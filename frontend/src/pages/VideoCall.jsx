@@ -896,6 +896,21 @@ export default function VideoCall() {
   // Telemetry events queued while the socket is disconnected, replayed once
   // it reconnects — see logVideoEvent/flushTelemetryQueue below.
   const telemetryQueueRef = useRef([]);
+  // True only while the other participant is actually in the room. Gates the
+  // ICE-restart / recovery machinery so a peer who has genuinely left can't
+  // leave us firing restart offers / restart-requests into an empty room, and
+  // lets handlePeerJoined tell "peer rejoined after leaving" apart from an
+  // ordinary first join. Mirrors DirectVideoCall.jsx's peerPresentRef.
+  const peerPresentRef = useRef(false);
+  // Wall-clock time the current outstanding local offer was sent. Lets
+  // createAndSendOffer detect a peer connection parked in "have-local-offer"
+  // past its answer deadline and roll it back to retry, instead of skipping
+  // recovery every time until the separate offer-answer watchdog fires.
+  const pendingOfferSentAtRef = useRef(0);
+  // Set while a full peer-connection rebuild (via reconnectNonce) has been
+  // requested from handlePeerJoined but the effect hasn't torn down/rebuilt
+  // yet — debounces repeated "peer-joined" events into a single rebuild.
+  const rebuildRequestedRef = useRef(false);
 
   // ── Call state ────────────────────────────────────────────────────
   const [isReady, setIsReady] = useState(false);
@@ -1606,10 +1621,12 @@ export default function VideoCall() {
 
     let mounted = true;
     completedRef.current = false;
+    rebuildRequestedRef.current = false;
     pendingRemoteCandidatesRef.current = [];
     ignoreOfferRef.current = false;
     settingRemoteAnswerPendingRef.current = false;
     pendingOfferIdRef.current = null;
+    pendingOfferSentAtRef.current = 0;
     lastReceivedOfferIdRef.current = null;
     clearTimeout(offerAnswerTimeoutRef.current);
     offerAnswerTimeoutRef.current = null;
@@ -1680,16 +1697,57 @@ export default function VideoCall() {
       }
     };
 
+    // Same formula the offer-answer watchdog uses to decide an outstanding
+    // offer is overdue — widened on high-latency links, capped so a briefly
+    // degraded connection can't wedge retry logic behind a multi-minute wait.
+    const computeOfferAnswerTimeout = () => {
+      const measuredRtt = lastRttMsRef.current;
+      return typeof measuredRtt === "number" && measuredRtt > 0
+        ? Math.min(Math.max(OFFER_ANSWER_TIMEOUT_MS, measuredRtt * 3 + 5000), 30000)
+        : OFFER_ANSWER_TIMEOUT_MS;
+    };
+
     const createAndSendOffer = async ({ iceRestart = false } = {}) => {
       if (!mounted || pc.signalingState === "closed" || makingOfferRef.current)
         return false;
       if (!isReadyRef.current) return false;
       if (pc.signalingState !== "stable") {
-        logger.info(
-          "Skipping offer because signaling state is",
-          pc.signalingState,
-        );
-        return false;
+        // A peer connection parked in "have-local-offer" past its answer
+        // deadline is holding a dead offer nothing will ever answer — every
+        // recovery trigger (peer-rejoin nudge, ICE-restart request, socket
+        // reconnect) would otherwise skip here and wait out the separate
+        // watchdog again. Roll the stale offer back and fall through to a
+        // fresh one. Any state other than a genuinely-stuck have-local-offer
+        // is left alone (a real negotiation is mid-flight).
+        const stuckMs = pendingOfferSentAtRef.current
+          ? Date.now() - pendingOfferSentAtRef.current
+          : 0;
+        const offerIsStale =
+          pc.signalingState === "have-local-offer" &&
+          stuckMs > computeOfferAnswerTimeout();
+        if (!offerIsStale) {
+          logger.info(
+            "Skipping offer because signaling state is",
+            pc.signalingState,
+          );
+          return false;
+        }
+        try {
+          logVideoEvent("stale_local_offer_rollback", {
+            stuckMs,
+            offerId: pendingOfferIdRef.current || null,
+          });
+          await pc.setLocalDescription({ type: "rollback" });
+          if (!mounted || pc.signalingState === "closed") return false;
+          pendingOfferIdRef.current = null;
+          pendingOfferSentAtRef.current = 0;
+          clearTimeout(offerAnswerTimeoutRef.current);
+          offerAnswerTimeoutRef.current = null;
+        } catch (err) {
+          logger.warn("Rollback of stale local offer failed:", err.message);
+          return false;
+        }
+        if (pc.signalingState !== "stable") return false;
       }
       try {
         makingOfferRef.current = true;
@@ -1703,6 +1761,7 @@ export default function VideoCall() {
         await pc.setLocalDescription(offer);
         const offerId = makeOfferId();
         pendingOfferIdRef.current = offerId;
+        pendingOfferSentAtRef.current = Date.now();
         socket.emit("video-offer", {
           appointmentId,
           offer: pc.localDescription,
@@ -1726,13 +1785,7 @@ export default function VideoCall() {
         // processing), capped so a temporarily degraded link can't wedge
         // retry logic behind a multi-minute wait.
         const measuredRtt = lastRttMsRef.current;
-        const effectiveOfferAnswerTimeoutMs =
-          typeof measuredRtt === "number" && measuredRtt > 0
-            ? Math.min(
-                Math.max(OFFER_ANSWER_TIMEOUT_MS, measuredRtt * 3 + 5000),
-                30000,
-              )
-            : OFFER_ANSWER_TIMEOUT_MS;
+        const effectiveOfferAnswerTimeoutMs = computeOfferAnswerTimeout();
 
         clearTimeout(offerAnswerTimeoutRef.current);
         offerAnswerTimeoutRef.current = window.setTimeout(() => {
@@ -1758,6 +1811,7 @@ export default function VideoCall() {
           pc.setLocalDescription({ type: "rollback" })
             .then(() => {
               pendingOfferIdRef.current = null;
+              pendingOfferSentAtRef.current = 0;
               // Retry directly rather than via scheduleIceRestart(): that
               // helper bails out early whenever pc.connectionState already
               // reads "connected" — which is exactly the misleading state
@@ -1840,6 +1894,9 @@ export default function VideoCall() {
     };
 
     const requestPeerIceRestart = () => {
+      // Nothing to restart to once the peer has genuinely left — see
+      // peerPresentRef. handlePeerJoined re-drives recovery when they return.
+      if (!peerPresentRef.current) return;
       if (restartRequestInFlightRef.current) return;
       restartRequestInFlightRef.current = true;
       socket.emit("ice-restart-request", { appointmentId });
@@ -1853,10 +1910,12 @@ export default function VideoCall() {
     };
 
     const scheduleIceRestart = () => {
-      if (!mounted || iceRestartTimerRef.current) return;
+      if (!mounted || !peerPresentRef.current || iceRestartTimerRef.current)
+        return;
       iceRestartTimerRef.current = setTimeout(async () => {
         iceRestartTimerRef.current = null;
-        if (!mounted || pc.signalingState === "closed") return;
+        if (!mounted || !peerPresentRef.current || pc.signalingState === "closed")
+          return;
         if (
           pc.connectionState === "connected" ||
           pc.iceConnectionState === "connected" ||
@@ -2037,6 +2096,8 @@ export default function VideoCall() {
         iceRestartTimerRef.current = null;
         restartRequestInFlightRef.current = false;
         iceRecoveryAttemptsRef.current = 0;
+        pendingOfferSentAtRef.current = 0;
+        peerPresentRef.current = true;
         clearReconnectStallWatch();
         hasConnectedOnceRef.current = true;
         setConnectionState("connected");
@@ -2077,6 +2138,8 @@ export default function VideoCall() {
         iceRestartTimerRef.current = null;
         restartRequestInFlightRef.current = false;
         iceRecoveryAttemptsRef.current = 0;
+        pendingOfferSentAtRef.current = 0;
+        peerPresentRef.current = true;
         clearReconnectStallWatch();
         hasConnectedOnceRef.current = true;
         setConnectionState("connected");
@@ -2116,6 +2179,9 @@ export default function VideoCall() {
     // Socket handlers
     const handleOffer = async ({ offer, offerId: incomingOfferId }) => {
       if (!offer || !mounted) return;
+      // An offer means the peer is here and negotiating — keep the recovery
+      // machinery armed for them.
+      peerPresentRef.current = true;
       try {
         setConnectionState("connecting");
         const readyForOffer =
@@ -2142,6 +2208,7 @@ export default function VideoCall() {
           // still shows up for it later is stale and must be rejected, and
           // the answer-timeout watchdog for it is no longer relevant.
           pendingOfferIdRef.current = null;
+          pendingOfferSentAtRef.current = 0;
           clearTimeout(offerAnswerTimeoutRef.current);
           offerAnswerTimeoutRef.current = null;
         } else if (offerCollision) {
@@ -2217,8 +2284,10 @@ export default function VideoCall() {
           return;
         }
         settingRemoteAnswerPendingRef.current = true;
+        peerPresentRef.current = true;
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         pendingOfferIdRef.current = null;
+        pendingOfferSentAtRef.current = 0;
         clearTimeout(offerAnswerTimeoutRef.current);
         offerAnswerTimeoutRef.current = null;
         logVideoEvent("answer_accepted", {
@@ -2266,7 +2335,7 @@ export default function VideoCall() {
     };
 
     const handleIceRestartRequest = async () => {
-      if (!mounted || !isReadyRef.current) return;
+      if (!mounted || !isReadyRef.current || !peerPresentRef.current) return;
       // The doctor still never self-initiates an offer as a matter of
       // course (see handlePeerJoined) — but if the PATIENT explicitly asks
       // for a restart because it just exhausted its own recovery attempts
@@ -2295,17 +2364,59 @@ export default function VideoCall() {
       const { resumedCall } = payload || {};
       if (mounted) {
         peerJoinedRef.current = true;
+        peerPresentRef.current = true;
         setPeerJoined(true);
         setPeerLeft(false);
-        if (isReadyRef.current && !inCallRef.current) startConnectionWatchdog();
+
+        // A peer connection that's missing (torn down in handleParticipantLeft
+        // when the peer genuinely left), closed, or failed cannot be salvaged
+        // with an ICE restart against a peer that now has a brand-new
+        // connection/DTLS identity. Rebuild it from scratch — same mechanism
+        // the manual "Retry" button uses (reconnectNonce): the effect tears
+        // down and re-runs, producing a fresh RTCPeerConnection, fresh local
+        // media, a fresh room (re)join, and a clean offer/answer where the
+        // patient offers and the doctor answers. Reusing the stale connection
+        // is exactly what left calls one-way after a refresh.
+        const existingPc = pcRef.current;
+        const pcNeedsRebuild =
+          !existingPc ||
+          existingPc.signalingState === "closed" ||
+          existingPc.connectionState === "failed";
+        if (pcNeedsRebuild && !rebuildRequestedRef.current) {
+          rebuildRequestedRef.current = true;
+          logVideoEvent("peer_rejoined_pc_rebuild", {
+            reason: !existingPc
+              ? "missing"
+              : existingPc.connectionState === "failed"
+                ? "failed"
+                : "closed",
+            resumedCall: Boolean(resumedCall),
+          });
+          manualReconnectRef.current = true;
+          setReconnectStalled(false);
+          setReconnectNonce((n) => n + 1);
+          return;
+        }
+
+        const currentlyConnected =
+          !!existingPc &&
+          (existingPc.connectionState === "connected" ||
+            existingPc.iceConnectionState === "connected" ||
+            existingPc.iceConnectionState === "completed");
+
+        if (isReadyRef.current && !currentlyConnected) startConnectionWatchdog();
         // Resuming a known-active call should recover in ~1-2s (see the
         // doctor nudge below), so a stall is meaningful much sooner. A
         // first-time connect has no such guarantee — real handshakes can
         // legitimately take well past a few seconds on slow networks, so
         // give it more room before nagging the user with a "reconnecting"
-        // banner that doesn't even apply yet.
-        if (isReadyRef.current && !inCallRef.current) {
-          startReconnectStallWatch(resumedCall ? 8000 : 20000);
+        // banner that doesn't even apply yet. Re-arm even when inCallRef is
+        // already true (a call that connected once, then the peer left and
+        // came back) so the doctor still gets the manual Retry escape hatch.
+        if (isReadyRef.current && !currentlyConnected) {
+          startReconnectStallWatch(
+            resumedCall || inCallRef.current ? 8000 : 20000,
+          );
         }
         if (!isDoctor && isReadyRef.current) {
           window.setTimeout(() => {
@@ -2342,17 +2453,72 @@ export default function VideoCall() {
     };
 
     const handleParticipantLeft = () => {
-      if (mounted) {
-        peerJoinedRef.current = false;
-        setIsRemoteConnected(false);
-        setConnectionState("disconnected");
-        setPeerJoined(false);
-        setPeerLeft(true);
-        // The peer genuinely left (not a brief reconnect blip, or the grace
-        // period would have suppressed this event) — there's nothing to
-        // "reconnect" to right now, so don't leave a stale stall banner up.
-        clearReconnectStallWatch();
+      if (!mounted) return;
+      peerJoinedRef.current = false;
+      // The peer genuinely left (a ~15s disconnect grace already elapsed
+      // server-side, or they left deliberately). Stand the recovery machinery
+      // fully down and DROP the peer connection — a reloaded/reconnected peer
+      // comes back with a brand-new RTCPeerConnection and DTLS identity, so
+      // keeping the old one and trying to ICE-restart onto it is exactly what
+      // wedges negotiation in "have-local-offer" or leaves video one-way.
+      // handlePeerJoined rebuilds a fresh connection when they return. Local
+      // camera/mic and its stream are left running so nothing has to be
+      // re-permissioned on rejoin.
+      peerPresentRef.current = false;
+      setIsRemoteConnected(false);
+      setConnectionState("disconnected");
+      setPeerJoined(false);
+      setPeerLeft(true);
+      clearReconnectStallWatch();
+
+      clearTimeout(iceRestartTimerRef.current);
+      iceRestartTimerRef.current = null;
+      clearTimeout(connectionFailTimerRef.current);
+      connectionFailTimerRef.current = null;
+      clearTimeout(offerAnswerTimeoutRef.current);
+      offerAnswerTimeoutRef.current = null;
+      clearTimeout(ignoreOfferResetTimerRef.current);
+      ignoreOfferResetTimerRef.current = null;
+      pendingOfferIdRef.current = null;
+      pendingOfferSentAtRef.current = 0;
+      lastReceivedOfferIdRef.current = null;
+      pendingRemoteCandidatesRef.current = [];
+      makingOfferRef.current = false;
+      ignoreOfferRef.current = false;
+      settingRemoteAnswerPendingRef.current = false;
+      restartRequestInFlightRef.current = false;
+      iceRecoveryAttemptsRef.current = 0;
+      stopStatsCollection();
+
+      const deadPc = pcRef.current;
+      if (deadPc) {
+        deadPc.ontrack = null;
+        deadPc.onicecandidate = null;
+        deadPc.onnegotiationneeded = null;
+        deadPc.onconnectionstatechange = null;
+        deadPc.oniceconnectionstatechange = null;
+        try {
+          deadPc.close();
+        } catch {
+          /* already closed */
+        }
+        pcRef.current = null;
       }
+
+      // Clear the peer's last frame so the stage doesn't stay frozen on it
+      // while we wait for them to return. The local self-view keeps running.
+      const rs = remoteStreamRef.current;
+      if (rs) {
+        rs.getTracks().forEach((track) => {
+          try {
+            track.stop();
+          } catch {
+            /* no-op */
+          }
+          rs.removeTrack(track);
+        });
+      }
+      assignStreams(isSwappedRef.current);
     };
 
     const handleChatMessage = (msg) => {
@@ -2461,7 +2627,12 @@ export default function VideoCall() {
       });
       if (isDoctor) {
         window.setTimeout(() => {
-          if (!mounted || !socket.connected || pc.signalingState === "closed")
+          if (
+            !mounted ||
+            !peerPresentRef.current ||
+            !socket.connected ||
+            pc.signalingState === "closed"
+          )
             return;
           if (
             pc.connectionState === "connected" ||
@@ -2475,7 +2646,12 @@ export default function VideoCall() {
       }
       if (!isDoctor && isReadyRef.current) {
         window.setTimeout(() => {
-          if (!mounted || !socket.connected || pc.signalingState === "closed")
+          if (
+            !mounted ||
+            !peerPresentRef.current ||
+            !socket.connected ||
+            pc.signalingState === "closed"
+          )
             return;
           if (
             pc.connectionState === "connected" ||
@@ -2516,10 +2692,11 @@ export default function VideoCall() {
     // always show some growth from RTP/RTCP keepalives even during
     // silence/camera-off.
     const verifyConnectionAfterVisible = async () => {
-      if (verifyingVisibilityRef.current) return;
+      if (verifyingVisibilityRef.current || !peerPresentRef.current) return;
       verifyingVisibilityRef.current = true;
       try {
-        if (!mounted || pc.signalingState === "closed") return;
+        if (!mounted || !peerPresentRef.current || pc.signalingState === "closed")
+          return;
         const isConnected =
           pc.connectionState === "connected" ||
           pc.iceConnectionState === "connected" ||
