@@ -424,6 +424,14 @@ export default function DirectVideoCall() {
   // bump this, and the in-flight run bails at its next checkpoint instead of
   // creating a second, orphaned RTCPeerConnection.
   const pcSetupGenerationRef = useRef(0);
+  // Guards cleanupCall against re-entrancy (e.g. a rapid double-click on
+  // "Leave Call" firing two click events before React re-renders the button
+  // away) — every individual step inside it is independently idempotent, but
+  // running the whole sequence twice is still wasted work (a second,
+  // no-op "leave-direct-room" emit, redundant timer clears) worth skipping
+  // outright rather than relying on each step's own idempotency. Mirrors
+  // VideoCall.jsx's completedRef guard on performCleanup.
+  const cleanupDoneRef = useRef(false);
   // Latest mic/camera toggle state, readable from non-React code paths
   // (setupPeerConnection applying the pre-join choice to freshly-captured
   // tracks; the toggle handlers) without a stale closure.
@@ -755,6 +763,8 @@ export default function DirectVideoCall() {
   }, [isSelfViewMinimized, assignStreams]);
 
   const cleanupCall = useCallback(() => {
+    if (cleanupDoneRef.current) return;
+    cleanupDoneRef.current = true;
     socket.emit("leave-direct-room", { roomId });
     clearTimeout(iceRestartTimerRef.current);
     iceRestartTimerRef.current = null;
@@ -1672,6 +1682,16 @@ export default function DirectVideoCall() {
     // identical guard.
     const handleVisibilityChange = async () => {
       if (document.visibilityState !== "visible" || !mountedRef.current) return;
+      // The local self-view (pip) can be suspended by the browser/OS while
+      // the tab/app is backgrounded — common on mobile — even though the
+      // underlying camera track and its WebRTC transmission to the peer
+      // keep running unaffected (a separate pipeline from the local
+      // preview's decode/render). Replay it explicitly on return instead of
+      // leaving it stuck on a frozen/black frame. Independent of
+      // socket/remote-connection state below, since it's a purely local
+      // media-element concern — does not touch or gate the existing
+      // remote-connection recovery check that follows.
+      void playAssignedVideos();
       if (!socket.connected) {
         socket.connect();
         return;

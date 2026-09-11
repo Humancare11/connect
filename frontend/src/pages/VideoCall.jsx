@@ -446,6 +446,23 @@ const ICE_RECOVERY_COOLDOWN_MS = Number(
 const OFFER_ANSWER_TIMEOUT_MS = Number(
   import.meta.env.VITE_RTC_OFFER_ANSWER_TIMEOUT_MS || 8000,
 );
+// How long a freshly (re)built RTCPeerConnection is protected from being
+// torn down again by handlePeerJoined's resumedCall-triggered rebuild check
+// (see that check's own comment for why it has to exist at all). Rejoining
+// the room — which every (re)build's own effect setup does — makes the
+// server echo "peer-joined" straight back to the same socket whenever a
+// peer is present, carrying resumedCall:true; that echo arrives well before
+// a brand-new pc has any realistic chance to negotiate (the doctor never
+// self-initiates an offer, and the patient's own offer waits on a fresh
+// getUserMedia() call first). Without this grace window, that echo alone
+// re-satisfies "resumed but not yet healthy" and tears the pc down again
+// before it ever gets a chance to connect — an unbounded rebuild cascade.
+// Long enough to cover a normal offer/answer + ICE round trip; the existing
+// connection watchdog / reconnect-stall / ICE-restart machinery remains the
+// safety net for a pc that's still unhealthy after this window elapses.
+const REBUILD_GRACE_MS = Number(
+  import.meta.env.VITE_RTC_REBUILD_GRACE_MS || 5000,
+);
 const STATS_INTERVAL_MS = Number(
   import.meta.env.VITE_RTC_STATS_INTERVAL_MS || 30000,
 );
@@ -756,6 +773,16 @@ export default function VideoCall() {
   const [apptLoading, setApptLoading] = useState(true);
   const [apptError, setApptError] = useState("");
   const [activeRole, setActiveRole] = useState("");
+  // Flips permanently true once this tab's call session is authoritatively
+  // over (denied room access, evicted/revoked, or superseded by a newer
+  // session for the same appointment elsewhere) — as opposed to a merely
+  // transient connection problem. A dependency of the main WebRTC effect
+  // below so setting it both tears the current effect instance all the way
+  // down (via its own cleanup — socket listeners, PeerConnection, local
+  // tracks) AND stops it from ever creating a new PeerConnection / requesting
+  // media again for this mount, even if a stray "peer-joined" still arrives
+  // in the brief window before that cleanup runs.
+  const [sessionEnded, setSessionEnded] = useState(false);
 
   // ── ICE server config (STUN + short-lived TURN credential) ────────
   const [iceConfig, setIceConfig] = useState(null);
@@ -824,6 +851,11 @@ export default function VideoCall() {
   const remoteStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
   const pcRef = useRef(null);
+  // Wall-clock time pcRef.current was constructed — see REBUILD_GRACE_MS for
+  // why handlePeerJoined needs this instead of relying on rebuildRequestedRef
+  // alone (that guard only protects a single effect instance, not the
+  // freshly-rebuilt instance a self "peer-joined" echo lands in next).
+  const pcCreatedAtRef = useRef(0);
 
   // ── Stable state refs ─────────────────────────────────────────────
   const inCallRef = useRef(false);
@@ -947,6 +979,13 @@ export default function VideoCall() {
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
   const [reconnectNonce, setReconnectNonce] = useState(0);
+  // Debounces the manual "Retry" button (see forceReconnect) — a rapid
+  // double-click/tap fires two separate click events before React has a
+  // chance to re-render the button as hidden (it disappears the instant
+  // reconnectStalled flips false), which would otherwise queue up two full
+  // PeerConnection teardown/rebuild cycles back to back.
+  const [manualReconnecting, setManualReconnecting] = useState(false);
+  const manualReconnectCooldownRef = useRef(null);
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false,
   );
@@ -1264,7 +1303,27 @@ export default function VideoCall() {
       t.stop();
     });
     screenStreamRef.current = null;
-    pcRef.current?.close();
+    // Detach handlers before closing so a stray late-firing WebRTC callback
+    // (ontrack/onconnectionstatechange/etc.) from this now-dead connection
+    // can never run against React state after cleanup, and null the ref
+    // (not just close()) so any code that reads pcRef.current afterwards —
+    // e.g. a "peer-joined" that slips in before the owning effect's own
+    // cleanup has run — sees "no connection" rather than a closed-but-still
+    // truthy object that would otherwise look like it needs rebuilding.
+    const deadPc = pcRef.current;
+    if (deadPc) {
+      deadPc.ontrack = null;
+      deadPc.onicecandidate = null;
+      deadPc.onconnectionstatechange = null;
+      deadPc.oniceconnectionstatechange = null;
+      try {
+        deadPc.close();
+      } catch {
+        /* already closed */
+      }
+    }
+    pcRef.current = null;
+    peerPresentRef.current = false;
     pendingRemoteCandidatesRef.current = [];
     joinedSocketIdRef.current = "";
     peerJoinedRef.current = false;
@@ -1489,7 +1548,12 @@ export default function VideoCall() {
 
     window.addEventListener("popstate", handlePopstate);
     return () => window.removeEventListener("popstate", handlePopstate);
-  }, [canJoinConsultation, navigate, resolveHomePath, performCleanup]);
+    // navigate/performCleanup were listed below but never used by this
+    // effect (it only sets pendingLeaveRef + opens the confirm modal; the
+    // actual navigate()+performCleanup() happen later, from the confirm
+    // modal's own "Leave" button) — trimmed to the dependencies this effect
+    // actually reads.
+  }, [canJoinConsultation, resolveHomePath]);
 
   // ── Tab close / reload → allow socket reconnect recovery ──────────
   useEffect(() => {
@@ -1518,9 +1582,25 @@ export default function VideoCall() {
     const remoteVideo = isSwappedRef.current
       ? pipVideoRef.current
       : mainVideoRef.current;
-    const mainOk = await playVideoElement(mainVideoRef.current);
-    const pipOk = await playVideoElement(pipVideoRef.current);
-    await playVideoElement(remoteAudioRef.current);
+    // Fire every element's .play() in the same synchronous tick (the array
+    // literal below evaluates each playVideoElement(...) call — which itself
+    // calls .play() before its first await — left to right, before
+    // Promise.allSettled is even invoked) rather than awaiting them one at a
+    // time. Awaiting sequentially meant only the first call's .play() ran
+    // inside a user gesture's call stack (e.g. "Tap to resume audio/video");
+    // by the time the second/third ran, after an await, the gesture context
+    // could already have lapsed on stricter autoplay-policy browsers.
+    // allSettled (not all) so one element's outcome can never prevent the
+    // others' results from being read — playVideoElement already resolves to
+    // true/false internally rather than rejecting, but this stays safe even
+    // if that ever changes.
+    const [mainResult, pipResult] = await Promise.allSettled([
+      playVideoElement(mainVideoRef.current),
+      playVideoElement(pipVideoRef.current),
+      playVideoElement(remoteAudioRef.current),
+    ]);
+    const mainOk = mainResult.status === "fulfilled" && mainResult.value;
+    const pipOk = pipResult.status === "fulfilled" && pipResult.value;
     const remoteOk = remoteVideo === pipVideoRef.current ? pipOk : mainOk;
     setPlaybackBlocked(Boolean(remoteVideo?.srcObject) && !remoteOk);
   }, []);
@@ -1600,6 +1680,15 @@ export default function VideoCall() {
   // ── Main WebRTC + Socket setup ────────────────────────────────────
   useEffect(() => {
     if (!canJoinConsultation) return;
+    // This tab's session has been authoritatively terminated (denied,
+    // revoked, or superseded — see sessionEnded's declaration). Returning
+    // here both stops a new PeerConnection/media request from ever being
+    // made again for this mount, and — since sessionEnded is a dependency
+    // of this effect — running this return is preceded by this same
+    // effect's own cleanup for whatever instance was previously active,
+    // which is what actually removes its socket listeners and tears down
+    // its PeerConnection and local tracks.
+    if (sessionEnded) return;
     if (!iceConfig) {
       if (iceConfigError) {
         setApptError(`Video consultation is not configured: ${iceConfigError}`);
@@ -1653,6 +1742,7 @@ export default function VideoCall() {
       return;
     }
     pcRef.current = pc;
+    pcCreatedAtRef.current = Date.now();
     logger.info("WebRTC peer connection created", {
       iceServers: iceConfig.iceServers.map((server) => ({
         urls: server.urls,
@@ -2362,7 +2452,15 @@ export default function VideoCall() {
 
     const handlePeerJoined = (payload = {}) => {
       const { resumedCall } = payload || {};
-      if (mounted) {
+      // completedRef flips synchronously the instant performCleanup() runs
+      // (room-denied / duplicate-session / access-revoked), ahead of
+      // whatever else reacts to sessionEnded — checking it here closes the
+      // brief window before this effect's own cleanup has actually run
+      // where a "peer-joined" arriving for an already-terminated session
+      // would otherwise pass pcNeedsRebuild's "!existingPc" check below
+      // (pcRef.current is nulled by performCleanup) and rebuild a fresh
+      // PeerConnection + re-request camera/mic for a session that's over.
+      if (mounted && !completedRef.current) {
         peerJoinedRef.current = true;
         peerPresentRef.current = true;
         setPeerJoined(true);
@@ -2378,10 +2476,41 @@ export default function VideoCall() {
         // patient offers and the doctor answers. Reusing the stale connection
         // is exactly what left calls one-way after a refresh.
         const existingPc = pcRef.current;
+        const pcHealthy =
+          !!existingPc &&
+          (existingPc.connectionState === "connected" ||
+            existingPc.iceConnectionState === "connected" ||
+            existingPc.iceConnectionState === "completed");
+        // A resumed session whose PC is stuck at "disconnected" (rather than
+        // the "failed" case already handled above) after a real network
+        // outage won't reliably self-heal via ICE restart alone — mirrors
+        // DirectVideoCall.jsx's handlePeerJoined. Gated on resumedCall so an
+        // ordinary first-time connect (a fresh pc briefly sits at
+        // "new"/"connecting", which is also "not healthy") is never
+        // affected — this only widens rebuild for a genuine resume.
+        //
+        // Also gated on REBUILD_GRACE_MS: rejoining the room (which every
+        // rebuild's own effect setup does, via emitOnlineAndJoinRoom) makes
+        // the server echo this very "peer-joined" straight back to us
+        // whenever a peer is present — including right after a rebuild we
+        // just performed for that same reason. That echo carries
+        // resumedCall:true and arrives long before a brand-new pc has any
+        // realistic chance to negotiate, so without this grace window it
+        // would immediately re-satisfy "resumed but not yet healthy" and
+        // tear the pc down again before it ever connects — see
+        // REBUILD_GRACE_MS's own comment for the full explanation. A pc
+        // genuinely stale from before this effect instance even started
+        // (the case this whole clause exists for) is always well past the
+        // grace window by the time it's evaluated, so that recovery path is
+        // unaffected.
+        const pcAgeMs = pcCreatedAtRef.current
+          ? Date.now() - pcCreatedAtRef.current
+          : Infinity;
         const pcNeedsRebuild =
           !existingPc ||
           existingPc.signalingState === "closed" ||
-          existingPc.connectionState === "failed";
+          existingPc.connectionState === "failed" ||
+          (resumedCall && !pcHealthy && pcAgeMs > REBUILD_GRACE_MS);
         if (pcNeedsRebuild && !rebuildRequestedRef.current) {
           rebuildRequestedRef.current = true;
           logVideoEvent("peer_rejoined_pc_rebuild", {
@@ -2546,6 +2675,19 @@ export default function VideoCall() {
         setTimeout(() => navigate("/user/dashboard", { replace: true }), 4000);
         return;
       }
+      // Patient-side cancellation had no handling here at all previously —
+      // only "complete" redirected the patient, so a mid-call cancellation
+      // (by the doctor or an admin) left the patient's call silently
+      // stalling with no explanation once evictAllFromAppointmentRoom
+      // dropped them from the room. Tear the session down the same way
+      // handleRoomDenied/handleDuplicateSession do, with a message that
+      // matches the doctor-side wording below.
+      if (status === "cancelled" && !isDoctor) {
+        performCleanup();
+        setSessionEnded(true);
+        setApptError("This appointment was cancelled by an administrator.");
+        return;
+      }
       // Doctor-side: an admin (or backend job) can close this appointment
       // out from under a doctor who's still in the call. completingRef
       // guards against re-showing this for the doctor's OWN
@@ -2573,6 +2715,13 @@ export default function VideoCall() {
 
     const handleRoomDenied = ({ msg } = {}) => {
       if (!mounted) return;
+      // Previously left the camera/mic running and the RTCPeerConnection
+      // open indefinitely behind the "Access Denied" gate screen — local
+      // media was already acquired by this effect independently of whether
+      // the room join itself succeeded. Tear the session down the same way
+      // a duplicate session does, instead of only changing what's rendered.
+      performCleanup();
+      setSessionEnded(true);
       setApptError(msg || "Access to this call room was denied.");
     };
 
@@ -2583,10 +2732,34 @@ export default function VideoCall() {
       // peer connection — instead of only closing the PC, so nothing
       // (call timer, stats polling, socket listeners) keeps running
       // behind the "Access Denied" gate screen this triggers below.
+      // sessionEnded (a dependency of this effect) is what actually
+      // removes the socket listeners themselves and stops a later
+      // "peer-joined" from silently rebuilding a fresh PeerConnection and
+      // re-requesting media in a tab the server has already flagged as
+      // superseded.
       performCleanup();
+      setSessionEnded(true);
       setApptError(
         msg || "Another consultation session was started elsewhere.",
       );
+    };
+
+    // The backend forcibly removes a socket from the appointment room (and
+    // emits this) when the appointment is reassigned to a different doctor,
+    // or — as a defensive fallback with no more specific reason — in any
+    // other case access is revoked outside the normal complete/cancel flow.
+    // "completed"/"cancelled" are deliberately excluded here: those already
+    // get their own, friendlier messaging above via "appointment-updated"
+    // (the completed-overlay redirect, the doctor's "closed by other"
+    // banner, and the cancellation handling just added above) — reacting to
+    // them here too would just race that messaging with a blunter "Access
+    // Denied" screen for the exact same event.
+    const handleAccessRevoked = ({ msg, reason } = {}) => {
+      if (!mounted) return;
+      if (reason === "completed" || reason === "cancelled") return;
+      performCleanup();
+      setSessionEnded(true);
+      setApptError(msg || "You no longer have access to this appointment.");
     };
 
     socket.on("video-offer", handleOffer);
@@ -2601,6 +2774,7 @@ export default function VideoCall() {
     socket.on("new-prescription", handleNewPrescription);
     socket.on("room-access-denied", handleRoomDenied);
     socket.on("duplicate-session", handleDuplicateSession);
+    socket.on("appointment-access-revoked", handleAccessRevoked);
 
     const joinRoom = () => {
       emitOnlineAndJoinRoom();
@@ -2743,6 +2917,16 @@ export default function VideoCall() {
     // regardless of tab visibility.
     const handleVisibilityChange = () => {
       if (!mounted || document.visibilityState !== "visible") return;
+      // The local self-view (pip) can be suspended by the browser/OS while
+      // the tab/app is backgrounded — common on mobile — even though the
+      // underlying camera track and its WebRTC transmission to the peer
+      // keep running unaffected (a separate pipeline from the local
+      // preview's decode/render). Replay it explicitly on return instead of
+      // leaving it stuck on a frozen/black frame. Independent of
+      // socket/remote-connection state below, since it's a purely local
+      // media-element concern — does not touch or gate the existing
+      // remote-connection recovery check that follows.
+      void playAssignedVideos();
       if (!socket.connected) {
         socket.connect();
         return;
@@ -2812,6 +2996,7 @@ export default function VideoCall() {
       socket.off("new-prescription", handleNewPrescription);
       socket.off("room-access-denied", handleRoomDenied);
       socket.off("duplicate-session", handleDuplicateSession);
+      socket.off("appointment-access-revoked", handleAccessRevoked);
       pc.ontrack = null;
       pc.onicecandidate = null;
       pc.onconnectionstatechange = null;
@@ -2832,6 +3017,14 @@ export default function VideoCall() {
       lastRttMsRef.current = null;
       clearTimeout(offerAnswerTimeoutRef.current);
       offerAnswerTimeoutRef.current = null;
+      // Mirror the ref reset into React state. This cleanup now also runs on
+      // an automatic PeerConnection rebuild after a peer leaves and rejoins
+      // (see handlePeerJoined) — not only on unmount or the manual "Retry" —
+      // so a user who was screen-sharing when that rebuild fires needs the
+      // "Stop Sharing" button to un-highlight too, not just have the track
+      // stopped underneath it. Gated on the ref so an ordinary teardown while
+      // not sharing doesn't trigger an unnecessary re-render.
+      if (screenSharingRef.current) setIsScreenSharing(false);
       screenSharingRef.current = false;
       screenShareStartInProgressRef.current = false;
       screenShareStopInProgressRef.current = false;
@@ -2854,6 +3047,7 @@ export default function VideoCall() {
     reconnectNonce,
     iceConfig,
     iceConfigError,
+    sessionEnded,
   ]);
 
   // ── Call timer ────────────────────────────────────────────────────
@@ -2972,14 +3166,28 @@ export default function VideoCall() {
   );
 
   const startScreenShare = useCallback(async () => {
-    const pc = pcRef.current;
+    // Re-entrancy guards for an already-in-flight start/stop — left silent
+    // (not a user-facing failure, just protecting against a double-click
+    // racing an operation already underway).
     if (
-      !pc ||
       screenSharingRef.current ||
       screenShareStartInProgressRef.current ||
       screenShareStopInProgressRef.current
     )
       return;
+
+    const pc = pcRef.current;
+    if (!pc || pc.signalingState === "closed") {
+      // Previously a silent no-op: pcRef.current is nulled once the peer
+      // leaves (handleParticipantLeft) or the session ends, but nothing
+      // disabled the Share button for that window, so a click here produced
+      // no feedback at all. The button's own `disabled` also now covers the
+      // common case (peerLeft), but this stays as the authoritative check.
+      showInlineMessage(
+        "Screen sharing isn't available right now — the other participant isn't connected.",
+      );
+      return;
+    }
 
     if (!canUseScreenShare()) {
       showInlineMessage(
@@ -3019,8 +3227,13 @@ export default function VideoCall() {
 
       screenStreamRef.current = screen;
       screenSharingRef.current = true;
+      // Local self-preview of the shared screen is assigned by the
+      // isScreenSharing-keyed effect below (it accounts for `isSwapped` too
+      // — the self-view lives in the main stage, not the PiP, whenever the
+      // view is swapped), rather than here, so there's a single source of
+      // truth for which element shows what instead of two assignments that
+      // can race and briefly show the wrong stream.
       setIsScreenSharing(true);
-      if (pipVideoRef.current) pipVideoRef.current.srcObject = screen;
       logVideoEvent("screen_share_started", {
         displaySurface: screenTrack.getSettings?.().displaySurface || "unknown",
       });
@@ -3085,14 +3298,28 @@ export default function VideoCall() {
 
   useEffect(() => {
     if (isSelfViewMinimized) return;
+    if (!pipVideoRef.current || !mainVideoRef.current) return;
 
     const frameId = requestAnimationFrame(() => {
-      if (!pipVideoRef.current) return;
+      if (!pipVideoRef.current || !mainVideoRef.current) return;
 
-      if (isScreenSharing && !isSwapped && screenStreamRef.current) {
-        pipVideoRef.current.srcObject = screenStreamRef.current;
-      } else {
-        assignStreams(isSwapped);
+      // Baseline: normal remote/local assignment for both elements, exactly
+      // as if screen sharing weren't happening.
+      assignStreams(isSwapped);
+
+      // While screen sharing, the *self-view* element should preview the
+      // actual shared screen rather than the still-live camera feed —
+      // replaceTrack() in startScreenShare only changes what's sent to the
+      // peer, it doesn't touch localStreamRef, so assignStreams() alone
+      // would otherwise keep showing the camera locally. Which element is
+      // "self view" depends on swap state: normally it's the PiP, but when
+      // the view is swapped, self-view is the main stage — previously this
+      // only handled the not-swapped case, so a presenter who swapped views
+      // mid-share had no local preview of their own shared screen at all.
+      if (isScreenSharing && screenStreamRef.current) {
+        const selfViewEl = isSwapped ? mainVideoRef.current : pipVideoRef.current;
+        selfViewEl.srcObject = screenStreamRef.current;
+        selfViewEl.play?.().catch(() => {});
       }
 
       pipVideoRef.current.play?.().catch(() => {});
@@ -3165,10 +3392,21 @@ export default function VideoCall() {
   // the main effect to tear down and rebuild the RTCPeerConnection + rejoin
   // the room from scratch, on either role.
   const forceReconnect = useCallback(() => {
+    if (manualReconnectCooldownRef.current) return;
     manualReconnectRef.current = true;
     setReconnectStalled(false);
+    setManualReconnecting(true);
     setReconnectNonce((n) => n + 1);
+    manualReconnectCooldownRef.current = window.setTimeout(() => {
+      manualReconnectCooldownRef.current = null;
+      setManualReconnecting(false);
+    }, 1500);
   }, []);
+
+  useEffect(
+    () => () => window.clearTimeout(manualReconnectCooldownRef.current),
+    [],
+  );
 
   const retryMediaPermissions = useCallback(async () => {
     if (retryingMedia) return;
@@ -3806,8 +4044,9 @@ export default function VideoCall() {
                   type="button"
                   className="hc-vc__rx-btn-primary"
                   onClick={forceReconnect}
+                  disabled={manualReconnecting}
                 >
-                  Retry
+                  {manualReconnecting ? "Retrying..." : "Retry"}
                 </button>
                 {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES && (
                   <button
@@ -4174,13 +4413,24 @@ export default function VideoCall() {
           <button
             className={`hc-vc__btn hc-vc__btn--share ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
             onClick={toggleScreenShare}
-            disabled={!isReady || (!isScreenSharing && !screenShareSupported)}
+            disabled={
+              !isReady ||
+              // Only gates *starting* a new share — stopping one already in
+              // progress must stay available regardless of peer state.
+              // peerLeft covers the common case (pcRef.current is nulled by
+              // handleParticipantLeft while it's true); startScreenShare
+              // itself remains the authoritative check and surfaces a
+              // message for any other case where a connection isn't usable.
+              (!isScreenSharing && (!screenShareSupported || peerLeft))
+            }
             title={
               !screenShareSupported
                 ? "Screen sharing is not supported on this browser"
                 : isScreenSharing
                   ? "Stop sharing"
-                  : "Share screen"
+                  : peerLeft
+                    ? "Screen sharing is unavailable while the other participant is away"
+                    : "Share screen"
             }
           >
             <span className="hc-vc__btn-icon">
