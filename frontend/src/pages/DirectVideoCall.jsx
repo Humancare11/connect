@@ -492,6 +492,13 @@ export default function DirectVideoCall() {
   // effect (forceReconnect), so a manual Retry that also stalls still
   // surfaces a way out instead of spinning silently.
   const armConnectWatchdogsRef = useRef(() => {});
+  // Lets the browser's "online" event (registered outside the Step-3 effect,
+  // below) nudge WebRTC recovery directly — covers a network path recovering
+  // while the signaling socket itself never dropped (media/ICE and the
+  // socket's transport are independent failure domains), instead of only
+  // reacting to the next scheduled ICE-restart timer tick or socket
+  // reconnect event.
+  const kickIceRecoveryRef = useRef(() => {});
   const [reconnectStalled, setReconnectStalled] = useState(false);
 
   useEffect(() => {
@@ -528,7 +535,18 @@ export default function DirectVideoCall() {
   // browser's own connectivity signal instead.
   useEffect(() => {
     const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Recovery was previously purely timer-driven from the moment a drop
+      // was first detected, regardless of whether the network was actually
+      // back by then — a restart attempt built/sent while still offline
+      // carries no usable ICE candidates and is effectively wasted. "online"
+      // is the most reliable signal that connectivity is genuinely restored,
+      // so use it to kick an immediate recovery check (and reconnect the
+      // socket right away rather than waiting out its backoff delay).
+      if (!socket.connected) socket.connect();
+      kickIceRecoveryRef.current();
+    };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     return () => {
@@ -1299,23 +1317,36 @@ export default function DirectVideoCall() {
         )
           return;
 
-        const now = Date.now();
-        if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
-          iceRecoveryAttemptsRef.current = 0;
-        }
-        lastIceRecoveryAtRef.current = now;
+        // A fully offline device can't gather real ICE candidates or have an
+        // offer delivered — taking the action now would just burn a
+        // recovery attempt on dead air and hand the peer an SDP built with
+        // no usable candidates. Skip the action but still loop below, so
+        // recovery resumes the moment connectivity is actually back instead
+        // of waiting on a connectionstatechange transition that a
+        // connection stuck in "disconnected" may never fire again.
+        if (typeof navigator === "undefined" || navigator.onLine !== false) {
+          const now = Date.now();
+          if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+            iceRecoveryAttemptsRef.current = 0;
+          }
+          lastIceRecoveryAtRef.current = now;
 
-        if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
-          requestPeerIceRestart();
-          return;
+          if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
+            requestPeerIceRestart();
+          } else {
+            iceRecoveryAttemptsRef.current += 1;
+            if (isInitiatorRef.current) {
+              await createAndSendIceRestartOffer();
+            } else {
+              requestPeerIceRestart();
+            }
+          }
         }
-        iceRecoveryAttemptsRef.current += 1;
 
-        if (!isInitiatorRef.current) {
-          requestPeerIceRestart();
-          return;
-        }
-        await createAndSendIceRestartOffer();
+        // Still unhealthy (or skipped because we're offline) — keep the
+        // retry loop alive on the same cadence instead of relying on
+        // another state-change event to re-enter this function.
+        scheduleIceRestart();
       }, ICE_RESTART_DELAY_MS);
     };
 
@@ -1634,6 +1665,27 @@ export default function DirectVideoCall() {
     };
     setupPeerConnectionRef.current = setupPeerConnection;
 
+    // See kickIceRecoveryRef's declaration — invoked directly from the
+    // browser's "online" event so a network path recovering while the
+    // socket itself never dropped still gets a prompt recovery check.
+    kickIceRecoveryRef.current = () => {
+      const pc = pcRef.current;
+      if (
+        !mountedRef.current ||
+        !peerPresentRef.current ||
+        !pc ||
+        pc.signalingState === "closed"
+      )
+        return;
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
+      scheduleIceRestart();
+    };
+
     const handleRoomJoined = ({ isInitiator, resumedCall } = {}) => {
       if (!mountedRef.current) return;
       isInitiatorRef.current = !!isInitiator;
@@ -1654,6 +1706,41 @@ export default function DirectVideoCall() {
 
     const joinRoom = () => {
       socket.emit("join-direct-room", { roomId, guestId: guestIdRef.current, name: guestName });
+    };
+
+    // A manager-level reconnect (as opposed to the socket's first-ever
+    // "connect") means our transport just dropped and came back — the
+    // server's connectionStateRecovery branch (see join-direct-room) only
+    // nudges the *peer* to re-check its connection, not this side. Rejoin
+    // the room and, if our own PeerConnection still looks unhealthy a beat
+    // later, proactively drive recovery instead of only waiting on a
+    // connectionstatechange transition. Mirrors VideoCall.jsx's
+    // handleSocketReconnect.
+    const handleSocketReconnect = () => {
+      if (!mountedRef.current) return;
+      joinRoom();
+      window.setTimeout(() => {
+        const pc = pcRef.current;
+        if (
+          !mountedRef.current ||
+          !peerPresentRef.current ||
+          !socket.connected ||
+          !pc ||
+          pc.signalingState === "closed"
+        )
+          return;
+        if (
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        )
+          return;
+        if (isInitiatorRef.current) {
+          void createAndSendIceRestartOffer();
+        } else {
+          requestPeerIceRestart();
+        }
+      }, 500);
     };
 
     const sampleInboundBytes = async (pc) => {
@@ -1735,6 +1822,7 @@ export default function DirectVideoCall() {
     };
 
     socket.on("connect", joinRoom);
+    socket.io.on("reconnect", handleSocketReconnect);
     socket.on("direct-room-joined", handleRoomJoined);
     socket.on("direct-room-error", handleRoomError);
     socket.on("direct-peer-joined", handlePeerJoined);
@@ -1760,6 +1848,7 @@ export default function DirectVideoCall() {
       // running setup again after this cleanup completes.
       startedRef.current = false;
       socket.off("connect", joinRoom);
+      socket.io.off("reconnect", handleSocketReconnect);
       socket.off("direct-room-joined", handleRoomJoined);
       socket.off("direct-room-error", handleRoomError);
       socket.off("direct-peer-joined", handlePeerJoined);
@@ -2036,16 +2125,26 @@ export default function DirectVideoCall() {
     iceConfigPromiseRef.current = fetchDirectRoomIceConfig(roomId);
     setCallStatus("connecting");
 
-    if (socket.connected) {
-      void setupPeerConnectionRef.current();
-    } else {
-      socket.connect();
-    }
     // Keep a safety net under the forced rebuild: if this attempt also
     // stalls, the watchdog kicks ICE recovery and the stall banner comes
     // back rather than the user staring at a silent "connecting" again.
     armConnectWatchdogsRef.current();
-    reconnectInProgressRef.current = false;
+
+    if (socket.connected) {
+      // Release the guard once the rebuild actually settles (success or
+      // failure) rather than immediately after firing it off — releasing it
+      // synchronously here let a second rapid click start an overlapping
+      // rebuild while the first was still mid-flight awaiting the ICE-server
+      // fetch / local media. setupPeerConnection's own generation token
+      // still protects against that regardless, but the guard should
+      // actually guard what it claims to.
+      setupPeerConnectionRef.current().finally(() => {
+        reconnectInProgressRef.current = false;
+      });
+    } else {
+      socket.connect();
+      reconnectInProgressRef.current = false;
+    }
   }, [roomId]);
 
   const sendChatMessage = useCallback(

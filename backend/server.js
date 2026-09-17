@@ -1825,6 +1825,27 @@ io.on("connection", (socket) => {
         recoveredEntry.cleanupTimer = null;
       }
       recoveredEntry.seats.set(guestId, Date.now());
+
+      // Echo the same nudge back to THIS (recovered) socket, not just the
+      // peer — without it, the guest whose connection actually blipped gets
+      // no signal at all that it's back in the room and never re-checks its
+      // own (possibly still-stale) RTCPeerConnection, leaving recovery to
+      // depend entirely on its own ICE-restart timer racing the network
+      // coming back. Mirrors the appointment-room join handler's identical
+      // `if (peerPresent) socket.emit("peer-joined", ...)` above.
+      const roomSocketIds = Array.from(io.sockets.adapter.rooms.get(room) || []);
+      let recoveredPeerName = "";
+      for (const sid of roomSocketIds) {
+        if (sid === socket.id) continue;
+        const meta = directRoomSockets.get(sid);
+        if (meta?.guestId && meta.guestId !== guestId) {
+          recoveredPeerName = meta.name || "";
+          break;
+        }
+      }
+      if (recoveredPeerName) {
+        socket.emit("direct-peer-joined", { name: recoveredPeerName, resumedCall: true });
+      }
       socket.to(room).emit("direct-peer-joined", { name: guestName, resumedCall: true });
       return;
     }

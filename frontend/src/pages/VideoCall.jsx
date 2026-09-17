@@ -867,6 +867,10 @@ export default function VideoCall() {
   const completedRef = useRef(false);
   const completingRef = useRef(false);
   const isSwappedRef = useRef(false);
+  // Guards verifyLocalPlaybackLiveness against overlapping runs (e.g. a
+  // camera/mic retry firing while a previous leave/rejoin's liveness check
+  // is still mid-flight).
+  const localLivenessCheckRef = useRef(false);
   const callTimerRef = useRef(null);
   const iceRestartTimerRef = useRef(null);
   const connectionFailTimerRef = useRef(null);
@@ -934,6 +938,13 @@ export default function VideoCall() {
   // lets handlePeerJoined tell "peer rejoined after leaving" apart from an
   // ordinary first join. Mirrors DirectVideoCall.jsx's peerPresentRef.
   const peerPresentRef = useRef(false);
+  // Lets the browser's "online" event (registered outside the main effect,
+  // below) nudge WebRTC recovery directly — covers a network path
+  // recovering while the signaling socket itself never dropped (media/ICE
+  // and the socket's transport are independent failure domains), instead of
+  // only reacting to the next scheduled ICE-restart timer tick or the
+  // socket's own "reconnect" event. Mirrors DirectVideoCall.jsx.
+  const kickIceRecoveryRef = useRef(() => {});
   // Wall-clock time the current outstanding local offer was sent. Lets
   // createAndSendOffer detect a peer connection parked in "have-local-offer"
   // past its answer deadline and roll it back to retry, instead of skipping
@@ -1093,7 +1104,18 @@ export default function VideoCall() {
   // immediately via the browser's own connectivity signal instead.
   useEffect(() => {
     const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Recovery was previously purely timer-driven from the moment a drop
+      // was first detected, regardless of whether the network was actually
+      // back by then — a restart attempt built/sent while still offline
+      // carries no usable ICE candidates and is effectively wasted. "online"
+      // is the most reliable signal that connectivity is genuinely restored,
+      // so use it to kick an immediate recovery check (and reconnect the
+      // socket right away rather than waiting out its backoff delay).
+      if (!socket.connected) socket.connect();
+      kickIceRecoveryRef.current();
+    };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     return () => {
@@ -1535,8 +1557,21 @@ export default function VideoCall() {
   }, [appointmentId, doctorId, isDoctor, logVideoEvent, userId]);
 
   // ── Block / intercept browser back button during confirmed call ───
+  // Also released once apptError is set — apptError covers every gate-screen
+  // reason the call can end early (duplicate-session, access-denied/revoked,
+  // cancelled, unsupported browser — see setApptError's call sites), and all
+  // of them render the "Access Denied"-style gate screen below via an early
+  // return. Previously this effect only depended on canJoinConsultation,
+  // which stays true even after apptError fires (appointment status itself
+  // doesn't change) — so the popstate listener stayed attached behind that
+  // gate screen. Its "Go Back" button's navigate(-1) then triggered a
+  // popstate that this still-active listener caught: it re-pushed history
+  // (silently swallowing the back navigation) and opened the leaveConfirm
+  // modal, whose JSX lives further down the component tree and is
+  // unreachable once the gate screen's early return has already fired —
+  // so the button appeared to do nothing and the user was stuck.
   useEffect(() => {
-    if (!canJoinConsultation) return;
+    if (!canJoinConsultation || apptError) return;
 
     window.history.pushState(null, "", window.location.href);
 
@@ -1553,7 +1588,7 @@ export default function VideoCall() {
     // actual navigate()+performCleanup() happen later, from the confirm
     // modal's own "Leave" button) — trimmed to the dependencies this effect
     // actually reads.
-  }, [canJoinConsultation, resolveHomePath]);
+  }, [canJoinConsultation, apptError, resolveHomePath]);
 
   // ── Tab close / reload → allow socket reconnect recovery ──────────
   useEffect(() => {
@@ -1594,15 +1629,31 @@ export default function VideoCall() {
     // others' results from being read — playVideoElement already resolves to
     // true/false internally rather than rejecting, but this stays safe even
     // if that ever changes.
-    const [mainResult, pipResult] = await Promise.allSettled([
+    const [mainResult, pipResult, remoteAudioResult] = await Promise.allSettled([
       playVideoElement(mainVideoRef.current),
       playVideoElement(pipVideoRef.current),
       playVideoElement(remoteAudioRef.current),
     ]);
     const mainOk = mainResult.status === "fulfilled" && mainResult.value;
     const pipOk = pipResult.status === "fulfilled" && pipResult.value;
+    // This was previously computed and then discarded — mainVideoRef/
+    // pipVideoRef are both always `muted` (autoplay-exempt on every
+    // browser), so remoteAudioRef's unmuted <audio> element was the only one
+    // of the three actually capable of being blocked by autoplay policy, and
+    // dropping its result meant "Tap to resume audio/video" could never be
+    // triggered by (or report success on) the one failure mode it exists
+    // for. Mirrors DirectVideoCall.jsx's playAssignedVideos.
+    const remoteAudioOk =
+      remoteAudioResult.status === "fulfilled" && remoteAudioResult.value;
     const remoteOk = remoteVideo === pipVideoRef.current ? pipOk : mainOk;
-    setPlaybackBlocked(Boolean(remoteVideo?.srcObject) && !remoteOk);
+    // Gate on the remote stream actually having a track — without this, the
+    // banner could fire against remoteStreamRef's placeholder MediaStream
+    // before any remote track has ever arrived.
+    const remoteHasMedia = Boolean(remoteStreamRef.current?.getTracks().length);
+    setPlaybackBlocked(
+      remoteHasMedia &&
+        (!remoteAudioOk || (Boolean(remoteVideo?.srcObject) && !remoteOk)),
+    );
   }, []);
 
   const assignStreams = useCallback(
@@ -1675,6 +1726,70 @@ export default function VideoCall() {
       return true;
     },
     [assignStreams],
+  );
+
+  // A camera device reopened immediately after a previous session just
+  // released it — exactly what happens on Leave -> Rejoin, since the
+  // outgoing call stops the same physical device that the new call's
+  // getUserMedia immediately reopens — can hand back a MediaStreamTrack
+  // that reports readyState "live" and enabled before its capture pipeline
+  // has actually started producing frames. The encoder feeding the
+  // RTCPeerConnection catches up independently (so the remote party sees
+  // video normally), but the local <video> element is left rendering
+  // nothing — videoWidth/videoHeight never advance past 0 — with no error
+  // ever thrown for anything in attachLocalMediaStream to catch. Verify a
+  // frame actually arrived shortly after attaching and self-heal once,
+  // silently, before giving up.
+  const verifyLocalPlaybackLiveness = useCallback(
+    async (stream, pc) => {
+      if (localLivenessCheckRef.current) return;
+      localLivenessCheckRef.current = true;
+      try {
+        await new Promise((resolve) => window.setTimeout(resolve, 1500));
+        if (pc.signalingState === "closed" || localStreamRef.current !== stream) return;
+
+        const videoTrack = stream.getVideoTracks()[0];
+        if (!videoTrack || videoTrack.readyState !== "live" || !videoTrack.enabled) {
+          return; // no local camera track to verify (audio-only, or already off)
+        }
+
+        const localVideoEl = isSwappedRef.current
+          ? mainVideoRef.current
+          : pipVideoRef.current;
+        if (!localVideoEl || localVideoEl.videoWidth > 0) return; // already rendering fine
+
+        logVideoEvent("local_video_frame_stall_detected", {});
+
+        // First recovery attempt: cheap — force the element to rebind and
+        // replay the SAME track rather than re-capturing the camera.
+        localVideoEl.srcObject = null;
+        localVideoEl.srcObject = stream;
+        await playVideoElement(localVideoEl);
+
+        await new Promise((resolve) => window.setTimeout(resolve, 1000));
+        if (pc.signalingState === "closed" || localStreamRef.current !== stream) return;
+        if (localVideoEl.videoWidth > 0) return; // rebind alone fixed it
+
+        // Rebinding didn't help — the capture pipeline itself is stuck.
+        // Re-request the camera once; attachLocalMediaStream's own
+        // previousStream cleanup stops the old, stuck track for us.
+        logVideoEvent("local_video_recapture_attempt", {});
+        const freshStream = await getConsultationMediaStream();
+        if (pc.signalingState === "closed" || localStreamRef.current !== stream) {
+          freshStream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        await attachLocalMediaStream(freshStream, pc);
+      } catch (err) {
+        logger.warn(
+          "[video-call] local playback liveness recovery failed:",
+          err?.message || err,
+        );
+      } finally {
+        localLivenessCheckRef.current = false;
+      }
+    },
+    [attachLocalMediaStream, logVideoEvent],
   );
 
   // ── Main WebRTC + Socket setup ────────────────────────────────────
@@ -2013,35 +2128,64 @@ export default function VideoCall() {
         )
           return;
 
-        const now = Date.now();
-        if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
-          iceRecoveryAttemptsRef.current = 0;
-        }
-        lastIceRecoveryAtRef.current = now;
+        // A fully offline device can't gather real ICE candidates or have an
+        // offer delivered — taking the action now would just burn a
+        // recovery attempt on dead air and hand the peer an SDP built with
+        // no usable candidates. Skip the action but still loop below, so
+        // recovery resumes the moment connectivity is actually back instead
+        // of waiting on a connectionstatechange transition that a
+        // connection stuck in "disconnected" may never fire again. Mirrors
+        // DirectVideoCall.jsx's scheduleIceRestart.
+        if (typeof navigator === "undefined" || navigator.onLine !== false) {
+          const now = Date.now();
+          if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+            iceRecoveryAttemptsRef.current = 0;
+          }
+          lastIceRecoveryAtRef.current = now;
 
-        if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
-          logVideoEvent("ice_recovery_exhausted", {
-            connectionState: pc.connectionState,
-            iceConnectionState: pc.iceConnectionState,
-            attempts: iceRecoveryAttemptsRef.current,
-          });
-          requestPeerIceRestart();
-          return;
+          if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
+            logVideoEvent("ice_recovery_exhausted", {
+              connectionState: pc.connectionState,
+              iceConnectionState: pc.iceConnectionState,
+              attempts: iceRecoveryAttemptsRef.current,
+            });
+            requestPeerIceRestart();
+          } else {
+            iceRecoveryAttemptsRef.current += 1;
+            logVideoEvent("ice_recovery_attempt", {
+              attempts: iceRecoveryAttemptsRef.current,
+              connectionState: pc.connectionState,
+              iceConnectionState: pc.iceConnectionState,
+            });
+
+            if (isDoctor) {
+              requestPeerIceRestart();
+            } else {
+              await createAndSendOffer({ iceRestart: true });
+            }
+          }
         }
 
-        iceRecoveryAttemptsRef.current += 1;
-        logVideoEvent("ice_recovery_attempt", {
-          attempts: iceRecoveryAttemptsRef.current,
-          connectionState: pc.connectionState,
-          iceConnectionState: pc.iceConnectionState,
-        });
-
-        if (isDoctor) {
-          requestPeerIceRestart();
-          return;
-        }
-        await createAndSendOffer({ iceRestart: true });
+        // Still unhealthy (or skipped because we're offline) — keep the
+        // retry loop alive on the same cadence instead of relying on
+        // another state-change event to re-enter this function.
+        scheduleIceRestart();
       }, ICE_RESTART_DELAY_MS);
+    };
+
+    // See kickIceRecoveryRef's declaration — invoked directly from the
+    // browser's "online" event so a network path recovering while the
+    // socket itself never dropped still gets a prompt recovery check.
+    kickIceRecoveryRef.current = () => {
+      if (!mounted || !peerPresentRef.current || pc.signalingState === "closed")
+        return;
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
+      scheduleIceRestart();
     };
 
     // Get local media after a lightweight device check.
@@ -2060,6 +2204,7 @@ export default function VideoCall() {
         }
 
         await attachLocalMediaStream(stream, pc);
+        void verifyLocalPlaybackLiveness(stream, pc);
 
         if (mounted) {
           setIsReady(true);
@@ -3039,6 +3184,7 @@ export default function VideoCall() {
     playAssignedVideos,
     isDoctor,
     attachLocalMediaStream,
+    verifyLocalPlaybackLiveness,
     emitOnlineAndJoinRoom,
     logVideoEvent,
     flushTelemetryQueue,
@@ -3430,6 +3576,7 @@ export default function VideoCall() {
 
       const stream = await getConsultationMediaStream();
       await attachLocalMediaStream(stream, pc);
+      void verifyLocalPlaybackLiveness(stream, pc);
 
       setIsReady(true);
       isReadyRef.current = true;
@@ -3488,6 +3635,7 @@ export default function VideoCall() {
   }, [
     appointmentId,
     attachLocalMediaStream,
+    verifyLocalPlaybackLiveness,
     emitOnlineAndJoinRoom,
     isDoctor,
     logVideoEvent,
@@ -3688,8 +3836,18 @@ export default function VideoCall() {
         </div>
         <h2>Access Denied</h2>
         <p>{apptError}</p>
-        <button className="hc-vc__gate-btn" onClick={() => navigate(-1)}>
-          Go Back
+        {/* navigate(-1) previously relied on the back-button trap effect's
+            own extra pushState entry being gone by the time this renders,
+            and even then just went back one history step — unreliable, and
+            not necessarily "home" if the user arrived here via a deep link.
+            Route straight to the right dashboard instead, replacing this
+            entry so a later back-navigation doesn't return to the now-dead
+            call/gate screen. */}
+        <button
+          className="hc-vc__gate-btn"
+          onClick={() => navigate(resolveHomePath(), { replace: true })}
+        >
+          Go Home
         </button>
       </div>
     );
