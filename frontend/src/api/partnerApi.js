@@ -8,6 +8,12 @@ export const partnerApi = {
   listCases: (params = {}) =>
     api.get("/api/partner/cases", { ...cfg, params }).then((r) => r.data),
 
+  // Paginated variant — returns { items, total, page, limit, pages }.
+  listCasesPaged: (params = {}) =>
+    api
+      .get("/api/partner/cases", { ...cfg, params: { page: 1, limit: 10, ...params } })
+      .then((r) => r.data),
+
   getCase: (id) => api.get(`/api/partner/cases/${id}`, cfg).then((r) => r.data),
 
   submitCase: (payload) =>
@@ -23,6 +29,11 @@ export const partnerApi = {
     api
       .get(`/api/partner/cases/${id}/attachments/access-url`, { ...cfg, params: { key } })
       .then((r) => r.data),
+
+  listInvoices: () => api.get("/api/partner/invoices", cfg).then((r) => r.data),
+
+  invoiceDownloadUrl: (id) =>
+    api.get(`/api/partner/invoices/${id}/download`, cfg).then((r) => r.data),
 };
 
 export default partnerApi;

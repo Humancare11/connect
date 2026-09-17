@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import socket from "../socket";
 import api from "../api";
-import { RTC_CONFIG } from "../utils/rtcIceConfig";
+import {
+  RTC_CONFIG,
+  RTC_CONFIG_ERROR,
+  sanitizeIceServers,
+  validateIceServers,
+  hasTurnServer,
+} from "../utils/rtcIceConfig";
 import "./videocall.css";
 import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
@@ -64,7 +70,14 @@ async function getCallMediaStream() {
     return await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
   } catch {
     try {
-      return await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+      return await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: true,
+      });
     } catch (secondErr) {
       const partialStream = new MediaStream();
       let lastErr = secondErr;
@@ -182,31 +195,82 @@ const RECONNECT_STALL_MS = 12000;
 // reconnect in between, stop implying "still working on it" and offer an
 // explicit way to end the call instead of retrying silently forever.
 const MAX_RECONNECT_STALL_RETRIES = 3;
+// How long the first WebRTC connection is given to reach "connected" before
+// it's treated as stalled and the ICE-restart machinery is kicked. Without
+// this, a first handshake that never completes but also never emits an
+// explicit ICE "failed" (no TURN path, dropped SDP, offer glare, ICE stuck
+// in "checking") leaves the call sitting on "Connecting…" forever with no
+// recovery and no UI. Mirrors VideoCall.jsx's CONNECTION_FAIL_TIMEOUT_MS.
+const CONNECTION_FAIL_TIMEOUT_MS = 25000;
+
+// Last-resort ICE config. RTC_CONFIG (built from VITE_RTC_* at build time) is
+// null when VITE_RTC_ICE_SERVERS_JSON is malformed — without this guard that
+// would reach `new RTCPeerConnection(null)`, i.e. host candidates only and
+// LAN-only calls, with no signal. A public-STUN config still traverses most
+// NATs and is a safe floor.
+const STUN_ONLY_FALLBACK = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+  iceCandidatePoolSize: 10,
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
+};
 
 // Short-lived TURN credentials minted by the backend for this specific room
 // (see GET /api/direct-video-room/:roomId/ice-servers) — the same approach
 // the appointment VideoCall page uses, kept independent since guests here
 // have no authenticated identity to gate that page's endpoint on. Falls back
-// to the static RTC_CONFIG (built from VITE_RTC_TURN_* at build time) if the
-// fetch fails or is unreachable, so a backend hiccup degrades rather than
-// blocks the call.
+// to the static RTC_CONFIG (built from VITE_RTC_TURN_* at build time), then to
+// public STUN, if the fetch fails or is unreachable — so a backend hiccup
+// degrades rather than blocks the call.
+// A momentary network blip on this one round trip shouldn't be able to
+// permanently degrade the call to STUN-only — retry once with a short backoff
+// before giving up, like VideoCall.jsx does. Only *request* failures are
+// retried; a response that came back but doesn't validate is a persistent
+// server-side config problem, so that's reported and falls straight through
+// to the static fallback rather than being retried pointlessly.
+const ICE_FETCH_RETRY_DELAYS_MS = [1200];
+
 async function fetchDirectRoomIceConfig(roomId) {
-  try {
-    const res = await api.get(`/api/direct-video-room/${roomId}/ice-servers`, { timeout: 8000 });
-    const iceServers = res.data?.iceServers;
-    if (Array.isArray(iceServers) && iceServers.length) {
-      return {
-        iceServers,
-        iceCandidatePoolSize: RTC_CONFIG?.iceCandidatePoolSize ?? 10,
-        bundlePolicy: "max-bundle",
-        rtcpMuxPolicy: "require",
-      };
+  for (let attempt = 0; attempt <= ICE_FETCH_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const res = await api.get(`/api/direct-video-room/${roomId}/ice-servers`, { timeout: 6000 });
+      const iceServers = sanitizeIceServers(res.data?.iceServers);
+      const validationError = validateIceServers(iceServers);
+      if (!validationError && iceServers.length) {
+        return {
+          iceServers,
+          iceCandidatePoolSize: RTC_CONFIG?.iceCandidatePoolSize ?? 10,
+          bundlePolicy: "max-bundle",
+          rtcpMuxPolicy: "require",
+        };
+      }
+      console.error(
+        "[direct-video-call] /ice-servers returned an unusable config — using static fallback:",
+        validationError || "no ICE servers in response",
+      );
+      break;
+    } catch (err) {
+      const nextDelay = ICE_FETCH_RETRY_DELAYS_MS[attempt];
+      if (nextDelay === undefined) {
+        console.warn(
+          "[direct-video-call] /ice-servers fetch failed, falling back to static config:",
+          err.message,
+        );
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, nextDelay));
     }
-  } catch (err) {
-    console.warn(
-      "[direct-video-call] Failed to fetch dynamic ICE servers, falling back to static config:",
-      err.message,
+  }
+  if (!RTC_CONFIG) {
+    console.error(
+      "[direct-video-call] No usable build-time ICE config" +
+        (RTC_CONFIG_ERROR ? ` (${RTC_CONFIG_ERROR})` : "") +
+        " — falling back to public STUN only. Calls across strict NATs may fail.",
     );
+    return STUN_ONLY_FALLBACK;
   }
   return RTC_CONFIG;
 }
@@ -246,20 +310,21 @@ const watchVideoOrientation = (videoEl, onOrientationChange) => {
   };
 };
 
-// Turns raw WebRTC stats into a coarse, user-facing quality bucket. Packet
-// loss is derived from the DELTA between this poll and the previous one
-// (not the raw cumulative counter) — using the cumulative value directly
-// would mean a single lost packet early in a long call marks the
-// connection "poor" for its entire remaining duration.
+// Turns raw WebRTC stats into a coarse, user-facing quality bucket. Inbound
+// packet loss is derived from the DELTA between this poll and the previous
+// one (not the raw cumulative counter) — using the cumulative value directly
+// would mean a single lost packet early in a long call marks the connection
+// "poor" for its entire remaining duration. packetsLost / packetsReceived
+// come from the inbound-rtp reports (they don't exist on candidate-pair).
 const deriveConnectionQuality = (diagnostics, previousSample) => {
   if (diagnostics.rtt === null) return "unknown";
 
   let lossRatio = 0;
   if (previousSample) {
-    const deltaSent = diagnostics.packetsSent - previousSample.packetsSent;
+    const deltaReceived = diagnostics.packetsReceived - previousSample.packetsReceived;
     const deltaLost = diagnostics.packetsLost - previousSample.packetsLost;
-    if (deltaSent > 0 && deltaLost > 0) {
-      lossRatio = deltaLost / (deltaSent + deltaLost);
+    if (deltaLost > 0 && deltaReceived + deltaLost > 0) {
+      lossRatio = deltaLost / (deltaReceived + deltaLost);
     }
   }
 
@@ -275,6 +340,7 @@ export default function DirectVideoCall() {
   // stage: checking -> prejoin -> call -> ended | error
   const [stage, setStage] = useState("checking");
   const [errorInfo, setErrorInfo] = useState(null); // { code, msg }
+  const [endedReason, setEndedReason] = useState("left"); // "left" | "closed"
   const [guestName, setGuestName] = useState(() => {
     try {
       return localStorage.getItem(NAME_STORAGE_KEY) || "";
@@ -287,10 +353,18 @@ export default function DirectVideoCall() {
   const [previewError, setPreviewError] = useState("");
   const [joining, setJoining] = useState(false);
   const [previewAttempt, setPreviewAttempt] = useState(0);
+  const [nameError, setNameError] = useState("");
+  // Advisory only — the room's /status check reported two participants
+  // already present. The socket join is still the real gate (a returning
+  // guest reclaiming their own seat is admitted regardless).
+  const [roomFullHint, setRoomFullHint] = useState(false);
 
   const [callStatus, setCallStatus] = useState("waiting"); // waiting | connecting | connected | reconnecting
   const [peerLeftNotice, setPeerLeftNotice] = useState(false);
   const [peerName, setPeerName] = useState("");
+  // Guards an accidental exit (mobile back-swipe / gesture, tab close) from
+  // silently dropping the call — the user has to confirm.
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
@@ -311,20 +385,78 @@ export default function DirectVideoCall() {
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState("unknown");
   const [pipPos, setPipPos] = useState({ x: null, y: null });
+  // True when the call has no local audio track to publish (mic denied, in
+  // use by another app, or no mic on the device) — surfaced so the guest
+  // isn't left believing they're audible when they aren't.
+  const [localAudioMissing, setLocalAudioMissing] = useState(false);
+  // In-call "retry camera/microphone" — for a guest who joined with a device
+  // denied/busy and has since fixed it, without making them leave and rejoin.
+  const [retryingInCallMedia, setRetryingInCallMedia] = useState(false);
+  const retryingInCallMediaRef = useRef(false);
+  // True when the ICE config in use has no TURN relay (backend misconfigured
+  // / unreachable and we fell back to STUN-only). The call can still work on
+  // permissive networks, but will fail across strict NATs — tell the guest
+  // rather than letting it silently hang on "Connecting…".
+  const [iceRelayWarning, setIceRelayWarning] = useState(false);
 
   const previewVideoRef = useRef(null);
+  const nameInputRef = useRef(null);
   const mainVideoRef = useRef(null);
   const pipVideoRef = useRef(null);
+  // Dedicated, always-mounted sink for the remote party's audio. Both <video>
+  // elements are kept muted; remote audio plays only through this element, so
+  // swapping the view or hiding the self-view (which unmounts a <video>)
+  // can't cut the other person's voice. Mirrors VideoCall.jsx.
+  const remoteAudioRef = useRef(null);
   const mainVideoOrientationCleanupRef = useRef(null);
   const pipVideoOrientationCleanupRef = useRef(null);
   const localStreamRef = useRef(null);
+  // The in-flight getCallMediaStream() promise from the pre-join preview.
+  // Step 3 (the call) awaits this so a guest who clicks "Join now" before
+  // capture finishes still gets their tracks published instead of racing the
+  // preview effect's teardown.
+  const localMediaPromiseRef = useRef(null);
   const remoteStreamRef = useRef(new MediaStream());
   const pcRef = useRef(null);
+  // Monotonic token for setupPeerConnection runs. It now awaits the ICE-server
+  // fetch and local-media capture before assigning pcRef.current, so a peer
+  // leave/rejoin (or forceReconnect / teardown) can happen mid-build — those
+  // bump this, and the in-flight run bails at its next checkpoint instead of
+  // creating a second, orphaned RTCPeerConnection.
+  const pcSetupGenerationRef = useRef(0);
+  // Guards cleanupCall against re-entrancy (e.g. a rapid double-click on
+  // "Leave Call" firing two click events before React re-renders the button
+  // away) — every individual step inside it is independently idempotent, but
+  // running the whole sequence twice is still wasted work (a second,
+  // no-op "leave-direct-room" emit, redundant timer clears) worth skipping
+  // outright rather than relying on each step's own idempotency. Mirrors
+  // VideoCall.jsx's completedRef guard on performCleanup.
+  const cleanupDoneRef = useRef(false);
+  // Latest mic/camera toggle state, readable from non-React code paths
+  // (setupPeerConnection applying the pre-join choice to freshly-captured
+  // tracks; the toggle handlers) without a stale closure.
+  const micOnRef = useRef(true);
+  const camOnRef = useRef(true);
+  const previewMicOnRef = useRef(true);
+  const previewCamOnRef = useRef(true);
   const isInitiatorRef = useRef(false);
+  // Set once the server tells us (via direct-room-joined) that this guest is
+  // rejoining a room it was already in — keeps the "Reconnecting…" label
+  // stable through the follow-up direct-peer-joined for the joining side too.
+  const resumedSessionRef = useRef(false);
+  // True only while the other participant is actually in the room. Gates the
+  // reconnect machinery so a peer who has genuinely left can't leave us
+  // firing ICE-restart offers / restart-requests into an empty room.
+  const peerPresentRef = useRef(false);
   const isSwappedRef = useRef(false);
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
   const pendingCandidatesRef = useRef([]);
+  // An offer that arrived before our RTCPeerConnection had finished being
+  // built (setupPeerConnection awaits the ICE-server fetch). Replayed by
+  // setupPeerConnection once ready, rather than left for the peer's
+  // offer-answer watchdog to retry ~8s later.
+  const pendingRemoteOfferRef = useRef(null);
   const mountedRef = useRef(true);
   const startedRef = useRef(false);
   const joinedRef = useRef(false);
@@ -344,6 +476,9 @@ export default function DirectVideoCall() {
   const lastIceRecoveryAtRef = useRef(0);
   const restartRequestInFlightRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
+  // Fires if the (first) connection hasn't reached "connected" within
+  // CONNECTION_FAIL_TIMEOUT_MS — see startConnectionWatchdog.
+  const connectionFailTimerRef = useRef(null);
   const reconnectStallTimerRef = useRef(null);
   // How many times the stall banner has fired since the last successful
   // (re)connect — see MAX_RECONNECT_STALL_RETRIES.
@@ -353,6 +488,17 @@ export default function DirectVideoCall() {
   const reconnectInProgressRef = useRef(false);
   const verifyingVisibilityRef = useRef(false);
   const setupPeerConnectionRef = useRef(() => {});
+  // Re-arms the first-connect watchdog + stall banner from outside the Step-3
+  // effect (forceReconnect), so a manual Retry that also stalls still
+  // surfaces a way out instead of spinning silently.
+  const armConnectWatchdogsRef = useRef(() => {});
+  // Lets the browser's "online" event (registered outside the Step-3 effect,
+  // below) nudge WebRTC recovery directly — covers a network path recovering
+  // while the signaling socket itself never dropped (media/ICE and the
+  // socket's transport are independent failure domains), instead of only
+  // reacting to the next scheduled ICE-restart timer tick or socket
+  // reconnect event.
+  const kickIceRecoveryRef = useRef(() => {});
   const [reconnectStalled, setReconnectStalled] = useState(false);
 
   useEffect(() => {
@@ -370,12 +516,37 @@ export default function DirectVideoCall() {
     isSwappedRef.current = isSwapped;
   }, [isSwapped]);
 
+  // Keep the toggle-state refs in step with their React state.
+  useEffect(() => {
+    micOnRef.current = micOn;
+  }, [micOn]);
+  useEffect(() => {
+    camOnRef.current = camOn;
+  }, [camOn]);
+  useEffect(() => {
+    previewMicOnRef.current = previewMicOn;
+  }, [previewMicOn]);
+  useEffect(() => {
+    previewCamOnRef.current = previewCamOn;
+  }, [previewCamOn]);
+
   // A fully offline device previously only surfaced indirectly, once the
   // socket/ICE timeouts eventually fired. Report it immediately via the
   // browser's own connectivity signal instead.
   useEffect(() => {
     const handleOffline = () => setIsOffline(true);
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      // Recovery was previously purely timer-driven from the moment a drop
+      // was first detected, regardless of whether the network was actually
+      // back by then — a restart attempt built/sent while still offline
+      // carries no usable ICE candidates and is effectively wasted. "online"
+      // is the most reliable signal that connectivity is genuinely restored,
+      // so use it to kick an immediate recovery check (and reconnect the
+      // socket right away rather than waiting out its backoff delay).
+      if (!socket.connected) socket.connect();
+      kickIceRecoveryRef.current();
+    };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
     return () => {
@@ -406,6 +577,7 @@ export default function DirectVideoCall() {
           setErrorInfo({ code: reason, msg: ROOM_ERROR_MESSAGES[reason] || ROOM_ERROR_MESSAGES.not_found });
           return;
         }
+        setRoomFullHint(Boolean(res.data?.full));
         setStage("prejoin");
       })
       .catch((err) => {
@@ -426,16 +598,31 @@ export default function DirectVideoCall() {
     setPreviewError("");
     let cancelled = false;
 
-    getCallMediaStream()
+    const mediaPromise = getCallMediaStream();
+    localMediaPromiseRef.current = mediaPromise;
+
+    mediaPromise
       .then((stream) => {
-        if (cancelled) {
+        // Keep the stream if the user has already committed to joining — the
+        // call effect (Step 3) takes ownership of it from here. Only stop it
+        // when the flow was genuinely abandoned (navigated away / retried
+        // devices), which is the sole case where this effect tears down
+        // without joinedRef being set.
+        if (cancelled && !joinedRef.current) {
           stream.getTracks().forEach((track) => track.stop());
           return;
         }
         localStreamRef.current = stream;
-        if (previewVideoRef.current) previewVideoRef.current.srcObject = stream;
-        setPreviewMicOn(stream.getAudioTracks().length > 0);
-        setPreviewCamOn(stream.getVideoTracks().length > 0);
+        if (!cancelled) {
+          if (previewVideoRef.current) {
+            // Belt-and-braces over the JSX `muted` prop — the preview shows
+            // the local stream, so it must never route mic audio to speakers.
+            previewVideoRef.current.muted = true;
+            previewVideoRef.current.srcObject = stream;
+          }
+          setPreviewMicOn(stream.getAudioTracks().length > 0);
+          setPreviewCamOn(stream.getVideoTracks().length > 0);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -453,6 +640,7 @@ export default function DirectVideoCall() {
           stream.getTracks().forEach((track) => track.stop());
           localStreamRef.current = null;
         }
+        localMediaPromiseRef.current = null;
       }
     };
   }, [stage, previewAttempt]);
@@ -486,23 +674,25 @@ export default function DirectVideoCall() {
         }
         try {
           const stats = await pc.getStats();
-          const diagnostics = { rtt: null, packetsSent: 0, packetsLost: 0 };
+          const diagnostics = { rtt: null, packetsReceived: 0, packetsLost: 0 };
           for (const report of stats.values()) {
             if (report.type === "candidate-pair" && report.state === "succeeded") {
               if (typeof report.currentRoundTripTime === "number") {
                 diagnostics.rtt = Math.round(report.currentRoundTripTime * 1000);
               }
-              if (typeof report.packetsSent === "number") {
-                diagnostics.packetsSent = report.packetsSent;
+            } else if (report.type === "inbound-rtp" && !report.isRemote) {
+              // Sum across the audio + video inbound streams.
+              if (typeof report.packetsReceived === "number") {
+                diagnostics.packetsReceived += report.packetsReceived;
               }
               if (typeof report.packetsLost === "number") {
-                diagnostics.packetsLost = report.packetsLost;
+                diagnostics.packetsLost += report.packetsLost;
               }
             }
           }
           const quality = deriveConnectionQuality(diagnostics, lastStatsSampleRef.current);
           lastStatsSampleRef.current = {
-            packetsSent: diagnostics.packetsSent,
+            packetsReceived: diagnostics.packetsReceived,
             packetsLost: diagnostics.packetsLost,
           };
           setConnectionQuality(quality);
@@ -520,9 +710,19 @@ export default function DirectVideoCall() {
   const playAssignedVideos = useCallback(async () => {
     const mainOk = await playVideoElement(mainVideoRef.current);
     const pipOk = await playVideoElement(pipVideoRef.current);
+    // Remote audio always plays through the dedicated (never-unmounted)
+    // <audio> sink — its playback state is the one that matters for the
+    // "tap to resume" prompt, since a blocked autoplay is almost always the
+    // audio, not the muted video.
+    const remoteAudioOk = await playVideoElement(remoteAudioRef.current);
     const remoteVideoEl = isSwappedRef.current ? pipVideoRef.current : mainVideoRef.current;
-    const remoteOk = remoteVideoEl === pipVideoRef.current ? pipOk : mainOk;
-    setPlaybackBlocked(Boolean(remoteVideoEl?.srcObject) && !remoteOk);
+    const remoteVideoOk = remoteVideoEl === pipVideoRef.current ? pipOk : mainOk;
+    const remoteHasMedia = Boolean(remoteStreamRef.current?.getTracks().length);
+    setPlaybackBlocked(
+      remoteHasMedia &&
+        (!remoteAudioOk ||
+          (Boolean(remoteVideoEl?.srcObject) && !remoteVideoOk)),
+    );
   }, []);
 
   const assignStreams = useCallback(
@@ -537,6 +737,12 @@ export default function DirectVideoCall() {
           ? remoteStreamRef.current
           : localStreamRef.current;
       }
+      // Remote audio sink is independent of which <video> slot the remote
+      // stream occupies, so a swap / minimise never drops the other party's
+      // voice.
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStreamRef.current;
+      }
       void playAssignedVideos();
     },
     [playAssignedVideos],
@@ -544,6 +750,11 @@ export default function DirectVideoCall() {
 
   const setMainVideoRef = useCallback((node) => {
     mainVideoRef.current = node;
+    // Enforce muting imperatively as well as via the JSX `muted` prop — React
+    // applies `muted` as a property post-mount, and the belt-and-braces set
+    // here closes any window where a freshly-attached node could play the
+    // local stream's audio. Remote audio plays only through remoteAudioRef.
+    if (node) node.muted = true;
     mainVideoOrientationCleanupRef.current?.();
     mainVideoOrientationCleanupRef.current = node
       ? watchVideoOrientation(node, setIsMainVideoPortrait)
@@ -552,6 +763,7 @@ export default function DirectVideoCall() {
 
   const setPipVideoRef = useCallback((node) => {
     pipVideoRef.current = node;
+    if (node) node.muted = true;
     pipVideoOrientationCleanupRef.current?.();
     pipVideoOrientationCleanupRef.current = node
       ? watchVideoOrientation(node, setIsPipVideoPortrait)
@@ -569,14 +781,24 @@ export default function DirectVideoCall() {
   }, [isSelfViewMinimized, assignStreams]);
 
   const cleanupCall = useCallback(() => {
+    if (cleanupDoneRef.current) return;
+    cleanupDoneRef.current = true;
     socket.emit("leave-direct-room", { roomId });
     clearTimeout(iceRestartTimerRef.current);
     iceRestartTimerRef.current = null;
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
+    clearTimeout(connectionFailTimerRef.current);
+    connectionFailTimerRef.current = null;
     clearTimeout(offerAnswerTimeoutRef.current);
     offerAnswerTimeoutRef.current = null;
     pendingOfferIdRef.current = null;
+    pendingRemoteOfferRef.current = null;
+    pendingCandidatesRef.current = [];
+    peerPresentRef.current = false;
+    // Invalidate any in-flight setupPeerConnection run.
+    pcSetupGenerationRef.current += 1;
+    localMediaPromiseRef.current = null;
     setReconnectStalled(false);
     const pc = pcRef.current;
     if (pc) {
@@ -637,6 +859,23 @@ export default function DirectVideoCall() {
       offerAnswerTimeoutRef.current = null;
     };
 
+    // Explicit SDP rollback, feature-detected. Older Safari / in-app WebViews
+    // don't implement rollback and throw here; the callers treat a false
+    // return as "couldn't roll back — let the watchdog / peer retry recover"
+    // rather than pushing an InvalidStateError further down.
+    const safeRollback = async (pc) => {
+      try {
+        await pc.setLocalDescription({ type: "rollback" });
+        return true;
+      } catch (err) {
+        console.warn(
+          "[direct-video-call] SDP rollback unsupported or failed:",
+          err?.message || err,
+        );
+        return false;
+      }
+    };
+
     // Self-heals if a specific offer never gets answered (dropped signaling
     // message, peer mid-reconnect, replayed/rejected stale answer, etc.) —
     // otherwise the RTCPeerConnection stays wedged in "have-local-offer"
@@ -657,9 +896,26 @@ export default function DirectVideoCall() {
           `[direct-video-call] no answer received for offer ${offerId} within ${OFFER_ANSWER_TIMEOUT_MS}ms — rolling back to retry.`,
         );
         try {
-          await pc.setLocalDescription({ type: "rollback" });
+          const rolledBack = await safeRollback(pc);
           pendingOfferIdRef.current = null;
-          void createAndSendIceRestartOffer();
+          if (!rolledBack) {
+            // Can't roll our own offer back on this browser — hand off to the
+            // ICE-restart machinery, which rebuilds negotiation from a fresh
+            // offer rather than depending on rollback.
+            void createAndSendIceRestartOffer();
+            return;
+          }
+          // A colliding remote offer we stashed rather than dropped (see
+          // handleOffer) can now be answered from a clean "stable" state —
+          // prefer that over kicking a fresh ICE-restart offer, so glare
+          // recovery completes in one step instead of another full cycle.
+          const stashedOffer = pendingRemoteOfferRef.current;
+          if (stashedOffer) {
+            pendingRemoteOfferRef.current = null;
+            void handleOffer(stashedOffer);
+          } else {
+            void createAndSendIceRestartOffer();
+          }
         } catch (err) {
           pendingOfferIdRef.current = null;
           console.error("[direct-video-call] rollback after offer-answer timeout failed", err);
@@ -695,9 +951,20 @@ export default function DirectVideoCall() {
       }
     };
 
-    const handleOffer = async ({ offer, offerId: incomingOfferId } = {}) => {
+    const handleOffer = async (payload = {}) => {
+      const { offer, offerId: incomingOfferId } = payload;
+      if (!offer) return;
       const pc = pcRef.current;
-      if (!pc || !offer) return;
+      if (!pc) {
+        // Offer beat our RTCPeerConnection into existence (setupPeerConnection
+        // is async — it awaits the ICE-server config). Stash the newest one
+        // *only* while we actually expect a peer; setupPeerConnection replays
+        // it the moment the PC is ready, so we don't sit through
+        // OFFER_ANSWER_TIMEOUT_MS waiting for the peer to retry. A stray offer
+        // arriving after the peer has left (PC already torn down) is ignored.
+        if (peerPresentRef.current) pendingRemoteOfferRef.current = payload;
+        return;
+      }
       const polite = !isInitiatorRef.current;
       const offerCollision = makingOfferRef.current || pc.signalingState !== "stable";
       ignoreOfferRef.current = !polite && offerCollision;
@@ -705,24 +972,54 @@ export default function DirectVideoCall() {
 
       try {
         if (offerCollision && pc.signalingState === "have-local-offer") {
-          await pc.setLocalDescription({ type: "rollback" });
+          const rolledBack = await safeRollback(pc);
           // Our own outstanding offer was just discarded — any answer that
           // still shows up for it later is stale and must be rejected.
           pendingOfferIdRef.current = null;
           clearOfferAnswerTimeout();
+          if (!rolledBack) {
+            // Browser can't roll back; can't safely apply a remote offer over
+            // our local one. Stash it (polite side) and let the peer's retry
+            // drive recovery.
+            if (polite && peerPresentRef.current) pendingRemoteOfferRef.current = payload;
+            return;
+          }
         } else if (offerCollision) {
-          // Collision, but not in a rollback-able state (e.g. mid-flight
-          // createOffer that hasn't reached setLocalDescription yet) —
-          // nothing safe to do but wait for the next negotiation cycle.
-          // Mirrors VideoCall.jsx's identical collision handling.
+          // Collision, but not in a rollback-able state (e.g. our own
+          // createOffer is mid-flight and hasn't reached setLocalDescription
+          // yet). Dropping the offer here is what let both symmetric peers
+          // sit in "have-local-offer" until the 8s offer-answer watchdog:
+          // the impolite peer keeps its own (winning) offer, but the polite
+          // peer stashes this one so it's answered the moment our own
+          // negotiation settles (see handleAnswer / armOfferAnswerTimeout).
+          if (polite && peerPresentRef.current) pendingRemoteOfferRef.current = payload;
           return;
         }
+
+        // A rollback above — or an onnegotiationneeded that raced in during
+        // one of the awaits — can leave signalingState somewhere that won't
+        // accept a remote offer. Re-check before applying it; stash for a
+        // retry rather than throwing an InvalidStateError into the void.
+        if (pc.signalingState !== "stable" && pc.signalingState !== "have-remote-offer") {
+          if (polite && peerPresentRef.current) pendingRemoteOfferRef.current = payload;
+          return;
+        }
+
         await pc.setRemoteDescription(offer);
         await flushPendingCandidates();
-        await pc.setLocalDescription();
+        // Explicit createAnswer()/setLocalDescription(answer) rather than the
+        // implicit no-arg form — the latter isn't implemented on older Safari
+        // / in-app WebViews and throws there.
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
         socket.emit("direct-video-answer", { roomId, answer: pc.localDescription, offerId: incomingOfferId });
       } catch (err) {
         console.error("[direct-video-call] offer handling failed", err);
+        // Let the polite peer take another run at this offer from a clean
+        // state instead of leaving the connection wedged until the watchdog.
+        if (polite && peerPresentRef.current && !pendingRemoteOfferRef.current) {
+          pendingRemoteOfferRef.current = payload;
+        }
       }
     };
 
@@ -747,16 +1044,30 @@ export default function DirectVideoCall() {
         pendingOfferIdRef.current = null;
         clearOfferAnswerTimeout();
         await flushPendingCandidates();
+        // We're back to "stable"; if a colliding remote offer was stashed
+        // while our own was outstanding (see handleOffer), answer it now.
+        const stashedOffer = pendingRemoteOfferRef.current;
+        if (stashedOffer) {
+          pendingRemoteOfferRef.current = null;
+          void handleOffer(stashedOffer);
+        }
       } catch (err) {
         console.error("[direct-video-call] answer handling failed", err);
       }
     };
 
     const handleIceCandidate = async ({ candidate } = {}) => {
+      if (!candidate) return;
       const pc = pcRef.current;
-      if (!pc || !candidate) return;
-      if (!pc.remoteDescription || !pc.remoteDescription.type) {
-        pendingCandidatesRef.current.push(candidate);
+      // Buffer until the PC exists AND has a remote description — candidates
+      // that arrive before either (during the async setupPeerConnection, or
+      // ahead of the first offer/answer) were previously dropped, forcing ICE
+      // to rediscover them. flushPendingCandidates drains this once the
+      // remote description is set. Only buffer while a peer is expected, so a
+      // straggler from a peer that already left isn't replayed onto the next
+      // connection.
+      if (!pc || !pc.remoteDescription || !pc.remoteDescription.type) {
+        if (peerPresentRef.current) pendingCandidatesRef.current.push(candidate);
         return;
       }
       try {
@@ -766,30 +1077,159 @@ export default function DirectVideoCall() {
       }
     };
 
-    const handlePeerJoined = ({ name } = {}) => {
+    const handlePeerJoined = ({ name, resumedCall } = {}) => {
       if (!mountedRef.current) return;
+      peerPresentRef.current = true;
       setPeerLeftNotice(false);
       setPeerName(name || "");
-      setCallStatus((prev) => (prev === "connected" ? prev : "connecting"));
+      const resuming = resumedCall || resumedSessionRef.current;
+
+      // Only a PC that's genuinely still connected is worth keeping across a
+      // resume — the nudge below drives its ICE restart. A resumed session
+      // whose PC is wedged (our socket reconnected outside
+      // connectionStateRecovery's window, leaving the old PC stuck
+      // non-connected, possibly with a non-"stable" signalingState that
+      // createAndSendIceRestartOffer can't act on) won't self-heal. Tear it
+      // down here so setupPeerConnection builds a clean one and negotiation
+      // runs from scratch — exactly what the reloaded peer does on its side.
+      const existingPc = pcRef.current;
+      const existingPcHealthy =
+        !!existingPc &&
+        (existingPc.connectionState === "connected" ||
+          existingPc.iceConnectionState === "connected" ||
+          existingPc.iceConnectionState === "completed");
+      if (resuming && existingPc && !existingPcHealthy) {
+        existingPc.onicecandidate = null;
+        existingPc.ontrack = null;
+        existingPc.onnegotiationneeded = null;
+        existingPc.onconnectionstatechange = null;
+        existingPc.oniceconnectionstatechange = null;
+        existingPc.close();
+        pcRef.current = null;
+        pcSetupGenerationRef.current += 1;
+        pendingCandidatesRef.current = [];
+        pendingRemoteOfferRef.current = null;
+        pendingOfferIdRef.current = null;
+        makingOfferRef.current = false;
+        ignoreOfferRef.current = false;
+        clearOfferAnswerTimeout();
+      }
+      // Whether we're keeping a live connection decides if the renegotiation
+      // nudge below applies (a fresh build negotiates on its own).
+      const hadConnection = existingPcHealthy;
+
+      setCallStatus((prev) => {
+        if (prev === "connected") return prev;
+        return resuming ? "reconnecting" : "connecting";
+      });
       // The peer connection (and therefore the initial offer + ICE
       // gathering) is only created once we know someone is actually in the
       // room to receive it — see setupPeerConnection's comment below for why
       // creating it eagerly in handleRoomJoined lost the initial offer.
       void setupPeerConnection();
+
+      // Surface a stalled *first* connect. Previously the connection
+      // watchdog and the manual-Retry stall banner were only wired for a
+      // drop *after* the call had already connected once (hasConnectedOnceRef
+      // gate), so a first handshake that never completed just spun on
+      // "Connecting…" forever. Arm both here — unconditionally — mirroring
+      // VideoCall.jsx's handlePeerJoined. Both self-clear on a successful
+      // connect and are no-ops once connected.
+      startConnectionWatchdog();
+      startReconnectStallWatch(resuming ? 8000 : 20000);
+
+      // If the server says the call was already active before this
+      // direct-peer-joined (the peer refreshed / reconnected rather than
+      // joining fresh) and we're the side that KEPT its RTCPeerConnection,
+      // none of the normal first-handshake triggers fire on our end — the
+      // peer builds a brand-new PC and only its onnegotiationneeded drives
+      // renegotiation, which on offer glare can leave us waiting out the
+      // full OFFER_ANSWER_TIMEOUT_MS. Proactively drive recovery from our
+      // side instead. Mirrors VideoCall.jsx's resumedCall handling: the
+      // impolite peer (initiator) re-offers with an ICE restart; the polite
+      // peer asks the initiator to. Guarded so an already-healthy connection
+      // is never perturbed.
+      if (resumedCall && hadConnection) {
+        window.setTimeout(() => {
+          const pc = pcRef.current;
+          if (!mountedRef.current || !pc || pc.signalingState === "closed") return;
+          if (
+            pc.connectionState === "connected" ||
+            pc.iceConnectionState === "connected" ||
+            pc.iceConnectionState === "completed"
+          )
+            return;
+          if (isInitiatorRef.current) {
+            void createAndSendIceRestartOffer();
+          } else {
+            requestPeerIceRestart();
+          }
+        }, 500);
+      }
     };
 
     const handleParticipantLeft = () => {
       if (!mountedRef.current) return;
+
+      // The peer is genuinely gone — either they left deliberately, or a
+      // ~15s disconnect grace already elapsed (server.js). There is nothing
+      // to "reconnect" to, so fully stand down the recovery machinery
+      // instead of letting the PC's own failure handlers keep firing
+      // ICE-restart offers / restart-requests into an empty room and raising
+      // a "Reconnecting…" banner over a call that's really just waiting.
+      peerPresentRef.current = false;
       setPeerLeftNotice(true);
+      setPeerName("");
       setCallStatus("waiting");
-      // The peer genuinely left (not a brief reconnect blip) — there's
-      // nothing to "reconnect" to right now, so don't leave a stale stall
-      // banner up.
+
       clearReconnectStallWatch();
+      clearOfferAnswerTimeout();
+      clearTimeout(iceRestartTimerRef.current);
+      iceRestartTimerRef.current = null;
+      clearTimeout(connectionFailTimerRef.current);
+      connectionFailTimerRef.current = null;
+      pendingOfferIdRef.current = null;
+      pendingRemoteOfferRef.current = null;
+      pendingCandidatesRef.current = [];
+      restartRequestInFlightRef.current = false;
+      iceRecoveryAttemptsRef.current = 0;
+      makingOfferRef.current = false;
+      ignoreOfferRef.current = false;
+      // Invalidate any in-flight setup so it can't build a connection into
+      // the now-empty room; the peer's rejoin starts a clean one — with a
+      // freshly re-fetched ICE config so its TURN credentials aren't stale.
+      pcSetupGenerationRef.current += 1;
+      iceConfigPromiseRef.current = fetchDirectRoomIceConfig(roomId);
+      stopStatsCollection();
+
+      // Drop the now-dead peer connection. If the peer comes back,
+      // handlePeerJoined -> setupPeerConnection builds a fresh one and
+      // negotiation runs cleanly from scratch (a reloaded peer has a brand
+      // new PC / DTLS identity anyway, so keeping the old one buys nothing).
+      const pc = pcRef.current;
+      if (pc) {
+        pc.onicecandidate = null;
+        pc.ontrack = null;
+        pc.onnegotiationneeded = null;
+        pc.onconnectionstatechange = null;
+        pc.oniceconnectionstatechange = null;
+        pc.close();
+        pcRef.current = null;
+      }
+
+      // Clear the peer's last frame so the stage doesn't freeze on it while
+      // we wait. The local preview keeps running.
+      const remoteStream = remoteStreamRef.current;
+      remoteStream.getTracks().forEach((track) => {
+        track.stop();
+        remoteStream.removeTrack(track);
+      });
+      assignStreams(isSwappedRef.current);
     };
 
     const handleRoomClosed = () => {
       if (!mountedRef.current) return;
+      setEndedReason("closed");
       cleanupCall();
       setStage("ended");
     };
@@ -865,11 +1305,11 @@ export default function DirectVideoCall() {
     // side (the room initiator here) ever self-initiates the actual
     // restart offer, so both sides don't race to renegotiate at once.
     const scheduleIceRestart = () => {
-      if (!mountedRef.current || iceRestartTimerRef.current) return;
+      if (!mountedRef.current || !peerPresentRef.current || iceRestartTimerRef.current) return;
       iceRestartTimerRef.current = setTimeout(async () => {
         iceRestartTimerRef.current = null;
         const pc = pcRef.current;
-        if (!mountedRef.current || !pc || pc.signalingState === "closed") return;
+        if (!mountedRef.current || !peerPresentRef.current || !pc || pc.signalingState === "closed") return;
         if (
           pc.connectionState === "connected" ||
           pc.iceConnectionState === "connected" ||
@@ -877,24 +1317,73 @@ export default function DirectVideoCall() {
         )
           return;
 
-        const now = Date.now();
-        if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
-          iceRecoveryAttemptsRef.current = 0;
-        }
-        lastIceRecoveryAtRef.current = now;
+        // A fully offline device can't gather real ICE candidates or have an
+        // offer delivered — taking the action now would just burn a
+        // recovery attempt on dead air and hand the peer an SDP built with
+        // no usable candidates. Skip the action but still loop below, so
+        // recovery resumes the moment connectivity is actually back instead
+        // of waiting on a connectionstatechange transition that a
+        // connection stuck in "disconnected" may never fire again.
+        if (typeof navigator === "undefined" || navigator.onLine !== false) {
+          const now = Date.now();
+          if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+            iceRecoveryAttemptsRef.current = 0;
+          }
+          lastIceRecoveryAtRef.current = now;
 
-        if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
-          requestPeerIceRestart();
-          return;
+          if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
+            requestPeerIceRestart();
+          } else {
+            iceRecoveryAttemptsRef.current += 1;
+            if (isInitiatorRef.current) {
+              await createAndSendIceRestartOffer();
+            } else {
+              requestPeerIceRestart();
+            }
+          }
         }
-        iceRecoveryAttemptsRef.current += 1;
 
-        if (!isInitiatorRef.current) {
-          requestPeerIceRestart();
-          return;
-        }
-        await createAndSendIceRestartOffer();
+        // Still unhealthy (or skipped because we're offline) — keep the
+        // retry loop alive on the same cadence instead of relying on
+        // another state-change event to re-enter this function.
+        scheduleIceRestart();
       }, ICE_RESTART_DELAY_MS);
+    };
+
+    // First-connect / recovery watchdog: if a peer is present but the PC
+    // hasn't reached a connected state within CONNECTION_FAIL_TIMEOUT_MS,
+    // kick the ICE-restart machinery. Covers ICE stalling in "checking" (or
+    // signaling being silently dropped) without ever emitting an explicit
+    // "failed" — which previously left the call on "Connecting…" with no
+    // recovery. Mirrors VideoCall.jsx's startConnectionWatchdog.
+    const startConnectionWatchdog = () => {
+      clearTimeout(connectionFailTimerRef.current);
+      connectionFailTimerRef.current = setTimeout(() => {
+        connectionFailTimerRef.current = null;
+        const pc = pcRef.current;
+        if (
+          !mountedRef.current ||
+          !peerPresentRef.current ||
+          !pc ||
+          pc.signalingState === "closed"
+        )
+          return;
+        if (
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        )
+          return;
+        console.warn(
+          "[direct-video-call] connection establishment timed out — requesting ICE recovery.",
+        );
+        scheduleIceRestart();
+      }, CONNECTION_FAIL_TIMEOUT_MS);
+    };
+
+    armConnectWatchdogsRef.current = () => {
+      startConnectionWatchdog();
+      startReconnectStallWatch(hasConnectedOnceRef.current ? 8000 : 20000);
     };
 
     // Shared by onconnectionstatechange and oniceconnectionstatechange (the
@@ -904,10 +1393,16 @@ export default function DirectVideoCall() {
     const handleConnectedState = () => {
       clearTimeout(iceRestartTimerRef.current);
       iceRestartTimerRef.current = null;
+      clearTimeout(connectionFailTimerRef.current);
+      connectionFailTimerRef.current = null;
       iceRecoveryAttemptsRef.current = 0;
       restartRequestInFlightRef.current = false;
       clearReconnectStallWatch();
       hasConnectedOnceRef.current = true;
+      peerPresentRef.current = true;
+      // The "resuming an earlier session" story ends once we're connected —
+      // any later peer-join is a fresh negotiation and should read as such.
+      resumedSessionRef.current = false;
       if (!mountedRef.current) return;
       setCallStatus("connected");
       setPeerLeftNotice(false);
@@ -924,6 +1419,64 @@ export default function DirectVideoCall() {
       ]);
     };
 
+    // Guarantees local mic/camera media exists before the connection is
+    // built. The pre-join preview normally captured it already (fast path:
+    // returns immediately). This also covers the guest clicking "Join now"
+    // before capture finished, and a transient capture failure that has
+    // since cleared. The pre-join mic/camera choices are applied to any
+    // freshly-captured tracks. Returns the stream, or null when the device
+    // genuinely can't/won't provide media — the call then proceeds
+    // receive-only rather than not connecting at all.
+    const ensureLocalMedia = async () => {
+      if (!localStreamRef.current) {
+        let stream = null;
+        try {
+          stream = (await localMediaPromiseRef.current) || null;
+        } catch {
+          stream = null;
+        }
+        if (!mountedRef.current) {
+          stream?.getTracks().forEach((track) => track.stop());
+          return null;
+        }
+        if (!stream && !localStreamRef.current) {
+          try {
+            stream = await getCallMediaStream();
+          } catch (err) {
+            console.warn(
+              "[direct-video-call] proceeding without local media:",
+              err?.message || err,
+            );
+            stream = null;
+          }
+          if (!mountedRef.current) {
+            stream?.getTracks().forEach((track) => track.stop());
+            return null;
+          }
+        }
+
+        // A concurrent path already adopted a stream — keep that one.
+        if (localStreamRef.current) {
+          if (stream && stream !== localStreamRef.current) {
+            stream.getTracks().forEach((track) => track.stop());
+          }
+        } else if (stream) {
+          stream.getAudioTracks().forEach((track) => {
+            track.enabled = micOnRef.current;
+          });
+          stream.getVideoTracks().forEach((track) => {
+            track.enabled = camOnRef.current;
+          });
+          localStreamRef.current = stream;
+          assignStreams(isSwappedRef.current);
+        }
+      }
+
+      const stream = localStreamRef.current;
+      setLocalAudioMissing((stream?.getAudioTracks().length ?? 0) === 0);
+      return stream;
+    };
+
     // Called from handlePeerJoined, never from handleRoomJoined directly:
     // creating the RTCPeerConnection immediately on joining used to add
     // tracks before anyone else was in the room, which fires
@@ -934,11 +1487,41 @@ export default function DirectVideoCall() {
     // joined even a moment before the second. Waiting for confirmation that
     // a peer is actually present (self-emitted immediately by the server if
     // one was already there, or on their later join) guarantees the offer
-    // always has a listener. pcRef.current guards against handlePeerJoined
-    // firing more than once (e.g. a peer briefly reconnecting).
+    // always has a listener. pcRef.current + the setup-generation token guard
+    // against handlePeerJoined firing more than once (e.g. a peer briefly
+    // reconnecting) racing two builds.
     const setupPeerConnection = async () => {
-      const iceConfig = (await iceConfigPromiseRef.current) || RTC_CONFIG;
-      if (!mountedRef.current || pcRef.current) return;
+      if (pcRef.current) return;
+      const generation = (pcSetupGenerationRef.current += 1);
+      // True once this run has been superseded (a newer setup, a teardown, a
+      // peer-left, an unmount) or a connection already exists.
+      const isStale = () =>
+        !mountedRef.current ||
+        pcRef.current ||
+        pcSetupGenerationRef.current !== generation ||
+        !peerPresentRef.current;
+
+      // fetchDirectRoomIceConfig never resolves to null, but keep a floor here
+      // too so a rejected promise can't reach `new RTCPeerConnection(null)`.
+      const iceConfig = (await iceConfigPromiseRef.current) || RTC_CONFIG || STUN_ONLY_FALLBACK;
+      if (isStale()) return;
+
+      // Warn (once we're actually building the connection) if the config we
+      // ended up with has no TURN relay — on a deployed build that means the
+      // backend's /ice-servers is misconfigured or unreachable and we fell
+      // back to STUN-only, which fails across strict NATs.
+      if (mountedRef.current) {
+        setIceRelayWarning(
+          import.meta.env.PROD && !hasTurnServer(iceConfig?.iceServers),
+        );
+      }
+
+      // Make sure our audio/video is captured before the peer connection is
+      // created, so a guest who joined faster than getUserMedia resolved is
+      // never left publishing nothing. Fast path when the preview already
+      // captured it.
+      const stream = await ensureLocalMedia();
+      if (isStale()) return;
 
       let pc;
       try {
@@ -949,6 +1532,12 @@ export default function DirectVideoCall() {
           code: "server_error",
           msg: "Could not start the video call on this browser or device.",
         });
+        return;
+      }
+      // Nothing above awaited between isStale() and here, but guard the
+      // handoff anyway so a superseded run can't publish its pc.
+      if (isStale()) {
+        pc.close();
         return;
       }
       pcRef.current = pc;
@@ -977,9 +1566,24 @@ export default function DirectVideoCall() {
       };
 
       pc.onnegotiationneeded = async () => {
+        // Only one setLocalDescription(offer) may be in flight per side for
+        // perfect-negotiation glare handling to work. Bail if we're already
+        // negotiating (our own offer in flight) or mid-processing a remote
+        // one — otherwise an implicit offer from here can race an in-flight
+        // handleOffer and leave both peers stuck in "have-local-offer".
+        if (
+          pc.signalingState !== "stable" ||
+          makingOfferRef.current ||
+          ignoreOfferRef.current
+        )
+          return;
         try {
           makingOfferRef.current = true;
-          await pc.setLocalDescription();
+          // Explicit createOffer()/setLocalDescription(offer) — the implicit
+          // no-arg form isn't supported on older Safari / in-app WebViews.
+          const offer = await pc.createOffer();
+          if (pc.signalingState !== "stable") return; // a remote offer raced in
+          await pc.setLocalDescription(offer);
           const offerId = makeOfferId();
           pendingOfferIdRef.current = offerId;
           socket.emit("direct-video-offer", { roomId, offer: pc.localDescription, offerId });
@@ -995,11 +1599,16 @@ export default function DirectVideoCall() {
         if (!mountedRef.current) return;
         if (pc.connectionState === "connected") {
           handleConnectedState();
-        } else if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+        } else if (
+          (pc.connectionState === "disconnected" || pc.connectionState === "failed") &&
+          peerPresentRef.current
+        ) {
           setCallStatus("reconnecting");
           stopStatsCollection();
           scheduleIceRestart();
           if (hasConnectedOnceRef.current) startReconnectStallWatch(RECONNECT_STALL_MS);
+        } else if (pc.connectionState === "connecting" && peerPresentRef.current) {
+          startConnectionWatchdog();
         }
       };
 
@@ -1010,31 +1619,128 @@ export default function DirectVideoCall() {
         if (!mountedRef.current) return;
         if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
           handleConnectedState();
-        } else if (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") {
+        } else if (
+          (pc.iceConnectionState === "failed" || pc.iceConnectionState === "disconnected") &&
+          peerPresentRef.current
+        ) {
           setCallStatus("reconnecting");
           stopStatsCollection();
           scheduleIceRestart();
           if (hasConnectedOnceRef.current) startReconnectStallWatch(RECONNECT_STALL_MS);
+        } else if (pc.iceConnectionState === "checking" && peerPresentRef.current) {
+          startConnectionWatchdog();
         }
       };
 
-      const stream = localStreamRef.current;
       if (stream) {
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      }
+
+      // If this side has no camera and/or mic to publish (both permissions
+      // denied, no devices, or device busy), add a recv-only transceiver for
+      // the missing kind(s). Without at least one transceiver this side
+      // never fires onnegotiationneeded — and if *both* peers are media-less
+      // no offer is ever created and the call hangs on "Connecting…".
+      // recv-only keeps us receiving the other participant. A fresh PC has
+      // no transceivers yet, and addTrack above already covers the kinds we
+      // do have, so this can't produce a duplicate m-section.
+      const localAudioCount = stream ? stream.getAudioTracks().length : 0;
+      const localVideoCount = stream ? stream.getVideoTracks().length : 0;
+      try {
+        if (localAudioCount === 0) pc.addTransceiver("audio", { direction: "recvonly" });
+        if (localVideoCount === 0) pc.addTransceiver("video", { direction: "recvonly" });
+      } catch (err) {
+        console.warn("[direct-video-call] addTransceiver fallback failed", err);
+      }
+
+      // Replay an offer that landed while this PC was still being built — see
+      // pendingRemoteOfferRef. Any ICE candidates buffered alongside it are
+      // drained by flushPendingCandidates() inside handleOffer once the
+      // remote description is set.
+      const bufferedOffer = pendingRemoteOfferRef.current;
+      if (bufferedOffer) {
+        pendingRemoteOfferRef.current = null;
+        void handleOffer(bufferedOffer);
       }
     };
     setupPeerConnectionRef.current = setupPeerConnection;
 
-    const handleRoomJoined = ({ isInitiator } = {}) => {
+    // See kickIceRecoveryRef's declaration — invoked directly from the
+    // browser's "online" event so a network path recovering while the
+    // socket itself never dropped still gets a prompt recovery check.
+    kickIceRecoveryRef.current = () => {
+      const pc = pcRef.current;
+      if (
+        !mountedRef.current ||
+        !peerPresentRef.current ||
+        !pc ||
+        pc.signalingState === "closed"
+      )
+        return;
+      if (
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed"
+      )
+        return;
+      scheduleIceRestart();
+    };
+
+    const handleRoomJoined = ({ isInitiator, resumedCall } = {}) => {
       if (!mountedRef.current) return;
       isInitiatorRef.current = !!isInitiator;
-      setCallStatus(isInitiator ? "connecting" : "waiting");
+      if (resumedCall) resumedSessionRef.current = true;
+      // A resume (the server recognised this guest from an earlier session in
+      // this room) means media was likely already flowing before we
+      // reloaded — show "reconnecting" rather than "connecting"/"waiting" so
+      // the two ends aren't left displaying contradictory states while the
+      // connection re-establishes. A fresh join keeps the original behaviour.
+      setCallStatus((prev) => {
+        if (prev === "connected") return prev;
+        if (resumedCall) return "reconnecting";
+        return isInitiator ? "connecting" : "waiting";
+      });
       // Peer connection setup is deferred to handlePeerJoined — see the
       // comment on setupPeerConnection for why.
     };
 
     const joinRoom = () => {
       socket.emit("join-direct-room", { roomId, guestId: guestIdRef.current, name: guestName });
+    };
+
+    // A manager-level reconnect (as opposed to the socket's first-ever
+    // "connect") means our transport just dropped and came back — the
+    // server's connectionStateRecovery branch (see join-direct-room) only
+    // nudges the *peer* to re-check its connection, not this side. Rejoin
+    // the room and, if our own PeerConnection still looks unhealthy a beat
+    // later, proactively drive recovery instead of only waiting on a
+    // connectionstatechange transition. Mirrors VideoCall.jsx's
+    // handleSocketReconnect.
+    const handleSocketReconnect = () => {
+      if (!mountedRef.current) return;
+      joinRoom();
+      window.setTimeout(() => {
+        const pc = pcRef.current;
+        if (
+          !mountedRef.current ||
+          !peerPresentRef.current ||
+          !socket.connected ||
+          !pc ||
+          pc.signalingState === "closed"
+        )
+          return;
+        if (
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"
+        )
+          return;
+        if (isInitiatorRef.current) {
+          void createAndSendIceRestartOffer();
+        } else {
+          requestPeerIceRestart();
+        }
+      }, 500);
     };
 
     const sampleInboundBytes = async (pc) => {
@@ -1063,6 +1769,16 @@ export default function DirectVideoCall() {
     // identical guard.
     const handleVisibilityChange = async () => {
       if (document.visibilityState !== "visible" || !mountedRef.current) return;
+      // The local self-view (pip) can be suspended by the browser/OS while
+      // the tab/app is backgrounded — common on mobile — even though the
+      // underlying camera track and its WebRTC transmission to the peer
+      // keep running unaffected (a separate pipeline from the local
+      // preview's decode/render). Replay it explicitly on return instead of
+      // leaving it stuck on a frozen/black frame. Independent of
+      // socket/remote-connection state below, since it's a purely local
+      // media-element concern — does not touch or gate the existing
+      // remote-connection recovery check that follows.
+      void playAssignedVideos();
       if (!socket.connected) {
         socket.connect();
         return;
@@ -1106,6 +1822,7 @@ export default function DirectVideoCall() {
     };
 
     socket.on("connect", joinRoom);
+    socket.io.on("reconnect", handleSocketReconnect);
     socket.on("direct-room-joined", handleRoomJoined);
     socket.on("direct-room-error", handleRoomError);
     socket.on("direct-peer-joined", handlePeerJoined);
@@ -1131,6 +1848,7 @@ export default function DirectVideoCall() {
       // running setup again after this cleanup completes.
       startedRef.current = false;
       socket.off("connect", joinRoom);
+      socket.io.off("reconnect", handleSocketReconnect);
       socket.off("direct-room-joined", handleRoomJoined);
       socket.off("direct-room-error", handleRoomError);
       socket.off("direct-peer-joined", handlePeerJoined);
@@ -1152,42 +1870,61 @@ export default function DirectVideoCall() {
     setPreviewAttempt((n) => n + 1);
   }, []);
 
+  // Track state is flipped from a ref and committed with a plain setState —
+  // the enable/disable of the MediaStreamTrack is a side effect and must not
+  // live inside a setState updater (React can invoke those more than once).
   const togglePreviewMic = useCallback(() => {
-    const stream = localStreamRef.current;
-    if (!stream || stream.getAudioTracks().length === 0) return;
-    setPreviewMicOn((prev) => {
-      const next = !prev;
-      stream.getAudioTracks().forEach((track) => {
-        track.enabled = next;
-      });
-      return next;
+    const audioTracks = localStreamRef.current?.getAudioTracks() ?? [];
+    if (audioTracks.length === 0) return;
+    const next = !previewMicOnRef.current;
+    audioTracks.forEach((track) => {
+      track.enabled = next;
     });
+    previewMicOnRef.current = next;
+    setPreviewMicOn(next);
   }, []);
 
   const togglePreviewCam = useCallback(() => {
-    const stream = localStreamRef.current;
-    if (!stream || stream.getVideoTracks().length === 0) return;
-    setPreviewCamOn((prev) => {
-      const next = !prev;
-      stream.getVideoTracks().forEach((track) => {
-        track.enabled = next;
-      });
-      return next;
+    const videoTracks = localStreamRef.current?.getVideoTracks() ?? [];
+    if (videoTracks.length === 0) return;
+    const next = !previewCamOnRef.current;
+    videoTracks.forEach((track) => {
+      track.enabled = next;
     });
+    previewCamOnRef.current = next;
+    setPreviewCamOn(next);
   }, []);
 
   const joinMeeting = useCallback(
     (event) => {
       event.preventDefault();
       if (joining) return;
-      setJoining(true);
+
       const trimmedName = guestName.trim().slice(0, 60);
+      if (!trimmedName) {
+        // Previously a blank/whitespace name silently became "Guest" with no
+        // feedback — ask for one (they can still type "Guest" explicitly).
+        setNameError(
+          'Please enter your name so the other participant knows who joined (or type "Guest").',
+        );
+        setGuestName("");
+        nameInputRef.current?.focus();
+        return;
+      }
+
+      setNameError("");
+      setJoining(true);
       setGuestName(trimmedName);
       try {
         localStorage.setItem(NAME_STORAGE_KEY, trimmedName);
       } catch {
         // Storage unavailable — non-fatal, just won't be remembered next time.
       }
+      // Carry the pre-join choices into the call, refs included so
+      // setupPeerConnection reads the right value without waiting for a
+      // re-render.
+      micOnRef.current = previewMicOn;
+      camOnRef.current = previewCamOn;
       setMicOn(previewMicOn);
       setCamOn(previewCamOn);
       joinedRef.current = true;
@@ -1196,36 +1933,91 @@ export default function DirectVideoCall() {
     [joining, guestName, previewMicOn, previewCamOn],
   );
 
+  // Side effect (enabling/disabling the track) is kept out of the setState
+  // updater; state is derived from a ref so rapid toggles stay consistent.
   const toggleMic = useCallback(() => {
-    const stream = localStreamRef.current;
-    if (!stream) return;
-    setMicOn((prev) => {
-      const next = !prev;
-      stream.getAudioTracks().forEach((track) => {
-        track.enabled = next;
-      });
-      return next;
+    const audioTracks = localStreamRef.current?.getAudioTracks() ?? [];
+    // Nothing to toggle if the mic was never granted / captured — leave the
+    // button showing "muted" rather than flipping to a misleading "live".
+    if (audioTracks.length === 0) return;
+    const next = !micOnRef.current;
+    audioTracks.forEach((track) => {
+      track.enabled = next;
     });
+    micOnRef.current = next;
+    setMicOn(next);
   }, []);
 
   const toggleCam = useCallback(() => {
-    const stream = localStreamRef.current;
-    if (!stream) return;
-    setCamOn((prev) => {
-      const next = !prev;
-      stream.getVideoTracks().forEach((track) => {
-        track.enabled = next;
-      });
-      return next;
+    const videoTracks = localStreamRef.current?.getVideoTracks() ?? [];
+    if (videoTracks.length === 0) return;
+    const next = !camOnRef.current;
+    videoTracks.forEach((track) => {
+      track.enabled = next;
     });
+    camOnRef.current = next;
+    setCamOn(next);
   }, []);
 
+  // Re-attempt getUserMedia mid-call and publish whatever new tracks it
+  // returns onto the live connection — for a guest who joined with the mic
+  // (or camera) denied / busy and has since granted access or freed the
+  // device, so they don't have to leave and rejoin. replaceTrack on an
+  // existing sender needs no renegotiation; addTrack for a kind we weren't
+  // sending triggers the normal onnegotiationneeded path.
+  const retryInCallMedia = useCallback(async () => {
+    const pc = pcRef.current;
+    if (!pc || pc.signalingState === "closed" || retryingInCallMediaRef.current) return;
+    retryingInCallMediaRef.current = true;
+    setRetryingInCallMedia(true);
+    try {
+      const fresh = await getCallMediaStream();
+      if (!mountedRef.current || pcRef.current !== pc || pc.signalingState === "closed") {
+        fresh.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      const base = localStreamRef.current || new MediaStream();
+      fresh.getTracks().forEach((track) => {
+        track.enabled = track.kind === "audio" ? micOnRef.current : camOnRef.current;
+        const sender = pc
+          .getSenders()
+          .find((s) => s.track && s.track.kind === track.kind);
+        if (sender) {
+          const previous = sender.track;
+          sender.replaceTrack(track).catch((err) =>
+            console.warn("[direct-video-call] replaceTrack during retry failed", err),
+          );
+          if (previous && previous !== track) {
+            previous.stop();
+            base.removeTrack(previous);
+          }
+        } else {
+          pc.addTrack(track, base);
+        }
+        if (!base.getTrackById(track.id)) base.addTrack(track);
+      });
+      localStreamRef.current = base;
+      setLocalAudioMissing(base.getAudioTracks().length === 0);
+      assignStreams(isSwappedRef.current);
+    } catch (err) {
+      console.warn(
+        "[direct-video-call] in-call media retry failed:",
+        err?.message || err,
+      );
+    } finally {
+      retryingInCallMediaRef.current = false;
+      if (mountedRef.current) setRetryingInCallMedia(false);
+    }
+  }, [assignStreams]);
+
   const toggleSwap = useCallback(() => {
-    setIsSwapped((prev) => {
-      const next = !prev;
-      assignStreams(next);
-      return next;
-    });
+    const next = !isSwappedRef.current;
+    // Update the ref synchronously (as toggleMic/toggleCam do) so a rapid
+    // double-tap resolves to the right end state, and re-point the
+    // <video>/<audio> sinks now rather than from inside a setState updater.
+    isSwappedRef.current = next;
+    setIsSwapped(next);
+    assignStreams(next);
   }, [assignStreams]);
 
   const toggleSelfView = useCallback(() => {
@@ -1247,9 +2039,49 @@ export default function DirectVideoCall() {
   }, []);
 
   const leaveCall = useCallback(() => {
+    setLeaveConfirmOpen(false);
     cleanupCall();
     setStage("ended");
   }, [cleanupCall]);
+
+  // Every path that would drop the call — the "Leave Call" button, a mobile
+  // back-swipe/gesture, the hardware back button — routes through here so the
+  // user gets one confirmation instead of the call ending silently.
+  const requestLeave = useCallback(() => {
+    setLeaveConfirmOpen(true);
+  }, []);
+
+  const cancelLeave = useCallback(() => {
+    setLeaveConfirmOpen(false);
+  }, []);
+
+  // ── Intercept back navigation / tab close while in the call ──────────────
+  // The appointment VideoCall screen already guards this; the Direct call
+  // screen previously did not, so a back-swipe on mobile (a common way to
+  // dismiss a panel) unmounted the page and ended the call with no warning.
+  useEffect(() => {
+    if (stage !== "call") return;
+
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      // Re-push so a second back press is needed to actually leave, and
+      // surface the confirmation.
+      window.history.pushState(null, "", window.location.href);
+      setLeaveConfirmOpen(true);
+    };
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+      return "";
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [stage]);
 
   // Manual escape hatch when automatic ICE-restart recovery is taking too
   // long: tears down and rebuilds just the RTCPeerConnection (not the
@@ -1262,12 +2094,15 @@ export default function DirectVideoCall() {
     setReconnectStalled(false);
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
+    clearTimeout(connectionFailTimerRef.current);
+    connectionFailTimerRef.current = null;
     clearTimeout(iceRestartTimerRef.current);
     iceRestartTimerRef.current = null;
     iceRecoveryAttemptsRef.current = 0;
     clearTimeout(offerAnswerTimeoutRef.current);
     offerAnswerTimeoutRef.current = null;
     pendingOfferIdRef.current = null;
+    pendingRemoteOfferRef.current = null;
 
     const pc = pcRef.current;
     if (pc) {
@@ -1282,15 +2117,35 @@ export default function DirectVideoCall() {
     pendingCandidatesRef.current = [];
     makingOfferRef.current = false;
     ignoreOfferRef.current = false;
+    // Supersede any in-flight setup from the failed attempt before rebuilding.
+    pcSetupGenerationRef.current += 1;
+    // Re-fetch ICE servers so the rebuilt connection gets fresh TURN
+    // credentials — the ones from page load may have expired on a long call,
+    // and a transient /ice-servers failure at load may since have cleared.
+    iceConfigPromiseRef.current = fetchDirectRoomIceConfig(roomId);
     setCallStatus("connecting");
 
+    // Keep a safety net under the forced rebuild: if this attempt also
+    // stalls, the watchdog kicks ICE recovery and the stall banner comes
+    // back rather than the user staring at a silent "connecting" again.
+    armConnectWatchdogsRef.current();
+
     if (socket.connected) {
-      void setupPeerConnectionRef.current();
+      // Release the guard once the rebuild actually settles (success or
+      // failure) rather than immediately after firing it off — releasing it
+      // synchronously here let a second rapid click start an overlapping
+      // rebuild while the first was still mid-flight awaiting the ICE-server
+      // fetch / local media. setupPeerConnection's own generation token
+      // still protects against that regardless, but the guard should
+      // actually guard what it claims to.
+      setupPeerConnectionRef.current().finally(() => {
+        reconnectInProgressRef.current = false;
+      });
     } else {
       socket.connect();
+      reconnectInProgressRef.current = false;
     }
-    reconnectInProgressRef.current = false;
-  }, []);
+  }, [roomId]);
 
   const sendChatMessage = useCallback(
     (event) => {
@@ -1380,7 +2235,11 @@ export default function DirectVideoCall() {
     return (
       <div className="hc-vc__gate">
         <h2>Call ended</h2>
-        <p>You have left the meeting.</p>
+        <p>
+          {endedReason === "closed"
+            ? "This meeting was ended by the host."
+            : "You have left the meeting."}
+        </p>
         <Link to="/" className="hc-vc__gate-btn">
           Return Home
         </Link>
@@ -1393,6 +2252,12 @@ export default function DirectVideoCall() {
       <div className="dvcall-page dvcall-page--center">
         <div className="dvcall-prejoin-card">
           <h2>Ready to join?</h2>
+          {roomFullHint && (
+            <p className="dvcall-prejoin-form__error" role="status">
+              This meeting looks full (two participants already joined). You can
+              still try — you&apos;ll be let back in if one of them is you.
+            </p>
+          )}
           <div className="dvcall-prejoin-preview">
             <video ref={previewVideoRef} autoPlay playsInline muted />
             {previewError && (
@@ -1427,13 +2292,24 @@ export default function DirectVideoCall() {
 
           <form className="dvcall-prejoin-form" onSubmit={joinMeeting}>
             <input
+              ref={nameInputRef}
               type="text"
               value={guestName}
               maxLength={60}
               placeholder="Your name"
-              onChange={(e) => setGuestName(e.target.value)}
+              aria-label="Your name"
+              aria-invalid={nameError ? "true" : undefined}
+              onChange={(e) => {
+                setGuestName(e.target.value);
+                if (nameError) setNameError("");
+              }}
               autoFocus
             />
+            {nameError && (
+              <p className="dvcall-prejoin-form__error" role="alert">
+                {nameError}
+              </p>
+            )}
             <button type="submit" className="dvcall-btn-primary" disabled={joining}>
               {joining ? "Joining…" : "Join now"}
             </button>
@@ -1485,6 +2361,13 @@ export default function DirectVideoCall() {
         </div>
       )}
 
+      {iceRelayWarning && !isOffline && (
+        <div className="hc-vc__offline-banner hc-vc__relay-warning">
+          <FiAlertTriangle /> Connection relay unavailable — this call may not
+          connect on some networks.
+        </div>
+      )}
+
       <div className={`hc-vc__body ${chatOpen ? "hc-vc__body--chat" : ""}`}>
         <div className="hc-vc__stage">
           <div className="hc-vc__main-wrap">
@@ -1492,9 +2375,28 @@ export default function DirectVideoCall() {
               ref={setMainVideoRef}
               autoPlay
               playsInline
-              muted={isSwapped}
+              muted
               className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}${isMainVideoPortrait ? " hc-vc__main-video--portrait" : ""}`}
             />
+
+            {localAudioMissing && (
+              <div className="hc-vc__local-audio-notice">
+                <FiMicOff />
+                <span>
+                  Your microphone isn&apos;t available — the other participant
+                  can&apos;t hear you. Check permissions or close any app using
+                  the mic.
+                </span>
+                <button
+                  type="button"
+                  className="hc-vc__local-audio-retry"
+                  onClick={retryInCallMedia}
+                  disabled={retryingInCallMedia}
+                >
+                  {retryingInCallMedia ? "Retrying…" : "Retry"}
+                </button>
+              </div>
+            )}
 
             {!connected && (
               <div className="hc-vc__waiting">
@@ -1572,7 +2474,7 @@ export default function DirectVideoCall() {
                 ref={setPipVideoRef}
                 autoPlay
                 playsInline
-                muted={!isSwapped}
+                muted
                 className={`hc-vc__pip-video${!isSwapped ? " hc-vc__video--local" : ""}${isPipVideoPortrait ? " hc-vc__pip-video--portrait" : ""}`}
               />
 
@@ -1614,6 +2516,26 @@ export default function DirectVideoCall() {
               <span>Self View</span>
             </button>
           )}
+
+          {/* Remote audio output — always mounted, never inside a
+              conditionally-rendered block. Both <video> elements are muted;
+              the remote party's audio plays only through this element, so
+              swapping views or hiding the self-view can't cut it. Kept
+              rendered-but-invisible rather than display:none — some engines
+              (older mobile Safari) won't start playback on a display:none
+              media element. */}
+          <audio
+            ref={remoteAudioRef}
+            autoPlay
+            playsInline
+            style={{
+              position: "absolute",
+              width: 1,
+              height: 1,
+              opacity: 0,
+              pointerEvents: "none",
+            }}
+          />
         </div>
 
         {chatOpen && (
@@ -1762,7 +2684,7 @@ export default function DirectVideoCall() {
 
           <button
             className="hc-vc__btn hc-vc__btn--end"
-            onClick={leaveCall}
+            onClick={requestLeave}
             title="Leave call"
           >
             <span className="hc-vc__btn-icon">
@@ -1772,6 +2694,44 @@ export default function DirectVideoCall() {
           </button>
         </div>
       </div>
+
+      {leaveConfirmOpen && (
+        <div className="hc-vc__confirm-overlay" onClick={cancelLeave}>
+          <div
+            className="hc-vc__confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dvcall-leave-title"
+          >
+            <div className="hc-vc__confirm-icon">⚠</div>
+            <h3 className="hc-vc__confirm-title" id="dvcall-leave-title">
+              Leave this meeting?
+            </h3>
+            <p className="hc-vc__confirm-text">
+              You'll be disconnected from the call. You can rejoin with the same
+              link while the meeting is still active.
+            </p>
+            <div className="hc-vc__confirm-actions">
+              <button
+                type="button"
+                className="hc-vc__confirm-btn"
+                onClick={cancelLeave}
+                autoFocus
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                className="hc-vc__confirm-btn hc-vc__confirm-btn--danger"
+                onClick={leaveCall}
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

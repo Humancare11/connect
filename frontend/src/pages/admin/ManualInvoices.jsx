@@ -130,6 +130,12 @@ export default function ManualInvoices() {
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("due");
 
+  // Optional link to a Partner Company. When set, the generated invoice also
+  // appears in that partner's Billing section. Selecting one prefills the
+  // Bill To block from the company profile; every field stays editable.
+  const [partners, setPartners] = useState([]);
+  const [partnerId, setPartnerId] = useState("");
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState(null);
@@ -204,6 +210,31 @@ export default function ManualInvoices() {
     const target = Math.min(Math.max(1, page), historyTotalPages);
     if (target === historyPage || historyLoading) return;
     fetchHistory({ page: target });
+  };
+
+  // Active Partner Companies for the "Bill to a Partner" picker. Failure is
+  // non-fatal — the form still works for ordinary one-off invoices.
+  useEffect(() => {
+    api
+      .get("/api/admin/manual-invoices/partners")
+      .then((res) => setPartners(res.data?.partners || []))
+      .catch(() => setPartners([]));
+  }, []);
+
+  const selectPartner = (id) => {
+    setPartnerId(id);
+    const partner = partners.find((p) => p._id === id);
+    if (!partner) return;
+    setCompanyName(partner.companyName || "");
+    if (partner.contactPersonName) setName(partner.contactPersonName);
+    if (partner.contactEmail) setEmail(partner.contactEmail);
+    if (partner.address) setAddress(partner.address);
+    if (
+      partner.billingCurrency &&
+      CURRENCY_OPTIONS.some((option) => option.code === partner.billingCurrency)
+    ) {
+      setCurrency(partner.billingCurrency);
+    }
   };
 
   const isFirstHistoryFetch = useRef(true);
@@ -318,6 +349,7 @@ export default function ManualInvoices() {
     setItems([{ id: 1, description: "", quantity: "1", rate: "" }]);
     setDescription("");
     setStatus("due");
+    setPartnerId("");
   };
 
   const submit = async (event) => {
@@ -341,6 +373,7 @@ export default function ManualInvoices() {
         })),
         description,
         status,
+        partnerId: partnerId || undefined,
       });
       setCreated(res.data.invoice);
       resetForm();
@@ -488,6 +521,25 @@ export default function ManualInvoices() {
 
           <section className="mi-doc__party">
             <p className="mi-doc__caption">Bill to</p>
+
+            {partners.length > 0 && (
+              <label className="mi-line">
+                <span className="mi-line__label">Partner</span>
+                <select
+                  className="mi-input mi-select"
+                  value={partnerId}
+                  onChange={(event) => selectPartner(event.target.value)}
+                >
+                  <option value="">One-off client (no partner)</option>
+                  {partners.map((partner) => (
+                    <option key={partner._id} value={partner._id}>
+                      {partner.companyName}
+                      {partner.partnerCode ? ` (${partner.partnerCode})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             <label className="mi-line">
               <span className="mi-line__label">Company</span>
@@ -947,6 +999,14 @@ export default function ManualInvoices() {
                         <span title={invoice.clientEmail}>
                           {invoice.clientEmail}
                         </span>
+                        {invoice.partner && (
+                          <span
+                            className="mi-email-flag mi-email-flag--sent"
+                            title={`Partner: ${invoice.partner.companyName}`}
+                          >
+                            {invoice.partner.partnerCode || invoice.partner.companyName}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td data-label="Description">
