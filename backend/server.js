@@ -729,7 +729,20 @@ app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
 // verdict is reached, closing the gap; anything slower already falls
 // through to the (already-correct) normal-join re-eviction/re-negotiation
 // path handled in join-appointment-room.
-const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 15000);
+// 30000, not the previous 15000: aligned with DIRECT_ROOM_LEAVE_GRACE_MS
+// below, whose own comment already documents that a mobile network blip can
+// realistically take 20-50s to recover — the appointment flow (used by the
+// connect-mobile app) had never been widened to match that reasoning. Purely
+// a timing value: it only gates (a) how long the disconnect handler waits
+// before emitting participant-left, and (b) the connectionStateRecovery cap
+// just below, which is deliberately kept in sync with it (see that comment).
+// Neither Socket.IO's own room-membership tracking (io.sockets.adapter.rooms,
+// which governs the join-appointment-room seat-limit check) nor socketRooms/
+// onlineUsers bookkeeping depends on this value — a longer window only delays
+// the user-facing "participant left" notice for a genuine departure, and
+// widens the connectionStateRecovery fast-path window a reconnecting socket
+// can land in instead of falling through to the fresh-join path.
+const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 30000);
 
 // HTTP server
 const server = http.createServer(app);

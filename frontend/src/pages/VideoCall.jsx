@@ -915,6 +915,16 @@ export default function VideoCall() {
   const socketAuthRefreshedRef = useRef(false);
   const verifyingVisibilityRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
+  // Set on a disconnected/failed transition after the call has connected at
+  // least once, and consumed the next time the connection reports healthy
+  // again (whether via a real onconnectionstatechange "connected" event or
+  // via resyncConnectionStateFromPeerConnection) — forces a remote-video
+  // rebind for a recovery that reuses the SAME track (an ICE restart, or the
+  // browser's own passive ICE self-healing), which never re-fires
+  // pc.ontrack and would otherwise leave the <video> element frozen on its
+  // last frame. Mirrors VideoCallController's _remoteRebindPending in the
+  // Flutter app.
+  const remoteRebindPendingRef = useRef(false);
   const reconnectStallTimerRef = useRef(null);
   // How many times the stall banner has fired since the last successful
   // (re)connect — see MAX_RECONNECT_STALL_RETRIES.
@@ -2276,6 +2286,32 @@ export default function VideoCall() {
         staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
 
         if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
+
+        // A receiver's track fires "mute" when RTP stops arriving for that
+        // specific SSRC (e.g. the sender's encoder hiccups, or a transient
+        // bandwidth squeeze starves video while audio keeps flowing) without
+        // any change to the overall connection/ICE state — none of the
+        // reconnection machinery in this effect is reachable from that, so
+        // without an explicit listener the <video> element is left frozen on
+        // its last frame indefinitely even though audio (no comparable
+        // per-frame pipeline to freeze) recovers on its own. Reassigning
+        // these on every ontrack firing for this track is safe/idempotent —
+        // a plain property assignment, not an accumulating listener list.
+        track.onmute = () => {
+          logVideoEvent("remote_track_muted", { kind: track.kind, id: track.id });
+        };
+        track.onunmute = () => {
+          logVideoEvent("remote_track_unmuted", { kind: track.kind, id: track.id });
+          if (!mounted) return;
+          // Same track object, same MediaStream — force a genuine source
+          // change the same way the trackWasReplaced branch below already
+          // does, so the element actually repaints instead of treating this
+          // as a no-op reassignment to an unchanged reference.
+          remoteStream = new MediaStream(remoteStream.getTracks());
+          remoteStreamRef.current = remoteStream;
+          assignStreams(isSwappedRef.current);
+          void playAssignedVideos();
+        };
       });
 
       if (trackWasReplaced) {
@@ -2322,26 +2358,76 @@ export default function VideoCall() {
       }
     };
 
+    // Shared by onconnectionstatechange/oniceconnectionstatechange's
+    // "connected" transitions below, and by
+    // resyncConnectionStateFromPeerConnection further down (a socket
+    // reconnect finding the peer connection was healthy all along) — see
+    // that function's own comment for why it needs to reuse this. Mirrors
+    // VideoCallController._handleConnectedState in the Flutter app.
+    const markPeerConnectionHealthy = () => {
+      clearTimeout(iceRestartTimerRef.current);
+      clearTimeout(connectionFailTimerRef.current);
+      iceRestartTimerRef.current = null;
+      restartRequestInFlightRef.current = false;
+      iceRecoveryAttemptsRef.current = 0;
+      pendingOfferSentAtRef.current = 0;
+      peerPresentRef.current = true;
+      clearReconnectStallWatch();
+      hasConnectedOnceRef.current = true;
+      setConnectionState("connected");
+      setIsRemoteConnected(true);
+      if (!inCallRef.current) {
+        setInCall(true);
+        inCallRef.current = true;
+      }
+      startStatsCollection(pc);
+      if (remoteRebindPendingRef.current) {
+        remoteRebindPendingRef.current = false;
+        // A recovery that reused the same track (an ICE restart, or the
+        // browser's own passive ICE self-healing after a network switch)
+        // never re-fires pc.ontrack, so nothing else would ever rebind the
+        // <video> element — rebuild remoteStream as a new object, the same
+        // fix pc.ontrack's trackWasReplaced branch above already applies for
+        // the track-replaced case, so every consumer's next srcObject
+        // assignment is honored as a genuine source change. Only reached
+        // once hasConnectedOnceRef is already true (see the set-sites
+        // below), so remoteStream always already holds live tracks here.
+        remoteStream = new MediaStream(remoteStream.getTracks());
+        remoteStreamRef.current = remoteStream;
+        assignStreams(isSwappedRef.current);
+        void playAssignedVideos();
+      }
+    };
+
+    // A Socket.IO (signaling) reconnect is a different transport than the
+    // already-established WebRTC/ICE media path — if the peer connection
+    // itself was never affected by the blip (a common case: the signaling
+    // socket times out through a proxy while the UDP/TURN media path
+    // survives untouched), neither onconnectionstatechange nor
+    // oniceconnectionstatechange ever fires again (no real state transition
+    // happened), so nothing would otherwise clear the "disconnected" UI
+    // state handleSocketDisconnect sets further down — permanently
+    // stranding the UI on "Reconnecting..." over a call that's actually
+    // still working. Called after every (re)connect to resync immediately
+    // from the peer connection's actual current state instead of waiting on
+    // an event that may never come. Safe to call even when nothing changed —
+    // markPeerConnectionHealthy only resets state/timers to the same values
+    // and restarts stats polling, and creates no offers. Mirrors
+    // VideoCallController._resyncConnectionStateFromPeerConnection.
+    const resyncConnectionStateFromPeerConnection = () => {
+      if (!mounted || pc.signalingState === "closed") return;
+      const isConnected =
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed";
+      if (isConnected) markPeerConnectionHealthy();
+    };
+
     pc.onconnectionstatechange = () => {
       const s = pc.connectionState;
       if (!mounted) return;
       if (s === "connected") {
-        clearTimeout(iceRestartTimerRef.current);
-        clearTimeout(connectionFailTimerRef.current);
-        iceRestartTimerRef.current = null;
-        restartRequestInFlightRef.current = false;
-        iceRecoveryAttemptsRef.current = 0;
-        pendingOfferSentAtRef.current = 0;
-        peerPresentRef.current = true;
-        clearReconnectStallWatch();
-        hasConnectedOnceRef.current = true;
-        setConnectionState("connected");
-        setIsRemoteConnected(true);
-        if (!inCallRef.current) {
-          setInCall(true);
-          inCallRef.current = true;
-        }
-        startStatsCollection(pc);
+        markPeerConnectionHealthy();
       } else if (s === "connecting") {
         setConnectionState("connecting");
         startConnectionWatchdog();
@@ -2352,6 +2438,7 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (hasConnectedOnceRef.current) remoteRebindPendingRef.current = true;
         scheduleIceRestart();
         // Only handlePeerJoined armed this watch before, gated on
         // !inCallRef — so a drop after the call had already connected once
@@ -2368,22 +2455,7 @@ export default function VideoCall() {
       const s = pc.iceConnectionState;
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
-        clearTimeout(iceRestartTimerRef.current);
-        clearTimeout(connectionFailTimerRef.current);
-        iceRestartTimerRef.current = null;
-        restartRequestInFlightRef.current = false;
-        iceRecoveryAttemptsRef.current = 0;
-        pendingOfferSentAtRef.current = 0;
-        peerPresentRef.current = true;
-        clearReconnectStallWatch();
-        hasConnectedOnceRef.current = true;
-        setConnectionState("connected");
-        setIsRemoteConnected(true);
-        if (!inCallRef.current) {
-          setInCall(true);
-          inCallRef.current = true;
-        }
-        startStatsCollection(pc);
+        markPeerConnectionHealthy();
       } else if (s === "checking") {
         if (!inCallRef.current) setConnectionState("connecting");
         startConnectionWatchdog();
@@ -2397,6 +2469,7 @@ export default function VideoCall() {
         });
         setConnectionState("disconnected");
         setIsRemoteConnected(false);
+        if (hasConnectedOnceRef.current) remoteRebindPendingRef.current = true;
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       } else if (s === "disconnected") {
@@ -2406,6 +2479,7 @@ export default function VideoCall() {
           connectionState: pc.connectionState,
         });
         setConnectionState("connecting");
+        if (hasConnectedOnceRef.current) remoteRebindPendingRef.current = true;
         scheduleIceRestart();
         if (hasConnectedOnceRef.current) startReconnectStallWatch(12000);
       }
@@ -2924,6 +2998,7 @@ export default function VideoCall() {
     const joinRoom = () => {
       emitOnlineAndJoinRoom();
       flushTelemetryQueue();
+      resyncConnectionStateFromPeerConnection();
     };
 
     const handleSocketDisconnect = () => {

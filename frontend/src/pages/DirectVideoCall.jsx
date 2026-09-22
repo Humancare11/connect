@@ -476,6 +476,15 @@ export default function DirectVideoCall() {
   const lastIceRecoveryAtRef = useRef(0);
   const restartRequestInFlightRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
+  // Set on a disconnected/failed transition after the call has connected at
+  // least once, and consumed the next time the connection reports healthy
+  // again (whether via a real onconnectionstatechange "connected" event or
+  // via resyncConnectionStateFromPeerConnection) — forces a remote-video
+  // rebind for a recovery that reuses the SAME track (an ICE restart, or the
+  // browser's own passive ICE self-healing), which never re-fires
+  // pc.ontrack and would otherwise leave the <video> element frozen on its
+  // last frame. Mirrors VideoCall.jsx's identical remoteRebindPendingRef.
+  const remoteRebindPendingRef = useRef(false);
   // Fires if the (first) connection hasn't reached "connected" within
   // CONNECTION_FAIL_TIMEOUT_MS — see startConnectionWatchdog.
   const connectionFailTimerRef = useRef(null);
@@ -1386,6 +1395,20 @@ export default function DirectVideoCall() {
       startReconnectStallWatch(hasConnectedOnceRef.current ? 8000 : 20000);
     };
 
+    // Reused by both the remote-track onunmute handler (in pc.ontrack below)
+    // and handleConnectedState's post-recovery check below it — forces the
+    // remote <video>/<audio> elements to treat remoteStreamRef.current as a
+    // genuine source change even though the object reference and its tracks
+    // may be unchanged. Plain srcObject reassignment to an already-assigned
+    // MediaStream reference can be a no-op in some browsers, leaving video
+    // frozen on its last frame even after the underlying track resumes
+    // producing frames. Mirrors the same "rebuild as a new MediaStream
+    // object" fix already applied in VideoCall.jsx's pc.ontrack.
+    const refreshRemoteStreamBinding = () => {
+      remoteStreamRef.current = new MediaStream(remoteStreamRef.current.getTracks());
+      assignStreams(isSwappedRef.current);
+    };
+
     // Shared by onconnectionstatechange and oniceconnectionstatechange (the
     // latter a fallback for browsers where the former fires late or not at
     // all) so a genuine "connected" transition is handled identically
@@ -1409,6 +1432,34 @@ export default function DirectVideoCall() {
       startCallTimer();
       const pc = pcRef.current;
       if (pc) startStatsCollection(pc);
+      if (remoteRebindPendingRef.current) {
+        remoteRebindPendingRef.current = false;
+        refreshRemoteStreamBinding();
+      }
+    };
+
+    // A Socket.IO (signaling) reconnect is a different transport than the
+    // already-established WebRTC/ICE media path — if the peer connection
+    // itself was never affected by the blip (a common case: the signaling
+    // socket times out through a proxy while the UDP/TURN media path
+    // survives untouched), neither onconnectionstatechange nor
+    // oniceconnectionstatechange ever fires again (no real state transition
+    // happened), so nothing would otherwise clear a "reconnecting" UI state
+    // set elsewhere — permanently stranding the UI over a call that's
+    // actually still working. Called after every (re)join to resync
+    // immediately from the peer connection's actual current state instead
+    // of waiting on an event that may never come. Safe to call even when
+    // nothing changed — handleConnectedState only resets state/timers to
+    // the same values and restarts stats polling, and creates no offers.
+    // Mirrors VideoCall.jsx's resyncConnectionStateFromPeerConnection.
+    const resyncConnectionStateFromPeerConnection = () => {
+      const pc = pcRef.current;
+      if (!mountedRef.current || !pc || pc.signalingState === "closed") return;
+      const isConnected =
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed";
+      if (isConnected) handleConnectedState();
     };
 
     const handleChatMessage = ({ senderName, text, createdAt } = {}) => {
@@ -1554,15 +1605,54 @@ export default function DirectVideoCall() {
           ? event.streams[0].getTracks()
           : [event.track].filter(Boolean);
 
+        // Set when this event actually swaps out a previously-live track for
+        // a given kind (as opposed to a first-time add) — see the
+        // trackWasReplaced branch below for why that case needs more than an
+        // in-place mutation of remoteStreamRef.current. Mirrors VideoCall.jsx's
+        // identical trackWasReplaced detection in its own pc.ontrack.
+        let trackWasReplaced = false;
+
         incomingTracks.forEach((track) => {
-          remoteStream
+          const staleTracksOfKind = remoteStream
             .getTracks()
-            .filter((existing) => existing.kind === track.kind && existing.id !== track.id)
-            .forEach((stale) => remoteStream.removeTrack(stale));
+            .filter((existing) => existing.kind === track.kind && existing.id !== track.id);
+          if (staleTracksOfKind.length > 0) trackWasReplaced = true;
+          staleTracksOfKind.forEach((stale) => remoteStream.removeTrack(stale));
           if (!remoteStream.getTrackById(track.id)) remoteStream.addTrack(track);
+
+          // A receiver's track fires "mute" when RTP stops arriving for that
+          // specific SSRC (e.g. the sender's encoder hiccups, or a transient
+          // bandwidth squeeze starves video while audio keeps flowing)
+          // without any change to the overall connection/ICE state — none
+          // of the reconnection machinery above is reachable from that, so
+          // without an explicit listener the <video> element is left frozen
+          // on its last frame indefinitely even though audio (no comparable
+          // per-frame pipeline to freeze) recovers on its own. Reassigning
+          // this on every ontrack firing for this track is safe/idempotent —
+          // a plain property assignment, not an accumulating listener list.
+          // Mirrors the identical fix in VideoCall.jsx's pc.ontrack.
+          track.onunmute = () => {
+            if (!mountedRef.current) return;
+            refreshRemoteStreamBinding();
+          };
         });
 
-        assignStreams(isSwappedRef.current);
+        if (trackWasReplaced) {
+          // The remote peer recreated their whole RTCPeerConnection (e.g. a
+          // page refresh) while this side's pc stayed alive — the new track
+          // has a different id but was just added into the SAME MediaStream
+          // object above (remoteStreamRef.current is otherwise only ever
+          // mutated in place, never reassigned), so the plain srcObject
+          // reassignment assignStreams() does can be a no-op in some
+          // browsers, leaving video frozen on the old track's last frame.
+          // refreshRemoteStreamBinding() forces a genuine source change —
+          // same fix VideoCall.jsx's own trackWasReplaced branch applies —
+          // and already calls assignStreams() itself, so it replaces the
+          // plain call below rather than running alongside it.
+          refreshRemoteStreamBinding();
+        } else {
+          assignStreams(isSwappedRef.current);
+        }
       };
 
       pc.onnegotiationneeded = async () => {
@@ -1605,6 +1695,7 @@ export default function DirectVideoCall() {
         ) {
           setCallStatus("reconnecting");
           stopStatsCollection();
+          if (hasConnectedOnceRef.current) remoteRebindPendingRef.current = true;
           scheduleIceRestart();
           if (hasConnectedOnceRef.current) startReconnectStallWatch(RECONNECT_STALL_MS);
         } else if (pc.connectionState === "connecting" && peerPresentRef.current) {
@@ -1625,6 +1716,7 @@ export default function DirectVideoCall() {
         ) {
           setCallStatus("reconnecting");
           stopStatsCollection();
+          if (hasConnectedOnceRef.current) remoteRebindPendingRef.current = true;
           scheduleIceRestart();
           if (hasConnectedOnceRef.current) startReconnectStallWatch(RECONNECT_STALL_MS);
         } else if (pc.iceConnectionState === "checking" && peerPresentRef.current) {
@@ -1706,6 +1798,7 @@ export default function DirectVideoCall() {
 
     const joinRoom = () => {
       socket.emit("join-direct-room", { roomId, guestId: guestIdRef.current, name: guestName });
+      resyncConnectionStateFromPeerConnection();
     };
 
     // A manager-level reconnect (as opposed to the socket's first-ever
