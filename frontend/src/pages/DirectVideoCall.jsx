@@ -508,6 +508,21 @@ export default function DirectVideoCall() {
   // reacting to the next scheduled ICE-restart timer tick or socket
   // reconnect event.
   const kickIceRecoveryRef = useRef(() => {});
+  // Same cross-effect invocation pattern as kickIceRecoveryRef just above —
+  // assigned inside the Step-3 effect (where handleConnectedState and
+  // remoteRebindPendingRef live) and invoked from the online/offline effect
+  // below. Covers a network-interface change (e.g. Wi-Fi <-> mobile data)
+  // that the RTCPeerConnection absorbs without ever leaving "connected":
+  // connectionState==="connected" is proof the transport is healthy, not
+  // proof the remote video renderer is still painting fresh frames — see
+  // its assignment for the full reasoning. Mirrors VideoCall.jsx's
+  // identical fix and the equivalent, already-applied fix in the Flutter
+  // app's VideoCallController._handleNetworkInterfaceChanged.
+  const networkRecoveryRef = useRef(() => {});
+  // Guards the function above against overlapping runs (e.g. the browser
+  // firing "online" again before the previous check's settle delay has
+  // finished).
+  const networkRecoveryInProgressRef = useRef(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
 
   useEffect(() => {
@@ -555,6 +570,10 @@ export default function DirectVideoCall() {
       // socket right away rather than waiting out its backoff delay).
       if (!socket.connected) socket.connect();
       kickIceRecoveryRef.current();
+      // Also give the remote-video renderer a chance to recover in case the
+      // PeerConnection never actually left "connected" throughout — see
+      // networkRecoveryRef's assignment for the full reasoning.
+      networkRecoveryRef.current();
     };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
@@ -1460,6 +1479,58 @@ export default function DirectVideoCall() {
         pc.iceConnectionState === "connected" ||
         pc.iceConnectionState === "completed";
       if (isConnected) handleConnectedState();
+    };
+
+    // Assigned to networkRecoveryRef so the online/offline effect below can
+    // invoke it — same cross-effect pattern kickIceRecoveryRef already uses.
+    // The browser's "online" event typically fires much faster than
+    // WebRTC's own ICE consent-check can notice a dead transport (that can
+    // take 20-30s+), so this can run well before — or entirely instead of —
+    // any onconnectionstatechange/oniceconnectionstatechange transition.
+    // Gives the existing ICE stack a short, fixed settle window (the same
+    // ICE_RESTART_DELAY_MS scheduleIceRestart already uses — no new timing
+    // constant introduced) to either genuinely fail (in which case the
+    // untouched connection-state handlers and scheduleIceRestart's own
+    // timer already own recovery from there) or silently self-heal; only
+    // once neither of those is going to trigger a rebind on its own does
+    // this proactively run the exact same rebind handleConnectedState()
+    // already trusts for the analogous "recovered, same track" case.
+    // Idempotent and race-safe: remoteRebindPendingRef is the single shared
+    // signal armed just below — if a genuine disconnect/reconnect cycle
+    // beats this to it, handleConnectedState() will already have cleared
+    // the flag by the time this checks it, and this becomes a no-op.
+    networkRecoveryRef.current = () => {
+      if (networkRecoveryInProgressRef.current) return;
+      if (!mountedRef.current || reconnectInProgressRef.current) return;
+      const pc = pcRef.current;
+      if (
+        !pc ||
+        pc.signalingState === "closed" ||
+        !hasConnectedOnceRef.current
+      )
+        return;
+      // Arm the same rebind flag the disconnected/failed branches below
+      // use — see this function's doc comment for why "online" can fire
+      // before remoteRebindPendingRef has otherwise been armed.
+      remoteRebindPendingRef.current = true;
+      networkRecoveryInProgressRef.current = true;
+      window.setTimeout(() => {
+        networkRecoveryInProgressRef.current = false;
+        const currentPc = pcRef.current;
+        if (
+          !mountedRef.current ||
+          currentPc !== pc ||
+          pc.signalingState === "closed"
+        )
+          return;
+        const stillConnected =
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed";
+        if (!stillConnected) return; // unhealthy — existing handlers/scheduleIceRestart own recovery from here
+        if (!remoteRebindPendingRef.current) return; // already consumed by a real reconnect in the meantime
+        handleConnectedState();
+      }, ICE_RESTART_DELAY_MS);
     };
 
     const handleChatMessage = ({ senderName, text, createdAt } = {}) => {

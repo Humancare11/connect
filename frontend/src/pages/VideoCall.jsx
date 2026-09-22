@@ -473,6 +473,16 @@ const STATS_INTERVAL_MS = Number(
 // instead of retrying silently forever.
 const MAX_RECONNECT_STALL_RETRIES = 3;
 
+// How many consecutive failed token-refresh heartbeat attempts (a single
+// attempt fires every 4 minutes — see the heartbeat effect) are tolerated
+// silently before treating the session as no longer authenticatable, when
+// each failure was itself ambiguous (a network blip, a transient 5xx — not
+// a definitive "this refresh token is invalid" rejection, which is acted on
+// immediately regardless of this count). Keeps a single dropped request
+// from tearing down an otherwise-healthy call, while still bounding how
+// long the app silently retries a session that may genuinely be dead.
+const AUTH_REFRESH_FAILURE_THRESHOLD = 2;
+
 // First line of defense against a stuck Enter key / paste-loop flooding
 // chat — the server has its own rate limit (see backend/utils/socketRateLimit.js),
 // this just keeps the UI itself from firing faster than a human can type.
@@ -909,9 +919,23 @@ export default function VideoCall() {
   const iceRecoveryAttemptsRef = useRef(0);
   const lastIceRecoveryAtRef = useRef(0);
   const pageUnloadingRef = useRef(false);
+  // Consecutive failed token-refresh heartbeat attempts — see the heartbeat
+  // effect and AUTH_REFRESH_FAILURE_THRESHOLD.
+  const authRefreshFailureCountRef = useRef(0);
   const screenSharingRef = useRef(false);
   const screenShareStartInProgressRef = useRef(false);
   const screenShareStopInProgressRef = useRef(false);
+  // Holds a still-live display-capture MediaStream across a PeerConnection
+  // rebuild — set by the main effect's cleanup (only when the rebuild is a
+  // reconnect, never a real leave/unmount, and screen sharing was active),
+  // consumed by resumeScreenShareIfPending once the rebuilt connection is
+  // healthy. Never holds a stopped/ended stream.
+  const pendingScreenShareResumeRef = useRef(null);
+  // Cross-effect invocation ref (same pattern as kickIceRecoveryRef/
+  // networkRecoveryRef below) — assigned to resumeScreenShareIfPending
+  // outside the main effect (where startScreenShare's own dependencies
+  // live) and invoked from inside it, from markPeerConnectionHealthy.
+  const resumeScreenShareRef = useRef(() => {});
   const socketAuthRefreshedRef = useRef(false);
   const verifyingVisibilityRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
@@ -955,6 +979,21 @@ export default function VideoCall() {
   // only reacting to the next scheduled ICE-restart timer tick or the
   // socket's own "reconnect" event. Mirrors DirectVideoCall.jsx.
   const kickIceRecoveryRef = useRef(() => {});
+  // Same cross-effect invocation pattern as kickIceRecoveryRef just above —
+  // assigned inside the main effect (where markPeerConnectionHealthy and
+  // remoteRebindPendingRef live) and invoked from the separate online/offline
+  // effect below. Covers a network-interface change (e.g. Wi-Fi <-> mobile
+  // data) that the RTCPeerConnection absorbs without ever leaving
+  // "connected": connectionState==="connected" is proof the transport is
+  // healthy, not proof the remote video renderer is still painting fresh
+  // frames — see its assignment for the full reasoning. Mirrors the
+  // equivalent, already-applied fix in the Flutter app's
+  // VideoCallController._handleNetworkInterfaceChanged.
+  const networkRecoveryRef = useRef(() => {});
+  // Guards the function above against overlapping runs (e.g. the browser
+  // firing "online" again before the previous check's settle delay has
+  // finished).
+  const networkRecoveryInProgressRef = useRef(false);
   // Wall-clock time the current outstanding local offer was sent. Lets
   // createAndSendOffer detect a peer connection parked in "have-local-offer"
   // past its answer deadline and roll it back to retry, instead of skipping
@@ -1125,6 +1164,10 @@ export default function VideoCall() {
       // socket right away rather than waiting out its backoff delay).
       if (!socket.connected) socket.connect();
       kickIceRecoveryRef.current();
+      // Also give the remote-video renderer a chance to recover in case the
+      // PeerConnection never actually left "connected" throughout — see
+      // networkRecoveryRef's assignment for the full reasoning.
+      networkRecoveryRef.current();
     };
     window.addEventListener("offline", handleOffline);
     window.addEventListener("online", handleOnline);
@@ -1335,6 +1378,18 @@ export default function VideoCall() {
       t.stop();
     });
     screenStreamRef.current = null;
+    // performCleanup is always a definitive, final teardown — also stop
+    // anything a preceding rebuild's cleanup preserved for a resume that
+    // will now never happen (e.g. this fires — room denied, duplicate
+    // session, explicit leave — while a rebuild was still in flight),
+    // so the capture session can't be silently leaked indefinitely.
+    if (pendingScreenShareResumeRef.current) {
+      pendingScreenShareResumeRef.current.getTracks().forEach((t) => {
+        t.onended = null;
+        if (t.readyState !== "ended") t.stop();
+      });
+      pendingScreenShareResumeRef.current = null;
+    }
     // Detach handlers before closing so a stray late-firing WebRTC callback
     // (ontrack/onconnectionstatechange/etc.) from this now-dead connection
     // can never run against React state after cleanup, and null the ref
@@ -2397,6 +2452,10 @@ export default function VideoCall() {
         assignStreams(isSwappedRef.current);
         void playAssignedVideos();
       }
+      // No-op unless the cleanup that preceded this connection preserved an
+      // in-progress screen share across the rebuild — see
+      // pendingScreenShareResumeRef's own comment.
+      resumeScreenShareRef.current();
     };
 
     // A Socket.IO (signaling) reconnect is a different transport than the
@@ -2421,6 +2480,58 @@ export default function VideoCall() {
         pc.iceConnectionState === "connected" ||
         pc.iceConnectionState === "completed";
       if (isConnected) markPeerConnectionHealthy();
+    };
+
+    // Assigned to networkRecoveryRef so the separate online/offline effect
+    // below can invoke it — same cross-effect pattern kickIceRecoveryRef
+    // already uses. The browser's "online" event typically fires much
+    // faster than WebRTC's own ICE consent-check can notice a dead
+    // transport (that can take 20-30s+), so this can run well before — or
+    // entirely instead of — any onconnectionstatechange/
+    // oniceconnectionstatechange transition. Gives the existing ICE stack a
+    // short, fixed settle window (the same ICE_RESTART_DELAY_MS
+    // scheduleIceRestart already uses — no new timing constant introduced)
+    // to either genuinely fail (in which case the untouched connection-state
+    // handlers and scheduleIceRestart's own timer already own recovery from
+    // there) or silently self-heal; only once neither of those is going to
+    // trigger a rebind on its own does this proactively run the exact same
+    // rebind markPeerConnectionHealthy() already trusts for the analogous
+    // "recovered, same track" case. Idempotent and race-safe:
+    // remoteRebindPendingRef is the single shared signal armed just below —
+    // if a genuine disconnect/reconnect cycle beats this to it,
+    // markPeerConnectionHealthy() will already have cleared the flag by the
+    // time this checks it, and this becomes a no-op.
+    networkRecoveryRef.current = () => {
+      if (networkRecoveryInProgressRef.current) return;
+      if (!mounted || manualReconnectRef.current) return;
+      const currentPc = pc;
+      if (
+        !currentPc ||
+        currentPc.signalingState === "closed" ||
+        !hasConnectedOnceRef.current
+      )
+        return;
+      // Arm the same rebind flag the disconnected/failed branches below
+      // use — see this function's doc comment for why "online" can fire
+      // before remoteRebindPendingRef has otherwise been armed.
+      remoteRebindPendingRef.current = true;
+      networkRecoveryInProgressRef.current = true;
+      window.setTimeout(() => {
+        networkRecoveryInProgressRef.current = false;
+        if (
+          !mounted ||
+          pcRef.current !== currentPc ||
+          currentPc.signalingState === "closed"
+        )
+          return;
+        const stillConnected =
+          currentPc.connectionState === "connected" ||
+          currentPc.iceConnectionState === "connected" ||
+          currentPc.iceConnectionState === "completed";
+        if (!stillConnected) return; // unhealthy — existing handlers/scheduleIceRestart own recovery from here
+        if (!remoteRebindPendingRef.current) return; // already consumed by a real reconnect in the meantime
+        markPeerConnectionHealthy();
+      }, ICE_RESTART_DELAY_MS);
     };
 
     pc.onconnectionstatechange = () => {
@@ -3223,10 +3334,40 @@ export default function VideoCall() {
       pc.oniceconnectionstatechange = null;
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      screenStreamRef.current?.getTracks().forEach((t) => {
-        t.onended = null;
-        t.stop();
-      });
+      // A rebuild (manual Retry, or the automatic pcNeedsRebuild path in
+      // handlePeerJoined — both set manualReconnectRef.current, captured
+      // above as isManualReconnect) tears down and recreates the whole
+      // RTCPeerConnection, but has nothing to do with the browser's own
+      // display-capture session, which getDisplayMedia() can't silently
+      // re-request without a fresh user gesture. Stopping the track here
+      // would permanently end that capture for no reason. For a rebuild
+      // specifically — never a real leave/unmount, where stopping it below
+      // is still correct — keep it alive and hand it to
+      // resumeScreenShareRef (invoked from markPeerConnectionHealthy once
+      // the new connection is healthy) instead of stopping it now.
+      if (isManualReconnect && screenSharingRef.current && screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((t) => {
+          t.onended = null;
+        });
+        pendingScreenShareResumeRef.current = screenStreamRef.current;
+      } else {
+        screenStreamRef.current?.getTracks().forEach((t) => {
+          t.onended = null;
+          t.stop();
+        });
+        // A real leave/unmount (not a rebuild) — also stop anything left
+        // over from an earlier rebuild's preservation that never actually
+        // got resumed (e.g. the rebuilt connection never reached
+        // "connected" before this real departure happened), so the
+        // capture session can't be silently leaked indefinitely.
+        if (pendingScreenShareResumeRef.current) {
+          pendingScreenShareResumeRef.current.getTracks().forEach((t) => {
+            t.onended = null;
+            if (t.readyState !== "ended") t.stop();
+          });
+          pendingScreenShareResumeRef.current = null;
+        }
+      }
       screenStreamRef.current = null;
       pendingRemoteCandidatesRef.current = [];
       joinedSocketIdRef.current = "";
@@ -3292,18 +3433,54 @@ export default function VideoCall() {
   // for as long as the call is actually in progress.
   useEffect(() => {
     if (!inCall) return;
+    authRefreshFailureCountRef.current = 0;
     const heartbeat = setInterval(
       () => {
         api
           .post("/api/auth/refresh", null, {
             authRole: isDoctor ? "doctor" : "user",
           })
-          .catch(() => {});
+          .then(() => {
+            authRefreshFailureCountRef.current = 0;
+          })
+          .catch((err) => {
+            authRefreshFailureCountRef.current += 1;
+            // A 401/403 here is the backend explicitly saying this refresh
+            // token itself is invalid/expired — no ambiguity, act on it
+            // immediately rather than waiting for it to repeat. Anything
+            // else (no response at all, a network error, a transient 5xx)
+            // is treated as ambiguous and only escalated after repeating —
+            // never on a single failure, so one dropped request can't tear
+            // down an otherwise-healthy call.
+            const status = err?.response?.status;
+            const isConfirmedAuthFailure = status === 401 || status === 403;
+            if (
+              !isConfirmedAuthFailure &&
+              authRefreshFailureCountRef.current < AUTH_REFRESH_FAILURE_THRESHOLD
+            ) {
+              return; // transient — the next scheduled attempt will try again
+            }
+            // Confirmed (or repeated) failure: the session can no longer be
+            // kept alive by retrying. Stop the futile silent retries and
+            // surface the same terminal apptError/sessionEnded gate this
+            // file already uses for room-denied/duplicate-session/access-
+            // revoked, instead of a second authentication UI — that gate
+            // also short-circuits the main WebRTC effect's own reconnect
+            // machinery (it starts with `if (sessionEnded) return;`), so
+            // this can't leave a reconnect loop running against a session
+            // that's already been told it's unauthenticated.
+            clearInterval(heartbeat);
+            performCleanup();
+            setSessionEnded(true);
+            setApptError(
+              "Your session has expired. Please refresh the page and log in again to continue.",
+            );
+          });
       },
       4 * 60 * 1000,
     );
     return () => clearInterval(heartbeat);
-  }, [inCall, isDoctor]);
+  }, [inCall, isDoctor, performCleanup]);
 
   // ── Controls ──────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
@@ -3504,6 +3681,76 @@ export default function VideoCall() {
     }
     void startScreenShare();
   }, [startScreenShare, stopScreenShare]);
+
+  // Consumes pendingScreenShareResumeRef — a still-live display-capture
+  // MediaStream the main effect's cleanup preserved (never stopped) across a
+  // PeerConnection rebuild specifically because it was mid-share at the
+  // time. Re-attaches it to the new PeerConnection's video sender via the
+  // same replaceTrack() call startScreenShare already uses — no new
+  // getDisplayMedia() prompt, so no user-gesture requirement is at stake,
+  // and no renegotiation is triggered (replaceTrack doesn't touch the SDP
+  // m-line). Assigned to resumeScreenShareRef so the main effect (where the
+  // new pc/markPeerConnectionHealthy live) can invoke it once the rebuilt
+  // connection is actually healthy, mirroring the existing
+  // kickIceRecoveryRef/networkRecoveryRef cross-effect pattern.
+  const resumeScreenShareIfPending = useCallback(async () => {
+    const pendingScreen = pendingScreenShareResumeRef.current;
+    if (!pendingScreen) return;
+    pendingScreenShareResumeRef.current = null;
+
+    const pc = pcRef.current;
+    const screenTrack = pendingScreen.getVideoTracks()[0];
+    // The browser's own "Stop sharing" bar can end the capture at any
+    // moment, including during the narrow rebuild window — if that already
+    // happened, or there's no pc to attach to, there's nothing to resume;
+    // fall back to the existing manual reselect flow (the Share button)
+    // rather than guessing, per the requirement not to auto-prompt
+    // getDisplayMedia().
+    if (!pc || pc.signalingState === "closed" || !screenTrack || screenTrack.readyState !== "live") {
+      pendingScreen.getTracks().forEach((track) => {
+        track.onended = null;
+        if (track.readyState !== "ended") track.stop();
+      });
+      return;
+    }
+
+    const sender = getVideoSender(pc);
+    if (!sender) {
+      pendingScreen.getTracks().forEach((track) => {
+        track.onended = null;
+        if (track.readyState !== "ended") track.stop();
+      });
+      return;
+    }
+
+    try {
+      setTrackHint(screenTrack, "detail");
+      await sender.replaceTrack(screenTrack);
+      await tuneSenderQuality(sender, {
+        maxBitrate: BITRATE_PROFILE.screenShareVideo,
+        maxFramerate: 30,
+        maintainResolution: true,
+      });
+      screenStreamRef.current = pendingScreen;
+      screenSharingRef.current = true;
+      setIsScreenSharing(true);
+      logVideoEvent("screen_share_resumed_after_reconnect", {});
+      screenTrack.onended = () => {
+        void stopScreenShare({ stopTracks: false });
+      };
+    } catch (err) {
+      logger.error("Resuming screen share after reconnect failed:", err);
+      logVideoEvent("screen_share_resume_failed", { message: err.message });
+      pendingScreen.getTracks().forEach((track) => {
+        track.onended = null;
+        if (track.readyState !== "ended") track.stop();
+      });
+    }
+  }, [getVideoSender, logVideoEvent, stopScreenShare]);
+
+  useEffect(() => {
+    resumeScreenShareRef.current = resumeScreenShareIfPending;
+  }, [resumeScreenShareIfPending]);
 
   const toggleSwap = useCallback(() => {
     setIsSwapped((prev) => {
