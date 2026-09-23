@@ -9,6 +9,11 @@ import { useDoctorAuth } from "../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import createLogger from "../utils/logger";
 import {
+  retryDebugLog,
+  retryDebugExtractFingerprint,
+  retryDebugPollInboundVideoStats,
+} from "../utils/retryDebug";
+import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
@@ -866,6 +871,16 @@ export default function VideoCall() {
   // alone (that guard only protects a single effect instance, not the
   // freshly-rebuilt instance a self "peer-joined" echo lands in next).
   const pcCreatedAtRef = useRef(0);
+  // TEMPORARY (RETRY_DEBUG): last remote DTLS fingerprint we applied, so
+  // handleOffer's diagnostic log can report whether an incoming offer's
+  // fingerprint differs from the previous one (i.e. the peer rebuilt their
+  // RTCPeerConnection). Read/written only by retry-debug logging.
+  const retryDebugLastRemoteFingerprintRef = useRef(null);
+  // TEMPORARY (RETRY_DEBUG): previous connectionState/iceConnectionState so
+  // the state-change handlers can log an old→new transition instead of just
+  // the new value. Read/written only by retry-debug logging.
+  const retryDebugPrevConnStateRef = useRef(null);
+  const retryDebugPrevIceStateRef = useRef(null);
 
   // ── Stable state refs ─────────────────────────────────────────────
   const inCallRef = useRef(false);
@@ -1765,7 +1780,15 @@ export default function VideoCall() {
 
       const senderTuning = stream.getTracks().map((track) => {
         const sender = getSenderForKind(pc, track.kind);
+        const wasAdded = !sender;
         const activeSender = sender || pc.addTrack(track, stream);
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "attachLocalMediaStream:track", {
+          kind: track.kind,
+          id: track.id,
+          action: wasAdded ? "addTrack" : "replaceTrack",
+          isManualReconnect: manualReconnectRef.current,
+        });
         const replace = sender ? sender.replaceTrack(track) : Promise.resolve();
         return replace.then(() =>
           tuneSenderQuality(
@@ -1790,7 +1813,7 @@ export default function VideoCall() {
       assignStreams(isSwappedRef.current);
       return true;
     },
-    [assignStreams],
+    [assignStreams, appointmentId, isDoctor],
   );
 
   // A camera device reopened immediately after a previous session just
@@ -1910,6 +1933,14 @@ export default function VideoCall() {
     });
 
     if (pcRef.current && pcRef.current.signalingState !== "closed") {
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "effect:closing_old_pc", {
+        isManualReconnect: manualReconnectRef.current,
+        oldPcConnectionState: pcRef.current.connectionState,
+        oldPcIceConnectionState: pcRef.current.iceConnectionState,
+        oldPcSignalingState: pcRef.current.signalingState,
+        oldPcAgeMs: pcCreatedAtRef.current ? Date.now() - pcCreatedAtRef.current : null,
+      });
       pcRef.current.close();
     }
 
@@ -1923,6 +1954,10 @@ export default function VideoCall() {
     }
     pcRef.current = pc;
     pcCreatedAtRef.current = Date.now();
+    // TEMPORARY (RETRY_DEBUG)
+    retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "effect:new_pc_created", {
+      isManualReconnect: manualReconnectRef.current,
+    });
     logger.info("WebRTC peer connection created", {
       iceServers: iceConfig.iceServers.map((server) => ({
         urls: server.urls,
@@ -2032,6 +2067,13 @@ export default function VideoCall() {
         const offerId = makeOfferId();
         pendingOfferIdRef.current = offerId;
         pendingOfferSentAtRef.current = Date.now();
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "createAndSendOffer:offer_sent", {
+          offerId,
+          iceRestart,
+          isManualReconnect: manualReconnectRef.current,
+          dtlsFingerprint: retryDebugExtractFingerprint(pc.localDescription?.sdp),
+        });
         socket.emit("video-offer", {
           appointmentId,
           offer: pc.localDescription,
@@ -2385,6 +2427,23 @@ export default function VideoCall() {
         remoteStreamRef.current = remoteStream;
       }
 
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "pc.ontrack", {
+        trackWasReplaced,
+        tracks: incomingTracks.map((track) => ({
+          kind: track.kind,
+          id: track.id,
+          readyState: track.readyState,
+          muted: track.muted,
+          enabled: track.enabled,
+        })),
+        streamCount: event.streams?.length || 0,
+        attachTarget: isSwappedRef.current
+          ? "pipVideoRef(remote)"
+          : "mainVideoRef(remote)",
+        alsoAttachedTo: "remoteAudioRef",
+      });
+
       if (mounted) {
         logVideoEvent("remote_track_received", {
           tracks: incomingTracks.map((track) => ({
@@ -2420,6 +2479,12 @@ export default function VideoCall() {
     // that function's own comment for why it needs to reuse this. Mirrors
     // VideoCallController._handleConnectedState in the Flutter app.
     const markPeerConnectionHealthy = () => {
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "markPeerConnectionHealthy:called", {
+        connectionState: pc.connectionState,
+        iceConnectionState: pc.iceConnectionState,
+        remoteRebindPending: remoteRebindPendingRef.current,
+        hasConnectedOnce: hasConnectedOnceRef.current,
+      });
       clearTimeout(iceRestartTimerRef.current);
       clearTimeout(connectionFailTimerRef.current);
       iceRestartTimerRef.current = null;
@@ -2536,6 +2601,12 @@ export default function VideoCall() {
 
     pc.onconnectionstatechange = () => {
       const s = pc.connectionState;
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "onconnectionstatechange", {
+        oldState: retryDebugPrevConnStateRef.current,
+        newState: s,
+      });
+      retryDebugPrevConnStateRef.current = s;
       if (!mounted) return;
       if (s === "connected") {
         markPeerConnectionHealthy();
@@ -2564,6 +2635,12 @@ export default function VideoCall() {
     // Fallback for browsers where onconnectionstatechange fires late or not at all
     pc.oniceconnectionstatechange = () => {
       const s = pc.iceConnectionState;
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "oniceconnectionstatechange", {
+        oldState: retryDebugPrevIceStateRef.current,
+        newState: s,
+      });
+      retryDebugPrevIceStateRef.current = s;
       if (!mounted) return;
       if (s === "connected" || s === "completed") {
         markPeerConnectionHealthy();
@@ -2611,6 +2688,36 @@ export default function VideoCall() {
         const offerCollision = !readyForOffer;
 
         const shouldIgnoreOffer = !isPolitePeer && offerCollision;
+
+        // TEMPORARY (RETRY_DEBUG): snapshot everything relevant at the
+        // moment this offer arrived, before any of it is mutated below.
+        const retryDebugRole = isDoctor ? "doctor" : "patient";
+        const retryDebugPcAgeMs = pcCreatedAtRef.current
+          ? Date.now() - pcCreatedAtRef.current
+          : null;
+        const retryDebugIncomingFingerprint = retryDebugExtractFingerprint(offer?.sdp);
+        const retryDebugPrevFingerprint = retryDebugLastRemoteFingerprintRef.current;
+        retryDebugLog(retryDebugRole, appointmentId, "handleOffer:arrived", {
+          offerId: incomingOfferId || null,
+          signalingState: pc.signalingState,
+          connectionState: pc.connectionState,
+          iceConnectionState: pc.iceConnectionState,
+          pcAgeMs: retryDebugPcAgeMs,
+          pcLooksFreshlyRebuilt:
+            retryDebugPcAgeMs !== null && retryDebugPcAgeMs < 3000,
+          makingOffer: makingOfferRef.current,
+          settingRemoteAnswerPending: settingRemoteAnswerPendingRef.current,
+          offerCollision,
+          isPolitePeer,
+          shouldIgnoreOffer,
+          incomingDtlsFingerprint: retryDebugIncomingFingerprint,
+          previousRemoteDtlsFingerprint: retryDebugPrevFingerprint,
+          dtlsFingerprintChanged:
+            retryDebugIncomingFingerprint != null &&
+            retryDebugPrevFingerprint != null &&
+            retryDebugIncomingFingerprint !== retryDebugPrevFingerprint,
+        });
+
         if (shouldIgnoreOffer) {
           markIgnoredOffer();
         } else {
@@ -2618,11 +2725,17 @@ export default function VideoCall() {
         }
         if (shouldIgnoreOffer) {
           logger.info("Ignoring colliding offer from peer.");
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:IGNORED_collision", {
+            offerId: incomingOfferId || null,
+          });
           return;
         }
 
         if (offerCollision && pc.signalingState === "have-local-offer") {
           logger.info("Rolling back local offer to accept peer offer.");
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:rollback_local_offer", {
+            offerId: incomingOfferId || null,
+          });
           await pc.setLocalDescription({ type: "rollback" });
           // Our own outstanding offer was just discarded — any answer that
           // still shows up for it later is stale and must be rejected, and
@@ -2635,10 +2748,31 @@ export default function VideoCall() {
           logger.info(
             "Ignoring offer while negotiation is already in progress.",
           );
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:IGNORED_in_progress", {
+            offerId: incomingOfferId || null,
+            signalingState: pc.signalingState,
+          });
           return;
         }
 
-        await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
+        } catch (err) {
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:setRemoteDescription:ERROR", {
+            offerId: incomingOfferId || null,
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          throw err;
+        }
+        // Diagnostic bookkeeping only — records the fingerprint we just
+        // applied so the *next* offer's arrival log can report whether it
+        // changed (i.e. the peer's RTCPeerConnection was rebuilt).
+        retryDebugLastRemoteFingerprintRef.current = retryDebugIncomingFingerprint;
+        retryDebugLog(retryDebugRole, appointmentId, "handleOffer:setRemoteDescription:ok", {
+          offerId: incomingOfferId || null,
+        });
         // Record which offer we just accepted as soon as it's applied, not
         // only once we get around to answering it — if local media isn't
         // ready yet, retryMediaPermissions() answers this same remote
@@ -2654,10 +2788,37 @@ export default function VideoCall() {
           setCamErrorReason(
             "Allow camera or microphone access, then retry to join the consultation.",
           );
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:local_media_not_ready", {
+            offerId: incomingOfferId || null,
+          });
           return;
         }
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
+        let answer;
+        try {
+          answer = await pc.createAnswer();
+        } catch (err) {
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:createAnswer:ERROR", {
+            offerId: incomingOfferId || null,
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          throw err;
+        }
+        try {
+          await pc.setLocalDescription(answer);
+        } catch (err) {
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:setLocalDescription:ERROR", {
+            offerId: incomingOfferId || null,
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          throw err;
+        }
+        retryDebugLog(retryDebugRole, appointmentId, "handleOffer:answer_sent", {
+          offerId: incomingOfferId || null,
+        });
         socket.emit("video-answer", {
           appointmentId,
           answer: pc.localDescription,
@@ -2667,13 +2828,33 @@ export default function VideoCall() {
           setInCall(true);
           inCallRef.current = true;
         }
+        // TEMPORARY (RETRY_DEBUG): watch whether media actually starts
+        // flowing on this pc after answering this offer.
+        retryDebugPollInboundVideoStats(
+          pc,
+          retryDebugRole,
+          appointmentId,
+          "handleOffer:post_answer",
+        );
       } catch (err) {
         logger.error("Offer error:", err);
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "handleOffer:ERROR", {
+          name: err?.name,
+          message: err?.message,
+          stack: err?.stack,
+        });
       }
     };
 
     const handleAnswer = async ({ answer, offerId: receivedOfferId }) => {
       if (!answer || !mounted) return;
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "handleAnswer:received", {
+        offerId: receivedOfferId || null,
+        expectedOfferId: pendingOfferIdRef.current,
+        signalingState: pc.signalingState,
+        isManualReconnect: manualReconnectRef.current,
+      });
       try {
         if (pc.signalingState !== "have-local-offer") {
           logger.info(
@@ -2721,8 +2902,18 @@ export default function VideoCall() {
           setInCall(true);
           inCallRef.current = true;
         }
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "handleAnswer:applied_ok", {
+          offerId: receivedOfferId || null,
+        });
       } catch (err) {
         logger.error("Answer error:", err);
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "handleAnswer:ERROR", {
+          offerId: receivedOfferId || null,
+          name: err?.name,
+          message: err?.message,
+          stack: err?.stack,
+        });
       } finally {
         settingRemoteAnswerPendingRef.current = false;
       }
@@ -2841,6 +3032,18 @@ export default function VideoCall() {
           existingPc.signalingState === "closed" ||
           existingPc.connectionState === "failed" ||
           (resumedCall && !pcHealthy && pcAgeMs > REBUILD_GRACE_MS);
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "handlePeerJoined", {
+          resumedCall: Boolean(resumedCall),
+          existingPcConnectionState: existingPc?.connectionState ?? null,
+          existingPcIceConnectionState: existingPc?.iceConnectionState ?? null,
+          existingPcSignalingState: existingPc?.signalingState ?? null,
+          pcHealthy,
+          pcAgeMs,
+          rebuildGraceMs: REBUILD_GRACE_MS,
+          pcNeedsRebuild,
+          branch: pcNeedsRebuild ? "REBUILD" : "NO_REBUILD",
+          rebuildAlreadyRequestedThisInstance: rebuildRequestedRef.current,
+        });
         if (pcNeedsRebuild && !rebuildRequestedRef.current) {
           rebuildRequestedRef.current = true;
           logVideoEvent("peer_rejoined_pc_rebuild", {
@@ -3861,6 +4064,11 @@ export default function VideoCall() {
   // the room from scratch, on either role.
   const forceReconnect = useCallback(() => {
     if (manualReconnectCooldownRef.current) return;
+    // TEMPORARY (RETRY_DEBUG)
+    retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "forceReconnect:TAPPED", {
+      pcConnectionState: pcRef.current?.connectionState ?? null,
+      pcIceConnectionState: pcRef.current?.iceConnectionState ?? null,
+    });
     manualReconnectRef.current = true;
     setReconnectStalled(false);
     setManualReconnecting(true);
@@ -3869,7 +4077,7 @@ export default function VideoCall() {
       manualReconnectCooldownRef.current = null;
       setManualReconnecting(false);
     }, 1500);
-  }, []);
+  }, [appointmentId, isDoctor]);
 
   useEffect(
     () => () => window.clearTimeout(manualReconnectCooldownRef.current),
