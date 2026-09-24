@@ -189,6 +189,11 @@ const ICE_RECOVERY_COOLDOWN_MS = 30000;
 // offer sender stuck in "have-local-offer" forever, since nothing else ever
 // rolls back a self-initiated offer. See VideoCall.jsx's identical constant.
 const OFFER_ANSWER_TIMEOUT_MS = 8000;
+// A stashed remote offer older than this is stale: the sender has long since
+// rolled it back (its own OFFER_ANSWER_TIMEOUT_MS) and moved on, so answering
+// it after a rebuild only produces an orphaned answer on their side. Mirrors
+// VideoCall.jsx's PENDING_OFFER_MAX_AGE_MS.
+const PENDING_OFFER_MAX_AGE_MS = 15000;
 // How long a disconnected/failed connection state is given to self-heal
 // (via the ICE-restart machinery above) before surfacing a manual "Retry"
 // escape hatch to the user.
@@ -612,6 +617,19 @@ export default function DirectVideoCall() {
   // re-entrancy guard) so the UI can be read declaratively in JSX.
   const [manualReconnecting, setManualReconnecting] = useState(false);
   const manualReconnectCooldownTimerRef = useRef(null);
+  // Releases both the re-entrancy guard and the banner/button's
+  // "Reconnecting…" hold after a manual Retry. Called from whichever happens
+  // first — the rebuilt connection becoming healthy (handleConnectedState) or
+  // the 5s fallback timer — so a rebuild that never gets healthy can't leave
+  // the button stuck disabled. Idempotent (checked against
+  // reconnectInProgressRef itself), safe to call from both paths.
+  const releaseManualReconnectGuard = useCallback(() => {
+    if (!reconnectInProgressRef.current) return;
+    reconnectInProgressRef.current = false;
+    setManualReconnecting(false);
+    clearTimeout(manualReconnectCooldownTimerRef.current);
+    manualReconnectCooldownTimerRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -1135,9 +1153,8 @@ export default function DirectVideoCall() {
           // handleOffer) can now be answered from a clean "stable" state —
           // prefer that over kicking a fresh ICE-restart offer, so glare
           // recovery completes in one step instead of another full cycle.
-          const stashedOffer = pendingRemoteOfferRef.current;
+          const stashedOffer = takeStashedOffer();
           if (stashedOffer) {
-            pendingRemoteOfferRef.current = null;
             void handleOffer(stashedOffer);
           } else {
             void createAndSendIceRestartOffer();
@@ -1367,7 +1384,24 @@ export default function DirectVideoCall() {
       }, ORPHANED_ANSWER_RECHECK_MS);
     };
 
-    const handleOffer = async (payload = {}) => {
+    // Takes (and clears) the stashed remote offer, dropping it when stale.
+    const takeStashedOffer = () => {
+      const stashed = pendingRemoteOfferRef.current;
+      pendingRemoteOfferRef.current = null;
+      if (!stashed) return null;
+      const ageMs = Date.now() - (stashed.receivedAt || Date.now());
+      if (ageMs <= PENDING_OFFER_MAX_AGE_MS) return stashed;
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "stashedOffer:dropped_stale", {
+        offerId: stashed.offerId || null,
+        ageMs,
+      });
+      return null;
+    };
+
+    const handleOffer = async (incoming = {}) => {
+      // Stamped once on first arrival; every stash/replay path carries it.
+      const payload = incoming.receivedAt ? incoming : { ...incoming, receivedAt: Date.now() };
       const { offer, offerId: incomingOfferId } = payload;
       if (!offer) return;
       const pc = pcRef.current;
@@ -1620,16 +1654,43 @@ export default function DirectVideoCall() {
         scheduleOrphanedAnswerRecheck("offerid_mismatch");
         return;
       }
+      // Safety net for a peer that rebuilt its pc: an answer whose DTLS
+      // fingerprint differs from the last one we applied from this peer comes
+      // from a brand-new RTCPeerConnection (e.g. the guest retried while the
+      // host kept its old pc and answered-to by the guest's new one). It can't
+      // be applied to our still-open, previously negotiated pc — the
+      // transport would sit "connected" with no media — so don't try; rebuild
+      // instead, and the fresh pc's own offer makes the peer rebuild too.
+      // Same non-null-on-both-sides rule as handleOffer's check. Mirrors
+      // VideoCall.jsx's handleAnswer.
+      const answerFingerprint = extractDtlsFingerprint(answer?.sdp);
+      const knownRemoteFingerprint = lastRemoteFingerprintRef.current;
+      if (
+        answerFingerprint != null &&
+        knownRemoteFingerprint != null &&
+        answerFingerprint !== knownRemoteFingerprint
+      ) {
+        retryDebugLog(retryDebugRole, roomId, "handleAnswer:peer_rebuilt_detected_via_answer_fingerprint", {
+          offerId: receivedOfferId || null,
+          answerFingerprint,
+          knownRemoteFingerprint,
+        });
+        await requestPcRebuild("answer_fingerprint_changed");
+        return;
+      }
       try {
         await pc.setRemoteDescription(answer);
+        // Real reconnect-logic state: the NEXT offer's or answer's fingerprint
+        // check compares against this. The offerer side only ever learns the
+        // peer's fingerprint from answers, so it must be stored here too.
+        if (answerFingerprint) lastRemoteFingerprintRef.current = answerFingerprint;
         pendingOfferIdRef.current = null;
         clearOfferAnswerTimeout();
         await flushPendingCandidates();
         // We're back to "stable"; if a colliding remote offer was stashed
         // while our own was outstanding (see handleOffer), answer it now.
-        const stashedOffer = pendingRemoteOfferRef.current;
+        const stashedOffer = takeStashedOffer();
         if (stashedOffer) {
-          pendingRemoteOfferRef.current = null;
           void handleOffer(stashedOffer);
         }
         // TEMPORARY (RETRY_DEBUG)
@@ -2070,6 +2131,8 @@ export default function DirectVideoCall() {
       // A pending orphaned-answer recheck (handleAnswer) is moot once the pc
       // is actually healthy again.
       cancelOrphanedAnswerRecheck();
+      // The rebuilt connection is up — end a manual Retry's banner/button hold.
+      releaseManualReconnectGuard();
       hasConnectedOnceRef.current = true;
       peerPresentRef.current = true;
       // The "resuming an earlier session" story ends once we're connected —
@@ -2499,9 +2562,8 @@ export default function DirectVideoCall() {
       // pendingRemoteOfferRef. Any ICE candidates buffered alongside it are
       // drained by flushPendingCandidates() inside handleOffer once the
       // remote description is set.
-      const bufferedOffer = pendingRemoteOfferRef.current;
+      const bufferedOffer = takeStashedOffer();
       if (bufferedOffer) {
-        pendingRemoteOfferRef.current = null;
         void handleOffer(bufferedOffer);
       }
     };
@@ -2552,19 +2614,19 @@ export default function DirectVideoCall() {
       resyncConnectionStateFromPeerConnection();
     };
 
-    // A manager-level "reconnect" fires strictly AFTER the socket's own
-    // "connect" for the same reconnect cycle (Socket.IO v4 event ordering:
-    // the Manager only emits "reconnect" once its sockets have already
-    // reconnected) — socket.on("connect", joinRoom) below already re-emits
-    // join-direct-room for this exact event, including when
-    // connectionStateRecovery restores the session, so calling joinRoom()
-    // again here was a second, redundant emit for the same reconnect
-    // (confirmed in production: the server saw two join-direct-room calls
-    // ~200ms apart, computed resumedCall differently for each depending on
-    // which branch it landed in, and broadcast two direct-peer-joined
-    // events — the root cause of the duplicate/over-eager rebuild bug fixed
-    // in this pass). This handler now only does its own follow-up: if our
-    // own PeerConnection still looks unhealthy a beat after the reconnect,
+    // Socket.IO v4 event order on a reconnect: the Manager's "reconnect"
+    // fires as soon as the Engine.IO transport opens — BEFORE the namespace
+    // CONNECT handshake completes and therefore before the socket's own
+    // "connect" event. socket.on("connect", joinRoom) below already re-emits
+    // join-direct-room for this reconnect (including when
+    // connectionStateRecovery restores the session). An emit made from THIS
+    // handler happens while socket.connected is still false, so socket.io
+    // buffers it and flushes it just before the "connect" handlers run —
+    // which then emit a second time. That double emit was the source of the
+    // duplicate join confirmed in production (two join-direct-room calls
+    // ~200ms apart, two direct-peer-joined broadcasts), so this handler no
+    // longer joins itself. It only does its own follow-up: if our own
+    // PeerConnection still looks unhealthy a beat after the reconnect,
     // proactively drive recovery instead of only waiting on a
     // connectionstatechange transition. Mirrors VideoCall.jsx's
     // handleSocketReconnect.
@@ -2962,20 +3024,11 @@ export default function DirectVideoCall() {
     // back rather than the user staring at a silent "connecting" again.
     armConnectWatchdogsRef.current();
 
-    // Releases both the re-entrancy guard and the button's disabled/
-    // "Reconnecting…" state. Called from whichever of the two paths below
-    // resolves first — the rebuild actually finishing, or the 5s fallback
-    // timer — so a rebuild that hangs longer than expected can't leave the
-    // button permanently stuck disabled. Idempotent (checked against
-    // reconnectInProgressRef itself) since both paths can fire in either
-    // order or even both.
-    const releaseManualReconnectGuard = () => {
-      if (!reconnectInProgressRef.current) return;
-      reconnectInProgressRef.current = false;
-      setManualReconnecting(false);
-      clearTimeout(manualReconnectCooldownTimerRef.current);
-      manualReconnectCooldownTimerRef.current = null;
-    };
+    // Held (button disabled, banner kept up showing "Reconnecting…") until
+    // the rebuilt connection is healthy (handleConnectedState calls
+    // releaseManualReconnectGuard) or 5s pass, whichever comes first — NOT
+    // merely until the rebuild call returns, which is well before the new
+    // connection actually works.
     manualReconnectCooldownTimerRef.current = window.setTimeout(releaseManualReconnectGuard, 5000);
 
     if (socket.connected) {
@@ -2986,12 +3039,12 @@ export default function DirectVideoCall() {
       // intent that should always take effect. Also clears
       // iceRestartTimerRef/connectionFailTimerRef/iceRecoveryAttemptsRef as
       // part of its own teardown, so those don't need repeating here.
-      requestPcRebuildRef.current("manual_retry", { manual: true }).finally(releaseManualReconnectGuard);
+      void requestPcRebuildRef.current("manual_retry", { manual: true });
     } else {
       socket.connect();
       releaseManualReconnectGuard();
     }
-  }, [roomId]);
+  }, [roomId, releaseManualReconnectGuard]);
 
   const sendChatMessage = useCallback(
     (event) => {
@@ -3266,15 +3319,21 @@ export default function DirectVideoCall() {
               </div>
             )}
 
-            {reconnectStalled && (
+            {/* Also kept up while a manual Retry is being held
+                (manualReconnecting): the tap itself clears reconnectStalled,
+                which used to make the banner — and its "Reconnecting…"
+                button — vanish the instant it was pressed. */}
+            {(reconnectStalled || manualReconnecting) && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
                 </span>
                 <span>
-                  {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
-                    ? "Still unable to reconnect. You can keep trying or end the call."
-                    : "Reconnection is taking longer than expected."}
+                  {manualReconnecting
+                    ? "Reconnecting to the call…"
+                    : reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
+                      ? "Still unable to reconnect. You can keep trying or end the call."
+                      : "Reconnection is taking longer than expected."}
                 </span>
                 <button
                   type="button"

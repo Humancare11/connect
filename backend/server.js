@@ -634,6 +634,12 @@ const onlineUsers = new Map();
 
 // Track which appointment room each socket is in
 const socketRooms = new Map(); // socketId -> appointmentId
+// socketId -> { peerRebuild: boolean }: what each participant's client says it
+// supports, announced in its join-appointment-room payload and relayed to the
+// other participant in "peer-joined" (as `peerCapabilities`). A client that
+// sends nothing is an older build and is recorded as supporting nothing. Kept
+// in memory only (like socketRooms); cleared on disconnect.
+const socketCapabilities = new Map();
 
 // Appointments just cancelled/completed, so every per-event signaling/chat
 // check (isSocketInAppointmentRoom) fails closed immediately, independent of
@@ -683,6 +689,11 @@ const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
+// A rebuild request is a rare recovery signal (the client side already caps
+// itself at a few automatic rebuilds per minute) — 3 per 10s is ample headroom
+// for a legitimate manual-Retry + automatic-watchdog overlap while still
+// stopping a misbehaving client from making the peer rebuild in a loop.
+const peerRebuildRequestLimiter = makeSocketLimiter({ windowMs: 10000, max: 3 });
 const telemetryLimiter = makeSocketLimiter({ windowMs: 1000, max: 10 });
 const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // max: 6, matching videoSdpLimiter above. Direct Video Call guests are
@@ -705,6 +716,7 @@ const SOCKET_LIMITERS = [
   iceCandidateLimiter,
   iceRestartLimiter,
   cameraStateLimiter,
+  peerRebuildRequestLimiter,
   telemetryLimiter,
   directChatLimiter,
   directSdpLimiter,
@@ -899,6 +911,29 @@ function hasOtherUserInRoom(existingSocketIds, excludeUserId) {
     }
   }
   return false;
+}
+
+// Only known boolean flags are accepted from the client; anything missing or
+// malformed reads as "not supported" so an old (or hostile) client can't
+// opt itself into behavior it doesn't have.
+function sanitizeCapabilities(raw) {
+  return { peerRebuild: Boolean(raw && raw.peerRebuild === true) };
+}
+
+// Capabilities of the participant in `roomSocketIds` who is NOT
+// `excludeUserId` (i.e. the joining socket's peer), or null if nobody else is
+// present. Same live-socket/identity walk as hasOtherUserInRoom.
+function getPeerCapabilities(roomSocketIds, excludeUserId) {
+  if (!roomSocketIds) return null;
+  for (const sid of roomSocketIds) {
+    const peerSocket = io.sockets.sockets.get(sid);
+    if (!peerSocket) continue;
+    const peerIdentity = getSocketIdentity(peerSocket);
+    if (peerIdentity?.userId && String(peerIdentity.userId) !== String(excludeUserId)) {
+      return socketCapabilities.get(sid) || sanitizeCapabilities(null);
+    }
+  }
+  return null;
 }
 
 // Async, race-free identity resolution for a SPECIFIC requested role/userId.
@@ -1410,7 +1445,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token } = {}) => {
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token, capabilities } = {}) => {
     if (!appointmentId) return;
 
     const room = appointmentRoomName(appointmentId);
@@ -1427,6 +1462,11 @@ io.on("connection", (socket) => {
       });
       return;
     }
+
+    // Recorded on every (re)join, including the already-in-room / recovered
+    // branch below — a client that stops announcing (an older build) reads
+    // as supporting nothing, never as inheriting a stale value.
+    socketCapabilities.set(socket.id, sanitizeCapabilities(capabilities));
 
     // Socket.IO may report this socket as already in the room in two
     // distinct cases: (a) a genuine duplicate emit on the same live
@@ -1450,8 +1490,19 @@ io.on("connection", (socket) => {
       const wasActivated = roomActivated.has(appointmentId);
       if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
-      socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
-      if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
+      // peerCapabilities = the OTHER participant's capabilities, from the
+      // receiver's point of view: the room gets the joiner's, the joiner gets
+      // the peer's (null when nobody else is present).
+      socket.to(room).emit("peer-joined", {
+        resumedCall: wasActivated,
+        peerCapabilities: socketCapabilities.get(socket.id),
+      });
+      if (peerPresent) {
+        socket.emit("peer-joined", {
+          resumedCall: wasActivated,
+          peerCapabilities: getPeerCapabilities(existing, access.identity.userId),
+        });
+      }
       return;
     }
 
@@ -1541,8 +1592,19 @@ io.on("connection", (socket) => {
     const wasActivated = roomActivated.has(appointmentId);
     if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
-    socket.to(room).emit("peer-joined", { resumedCall: wasActivated });
-    if (peerPresent) socket.emit("peer-joined", { resumedCall: wasActivated });
+    socket.to(room).emit("peer-joined", {
+      resumedCall: wasActivated,
+      peerCapabilities: socketCapabilities.get(socket.id),
+    });
+    if (peerPresent) {
+      socket.emit("peer-joined", {
+        resumedCall: wasActivated,
+        peerCapabilities: getPeerCapabilities(
+          io.sockets.adapter.rooms.get(room),
+          socketUserId,
+        ),
+      });
+    }
   });
 
   socket.on("leave-appointment-room", ({ appointmentId }) => {
@@ -1716,6 +1778,24 @@ io.on("connection", (socket) => {
       .emit("camera-state", { isCamOff: Boolean(isCamOff) });
   });
 
+  // Asks the other participant to tear down and rebuild its own
+  // RTCPeerConnection. In an appointment call the patient is the sole offerer,
+  // so when the doctor rebuilds its pc the patient's old pc would later get an
+  // answer carrying a NEW DTLS fingerprint it cannot apply (video stays
+  // blank) — the doctor emits this first so the patient rebuilds too and
+  // sends a fresh offer. Pure relay, no payload: clients that don't know this
+  // event simply ignore it, and the requester falls back to rebuilding alone
+  // after its own timeout.
+  socket.on("request-peer-rebuild", ({ appointmentId } = {}) => {
+    if (!appointmentId) return;
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!peerRebuildRequestLimiter.allow(socket.id)) return;
+
+    socket
+      .to(appointmentRoomName(appointmentId))
+      .emit("request-peer-rebuild");
+  });
+
   socket.on("disconnect", (reason) => {
     // Notify the peer only after a short grace period. Mobile browsers can
     // briefly reconnect sockets during app/background or transport changes.
@@ -1752,6 +1832,7 @@ io.on("connection", (socket) => {
     }
 
     socketUsers.delete(socket.id);
+    socketCapabilities.delete(socket.id);
 
     for (const [userId, socketSet] of onlineUsers.entries()) {
       if (socketSet.has(socket.id)) {

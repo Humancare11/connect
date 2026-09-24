@@ -15,3 +15,19 @@ export function extractDtlsFingerprint(sdp) {
   const match = /a=fingerprint:\S+\s+(\S+)/i.exec(sdp);
   return match ? match[1] : null;
 }
+
+// Negotiated direction of each media section, e.g. ["audio:sendrecv",
+// "video:recvonly"]. Diagnostic only (never drives negotiation): lets callers
+// log — and warn about — an answer that is receive-only even though local
+// tracks exist, which silently produces a one-way call.
+export function extractSdpDirections(sdp) {
+  if (!sdp) return [];
+  return sdp
+    .split(/\r?\nm=/)
+    .slice(1)
+    .map((section) => {
+      const kind = section.split(" ")[0];
+      const match = /a=(sendrecv|sendonly|recvonly|inactive)/.exec(section);
+      return `${kind}:${match ? match[1] : "?"}`;
+    });
+}
