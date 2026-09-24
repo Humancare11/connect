@@ -76,6 +76,9 @@ if (!staging && isMainProcess) {
       reuseExistingServer: false,
       // Frontend .env leaves VITE_API_URL empty, so Vite proxies /api and
       // /socket.io to http://localhost:5000 — the backend started above.
+      // The tests read the app's "[RETRY-DEBUG]" console lines, which are off
+      // unless this is set.
+      env: { VITE_RETRY_DEBUG: "true" },
     },
   ];
 }

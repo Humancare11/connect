@@ -2,16 +2,16 @@
 // Added to investigate "blank video on the other side after tapping Retry",
 // shared by VideoCall.jsx (appointment calls) and DirectVideoCall.jsx
 // (ad-hoc calls) so both use identical logging behavior. Logging only — no
-// call/reconnect logic lives here. Flip RETRY_DEBUG to false (or delete this
-// file and its imports, all call sites tagged "[RETRY-DEBUG]") once the
-// investigation is closed.
+// call/reconnect logic lives here. Off by default; enable per build with
+// VITE_RETRY_DEBUG=true (the e2e suite sets it for its dev server; it is
+// deliberately NOT set in .env or .env.production, so production stays quiet).
 //
 // Exception: retryDebugExtractFingerprint below is kept here only as a
 // backward-compatible re-export for VideoCall.jsx, which still uses it
 // purely for logging. The real implementation — and the copy DirectVideoCall
 // .jsx's actual reconnect fix depends on — lives in webrtcSdp.js, outside
 // this file and outside the RETRY_DEBUG flag, on purpose.
-export const RETRY_DEBUG = true;
+export const RETRY_DEBUG = import.meta.env.VITE_RETRY_DEBUG === "true";
 export { extractDtlsFingerprint as retryDebugExtractFingerprint } from "./webrtcSdp";
 
 // `callId` is an appointmentId (VideoCall.jsx) or a direct-call roomId

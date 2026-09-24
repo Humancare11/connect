@@ -77,6 +77,9 @@ for these, so `helpers/seed.js` (local only) is the reference for the shape.
   cutting traffic needs OS-level tooling (firewall rules needing admin, or
   toxiproxy/iptables in Docker plus a TURN-only ICE config). That isn't simple
   or portable here (no Docker on this machine), so it's left out.
-- The assertions on `[RETRY-DEBUG]` log lines require `RETRY_DEBUG = true` in
-  `frontend/src/utils/retryDebug.js` (its current value). Turn it off and those
+- The assertions on `[RETRY-DEBUG]` log lines need the app's debug logging on.
+  `RETRY_DEBUG` in `frontend/src/utils/retryDebug.js` now reads
+  `VITE_RETRY_DEBUG` (off by default); `playwright.config.js` sets
+  `VITE_RETRY_DEBUG=true` for the Vite dev server it starts. If you point the
+  suite at some other server, that build needs the same variable, or those
   tests will fail on their log assertions by design.

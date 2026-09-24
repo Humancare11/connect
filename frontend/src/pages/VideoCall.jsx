@@ -14,6 +14,8 @@ import {
   retryDebugPollInboundVideoStats,
 } from "../utils/retryDebug";
 import { extractDtlsFingerprint, extractSdpDirections } from "../utils/webrtcSdp";
+import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
+import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -2363,6 +2365,28 @@ export default function VideoCall() {
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
+    // localReadyPromise is settled by the media IIFE below, which itself gives
+    // up on getUserMedia after MEDIA_ACQUIRE_TIMEOUT_MS. This is the backstop
+    // for the rest of that IIFE (e.g. enumerateDevices) hanging: resolves the
+    // string "timeout" so the offer path carries on receive-only instead of
+    // waiting forever. Only an explicit `false` means "media failed".
+    const waitForLocalReady = async (where, offerId) => {
+      let timer;
+      const result = await Promise.race([
+        localReadyPromise,
+        new Promise((resolve) => {
+          timer = window.setTimeout(() => resolve("timeout"), MEDIA_ACQUIRE_TIMEOUT_MS + 2000);
+        }),
+      ]);
+      window.clearTimeout(timer);
+      if (result === "timeout") {
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "localReady:wait_timed_out", {
+          where,
+          offerId: offerId || null,
+        });
+      }
+      return result;
+    };
 
     if (pcRef.current && pcRef.current.signalingState !== "closed") {
       // TEMPORARY (RETRY_DEBUG)
@@ -2736,7 +2760,66 @@ export default function VideoCall() {
         setDeviceCheck({ ...summary, status: "checking" });
         logVideoEvent("device_check", summary);
 
-        const stream = await getConsultationMediaStream();
+        const mediaAttempt = getConsultationMediaStream();
+        if (await mediaAcquireTimedOut(mediaAttempt)) {
+          // getUserMedia is hanging (unanswered permission prompt, busy or
+          // wedged device). Don't hold the whole call hostage: join and
+          // answer receive-only, show the usual media error + Retry, and
+          // attach the stream normally if it ever arrives.
+          logger.warn("getUserMedia still pending after", MEDIA_ACQUIRE_TIMEOUT_MS, "ms — continuing without local media");
+          logVideoEvent("media_acquire_timeout", { timeoutMs: MEDIA_ACQUIRE_TIMEOUT_MS });
+          retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "media:acquire_timed_out", {
+            timeoutMs: MEDIA_ACQUIRE_TIMEOUT_MS,
+          });
+          if (mounted) {
+            setCamError(true);
+            setCamErrorReason(
+              "Your camera or microphone is taking too long to respond. The call will connect without it — tap Retry, or check that no other app is using it.",
+            );
+            setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
+            setIsReady(true);
+            isReadyRef.current = true;
+            if (socket.connected) joinRoom();
+          }
+          resolveLocalReady(true);
+          mediaAttempt
+            .then(async (lateStream) => {
+              // Skip if the call moved on, or Retry already published media.
+              if (
+                !mounted ||
+                pc.signalingState === "closed" ||
+                pc.getSenders().some((s) => s.track && s.track.readyState === "live")
+              ) {
+                lateStream.getTracks().forEach((t) => t.stop());
+                return;
+              }
+              await attachLocalMediaStream(lateStream, pc);
+              void verifyLocalPlaybackLiveness(lateStream, pc);
+              setCamError(false);
+              setCamErrorReason("");
+              setDeviceCheck((prev) => ({ ...prev, status: "ready" }));
+              logVideoEvent("media_late_attached", {
+                audioTracks: lateStream.getAudioTracks().length,
+                videoTracks: lateStream.getVideoTracks().length,
+              });
+              retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "media:late_attached", {});
+              // The connection was negotiated without our tracks — offer again
+              // so they get published (createAndSendOffer guards state/glare).
+              window.setTimeout(() => {
+                if (mounted && pc.signalingState !== "closed") {
+                  void createAndSendOffer({ iceRestart: false });
+                }
+              }, 200);
+            })
+            .catch((err) => {
+              // Same handling as an immediate failure (the error/Retry UI is
+              // already up; just make the reason accurate).
+              logVideoEvent("media_permission_failed", { name: err?.name, message: err?.message });
+              if (mounted) setCamErrorReason(mediaErrorMessage(err));
+            });
+          return;
+        }
+        const stream = await mediaAttempt;
         if (!mounted) {
           stream.getTracks().forEach((t) => t.stop());
           return;
@@ -3144,7 +3227,7 @@ export default function VideoCall() {
         // false (and we carry on, receive-only as before) if media can't be
         // acquired. Incoming ICE candidates are queued meanwhile
         // (pendingRemoteCandidatesRef) and flushed after the offer is applied.
-        await localReadyPromise;
+        await waitForLocalReady("handleOffer:before_apply", incomingOfferId);
         if (!mounted || pc.signalingState === "closed") return;
         const readyForOffer =
           !makingOfferRef.current &&
@@ -3298,9 +3381,9 @@ export default function VideoCall() {
         resetIgnoredOffer();
         await flushPendingIceCandidates();
         // Now wait for local tracks so the answer includes our video/audio.
-        const localReady = await localReadyPromise;
+        const localReady = await waitForLocalReady("handleOffer:before_answer", incomingOfferId);
         if (!mounted) return;
-        if (!localReady) {
+        if (localReady === false) {
           setCamError(true);
           setCamErrorReason(
             "Allow camera or microphone access, then retry to join the consultation.",
@@ -3310,6 +3393,12 @@ export default function VideoCall() {
           });
           return;
         }
+        // A collision rollback can leave the matched transceivers recvonly even
+        // though we hold live local tracks — fix that before answering.
+        await ensureLocalTracksSentInAnswer(pc, localStreamRef.current, (label, data) =>
+          retryDebugLog(retryDebugRole, appointmentId, label, data),
+        );
+        if (!mounted || pc.signalingState === "closed") return;
         let answer;
         try {
           answer = await pc.createAnswer();

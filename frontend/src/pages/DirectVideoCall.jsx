@@ -14,6 +14,8 @@ import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
 import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDebug";
 import { extractDtlsFingerprint } from "../utils/webrtcSdp";
+import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
+import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
   FiMic,
   FiMicOff,
@@ -1566,6 +1568,12 @@ export default function DirectVideoCall() {
         // Explicit createAnswer()/setLocalDescription(answer) rather than the
         // implicit no-arg form — the latter isn't implemented on older Safari
         // / in-app WebViews and throws there.
+        // A collision rollback can leave the matched transceivers recvonly even
+        // though we hold live local tracks — fix that before answering.
+        await ensureLocalTracksSentInAnswer(pc, localStreamRef.current, (label, data) =>
+          retryDebugLog(retryDebugRole, roomId, label, data),
+        );
+        if (!mountedRef.current || pc.signalingState === "closed") return;
         let answer;
         try {
           answer = await pc.createAnswer();
@@ -2245,16 +2253,61 @@ export default function DirectVideoCall() {
     const ensureLocalMedia = async () => {
       if (!localStreamRef.current) {
         let stream = null;
+        let timedOut = false;
+        const pendingMedia = localMediaPromiseRef.current;
         try {
-          stream = (await localMediaPromiseRef.current) || null;
+          if (pendingMedia) {
+            timedOut = await mediaAcquireTimedOut(pendingMedia);
+            if (!timedOut) stream = (await pendingMedia) || null;
+          }
         } catch {
           stream = null;
+        }
+        if (timedOut && mountedRef.current) {
+          // getUserMedia is hanging (unanswered permission prompt, busy
+          // device). Build the connection receive-only now — the existing
+          // "no microphone" banner + Retry shows via localAudioMissing below —
+          // and publish the stream if it ever arrives.
+          console.warn("[direct-video-call] getUserMedia still pending — continuing without local media");
+          retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "media:acquire_timed_out", {
+            timeoutMs: MEDIA_ACQUIRE_TIMEOUT_MS,
+          });
+          pendingMedia
+            .then((lateStream) => {
+              const latePc = pcRef.current;
+              if (
+                !lateStream ||
+                !mountedRef.current ||
+                !latePc ||
+                latePc.signalingState === "closed" ||
+                latePc.getSenders().some((s) => s.track && s.track.readyState === "live")
+              ) {
+                return;
+              }
+              lateStream.getTracks().forEach((track) => {
+                track.enabled = track.kind === "audio" ? micOnRef.current : camOnRef.current;
+                const transceiver = latePc
+                  .getTransceivers()
+                  .find((t) => t.receiver?.track?.kind === track.kind && !t.sender.track);
+                if (transceiver) {
+                  transceiver.sender.replaceTrack(track).catch(() => {});
+                  transceiver.direction = "sendrecv"; // fires negotiationneeded
+                } else {
+                  latePc.addTrack(track, lateStream);
+                }
+              });
+              localStreamRef.current = lateStream;
+              setLocalAudioMissing(lateStream.getAudioTracks().length === 0);
+              assignStreams(isSwappedRef.current);
+              retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "media:late_attached", {});
+            })
+            .catch(() => {});
         }
         if (!mountedRef.current) {
           stream?.getTracks().forEach((track) => track.stop());
           return null;
         }
-        if (!stream && !localStreamRef.current) {
+        if (!timedOut && !stream && !localStreamRef.current) {
           try {
             stream = await getCallMediaStream();
           } catch (err) {

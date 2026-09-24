@@ -79,7 +79,7 @@ opened.document.write(
 ### 3.4 TURN credential committed to git, weak, and not yet rotated (already known, still open)
 **Files:** `connect/frontend/.env` / `.env.production` (`.env.production` is git-tracked), documented fully in `connect/direct_video_call_turn_credential_rotation.md`
 
-`VITE_RTC_TURN_USERNAME=rtcuser` / `VITE_RTC_TURN_CREDENTIAL=StrongPassword123` is baked into every shipped frontend bundle and has been in every production build to date. The two TURN regions (`TURN_STATIC_AUTH_SECRET` / `_2`) also currently share the identical secret, defeating the isolation the code comments say they're meant to have. This was found and documented by a prior session but explicitly marked "not yet actioned" — it's still the live configuration as of this audit. Given the app is deployed and this credential has been public in devtools/bundle for a while, **treat it as already compromised.**
+`VITE_RTC_TURN_USERNAME=rtcuser` / `VITE_RTC_TURN_CREDENTIAL=<redacted>` is baked into every shipped frontend bundle and has been in every production build to date. The two TURN regions (`TURN_STATIC_AUTH_SECRET` / `_2`) also currently share the identical secret, defeating the isolation the code comments say they're meant to have. This was found and documented by a prior session but explicitly marked "not yet actioned" — it's still the live configuration as of this audit. Given the app is deployed and this credential has been public in devtools/bundle for a while, **treat it as already compromised.**
 
 **Fix:** follow the rotation steps already written in `direct_video_call_turn_credential_rotation.md` — this is pure ops work, no code change needed beyond what's already merged.
 
