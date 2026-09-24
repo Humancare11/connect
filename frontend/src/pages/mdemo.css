@@ -170,3 +170,19 @@ img, svg { display: block; }
 }
 .stat-num .suffix { font-family: var(--font-primary); font-weight: 700; color: var(--blue-3); font-size: .55em; margin-left: 2px; }
 .stat-lbl { font-size: 14px; color: rgba(255,255,255,.65); margin-top: 14px; line-height: 1.4; max-width: 200px; }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Demo Page
+   ══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .demo-grid, .demo-columns { grid-template-columns: 1fr; }
+  .demo-header { font-size: 28px; }
+}
+@media (max-width: 640px) {
+  .demo-hero { padding: 40px 16px; }
+  .demo-header { font-size: 24px; }
+  .demo-card { padding: 20px 16px; border-radius: 12px; }
+}
+@media (max-width: 420px) {
+  .demo-header { font-size: 20px; }
+}

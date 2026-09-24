@@ -15,6 +15,7 @@ import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import UTIimage from "../../assets/BlogImages/uti-online-treatment.webp";
 import MigraineVsHeadache from "../../assets/BlogImages/Migrane-Vs-Headache.webp";
+import TelehealthforHypertensionImg from "../../assets/BlogImages/Telehealth-for-Hypertension.webp";
 import SEO from "../../components/Seo";
 
 import heroBg from "../../assets/BannerImages/blog-banner.webp";
@@ -147,6 +148,15 @@ const blogs = [
     image: MigraineVsHeadache,
     path: "/migraine-vs-headache-symptoms-causes-differences-and-treatment-options",
     readTime: 9,
+  },
+  {
+    id: 15,
+    title: "Telehealth for Hypertension: Can You Treat High Blood Pressure Online?",
+    description:
+      "Hypertension, or high blood pressure, is a health condition in which the heart pumps blood at high pressure throughout the body. Since hypertension can bring the heart disease stroke kidney disease, and other complications if ignored, it is necessary to check the blood pressure frequently and follow the recommended therapy.",
+    image: TelehealthforHypertensionImg,
+    path: "/telehealth-for-hypertension",
+    readTime: 8,
   },
 ];
 

@@ -811,11 +811,23 @@
 /* ══════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════ */
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .de-body {
+    grid-template-columns: 160px 1fr;
+    gap: 28px;
+    padding: 32px 24px 60px;
+  }
+}
+
+/* Tablet portrait (900px) */
 @media (max-width: 900px) {
   .de-body {
     grid-template-columns: 1fr;
     padding: 24px 20px 80px;
   }
+
   .de-sidenav {
     position: static;
     flex-direction: row;
@@ -823,32 +835,135 @@
     gap: 4px;
     padding: 0;
     padding-bottom: 4px;
+    scrollbar-width: none;
   }
+
+  .de-sidenav::-webkit-scrollbar {
+    display: none;
+  }
+
   .de-sidenav-item {
     white-space: nowrap;
+    flex-shrink: 0;
   }
 }
 
+/* Mobile large (640px) */
 @media (max-width: 640px) {
   .de-grid-2 {
     grid-template-columns: 1fr;
   }
+
   .de-header-inner {
     padding: 14px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
   }
+
+  .de-header-text h1 {
+    font-size: 16px;
+  }
+
   .de-section {
     padding: 36px 0 44px;
   }
+
   .de-submit-bar {
     flex-direction: column;
     align-items: stretch;
   }
+
   .de-submit-btn {
     justify-content: center;
   }
-}
-/* REMOVE sticky behavior */
 
+  .de-body {
+    padding: 16px 14px 60px;
+  }
+}
+
+/* Mobile portrait (480px) */
+@media (max-width: 480px) {
+  .de-body {
+    padding: 12px 10px 50px;
+  }
+
+  .de-header-inner {
+    padding: 12px 14px;
+  }
+
+  .de-header-logo {
+    font-size: 14px;
+  }
+
+  .de-edit-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .de-section {
+    padding: 28px 0 32px;
+  }
+
+  /* Input rows stack */
+  .de-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .de-label {
+    font-size: 11px;
+  }
+
+  .de-input,
+  .de-select,
+  .de-textarea {
+    font-size: 14px;
+  }
+
+  /* Availability grid stack */
+  .de-avail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Small mobile (380px) */
+@media (max-width: 380px) {
+  .de-body {
+    padding: 10px 8px 40px;
+  }
+
+  .de-sidenav {
+    gap: 3px;
+  }
+
+  .de-sidenav-item {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .de-section h2,
+  .de-section-title {
+    font-size: 16px;
+  }
+
+  .de-submit-btn {
+    font-size: 13px;
+    padding: 11px 18px;
+  }
+}
+
+/* Extra small (320px) */
+@media (max-width: 320px) {
+  .de-body {
+    padding: 8px 6px 36px;
+  }
+
+  .de-header-inner {
+    padding: 10px 12px;
+  }
+}
+
+/* REMOVE sticky behavior */
 .de-header {
   position: relative; /* was sticky */
 }

@@ -1055,3 +1055,18 @@
     width: 100%;
   }
 }
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+@media (max-width: 1024px) {
+  .ad-sidebar { width: 220px; }
+  .ad-main { margin-left: 220px; }
+  .adp-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .ad-sidebar { width: 100%; height: auto; position: static; flex-direction: row; padding: 12px 16px; }
+  .ad-nav { display: none; }
+  .ad-main { margin-left: 0; width: 100%; }
+  .ad-content { padding: 16px; }
+  .adp-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .ad-topbar { padding: 10px 16px; }
+}
+/* (existing 768px and 480px breakpoints retained above) */

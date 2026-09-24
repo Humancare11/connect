@@ -274,3 +274,35 @@
     width: 100%;
   }
 }
+/* -- Tablet (=1024px) -- */
+@media (max-width: 1024px) and (min-width: 601px) {
+  .adp-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .adp-header {
+    padding: 20px 24px;
+  }
+}
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .adp-header {
+    padding: 16px 14px;
+  }
+
+  .adp-header-title h1 {
+    font-size: 19px;
+  }
+
+  .adp-search-box {
+    width: 100%;
+  }
+
+  .adp-modal-box {
+    padding: 18px 14px;
+    width: calc(100% - 24px);
+    margin: 12px auto;
+  }
+}

@@ -503,3 +503,36 @@ color: #212121;
 .plc-info-icon:hover .plc-tooltip {
   display: block !important;
 }
+/* -- Tablet (=1024px) -- */
+@media (max-width: 1024px) {
+  .plc-page {
+    padding: 24px 16px;
+  }
+
+  .plc-card {
+    max-width: 100%;
+  }
+}
+
+/* -- Mobile Small (=480px) -- */
+@media (max-width: 480px) {
+  .plc-summary-panel,
+  .plc-right-panel {
+    padding: 16px 14px;
+  }
+
+  .plc-summary-panel h1,
+  .plc-success-panel h2 {
+    font-size: 24px;
+  }
+
+  .plc-pay-btn {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .plc-tooltip {
+    min-width: 200px;
+    font-size: 11px !important;
+  }
+}

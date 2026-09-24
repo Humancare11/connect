@@ -145,3 +145,81 @@
   border-color: rgba(239, 68, 68, 0.4);
   color: #fca5a5;
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Direct Video Call
+   ══════════════════════════════════════════════ */
+
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .dvcall-prejoin-card {
+    max-width: 380px;
+    padding: 22px;
+  }
+
+  .dvcall-ctrl {
+    width: 46px;
+    height: 46px;
+    font-size: 16px;
+  }
+}
+
+/* ── Mobile (≤640px) ── */
+@media (max-width: 640px) {
+  .dvcall-page--center {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .dvcall-prejoin-card {
+    max-width: 100%;
+    padding: 18px 16px;
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .dvcall-prejoin-card h2 {
+    font-size: 17px;
+  }
+
+  .dvcall-prejoin-form {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dvcall-btn-primary,
+  .dvcall-btn-secondary {
+    width: 100%;
+    text-align: center;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .dvcall-ctrl {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .dvcall-prejoin-card {
+    padding: 14px 12px;
+    border-radius: 10px;
+  }
+
+  .dvcall-prejoin-card h2 {
+    font-size: 15px;
+  }
+
+  .dvcall-ctrl {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .dvcall-prejoin-preview__controls {
+    gap: 8px;
+  }
+}

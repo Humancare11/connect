@@ -681,3 +681,37 @@
 
 
 
+
+/* -- Tablet (=900px) -- */
+@media (max-width: 900px) and (min-width: 641px) {
+  .qna-controls {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .qna-search-box {
+    width: 100%;
+  }
+}
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .qna-page {
+    padding: 16px 12px;
+  }
+
+  .qna-card-head {
+    padding: 12px 10px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .qna-actions-wrap {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .qna-card-title {
+    font-size: 14px;
+  }
+}

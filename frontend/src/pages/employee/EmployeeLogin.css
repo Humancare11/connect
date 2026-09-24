@@ -162,3 +162,64 @@
   cursor: not-allowed;
   transform: none;
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Employee Login
+   ══════════════════════════════════════════════ */
+
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .eal-page {
+    padding: 80px 20px 40px;
+  }
+
+  .eal-card {
+    max-width: 420px;
+    padding: 32px 28px;
+  }
+}
+
+/* ── Mobile (≤640px) ── */
+@media (max-width: 640px) {
+  .eal-page {
+    padding: 75px 16px 36px;
+    align-items: flex-start;
+  }
+
+  .eal-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+
+  .eal-title {
+    font-size: 22px;
+  }
+
+  .eal-input {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .eal-login-btn {
+    height: 46px;
+    font-size: 14px;
+  }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .eal-page {
+    padding: 65px 12px 28px;
+  }
+
+  .eal-card {
+    padding: 22px 16px;
+    border-radius: 14px;
+  }
+
+  .eal-title {
+    font-size: 20px;
+  }
+}

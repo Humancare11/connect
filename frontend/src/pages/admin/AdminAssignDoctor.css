@@ -298,3 +298,42 @@
   .aad-search input { width: 100%; }
   .aad-doctor-row { padding: 12px 14px; }
 }
+
+/* -- Mobile Medium (=600px) -- */
+@media (max-width: 600px) {
+  .aad-appt-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .aad-doctor-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .aad-doctor-actions {
+    width: 100%;
+  }
+
+  .aad-assign-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .aad-appt-bar {
+    padding: 0 10px;
+  }
+
+  .aad-list-section {
+    margin: 8px 6px 20px;
+    border-radius: 12px;
+  }
+
+  .aad-doctor-info h4 {
+    font-size: 14px;
+  }
+}

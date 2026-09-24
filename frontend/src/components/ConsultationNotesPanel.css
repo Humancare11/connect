@@ -89,3 +89,35 @@
   color: #475569;
   white-space: pre-wrap;
 }
+
+/* ---------------------------------------------------------------
+   RESPONSIVE � ConsultationNotesPanel
+   --------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .cnp-item-head {
+    padding: 10px 12px;
+    font-size: 12.5px;
+  }
+
+  .cnp-item-content {
+    padding: 0 12px 12px 28px;
+    font-size: 12.5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cnp-item-head {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .cnp-item-updated {
+    width: 100%;
+    margin-left: 20px;
+  }
+
+  .cnp-item-content {
+    padding: 0 10px 10px 14px;
+    font-size: 12px;
+  }
+}

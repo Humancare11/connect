@@ -311,3 +311,39 @@
     transition: none;
   }
 }
+/* -- Responsive -- */
+@media (max-width: 640px) {
+  .svc-switcher {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .svc-switcher__grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .svc-switcher__feature {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .svc-switcher__title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .svc-switcher {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .svc-switcher__title {
+    font-size: 1.125rem;
+  }
+
+  .svc-switcher__row {
+    padding: 10px 12px;
+  }
+}

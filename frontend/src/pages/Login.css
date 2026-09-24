@@ -1082,6 +1082,26 @@
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════════════════ */
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) {
+  .hc-card {
+    width: 860px;
+  }
+
+  .hc-form {
+    padding: 28px 32px 24px;
+  }
+
+  .hc-panel-content {
+    padding: 0 32px;
+  }
+
+  .hc-panel-heading {
+    font-size: 24px;
+  }
+}
+
+/* ── Mobile (≤768px) ── */
 @media (max-width: 768px) {
   .hc-page-bg {
     padding-top: 24px;
@@ -1153,6 +1173,42 @@
   }
   .hc-page-bg .date-input {
     line-height: 44px;
+  }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .hc-card {
+    margin: 60px 8px;
+    border-radius: 14px;
+  }
+
+  .hc-form {
+    padding: 50px 16px 24px;
+  }
+
+  .hc-heading {
+    font-size: 20px;
+  }
+
+  .hc-btn {
+    font-size: 12.5px;
+    padding: 13px 32px;
+    height: 46px;
+  }
+
+  .hc-otp-box {
+    width: 42px;
+    height: 50px;
+    font-size: 18px;
+  }
+
+  .hc-otp-boxes {
+    gap: 7px;
+  }
+
+  .hc-flow-card {
+    padding: 32px 16px 24px;
   }
 }
 

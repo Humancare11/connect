@@ -754,3 +754,29 @@ select.urt-input {
     gap: 12px;
   }
 }
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .urt-root {
+    padding: 14px 10px;
+  }
+
+  .urt-page-title {
+    font-size: 20px;
+  }
+
+  .urt-card {
+    padding: 16px 14px;
+  }
+
+  .urt-field input,
+  .urt-field select,
+  .urt-field textarea {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .urt-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

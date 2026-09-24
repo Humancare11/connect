@@ -585,3 +585,33 @@
     justify-content: center;
   }
 }
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .hc-ps__avatar-card {
+    padding: 18px 14px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .hc-ps__avatar-name,
+  .hc-ps__avatar-email {
+    text-align: center;
+  }
+
+  .hc-ps__avatar-badge {
+    align-self: center;
+  }
+
+  .hc-ps__form {
+    padding: 16px 14px 18px;
+  }
+
+  .hc-ps__form-card-header {
+    padding: 16px 14px 14px;
+  }
+
+  .hc-ps__card-title {
+    font-size: 16px;
+  }
+}

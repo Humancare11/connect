@@ -461,3 +461,18 @@
     text-align: left;
   }
 }
+
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+@media (max-width: 1024px) {
+  .pl-admin__grid { grid-template-columns: 1fr; }
+  .pl-form-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .pl-admin { padding: 20px 16px; }
+  .pl-table { font-size: 13px; }
+}
+/* (existing 760px breakpoint retained above) */
+@media (max-width: 420px) {
+  .pl-table th, .pl-table td { padding: 8px 6px; font-size: 12px; }
+  .pl-primary, .pl-secondary { width: 100%; text-align: center; }
+}

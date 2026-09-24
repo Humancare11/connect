@@ -162,3 +162,64 @@
   cursor: not-allowed;
   transform: none;
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Partner Login
+   ══════════════════════════════════════════════ */
+
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .ptl-card {
+    max-width: 420px;
+    padding: 32px 28px;
+  }
+}
+
+/* ── Mobile (≤640px) ── */
+@media (max-width: 640px) {
+  .ptl-page {
+    padding: 80px 16px 40px;
+    align-items: flex-start;
+  }
+
+  .ptl-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 28px 20px;
+    border-radius: 18px;
+  }
+
+  .ptl-title {
+    font-size: 22px;
+  }
+
+  .ptl-subtitle {
+    font-size: 13px;
+  }
+
+  .ptl-input {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .ptl-login-btn {
+    height: 46px;
+    font-size: 14px;
+  }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .ptl-page {
+    padding: 70px 12px 32px;
+  }
+
+  .ptl-card {
+    padding: 22px 16px;
+    border-radius: 14px;
+  }
+
+  .ptl-title {
+    font-size: 20px;
+  }
+}

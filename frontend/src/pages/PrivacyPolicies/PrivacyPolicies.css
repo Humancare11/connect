@@ -143,3 +143,39 @@
     font-size: 15px;
   }
 }
+
+/* -- Tablet (=900px) -- */
+@media (max-width: 900px) {
+  .rcp-content {
+    padding: 90px 32px 70px;
+  }
+
+  .rcp-title {
+    font-size: 38px;
+  }
+
+  .rcp-heading {
+    font-size: 24px;
+  }
+}
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .rcp-content {
+    padding: 70px 16px 48px;
+  }
+
+  .rcp-title {
+    font-size: 26px;
+  }
+
+  .rcp-heading {
+    font-size: 19px;
+  }
+
+  .rcp-page,
+  .rcp-intro,
+  .rcp-section p {
+    font-size: 14px;
+  }
+}

@@ -722,3 +722,29 @@
     padding: 0 16px 16px;
   }
 }
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .mq-root {
+    padding: 12px 10px;
+  }
+
+  .mq-card-header {
+    padding: 12px 12px 10px;
+  }
+
+  .mq-card-body {
+    padding: 0 12px 12px;
+  }
+
+  .mq-card-title {
+    font-size: 15px;
+  }
+
+  .mq-answer-block {
+    padding: 12px 14px;
+  }
+
+  .mq-answer-text {
+    font-size: 13px;
+  }
+}

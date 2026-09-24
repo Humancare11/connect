@@ -178,3 +178,17 @@
     padding: 0 8px;
   }
 }
+
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+@media (max-width: 1024px) {
+  .ph-table { font-size: 13px; }
+}
+@media (max-width: 900px) {
+  .ph-header { flex-direction: column; gap: 10px; }
+  .ph-search { width: 100%; }
+}
+/* (existing 640px breakpoint retained above) */
+@media (max-width: 420px) {
+  .ph-table th, .ph-table td { padding: 8px 6px; font-size: 11.5px; }
+  .ph-pagination { flex-wrap: wrap; gap: 4px; }
+}

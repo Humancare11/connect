@@ -105,6 +105,16 @@
 }
 
 /* ── Responsive: stack notes below the form on narrow screens ── */
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .wp-grid {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 18px;
+  }
+}
+
+/* Tablet portrait (900px) */
 @media (max-width: 900px) {
   .wp-grid {
     grid-template-columns: 1fr;
@@ -116,8 +126,64 @@
   }
 }
 
+/* Mobile large (640px) */
+@media (max-width: 640px) {
+  .wp-page {
+    padding: 4px 0 24px;
+  }
+
+  .wp-form-col {
+    padding: 20px 18px;
+  }
+
+  .wp-form-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .wp-form-footer button {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* Mobile portrait (450px) */
 @media (max-width: 450px) {
   .wp-form-col {
     padding: 16px;
+  }
+
+  .wp-notes-sticky {
+    padding: 16px;
+  }
+
+  .wp-notes-title {
+    font-size: 14px;
+  }
+}
+
+/* Small mobile (380px) */
+@media (max-width: 380px) {
+  .wp-form-col {
+    padding: 14px 12px;
+  }
+
+  .wp-notes-sticky {
+    padding: 14px 12px;
+  }
+
+  .wp-form-footer {
+    flex-direction: column;
+  }
+
+  .wp-form-footer button {
+    width: 100%;
+  }
+}
+
+/* Extra small (320px) */
+@media (max-width: 320px) {
+  .wp-form-col {
+    padding: 12px 10px;
   }
 }
