@@ -387,4 +387,107 @@ const sendGopEmail = async (to, { providerName, gopNumber, patientName, caseType
   });
 };
 
-module.exports = { sendOTPEmail, sendEmail, sendInvoiceEmail, sendManualInvoiceEmail, sendGopEmail };
+// Sent to a doctor when an admin approves their enrollment/profile. `name` is
+// the doctor's own name (may be empty), `loginUrl` points at the doctor login
+// page. Support details mirror the shared footer below.
+const buildDoctorApprovalEmailHTML = ({ name, loginUrl }) => {
+  const greeting = name ? `Hello Dr. ${escapeHtml(name)},` : `Hello Doctor,`;
+  const safeLoginUrl = escapeHtml(loginUrl);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Profile Approved — Humancare Connect</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
+<div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
+
+  <div style="background:#dcebff;padding:20px 32px;text-align:center;border-radius: 16px 16px 0 0;">
+    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
+    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">Profile Approved</span>
+  </div>
+
+  <div style="padding:24px 32px;">
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 12px;">${greeting}</p>
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 16px;">
+      Great news — your doctor profile has been reviewed and <strong>approved</strong> by the Humancare Connect team.
+      Welcome aboard! You can now sign in to your dashboard to manage your availability, consultations, and patients.
+    </p>
+
+    <div style="text-align:center;margin:0 0 20px;">
+      <a href="${safeLoginUrl}" style="display:inline-block;background:#0a1f44;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:10px;">Go to your dashboard</a>
+      <p style="font-size:12px;color:#6b7280;margin:10px 0 0;">Or copy this link into your browser:<br/><a href="${safeLoginUrl}" style="color:#4b5db8;">${safeLoginUrl}</a></p>
+    </div>
+
+    <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:18px 22px;margin:0 0 18px;">
+      <p style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#6b7280;font-weight:600;margin:0 0 10px;">How to log in</p>
+      <ol style="margin:0;padding-left:18px;color:#374151;font-size:14px;line-height:1.7;">
+        <li>Open the doctor login page using the button above.</li>
+        <li>Enter your registered email address and the password you created during registration.</li>
+        <li>You'll land on your doctor dashboard — set your availability to start receiving consultations.</li>
+      </ol>
+    </div>
+
+    <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;">
+      Need help getting started? Contact us at
+      <a href="mailto:support@humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">support@humancareconnect.co</a>
+      or <a href="tel:+13023039993" style="color:#4b5db8;text-decoration:none;font-weight:500;">+1 302-303-9993</a>.
+    </p>
+  </div>
+
+  <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;width:140px;">
+          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect"  style="display:block;object-fit:contain;width:140px;height:44px;"/>
+        </td>
+        <td style="vertical-align:middle;text-align:right;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-left:auto;">
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="mailto:support@humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">support@humancareconnect.co</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="tel:+13023039993" style="color:#4b5db8;text-decoration:none;font-weight:500;">+1 302-303-9993</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="https://humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">humancareconnect.co</a></td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;text-align:center;">
+      <span style="font-size:12px;">
+        <a href="https://humancareconnect.co/privacy" style="color:#4b5db8;text-decoration:none;font-weight:500;">Privacy Policy</a>
+        <span style="margin:0 5px;color:#d1d5db;">·</span>
+        <a href="https://humancareconnect.co/support" style="color:#4b5db8;text-decoration:none;font-weight:500;">Support</a>
+      </span>
+      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} Humancare Connect. All rights reserved.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+};
+
+const sendDoctorApprovalEmail = async (to, { name, loginUrl }) => {
+  const plainText = [
+    name ? `Hello Dr. ${name},` : "Hello Doctor,",
+    "",
+    "Great news - your doctor profile has been reviewed and approved by the Humancare Connect team. Welcome aboard!",
+    "",
+    "How to log in:",
+    "1. Open the doctor login page: " + loginUrl,
+    "2. Enter your registered email address and the password you created during registration.",
+    "3. You'll land on your doctor dashboard - set your availability to start receiving consultations.",
+    "",
+    "Need help? Contact support@humancareconnect.co or +1 302-303-9993.",
+  ].join("\n");
+
+  await sendMail({
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
+    to,
+    subject: "Welcome to Humancare Connect — Your Doctor Profile is Approved",
+    text: plainText,
+    html: buildDoctorApprovalEmailHTML({ name, loginUrl }),
+  });
+};
+
+module.exports = { sendOTPEmail, sendEmail, sendInvoiceEmail, sendManualInvoiceEmail, sendGopEmail, sendDoctorApprovalEmail };

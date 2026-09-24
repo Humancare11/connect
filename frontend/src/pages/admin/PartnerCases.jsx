@@ -39,7 +39,7 @@ export default function AdminPartnerCases() {
   const stats = statsQ.data || {};
 
   return (
-    <div className="pt-page">
+    <div className="pt-page" style={{ maxWidth: "100%" }}>
       <div className="pt-page-head">
         <div>
           <h1 className="pt-page-title">Partners Cases</h1>

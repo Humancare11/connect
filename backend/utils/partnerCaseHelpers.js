@@ -84,6 +84,7 @@ function sanitizeCaseInput(body = {}) {
     location: {
       country: cleanText(location.country, MAX.short),
       state: cleanText(location.state, MAX.short),
+      postalCode: cleanText(location.postalCode, MAX.short),
       pharmacyAddress: cleanText(location.pharmacyAddress, MAX.medium),
       clinicName: cleanText(location.clinicName, MAX.short),
       address: cleanText(location.address, MAX.medium),
@@ -149,6 +150,7 @@ function serializeCaseForPartner(doc) {
     location: {
       country: location.country || "",
       state: location.state || "",
+      postalCode: location.postalCode || "",
       pharmacyAddress: location.pharmacyAddress || "",
       clinicName: location.clinicName || "",
       address: location.address || "",
@@ -157,7 +159,9 @@ function serializeCaseForPartner(doc) {
       ? c.attachments.map((a) => ({ name: a.name, key: a.key, type: a.type, size: a.size }))
       : [],
     assignedDoctorName,
-    videoLink: c.videoLink || "",
+    // The video consultation link is only relevant for teleconsultations —
+    // never expose it for house-call / in-clinic cases.
+    videoLink: c.serviceType === "teleconsultation" ? c.videoLink || "" : "",
     amountCents: typeof c.amountCents === "number" ? c.amountCents : null,
     currency: c.currency || "usd",
     hasInvoice: Boolean(c.invoice),

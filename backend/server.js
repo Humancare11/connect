@@ -670,26 +670,31 @@ setInterval(sweepRoomActivated, Math.min(ROOM_ACTIVATED_TTL_MS, 60 * 60 * 1000))
 // (ICE candidates are naturally bursty during gathering; SDP offers/answers
 // and chat/telemetry are not) so real users never notice them.
 const chatMessageLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
-const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+// max: 6. A normal appointment handshake is one SDP per side per second, but
+// recovery paths legitimately burst above that: the patient's offer-answer
+// watchdog does a rollback + re-offer, and the doctor now also sends an
+// ICE-restart offer when the patient explicitly requests one (see
+// VideoCall.jsx handleIceRestartRequest — it no longer returns early for the
+// doctor). A bad reconnect can therefore produce offer + re-offer + answer
+// inside one second. At max: 2 the SDP message that actually completed the
+// handshake was being silently dropped, wedging the call at "connecting".
+// 6 keeps headroom for that burst while still capping well below a flood.
+const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const telemetryLimiter = makeSocketLimiter({ windowMs: 1000, max: 10 });
 const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
-// max: 6, not 2 like videoSdpLimiter above. That budget works for the
-// appointment flow because only one side (the patient) ever self-initiates
-// an offer there — the doctor only answers, so a normal handshake never
-// sends more than one SDP message per side per second. Direct Video Call
-// guests are symmetric peers: both sides independently create their
-// RTCPeerConnection and add tracks, so an initial "offer glare" (both sides
-// firing onnegotiationneeded at once) is expected, and the polite side's
-// rollback can itself re-trigger onnegotiationneeded, producing a real
-// burst of up to 3 legitimate SDP messages (offer, re-offer, then the
-// answer) within under a second. At max: 2, the answer that actually
-// completes the handshake was being silently dropped by this limiter,
-// leaving the call stuck at "connecting" forever. 6 keeps comfortable
-// headroom for that burst while still capping well below anything a real
-// flood needs.
+// max: 6, matching videoSdpLimiter above. Direct Video Call guests are
+// symmetric peers: both sides independently create their RTCPeerConnection
+// and add tracks, so an initial "offer glare" (both sides firing
+// onnegotiationneeded at once) is expected, and the polite side's rollback
+// can itself re-trigger onnegotiationneeded, producing a real burst of up to
+// 3 legitimate SDP messages (offer, re-offer, then the answer) within under a
+// second. At max: 2, the answer that actually completes the handshake was
+// being silently dropped by this limiter, leaving the call stuck at
+// "connecting" forever. 6 keeps comfortable headroom for that burst while
+// still capping well below anything a real flood needs.
 const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
@@ -724,7 +729,20 @@ app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
 // verdict is reached, closing the gap; anything slower already falls
 // through to the (already-correct) normal-join re-eviction/re-negotiation
 // path handled in join-appointment-room.
-const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 15000);
+// 30000, not the previous 15000: aligned with DIRECT_ROOM_LEAVE_GRACE_MS
+// below, whose own comment already documents that a mobile network blip can
+// realistically take 20-50s to recover — the appointment flow (used by the
+// connect-mobile app) had never been widened to match that reasoning. Purely
+// a timing value: it only gates (a) how long the disconnect handler waits
+// before emitting participant-left, and (b) the connectionStateRecovery cap
+// just below, which is deliberately kept in sync with it (see that comment).
+// Neither Socket.IO's own room-membership tracking (io.sockets.adapter.rooms,
+// which governs the join-appointment-room seat-limit check) nor socketRooms/
+// onlineUsers bookkeeping depends on this value — a longer window only delays
+// the user-facing "participant left" notice for a genuine departure, and
+// widens the connectionStateRecovery fast-path window a reconnecting socket
+// can land in instead of falling through to the fresh-join path.
+const SOCKET_LEAVE_GRACE_MS = Number(process.env.SOCKET_LEAVE_GRACE_MS || 30000);
 
 // HTTP server
 const server = http.createServer(app);
@@ -1069,7 +1087,12 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 // tracked by a client-generated guestId (not an authenticated identity) purely
 // so a page refresh in the same tab is treated as a rejoin, not a 3rd seat.
 const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
-// roomId -> { initiatorGuestId, participantGuestIds: Set }
+// roomId -> {
+//   initiatorGuestId,          // stable impolite-peer assignment (see below)
+//   participantGuestIds: Set,  // every guestId ever seen in this room
+//   seats: Map<guestId, ms>,   // held seats — value is "last seen" epoch ms
+//   cleanupTimer,              // deferred teardown once the room is empty
+// }
 // Assigns the initiator/polite role once per guestId, the first time it's
 // ever seen in a room, and keeps it stable across refreshes/reconnects.
 // Recomputing this role from "who else is currently connected" (as before)
@@ -1078,12 +1101,97 @@ const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
 // deadlocks perfect-negotiation's offer-collision handling on both sides.
 const directRoomRoles = new Map();
 
-function getDirectRoomRole(roomId, guestId) {
+// A participant who drops out mid-call (page refresh, a brief network loss,
+// a Wi-Fi <-> cellular switch) keeps their seat reserved for this long, so a
+// third person who also has the link can't slip into it before they get
+// back — which previously locked the original participant out of their own
+// call with a "meeting already has two participants" error. A deliberate
+// "Leave call" gives the seat up immediately (see leave-direct-room), so
+// this window only ever holds a seat open for an *unintended* disconnect.
+const DIRECT_ROOM_SEAT_RESERVATION_MS = Math.max(
+  5000,
+  Number(process.env.DIRECT_ROOM_SEAT_RESERVATION_MS || 60000),
+);
+
+// How long the direct-room "disconnect" handler waits before telling the peer
+// someone left. Longer than the appointment flow's SOCKET_LEAVE_GRACE_MS
+// (15s) because a guest-link call has no login to fall back on and the seat
+// is held for DIRECT_ROOM_SEAT_RESERVATION_MS anyway — so a 20-50s mobile
+// blip should reconnect silently instead of flashing "the other participant
+// left" and forcing a from-scratch renegotiation. Capped at the seat
+// reservation so the notice never outlives the seat itself.
+const DIRECT_ROOM_LEAVE_GRACE_MS = Math.min(
+  DIRECT_ROOM_SEAT_RESERVATION_MS,
+  Math.max(5000, Number(process.env.DIRECT_ROOM_LEAVE_GRACE_MS || 30000)),
+);
+
+function getDirectRoomEntry(roomId) {
   let entry = directRoomRoles.get(roomId);
   if (!entry) {
-    entry = { initiatorGuestId: null, participantGuestIds: new Set() };
+    entry = {
+      initiatorGuestId: null,
+      participantGuestIds: new Set(),
+      seats: new Map(),
+      cleanupTimer: null,
+    };
     directRoomRoles.set(roomId, entry);
   }
+  return entry;
+}
+
+// guestIds that currently have at least one live socket in the room.
+function connectedGuestIdsForRoom(roomId) {
+  const ids = new Set();
+  for (const meta of directRoomSockets.values()) {
+    if (String(meta.roomId) === String(roomId) && meta.guestId) ids.add(meta.guestId);
+  }
+  return ids;
+}
+
+// Release seats held by guests who are neither connected right now nor still
+// within their post-disconnect reservation window.
+function pruneDirectRoomSeats(roomId, entry = directRoomRoles.get(roomId)) {
+  if (!entry) return;
+  const now = Date.now();
+  const connected = connectedGuestIdsForRoom(roomId);
+  for (const [guestId, lastSeenAt] of entry.seats) {
+    if (connected.has(guestId)) continue;
+    if (now - lastSeenAt > DIRECT_ROOM_SEAT_RESERVATION_MS) entry.seats.delete(guestId);
+  }
+}
+
+// Tear down a room's role/seat bookkeeping once it has no live sockets — but
+// not before any still-reserved seats have had their full window to
+// reconnect (this is what covers both participants dropping at once).
+function scheduleDirectRoomRolesCleanup(roomId) {
+  const entry = directRoomRoles.get(roomId);
+  if (!entry) return;
+  if (connectedGuestIdsForRoom(roomId).size > 0) return; // someone is still here
+  pruneDirectRoomSeats(roomId, entry);
+  if (entry.seats.size === 0) {
+    clearDirectRoomRoles(roomId);
+    return;
+  }
+  if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
+  const now = Date.now();
+  let newestReservation = 0;
+  for (const lastSeenAt of entry.seats.values()) {
+    newestReservation = Math.max(newestReservation, lastSeenAt);
+  }
+  const delay = Math.max(
+    1000,
+    DIRECT_ROOM_SEAT_RESERVATION_MS - (now - newestReservation) + 1000,
+  );
+  entry.cleanupTimer = setTimeout(() => {
+    const current = directRoomRoles.get(roomId);
+    if (!current) return;
+    current.cleanupTimer = null;
+    scheduleDirectRoomRolesCleanup(roomId);
+  }, delay);
+}
+
+function getDirectRoomRole(roomId, guestId) {
+  const entry = getDirectRoomEntry(roomId);
 
   const isReturningGuest = entry.participantGuestIds.has(guestId);
   entry.participantGuestIds.add(guestId);
@@ -1099,6 +1207,8 @@ function getDirectRoomRole(roomId, guestId) {
 }
 
 function clearDirectRoomRoles(roomId) {
+  const entry = directRoomRoles.get(roomId);
+  if (entry?.cleanupTimer) clearTimeout(entry.cleanupTimer);
   directRoomRoles.delete(roomId);
 }
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
@@ -1127,9 +1237,14 @@ function isSocketInDirectRoom(socket, roomId) {
 // default maxHttpBufferSize (1 MB) is the outer bound; a real offer/answer is
 // a few KB, so this cap is generous while still closing off abuse.
 const MAX_SDP_LENGTH = 100_000;
-// Matches both id shapes DirectVideoCall.jsx's makeOfferId() can produce:
-// a crypto.randomUUID() or an "offer-<ts>-<rand>" fallback.
-const DIRECT_OFFER_ID_PATTERN = /^[A-Za-z0-9-]{1,64}$/;
+// Matches the id shapes makeOfferId() produces in VideoCall.jsx /
+// DirectVideoCall.jsx (a crypto.randomUUID() or an "offer-<ts>-<rand>"
+// fallback). `_` and `.` are also allowed so common id-library alphabets
+// (e.g. nanoid) from any other first-party client pass through untouched —
+// the purpose here is only to reject oversized / structured injection, not
+// to enforce one exact format. Shared by the appointment and direct-room
+// signaling relays.
+const DIRECT_OFFER_ID_PATTERN = /^[A-Za-z0-9._-]{1,64}$/;
 
 function isValidSessionDescription(desc, expectedType) {
   return (
@@ -1540,23 +1655,30 @@ io.on("connection", (socket) => {
   socket.on("video-offer", ({ appointmentId, offer, offerId }) => {
     if (!appointmentId || !offer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    // Refuse to relay anything that isn't a well-formed offer (malformed /
+    // oversized SDP can only crash or spam the peer). Checked before the rate
+    // limiter so junk payloads don't burn a legitimate participant's budget —
+    // mirrors the direct-room relay.
+    if (!isValidSessionDescription(offer, "offer")) return;
     if (!videoSdpLimiter.allow(socket.id)) return;
 
-    // offerId is opaque to the server — just relayed so the two peers can
-    // correlate an answer back to the offer it's meant for (see VideoCall.jsx).
+    // offerId is opaque to the server — sanitized (any non-plausible value
+    // becomes undefined) and relayed so the two peers can correlate an answer
+    // back to the offer it's meant for (see VideoCall.jsx handleAnswer).
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-offer", { offer, offerId });
+      .emit("video-offer", { offer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
     if (!appointmentId || !answer) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!isValidSessionDescription(answer, "answer")) return;
     if (!videoSdpLimiter.allow(socket.id)) return;
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-answer", { answer, offerId });
+      .emit("video-answer", { answer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
@@ -1676,8 +1798,17 @@ io.on("connection", (socket) => {
     }
 
     if (roomDoc.status === "active" && roomDoc.expiresAt && roomDoc.expiresAt.getTime() <= Date.now()) {
-      roomDoc.status = "expired";
-      await roomDoc.save().catch(() => { });
+      // A call already under way is allowed to finish even if the room ticks
+      // past its expiry mid-consult — but only for a guest reconnecting into
+      // a room that's still tracked as live (holds a reserved seat). A
+      // brand-new join of an expired room is still refused, and the stale
+      // rooms whose in-memory entry has already been cleaned up fall through
+      // to expiry normally.
+      const guestReconnecting = !!directRoomRoles.get(roomId)?.seats.has(guestId);
+      if (!guestReconnecting) {
+        roomDoc.status = "expired";
+        await roomDoc.save().catch(() => { });
+      }
     }
 
     if (roomDoc.status !== "active") {
@@ -1694,8 +1825,41 @@ io.on("connection", (socket) => {
     const room = directRoomName(roomId);
 
     if (socket.rooms.has(room)) {
-      // Duplicate emit from a re-run effect — just re-signal, don't re-count seats.
-      socket.to(room).emit("direct-peer-joined", { name: guestName });
+      // Either a duplicate emit from a re-run effect, or a Socket.IO
+      // connection-state-recovered socket: the library restores socket.rooms
+      // but NOT our directRoomSockets bookkeeping (cleared in "disconnect"),
+      // and every downstream relay is gated on isSocketInDirectRoom() which
+      // checks it — so repair it here, keep the seat reservation fresh, and
+      // nudge the peer to renegotiate before returning.
+      directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+      const recoveredEntry = getDirectRoomEntry(roomId);
+      if (recoveredEntry.cleanupTimer) {
+        clearTimeout(recoveredEntry.cleanupTimer);
+        recoveredEntry.cleanupTimer = null;
+      }
+      recoveredEntry.seats.set(guestId, Date.now());
+
+      // Echo the same nudge back to THIS (recovered) socket, not just the
+      // peer — without it, the guest whose connection actually blipped gets
+      // no signal at all that it's back in the room and never re-checks its
+      // own (possibly still-stale) RTCPeerConnection, leaving recovery to
+      // depend entirely on its own ICE-restart timer racing the network
+      // coming back. Mirrors the appointment-room join handler's identical
+      // `if (peerPresent) socket.emit("peer-joined", ...)` above.
+      const roomSocketIds = Array.from(io.sockets.adapter.rooms.get(room) || []);
+      let recoveredPeerName = "";
+      for (const sid of roomSocketIds) {
+        if (sid === socket.id) continue;
+        const meta = directRoomSockets.get(sid);
+        if (meta?.guestId && meta.guestId !== guestId) {
+          recoveredPeerName = meta.name || "";
+          break;
+        }
+      }
+      if (recoveredPeerName) {
+        socket.emit("direct-peer-joined", { name: recoveredPeerName, resumedCall: true });
+      }
+      socket.to(room).emit("direct-peer-joined", { name: guestName, resumedCall: true });
       return;
     }
 
@@ -1738,7 +1902,22 @@ io.on("connection", (socket) => {
       }
     }
 
-    if (uniqueGuestIds.size >= (roomDoc.maxParticipants || 2) && !alreadyInRoom) {
+    const maxParticipants = roomDoc.maxParticipants || 2;
+    const roomEntry = getDirectRoomEntry(roomId);
+    if (roomEntry.cleanupTimer) {
+      clearTimeout(roomEntry.cleanupTimer);
+      roomEntry.cleanupTimer = null;
+    }
+    pruneDirectRoomSeats(roomId, roomEntry);
+
+    // A guest who already holds a seat — connected right now, OR briefly
+    // disconnected and still inside their reconnection window — is always let
+    // back in. A brand-new guest is refused once every seat is taken,
+    // *including* a seat still reserved for a participant who just dropped
+    // and may be reconnecting. (uniqueGuestIds, the live-socket view, still
+    // drives stale-socket eviction and the peer-name lookup above.)
+    const holdsSeat = roomEntry.seats.has(guestId);
+    if (!holdsSeat && roomEntry.seats.size >= maxParticipants) {
       socket.emit("direct-room-error", { code: "full", msg: "This meeting already has two participants." });
       return;
     }
@@ -1752,6 +1931,20 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+    roomEntry.seats.set(guestId, Date.now());
+
+    // Belt-and-braces over-capacity guard. Today nothing awaits between the
+    // seat check above and here, so that check is authoritative — but an
+    // await ever slipped into that span would open a TOCTOU window where two
+    // brand-new guests both pass the check and both claim a seat, breaking
+    // WebRTC for everyone in a now-3-way room. Back the loser out cleanly.
+    if (!holdsSeat && roomEntry.seats.size > maxParticipants) {
+      roomEntry.seats.delete(guestId);
+      socket.leave(room);
+      directRoomSockets.delete(socket.id);
+      socket.emit("direct-room-error", { code: "full", msg: "This meeting already has two participants." });
+      return;
+    }
 
     const now = new Date();
     DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => { });
@@ -1766,19 +1959,35 @@ io.on("connection", (socket) => {
     if (!roomId) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
 
+    const meta = directRoomSockets.get(socket.id);
     const room = directRoomName(roomId);
     socket.to(room).emit("direct-participant-left");
     socket.leave(room);
     directRoomSockets.delete(socket.id);
 
+    // A deliberate "Leave call" gives up the seat right away — only an
+    // *unintended* drop (disconnect) keeps it reserved. Don't release it if
+    // this guest still has another live socket in the room (e.g. closed one
+    // of two tabs).
+    const entry = directRoomRoles.get(roomId);
+    if (entry && meta?.guestId && !connectedGuestIdsForRoom(roomId).has(meta.guestId)) {
+      entry.seats.delete(meta.guestId);
+    }
+
     const remaining = io.sockets.adapter.rooms.get(room);
-    if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
+    if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
   });
 
   socket.on("direct-video-offer", ({ roomId, offer, offerId } = {}) => {
     if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
     if (!isValidSessionDescription(offer, "offer")) return;
-    if (!directSdpLimiter.allow(socket.id)) return;
+    if (!directSdpLimiter.allow(socket.id)) {
+      // A dropped offer/answer wedges the peer in "have-local-offer" until
+      // its ~8s watchdog — log it so a real glare-storm is visible rather
+      // than silently degrading the call.
+      console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — offer dropped`);
+      return;
+    }
     // offerId is opaque to the server — relayed unchanged so the two peers can
     // correlate an answer back to the offer it belongs to. DirectVideoCall.jsx
     // rejects any answer whose offerId doesn't match its pending offer, so
@@ -1791,7 +2000,10 @@ io.on("connection", (socket) => {
   socket.on("direct-video-answer", ({ roomId, answer, offerId } = {}) => {
     if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
     if (!isValidSessionDescription(answer, "answer")) return;
-    if (!directSdpLimiter.allow(socket.id)) return;
+    if (!directSdpLimiter.allow(socket.id)) {
+      console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — answer dropped`);
+      return;
+    }
     socket
       .to(directRoomName(roomId))
       .emit("direct-video-answer", { answer, offerId: sanitizeOfferId(offerId) });
@@ -1836,6 +2048,18 @@ io.on("connection", (socket) => {
 
     directRoomSockets.delete(socket.id);
 
+    // Start (or restart) this guest's seat-reservation clock from the moment
+    // they drop, so a reconnect within DIRECT_ROOM_SEAT_RESERVATION_MS still
+    // finds their seat held (see the join handler). If they still have
+    // another live socket in the room, they never lost the seat.
+    const roleEntry = directRoomRoles.get(roomId);
+    if (
+      roleEntry?.seats.has(guestId) &&
+      !connectedGuestIdsForRoom(roomId).has(guestId)
+    ) {
+      roleEntry.seats.set(guestId, Date.now());
+    }
+
     setTimeout(() => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
@@ -1844,9 +2068,9 @@ io.on("connection", (socket) => {
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
         const remaining = io.sockets.adapter.rooms.get(room);
-        if (!remaining || remaining.size === 0) clearDirectRoomRoles(roomId);
+        if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }
-    }, SOCKET_LEAVE_GRACE_MS);
+    }, DIRECT_ROOM_LEAVE_GRACE_MS);
   });
 
 }); // end io.on("connection")

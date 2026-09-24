@@ -82,6 +82,7 @@
 
 .dvcall-prejoin-form {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
   width: 100%;
 }
@@ -96,6 +97,19 @@
   color: #fff;
   font-size: 14px;
   outline: 0;
+}
+
+.dvcall-prejoin-form input[aria-invalid="true"] {
+  border-color: #f87171;
+}
+
+.dvcall-prejoin-form__error {
+  flex-basis: 100%;
+  margin: -2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #fca5a5;
+  text-align: left;
 }
 
 .dvcall-btn-primary,
