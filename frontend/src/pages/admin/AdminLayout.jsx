@@ -233,14 +233,19 @@ export default function AdminLayout({ children }) {
       .toUpperCase()
     : "AD";
 
+  const MANAGE_USERS_PATH = "/admin-dashboard/manage-users";
   const EXTRA_TITLES = {
     "/payment-admin/payment-links": "Payment Links",
   };
+  // The user profile page (/admin-dashboard/manage-users/:id) belongs to the
+  // Manage Users item. Only that route is treated this way.
+  const isUserProfileRoute = location.pathname.startsWith(`${MANAGE_USERS_PATH}/`);
   const pageTitle =
     NAV_ITEMS.flatMap((s) => s.items).find(
       (i) =>
         i.path === location.pathname ||
-        i.paymentAdminPath === location.pathname,
+        i.paymentAdminPath === location.pathname ||
+        (isUserProfileRoute && i.path === MANAGE_USERS_PATH),
     )?.label ||
     EXTRA_TITLES[location.pathname] ||
     "Admin";
@@ -302,7 +307,8 @@ export default function AdminLayout({ children }) {
               <div className="ad-nav-section-label">{section.section}</div>
               {section.items.map(item => {
                 const target = user.role === "paymentadmin" && item.paymentAdminPath ? item.paymentAdminPath : item.path;
-                const active = location.pathname === target;
+                const active =
+                  location.pathname === target || (isUserProfileRoute && target === MANAGE_USERS_PATH);
                 return (
                   <Link
                     key={target}

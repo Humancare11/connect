@@ -471,6 +471,7 @@ const rejectUserDeleteRequest = async (req, res) => {
 // GET /api/admin/users/:id — get user details
 const getUserDetails = async (req, res) => {
   try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ msg: "User not found" });
     const found = await User.findById(req.params.id);
     if (!found) return res.status(404).json({ msg: "User not found" });
     const user = toAdminUser(found);

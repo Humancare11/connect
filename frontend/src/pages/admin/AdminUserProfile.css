@@ -1,0 +1,108 @@
+/* Admin · User Profile page. The content styles (.mu-hero, .mu-section,
+   .mu-stat, .mu-ctable, …) live in ManageUsers.css; this file is page layout only. */
+.mu-page {
+  display: flex;
+  flex-direction: column;
+  max-width: 960px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.mu-page-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.mu-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(14, 108, 235, 0.2);
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 700;
+  color: #083ab0;
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+}
+.mu-back-btn:hover {
+  background: #fff;
+  color: #0b0443;
+}
+
+.mu-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.mu-page-actions .adp-btn {
+  padding: 9px 18px;
+  font-size: 13px;
+}
+
+.mu-page-message {
+  padding: 40px 20px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e6ecf7;
+  border-radius: 16px;
+}
+.mu-page-message h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: #0b0443;
+}
+.mu-page-message p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #6b7ca3;
+}
+
+.mu-skeleton--hero {
+  width: 100%;
+  height: 112px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+}
+.mu-skeleton--card {
+  width: 100%;
+  height: 150px;
+  border-radius: 14px;
+}
+
+/* Phones: back link on top, then the identity card, then the actions as a
+   full-width row, then the sections. */
+@media (max-width: 640px) {
+  .mu-page-bar {
+    display: contents;
+  }
+  .mu-back-btn {
+    order: 0;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .mu-page > .mu-hero {
+    order: 1;
+  }
+  .mu-page-actions {
+    order: 2;
+    margin-bottom: 14px;
+  }
+  .mu-page-actions .adp-btn {
+    flex: 1 1 130px;
+    text-align: center;
+    padding: 11px 14px;
+  }
+  .mu-page > .mu-grid {
+    order: 3;
+  }
+  .mu-page > .mu-page-message {
+    order: 1;
+  }
+}
