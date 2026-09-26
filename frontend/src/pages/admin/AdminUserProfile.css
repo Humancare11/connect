@@ -1,5 +1,5 @@
 /* Admin · User Profile page. The content styles (.mu-hero, .mu-section,
-   .mu-stat, .mu-ctable, …) live in ManageUsers.css; this file is page layout only. */
+   .mu-ctable, …) live in ManageUsers.css; this file is page layout only. */
 .mu-page {
   display: flex;
   flex-direction: column;
@@ -36,16 +36,6 @@
   color: #0b0443;
 }
 
-.mu-page-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.mu-page-actions .adp-btn {
-  padding: 9px 18px;
-  font-size: 13px;
-}
-
 .mu-page-message {
   padding: 40px 20px;
   text-align: center;
@@ -74,35 +64,4 @@
   width: 100%;
   height: 150px;
   border-radius: 14px;
-}
-
-/* Phones: back link on top, then the identity card, then the actions as a
-   full-width row, then the sections. */
-@media (max-width: 640px) {
-  .mu-page-bar {
-    display: contents;
-  }
-  .mu-back-btn {
-    order: 0;
-    justify-content: center;
-    margin-bottom: 12px;
-  }
-  .mu-page > .mu-hero {
-    order: 1;
-  }
-  .mu-page-actions {
-    order: 2;
-    margin-bottom: 14px;
-  }
-  .mu-page-actions .adp-btn {
-    flex: 1 1 130px;
-    text-align: center;
-    padding: 11px 14px;
-  }
-  .mu-page > .mu-grid {
-    order: 3;
-  }
-  .mu-page > .mu-page-message {
-    order: 1;
-  }
 }

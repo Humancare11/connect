@@ -362,50 +362,50 @@
   margin-bottom: 2px;
   overflow-wrap: anywhere;
 }
-.mu-hero-email {
+.mu-hero-sub {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.75);
-  margin-bottom: 10px;
-  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, 0.78);
 }
-.mu-hero-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.mu-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.28);
-}
-.mu-badge--btn {
-  cursor: pointer;
-}
-.mu-badge--btn:hover {
-  background: rgba(255, 255, 255, 0.26);
-}
-.mu-badge--warn {
+.mu-hero-notice {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
   color: #7c2d12;
   background: #fed7aa;
-  border-color: #fdba74;
+  border: 1px solid #fdba74;
+  overflow-wrap: anywhere;
+}
+.mu-hero-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+}
+.mu-hero-actions .adp-btn {
+  padding: 9px 18px;
+  font-size: 13px;
+}
+/* destructive actions read as white-on-navy so they stand out on the header card */
+.mu-hero-actions .adp-btn--reject {
+  background: #fff;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  box-shadow: none;
+}
+.mu-hero-actions .adp-btn--reject:hover {
+  background: #fef2f2;
 }
 
-/* Sections */
 .mu-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
-}
-.mu-span-2 {
-  grid-column: 1 / -1;
 }
 .mu-section {
   min-width: 0;
@@ -430,42 +430,37 @@
   text-transform: uppercase;
   color: #0e6ceb;
 }
-.mu-section-hint {
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 10px;
+.mu-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f0f3fa;
+}
+.mu-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.mu-row-label {
+  flex: 0 0 auto;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  color: #475076;
-  background: #eef3fc;
-}
-
-.mu-fields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px 18px;
-}
-.mu-field {
-  min-width: 0;
-}
-.mu-field-label {
-  margin-bottom: 3px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #6b7ca3;
 }
-.mu-field-value {
+.mu-row-value {
+  min-width: 0;
+  text-align: right;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: #0b0443;
   overflow-wrap: anywhere;
 }
-.mu-field-value--empty {
-  color: #94a3b8;
+.mu-row-value--empty {
   font-weight: 400;
+  color: #94a3b8;
 }
 .mu-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -473,60 +468,6 @@
 }
 
 /* Consultation tiles */
-.mu-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
-}
-.mu-stat {
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  border-left-width: 4px;
-}
-.mu-stat-num {
-  font-size: 26px;
-  line-height: 1.1;
-  font-weight: 800;
-}
-.mu-stat-label {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-.mu-stat--total {
-  color: #0b0443;
-  background: #eef3fc;
-  border-color: #d9e3f7;
-  border-left-color: #083ab0;
-}
-.mu-stat--completed {
-  color: #14532d;
-  background: #effaf3;
-  border-color: #d3f0dd;
-  border-left-color: #16a34a;
-}
-.mu-stat--upcoming {
-  color: #0c4a8a;
-  background: #eff6ff;
-  border-color: #d5e6fb;
-  border-left-color: #2563eb;
-}
-.mu-stat--cancelled {
-  color: #7f1d1d;
-  background: #fef2f2;
-  border-color: #fbdada;
-  border-left-color: #dc2626;
-}
-.mu-stat--other {
-  color: #475076;
-  background: #f4f6fa;
-  border-color: #e2e7f0;
-  border-left-color: #94a3b8;
-}
 .mu-skeleton {
   display: block;
   border-radius: 6px;
@@ -570,9 +511,6 @@
   .mu-grid {
     grid-template-columns: 1fr;
   }
-  .mu-span-2 {
-    grid-column: auto;
-  }
   .mu-hero {
     padding: 14px;
     gap: 12px;
@@ -586,21 +524,66 @@
   .mu-hero-name {
     font-size: 16px;
   }
-  .mu-stats {
-    grid-template-columns: repeat(2, 1fr);
+  .mu-hero {
+    flex-wrap: wrap;
+  }
+  .mu-hero-actions {
+    flex: 1 1 100%;
+    margin-left: 0;
+    justify-content: stretch;
+  }
+  .mu-hero-actions .adp-btn {
+    flex: 1 1 130px;
+    text-align: center;
+    padding: 11px 14px;
   }
 }
 
-/* ── Consultation list (on the User Profile page) ─────── */
-.mu-subheading {
-  margin: 18px 0 8px;
-  padding-top: 14px;
-  border-top: 1px solid #edf1f9;
-  font-size: 11px;
+/* ── Two-column profile layout (desktop): Personal Information on the left;
+   Consultations Info over A/C Information on the right. Below 1000px it is a
+   single column in DOM order (Personal, Consultations, A/C). ───────── */
+@media (min-width: 1000px) {
+  .mu-grid--profile {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .mu-area-personal { grid-column: 1; grid-row: 1 / span 2; }
+  .mu-area-consults { grid-column: 2; grid-row: 1; }
+  .mu-area-account { grid-column: 2; grid-row: 2; }
+}
+
+/* ── Consultations Info ────────────────────────────────────── */
+.mu-consult-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.mu-status-select {
+  min-width: 150px;
+  height: 38px;
+  padding: 0 34px 0 14px;
+  border: 1px solid #d9e3f7;
+  border-radius: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7ca3' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+  font: inherit;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6b7ca3;
+  color: #0b0443;
+  cursor: pointer;
+}
+.mu-status-select:focus-visible {
+  outline: 2px solid #0e6ceb;
+  outline-offset: 2px;
+}
+.mu-consult-count {
+  min-width: 34px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: #0b0443;
 }
 
 .mu-consults-scroll {
@@ -624,43 +607,30 @@
 }
 .mu-ctable td {
   padding: 10px 8px;
-  vertical-align: top;
+  vertical-align: middle;
   border-bottom: 1px solid #f0f3fa;
 }
 .mu-ctable tbody tr:last-child td {
   border-bottom: none;
 }
-.mu-cell {
-  min-width: 0;
+.mu-col-sr {
+  width: 52px;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #6b7ca3;
 }
 .mu-cell-main {
   font-weight: 600;
   color: #0b0443;
   overflow-wrap: anywhere;
 }
-.mu-cell-main--empty {
-  font-weight: 400;
-  color: #94a3b8;
-}
 .mu-cell-sub {
   margin-top: 2px;
   font-size: 11.5px;
   color: #6b7ca3;
-  overflow-wrap: anywhere;
 }
 .mu-cell-action {
   text-align: right;
-  white-space: nowrap;
-}
-
-.mu-pill {
-  display: inline-block;
-  padding: 3px 10px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.4;
   white-space: nowrap;
 }
 .mu-view-btn {
@@ -676,38 +646,6 @@
 }
 .mu-view-btn:hover {
   background: #dfe9fb;
-}
-
-.mu-consults-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 10px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f3fa;
-}
-.mu-consults-error {
-  font-size: 12.5px;
-  color: #b91c1c;
-}
-.mu-load-more {
-  padding: 8px 22px;
-  border-radius: 10px;
-  border: 1px solid #d9e3f7;
-  background: #fff;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: #083ab0;
-  cursor: pointer;
-}
-.mu-load-more:hover:not(:disabled) {
-  background: #eef3fc;
-}
-.mu-load-more:disabled {
-  opacity: 0.6;
-  cursor: default;
 }
 
 .mu-consults-empty {
@@ -726,54 +664,67 @@
   border-radius: 10px;
 }
 
-/* Phones: each consultation becomes a card */
+/* Pagination: Prev 1 2 3 Next */
+.mu-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f3fa;
+}
+.mu-pager-btn,
+.mu-load-more {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid #d9e3f7;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #083ab0;
+  cursor: pointer;
+}
+.mu-pager-btn:hover:not(:disabled):not(.mu-pager-btn--active),
+.mu-load-more:hover:not(:disabled) {
+  background: #eef3fc;
+}
+.mu-pager-btn--active {
+  background: #083ab0;
+  border-color: #083ab0;
+  color: #fff;
+  cursor: default;
+}
+.mu-pager-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.mu-pager-btn--active:disabled {
+  opacity: 1;
+}
+.mu-pager-gap {
+  padding: 0 2px;
+  color: #94a3b8;
+}
+
 @media (max-width: 640px) {
-  .mu-ctable,
-  .mu-ctable tbody,
-  .mu-ctable tr,
   .mu-ctable td {
-    display: block;
-    width: 100%;
+    padding: 9px 6px;
   }
-  .mu-ctable thead {
-    display: none;
+  .mu-col-sr {
+    width: 40px;
   }
-  .mu-ctable tr {
-    margin-bottom: 10px;
-    padding: 6px 12px;
-    background: #fbfcff;
-    border: 1px solid #e6ecf7;
-    border-radius: 12px;
+  .mu-pager-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 9px;
   }
-  .mu-ctable td {
-    display: grid;
-    grid-template-columns: 92px 1fr;
-    gap: 10px;
-    padding: 7px 0;
-    border-bottom: 1px solid #f0f3fa;
-  }
-  .mu-ctable td::before {
-    content: attr(data-label);
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #6b7ca3;
-    padding-top: 2px;
-  }
-  .mu-ctable tbody tr td.mu-cell-action {
-    display: block;
-    border-bottom: none;
-    padding: 10px 0 6px;
-    text-align: center;
-  }
-  .mu-ctable td.mu-cell-action::before {
-    display: none;
-  }
-  .mu-ctable .mu-view-btn {
-    display: block;
-    text-align: center;
-    padding: 9px 14px;
+  .mu-consult-count {
+    font-size: 24px;
   }
 }
 

@@ -1,27 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../../api";
 
 const PAGE_SIZE = 10;
 
-// Same labels and colours as the admin Appointments page (AdminAppointments.jsx).
-// Kept as a local copy so that page — and its stylesheet, which also styles
-// .adp-modal — stay untouched.
-const STATUS_META = {
-  upcoming: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
-  assigned: { label: "Assigned", bg: "#f0fdfa", color: "#0f766e", border: "#99f6e4" },
-  pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
-  confirmed: { label: "Confirmed", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-  complete: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
-  cancelled: { label: "Cancelled", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
-};
-
-const PAYMENT_META = {
-  paid: { label: "Paid", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-  unpaid: { label: "Unpaid", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
-  refunded: { label: "Refunded", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
-};
-
-const GATEWAY_LABELS = { stripe: "Stripe", paypal: "PayPal" };
+// "Total" plus the status filter of the admin Appointments page, in the same
+// order and with the same labels (its STATUS_ORDER / STATUS_META).
+const STATUS_OPTIONS = [
+  { value: "all", label: "Total" },
+  { value: "upcoming", label: "Upcoming" },
+  { value: "assigned", label: "Assigned" },
+  { value: "pending", label: "Pending" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "complete", label: "Complete" },
+  { value: "cancelled", label: "Cancelled" },
+];
 
 // The existing admin detail pages, opened as they are (in a new tab).
 const DETAIL_ROUTES = {
@@ -29,14 +21,7 @@ const DETAIL_ROUTES = {
   category: (id) => `/admin-dashboard/category-consultations/${id}`,
 };
 
-function Pill({ meta, fallback }) {
-  const m = meta || fallback;
-  return (
-    <span className="mu-pill" style={{ background: m.bg, color: m.color, borderColor: m.border }}>
-      {m.label}
-    </span>
-  );
-}
+const KIND_LABELS = { appointment: "Doctor", category: "Category" };
 
 // "2026-10-12" → "12 Oct 2026" (parsed as a calendar date, so no timezone shift).
 function formatDay(value) {
@@ -46,84 +31,80 @@ function formatDay(value) {
   return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
 }
 
-function formatFee(value) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return "";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+// 1 … 4 5 6 … 20 — always the first and last page and the current page ±1.
+function pageWindow(current, total) {
+  const pages = new Set([1, total, current - 1, current, current + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= total).sort((a, b) => a - b);
+  const out = [];
+  sorted.forEach((p, i) => {
+    if (i > 0 && p - sorted[i - 1] > 1) out.push("gap");
+    out.push(p);
+  });
+  return out;
 }
 
-function ConsultationRow({ item }) {
-  const detailUrl = DETAIL_ROUTES[item.kind]?.(item.id);
-  const payment = PAYMENT_META[item.paymentStatus] || PAYMENT_META.unpaid;
-  const gateway = GATEWAY_LABELS[item.paymentGateway] || "";
-  const fee = formatFee(item.fee);
-
+function Pagination({ page, totalPages, disabled, onChange }) {
+  if (totalPages <= 1) return null;
   return (
-    <tr>
-      <td data-label="Date & time">
-        <div className="mu-cell">
-          <div className="mu-cell-main">{formatDay(item.date) || "Not provided"}</div>
-          <div className="mu-cell-sub">{item.time}</div>
-          {item.timezone && <div className="mu-cell-sub">{item.timezone}</div>}
-        </div>
-      </td>
-      <td data-label="Doctor / category">
-        <div className="mu-cell">
-          <div className={`mu-cell-main${item.doctorName ? "" : " mu-cell-main--empty"}`}>
-            {item.doctorName || "Not assigned"}
-          </div>
-          <div className="mu-cell-sub">{[item.title, item.subtitle].filter(Boolean).join(" · ")}</div>
-        </div>
-      </td>
-      <td data-label="Type">
-        <div className="mu-cell">
-          <div className="mu-cell-main">{item.type}</div>
-          {item.typeDetail && <div className="mu-cell-sub">{item.typeDetail}</div>}
-        </div>
-      </td>
-      <td data-label="Status">
-        <div className="mu-cell">
-          <Pill meta={STATUS_META[item.status]} fallback={STATUS_META.upcoming} />
-        </div>
-      </td>
-      <td data-label="Payment">
-        <div className="mu-cell">
-          <Pill meta={payment} fallback={PAYMENT_META.unpaid} />
-          {(gateway || fee) && <div className="mu-cell-sub">{[fee, gateway].filter(Boolean).join(" · ")}</div>}
-        </div>
-      </td>
-      <td data-label="" className="mu-cell-action">
-        <a className="mu-view-btn" href={detailUrl} target="_blank" rel="noopener noreferrer">
-          View
-        </a>
-      </td>
-    </tr>
+    <nav className="mu-pager" aria-label="Consultation pages">
+      <button type="button" className="mu-pager-btn" disabled={disabled || page <= 1} onClick={() => onChange(page - 1)}>
+        Prev
+      </button>
+      {pageWindow(page, totalPages).map((p, i) =>
+        p === "gap" ? (
+          <span key={`gap-${i}`} className="mu-pager-gap" aria-hidden="true">
+            …
+          </span>
+        ) : (
+          <button
+            key={p}
+            type="button"
+            className={`mu-pager-btn${p === page ? " mu-pager-btn--active" : ""}`}
+            disabled={disabled}
+            aria-current={p === page ? "page" : undefined}
+            onClick={() => p !== page && onChange(p)}
+          >
+            {p}
+          </button>
+        )
+      )}
+      <button
+        type="button"
+        className="mu-pager-btn"
+        disabled={disabled || page >= totalPages}
+        onClick={() => onChange(page + 1)}
+      >
+        Next
+      </button>
+    </nav>
   );
 }
 
-// All of a user's consultations (Appointment + CategoryConsultation), newest
-// booked first, ten at a time.
+// "Consultations Info": a status dropdown with the matching count, and that
+// user's consultations (Appointment + CategoryConsultation, newest booked
+// first) filtered to that status, ten per page. Counts and pages come from the
+// backend, so the count is always the size of what the table is showing.
 export default function UserConsultationList({ userId }) {
-  const [items, setItems] = useState([]);
-  const [hasMore, setHasMore] = useState(false);
-  const [nextPage, setNextPage] = useState(1);
-  // "loading" (first page) | "ready" | "error" (first page) | "more" | "more-error"
+  const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState({ items: [], total: 0, totalPages: 0 });
+  // "loading" | "ready" | "error"
   const [phase, setPhase] = useState("loading");
   const [attempt, setAttempt] = useState(0);
 
-  const fetchPage = useCallback(
-    (page) => api.get(`/api/admin/users/${userId}/consultations`, { params: { page, limit: PAGE_SIZE } }),
-    [userId],
-  );
-
   useEffect(() => {
     let cancelled = false;
-    fetchPage(1)
+    api
+      .get(`/api/admin/users/${userId}/consultations`, { params: { status, page, limit: PAGE_SIZE } })
       .then((res) => {
         if (cancelled) return;
-        setItems(res.data.items || []);
-        setHasMore(Boolean(res.data.hasMore));
-        setNextPage(2);
+        const { items = [], total = 0, totalPages = 0 } = res.data || {};
+        // The last page emptied out (e.g. bookings changed underneath us): step back.
+        if (items.length === 0 && page > 1 && totalPages > 0) {
+          setPage(totalPages);
+          return;
+        }
+        setData({ items, total, totalPages });
         setPhase("ready");
       })
       .catch((err) => {
@@ -133,82 +114,110 @@ export default function UserConsultationList({ userId }) {
     return () => {
       cancelled = true;
     };
-  }, [fetchPage, attempt]);
+  }, [userId, status, page, attempt]);
 
-  const retryFirstPage = () => {
+  const changeStatus = (next) => {
+    setStatus(next);
+    setPage(1);
+    setPhase("loading");
+  };
+  const changePage = (next) => {
+    setPage(next);
+    setPhase("loading");
+  };
+  const retry = () => {
     setPhase("loading");
     setAttempt((n) => n + 1);
   };
 
-  const loadMore = async () => {
-    setPhase("more");
-    try {
-      const res = await fetchPage(nextPage);
-      setItems((prev) => [...prev, ...(res.data.items || [])]);
-      setHasMore(Boolean(res.data.hasMore));
-      setNextPage((n) => n + 1);
-      setPhase("ready");
-    } catch (err) {
-      console.error("consultation list (more) failed:", err);
-      setPhase("more-error");
-    }
-  };
-
-  if (phase === "loading") {
-    return (
-      <div className="mu-consults" aria-busy="true">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="mu-skeleton mu-skeleton--row" />
-        ))}
-      </div>
-    );
-  }
-
-  if (phase === "error") {
-    return (
-      <div className="mu-stats-error">
-        <span>Couldn't load consultations.</span>
-        <button type="button" className="mu-link-btn" onClick={retryFirstPage}>
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return <div className="mu-consults-empty">No consultations yet</div>;
-  }
+  const loading = phase === "loading";
 
   return (
     <div className="mu-consults">
-      <div className="mu-consults-scroll">
-        <table className="mu-ctable">
-          <thead>
-            <tr>
-              <th>Date &amp; time</th>
-              <th>Doctor / category</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Payment</th>
-              <th aria-label="Actions" />
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <ConsultationRow key={`${item.kind}:${item.id}`} item={item} />
-            ))}
-          </tbody>
-        </table>
+      <div className="mu-consult-head">
+        <select
+          className="mu-status-select"
+          aria-label="Filter consultations by status"
+          value={status}
+          onChange={(e) => changeStatus(e.target.value)}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className="mu-consult-count" aria-live="polite">
+          {loading ? <span className="mu-skeleton mu-skeleton--num" /> : phase === "error" ? "–" : data.total}
+        </span>
       </div>
 
-      {(hasMore || phase === "more-error") && (
-        <div className="mu-consults-footer">
-          {phase === "more-error" && <span className="mu-consults-error">Couldn't load more.</span>}
-          <button type="button" className="mu-load-more" onClick={loadMore} disabled={phase === "more"}>
-            {phase === "more" ? "Loading…" : phase === "more-error" ? "Retry" : "Load more"}
+      {loading && (
+        <div aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="mu-skeleton mu-skeleton--row" />
+          ))}
+        </div>
+      )}
+
+      {phase === "error" && (
+        <div className="mu-stats-error">
+          <span>Couldn't load consultations.</span>
+          <button type="button" className="mu-link-btn" onClick={retry}>
+            Retry
           </button>
         </div>
       )}
+
+      {phase === "ready" && data.items.length === 0 && (
+        <div className="mu-consults-empty">
+          {status === "all" ? "No consultations yet" : "No consultations with this status"}
+        </div>
+      )}
+
+      {phase === "ready" && data.items.length > 0 && (
+        <div className="mu-consults-scroll">
+          <table className="mu-ctable">
+            <thead>
+              <tr>
+                <th className="mu-col-sr">Sr. No</th>
+                <th>Date</th>
+                <th>App. ID</th>
+                <th aria-label="View" />
+              </tr>
+            </thead>
+            <tbody>
+              {data.items.map((item, index) => (
+                <tr key={`${item.kind}:${item.id}`}>
+                  <td className="mu-col-sr">{(page - 1) * PAGE_SIZE + index + 1}</td>
+                  <td>
+                    <div className="mu-cell-main">{formatDay(item.date) || "Not provided"}</div>
+                    {item.time && <div className="mu-cell-sub">{item.time}</div>}
+                  </td>
+                  <td>
+                    <div className="mu-cell-main mu-mono" title={item.id}>
+                      {item.shortId}
+                    </div>
+                    <div className="mu-cell-sub">{KIND_LABELS[item.kind]}</div>
+                  </td>
+                  <td className="mu-cell-action">
+                    <a
+                      className="mu-view-btn"
+                      href={DETAIL_ROUTES[item.kind]?.(item.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View
+                    </a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Pagination page={page} totalPages={phase === "error" ? 0 : data.totalPages} disabled={loading} onChange={changePage} />
     </div>
   );
 }

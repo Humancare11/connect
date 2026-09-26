@@ -491,66 +491,31 @@ const getUserDetails = async (req, res) => {
   }
 };
 
-// GET /api/admin/users/:id/consultation-summary
-// How many consultations this patient has booked, grouped by outcome. Counts
-// both booking collections (Appointment = doctor consultations,
-// CategoryConsultation = category consultations) and is calculated on demand —
-// nothing is stored on the user.
-//
-// Status grouping (case-insensitive; the two collections spell them differently):
-//   completed → complete, completed
-//   cancelled → cancelled
-//   upcoming  → upcoming, requested, assigned, pending, confirmed
-//   other     → anything else, so total always adds up
-const CONSULTATION_STATUS_GROUP = {
-  $switch: {
-    branches: [
-      { case: { $in: [{ $toLower: { $ifNull: ["$status", ""] } }, ["complete", "completed"]] }, then: "completed" },
-      { case: { $in: [{ $toLower: { $ifNull: ["$status", ""] } }, ["cancelled"]] }, then: "cancelled" },
-      { case: { $in: [{ $toLower: { $ifNull: ["$status", ""] } }, ["upcoming", "requested", "assigned", "pending", "confirmed"]] }, then: "upcoming" },
-    ],
-    default: "other",
-  },
-};
-
-const getUserConsultationSummary = async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: "Invalid user id" });
-    if (!(await User.exists({ _id: id }))) return res.status(404).json({ msg: "User not found" });
-
-    const pipeline = [
-      { $match: { patientId: new mongoose.Types.ObjectId(id) } },
-      { $group: { _id: CONSULTATION_STATUS_GROUP, count: { $sum: 1 } } },
-    ];
-    const [appointmentGroups, categoryGroups] = await Promise.all([
-      Appointment.aggregate(pipeline),
-      CategoryConsultation.aggregate(pipeline),
-    ]);
-
-    const summary = { total: 0, completed: 0, upcoming: 0, cancelled: 0, other: 0 };
-    for (const row of [...appointmentGroups, ...categoryGroups]) {
-      summary[row._id] += row.count;
-      summary.total += row.count;
-    }
-
-    res.status(200).json(summary);
-  } catch (error) {
-    console.error("getUserConsultationSummary error:", error);
-    res.status(500).json({ msg: "Failed to fetch consultation summary" });
-  }
-};
-
-// GET /api/admin/users/:id/consultations?page=1&limit=10
+// GET /api/admin/users/:id/consultations?page=1&limit=10&status=all
 // A patient's consultations from both booking collections (Appointment =
-// doctor consultations, CategoryConsultation = category consultations),
-// merged newest-booked-first — the same order as the patient's own list.
+// doctor consultations, CategoryConsultation = category consultations), merged
+// newest-booked-first — the same order as the patient's own list — with page
+// numbers. `status` is one of the admin Appointments page's filter values
+// (upcoming | assigned | pending | confirmed | complete | cancelled) or "all".
+// `total` is the number of bookings matching that status, so the UI's count
+// and its pagination both come from here. Nothing is stored on the user.
 //
-// Each collection is asked only for ids + timestamps (index-backed by
-// patientId), the two are merged and sliced to the page, and just that page's
-// documents are then loaded in full. Payment/status fields are the ones the
-// admin detail pages already read.
+// Status mapping (case-insensitive; the two collections spell them differently,
+// and it matches the Appointments page: requested → upcoming, completed → complete):
+//   upcoming  → Appointment: upcoming, requested            (CategoryConsultation has none)
+//   assigned  → assigned            pending   → pending
+//   confirmed → confirmed           cancelled → cancelled
+//   complete  → complete, completed
 const CONSULTATION_LIST_MAX_LIMIT = 50;
+
+const CONSULTATION_STATUS_VARIANTS = {
+  upcoming: { appointment: ["upcoming", "requested"], category: [] },
+  assigned: { appointment: ["assigned"], category: ["Assigned"] },
+  pending: { appointment: ["pending"], category: ["Pending"] },
+  confirmed: { appointment: ["confirmed"], category: ["Confirmed"] },
+  complete: { appointment: ["complete", "completed"], category: ["Completed", "Complete"] },
+  cancelled: { appointment: ["cancelled"], category: ["Cancelled"] },
+};
 
 const canonicalConsultationStatus = (status) => {
   const value = String(status || "").toLowerCase();
@@ -566,8 +531,13 @@ const consultationFee = (doc) => {
   return Number.isFinite(paid) && paid > 0 ? paid / 100 : 0;
 };
 
+// No human-readable booking number exists on either model, so admins get a
+// short form of the _id (same convention as the medical certificate ids).
+const shortBookingId = (id) => String(id).slice(-8).toUpperCase();
+
 const toAppointmentRow = (a) => ({
   id: String(a._id),
+  shortId: shortBookingId(a._id),
   kind: "appointment",
   bookedAt: a.createdAt,
   date: a.date || "",
@@ -589,6 +559,7 @@ const toCategoryRow = (c) => {
   const enrollmentName = `${c.assignedDoctorId?.firstName || ""} ${c.assignedDoctorId?.surname || ""}`.trim();
   return {
     id: String(c._id),
+    shortId: shortBookingId(c._id),
     kind: "category",
     bookedAt: c.createdAt,
     date: c.date || "",
@@ -610,6 +581,12 @@ const getUserConsultations = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: "Invalid user id" });
+
+    const requestedStatus = String(req.query.status || "all").toLowerCase();
+    if (requestedStatus !== "all" && !CONSULTATION_STATUS_VARIANTS[requestedStatus]) {
+      return res.status(400).json({ msg: "Invalid status filter" });
+    }
+
     if (!(await User.exists({ _id: id }))) return res.status(404).json({ msg: "User not found" });
 
     const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), 1000);
@@ -617,13 +594,22 @@ const getUserConsultations = async (req, res) => {
     const start = (page - 1) * limit;
     const patientId = new mongoose.Types.ObjectId(id);
 
-    // Enough from each side to fill this page (+1 to know whether more exist).
-    const need = start + limit + 1;
+    const variants = requestedStatus === "all" ? null : CONSULTATION_STATUS_VARIANTS[requestedStatus];
+    const appointmentFilter = { patientId, ...(variants ? { status: { $in: variants.appointment } } : {}) };
+    const categoryFilter = { patientId, ...(variants ? { status: { $in: variants.category } } : {}) };
+    const searchesCategory = !variants || variants.category.length > 0;
+    const searchesAppointment = !variants || variants.appointment.length > 0;
+
+    // Enough from each side to fill this page.
+    const need = start + limit;
     const newestFirst = { createdAt: -1, _id: -1 };
-    const [appointmentKeys, categoryKeys] = await Promise.all([
-      Appointment.find({ patientId }).select("_id createdAt").sort(newestFirst).limit(need).lean(),
-      CategoryConsultation.find({ patientId }).select("_id createdAt").sort(newestFirst).limit(need).lean(),
+    const [appointmentCount, categoryCount, appointmentKeys, categoryKeys] = await Promise.all([
+      searchesAppointment ? Appointment.countDocuments(appointmentFilter) : 0,
+      searchesCategory ? CategoryConsultation.countDocuments(categoryFilter) : 0,
+      searchesAppointment ? Appointment.find(appointmentFilter).select("_id createdAt").sort(newestFirst).limit(need).lean() : [],
+      searchesCategory ? CategoryConsultation.find(categoryFilter).select("_id createdAt").sort(newestFirst).limit(need).lean() : [],
     ]);
+    const total = appointmentCount + categoryCount;
 
     const time = (row) => (row.createdAt ? new Date(row.createdAt).getTime() : 0);
     const merged = [
@@ -632,7 +618,6 @@ const getUserConsultations = async (req, res) => {
     ].sort((x, y) => time(y) - time(x) || String(y._id).localeCompare(String(x._id)));
 
     const pageKeys = merged.slice(start, start + limit);
-    const hasMore = merged.length > start + limit;
 
     const idsOf = (kind) => pageKeys.filter((k) => k.kind === kind).map((k) => k._id);
     const [appointments, categories] = await Promise.all([
@@ -656,7 +641,14 @@ const getUserConsultations = async (req, res) => {
     ]);
     const items = pageKeys.map((k) => rows.get(`${k.kind}:${k._id}`)).filter(Boolean);
 
-    res.status(200).json({ items, page, limit, hasMore });
+    res.status(200).json({
+      items,
+      page,
+      limit,
+      status: requestedStatus,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     console.error("getUserConsultations error:", error);
     res.status(500).json({ msg: "Failed to fetch consultations" });
@@ -1178,7 +1170,6 @@ module.exports = {
   approveUserDeleteRequest,
   rejectUserDeleteRequest,
   getUserDetails,
-  getUserConsultationSummary,
   getUserConsultations,
   forceLogoutUser,
   disableUser,
