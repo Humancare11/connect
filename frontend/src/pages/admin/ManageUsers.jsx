@@ -9,83 +9,6 @@ function getCountryName(isoCode) {
   return country?.name || isoCode;
 }
 
-function InfoSection({ title, children }) {
-  return (
-    <div
-      style={{
-        background: "rgba(248,250,252,0.8)",
-        border: "1px solid rgba(255,255,255,0.75)",
-        borderRadius: 12,
-        padding: "14px 18px",
-        marginBottom: 12,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#0e6ceb",
-          marginBottom: 12,
-        }}
-      >
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function InfoRow({ icon, label, value, noBorder }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 12,
-        padding: "8px 0",
-        borderBottom: noBorder ? "none" : "1px solid rgba(255,255,255,0.6)",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 15,
-          width: 22,
-          textAlign: "center",
-          flexShrink: 0,
-          marginTop: 1,
-        }}
-      >
-        {icon}
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#6b7ca3",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            marginBottom: 2,
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            fontSize: 13.5,
-            fontWeight: 500,
-            color: value ? "#0b0443" : "#94a3b8",
-          }}
-        >
-          {value || "Not provided"}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function formatPatientId(value) {
   if (value === undefined || value === null || value === "") return "—";
   const numeric = Number(value);
@@ -95,11 +18,123 @@ function formatPatientId(value) {
   return String(value);
 }
 
+const NOT_PROVIDED = "Not provided";
+
+const formatDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
+};
+
+// "Web · Chrome on Windows" / "App · Android" / "Unknown" (accounts created
+// before this was recorded). An app guessed from its HTTP client rather than
+// declared by the app itself is flagged "(inferred)".
+function formatRegisteredVia(user) {
+  const platform = user.registrationPlatform;
+  const subType = user.registrationSubType;
+  if (platform === "web") return `Web · ${subType || "Browser unknown"}`;
+  if (platform === "app") {
+    const os = { android: "Android", ios: "iOS" }[subType] || "Platform unknown";
+    const version = user.registrationAppVersion ? ` · v${user.registrationAppVersion}` : "";
+    const inferred = user.registrationPlatformSource === "inferred" ? " (inferred)" : "";
+    return `App · ${os}${version}${inferred}`;
+  }
+  return "Unknown";
+}
+
+function Field({ label, value, mono }) {
+  return (
+    <div className="mu-field">
+      <div className="mu-field-label">{label}</div>
+      <div className={`mu-field-value${value ? "" : " mu-field-value--empty"}${mono ? " mu-mono" : ""}`}>
+        {value || NOT_PROVIDED}
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, hint, className = "", children }) {
+  return (
+    <section className={`mu-section ${className}`}>
+      <div className="mu-section-title">
+        <span>{title}</span>
+        {hint && <span className="mu-section-hint">{hint}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+const STAT_TILES = [
+  { key: "total", label: "Total", tone: "total" },
+  { key: "completed", label: "Completed", tone: "completed" },
+  { key: "upcoming", label: "Upcoming", tone: "upcoming" },
+  { key: "cancelled", label: "Cancelled", tone: "cancelled" },
+];
+
+function ConsultationStats({ state, onRetry }) {
+  if (state.status === "error") {
+    return (
+      <div className="mu-stats-error">
+        <span>Couldn't load consultation count.</span>
+        <button type="button" className="mu-link-btn" onClick={onRetry}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const loading = state.status === "loading";
+  const data = state.data || {};
+  const tiles = data.other > 0 ? [...STAT_TILES, { key: "other", label: "Other", tone: "other" }] : STAT_TILES;
+
+  return (
+    <div className="mu-stats" aria-busy={loading}>
+      {tiles.map((tile) => (
+        <div key={tile.key} className={`mu-stat mu-stat--${tile.tone}`}>
+          {loading ? (
+            <span className="mu-skeleton mu-skeleton--num" />
+          ) : (
+            <div className="mu-stat-num">{data[tile.key] ?? 0}</div>
+          )}
+          <div className="mu-stat-label">{tile.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete }) {
+  const userId = user?._id;
+  const [stats, setStats] = useState({ status: "loading", data: null });
+  const [attempt, setAttempt] = useState(0);
+  const [copied, setCopied] = useState(false);
+
+  // Consultation counts are calculated by the API on demand (both booking
+  // collections) rather than stored on the user. The modal is keyed by user, so
+  // it starts in the loading state for every user it is opened for.
+  useEffect(() => {
+    if (!userId) return undefined;
+    let cancelled = false;
+    api
+      .get(`/api/admin/users/${userId}/consultation-summary`)
+      .then((res) => {
+        if (!cancelled) setStats({ status: "ready", data: res.data });
+      })
+      .catch((err) => {
+        console.error("consultation summary failed:", err);
+        if (!cancelled) setStats({ status: "error", data: null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, attempt]);
+
   if (!user) return null;
 
   const hasPendingDeletion = user.deletionRequestStatus === "pending";
-
+  const patientId = user.patientId ? formatPatientId(user.patientId) : "";
   const initials = user.name
     ? user.name
         .split(" ")
@@ -108,22 +143,21 @@ function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete })
         .join("")
         .toUpperCase()
     : "U";
+  const roleLabel = user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : "User";
 
-  const joinedDate = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
-    : "—";
+  const copyPatientId = async () => {
+    try {
+      await navigator.clipboard.writeText(patientId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable (insecure context / denied) — nothing to do */
+    }
+  };
 
   return (
     <div className="adp-overlay" onClick={onClose}>
-      <div
-        className="adp-modal"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 800 }}
-      >
+      <div className="adp-modal mu-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="adp-modal-header">
           <h3 className="adp-modal-title">User Profile</h3>
@@ -132,175 +166,71 @@ function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete })
           </button>
         </div>
 
-        <div className="adp-modal-body" style={{ padding: "20px 22px" }}>
-          {/* Hero / Identity */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              padding: "18px 20px",
-              background: "linear-gradient(135deg, #0b0443 0%, #083ab0 100%)",
-              borderRadius: 14,
-              marginBottom: 14,
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: -30,
-                right: -30,
-                width: 120,
-                height: 120,
-                background: "rgba(255,255,255,0.06)",
-                borderRadius: "50%",
-                pointerEvents: "none",
-              }}
-            />
-            <div
-              style={{
-                width: 60,
-                height: 60,
-                borderRadius: 16,
-                flexShrink: 0,
-                background: "rgba(255,255,255,0.15)",
-                border: "2px solid rgba(255,255,255,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 22,
-                fontWeight: 800,
-                color: "#fff",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              {initials}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 17,
-                  fontWeight: 800,
-                  color: "#fff",
-                  marginBottom: 3,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user.name}
-              </div>
-              <div
-                style={{
-                  fontSize: 12.5,
-                  color: "rgba(255,255,255,0.7)",
-                  marginBottom: 8,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user.email}
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    background: "rgba(255,255,255,0.15)",
-                    border: "1px solid rgba(255,255,255,0.25)",
-                    borderRadius: 20,
-                    padding: "3px 10px",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#fff",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  👤 {user.role || "User"}
-                </span>
-                {user.country && (
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      background: "rgba(255,255,255,0.12)",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      borderRadius: 20,
-                      padding: "3px 10px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.85)",
-                    }}
+        <div className="adp-modal-body mu-body">
+          {/* Identity card */}
+          <div className="mu-hero">
+            <div className="mu-avatar">{initials}</div>
+            <div className="mu-hero-info">
+              <div className="mu-hero-name">{user.name || NOT_PROVIDED}</div>
+              <div className="mu-hero-email">{user.email || NOT_PROVIDED}</div>
+              <div className="mu-hero-badges">
+                <span className="mu-badge">👤 {roleLabel}</span>
+                {patientId && (
+                  <button
+                    type="button"
+                    className="mu-badge mu-badge--btn"
+                    onClick={copyPatientId}
+                    title="Copy patient ID"
                   >
-                    🌍 {getCountryName(user.country)}
-                  </span>
+                    🆔 {patientId} · {copied ? "Copied" : "Copy"}
+                  </button>
                 )}
+                {hasPendingDeletion && <span className="mu-badge mu-badge--warn">Deletion requested</span>}
               </div>
             </div>
           </div>
 
-          {/* Personal Information */}
-          <InfoSection title="Personal Information">
-            <InfoRow icon="📱" label="Mobile" value={user.mobile} />
-            <InfoRow icon="⚧" label="Gender" value={user.gender} />
-            <InfoRow icon="🎂" label="Date of Birth" value={user.dob} />
-            <InfoRow icon="🌍" label="Country" value={getCountryName(user.country)} />
-            <InfoRow icon="📍" label="State / Province" value={user.state} noBorder />
-          </InfoSection>
+          <div className="mu-grid">
+            <Section title="Personal Information">
+              <div className="mu-fields">
+                <Field label="Mobile" value={user.mobile} />
+                <Field label="Gender" value={user.gender} />
+                <Field label="Date of Birth" value={user.dob} />
+              </div>
+            </Section>
 
-          {/* Account Information */}
-          <InfoSection title="Account Information">
-            <InfoRow
-              icon="🆔"
-              label="Patient ID"
-              value={formatPatientId(user.patientId)}
-            />
-            <InfoRow
-              icon="🔑"
-              label="Role"
-              value={
-                user.role
-                  ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                  : "User"
-              }
-            />
-            <InfoRow icon="📅" label="Member Since" value={joinedDate} />
-            <InfoRow
-              icon="🌐"
-              label="Registration IP"
-              value={user.registrationIp || "—"}
-              noBorder
-            />
-          </InfoSection>
+            <Section title="Location" hint={user.locationSource === "ip" ? "Detected from IP" : ""}>
+              <div className="mu-fields">
+                <Field label="Country" value={getCountryName(user.country)} />
+                <Field label="State / Province" value={user.state} />
+                <Field label="City" value={user.city} />
+              </div>
+            </Section>
 
-          {hasPendingDeletion && (
-            <InfoSection title="Account Deletion Request">
-              <InfoRow
-                icon="🗑️"
-                label="Reason"
-                value={user.deletionReason || "No reason provided"}
-              />
-              <InfoRow
-                icon="📅"
-                label="Requested On"
-                value={
-                  user.deletionRequestedAt
-                    ? new Date(user.deletionRequestedAt).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "—"
-                }
-                noBorder
-              />
-            </InfoSection>
-          )}
+            <Section title="Consultations" className="mu-span-2">
+              <ConsultationStats state={stats} onRetry={() => {
+                  setStats({ status: "loading", data: null });
+                  setAttempt((n) => n + 1);
+                }} />
+            </Section>
+
+            <Section title="Account Information" className="mu-span-2">
+              <div className="mu-fields">
+                <Field label="Member Since" value={formatDate(user.createdAt)} />
+                <Field label="Registration IP" value={user.registrationIp} mono />
+                <Field label="Registered Via" value={formatRegisteredVia(user)} />
+              </div>
+            </Section>
+
+            {hasPendingDeletion && (
+              <Section title="Account Deletion Request" className="mu-span-2 mu-section--warn">
+                <div className="mu-fields">
+                  <Field label="Reason" value={user.deletionReason || "No reason provided"} />
+                  <Field label="Requested On" value={formatDate(user.deletionRequestedAt)} />
+                </div>
+              </Section>
+            )}
+          </div>
         </div>
 
         <div className="adp-modal-footer">
@@ -421,6 +351,7 @@ export default function ManageUsers() {
       )}
       {selected && (
         <UserModal
+          key={selected._id}
           user={selected}
           onClose={() => setSelected(null)}
           onDelete={handleDelete}

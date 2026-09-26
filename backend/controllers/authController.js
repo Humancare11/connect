@@ -26,6 +26,7 @@ const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation"
 const { recordFailedLogin, recordSecurityEvent } = require("../utils/securityMonitor");
 const { validateMobile } = require("../utils/mobileValidation");
 const { lookupLocation } = require("../utils/geoIp");
+const { detectRegistrationClient } = require("../utils/clientInfo");
 const { Country, State } = require("country-state-city");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
@@ -234,6 +235,7 @@ const register = async (req, res) => {
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
       mobile: mobileCheck.value, ...location, registrationIp: ip,
+      ...detectRegistrationClient(req),
     });
     await rememberPassword({ userId: user._id, userType: "user", passwordHash: hashed });
 
@@ -821,6 +823,7 @@ const googleAuthUser = async (req, res) => {
     user = await User.create({
       name, email, googleId, role: "user",
       mobile: mobileCheck.value, ...location, registrationIp: ip,
+      ...detectRegistrationClient(req),
     });
     await recordConsent(req, user);
     const session = await issueAuthCookies(res, user);

@@ -1,7 +1,9 @@
 const User = require("../models/User");
 const Enrollment = require("../models/Enrollment");
 const Doctor = require("../models/Doctor");
+const mongoose = require("mongoose");
 const Appointment = require("../models/Appointment");
+const CategoryConsultation = require("../models/CategoryConsultation");
 const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { recordActivity } = require("../utils/activityLogger");
@@ -484,6 +486,56 @@ const getUserDetails = async (req, res) => {
   } catch (error) {
     console.error("getUserDetails error:", error);
     res.status(500).json({ msg: "Failed to fetch user details" });
+  }
+};
+
+// GET /api/admin/users/:id/consultation-summary
+// How many consultations this patient has booked, grouped by outcome. Counts
+// both booking collections (Appointment = doctor consultations,
+// CategoryConsultation = category consultations) and is calculated on demand —
+// nothing is stored on the user.
+//
+// Status grouping (case-insensitive; the two collections spell them differently):
+//   completed → complete, completed
+//   cancelled → cancelled
+//   upcoming  → upcoming, requested, assigned, pending, confirmed
+//   other     → anything else, so total always adds up
+const CONSULTATION_STATUS_GROUP = {
+  $switch: {
+    branches: [
+      { case: { $in: [{ $toLower: { $ifNull: ["$status", ""] } }, ["complete", "completed"]] }, then: "completed" },
+      { case: { $in: [{ $toLower: { $ifNull: ["$status", ""] } }, ["cancelled"]] }, then: "cancelled" },
+      { case: { $in: [{ $toLower: { $ifNull: ["$status", ""] } }, ["upcoming", "requested", "assigned", "pending", "confirmed"]] }, then: "upcoming" },
+    ],
+    default: "other",
+  },
+};
+
+const getUserConsultationSummary = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: "Invalid user id" });
+    if (!(await User.exists({ _id: id }))) return res.status(404).json({ msg: "User not found" });
+
+    const pipeline = [
+      { $match: { patientId: new mongoose.Types.ObjectId(id) } },
+      { $group: { _id: CONSULTATION_STATUS_GROUP, count: { $sum: 1 } } },
+    ];
+    const [appointmentGroups, categoryGroups] = await Promise.all([
+      Appointment.aggregate(pipeline),
+      CategoryConsultation.aggregate(pipeline),
+    ]);
+
+    const summary = { total: 0, completed: 0, upcoming: 0, cancelled: 0, other: 0 };
+    for (const row of [...appointmentGroups, ...categoryGroups]) {
+      summary[row._id] += row.count;
+      summary.total += row.count;
+    }
+
+    res.status(200).json(summary);
+  } catch (error) {
+    console.error("getUserConsultationSummary error:", error);
+    res.status(500).json({ msg: "Failed to fetch consultation summary" });
   }
 };
 
@@ -1002,6 +1054,7 @@ module.exports = {
   approveUserDeleteRequest,
   rejectUserDeleteRequest,
   getUserDetails,
+  getUserConsultationSummary,
   forceLogoutUser,
   disableUser,
   migrateDoctorIds,
