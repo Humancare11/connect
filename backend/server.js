@@ -132,7 +132,7 @@ const startServer = async () => {
 
   await ensureBucketCors(allowedOrigins);
 
-  // Optional: loads the GeoLite2 DB used to pre-fill a new user's location.
+  // Optional: loads the DB-IP City Lite DB used to pre-fill a new user's location.
   // Non-blocking and non-fatal — signup works without it.
   initGeoIp().catch(() => {});
 };

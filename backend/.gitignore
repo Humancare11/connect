@@ -39,5 +39,5 @@ uploads/*
 .DS_Store
 Thumbs.db
 
-# GeoLite2 / GeoIP databases (download separately, see utils/geoIp.js)
+# GeoIP databases, e.g. dbip-city-lite.mmdb (download separately, see utils/geoIp.js)
 data/*.mmdb
