@@ -367,6 +367,9 @@ export default function PhoneInputField({
   searchInputName,
   required = false,
   maxLength,
+  // Opt-in: while +91 is selected, keep only the 10 national digits (and
+  // tolerate a pasted "+91…" / "0…" prefix). Other callers are unaffected.
+  limitIndianNumber = false,
 }) {
   const init = parseValue(value, defaultCountry);
   const [country, setCountry] = useState(init.country);
@@ -434,7 +437,13 @@ export default function PhoneInputField({
 
   const handleLocalChange = (e) => {
     userSelectedRef.current = true;
-    const l = e.target.value.replace(/\D/g, "").slice(0, maxLength);
+    let l = e.target.value.replace(/\D/g, "");
+    if (limitIndianNumber && country.code === "IN") {
+      if (l.length === 12 && l.startsWith("91")) l = l.slice(2);
+      else if (l.length === 11 && l.startsWith("0")) l = l.slice(1);
+      l = l.slice(0, 10);
+    }
+    l = l.slice(0, maxLength);
     setLocal(l);
     emit(country, l);
   };

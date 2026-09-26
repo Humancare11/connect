@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import "./Login.css";
@@ -67,29 +67,6 @@ const COMMON_PASSWORDS = new Set([
   "doctor123",
   "patient123",
 ]);
-const DOB_MIN = "1900-01-01";
-const IP_COUNTRY_ENDPOINT = "https://api.country.is/";
-const IP_COUNTRY_TIMEOUT_MS = 3500;
-const todayISO = () => new Date().toISOString().slice(0, 10);
-
-async function getIpCountryCode() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), IP_COUNTRY_TIMEOUT_MS);
-
-  try {
-    const res = await fetch(IP_COUNTRY_ENDPOINT, {
-      signal: controller.signal,
-    });
-    if (!res.ok) return "";
-    const data = await res.json();
-    return String(data?.country || "").toUpperCase();
-  } catch {
-    return "";
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 function getPasswordError(password) {
   const value = String(password || "");
   if (value.length < 8) return "Password must be at least 8 characters.";
@@ -105,28 +82,10 @@ function getPasswordError(password) {
   return "";
 }
 
-function getDobError(dob) {
-  if (!dob) return "Select Date of Birth";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob)) return "Enter a valid Date of Birth";
-  if (Number.isNaN(new Date(`${dob}T00:00:00`).getTime()))
-    return "Enter a valid Date of Birth";
-  if (dob.startsWith("0000")) return "Enter a valid year of birth";
-  if (dob > todayISO()) return "Date of Birth cannot be in the future";
-  if (dob < DOB_MIN) return "Date of Birth must be in or after 1900";
-  return "";
-}
 import api, { setUserAuthToken, getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
-import PhoneInputField, {
-  COUNTRIES as PHONE_COUNTRIES,
-  parseValue as parsePhoneValue,
-  findCountryByName,
-  getFlagUrl,
-  toFlag,
-} from "../components/PhoneInputField";
-import DatePickerField from "../components/DatePickerField";
-import useLocationData from "../hooks/useLocationData";
-import useCountries from "../hooks/useCountries";
+import PhoneInputField from "../components/PhoneInputField";
+import { getMobileError } from "../utils/phone";
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -259,21 +218,13 @@ export default function AuthPage() {
 
   const [view, setView] = useState("auth");
   const [isRegister, setIsRegister] = useState(false);
-  const [countryOpen, setCountryOpen] = useState(false);
-  const [countrySearch, setCountrySearch] = useState("");
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [registerForm, setRegisterForm] = useState({
     name: "",
     email: "",
     mobile: "",
-    dob: "",
-    gender: "",
-    country: "",
-    state: "",
-    city: "",
     password: "",
-    confirmPassword: "",
     terms: false,
     privacyConsent: false,
     hipaaConsent: false,
@@ -282,9 +233,6 @@ export default function AuthPage() {
   const [googlePending, setGooglePending] = useState(null);
   const [googleProfile, setGoogleProfile] = useState({
     mobile: "",
-    dob: "",
-    gender: "",
-    country: "",
     terms: false,
     privacyConsent: false,
     hipaaConsent: false,
@@ -293,10 +241,6 @@ export default function AuthPage() {
   const [otpValue, setOtpValue] = useState("");
   const [otpTimer, setOtpTimer] = useState(0);
   const timerRef = useRef(null);
-  const countryManuallySelectedRef = useRef(false);
-  const ipCountryAppliedRef = useRef(false);
-  const googleCountryManuallySelectedRef = useRef(false);
-  const googleIpCountryAppliedRef = useRef(false);
 
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetToken, setResetToken] = useState("");
@@ -304,7 +248,6 @@ export default function AuthPage() {
   const [confirmPass, setConfirmPass] = useState("");
   const [showPasswords, setShowPasswords] = useState({
     register: false,
-    registerConfirm: false,
     login: false,
     newPass: false,
     confirmPass: false,
@@ -320,18 +263,6 @@ export default function AuthPage() {
   const registerPasswordError = registerForm.password
     ? getPasswordError(registerForm.password)
     : "";
-  const { states, cities, loadingStates, loadingCities } = useLocationData(
-    registerForm.country,
-    registerForm.state,
-  );
-
-  const {
-    data: countries = [],
-    isLoading: loadingCountries,
-    error: countriesError,
-    refetch: refetchCountries,
-  } = useCountries();
-
   const clrErr = () => {
     setFormError("");
     setFormSuccess("");
@@ -359,188 +290,6 @@ export default function AuthPage() {
     setFormError("");
     setOtpValue("");
   };
-
-  const handleCountrySelect = (e) => {
-    countryManuallySelectedRef.current = true;
-    const countryName = e.target.value;
-    const selected = findCountryByName(countryName);
-    if (!selected) {
-      return setRegisterForm((p) => ({ ...p, country: countryName }));
-    }
-    const { local } = parsePhoneValue(registerForm.mobile, selected.code);
-    setRegisterForm((p) => ({
-      ...p,
-      country: selected.name,
-      mobile: `+${selected.dial}${local}`,
-    }));
-  };
-
-  const getPhoneCountryForLocationCountry = (country) => {
-    if (!country) return null;
-    return (
-      PHONE_COUNTRIES.find(
-        (phoneCountry) =>
-          phoneCountry.code === String(country.isoCode || "").toUpperCase(),
-      ) || findCountryByName(country.name)
-    );
-  };
-
-  const getMobileWithCountryCode = (mobile, country, fallbackCode = "auto") => {
-    const phoneCountry = getPhoneCountryForLocationCountry(country);
-    const dialCode = String(
-      phoneCountry?.dial || country?.phonecode || "",
-    ).replace(/\D/g, "");
-    const { local } = parsePhoneValue(
-      mobile,
-      phoneCountry?.code || country?.isoCode || fallbackCode,
-    );
-
-    return dialCode ? `+${dialCode}${local}` : mobile;
-  };
-
-  const selectedPhoneCountry = findCountryByName(registerForm.country);
-
-  // Trigger label for the Country dropdown. Resolve the selected country from the
-  // canonical location list (match by the stored name, use its ISO code for the
-  // flag) so every country renders — findCountryByName only matches the ~205
-  // whose spelling is identical in the phone-widget list. Falls back to the
-  // phone-widget match while the location list loads, then to the raw stored
-  // name so a country name always shows once one is selected. Display only —
-  // does not affect what is saved.
-  const selectedCountryDisplay =
-    countries.find((c) => c.name === registerForm.country) || null;
-  const selectedCountryName =
-    selectedCountryDisplay?.name ||
-    selectedPhoneCountry?.name ||
-    registerForm.country ||
-    "";
-  const selectedCountryFlagCode =
-    selectedCountryDisplay?.isoCode || selectedPhoneCountry?.code || "";
-
-  // The mobile widget names countries from its own list (PHONE_COUNTRIES), which
-  // differs from the location API's names for ~45 countries. Resolve the widget's
-  // ISO code back to the location-API country name so the value we persist matches
-  // the Country dropdown selection and the State/City lookups (keyed on that name)
-  // keep working.
-  const canonicalCountryName = (meta) => {
-    if (!meta) return "";
-    const match = countries.find(
-      (c) => c.isoCode?.toUpperCase() === String(meta.code || "").toUpperCase(),
-    );
-    return match?.name || meta?.name || "";
-  };
-
-  const selectedGoogleCountry = countries.find(
-    (country) => country.name === googleProfile.country,
-  );
-  const selectedGooglePhoneCountry =
-    getPhoneCountryForLocationCountry(selectedGoogleCountry) ||
-    findCountryByName(googleProfile.country);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (ipCountryAppliedRef.current || countries.length === 0) return;
-    if (countryManuallySelectedRef.current) return;
-
-    getIpCountryCode().then((countryCode) => {
-      if (cancelled || !countryCode || countryManuallySelectedRef.current) {
-        return;
-      }
-
-      const detectedCountry = countries.find(
-        (country) => country.isoCode?.toUpperCase() === countryCode,
-      );
-      if (!detectedCountry) return;
-
-      ipCountryAppliedRef.current = true;
-      setRegisterForm((prev) => {
-        if (countryManuallySelectedRef.current) return prev;
-        const existingCountry = findCountryByName(prev.country);
-        const canReplaceCountry =
-          !prev.country ||
-          (!countryManuallySelectedRef.current &&
-            existingCountry?.code === "IN");
-
-        if (!canReplaceCountry) return prev;
-
-        return {
-          ...prev,
-          country: detectedCountry.name,
-          state: "",
-          city: "",
-          mobile: getMobileWithCountryCode(
-            prev.mobile,
-            detectedCountry,
-            existingCountry?.code || "auto",
-          ),
-        };
-      });
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [countries]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!googlePending || googleIpCountryAppliedRef.current) return;
-    if (countries.length === 0 || googleCountryManuallySelectedRef.current) {
-      return;
-    }
-
-    getIpCountryCode().then((countryCode) => {
-      if (
-        cancelled ||
-        !countryCode ||
-        googleCountryManuallySelectedRef.current
-      ) {
-        return;
-      }
-
-      const detectedCountry = countries.find(
-        (country) => country.isoCode?.toUpperCase() === countryCode,
-      );
-      if (!detectedCountry) return;
-
-      googleIpCountryAppliedRef.current = true;
-      setGoogleProfile((prev) => {
-        if (googleCountryManuallySelectedRef.current) {
-          return prev;
-        }
-        const existingCountry = findCountryByName(prev.country);
-        const canReplaceCountry =
-          !prev.country || existingCountry?.code === "IN";
-
-        if (!canReplaceCountry) return prev;
-
-        return {
-          ...prev,
-          country: detectedCountry.name,
-          mobile: getMobileWithCountryCode(
-            prev.mobile,
-            detectedCountry,
-            existingCountry?.code || "auto",
-          ),
-        };
-      });
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [countries, googlePending]);
-
-  useEffect(() => {
-    if (!countryOpen) return;
-    const close = (e) => {
-      if (!e.target.closest(".hc-country-dropdown")) setCountryOpen(false);
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [countryOpen]);
 
   function afterLogin(user) {
     login(user);
@@ -593,11 +342,8 @@ export default function AuthPage() {
 
   const handleGoogleComplete = async (e) => {
     e.preventDefault();
-    if (!googleProfile.mobile) return setFormError("Enter mobile number");
-    const googleDobError = getDobError(googleProfile.dob);
-    if (googleDobError) return setFormError(googleDobError);
-    if (!googleProfile.gender) return setFormError("Select Gender");
-    if (!googleProfile.country) return setFormError("Select your country");
+    const googleMobileError = getMobileError(googleProfile.mobile);
+    if (googleMobileError) return setFormError(googleMobileError);
     if (
       !googleProfile.terms ||
       !googleProfile.privacyConsent ||
@@ -613,9 +359,6 @@ export default function AuthPage() {
       const res = await api.post("/api/auth/google", {
         accessToken: googlePending.accessToken,
         mobile: googleProfile.mobile,
-        dob: googleProfile.dob,
-        gender: googleProfile.gender,
-        country: googleProfile.country,
         privacyConsent: googleProfile.privacyConsent,
         hipaaConsent: googleProfile.hipaaConsent,
       });
@@ -667,35 +410,14 @@ export default function AuthPage() {
     }
     const passwordError = getPasswordError(registerForm.password);
     if (passwordError) return setFormError(passwordError);
-    if (!registerForm.confirmPassword) {
-      return setFormError("Confirm your password.");
-    }
-    if (registerForm.confirmPassword !== registerForm.password) {
-      return setFormError("Passwords do not match.");
-    }
-    if (!registerForm.mobile) return setFormError("Enter mobile number");
-    const dobError = getDobError(registerForm.dob);
-    if (dobError) return setFormError(dobError);
-    if (!registerForm.gender) return setFormError("Select Gender");
-    if (!registerForm.country) return setFormError("Select your country");
-    if (loadingStates) {
-      return setFormError("Please wait while we load the state / province list.");
-    }
-    // State / province is mandatory. Countries with subdivisions in the
-    // location API use the dropdown; countries with none (e.g. Singapore,
-    // Monaco) fall back to a free-text field — either way a value is required.
-    if (!registerForm.state.trim()) {
-      return setFormError("Select your state / province");
-    }
-    if (cities.length > 0 && !registerForm.city) {
-      return setFormError("Select your city");
-    }
+    const mobileError = getMobileError(registerForm.mobile);
+    if (mobileError) return setFormError(mobileError);
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", {
         email: registerForm.email,
         password: registerForm.password,
-        dob: registerForm.dob,
+        mobile: registerForm.mobile,
         name: registerForm.name,
         privacyConsent: registerForm.privacyConsent,
         hipaaConsent: registerForm.hipaaConsent,
@@ -717,7 +439,7 @@ export default function AuthPage() {
     setLoading(true);
     clrErr();
     try {
-      const { terms, confirmPassword, ...data } = registerForm;
+      const { terms: _terms, ...data } = registerForm;
       const res = await api.post("/api/auth/register", {
         ...data,
         otp: otpValue,
@@ -729,13 +451,7 @@ export default function AuthPage() {
         name: "",
         email: "",
         mobile: "",
-        dob: "",
-        gender: "",
-        country: "",
-        state: "",
-        city: "",
         password: "",
-        confirmPassword: "",
         terms: false,
         privacyConsent: false,
         hipaaConsent: false,
@@ -755,7 +471,7 @@ export default function AuthPage() {
       await api.post("/api/auth/send-register-otp", {
         email: registerForm.email,
         password: registerForm.password,
-        dob: registerForm.dob,
+        mobile: registerForm.mobile,
         name: registerForm.name,
         privacyConsent: registerForm.privacyConsent,
         hipaaConsent: registerForm.hipaaConsent,
@@ -861,7 +577,7 @@ export default function AuthPage() {
             >
               Welcome,{" "}
               <strong style={{ color: "#2563eb" }}>{googlePending.name}</strong>
-              ! Just a few more details.
+              ! Just add your mobile number to finish.
             </p>
             {formError && <p className="hc-form-error">{formError}</p>}
             <label htmlFor="google-profile-name" style={VISUALLY_HIDDEN}>
@@ -888,145 +604,23 @@ export default function AuthPage() {
               disabled
               style={{ opacity: 0.55, cursor: "not-allowed" }}
             />
-            <div className="hc-row hc-reg-row">
-              <div className="hc-field-wrap">
-                <label htmlFor="google-profile-dob" className="hc-reg-label">
-                  Date of Birth
-                </label>
-                <DatePickerField
-                  id="google-profile-dob"
-                  name="googleProfileDob"
-                  value={googleProfile.dob}
-                  onChange={(v) => setGoogleProfile((p) => ({ ...p, dob: v }))}
-                  min={DOB_MIN}
-                  max={todayISO()}
-                  placeholder="Date of Birth"
-                  required
-                />
-              </div>
-              <div className="hc-field-wrap">
-                <label htmlFor="google-profile-gender" className="hc-reg-label">
-                  Gender
-                </label>
-                <div className="hc-gender-wrap">
-                  <select
-                    id="google-profile-gender"
-                    name="googleProfileGender"
-                    className="hc-select hc-gender-select"
-                    value={googleProfile.gender}
-                    onChange={(e) =>
-                      setGoogleProfile((p) => ({
-                        ...p,
-                        gender: e.target.value,
-                      }))
-                    }
-                    required
-                  >
-                    <option value="" disabled>
-                      Select gender
-                    </option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  <svg
-                    className="hc-gender-arrow"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="hc-row hc-reg-row hc-country-mobile-row">
-              <div className="hc-field-wrap">
-                <label
-                  htmlFor="google-profile-country"
-                  className="hc-reg-label"
-                >
-                  Country
-                </label>
-                <select
-                  id="google-profile-country"
-                  name="googleProfileCountry"
-                  className="hc-select hc-country-select"
-                  value={googleProfile.country}
-                  onChange={(e) => {
-                    googleCountryManuallySelectedRef.current = true;
-                    const selectedCountry = countries.find(
-                      (country) => country.name === e.target.value,
-                    );
-
-                    setGoogleProfile((p) => ({
-                      ...p,
-                      country: e.target.value,
-                      mobile: selectedCountry
-                        ? getMobileWithCountryCode(p.mobile, selectedCountry)
-                        : p.mobile,
-                    }));
-                  }}
-                  required
-                  disabled={loadingCountries}
-                >
-                  <option value="">
-                    {loadingCountries
-                      ? "Loading countries..."
-                      : countriesError
-                        ? "Failed to load countries"
-                        : "Select Country"}
-                  </option>
-                  {!loadingCountries &&
-                    !countriesError &&
-                    countries.map((c) => (
-                      <option key={c.isoCode} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                </select>
-                {countriesError && (
-                  <button
-                    type="button"
-                    onClick={() => refetchCountries()}
-                    className="hc-google-retry-btn"
-                  >
-                    Retry Loading Countries
-                  </button>
-                )}
-              </div>
-              <div className="hc-field-wrap">
-                <label htmlFor="google-profile-mobile" className="hc-reg-label">
-                  Mobile Number
-                </label>
-                <PhoneInputField
-                  inputId="google-profile-mobile"
-                  inputName="googleProfileMobile"
-                  searchInputId="google-profile-mobile-country-search"
-                  searchInputName="googleProfileMobileCountrySearch"
-                  value={googleProfile.mobile}
-                  onChange={(ph, meta) => {
-                    googleCountryManuallySelectedRef.current = true;
-                    setGoogleProfile((p) => ({
-                      ...p,
-                      mobile: ph,
-                      country: meta?.name || p.country,
-                    }));
-                  }}
-                  onCountryChange={(meta) =>
-                    meta?.name &&
-                    setGoogleProfile((p) => ({ ...p, country: meta.name }))
-                  }
-                  defaultCountry={selectedGooglePhoneCountry?.code || "auto"}
-                  placeholder="Mobile number"
-                  required
-                />
-              </div>
+            <div className="hc-mobile-field">
+              <label htmlFor="google-profile-mobile" className="hc-reg-label">
+                Mobile Number
+              </label>
+              <PhoneInputField
+                inputId="google-profile-mobile"
+                inputName="googleProfileMobile"
+                searchInputId="google-profile-mobile-country-search"
+                searchInputName="googleProfileMobileCountrySearch"
+                value={googleProfile.mobile}
+                onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
+                defaultCountry="IN"
+                placeholder="Mobile number"
+                required
+                maxLength={15}
+                limitIndianNumber
+              />
             </div>
             <div className="hc-consent-row">
               <label
@@ -1420,343 +1014,23 @@ export default function AuthPage() {
               style={{ width: "100%" }}
             />
 
-            <div className="hc-row hc-reg-row">
-              <div className="hc-field-wrap">
-                <label htmlFor="patient-register-dob" style={VISUALLY_HIDDEN}>
-                  Date of Birth
-                </label>
-                <DatePickerField
-                  id="patient-register-dob"
-                  name="patientRegisterDob"
-                  value={registerForm.dob}
-                  onChange={(v) => setRegisterForm((p) => ({ ...p, dob: v }))}
-                  min={DOB_MIN}
-                  max={todayISO()}
-                  placeholder="Date of Birth"
-                  required
-                />
-              </div>
-              <div className="hc-field-wrap">
-                <label
-                  htmlFor="patient-register-gender"
-                  style={VISUALLY_HIDDEN}
-                >
-                  Gender
-                </label>
-                <div className="hc-gender-wrap">
-                  <select
-                    id="patient-register-gender"
-                    name="patientRegisterGender"
-                    className="hc-select hc-gender-select"
-                    value={registerForm.gender}
-                    onChange={(e) =>
-                      setRegisterForm((p) => ({ ...p, gender: e.target.value }))
-                    }
-                    required
-                  >
-                    <option value="" disabled>
-                      Select gender
-                    </option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  <svg
-                    className="hc-gender-arrow"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="hc-row hc-reg-row hc-country-mobile-row">
-              <div className="hc-field-wrap">
-                <div className="hc-country-dropdown">
-                  <button
-                    type="button"
-                    className="hc-country-trigger"
-                    onClick={() => {
-                      setCountryOpen((v) => !v);
-                      if (!countryOpen) setCountrySearch("");
-                    }}
-                  >
-                    {selectedCountryName ? (
-                      <>
-                        {selectedCountryFlagCode && (
-                          <img
-                            src={getFlagUrl(selectedCountryFlagCode)}
-                            alt={selectedCountryName}
-                            style={{
-                              width: 20,
-                              height: 15,
-                              objectFit: "cover",
-                              borderRadius: 2,
-                            }}
-                          />
-                        )}
-                        <span>{selectedCountryName}</span>
-                      </>
-                    ) : (
-                      <span>Select Country</span>
-                    )}
-                  </button>
-
-                  {countryOpen && (
-                    <div className="hc-country-menu">
-                      <div className="hc-country-search-wrap">
-                        <div className="hc-country-search-inner">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#94a3b8"
-                            strokeWidth="2"
-                            style={{ flexShrink: 0 }}
-                          >
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                          </svg>
-                          <label
-                            htmlFor="patient-register-country-search"
-                            style={VISUALLY_HIDDEN}
-                          >
-                            Search Country
-                          </label>
-                          <input
-                            id="patient-register-country-search"
-                            name="patientRegisterCountrySearch"
-                            className="hc-country-search-input"
-                            type="text"
-                            placeholder="Search country"
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                          />
-                          {countrySearch && (
-                            <button
-                              type="button"
-                              className="hc-country-search-clear"
-                              onClick={() => setCountrySearch("")}
-                            >
-                              ✕
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                      {loadingCountries ? (
-                        <div className="hc-country-loading">
-                          Loading countries...
-                        </div>
-                      ) : countriesError ? (
-                        <div className="hc-country-error">
-                          <p className="hc-country-error-text">
-                            Failed to load countries
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => refetchCountries()}
-                            className="hc-country-retry-btn"
-                          >
-                            Retry
-                          </button>
-                        </div>
-                      ) : countries.length === 0 ? (
-                        <div className="hc-country-loading">
-                          No countries available
-                        </div>
-                      ) : (
-                        countries
-                          .filter(
-                            (c) =>
-                              !countrySearch ||
-                              c.name
-                                .toLowerCase()
-                                .includes(countrySearch.toLowerCase()),
-                          )
-                          .map((c) => (
-                            <button
-                              key={c.isoCode}
-                              type="button"
-                              className="hc-country-option"
-                              onClick={() => {
-                                countryManuallySelectedRef.current = true;
-                                const { local } = parsePhoneValue(
-                                  registerForm.mobile,
-                                  c.isoCode,
-                                );
-
-                                setRegisterForm((p) => ({
-                                  ...p,
-                                  country: c.name,
-                                  // drop a subdivision picked for a different country
-                                  ...(p.country === c.name
-                                    ? {}
-                                    : { state: "", city: "" }),
-                                  mobile: `+${c.phonecode}${local}`,
-                                }));
-
-                                setCountryOpen(false);
-                                setCountrySearch("");
-                              }}
-                            >
-                              <img
-                                src={getFlagUrl(c.isoCode)}
-                                alt={c.name}
-                                style={{
-                                  width: 20,
-                                  height: 15,
-                                  objectFit: "cover",
-                                  borderRadius: 2,
-                                }}
-                              />
-
-                              <span>{c.name}</span>
-                            </button>
-                          ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="hc-field-wrap">
-                <label
-                  htmlFor="patient-register-mobile"
-                  style={VISUALLY_HIDDEN}
-                >
-                  Mobile Number
-                </label>
-                <PhoneInputField
-                  inputId="patient-register-mobile"
-                  inputName="patientRegisterMobile"
-                  searchInputId="patient-register-mobile-country-search"
-                  searchInputName="patientRegisterMobileCountrySearch"
-                  value={registerForm.mobile}
-                  onChange={(ph, meta) => {
-                    countryManuallySelectedRef.current = true;
-                    setRegisterForm((p) => {
-                      const nextCountry =
-                        canonicalCountryName(meta) || p.country;
-                      return {
-                        ...p,
-                        mobile: ph,
-                        country: nextCountry,
-                        ...(nextCountry === p.country
-                          ? {}
-                          : { state: "", city: "" }),
-                      };
-                    });
-                  }}
-                  onCountryChange={(meta) => {
-                    const nextCountry = canonicalCountryName(meta);
-                    if (!nextCountry) return;
-                    setRegisterForm((p) =>
-                      p.country === nextCountry
-                        ? p
-                        : { ...p, country: nextCountry, state: "", city: "" },
-                    );
-                  }}
-                  defaultCountry={selectedPhoneCountry?.code || "auto"}
-                  placeholder="Mobile number"
-                  required
-                  maxLength={15}
-                />
-              </div>
-            </div>
-
-            <div className="hc-row hc-reg-row">
-              <div className="hc-field-wrap">
-                <label htmlFor="patient-register-state" style={VISUALLY_HIDDEN}>
-                  State or Province
-                </label>
-                {registerForm.country && !loadingStates && states.length === 0 ? (
-                  // Selected country has no subdivisions in the location API
-                  // (e.g. Singapore, Monaco) — let the user type it so the
-                  // mandatory field can still be satisfied.
-                  <input
-                    id="patient-register-state"
-                    name="patientRegisterState"
-                    className="hc-input hc-state-input"
-                    type="text"
-                    placeholder="State / Province"
-                    value={registerForm.state}
-                    onChange={(e) =>
-                      setRegisterForm((p) => ({
-                        ...p,
-                        state: e.target.value,
-                        city: "",
-                      }))
-                    }
-                    required
-                  />
-                ) : (
-                  <select
-                    id="patient-register-state"
-                    name="patientRegisterState"
-                    className="hc-select hc-state-select"
-                    value={registerForm.state}
-                    onChange={(e) =>
-                      setRegisterForm((p) => ({
-                        ...p,
-                        state: e.target.value,
-                        city: "",
-                      }))
-                    }
-                    disabled={!registerForm.country || loadingStates}
-                    required
-                  >
-                    <option value="">
-                      {loadingStates
-                        ? "Loading..."
-                        : registerForm.country
-                          ? "Select state / province"
-                          : "Select country first"}
-                    </option>
-                    {states.map((s) => (
-                      <option key={s.isoCode} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              <div className="hc-field-wrap">
-                <label htmlFor="patient-register-city" style={VISUALLY_HIDDEN}>
-                  City
-                </label>
-                <select
-                  id="patient-register-city"
-                  name="patientRegisterCity"
-                  className="hc-select hc-city-select"
-                  value={registerForm.city}
-                  onChange={(e) =>
-                    setRegisterForm((p) => ({ ...p, city: e.target.value }))
-                  }
-                  disabled={!registerForm.state}
-                  required={cities.length > 0}
-                >
-                  <option value="">
-                    {loadingCities
-                      ? "Loading..."
-                      : registerForm.state
-                        ? "Select city"
-                        : "Select state first"}
-                  </option>
-                  {cities.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div className="hc-mobile-field">
+              <label htmlFor="patient-register-mobile" style={VISUALLY_HIDDEN}>
+                Mobile Number
+              </label>
+              <PhoneInputField
+                inputId="patient-register-mobile"
+                inputName="patientRegisterMobile"
+                searchInputId="patient-register-mobile-country-search"
+                searchInputName="patientRegisterMobileCountrySearch"
+                value={registerForm.mobile}
+                onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
+                defaultCountry="IN"
+                placeholder="Mobile number"
+                required
+                maxLength={15}
+                limitIndianNumber
+              />
             </div>
 
             <div className="hc-pw-wrapper">
@@ -1794,49 +1068,6 @@ export default function AuthPage() {
             >
               {registerPasswordError || PASSWORD_REQUIREMENTS}
             </p>
-
-            <div className="hc-pw-wrapper">
-              <label
-                htmlFor="patient-register-confirm-password"
-                style={VISUALLY_HIDDEN}
-              >
-                Confirm Password
-              </label>
-              <input
-                id="patient-register-confirm-password"
-                name="patientRegisterConfirmPassword"
-                className="hc-input"
-                type={showPasswords.registerConfirm ? "text" : "password"}
-                placeholder="Confirm Password"
-                value={registerForm.confirmPassword}
-                onChange={(e) =>
-                  setRegisterForm((p) => ({
-                    ...p,
-                    confirmPassword: e.target.value,
-                  }))
-                }
-                required
-              />
-              <button
-                type="button"
-                className="hc-pw-toggle"
-                onClick={() =>
-                  setShowPasswords((p) => ({
-                    ...p,
-                    registerConfirm: !p.registerConfirm,
-                  }))
-                }
-                tabIndex={-1}
-              >
-                <EyeIcon open={showPasswords.registerConfirm} />
-              </button>
-            </div>
-            {registerForm.confirmPassword &&
-              registerForm.confirmPassword !== registerForm.password && (
-                <p className="hc-pw-requirements hc-pw-requirements--error">
-                  Passwords do not match.
-                </p>
-              )}
 
             <div className="hc-consent-row">
               <label

@@ -454,6 +454,21 @@
   gap: 10px;
 }
 
+/* Mobile-number field (register + Google completion). .pif-control already carries the 10px bottom gap. */
+.hc-mobile-field {
+  width: 100%;
+}
+.hc-page-bg .hc-mobile-field .pif-input {
+  text-align: left;
+}
+
+/* The register form is now short: centre it in the card instead of leaving a
+   blank band at the bottom. "safe" keeps the top reachable if it ever overflows. */
+.hc-register-form {
+  justify-content: center;
+  justify-content: safe center;
+}
+
 /* ── Small-caps register label ───────────────────────────── */
 .hc-reg-label {
   display: block;
@@ -1150,6 +1165,9 @@
     height: auto;
   }
   .hc-form-box--login .hc-form {
+    justify-content: flex-start;
+  }
+  .hc-register-form {
     justify-content: flex-start;
   }
 

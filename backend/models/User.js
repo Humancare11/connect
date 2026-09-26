@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema(
 
     city: { type: String, default: "" },
 
+    // Where country/state/city came from: "ip" = auto-detected at signup,
+    // "user" = entered/confirmed by the user. "" for accounts that predate this.
+    locationSource: { type: String, enum: ["ip", "user", ""], default: "" },
+
     registrationIp: { type: String, default: "" },
 
     accountDisabled: { type: Boolean, default: false, index: true },

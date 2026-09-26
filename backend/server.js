@@ -39,6 +39,8 @@ const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
+const { parseTrustProxy } = require("./utils/clientIp");
+const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
@@ -57,9 +59,11 @@ const app = express();
 // const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 
-// Trust the first reverse proxy (Nginx, Apache, Cloudflare).
-// Without this, req.protocol returns "http" even behind HTTPS termination.
-app.set("trust proxy", 1);
+// Trust the reverse proxy chain (Nginx, Apache, Cloudflare, a load balancer).
+// Without this, req.protocol returns "http" even behind HTTPS termination and
+// req.ip is the proxy's address instead of the client's. Defaults to 1 hop;
+// set TRUST_PROXY to match the real chain (e.g. 2 for load balancer + nginx).
+app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside
@@ -127,6 +131,10 @@ const startServer = async () => {
   scheduleInvoiceReconciliation();
 
   await ensureBucketCors(allowedOrigins);
+
+  // Optional: loads the GeoLite2 DB used to pre-fill a new user's location.
+  // Non-blocking and non-fatal — signup works without it.
+  initGeoIp().catch(() => {});
 };
 
 function normalizeOrigin(value) {
