@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
 import UserConsultationList from "./UserConsultationList";
@@ -84,20 +84,9 @@ function Section({ title, className = "", children }) {
   );
 }
 
-function BackLink({ search }) {
-  return (
-    <Link className="mu-back-btn" to={{ pathname: LIST_PATH, search }} state={{ restoreScroll: true }}>
-      <span aria-hidden="true">←</span> Back to Manage Users
-    </Link>
-  );
-}
-
-function ProfileSkeleton({ search }) {
+function ProfileSkeleton() {
   return (
     <div className="mu-page" aria-busy="true">
-      <div className="mu-page-bar">
-        <BackLink search={search} />
-      </div>
       <div className="mu-skeleton mu-skeleton--hero" />
       <div className="mu-grid">
         <div className="mu-skeleton mu-skeleton--card" />
@@ -107,12 +96,9 @@ function ProfileSkeleton({ search }) {
   );
 }
 
-function ProfileMessage({ title, text, search, onRetry }) {
+function ProfileMessage({ title, text, onRetry }) {
   return (
     <div className="mu-page">
-      <div className="mu-page-bar">
-        <BackLink search={search} />
-      </div>
       <div className="mu-page-message">
         <h3>{title}</h3>
         <p>{text}</p>
@@ -130,7 +116,8 @@ function UserProfile({ id }) {
   const location = useLocation();
   const navigate = useNavigate();
   // The list's query string (search / filter), passed along when opening this
-  // page so "Back" can restore it. Empty for a direct link or a refresh.
+  // page so returning to the list (e.g. after a delete) can restore it. Empty for
+  // a direct link or a refresh.
   const listSearch = location.state?.from || "";
 
   const [load, setLoad] = useState({ status: "loading", user: null });
@@ -164,13 +151,12 @@ function UserProfile({ id }) {
     setTimeout(() => setToast(null), 4000);
   };
 
-  if (load.status === "loading") return <ProfileSkeleton search={listSearch} />;
+  if (load.status === "loading") return <ProfileSkeleton />;
   if (load.status === "notfound") {
     return (
       <ProfileMessage
         title="User not found"
         text="This account doesn't exist or was deleted."
-        search={listSearch}
       />
     );
   }
@@ -179,7 +165,6 @@ function UserProfile({ id }) {
       <ProfileMessage
         title="Couldn't load this user"
         text="Something went wrong while loading the profile."
-        search={listSearch}
         onRetry={() => {
           setLoad({ status: "loading", user: null });
           setLoadAttempt((n) => n + 1);
@@ -234,10 +219,6 @@ function UserProfile({ id }) {
         </div>
       )}
 
-      <div className="mu-page-bar">
-        <BackLink search={listSearch} />
-      </div>
-
       {/* Header card */}
       <div className="mu-hero">
         <div className="mu-avatar">{initials}</div>
@@ -280,14 +261,16 @@ function UserProfile({ id }) {
           <Row label="IP" value={user.registrationIp} mono />
         </Section>
 
-        <Section title="Consultations Info" className="mu-area-consults">
-          <UserConsultationList userId={user._id} />
-        </Section>
+        <div className="mu-col-right">
+          <Section title="Consultations Info" className="mu-area-consults">
+            <UserConsultationList userId={user._id} />
+          </Section>
 
-        <Section title="A/C Information" className="mu-area-account">
-          <Row label="Sign up with" value={SIGNUP_METHOD_LABELS[user.signupMethod] || "Unknown"} />
-          <Row label="Registered via" value={formatRegisteredVia(user)} />
-        </Section>
+          <Section title="A/C Information" className="mu-area-account">
+            <Row label="Sign up with" value={SIGNUP_METHOD_LABELS[user.signupMethod] || "Unknown"} />
+            <Row label="Registered via" value={formatRegisteredVia(user)} />
+          </Section>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 4;
 
 // "Total" plus the status filter of the admin Appointments page, in the same
 // order and with the same labels (its STATUS_ORDER / STATUS_META).

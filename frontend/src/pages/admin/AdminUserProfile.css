@@ -3,37 +3,9 @@
 .mu-page {
   display: flex;
   flex-direction: column;
-  max-width: 960px;
-  margin: 0 auto;
-  padding-bottom: 24px;
-}
-
-.mu-page-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.mu-back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(14, 108, 235, 0.2);
-  background: rgba(255, 255, 255, 0.75);
-  font-size: 13px;
-  font-weight: 700;
-  color: #083ab0;
-  text-decoration: none;
-  backdrop-filter: blur(8px);
-}
-.mu-back-btn:hover {
-  background: #fff;
-  color: #0b0443;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 8px 24px;
 }
 
 .mu-page-message {

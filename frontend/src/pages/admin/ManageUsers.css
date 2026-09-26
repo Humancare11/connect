@@ -540,16 +540,38 @@
 }
 
 /* ── Two-column profile layout (desktop): Personal Information on the left;
-   Consultations Info over A/C Information on the right. Below 1000px it is a
-   single column in DOM order (Personal, Consultations, A/C). ───────── */
+   Consultations Info over A/C Information on the right. Both columns are the
+   same height: the row stretches them, the right column's last card (A/C)
+   absorbs any difference, and rows inside a stretched card are spread evenly.
+   Below 1000px it is a single column in DOM order (Personal, Consultations, A/C). ── */
+.mu-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
 @media (min-width: 1000px) {
   .mu-grid--profile {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
+    align-items: stretch;
   }
-  .mu-area-personal { grid-column: 1; grid-row: 1 / span 2; }
-  .mu-area-consults { grid-column: 2; grid-row: 1; }
-  .mu-area-account { grid-column: 2; grid-row: 2; }
+  .mu-area-personal,
+  .mu-area-account {
+    display: flex;
+    flex-direction: column;
+  }
+  .mu-col-right > .mu-area-account {
+    flex: 1 1 auto;
+  }
+  .mu-area-personal .mu-row,
+  .mu-area-account .mu-row {
+    flex: 1 1 auto;
+    align-items: center;
+  }
+  .mu-area-personal .mu-row:last-child,
+  .mu-area-account .mu-row:last-child {
+    padding-bottom: 11px;
+  }
 }
 
 /* ── Consultations Info ────────────────────────────────────── */
