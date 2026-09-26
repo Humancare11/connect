@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Country } from "country-state-city";
 import api from "../../api";
+import UserConsultationList from "./UserConsultationList";
 import "./ManageUsers.css";
 
 function getCountryName(isoCode) {
@@ -42,6 +43,14 @@ function formatRegisteredVia(user) {
   }
   return "Unknown";
 }
+
+// How the account was created. The API resolves this for older accounts too
+// (see backend utils/signupMethod.js); "" means it can't be told.
+const SIGNUP_METHOD_LABELS = {
+  email: "Email",
+  google: "Google",
+  email_google: "Email + Google",
+};
 
 function Field({ label, value, mono }) {
   return (
@@ -208,17 +217,23 @@ function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete })
             </Section>
 
             <Section title="Consultations" className="mu-span-2">
-              <ConsultationStats state={stats} onRetry={() => {
+              <ConsultationStats
+                state={stats}
+                onRetry={() => {
                   setStats({ status: "loading", data: null });
                   setAttempt((n) => n + 1);
-                }} />
+                }}
+              />
+              <div className="mu-subheading">All consultations</div>
+              <UserConsultationList userId={userId} />
             </Section>
 
             <Section title="Account Information" className="mu-span-2">
               <div className="mu-fields">
                 <Field label="Member Since" value={formatDate(user.createdAt)} />
-                <Field label="Registration IP" value={user.registrationIp} mono />
+                <Field label="Signed Up With" value={SIGNUP_METHOD_LABELS[user.signupMethod] || "Unknown"} />
                 <Field label="Registered Via" value={formatRegisteredVia(user)} />
+                <Field label="Registration IP" value={user.registrationIp} mono />
               </div>
             </Section>
 

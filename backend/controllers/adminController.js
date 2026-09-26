@@ -12,6 +12,7 @@ const { randomInt } = require("crypto");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
+const { toAdminUser } = require("../utils/signupMethod");
 const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 const STEP_LABELS = ["Identity", "Professional", "Availability", "Payout", "Submitted"];
@@ -365,10 +366,9 @@ const rejectDoctorDeleteRequest = async (req, res) => {
 // GET /api/admin/users — all users for admin management
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({ role: "user" })
-      .select("-password")
-      .sort({ createdAt: -1 })
-      .lean();
+    // The password hash is read only to tell how each account was created
+    // (see utils/signupMethod.js); toAdminUser removes it before responding.
+    const users = (await User.find({ role: "user" }).sort({ createdAt: -1 }).lean()).map(toAdminUser);
 
     if (users.length >= 100) {
       await recordSecurityEvent(req, {
@@ -471,8 +471,9 @@ const rejectUserDeleteRequest = async (req, res) => {
 // GET /api/admin/users/:id — get user details
 const getUserDetails = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("-password");
-    if (!user) return res.status(404).json({ msg: "User not found" });
+    const found = await User.findById(req.params.id);
+    if (!found) return res.status(404).json({ msg: "User not found" });
+    const user = toAdminUser(found);
 
     await recordActivity(req, {
       action: "ADMIN_VIEW_USER",
@@ -536,6 +537,128 @@ const getUserConsultationSummary = async (req, res) => {
   } catch (error) {
     console.error("getUserConsultationSummary error:", error);
     res.status(500).json({ msg: "Failed to fetch consultation summary" });
+  }
+};
+
+// GET /api/admin/users/:id/consultations?page=1&limit=10
+// A patient's consultations from both booking collections (Appointment =
+// doctor consultations, CategoryConsultation = category consultations),
+// merged newest-booked-first — the same order as the patient's own list.
+//
+// Each collection is asked only for ids + timestamps (index-backed by
+// patientId), the two are merged and sliced to the page, and just that page's
+// documents are then loaded in full. Payment/status fields are the ones the
+// admin detail pages already read.
+const CONSULTATION_LIST_MAX_LIMIT = 50;
+
+const canonicalConsultationStatus = (status) => {
+  const value = String(status || "").toLowerCase();
+  if (value === "requested") return "upcoming";
+  if (value === "completed") return "complete";
+  return value || "upcoming";
+};
+
+const consultationFee = (doc) => {
+  const price = Number(doc.consultationPrice);
+  if (Number.isFinite(price) && price > 0) return price;
+  const paid = Number(doc.paymentAmount);
+  return Number.isFinite(paid) && paid > 0 ? paid / 100 : 0;
+};
+
+const toAppointmentRow = (a) => ({
+  id: String(a._id),
+  kind: "appointment",
+  bookedAt: a.createdAt,
+  date: a.date || "",
+  time: a.time || "",
+  timezone: a.patientTimezone || "",
+  doctorName: a.doctorId?.name || "",
+  title: a.category || "",
+  subtitle: a.specialty || "",
+  type: "Doctor consultation",
+  typeDetail: "",
+  status: canonicalConsultationStatus(a.status),
+  paymentStatus: a.paymentStatus || "unpaid",
+  paymentGateway: a.paymentGateway || "",
+  fee: consultationFee(a),
+});
+
+const toCategoryRow = (c) => {
+  const flexible = (c.appointmentType || (c.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE")) === "FLEXIBLE_TIME";
+  const enrollmentName = `${c.assignedDoctorId?.firstName || ""} ${c.assignedDoctorId?.surname || ""}`.trim();
+  return {
+    id: String(c._id),
+    kind: "category",
+    bookedAt: c.createdAt,
+    date: c.date || "",
+    time: (flexible ? c.slot : c.assignedSlot) || (flexible ? "" : "Next Available"),
+    timezone: "",
+    doctorName: enrollmentName || c.assignedDoctorName || "",
+    title: c.categoryName || "Category Consultation",
+    subtitle: c.specialtyName || c.supportType || "",
+    type: "Category consultation",
+    typeDetail: flexible ? "Flexible time" : "Next available",
+    status: canonicalConsultationStatus(c.status),
+    paymentStatus: c.paymentStatus || "unpaid",
+    paymentGateway: c.paymentGateway || "",
+    fee: consultationFee(c),
+  };
+};
+
+const getUserConsultations = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) return res.status(400).json({ msg: "Invalid user id" });
+    if (!(await User.exists({ _id: id }))) return res.status(404).json({ msg: "User not found" });
+
+    const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), 1000);
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), CONSULTATION_LIST_MAX_LIMIT);
+    const start = (page - 1) * limit;
+    const patientId = new mongoose.Types.ObjectId(id);
+
+    // Enough from each side to fill this page (+1 to know whether more exist).
+    const need = start + limit + 1;
+    const newestFirst = { createdAt: -1, _id: -1 };
+    const [appointmentKeys, categoryKeys] = await Promise.all([
+      Appointment.find({ patientId }).select("_id createdAt").sort(newestFirst).limit(need).lean(),
+      CategoryConsultation.find({ patientId }).select("_id createdAt").sort(newestFirst).limit(need).lean(),
+    ]);
+
+    const time = (row) => (row.createdAt ? new Date(row.createdAt).getTime() : 0);
+    const merged = [
+      ...appointmentKeys.map((row) => ({ ...row, kind: "appointment" })),
+      ...categoryKeys.map((row) => ({ ...row, kind: "category" })),
+    ].sort((x, y) => time(y) - time(x) || String(y._id).localeCompare(String(x._id)));
+
+    const pageKeys = merged.slice(start, start + limit);
+    const hasMore = merged.length > start + limit;
+
+    const idsOf = (kind) => pageKeys.filter((k) => k.kind === kind).map((k) => k._id);
+    const [appointments, categories] = await Promise.all([
+      idsOf("appointment").length
+        ? Appointment.find({ _id: { $in: idsOf("appointment") } })
+            .select("date time patientTimezone category specialty consultationPrice paymentAmount paymentStatus paymentGateway status doctorId createdAt")
+            .populate("doctorId", "name")
+            .lean()
+        : [],
+      idsOf("category").length
+        ? CategoryConsultation.find({ _id: { $in: idsOf("category") } })
+            .select("date slot assignedSlot appointmentType urgency supportType categoryName specialtyName consultationPrice paymentAmount paymentStatus paymentGateway status assignedDoctorId assignedDoctorName createdAt")
+            .populate("assignedDoctorId", "firstName surname")
+            .lean()
+        : [],
+    ]);
+
+    const rows = new Map([
+      ...appointments.map((a) => [`appointment:${a._id}`, toAppointmentRow(a)]),
+      ...categories.map((c) => [`category:${c._id}`, toCategoryRow(c)]),
+    ]);
+    const items = pageKeys.map((k) => rows.get(`${k.kind}:${k._id}`)).filter(Boolean);
+
+    res.status(200).json({ items, page, limit, hasMore });
+  } catch (error) {
+    console.error("getUserConsultations error:", error);
+    res.status(500).json({ msg: "Failed to fetch consultations" });
   }
 };
 
@@ -1055,6 +1178,7 @@ module.exports = {
   rejectUserDeleteRequest,
   getUserDetails,
   getUserConsultationSummary,
+  getUserConsultations,
   forceLogoutUser,
   disableUser,
   migrateDoctorIds,

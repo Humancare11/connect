@@ -235,6 +235,7 @@ const register = async (req, res) => {
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
       mobile: mobileCheck.value, ...location, registrationIp: ip,
+      signupMethod: "email",
       ...detectRegistrationClient(req),
     });
     await rememberPassword({ userId: user._id, userType: "user", passwordHash: hashed });
@@ -823,6 +824,7 @@ const googleAuthUser = async (req, res) => {
     user = await User.create({
       name, email, googleId, role: "user",
       mobile: mobileCheck.value, ...location, registrationIp: ip,
+      signupMethod: "google",
       ...detectRegistrationClient(req),
     });
     await recordConsent(req, user);
