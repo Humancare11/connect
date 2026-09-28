@@ -1,41 +1,7 @@
 import React, { useState } from "react";
 import { FiCheckCircle, FiMessageSquare, FiLock } from "react-icons/fi";
 import api from "../../api";
-
-const TEXT_PRIMARY = "#0F172A";
-const TEXT_BODY = "#475569";
-const TEXT_DIM = "#64748B";
-const BORDER = "#E2E8F0";
-
-const PrimaryBtn = ({ children, ac, onClick, fullWidth, type = "button" }) => (
-  <button
-    type={type}
-    onClick={onClick}
-    style={{
-      padding: "13px 26px",
-      borderRadius: 12,
-      fontWeight: 700,
-      fontSize: 14,
-      color: "#fff",
-      cursor: "pointer",
-      border: "none",
-      background: ac,
-      boxShadow: `0 4px 14px ${ac}35`,
-      transition: "transform 0.2s, box-shadow 0.2s, background 0.2s",
-      width: fullWidth ? "100%" : "auto",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-2px)";
-      e.currentTarget.style.boxShadow = `0 8px 20px ${ac}45`;
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = `0 4px 14px ${ac}35`;
-    }}
-  >
-    {children}
-  </button>
-);
+import "./newservices.css";
 
 const ConsultationForm = ({ s }) => {
   const [values, setValues] = useState({
@@ -57,7 +23,6 @@ const ConsultationForm = ({ s }) => {
 
       if (data.success) {
         setSubmitted(true);
-
         setValues({
           name: "",
           email: "",
@@ -72,90 +37,28 @@ const ConsultationForm = ({ s }) => {
     }
   };
 
-  const inputStyle = {
-    width: "100%",
-    padding: "11px 14px",
-    borderRadius: 10,
-    border: `1px solid ${BORDER}`,
-    background: "#fff",
-    color: TEXT_PRIMARY,
-    fontSize: 14,
-    outline: "none",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-    fontFamily: "inherit",
-  };
-
-  const labelStyle = {
-    display: "block",
-    fontSize: 13,
-    fontWeight: 600,
-    color: TEXT_PRIMARY,
-    marginBottom: 6,
-  };
-
-  const focusHandlers = {
-    onFocus: (e) => {
-      e.target.style.borderColor = s.accentColor;
-      e.target.style.boxShadow = `0 0 0 3px ${s.accentColor}1A`;
-    },
-    onBlur: (e) => {
-      e.target.style.borderColor = BORDER;
-      e.target.style.boxShadow = "none";
-    },
-  };
-
   return (
     <div
-      style={{
-        borderRadius: 24,
-        padding: 32,
-        background: "#fff",
-        border: `1px solid ${BORDER}`,
-      }}
+      className="service-contact-card"
+      style={{ "--service-accent": s?.accentColor || "#2563EB" }}
     >
       {submitted ? (
         <div style={{ textAlign: "center", padding: "32px 8px" }}>
-          <div
-            style={{
-              width: 52,
-              height: 52,
-              borderRadius: "50%",
-              margin: "0 auto 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: `${s.accentColor}12`,
-            }}
-          >
-            <FiCheckCircle
-              style={{ fontSize: 24, color: s.accentColor }}
-            />
+          <div className="service-contact-icon-wrap service-contact-icon-wrap--success">
+            <FiCheckCircle style={{ fontSize: 24, color: s?.accentColor || "var(--service-accent)" }} />
           </div>
 
-          <h3
-            style={{
-              color: TEXT_PRIMARY,
-              fontSize: 18,
-              fontWeight: 800,
-              marginBottom: 8,
-            }}
-          >
+          <h3 className="service-contact-title">
             Request received
           </h3>
 
-          <p
-            style={{
-              color: TEXT_BODY,
-              fontSize: 14,
-              lineHeight: 1.6,
-              marginBottom: 20,
-            }}
-          >
+          <p style={{ color: "var(--service-text-body)", fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
             A member of our care team will reach out to{" "}
             {values.email || "you"} shortly.
           </p>
 
           <button
+            type="button"
             onClick={() => {
               setSubmitted(false);
               setValues({
@@ -164,63 +67,29 @@ const ConsultationForm = ({ s }) => {
                 message: "",
               });
             }}
-            style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: s.accentColor,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-            }}
+            className="service-contact-reset-btn"
           >
             Send another request
           </button>
         </div>
       ) : (
         <>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: `${s.accentColor}12`,
-              marginBottom: 16,
-            }}
-          >
-            <FiMessageSquare
-              style={{ fontSize: 20, color: s.accentColor }}
-            />
+          <div className="service-contact-icon-wrap">
+            <FiMessageSquare style={{ fontSize: 20, color: s?.accentColor || "var(--service-accent)" }} />
           </div>
 
-          <h3
-            style={{
-              color: TEXT_PRIMARY,
-              fontSize: 19,
-              fontWeight: 800,
-              marginBottom: 6,
-            }}
-          >
+          <h3 className="service-contact-title">
             Request a Consultation
           </h3>
 
-          <p
-            style={{
-              color: TEXT_DIM,
-              fontSize: 13.5,
-              lineHeight: 1.6,
-              marginBottom: 22,
-            }}
-          >
+          <p className="service-contact-desc">
             Tell us a little about what you need, and a care coordinator
             will follow up within one business day.
           </p>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 16 }}>
-              <label htmlFor="consult-name" style={labelStyle}>
+            <div className="service-form-group">
+              <label htmlFor="consult-name" className="service-form-label">
                 Full name
               </label>
 
@@ -231,13 +100,12 @@ const ConsultationForm = ({ s }) => {
                 placeholder="Jordan Lee"
                 value={values.name}
                 onChange={handleChange("name")}
-                style={inputStyle}
-                {...focusHandlers}
+                className="service-form-input"
               />
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <label htmlFor="consult-email" style={labelStyle}>
+            <div className="service-form-group">
+              <label htmlFor="consult-email" className="service-form-label">
                 Email address
               </label>
 
@@ -248,13 +116,12 @@ const ConsultationForm = ({ s }) => {
                 placeholder="jordan@email.com"
                 value={values.email}
                 onChange={handleChange("email")}
-                style={inputStyle}
-                {...focusHandlers}
+                className="service-form-input"
               />
             </div>
 
-            <div style={{ marginBottom: 20 }}>
-              <label htmlFor="consult-message" style={labelStyle}>
+            <div className="service-form-group service-form-group--textarea">
+              <label htmlFor="consult-message" className="service-form-label">
                 What can we help with?
               </label>
 
@@ -265,34 +132,19 @@ const ConsultationForm = ({ s }) => {
                 placeholder="Briefly describe your symptoms..."
                 value={values.message}
                 onChange={handleChange("message")}
-                style={{
-                  ...inputStyle,
-                  resize: "vertical",
-                }}
-                {...focusHandlers}
+                className="service-form-textarea"
               />
             </div>
 
-            <PrimaryBtn ac={s.accentColor} fullWidth type="submit">
-              Submit Request
-            </PrimaryBtn>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                marginTop: 14,
-                color: TEXT_DIM,
-                fontSize: 12,
-              }}
+            <button
+              type="submit"
+              className="service-btn service-btn--primary service-btn--full"
             >
-              <FiLock
-                style={{
-                  fontSize: 13,
-                  color: s.accentColor,
-                }}
-              />
+              Submit Request
+            </button>
+
+            <div className="service-form-privacy">
+              <FiLock className="service-form-privacy__icon" />
               Your information is encrypted and never shared without
               consent.
             </div>

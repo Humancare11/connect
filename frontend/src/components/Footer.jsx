@@ -51,9 +51,11 @@ export default function Footer() {
                 <FaMapMarkerAlt />
               </span>
               <span className="footer-contact-text">
-                4 Peddlers Row, 1091 Newark,
-                <br />
-                DE 19702, USA
+                <a href="https://maps.app.goo.gl/aWhXUTTm8uUhstgs9">
+                  4 Peddlers Row, 1091 Newark,
+                  <br />
+                  DE 19702, USA
+                </a>
               </span>
             </div>
 
