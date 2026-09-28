@@ -340,7 +340,7 @@ export function MedicalCertificateSlip({
             label="Date of Issue"
             value={fmtDate(cert?.issuedDate || cert?.createdAt)}
           />
-          <InfoField label="Age / Sex" value={ageSex} />
+          <InfoField label="Age / Sex" value={ageSex || "—"} />
           {patient?.dob && (
             <InfoField label="Date of Birth" value={fmtDate(patient.dob)} />
           )}

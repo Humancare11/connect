@@ -172,15 +172,15 @@ connect" rather than one that errors immediately.
 ```
 28  RTC_STUN_URLS=stun:stun.l.google.com:19302
 29  RTC_TURN_URLS=turn:turn.humancareconnect.co:3478,turn:turn.humancareconnect.co:3478?transport=tcp,turns:turn.humancareconnect.co:443
-30  TURN_STATIC_AUTH_SECRET=d5f2fbbc123d8a1e9b58db22ad5207aadbd93de46dca9a68ba41aad625ee731b
+30  TURN_STATIC_AUTH_SECRET=<redacted>
 31
-32  TURN_SHARED_SECRET=d5f2fbbc123d8a1e9b58db22ad5207aadbd93de46dca9a68ba41aad625ee731b   ← unused by any code (grepped)
+32  TURN_SHARED_SECRET=<redacted>   ← unused by any code (grepped)
 33  TURN_REALM=turn.humancareconnect.co                                                   ← unused by any code (grepped)
 34  TURN_HOST=turn.humancareconnect.co                                                     ← unused by any code (grepped)
-35  TURN_STATIC_AUTH_SECRET=d5f2fbbc123d8a1e9b58db22ad5207aadbd93de46dca9a68ba41aad625ee731b   ← duplicate, same value (harmless)
+35  TURN_STATIC_AUTH_SECRET=<redacted>   ← duplicate, same value (harmless)
 36  RTC_TURN_URLS=turn:turn.humancareconnect.co:3478?transport=udp,turn:turn.humancareconnect.co:3478?transport=tcp   ← duplicate, DIFFERENT value
 37  RTC_TURN_URLS_2=turn:turn2.humancareconnect.co:3478?transport=udp,turn:turn2.humancareconnect.co:3478?transport=tcp
-38  TURN_STATIC_AUTH_SECRET_2=d5f2fbbc123d8a1e9b58db22ad5207aadbd93de46dca9a68ba41aad625ee731b
+38  TURN_STATIC_AUTH_SECRET_2=<redacted>
 ```
 
 `dotenv` parses a file top-to-bottom into a plain object, so within a single

@@ -19,7 +19,7 @@ changes — they were already the deployed configuration.
 
 ```
 VITE_RTC_TURN_USERNAME=rtcuser
-VITE_RTC_TURN_CREDENTIAL=StrongPassword123
+VITE_RTC_TURN_CREDENTIAL=<redacted>
 ```
 
 These are consumed by `frontend/src/utils/rtcIceConfig.js` at **module load
@@ -44,7 +44,7 @@ a pure code change, tracked separately, not a secret rotation).
 **Action needed:** rotate the value of `VITE_RTC_TURN_CREDENTIAL` (and
 ideally `VITE_RTC_TURN_USERNAME`) in your coturn user database / auth config
 and in `connect/frontend/.env` + `.env.production`, then rebuild and redeploy
-the frontend. Treat the current value (`StrongPassword123`, which reads like
+the frontend. Treat the current value (`<redacted>`, which reads like
 a placeholder that was never rotated after initial setup) as already
 compromised, since it has been shipped in every production build to date.
 

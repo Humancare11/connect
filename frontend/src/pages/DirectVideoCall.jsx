@@ -12,6 +12,10 @@ import {
 import "./videocall.css";
 import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
+import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDebug";
+import { extractDtlsFingerprint } from "../utils/webrtcSdp";
+import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
+import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
   FiMic,
   FiMicOff,
@@ -187,6 +191,11 @@ const ICE_RECOVERY_COOLDOWN_MS = 30000;
 // offer sender stuck in "have-local-offer" forever, since nothing else ever
 // rolls back a self-initiated offer. See VideoCall.jsx's identical constant.
 const OFFER_ANSWER_TIMEOUT_MS = 8000;
+// A stashed remote offer older than this is stale: the sender has long since
+// rolled it back (its own OFFER_ANSWER_TIMEOUT_MS) and moved on, so answering
+// it after a rebuild only produces an orphaned answer on their side. Mirrors
+// VideoCall.jsx's PENDING_OFFER_MAX_AGE_MS.
+const PENDING_OFFER_MAX_AGE_MS = 15000;
 // How long a disconnected/failed connection state is given to self-heal
 // (via the ICE-restart machinery above) before surfacing a manual "Retry"
 // escape hatch to the user.
@@ -202,6 +211,35 @@ const MAX_RECONNECT_STALL_RETRIES = 3;
 // in "checking") leaves the call sitting on "Connecting…" forever with no
 // recovery and no UI. Mirrors VideoCall.jsx's CONNECTION_FAIL_TIMEOUT_MS.
 const CONNECTION_FAIL_TIMEOUT_MS = 25000;
+
+// How much grace a freshly-built pc gets before an unhealthy state is worth
+// tearing it down over. Without this, a duplicate/rapid "peer joined" signal
+// (e.g. a signaling-level reconnect firing twice) can tear down and rebuild
+// a pc that's only milliseconds old and still simply negotiating — never
+// giving any single attempt a real chance to connect. Mirrors VideoCall
+// .jsx's identical REBUILD_GRACE_MS.
+const REBUILD_GRACE_MS = 3000;
+// An orphaned answer (offerId mismatch, or arriving while not in
+// "have-local-offer") is normal fallout from ordinary offer/answer glare in
+// perfect negotiation — most resolve themselves via the collision/rollback
+// logic already in handleOffer/handleAnswer. Only treat it as a sign of a
+// genuinely broken session if the pc is *still* unhealthy this long after.
+const ORPHANED_ANSWER_RECHECK_MS = 4000;
+// Inbound-media watchdog (requestPcRebuild's "stall" trigger): how often two
+// zero-growth samples in a row (see startStatsCollection) must span before
+// being treated as a real stall, how long a pc may sit in "new"/"connecting"
+// after negotiation before that alone counts as stalled, and how long to
+// stay quiet after any automatic rebuild before evaluating stats again (a
+// freshly rebuilt pc needs real time to reconnect and start flowing media,
+// and re-triggering off its own still-connecting state would be the exact
+// rebuild-loop this cooldown exists to prevent).
+const MEDIA_STALL_NEVER_CONNECTED_MS = 10000;
+const MEDIA_STALL_COOLDOWN_MS = 25000;
+// Rate limit on *automatic* rebuilds only — manual Retry (forceReconnect) is
+// deliberately exempt, since a person tapping the button is explicit intent,
+// not a runaway loop.
+const AUTO_REBUILD_MAX_COUNT = 3;
+const AUTO_REBUILD_WINDOW_MS = 60000;
 
 // Last-resort ICE config. RTC_CONFIG (built from VITE_RTC_* at build time) is
 // null when VITE_RTC_ICE_SERVERS_JSON is malformed — without this guard that
@@ -424,6 +462,15 @@ export default function DirectVideoCall() {
   // bump this, and the in-flight run bails at its next checkpoint instead of
   // creating a second, orphaned RTCPeerConnection.
   const pcSetupGenerationRef = useRef(0);
+  // Guards requestPcRebuild against overlapping rebuilds — every automatic
+  // rebuild trigger (fingerprint mismatch, InvalidAccessError, an unhealthy
+  // resumed pc, an orphaned answer, a stalled media watchdog) and manual
+  // Retry all serialize through it. Not diagnostic-only: this is real
+  // reconnect-logic state, part of the fix for the "blank video after Retry"
+  // bug (stale RTCPeerConnection rejecting a rebuilt peer's fresh offer with
+  // an m-line-order InvalidAccessError) and the follow-up race conditions
+  // (duplicate/over-eager rebuilds, orphaned answers, silent media stalls).
+  const peerRebuildInProgressRef = useRef(false);
   // Guards cleanupCall against re-entrancy (e.g. a rapid double-click on
   // "Leave Call" firing two click events before React re-renders the button
   // away) — every individual step inside it is independently idempotent, but
@@ -485,6 +532,43 @@ export default function DirectVideoCall() {
   // pc.ontrack and would otherwise leave the <video> element frozen on its
   // last frame. Mirrors VideoCall.jsx's identical remoteRebindPendingRef.
   const remoteRebindPendingRef = useRef(false);
+  // The DTLS fingerprint (see extractDtlsFingerprint, utils/webrtcSdp.js) of
+  // the last remote offer this side successfully applied. Real
+  // reconnect-logic state, not diagnostic: handleOffer's proactive rebuild
+  // check compares an incoming offer's fingerprint against this to detect a
+  // peer that tore down and rebuilt its RTCPeerConnection (its own Retry),
+  // and requestPcRebuild resets it to null before rebuilding so
+  // the replayed offer isn't mistaken for another rebuild — see both for
+  // the full reasoning. Deliberately outside RETRY_DEBUG and outside
+  // retryDebug.js: this must keep working even with debug logging disabled.
+  const lastRemoteFingerprintRef = useRef(null);
+  // Wall-clock time pcRef.current was constructed. Real reconnect-logic
+  // state (not diagnostic-only, despite living alongside the debug refs
+  // below): handlePeerJoined's rebuild gate uses this for REBUILD_GRACE_MS,
+  // and the media-stall watchdog uses it for the "never connected" case.
+  const pcCreatedAtRef = useRef(0);
+  // ── requestPcRebuild support state ───────────────────────────────────
+  // Timestamps of recent *automatic* rebuilds, for AUTO_REBUILD_MAX_COUNT /
+  // AUTO_REBUILD_WINDOW_MS — see requestPcRebuild. Manual Retry
+  // (forceReconnect) never reads or writes this.
+  const autoRebuildTimestampsRef = useRef([]);
+  // Debounces handleAnswer's "orphaned answer" recheck (see
+  // scheduleOrphanedAnswerRecheck) — only one pending recheck at a time; a
+  // newer orphaned answer reschedules rather than stacking a second timer.
+  const orphanedAnswerCheckTimerRef = useRef(null);
+  // Media-stall watchdog (startStatsCollection) state: previous sample to
+  // diff against, how many consecutive zero-growth samples have been seen,
+  // and a cooldown so a rebuild it triggers can't immediately re-trigger it
+  // before the fresh pc has had real time to reconnect.
+  const mediaStallSampleRef = useRef(null);
+  const mediaStallConsecutiveCountRef = useRef(0);
+  const mediaStallCooldownUntilRef = useRef(0);
+  // TEMPORARY (RETRY_DEBUG): diagnostic-only state for the "blank video on
+  // the other side after Retry" investigation — read/written only by
+  // retryDebugLog call sites, never by call/reconnect logic. Mirrors
+  // VideoCall.jsx's equivalent refs (added there first).
+  const retryDebugPrevConnStateRef = useRef(null);
+  const retryDebugPrevIceStateRef = useRef(null);
   // Fires if the (first) connection hasn't reached "connected" within
   // CONNECTION_FAIL_TIMEOUT_MS — see startConnectionWatchdog.
   const connectionFailTimerRef = useRef(null);
@@ -497,6 +581,12 @@ export default function DirectVideoCall() {
   const reconnectInProgressRef = useRef(false);
   const verifyingVisibilityRef = useRef(false);
   const setupPeerConnectionRef = useRef(() => {});
+  // Cross-effect bridge to requestPcRebuild (defined inside the Step-3
+  // effect, alongside setupPeerConnection) so forceReconnect — a plain
+  // useCallback outside that effect — can route manual Retry through the
+  // same serialized teardown/rebuild path every automatic trigger uses,
+  // instead of duplicating its own. Same pattern as setupPeerConnectionRef.
+  const requestPcRebuildRef = useRef(async () => {});
   // Re-arms the first-connect watchdog + stall banner from outside the Step-3
   // effect (forceReconnect), so a manual Retry that also stalls still
   // surfaces a way out instead of spinning silently.
@@ -524,6 +614,24 @@ export default function DirectVideoCall() {
   // finished).
   const networkRecoveryInProgressRef = useRef(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
+  // Drives the manual "Retry" button's disabled/label state (see
+  // forceReconnect) — separate from reconnectInProgressRef (the actual
+  // re-entrancy guard) so the UI can be read declaratively in JSX.
+  const [manualReconnecting, setManualReconnecting] = useState(false);
+  const manualReconnectCooldownTimerRef = useRef(null);
+  // Releases both the re-entrancy guard and the banner/button's
+  // "Reconnecting…" hold after a manual Retry. Called from whichever happens
+  // first — the rebuilt connection becoming healthy (handleConnectedState) or
+  // the 5s fallback timer — so a rebuild that never gets healthy can't leave
+  // the button stuck disabled. Idempotent (checked against
+  // reconnectInProgressRef itself), safe to call from both paths.
+  const releaseManualReconnectGuard = useCallback(() => {
+    if (!reconnectInProgressRef.current) return;
+    reconnectInProgressRef.current = false;
+    setManualReconnecting(false);
+    clearTimeout(manualReconnectCooldownTimerRef.current);
+    manualReconnectCooldownTimerRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -692,6 +800,111 @@ export default function DirectVideoCall() {
     setConnectionQuality("unknown");
   }, []);
 
+  // Media-stall watchdog, run from the same 5s tick as the existing quality
+  // stats (reuses the one getStats() call — no separate polling loop). A pc
+  // can report connectionState "connected" while inbound video has silently
+  // stopped flowing (the production incident this fixes showed exactly
+  // that: ICE "connected," zero inboundVideo bytes for 20+ seconds). Two
+  // consecutive zero-growth samples (~10s) — or, for a pc that never
+  // reaches "connected"/"completed" at all, MEDIA_STALL_NEVER_CONNECTED_MS
+  // since it was built — triggers a full requestPcRebuild rather than just
+  // an ICE restart, since by this point the existing ICE-restart machinery
+  // has already had its own chance to run and the connection is still not
+  // producing media.
+  //
+  // Safeguards:
+  // - Audio bytes growing at all means the connection is genuinely alive
+  //   (even if video is stalled for some other reason) — never rebuild.
+  // - The remote video track reporting `muted` (best-effort proxy for "the
+  //   peer turned their camera off," since this codebase has no dedicated
+  //   camera-state signaling event — see toggleCam/camOnRef, which only
+  //   ever sets `track.enabled` locally) skips the video check for that
+  //   tick, on top of the audio check already covering the common case
+  //   (the peer's mic keeps working even with their camera off).
+  // - Only one side acts first: the initiator triggers after 2 consecutive
+  //   stalled samples; the guest waits one more tick (3 consecutive, ~15s)
+  //   so the initiator's own rebuild — and the fresh offer it sends — has
+  //   time to arrive and resolve things first, without both sides
+  //   rebuilding (and re-fingerprinting) at the same moment.
+  // - MEDIA_STALL_COOLDOWN_MS after any watchdog-triggered rebuild, the
+  //   watchdog goes quiet — a freshly rebuilt pc needs real time to
+  //   reconnect and start flowing media again.
+  const evaluateMediaStallWatchdog = useCallback(
+    (pc, statsReport) => {
+      if (Date.now() < mediaStallCooldownUntilRef.current) return;
+
+      const pcAgeMs = pcCreatedAtRef.current ? Date.now() - pcCreatedAtRef.current : 0;
+      let videoBytesReceived = null;
+      let videoFramesDecoded = null;
+      let audioBytesReceived = null;
+      for (const report of statsReport.values()) {
+        if (report.type !== "inbound-rtp" || report.isRemote) continue;
+        if (report.kind === "video" || report.mediaType === "video") {
+          videoBytesReceived = typeof report.bytesReceived === "number" ? report.bytesReceived : null;
+          videoFramesDecoded = typeof report.framesDecoded === "number" ? report.framesDecoded : null;
+        } else if (report.kind === "audio" || report.mediaType === "audio") {
+          audioBytesReceived = typeof report.bytesReceived === "number" ? report.bytesReceived : null;
+        }
+      }
+
+      const prev = mediaStallSampleRef.current;
+      mediaStallSampleRef.current = { videoBytesReceived, videoFramesDecoded, audioBytesReceived };
+      if (!prev) return; // first sample — nothing to diff against yet
+
+      const audioGrew =
+        typeof audioBytesReceived === "number" &&
+        typeof prev.audioBytesReceived === "number" &&
+        audioBytesReceived > prev.audioBytesReceived;
+      if (audioGrew) {
+        mediaStallConsecutiveCountRef.current = 0;
+        return;
+      }
+
+      const remoteVideoTrack = remoteStreamRef.current?.getVideoTracks?.()[0];
+      const remoteCameraLooksOff = remoteVideoTrack?.muted === true;
+
+      const videoGrew =
+        typeof videoBytesReceived === "number" &&
+        typeof prev.videoBytesReceived === "number" &&
+        (videoBytesReceived > prev.videoBytesReceived ||
+          (typeof videoFramesDecoded === "number" &&
+            typeof prev.videoFramesDecoded === "number" &&
+            videoFramesDecoded > prev.videoFramesDecoded));
+
+      const neverConnected =
+        (pc.connectionState === "new" || pc.connectionState === "connecting") &&
+        pcAgeMs > MEDIA_STALL_NEVER_CONNECTED_MS;
+      const connectedButSilent = pc.connectionState === "connected" && !videoGrew && !remoteCameraLooksOff;
+
+      const role = isInitiatorRef.current ? "initiator" : "guest";
+      if (!neverConnected && !connectedButSilent) {
+        mediaStallConsecutiveCountRef.current = 0;
+        return;
+      }
+
+      mediaStallConsecutiveCountRef.current += 1;
+      const requiredSamples = isInitiatorRef.current ? 2 : 3;
+      retryDebugLog(role, roomId, "mediaStallWatchdog:sample", {
+        neverConnected,
+        connectedButSilent,
+        remoteCameraLooksOff,
+        connectionState: pc.connectionState,
+        pcAgeMs,
+        consecutiveCount: mediaStallConsecutiveCountRef.current,
+        requiredSamples,
+      });
+      if (mediaStallConsecutiveCountRef.current < requiredSamples) return;
+
+      mediaStallConsecutiveCountRef.current = 0;
+      mediaStallCooldownUntilRef.current = Date.now() + MEDIA_STALL_COOLDOWN_MS;
+      retryDebugLog(role, roomId, "mediaStallWatchdog:TRIGGERING_rebuild", {
+        reason: neverConnected ? "never_connected" : "connected_no_inbound_media",
+      });
+      void requestPcRebuildRef.current(neverConnected ? "media_never_connected" : "media_stall", {});
+    },
+    [roomId],
+  );
+
   const startStatsCollection = useCallback(
     (pc) => {
       stopStatsCollection();
@@ -724,12 +937,13 @@ export default function DirectVideoCall() {
             packetsLost: diagnostics.packetsLost,
           };
           setConnectionQuality(quality);
+          evaluateMediaStallWatchdog(pc, stats);
         } catch (err) {
           console.warn("[direct-video-call] getStats failed:", err.message);
         }
       }, CONNECTION_STATS_INTERVAL_MS);
     },
-    [stopStatsCollection],
+    [stopStatsCollection, evaluateMediaStallWatchdog],
   );
 
   // ── Assign local/remote streams to whichever <video> is in the main vs.
@@ -820,6 +1034,10 @@ export default function DirectVideoCall() {
     connectionFailTimerRef.current = null;
     clearTimeout(offerAnswerTimeoutRef.current);
     offerAnswerTimeoutRef.current = null;
+    clearTimeout(orphanedAnswerCheckTimerRef.current);
+    orphanedAnswerCheckTimerRef.current = null;
+    clearTimeout(manualReconnectCooldownTimerRef.current);
+    manualReconnectCooldownTimerRef.current = null;
     pendingOfferIdRef.current = null;
     pendingRemoteOfferRef.current = null;
     pendingCandidatesRef.current = [];
@@ -937,9 +1155,8 @@ export default function DirectVideoCall() {
           // handleOffer) can now be answered from a clean "stable" state —
           // prefer that over kicking a fresh ICE-restart offer, so glare
           // recovery completes in one step instead of another full cycle.
-          const stashedOffer = pendingRemoteOfferRef.current;
+          const stashedOffer = takeStashedOffer();
           if (stashedOffer) {
-            pendingRemoteOfferRef.current = null;
             void handleOffer(stashedOffer);
           } else {
             void createAndSendIceRestartOffer();
@@ -970,6 +1187,17 @@ export default function DirectVideoCall() {
         await pc.setLocalDescription(offer);
         const offerId = makeOfferId();
         pendingOfferIdRef.current = offerId;
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(
+          isInitiatorRef.current ? "initiator" : "guest",
+          roomId,
+          "createAndSendIceRestartOffer:offer_sent",
+          {
+            offerId,
+            reconnectInProgress: reconnectInProgressRef.current,
+            dtlsFingerprint: extractDtlsFingerprint(pc.localDescription?.sdp),
+          },
+        );
         socket.emit("direct-video-offer", { roomId, offer: pc.localDescription, offerId });
         armOfferAnswerTimeout(offerId);
       } catch (err) {
@@ -979,11 +1207,213 @@ export default function DirectVideoCall() {
       }
     };
 
-    const handleOffer = async (payload = {}) => {
+    // Cancels any pending scheduleOrphanedAnswerRecheck timer — the pc it
+    // was watching is either about to be replaced (requestPcRebuild) or has
+    // become healthy (handleConnectedState), either of which makes the
+    // scheduled check moot.
+    const cancelOrphanedAnswerRecheck = () => {
+      clearTimeout(orphanedAnswerCheckTimerRef.current);
+      orphanedAnswerCheckTimerRef.current = null;
+    };
+
+    // Single, serialized entry point for every "tear down and rebuild the
+    // pc from scratch" trigger in this file: the fingerprint/InvalidAccess
+    // detection below, handlePeerJoined's health-gated rebuild, the
+    // orphaned-answer recheck, the media-stall watchdog, and manual Retry
+    // (forceReconnect) all funnel through here instead of each duplicating
+    // their own teardown — see the module-level root-cause comment on the
+    // "blank video after Retry" bug this file was originally patched for;
+    // every trigger below is a different way of detecting the same
+    // underlying problem (this side's pc no longer matches what the peer
+    // actually has).
+    //
+    // options.manual (forceReconnect only): bypasses the automatic-rebuild
+    // rate limit, and — if another rebuild is already in flight — preempts
+    // it (tears down whatever pc currently exists, including one the other
+    // rebuild is still building) rather than coalescing, since a person
+    // tapping Retry is explicit intent that should always take effect.
+    // Automatic triggers instead coalesce: if a rebuild is already running,
+    // they don't start a second one (a second rebuild would just mint yet
+    // another DTLS fingerprint and make the peer rebuild AGAIN) — they only
+    // update pendingRemoteOfferRef so the offer that triggered them is still
+    // applied once the in-flight rebuild finishes, per its own
+    // "bufferedOffer" replay.
+    const requestPcRebuild = async (reason, options = {}) => {
+      const { offerToReplay, manual = false } = options;
+      const role = isInitiatorRef.current ? "initiator" : "guest";
+
+      if (!manual) {
+        const now = Date.now();
+        autoRebuildTimestampsRef.current = autoRebuildTimestampsRef.current.filter(
+          (t) => now - t < AUTO_REBUILD_WINDOW_MS,
+        );
+        if (autoRebuildTimestampsRef.current.length >= AUTO_REBUILD_MAX_COUNT) {
+          retryDebugLog(role, roomId, "requestPcRebuild:BLOCKED_rate_limit", {
+            reason,
+            recentCount: autoRebuildTimestampsRef.current.length,
+            windowMs: AUTO_REBUILD_WINDOW_MS,
+          });
+          // Stop auto-rebuilding and fall back to the existing manual-Retry
+          // UI rather than looping forever — mirrors the existing stall
+          // banner used elsewhere for "automatic recovery isn't working."
+          if (offerToReplay && peerPresentRef.current) pendingRemoteOfferRef.current = offerToReplay;
+          setReconnectStalled(true);
+          return;
+        }
+      }
+
+      if (peerRebuildInProgressRef.current) {
+        if (!manual) {
+          retryDebugLog(role, roomId, "requestPcRebuild:COALESCED", { reason });
+          if (offerToReplay && peerPresentRef.current) pendingRemoteOfferRef.current = offerToReplay;
+          return;
+        }
+        retryDebugLog(role, roomId, "requestPcRebuild:manual_preempting_in_progress_rebuild", {
+          reason,
+        });
+      }
+
+      peerRebuildInProgressRef.current = true;
+      if (!manual) autoRebuildTimestampsRef.current.push(Date.now());
+      retryDebugLog(role, roomId, "requestPcRebuild:START", { reason, manual });
+      try {
+        cancelOrphanedAnswerRecheck();
+        // Must survive the rebuild — setupPeerConnection replays whatever is
+        // stashed here once the fresh pc and its local tracks are ready (see
+        // its own "bufferedOffer" replay at the end of that function). Left
+        // untouched (not nulled) when there's nothing new to replay, so a
+        // manual Retry preempting an in-flight automatic rebuild doesn't
+        // discard whatever that rebuild had already stashed.
+        if (offerToReplay) pendingRemoteOfferRef.current = offerToReplay;
+
+        const stalePc = pcRef.current;
+        if (stalePc) {
+          retryDebugLog(role, roomId, "requestPcRebuild:closing_stale_pc", {
+            connectionState: stalePc.connectionState,
+            iceConnectionState: stalePc.iceConnectionState,
+            signalingState: stalePc.signalingState,
+            pcAgeMs: pcCreatedAtRef.current ? Date.now() - pcCreatedAtRef.current : null,
+          });
+          stalePc.onicecandidate = null;
+          stalePc.ontrack = null;
+          stalePc.onnegotiationneeded = null;
+          stalePc.onconnectionstatechange = null;
+          stalePc.oniceconnectionstatechange = null;
+          stalePc.close();
+        }
+        pcRef.current = null;
+        pendingCandidatesRef.current = [];
+        pendingOfferIdRef.current = null;
+        makingOfferRef.current = false;
+        ignoreOfferRef.current = false;
+        clearOfferAnswerTimeout();
+        clearTimeout(iceRestartTimerRef.current);
+        iceRestartTimerRef.current = null;
+        clearTimeout(connectionFailTimerRef.current);
+        connectionFailTimerRef.current = null;
+        iceRecoveryAttemptsRef.current = 0;
+        restartRequestInFlightRef.current = false;
+        // The pc we're about to build has no prior negotiation — nothing
+        // meaningful to compare a future offer's fingerprint against.
+        // Clearing this (rather than leaving the old peer's fingerprint in
+        // place) stops the replayed offer below from re-triggering this same
+        // proactive check and looping.
+        lastRemoteFingerprintRef.current = null;
+        // Reset the media-stall watchdog's own sample/counter — comparing
+        // the fresh pc's first stats sample against a stale one from the pc
+        // that just got closed would read as a huge, meaningless delta (or
+        // a false "zero growth" if it happens to land before the new pc has
+        // any stats yet).
+        mediaStallSampleRef.current = null;
+        mediaStallConsecutiveCountRef.current = 0;
+        // Invalidates any other stale in-flight setupPeerConnection() run so
+        // it discards its pc instead of racing this one — mirrors
+        // forceReconnect/handlePeerJoined's identical use of this token.
+        // (setupPeerConnection also bumps this itself on entry; bumping here
+        // too additionally invalidates anything already in flight before we
+        // even start ours.)
+        pcSetupGenerationRef.current += 1;
+
+        await setupPeerConnectionRef.current();
+        retryDebugLog(role, roomId, "requestPcRebuild:DONE", { reason, manual });
+      } finally {
+        peerRebuildInProgressRef.current = false;
+      }
+    };
+
+    // Schedules a one-off recheck ~ORPHANED_ANSWER_RECHECK_MS after an
+    // orphaned answer (handleAnswer's offerId-mismatch / wrong-signalingState
+    // branches) — most orphaned answers are normal perfect-negotiation glare
+    // fallout that resolves itself, so this deliberately does NOT rebuild
+    // immediately. Only if the pc is *still* unhealthy this long after does
+    // it call requestPcRebuild. Debounced to a single pending timer; the
+    // check is automatically moot (and skips itself) if the pc has since
+    // been replaced by any other rebuild path, or reconnected on its own —
+    // see handleConnectedState's own cancelOrphanedAnswerRecheck() call.
+    const scheduleOrphanedAnswerRecheck = (reason) => {
+      const role = isInitiatorRef.current ? "initiator" : "guest";
+      const checkPc = pcRef.current;
+      const checkGeneration = pcSetupGenerationRef.current;
+      cancelOrphanedAnswerRecheck();
+      retryDebugLog(role, roomId, "scheduleOrphanedAnswerRecheck:armed", { reason });
+      orphanedAnswerCheckTimerRef.current = window.setTimeout(() => {
+        orphanedAnswerCheckTimerRef.current = null;
+        if (
+          !mountedRef.current ||
+          pcRef.current !== checkPc ||
+          pcSetupGenerationRef.current !== checkGeneration
+        ) {
+          retryDebugLog(role, roomId, "scheduleOrphanedAnswerRecheck:cancelled_pc_replaced", { reason });
+          return;
+        }
+        const pc = checkPc;
+        const isHealthy =
+          pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed";
+        retryDebugLog(role, roomId, "scheduleOrphanedAnswerRecheck:fired", {
+          reason,
+          connectionState: pc.connectionState,
+          iceConnectionState: pc.iceConnectionState,
+          isHealthy,
+        });
+        // A pc that IS healthy but silently not flowing media ("connected
+        // with no inbound media") is the media-stall watchdog's own,
+        // separately-cadenced concern (startStatsCollection) — not
+        // re-implemented here to avoid two independent stats-based stall
+        // detectors disagreeing with each other.
+        if (!isHealthy) void requestPcRebuild(`orphaned_answer:${reason}`);
+      }, ORPHANED_ANSWER_RECHECK_MS);
+    };
+
+    // Takes (and clears) the stashed remote offer, dropping it when stale.
+    const takeStashedOffer = () => {
+      const stashed = pendingRemoteOfferRef.current;
+      pendingRemoteOfferRef.current = null;
+      if (!stashed) return null;
+      const ageMs = Date.now() - (stashed.receivedAt || Date.now());
+      if (ageMs <= PENDING_OFFER_MAX_AGE_MS) return stashed;
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "stashedOffer:dropped_stale", {
+        offerId: stashed.offerId || null,
+        ageMs,
+      });
+      return null;
+    };
+
+    const handleOffer = async (incoming = {}) => {
+      // Stamped once on first arrival; every stash/replay path carries it.
+      const payload = incoming.receivedAt ? incoming : { ...incoming, receivedAt: Date.now() };
       const { offer, offerId: incomingOfferId } = payload;
       if (!offer) return;
       const pc = pcRef.current;
+      const retryDebugRole = isInitiatorRef.current ? "initiator" : "guest";
       if (!pc) {
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(retryDebugRole, roomId, "handleOffer:no_pc_yet_stashed", {
+          offerId: incomingOfferId || null,
+          peerPresent: peerPresentRef.current,
+        });
         // Offer beat our RTCPeerConnection into existence (setupPeerConnection
         // is async — it awaits the ICE-server config). Stash the newest one
         // *only* while we actually expect a peer; setupPeerConnection replays
@@ -993,14 +1423,64 @@ export default function DirectVideoCall() {
         if (peerPresentRef.current) pendingRemoteOfferRef.current = payload;
         return;
       }
+      // Computed before the collision/ignore logic below on purpose: a
+      // changed DTLS fingerprint means the peer rebuilt their
+      // RTCPeerConnection (their own Retry), and treating that as an
+      // ordinary glare collision would drop or stash the one offer that can
+      // never be satisfied by this side's stale pc — see
+      // requestPcRebuild above.
+      const retryDebugPcAgeMs = pcCreatedAtRef.current ? Date.now() - pcCreatedAtRef.current : null;
+      const incomingFingerprint = extractDtlsFingerprint(offer?.sdp);
+      const previousFingerprint = lastRemoteFingerprintRef.current;
+      const peerFingerprintChanged =
+        incomingFingerprint != null &&
+        previousFingerprint != null &&
+        incomingFingerprint !== previousFingerprint;
+
       const polite = !isInitiatorRef.current;
       const offerCollision = makingOfferRef.current || pc.signalingState !== "stable";
-      ignoreOfferRef.current = !polite && offerCollision;
-      if (ignoreOfferRef.current) return;
+      ignoreOfferRef.current = !polite && offerCollision && !peerFingerprintChanged;
+
+      // TEMPORARY (RETRY_DEBUG): snapshot everything relevant at the moment
+      // this offer arrived, before any of it is mutated below.
+      retryDebugLog(retryDebugRole, roomId, "handleOffer:arrived", {
+        offerId: incomingOfferId || null,
+        signalingState: pc.signalingState,
+        connectionState: pc.connectionState,
+        iceConnectionState: pc.iceConnectionState,
+        pcAgeMs: retryDebugPcAgeMs,
+        pcLooksFreshlyRebuilt: retryDebugPcAgeMs !== null && retryDebugPcAgeMs < 3000,
+        makingOffer: makingOfferRef.current,
+        offerCollision,
+        isPolitePeer: polite,
+        shouldIgnoreOffer: ignoreOfferRef.current,
+        incomingDtlsFingerprint: incomingFingerprint,
+        previousRemoteDtlsFingerprint: previousFingerprint,
+        dtlsFingerprintChanged: peerFingerprintChanged,
+      });
+
+      if (peerFingerprintChanged) {
+        retryDebugLog(retryDebugRole, roomId, "handleOffer:peer_rebuilt_detected_via_fingerprint", {
+          offerId: incomingOfferId || null,
+        });
+        await requestPcRebuild("fingerprint_changed", { offerToReplay: payload });
+        return;
+      }
+
+      if (ignoreOfferRef.current) {
+        retryDebugLog(retryDebugRole, roomId, "handleOffer:IGNORED_collision", {
+          offerId: incomingOfferId || null,
+        });
+        return;
+      }
 
       try {
         if (offerCollision && pc.signalingState === "have-local-offer") {
           const rolledBack = await safeRollback(pc);
+          retryDebugLog(retryDebugRole, roomId, "handleOffer:rollback_local_offer", {
+            offerId: incomingOfferId || null,
+            rolledBack,
+          });
           // Our own outstanding offer was just discarded — any answer that
           // still shows up for it later is stale and must be rejected.
           pendingOfferIdRef.current = null;
@@ -1020,6 +1500,10 @@ export default function DirectVideoCall() {
           // the impolite peer keeps its own (winning) offer, but the polite
           // peer stashes this one so it's answered the moment our own
           // negotiation settles (see handleAnswer / armOfferAnswerTimeout).
+          retryDebugLog(retryDebugRole, roomId, "handleOffer:collision_not_rollbackable_stashed", {
+            offerId: incomingOfferId || null,
+            signalingState: pc.signalingState,
+          });
           if (polite && peerPresentRef.current) pendingRemoteOfferRef.current = payload;
           return;
         }
@@ -1029,20 +1513,105 @@ export default function DirectVideoCall() {
         // accept a remote offer. Re-check before applying it; stash for a
         // retry rather than throwing an InvalidStateError into the void.
         if (pc.signalingState !== "stable" && pc.signalingState !== "have-remote-offer") {
+          retryDebugLog(retryDebugRole, roomId, "handleOffer:signaling_state_unacceptable_stashed", {
+            offerId: incomingOfferId || null,
+            signalingState: pc.signalingState,
+          });
           if (polite && peerPresentRef.current) pendingRemoteOfferRef.current = payload;
           return;
         }
 
-        await pc.setRemoteDescription(offer);
+        try {
+          await pc.setRemoteDescription(offer);
+        } catch (err) {
+          // Reactive fallback for the same "peer rebuilt their pc" case the
+          // proactive fingerprint check above is meant to catch before we
+          // ever get here — reached when there was no previous fingerprint
+          // to compare against yet (e.g. the very first offer after a
+          // rebuild on either side) so the proactive check couldn't fire.
+          // This is the exact error confirmed in production: Chrome's
+          // InvalidAccessError "the order of m-lines in subsequent offer
+          // doesn't match order from previous offer/answer" when a fresh
+          // peer's SDP is applied onto this side's still-open, previously
+          // negotiated pc.
+          const looksLikeStalePcRenegotiation =
+            err?.name === "InvalidAccessError" || /m-line/i.test(err?.message || "");
+          retryDebugLog(retryDebugRole, roomId, "handleOffer:setRemoteDescription:ERROR", {
+            offerId: incomingOfferId || null,
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+            looksLikeStalePcRenegotiation,
+          });
+          if (looksLikeStalePcRenegotiation) {
+            retryDebugLog(retryDebugRole, roomId, "handleOffer:peer_rebuilt_detected_via_sdp_error", {
+              offerId: incomingOfferId || null,
+            });
+            await requestPcRebuild("sdp_error", { offerToReplay: payload });
+            return;
+          }
+          throw err;
+        }
+        // Real reconnect-logic state, not a log side-effect: this is what
+        // the *next* offer's proactive fingerprint check (above) compares
+        // against to detect a rebuilt peer. Updated on every
+        // successfully-applied offer — including a replayed one after
+        // requestPcRebuild runs — so an ordinary same-pc
+        // ICE-restart offer never looks like a rebuild, and a genuine
+        // rebuild's replayed offer is never mistaken for another rebuild
+        // (see requestPcRebuild's own reset of this ref).
+        lastRemoteFingerprintRef.current = incomingFingerprint;
+        retryDebugLog(retryDebugRole, roomId, "handleOffer:setRemoteDescription:ok", {
+          offerId: incomingOfferId || null,
+        });
         await flushPendingCandidates();
         // Explicit createAnswer()/setLocalDescription(answer) rather than the
         // implicit no-arg form — the latter isn't implemented on older Safari
         // / in-app WebViews and throws there.
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
+        // A collision rollback can leave the matched transceivers recvonly even
+        // though we hold live local tracks — fix that before answering.
+        await ensureLocalTracksSentInAnswer(pc, localStreamRef.current, (label, data) =>
+          retryDebugLog(retryDebugRole, roomId, label, data),
+        );
+        if (!mountedRef.current || pc.signalingState === "closed") return;
+        let answer;
+        try {
+          answer = await pc.createAnswer();
+        } catch (err) {
+          retryDebugLog(retryDebugRole, roomId, "handleOffer:createAnswer:ERROR", {
+            offerId: incomingOfferId || null,
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          throw err;
+        }
+        try {
+          await pc.setLocalDescription(answer);
+        } catch (err) {
+          retryDebugLog(retryDebugRole, roomId, "handleOffer:setLocalDescription:ERROR", {
+            offerId: incomingOfferId || null,
+            name: err?.name,
+            message: err?.message,
+            stack: err?.stack,
+          });
+          throw err;
+        }
+        retryDebugLog(retryDebugRole, roomId, "handleOffer:answer_sent", {
+          offerId: incomingOfferId || null,
+        });
         socket.emit("direct-video-answer", { roomId, answer: pc.localDescription, offerId: incomingOfferId });
+        // TEMPORARY (RETRY_DEBUG): watch whether media actually starts
+        // flowing on this pc after answering this offer.
+        retryDebugPollInboundVideoStats(pc, retryDebugRole, roomId, "handleOffer:post_answer");
       } catch (err) {
         console.error("[direct-video-call] offer handling failed", err);
+        retryDebugLog(retryDebugRole, roomId, "handleOffer:ERROR", {
+          offerId: incomingOfferId || null,
+          name: err?.name,
+          message: err?.message,
+          stack: err?.stack,
+        });
         // Let the polite peer take another run at this offer from a clean
         // state instead of leaving the connection wedged until the watchdog.
         if (polite && peerPresentRef.current && !pendingRemoteOfferRef.current) {
@@ -1054,7 +1623,28 @@ export default function DirectVideoCall() {
     const handleAnswer = async ({ answer, offerId: receivedOfferId } = {}) => {
       const pc = pcRef.current;
       if (!pc || !answer) return;
-      if (pc.signalingState !== "have-local-offer") return;
+      const retryDebugRole = isInitiatorRef.current ? "initiator" : "guest";
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(retryDebugRole, roomId, "handleAnswer:received", {
+        offerId: receivedOfferId || null,
+        expectedOfferId: pendingOfferIdRef.current,
+        signalingState: pc.signalingState,
+        reconnectInProgress: reconnectInProgressRef.current,
+      });
+      if (pc.signalingState !== "have-local-offer") {
+        // Orphaned answer — we're not (or no longer) waiting for one on
+        // this pc. Normal fallout from perfect-negotiation glare (we rolled
+        // back our own offer, or already applied a colliding one) and
+        // usually resolves itself; don't rebuild on the spot. Only if the
+        // pc is *still* unhealthy a few seconds from now is this actually a
+        // sign of a broken session — see scheduleOrphanedAnswerRecheck.
+        retryDebugLog(retryDebugRole, roomId, "handleAnswer:ORPHANED_wrong_signaling_state", {
+          offerId: receivedOfferId || null,
+          signalingState: pc.signalingState,
+        });
+        scheduleOrphanedAnswerRecheck("wrong_signaling_state");
+        return;
+      }
       // Guards against a stale/replayed answer being applied to a newer
       // offer (e.g. a redelivered socket event across a reconnect) —
       // signalingState alone can't tell a genuine fresh answer apart from
@@ -1065,22 +1655,64 @@ export default function DirectVideoCall() {
         console.warn(
           `[direct-video-call] rejecting stale answer (expected ${expectedOfferId || "none"}, got ${receivedOfferId || "none"})`,
         );
+        retryDebugLog(retryDebugRole, roomId, "handleAnswer:ORPHANED_offerid_mismatch", {
+          offerId: receivedOfferId || null,
+          expectedOfferId: expectedOfferId || null,
+        });
+        scheduleOrphanedAnswerRecheck("offerid_mismatch");
+        return;
+      }
+      // Safety net for a peer that rebuilt its pc: an answer whose DTLS
+      // fingerprint differs from the last one we applied from this peer comes
+      // from a brand-new RTCPeerConnection (e.g. the guest retried while the
+      // host kept its old pc and answered-to by the guest's new one). It can't
+      // be applied to our still-open, previously negotiated pc — the
+      // transport would sit "connected" with no media — so don't try; rebuild
+      // instead, and the fresh pc's own offer makes the peer rebuild too.
+      // Same non-null-on-both-sides rule as handleOffer's check. Mirrors
+      // VideoCall.jsx's handleAnswer.
+      const answerFingerprint = extractDtlsFingerprint(answer?.sdp);
+      const knownRemoteFingerprint = lastRemoteFingerprintRef.current;
+      if (
+        answerFingerprint != null &&
+        knownRemoteFingerprint != null &&
+        answerFingerprint !== knownRemoteFingerprint
+      ) {
+        retryDebugLog(retryDebugRole, roomId, "handleAnswer:peer_rebuilt_detected_via_answer_fingerprint", {
+          offerId: receivedOfferId || null,
+          answerFingerprint,
+          knownRemoteFingerprint,
+        });
+        await requestPcRebuild("answer_fingerprint_changed");
         return;
       }
       try {
         await pc.setRemoteDescription(answer);
+        // Real reconnect-logic state: the NEXT offer's or answer's fingerprint
+        // check compares against this. The offerer side only ever learns the
+        // peer's fingerprint from answers, so it must be stored here too.
+        if (answerFingerprint) lastRemoteFingerprintRef.current = answerFingerprint;
         pendingOfferIdRef.current = null;
         clearOfferAnswerTimeout();
         await flushPendingCandidates();
         // We're back to "stable"; if a colliding remote offer was stashed
         // while our own was outstanding (see handleOffer), answer it now.
-        const stashedOffer = pendingRemoteOfferRef.current;
+        const stashedOffer = takeStashedOffer();
         if (stashedOffer) {
-          pendingRemoteOfferRef.current = null;
           void handleOffer(stashedOffer);
         }
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(retryDebugRole, roomId, "handleAnswer:applied_ok", {
+          offerId: receivedOfferId || null,
+        });
       } catch (err) {
         console.error("[direct-video-call] answer handling failed", err);
+        retryDebugLog(retryDebugRole, roomId, "handleAnswer:ERROR", {
+          offerId: receivedOfferId || null,
+          name: err?.name,
+          message: err?.message,
+          stack: err?.stack,
+        });
       }
     };
 
@@ -1126,22 +1758,55 @@ export default function DirectVideoCall() {
         (existingPc.connectionState === "connected" ||
           existingPc.iceConnectionState === "connected" ||
           existingPc.iceConnectionState === "completed");
-      if (resuming && existingPc && !existingPcHealthy) {
-        existingPc.onicecandidate = null;
-        existingPc.ontrack = null;
-        existingPc.onnegotiationneeded = null;
-        existingPc.onconnectionstatechange = null;
-        existingPc.oniceconnectionstatechange = null;
-        existingPc.close();
-        pcRef.current = null;
-        pcSetupGenerationRef.current += 1;
-        pendingCandidatesRef.current = [];
-        pendingRemoteOfferRef.current = null;
-        pendingOfferIdRef.current = null;
-        makingOfferRef.current = false;
-        ignoreOfferRef.current = false;
-        clearOfferAnswerTimeout();
-      }
+      // Deliberately NOT gated on `resumedCall` alone: `resumedCall` is
+      // emitted on a plain Socket.IO reconnect (connectionStateRecovery, or
+      // an ordinary reconnect from a returning guestId — see
+      // join-direct-room in server.js) with zero knowledge of whether the
+      // PEER's RTCPeerConnection was ever rebuilt. A healthy pc here almost
+      // always means the signaling socket blipped while the WebRTC/ICE media
+      // path (a separate transport) kept working fine — tearing it down on
+      // every resumedCall regardless of health was tried and reverted: it
+      // caused an unaffected, working side to visibly rebuild/blank itself
+      // over the *other* side's harmless socket blip. The actual "peer
+      // rebuilt their pc" case (a real Retry) is instead primarily caught by
+      // handleOffer's own DTLS-fingerprint check and
+      // InvalidAccessError/m-line-order catch, which observe the actual SDP
+      // (ground truth) rather than inferring it from this socket-level
+      // signal.
+      //
+      // pcAgeMs/REBUILD_GRACE_MS guards the remaining case this still needs
+      // to catch: a genuinely wedged pc (closed/failed, or resumed-but-
+      // unhealthy well past when it should have reconnected). Without the
+      // grace window, a duplicate/rapid peer-joined signal (the exact
+      // duplicate-join bug fixed alongside this) tears down and rebuilds a
+      // pc that's only milliseconds old and still simply negotiating —
+      // mirrors VideoCall.jsx's identical pcNeedsRebuild formula.
+      const pcAgeMs = pcCreatedAtRef.current ? Date.now() - pcCreatedAtRef.current : Infinity;
+      // Requires an existingPc for every branch on purpose — "no pc yet" is
+      // not a rebuild, just an ordinary first build (see the plain
+      // setupPeerConnection() call below), and must never consume the
+      // automatic-rebuild rate limit or go through requestPcRebuild's
+      // teardown machinery, which has nothing to tear down.
+      const pcNeedsTeardown = Boolean(
+        existingPc &&
+          (existingPc.signalingState === "closed" ||
+            existingPc.connectionState === "failed" ||
+            (resuming && !existingPcHealthy && pcAgeMs > REBUILD_GRACE_MS)),
+      );
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "handlePeerJoined", {
+        resumedCall: Boolean(resumedCall),
+        resuming: Boolean(resuming),
+        existingPcConnectionState: existingPc?.connectionState ?? null,
+        existingPcIceConnectionState: existingPc?.iceConnectionState ?? null,
+        existingPcSignalingState: existingPc?.signalingState ?? null,
+        existingPcHealthy,
+        pcAgeMs,
+        rebuildGraceMs: REBUILD_GRACE_MS,
+        pcNeedsTeardown,
+        branch: pcNeedsTeardown ? "REBUILD" : existingPc ? "NO_REBUILD" : "FIRST_BUILD",
+        rebuildAlreadyInProgress: peerRebuildInProgressRef.current,
+      });
       // Whether we're keeping a live connection decides if the renegotiation
       // nudge below applies (a fresh build negotiates on its own).
       const hadConnection = existingPcHealthy;
@@ -1150,11 +1815,25 @@ export default function DirectVideoCall() {
         if (prev === "connected") return prev;
         return resuming ? "reconnecting" : "connecting";
       });
-      // The peer connection (and therefore the initial offer + ICE
-      // gathering) is only created once we know someone is actually in the
-      // room to receive it — see setupPeerConnection's comment below for why
+      // Routed through requestPcRebuild (not a separate inline teardown) so
+      // this trigger shares the same serialization, coalescing, and
+      // automatic-rebuild rate limit as every other trigger — a burst of
+      // duplicate peer-joined events now produces at most one in-flight
+      // rebuild instead of several racing ones. The plain first-build path
+      // (no existingPc) also skips calling setupPeerConnection directly
+      // while a rebuild is already in flight — its own internal
+      // setupPeerConnectionRef.current() call will build the pc once it
+      // gets there; racing a second, independent build here would recreate
+      // exactly the "several pcs built within ~1s" bug this fixes. The peer
+      // connection (and therefore the initial offer + ICE gathering) is
+      // only created once we know someone is actually in the room to
+      // receive it — see setupPeerConnection's comment below for why
       // creating it eagerly in handleRoomJoined lost the initial offer.
-      void setupPeerConnection();
+      if (pcNeedsTeardown) {
+        void requestPcRebuild("peer_joined_unhealthy_resume");
+      } else if (!peerRebuildInProgressRef.current) {
+        void setupPeerConnection();
+      }
 
       // Surface a stalled *first* connect. Previously the connection
       // watchdog and the manual-Retry stall banner were only wired for a
@@ -1229,6 +1908,15 @@ export default function DirectVideoCall() {
       pcSetupGenerationRef.current += 1;
       iceConfigPromiseRef.current = fetchDirectRoomIceConfig(roomId);
       stopStatsCollection();
+      cancelOrphanedAnswerRecheck();
+      // A genuinely new peer session starts fresh — stale state here would
+      // otherwise compare the next pc's first stats sample against this
+      // dead session's last one (a bogus "zero growth"), or treat the next
+      // peer's first offer as a "changed fingerprint" rebuild trigger
+      // against an identity that no longer exists.
+      mediaStallSampleRef.current = null;
+      mediaStallConsecutiveCountRef.current = 0;
+      lastRemoteFingerprintRef.current = null;
 
       // Drop the now-dead peer connection. If the peer comes back,
       // handlePeerJoined -> setupPeerConnection builds a fresh one and
@@ -1433,6 +2121,14 @@ export default function DirectVideoCall() {
     // all) so a genuine "connected" transition is handled identically
     // regardless of which callback fires it.
     const handleConnectedState = () => {
+      // TEMPORARY (RETRY_DEBUG)
+      const retryDebugPc = pcRef.current;
+      retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "handleConnectedState:called", {
+        connectionState: retryDebugPc?.connectionState ?? null,
+        iceConnectionState: retryDebugPc?.iceConnectionState ?? null,
+        remoteRebindPending: remoteRebindPendingRef.current,
+        hasConnectedOnce: hasConnectedOnceRef.current,
+      });
       clearTimeout(iceRestartTimerRef.current);
       iceRestartTimerRef.current = null;
       clearTimeout(connectionFailTimerRef.current);
@@ -1440,6 +2136,11 @@ export default function DirectVideoCall() {
       iceRecoveryAttemptsRef.current = 0;
       restartRequestInFlightRef.current = false;
       clearReconnectStallWatch();
+      // A pending orphaned-answer recheck (handleAnswer) is moot once the pc
+      // is actually healthy again.
+      cancelOrphanedAnswerRecheck();
+      // The rebuilt connection is up — end a manual Retry's banner/button hold.
+      releaseManualReconnectGuard();
       hasConnectedOnceRef.current = true;
       peerPresentRef.current = true;
       // The "resuming an earlier session" story ends once we're connected —
@@ -1552,16 +2253,61 @@ export default function DirectVideoCall() {
     const ensureLocalMedia = async () => {
       if (!localStreamRef.current) {
         let stream = null;
+        let timedOut = false;
+        const pendingMedia = localMediaPromiseRef.current;
         try {
-          stream = (await localMediaPromiseRef.current) || null;
+          if (pendingMedia) {
+            timedOut = await mediaAcquireTimedOut(pendingMedia);
+            if (!timedOut) stream = (await pendingMedia) || null;
+          }
         } catch {
           stream = null;
+        }
+        if (timedOut && mountedRef.current) {
+          // getUserMedia is hanging (unanswered permission prompt, busy
+          // device). Build the connection receive-only now — the existing
+          // "no microphone" banner + Retry shows via localAudioMissing below —
+          // and publish the stream if it ever arrives.
+          console.warn("[direct-video-call] getUserMedia still pending — continuing without local media");
+          retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "media:acquire_timed_out", {
+            timeoutMs: MEDIA_ACQUIRE_TIMEOUT_MS,
+          });
+          pendingMedia
+            .then((lateStream) => {
+              const latePc = pcRef.current;
+              if (
+                !lateStream ||
+                !mountedRef.current ||
+                !latePc ||
+                latePc.signalingState === "closed" ||
+                latePc.getSenders().some((s) => s.track && s.track.readyState === "live")
+              ) {
+                return;
+              }
+              lateStream.getTracks().forEach((track) => {
+                track.enabled = track.kind === "audio" ? micOnRef.current : camOnRef.current;
+                const transceiver = latePc
+                  .getTransceivers()
+                  .find((t) => t.receiver?.track?.kind === track.kind && !t.sender.track);
+                if (transceiver) {
+                  transceiver.sender.replaceTrack(track).catch(() => {});
+                  transceiver.direction = "sendrecv"; // fires negotiationneeded
+                } else {
+                  latePc.addTrack(track, lateStream);
+                }
+              });
+              localStreamRef.current = lateStream;
+              setLocalAudioMissing(lateStream.getAudioTracks().length === 0);
+              assignStreams(isSwappedRef.current);
+              retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "media:late_attached", {});
+            })
+            .catch(() => {});
         }
         if (!mountedRef.current) {
           stream?.getTracks().forEach((track) => track.stop());
           return null;
         }
-        if (!stream && !localStreamRef.current) {
+        if (!timedOut && !stream && !localStreamRef.current) {
           try {
             stream = await getCallMediaStream();
           } catch (err) {
@@ -1663,6 +2409,11 @@ export default function DirectVideoCall() {
         return;
       }
       pcRef.current = pc;
+      pcCreatedAtRef.current = Date.now();
+      // TEMPORARY (RETRY_DEBUG)
+      retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "setupPeerConnection:new_pc_created", {
+        reconnectInProgress: reconnectInProgressRef.current,
+      });
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -1708,6 +2459,20 @@ export default function DirectVideoCall() {
           };
         });
 
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "pc.ontrack", {
+          trackWasReplaced,
+          tracks: incomingTracks.map((track) => ({
+            kind: track.kind,
+            id: track.id,
+            readyState: track.readyState,
+            muted: track.muted,
+            enabled: track.enabled,
+          })),
+          streamCount: event.streams?.length || 0,
+          attachTarget: isSwappedRef.current ? "pipVideoRef(remote)" : "mainVideoRef(remote)",
+        });
+
         if (trackWasReplaced) {
           // The remote peer recreated their whole RTCPeerConnection (e.g. a
           // page refresh) while this side's pc stayed alive — the new track
@@ -1747,6 +2512,17 @@ export default function DirectVideoCall() {
           await pc.setLocalDescription(offer);
           const offerId = makeOfferId();
           pendingOfferIdRef.current = offerId;
+          // TEMPORARY (RETRY_DEBUG)
+          retryDebugLog(
+            isInitiatorRef.current ? "initiator" : "guest",
+            roomId,
+            "onnegotiationneeded:offer_sent",
+            {
+              offerId,
+              reconnectInProgress: reconnectInProgressRef.current,
+              dtlsFingerprint: extractDtlsFingerprint(pc.localDescription?.sdp),
+            },
+          );
           socket.emit("direct-video-offer", { roomId, offer: pc.localDescription, offerId });
           armOfferAnswerTimeout(offerId);
         } catch (err) {
@@ -1757,6 +2533,12 @@ export default function DirectVideoCall() {
       };
 
       pc.onconnectionstatechange = () => {
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "onconnectionstatechange", {
+          oldState: retryDebugPrevConnStateRef.current,
+          newState: pc.connectionState,
+        });
+        retryDebugPrevConnStateRef.current = pc.connectionState;
         if (!mountedRef.current) return;
         if (pc.connectionState === "connected") {
           handleConnectedState();
@@ -1778,6 +2560,12 @@ export default function DirectVideoCall() {
       // late or not at all — same reasoning as VideoCall.jsx's pairing of
       // the two handlers.
       pc.oniceconnectionstatechange = () => {
+        // TEMPORARY (RETRY_DEBUG)
+        retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "oniceconnectionstatechange", {
+          oldState: retryDebugPrevIceStateRef.current,
+          newState: pc.iceConnectionState,
+        });
+        retryDebugPrevIceStateRef.current = pc.iceConnectionState;
         if (!mountedRef.current) return;
         if (pc.iceConnectionState === "connected" || pc.iceConnectionState === "completed") {
           handleConnectedState();
@@ -1796,7 +2584,14 @@ export default function DirectVideoCall() {
       };
 
       if (stream) {
-        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
+          // TEMPORARY (RETRY_DEBUG)
+          retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "setupPeerConnection:track_added", {
+            kind: track.kind,
+            id: track.id,
+          });
+        });
       }
 
       // If this side has no camera and/or mic to publish (both permissions
@@ -1820,13 +2615,13 @@ export default function DirectVideoCall() {
       // pendingRemoteOfferRef. Any ICE candidates buffered alongside it are
       // drained by flushPendingCandidates() inside handleOffer once the
       // remote description is set.
-      const bufferedOffer = pendingRemoteOfferRef.current;
+      const bufferedOffer = takeStashedOffer();
       if (bufferedOffer) {
-        pendingRemoteOfferRef.current = null;
         void handleOffer(bufferedOffer);
       }
     };
     setupPeerConnectionRef.current = setupPeerConnection;
+    requestPcRebuildRef.current = requestPcRebuild;
 
     // See kickIceRecoveryRef's declaration — invoked directly from the
     // browser's "online" event so a network path recovering while the
@@ -1872,17 +2667,24 @@ export default function DirectVideoCall() {
       resyncConnectionStateFromPeerConnection();
     };
 
-    // A manager-level reconnect (as opposed to the socket's first-ever
-    // "connect") means our transport just dropped and came back — the
-    // server's connectionStateRecovery branch (see join-direct-room) only
-    // nudges the *peer* to re-check its connection, not this side. Rejoin
-    // the room and, if our own PeerConnection still looks unhealthy a beat
-    // later, proactively drive recovery instead of only waiting on a
+    // Socket.IO v4 event order on a reconnect: the Manager's "reconnect"
+    // fires as soon as the Engine.IO transport opens — BEFORE the namespace
+    // CONNECT handshake completes and therefore before the socket's own
+    // "connect" event. socket.on("connect", joinRoom) below already re-emits
+    // join-direct-room for this reconnect (including when
+    // connectionStateRecovery restores the session). An emit made from THIS
+    // handler happens while socket.connected is still false, so socket.io
+    // buffers it and flushes it just before the "connect" handlers run —
+    // which then emit a second time. That double emit was the source of the
+    // duplicate join confirmed in production (two join-direct-room calls
+    // ~200ms apart, two direct-peer-joined broadcasts), so this handler no
+    // longer joins itself. It only does its own follow-up: if our own
+    // PeerConnection still looks unhealthy a beat after the reconnect,
+    // proactively drive recovery instead of only waiting on a
     // connectionstatechange transition. Mirrors VideoCall.jsx's
     // handleSocketReconnect.
     const handleSocketReconnect = () => {
       if (!mountedRef.current) return;
-      joinRoom();
       window.setTimeout(() => {
         const pc = pcRef.current;
         if (
@@ -2254,35 +3056,16 @@ export default function DirectVideoCall() {
   // connect. Mirrors VideoCall.jsx's forceReconnect.
   const forceReconnect = useCallback(() => {
     if (reconnectInProgressRef.current) return;
+    // TEMPORARY (RETRY_DEBUG)
+    retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "forceReconnect:TAPPED", {
+      pcConnectionState: pcRef.current?.connectionState ?? null,
+      pcIceConnectionState: pcRef.current?.iceConnectionState ?? null,
+    });
     reconnectInProgressRef.current = true;
+    setManualReconnecting(true);
     setReconnectStalled(false);
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
-    clearTimeout(connectionFailTimerRef.current);
-    connectionFailTimerRef.current = null;
-    clearTimeout(iceRestartTimerRef.current);
-    iceRestartTimerRef.current = null;
-    iceRecoveryAttemptsRef.current = 0;
-    clearTimeout(offerAnswerTimeoutRef.current);
-    offerAnswerTimeoutRef.current = null;
-    pendingOfferIdRef.current = null;
-    pendingRemoteOfferRef.current = null;
-
-    const pc = pcRef.current;
-    if (pc) {
-      pc.onicecandidate = null;
-      pc.ontrack = null;
-      pc.onnegotiationneeded = null;
-      pc.onconnectionstatechange = null;
-      pc.oniceconnectionstatechange = null;
-      pc.close();
-      pcRef.current = null;
-    }
-    pendingCandidatesRef.current = [];
-    makingOfferRef.current = false;
-    ignoreOfferRef.current = false;
-    // Supersede any in-flight setup from the failed attempt before rebuilding.
-    pcSetupGenerationRef.current += 1;
     // Re-fetch ICE servers so the rebuilt connection gets fresh TURN
     // credentials — the ones from page load may have expired on a long call,
     // and a transient /ice-servers failure at load may since have cleared.
@@ -2294,22 +3077,27 @@ export default function DirectVideoCall() {
     // back rather than the user staring at a silent "connecting" again.
     armConnectWatchdogsRef.current();
 
+    // Held (button disabled, banner kept up showing "Reconnecting…") until
+    // the rebuilt connection is healthy (handleConnectedState calls
+    // releaseManualReconnectGuard) or 5s pass, whichever comes first — NOT
+    // merely until the rebuild call returns, which is well before the new
+    // connection actually works.
+    manualReconnectCooldownTimerRef.current = window.setTimeout(releaseManualReconnectGuard, 5000);
+
     if (socket.connected) {
-      // Release the guard once the rebuild actually settles (success or
-      // failure) rather than immediately after firing it off — releasing it
-      // synchronously here let a second rapid click start an overlapping
-      // rebuild while the first was still mid-flight awaiting the ICE-server
-      // fetch / local media. setupPeerConnection's own generation token
-      // still protects against that regardless, but the guard should
-      // actually guard what it claims to.
-      setupPeerConnectionRef.current().finally(() => {
-        reconnectInProgressRef.current = false;
-      });
+      // The actual teardown/rebuild is delegated to requestPcRebuild
+      // (manual: true) — it bypasses the automatic-rebuild rate limit and,
+      // if an automatic rebuild happens to already be in flight, preempts
+      // it rather than coalescing, since a person tapping Retry is explicit
+      // intent that should always take effect. Also clears
+      // iceRestartTimerRef/connectionFailTimerRef/iceRecoveryAttemptsRef as
+      // part of its own teardown, so those don't need repeating here.
+      void requestPcRebuildRef.current("manual_retry", { manual: true });
     } else {
       socket.connect();
-      reconnectInProgressRef.current = false;
+      releaseManualReconnectGuard();
     }
-  }, [roomId]);
+  }, [roomId, releaseManualReconnectGuard]);
 
   const sendChatMessage = useCallback(
     (event) => {
@@ -2584,18 +3372,29 @@ export default function DirectVideoCall() {
               </div>
             )}
 
-            {reconnectStalled && (
+            {/* Also kept up while a manual Retry is being held
+                (manualReconnecting): the tap itself clears reconnectStalled,
+                which used to make the banner — and its "Reconnecting…"
+                button — vanish the instant it was pressed. */}
+            {(reconnectStalled || manualReconnecting) && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
                 </span>
                 <span>
-                  {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
-                    ? "Still unable to reconnect. You can keep trying or end the call."
-                    : "Reconnection is taking longer than expected."}
+                  {manualReconnecting
+                    ? "Reconnecting to the call…"
+                    : reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
+                      ? "Still unable to reconnect. You can keep trying or end the call."
+                      : "Reconnection is taking longer than expected."}
                 </span>
-                <button type="button" className="hc-vc__rx-btn-primary" onClick={forceReconnect}>
-                  Retry
+                <button
+                  type="button"
+                  className="hc-vc__rx-btn-primary"
+                  onClick={forceReconnect}
+                  disabled={manualReconnecting}
+                >
+                  {manualReconnecting ? "Reconnecting…" : "Retry"}
                 </button>
                 {reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES && (
                   <button type="button" className="hc-vc__rx-btn-ghost" onClick={leaveCall}>

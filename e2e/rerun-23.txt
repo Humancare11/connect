@@ -1,0 +1,172 @@
+[WebServer] (node:1912) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[e2e] seeded local DB: appointment 6ab41e26a56d2154983db405
+[e2e] doctor + patient sessions saved
+
+Running 2 tests using 1 worker
+
+[WebServer] 12:15:00 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 12:15:00 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:01 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:03 AM [vite] (client) [console.warn] [video-call] ICE connection disconnected
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:17 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  x  1 tests\video-call.spec.js:31:3 › appointment call reconnect › 2 patient taps Retry - video resumes, doctor detects rebuilt peer (29.0s)
+[WebServer] 12:15:29 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 12:15:29 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:31 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:32 AM [vite] (client) [console.warn] [video-call] ICE connection disconnected
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 12:15:45 AM [vite] (client) [console.warn] [video-call] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  ok 2 tests\video-call.spec.js:46:3 › appointment call reconnect › 3 doctor taps Retry - video resumes, request-peer-rebuild sent and received (18.5s)
+
+
+  1) tests\video-call.spec.js:31:3 › appointment call reconnect › 2 patient taps Retry - video resumes, doctor detects rebuilt peer 
+
+    Error: after patient Retry patient inbound video did not flow within 10000ms (last sample: {"pcIndex":1,"pcCount":2,"state":"connected","video":null,"audio":null,"localSdp":["audio:sendrecv","video:sendrecv"],"remoteSdp":["audio:recvonly","video:recvonly"]})
+
+       at ..\helpers\harness.js:150
+
+      148 |     await page.waitForTimeout(500);
+      149 |   }
+    > 150 |   throw new Error(
+          |         ^
+      151 |     `${label} inbound video did not flow within ${timeoutMs}ms (last sample: ${JSON.stringify(last)})`,
+      152 |   );
+      153 | }
+        at waitForVideoFlowing (C:\aaamain\connect\e2e\helpers\harness.js:150:9)
+        at Object.bothFlowing (C:\aaamain\connect\e2e\helpers\harness.js:245:9)
+        at C:\aaamain\connect\e2e\tests\video-call.spec.js:39:5
+
+    Error Context: test-results\.pw\video-call-appointment-cal-e660b-doctor-detects-rebuilt-peer\error-context.md
+
+  1 failed
+    tests\video-call.spec.js:31:3 › appointment call reconnect › 2 patient taps Retry - video resumes, doctor detects rebuilt peer 
+  1 passed (1.9m)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | 2 patient taps Retry - video resumes, doctor detects rebuilt peer | FAIL | 29.0 | Error: after patient Retry patient inbound video did not flow within 10000ms (last sample: {"pcIndex":1,"pcCount":2,"state":"connected","video":null,"audio":nul |
+| 2 | 3 doctor taps Retry - video resumes, request-peer-rebuild sent and received | PASS | 18.5 |  |
+

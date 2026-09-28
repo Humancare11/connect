@@ -38,3 +38,6 @@ uploads/*
 # OS
 .DS_Store
 Thumbs.db
+
+# GeoLite2 / GeoIP databases (download separately, see utils/geoIp.js)
+data/*.mmdb
