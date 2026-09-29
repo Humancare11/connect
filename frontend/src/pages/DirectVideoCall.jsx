@@ -126,6 +126,32 @@ const ROOM_ERROR_MESSAGES = {
 };
 
 const NAME_STORAGE_KEY = "dvc-guest-name";
+const SESSION_TOKEN_KEY_PREFIX = "dvc-session-";
+
+// PIN-verified session token — mirrors getOrCreateGuestId's storage pattern
+// so it survives a refresh/new-tab the same way, but is never auto-created:
+// a missing token always means "ask for the PIN again" (no anonymous
+// fallback, unlike guestId).
+function getStoredSessionToken(roomId) {
+  try {
+    return localStorage.getItem(`${SESSION_TOKEN_KEY_PREFIX}${roomId}`) || "";
+  } catch {
+    return "";
+  }
+}
+
+function storeSessionToken(roomId, token) {
+  try {
+    if (token) localStorage.setItem(`${SESSION_TOKEN_KEY_PREFIX}${roomId}`, token);
+    else localStorage.removeItem(`${SESSION_TOKEN_KEY_PREFIX}${roomId}`);
+  } catch {
+    // Storage unavailable — the PIN will just need to be re-entered next time.
+  }
+}
+
+function roleLabel(role) {
+  return role === "doctor" ? "Doctor" : role === "patient" ? "Patient" : "";
+}
 
 function getOrCreateGuestId(roomId) {
   const key = `dvc-guest-id-${roomId}`;
@@ -412,13 +438,92 @@ const deriveConnectionQuality = (diagnostics, previousSample) => {
   return "good";
 };
 
+// 6-digit PIN entry — large boxes, auto-advance, paste support, no
+// case-sensitivity (digits only) — built for a phone-holding patient who
+// may not be tech-savvy. Deliberately standalone rather than importing
+// DoctorLogin's OTPInput, which carries unrelated login-flow styling.
+function PinInput({ value, onChange, disabled }) {
+  const inputs = useRef([]);
+  const digits = (value + "      ").slice(0, 6).split("");
+
+  const move = (i) => inputs.current[i]?.focus();
+
+  const handleChange = (i, e) => {
+    const ch = e.target.value.replace(/\D/g, "").slice(-1);
+    const arr = [...digits];
+    arr[i] = ch || " ";
+    onChange(arr.join("").trimEnd().replace(/ /g, ""));
+    if (ch && i < 5) move(i + 1);
+  };
+
+  const handleKey = (i, e) => {
+    if (e.key === "Backspace") {
+      const arr = [...digits];
+      if (arr[i].trim()) {
+        arr[i] = " ";
+        onChange(arr.join("").trimEnd().replace(/ /g, ""));
+      } else if (i > 0) {
+        arr[i - 1] = " ";
+        onChange(arr.join("").trimEnd().replace(/ /g, ""));
+        move(i - 1);
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    onChange(text);
+    move(Math.min(text.length, 5));
+  };
+
+  return (
+    <div className="dvcall-pin-boxes">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <input
+          key={i}
+          ref={(el) => {
+            inputs.current[i] = el;
+          }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digits[i].trim()}
+          disabled={disabled}
+          onChange={(e) => handleChange(i, e)}
+          onKeyDown={(e) => handleKey(i, e)}
+          onPaste={handlePaste}
+          className="dvcall-pin-box"
+          aria-label={`PIN digit ${i + 1}`}
+          autoFocus={i === 0}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function DirectVideoCall() {
   const { roomId } = useParams();
   const guestIdRef = useRef(getOrCreateGuestId(roomId));
 
-  // stage: checking -> prejoin -> call -> ended | error
+  // stage: checking -> [pin ->] prejoin -> call -> ended | error
+  // "pin" is skipped entirely for legacy (pre-PIN) rooms, and skipped for
+  // PIN rooms too when a valid sessionToken is already stored for this
+  // room/browser (see the Step 1 effect below).
   const [stage, setStage] = useState("checking");
   const [errorInfo, setErrorInfo] = useState(null); // { code, msg }
+  const [hasPin, setHasPin] = useState(false);
+  const [role, setRole] = useState(""); // "doctor" | "patient" — known once verified/joined
+  const roleRef = useRef("");
+  const sessionTokenRef = useRef("");
+  const [pinDigits, setPinDigits] = useState("");
+  const [pinVerifying, setPinVerifying] = useState(false);
+  const [pinError, setPinError] = useState("");
+  const [pinBlocked, setPinBlocked] = useState(false);
+  // Set when the PIN we just entered matches a role already held by
+  // another device — the user has to explicitly confirm before we evict it.
+  const [pinConflictRole, setPinConflictRole] = useState("");
+  const [takingOver, setTakingOver] = useState(false);
   const [endedReason, setEndedReason] = useState("left"); // "left" | "closed"
   // Server-provided reason text for the "closed" case (e.g. "The admin
   // ended this call, please rejoin." for a Force End, vs. the pre-existing
@@ -803,6 +908,18 @@ export default function DirectVideoCall() {
           return;
         }
         setRoomFullHint(Boolean(res.data?.full));
+        const pinRoom = Boolean(res.data?.hasPin);
+        setHasPin(pinRoom);
+        if (pinRoom) {
+          const stored = getStoredSessionToken(roomId);
+          if (stored) {
+            sessionTokenRef.current = stored;
+            setStage("prejoin");
+            return;
+          }
+          setStage("pin");
+          return;
+        }
         setStage("prejoin");
       })
       .catch((err) => {
@@ -816,6 +933,77 @@ export default function DirectVideoCall() {
       alive = false;
     };
   }, [roomId]);
+
+  // ── Step 1b: PIN entry (PIN rooms only, no stored session yet) ─────────────
+  useEffect(() => {
+    if (stage !== "pin") return;
+
+    const handlePinOk = ({ role: grantedRole, sessionToken: token } = {}) => {
+      setPinVerifying(false);
+      setTakingOver(false);
+      setPinConflictRole("");
+      setRole(grantedRole || "");
+      roleRef.current = grantedRole || "";
+      sessionTokenRef.current = token || "";
+      storeSessionToken(roomId, token || "");
+      setStage("prejoin");
+    };
+    const handlePinError = ({ msg, blocked } = {}) => {
+      setPinVerifying(false);
+      setTakingOver(false);
+      setPinBlocked(Boolean(blocked));
+      setPinError(msg || "Incorrect PIN. Please check and try again.");
+      if (!blocked) setPinDigits("");
+    };
+    const handlePinConflict = ({ role: conflictRole } = {}) => {
+      setPinVerifying(false);
+      setPinError("");
+      setPinConflictRole(conflictRole || "");
+    };
+
+    socket.on("direct-pin-ok", handlePinOk);
+    socket.on("direct-pin-error", handlePinError);
+    socket.on("direct-pin-conflict", handlePinConflict);
+    if (!socket.connected) socket.connect();
+
+    return () => {
+      socket.off("direct-pin-ok", handlePinOk);
+      socket.off("direct-pin-error", handlePinError);
+      socket.off("direct-pin-conflict", handlePinConflict);
+    };
+  }, [stage, roomId]);
+
+  const submitPin = useCallback(
+    (event) => {
+      event?.preventDefault();
+      if (pinVerifying || pinDigits.length !== 6) return;
+      setPinError("");
+      setPinBlocked(false);
+      setPinConflictRole("");
+      setPinVerifying(true);
+      if (!socket.connected) socket.connect();
+      socket.emit("verify-direct-pin", { roomId, pin: pinDigits, guestId: guestIdRef.current });
+    },
+    [pinVerifying, pinDigits, roomId],
+  );
+
+  const confirmTakeover = useCallback(() => {
+    if (!pinConflictRole || pinVerifying) return;
+    setPinError("");
+    setPinVerifying(true);
+    setTakingOver(true);
+    socket.emit("direct-session-takeover", {
+      roomId,
+      pin: pinDigits,
+      guestId: guestIdRef.current,
+      role: pinConflictRole,
+    });
+  }, [pinConflictRole, pinDigits, pinVerifying, roomId]);
+
+  const cancelTakeover = useCallback(() => {
+    setPinConflictRole("");
+    setPinDigits("");
+  }, []);
 
   // ── Step 2: pre-join device preview ────────────────────────────────────────
   useEffect(() => {
@@ -2336,8 +2524,33 @@ export default function DirectVideoCall() {
     const handleRoomError = ({ code, msg } = {}) => {
       if (!mountedRef.current) return;
       cleanupCall();
+      // A PIN room's stored sessionToken turned out to be invalid (malformed/
+      // tampered — a genuinely superseded-but-well-formed token gets
+      // direct-session-superseded below instead). Send back to PIN entry
+      // rather than a dead-end error screen.
+      if (code === "pin_required") {
+        storeSessionToken(roomId, "");
+        sessionTokenRef.current = "";
+        setPinError("");
+        setStage("pin");
+        return;
+      }
       setStage("error");
       setErrorInfo({ code: code || "server_error", msg: msg || ROOM_ERROR_MESSAGES.server_error });
+    };
+
+    // PIN rooms only — this device's session was taken over by another
+    // device, or an admin regenerated this role's PIN with "end current
+    // session" checked. Either way the old PIN/token no longer works, so
+    // send this device back to PIN entry with the server's own message.
+    const handleSessionSuperseded = ({ msg } = {}) => {
+      if (!mountedRef.current) return;
+      cleanupCall();
+      storeSessionToken(roomId, "");
+      sessionTokenRef.current = "";
+      setPinError(msg || "Your session has ended. Please enter the PIN again.");
+      setPinDigits("");
+      setStage("pin");
     };
 
     const handleIceRestartRequest = async () => {
@@ -3024,9 +3237,13 @@ export default function DirectVideoCall() {
       scheduleIceRestart();
     };
 
-    const handleRoomJoined = ({ isInitiator, resumedCall } = {}) => {
+    const handleRoomJoined = ({ isInitiator, resumedCall, role: joinedRole } = {}) => {
       if (!mountedRef.current) return;
       isInitiatorRef.current = !!isInitiator;
+      if (joinedRole) {
+        roleRef.current = joinedRole;
+        setRole(joinedRole);
+      }
       if (resumedCall) resumedSessionRef.current = true;
       // A resume (the server recognised this guest from an earlier session in
       // this room) means media was likely already flowing before we
@@ -3046,7 +3263,12 @@ export default function DirectVideoCall() {
     };
 
     const joinRoom = () => {
-      socket.emit("join-direct-room", { roomId, guestId: guestIdRef.current, name: guestName });
+      socket.emit("join-direct-room", {
+        roomId,
+        guestId: guestIdRef.current,
+        name: guestName,
+        sessionToken: sessionTokenRef.current,
+      });
       resyncConnectionStateFromPeerConnection();
     };
 
@@ -3179,6 +3401,7 @@ export default function DirectVideoCall() {
     socket.on("direct-room-closed", handleRoomClosed);
     socket.on("direct-duplicate-session", handleDuplicateSession);
     socket.on("direct-seat-taken-over", handleSeatTakenOver);
+    socket.on("direct-session-superseded", handleSessionSuperseded);
     socket.on("presence-ping", handlePresencePing);
     socket.on("direct-media-state", handleMediaState);
     socket.on("direct-monitoring-active", handleMonitoringActive);
@@ -3209,6 +3432,7 @@ export default function DirectVideoCall() {
       socket.off("direct-room-closed", handleRoomClosed);
       socket.off("direct-duplicate-session", handleDuplicateSession);
       socket.off("direct-seat-taken-over", handleSeatTakenOver);
+      socket.off("direct-session-superseded", handleSessionSuperseded);
       socket.off("presence-ping", handlePresencePing);
       socket.off("direct-media-state", handleMediaState);
       socket.off("direct-monitoring-active", handleMonitoringActive);
@@ -3257,26 +3481,31 @@ export default function DirectVideoCall() {
       event.preventDefault();
       if (joining) return;
 
-      const trimmedName = guestName.trim().slice(0, 60);
-      if (!trimmedName) {
-        // Previously a blank/whitespace name silently became "Guest" with no
-        // feedback — ask for one (they can still type "Guest" explicitly).
-        setNameError(
-          'Please enter your name so the other participant knows who joined (or type "Guest").',
-        );
-        setGuestName("");
-        nameInputRef.current?.focus();
-        return;
+      // PIN rooms identify each side by role (Doctor/Patient), not a typed
+      // name — the server never uses guestName for them (see
+      // roleDisplayName server-side) — so there's nothing to validate here.
+      if (!hasPin) {
+        const trimmedName = guestName.trim().slice(0, 60);
+        if (!trimmedName) {
+          // Previously a blank/whitespace name silently became "Guest" with no
+          // feedback — ask for one (they can still type "Guest" explicitly).
+          setNameError(
+            'Please enter your name so the other participant knows who joined (or type "Guest").',
+          );
+          setGuestName("");
+          nameInputRef.current?.focus();
+          return;
+        }
+        setGuestName(trimmedName);
+        try {
+          localStorage.setItem(NAME_STORAGE_KEY, trimmedName);
+        } catch {
+          // Storage unavailable — non-fatal, just won't be remembered next time.
+        }
       }
 
       setNameError("");
       setJoining(true);
-      setGuestName(trimmedName);
-      try {
-        localStorage.setItem(NAME_STORAGE_KEY, trimmedName);
-      } catch {
-        // Storage unavailable — non-fatal, just won't be remembered next time.
-      }
       // Carry the pre-join choices into the call, refs included so
       // setupPeerConnection reads the right value without waiting for a
       // re-render.
@@ -3287,7 +3516,7 @@ export default function DirectVideoCall() {
       joinedRef.current = true;
       setStage("call");
     },
-    [joining, guestName, previewMicOn, previewCamOn],
+    [joining, guestName, previewMicOn, previewCamOn, hasPin],
   );
 
   // Side effect (enabling/disabling the track) is kept out of the setState
@@ -3617,12 +3846,65 @@ export default function DirectVideoCall() {
         <h2>Call ended</h2>
         <p>
           {endedReason === "closed"
-            ? closedMsg || "This meeting was ended by the host."
+            ? closedMsg || "This meeting was ended by the admin."
             : "You have left the meeting."}
         </p>
         <Link to="/" className="hc-vc__gate-btn">
           Return Home
         </Link>
+      </div>
+    );
+  }
+
+  if (stage === "pin") {
+    return (
+      <div className="dvcall-page dvcall-page--center">
+        <div className="dvcall-pin-card">
+          <h2>Enter your meeting PIN</h2>
+          <p className="dvcall-pin-card__subtitle">
+            Ask whoever shared this link for your 6-digit PIN. It decides whether you join as the
+            Doctor or the Patient.
+          </p>
+
+          {pinConflictRole ? (
+            <div className="dvcall-pin-conflict" role="alert">
+              <FiAlertTriangle />
+              <p>
+                This PIN is already in use on another device or tab right now. If that's you on
+                another device, you can disconnect it and join here instead.
+              </p>
+              <div className="dvcall-pin-conflict__actions">
+                <button
+                  type="button"
+                  className="dvcall-btn-primary"
+                  disabled={pinVerifying}
+                  onClick={confirmTakeover}
+                >
+                  {pinVerifying && takingOver ? "Disconnecting other device…" : "Disconnect other device and join here"}
+                </button>
+                <button type="button" className="dvcall-btn-secondary" onClick={cancelTakeover}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form className="dvcall-pin-form" onSubmit={submitPin}>
+              <PinInput value={pinDigits} onChange={setPinDigits} disabled={pinVerifying || pinBlocked} />
+              {pinError && (
+                <p className="dvcall-prejoin-form__error" role="alert">
+                  {pinError}
+                </p>
+              )}
+              <button
+                type="submit"
+                className="dvcall-btn-primary"
+                disabled={pinVerifying || pinBlocked || pinDigits.length !== 6}
+              >
+                {pinVerifying ? "Checking…" : "Continue"}
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     );
   }
@@ -3725,20 +4007,28 @@ export default function DirectVideoCall() {
           )}
 
           <form className="dvcall-prejoin-form" onSubmit={joinMeeting}>
-            <input
-              ref={nameInputRef}
-              type="text"
-              value={guestName}
-              maxLength={60}
-              placeholder="Your name"
-              aria-label="Your name"
-              aria-invalid={nameError ? "true" : undefined}
-              onChange={(e) => {
-                setGuestName(e.target.value);
-                if (nameError) setNameError("");
-              }}
-              autoFocus
-            />
+            {hasPin ? (
+              role && (
+                <p className="dvcall-prejoin-role">
+                  Joining as <strong>{roleLabel(role)}</strong>
+                </p>
+              )
+            ) : (
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={guestName}
+                maxLength={60}
+                placeholder="Your name"
+                aria-label="Your name"
+                aria-invalid={nameError ? "true" : undefined}
+                onChange={(e) => {
+                  setGuestName(e.target.value);
+                  if (nameError) setNameError("");
+                }}
+                autoFocus
+              />
+            )}
             {nameError && (
               <p className="dvcall-prejoin-form__error" role="alert">
                 {nameError}

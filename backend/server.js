@@ -1627,7 +1627,11 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
     ...(maskedIp ? { maskedIp } : {}),
   });
 
-  socket.emit("direct-room-joined", { roomId, role, resumedCall });
+  // isInitiator mirrors the legacy join flow's field so the existing
+  // WebRTC-offerer logic in the frontend needs no PIN-specific branch —
+  // the doctor always initiates, deterministically (unlike the legacy
+  // first-to-join heuristic, which has no meaning here).
+  socket.emit("direct-room-joined", { roomId, role, isInitiator: role === "doctor", resumedCall });
 
   const otherRole = role === "doctor" ? "patient" : "doctor";
   const otherSlot = slots[otherRole];

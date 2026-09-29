@@ -242,6 +242,98 @@
   color: #fca5a5;
 }
 
+.dvcall-pin-card {
+  width: 100%;
+  max-width: 420px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.dvcall-pin-card h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.dvcall-pin-card__subtitle {
+  margin: -8px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.dvcall-pin-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.dvcall-pin-boxes {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dvcall-pin-box {
+  width: 44px;
+  height: 54px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #fff;
+  outline: 0;
+}
+
+.dvcall-pin-box:focus {
+  border-color: #6366f1;
+}
+
+.dvcall-pin-box:disabled {
+  opacity: 0.5;
+}
+
+.dvcall-pin-conflict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #fecaca;
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.dvcall-pin-conflict svg {
+  font-size: 26px;
+  color: #f87171;
+}
+
+.dvcall-pin-conflict__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.dvcall-prejoin-role {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .dvcall-btn-primary,
 .dvcall-btn-secondary {
   border: 0;
@@ -296,7 +388,8 @@
 
 /* ── Tablet (≤900px) ── */
 @media (max-width: 900px) {
-  .dvcall-prejoin-card {
+  .dvcall-prejoin-card,
+  .dvcall-pin-card {
     max-width: 380px;
     padding: 22px;
   }
@@ -315,14 +408,16 @@
     gap: 12px;
   }
 
-  .dvcall-prejoin-card {
+  .dvcall-prejoin-card,
+  .dvcall-pin-card {
     max-width: 100%;
     padding: 18px 16px;
     border-radius: 12px;
     gap: 12px;
   }
 
-  .dvcall-prejoin-card h2 {
+  .dvcall-prejoin-card h2,
+  .dvcall-pin-card h2 {
     font-size: 17px;
   }
 
@@ -339,6 +434,12 @@
     font-size: 14px;
   }
 
+  .dvcall-pin-box {
+    width: 38px;
+    height: 48px;
+    font-size: 19px;
+  }
+
   .dvcall-ctrl {
     width: 44px;
     height: 44px;
@@ -348,12 +449,20 @@
 
 /* ── Small Mobile (≤420px) ── */
 @media (max-width: 420px) {
-  .dvcall-prejoin-card {
+  .dvcall-prejoin-card,
+  .dvcall-pin-card {
     padding: 14px 12px;
     border-radius: 10px;
   }
 
-  .dvcall-prejoin-card h2 {
+  .dvcall-pin-box {
+    width: 32px;
+    height: 42px;
+    font-size: 17px;
+  }
+
+  .dvcall-prejoin-card h2,
+  .dvcall-pin-card h2 {
     font-size: 15px;
   }
 

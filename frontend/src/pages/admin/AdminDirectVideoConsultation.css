@@ -369,6 +369,84 @@
   color: #0f172a;
 }
 
+.dvc-result--pins {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.dvc-pin-panel {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.dvc-pin-panel-row td {
+  background: #f8fafc;
+}
+
+.dvc-pin-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.dvc-pin-row__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dvc-pin-row__label {
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 13px;
+  min-width: 60px;
+}
+
+.dvc-pin-row__value {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #0f766e;
+}
+
+.dvc-pin-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dvc-pin-regen {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #cbd5e1;
+  display: grid;
+  gap: 10px;
+}
+
+.dvc-pin-regen__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dvc-pin-regen__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.dvc-pin-regen__hint {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
 @media (max-width: 760px) {
   .dvc-header,
   .dvc-form-grid,

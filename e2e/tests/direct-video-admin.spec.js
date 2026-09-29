@@ -3,6 +3,8 @@
 // were seeded (staging runs without TEST_ADMIN_EMAIL/PASSWORD).
 import { request } from "@playwright/test";
 import { ADMIN_STATE } from "../global-setup.js";
+import { LOCAL_MONGO_URI } from "../helpers/env.js";
+import { createDirectRoom } from "../helpers/directRoomSeed.js";
 import {
   bothRecovered,
   newParty,
@@ -20,18 +22,44 @@ test.describe("direct call — admin panel", () => {
     return request.newContext({ baseURL, storageState: ADMIN_STATE });
   }
 
+  // Every room created through the real admin API always gets PINs (Step 1
+  // of the PIN-based-roles rollout) — this is the normal path now.
   async function createRoomViaApi(api, extra = {}) {
     const res = await api.post("/api/direct-video-room", {
       data: { note: "e2e admin test", expiresInHours: 24, ...extra },
     });
     expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
     const body = await res.json();
-    return body.room;
+    return { ...body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+  }
+
+  // A handful of tests below (room-full rejection) exercise the LEGACY,
+  // pre-PIN join path specifically — old links created before this rollout
+  // keep working exactly as before, gated on doctorPinEncrypted being
+  // empty. Seeded directly in the DB (bypassing the admin API, which always
+  // issues PINs now) so that legacy behaviour stays covered.
+  async function createLegacyRoom(opts = {}) {
+    const { roomId } = await createDirectRoom({ mongoUri: LOCAL_MONGO_URI, status: "active", ...opts });
+    return roomId;
   }
 
   async function joinAsGuest(party, roomId, name) {
     await party.page.goto(`/direct-video-call/${roomId}`, { timeout: 20_000, waitUntil: "domcontentloaded" });
     await party.page.getByLabel("Your name").fill(name);
+    await party.page.getByRole("button", { name: "Join now" }).click();
+  }
+
+  async function fillPin(page, pin) {
+    await page.locator(".dvcall-pin-box").first().click();
+    await page.keyboard.type(pin);
+  }
+
+  // PIN rooms only — enters the PIN (deciding Doctor vs Patient role),
+  // continues past the device-preview screen with no name to type.
+  async function joinWithPin(party, roomId, pin) {
+    await party.page.goto(`/direct-video-call/${roomId}`, { timeout: 20_000, waitUntil: "domcontentloaded" });
+    await fillPin(party.page, pin);
+    await party.page.getByRole("button", { name: "Continue" }).click();
     await party.page.getByRole("button", { name: "Join now" }).click();
   }
 
@@ -52,14 +80,14 @@ test.describe("direct call — admin panel", () => {
       });
       await expect(callRow(admin.page, room.roomId)).toContainText("Waiting", { timeout: 10_000 });
 
-      await joinAsGuest(host, room.roomId, "Host Admin1");
+      await joinWithPin(host, room.roomId, room.doctorPin);
       // A solo join never has video "flowing" (no peer yet) — just give the
       // join-direct-room round trip a moment to land server-side.
       await host.page.waitForTimeout(2_000);
       await admin.page.reload({ waitUntil: "domcontentloaded" });
       await expect(callRow(admin.page, room.roomId)).toContainText("One joined", { timeout: 10_000 });
 
-      await joinAsGuest(guest, room.roomId, "Guest Admin1");
+      await joinWithPin(guest, room.roomId, room.patientPin);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
@@ -81,21 +109,25 @@ test.describe("direct call — admin panel", () => {
     const third = await newParty(browser, "third", null, baseURL);
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
     try {
-      const room = await createRoomViaApi(api);
-      await Promise.all([joinAsGuest(host, room.roomId, "Host P1"), joinAsGuest(guest, room.roomId, "Guest P1")]);
+      // Room-full rejection is a legacy (pre-PIN) behaviour — PIN rooms
+      // replace it with a PIN-conflict-and-takeover flow instead (see
+      // direct-pin-socket.spec.js), so this exercises an old-style room
+      // directly, same as old links must keep working.
+      const roomId = await createLegacyRoom();
+      await Promise.all([joinAsGuest(host, roomId, "Host P1"), joinAsGuest(guest, roomId, "Guest P1")]);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
       ]);
 
-      await joinAsGuest(third, room.roomId, "Third P1");
+      await joinAsGuest(third, roomId, "Third P1");
       await expect(third.page.locator("h2", { hasText: "Can't join this meeting" })).toBeVisible({
         timeout: 10_000,
       });
 
       await admin.page.goto("/admin-dashboard/direct-video-consultation/calls", { waitUntil: "domcontentloaded" });
       await admin.page.locator('input[type="checkbox"]').check();
-      await expect(callRow(admin.page, room.roomId)).toContainText("Problem", { timeout: 10_000 });
+      await expect(callRow(admin.page, roomId)).toContainText("Problem", { timeout: 10_000 });
     } finally {
       await host.context.close();
       await guest.context.close();
@@ -115,14 +147,16 @@ test.describe("direct call — admin panel", () => {
     const third = await newParty(browser, "third", null, baseURL);
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
     try {
-      const room = await createRoomViaApi(api);
-      await Promise.all([joinAsGuest(host, room.roomId, "Host Alert1"), joinAsGuest(guest, room.roomId, "Guest Alert1")]);
+      // See the previous test — room-full rejection only exists on legacy
+      // (pre-PIN) rooms.
+      const roomId = await createLegacyRoom();
+      await Promise.all([joinAsGuest(host, roomId, "Host Alert1"), joinAsGuest(guest, roomId, "Guest Alert1")]);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
       ]);
 
-      await joinAsGuest(third, room.roomId, "Third Alert1");
+      await joinAsGuest(third, roomId, "Third Alert1");
       await expect(third.page.locator("h2", { hasText: "Can't join this meeting" })).toBeVisible({
         timeout: 10_000,
       });
@@ -135,7 +169,7 @@ test.describe("direct call — admin panel", () => {
           async () => {
             const res = await api.get(`/api/direct-video-room/alerts?limit=20`);
             const body = await res.json();
-            return (body.alerts || []).some((a) => a.roomId === room.roomId && a.type === "room_full");
+            return (body.alerts || []).some((a) => a.roomId === roomId && a.type === "room_full");
           },
           { timeout: 15_000, message: "expected a room_full alert for this room" },
         )
@@ -169,7 +203,7 @@ test.describe("direct call — admin panel", () => {
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
     try {
       const room = await createRoomViaApi(api);
-      await Promise.all([joinAsGuest(host, room.roomId, "Host Report"), joinAsGuest(guest, room.roomId, "Guest Report")]);
+      await Promise.all([joinWithPin(host, room.roomId, room.doctorPin), joinWithPin(guest, room.roomId, room.patientPin)]);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
@@ -209,14 +243,14 @@ test.describe("direct call — admin panel", () => {
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
     try {
       const room = await createRoomViaApi(api);
-      await joinAsGuest(host, room.roomId, "Host IP1");
+      await joinWithPin(host, room.roomId, room.doctorPin);
       // Give the join round trip a moment to land and be logged server-side.
       await host.page.waitForTimeout(1_500);
 
       const res = await api.get(`/api/direct-video-room/${room.roomId}/events`);
       const body = await res.json();
-      const participant = (body.participants || []).find((p) => p.role === "initiator");
-      expect(participant, "expected the host's participant row").toBeTruthy();
+      const participant = (body.participants || []).find((p) => p.role === "doctor");
+      expect(participant, "expected the host's (Doctor's) participant row").toBeTruthy();
       expect(participant.maskedIp, "expected a masked IP to be recorded (DIRECT_CALL_IP_LOGGING_ENABLED defaults on)").toBeTruthy();
       // Masked — an IPv4 always ends in "xxx" here; never a bare 4-octet
       // all-numeric address (what a full, unmasked IPv4 would look like).
@@ -265,7 +299,7 @@ test.describe("direct call — admin panel", () => {
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
     try {
       const room = await createRoomViaApi(api);
-      await Promise.all([joinAsGuest(host, room.roomId, "Host Clear"), joinAsGuest(guest, room.roomId, "Guest Clear")]);
+      await Promise.all([joinWithPin(host, room.roomId, room.doctorPin), joinWithPin(guest, room.roomId, room.patientPin)]);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
@@ -308,7 +342,7 @@ test.describe("direct call — admin panel", () => {
     let adminClosed = false;
     try {
       const room = await createRoomViaApi(api);
-      await Promise.all([joinAsGuest(host, room.roomId, "Host Live1"), joinAsGuest(guest, room.roomId, "Guest Live1")]);
+      await Promise.all([joinWithPin(host, room.roomId, room.doctorPin), joinWithPin(guest, room.roomId, room.patientPin)]);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
@@ -368,7 +402,7 @@ test.describe("direct call — admin panel", () => {
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
     try {
       const room = await createRoomViaApi(api);
-      await Promise.all([joinAsGuest(host, room.roomId, "Host End"), joinAsGuest(guest, room.roomId, "Guest End")]);
+      await Promise.all([joinWithPin(host, room.roomId, room.doctorPin), joinWithPin(guest, room.roomId, room.patientPin)]);
       await Promise.all([
         waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),

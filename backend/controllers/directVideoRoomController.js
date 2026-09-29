@@ -280,7 +280,7 @@ const regeneratePin = async (req, res) => {
 const getDirectVideoRoomStatus = async (req, res) => {
   try {
     const room = await DirectVideoRoom.findOne({ roomId: req.params.roomId })
-      .select("status expiresAt maxParticipants")
+      .select("status expiresAt maxParticipants doctorPinEncrypted")
       .lean();
     if (!room) return res.status(404).json({ valid: false, reason: "not_found" });
 
@@ -304,6 +304,7 @@ const getDirectVideoRoomStatus = async (req, res) => {
       maxParticipants,
       occupants,
       full: occupants >= maxParticipants,
+      hasPin: Boolean(room.doctorPinEncrypted),
     });
   } catch (error) {
     console.error("getDirectVideoRoomStatus error:", error);

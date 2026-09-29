@@ -26,6 +26,8 @@ function formatDate(value) {
 }
 
 function roleLabel(role) {
+  if (role === "doctor") return "Doctor";
+  if (role === "patient") return "Patient";
   if (role === "initiator") return "Host";
   if (role === "guest") return "Guest";
   return "Participant";
