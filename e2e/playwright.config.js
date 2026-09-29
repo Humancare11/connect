@@ -90,7 +90,14 @@ export default defineConfig({
   // One appointment / one doctor / one patient are shared, so tests must not
   // overlap.
   fullyParallel: false,
-  workers: 1,
+  // Default to one test at a time — this suite reuses shared server-side
+  // state (one appointment/doctor/patient, and several tests intentionally
+  // race two-or-more browser contexts against the same signaling room), so
+  // running tests in parallel isn't just slower, it produces flaky failures
+  // that have nothing to do with the app (cross-test state collisions, and
+  // plain resource contention slowing down timing-sensitive assertions).
+  // Override with E2E_WORKERS=<n> for a deliberate parallel run.
+  workers: process.env.E2E_WORKERS ? Number(process.env.E2E_WORKERS) : 1,
   retries: 0,
   timeout: 180_000,
   expect: { timeout: 15_000 },

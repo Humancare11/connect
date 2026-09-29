@@ -26,6 +26,32 @@ const TRACK_PCS = () => {
   };
 };
 
+// ── MediaStreamTrack tracking ────────────────────────────────────────────────
+// Records every track this page ever gets from getUserMedia() or .clone()s
+// (e.g. an always-enabled clone kept for local level metering — see
+// DirectVideoCall.jsx's setupMutedReminderMeter) — used to assert "no live
+// track left anywhere on the page" after a call ends, which pc.getSenders()
+// alone can't see for a clone that was never attached to the peer connection.
+// Registered before any test-side getUserMedia override so composition still
+// works: overrideGetUserMedia() captures "real" AFTER this init script has
+// already replaced it, so its wrapper still funnels through here first.
+const TRACK_MEDIA_TRACKS = () => {
+  if (window.__e2eTracks) return;
+  window.__e2eTracks = [];
+  const origClone = MediaStreamTrack.prototype.clone;
+  MediaStreamTrack.prototype.clone = function (...args) {
+    const cloned = origClone.apply(this, args);
+    window.__e2eTracks.push(cloned);
+    return cloned;
+  };
+  const origGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = async (...args) => {
+    const stream = await origGetUserMedia(...args);
+    stream.getTracks().forEach((t) => window.__e2eTracks.push(t));
+    return stream;
+  };
+};
+
 // ── Console capture ─────────────────────────────────────────────────────────
 function captureLogs(page) {
   const pending = [];
@@ -71,9 +97,13 @@ function captureLogs(page) {
 }
 
 // ── Peer connection / video stats helpers ───────────────────────────────────
-// Real (un-faked) view of the newest open pc's inbound media.
+// Real (un-faked) view of the newest open pc's inbound media. Raced against a
+// timeout: page.evaluate() has no timeout of its own, and on this machine a
+// CDP round-trip has occasionally stalled indefinitely (observed independent
+// of any particular app behaviour) — without this, one bad sample could hang
+// every caller's own retry loop for the rest of the test budget.
 export async function readInbound(page) {
-  return page.evaluate(async () => {
+  const evalPromise = page.evaluate(async () => {
     const pcs = (window.__e2e && window.__e2e.pcs) || [];
     let idx = -1;
     for (let i = pcs.length - 1; i >= 0; i--) {
@@ -129,6 +159,19 @@ export async function readInbound(page) {
       remoteSdp: dirs(pc.remoteDescription),
     };
   });
+  let timer;
+  const timedOut = Symbol("readInbound-timeout");
+  const result = await Promise.race([
+    evalPromise,
+    new Promise((resolve) => {
+      timer = setTimeout(() => resolve(timedOut), 8_000);
+    }),
+  ]);
+  clearTimeout(timer);
+  if (result === timedOut) {
+    return { pcIndex: -3, pcCount: -1, state: "evaluate_timed_out" };
+  }
+  return result;
 }
 
 // Waits until inbound video FRAMES are increasing on the current pc (which
@@ -207,8 +250,14 @@ export async function assertFramesFlowing(page, durationMs, { maxStallMs = 6_000
 // same code path a real ICE disconnect takes. Retry then performs a genuine
 // teardown/rebuild. (A real OS-level network drop isn't practical here: see
 // the README.)
+// Raced against a timeout for the same reason as readInbound()'s own evalPromise
+// race (see its comment): an unprotected page.evaluate() here has been observed
+// to hang the CDP round-trip indefinitely on this machine, independent of app
+// behavior — without this, one bad call could eat a caller's entire test budget
+// (e.g. waiting on a Retry button that never appears because the stall was
+// never actually applied) instead of failing fast with a clear error.
 export async function simulateStall(page) {
-  await page.evaluate(() => {
+  const evalPromise = page.evaluate(() => {
     const pcs = window.__e2e.pcs;
     const pc = [...pcs].reverse().find((p) => p.signalingState !== "closed");
     if (!pc) throw new Error("no open RTCPeerConnection to stall");
@@ -218,6 +267,18 @@ export async function simulateStall(page) {
     if (typeof pc.oniceconnectionstatechange === "function") pc.oniceconnectionstatechange();
     if (typeof pc.onconnectionstatechange === "function") pc.onconnectionstatechange();
   });
+  let timer;
+  const timedOut = Symbol("simulateStall-timeout");
+  const result = await Promise.race([
+    evalPromise.then(() => "ok"),
+    new Promise((resolve) => {
+      timer = setTimeout(() => resolve(timedOut), 8_000);
+    }),
+  ]);
+  clearTimeout(timer);
+  if (result === timedOut) {
+    throw new Error("simulateStall: page.evaluate did not respond within 8000ms (CDP stall)");
+  }
 }
 
 export function retryButton(page) {
@@ -230,19 +291,119 @@ export async function waitForRetryButton(page, timeout = 40_000) {
   return btn;
 }
 
+// Every getUserMedia track AND every .clone() of one (see TRACK_MEDIA_TRACKS)
+// that's still readyState "live" — used to assert a call left nothing
+// running: a leaked clone (e.g. a level-metering track never attached to the
+// peer connection) wouldn't show up in pc.getSenders() but does show up here,
+// and a real leak keeps the browser's mic/camera-in-use indicator lit.
+export async function liveMediaTracks(page) {
+  return page.evaluate(() => {
+    const tracks = window.__e2eTracks || [];
+    return tracks
+      .filter((t) => t.readyState === "live")
+      .map((t) => ({ kind: t.kind, id: t.id, label: t.label }));
+  });
+}
+
+export { newParty, overrideGetUserMedia, setGumMode, jsHeapUsed };
+
 // ── Fixture: a doctor + a patient, each in its own context ─────────────────
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-async function newParty(browser, role, storageState, baseURL) {
+async function newParty(browser, role, storageState, baseURL, contextOptions = {}) {
   const context = await browser.newContext({
     baseURL,
     ...(storageState ? { storageState } : {}),
     permissions: ["camera", "microphone"],
+    ...contextOptions,
   });
   await context.addInitScript(TRACK_PCS);
+  await context.addInitScript(TRACK_MEDIA_TRACKS);
   const page = await context.newPage();
   const logs = captureLogs(page);
+
+  // context.close() has been observed to hang indefinitely on this machine
+  // — the same class of CDP round-trip stall documented on readInbound()/
+  // simulateStall() above, just on the teardown call this time. Previously
+  // this could eat a whole test's remaining budget from inside its own
+  // `finally` block (every test in this suite calls .context.close() there).
+  // Race it against a timeout so a stuck close can never block the run —
+  // there's nothing more a test can do about an unresponsive browser
+  // process anyway; Playwright's own process teardown between test files
+  // still reaps it.
+  const realClose = context.close.bind(context);
+  context.close = async (...args) => {
+    let timer;
+    const timedOut = Symbol("context.close-timeout");
+    const result = await Promise.race([
+      realClose(...args).then(
+        () => "ok",
+        () => "ok", // a close-time error isn't actionable either — don't hang on it
+      ),
+      new Promise((resolve) => {
+        timer = setTimeout(() => resolve(timedOut), 15_000);
+      }),
+    ]);
+    clearTimeout(timer);
+    if (result === timedOut) {
+      console.warn(
+        `[harness] context.close() for "${role}" did not respond within 15s (CDP stall) — abandoning it rather than blocking the test.`,
+      );
+    }
+  };
+
   return { role, context, page, logs };
+}
+
+// Patches navigator.mediaDevices.getUserMedia on `page` BEFORE it navigates,
+// for the permission-denied / slow-prompt scenarios. Must be called right
+// after newParty() and before page.goto(). The mode is read from
+// window.__e2eGumMode on every call (not baked in once), so a later
+// setGumMode() can flip an already-loaded page from deny to allow — e.g. to
+// simulate the user granting permission on a Retry click, with no reload.
+//   { kind: "deny" }                 -> every call rejects like a real denial
+//   { kind: "delay", delayMs, then } -> resolves (or rejects, if
+//                                    then === "deny") after delayMs, using
+//                                    the real fake device once it does
+//   { kind: "allow" }                -> passes straight through (the default)
+async function overrideGetUserMedia(page, mode) {
+  await page.addInitScript((initialMode) => {
+    window.__e2eGumMode = initialMode;
+    const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = (constraints) => {
+      const m = window.__e2eGumMode || { kind: "allow" };
+      if (m.kind === "deny") {
+        return Promise.reject(new DOMException("Permission denied (e2e)", "NotAllowedError"));
+      }
+      if (m.kind === "delay") {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            if (m.then === "deny") {
+              reject(new DOMException("Permission denied (e2e)", "NotAllowedError"));
+            } else {
+              real(constraints).then(resolve, reject);
+            }
+          }, m.delayMs);
+        });
+      }
+      return real(constraints);
+    };
+  }, mode);
+}
+
+// Flips an already-loaded page's getUserMedia mode (see overrideGetUserMedia)
+// without a reload — e.g. simulating the user granting permission on Retry.
+async function setGumMode(page, mode) {
+  await page.evaluate((m) => {
+    window.__e2eGumMode = m;
+  }, mode);
+}
+
+// Chromium exposes a coarse JS-heap size without any launch flag. Best-effort
+// only — not a substitute for a real profiler, but enough to catch a gross
+// per-rebuild leak over a long call.
+async function jsHeapUsed(page) {
+  return page.evaluate(() => (performance).memory?.usedJSHeapSize ?? null);
 }
 
 export const test = base.extend({

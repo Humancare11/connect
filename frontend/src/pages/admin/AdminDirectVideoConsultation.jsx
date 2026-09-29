@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../../api";
 import "./AdminDirectVideoConsultation.css";
 
@@ -23,6 +24,8 @@ function statusLabel(status) {
 export default function AdminDirectVideoConsultation() {
   const [note, setNote] = useState("");
   const [expiresInHours, setExpiresInHours] = useState(24);
+  const [doctorId, setDoctorId] = useState("");
+  const [doctors, setDoctors] = useState([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState(null);
@@ -44,6 +47,10 @@ export default function AdminDirectVideoConsultation() {
 
   useEffect(() => {
     fetchHistory();
+    api
+      .get("/api/admin/doctors")
+      .then((res) => setDoctors((res.data || []).filter((d) => d.approvalStatus === "approved")))
+      .catch(() => setDoctors([]));
   }, []);
 
   const generateLink = async (event) => {
@@ -53,9 +60,10 @@ export default function AdminDirectVideoConsultation() {
     setCopied(false);
     setGenerating(true);
     try {
-      const res = await api.post("/api/direct-video-room", { note, expiresInHours });
+      const res = await api.post("/api/direct-video-room", { note, expiresInHours, doctorId: doctorId || undefined });
       setCreated(res.data?.room || null);
       setNote("");
+      setDoctorId("");
       fetchHistory();
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to generate the video consultation link.");
@@ -111,6 +119,10 @@ export default function AdminDirectVideoConsultation() {
         </div>
       </div>
 
+      <Link to="/admin-dashboard/direct-video-consultation/calls" className="dvc-secondary" style={{ display: "inline-block", marginBottom: 16 }}>
+        View Calls &amp; Reports →
+      </Link>
+
       <form className="dvc-card dvc-form" onSubmit={generateLink}>
         <div className="dvc-form__title">
           <h2>Generate a Secure Link</h2>
@@ -129,6 +141,17 @@ export default function AdminDirectVideoConsultation() {
               <option value={6}>6 hours</option>
               <option value={24}>24 hours</option>
               <option value={72}>72 hours</option>
+            </select>
+          </label>
+          <label className="dvc-field">
+            <span className="dvc-field__label">Doctor (optional)</span>
+            <select value={doctorId} onChange={(e) => setDoctorId(e.target.value)}>
+              <option value="">— None —</option>
+              {doctors.map((d) => (
+                <option key={d._id} value={d._id}>
+                  {d.name}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -192,6 +215,7 @@ export default function AdminDirectVideoConsultation() {
               <thead>
                 <tr>
                   <th>Created</th>
+                  <th>Doctor</th>
                   <th>Expires</th>
                   <th>Note</th>
                   <th>Status</th>
@@ -203,6 +227,7 @@ export default function AdminDirectVideoConsultation() {
                 {rooms.map((room) => (
                   <tr key={room.roomId}>
                     <td>{formatDate(room.createdAt)}</td>
+                    <td>{room.doctorName || "-"}</td>
                     <td>{formatDate(room.expiresAt)}</td>
                     <td>{room.note || "-"}</td>
                     <td>

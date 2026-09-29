@@ -17,6 +17,12 @@ import { extractDtlsFingerprint } from "../utils/webrtcSdp";
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
+  detectInAppBrowser,
+  buildAndroidChromeIntentUrl,
+  isAndroidUserAgent,
+} from "../utils/inAppBrowser";
+import { createMicLevelMeter } from "../utils/micLevelMeter";
+import {
   FiMic,
   FiMicOff,
   FiVideo,
@@ -123,8 +129,15 @@ const NAME_STORAGE_KEY = "dvc-guest-name";
 function getOrCreateGuestId(roomId) {
   const key = `dvc-guest-id-${roomId}`;
   let id = "";
+  // localStorage (not sessionStorage): the same guestId must survive a new
+  // tab, closing and reopening the tab, or an in-app browser handing off to
+  // the system browser — all extremely common ways to open the same link
+  // twice on one phone. sessionStorage gave each of those a fresh random
+  // guestId, so the server (see join-direct-room's seat map, keyed by
+  // guestId) saw a 3rd participant and rejected the real 2nd person with
+  // "This meeting already has two participants" — confirmed in production.
   try {
-    id = sessionStorage.getItem(key) || "";
+    id = localStorage.getItem(key) || "";
   } catch {
     id = "";
   }
@@ -133,7 +146,7 @@ function getOrCreateGuestId(roomId) {
       ? crypto.randomUUID()
       : `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     try {
-      sessionStorage.setItem(key, id);
+      localStorage.setItem(key, id);
     } catch {
       // Storage unavailable (private mode, etc.) — fine, id just won't persist across a refresh.
     }
@@ -177,6 +190,28 @@ const makeOfferId = () =>
 const CHAT_SEND_COOLDOWN_MS = 300;
 
 const CONNECTION_STATS_INTERVAL_MS = 5000;
+// Phase 3.1: max time between direct-network-quality reports even with no
+// bucket change — an admin looking at a report should never see a call with
+// zero quality data just because it stayed "good" the whole time.
+const NETWORK_QUALITY_HEARTBEAT_MS = 30000;
+
+// "You are muted" reminder tuning — see the mutedReminderMeterRef doc
+// comment for the local-only mic-level approach. Sustain is tracked as a
+// decaying "credit" (below) rather than requiring literally every single
+// animation-frame sample to clear the threshold: real speech (and, it turns
+// out, Chromium's fake test audio device alike) has brief natural dips
+// between syllables even while genuinely "talking", and a strict
+// every-frame check made the reminder effectively unreachable.
+const MUTED_REMINDER_LEVEL_THRESHOLD = 0.15;
+const MUTED_REMINDER_SUSTAIN_MS = 1000;
+const MUTED_REMINDER_COOLDOWN_MS = 8000; // don't re-show immediately after one fades
+const MUTED_REMINDER_TOAST_MS = 3000;
+
+// Tighter than MEDIA_ACQUIRE_TIMEOUT_MS: the user is actively watching the
+// "Retrying..." button (retryInCallMedia / the pre-join preview), so a stuck
+// permission prompt or busy device must hand control back well within ~10s
+// rather than leaving the UI stuck for the full initial-join budget.
+const RETRY_MEDIA_TIMEOUT_MS = 10000;
 
 // Reconnection tuning — mirrors VideoCall.jsx's ICE_RESTART_DELAY_MS /
 // ICE_MAX_RECOVERY_ATTEMPTS / ICE_RECOVERY_COOLDOWN_MS / OFFER_ANSWER_TIMEOUT_MS
@@ -379,6 +414,12 @@ export default function DirectVideoCall() {
   const [stage, setStage] = useState("checking");
   const [errorInfo, setErrorInfo] = useState(null); // { code, msg }
   const [endedReason, setEndedReason] = useState("left"); // "left" | "closed"
+  // Server-provided reason text for the "closed" case (e.g. "The admin
+  // ended this call, please rejoin." for a Force End, vs. the pre-existing
+  // "This consultation has been ended by an administrator." for the
+  // room-history Close button) — previously always shown as one fixed
+  // generic string regardless of what the server actually said.
+  const [closedMsg, setClosedMsg] = useState("");
   const [guestName, setGuestName] = useState(() => {
     try {
       return localStorage.getItem(NAME_STORAGE_KEY) || "";
@@ -389,6 +430,12 @@ export default function DirectVideoCall() {
   const [previewMicOn, setPreviewMicOn] = useState(true);
   const [previewCamOn, setPreviewCamOn] = useState(true);
   const [previewError, setPreviewError] = useState("");
+  // 0..1 local mic loudness for the pre-join preview's level bar — see
+  // utils/micLevelMeter.js. Never sent anywhere.
+  const [previewMicLevel, setPreviewMicLevel] = useState(0);
+  // { status: "checking"|"ok"|"warning"|"error", msg } — advisory only, see
+  // the Step 2b effect below.
+  const [networkCheck, setNetworkCheck] = useState({ status: "checking", msg: "" });
   const [joining, setJoining] = useState(false);
   const [previewAttempt, setPreviewAttempt] = useState(0);
   const [nameError, setNameError] = useState("");
@@ -396,6 +443,21 @@ export default function DirectVideoCall() {
   // already present. The socket join is still the real gate (a returning
   // guest reclaiming their own seat is admitted regardless).
   const [roomFullHint, setRoomFullHint] = useState(false);
+
+  // Computed once — navigator.userAgent doesn't change mid-session.
+  const [inAppBrowser] = useState(() => detectInAppBrowser());
+  const [inAppBannerDismissed, setInAppBannerDismissed] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const copyMeetingLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1800);
+    } catch {
+      // Clipboard access can be denied/unavailable — the link is already
+      // visible in the address bar either way, so this is a soft failure.
+    }
+  }, []);
 
   const [callStatus, setCallStatus] = useState("waiting"); // waiting | connecting | connected | reconnecting
   const [peerLeftNotice, setPeerLeftNotice] = useState(false);
@@ -405,6 +467,11 @@ export default function DirectVideoCall() {
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
+  // Mirrors micOn/camOn, but for the remote peer — driven entirely by the
+  // direct-media-state signaling event (see announceMediaState/
+  // handleMediaState). Never touched by any local media check.
+  const [peerMicOff, setPeerMicOff] = useState(false);
+  const [peerCamOff, setPeerCamOff] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [chatText, setChatText] = useState("");
@@ -516,6 +583,11 @@ export default function DirectVideoCall() {
   const statsTimerRef = useRef(null);
   const lastStatsSampleRef = useRef(null);
   const iceConfigPromiseRef = useRef(null);
+  // Phase 3.1: last quality bucket reported to the server, and when — used
+  // to only emit direct-network-quality on a good<->poor-style bucket
+  // change, or a 30s heartbeat otherwise. Never every 5s stats poll.
+  const lastReportedQualityRef = useRef("");
+  const lastQualityReportAtRef = useRef(0);
 
   // ── Reconnection state — mirrors VideoCall.jsx's equivalent refs ────────
   const iceRestartTimerRef = useRef(null);
@@ -733,40 +805,90 @@ export default function DirectVideoCall() {
     if (stage !== "prejoin") return;
     setPreviewError("");
     let cancelled = false;
+    let micMeter = null;
+    let micMeterRaf = null;
+
+    // Local-only — see utils/micLevelMeter.js. Torn down whenever this
+    // effect does, regardless of whether the user went on to join: Step 3
+    // owns the stream from there, metering it isn't this effect's job.
+    const stopMicMeter = () => {
+      if (micMeterRaf) cancelAnimationFrame(micMeterRaf);
+      micMeterRaf = null;
+      micMeter?.stop();
+      micMeter = null;
+      setPreviewMicLevel(0);
+    };
+    const startMicMeter = (stream) => {
+      stopMicMeter();
+      micMeter = createMicLevelMeter(stream);
+      if (!micMeter) return;
+      const tick = () => {
+        if (cancelled) return;
+        setPreviewMicLevel(micMeter.getLevel());
+        micMeterRaf = requestAnimationFrame(tick);
+      };
+      tick();
+    };
 
     const mediaPromise = getCallMediaStream();
     localMediaPromiseRef.current = mediaPromise;
 
-    mediaPromise
-      .then((stream) => {
-        // Keep the stream if the user has already committed to joining — the
-        // call effect (Step 3) takes ownership of it from here. Only stop it
-        // when the flow was genuinely abandoned (navigated away / retried
-        // devices), which is the sole case where this effect tears down
-        // without joinedRef being set.
-        if (cancelled && !joinedRef.current) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
+    // Keep the stream if the user has already committed to joining — the
+    // call effect (Step 3) takes ownership of it from here. Only stop it
+    // when the flow was genuinely abandoned (navigated away / retried
+    // devices), which is the sole case where this effect tears down without
+    // joinedRef being set.
+    const adopt = (stream) => {
+      if (cancelled && !joinedRef.current) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      localStreamRef.current = stream;
+      if (!cancelled) {
+        if (previewVideoRef.current) {
+          // Belt-and-braces over the JSX `muted` prop — the preview shows
+          // the local stream, so it must never route mic audio to speakers.
+          previewVideoRef.current.muted = true;
+          previewVideoRef.current.srcObject = stream;
         }
-        localStreamRef.current = stream;
-        if (!cancelled) {
-          if (previewVideoRef.current) {
-            // Belt-and-braces over the JSX `muted` prop — the preview shows
-            // the local stream, so it must never route mic audio to speakers.
-            previewVideoRef.current.muted = true;
-            previewVideoRef.current.srcObject = stream;
-          }
-          setPreviewMicOn(stream.getAudioTracks().length > 0);
-          setPreviewCamOn(stream.getVideoTracks().length > 0);
-        }
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setPreviewError(mediaErrorMessage(err));
-      });
+        setPreviewMicOn(stream.getAudioTracks().length > 0);
+        setPreviewCamOn(stream.getVideoTracks().length > 0);
+        setPreviewError("");
+        startMicMeter(stream);
+      }
+    };
+
+    (async () => {
+      // A stuck permission prompt / busy device otherwise leaves the preview
+      // blank forever with no error and no Retry button — "Join now" isn't
+      // gated on this promise so the user could still proceed, but nothing
+      // told them that. Mirrors Step 3's ensureLocalMedia timeout handling.
+      const timedOut = await mediaAcquireTimedOut(mediaPromise, RETRY_MEDIA_TIMEOUT_MS);
+      if (cancelled) return;
+      if (timedOut) {
+        retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "preview:acquire_timed_out", {
+          timeoutMs: RETRY_MEDIA_TIMEOUT_MS,
+        });
+        setPreviewError(
+          "Camera/microphone access is taking too long. Check permissions and try again, or join without them.",
+        );
+        // Don't abandon it — adopt it if it eventually arrives instead of
+        // leaving a live stream nobody ever attaches.
+        mediaPromise.then(adopt).catch((err) => {
+          if (!cancelled) setPreviewError(mediaErrorMessage(err));
+        });
+        return;
+      }
+      try {
+        adopt(await mediaPromise);
+      } catch (err) {
+        if (!cancelled) setPreviewError(mediaErrorMessage(err));
+      }
+    })();
 
     return () => {
       cancelled = true;
+      stopMicMeter();
       // Only tear down the preview stream if the user actually abandoned the
       // flow (navigated away / retried devices) — not when we're moving
       // forward into the call, where Step 3 takes over this same stream.
@@ -779,7 +901,42 @@ export default function DirectVideoCall() {
         localMediaPromiseRef.current = null;
       }
     };
-  }, [stage, previewAttempt]);
+  }, [stage, previewAttempt, roomId]);
+
+  // ── Step 2b: pre-join network check ────────────────────────────────────────
+  // Independent of the media preview above and of Step 3's own ICE-config
+  // fetch (which only runs after joining) — this is purely informational,
+  // never gates "Join now". Reuses the public /ice-servers endpoint that's
+  // fetched for real once the call actually starts.
+  useEffect(() => {
+    if (stage !== "prejoin") return;
+    let cancelled = false;
+    setNetworkCheck({ status: "checking", msg: "" });
+    const startedAt = Date.now();
+    api
+      .get(`/api/direct-video-room/${roomId}/ice-servers`, { timeout: 6000 })
+      .then((res) => {
+        if (cancelled) return;
+        const latencyMs = Date.now() - startedAt;
+        const noTurn = res.data?.warning === "no_turn";
+        setNetworkCheck({
+          status: noTurn ? "warning" : "ok",
+          msg: noTurn
+            ? `Reachable (~${latencyMs}ms), but relay servers are unavailable — calls on strict networks may struggle to connect.`
+            : `Reachable (~${latencyMs}ms).`,
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setNetworkCheck({
+          status: "error",
+          msg: "Could not reach the call server to check your connection. You can still try to join.",
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [stage, roomId]);
 
   const startCallTimer = useCallback(() => {
     if (timerRef.current) return;
@@ -937,13 +1094,26 @@ export default function DirectVideoCall() {
             packetsLost: diagnostics.packetsLost,
           };
           setConnectionQuality(quality);
+          // Phase 3.1: report to the server only on a bucket change or a 30s
+          // heartbeat — never on every 5s poll, which would make
+          // DirectRoomEvent noise proportional to call length for no benefit.
+          if (quality !== "unknown" && socket.connected) {
+            const now = Date.now();
+            const changed = quality !== lastReportedQualityRef.current;
+            const heartbeatDue = now - lastQualityReportAtRef.current >= NETWORK_QUALITY_HEARTBEAT_MS;
+            if (changed || heartbeatDue) {
+              lastReportedQualityRef.current = quality;
+              lastQualityReportAtRef.current = now;
+              socket.emit("direct-network-quality", { roomId, quality });
+            }
+          }
           evaluateMediaStallWatchdog(pc, stats);
         } catch (err) {
           console.warn("[direct-video-call] getStats failed:", err.message);
         }
       }, CONNECTION_STATS_INTERVAL_MS);
     },
-    [stopStatsCollection, evaluateMediaStallWatchdog],
+    [stopStatsCollection, evaluateMediaStallWatchdog, roomId],
   );
 
   // ── Assign local/remote streams to whichever <video> is in the main vs.
@@ -1022,7 +1192,110 @@ export default function DirectVideoCall() {
     return () => cancelAnimationFrame(frameId);
   }, [isSelfViewMinimized, assignStreams]);
 
+  // ── "You are muted" reminder (2.2) ──────────────────────────────────────
+  // Purely local: never sends anything to the server or the peer.
+  //
+  // Spike result: reading levels directly off the real mic track while
+  // muted is NOT reliable — per the MediaStreamTrack spec, a disabled
+  // (track.enabled = false) track feeds SILENCE into any Web Audio graph
+  // it's connected to, regardless of how many nodes/streams tap it. That's
+  // exactly how this app implements mute (toggleMic sets track.enabled),
+  // so an analyser on the real track would always read ~0 while muted —
+  // useless for exactly the case this feature needs to detect. Fix: clone
+  // the audio track once (MediaStreamTrack.clone() creates an independent
+  // track sharing the same underlying source) and force the CLONE's own
+  // `enabled` to always stay true. The clone keeps carrying real mic audio
+  // no matter what the real (sent) track's enabled state is toggled to.
+  const mutedReminderMeterRef = useRef(null); // { meter, meterTrack } | null
+  const mutedReminderRafRef = useRef(null);
+  // "Credit" toward the sustain requirement, in ms — accumulates while
+  // loud, decays (slowly) while quiet. Deliberately NOT a strict "every
+  // single frame must clear the threshold" timer: real speech (confirmed
+  // empirically against Chromium's fake test audio device too) has brief
+  // natural dips frame-to-frame even while genuinely sustained, and a
+  // strict version made the reminder practically unreachable.
+  const mutedReminderCreditMsRef = useRef(0);
+  const mutedReminderLastTickAtRef = useRef(0);
+  const mutedReminderLastShownAtRef = useRef(0);
+  const [showMutedToast, setShowMutedToast] = useState(false);
+
+  const stopMutedReminderMeter = useCallback(() => {
+    if (mutedReminderRafRef.current) cancelAnimationFrame(mutedReminderRafRef.current);
+    mutedReminderRafRef.current = null;
+    const current = mutedReminderMeterRef.current;
+    if (current) {
+      current.meter.stop();
+      current.meterTrack.stop();
+    }
+    mutedReminderMeterRef.current = null;
+    mutedReminderCreditMsRef.current = 0;
+    mutedReminderLastTickAtRef.current = 0;
+  }, []);
+
+  // Called whenever a fresh local audio track is attached (initial join,
+  // and a later media Retry) — the clone must be re-made from whichever
+  // track is actually live now.
+  const setupMutedReminderMeter = useCallback(
+    (stream) => {
+      stopMutedReminderMeter();
+      const audioTrack = stream?.getAudioTracks?.()[0];
+      if (!audioTrack) return;
+      let meterTrack;
+      try {
+        meterTrack = audioTrack.clone();
+      } catch {
+        return; // Best-effort feature — never let a clone failure affect the call.
+      }
+      meterTrack.enabled = true;
+      const meter = createMicLevelMeter(new MediaStream([meterTrack]));
+      if (!meter) {
+        meterTrack.stop();
+        return;
+      }
+      mutedReminderMeterRef.current = { meter, meterTrack };
+
+      const tick = () => {
+        if (!mountedRef.current) return;
+        const now = Date.now();
+        const dt = mutedReminderLastTickAtRef.current ? now - mutedReminderLastTickAtRef.current : 16;
+        mutedReminderLastTickAtRef.current = now;
+        const level = meter.getLevel();
+
+        if (!micOnRef.current) {
+          if (level > MUTED_REMINDER_LEVEL_THRESHOLD) {
+            mutedReminderCreditMsRef.current = Math.min(
+              MUTED_REMINDER_SUSTAIN_MS,
+              mutedReminderCreditMsRef.current + dt,
+            );
+          } else {
+            // Decays slower than it accumulates — a brief quiet gap between
+            // syllables shouldn't wipe out several seconds of otherwise
+            // sustained talking.
+            mutedReminderCreditMsRef.current = Math.max(0, mutedReminderCreditMsRef.current - dt * 0.2);
+          }
+          if (
+            mutedReminderCreditMsRef.current >= MUTED_REMINDER_SUSTAIN_MS &&
+            now - mutedReminderLastShownAtRef.current >= MUTED_REMINDER_COOLDOWN_MS
+          ) {
+            mutedReminderLastShownAtRef.current = now;
+            mutedReminderCreditMsRef.current = 0;
+            setShowMutedToast(true);
+            window.setTimeout(() => {
+              if (mountedRef.current) setShowMutedToast(false);
+            }, MUTED_REMINDER_TOAST_MS);
+          }
+        } else {
+          mutedReminderCreditMsRef.current = 0;
+        }
+        mutedReminderRafRef.current = requestAnimationFrame(tick);
+      };
+      tick();
+    },
+    [stopMutedReminderMeter],
+  );
+
   const cleanupCall = useCallback(() => {
+    stopMutedReminderMeter();
     if (cleanupDoneRef.current) return;
     cleanupDoneRef.current = true;
     socket.emit("leave-direct-room", { roomId });
@@ -1063,7 +1336,7 @@ export default function DirectVideoCall() {
     }
     stopCallTimer();
     stopStatsCollection();
-  }, [roomId, stopCallTimer, stopStatsCollection]);
+  }, [roomId, stopCallTimer, stopStatsCollection, stopMutedReminderMeter]);
 
   // ── Step 3: media + peer connection + signaling, once the guest joins ────
   useEffect(() => {
@@ -1742,6 +2015,16 @@ export default function DirectVideoCall() {
       peerPresentRef.current = true;
       setPeerLeftNotice(false);
       setPeerName(name || "");
+      // The peer's mic/camera state before this (re)join is unknown until
+      // they announce it again — assume "on" rather than keep a stale value
+      // from a previous session (a wrongly-stuck "off" badge is a worse
+      // failure mode than a brief incorrect "on" assumption for the second
+      // or two until their announcement arrives).
+      setPeerMicOff(false);
+      setPeerCamOff(false);
+      // They just (re)joined and may have missed our last toggle (e.g. they
+      // reconnected) — make sure they get our current state again.
+      announceMediaState();
       const resuming = resumedCall || resumedSessionRef.current;
 
       // Only a PC that's genuinely still connected is worth keeping across a
@@ -1943,9 +2226,10 @@ export default function DirectVideoCall() {
       assignStreams(isSwappedRef.current);
     };
 
-    const handleRoomClosed = () => {
+    const handleRoomClosed = ({ msg } = {}) => {
       if (!mountedRef.current) return;
       setEndedReason("closed");
+      setClosedMsg(msg || "");
       cleanupCall();
       setStage("ended");
     };
@@ -1955,6 +2239,38 @@ export default function DirectVideoCall() {
       cleanupCall();
       setStage("error");
       setErrorInfo({ code: "duplicate_session", msg: "This meeting was opened in another tab or window." });
+    };
+
+    // The server decided this socket's seat is dead/unresponsive (see
+    // PRESENCE_CHECK_TIMEOUT_MS server-side) and handed it to a new guestId
+    // — e.g. this tab switched apps/browsers and a fresh tab took over. Stop
+    // cleanly here; the new tab's own call is unaffected by this one.
+    const handleSeatTakenOver = () => {
+      if (!mountedRef.current) return;
+      cleanupCall();
+      setStage("error");
+      setErrorInfo({
+        code: "seat_taken_over",
+        msg: "This call is now open in another browser or device.",
+      });
+    };
+
+    // Answered immediately whenever this socket is still alive — the server
+    // only uses this to tell a live-but-possibly-frozen tab apart from one
+    // that's truly gone (see tryTakeOverDeadSeat server-side). No-op if this
+    // tab is fine; irrelevant to any call state either way.
+    //
+    // Socket.IO passes the event's data argument(s) first and the ack
+    // callback last — the server sends one data arg (an empty object), so
+    // the callback arrives as the SECOND parameter here, not the first.
+    const handlePresencePing = (_data, ack) => {
+      if (typeof ack === "function") ack();
+    };
+
+    const handleMediaState = ({ isMicOff, isCamOff } = {}) => {
+      if (!mountedRef.current) return;
+      setPeerMicOff(Boolean(isMicOff));
+      setPeerCamOff(Boolean(isCamOff));
     };
 
     const handleRoomError = ({ code, msg } = {}) => {
@@ -2141,6 +2457,13 @@ export default function DirectVideoCall() {
       cancelOrphanedAnswerRecheck();
       // The rebuilt connection is up — end a manual Retry's banner/button hold.
       releaseManualReconnectGuard();
+      // Phase 4: the one reliable signal the server has that this call
+      // actually connected (vs. two participants who joined but never got a
+      // peer connection up) — fired once per call, on the first connect
+      // only, not on every reconnect. See server.js's "connected" handler.
+      if (!hasConnectedOnceRef.current) {
+        socket.emit("direct-call-connected", { roomId });
+      }
       hasConnectedOnceRef.current = true;
       peerPresentRef.current = true;
       // The "resuming an earlier session" story ends once we're connected —
@@ -2254,12 +2577,17 @@ export default function DirectVideoCall() {
       if (!localStreamRef.current) {
         let stream = null;
         let timedOut = false;
-        const pendingMedia = localMediaPromiseRef.current;
+        // Falls back to starting a fresh capture right here (e.g. a rebuild
+        // after local media never succeeded on the first attempt, where
+        // localMediaPromiseRef was cleared by requestPcRebuild) — always
+        // going through this same bounded race, rather than an earlier,
+        // separate un-timed getCallMediaStream() call below, is what keeps
+        // setupPeerConnection() from hanging forever on a still-unanswered
+        // permission prompt and leaving the call stuck with no pc at all.
+        const pendingMedia = localMediaPromiseRef.current || getCallMediaStream();
         try {
-          if (pendingMedia) {
-            timedOut = await mediaAcquireTimedOut(pendingMedia);
-            if (!timedOut) stream = (await pendingMedia) || null;
-          }
+          timedOut = await mediaAcquireTimedOut(pendingMedia);
+          if (!timedOut) stream = (await pendingMedia) || null;
         } catch {
           stream = null;
         }
@@ -2299,6 +2627,12 @@ export default function DirectVideoCall() {
               localStreamRef.current = lateStream;
               setLocalAudioMissing(lateStream.getAudioTracks().length === 0);
               assignStreams(isSwappedRef.current);
+              // This stream never went through setupMutedReminderMeter (that
+              // only runs at ensureLocalMedia()'s own return, which already
+              // happened via the timeout path before this late arrival) —
+              // without this, a guest whose mic showed up late would never
+              // get the "You're muted" reminder for the rest of the call.
+              setupMutedReminderMeter(lateStream);
               retryDebugLog(isInitiatorRef.current ? "initiator" : "guest", roomId, "media:late_attached", {});
             })
             .catch(() => {});
@@ -2306,21 +2640,6 @@ export default function DirectVideoCall() {
         if (!mountedRef.current) {
           stream?.getTracks().forEach((track) => track.stop());
           return null;
-        }
-        if (!timedOut && !stream && !localStreamRef.current) {
-          try {
-            stream = await getCallMediaStream();
-          } catch (err) {
-            console.warn(
-              "[direct-video-call] proceeding without local media:",
-              err?.message || err,
-            );
-            stream = null;
-          }
-          if (!mountedRef.current) {
-            stream?.getTracks().forEach((track) => track.stop());
-            return null;
-          }
         }
 
         // A concurrent path already adopted a stream — keep that one.
@@ -2390,6 +2709,7 @@ export default function DirectVideoCall() {
       // captured it.
       const stream = await ensureLocalMedia();
       if (isStale()) return;
+      setupMutedReminderMeter(stream);
 
       let pc;
       try {
@@ -2660,6 +2980,9 @@ export default function DirectVideoCall() {
       });
       // Peer connection setup is deferred to handlePeerJoined — see the
       // comment on setupPeerConnection for why.
+      // Harmless no-op if no peer is in the room yet (nothing to broadcast
+      // to) — handlePeerJoined re-announces the moment one actually is.
+      announceMediaState();
     };
 
     const joinRoom = () => {
@@ -2795,6 +3118,9 @@ export default function DirectVideoCall() {
     socket.on("direct-participant-left", handleParticipantLeft);
     socket.on("direct-room-closed", handleRoomClosed);
     socket.on("direct-duplicate-session", handleDuplicateSession);
+    socket.on("direct-seat-taken-over", handleSeatTakenOver);
+    socket.on("presence-ping", handlePresencePing);
+    socket.on("direct-media-state", handleMediaState);
     socket.on("direct-video-offer", handleOffer);
     socket.on("direct-video-answer", handleAnswer);
     socket.on("direct-ice-candidate", handleIceCandidate);
@@ -2821,6 +3147,9 @@ export default function DirectVideoCall() {
       socket.off("direct-participant-left", handleParticipantLeft);
       socket.off("direct-room-closed", handleRoomClosed);
       socket.off("direct-duplicate-session", handleDuplicateSession);
+      socket.off("direct-seat-taken-over", handleSeatTakenOver);
+      socket.off("presence-ping", handlePresencePing);
+      socket.off("direct-media-state", handleMediaState);
       socket.off("direct-video-offer", handleOffer);
       socket.off("direct-video-answer", handleAnswer);
       socket.off("direct-ice-candidate", handleIceCandidate);
@@ -2901,6 +3230,22 @@ export default function DirectVideoCall() {
 
   // Side effect (enabling/disabling the track) is kept out of the setState
   // updater; state is derived from a ref so rapid toggles stay consistent.
+  // Tells the peer our current mic/camera on-off state — see peerMicOff/
+  // peerCamOff's badges. Emitted on toggle, right after joining, and
+  // re-announced whenever the peer (re)joins (see handlePeerJoined) so a
+  // late joiner or a peer that reconnected isn't left assuming stale state.
+  // A socket.io server that hasn't deployed the direct-media-state handler
+  // yet just never relays this — this side's own UI is unaffected either
+  // way, it only ever reads what the PEER announces.
+  const announceMediaState = useCallback(() => {
+    if (!socket.connected) return;
+    socket.emit("direct-media-state", {
+      roomId,
+      isMicOff: !micOnRef.current,
+      isCamOff: !camOnRef.current,
+    });
+  }, [roomId]);
+
   const toggleMic = useCallback(() => {
     const audioTracks = localStreamRef.current?.getAudioTracks() ?? [];
     // Nothing to toggle if the mic was never granted / captured — leave the
@@ -2912,7 +3257,8 @@ export default function DirectVideoCall() {
     });
     micOnRef.current = next;
     setMicOn(next);
-  }, []);
+    announceMediaState();
+  }, [announceMediaState]);
 
   const toggleCam = useCallback(() => {
     const videoTracks = localStreamRef.current?.getVideoTracks() ?? [];
@@ -2923,7 +3269,8 @@ export default function DirectVideoCall() {
     });
     camOnRef.current = next;
     setCamOn(next);
-  }, []);
+    announceMediaState();
+  }, [announceMediaState]);
 
   // Re-attempt getUserMedia mid-call and publish whatever new tracks it
   // returns onto the live connection — for a guest who joined with the mic
@@ -2937,7 +3284,22 @@ export default function DirectVideoCall() {
     retryingInCallMediaRef.current = true;
     setRetryingInCallMedia(true);
     try {
-      const fresh = await getCallMediaStream();
+      const pendingMedia = getCallMediaStream();
+      const timedOut = await mediaAcquireTimedOut(pendingMedia, RETRY_MEDIA_TIMEOUT_MS);
+      if (timedOut) {
+        const role = isInitiatorRef.current ? "initiator" : "guest";
+        retryDebugLog(role, roomId, "retryInCallMedia:timed_out", {
+          timeoutMs: RETRY_MEDIA_TIMEOUT_MS,
+        });
+        // Don't cancel the underlying getUserMedia — a late-arriving stream
+        // would otherwise leak an unstoppable track — just stop waiting on
+        // it and let the user retry again.
+        pendingMedia
+          .then((stream) => stream.getTracks().forEach((track) => track.stop()))
+          .catch(() => {});
+        throw new Error("Camera/microphone access is taking too long. Check permissions and try again.");
+      }
+      const fresh = await pendingMedia;
       if (!mountedRef.current || pcRef.current !== pc || pc.signalingState === "closed") {
         fresh.getTracks().forEach((track) => track.stop());
         return;
@@ -2965,6 +3327,10 @@ export default function DirectVideoCall() {
       localStreamRef.current = base;
       setLocalAudioMissing(base.getAudioTracks().length === 0);
       assignStreams(isSwappedRef.current);
+      // The old audio track (if any) that setupMutedReminderMeter's clone
+      // was tracking may have just been replaced/stopped above — rebuild
+      // the meter off whichever track is actually live now.
+      setupMutedReminderMeter(base);
     } catch (err) {
       console.warn(
         "[direct-video-call] in-call media retry failed:",
@@ -2974,7 +3340,7 @@ export default function DirectVideoCall() {
       retryingInCallMediaRef.current = false;
       if (mountedRef.current) setRetryingInCallMedia(false);
     }
-  }, [assignStreams]);
+  }, [assignStreams, roomId, setupMutedReminderMeter]);
 
   const toggleSwap = useCallback(() => {
     const next = !isSwappedRef.current;
@@ -3189,7 +3555,7 @@ export default function DirectVideoCall() {
         <h2>Call ended</h2>
         <p>
           {endedReason === "closed"
-            ? "This meeting was ended by the host."
+            ? closedMsg || "This meeting was ended by the host."
             : "You have left the meeting."}
         </p>
         <Link to="/" className="hc-vc__gate-btn">
@@ -3204,6 +3570,42 @@ export default function DirectVideoCall() {
       <div className="dvcall-page dvcall-page--center">
         <div className="dvcall-prejoin-card">
           <h2>Ready to join?</h2>
+          {inAppBrowser.isInApp && !inAppBannerDismissed && (
+            <div className="dvcall-inapp-banner" role="status">
+              <button
+                type="button"
+                className="dvcall-inapp-banner__dismiss"
+                aria-label="Dismiss"
+                onClick={() => setInAppBannerDismissed(true)}
+              >
+                <FiX />
+              </button>
+              <p>
+                For a better call, open this link in {isAndroidUserAgent() ? "Chrome" : "Safari"} instead
+                of the {inAppBrowser.name} browser.
+              </p>
+              <div className="dvcall-inapp-banner__actions">
+                {isAndroidUserAgent() &&
+                  (() => {
+                    const intentUrl = buildAndroidChromeIntentUrl(window.location.href);
+                    return intentUrl ? (
+                      <a className="dvcall-btn-secondary" href={intentUrl}>
+                        Open in Chrome
+                      </a>
+                    ) : null;
+                  })()}
+                <button type="button" className="dvcall-btn-secondary" onClick={copyMeetingLink}>
+                  {linkCopied ? "Copied!" : "Copy link"}
+                </button>
+              </div>
+              {!isAndroidUserAgent() && (
+                <p className="dvcall-inapp-banner__hint">
+                  Paste the link into Safari to continue — iOS doesn&apos;t allow opening it there
+                  automatically.
+                </p>
+              )}
+            </div>
+          )}
           {roomFullHint && (
             <p className="dvcall-prejoin-form__error" role="status">
               This meeting looks full (two participants already joined). You can
@@ -3236,10 +3638,28 @@ export default function DirectVideoCall() {
             </div>
           </div>
 
+          {previewMicOn && (
+            <div className="dvcall-mic-meter" aria-hidden="true">
+              <div
+                className="dvcall-mic-meter__fill"
+                style={{ width: `${Math.round(previewMicLevel * 100)}%` }}
+              />
+            </div>
+          )}
+
           {previewError && (
             <button type="button" className="dvcall-btn-secondary" onClick={retryPreview}>
               Retry Camera/Mic
             </button>
+          )}
+
+          {networkCheck.status !== "checking" && networkCheck.msg && (
+            <p
+              className={`dvcall-network-check dvcall-network-check--${networkCheck.status}`}
+              role="status"
+            >
+              {networkCheck.msg}
+            </p>
           )}
 
           <form className="dvcall-prejoin-form" onSubmit={joinMeeting}>
@@ -3304,6 +3724,20 @@ export default function DirectVideoCall() {
             <span className="hc-vc__infobar-label">Participant</span>
             <span className="hc-vc__infobar-name">{peerName || "Guest"}</span>
           </div>
+          {connected && (peerMicOff || peerCamOff) && (
+            <div className="hc-vc__peer-media-badges">
+              {peerMicOff && (
+                <span className="hc-vc__peer-media-badge">
+                  <FiMicOff /> {peerName || "Guest"}&apos;s mic is off
+                </span>
+              )}
+              {peerCamOff && (
+                <span className="hc-vc__peer-media-badge">
+                  <FiVideoOff /> {peerName || "Guest"}&apos;s camera is off
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -3317,6 +3751,12 @@ export default function DirectVideoCall() {
         <div className="hc-vc__offline-banner hc-vc__relay-warning">
           <FiAlertTriangle /> Connection relay unavailable — this call may not
           connect on some networks.
+        </div>
+      )}
+
+      {showMutedToast && (
+        <div className="dvcall-muted-toast" role="status">
+          <FiMicOff /> You&apos;re muted
         </div>
       )}
 

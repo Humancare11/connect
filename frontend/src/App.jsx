@@ -806,6 +806,10 @@ const AdminCategoryConsultations = lazy(
 const AdminDirectVideoConsultation = lazy(
   () => import("./pages/admin/AdminDirectVideoConsultation"),
 );
+const AdminDirectVideoCalls = lazy(() => import("./pages/admin/AdminDirectVideoCalls"));
+const AdminDirectVideoCallDetail = lazy(
+  () => import("./pages/admin/AdminDirectVideoCallDetail"),
+);
 
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
@@ -1670,6 +1674,26 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <AdminDirectVideoConsultation />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/direct-video-consultation/calls"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDirectVideoCalls />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/direct-video-consultation/calls/:roomId"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDirectVideoCallDetail />
                 </AdminLayout>
               </PrivateRoute>
             }

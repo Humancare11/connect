@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
+import DirectCallAlertsBell from "./DirectCallAlertsBell";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -566,6 +567,7 @@ export default function AdminLayout({ children }) {
             <div className="ad-topbar-title">{pageTitle}</div>
           </div>
           <div className="ad-topbar-right">
+            <DirectCallAlertsBell />
             <span className="ad-topbar-user">
               👋 {user.name?.split(" ")[0]}
             </span>
