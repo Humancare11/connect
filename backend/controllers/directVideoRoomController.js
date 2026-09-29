@@ -312,6 +312,25 @@ const getDirectVideoRoomStatus = async (req, res) => {
   }
 };
 
+// POST /api/direct-video-room/:roomId/leaving?guestId=... — public, no login
+// required, called via navigator.sendBeacon on pagehide (see
+// DirectVideoCall.jsx). Best-effort: a beacon is specifically designed to
+// have a chance of completing during page unload where an ordinary request
+// often wouldn't, but there's still no guarantee it arrives — this is why
+// disconnect_reason falls back to "unknown" server-side when it doesn't.
+// guestId travels in the query string rather than a JSON body since
+// sendBeacon's default body content-type isn't guaranteed to be parsed by
+// an ordinary JSON body-parser.
+const reportDirectRoomLeaving = (req, res) => {
+  const guestId = String(req.query?.guestId || "");
+  if (guestId && /^[a-zA-Z0-9-]{8,64}$/.test(guestId)) {
+    req.app.get("recordExpectedDisconnectReason")?.(guestId, "tab_closed");
+  }
+  // 204: sendBeacon doesn't read the response either way, but a real status
+  // keeps this indistinguishable from any other endpoint in server logs.
+  res.status(204).end();
+};
+
 // GET /api/direct-video-room/:roomId/ice-servers — public, no login required.
 // Mirrors GET /api/rtc/ice-servers (routes/rtc.js), which the appointment
 // Video Consultation flow uses to get short-lived TURN credentials minted by
@@ -441,6 +460,53 @@ const getDirectVideoCalls = async (req, res) => {
   }
 };
 
+// The fixed set of disconnect/rejection reasons (see server.js's
+// direct-call-problem handler, the /leaving beacon, and the explicit
+// eviction sites for admin_ended/pin_regenerated/session_taken_over).
+// `detectable` documents how reliable each one actually is, shown to the
+// admin alongside the Problems list so "we don't know why" reads as
+// intentional rather than a bug:
+//  - "server": the server itself caused or directly observed it — always
+//    accurate.
+//  - "best-effort": self-reported by the client right before things went
+//    wrong — usually arrives, but the browser can vanish before it sends.
+//  - "unknown": no signal at all arrived before the socket dropped — could
+//    be a closed tab, a locked phone, or a lost network; these look
+//    identical from the server's side and are not distinguishable.
+const DISCONNECT_REASON_INFO = {
+  left_call: { label: "Left the call", suggestion: "Nothing to do — a normal, deliberate exit.", detectable: "server" },
+  admin_ended: { label: "Ended by admin", suggestion: "Nothing to do — an admin force-ended this call.", detectable: "server" },
+  pin_regenerated: { label: "PIN regenerated", suggestion: "Expected — an admin regenerated this role's PIN and ended the old session.", detectable: "server" },
+  session_taken_over: { label: "Taken over by another device", suggestion: "Expected — someone confirmed the PIN on another device and took over this role.", detectable: "server" },
+  link_expired: { label: "Link expired", suggestion: "Extend the link if the consultation still needs to happen.", detectable: "server" },
+  ping_timeout: { label: "Ping timeout", suggestion: "The device stopped responding — likely a weak or dropped connection.", detectable: "server" },
+  network_lost: { label: "Network lost", suggestion: "Ask them to check their Wi-Fi/mobile data and rejoin.", detectable: "best-effort" },
+  ice_failed: { label: "Connection failed (ICE)", suggestion: "Often a restrictive network/firewall — ask them to try a different network.", detectable: "best-effort" },
+  permission_denied: { label: "Camera/mic permission denied", suggestion: "Ask them to allow camera/microphone access in their browser and rejoin.", detectable: "best-effort" },
+  device_busy: { label: "Camera/mic busy", suggestion: "Ask them to close other apps using the camera/microphone and rejoin.", detectable: "best-effort" },
+  in_app_browser: { label: "In-app browser", suggestion: "Ask them to open the link in Chrome/Safari instead of the app's built-in browser.", detectable: "best-effort" },
+  unsupported_browser: { label: "Unsupported browser", suggestion: "Ask them to use a recent Chrome, Safari, or Edge.", detectable: "best-effort" },
+  server_error: { label: "Server error", suggestion: "Check server logs — this shouldn't normally happen.", detectable: "best-effort" },
+  tab_closed: { label: "Tab/app closed", suggestion: "Nothing to do — they closed the tab or app.", detectable: "best-effort" },
+  unknown: { label: "Disconnected (reason unknown)", suggestion: "Could be a closed tab, a locked phone, or lost network — these can't be told apart.", detectable: "unknown" },
+};
+
+// Reasons that represent something going wrong worth an admin's attention —
+// everything else (a deliberate leave, an intentional admin/PIN action) is
+// still in the timeline but never clutters the Problems summary.
+const PROBLEM_DISCONNECT_REASONS = new Set([
+  "link_expired",
+  "network_lost",
+  "ice_failed",
+  "permission_denied",
+  "device_busy",
+  "in_app_browser",
+  "unsupported_browser",
+  "server_error",
+  "ping_timeout",
+  "unknown",
+]);
+
 // Plain-language summary for one timeline event, e.g. "Guest joined from
 // iPhone, WhatsApp browser". Falls back to the raw type for anything not
 // explicitly worded below rather than hiding it.
@@ -465,10 +531,14 @@ function describeEvent(event) {
       return `${who} left the call`;
     case "seat_reservation_expired":
       return `${who}'s reserved seat expired (they didn't come back)`;
-    case "disconnected":
-      return `${who} disconnected${fromSuffix} (${event.detail?.reason || "connection lost"})`;
-    case "rejected":
-      return `A join attempt was rejected (${event.detail?.reason || "unknown reason"})`;
+    case "disconnected": {
+      const info = DISCONNECT_REASON_INFO[event.detail?.disconnect_reason];
+      return `${who} disconnected${fromSuffix} — ${info?.label || event.detail?.reason || "connection lost"}`;
+    }
+    case "rejected": {
+      const info = DISCONNECT_REASON_INFO[event.detail?.disconnect_reason];
+      return `A join attempt was rejected (${info?.label || event.detail?.reason || "unknown reason"})`;
+    }
     case "stale_socket_evicted":
       return `${who}'s older tab/window was disconnected (opened a new one)`;
     case "seat_taken_over":
@@ -495,6 +565,8 @@ function describeEvent(event) {
       return `An admin (${event.detail?.adminName || "unknown"}) viewed the PINs`;
     case "admin_regenerate_pin":
       return `An admin (${event.detail?.adminName || "unknown"}) regenerated the ${event.detail?.role || ""} PIN${event.detail?.endedSession ? " and ended the current session" : ""}`;
+    case "admin_deleted_timeline":
+      return `A superadmin (${event.detail?.adminName || "unknown"}) deleted ${event.detail?.deletedCount ?? 0} timeline event(s)`;
     default:
       return `${who}: ${event.type}`;
   }
@@ -554,9 +626,34 @@ const getDirectVideoRoomEvents = async (req, res) => {
       byGuest.set(event.guestId, existing);
     }
 
+    // "Problems" summary — only reasons that represent something going
+    // wrong (see PROBLEM_DISCONNECT_REASONS); a deliberate leave or an
+    // intentional admin/PIN action never shows up here, only in the plain
+    // timeline below.
+    const problems = events
+      .filter((event) => PROBLEM_DISCONNECT_REASONS.has(event.detail?.disconnect_reason))
+      .map((event) => {
+        const info = DISCONNECT_REASON_INFO[event.detail.disconnect_reason];
+        const who =
+          event.role === "doctor" ? "Doctor"
+          : event.role === "patient" ? "Patient"
+          : event.role === "initiator" ? "Host"
+          : event.role === "guest" ? "Guest"
+          : "Someone";
+        return {
+          at: event.createdAt,
+          who,
+          reason: event.detail.disconnect_reason,
+          label: info.label,
+          suggestion: info.suggestion,
+          detectable: info.detectable,
+        };
+      });
+
     res.status(200).json({
       room: serializeRoom(req, room),
       participants: Array.from(byGuest.values()),
+      problems,
       timeline: events.map((event) => ({
         at: event.createdAt,
         type: event.type,
@@ -567,6 +664,36 @@ const getDirectVideoRoomEvents = async (req, res) => {
   } catch (error) {
     console.error("getDirectVideoRoomEvents error:", error);
     res.status(500).json({ msg: "Failed to fetch the call report." });
+  }
+};
+
+// DELETE /api/direct-video-room/:roomId/events — superadmin-only. Wipes this
+// room's timeline (technical data only — never audio/video, this was never
+// stored in the first place). Writes one small audit event right after the
+// deletion so the deletion itself is never silently invisible; that audit
+// entry is deliberately the only thing left in an otherwise-empty timeline.
+const deleteDirectVideoRoomEvents = async (req, res) => {
+  try {
+    const room = await DirectVideoRoom.findOne({ roomId: req.params.roomId }).select("roomId").lean();
+    if (!room) return res.status(404).json({ msg: "Room not found." });
+
+    const { deletedCount } = await DirectRoomEvent.deleteMany({ roomId: req.params.roomId });
+
+    const admin = req.user?.id ? await User.findById(req.user.id).select("name email").lean() : null;
+    const logDirectRoom = req.app.get("logDirectRoom");
+    logDirectRoom?.("admin_deleted_timeline", {
+      roomId: req.params.roomId,
+      detail: {
+        adminId: req.user?.id || null,
+        adminName: admin?.name || req.user?.name || req.user?.email || "Superadmin",
+        deletedCount,
+      },
+    });
+
+    res.status(200).json({ msg: `Deleted ${deletedCount} timeline event(s).`, deletedCount });
+  } catch (error) {
+    console.error("deleteDirectVideoRoomEvents error:", error);
+    res.status(500).json({ msg: "Failed to delete this room's timeline data." });
   }
 };
 
@@ -716,9 +843,11 @@ module.exports = {
   getDirectVideoRooms,
   closeDirectVideoRoom,
   getDirectVideoRoomStatus,
+  reportDirectRoomLeaving,
   getDirectVideoRoomIceServers,
   getDirectVideoCalls,
   getDirectVideoRoomEvents,
+  deleteDirectVideoRoomEvents,
   extendDirectVideoRoomLink,
   clearStuckSeats,
   forceEndDirectVideoCall,

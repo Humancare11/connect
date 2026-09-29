@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
+const { verifyAdminToken, adminOnly, superAdminOnly } = require("../middleware/verifyToken");
 const { directVideoRoomPublicLimiter } = require("../middleware/rateLimiters");
 const {
   createDirectVideoRoom,
   getDirectVideoRooms,
   closeDirectVideoRoom,
   getDirectVideoRoomStatus,
+  reportDirectRoomLeaving,
   getDirectVideoRoomIceServers,
   getDirectVideoCalls,
   getDirectVideoRoomEvents,
+  deleteDirectVideoRoomEvents,
   extendDirectVideoRoomLink,
   clearStuckSeats,
   forceEndDirectVideoCall,
@@ -34,6 +36,7 @@ router.post("/alerts/:alertId/read", verifyAdminToken, adminOnly, markDirectCall
 // Admin: Calls list + report + call-management actions (Phase 3).
 router.get("/calls", verifyAdminToken, adminOnly, getDirectVideoCalls);
 router.get("/:roomId/events", verifyAdminToken, adminOnly, getDirectVideoRoomEvents);
+router.delete("/:roomId/events", verifyAdminToken, superAdminOnly, deleteDirectVideoRoomEvents);
 router.post("/:roomId/extend", verifyAdminToken, adminOnly, extendDirectVideoRoomLink);
 router.post("/:roomId/clear-stuck-seats", verifyAdminToken, adminOnly, clearStuckSeats);
 router.post("/:roomId/force-end", verifyAdminToken, adminOnly, forceEndDirectVideoCall);
@@ -44,6 +47,7 @@ router.post("/:roomId/regenerate-pin", verifyAdminToken, adminOnly, regeneratePi
 // before joining as a guest, same trust model as a Google Meet link.
 // Rate-limited per IP+room since there's no identity to key on.
 router.get("/:roomId/status", directVideoRoomPublicLimiter, getDirectVideoRoomStatus);
+router.post("/:roomId/leaving", directVideoRoomPublicLimiter, reportDirectRoomLeaving);
 router.get("/:roomId/ice-servers", directVideoRoomPublicLimiter, getDirectVideoRoomIceServers);
 
 module.exports = router;

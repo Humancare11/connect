@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import api from "../../api";
 import socket, { setSocketAuthRole } from "../../socket";
+import { useAdmin } from "../../context/AdminContext";
 import "./AdminDirectVideoConsultation.css";
 
 const CONNECTION_STATE_COLORS = {
@@ -35,12 +36,15 @@ function roleLabel(role) {
 
 export default function AdminDirectVideoCallDetail() {
   const { roomId } = useParams();
+  const { admin } = useAdmin();
+  const isSuperAdmin = admin?.role === "superadmin";
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionBusy, setActionBusy] = useState("");
   const [actionNotice, setActionNotice] = useState("");
   const [confirmForceEnd, setConfirmForceEnd] = useState(false);
+  const [confirmDeleteTimeline, setConfirmDeleteTimeline] = useState(false);
 
   // Live view — automatic for as long as this report page is open, no
   // button. Samples are keyed by guestId; never persisted anywhere, just
@@ -127,10 +131,26 @@ export default function AdminDirectVideoCallDetail() {
     }
   };
 
+  const deleteTimeline = async () => {
+    setActionBusy("deleteTimeline");
+    setActionNotice("");
+    try {
+      const res = await api.delete(`/api/direct-video-room/${roomId}/events`);
+      setActionNotice(res.data?.msg || "Timeline deleted.");
+      fetchReport();
+    } catch (err) {
+      setActionNotice(err.response?.data?.msg || "Failed to delete the timeline.");
+    } finally {
+      setActionBusy("");
+      setConfirmDeleteTimeline(false);
+    }
+  };
+
   if (loading) return <div className="dvc-page dvc-empty">Loading call report…</div>;
   if (error || !data) return <div className="dvc-page dvc-error">{error || "Not found."}</div>;
 
   const { room, participants, timeline } = data;
+  const problems = data.problems || [];
 
   return (
     <div className="dvc-page">
@@ -147,6 +167,39 @@ export default function AdminDirectVideoCallDetail() {
           ← Back to Calls
         </Link>
       </div>
+
+      {problems.length > 0 && (
+        <div className="dvc-card dvc-problems">
+          <div className="dvc-form__title">
+            <h2>Problems</h2>
+            <p>
+              Things that went wrong during this call. Some causes are self-reported by the device
+              right before it disconnects and aren't always caught in time — see each item's
+              reliability note.
+            </p>
+          </div>
+          <ul className="dvc-problems__list">
+            {problems.map((p, i) => (
+              <li key={i}>
+                <div className="dvc-problems__head">
+                  <span className="dvc-problems__label">
+                    {p.who}: {p.label}
+                  </span>
+                  <span className={`dvc-problems__detectable dvc-problems__detectable--${p.detectable}`}>
+                    {p.detectable === "server"
+                      ? "Reliable"
+                      : p.detectable === "best-effort"
+                        ? "Best-effort"
+                        : "Not reliably detectable"}
+                  </span>
+                </div>
+                <p className="dvc-problems__suggestion">{p.suggestion}</p>
+                <span className="dvc-problems__time">{formatDate(p.at)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="dvc-card">
         <div className="dvc-form__title">
@@ -306,8 +359,39 @@ export default function AdminDirectVideoCallDetail() {
       </div>
 
       <div className="dvc-card">
-        <div className="dvc-form__title">
+        <div className="dvc-form__title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2>Timeline</h2>
+          {isSuperAdmin && timeline.length > 0 && (
+            !confirmDeleteTimeline ? (
+              <button
+                type="button"
+                className="dvc-link-btn"
+                disabled={!!actionBusy}
+                onClick={() => setConfirmDeleteTimeline(true)}
+                style={{ borderColor: "#fecaca", background: "#fee2e2", color: "#991b1b" }}
+              >
+                Delete timeline data
+              </button>
+            ) : (
+              <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#991b1b" }}>
+                  Permanently deletes all {timeline.length} event(s). Are you sure?
+                </span>
+                <button
+                  type="button"
+                  className="dvc-link-btn"
+                  disabled={!!actionBusy}
+                  onClick={deleteTimeline}
+                  style={{ borderColor: "#fecaca", background: "#fee2e2", color: "#991b1b" }}
+                >
+                  {actionBusy === "deleteTimeline" ? "Deleting…" : "Yes, delete it"}
+                </button>
+                <button type="button" className="dvc-link-btn" onClick={() => setConfirmDeleteTimeline(false)}>
+                  Cancel
+                </button>
+              </span>
+            )
+          )}
         </div>
         {timeline.length === 0 ? (
           <div className="dvc-empty">No events recorded yet.</div>

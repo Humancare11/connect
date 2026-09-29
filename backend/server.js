@@ -1259,6 +1259,28 @@ function directMonitorRoomName(roomId) {
 // or a 30s heartbeat (mirrors the old client-side gate this replaces).
 const directLastLoggedQuality = new Map();
 const DIRECT_QUALITY_HEARTBEAT_MS = 30_000;
+
+// guestId -> { reason, at } — a best-effort hint for why a socket is about
+// to disconnect, set either by the client (direct-call-problem, right
+// before things go wrong) or the /leaving sendBeacon endpoint (pagehide).
+// The generic "disconnect" handler below consumes it if still fresh,
+// otherwise falls back to Socket.IO's own raw reason or "unknown" — see the
+// fixed disconnect_reason vocabulary in directVideoRoomController.js.
+const directExpectedDisconnectReason = new Map();
+const DIRECT_DISCONNECT_HINT_TTL_MS = 20_000;
+// Reasons a participant is allowed to self-report via direct-call-problem —
+// deliberately excludes the server-only reasons (admin_ended,
+// pin_regenerated, session_taken_over, link_expired, ping_timeout, unknown),
+// which the server already knows for certain and a client has no business
+// claiming.
+const DIRECT_CLIENT_REPORTABLE_REASONS = new Set([
+  "network_lost",
+  "ice_failed",
+  "permission_denied",
+  "device_busy",
+  "in_app_browser",
+  "unsupported_browser",
+]);
 function isAdminSocket(socket) {
   return socket.userRole === "admin" || socket.userRole === "superadmin";
 }
@@ -1465,9 +1487,19 @@ function forceEndDirectCall(roomId) {
   for (const sid of socketIds) {
     const s = io.sockets.sockets.get(sid);
     if (!s) continue;
+    const meta = directRoomSockets.get(sid);
     s.emit("direct-room-closed", { msg: "The admin ended this call, please rejoin." });
     s.leave(room);
     directRoomSockets.delete(sid);
+    if (meta?.guestId) {
+      logDirectRoom("disconnected", {
+        roomId,
+        guestId: meta.guestId,
+        socketId: sid,
+        role: meta.role,
+        disconnect_reason: "admin_ended",
+      });
+    }
   }
   clearDirectRoomRoles(roomId);
   return socketIds.length;
@@ -1666,6 +1698,13 @@ function endDirectRoomSession(roomId, role, message) {
       liveSocket.emit("direct-session-superseded", { msg: message });
       liveSocket.leave(room);
       directRoomSockets.delete(slot.socketId);
+      logDirectRoom("disconnected", {
+        roomId,
+        guestId: slot.guestId,
+        socketId: slot.socketId,
+        role,
+        disconnect_reason: "pin_regenerated",
+      });
     }
   }
   slots[role] = null;
@@ -1851,6 +1890,9 @@ app.set("clearStuckDirectSeats", clearStuckDirectSeats);
 app.set("forceEndDirectCall", forceEndDirectCall);
 app.set("logDirectRoom", logDirectRoom);
 app.set("endDirectRoomSession", endDirectRoomSession);
+app.set("recordExpectedDisconnectReason", (guestId, reason) => {
+  directExpectedDisconnectReason.set(guestId, { reason, at: Date.now() });
+});
 
 io.on("connection", (socket) => {
   // Socket.IO restored socket.rooms/socket.data from a prior session within
@@ -2495,6 +2537,13 @@ io.on("connection", (socket) => {
         oldSocket.emit("direct-session-superseded", { msg: "You joined from another device." });
         oldSocket.leave(directRoomName(roomId));
         directRoomSockets.delete(current.socketId);
+        logDirectRoom("disconnected", {
+          roomId,
+          guestId: current.guestId,
+          socketId: current.socketId,
+          role,
+          disconnect_reason: "session_taken_over",
+        });
       }
     }
 
@@ -2523,6 +2572,7 @@ io.on("connection", (socket) => {
       roomDoc = await DirectVideoRoom.findOne({ roomId });
     } catch (err) {
       console.error("[direct-room] lookup error:", err.message);
+      logDirectRoom("rejected", { roomId, guestId, socketId: socket.id, reason: "server_error", disconnect_reason: "server_error" });
       socket.emit("direct-room-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
       return;
     }
@@ -2548,7 +2598,13 @@ io.on("connection", (socket) => {
     }
 
     if (roomDoc.status !== "active") {
-      logDirectRoom("rejected", { roomId, guestId, socketId: socket.id, reason: roomDoc.status });
+      logDirectRoom("rejected", {
+        roomId,
+        guestId,
+        socketId: socket.id,
+        reason: roomDoc.status,
+        disconnect_reason: roomDoc.status === "expired" ? "link_expired" : undefined,
+      });
       socket.emit("direct-room-error", {
         code: roomDoc.status === "expired" ? "expired" : "closed",
         msg: roomDoc.status === "expired"
@@ -2992,6 +3048,22 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Best-effort self-report: the client noticed something is about to go
+  // wrong (lost network, ICE failed, permission denied, device busy, an
+  // in-app browser) and sends this right before the connection actually
+  // drops. Never guaranteed to arrive — the browser can vanish first, which
+  // is exactly why the fixed reason list documents this as "best-effort",
+  // not "reliable". Only sets a short-lived hint; the real disconnect_reason
+  // is written once the socket actually disconnects, below.
+  socket.on("direct-call-problem", ({ roomId, reason } = {}) => {
+    if (!roomId || !DIRECT_CLIENT_REPORTABLE_REASONS.has(reason)) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directCallStatsLimiter.allow(socket.id)) return;
+    const meta = directRoomSockets.get(socket.id);
+    if (!meta?.guestId) return;
+    directExpectedDisconnectReason.set(meta.guestId, { reason, at: Date.now() });
+  });
+
   // An admin's monitoring socket is never in directRoomSockets (that map is
   // call participants only), so the other "disconnect" handler below always
   // no-ops for it — this one specifically drops it from every room it was
@@ -3027,7 +3099,29 @@ io.on("connection", (socket) => {
     const room = directRoomName(roomId);
 
     directRoomSockets.delete(socket.id);
-    logDirectRoom("disconnected", { roomId, guestId, socketId: socket.id, role: meta.role, reason });
+
+    // disconnect_reason: prefer a fresh client/beacon hint (best-effort —
+    // may not exist), then Socket.IO's own reason where it's unambiguous
+    // ("ping timeout" always means the heartbeat genuinely stopped landing),
+    // and otherwise "unknown" rather than guessing — a plain "transport
+    // close" is indistinguishable between a closed tab, a locked phone, and
+    // a dropped network from the server's side alone.
+    const hint = directExpectedDisconnectReason.get(guestId);
+    directExpectedDisconnectReason.delete(guestId);
+    const disconnect_reason =
+      hint && Date.now() - hint.at < DIRECT_DISCONNECT_HINT_TTL_MS
+        ? hint.reason
+        : reason === "ping timeout"
+          ? "ping_timeout"
+          : "unknown";
+    logDirectRoom("disconnected", {
+      roomId,
+      guestId,
+      socketId: socket.id,
+      role: meta.role,
+      disconnect_reason,
+      socketIoReason: reason,
+    });
 
     // PIN rooms: same as leave-direct-room — only drop the live socket
     // reference, the session itself stays reserved for a reconnect.

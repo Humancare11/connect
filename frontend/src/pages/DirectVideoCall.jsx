@@ -508,6 +508,14 @@ export default function DirectVideoCall() {
   // PIN rooms too when a valid sessionToken is already stored for this
   // room/browser (see the Step 1 effect below).
   const [stage, setStage] = useState("checking");
+  // Mirrors `stage` for handlers registered once (empty dep array) that
+  // still need to know the current stage without re-subscribing on every
+  // stage change — e.g. the offline/pagehide listeners below, which are
+  // only meaningful to report while actually in the call.
+  const stageRef = useRef("checking");
+  useEffect(() => {
+    stageRef.current = stage;
+  }, [stage]);
   const [errorInfo, setErrorInfo] = useState(null); // { code, msg }
   const [hasPin, setHasPin] = useState(false);
   const [role, setRole] = useState(""); // "doctor" | "patient" — known once verified/joined
@@ -856,7 +864,15 @@ export default function DirectVideoCall() {
   // socket/ICE timeouts eventually fired. Report it immediately via the
   // browser's own connectivity signal instead.
   useEffect(() => {
-    const handleOffline = () => setIsOffline(true);
+    const handleOffline = () => {
+      setIsOffline(true);
+      // Best-effort — see direct-call-problem's doc comment server-side.
+      // Only meaningful mid-call; harmless no-op otherwise since the socket
+      // isn't in the room yet and the server drops it.
+      if (stageRef.current === "call" && socket.connected) {
+        socket.emit("direct-call-problem", { roomId, reason: "network_lost" });
+      }
+    };
     const handleOnline = () => {
       setIsOffline(false);
       // Recovery was previously purely timer-driven from the moment a drop
@@ -880,6 +896,27 @@ export default function DirectVideoCall() {
       window.removeEventListener("online", handleOnline);
     };
   }, []);
+
+  // Best-effort "leaving" signal (refinement to the call-report plan): a tab
+  // close, app switch-away-and-kill, or phone lock can end the page with no
+  // chance for an ordinary socket.emit to complete — pagehide + sendBeacon
+  // is specifically designed to have a shot at completing in exactly that
+  // situation, which a normal request often doesn't. Still not guaranteed
+  // (there's no guarantee ANY code runs before the OS kills a backgrounded
+  // tab) — the server falls back to a generic "reason unknown" disconnect
+  // when this never arrives, deliberately never claiming more certainty
+  // than actually exists. A deliberate "Leave call" click is unaffected —
+  // that already reports "left_call" reliably via leave-direct-room.
+  useEffect(() => {
+    const handlePageHide = () => {
+      if (stageRef.current !== "call" || !navigator.sendBeacon) return;
+      const base = import.meta.env.VITE_API_URL || "";
+      const url = `${base}/api/direct-video-room/${roomId}/leaving?guestId=${encodeURIComponent(guestIdRef.current)}`;
+      navigator.sendBeacon(url);
+    };
+    window.addEventListener("pagehide", handlePageHide);
+    return () => window.removeEventListener("pagehide", handlePageHide);
+  }, [roomId]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -2588,6 +2625,12 @@ export default function DirectVideoCall() {
           return;
         reconnectStallCountRef.current += 1;
         setReconnectStalled(true);
+        // Best-effort context for the Problems box: automatic recovery gave
+        // up and the manual Retry button is now showing — a real ICE/network
+        // failure, not just a brief blip (those self-heal before this fires).
+        if (socket.connected) {
+          socket.emit("direct-call-problem", { roomId, reason: "ice_failed" });
+        }
       }, delayMs);
     };
 
@@ -3258,6 +3301,14 @@ export default function DirectVideoCall() {
       // Harmless no-op if no peer is in the room yet (nothing to broadcast
       // to) — handlePeerJoined re-announces the moment one actually is.
       announceMediaState();
+      // Best-effort context for the Problems box: an in-app browser (e.g.
+      // Instagram/Facebook's built-in browser) is a common, semi-reliable
+      // cause of calls that never quite connect. Only meaningful if this
+      // device disconnects again shortly after (the server's hint TTL
+      // bounds that) — reported once per join, not continuously.
+      if (inAppBrowser.isInApp && socket.connected) {
+        socket.emit("direct-call-problem", { roomId, reason: "in_app_browser" });
+      }
     };
 
     const joinRoom = () => {
@@ -3625,6 +3676,19 @@ export default function DirectVideoCall() {
         "[direct-video-call] in-call media retry failed:",
         err?.message || err,
       );
+      // Best-effort context for the Problems box — only for the two causes
+      // that are actually distinguishable from the browser's own error name;
+      // anything else (including the timeout branch above) stays unreported
+      // rather than guessed.
+      const problemReason =
+        err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError"
+          ? "permission_denied"
+          : err?.name === "NotReadableError" || err?.name === "TrackStartError"
+            ? "device_busy"
+            : "";
+      if (problemReason && socket.connected) {
+        socket.emit("direct-call-problem", { roomId, reason: problemReason });
+      }
     } finally {
       retryingInCallMediaRef.current = false;
       if (mountedRef.current) setRetryingInCallMedia(false);
