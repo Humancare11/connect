@@ -10,6 +10,7 @@
     "report": "playwright show-report test-results/html-report"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0"
+    "@playwright/test": "^1.55.0",
+    "socket.io-client": "^4.8.3"
   }
 }

@@ -36,7 +36,10 @@ const DirectRoomEvent = require("./models/DirectRoomEvent");
 const DirectCallAlert = require("./models/DirectCallAlert");
 const { createAlertEngine } = require("./utils/directCallAlerts");
 const { sendEmail } = require("./utils/sendEmail");
-const { resolveMaskedIp } = require("./utils/maskIp");
+const { resolveMaskedIp, getSocketClientIp } = require("./utils/maskIp");
+const { decryptPin, generatePin, encryptPin } = require("./utils/directPinCrypto");
+const { signSessionToken, verifySessionToken } = require("./utils/directSessionToken");
+const { isBlocked: isPinAttemptBlocked, recordWrongAttempt: recordWrongPinAttempt } = require("./utils/directPinAttemptLimiter");
 const { describeCallClient } = require("./utils/callClientInfo");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { recordActivity } = require("./utils/activityLogger");
@@ -737,6 +740,11 @@ const directCallConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 })
 // Phase 5.1: clients send a sample ~every 1-2s while an admin is watching —
 // this cap is generous headroom over that, not a bound on expected traffic.
 const directLiveMonitorSampleLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+// Coarse, per-socket guard against a single connection hammering PIN
+// verification — the REAL brute-force defense is the IP+room/room-wide
+// windows in utils/directPinAttemptLimiter.js, checked separately inside
+// the handlers themselves.
+const directPinVerifyLimiter = makeSocketLimiter({ windowMs: 10000, max: 8 });
 
 const SOCKET_LIMITERS = [
   chatMessageLimiter,
@@ -754,6 +762,7 @@ const SOCKET_LIMITERS = [
   directNetworkQualityLimiter,
   directCallConnectedLimiter,
   directLiveMonitorSampleLimiter,
+  directPinVerifyLimiter,
 ];
 
 app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
@@ -1168,6 +1177,30 @@ const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
 // deadlocks perfect-negotiation's offer-collision handling on both sides.
 const directRoomRoles = new Map();
 
+// PIN-based rooms (roomDoc.doctorPinEncrypted set) use this instead of
+// directRoomRoles/its seat-by-guestId model above — two fixed slots,
+// "doctor" and "patient", each owned by whichever session currently holds
+// that role (see utils/directSessionToken.js). The DB's own
+// doctorSession/patientSession fields are the real source of truth (they
+// survive a restart); this map is just the live view — rebuilt lazily,
+// per room, the next time anyone actually joins it. roomId -> {
+//   doctor: { guestId, socketId, sessionId, lastTakeoverAt } | null,
+//   patient: { ... } | null,
+// }
+const directPinRoomSlots = new Map();
+function getPinRoomEntry(roomId) {
+  let entry = directPinRoomSlots.get(roomId);
+  if (!entry) {
+    entry = { doctor: null, patient: null };
+    directPinRoomSlots.set(roomId, entry);
+  }
+  return entry;
+}
+// Minimum time between two takeovers of the SAME role slot — without this,
+// two devices that both believe they're the legitimate participant could
+// keep bouncing the seat back and forth indefinitely.
+const DIRECT_PIN_TAKEOVER_COOLDOWN_MS = 10_000;
+
 // A participant who drops out mid-call (page refresh, a brief network loss,
 // a Wi-Fi <-> cellular switch) keeps their seat reserved for this long, so a
 // third person who also has the link can't slip into it before they get
@@ -1512,6 +1545,7 @@ function clearDirectRoomRoles(roomId) {
   // the Live view open past the call ending) — drop the bookkeeping so it
   // doesn't linger until that admin socket disconnects.
   directRoomWatchers.delete(roomId);
+  directPinRoomSlots.delete(roomId);
 }
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
 const DIRECT_GUEST_ID_PATTERN = /^[a-zA-Z0-9-]{8,64}$/;
@@ -1530,6 +1564,102 @@ function isSocketInDirectRoom(socket, roomId) {
   const meta = directRoomSockets.get(socket.id);
   const room = directRoomName(roomId);
   return !!meta && String(meta.roomId) === String(roomId) && socket.rooms.has(room);
+}
+
+function roleDisplayName(role) {
+  return role === "doctor" ? "Doctor" : "Patient";
+}
+
+// join-direct-room's PIN-room branch — everything the legacy (no-PIN)
+// branch does (seat/presence timing heuristics, room-full rejection) is
+// replaced here by two fixed, named slots whose ownership is decided by a
+// signed session token, not join order. See utils/directSessionToken.js
+// and the doctorSession/patientSession fields on DirectVideoRoom.
+async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken }) {
+  const decoded = sessionToken ? verifySessionToken(sessionToken) : null;
+  if (!decoded || String(decoded.roomId) !== String(roomId) || (decoded.role !== "doctor" && decoded.role !== "patient")) {
+    socket.emit("direct-room-error", { code: "pin_required", msg: "Please enter the PIN to join." });
+    return;
+  }
+  const { role, sessionId } = decoded;
+  const sessionField = role === "doctor" ? "doctorSession" : "patientSession";
+  if (!roomDoc[sessionField]?.sessionId || roomDoc[sessionField].sessionId !== sessionId) {
+    socket.emit("direct-session-superseded", { msg: "Your session has ended. Please enter the new PIN." });
+    return;
+  }
+
+  const room = directRoomName(roomId);
+  const slots = getPinRoomEntry(roomId);
+  const current = slots[role];
+
+  // Evict a stale socket for the SAME role+session — a refresh or duplicate
+  // tab, not a different device (a different device would carry a
+  // different, no-longer-current sessionId and would have been rejected
+  // above already).
+  if (current?.socketId && current.socketId !== socket.id) {
+    const staleSocket = io.sockets.sockets.get(current.socketId);
+    if (staleSocket) {
+      staleSocket.leave(room);
+      directRoomSockets.delete(current.socketId);
+    }
+  }
+
+  // A resume (peer should proactively renegotiate) iff this exact session
+  // already held the slot before — i.e. this isn't the first join-direct-
+  // room call right after verify-direct-pin created it.
+  const resumedCall = current?.sessionId === sessionId;
+
+  slots[role] = { guestId, socketId: socket.id, sessionId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
+  directRoomSockets.set(socket.id, { roomId, guestId, name: roleDisplayName(role), role });
+  socket.join(room);
+
+  const now = new Date();
+  DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => {});
+  DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => {});
+
+  const maskedIp = resolveMaskedIp(socket);
+  logDirectRoom("joined", {
+    roomId,
+    guestId,
+    socketId: socket.id,
+    role,
+    resumedCall,
+    ...(maskedIp ? { maskedIp } : {}),
+  });
+
+  socket.emit("direct-room-joined", { roomId, role, resumedCall });
+
+  const otherRole = role === "doctor" ? "patient" : "doctor";
+  const otherSlot = slots[otherRole];
+  if (otherSlot?.socketId) {
+    const otherSocket = io.sockets.sockets.get(otherSlot.socketId);
+    if (otherSocket) {
+      socket.emit("direct-peer-joined", { name: roleDisplayName(otherRole), resumedCall: true });
+      otherSocket.emit("direct-peer-joined", { name: roleDisplayName(role), resumedCall: true });
+    }
+  }
+}
+
+// Admin "regenerate PIN and end current session" — force-disconnects
+// whichever live socket currently holds that role's slot, if any. Exposed
+// via app.set("endDirectRoomSession", ...) below for
+// directVideoRoomController.js's regeneratePin to call. The DB side of
+// clearing the session was already done by the controller before this
+// runs; this only handles the live socket.
+function endDirectRoomSession(roomId, role, message) {
+  const slots = directPinRoomSlots.get(roomId);
+  const slot = slots?.[role];
+  if (!slot) return;
+  const room = directRoomName(roomId);
+  if (slot.socketId) {
+    const liveSocket = io.sockets.sockets.get(slot.socketId);
+    if (liveSocket) {
+      liveSocket.emit("direct-session-superseded", { msg: message });
+      liveSocket.leave(room);
+      directRoomSockets.delete(slot.socketId);
+    }
+  }
+  slots[role] = null;
 }
 
 // Structured, one-line-per-event logging for the direct-room lifecycle —
@@ -1708,6 +1838,7 @@ app.set("directRoomSockets", directRoomSockets);
 app.set("clearStuckDirectSeats", clearStuckDirectSeats);
 app.set("forceEndDirectCall", forceEndDirectCall);
 app.set("logDirectRoom", logDirectRoom);
+app.set("endDirectRoomSession", endDirectRoomSession);
 
 io.on("connection", (socket) => {
   // Socket.IO restored socket.rooms/socket.data from a prior session within
@@ -2186,7 +2317,186 @@ io.on("connection", (socket) => {
   // Kept fully separate from the appointment-room events above and from the
   // platform auth system: independent event names, independent in-memory
   // tracking, independent DB model, no identity/login requirement at all.
-  socket.on("join-direct-room", async ({ roomId, guestId, name } = {}) => {
+
+  // PIN rooms only (roomDoc.doctorPinEncrypted set) — the very first step of
+  // joining, before join-direct-room. Verifies a submitted PIN, decides the
+  // role (whichever PIN matched), and either grants a fresh session,
+  // silently re-issues a token for the SAME device reclaiming its own
+  // session, or reports a conflict for the client to offer a takeover.
+  socket.on("verify-direct-pin", async ({ roomId, pin, guestId } = {}) => {
+    if (!roomId || typeof roomId !== "string" || !DIRECT_ROOM_ID_PATTERN.test(roomId)) {
+      socket.emit("direct-pin-error", { msg: "This meeting link is invalid." });
+      return;
+    }
+    if (!guestId || typeof guestId !== "string" || !DIRECT_GUEST_ID_PATTERN.test(guestId)) {
+      socket.emit("direct-pin-error", { msg: "Could not verify — please reload and try again." });
+      return;
+    }
+    if (!directPinVerifyLimiter.allow(socket.id)) {
+      socket.emit("direct-pin-error", { msg: "Please slow down and try again in a moment." });
+      return;
+    }
+
+    const ip = getSocketClientIp(socket);
+    if (isPinAttemptBlocked({ ip, roomId })) {
+      socket.emit("direct-pin-error", {
+        msg: "Too many attempts. Please wait a few minutes and try again.",
+        blocked: true,
+      });
+      return;
+    }
+
+    let roomDoc;
+    try {
+      roomDoc = await DirectVideoRoom.findOne({ roomId });
+    } catch (err) {
+      console.error("[direct-room] pin lookup error:", err.message);
+      socket.emit("direct-pin-error", { msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
+    if (!roomDoc || !roomDoc.doctorPinEncrypted) {
+      socket.emit("direct-pin-error", { msg: "This meeting link is invalid." });
+      return;
+    }
+    if (roomDoc.status !== "active" || (roomDoc.expiresAt && roomDoc.expiresAt.getTime() <= Date.now())) {
+      socket.emit("direct-pin-error", {
+        msg: roomDoc.status === "closed" ? "This meeting has ended." : "This meeting link has expired.",
+      });
+      return;
+    }
+
+    const submitted = String(pin || "").trim();
+    const doctorPin = decryptPin(roomDoc.doctorPinEncrypted);
+    const patientPin = decryptPin(roomDoc.patientPinEncrypted);
+    const role = submitted && submitted === doctorPin ? "doctor" : submitted && submitted === patientPin ? "patient" : null;
+
+    if (!role) {
+      const { roomBlockJustTripped } = recordWrongPinAttempt({ ip, roomId });
+      if (roomBlockJustTripped) {
+        directCallAlertEngine.raise("pin_brute_force", {
+          roomId,
+          doctorName: roomDoc.doctorName,
+          message: "Repeated wrong PIN attempts — this room's PIN entry is temporarily blocked.",
+          detail: {},
+        });
+      }
+      socket.emit("direct-pin-error", { msg: "Incorrect PIN. Please check and try again." });
+      return;
+    }
+
+    const sessionField = role === "doctor" ? "doctorSession" : "patientSession";
+    const existing = roomDoc[sessionField];
+
+    // Same device reclaiming its own session (e.g. cleared localStorage but
+    // still typed the right PIN) — re-issue a token for the SAME session
+    // rather than treating it as a conflict with itself.
+    if (existing?.sessionId && existing.guestId === guestId) {
+      socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId: existing.sessionId }) });
+      return;
+    }
+
+    // Slot held by a different device — surface a conflict; the client asks
+    // the user to confirm before anything is actually taken over.
+    if (existing?.sessionId) {
+      socket.emit("direct-pin-conflict", { role });
+      return;
+    }
+
+    // Slot free — grant it outright.
+    const sessionId = randomUUID();
+    roomDoc[sessionField] = { sessionId, guestId, startedAt: new Date() };
+    await roomDoc.save();
+    socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId }) });
+  });
+
+  // PIN rooms only — user-confirmed takeover after a direct-pin-conflict.
+  // Requires the PIN again (not just a click) so a takeover can't be
+  // triggered by anything other than someone who actually knows it.
+  socket.on("direct-session-takeover", async ({ roomId, pin, guestId, role } = {}) => {
+    if (!roomId || typeof roomId !== "string" || !DIRECT_ROOM_ID_PATTERN.test(roomId)) {
+      socket.emit("direct-pin-error", { msg: "This meeting link is invalid." });
+      return;
+    }
+    if (!guestId || typeof guestId !== "string" || !DIRECT_GUEST_ID_PATTERN.test(guestId)) {
+      socket.emit("direct-pin-error", { msg: "Could not verify — please reload and try again." });
+      return;
+    }
+    if (role !== "doctor" && role !== "patient") {
+      socket.emit("direct-pin-error", { msg: "Could not verify — please reload and try again." });
+      return;
+    }
+    if (!directPinVerifyLimiter.allow(socket.id)) {
+      socket.emit("direct-pin-error", { msg: "Please slow down and try again in a moment." });
+      return;
+    }
+
+    const ip = getSocketClientIp(socket);
+    if (isPinAttemptBlocked({ ip, roomId })) {
+      socket.emit("direct-pin-error", {
+        msg: "Too many attempts. Please wait a few minutes and try again.",
+        blocked: true,
+      });
+      return;
+    }
+
+    let roomDoc;
+    try {
+      roomDoc = await DirectVideoRoom.findOne({ roomId });
+    } catch (err) {
+      console.error("[direct-room] takeover lookup error:", err.message);
+      socket.emit("direct-pin-error", { msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
+    if (!roomDoc || !roomDoc.doctorPinEncrypted || roomDoc.status !== "active") {
+      socket.emit("direct-pin-error", { msg: "This meeting link is invalid." });
+      return;
+    }
+
+    const submitted = String(pin || "").trim();
+    const expectedPin = decryptPin(role === "doctor" ? roomDoc.doctorPinEncrypted : roomDoc.patientPinEncrypted);
+    if (!submitted || submitted !== expectedPin) {
+      const { roomBlockJustTripped } = recordWrongPinAttempt({ ip, roomId });
+      if (roomBlockJustTripped) {
+        directCallAlertEngine.raise("pin_brute_force", {
+          roomId,
+          doctorName: roomDoc.doctorName,
+          message: "Repeated wrong PIN attempts — this room's PIN entry is temporarily blocked.",
+          detail: {},
+        });
+      }
+      socket.emit("direct-pin-error", { msg: "Incorrect PIN. Please check and try again." });
+      return;
+    }
+
+    const slots = getPinRoomEntry(roomId);
+    const current = slots[role];
+    if (current?.lastTakeoverAt && Date.now() - current.lastTakeoverAt < DIRECT_PIN_TAKEOVER_COOLDOWN_MS) {
+      socket.emit("direct-pin-error", { msg: "Please wait a few seconds and try again." });
+      return;
+    }
+
+    // Evict the old device right away — its own next request/reconnect will
+    // find the DB session no longer matches and show "joined elsewhere".
+    if (current?.socketId) {
+      const oldSocket = io.sockets.sockets.get(current.socketId);
+      if (oldSocket) {
+        oldSocket.emit("direct-session-superseded", { msg: "You joined from another device." });
+        oldSocket.leave(directRoomName(roomId));
+        directRoomSockets.delete(current.socketId);
+      }
+    }
+
+    const sessionId = randomUUID();
+    const sessionField = role === "doctor" ? "doctorSession" : "patientSession";
+    roomDoc[sessionField] = { sessionId, guestId, startedAt: new Date() };
+    await roomDoc.save();
+    slots[role] = { guestId, socketId: null, sessionId, lastTakeoverAt: Date.now() };
+
+    logDirectRoom("session_taken_over", { roomId, guestId, socketId: socket.id, role });
+    socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId }) });
+  });
+
+  socket.on("join-direct-room", async ({ roomId, guestId, name, sessionToken } = {}) => {
     if (!roomId || typeof roomId !== "string" || !DIRECT_ROOM_ID_PATTERN.test(roomId)) {
       socket.emit("direct-room-error", { code: "invalid", msg: "This meeting link is invalid." });
       return;
@@ -2234,6 +2544,10 @@ io.on("connection", (socket) => {
           : "This meeting has ended.",
       });
       return;
+    }
+
+    if (roomDoc.doctorPinEncrypted) {
+      return handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToken });
     }
 
     const guestName = sanitizeGuestName(name);
@@ -2461,6 +2775,24 @@ io.on("connection", (socket) => {
       });
     }
 
+    // PIN rooms: the role's session stays reserved (it's tied to the PIN,
+    // not to being currently connected) — only the live socket reference is
+    // cleared, so a rejoin with the same remembered token still reclaims it.
+    if (meta?.role) {
+      const slots = directPinRoomSlots.get(roomId);
+      const slot = slots?.[meta.role];
+      if (slot?.socketId === socket.id) {
+        slot.socketId = null;
+        logDirectRoom("seat_released", {
+          roomId,
+          guestId: meta.guestId,
+          socketId: socket.id,
+          role: meta.role,
+          reason: "left_call",
+        });
+      }
+    }
+
     const remaining = io.sockets.adapter.rooms.get(room);
     if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
   });
@@ -2680,7 +3012,14 @@ io.on("connection", (socket) => {
     const room = directRoomName(roomId);
 
     directRoomSockets.delete(socket.id);
-    logDirectRoom("disconnected", { roomId, guestId, socketId: socket.id, reason });
+    logDirectRoom("disconnected", { roomId, guestId, socketId: socket.id, role: meta.role, reason });
+
+    // PIN rooms: same as leave-direct-room — only drop the live socket
+    // reference, the session itself stays reserved for a reconnect.
+    if (meta.role) {
+      const slot = directPinRoomSlots.get(roomId)?.[meta.role];
+      if (slot?.socketId === socket.id) slot.socketId = null;
+    }
 
     // Start (or restart) this guest's seat-reservation clock from the moment
     // they drop, so a reconnect within DIRECT_ROOM_SEAT_RESERVATION_MS still

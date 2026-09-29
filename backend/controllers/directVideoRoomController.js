@@ -444,7 +444,15 @@ const getDirectVideoCalls = async (req, res) => {
 // iPhone, WhatsApp browser". Falls back to the raw type for anything not
 // explicitly worded below rather than hiding it.
 function describeEvent(event) {
-  const who = event.role === "initiator" ? "Host" : event.role === "guest" ? "Guest" : "Someone";
+  // "initiator"/"guest" only ever appear on rooms created before PINs
+  // existed (see DirectVideoRoom.doctorPinEncrypted) — a PIN room's events
+  // always carry the real "doctor"/"patient" role instead.
+  const who =
+    event.role === "doctor" ? "Doctor"
+    : event.role === "patient" ? "Patient"
+    : event.role === "initiator" ? "Host"
+    : event.role === "guest" ? "Guest"
+    : "Someone";
   const from = [event.device, event.browser].filter(Boolean).join(", ");
   const fromSuffix = from ? ` from ${from}` : "";
   switch (event.type) {
@@ -464,6 +472,8 @@ function describeEvent(event) {
       return `${who}'s older tab/window was disconnected (opened a new one)`;
     case "seat_taken_over":
       return `${who}'s seat was given to a new device/browser (${event.detail?.reason === "dead_socket" ? "the old one had disconnected" : "the old one stopped responding"})`;
+    case "session_taken_over":
+      return `${who}'s session was taken over by another device (confirmed with the PIN)`;
     case "presence_ping_timed_out":
       return `${who}'s device/browser stopped responding to a check`;
     case "media_state_changed":
