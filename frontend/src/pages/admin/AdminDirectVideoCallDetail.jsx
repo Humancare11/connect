@@ -42,9 +42,9 @@ export default function AdminDirectVideoCallDetail() {
   const [actionNotice, setActionNotice] = useState("");
   const [confirmForceEnd, setConfirmForceEnd] = useState(false);
 
-  // Phase 5.1: Live view — off by default, only watching while liveOpen is
-  // true. Samples are keyed by guestId; never persisted anywhere, just held
-  // in this component's state for as long as the panel is open.
+  // Live view — automatic for as long as this report page is open, no
+  // button. Samples are keyed by guestId; never persisted anywhere, just
+  // held in this component's state for as long as the page is open.
   const [liveOpen, setLiveOpen] = useState(false);
   const [liveSamples, setLiveSamples] = useState({});
   const liveOpenRef = useRef(false);
@@ -59,17 +59,18 @@ export default function AdminDirectVideoCallDetail() {
     liveOpenRef.current = false;
     setLiveOpen(false);
     socket.emit("admin-unwatch-direct-room", { roomId });
-    socket.off("direct-live-monitor-sample", handleLiveSample);
+    socket.off("direct-call-stats", handleLiveSample);
   }, [roomId, handleLiveSample]);
 
   const startWatching = useCallback(async () => {
-    // This admin socket has typically never connected before this exact
-    // click — no other admin page uses it. If the admin's access token has
-    // since expired (e.g. they opened this report and left it idle),
-    // refresh first so the handshake below authenticates with a current
-    // token rather than one io.use() will reject, which would otherwise
-    // leave "Start Live Monitoring" silently doing nothing (isAdminSocket()
-    // fails closed on the server for an unauthenticated socket).
+    // This admin socket has typically never connected before this report
+    // page mounted — no other admin page uses it. If the admin's access
+    // token has since expired (e.g. they had this report open, idle, past
+    // token expiry), refresh first so the handshake below authenticates
+    // with a current token rather than one io.use() will reject, which
+    // would otherwise leave the Live section silently empty
+    // (isAdminSocket() fails closed on the server for an unauthenticated
+    // socket).
     await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true }).catch(() => {});
     setSocketAuthRole("admin");
     if (socket.connected) {
@@ -82,14 +83,19 @@ export default function AdminDirectVideoCallDetail() {
     liveOpenRef.current = true;
     setLiveOpen(true);
     setLiveSamples({});
-    socket.on("direct-live-monitor-sample", handleLiveSample);
+    socket.on("direct-call-stats", handleLiveSample);
     socket.emit("admin-watch-direct-room", { roomId });
   }, [roomId, handleLiveSample]);
 
-  // Stop watching on unmount (navigating away) or if the room changes —
-  // never leaves the server thinking this admin is still watching a room
-  // whose page isn't open anymore.
-  useEffect(() => () => stopWatching(), [stopWatching]);
+  // Auto-join the watcher room on mount, leave on unmount (navigating away)
+  // or if the room changes — the server only speeds up participants'
+  // telemetry cadence and only the current page's lifetime controls that,
+  // never leaving it thinking a closed page is still watching.
+  useEffect(() => {
+    startWatching();
+    return () => stopWatching();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
 
   const fetchReport = () => {
     setLoading(true);
@@ -237,22 +243,16 @@ export default function AdminDirectVideoCallDetail() {
       </div>
 
       <div className="dvc-card">
-        <div className="dvc-form__title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="dvc-form__title">
           <h2>Live</h2>
-          <button
-            className="dvc-secondary"
-            type="button"
-            onClick={liveOpen ? stopWatching : startWatching}
-          >
-            {liveOpen ? "Stop Live Monitoring" : "Start Live Monitoring"}
-          </button>
+          <p>
+            Technical connection data only — mic/camera on-off, connection state, network quality.
+            Never audio, video, or an audio level. Updates automatically while this page is open, no
+            action needed.
+          </p>
         </div>
         {!liveOpen ? (
-          <div className="dvc-empty">
-            Start Live Monitoring to see both participants' mic level, mute/camera state, connection
-            state and network quality update every 1-2 seconds while this call is in progress. Both
-            participants see a small notice while you're watching.
-          </div>
+          <div className="dvc-empty">Connecting…</div>
         ) : participants.filter((p) => p.connectionState !== "left").length === 0 ? (
           <div className="dvc-empty">Waiting for a participant to be in the call…</div>
         ) : (
@@ -262,7 +262,6 @@ export default function AdminDirectVideoCallDetail() {
               .map((p) => {
                 const sample = liveSamples[p.guestId];
                 const stale = sample && Date.now() - sample.at > 6000;
-                const level = sample ? Math.round(sample.micLevel * 100) : 0;
                 return (
                   <div
                     key={p.guestId}
@@ -282,17 +281,6 @@ export default function AdminDirectVideoCallDetail() {
                       <div style={{ fontSize: 12, color: "#9ca3af" }}>No samples yet…</div>
                     ) : (
                       <>
-                        <div style={{ fontSize: 11, color: "#6b7280", marginBottom: 4 }}>Mic level</div>
-                        <div style={{ background: "#f1f5f9", borderRadius: 6, height: 8, overflow: "hidden", marginBottom: 10 }}>
-                          <div
-                            style={{
-                              width: `${level}%`,
-                              height: "100%",
-                              background: sample.micOn ? "#16a34a" : "#d1d5db",
-                              transition: "width 150ms linear",
-                            }}
-                          />
-                        </div>
                         <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#374151", flexWrap: "wrap" }}>
                           <span>Mic: {sample.micOn ? "On" : "Off"}</span>
                           <span>Camera: {sample.camOn ? "On" : "Off"}</span>
@@ -300,11 +288,12 @@ export default function AdminDirectVideoCallDetail() {
                             {sample.connectionState || "unknown"}
                           </span>
                         </div>
-                        <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#6b7280", marginTop: 6 }}>
+                        <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#6b7280", marginTop: 6, flexWrap: "wrap" }}>
                           <span>RTT: {typeof sample.rtt === "number" ? `${sample.rtt}ms` : "-"}</span>
                           <span>
                             Loss: {typeof sample.packetLoss === "number" ? `${(sample.packetLoss * 100).toFixed(1)}%` : "-"}
                           </span>
+                          <span>Jitter: {typeof sample.jitter === "number" ? `${sample.jitter}ms` : "-"}</span>
                         </div>
                         {stale && <div style={{ fontSize: 11, color: "#d97706", marginTop: 6 }}>No recent samples</div>}
                       </>

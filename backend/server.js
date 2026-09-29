@@ -728,18 +728,13 @@ const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 })
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // Matches cameraStateLimiter above — same event shape, same room-scoped relay.
 const directMediaStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
-// The client only emits this on a quality-bucket change or a 30s heartbeat
-// (see DirectVideoCall.jsx's startStatsCollection) — generous headroom over
-// that expected rate is still enough to stop a misbehaving client from
-// spamming DirectRoomEvent writes.
-const directNetworkQualityLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // Fired at most once or twice per side per call (connect, maybe a
 // reconnect) — this cap only exists to stop a misbehaving/malicious client
 // from spamming it, not to bound expected traffic.
 const directCallConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
-// Phase 5.1: clients send a sample ~every 1-2s while an admin is watching —
-// this cap is generous headroom over that, not a bound on expected traffic.
-const directLiveMonitorSampleLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
+// Clients send direct-call-stats every ~5s always, ~1-2s while an admin is
+// watching (see DirectVideoCall.jsx) — generous headroom over that.
+const directCallStatsLimiter = makeSocketLimiter({ windowMs: 1200, max: 2 });
 // Coarse, per-socket guard against a single connection hammering PIN
 // verification — the REAL brute-force defense is the IP+room/room-wide
 // windows in utils/directPinAttemptLimiter.js, checked separately inside
@@ -759,9 +754,8 @@ const SOCKET_LIMITERS = [
   directIceCandidateLimiter,
   directIceRestartLimiter,
   directMediaStateLimiter,
-  directNetworkQualityLimiter,
   directCallConnectedLimiter,
-  directLiveMonitorSampleLimiter,
+  directCallStatsLimiter,
   directPinVerifyLimiter,
 ];
 
@@ -1257,6 +1251,14 @@ const directRoomWatchers = new Map();
 function directMonitorRoomName(roomId) {
   return `direct_monitor_${roomId}`;
 }
+
+// `${roomId}:${guestId}` -> { quality, loggedAt } — direct-call-stats now
+// arrives continuously (every ~5s, faster while watched), so persisting a
+// network_quality DirectRoomEvent on every message would make timeline
+// noise proportional to call length. Only write one on a real bucket change
+// or a 30s heartbeat (mirrors the old client-side gate this replaces).
+const directLastLoggedQuality = new Map();
+const DIRECT_QUALITY_HEARTBEAT_MS = 30_000;
 function isAdminSocket(socket) {
   return socket.userRole === "admin" || socket.userRole === "superadmin";
 }
@@ -1546,6 +1548,9 @@ function clearDirectRoomRoles(roomId) {
   // doesn't linger until that admin socket disconnects.
   directRoomWatchers.delete(roomId);
   directPinRoomSlots.delete(roomId);
+  for (const key of directLastLoggedQuality.keys()) {
+    if (key.startsWith(`${roomId}:`)) directLastLoggedQuality.delete(key);
+  }
 }
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
 const DIRECT_GUEST_ID_PATTERN = /^[a-zA-Z0-9-]{8,64}$/;
@@ -1666,6 +1671,19 @@ function endDirectRoomSession(roomId, role, message) {
   slots[role] = null;
 }
 
+// Shared role derivation — almost no call site actually knows/passes
+// `role` explicitly, so this fills it in from whichever room model applies
+// (PIN rooms carry it on directRoomSockets already; legacy rooms derive it
+// from directRoomRoles' initiator/participant sets).
+function resolveDirectGuestRole(roomId, guestId, explicitRole) {
+  if (explicitRole) return explicitRole;
+  if (!roomId || !guestId) return "";
+  const entry = directRoomRoles.get(roomId);
+  if (entry?.initiatorGuestId === guestId) return "initiator";
+  if (entry?.participantGuestIds.has(guestId)) return "guest";
+  return "";
+}
+
 // Structured, one-line-per-event logging for the direct-room lifecycle —
 // logging only, never used for any behavior/decision. Added after a real
 // incident ("2 participants already joined" on a call that never connected)
@@ -1674,17 +1692,7 @@ function endDirectRoomSession(roomId, role, message) {
 // roomId/guestId are opaque, non-secret tokens (see DIRECT_ROOM_ID_PATTERN /
 // DIRECT_GUEST_ID_PATTERN) — safe to log in full, unlike an auth token.
 function logDirectRoom(event, { roomId, guestId, role, socketId, ...extra } = {}) {
-  // Almost no call site actually knows/passes `role` explicitly — derive it
-  // here instead of touching every one of them, so the admin report's
-  // "Host"/"Guest" wording (see describeEvent) works everywhere rather than
-  // falling back to "Someone" almost always.
-  const resolvedRole =
-    role || (roomId && guestId ? directRoomRoles.get(roomId)?.initiatorGuestId === guestId
-      ? "initiator"
-      : directRoomRoles.get(roomId)?.participantGuestIds.has(guestId)
-        ? "guest"
-        : ""
-      : "");
+  const resolvedRole = resolveDirectGuestRole(roomId, guestId, role);
   console.info(`[direct-room] ${event}`, { roomId, guestId, role: resolvedRole, socketId, ...extra });
 
   // Phase 3: persist the same event, fire-and-forget — this must never
@@ -2879,23 +2887,6 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Phase 3.1: the client only sends this on a quality-bucket change
-  // (good/weak/poor) or a 30s heartbeat — never every stats poll — so this
-  // is purely a log write, nothing to relay to the peer.
-  socket.on("direct-network-quality", ({ roomId, quality } = {}) => {
-    if (!roomId || !quality) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directNetworkQualityLimiter.allow(socket.id)) return;
-
-    const meta = directRoomSockets.get(socket.id);
-    logDirectRoom("network_quality", {
-      roomId,
-      guestId: meta?.guestId,
-      socketId: socket.id,
-      quality: String(quality).slice(0, 16),
-    });
-  });
-
   // Phase 4: the one reliable server-side signal that a call actually
   // connected (vs. two participants who joined but never got a peer
   // connection up) — see directCallAlerts.js's "never_connected" trigger,
@@ -2909,12 +2900,14 @@ io.on("connection", (socket) => {
     logDirectRoom("connected", { roomId, guestId: meta?.guestId, socketId: socket.id });
   });
 
-  // ── Phase 5.1: live admin monitoring ──────────────────────────────────
+  // ── Live admin monitoring ──────────────────────────────────────────────
   // A separate room/channel (direct_monitor_<roomId>) from the call's own
   // direct_room_<roomId> — participants are never joined to it, and an
-  // admin socket here is never joined to the call room. Clients only start
-  // sending direct-live-monitor-sample while directRoomWatchers has at
-  // least one entry for their room (told via direct-monitoring-active).
+  // admin socket here is never joined to the call room. direct-call-stats
+  // (below) is sent by every participant regardless of whether anyone is
+  // watching (that's the point — no participant-facing "being monitored"
+  // signal anymore); direct-monitoring-active only ever changes how OFTEN
+  // the client sends it (faster while watched), never whether it does.
   socket.on("admin-watch-direct-room", ({ roomId } = {}) => {
     if (!DIRECT_CALL_LIVE_MONITOR_ENABLED) return;
     if (!isAdminSocket(socket)) return;
@@ -2949,36 +2942,54 @@ io.on("connection", (socket) => {
     stopWatchingDirectRoom(roomId);
   });
 
-  // A participant only ever sends this while direct-monitoring-active told
-  // it an admin is watching — never recorded/stored, relayed live only to
-  // that room's current watchers.
-  socket.on("direct-live-monitor-sample", (sample = {}) => {
-    if (!DIRECT_CALL_LIVE_MONITOR_ENABLED) return;
+  // Technical-only telemetry — never audio/video, never an audio/mic level.
+  // Every participant sends this continuously while in the call (every ~5s,
+  // faster while an admin is watching — see DirectVideoCall.jsx), so this
+  // handler does two independent things: (1) relay it live to this room's
+  // current watchers, if any, and (2) persist a network_quality timeline
+  // entry, but only on a real bucket change or a 30s heartbeat — never on
+  // every message, which would otherwise make DirectRoomEvent writes scale
+  // with call length for no benefit.
+  socket.on("direct-call-stats", (sample = {}) => {
     const { roomId } = sample;
     if (!roomId) return;
     if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directLiveMonitorSampleLimiter.allow(socket.id)) return;
-    const watchers = directRoomWatchers.get(roomId);
-    if (!watchers || watchers.size === 0) return;
+    if (!directCallStatsLimiter.allow(socket.id)) return;
 
     const meta = directRoomSockets.get(socket.id);
-    const roleEntry = directRoomRoles.get(roomId);
-    const role =
-      meta?.guestId && roleEntry?.initiatorGuestId === meta.guestId
-        ? "initiator"
-        : meta?.guestId
-          ? "guest"
-          : "";
-    io.to(directMonitorRoomName(roomId)).emit("direct-live-monitor-sample", {
-      guestId: meta?.guestId || "",
-      role,
-      micLevel: typeof sample.micLevel === "number" ? Math.max(0, Math.min(1, sample.micLevel)) : 0,
-      micOn: !!sample.micOn,
-      camOn: !!sample.camOn,
-      connectionState: String(sample.connectionState || "").slice(0, 20),
-      rtt: typeof sample.rtt === "number" ? sample.rtt : null,
-      packetLoss: typeof sample.packetLoss === "number" ? sample.packetLoss : null,
-    });
+    const role = resolveDirectGuestRole(roomId, meta?.guestId, meta?.role);
+    const connectionState = String(sample.connectionState || "").slice(0, 20);
+    const rtt = typeof sample.rtt === "number" ? sample.rtt : null;
+    const packetLoss = typeof sample.packetLoss === "number" ? sample.packetLoss : null;
+    const jitter = typeof sample.jitter === "number" ? sample.jitter : null;
+    const quality = typeof sample.quality === "string" ? sample.quality.slice(0, 16) : "";
+    const micOn = !!sample.micOn;
+    const camOn = !!sample.camOn;
+
+    const watchers = directRoomWatchers.get(roomId);
+    if (watchers && watchers.size > 0) {
+      io.to(directMonitorRoomName(roomId)).emit("direct-call-stats", {
+        guestId: meta?.guestId || "",
+        role,
+        micOn,
+        camOn,
+        connectionState,
+        rtt,
+        packetLoss,
+        jitter,
+        quality,
+      });
+    }
+
+    if (quality && quality !== "unknown" && meta?.guestId) {
+      const key = `${roomId}:${meta.guestId}`;
+      const last = directLastLoggedQuality.get(key);
+      const now = Date.now();
+      if (!last || last.quality !== quality || now - last.loggedAt >= DIRECT_QUALITY_HEARTBEAT_MS) {
+        directLastLoggedQuality.set(key, { quality, loggedAt: now });
+        logDirectRoom("network_quality", { roomId, guestId: meta.guestId, role, socketId: socket.id, quality });
+      }
+    }
   });
 
   // An admin's monitoring socket is never in directRoomSockets (that map is

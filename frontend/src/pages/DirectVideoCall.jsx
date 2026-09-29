@@ -40,7 +40,6 @@ import {
   FiMinimize,
   FiMinimize2,
   FiRefreshCw,
-  FiEye,
 } from "react-icons/fi";
 
 const MEDIA_CONSTRAINTS = {
@@ -217,15 +216,13 @@ const makeOfferId = () =>
 const CHAT_SEND_COOLDOWN_MS = 300;
 
 const CONNECTION_STATS_INTERVAL_MS = 5000;
-// Phase 5.1: how often a live-monitor-sample is sent while an admin is
-// watching — independent of, and faster than, CONNECTION_STATS_INTERVAL_MS
-// above (that one drives getStats() itself, which this reuses rather than
-// polling a second time).
-const LIVE_MONITOR_SAMPLE_INTERVAL_MS = 1500;
-// Phase 3.1: max time between direct-network-quality reports even with no
-// bucket change — an admin looking at a report should never see a call with
-// zero quality data just because it stayed "good" the whole time.
-const NETWORK_QUALITY_HEARTBEAT_MS = 30000;
+// direct-call-stats send cadence: every ~5s always, faster while an admin
+// has the report page open (told via direct-monitoring-active) — never
+// gated on a button, never shown to the participant. Independent of
+// CONNECTION_STATS_INTERVAL_MS above, which drives getStats() itself (this
+// reuses those cached readings rather than polling a second time).
+const DIRECT_CALL_STATS_DEFAULT_INTERVAL_MS = 5000;
+const DIRECT_CALL_STATS_WATCHED_INTERVAL_MS = 1500;
 
 // "You are muted" reminder tuning — see the mutedReminderMeterRef doc
 // comment for the local-only mic-level approach. Sustain is tracked as a
@@ -571,10 +568,11 @@ export default function DirectVideoCall() {
   }, []);
 
   const [callStatus, setCallStatus] = useState("waiting"); // waiting | connecting | connected | reconnecting
-  // Phase 5.1: true only while an admin has this room's Live view open — see
-  // the "direct-monitoring-active" listener below. Drives both the
-  // transparency indicator and whether startStatsCollection sends samples.
-  const [beingMonitored, setBeingMonitored] = useState(false);
+  // True only while an admin has this room's report page open — see the
+  // "direct-monitoring-active" listener below. A ref, not state: it only
+  // ever speeds up how often direct-call-stats is sent (see that effect
+  // above), and is deliberately never rendered — there is no
+  // participant-facing "being watched" indicator.
   const beingMonitoredRef = useRef(false);
   const [peerLeftNotice, setPeerLeftNotice] = useState(false);
   const [peerName, setPeerName] = useState("");
@@ -698,18 +696,16 @@ export default function DirectVideoCall() {
   const dragRef = useRef({ active: false, ox: 0, oy: 0, ex: 0, ey: 0 });
   const statsTimerRef = useRef(null);
   const lastStatsSampleRef = useRef(null);
-  // Phase 5.1: last RTT sampled by the 5s stats poll below — read by the
-  // separate, faster live-monitor-sample interval so that one doesn't need
-  // its own getStats() poll (which would mean two concurrent stats polls
-  // running whenever an admin is watching).
+  // Last RTT/jitter/quality sampled by the 5s stats poll below — read by the
+  // separate, faster direct-call-stats interval so that one doesn't need its
+  // own getStats() poll (which would mean two concurrent stats polls running
+  // whenever an admin is watching).
   const lastRttRef = useRef(null);
-  const liveMonitorTimerRef = useRef(null);
+  const lastJitterRef = useRef(null);
+  const lastQualityRef = useRef("unknown");
+  const directCallStatsTimerRef = useRef(null);
+  const lastStatsEmitAtRef = useRef(0);
   const iceConfigPromiseRef = useRef(null);
-  // Phase 3.1: last quality bucket reported to the server, and when — used
-  // to only emit direct-network-quality on a good<->poor-style bucket
-  // change, or a 30s heartbeat otherwise. Never every 5s stats poll.
-  const lastReportedQualityRef = useRef("");
-  const lastQualityReportAtRef = useRef(0);
 
   // ── Reconnection state — mirrors VideoCall.jsx's equivalent refs ────────
   const iceRestartTimerRef = useRef(null);
@@ -1278,6 +1274,8 @@ export default function DirectVideoCall() {
         try {
           const stats = await pc.getStats();
           const diagnostics = { rtt: null, packetsReceived: 0, packetsLost: 0 };
+          let jitterSum = 0;
+          let jitterStreams = 0;
           for (const report of stats.values()) {
             if (report.type === "candidate-pair" && report.state === "succeeded") {
               if (typeof report.currentRoundTripTime === "number") {
@@ -1291,6 +1289,10 @@ export default function DirectVideoCall() {
               if (typeof report.packetsLost === "number") {
                 diagnostics.packetsLost += report.packetsLost;
               }
+              if (typeof report.jitter === "number") {
+                jitterSum += report.jitter;
+                jitterStreams += 1;
+              }
             }
           }
           const quality = deriveConnectionQuality(diagnostics, lastStatsSampleRef.current);
@@ -1299,58 +1301,55 @@ export default function DirectVideoCall() {
             packetsLost: diagnostics.packetsLost,
           };
           lastRttRef.current = diagnostics.rtt;
+          lastJitterRef.current = jitterStreams > 0 ? Math.round((jitterSum / jitterStreams) * 1000) : null;
+          lastQualityRef.current = quality;
           setConnectionQuality(quality);
-          // Phase 3.1: report to the server only on a bucket change or a 30s
-          // heartbeat — never on every 5s poll, which would make
-          // DirectRoomEvent noise proportional to call length for no benefit.
-          if (quality !== "unknown" && socket.connected) {
-            const now = Date.now();
-            const changed = quality !== lastReportedQualityRef.current;
-            const heartbeatDue = now - lastQualityReportAtRef.current >= NETWORK_QUALITY_HEARTBEAT_MS;
-            if (changed || heartbeatDue) {
-              lastReportedQualityRef.current = quality;
-              lastQualityReportAtRef.current = now;
-              socket.emit("direct-network-quality", { roomId, quality });
-            }
-          }
           evaluateMediaStallWatchdog(pc, stats);
         } catch (err) {
           console.warn("[direct-video-call] getStats failed:", err.message);
         }
       }, CONNECTION_STATS_INTERVAL_MS);
     },
-    [stopStatsCollection, evaluateMediaStallWatchdog, roomId],
+    [stopStatsCollection, evaluateMediaStallWatchdog],
   );
 
-  // Phase 5.1: while beingMonitored is true, send a live sample every ~1.5s —
-  // local-only readings already computed elsewhere (the always-enabled mic
-  // clone from setupMutedReminderMeter, and the last RTT/packet counts from
-  // the stats poll above), never a new getStats() call of its own. Stops the
-  // instant beingMonitored goes false, and never runs at all when nobody is
-  // watching — so an idle call sends nothing extra either way.
+  // Technical-only telemetry — never audio/video, never an audio/mic level.
+  // Always on while in a call (no button, no participant-facing notice):
+  // every ~5s by default, faster (~1.5s) while an admin has the report page
+  // open (told via direct-monitoring-active, tracked in beingMonitoredRef —
+  // a ref only, deliberately never rendered, so nothing shows the
+  // participant a "being watched" signal). Reuses the last RTT/jitter/
+  // quality already computed by the stats poll above rather than a second
+  // concurrent getStats() call.
   useEffect(() => {
-    if (!beingMonitored) return undefined;
-    liveMonitorTimerRef.current = setInterval(() => {
+    if (stage !== "call") return undefined;
+    directCallStatsTimerRef.current = setInterval(() => {
       if (!socket.connected) return;
-      const micLevel = mutedReminderMeterRef.current?.meter.getLevel() ?? 0;
+      const intervalMs = beingMonitoredRef.current
+        ? DIRECT_CALL_STATS_WATCHED_INTERVAL_MS
+        : DIRECT_CALL_STATS_DEFAULT_INTERVAL_MS;
+      const now = Date.now();
+      if (now - lastStatsEmitAtRef.current < intervalMs) return;
+      lastStatsEmitAtRef.current = now;
       const sample = lastStatsSampleRef.current;
-      socket.emit("direct-live-monitor-sample", {
+      socket.emit("direct-call-stats", {
         roomId,
-        micLevel,
         micOn: micOnRef.current,
         camOn: camOnRef.current,
         connectionState: pcRef.current?.connectionState || "unknown",
         rtt: lastRttRef.current,
+        jitter: lastJitterRef.current,
+        quality: lastQualityRef.current,
         packetLoss: sample && sample.packetsReceived + sample.packetsLost > 0
           ? sample.packetsLost / (sample.packetsReceived + sample.packetsLost)
           : null,
       });
-    }, LIVE_MONITOR_SAMPLE_INTERVAL_MS);
+    }, DIRECT_CALL_STATS_WATCHED_INTERVAL_MS);
     return () => {
-      clearInterval(liveMonitorTimerRef.current);
-      liveMonitorTimerRef.current = null;
+      clearInterval(directCallStatsTimerRef.current);
+      directCallStatsTimerRef.current = null;
     };
-  }, [beingMonitored, roomId]);
+  }, [roomId, stage]);
 
   // ── Assign local/remote streams to whichever <video> is in the main vs.
   // pip slot right now — kept as a single source of truth so swapping the
@@ -1533,8 +1532,8 @@ export default function DirectVideoCall() {
   const cleanupCall = useCallback(() => {
     stopMutedReminderMeter();
     beingMonitoredRef.current = false;
-    clearInterval(liveMonitorTimerRef.current);
-    liveMonitorTimerRef.current = null;
+    clearInterval(directCallStatsTimerRef.current);
+    directCallStatsTimerRef.current = null;
     if (cleanupDoneRef.current) return;
     cleanupDoneRef.current = true;
     socket.emit("leave-direct-room", { roomId });
@@ -2512,13 +2511,12 @@ export default function DirectVideoCall() {
       setPeerCamOff(Boolean(isCamOff));
     };
 
-    // Phase 5.1: transparency signal — an admin's Live view toggles this for
-    // everyone currently in the room (via the server's direct_room_<id>
-    // broadcast), never targeted at just one side.
+    // An admin's report page toggles this for everyone currently in the
+    // room (via the server's direct_room_<id> broadcast) — only ever speeds
+    // up direct-call-stats' send cadence, never shown in the UI.
     const handleMonitoringActive = (active) => {
       if (!mountedRef.current) return;
       beingMonitoredRef.current = Boolean(active);
-      setBeingMonitored(Boolean(active));
     };
 
     const handleRoomError = ({ code, msg } = {}) => {
@@ -4066,14 +4064,6 @@ export default function DirectVideoCall() {
           <div className="hc-vc__logo-mark">
             <img src={HumancareLogo} alt="Humancare Connect" className="hc-vc__logo-img" />
           </div>
-          {beingMonitored && (
-            <span
-              className="hc-vc__peer-media-badge"
-              title="An admin can currently see this call's connection quality (mic level, mute state, connection state) — never your audio or video."
-            >
-              <FiEye /> Admin monitoring connection quality
-            </span>
-          )}
         </div>
 
         <div className="hc-vc__meta-party">

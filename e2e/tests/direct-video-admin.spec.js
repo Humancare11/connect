@@ -331,7 +331,7 @@ test.describe("direct call — admin panel", () => {
     }
   });
 
-  test("Phase 5.1: Live view streams updates while watched, stops when closed, survives admin disconnect", async ({
+  test("Live view: auto-watches on page open (no button), samples land, survives admin disconnect", async ({
     browser,
     baseURL,
   }) => {
@@ -348,42 +348,28 @@ test.describe("direct call — admin panel", () => {
         waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
       ]);
 
-      // Not being monitored yet — no transparency indicator on either side.
-      await expect(host.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0);
-
+      // No "Start Live Monitoring" button — opening the report page alone
+      // starts watching, and no participant-facing notice exists any more
+      // (technical telemetry is always-on regardless of who's watching).
       await admin.page.goto(`/admin-dashboard/direct-video-consultation/calls/${room.roomId}`, {
         waitUntil: "domcontentloaded",
       });
-      await admin.page.getByRole("button", { name: "Start Live Monitoring" }).click();
+      await expect(admin.page.getByRole("button", { name: /live monitoring/i })).toHaveCount(0);
 
-      // Both participants see the transparency indicator once watching starts.
-      await expect(host.page.getByText(/admin monitoring connection quality/i)).toBeVisible({ timeout: 10_000 });
-      await expect(guest.page.getByText(/admin monitoring connection quality/i)).toBeVisible({ timeout: 10_000 });
-
-      // Admin sees live samples land for both participants (mic level/mute/
-      // connection state), not just placeholders.
+      // Live samples land for both participants (mic/camera on-off,
+      // connection state, RTT/loss/jitter) without any click.
       const liveCard = admin.page.locator(".dvc-card", { has: admin.page.locator("h2", { hasText: "Live" }) });
       await expect(liveCard.getByText("No samples yet…")).toHaveCount(0, { timeout: 15_000 });
+      await expect(liveCard.getByText(/RTT:/)).toBeVisible();
 
-      // Stop watching — the indicator disappears from both call pages, which
-      // is only possible because the clients actually stopped sending (the
-      // server only clears it once the watcher count hits zero).
-      await admin.page.getByRole("button", { name: "Stop Live Monitoring" }).click();
-      await expect(host.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0, { timeout: 10_000 });
-      await expect(guest.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0, { timeout: 10_000 });
-
-      // Start again, then drop the admin's own connection mid-watch — the
-      // call between host and guest must be completely unaffected.
-      await admin.page.getByRole("button", { name: "Start Live Monitoring" }).click();
-      await expect(host.page.getByText(/admin monitoring connection quality/i)).toBeVisible({ timeout: 10_000 });
+      // Dropping the admin's own connection mid-watch must leave the call
+      // between host and guest completely unaffected.
       await admin.context.close();
       adminClosed = true;
 
       await host.page.waitForTimeout(3_000);
       await waitForVideoFlowing(host.page, { timeoutMs: 10_000, label: "host still live after admin disconnect" });
       await waitForVideoFlowing(guest.page, { timeoutMs: 10_000, label: "guest still live after admin disconnect" });
-      // The server's admin-disconnect cleanup drops the last watcher too.
-      await expect(host.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0, { timeout: 10_000 });
     } finally {
       await host.context.close();
       await guest.context.close();

@@ -377,6 +377,7 @@ export default function AdminDirectVideoConsultation() {
                   <th>Status</th>
                   <th>Link</th>
                   <th>PINs</th>
+                  <th>Report</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -406,6 +407,11 @@ export default function AdminDirectVideoConsultation() {
                         )}
                       </td>
                       <td>
+                        <Link className="dvc-link-btn" to={`/admin-dashboard/direct-video-consultation/calls/${room.roomId}`}>
+                          Report
+                        </Link>
+                      </td>
+                      <td>
                         <button
                           type="button"
                           className="dvc-link-btn"
@@ -418,7 +424,7 @@ export default function AdminDirectVideoConsultation() {
                     </tr>
                     {expandedPinRoomId === room.roomId && (
                       <tr className="dvc-pin-panel-row">
-                        <td colSpan={8}>
+                        <td colSpan={9}>
                           {pinLoadingRoomId === room.roomId ? (
                             <div className="dvc-empty">Loading PINs…</div>
                           ) : pinErrorByRoom[room.roomId] ? (
