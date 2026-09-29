@@ -357,10 +357,11 @@ test.describe("direct call — admin panel", () => {
       await expect(admin.page.getByRole("button", { name: /live monitoring/i })).toHaveCount(0);
 
       // Live samples land for both participants (mic/camera on-off,
-      // connection state, RTT/loss/jitter) without any click.
+      // connection state, RTT/loss/jitter) without any click — both cards
+      // show their own "RTT: ..." line, hence .first() below.
       const liveCard = admin.page.locator(".dvc-card", { has: admin.page.locator("h2", { hasText: "Live" }) });
       await expect(liveCard.getByText("No samples yet…")).toHaveCount(0, { timeout: 15_000 });
-      await expect(liveCard.getByText(/RTT:/)).toBeVisible();
+      await expect(liveCard.getByText(/RTT:/).first()).toBeVisible();
 
       // Dropping the admin's own connection mid-watch must leave the call
       // between host and guest completely unaffected.
