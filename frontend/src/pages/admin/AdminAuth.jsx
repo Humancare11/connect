@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import "../log.css";
@@ -21,7 +21,12 @@ function EyeIcon({ open }) {
 
 export default function AdminAuthPage() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [error, setError] = useState("");
+  const location = useLocation();
+  const [error, setError] = useState(
+    location.state?.sessionExpired
+      ? "Your session has expired. Please log in again."
+      : "",
+  );
   const [loading, setLoading] = useState(false);
   const [showPasswords, setShowPasswords] = useState({ super: false, admin: false });
 
@@ -30,6 +35,7 @@ export default function AdminAuthPage() {
 
   const navigate = useNavigate();
   const { login } = useAdmin();
+  const from = location.state?.from;
 
   const handleAdminChange = (e) =>
     setAdminForm({ ...adminForm, [e.target.name]: e.target.value });
@@ -53,7 +59,7 @@ export default function AdminAuthPage() {
       }
 
       login(user);
-      navigate("/admin-dashboard");
+      navigate(from || "/admin-dashboard");
     } catch (err) {
       setError(err.response?.data?.msg || "Admin login failed. Please try again.");
     }
@@ -77,7 +83,7 @@ export default function AdminAuthPage() {
       }
 
       login(user);
-      navigate("/superadmin-dashboard");
+      navigate(from || "/superadmin-dashboard");
     } catch (err) {
       setError(err.response?.data?.msg || "Super Admin login failed. Please try again.");
     }

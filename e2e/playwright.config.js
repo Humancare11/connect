@@ -66,6 +66,12 @@ if (!staging && isMainProcess) {
         FRONTEND_URL: baseURL,
         SMTP_HOST: "127.0.0.1",
         SMTP_PORT: "1",
+        // Test-only: shortens the access-token lifetime so the session-
+        // refresh e2e tests can exercise real expiry in seconds instead of
+        // waiting out the real 15 minutes. Empty/unset in a normal run —
+        // see verifyToken.js's own gate, which additionally refuses this
+        // override outright in production regardless of what's set here.
+        ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || "",
       },
     },
     {

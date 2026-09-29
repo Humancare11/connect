@@ -60,9 +60,23 @@ export default function AdminDirectVideoCallDetail() {
     socket.off("direct-live-monitor-sample", handleLiveSample);
   }, [roomId, handleLiveSample]);
 
-  const startWatching = useCallback(() => {
+  const startWatching = useCallback(async () => {
+    // This admin socket has typically never connected before this exact
+    // click — no other admin page uses it. If the admin's access token has
+    // since expired (e.g. they opened this report and left it idle),
+    // refresh first so the handshake below authenticates with a current
+    // token rather than one io.use() will reject, which would otherwise
+    // leave "Start Live Monitoring" silently doing nothing (isAdminSocket()
+    // fails closed on the server for an unauthenticated socket).
+    await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true }).catch(() => {});
     setSocketAuthRole("admin");
-    if (!socket.connected) socket.connect();
+    if (socket.connected) {
+      // Already connected under a possibly-stale identity (e.g. connected
+      // once, then sat idle past token expiry) — force a fresh handshake
+      // with the just-refreshed token instead of reusing the old one.
+      socket.disconnect();
+    }
+    socket.connect();
     liveOpenRef.current = true;
     setLiveOpen(true);
     setLiveSamples({});

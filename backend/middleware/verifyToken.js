@@ -6,7 +6,22 @@ const Doctor = require("../models/Doctor");
 const Partner = require("../models/Partner");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 
-const ACCESS_TOKEN_MS = 15 * 60 * 1000;
+// Test-only override so the e2e suite can exercise the refresh flow in
+// seconds instead of waiting out the real 15-minute window. Accepts a plain
+// number of seconds ("60") or a shorthand ("60s"/"2m"). Gated on NODE_ENV
+// explicitly (not just "unset in prod") so this can never take effect in
+// production even if the env var leaks into that environment somehow.
+function parseAccessTokenTtlOverride(raw) {
+  if (!raw) return null;
+  const match = String(raw).trim().match(/^(\d+)(s|m)?$/i);
+  if (!match) return null;
+  const value = Number(match[1]);
+  const unit = (match[2] || "s").toLowerCase();
+  return value * (unit === "m" ? 60_000 : 1_000);
+}
+const ACCESS_TOKEN_MS =
+  (process.env.NODE_ENV !== "production" && parseAccessTokenTtlOverride(process.env.ACCESS_TOKEN_TTL)) ||
+  15 * 60 * 1000;
 const REFRESH_TOKEN_MS = 8 * 60 * 60 * 1000;
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 const isSecureCookie = process.env.NODE_ENV === "production" || process.env.HTTPS === "true";
