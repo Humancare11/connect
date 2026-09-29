@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const { TURN_REGIONS, buildStunServers } = require("../utils/iceServerRegions");
 const { generateTurnCredentials } = require("../utils/turnCredentials");
+const { encryptPin, decryptPin, generatePin } = require("../utils/directPinCrypto");
 
 const MIN_EXPIRY_HOURS = 1;
 const MAX_EXPIRY_HOURS = 72;
@@ -53,6 +54,10 @@ function serializeRoom(req, room) {
     // guessed from `note`, per the Phase 3 plan.
     doctorId: room.doctorId || null,
     doctorName: room.doctorName || "",
+    // Never the PIN itself — just whether this room uses the PIN flow at
+    // all (rooms created before it existed keep working the old
+    // guestId/host-guest way, gated on this being false).
+    hasPin: Boolean(room.doctorPinEncrypted),
     maxParticipants: room.maxParticipants,
     expiresAt: room.expiresAt,
     firstJoinedAt: room.firstJoinedAt,
@@ -88,6 +93,14 @@ const createDirectVideoRoom = async (req, res) => {
       }
     }
 
+    // Generated fresh here, not read back later — the DB only ever stores
+    // the encrypted form. This is the ONE moment (plus a later explicit
+    // "view PIN" or "regenerate PIN" action) the plaintext PIN exists
+    // server-side; never logged, never put in the room's own document
+    // unencrypted.
+    const doctorPin = generatePin();
+    const patientPin = generatePin();
+
     // Extremely unlikely to collide (192-bit token), but guard against the
     // theoretical unique-index race with a couple of retries.
     let room = null;
@@ -101,6 +114,10 @@ const createDirectVideoRoom = async (req, res) => {
           doctorName,
           note,
           expiresAt: new Date(Date.now() + expiresInHours * 60 * 60 * 1000),
+          doctorPinEncrypted: encryptPin(doctorPin),
+          patientPinEncrypted: encryptPin(patientPin),
+          doctorPinRegeneratedAt: new Date(),
+          patientPinRegeneratedAt: new Date(),
         });
       } catch (err) {
         if (err?.code !== 11000) throw err;
@@ -113,6 +130,8 @@ const createDirectVideoRoom = async (req, res) => {
     res.status(201).json({
       msg: "Secure video consultation link generated.",
       room: serializeRoom(req, room),
+      doctorPin,
+      patientPin,
     });
   } catch (error) {
     console.error("createDirectVideoRoom error:", error);
@@ -161,6 +180,98 @@ const closeDirectVideoRoom = async (req, res) => {
   } catch (error) {
     console.error("closeDirectVideoRoom error:", error);
     res.status(500).json({ msg: "Failed to close the room." });
+  }
+};
+
+// GET /api/direct-video-room/:roomId/pins — admin views both PINs again
+// (they're encrypted, not hashed, specifically so this can exist — see the
+// PIN-crypto plan). Every view is logged with the admin's name; the PIN
+// value itself never appears in that log entry, only in this response.
+const getDirectRoomPins = async (req, res) => {
+  try {
+    const room = await DirectVideoRoom.findOne({ roomId: req.params.roomId })
+      .select("doctorPinEncrypted patientPinEncrypted doctorPinRegeneratedAt patientPinRegeneratedAt")
+      .lean();
+    if (!room) return res.status(404).json({ msg: "Room not found." });
+    if (!room.doctorPinEncrypted) {
+      return res.status(404).json({ msg: "This link was created before PINs existed — it has no PIN." });
+    }
+
+    const admin = req.user?.id ? await User.findById(req.user.id).select("name email").lean() : null;
+    const logDirectRoom = req.app.get("logDirectRoom");
+    logDirectRoom?.("admin_viewed_pins", {
+      roomId: req.params.roomId,
+      detail: { adminId: req.user?.id || null, adminName: admin?.name || req.user?.name || req.user?.email || "Admin" },
+    });
+
+    res.status(200).json({
+      doctorPin: decryptPin(room.doctorPinEncrypted),
+      patientPin: decryptPin(room.patientPinEncrypted),
+      doctorPinRegeneratedAt: room.doctorPinRegeneratedAt,
+      patientPinRegeneratedAt: room.patientPinRegeneratedAt,
+    });
+  } catch (error) {
+    console.error("getDirectRoomPins error:", error);
+    res.status(500).json({ msg: "Failed to fetch PINs." });
+  }
+};
+
+// POST /api/direct-video-room/:roomId/regenerate-pin — admin action.
+// body: { role: "doctor"|"patient", endCurrentSession?: boolean }
+// Default (endCurrentSession falsy): the CURRENT device's session token
+// stays valid (a refresh doesn't kick the legitimate user off) — only the
+// OLD PIN value stops working for a NEW join, since it no longer matches
+// what's encrypted here. endCurrentSession: true additionally clears that
+// role's session in the DB and asks the live socket holding it (if any) to
+// disconnect with a clear message — see server.js's endDirectRoomSession,
+// wired in the socket-layer step of this feature.
+const regeneratePin = async (req, res) => {
+  try {
+    const role = String(req.body?.role || "").toLowerCase();
+    if (role !== "doctor" && role !== "patient") {
+      return res.status(400).json({ msg: "role must be \"doctor\" or \"patient\"." });
+    }
+    const endCurrentSession = Boolean(req.body?.endCurrentSession);
+
+    const room = await DirectVideoRoom.findOne({ roomId: req.params.roomId });
+    if (!room) return res.status(404).json({ msg: "Room not found." });
+    if (!room.doctorPinEncrypted) {
+      return res.status(404).json({ msg: "This link was created before PINs existed — it has no PIN to regenerate." });
+    }
+
+    const newPin = generatePin();
+    const encryptedField = role === "doctor" ? "doctorPinEncrypted" : "patientPinEncrypted";
+    const regeneratedAtField = role === "doctor" ? "doctorPinRegeneratedAt" : "patientPinRegeneratedAt";
+    room[encryptedField] = encryptPin(newPin);
+    room[regeneratedAtField] = new Date();
+
+    if (endCurrentSession) {
+      const sessionField = role === "doctor" ? "doctorSession" : "patientSession";
+      room[sessionField] = { sessionId: "", guestId: "", startedAt: null };
+    }
+    await room.save();
+
+    if (endCurrentSession) {
+      const endSession = req.app.get("endDirectRoomSession");
+      endSession?.(req.params.roomId, role, "Your session has ended. Please enter the new PIN.");
+    }
+
+    const admin = req.user?.id ? await User.findById(req.user.id).select("name email").lean() : null;
+    const logDirectRoom = req.app.get("logDirectRoom");
+    logDirectRoom?.("admin_regenerate_pin", {
+      roomId: req.params.roomId,
+      detail: {
+        adminId: req.user?.id || null,
+        adminName: admin?.name || req.user?.name || req.user?.email || "Admin",
+        role,
+        endedSession: endCurrentSession,
+      },
+    });
+
+    res.status(200).json({ msg: `${role === "doctor" ? "Doctor" : "Patient"} PIN regenerated.`, pin: newPin });
+  } catch (error) {
+    console.error("regeneratePin error:", error);
+    res.status(500).json({ msg: "Failed to regenerate the PIN." });
   }
 };
 
@@ -369,6 +480,10 @@ function describeEvent(event) {
       return `An admin (${event.detail?.adminName || "unknown"}) cleared ${event.detail?.cleared ?? 0} stuck seat(s)`;
     case "admin_force_end_call":
       return `An admin (${event.detail?.adminName || "unknown"}) force-ended the call`;
+    case "admin_viewed_pins":
+      return `An admin (${event.detail?.adminName || "unknown"}) viewed the PINs`;
+    case "admin_regenerate_pin":
+      return `An admin (${event.detail?.adminName || "unknown"}) regenerated the ${event.detail?.role || ""} PIN${event.detail?.endedSession ? " and ended the current session" : ""}`;
     default:
       return `${who}: ${event.type}`;
   }
@@ -599,4 +714,6 @@ module.exports = {
   getDirectCallAlerts,
   getDirectCallAlertsUnreadCount,
   markDirectCallAlertRead,
+  getDirectRoomPins,
+  regeneratePin,
 };

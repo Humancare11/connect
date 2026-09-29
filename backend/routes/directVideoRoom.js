@@ -16,6 +16,8 @@ const {
   getDirectCallAlerts,
   getDirectCallAlertsUnreadCount,
   markDirectCallAlertRead,
+  getDirectRoomPins,
+  regeneratePin,
 } = require("../controllers/directVideoRoomController");
 
 // Admin: generate / list / close rooms
@@ -35,6 +37,8 @@ router.get("/:roomId/events", verifyAdminToken, adminOnly, getDirectVideoRoomEve
 router.post("/:roomId/extend", verifyAdminToken, adminOnly, extendDirectVideoRoomLink);
 router.post("/:roomId/clear-stuck-seats", verifyAdminToken, adminOnly, clearStuckSeats);
 router.post("/:roomId/force-end", verifyAdminToken, adminOnly, forceEndDirectVideoCall);
+router.get("/:roomId/pins", verifyAdminToken, adminOnly, getDirectRoomPins);
+router.post("/:roomId/regenerate-pin", verifyAdminToken, adminOnly, regeneratePin);
 
 // Public: no login required — anyone with the link checks room validity
 // before joining as a guest, same trust model as a Google Meet link.

@@ -24,6 +24,34 @@ const directVideoRoomSchema = new mongoose.Schema(
       index: true,
     },
     maxParticipants: { type: Number, default: 2 },
+    // PIN-based roles (added after this model's initial version — rooms
+    // created before this existed simply have these empty, and every PIN
+    // code path is gated on `doctorPinEncrypted` being non-empty so those
+    // old links keep working the original guestId/host-guest way until
+    // they expire). Encrypted (AES-256-GCM, utils/directPinCrypto.js), not
+    // hashed — an admin must be able to view/resend a forgotten PIN, see
+    // the implementation plan for why that outweighs one-way hashing here.
+    doctorPinEncrypted: { type: String, default: "" },
+    patientPinEncrypted: { type: String, default: "" },
+    doctorPinRegeneratedAt: { type: Date, default: null },
+    patientPinRegeneratedAt: { type: Date, default: null },
+    // Which session currently holds each role's single seat — the source
+    // of truth a session token is checked against (see
+    // utils/directSessionToken.js): a token is only honored while its
+    // sessionId still matches here. Persisted (survives a server restart,
+    // unlike the in-memory directRoomRoles map in server.js) but socketId
+    // is NOT stored here — that's purely a live, in-memory concern,
+    // meaningless across a restart anyway.
+    doctorSession: {
+      sessionId: { type: String, default: "" },
+      guestId: { type: String, default: "" },
+      startedAt: { type: Date, default: null },
+    },
+    patientSession: {
+      sessionId: { type: String, default: "" },
+      guestId: { type: String, default: "" },
+      startedAt: { type: Date, default: null },
+    },
     // No `index: true` here — see the TTL index below, which replaces it.
     // Two indexes on the exact same single key ({expiresAt: 1}) are not
     // allowed (MongoDB rejects the second with IndexOptionsConflict), so

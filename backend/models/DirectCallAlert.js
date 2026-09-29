@@ -9,7 +9,7 @@ const directCallAlertSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ["room_full", "repeated_retries", "never_connected"],
+    enum: ["room_full", "repeated_retries", "never_connected", "pin_brute_force"],
   },
   message: { type: String, default: "" },
   doctorName: { type: String, default: "" },
