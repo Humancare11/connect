@@ -401,6 +401,9 @@ const getDirectVideoRoomEvents = async (req, res) => {
         connectionState: "unknown",
         isMicOff: null,
         isCamOff: null,
+        // Phase 5.2 — admin-only (this whole endpoint is verifyAdminToken +
+        // adminOnly gated already), masked at write time in server.js.
+        maskedIp: "",
       };
       if (event.device || event.browser || event.os) {
         existing.device = event.device || existing.device;
@@ -409,6 +412,7 @@ const getDirectVideoRoomEvents = async (req, res) => {
       }
       if (event.role) existing.role = event.role;
       if (event.type === "joined" && !existing.joinedAt) existing.joinedAt = event.createdAt;
+      if (event.type === "joined" && event.detail?.maskedIp) existing.maskedIp = event.detail.maskedIp;
       if (event.type === "media_state_changed") {
         if (typeof event.detail?.isMicOff === "boolean") existing.isMicOff = event.detail.isMicOff;
         if (typeof event.detail?.isCamOff === "boolean") existing.isCamOff = event.detail.isCamOff;

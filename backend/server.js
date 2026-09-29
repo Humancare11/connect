@@ -36,6 +36,7 @@ const DirectRoomEvent = require("./models/DirectRoomEvent");
 const DirectCallAlert = require("./models/DirectCallAlert");
 const { createAlertEngine } = require("./utils/directCallAlerts");
 const { sendEmail } = require("./utils/sendEmail");
+const { resolveMaskedIp } = require("./utils/maskIp");
 const { describeCallClient } = require("./utils/callClientInfo");
 const { verifyToken, verifyAdminToken, adminOnly } = require("./middleware/verifyToken");
 const { recordActivity } = require("./utils/activityLogger");
@@ -733,6 +734,9 @@ const directNetworkQualityLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 }
 // reconnect) — this cap only exists to stop a misbehaving/malicious client
 // from spamming it, not to bound expected traffic.
 const directCallConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+// Phase 5.1: clients send a sample ~every 1-2s while an admin is watching —
+// this cap is generous headroom over that, not a bound on expected traffic.
+const directLiveMonitorSampleLimiter = makeSocketLimiter({ windowMs: 1000, max: 2 });
 
 const SOCKET_LIMITERS = [
   chatMessageLimiter,
@@ -749,6 +753,7 @@ const SOCKET_LIMITERS = [
   directMediaStateLimiter,
   directNetworkQualityLimiter,
   directCallConnectedLimiter,
+  directLiveMonitorSampleLimiter,
 ];
 
 app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
@@ -1209,6 +1214,20 @@ const PRESENCE_CHECK_TIMEOUT_MS = 3000;
 // exactly the same.
 const DIRECT_ROOM_EVENTS_ENABLED = process.env.DIRECT_ROOM_EVENTS_ENABLED !== "false";
 
+// Phase 5.1: live admin monitoring. ON by default everywhere — turning it
+// off just means the admin report's "Live" view has nothing to show; the
+// call itself never depends on it.
+const DIRECT_CALL_LIVE_MONITOR_ENABLED = process.env.DIRECT_CALL_LIVE_MONITOR_ENABLED !== "false";
+// roomId -> Set<adminSocketId> currently watching. Only ever touched by the
+// admin-watch/-unwatch handlers and the admin disconnect cleanup below.
+const directRoomWatchers = new Map();
+function directMonitorRoomName(roomId) {
+  return `direct_monitor_${roomId}`;
+}
+function isAdminSocket(socket) {
+  return socket.userRole === "admin" || socket.userRole === "superadmin";
+}
+
 // Phase 4: admin alerts (email + in-app). See utils/directCallAlerts.js for
 // the flag/debounce/trigger logic — this just wires the real Mongo model,
 // mailer, and report-link builder into it. Like DIRECT_ROOM_EVENTS_ENABLED
@@ -1489,6 +1508,10 @@ function clearDirectRoomRoles(roomId) {
   if (entry?.cleanupTimer) clearTimeout(entry.cleanupTimer);
   directRoomRoles.delete(roomId);
   directCallAlertEngine.cleanupRoom(roomId);
+  // Phase 5.1: a room can fully close while still being watched (admin left
+  // the Live view open past the call ending) — drop the bookkeeping so it
+  // doesn't linger until that admin socket disconnects.
+  directRoomWatchers.delete(roomId);
 }
 const DIRECT_ROOM_ID_PATTERN = /^[a-f0-9]{16,128}$/i;
 const DIRECT_GUEST_ID_PATTERN = /^[a-zA-Z0-9-]{8,64}$/;
@@ -2396,12 +2419,17 @@ io.on("connection", (socket) => {
     DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => { });
     DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => { });
 
+    // Phase 5.2: masked IP per join — see utils/maskIp.js. resolveMaskedIp()
+    // already returns "" when DIRECT_CALL_IP_LOGGING_ENABLED=false or no IP
+    // could be resolved; omit the field entirely rather than storing "".
+    const maskedIp = resolveMaskedIp(socket);
     logDirectRoom("joined", {
       roomId,
       guestId,
       socketId: socket.id,
       role: isInitiator ? "initiator" : "guest",
       resumedCall,
+      ...(maskedIp ? { maskedIp } : {}),
     });
     socket.emit("direct-room-joined", { roomId, isInitiator, resumedCall });
     if (existingPeerName) socket.emit("direct-peer-joined", { name: existingPeerName });
@@ -2543,6 +2571,89 @@ io.on("connection", (socket) => {
     if (!directCallConnectedLimiter.allow(socket.id)) return;
     const meta = directRoomSockets.get(socket.id);
     logDirectRoom("connected", { roomId, guestId: meta?.guestId, socketId: socket.id });
+  });
+
+  // ── Phase 5.1: live admin monitoring ──────────────────────────────────
+  // A separate room/channel (direct_monitor_<roomId>) from the call's own
+  // direct_room_<roomId> — participants are never joined to it, and an
+  // admin socket here is never joined to the call room. Clients only start
+  // sending direct-live-monitor-sample while directRoomWatchers has at
+  // least one entry for their room (told via direct-monitoring-active).
+  socket.on("admin-watch-direct-room", ({ roomId } = {}) => {
+    if (!DIRECT_CALL_LIVE_MONITOR_ENABLED) return;
+    if (!isAdminSocket(socket)) return;
+    if (!roomId || !DIRECT_ROOM_ID_PATTERN.test(roomId)) return;
+
+    let watchers = directRoomWatchers.get(roomId);
+    if (!watchers) {
+      watchers = new Set();
+      directRoomWatchers.set(roomId, watchers);
+    }
+    const wasEmpty = watchers.size === 0;
+    watchers.add(socket.id);
+    socket.join(directMonitorRoomName(roomId));
+    if (wasEmpty) {
+      io.to(directRoomName(roomId)).emit("direct-monitoring-active", true);
+    }
+  });
+
+  function stopWatchingDirectRoom(roomId) {
+    const watchers = directRoomWatchers.get(roomId);
+    if (!watchers || !watchers.has(socket.id)) return;
+    watchers.delete(socket.id);
+    socket.leave(directMonitorRoomName(roomId));
+    if (watchers.size === 0) {
+      directRoomWatchers.delete(roomId);
+      io.to(directRoomName(roomId)).emit("direct-monitoring-active", false);
+    }
+  }
+
+  socket.on("admin-unwatch-direct-room", ({ roomId } = {}) => {
+    if (!roomId) return;
+    stopWatchingDirectRoom(roomId);
+  });
+
+  // A participant only ever sends this while direct-monitoring-active told
+  // it an admin is watching — never recorded/stored, relayed live only to
+  // that room's current watchers.
+  socket.on("direct-live-monitor-sample", (sample = {}) => {
+    if (!DIRECT_CALL_LIVE_MONITOR_ENABLED) return;
+    const { roomId } = sample;
+    if (!roomId) return;
+    if (!isSocketInDirectRoom(socket, roomId)) return;
+    if (!directLiveMonitorSampleLimiter.allow(socket.id)) return;
+    const watchers = directRoomWatchers.get(roomId);
+    if (!watchers || watchers.size === 0) return;
+
+    const meta = directRoomSockets.get(socket.id);
+    const roleEntry = directRoomRoles.get(roomId);
+    const role =
+      meta?.guestId && roleEntry?.initiatorGuestId === meta.guestId
+        ? "initiator"
+        : meta?.guestId
+          ? "guest"
+          : "";
+    io.to(directMonitorRoomName(roomId)).emit("direct-live-monitor-sample", {
+      guestId: meta?.guestId || "",
+      role,
+      micLevel: typeof sample.micLevel === "number" ? Math.max(0, Math.min(1, sample.micLevel)) : 0,
+      micOn: !!sample.micOn,
+      camOn: !!sample.camOn,
+      connectionState: String(sample.connectionState || "").slice(0, 20),
+      rtt: typeof sample.rtt === "number" ? sample.rtt : null,
+      packetLoss: typeof sample.packetLoss === "number" ? sample.packetLoss : null,
+    });
+  });
+
+  // An admin's monitoring socket is never in directRoomSockets (that map is
+  // call participants only), so the other "disconnect" handler below always
+  // no-ops for it — this one specifically drops it from every room it was
+  // watching, tells that room's participants monitoring has stopped if it
+  // was the last watcher, and never touches the call itself.
+  socket.on("disconnect", () => {
+    for (const roomId of directRoomWatchers.keys()) {
+      stopWatchingDirectRoom(roomId);
+    }
   });
 
   // Ephemeral, relay-only chat — intentionally not persisted, since this

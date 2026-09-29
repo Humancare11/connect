@@ -203,6 +203,38 @@ test.describe("direct call — admin panel", () => {
     }
   });
 
+  test("Phase 5.2: a join stores only a masked IP, never the full one", async ({ browser, baseURL }) => {
+    const api = await adminApi(baseURL);
+    const host = await newParty(browser, "host", null, baseURL);
+    const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
+    try {
+      const room = await createRoomViaApi(api);
+      await joinAsGuest(host, room.roomId, "Host IP1");
+      // Give the join round trip a moment to land and be logged server-side.
+      await host.page.waitForTimeout(1_500);
+
+      const res = await api.get(`/api/direct-video-room/${room.roomId}/events`);
+      const body = await res.json();
+      const participant = (body.participants || []).find((p) => p.role === "initiator");
+      expect(participant, "expected the host's participant row").toBeTruthy();
+      expect(participant.maskedIp, "expected a masked IP to be recorded (DIRECT_CALL_IP_LOGGING_ENABLED defaults on)").toBeTruthy();
+      // Masked — an IPv4 always ends in "xxx" here; never a bare 4-octet
+      // all-numeric address (what a full, unmasked IPv4 would look like).
+      expect(participant.maskedIp).toMatch(/xxx/);
+      expect(participant.maskedIp).not.toMatch(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/);
+
+      // Same value surfaces on the report page's admin-only column.
+      await admin.page.goto(`/admin-dashboard/direct-video-consultation/calls/${room.roomId}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(admin.page.getByText(participant.maskedIp)).toBeVisible({ timeout: 10_000 });
+    } finally {
+      await host.context.close();
+      await admin.context.close();
+      await api.dispose();
+    }
+  });
+
   test("admin action: extend link pushes expiresAt forward", async ({ browser, baseURL }) => {
     const api = await adminApi(baseURL);
     const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
@@ -261,6 +293,67 @@ test.describe("direct call — admin panel", () => {
       await host.context.close();
       await guest.context.close();
       await admin.context.close();
+      await api.dispose();
+    }
+  });
+
+  test("Phase 5.1: Live view streams updates while watched, stops when closed, survives admin disconnect", async ({
+    browser,
+    baseURL,
+  }) => {
+    const api = await adminApi(baseURL);
+    const host = await newParty(browser, "host", null, baseURL);
+    const guest = await newParty(browser, "guest", null, baseURL);
+    const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
+    let adminClosed = false;
+    try {
+      const room = await createRoomViaApi(api);
+      await Promise.all([joinAsGuest(host, room.roomId, "Host Live1"), joinAsGuest(guest, room.roomId, "Guest Live1")]);
+      await Promise.all([
+        waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
+        waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
+      ]);
+
+      // Not being monitored yet — no transparency indicator on either side.
+      await expect(host.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0);
+
+      await admin.page.goto(`/admin-dashboard/direct-video-consultation/calls/${room.roomId}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await admin.page.getByRole("button", { name: "Start Live Monitoring" }).click();
+
+      // Both participants see the transparency indicator once watching starts.
+      await expect(host.page.getByText(/admin monitoring connection quality/i)).toBeVisible({ timeout: 10_000 });
+      await expect(guest.page.getByText(/admin monitoring connection quality/i)).toBeVisible({ timeout: 10_000 });
+
+      // Admin sees live samples land for both participants (mic level/mute/
+      // connection state), not just placeholders.
+      const liveCard = admin.page.locator(".dvc-card", { has: admin.page.locator("h2", { hasText: "Live" }) });
+      await expect(liveCard.getByText("No samples yet…")).toHaveCount(0, { timeout: 15_000 });
+
+      // Stop watching — the indicator disappears from both call pages, which
+      // is only possible because the clients actually stopped sending (the
+      // server only clears it once the watcher count hits zero).
+      await admin.page.getByRole("button", { name: "Stop Live Monitoring" }).click();
+      await expect(host.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0, { timeout: 10_000 });
+      await expect(guest.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0, { timeout: 10_000 });
+
+      // Start again, then drop the admin's own connection mid-watch — the
+      // call between host and guest must be completely unaffected.
+      await admin.page.getByRole("button", { name: "Start Live Monitoring" }).click();
+      await expect(host.page.getByText(/admin monitoring connection quality/i)).toBeVisible({ timeout: 10_000 });
+      await admin.context.close();
+      adminClosed = true;
+
+      await host.page.waitForTimeout(3_000);
+      await waitForVideoFlowing(host.page, { timeoutMs: 10_000, label: "host still live after admin disconnect" });
+      await waitForVideoFlowing(guest.page, { timeoutMs: 10_000, label: "guest still live after admin disconnect" });
+      // The server's admin-disconnect cleanup drops the last watcher too.
+      await expect(host.page.getByText(/admin monitoring connection quality/i)).toHaveCount(0, { timeout: 10_000 });
+    } finally {
+      await host.context.close();
+      await guest.context.close();
+      if (!adminClosed) await admin.context.close();
       await api.dispose();
     }
   });
