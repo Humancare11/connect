@@ -20,6 +20,10 @@ dist
 .env.production
 .env.production.local
 .env.uat
+.env.search-dev
+
+# Search-taxonomy migration run reports (may name databases/record ids)
+scripts/searchTaxonomy/results/
 
 # IDE
 .vscode

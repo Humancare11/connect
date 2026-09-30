@@ -611,18 +611,11 @@ app.use(
 app.use("/api/direct-video-room", require("./routes/directVideoRoom"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/rtc", require("./routes/rtc"));
+const searchRouter = require("./routes/search");
+app.use("/api/search", searchRouter);
+app.use("/api/search", searchRouter.handleSearchErrors);
 const CategoryConsultation = require("./models/CategoryConsultation");
 const Enrollment = require("./models/Enrollment");
-
-const searchRoutes = require("./searchRoutes");
-
-app.post("/api/search", (req, res) => {
-  const { query, routes } = req.body;
-
-  const results = searchRoutes(query, routes);
-
-  res.json({ results });
-});
 
 // Health Check
 app.get("/api/health", (req, res) => {
