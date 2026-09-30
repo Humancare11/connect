@@ -242,6 +242,7 @@ const offices = [
     name: "Humancare Connect, Inc.",
     lines: ["4 Peddlers Row, 1091", "Newark, DE 19702, USA"],
     email: "support@humancareconnect.co",
+    mapUrl: "https://maps.app.goo.gl/iSYoP4DP1GNhks1z6",
   },
 ];
 
@@ -655,12 +656,28 @@ export default function AboutPage() {
                       <div className="address-card__label">{addr.label}</div>
                       <h4 className="address-card__name">{addr.name}</h4>
                       <p className="address-card__lines">
-                        {addr.lines.map((l) => (
-                          <span key={l}>
-                            {l}
-                            <br />
-                          </span>
-                        ))}
+                        {addr.mapUrl ? (
+                          <a
+                            href={addr.mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="address-card__map-link"
+                          >
+                            {addr.lines.map((l) => (
+                              <span key={l}>
+                                {l}
+                                <br />
+                              </span>
+                            ))}
+                          </a>
+                        ) : (
+                          addr.lines.map((l) => (
+                            <span key={l}>
+                              {l}
+                              <br />
+                            </span>
+                          ))
+                        )}
                         <a
                           href={`mailto:${addr.email}`}
                           className="address-card__email"

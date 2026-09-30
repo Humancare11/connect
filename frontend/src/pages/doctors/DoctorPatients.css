@@ -932,14 +932,93 @@ select.dp-input {
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .dp-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+}
+
+/* Tablet portrait & below (900px) */
+@media (max-width: 900px) {
   .dp-stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: 10px;
   }
+
+  /* Horizontally scrollable table */
+  .dp-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .dp-table {
+    min-width: 560px;
+  }
+
+  .dp-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .dp-header-right {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .dp-search-wrap {
+    flex: 1;
+  }
 }
 
+/* Mobile large (640px) */
+@media (max-width: 640px) {
+  .dp-root-mp {
+    padding: 14px 0 20px;
+  }
+
+  .dp-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .dp-title {
+    font-size: 22px;
+  }
+
+  .dp-header-right {
+    width: 100%;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .dp-search-wrap {
+    width: 100%;
+  }
+
+  .dp-search {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .dp-card {
+    flex-wrap: wrap;
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .dp-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* Mobile portrait (450px) */
 @media (max-width: 450px) {
   .dp-root-mp {
     padding: 12px 0 16px;
@@ -1009,6 +1088,47 @@ select.dp-input {
     grid-template-columns: 1fr;
   }
 }
+
+/* Small mobile (380px) */
+@media (max-width: 380px) {
+  .dp-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .dp-stat {
+    padding: 10px 10px;
+  }
+
+  .dp-stat-num {
+    font-size: 18px;
+  }
+
+  .dp-title {
+    font-size: 18px;
+  }
+
+  .dp-table {
+    min-width: 440px;
+  }
+
+  .dp-card {
+    padding: 12px;
+  }
+}
+
+/* Extra small (320px) */
+@media (max-width: 320px) {
+  .dp-stats {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dp-title {
+    font-size: 16px;
+  }
+}
+
 
 .dp-med-card {
   border: 1.5px solid var(--border);

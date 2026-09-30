@@ -2,6 +2,8 @@
    Humancare — Doctor Layout  |  Glassmorphism Edition
    ═══════════════════════════════════════════════════════════════ */
 
+@import "./Dashboard.css";
+
 /* ── Reset & base ─────────────────────────────────────────────── */
 *,
 *::before,
@@ -10,6 +12,7 @@
   margin: 0;
   padding: 0;
 }
+
 
 /* ── Page shell ───────────────────────────────────────────────── */
 .dl-page {
@@ -422,19 +425,43 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE — Full Coverage: Mobile · Tablet · Desktop
    ═══════════════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
+
+/* ── Tablet landscape (1024px and below) ── */
+@media (max-width: 1024px) {
+  .dl-sidebar {
+    width: 220px;
+  }
+
+  .dl-main {
+    margin-left: calc(220px + 28px);
+    padding: 14px 14px 14px 0;
+  }
+
+  .dl-topbar {
+    padding: 0 16px;
+  }
+}
+
+/* ── Tablet portrait & below (900px and below) ── */
+@media (max-width: 900px) {
   .dl-sidebar {
     top: 10px;
     left: 10px;
     bottom: 10px;
+    width: 260px;
     transform: translateX(calc(-100% - 20px));
     border-radius: 20px;
+    z-index: 60;
   }
 
   .dl-sidebar--open {
     transform: translateX(0);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.7) inset,
+      0 24px 64px rgba(0, 0, 0, 0.35),
+      0 4px 16px rgba(0, 0, 0, 0.2);
   }
 
   .dl-main {
@@ -462,8 +489,138 @@
   .dl-topbar-eyebrow {
     display: none;
   }
+
+  /* Sidebar stays scrollable on tablet/mobile */
+  .dl-nav {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Profile block slightly more compact */
+  .dl-profile {
+    padding: 14px 16px 16px;
+    margin: 0 10px;
+  }
+
+  .dl-avatar {
+    width: 46px;
+    height: 46px;
+    font-size: 18px;
+  }
+
+  .dl-profile-name {
+    font-size: 12.5px;
+  }
+
+  .dl-profile-email {
+    font-size: 10.5px;
+  }
+
+  /* Doctor Dashboard (hc-dash) unified responsive overrides for <= 900px */
+  .hc-dash__page {
+    padding: 14px 10px;
+  }
+
+  .hc-dash__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px 20px;
+    border-radius: 18px;
+    margin-bottom: 18px;
+  }
+
+  .hc-dash__title {
+    font-size: 24px;
+    line-height: 1.25;
+  }
+
+  .hc-dash__subtitle {
+    font-size: 13.5px;
+  }
+
+  .hc-dash__book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+  }
+
+  .hc-dash__overview {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .hc-dash__ov-card {
+    padding: 18px 18px;
+    gap: 14px;
+  }
+
+  .hc-dash__ov-num {
+    font-size: 26px;
+  }
+
+  .hc-dash__ov-label {
+    font-size: 13.5px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .hc-dash__ov-sub {
+    font-size: 12px;
+  }
+
+  .hc-dash__section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .hc-dash__activity-item {
+    padding: 13px 14px;
+    gap: 10px;
+  }
 }
 
+/* ── Mobile large (480px and below) ── */
+@media (max-width: 480px) {
+  .dl-main {
+    padding: 8px;
+  }
+
+  .dl-topbar {
+    top: 8px;
+    padding: 0 12px;
+    height: 54px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+  }
+
+  .dl-topbar-right {
+    gap: 7px;
+  }
+
+  .dl-topbar-title {
+    font-size: 14px;
+  }
+
+  .dl-brand {
+    padding: 18px 16px 14px;
+  }
+
+  .dl-brand-name {
+    font-size: 13.5px;
+  }
+
+  .dl-logout {
+    font-size: 12px;
+    margin: 0 10px 12px;
+    width: calc(100% - 20px);
+    padding: 9px 10px;
+  }
+}
+
+/* ── Mobile small (450px and below) ── */
 @media (max-width: 450px) {
   .dl-topbar {
     padding: 0 10px;
@@ -492,11 +649,34 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100px;
+    max-width: 120px;
   }
 
   .dl-main {
     padding: 6px;
+  }
+}
+
+/* ── Mobile extra small (360px and below) ── */
+@media (max-width: 360px) {
+  .dl-topbar {
+    height: 48px;
+    padding: 0 8px;
+    border-radius: 12px;
+  }
+
+  .dl-topbar-title {
+    font-size: 12px;
+    max-width: 90px;
+  }
+
+  .dl-main {
+    padding: 4px;
+  }
+
+  .dl-topbar-book {
+    padding: 5px 7px;
+    font-size: 10px;
   }
 }
 

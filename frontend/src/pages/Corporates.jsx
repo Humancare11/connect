@@ -34,7 +34,7 @@ const SERVICES = [
         grad: "linear-gradient(90deg,#223A5E,#0C8B7A)",
       },
       {
-        label: "Same-day appointments",
+        label: "Same-day online doctor appointments",
         val: "Available",
         pct: 100,
         grad: "linear-gradient(90deg,#0C8B7A,#0a6b5e)",
@@ -174,7 +174,7 @@ const SERVICES = [
     ),
   },
   {
-    label: "HR Dashboard",
+    label: "Sick Leave",
     title: "Absence Management",
     desc: "Simplify sick leave validation, return-to-work notes, and medical certificates through secure corporate telemedicine services.",
     stat: "60% faster HR processing",
@@ -214,7 +214,7 @@ const SERVICES = [
     ),
   },
   {
-    label: "Sick Leave",
+    label: "Health Analytics & Reporting",
     title: "Health Analytics & Reporting",
     desc: "Real-time workforce health insights, utilization tracking, and absenteeism reporting for smarter healthcare decisions.",
     stat: "34% reduction in sick days",

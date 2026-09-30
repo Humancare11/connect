@@ -182,3 +182,17 @@
     padding: 8px 12px;
   }
 }
+/* ══ RESPONSIVE ══════════════════════════════ */
+@media (max-width: 1024px) {
+  .cards { gap: 16px; }
+}
+@media (max-width: 900px) {
+  .cards { flex-direction: column; }
+  .profile-table { font-size: 13px; }
+}
+/* (existing 768px breakpoint retained above) */
+@media (max-width: 420px) {
+  .profile-table { font-size: 11.5px; }
+  .profile-table th,
+  .profile-table td { padding: 6px 8px; }
+}

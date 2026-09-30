@@ -524,3 +524,36 @@
     padding: 8px;
   }
 }
+/* -- Tablet Landscape (=1024px) -- */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .hc-ul__sidebar {
+    width: 230px;
+  }
+
+  .hc-ul__main {
+    margin-left: 230px;
+    padding: 16px 20px;
+  }
+
+  .hc-ul__topbar {
+    padding: 0 16px;
+  }
+}
+
+/* -- Mobile Extra Small (=380px) -- */
+@media (max-width: 380px) {
+  .hc-ul__topbar {
+    padding: 0 8px;
+    height: 48px;
+  }
+
+  .hc-ul__burger {
+    width: 34px;
+    height: 34px;
+  }
+
+  .hc-ul__topbar-user-avatar {
+    width: 30px;
+    height: 30px;
+  }
+}

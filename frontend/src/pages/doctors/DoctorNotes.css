@@ -283,6 +283,7 @@
   margin: auto;
 }
 
+/* ── Tablet (1050px) ── */
 @media (max-width: 1050px) {
   .dn-filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -297,6 +298,26 @@
   }
 }
 
+/* ── Tablet portrait & below (900px) ── */
+@media (max-width: 900px) {
+  .dn-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .dn-title {
+    font-size: 22px;
+  }
+
+  .dn-filters {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+/* ── Mobile portrait (620px) ── */
 @media (max-width: 620px) {
   .dn-filters,
   .dn-meta-grid {
@@ -311,5 +332,85 @@
 
   .dn-actions {
     justify-content: flex-end;
+  }
+
+  .dn-page {
+    padding: 4px 0 20px;
+  }
+
+  .dn-title {
+    font-size: 20px;
+  }
+}
+
+/* ── Small mobile (480px) ── */
+@media (max-width: 480px) {
+  .dn-page {
+    padding: 2px 0 16px;
+  }
+
+  .dn-title {
+    font-size: 18px;
+  }
+
+  .dn-subtitle {
+    font-size: 13px;
+  }
+
+  .dn-filters {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .dn-editor {
+    padding: 14px;
+  }
+
+  .dn-editor-head h3 {
+    font-size: 17px;
+  }
+
+  .dn-textarea {
+    min-height: 260px;
+    font-size: 13.5px;
+  }
+
+  .dn-list {
+    max-height: 260px;
+  }
+}
+
+/* ── Extra small (380px) ── */
+@media (max-width: 380px) {
+  .dn-title {
+    font-size: 16px;
+  }
+
+  .dn-editor {
+    padding: 12px;
+  }
+
+  .dn-editor-head h3 {
+    font-size: 16px;
+  }
+
+  .dn-meta-grid div {
+    padding: 10px;
+  }
+
+  .dn-btn {
+    font-size: 12px;
+    padding: 0 12px;
+  }
+}
+
+/* ── 320px ── */
+@media (max-width: 320px) {
+  .dn-title {
+    font-size: 15px;
+  }
+
+  .dn-textarea {
+    min-height: 200px;
   }
 }

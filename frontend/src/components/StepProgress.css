@@ -109,3 +109,13 @@
     margin-top: 4px;
   }
 }
+
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+@media (max-width: 900px) {
+  .step-label { font-size: 10px; }
+}
+@media (max-width: 640px) {
+  .ring-circle { width: 36px; height: 36px; }
+  .step-label { font-size: 9.5px; max-width: 56px; }
+}
+/* (existing 520px breakpoint retained above) */

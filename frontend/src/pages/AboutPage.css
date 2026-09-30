@@ -1203,6 +1203,17 @@
   margin: 0;
 }
 
+.about-page .address-card__map-link {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+  transition: color .2s ease;
+}
+
+.about-page .address-card__map-link:hover {
+  color: #2563EB;
+}
+
 .about-page .address-card__email {
   color: #1E3A5F;
   text-decoration: none;

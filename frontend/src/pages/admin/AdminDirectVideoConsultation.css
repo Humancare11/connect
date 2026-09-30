@@ -311,3 +311,34 @@
     text-align: left;
   }
 }
+
+/* -- Tablet (=1024px) -- */
+@media (max-width: 1024px) and (min-width: 761px) {
+  .dvc-container {
+    padding: 24px 20px;
+  }
+
+  .dvc-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* -- Mobile Small (=480px) -- */
+@media (max-width: 480px) {
+  .dvc-header {
+    padding: 16px 14px;
+  }
+
+  .dvc-header-title h1 {
+    font-size: 20px;
+  }
+
+  .dvc-form-card {
+    padding: 16px 14px;
+  }
+
+  .dvc-btn-submit {
+    width: 100%;
+    justify-content: center;
+  }
+}

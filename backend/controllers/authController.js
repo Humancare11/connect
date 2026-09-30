@@ -24,6 +24,9 @@ const { recordActivity, getIp }                 = require("../utils/activityLogg
 const { assertPasswordAllowed, rememberPassword, validatePasswordStrength } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin, recordSecurityEvent } = require("../utils/securityMonitor");
+const { validateMobile } = require("../utils/mobileValidation");
+const { lookupLocation } = require("../utils/geoIp");
+const { Country, State } = require("country-state-city");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
 const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
@@ -53,6 +56,20 @@ const validateDob = (dob) => {
 };
 
 // ── helpers ───────────────────────────────────────────
+// Location for a brand-new account, detected from the request IP. Never
+// throws and never blocks signup: on any failure (no DB, private/local IP,
+// unknown IP) every field is left empty.
+const detectSignupLocation = async (ip) => {
+  const geo = await lookupLocation(ip).catch(() => null);
+  const location = {
+    country: geo?.country || "",
+    state: geo?.state || "",
+    city: geo?.city || "",
+  };
+  const detected = Boolean(location.country || location.state || location.city);
+  return { ...location, locationSource: detected ? "ip" : "" };
+};
+
 const safeUser = (user) => ({
   _id:             user._id,
   patientId:       user.patientId,
@@ -65,6 +82,7 @@ const safeUser = (user) => ({
   country:         user.country,
   state:           user.state,
   city:            user.city,
+  locationSource:  user.locationSource,
   specialty:       user.specialty,
   degree:          user.degree,
   experience:      user.experience,
@@ -144,15 +162,16 @@ const ensureDoctorEnrollment = async (doctor) => {
 // ════════════════════════════════════════════
 const sendRegisterOTP = async (req, res) => {
   try {
-    const { email, password, dob, privacyConsent, hipaaConsent, name } = req.body;
-    if (!email) return res.status(400).json({ msg: "Email is required." });
+    const { email, password, mobile, privacyConsent, hipaaConsent, name } = req.body;
+    if (!email || typeof email !== "string") return res.status(400).json({ msg: "Email is required." });
     if (password !== undefined) {
       const passwordCheck = validatePasswordStrength(password);
       if (!passwordCheck.valid) return passwordError(res, passwordCheck);
     }
-    if (dob !== undefined) {
-      const dobCheck = validateDob(dob);
-      if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
+    // Checked here too so nobody is emailed an OTP only to fail on mobile at register.
+    if (mobile !== undefined) {
+      const mobileCheck = validateMobile(mobile);
+      if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
     }
     if (privacyConsent !== undefined || hipaaConsent !== undefined) {
       if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent)) {
@@ -181,21 +200,21 @@ const sendRegisterOTP = async (req, res) => {
 // ════════════════════════════════════════════
 const register = async (req, res) => {
   try {
-    const { name, email, password, mobile, dob, gender, country, state, city, otp, privacyConsent, hipaaConsent } = req.body;
+    // dob / gender / country / state / city in the body are deliberately
+    // ignored: they're collected later on the Profile page, and location is
+    // detected server-side from the request IP.
+    const { name, email, password, mobile, otp, privacyConsent, hipaaConsent } = req.body;
 
-    if (!name || !email || !password || !otp)
-      return res.status(400).json({ msg: "Name, email, password and OTP are required." });
+    if (!name || !email || !password || !otp || !mobile)
+      return res.status(400).json({ msg: "Name, email, mobile number, password and OTP are required." });
+    if (typeof name !== "string" || typeof email !== "string" || typeof password !== "string")
+      return res.status(400).json({ msg: "Name, email, mobile number, password and OTP are required." });
 
-    const cleanCountry = String(country || "").trim();
-    const cleanState = String(state || "").trim();
-    const cleanCity = String(city || "").trim();
-    if (!cleanCountry || !cleanState)
-      return res.status(400).json({ msg: "Country and state/province are required." });
+    const mobileCheck = validateMobile(mobile);
+    if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
 
     if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
       return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
-    const dobCheck = validateDob(dob);
-    if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
 
     const clean = email.toLowerCase().trim();
 
@@ -209,12 +228,12 @@ const register = async (req, res) => {
     if (!check.valid) return res.status(400).json({ msg: check.msg });
 
     const ip = getIp(req);
+    const location = await detectSignupLocation(ip);
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
-      mobile: mobile || "", dob: dob || "", gender: gender || "",
-      country: cleanCountry, state: cleanState, city: cleanCity, registrationIp: ip,
+      mobile: mobileCheck.value, ...location, registrationIp: ip,
     });
     await rememberPassword({ userId: user._id, userType: "user", passwordHash: hashed });
 
@@ -231,11 +250,15 @@ const register = async (req, res) => {
       userName: user.name,
       userEmail: user.email,
       userRole: "user",
-      details: { gender: user.gender, country: user.country, state: user.state },
+      details: { country: user.country, state: user.state },
     });
 
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
   } catch (err) {
+    // Two concurrent signups with the same email: the unique index wins.
+    if (err?.code === 11000 && err?.keyPattern?.email) {
+      return res.status(409).json({ msg: "Email already registered." });
+    }
     console.error("register error:", err);
     return res.status(500).json({ msg: "Server error. Please try again." });
   }
@@ -550,20 +573,95 @@ const adminLogin = async (req, res) => {
 //   }
 // };
 
+// ── profile helpers ─────────────────────────────────────
+const PROFILE_TEXT_MAX = 100;
+const VALID_GENDERS = ["Male", "Female", "Other", ""];
+const ALL_COUNTRIES = Country.getAllCountries();
+
+const cleanStr = (value) => String(value ?? "").trim();
+const findCountryRecord = (value) => {
+  const q = cleanStr(value).toLowerCase();
+  if (!q) return null;
+  return ALL_COUNTRIES.find((c) => c.name.toLowerCase() === q || c.isoCode.toLowerCase() === q) || null;
+};
+
+// Validates the country / state / city fields of a profile update and returns
+// the $set fragment for them. Only fields that actually differ from what is
+// stored are validated, so a legacy free-text value the user didn't touch
+// never blocks saving other fields. Country and state must come from the
+// country-state-city lists (the same data the dropdowns use); city is free
+// text because a detected city may not exist in that list.
+const buildLocationUpdate = (body, current) => {
+  const set = {};
+  const has = (key) => body[key] !== undefined;
+
+  for (const key of ["country", "state", "city"]) {
+    if (has(key) && typeof body[key] !== "string") return { error: "Invalid location value." };
+  }
+
+  const countryChanged = has("country") && cleanStr(body.country) !== cleanStr(current.country);
+  const stateChanged = has("state") && cleanStr(body.state) !== cleanStr(current.state);
+  const cityChanged = has("city") && cleanStr(body.city) !== cleanStr(current.city);
+
+  if (countryChanged) {
+    const value = cleanStr(body.country);
+    if (value) {
+      const record = findCountryRecord(value);
+      if (!record) return { error: "Select a valid country." };
+      set.country = record.name;
+    } else {
+      set.country = "";
+    }
+    // A subdivision picked for the previous country no longer applies.
+    if (!has("state")) set.state = "";
+    if (!has("city")) set.city = "";
+  }
+
+  if (stateChanged) {
+    const value = cleanStr(body.state);
+    if (value) {
+      const effectiveCountry = countryChanged ? set.country : cleanStr(current.country);
+      const record = findCountryRecord(effectiveCountry);
+      if (!record) return { error: "Select a country before choosing a state / province." };
+
+      const states = State.getStatesOfCountry(record.isoCode) || [];
+      if (states.length > 0) {
+        const q = value.toLowerCase();
+        const match = states.find((s) => s.name.toLowerCase() === q || s.isoCode.toLowerCase() === q);
+        if (!match) return { error: "Select a valid state / province." };
+        set.state = match.name;
+      } else {
+        // Country with no subdivisions in the dataset — free text.
+        if (value.length > PROFILE_TEXT_MAX) return { error: "State / province is too long." };
+        set.state = value;
+      }
+    } else {
+      set.state = "";
+    }
+    if (!has("city")) set.city = "";
+  }
+
+  if (cityChanged) {
+    const value = cleanStr(body.city);
+    if (value.length > PROFILE_TEXT_MAX) return { error: "City is too long." };
+    set.city = value;
+  }
+
+  if (Object.keys(set).length > 0) set.locationSource = "user";
+  return { set };
+};
+
 const updateProfile = async (req, res) => {
   try {
-    const { name, email, mobile, dob, gender, country, state } = req.body;
+    const { name, email, mobile, dob, gender } = req.body;
     const userId = req.user.id;
 
-    if (!name || !email)
+    if (!name || !email || typeof name !== "string" || typeof email !== "string")
       return res.status(400).json({ msg: "Name and email are required." });
 
-    // Validate dob if provided
-    if (dob) {
-      const dobCheck = validateDob(dob);
-      if (!dobCheck.valid)
-        return res.status(400).json({ msg: dobCheck.msg });
-    }
+    const current = await User.findById(userId).select("mobile dob country state city").lean();
+    if (!current)
+      return res.status(404).json({ msg: "User not found." });
 
     const cleanEmail = email.toLowerCase().trim();
 
@@ -571,22 +669,53 @@ const updateProfile = async (req, res) => {
     if (existing)
       return res.status(400).json({ msg: "Email is already in use by another account." });
 
+    // Only fields present in the request are written, so a partial update
+    // can never blank data (including the IP-detected location).
+    const set = { name, email: cleanEmail };
+
+    // Date of birth is optional: blank clears it, a value must be valid.
+    if (dob !== undefined) {
+      if (typeof dob !== "string") return res.status(400).json({ msg: "Date of Birth must be a valid date." });
+      const nextDob = dob.trim();
+      if (nextDob !== cleanStr(current.dob)) {
+        if (nextDob) {
+          const dobCheck = validateDob(nextDob);
+          if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
+        }
+        set.dob = nextDob;
+      }
+    }
+
+    // Gender is optional too, but must be one of the known values.
+    if (gender !== undefined) {
+      if (!VALID_GENDERS.includes(gender)) return res.status(400).json({ msg: "Invalid gender." });
+      set.gender = gender;
+    }
+
+    // Mobile: validated only when changed (an existing legacy number the
+    // user didn't touch must not block the save). It can be replaced but not
+    // removed once set.
+    if (mobile !== undefined) {
+      if (typeof mobile !== "string") return res.status(400).json({ msg: "Mobile number is invalid." });
+      const nextMobile = mobile.trim();
+      if (nextMobile !== cleanStr(current.mobile)) {
+        if (!nextMobile) return res.status(400).json({ msg: "Mobile number cannot be removed." });
+        const mobileCheck = validateMobile(nextMobile);
+        if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
+        set.mobile = mobileCheck.value;
+      }
+    }
+
+    const location = buildLocationUpdate(req.body, current);
+    if (location.error) return res.status(400).json({ msg: location.error });
+    Object.assign(set, location.set);
+
     // Use $set explicitly so the patientId hook doesn't misfire
     const updated = await User.findOneAndUpdate(
-  { _id: userId },
-  {
-    $set: {
-      name,
-      email: cleanEmail,
-      mobile: mobile || "",
-      dob: dob || "",
-      gender: gender || "",
-      country: country || "",
-      ...(state !== undefined ? { state: String(state).trim() } : {}),
-    },
-  },
-  { returnDocument: "after", runValidators: false }
-);
+      { _id: userId },
+      { $set: set },
+      { returnDocument: "after", runValidators: false }
+    );
 
     if (!updated)
       return res.status(404).json({ msg: "User not found." });
@@ -599,7 +728,7 @@ const updateProfile = async (req, res) => {
       userName: updated.name,
       userEmail: updated.email,
       userRole: updated.role,
-      details: { updatedFields: ["name", "email", "mobile", "dob", "gender", "country", "state"] },
+      details: { updatedFields: Object.keys(set) },
     });
 
     return res.json({ msg: "Profile updated successfully.", user: safeUser(updated) });
@@ -608,6 +737,7 @@ const updateProfile = async (req, res) => {
     return res.status(500).json({ msg: "Server error. Please try again." });
   }
 };
+
 
 // PUT /api/auth/account-delete-request — user requests admin approval to delete their own account
 const requestAccountDeletion = async (req, res) => {
@@ -655,7 +785,8 @@ const requestAccountDeletion = async (req, res) => {
 // ════════════════════════════════════════════
 const googleAuthUser = async (req, res) => {
   try {
-    const { accessToken, mobile, dob, gender, country, privacyConsent, hipaaConsent } = req.body;
+    // dob / gender / country in the body are ignored for new accounts (see register).
+    const { accessToken, mobile, privacyConsent, hipaaConsent } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
     const { googleId, email, name } = await getGoogleProfile(accessToken);
@@ -675,16 +806,22 @@ const googleAuthUser = async (req, res) => {
     const doctor = await Doctor.findOne({ email });
     if (doctor) return res.status(403).json({ msg: "Please use the Doctor Login page." });
 
-    if (!mobile || !dob || !gender || !country)
+    // First call has no mobile yet → tell the client to show the short
+    // "mobile + consents" completion step, then it calls this endpoint again.
+    if (!mobile)
       return res.status(200).json({ isNewUser: true, googleName: name, googleEmail: email });
     if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
       return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
-    const dobCheck = validateDob(dob);
-    if (!dobCheck.valid) return res.status(400).json({ msg: dobCheck.msg });
+    const mobileCheck = validateMobile(mobile);
+    if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
 
     const ip = getIp(req);
+    const location = await detectSignupLocation(ip);
 
-    user = await User.create({ name, email, googleId, role: "user", mobile, dob, gender, country, registrationIp: ip });
+    user = await User.create({
+      name, email, googleId, role: "user",
+      mobile: mobileCheck.value, ...location, registrationIp: ip,
+    });
     await recordConsent(req, user);
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);

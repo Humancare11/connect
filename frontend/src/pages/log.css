@@ -1353,3 +1353,18 @@
 
 
 
+
+/* ══ RESPONSIVE — extra breakpoints (fix duplicate 768px) ══ */
+@media (max-width: 1024px) {
+  .log-container, .log-wrap { padding: 0 20px; }
+}
+@media (max-width: 900px) {
+  .log-grid, .log-columns { grid-template-columns: 1fr; }
+  .log-sidebar { display: none; }
+  .log-main { width: 100%; }
+}
+/* (768px breakpoints retained above — note: duplicate exists in file) */
+@media (max-width: 420px) {
+  .log-card { padding: 16px 12px; border-radius: 12px; }
+  .log-title { font-size: 16px; }
+}

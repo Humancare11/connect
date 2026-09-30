@@ -196,3 +196,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .hcm-page {
+    padding: 16px 12px;
+  }
+
+  .hcm-header h1 {
+    font-size: 20px;
+  }
+
+  .hcm-card {
+    padding: 16px 14px;
+  }
+
+  .hcm-btn-submit {
+    width: 100%;
+    justify-content: center;
+  }
+}

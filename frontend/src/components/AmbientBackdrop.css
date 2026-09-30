@@ -294,3 +294,17 @@
     opacity: 0.03;
   }
 }
+/* -- Mobile Small (=480px) -- */
+@media (max-width: 480px) {
+  .orb-top {
+    width: 96vw;
+    height: 96vw;
+    filter: blur(55px);
+  }
+
+  .orb-bottom {
+    width: 96vw;
+    height: 96vw;
+    filter: blur(60px);
+  }
+}

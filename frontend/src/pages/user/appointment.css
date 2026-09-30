@@ -824,3 +824,47 @@
     max-height: 94vh;
   }
 }
+
+/* ── Tablet Landscape (≤1024px) ── */
+@media (max-width: 1024px) {
+  .appt-page {
+    padding: 0 16px;
+  }
+
+  .appt-header {
+    padding: 20px 22px;
+  }
+
+  .appt-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Tablet Portrait (≤900px) ── */
+@media (max-width: 900px) {
+  .appt-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    border-radius: 18px;
+    padding: 18px 16px;
+  }
+
+  .appt-title {
+    font-size: 22px;
+  }
+
+  .appt-book-btn {
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .appt-tabs {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .appt-tab {
+    flex: 1 1 auto;
+  }
+}

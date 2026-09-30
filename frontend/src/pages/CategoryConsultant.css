@@ -822,3 +822,112 @@
   cursor: not-allowed;
   text-decoration: line-through;
 }
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Category Consultant
+   ══════════════════════════════════════════════ */
+
+/* ── Tablet Landscape (≤1024px) ── */
+@media (max-width: 1024px) {
+  .hc-form-shell {
+    padding: 100px 20px 60px;
+  }
+}
+
+/* ── Tablet Portrait (≤900px) ── */
+@media (max-width: 900px) {
+  .hc-form-shell {
+    padding: 90px 16px 48px;
+    align-items: flex-start;
+  }
+
+  .hc-topbar {
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .hc-card,
+  .hc-page-card {
+    padding: 28px 24px;
+    border-radius: 20px;
+  }
+
+  .hc-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .hc-slot-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Mobile (≤640px) ── */
+@media (max-width: 640px) {
+  .hc-form-shell {
+    padding: 80px 12px 40px;
+  }
+
+  .hc-card,
+  .hc-page-card {
+    padding: 22px 16px;
+    border-radius: 16px;
+  }
+
+  .hc-heading {
+    font-size: 20px;
+  }
+
+  .hc-subheading {
+    font-size: 15px;
+  }
+
+  .hc-slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .hc-slot {
+    font-size: 12px;
+    padding: 7px 4px;
+  }
+
+  .hc-date-input {
+    font-size: 14px;
+    padding: 11px 12px;
+  }
+
+  .hc-topbar {
+    gap: 8px;
+  }
+
+  .hc-country-trigger {
+    height: 44px;
+    font-size: 13px;
+  }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .hc-form-shell {
+    padding: 70px 10px 32px;
+  }
+
+  .hc-card,
+  .hc-page-card {
+    padding: 18px 12px;
+    border-radius: 14px;
+  }
+
+  .hc-slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hc-slot {
+    font-size: 11.5px;
+    padding: 6px 4px;
+  }
+
+  .hc-heading {
+    font-size: 18px;
+  }
+}

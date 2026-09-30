@@ -768,8 +768,10 @@
 }
 
 /* ════════════════════════════════════════
-   RESPONSIVE
+   RESPONSIVE — Full Coverage
 ════════════════════════════════════════ */
+
+/* ── Tablet landscape (1100px) ── */
 @media (max-width: 1100px) {
   .dd-grid {
     grid-template-columns: 1fr;
@@ -782,6 +784,7 @@
   }
 }
 
+/* ── Tablet portrait (900px) ── */
 @media (max-width: 900px) {
   .dd-stats {
     grid-template-columns: repeat(2, 1fr);
@@ -800,9 +803,22 @@
   .dd-banner-right {
     text-align: left;
   }
+
+  .dd-clock {
+    font-size: 30px;
+  }
+
+  .dd-banner-name {
+    font-size: 24px;
+  }
 }
 
+/* ── Mobile landscape / large phone (640px) ── */
 @media (max-width: 640px) {
+  .dd-root {
+    padding: 14px 10px;
+  }
+
   .dd-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -814,11 +830,14 @@
 
   .dd-panel-head {
     gap: 10px;
+    flex-wrap: wrap;
   }
 
   .dd-tabs {
     overflow-x: auto;
     scrollbar-width: none;
+    flex-wrap: nowrap;
+    max-width: 100%;
   }
 
   .dd-tabs::-webkit-scrollbar {
@@ -841,4 +860,448 @@
   .dd-stat-value {
     font-size: 22px;
   }
+
+  .dd-banner {
+    padding: 20px 18px;
+  }
+
+  .dd-appt-row {
+    padding: 12px 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .dd-appt-right {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dd-appt-actions {
+    flex-wrap: wrap;
+  }
 }
+
+/* ── Mobile portrait (480px) ── */
+@media (max-width: 480px) {
+  .dd-root {
+    padding: 12px 8px;
+  }
+
+  .dd-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .dd-stat {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .dd-stat-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dd-stat-value {
+    font-size: 20px;
+  }
+
+  .dd-stat-label {
+    font-size: 11px;
+  }
+
+  .dd-banner {
+    padding: 18px 14px;
+    border-radius: 16px;
+  }
+
+  .dd-banner-name {
+    font-size: 20px;
+  }
+
+  .dd-clock {
+    font-size: 26px;
+  }
+
+  .dd-banner-today,
+  .dd-banner-date {
+    font-size: 11.5px;
+  }
+
+  .dd-panel-head {
+    padding: 14px 16px;
+  }
+
+  .dd-panel-title {
+    font-size: 14px;
+  }
+
+  .dd-view-all {
+    font-size: 11.5px;
+  }
+
+  .dd-tab {
+    padding: 5px 10px;
+    font-size: 11.5px;
+  }
+
+  .dd-appt-av {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  .dd-appt-name {
+    font-size: 13px;
+  }
+
+  .dd-appt-issue {
+    font-size: 11.5px;
+  }
+
+  .dd-quick-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    padding: 12px;
+  }
+
+  .dd-quick-item {
+    padding: 12px 6px;
+    gap: 6px;
+  }
+
+  .dd-quick-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .dd-quick-label {
+    font-size: 10px;
+  }
+
+  .dd-next-av {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .dd-next-name {
+    font-size: 14px;
+  }
+
+  .dd-btn {
+    padding: 6px 10px;
+    font-size: 11.5px;
+  }
+
+  .dd-btn--wide {
+    padding: 11px;
+    font-size: 13px;
+  }
+}
+
+/* ── Small mobile (380px) ── */
+@media (max-width: 380px) {
+  .dd-root {
+    padding: 8px 6px;
+  }
+
+  .dd-stats {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .dd-stat {
+    padding: 12px 10px;
+  }
+
+  .dd-stat-value {
+    font-size: 18px;
+  }
+
+  .dd-banner-name {
+    font-size: 18px;
+  }
+
+  .dd-clock {
+    font-size: 22px;
+  }
+
+  .dd-appt-row {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .dd-quick-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 10px;
+  }
+
+  .dd-quick-item {
+    padding: 10px 4px;
+  }
+
+  .dd-quick-label {
+    font-size: 9.5px;
+  }
+
+  .dd-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+}
+
+/* ── Extra small (320px) ── */
+@media (max-width: 320px) {
+  .dd-stats {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .dd-stat {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .dd-banner-name {
+    font-size: 16px;
+  }
+
+  .dd-clock {
+    font-size: 20px;
+  }
+
+  .dd-quick-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ════════════════════════════════════════
+   hc-dash__ RESPONSIVE OVERRIDES
+   (for Dashbord.jsx which uses user/dashboard.css
+    — these scoped overrides keep doctor layout context)
+════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .hc-dash__page {
+    padding: 16px 12px;
+  }
+
+  .hc-dash__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px 20px;
+    border-radius: 18px;
+    margin-bottom: 20px;
+  }
+
+  .hc-dash__title {
+    font-size: 24px;
+    line-height: 1.25;
+  }
+
+  .hc-dash__subtitle {
+    font-size: 13.5px;
+  }
+
+  .hc-dash__book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+  }
+
+  .hc-dash__overview {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .hc-dash__ov-card {
+    padding: 18px 18px;
+    gap: 14px;
+  }
+
+  .hc-dash__ov-num {
+    font-size: 26px;
+  }
+
+  .hc-dash__ov-label {
+    font-size: 13.5px;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .hc-dash__ov-sub {
+    font-size: 12px;
+  }
+
+  .hc-dash__section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .hc-dash__activity-item {
+    padding: 13px 14px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hc-dash__page {
+    padding: 12px 8px;
+  }
+
+  .hc-dash__header {
+    padding: 22px 18px;
+    border-radius: 18px;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .hc-dash__title {
+    font-size: 22px;
+  }
+
+  .hc-dash__overview {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .hc-dash__ov-card {
+    padding: 18px 16px;
+    gap: 14px;
+  }
+
+  .hc-dash__book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+  }
+
+  .hc-dash__section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .hc-dash__activity-item {
+    padding: 13px 14px;
+    gap: 10px;
+  }
+
+  .hc-dash__activity-time {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hc-dash__page {
+    padding: 10px 6px;
+  }
+
+  .hc-dash__header {
+    padding: 18px 14px;
+    border-radius: 14px;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .hc-dash__title {
+    font-size: 18px;
+    word-break: break-word;
+  }
+
+  .hc-dash__eyebrow {
+    font-size: 9px;
+    letter-spacing: 2px;
+  }
+
+  .hc-dash__subtitle {
+    font-size: 12px;
+  }
+
+  .hc-dash__overview {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .hc-dash__ov-card {
+    padding: 14px 12px;
+    gap: 10px;
+  }
+
+  .hc-dash__ov-num {
+    font-size: 24px;
+  }
+
+  .hc-dash__ov-icon {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+
+  .hc-dash__section-title {
+    font-size: 17px;
+  }
+
+  .hc-dash__activity-item {
+    padding: 11px 12px;
+    gap: 8px;
+  }
+
+  .hc-dash__activity-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+
+  .hc-dash__activity-title {
+    font-size: 12.5px;
+  }
+
+  .hc-dash__pagination {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .hc-dash__page-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .hc-dash__book-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hc-dash__page {
+    padding: 8px 4px;
+  }
+
+  .hc-dash__title {
+    font-size: 16px;
+  }
+
+  .hc-dash__ov-num {
+    font-size: 20px;
+  }
+
+  .hc-dash__activity-dot {
+    display: none;
+  }
+
+  .hc-dash__activity-item {
+    gap: 6px;
+  }
+}

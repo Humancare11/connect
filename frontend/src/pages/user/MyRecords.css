@@ -435,3 +435,17 @@
     padding: 12px;
   }
 }
+
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+@media (max-width: 1024px) {
+  .mr-card { flex-direction: column; }
+}
+@media (max-width: 900px) {
+  .mr-header-row { flex-direction: column; gap: 12px; }
+  .mr-filter-bar { flex-wrap: wrap; gap: 8px; }
+}
+/* (existing 600px breakpoint retained above) */
+@media (max-width: 420px) {
+  .mr-card { border-radius: 12px; padding: 12px; }
+  .mr-slip-wrap { padding: 8px; }
+}

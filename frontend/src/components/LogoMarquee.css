@@ -70,3 +70,17 @@
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+
+/* ══ RESPONSIVE — LogoMarquee ══════════════════════════════ */
+@media (max-width: 900px) {
+  .lm-track { gap: 32px; }
+  .lm-track span { font-size: 12px; letter-spacing: 0.12em; }
+}
+@media (max-width: 640px) {
+  .lm-track { gap: 24px; }
+  .lm-track span { font-size: 11px; letter-spacing: 0.1em; }
+}
+@media (max-width: 420px) {
+  .lm-track { gap: 18px; }
+  .lm-track span { font-size: 10px; }
+}

@@ -18,7 +18,11 @@ const PrivacyPolicy1 = () => {
                         We collect information you provide directly, such as your name, date of birth, contact details, health and medical information submitted during consultations or intake forms, and payment information processed through our secure payment provider. When you communicate with us by email, chat, or through our support channels, we retain those communications.
                     </p>
                     <p>
-                        We also collect information automatically when you use the Platform, including your device identifiers, IP address, browser type, operating system, pages visited, and session activity. We use cookies and similar technologies for this purpose — see our Cookie Policy for full details. Where you connect to us through a referring provider, insurer, or identity verification service, we may receive information from those third parties as well.
+                        We also collect information automatically when you use the Platform, including your device identifiers, IP address, browser type, operating system, pages visited, and session activity. When you create an account, we also use your IP address to estimate your approximate location (country, state or province, and city) so we can pre-fill your profile; you can review and change it at any time from your profile settings. We use cookies and similar technologies for this purpose — see our Cookie Policy for full details. Where you connect to us through a referring provider, insurer, or identity verification service, we may receive information from those third parties as well.
+                    </p>
+                    <p>
+                        This product includes GeoLite2 data created by MaxMind, available from{" "}
+                        <a href="https://www.maxmind.com" target="_blank" rel="noopener noreferrer">https://www.maxmind.com</a>.
                     </p>
                 </section>
 

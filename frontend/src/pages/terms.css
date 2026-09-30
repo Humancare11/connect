@@ -116,3 +116,48 @@
   .legal-layout { grid-template-columns: 1fr; }
   .legal-sidebar { position: static; }
 }
+/* -- Mobile Medium (=640px) -- */
+@media (max-width: 640px) {
+  .legal-sidebar__inner {
+    padding: 16px 14px;
+  }
+
+  .legal-section {
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+  }
+
+  .legal-section__title {
+    font-size: 18px;
+  }
+
+  .legal-section__body {
+    font-size: 13.5px;
+    line-height: 1.7;
+  }
+
+  .legal-contact {
+    padding: 24px 18px;
+  }
+
+  .legal-notice {
+    padding: 14px 16px;
+    margin-bottom: 24px;
+  }
+}
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .legal-nav__link {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+
+  .legal-section__title {
+    font-size: 17px;
+  }
+
+  .legal-contact__heading {
+    font-size: 16px;
+  }
+}

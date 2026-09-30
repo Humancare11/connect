@@ -1155,3 +1155,26 @@
   color: #93c5fd;
   text-decoration: underline;
 }
+
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+/* (existing 900px breakpoint retained above) */
+
+/* ── Mobile (≤640px) ── */
+@media (max-width: 640px) {
+  .sp-hero__title { font-size: clamp(26px, 7vw, 36px); }
+  .sp-hero__description { font-size: 14px; }
+  .sp-hero__actions { flex-direction: column; gap: 10px; }
+  .sp-btn--primary-lg, .sp-btn--ghost-lg { width: 100%; justify-content: center; }
+  .sp-container { padding: 0 14px; }
+  .sp-container--narrow { padding: 0 14px; }
+  .sp-overview__grid { grid-template-columns: 1fr; }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .sp-hero { padding: 80px 14px 40px; }
+  .sp-hero__title { font-size: 24px; }
+  .sp-hero__tagline { font-size: 13px; }
+  .sp-hero__actions { gap: 8px; }
+  .sp-btn { font-size: 13px; padding: 10px 18px; }
+}

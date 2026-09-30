@@ -8,68 +8,30 @@ import {
 } from "framer-motion";
 import {
   FiMonitor,
-  FiHome,
   FiSearch,
-  FiActivity,
-  FiShield,
-  FiSun,
   FiLock,
   FiZap,
-  FiCalendar,
   FiFileText,
-  FiGlobe,
   FiCheckCircle,
-  FiArrowRight,
-  FiChevronDown,
-  FiPlus,
   FiStar,
   FiHeart,
-  FiUsers,
-  FiPhone,
-  FiMail,
-  FiClock,
-  FiTrendingUp,
   FiAward,
-  FiRefreshCw,
-  FiBarChart2,
-  FiMapPin,
-  FiCamera,
-  FiDroplet,
-  FiPackage,
-  FiSmile,
-  FiBriefcase,
+  FiShield,
+  FiClock,
+  FiGlobe,
   FiUserCheck,
-  FiMessageSquare,
-  FiCpu,
-  FiAlertCircle,
-  FiThumbsUp,
+  FiBarChart2,
+  FiPackage,
   FiVideo,
-  FiPieChart,
-  FiBookOpen,
-  FiNavigation,
-  FiWifi,
-  FiHeadphones,
-  FiUser,
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
-
-/* ──────────────────────────────────────────────────────────────────────────
-   DESIGN TOKENS — light theme
-   Body copy uses solid slate, never low-opacity white-on-white, so contrast
-   stays readable (point 6). Accent color is the only saturated color on the
-   page; everything else is neutral.
-────────────────────────────────────────────────────────────────────────── */
-const BG_BASE = "#FFFFFF"; // Page background
-const BG_SURFACE = "#F8FAFC"; // Alternating section background
-const BG_ELEVATED = "#FFFFFF"; // Card background (flat, bordered — no glass)
-const TEXT_PRIMARY = "#0F172A"; // Headings, high-emphasis body
-const TEXT_BODY = "#475569"; // Standard paragraph text
-const TEXT_DIM = "#64748B"; // Captions, labels, secondary info
-const BORDER = "#E2E8F0";
-const BORDER_HOVER = "#CBD5E1";
+import CentralFAQ from "../../components/FAQ/FAQ";
+import "../Specialty/SpecialtyPage.css";
+import "../Categories/categoriesGlobal.css";
+import "./newservices.css";
 
 const useBreakpoint = () => {
   const getBreakpoint = () => {
@@ -175,13 +137,6 @@ const SERVICES = {
         desc: "Consultations available in 14+ languages with live interpreter access.",
       },
     ],
-
-    // stats: [
-    //   { value: 120000, suffix: "+", label: "Patients Served" },
-    //   { value: 2800, suffix: "+", label: "Verified Providers" },
-    //   { value: 98, suffix: "%", label: "Satisfaction Rate" },
-    //   { value: 14, suffix: " min", label: "Avg. Wait Time" },
-    // ],
     faqs: [
       {
         q: "What is a weight loss program?",
@@ -250,26 +205,6 @@ const SERVICES = {
     ],
   },
 };
-/* ──────────────────────────────────────────────────────────────────────────
-   HOOKS & UTILS
-────────────────────────────────────────────────────────────────────────── */
-const useCountUp = (target, duration = 2200, start = false) => {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!start) return;
-    let t0 = null;
-    const isFloat = String(target).includes(".");
-    const tick = (ts) => {
-      if (!t0) t0 = ts;
-      const p = Math.min((ts - t0) / duration, 1);
-      const e = 1 - Math.pow(1 - p, 3);
-      setCount(isFloat ? +(e * target).toFixed(1) : Math.floor(e * target));
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [target, duration, start]);
-  return count;
-};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -283,765 +218,8 @@ const fadeUp = {
     },
   }),
 };
+
 const stagger = { visible: { transition: { staggerChildren: 0.08 } } };
-
-/* ──────────────────────────────────────────────────────────────────────────
-   MICRO COMPONENTS
-────────────────────────────────────────────────────────────────────────── */
-const SLabel = ({ text, ac }) => (
-  <div
-    style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}
-  >
-    <div style={{ width: 24, height: 1, background: ac }} />
-    <span
-      style={{
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: ac,
-      }}
-    >
-      {text}
-    </span>
-  </div>
-);
-
-// Returns a hex color darkened toward black by `amount` (0-1), used to keep
-// small accent-tinted text safely above WCAG AA contrast on light tint backgrounds.
-const darken = (hex, amount) => {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.slice(0, 2), 16),
-    g = parseInt(h.slice(2, 4), 16),
-    b = parseInt(h.slice(4, 6), 16);
-  const dr = Math.round(r * (1 - amount)),
-    dg = Math.round(g * (1 - amount)),
-    db = Math.round(b * (1 - amount));
-  return `#${[dr, dg, db].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
-};
-
-const Pill = ({ children, ac }) => {
-  const textColor = darken(ac, 0.18); // verified >7:1 contrast at this font size, vs ~4.5:1 for the raw accent
-  return (
-    <div
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "6px 14px",
-        borderRadius: 100,
-        background: `${ac}12`,
-        color: textColor,
-        border: `1px solid ${ac}30`,
-        fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        marginBottom: 22,
-      }}
-    >
-      <span
-        style={{ width: 6, height: 6, borderRadius: "50%", background: ac }}
-      />
-      {children}
-    </div>
-  );
-};
-
-const PrimaryBtn = ({ children, ac, onClick, fullWidth, type = "button" }) => (
-  <button
-    type={type}
-    onClick={onClick}
-    style={{
-      padding: "13px 26px",
-      borderRadius: 12,
-      fontWeight: 700,
-      fontSize: 14,
-      color: "#fff",
-      cursor: "pointer",
-      border: "none",
-      background: ac,
-      boxShadow: `0 4px 14px ${ac}35`,
-      transition: "transform 0.2s, box-shadow 0.2s, background 0.2s",
-      width: fullWidth ? "100%" : "auto",
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = "translateY(-2px)";
-      e.currentTarget.style.boxShadow = `0 8px 20px ${ac}45`;
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = "translateY(0)";
-      e.currentTarget.style.boxShadow = `0 4px 14px ${ac}35`;
-    }}
-  >
-    {children}
-  </button>
-);
-
-const GhostBtn = ({ children, onClick }) => (
-  <button
-    onClick={onClick}
-    style={{
-      padding: "13px 22px",
-      borderRadius: 12,
-      fontWeight: 600,
-      fontSize: 14,
-      color: TEXT_PRIMARY,
-      cursor: "pointer",
-      background: "#fff",
-      border: `1px solid ${BORDER_HOVER}`,
-      transition: "background 0.2s, border-color 0.2s",
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 6,
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.background = BG_SURFACE;
-      e.currentTarget.style.borderColor = "#94A3B8";
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.background = "#fff";
-      e.currentTarget.style.borderColor = BORDER_HOVER;
-    }}
-  >
-    {children}
-  </button>
-);
-
-/* ──────────────────────────────────────────────────────────────────────────
-   HERO
-  
-────────────────────────────────────────────────────────────────────────── */
-const Hero = ({ s, bp }) => {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end start"],
-  });
-  const op = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
-
-  return (
-    <section
-      ref={ref}
-      style={{
-        position: "relative",
-        minHeight: "62vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        overflow: "hidden",
-        background: BG_SURFACE,
-        borderBottom: `1px solid ${BORDER}`,
-      }}
-    >
-      <motion.div
-        style={{
-          position: "relative",
-          zIndex: 10,
-          maxWidth: 1200,
-          margin: "0 auto",
-          padding: "64px 24px",
-          width: "100%",
-          opacity: op,
-        }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.1 }}
-        >
-          <Pill ac={s.accentColor}>Humancare Connect</Pill>
-        </motion.div>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 32 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.18 }}
-          style={{
-            fontSize: "clamp(36px, 5.5vw, 60px)",
-            fontWeight: 900,
-            color: TEXT_PRIMARY,
-            lineHeight: 1.08,
-            letterSpacing: "-0.03em",
-            marginBottom: 18,
-            maxWidth: 760,
-          }}
-        >
-          {s.name.split(" ").map((w, i, arr) => (
-            <span key={i}>
-              {i === Math.floor(arr.length / 2) ? (
-                <span style={{ color: s.accentColor }}>{w} </span>
-              ) : (
-                <span>{w} </span>
-              )}
-            </span>
-          ))}
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.26 }}
-          style={{
-            fontSize: 18,
-            color: TEXT_DIM,
-            fontStyle: "italic",
-            marginBottom: 10,
-          }}
-        >
-          {s.tagline}
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.32 }}
-          style={{
-            fontSize: 16,
-            color: TEXT_BODY,
-            lineHeight: 1.7,
-            maxWidth: 560,
-            marginBottom: 28,
-          }}
-        >
-          {s.intro}
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.38 }}
-          style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
-        >
-          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
-            <a href="/login">Get Started</a>
-          </PrimaryBtn>
-          <GhostBtn>
-            <Link to="/appointment-booking" state={{ tab: "spec" }}>
-              {" "}
-              Request Your Lab Consultation Today
-            </Link>
-          </GhostBtn>
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-};
-
-/* ──────────────────────────────────────────────────────────────────────────
-   OVERVIEW
-   Fix 2: text block now sits left (was right), and the right column — which
-   previously held the icon visual panel — now holds the consultation form.
-   The outcomes strip at the bottom is unchanged in structure.
-────────────────────────────────────────────────────────────────────────── */
-const Overview = ({ s, bp }) => (
-  <section
-    style={{
-      background: BG_BASE,
-      width: "100%",
-    }}
-  >
-    <div
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "48px 16px" : "88px 24px",
-      }}
-    >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : "1.1fr 0.9fr",
-          gap: bp.isMobile ? 32 : 64,
-          alignItems: "start",
-        }}
-      >
-        {/* Text — now the left column */}
-        <div>
-          <motion.div variants={fadeUp}>
-            <SLabel text="Service Overview" ac={s.accentColor} />
-            <h2
-              style={{
-                fontSize: "clamp(26px, 3.5vw, 36px)",
-                fontWeight: 900,
-                color: TEXT_PRIMARY,
-                lineHeight: 1.15,
-                marginBottom: 20,
-              }}
-            >
-              What Are Weight Loss Programs?
-            </h2>
-          </motion.div>
-          <motion.p
-            variants={fadeUp}
-            style={{
-              color: TEXT_BODY,
-              lineHeight: 1.75,
-              marginBottom: 20,
-              fontSize: 15.5,
-            }}
-          >
-            {s.description}
-          </motion.p>
-          <motion.div
-            variants={fadeUp}
-            style={{
-              padding: "16px 18px",
-              borderRadius: 14,
-              marginBottom: 20,
-              background: `${s.accentColor}0A`,
-              border: `1px solid ${s.accentColor}25`,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: s.accentColor,
-                marginBottom: 6,
-              }}
-            >
-              Why It Matters
-            </div>
-            <p
-              style={{
-                color: TEXT_BODY,
-                fontSize: 14,
-                lineHeight: 1.7,
-                margin: 0,
-              }}
-            >
-              {s.whyItMatters}
-            </p>
-          </motion.div>
-          <motion.div variants={fadeUp}>
-            <div
-              style={{
-                color: TEXT_PRIMARY,
-                fontWeight: 700,
-                fontSize: 14,
-                marginBottom: 12,
-              }}
-            >
-              Who Can Benefit
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {s.whoBenefits.map((item, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 10,
-                    color: TEXT_BODY,
-                    fontSize: 14,
-                  }}
-                >
-                  <FiCheckCircle
-                    style={{
-                      color: s.accentColor,
-                      fontSize: 16,
-                      marginTop: 1,
-                      flexShrink: 0,
-                    }}
-                  />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Form — now the right column, replacing the old icon visual panel */}
-        <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
-          <ServiceContact s={s} />
-        </motion.div>
-      </motion.div>
-
-
-    </div>
-  </section>
-);
-
-/* ──────────────────────────────────────────────────────────────────────────
-   OUR SERVICES (was "How It Works")
-   Fix 3: heading text changed only — content (the 4-step process) is
-   unchanged since it's still accurate underneath the new label.
-   Fix 5: sticky card glass effect removed — flat surface, no backdrop-filter,
-   no glow blob.
-────────────────────────────────────────────────────────────────────────── */
-const HowItWorks = ({ s, bp }) => (
-  <section
-    style={{
-      padding: bp.isMobile ? "48px 0" : "88px 0",
-      background: BG_SURFACE,
-      borderTop: `1px solid ${BORDER}`,
-      borderBottom: `1px solid ${BORDER}`,
-    }}
-  >
-    <div
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "0 16px" : "0 24px",
-      }}
-    >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
-          gap: bp.isMobile ? 32 : 64,
-          alignItems: "start",
-        }}
-      >
-        <div>
-          <motion.div variants={fadeUp}>
-            <SLabel text="Our Services" ac={s.accentColor} />
-            <h2
-              style={{
-                fontSize: "clamp(26px, 3.5vw, 36px)",
-                fontWeight: 900,
-                color: TEXT_PRIMARY,
-                lineHeight: 1.15,
-                marginBottom: 8,
-              }}
-            >
-              Getting started is{" "}
-              <span style={{ color: s.accentColor }}>simple.</span>
-            </h2>
-            <p
-              style={{
-                color: TEXT_DIM,
-                fontSize: 15,
-                lineHeight: 1.7,
-                marginBottom: 36,
-              }}
-            >
-              Beginning your weight loss journey through Humancare Connect is
-              convenient, secure, and designed around your individual needs.
-            </p>
-          </motion.div>
-
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {s.steps.map((step, i) => (
-              <motion.div
-                key={i}
-                variants={fadeUp}
-                custom={i}
-                style={{ position: "relative", display: "flex", gap: 18 }}
-              >
-                {i < s.steps.length - 1 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: 19,
-                      top: 46,
-                      width: 1,
-                      height: "calc(100% - 8px)",
-                      background: BORDER_HOVER,
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    position: "relative",
-                    zIndex: 1,
-                    flexShrink: 0,
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: s.accentColor,
-                  }}
-                >
-                  {React.createElement(step.Icon, {
-                    style: { fontSize: 18, color: "#fff" },
-                  })}
-                </div>
-                <div style={{ paddingBottom: 28, flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: s.accentColor,
-                      marginBottom: 4,
-                    }}
-                  >
-                    Step {i + 1}
-                  </div>
-                  <div
-                    style={{
-                      color: TEXT_PRIMARY,
-                      fontWeight: 700,
-                      fontSize: 15,
-                      marginBottom: 4,
-                    }}
-                  >
-                    {step.title}
-                  </div>
-                  <p
-                    style={{
-                      color: TEXT_DIM,
-                      fontSize: 14,
-                      lineHeight: 1.65,
-                      margin: 0,
-                    }}
-                  >
-                    {step.body}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-
-        {/* Sticky card — flat surface, no blur, no glow blob */}
-        <motion.div variants={fadeUp} style={{ position: "sticky", top: 96 }}>
-          <div
-            style={{
-              borderRadius: 24,
-              padding: 36,
-              background: "#fff",
-              border: `1px solid ${BORDER}`,
-            }}
-          >
-            {React.createElement(s.heroIcon, {
-              style: { fontSize: 44, color: s.accentColor, marginBottom: 16 },
-            })}
-            <h3
-              style={{
-                color: TEXT_PRIMARY,
-                fontSize: 20,
-                fontWeight: 800,
-                marginBottom: 8,
-              }}
-            >
-              Ready to begin?
-            </h3>
-            <p
-              style={{
-                color: TEXT_DIM,
-                fontSize: 14,
-                lineHeight: 1.7,
-                marginBottom: 24,
-              }}
-            >
-              Take the first step toward healthier weight management through
-              trusted telemedicine services. Personalized support is available
-              to help you build sustainable habits and achieve your long term
-              wellness goals.
-            </p>
-            <PrimaryBtn ac={s.accentColor} fullWidth>
-              Get Started Today
-            </PrimaryBtn>
-            <div
-              style={{
-                marginTop: 20,
-                display: "grid",
-                gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
-                gap: 8,
-              }}
-            >
-              {[
-                [FiLock, "Secure & Private"],
-                [FiZap, "Fast Response"],
-                [FiUserCheck, "Verified Providers"],
-                [FiFileText, "No Insurance Required"],
-              ].map(([Icon, lb], i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    color: TEXT_DIM,
-                    fontSize: 12,
-                  }}
-                >
-                  <Icon style={{ fontSize: 13, color: s.accentColor }} />
-                  {lb}
-                </div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </div>
-  </section>
-);
-
-/* ──────────────────────────────────────────────────────────────────────────
-   FEATURES & BENEFITS
-   Fix 4: the 6 separate small cards are consolidated into a single large
-   card. Each feature is now a row inside one bordered container rather than
-   its own tile, so it reads as one consolidated "service details" panel.
-   Fix 5: no glass effect, no hover glow-shadow — flat row dividers instead.
-────────────────────────────────────────────────────────────────────────── */
-const Features = ({ s, bp }) => (
-  <section
-    style={{
-      maxWidth: 1200,
-      margin: "0 auto",
-      padding: bp.isMobile ? "48px 16px" : "88px 24px",
-    }}
-  >
-    <motion.div
-      variants={stagger}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-60px" }}
-    >
-      <motion.div
-        variants={fadeUp}
-        style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
-      >
-        <SLabel text="Features & Benefits" ac={s.accentColor} />
-        <h2
-          style={{
-            fontSize: "clamp(26px, 3.5vw, 36px)",
-            fontWeight: 900,
-            color: TEXT_PRIMARY,
-            lineHeight: 1.15,
-            marginBottom: 10,
-          }}
-        >
-          Understanding Weight Loss
-          <br />
-          <span style={{ color: s.accentColor }}>Programs</span>
-        </h2>
-        <p style={{ color: TEXT_DIM, fontSize: 15 }}>
-          Every feature is designed around one goal: better outcomes for you.
-        </p>
-      </motion.div>
-
-      <motion.div
-        variants={fadeUp}
-        style={{
-          borderRadius: 24,
-          background: "#fff",
-          border: `1px solid ${BORDER}`,
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ padding: 28 }}>
-          <p
-            style={{
-              color: TEXT_BODY,
-              fontSize: 15,
-              lineHeight: 1.75,
-              margin: "0 0 18px 0",
-            }}
-          >
-            Weight loss is not simply about reducing numbers on a scale.
-            Effective weight management focuses on improving overall health
-            through sustainable lifestyle changes, balanced nutrition, regular
-            physical activity, and professional healthcare guidance. Every
-            individual has unique health needs, which is why personalized care
-            plays an important role in long term success.
-          </p>
-          <p
-            style={{
-              color: TEXT_BODY,
-              fontSize: 15,
-              lineHeight: 1.75,
-              margin: "0 0 18px 0",
-            }}
-          >
-            At Humancare Connect, our weight loss programs are designed to
-            provide patient centered support through virtual healthcare
-            services. Licensed healthcare providers evaluate factors such as
-            current weight, medical history, lifestyle habits, nutrition
-            patterns, and health goals to develop individualized
-            recommendations. This personalized approach helps patients make
-            meaningful progress while prioritizing their overall well being.
-          </p>
-          <p
-            style={{
-              color: TEXT_BODY,
-              fontSize: 15,
-              lineHeight: 1.75,
-              margin: 0,
-            }}
-          >
-            Weight loss programs may benefit individuals who are managing
-            obesity, weight related health concerns, or difficulties maintaining
-            healthy lifestyle habits. Through secure telemedicine services,
-            patients can access professional support, receive ongoing guidance,
-            and stay accountable throughout their weight management journey
-            without the need for frequent in person visits.
-          </p>
-        </div>
-      </motion.div>
-    </motion.div>
-  </section>
-);
-
-/* ──────────────────────────────────────────────────────────────────────────
-   STATS / WHY US
-   Fix 5: no glass effect on stat or info cards — flat bordered surfaces.
-────────────────────────────────────────────────────────────────────────── */
-const StatCard = ({ value, suffix, label, ac, go }) => {
-  const c = useCountUp(value, 2200, go);
-  return (
-    <motion.div
-      variants={fadeUp}
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 28,
-        borderRadius: 20,
-        textAlign: "center",
-        background: "#fff",
-        border: `1px solid ${BORDER}`,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 38,
-          fontWeight: 900,
-          letterSpacing: "-0.02em",
-          color: ac,
-          marginBottom: 4,
-        }}
-      >
-        {c}
-        {suffix}
-      </div>
-      <div
-        style={{
-          color: TEXT_DIM,
-          fontSize: 12,
-          fontWeight: 600,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </div>
-    </motion.div>
-  );
-};
 
 const whyUsItems = [
   [
@@ -1076,449 +254,21 @@ const whyUsItems = [
   ],
 ];
 
-const WhyUs = ({ s, bp }) => {
-  const ref = useRef(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setInView(true);
-      },
-      { threshold: 0.2 },
-    );
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-
-  return (
-    <section
-      ref={ref}
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "48px 16px" : "88px 24px",
-      }}
-    >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-      >
-        <motion.div
-          variants={fadeUp}
-          style={{ textAlign: "center", maxWidth: 560, margin: "0 auto 44px" }}
-        >
-          <SLabel text="Why Choose Us" ac={s.accentColor} />
-          <h2
-            style={{
-              fontSize: "clamp(26px, 3.5vw, 36px)",
-              fontWeight: 900,
-              color: TEXT_PRIMARY,
-              lineHeight: 1.15,
-              marginBottom: 10,
-            }}
-          >
-            Results you can{" "}
-            <span style={{ color: s.accentColor }}>measure.</span>
-          </h2>
-          <p style={{ color: TEXT_DIM, fontSize: 15 }}>
-            Numbers that represent real patients, real outcomes.
-          </p>
-        </motion.div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: bp.isMobile
-              ? "1fr"
-              : bp.isTablet
-                ? "repeat(2, 1fr)"
-                : "repeat(4, 1fr)",
-            gap: 12,
-            marginBottom: 44,
-          }}
-        >
-          {/* {s.stats.map((st, i) => (
-            <StatCard
-              key={i}
-              value={st.value}
-              suffix={st.suffix}
-              label={st.label}
-              ac={s.accentColor}
-              go={inView}
-            />
-          ))} */}
-        </div>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: bp.isMobile
-              ? "1fr"
-              : bp.isTablet
-                ? "repeat(2, 1fr)"
-                : "repeat(3, 1fr)",
-            gap: 12,
-          }}
-        >
-          {whyUsItems.map(([Icon, title, desc], i) => (
-            <motion.div
-              key={i}
-              variants={fadeUp}
-              custom={i}
-              style={{
-                display: "flex",
-                gap: 14,
-                alignItems: "flex-start",
-                padding: 20,
-                borderRadius: 16,
-                background: "#fff",
-                border: `1px solid ${BORDER}`,
-              }}
-            >
-              <div
-                style={{
-                  flexShrink: 0,
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: `${s.accentColor}12`,
-                }}
-              >
-                <Icon style={{ fontSize: 18, color: s.accentColor }} />
-              </div>
-              <div>
-                <div
-                  style={{
-                    color: TEXT_PRIMARY,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    marginBottom: 4,
-                  }}
-                >
-                  {title}
-                </div>
-                <div style={{ color: TEXT_DIM, fontSize: 13, lineHeight: 1.6 }}>
-                  {desc}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </section>
-  );
-};
-
-/* ──────────────────────────────────────────────────────────────────────────
-   FAQ
-   Fix 5: container is a flat bordered surface, no backdrop blur.
-────────────────────────────────────────────────────────────────────────── */
-const FAQ = ({ s, bp }) => {
-  const [open, setOpen] = useState(null);
-  return (
-    <section
-      style={{
-        maxWidth: 1200,
-        margin: "0 auto",
-        padding: bp.isMobile ? "48px 16px" : "88px 24px",
-      }}
-    >
-      <motion.div
-        variants={stagger}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-60px" }}
-        style={{
-          display: "grid",
-          gridTemplateColumns: bp.isMobile ? "1fr" : "1fr 1fr",
-          gap: bp.isMobile ? 32 : 64,
-        }}
-      >
-        <motion.div variants={fadeUp}>
-          <SLabel text="FAQ" ac={s.accentColor} />
-          <h2
-            style={{
-              fontSize: "clamp(26px, 3.5vw, 36px)",
-              fontWeight: 900,
-              color: TEXT_PRIMARY,
-              lineHeight: 1.15,
-              marginBottom: 14,
-            }}
-          >
-            Questions about
-            <br />
-            <span style={{ color: s.accentColor }}>{s.name}?</span>
-          </h2>
-          <p
-            style={{
-              color: TEXT_DIM,
-              fontSize: 15,
-              lineHeight: 1.7,
-              marginBottom: 24,
-            }}
-          >
-            We've answered the most common questions below. Our care team is one
-            message away if yours isn't listed.
-          </p>
-          <button
-            style={{
-              padding: "11px 20px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              cursor: "pointer",
-              background: `${s.accentColor}10`,
-              color: s.accentColor,
-              border: `1px solid ${s.accentColor}30`,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              transition: "background 0.2s",
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}1A`)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.background = `${s.accentColor}10`)
-            }
-          >
-            <FiMessageSquare style={{ fontSize: 15 }} /> Contact Care Team
-          </button>
-        </motion.div>
-
-        <motion.div
-          variants={fadeUp}
-          style={{
-            padding: 20,
-            borderRadius: 22,
-            background: "#fff",
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          {s.faqs.map((faq, i) => (
-            <div
-              key={i}
-              style={{
-                borderBottom:
-                  i < s.faqs.length - 1 ? `1px solid ${BORDER}` : "none",
-              }}
-            >
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "16px 0",
-                  textAlign: "left",
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                <span
-                  style={{
-                    color: TEXT_PRIMARY,
-                    fontWeight: 700,
-                    fontSize: 14,
-                    paddingRight: 16,
-                  }}
-                >
-                  {faq.q}
-                </span>
-                <div
-                  style={{
-                    flexShrink: 0,
-                    width: 28,
-                    height: 28,
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: open === i ? s.accentColor : BG_SURFACE,
-                    transition: "background 0.2s, transform 0.2s",
-                    transform: open === i ? "rotate(45deg)" : "none",
-                  }}
-                >
-                  <FiPlus
-                    style={{
-                      fontSize: 14,
-                      color: open === i ? "#fff" : TEXT_DIM,
-                    }}
-                  />
-                </div>
-              </button>
-              <AnimatePresence>
-                {open === i && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.26 }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <div
-                      style={{
-                        paddingBottom: 16,
-                        paddingRight: 40,
-                        color: TEXT_BODY,
-                        fontSize: 14,
-                        lineHeight: 1.7,
-                      }}
-                    >
-                      {faq.a}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-};
-
-/* ──────────────────────────────────────────────────────────────────────────
-   FINAL CTA
-   Fix 5: glow blobs and translucent layered gradient removed — flat tinted
-   surface instead.
-────────────────────────────────────────────────────────────────────────── */
-const FinalCTA = ({ s, bp }) => (
-  <section
-    style={{
-      maxWidth: 1200,
-      margin: "0 auto",
-      padding: bp.isMobile ? "48px 16px" : "88px 24px",
-    }}
-  >
-    <motion.div
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.6 }}
-      style={{
-        position: "relative",
-        borderRadius: 28,
-        padding: bp.isMobile ? "40px 16px" : "72px 48px",
-        textAlign: "center",
-        background: `${s.accentColor}08`,
-        border: `1px solid ${s.accentColor}25`,
-      }}
-    >
-      <div>
-        <Pill ac={s.accentColor}>Start Today</Pill>
-        <h2
-          style={{
-            fontSize: bp.isMobile
-              ? "clamp(28px, 8vw, 36px)"
-              : "clamp(32px, 5vw, 52px)",
-            fontWeight: 900,
-            color: TEXT_PRIMARY,
-            lineHeight: 1.1,
-            marginBottom: 14,
-          }}
-        >
-          Ready to Reach Your Weight
-          <br />
-          <span style={{ color: s.accentColor }}>Management Goals?</span>
-        </h2>
-        <p
-          style={{
-            color: TEXT_BODY,
-            lineHeight: 1.7,
-            maxWidth: 500,
-            margin: "0 auto 36px",
-            fontSize: 16,
-          }}
-        >
-          Take control of your health with personalized weight loss programs
-          through Humancare Connect. Connect with a licensed healthcare
-          provider, receive expert guidance, and start building healthier habits
-          that support long term wellness.
-        </p>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            marginBottom: 36,
-            flexWrap: "wrap",
-            flexDirection: bp.isMobile ? "column" : "row",
-          }}
-        >
-          <PrimaryBtn ac={s.accentColor} fullWidth={bp.isMobile}>
-            Get Started
-          </PrimaryBtn>
-          <GhostBtn>Book Appointment</GhostBtn>
-          <button
-            style={{
-              padding: "13px 24px",
-              borderRadius: 12,
-              fontWeight: 600,
-              fontSize: 14,
-              background: "transparent",
-              color: TEXT_DIM,
-              border: `1px solid ${BORDER_HOVER}`,
-              cursor: "pointer",
-            }}
-          >
-            Contact Us
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 28,
-          }}
-        >
-          {[
-            [FiLock, "HIPAA Compliant"],
-            [FiStar, "4.9/5 Rated"],
-            [FiShield, "Verified Providers"],
-            [FiFileText, "No Insurance Required"],
-            [FiClock, "24/7 Access"],
-          ].map(([Icon, lb], i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                color: TEXT_DIM,
-                fontSize: 13,
-              }}
-            >
-              <Icon style={{ fontSize: 15 }} />
-              {lb}
-            </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
-  </section>
-);
-
 /* ──────────────────────────────────────────────────────────────────────────
    ROOT APP
-   Fix 6: wrapper background now matches the token system used throughout
-   every child component, instead of a hardcoded color disconnected from it.
 ────────────────────────────────────────────────────────────────────────── */
 export default function WeightLossPrograms() {
   const bp = useBreakpoint();
   const [slug, setSlug] = useState("telehealth-services");
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
+
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   return (
     <>
@@ -1538,12 +288,12 @@ export default function WeightLossPrograms() {
           content="Explore personalized weight loss programs through secure telemedicine services. Connect with licensed healthcare providers and achieve your health goals."
         />
       </Helmet>
-      <div
-      // style={{
-      //   backgroundColor: BG_BASE,
-      //   minHeight: "700px",
-      //   width: "100%",
-      // }}
+
+      <main
+        className="service-page service-page--weight-loss"
+        style={{
+          "--service-accent": s.accentColor,
+        }}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -1553,16 +303,447 @@ export default function WeightLossPrograms() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <Hero s={s} bp={bp} />
-            <Overview s={s} bp={bp} />
-            <HowItWorks s={s} bp={bp} />
-            <Features s={s} bp={bp} />
-            <WhyUs s={s} bp={bp} />
-            <FAQ s={s} bp={bp} />
-            <FinalCTA s={s} bp={bp} />
+            {/* =================================================
+                HERO (Clean Standalone)
+                ================================================= */}
+            <section ref={heroRef} className="service-hero">
+              <motion.div
+                style={{ opacity: heroOpacity }}
+                className="service-hero__content-standalone"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.1 }}
+                >
+                  <div className="service-pill">
+                    <span className="service-pill__dot" />
+                    Humancare Connect
+                  </div>
+                </motion.div>
+
+                <motion.h1
+                  initial={{ opacity: 0, y: 32 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.18 }}
+                  className="service-hero__title"
+                >
+                  {s.name.split(" ").map((w, i, arr) => (
+                    <span key={i}>
+                      {i === Math.floor(arr.length / 2) ? (
+                        <span className="service-accent">{w} </span>
+                      ) : (
+                        <span>{w} </span>
+                      )}
+                    </span>
+                  ))}
+                </motion.h1>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.26 }}
+                  className="service-hero__tagline"
+                >
+                  {s.tagline}
+                </motion.p>
+
+                <motion.p
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.32 }}
+                  className="service-hero__intro"
+                >
+                  {s.intro}
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.38 }}
+                  className="service-hero__btn-group"
+                >
+                  <button
+                    type="button"
+                    className="service-btn service-btn--primary"
+                  >
+                    <a href="/login">Get Started</a>
+                  </button>
+                  <button
+                    type="button"
+                    className="service-btn service-btn--ghost"
+                  >
+                    <Link to="/appointment-booking" state={{ tab: "spec" }}>
+                      Request Your Lab Consultation Today
+                    </Link>
+                  </button>
+                </motion.div>
+              </motion.div>
+            </section>
+
+            {/* =================================================
+                SERVICE OVERVIEW
+                ================================================= */}
+            <section className="service-section service-section--white">
+              <div className="service-container">
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-60px" }}
+                  className="service-overview__grid"
+                >
+                  <div>
+                    <motion.div variants={fadeUp}>
+                      <div className="service-label">
+                        <div className="service-label__line" />
+                        <span className="service-label__text">Service Overview</span>
+                      </div>
+                      <h2 className="service-heading-lg">
+                        What Are Weight Loss Programs?
+                      </h2>
+                    </motion.div>
+
+                    <motion.p variants={fadeUp} className="service-overview__description">
+                      {s.description}
+                    </motion.p>
+
+                    <motion.div variants={fadeUp} className="service-why-matters">
+                      <div className="service-why-matters__label">Why It Matters</div>
+                      <p className="service-why-matters__text">{s.whyItMatters}</p>
+                    </motion.div>
+
+                    <motion.div variants={fadeUp}>
+                      <div className="service-benefits-list__title">
+                        Who Can Benefit
+                      </div>
+                      <div className="service-benefits-list">
+                        {s.whoBenefits.map((item, i) => (
+                          <div key={i} className="service-benefit-item">
+                            <FiCheckCircle className="service-benefit-item__icon" />
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  <motion.div variants={fadeUp} className="service-overview__sticky">
+                    <ServiceContact s={s} />
+                  </motion.div>
+                </motion.div>
+
+                {/* Outcomes strip */}
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  className="service-outcomes-strip"
+                >
+                  {s.keyOutcomes.map((o, i) => (
+                    <motion.div
+                      key={i}
+                      variants={fadeUp}
+                      custom={i}
+                      className="service-outcome-card"
+                    >
+                      <div className="service-outcome-card__dot" />
+                      <p className="service-outcome-card__text">{o}</p>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </div>
+            </section>
+
+            {/* =================================================
+                HOW IT WORKS
+                ================================================= */}
+            <section className="service-section service-section--surface">
+              <div className="service-container">
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-60px" }}
+                  className="service-how-it-works__grid"
+                >
+                  <div>
+                    <motion.div variants={fadeUp}>
+                      <div className="service-label">
+                        <div className="service-label__line" />
+                        <span className="service-label__text">Our Services</span>
+                      </div>
+                      <h2 className="service-heading-lg">
+                        Getting started is{" "}
+                        <span className="service-accent">simple.</span>
+                      </h2>
+                      <p
+                        className="service-section-header__subtitle"
+                        style={{ marginBottom: 36, textAlign: "left" }}
+                      >
+                        Beginning your weight loss journey through Humancare Connect is
+                        convenient, secure, and designed around your individual needs.
+                      </p>
+                    </motion.div>
+
+                    <motion.div
+                      variants={stagger}
+                      initial="hidden"
+                      whileInView="visible"
+                      viewport={{ once: true }}
+                      className="service-step-list"
+                    >
+                      {s.steps.map((step, i) => (
+                        <motion.div
+                          key={i}
+                          variants={fadeUp}
+                          custom={i}
+                          className="service-step-item"
+                        >
+                          {i < s.steps.length - 1 && (
+                            <div className="service-step-item__line" />
+                          )}
+                          <div className="service-step-item__icon-wrap">
+                            {React.createElement(step.Icon, {
+                              style: { fontSize: 18, color: "#fff" },
+                            })}
+                          </div>
+                          <div className="service-step-item__content">
+                            <div className="service-step-item__badge">
+                              Step {i + 1}
+                            </div>
+                            <div className="service-step-item__title">
+                              {step.title}
+                            </div>
+                            <p className="service-step-item__body">
+                              {step.body}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </motion.div>
+                  </div>
+
+                  <motion.div variants={fadeUp} className="service-overview__sticky">
+                    <div className="service-how-it-works__card">
+                      {React.createElement(s.heroIcon, {
+                        className: "service-how-it-works__card-icon",
+                      })}
+                      <h3 className="service-how-it-works__card-title">
+                        Ready to begin?
+                      </h3>
+                      <p className="service-how-it-works__card-text">
+                        Take control of your health with personalized weight loss
+                        programs through Humancare Connect. Connect with a licensed
+                        healthcare provider and start building healthier habits today.
+                      </p>
+                      <button
+                        type="button"
+                        className="service-btn service-btn--primary service-btn--full"
+                      >
+                        <a href="/login">Get Started Today</a>
+                      </button>
+                      <div className="service-trust-grid">
+                        {[
+                          [FiLock, "Secure & Private"],
+                          [FiZap, "Fast Response"],
+                          [FiUserCheck, "Verified Providers"],
+                          [FiFileText, "No Insurance Required"],
+                        ].map(([Icon, lb], i) => (
+                          <div key={i} className="service-trust-item">
+                            <Icon className="service-trust-item__icon" />
+                            {lb}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </div>
+            </section>
+
+            {/* =================================================
+                FEATURES & BENEFITS
+                ================================================= */}
+            <section className="service-section">
+              <div className="service-container">
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-60px" }}
+                >
+                  <motion.div variants={fadeUp} className="service-section-header">
+                    <div className="service-label service-label--center">
+                      <div className="service-label__line" />
+                      <span className="service-label__text">Features &amp; Benefits</span>
+                    </div>
+                    <h2 className="service-heading-lg">
+                      Understanding Weight Loss
+                      <br />
+                      <span className="service-accent">Programs</span>
+                    </h2>
+                    <p className="service-section-header__subtitle">
+                      Every feature is designed around one goal: better outcomes for you.
+                    </p>
+                  </motion.div>
+
+                  <motion.div variants={fadeUp} className="service-feature-card">
+                    <p>
+                      Weight loss is not simply about reducing numbers on a scale.
+                      Effective weight management focuses on improving overall health
+                      through sustainable lifestyle changes, balanced nutrition, regular
+                      physical activity, and professional healthcare guidance. Every
+                      individual has unique health needs, which is why personalized care
+                      plays an important role in long term success.
+                    </p>
+                    <p>
+                      At Humancare Connect, our weight loss programs are designed to
+                      provide patient centered support through virtual healthcare
+                      services. Licensed healthcare providers evaluate factors such as
+                      current weight, medical history, lifestyle habits, nutrition
+                      patterns, and health goals to develop individualized
+                      recommendations. This personalized approach helps patients make
+                      meaningful progress while prioritizing their overall well being.
+                    </p>
+                    <p>
+                      Weight loss programs may benefit individuals who are managing
+                      obesity, weight related health concerns, or difficulties maintaining
+                      healthy lifestyle habits. Through secure telemedicine services,
+                      patients can access professional support, receive ongoing guidance,
+                      and stay accountable throughout their weight management journey
+                      without the need for frequent in person visits.
+                    </p>
+                  </motion.div>
+                </motion.div>
+              </div>
+            </section>
+
+            {/* =================================================
+                WHY CHOOSE US
+                ================================================= */}
+            <section className="service-section">
+              <div className="service-container">
+                <motion.div
+                  variants={stagger}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true, margin: "-60px" }}
+                >
+                  <motion.div variants={fadeUp} className="service-section-header">
+                    <div className="service-label service-label--center">
+                      <div className="service-label__line" />
+                      <span className="service-label__text">Why Choose Us</span>
+                    </div>
+                    <h2 className="service-heading-lg">
+                      Results you can{" "}
+                      <span className="service-accent">measure.</span>
+                    </h2>
+                    <p className="service-section-header__subtitle">
+                      Numbers that represent real patients, real outcomes.
+                    </p>
+                  </motion.div>
+
+                  <div className="service-why-us__grid">
+                    {whyUsItems.map(([Icon, title, desc], i) => (
+                      <motion.div
+                        key={i}
+                        variants={fadeUp}
+                        custom={i}
+                        className="service-why-us__card"
+                      >
+                        <div className="service-why-us__card-icon-wrap">
+                          <Icon className="service-why-us__card-icon" />
+                        </div>
+                        <div>
+                          <div className="service-why-us__card-title">{title}</div>
+                          <div className="service-why-us__card-desc">{desc}</div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </section>
+
+            {/* =================================================
+                FAQ
+                ================================================= */}
+            <section className="service-faq">
+              <CentralFAQ
+                badge="FAQ"
+                title={`Questions about ${s.name}?`}
+                description="We've answered the most common questions below. Our care team is one message away if yours isn't listed."
+                sections={[
+                  {
+                    title: "Frequently Asked",
+                    items: s.faqs.map((faq) => ({
+                      question: faq.q,
+                      answer: faq.a,
+                    })),
+                  },
+                ]}
+              />
+            </section>
+
+            {/* =================================================
+                FINAL CTA
+                ================================================= */}
+            <section className="service-section">
+              <div className="service-container">
+                <motion.div
+                  initial={{ opacity: 0, y: 32 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.6 }}
+                  className="service-cta-card"
+                >
+                  <div>
+                    <div className="service-pill">
+                      <span className="service-pill__dot" />
+                      Start Today
+                    </div>
+                    <h2 className="service-cta-title">
+                      Ready to Reach Your Weight
+                      <br />
+                      <span className="service-accent">Management Goals?</span>
+                    </h2>
+                    <p className="service-cta-desc">
+                      Take control of your health with personalized weight loss programs
+                      through Humancare Connect. Connect with a licensed healthcare
+                      provider, receive expert guidance, and start building healthier habits
+                      that support long term wellness.
+                    </p>
+                    <div className="service-cta-btn-group">
+                      <button
+                        type="button"
+                        className="service-btn service-btn--primary"
+                      >
+                        <a href="/login">Get Started</a>
+                      </button>
+                    </div>
+                    <div className="service-cta-trust">
+                      {[
+                        [FiLock, "HIPAA Compliant"],
+                        [FiStar, "4.9/5 Rated"],
+                        [FiShield, "Verified Providers"],
+                        [FiFileText, "No Insurance Required"],
+                        [FiClock, "24/7 Access"],
+                      ].map(([Icon, lb], i) => (
+                        <div key={i} className="service-cta-trust__item">
+                          <Icon className="service-cta-trust__icon" />
+                          {lb}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </section>
           </motion.div>
         </AnimatePresence>
-      </div>
+      </main>
     </>
   );
 }

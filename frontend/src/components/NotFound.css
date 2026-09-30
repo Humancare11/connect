@@ -215,3 +215,22 @@
     text-align: left;
   }
 }
+/* -- Mobile Small (=400px) -- */
+@media (max-width: 400px) {
+  .nf-404 {
+    font-size: 56px;
+  }
+
+  .nf-heading {
+    font-size: 22px;
+  }
+
+  .nf-desc {
+    font-size: 14px;
+  }
+
+  .nf-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

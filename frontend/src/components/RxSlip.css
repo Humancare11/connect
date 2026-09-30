@@ -435,3 +435,61 @@ table.rx-med-table tbody tr {
   word-break: break-word;
   text-align: left;
 }
+/* -- Tablet (=900px) -- */
+@media (max-width: 900px) {
+  .rx-header,
+  .rx-title-row {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .rx-patient-panel {
+    margin: 0 24px 20px;
+  }
+}
+
+/* -- Mobile Medium (=640px) -- */
+@media (max-width: 640px) {
+  .rx-header {
+    padding: 18px 16px 12px;
+  }
+
+  .rx-logo {
+    max-height: 100px;
+    width: 110px;
+  }
+
+  .rx-title-row {
+    padding: 14px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .rx-date-inline {
+    position: static;
+  }
+
+  .rx-patient-panel {
+    margin: 0 14px 18px;
+  }
+}
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .rx-slip {
+    border-radius: 8px;
+  }
+
+  .rx-title {
+    font-size: 18px;
+  }
+
+  .rx-header {
+    padding: 14px 12px 10px;
+  }
+
+  .rx-patient-panel {
+    margin: 0 10px 14px;
+  }
+}

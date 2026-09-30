@@ -60,6 +60,8 @@ import TelemedicineCost from "./pages/Blogs/TelemedicineCost";
 import OnlineDoctorRealDoctor from "./pages/Blogs/OnlineDoctorsRealDoctors";
 import FutureofTelemedicine from "./pages/Blogs/FutureofTelemedicine";
 import UTI from "./pages/Blogs/UTI";
+import MigraineVsHeadache from "./pages/Blogs/MigraineVsHeadache";
+import TelehealthforHypertension from "./pages/Blogs/TelehealthforHypertension";
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
@@ -1011,7 +1013,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
       },
       10 * 60 * 1000,
     );
@@ -1085,7 +1087,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -2822,6 +2824,14 @@ function AppLayout() {
           <Route
             path="/uti-symptoms-causes-treatment-&-when-to-see-a-doctor"
             element={<UTI />}
+          />
+          <Route
+            path="/migraine-vs-headache-symptoms-causes-differences-and-treatment-options"
+            element={<MigraineVsHeadache />}
+          />
+          <Route
+            path="/telehealth-for-hypertension"
+            element={<TelehealthforHypertension />}
           />
           {/* PRIVACY  */}
           {/* <Route path="/privacy-concerns" element={<PrivacyConcerns />} /> */}

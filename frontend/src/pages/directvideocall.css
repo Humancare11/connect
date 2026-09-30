@@ -160,58 +160,80 @@
   color: #fca5a5;
 }
 
-/* In-call notice shown when the guest has no local audio track to publish
-   (mic denied / in use / absent). Sits at the top of the stage, clear of the
-   fixed offline banner and the bottom-anchored peer/reconnect notices. */
-.hc-vc__local-audio-notice {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: min(92vw, 460px);
-  background: rgba(239, 68, 68, 0.14);
-  border: 1px solid rgba(239, 68, 68, 0.34);
-  color: #fca5a5;
-  padding: 8px 16px;
-  border-radius: 40px;
-  font-family: var(--font-primary, inherit);
-  font-size: 12.5px;
-  font-weight: 600;
-  line-height: 1.35;
-  text-align: left;
-  backdrop-filter: blur(12px);
-  z-index: 11;
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Direct Video Call
+   ══════════════════════════════════════════════ */
+
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .dvcall-prejoin-card {
+    max-width: 380px;
+    padding: 22px;
+  }
+
+  .dvcall-ctrl {
+    width: 46px;
+    height: 46px;
+    font-size: 16px;
+  }
 }
 
-.hc-vc__local-audio-notice svg {
-  flex: 0 0 auto;
+/* ── Mobile (≤640px) ── */
+@media (max-width: 640px) {
+  .dvcall-page--center {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .dvcall-prejoin-card {
+    max-width: 100%;
+    padding: 18px 16px;
+    border-radius: 12px;
+    gap: 12px;
+  }
+
+  .dvcall-prejoin-card h2 {
+    font-size: 17px;
+  }
+
+  .dvcall-prejoin-form {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dvcall-btn-primary,
+  .dvcall-btn-secondary {
+    width: 100%;
+    text-align: center;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .dvcall-ctrl {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
 }
 
-.hc-vc__local-audio-retry {
-  flex: 0 0 auto;
-  border: 1px solid rgba(252, 165, 165, 0.5);
-  background: rgba(239, 68, 68, 0.22);
-  color: #fecaca;
-  font: inherit;
-  font-weight: 700;
-  padding: 3px 12px;
-  border-radius: 40px;
-  cursor: pointer;
-}
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .dvcall-prejoin-card {
+    padding: 14px 12px;
+    border-radius: 10px;
+  }
 
-.hc-vc__local-audio-retry:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
+  .dvcall-prejoin-card h2 {
+    font-size: 15px;
+  }
 
-/* Reuses the fixed offline-banner layout (videocall.css) but recolours it
-   amber — a "heads up, this might not connect" warning rather than a hard
-   error. Shown when the ICE config in use has no TURN relay. Never rendered
-   at the same time as the offline banner (see DirectVideoCall.jsx). */
-.hc-vc__relay-warning {
-  background: #78350f;
-  color: #fde68a;
+  .dvcall-ctrl {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .dvcall-prejoin-preview__controls {
+    gap: 8px;
+  }
 }

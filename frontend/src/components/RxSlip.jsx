@@ -129,15 +129,15 @@ export default function RxSlip({
           <div className="rx-patient-row rx-patient-row-triple">
             <div className="rx-patient-cell">
               <span className="rx-label">Gender</span>
-              <span className="rx-value">{pGender}</span>
+              <span className="rx-value">{pGender || "—"}</span>
             </div>
             <div className="rx-patient-cell">
               <span className="rx-label">DOB</span>
-              <span className="rx-value">{pDob}</span>
+              <span className="rx-value">{pDob || "—"}</span>
             </div>
             <div className="rx-patient-cell">
               <span className="rx-label">Age</span>
-              <span className="rx-value">{pAge}</span>
+              <span className="rx-value">{pAge || "—"}</span>
             </div>
           </div>
         </div>

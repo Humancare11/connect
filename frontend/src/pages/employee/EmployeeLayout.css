@@ -271,3 +271,14 @@
     padding: 20px 16px;
   }
 }
+
+/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
+@media (max-width: 1024px) {
+  .eal-sidebar { width: 220px; }
+  .eal-main { margin-left: 220px; }
+}
+/* (existing 768px breakpoint retained above — hides sidebar, shows hamburger) */
+@media (max-width: 420px) {
+  .eal-content { padding: 14px 12px; }
+  .eal-topbar { padding: 10px 12px; }
+}

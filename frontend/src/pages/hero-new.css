@@ -653,3 +653,44 @@ body {
     --h: 440px;
   }
 }
+
+/* -- Mobile Small (=420px) -- */
+@media (max-width: 420px) {
+  .hce-hero {
+    padding: 95px 14px 50px;
+  }
+
+  .hce-left h1 {
+    font-size: 27px;
+    letter-spacing: -0.8px;
+  }
+
+  .hce-left p {
+    font-size: 13.5px;
+  }
+
+  .hce-stage-wrap {
+    height: 390px;
+  }
+
+  .hce-card {
+    --w: 155px;
+    --h: 290px;
+  }
+
+  .hce-card.center {
+    --w: 215px;
+    --h: 370px;
+  }
+
+  .hce-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .hce-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

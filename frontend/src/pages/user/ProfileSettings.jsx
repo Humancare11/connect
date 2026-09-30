@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Country } from "country-state-city";
 import api from "../../api";
 import { useAuth } from "../../context/AuthContext";
+import PhoneInputField, { parseValue as parsePhoneValue } from "../../components/PhoneInputField";
+import LocationSelects from "../../components/LocationSelects";
+import { getMobileError } from "../../utils/phone";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -36,6 +39,22 @@ const inputStyle = {
   transition: "all 0.2s ease",
 };
 
+const selectStyle = {
+  ...inputStyle,
+  cursor: "pointer",
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7ca3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+  paddingRight: "36px",
+  appearance: "none",
+  WebkitAppearance: "none",
+};
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+// "+91" with no digits after it is what the phone widget holds while empty.
+const isBlankMobile = (value) => !value || parsePhoneValue(value).local === "";
+
 /* ── Field wrapper ── */
 function Field({ label, required, icon, children }) {
   return (
@@ -56,19 +75,21 @@ function Field({ label, required, icon, children }) {
         )}
       </label>
       <div style={{ position: "relative" }}>
-        <span
-          style={{
-            position: "absolute",
-            left: "15px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            fontSize: "15px",
-            pointerEvents: "none",
-            zIndex: 1,
-          }}
-        >
-          {icon}
-        </span>
+        {icon && (
+          <span
+            style={{
+              position: "absolute",
+              left: "15px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              fontSize: "15px",
+              pointerEvents: "none",
+              zIndex: 1,
+            }}
+          >
+            {icon}
+          </span>
+        )}
         {children}
       </div>
     </div>
@@ -132,7 +153,7 @@ export default function ProfileSettings() {
   const [saved, setSaved]   = useState(false);
   const [error, setError]   = useState("");
   const [formData, setFormData] = useState({
-    name: "", email: "", mobile: "", gender: "", dob: "", country: "", state: "",
+    name: "", email: "", mobile: "", gender: "", dob: "", country: "", state: "", city: "",
   });
 
   useEffect(() => {
@@ -145,6 +166,7 @@ export default function ProfileSettings() {
         dob:     user.dob     || "",
         country: user.country || "",
         state:   user.state   || "",
+        city:    user.city    || "",
       });
     }
   }, [user]);
@@ -166,6 +188,7 @@ export default function ProfileSettings() {
         dob:     user.dob     || "",
         country: user.country || "",
         state:   user.state   || "",
+        city:    user.city    || "",
       });
     }
     setSaved(false);
@@ -178,13 +201,32 @@ export default function ProfileSettings() {
     setError("");
     setSaved(false);
     try {
-      await api.put("/api/auth/update-profile", formData);
-      updateUser({ ...user, ...formData });
+      // Mobile is only re-validated when the user changed it, so a legacy
+      // number they didn't touch never blocks saving other fields. Once a
+      // number exists it can be replaced but not removed (the server agrees).
+      const storedMobile = String(user.mobile || "").trim();
+      if (formData.mobile.trim() !== storedMobile) {
+        if (isBlankMobile(formData.mobile)) {
+          if (storedMobile) throw new Error("Mobile number cannot be removed.");
+        } else {
+          const mobileError = getMobileError(formData.mobile);
+          if (mobileError) throw new Error(mobileError);
+        }
+      }
+
+      const payload = { ...formData };
+      if (isBlankMobile(payload.mobile) && !storedMobile) payload.mobile = "";
+      const res = await api.put("/api/auth/update-profile", payload);
+      // Use the server's copy so normalised values (mobile, state names,
+      // locationSource) show exactly as stored.
+      updateUser({ ...user, ...(res.data?.user || formData) });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error("Failed to update profile:", err);
-      setError("Failed to update profile. Please try again.");
+      setError(
+        err?.response?.data?.msg || err?.message || "Failed to update profile. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -227,6 +269,9 @@ export default function ProfileSettings() {
         @keyframes ps-fadein { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
         @keyframes ps-spin   { to { transform: rotate(360deg); } }
         .ps-fadein { animation: ps-fadein 0.25s ease; }
+        .ps-phone .pif-control { height: 47px; min-height: 47px; border-radius: 13px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(203,213,225,0.80); }
+        .ps-phone .pif-control.is-active { border-color: rgba(59,130,246,0.65); background: rgba(255,255,255,0.88); box-shadow: 0 0 0 3px rgba(59,130,246,0.13); }
+        .ps-phone .pif-input { font-family: 'Plus Jakarta Sans', sans-serif; color: #0b0443; }
         @media (max-width: 860px) {
           .ps-body   { grid-template-columns: 1fr !important; }
           .ps-avatar-card { flex-direction: row !important; flex-wrap: wrap !important; padding: 22px 24px !important; }
@@ -338,6 +383,9 @@ export default function ProfileSettings() {
                 {formData.state && (
                   <MetaRow icon="📍" label="State / Province" value={formData.state} />
                 )}
+                {formData.city && (
+                  <MetaRow icon="🏙️" label="City" value={formData.city} />
+                )}
               </div>
             </div>
           </div>
@@ -420,26 +468,30 @@ export default function ProfileSettings() {
 
               {/* Row 2: Mobile + Gender */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-                <Field label="Mobile Number" icon="📞">
-                  <input
-                    style={inputStyle} type="tel" id="mobile" name="mobile"
-                    value={formData.mobile} onChange={handleChange}
-                    placeholder="+91 98765 43210"
-                    onFocus={onFocus} onBlur={onBlur}
-                  />
+                <Field label="Mobile Number" required={Boolean(user.mobile)}>
+                  <div className="ps-phone">
+                    <PhoneInputField
+                      inputId="mobile"
+                      inputName="mobile"
+                      searchInputId="mobile-country-search"
+                      searchInputName="mobileCountrySearch"
+                      value={formData.mobile}
+                      onChange={(ph) => {
+                        setFormData((prev) => ({ ...prev, mobile: ph }));
+                        setSaved(false);
+                        setError("");
+                      }}
+                      defaultCountry="IN"
+                      placeholder="Mobile number"
+                      required={Boolean(user.mobile)}
+                      maxLength={15}
+                      limitIndianNumber
+                    />
+                  </div>
                 </Field>
-                <Field label="Gender" icon="⚧">
+                <Field label="Gender (optional)" icon="⚧">
                   <select
-                    style={{
-                      ...inputStyle,
-                      cursor: "pointer",
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7ca3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 14px center",
-                      paddingRight: "36px",
-                      appearance: "none",
-                      WebkitAppearance: "none",
-                    }}
+                    style={selectStyle}
                     id="gender" name="gender"
                     value={formData.gender} onChange={handleChange}
                     onFocus={onFocus} onBlur={onBlur}
@@ -452,36 +504,39 @@ export default function ProfileSettings() {
                 </Field>
               </div>
 
-              {/* Row 3: DOB + Country */}
+              {/* Row 3: DOB (optional) */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-                <Field label="Date of Birth" icon="🎂">
+                <Field label="Date of Birth (optional)" icon="🎂">
                   <input
                     style={inputStyle} type="date" id="dob" name="dob"
                     value={formData.dob} onChange={handleChange}
-                    onFocus={onFocus} onBlur={onBlur}
-                  />
-                </Field>
-                <Field label="Country" icon="🌍">
-                  <input
-                    style={inputStyle} type="text" id="country" name="country"
-                    value={getCountryName(formData.country)} onChange={handleChange}
-                    placeholder="e.g. India, USA"
+                    min="1900-01-01" max={todayISO()}
                     onFocus={onFocus} onBlur={onBlur}
                   />
                 </Field>
               </div>
 
-              {/* Row 4: State / Province */}
-              <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-                <Field label="State / Province" icon="📍">
-                  <input
-                    style={inputStyle} type="text" id="state" name="state"
-                    value={formData.state} onChange={handleChange}
-                    placeholder="e.g. Maharashtra"
-                    onFocus={onFocus} onBlur={onBlur}
-                  />
-                </Field>
-              </div>
+              {/* Rows 4-5: Country → State / Province → City */}
+              <LocationSelects
+                country={formData.country}
+                state={formData.state}
+                city={formData.city}
+                onChange={(loc) => {
+                  setFormData((prev) => ({ ...prev, ...loc }));
+                  setSaved(false);
+                  setError("");
+                }}
+                fieldComponent={Field}
+                inputStyle={inputStyle}
+                selectStyle={selectStyle}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              />
+              {user.locationSource === "ip" && (
+                <p style={{ fontSize: "12px", color: "#6b7ca3", margin: "-8px 0 0" }}>
+                  📍 We estimated your location from your internet connection. Please confirm or correct it.
+                </p>
+              )}
 
               {/* Actions */}
               <div

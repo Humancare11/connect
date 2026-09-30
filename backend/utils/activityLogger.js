@@ -1,10 +1,10 @@
+const { getClientIp } = require("./clientIp");
+
+// Client IP for audit/consent records. Resolved via Express's trusted-proxy
+// handling (see TRUST_PROXY in server.js) rather than the raw, client-
+// controllable first X-Forwarded-For entry.
 function getIp(req) {
-  return (
-    (req?.headers?.["x-forwarded-for"] || "").split(",")[0].trim() ||
-    req?.socket?.remoteAddress ||
-    req?.ip ||
-    "unknown"
-  );
+  return getClientIp(req) || req?.socket?.remoteAddress || req?.ip || "unknown";
 }
 
 // Intentionally a no-op — activity/audit logging (PHI access, admin actions,

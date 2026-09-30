@@ -8,6 +8,9 @@ import React, {
 } from "react";
 import "./home.css";
 const Sa = lazy(() => import("../components/Sa"));
+const EverydayCareSection = lazy(
+  () => import("../components/EverydayCareSection"),
+);
 const Aa = lazy(() => import("../components/Aa"));
 // import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
 import sceneVideo from "../assets/gifts/HeroVideo.mp4";
@@ -1007,6 +1010,13 @@ export default function HomePage() {
       <LazySection>
         <Suspense fallback={null}>
           <Sa />
+        </Suspense>
+      </LazySection>
+
+      {/* ════════ EVERYDAY & PEDIATRIC CARE ═════════════════════════════════ */}
+      <LazySection>
+        <Suspense fallback={null}>
+          <EverydayCareSection />
         </Suspense>
       </LazySection>
 

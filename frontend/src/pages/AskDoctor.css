@@ -579,9 +579,91 @@
 
 /* ─── Responsive ────────────────────────────────────────────────────────────── */
 
+/* ── Tablet (≤900px) ── */
+@media (max-width: 900px) {
+  .ad-hero {
+    padding: 44px 20px 40px;
+  }
+
+  .ad-hero h1 {
+    font-size: 34px;
+  }
+
+  .ad-features {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ad-wrap {
+    padding: 28px 16px 48px;
+  }
+
+  .ad-success-card {
+    padding: 36px 24px;
+  }
+}
+
+/* ── Mobile (≤640px) ── */
 @media (max-width: 640px) {
   .ad-hero h1     { font-size: 28px; }
   .ad-features    { grid-template-columns: 1fr; }
   .ad-form-card form { padding: 20px; }
   .ad-form-header { padding: 20px; }
+
+  .ad-wrap {
+    padding: 20px 12px 40px;
+  }
+
+  .ad-hero {
+    padding: 36px 16px 32px;
+  }
+
+  .ad-hero p {
+    font-size: 14px;
+  }
+
+  .ad-success-card {
+    padding: 28px 16px;
+  }
+
+  .ad-success-title {
+    font-size: 20px;
+  }
+
+  .ad-cat-chip {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+}
+
+/* ── Small Mobile (≤420px) ── */
+@media (max-width: 420px) {
+  .ad-hero h1 {
+    font-size: 24px;
+  }
+
+  .ad-hero p {
+    font-size: 13px;
+  }
+
+  .ad-form-card form {
+    padding: 16px;
+  }
+
+  .ad-form-header {
+    padding: 16px;
+  }
+
+  .ad-form-header h2 {
+    font-size: 17px;
+  }
+
+  .ad-submit-btn {
+    font-size: 14px;
+    padding: 13px;
+  }
+
+  .ad-feature {
+    padding: 14px 16px;
+    gap: 10px;
+  }
 }
