@@ -812,6 +812,19 @@ export default function DirectVideoCall() {
   // finished).
   const networkRecoveryInProgressRef = useRef(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
+  // The stall banner reads "Waiting for the other person to reconnect…"
+  // instead of the generic text — set immediately on the server's
+  // peer-socket-down event (this side's own connection is fine, only the
+  // peer's socket dropped) and cleared on peer-socket-up or a genuine
+  // direct-participant-left. Mirrors VideoCall.jsx's identical state.
+  const [waitingForOldPeer, setWaitingForOldPeer] = useState(false);
+  const waitingForOldPeerRef = useRef(false);
+  const clearWaitingForOldPeer = useCallback(() => {
+    if (!waitingForOldPeerRef.current) return;
+    waitingForOldPeerRef.current = false;
+    setWaitingForOldPeer(false);
+    setReconnectStalled(false);
+  }, []);
   // Drives the manual "Retry" button's disabled/label state (see
   // forceReconnect) — separate from reconnectInProgressRef (the actual
   // re-entrancy guard) so the UI can be read declaratively in JSX.
@@ -1246,12 +1259,16 @@ export default function DirectVideoCall() {
       mediaStallSampleRef.current = { videoBytesReceived, videoFramesDecoded, audioBytesReceived };
       if (!prev) return; // first sample — nothing to diff against yet
 
-      const audioGrew =
-        typeof audioBytesReceived === "number" &&
-        typeof prev.audioBytesReceived === "number" &&
-        audioBytesReceived > prev.audioBytesReceived;
+      // Missing data on either side of the comparison is inconclusive, not a
+      // stall — a stat field the browser doesn't populate (or a report that
+      // briefly didn't come back) must never by itself trigger a rebuild.
+      const grew = (now, before) =>
+        typeof now !== "number" || typeof before !== "number" || now > before;
+
+      const audioGrew = grew(audioBytesReceived, prev.audioBytesReceived);
       if (audioGrew) {
         mediaStallConsecutiveCountRef.current = 0;
+        clearWaitingForOldPeer();
         return;
       }
 
@@ -1259,12 +1276,8 @@ export default function DirectVideoCall() {
       const remoteCameraLooksOff = remoteVideoTrack?.muted === true;
 
       const videoGrew =
-        typeof videoBytesReceived === "number" &&
-        typeof prev.videoBytesReceived === "number" &&
-        (videoBytesReceived > prev.videoBytesReceived ||
-          (typeof videoFramesDecoded === "number" &&
-            typeof prev.videoFramesDecoded === "number" &&
-            videoFramesDecoded > prev.videoFramesDecoded));
+        grew(videoBytesReceived, prev.videoBytesReceived) ||
+        grew(videoFramesDecoded, prev.videoFramesDecoded);
 
       const neverConnected =
         (pc.connectionState === "new" || pc.connectionState === "connecting") &&
@@ -1274,6 +1287,7 @@ export default function DirectVideoCall() {
       const role = isInitiatorRef.current ? "initiator" : "guest";
       if (!neverConnected && !connectedButSilent) {
         mediaStallConsecutiveCountRef.current = 0;
+        if (videoGrew) clearWaitingForOldPeer();
         return;
       }
 
@@ -1297,7 +1311,7 @@ export default function DirectVideoCall() {
       });
       void requestPcRebuildRef.current(neverConnected ? "media_never_connected" : "media_stall", {});
     },
-    [roomId],
+    [roomId, clearWaitingForOldPeer],
   );
 
   const startStatsCollection = useCallback(
@@ -2433,6 +2447,29 @@ export default function DirectVideoCall() {
       }
     };
 
+    // The peer's socket just dropped (server-side "disconnect", before its
+    // own DIRECT_ROOM_LEAVE_GRACE_MS grace period decides whether to declare
+    // them gone via direct-participant-left). This side's own connection is
+    // fine — show "waiting for the other person to reconnect" immediately
+    // instead of the generic stall text. Resolved by handlePeerSocketUp or
+    // handleParticipantLeft below.
+    const handleDirectPeerSocketDown = () => {
+      if (!mountedRef.current || !peerPresentRef.current) return;
+      const role = isInitiatorRef.current ? "initiator" : "guest";
+      retryDebugLog(role, roomId, "direct-peer-socket-down:RECEIVED", {});
+      waitingForOldPeerRef.current = true;
+      setWaitingForOldPeer(true);
+      setReconnectStalled(true);
+    };
+
+    // The same peer whose socket dropped has rejoined the room.
+    const handleDirectPeerSocketUp = () => {
+      if (!mountedRef.current) return;
+      const role = isInitiatorRef.current ? "initiator" : "guest";
+      retryDebugLog(role, roomId, "direct-peer-socket-up:RECEIVED", {});
+      clearWaitingForOldPeer();
+    };
+
     const handleParticipantLeft = () => {
       if (!mountedRef.current) return;
 
@@ -2475,6 +2512,8 @@ export default function DirectVideoCall() {
       mediaStallSampleRef.current = null;
       mediaStallConsecutiveCountRef.current = 0;
       lastRemoteFingerprintRef.current = null;
+      // Any "waiting for the other person" state belonged to the one who left.
+      clearWaitingForOldPeer();
 
       // Drop the now-dead peer connection. If the peer comes back,
       // handlePeerJoined -> setupPeerConnection builds a fresh one and
@@ -3447,6 +3486,8 @@ export default function DirectVideoCall() {
     socket.on("direct-room-error", handleRoomError);
     socket.on("direct-peer-joined", handlePeerJoined);
     socket.on("direct-participant-left", handleParticipantLeft);
+    socket.on("direct-peer-socket-down", handleDirectPeerSocketDown);
+    socket.on("direct-peer-socket-up", handleDirectPeerSocketUp);
     socket.on("direct-room-closed", handleRoomClosed);
     socket.on("direct-duplicate-session", handleDuplicateSession);
     socket.on("direct-seat-taken-over", handleSeatTakenOver);
@@ -3478,6 +3519,8 @@ export default function DirectVideoCall() {
       socket.off("direct-room-error", handleRoomError);
       socket.off("direct-peer-joined", handlePeerJoined);
       socket.off("direct-participant-left", handleParticipantLeft);
+      socket.off("direct-peer-socket-down", handleDirectPeerSocketDown);
+      socket.off("direct-peer-socket-up", handleDirectPeerSocketUp);
       socket.off("direct-room-closed", handleRoomClosed);
       socket.off("direct-duplicate-session", handleDuplicateSession);
       socket.off("direct-seat-taken-over", handleSeatTakenOver);
@@ -4238,9 +4281,11 @@ export default function DirectVideoCall() {
                 <span>
                   {manualReconnecting
                     ? "Reconnecting to the call…"
-                    : reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
-                      ? "Still unable to reconnect. You can keep trying or end the call."
-                      : "Reconnection is taking longer than expected."}
+                    : waitingForOldPeer
+                      ? "Waiting for the other person to reconnect…"
+                      : reconnectStallCountRef.current >= MAX_RECONNECT_STALL_RETRIES
+                        ? "Still unable to reconnect. You can keep trying or end the call."
+                        : "Reconnection is taking longer than expected."}
                 </span>
                 <button
                   type="button"

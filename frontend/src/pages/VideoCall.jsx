@@ -3793,6 +3793,28 @@ export default function VideoCall() {
       });
     };
 
+    // The peer's socket just dropped (server-side "disconnect", before its
+    // own SOCKET_LEAVE_GRACE_MS grace period decides whether to declare them
+    // gone via participant-left). This side's own connection is fine — show
+    // "waiting for the other person to reconnect" immediately instead of the
+    // generic stall text, rather than waiting on the existing
+    // OLD_PEER_ICE_RESTART_RECHECK_MS handshake-timeout heuristic to infer it.
+    // Resolved by handlePeerSocketUp or handleParticipantLeft below.
+    const handlePeerSocketDown = () => {
+      if (!mounted || !peerPresentRef.current) return;
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "peer-socket-down:RECEIVED", {});
+      waitingForOldPeerRef.current = true;
+      setWaitingForOldPeer(true);
+      setReconnectStalled(true);
+    };
+
+    // The same peer whose socket dropped has rejoined the room.
+    const handlePeerSocketUp = () => {
+      if (!mounted) return;
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "peer-socket-up:RECEIVED", {});
+      clearWaitingForOldPeer();
+    };
+
     const handlePeerJoined = (payload = {}) => {
       const { resumedCall, peerCapabilities } = payload || {};
       // The server relays the OTHER participant's announced capabilities.
@@ -4170,6 +4192,8 @@ export default function VideoCall() {
     socket.on("ice-restart-request", handleIceRestartRequest);
     socket.on("peer-joined", handlePeerJoined);
     socket.on("participant-left", handleParticipantLeft);
+    socket.on("peer-socket-down", handlePeerSocketDown);
+    socket.on("peer-socket-up", handlePeerSocketUp);
     socket.on("appointment-message", handleChatMessage);
     socket.on("appointment-chat-history", handleChatHistory);
     socket.on("appointment-updated", handleApptUpdated);
@@ -4411,8 +4435,12 @@ export default function VideoCall() {
         watchdogPrev = { videoBytes, videoFrames, audioBytes };
         if (!prev) return; // first sample — nothing to diff against yet
 
+        // Missing data on either side of the comparison is inconclusive, not
+        // a stall — a stat field the browser doesn't populate (or a report
+        // that briefly didn't come back) must never by itself trigger a
+        // rebuild.
         const grew = (now, before) =>
-          typeof now === "number" && typeof before === "number" && now > before;
+          typeof now !== "number" || typeof before !== "number" || now > before;
         const audioGrew = grew(audioBytes, prev.audioBytes);
         const videoGrew =
           grew(videoBytes, prev.videoBytes) || grew(videoFrames, prev.videoFrames);
@@ -4549,6 +4577,8 @@ export default function VideoCall() {
       socket.off("ice-restart-request", handleIceRestartRequest);
       socket.off("peer-joined", handlePeerJoined);
       socket.off("participant-left", handleParticipantLeft);
+      socket.off("peer-socket-down", handlePeerSocketDown);
+      socket.off("peer-socket-up", handlePeerSocketUp);
       socket.off("appointment-message", handleChatMessage);
       socket.off("appointment-chat-history", handleChatHistory);
       socket.off("appointment-updated", handleApptUpdated);

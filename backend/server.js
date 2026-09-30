@@ -673,6 +673,13 @@ const socketUsers = new Map(); // socketId -> { userId, role }
 // (peer should renegotiate quickly) vs. an ordinary first-time join (peer
 // should not be perturbed while a normal handshake is already in progress).
 const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
+// appointmentId -> the userId whose socket just dropped, from the moment the
+// "disconnect" handler fires until either that same user rejoins (peer-socket-up)
+// or the grace period expires without them (participant-left, which also
+// clears this). Lets the still-connected side distinguish "the peer's network
+// just dropped" from its own connection trouble well before the
+// SOCKET_LEAVE_GRACE_MS grace period would otherwise tell it anything.
+const appointmentSocketDown = new Map();
 // Entries persist across a room's transient auto-eviction (see the
 // disconnect grace-timeout handler below) so a simultaneous-drop-and-
 // reconnect still counts as a resume, not a first join — but that means
@@ -1157,6 +1164,10 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 // tracked by a client-generated guestId (not an authenticated identity) purely
 // so a page refresh in the same tab is treated as a rejoin, not a 3rd seat.
 const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
+// roomId -> the guestId whose socket just dropped — the direct-room analogue
+// of appointmentSocketDown above (same purpose: an immediate, pre-grace-period
+// "it's the peer, not you" signal for the still-connected side).
+const directRoomSocketDown = new Map();
 // roomId -> {
 //   initiatorGuestId,          // stable impolite-peer assignment (see below)
 //   participantGuestIds: Set,  // every guestId ever seen in this room
@@ -1650,6 +1661,11 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   directRoomSockets.set(socket.id, { roomId, guestId, name: roleDisplayName(role), role });
   socket.join(room);
 
+  if (directRoomSocketDown.get(roomId) === guestId) {
+    directRoomSocketDown.delete(roomId);
+    socket.to(room).emit("direct-peer-socket-up");
+  }
+
   const now = new Date();
   DirectVideoRoom.updateOne({ roomId }, { $set: { lastActivityAt: now } }).catch(() => {});
   DirectVideoRoom.updateOne({ roomId, firstJoinedAt: null }, { $set: { firstJoinedAt: now } }).catch(() => {});
@@ -2002,6 +2018,13 @@ io.on("connection", (socket) => {
     if (socket.rooms.has(room)) {
       socketRooms.set(socket.id, appointmentId);
 
+      // This same user's socket just came back from a drop — tell whoever's
+      // waiting they're no longer gone. See the "disconnect" handler above.
+      if (appointmentSocketDown.get(appointmentId) === access.identity.userId) {
+        appointmentSocketDown.delete(appointmentId);
+        socket.to(room).emit("peer-socket-up");
+      }
+
       const existing = io.sockets.adapter.rooms.get(room);
       const peerPresent = hasOtherUserInRoom(existing, access.identity.userId);
       const wasActivated = roomActivated.has(appointmentId);
@@ -2074,6 +2097,11 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
+
+    if (appointmentSocketDown.get(appointmentId) === socketUserId) {
+      appointmentSocketDown.delete(appointmentId);
+      socket.to(room).emit("peer-socket-up");
+    }
 
     ChatMessage.find({ appointmentId })
       .sort({ createdAt: 1 })
@@ -2322,6 +2350,17 @@ io.on("connection", (socket) => {
       const disconnectedUserId = liveIdentity?.userId || socket.userId || "";
       const appointmentRoom = `appointment_${appointmentId}`;
 
+      // Immediate, pre-grace-period signal: tell whoever's left in the room
+      // that the OTHER side just dropped, so they can show "waiting for the
+      // other person to reconnect" instead of treating it as their own
+      // connection trouble. A no-op send if nobody else is left. See
+      // join-appointment-room below for where this gets resolved (peer-socket-up)
+      // or the setTimeout below for where it times out (participant-left).
+      if (disconnectedUserId) {
+        io.to(appointmentRoom).emit("peer-socket-down");
+        appointmentSocketDown.set(appointmentId, disconnectedUserId);
+      }
+
       setTimeout(() => {
         const sameUserStillInRoom = Array.from(socketRooms.entries()).some(([sid, roomAppointmentId]) => {
           if (String(roomAppointmentId) !== String(appointmentId)) return false;
@@ -2331,6 +2370,12 @@ io.on("connection", (socket) => {
           const peerUserId = peerIdentity?.userId || peerSocket.userId || "";
           return disconnectedUserId && String(peerUserId) === String(disconnectedUserId);
         });
+
+        // Only clear an entry this same disconnect set — a second, unrelated
+        // disconnect for a different user may have overwritten it since.
+        if (appointmentSocketDown.get(appointmentId) === disconnectedUserId) {
+          appointmentSocketDown.delete(appointmentId);
+        }
 
         if (!sameUserStillInRoom) {
           io.to(appointmentRoom).emit("participant-left");
@@ -2629,6 +2674,10 @@ io.on("connection", (socket) => {
       // checks it — so repair it here, keep the seat reservation fresh, and
       // nudge the peer to renegotiate before returning.
       directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+      if (directRoomSocketDown.get(roomId) === guestId) {
+        directRoomSocketDown.delete(roomId);
+        socket.to(room).emit("direct-peer-socket-up");
+      }
       const recoveredEntry = getDirectRoomEntry(roomId);
       if (recoveredEntry.cleanupTimer) {
         clearTimeout(recoveredEntry.cleanupTimer);
@@ -2767,6 +2816,10 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+    if (directRoomSocketDown.get(roomId) === guestId) {
+      directRoomSocketDown.delete(roomId);
+      socket.to(room).emit("direct-peer-socket-up");
+    }
     roomEntry.seats.set(guestId, Date.now());
     logDirectRoom("seat_reserved", {
       roomId,
@@ -3100,6 +3153,14 @@ io.on("connection", (socket) => {
 
     directRoomSockets.delete(socket.id);
 
+    // Immediate, pre-grace-period signal — see appointmentSocketDown's
+    // "disconnect" handler above for the same idea applied to appointment
+    // rooms. Resolved by direct-peer-socket-up on rejoin (handlePinRoomJoin
+    // and both join-direct-room branches below) or timed out by
+    // direct-participant-left in the setTimeout further down.
+    io.to(room).emit("direct-peer-socket-down");
+    directRoomSocketDown.set(roomId, guestId);
+
     // disconnect_reason: prefer a fresh client/beacon hint (best-effort —
     // may not exist), then Socket.IO's own reason where it's unambiguous
     // ("ping timeout" always means the heartbeat genuinely stopped landing),
@@ -3153,6 +3214,12 @@ io.on("connection", (socket) => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
       );
+
+      // Only clear an entry this same disconnect set — a second, unrelated
+      // disconnect for a different guest may have overwritten it since.
+      if (directRoomSocketDown.get(roomId) === guestId) {
+        directRoomSocketDown.delete(roomId);
+      }
 
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
