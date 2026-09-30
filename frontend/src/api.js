@@ -1,5 +1,14 @@
 import axios from "axios";
-import { dispatchSessionActivity } from "./utils/session";
+import { dispatchSessionActivity, SESSION_EXPIRED_EVENT } from "./utils/session";
+
+// URLs that must never trigger the reactive refresh-and-retry flow below:
+// the refresh call itself (obviously), and every login/OAuth endpoint —
+// none of those represent an existing authenticated session that could be
+// refreshed, a 401/400 there just means bad credentials. Covers
+// /api/auth/login, /api/doctor/login, every "*-login" endpoint
+// (admin-login, payment-admin-login, employee-admin-login, partner-login,
+// doctor-login), and /api/auth/google(-doctor).
+const AUTH_BOOTSTRAP_URL_RE = /\/api\/(auth\/refresh|auth\/login|doctor\/login|auth\/[a-z-]*-login|auth\/google(-doctor)?)\b/;
 
 const AUTH_ROLES = new Set(["user", "doctor", "admin", "superadmin", "paymentadmin", "employeeadmin", "partner"]);
 const TOKEN_ROLE_ALIASES = {
@@ -79,6 +88,21 @@ export function setUserAuthToken(nextAccessToken = "", nextRefreshToken = "", ro
   setAuthTokenForRole(role, nextAccessToken, nextRefreshToken);
 }
 
+// Declares which role this page is authenticating as, WITHOUT touching its
+// tokens — call this synchronously at the top of a protected page/context's
+// mount effect, before any API request fires. Closes a real race: on a cold
+// load with an already-expired access token, activeAuthRole starts "" and
+// only used to get set as a side effect of a successful token-bearing
+// response — so any request that fires before that first response resolves
+// (e.g. a page's own data fetch, running in parallel with its auth
+// context's own /api/auth/me check) can't infer its role from
+// inferAuthRoleFromUrl, 401s, and its own reactive refresh attempt then has
+// no role to key a retry on either.
+export function setActiveAuthRole(role = "") {
+  const normalizedRole = normalizeAuthRole(role);
+  if (normalizedRole) activeAuthRole = normalizedRole;
+}
+
 export function clearAuthTokenForRole(role = "") {
   const normalizedRole = normalizeAuthRole(role);
   if (!normalizedRole) {
@@ -147,25 +171,39 @@ api.interceptors.response.use(
       original &&
       !original._retry &&
       !original.skipAuthRefresh &&
-      !url.includes("/api/auth/refresh")
+      !AUTH_BOOTSTRAP_URL_RE.test(url)
     ) {
-      original._retry = true;
+      // The role this failing request was actually made as — this is the
+      // ONLY source of truth for which session to refresh and which bucket
+      // to store the new tokens under. Never re-derive it from the refresh
+      // response afterward: buildTokenPayload() on the backend returns just
+      // {accessToken, refreshToken}, no role field, so re-inferring from
+      // that response was silently storing refreshed tokens under an empty
+      // role key (a no-op) whenever the ORIGINAL request's role couldn't be
+      // read off its URL — the refresh looked successful (200 from the
+      // server) but the app never actually picked up the new token.
       const role = normalizeAuthRole(original.authRole || inferAuthRoleFromUrl(url));
-      const refreshKey = role || "default";
-      if (!refreshPromisesByRole.has(refreshKey)) {
+      if (!role) return Promise.reject(error);
+
+      original._retry = true;
+      if (!refreshPromisesByRole.has(role)) {
         refreshPromisesByRole.set(
-          refreshKey,
-          api.post("/api/auth/refresh", null, { authRole: role }).finally(() => {
-            refreshPromisesByRole.delete(refreshKey);
-          })
+          role,
+          api
+            .post("/api/auth/refresh", null, { authRole: role, skipAuthRefresh: true })
+            .then((res) => {
+              setAuthTokenForRole(role, res.data?.accessToken, res.data?.refreshToken);
+              return res;
+            })
+            .finally(() => refreshPromisesByRole.delete(role)),
         );
       }
       try {
-        await refreshPromisesByRole.get(refreshKey);
+        await refreshPromisesByRole.get(role);
         return api(original);
       } catch {
         clearAuthTokenForRole(role);
-        window.dispatchEvent(new CustomEvent("hc:session-expired"));
+        window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT, { detail: { role } }));
       }
     }
 

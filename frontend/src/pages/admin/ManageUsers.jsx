@@ -1,89 +1,23 @@
 import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useNavigationType, useSearchParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
+import {
+  approveUserDeletion,
+  deleteUserAccount,
+  mergeUpdatedUser,
+  rejectUserDeletion,
+} from "./userAdminActions";
 import "./ManageUsers.css";
+
+// Remembers where the list was scrolled when a profile is opened, so coming
+// back (the page's Back button or the browser's) puts the admin in the same place.
+const SCROLL_KEY = "manage-users:list-scroll";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
   const country = Country.getCountryByCode(isoCode);
   return country?.name || isoCode;
-}
-
-function InfoSection({ title, children }) {
-  return (
-    <div
-      style={{
-        background: "rgba(248,250,252,0.8)",
-        border: "1px solid rgba(255,255,255,0.75)",
-        borderRadius: 12,
-        padding: "14px 18px",
-        marginBottom: 12,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "#0e6ceb",
-          marginBottom: 12,
-        }}
-      >
-        {title}
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function InfoRow({ icon, label, value, noBorder }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 12,
-        padding: "8px 0",
-        borderBottom: noBorder ? "none" : "1px solid rgba(255,255,255,0.6)",
-      }}
-    >
-      <span
-        style={{
-          fontSize: 15,
-          width: 22,
-          textAlign: "center",
-          flexShrink: 0,
-          marginTop: 1,
-        }}
-      >
-        {icon}
-      </span>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color: "#6b7ca3",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            marginBottom: 2,
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            fontSize: 13.5,
-            fontWeight: 500,
-            color: value ? "#0b0443" : "#94a3b8",
-          }}
-        >
-          {value || "Not provided"}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function formatPatientId(value) {
@@ -95,254 +29,30 @@ function formatPatientId(value) {
   return String(value);
 }
 
-function UserModal({ user, onClose, onDelete, onApproveDelete, onRejectDelete }) {
-  if (!user) return null;
-
-  const hasPendingDeletion = user.deletionRequestStatus === "pending";
-
-  const initials = user.name
-    ? user.name
-        .split(" ")
-        .map((w) => w[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
-    : "U";
-
-  const joinedDate = user.createdAt
-    ? new Date(user.createdAt).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
-    : "—";
-
-  return (
-    <div className="adp-overlay" onClick={onClose}>
-      <div
-        className="adp-modal"
-        onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: 800 }}
-      >
-        {/* Header */}
-        <div className="adp-modal-header">
-          <h3 className="adp-modal-title">User Profile</h3>
-          <button className="adp-modal-close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <div className="adp-modal-body" style={{ padding: "20px 22px" }}>
-          {/* Hero / Identity */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              padding: "18px 20px",
-              background: "linear-gradient(135deg, #0b0443 0%, #083ab0 100%)",
-              borderRadius: 14,
-              marginBottom: 14,
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                top: -30,
-                right: -30,
-                width: 120,
-                height: 120,
-                background: "rgba(255,255,255,0.06)",
-                borderRadius: "50%",
-                pointerEvents: "none",
-              }}
-            />
-            <div
-              style={{
-                width: 60,
-                height: 60,
-                borderRadius: 16,
-                flexShrink: 0,
-                background: "rgba(255,255,255,0.15)",
-                border: "2px solid rgba(255,255,255,0.3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 22,
-                fontWeight: 800,
-                color: "#fff",
-                backdropFilter: "blur(8px)",
-              }}
-            >
-              {initials}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div
-                style={{
-                  fontSize: 17,
-                  fontWeight: 800,
-                  color: "#fff",
-                  marginBottom: 3,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user.name}
-              </div>
-              <div
-                style={{
-                  fontSize: 12.5,
-                  color: "rgba(255,255,255,0.7)",
-                  marginBottom: 8,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {user.email}
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 4,
-                    background: "rgba(255,255,255,0.15)",
-                    border: "1px solid rgba(255,255,255,0.25)",
-                    borderRadius: 20,
-                    padding: "3px 10px",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    color: "#fff",
-                    textTransform: "capitalize",
-                  }}
-                >
-                  👤 {user.role || "User"}
-                </span>
-                {user.country && (
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      background: "rgba(255,255,255,0.12)",
-                      border: "1px solid rgba(255,255,255,0.2)",
-                      borderRadius: 20,
-                      padding: "3px 10px",
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "rgba(255,255,255,0.85)",
-                    }}
-                  >
-                    🌍 {getCountryName(user.country)}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Personal Information */}
-          <InfoSection title="Personal Information">
-            <InfoRow icon="📱" label="Mobile" value={user.mobile} />
-            <InfoRow icon="⚧" label="Gender" value={user.gender} />
-            <InfoRow icon="🎂" label="Date of Birth" value={user.dob} />
-            <InfoRow icon="🌍" label="Country" value={getCountryName(user.country)} />
-            <InfoRow icon="📍" label="State / Province" value={user.state} noBorder />
-          </InfoSection>
-
-          {/* Account Information */}
-          <InfoSection title="Account Information">
-            <InfoRow
-              icon="🆔"
-              label="Patient ID"
-              value={formatPatientId(user.patientId)}
-            />
-            <InfoRow
-              icon="🔑"
-              label="Role"
-              value={
-                user.role
-                  ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
-                  : "User"
-              }
-            />
-            <InfoRow icon="📅" label="Member Since" value={joinedDate} />
-            <InfoRow
-              icon="🌐"
-              label="Registration IP"
-              value={user.registrationIp || "—"}
-              noBorder
-            />
-          </InfoSection>
-
-          {hasPendingDeletion && (
-            <InfoSection title="Account Deletion Request">
-              <InfoRow
-                icon="🗑️"
-                label="Reason"
-                value={user.deletionReason || "No reason provided"}
-              />
-              <InfoRow
-                icon="📅"
-                label="Requested On"
-                value={
-                  user.deletionRequestedAt
-                    ? new Date(user.deletionRequestedAt).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                      })
-                    : "—"
-                }
-                noBorder
-              />
-            </InfoSection>
-          )}
-        </div>
-
-        <div className="adp-modal-footer">
-          <button className="adp-btn adp-btn--ghost" onClick={onClose}>
-            Close
-          </button>
-          {hasPendingDeletion ? (
-            <>
-              <button
-                className="adp-btn adp-btn--reject"
-                onClick={() => onRejectDelete(user._id, user.name)}
-              >
-                Reject Deletion
-              </button>
-              <button
-                className="adp-btn adp-btn--approve"
-                onClick={() => onApproveDelete(user._id, user.name)}
-              >
-                Approve Deletion
-              </button>
-            </>
-          ) : (
-            <button
-              className="adp-btn adp-btn--reject"
-              onClick={() => onDelete(user._id, user.name)}
-            >
-              Delete User
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ManageUsers() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
-  const [search, setSearch] = useState("");
-  const [toast, setToast] = useState(null);
-  const [filter, setFilter] = useState("all");
+  // A result message handed over by the profile page (e.g. after deleting a user).
+  const [toast, setToast] = useState(() =>
+    location.state?.toast ? { msg: location.state.toast, ok: true } : null
+  );
+
+  // Search and filter are kept in the URL (?q=…&filter=…) so they survive
+  // opening a profile and coming back, and the browser's Back button works.
+  const search = searchParams.get("q") || "";
+  const filter = searchParams.get("filter") === "deletion_requests" ? "deletion_requests" : "all";
+  const updateParams = ({ q = search, filter: nextFilter = filter }) => {
+    const next = {};
+    if (q) next.q = q;
+    if (nextFilter !== "all") next.filter = nextFilter;
+    setSearchParams(next, { replace: true });
+  };
+  const setSearch = (q) => updateParams({ q });
+  const setFilter = (nextFilter) => updateParams({ filter: nextFilter });
 
   useEffect(() => {
     api
@@ -352,47 +62,71 @@ export default function ManageUsers() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    if (!location.state?.toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 4000);
+    // keep restoreScroll, drop the toast so a refresh doesn't show it again
+    navigate(
+      { pathname: location.pathname, search: location.search },
+      { replace: true, state: { restoreScroll: location.state.restoreScroll } }
+    );
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Restore the scroll position when returning from a profile (Back button on
+  // the profile page, or the browser's back). A normal visit starts at the top.
+  useEffect(() => {
+    if (loading) return;
+    if (navigationType !== "POP" && !location.state?.restoreScroll) return;
+    let saved = null;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(SCROLL_KEY) || "null");
+      sessionStorage.removeItem(SCROLL_KEY);
+    } catch {
+      /* sessionStorage unavailable — start at the top */
+    }
+    if (saved && saved.search === location.search) {
+      // instant: the site uses smooth scrolling, but a restore should just be there
+      requestAnimationFrame(() => window.scrollTo({ top: saved.top, behavior: "instant" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
+  const rememberScroll = () => {
+    try {
+      sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ search: location.search, top: window.scrollY }));
+    } catch {
+      /* sessionStorage unavailable — Back just starts at the top */
+    }
+  };
+
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 4000);
   };
 
   const handleDelete = async (userId, userName) => {
-    if (!window.confirm(`Delete user "${userName}"? This cannot be undone.`))
-      return;
-    try {
-      await api.delete(`/api/admin/users/${userId}`);
-      setUsers((prev) => prev.filter((u) => u._id !== userId));
-      setSelected(null);
-      showToast("User deleted.");
-    } catch {
-      showToast("Failed to delete user.", false);
-    }
+    const result = await deleteUserAccount(userId, userName);
+    if (!result.done) return;
+    if (result.ok) setUsers((prev) => prev.filter((u) => u._id !== userId));
+    showToast(result.message, result.ok);
   };
 
   const handleApproveDelete = async (userId, userName) => {
-    if (!window.confirm(`Approve deletion request for "${userName}"? Their account will be permanently deleted.`))
-      return;
-    try {
-      await api.put(`/api/admin/users/${userId}/delete-request/approve`, {});
-      setUsers((prev) => prev.filter((u) => u._id !== userId));
-      setSelected(null);
-      showToast("Account deletion approved and account deleted.");
-    } catch (err) {
-      showToast(err?.response?.data?.msg || "Failed to approve deletion request.", false);
-    }
+    const result = await approveUserDeletion(userId, userName);
+    if (!result.done) return;
+    if (result.ok) setUsers((prev) => prev.filter((u) => u._id !== userId));
+    showToast(result.message, result.ok);
   };
 
   const handleRejectDelete = async (userId, userName) => {
-    if (!window.confirm(`Reject deletion request for "${userName}"?`)) return;
-    try {
-      const res = await api.put(`/api/admin/users/${userId}/delete-request/reject`, {});
-      setUsers((prev) => prev.map((u) => (u._id === userId ? res.data?.user || u : u)));
-      setSelected((prev) => (prev?._id === userId ? res.data?.user || prev : prev));
-      showToast("Deletion request rejected.");
-    } catch (err) {
-      showToast(err?.response?.data?.msg || "Failed to reject deletion request.", false);
+    const result = await rejectUserDeletion(userId, userName);
+    if (!result.done) return;
+    if (result.ok) {
+      setUsers((prev) => prev.map((u) => (u._id === userId ? mergeUpdatedUser(u, result.user) : u)));
     }
+    showToast(result.message, result.ok);
   };
 
   const deletionRequestCount = users.filter((u) => u.deletionRequestStatus === "pending").length;
@@ -419,16 +153,6 @@ export default function ManageUsers() {
           <span>{toast.ok ? "✓" : "!"}</span> {toast.msg}
         </div>
       )}
-      {selected && (
-        <UserModal
-          user={selected}
-          onClose={() => setSelected(null)}
-          onDelete={handleDelete}
-          onApproveDelete={handleApproveDelete}
-          onRejectDelete={handleRejectDelete}
-        />
-      )}
-
       <div className="adp-header">
         <span className="adp-eyebrow">Admin Panel</span>
         <h1 className="adp-title">Manage Users</h1>
@@ -618,12 +342,14 @@ export default function ManageUsers() {
                     </td>
                     <td>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <button
+                        <Link
                           className="adp-btn adp-btn--view"
-                          onClick={() => setSelected(u)}
+                          to={`/admin-dashboard/manage-users/${u._id}`}
+                          state={{ from: location.search }}
+                          onClick={rememberScroll}
                         >
                           View
-                        </button>
+                        </Link>
                         {u.deletionRequestStatus === "pending" ? (
                           <>
                             <button

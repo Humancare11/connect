@@ -12,6 +12,7 @@ import { seedLocal } from "./helpers/seed.js";
 export const AUTH_DIR = path.resolve("test-results", ".auth");
 export const DOCTOR_STATE = path.join(AUTH_DIR, "doctor.json");
 export const PATIENT_STATE = path.join(AUTH_DIR, "patient.json");
+export const ADMIN_STATE = path.join(AUTH_DIR, "admin.json");
 
 async function login(baseURL, urlPath, body, statePath, label) {
   const ctx = await request.newContext({ baseURL });
@@ -35,9 +36,11 @@ export default async function globalSetup() {
       mongoUri: LOCAL_MONGO_URI,
       doctor: creds.doctor,
       patient: creds.patient,
+      admin: creds.admin,
     });
     process.env.TEST_APPOINTMENT_ID = ids.appointmentId;
     process.env.TEST_DIRECT_ROOM_ID = ids.directRoomId;
+    process.env.TEST_DOCTOR_ID = ids.doctorId;
     console.log(`[e2e] seeded local DB: appointment ${ids.appointmentId}`);
   }
 
@@ -56,4 +59,18 @@ export default async function globalSetup() {
     "Patient",
   );
   console.log("[e2e] doctor + patient sessions saved");
+
+  // Admin panel (Phase 3) — only when credentials exist (always true in
+  // local mode; opt-in in staging). Tests that need admin access skip
+  // themselves via test.skip(!process.env.TEST_ADMIN_EMAIL, ...) otherwise.
+  if (creds.admin) {
+    await login(
+      baseURL,
+      "/api/auth/admin-login",
+      { email: creds.admin.email, password: creds.admin.password },
+      ADMIN_STATE,
+      "Admin",
+    );
+    console.log("[e2e] admin session saved");
+  }
 }

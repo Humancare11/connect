@@ -254,7 +254,11 @@ export default function AuthPage() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState(
+    location.state?.sessionExpired
+      ? "Your session has expired. Please log in again."
+      : "",
+  );
   const [formSuccess, setFormSuccess] = useState(
     location.state?.registered
       ? "Account created successfully! Please sign in."

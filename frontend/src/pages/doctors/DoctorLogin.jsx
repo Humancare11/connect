@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import "../log.css";
 import api from "../../api";
@@ -194,13 +194,18 @@ function FlowCard({ icon, title, subtitle, formError, onBack, children }) {
 /* ─── Main component ─────────────────────────────────────────── */
 export default function DoctorAuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useDoctorAuth();
 
   /* view: 'auth' | 'register-otp' | 'forgot-email' | 'forgot-otp' | 'forgot-reset' */
   const [view, setView] = useState("auth");
   const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] = useState(
+    location.state?.sessionExpired
+      ? "Your session has expired. Please log in again."
+      : "",
+  );
   const [formSuccess, setFormSuccess] = useState("");
 
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
@@ -254,6 +259,11 @@ export default function DoctorAuthPage() {
 
   function afterLogin(doctor, isNewUser = false) {
     login(doctor);
+    const from = location.state?.from;
+    if (from && !isNewUser) {
+      navigate(from);
+      return;
+    }
     navigate(isNewUser ? "/doctor-dashboard/enrollments" : "/doctor-dashboard");
   }
 

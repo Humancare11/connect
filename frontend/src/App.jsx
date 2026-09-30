@@ -7,7 +7,7 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
-import { lazy, Suspense, useEffect, useLayoutEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
@@ -39,6 +39,7 @@ import api, { clearUserAuthToken } from "./api";
 import {
   ROLE_TIMEOUT_MS,
   SESSION_ACTIVITY_EVENT,
+  SESSION_EXPIRED_EVENT,
   clearClientSession,
   getActiveSessionRole,
   getLogoutRedirectPath,
@@ -795,6 +796,7 @@ const AdminDoctorProfile = lazy(
   () => import("./pages/admin/AdminDoctorProfile"),
 );
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
+const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
@@ -804,6 +806,10 @@ const AdminCategoryConsultations = lazy(
 );
 const AdminDirectVideoConsultation = lazy(
   () => import("./pages/admin/AdminDirectVideoConsultation"),
+);
+const AdminDirectVideoCalls = lazy(() => import("./pages/admin/AdminDirectVideoCalls"));
+const AdminDirectVideoCallDetail = lazy(
+  () => import("./pages/admin/AdminDirectVideoCallDetail"),
 );
 
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
@@ -945,6 +951,17 @@ function SessionTimeoutManager() {
   const { admin, logout: logoutAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
+  // The idle-timeout effect below intentionally does NOT depend on
+  // location (adding it would reset the idle countdown on every
+  // navigation) — but logoutAll still needs whatever page is CURRENT at
+  // the moment a session actually expires, not whatever page was open
+  // when that effect last (re)ran. A ref updated on every render is the
+  // standard way to read a fresh value from a long-lived effect closure
+  // without depending on it.
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
   const [warningOpen, setWarningOpen] = useState(false);
   const [remaining, setRemaining] = useState(300);
 
@@ -964,12 +981,29 @@ function SessionTimeoutManager() {
     let countdownTimer;
     let refreshTimer;
 
-    const logoutAll = async () => {
+    // Called two ways: as the idle-timeout's own setTimeout callback (no
+    // args — the existing 5-minute warning dialog already told the user
+    // this was coming, so no extra message needed) and as the
+    // SESSION_EXPIRED_EVENT listener below (refresh genuinely failed —
+    // never leave the user silently logged out with no explanation).
+    const logoutAll = async (event) => {
+      const isSessionExpiredEvent = event?.type === SESSION_EXPIRED_EVENT;
+      const effectiveRole = event?.detail?.role || role;
       clearUserAuthToken();
       clearClientSession();
       await Promise.allSettled([logoutUser(), logoutDoctor(), logoutAdmin()]);
       setWarningOpen(false);
-      navigate(getLogoutRedirectPath(role), { replace: true });
+      navigate(getLogoutRedirectPath(effectiveRole), {
+        replace: true,
+        ...(isSessionExpiredEvent
+          ? {
+              state: {
+                sessionExpired: true,
+                from: locationRef.current.pathname + locationRef.current.search,
+              },
+            }
+          : {}),
+      });
     };
 
     const schedule = () => {
@@ -1009,7 +1043,7 @@ function SessionTimeoutManager() {
       window.addEventListener(event, markActive, { passive: true }),
     );
     window.addEventListener(SESSION_ACTIVITY_EVENT, markActive);
-    window.addEventListener("hc:session-expired", logoutAll);
+    window.addEventListener(SESSION_EXPIRED_EVENT, logoutAll);
 
     refreshTimer = setInterval(
       () => {
@@ -1023,7 +1057,7 @@ function SessionTimeoutManager() {
     return () => {
       events.forEach((event) => window.removeEventListener(event, markActive));
       window.removeEventListener(SESSION_ACTIVITY_EVENT, markActive);
-      window.removeEventListener("hc:session-expired", logoutAll);
+      window.removeEventListener(SESSION_EXPIRED_EVENT, logoutAll);
       clearTimeout(warningTimer);
       clearTimeout(logoutTimer);
       clearInterval(countdownTimer);
@@ -1634,6 +1668,16 @@ function AppLayout() {
             }
           />
           <Route
+            path="/admin-dashboard/manage-users/:id"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminUserProfile />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/admin-dashboard/appointments"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
@@ -1659,6 +1703,26 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <AdminDirectVideoConsultation />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/direct-video-consultation/calls"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDirectVideoCalls />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/direct-video-consultation/calls/:roomId"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDirectVideoCallDetail />
                 </AdminLayout>
               </PrivateRoute>
             }

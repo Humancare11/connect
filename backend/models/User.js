@@ -57,6 +57,20 @@ const userSchema = new mongoose.Schema(
 
     registrationIp: { type: String, default: "" },
 
+    // How the account was created. Set once at signup; empty for older accounts
+    // (the admin API derives it for those — see utils/signupMethod.js).
+    signupMethod: { type: String, enum: ["email", "google", ""], default: "" },
+
+    // Where the signup came from — informational, set once at signup (see
+    // utils/clientInfo.js). Empty for accounts created before this existed.
+    // subType: web → "Chrome on Windows"; app → "android" | "ios" | "unknown".
+    // source: "header" = the app declared it, "inferred" = guessed from a native
+    // HTTP client's User-Agent, "user-agent" = parsed from a browser.
+    registrationPlatform: { type: String, enum: ["web", "app", ""], default: "" },
+    registrationSubType: { type: String, default: "" },
+    registrationPlatformSource: { type: String, enum: ["header", "inferred", "user-agent", ""], default: "" },
+    registrationAppVersion: { type: String, default: "" },
+
     accountDisabled: { type: Boolean, default: false, index: true },
     disabledAt: { type: Date, default: null },
     disabledReason: { type: String, default: "" },

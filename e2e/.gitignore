@@ -2,3 +2,6 @@ node_modules/
 test-results/
 test-results-full-run.txt
 playwright-report/
+# Ad hoc debug/run-log output saved directly in this directory during manual
+# test runs — never source, never meant to be committed.
+*.txt
