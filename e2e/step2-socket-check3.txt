@@ -1,0 +1,111 @@
+[WebServer] [slow-query] users.findOne 331ms {"email":"admin@gmail.com"}
+[WebServer] (node:27552) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb6e37051cade2080e7370
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 8 tests using 1 worker
+
+  ok 1 tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds (442ms)
+  x  2 tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts (8.2s)
+  ok 3 tests\direct-pin-socket.spec.js:112:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true (393ms)
+  ok 4 tests\direct-pin-socket.spec.js:138:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device (336ms)
+  ok 5 tests\direct-pin-socket.spec.js:176:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working (297ms)
+  ok 6 tests\direct-pin-socket.spec.js:214:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected (257ms)
+  ok 7 tests\direct-pin-socket.spec.js:247:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged (167ms)
+  ok 8 tests\direct-pin-socket.spec.js:270:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked (1.5s)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:22:40 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+
+  1) tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts 
+
+    Error: timed out waiting for "direct-pin-error"
+
+      53 | function once(socket, event, timeoutMs = 8_000) {
+      54 |   return new Promise((resolve, reject) => {
+    > 55 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      56 |     socket.once(event, (payload) => {
+      57 |       clearTimeout(timer);
+      58 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:55:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-4a817-mpts-block-further-attempts\error-context.md
+
+  1 failed
+    tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts 
+  7 passed (37.1s)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | correct PIN assigns the right role and join-direct-room succeeds | PASS | 0.4 |  |
+| 2 | wrong PIN is rejected, and 5 wrong attempts block further attempts | FAIL | 8.2 | Error: timed out waiting for "direct-pin-error" |
+| 3 | a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true | PASS | 0.4 |  |
+| 4 | second device with the same PIN gets a conflict; confirmed takeover evicts the first device | PASS | 0.3 |  |
+| 5 | regenerate PIN (default): current device's session survives a refresh, old PIN stops working | PASS | 0.3 |  |
+| 6 | regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected | PASS | 0.3 |  |
+| 7 | admin can view PINs again after creation, and the view is logged | PASS | 0.2 |  |
+| 8 | per-room brute force: many wrong attempts from different IPs still gets blocked | PASS | 1.5 |  |
+
+EXIT_CODE=1

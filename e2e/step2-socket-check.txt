@@ -1,0 +1,412 @@
+[WebServer] (node:29488) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb6d4a6e9199aa8db706f8
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 8 tests using 1 worker
+
+  x  1 tests\direct-pin-socket.spec.js:63:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds (8.2s)
+  x  2 tests\direct-pin-socket.spec.js:86:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts (8.1s)
+  x  3 tests\direct-pin-socket.spec.js:109:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true (8.1s)
+  x  4 tests\direct-pin-socket.spec.js:135:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device (8.1s)
+  x  5 tests\direct-pin-socket.spec.js:173:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working (8.1s)
+  x  6 tests\direct-pin-socket.spec.js:211:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected (8.1s)
+  ok 7 tests\direct-pin-socket.spec.js:244:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged (113ms)
+  ok 8 tests\direct-pin-socket.spec.js:267:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked (315ms)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 1:19:22 PM [vite] ws proxy error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+[WebServer] 1:19:22 PM [vite] ws proxy socket error:
+[WebServer] Error: write ECONNRESET
+[WebServer]     at afterWriteDispatched (node:internal/stream_base_commons:159:15)
+[WebServer]     at writeGeneric (node:internal/stream_base_commons:150:3)
+[WebServer]     at Socket._writeGeneric (node:net:966:11)
+[WebServer]     at Socket._write (node:net:978:8)
+[WebServer]     at writeOrBuffer (node:internal/streams/writable:570:12)
+[WebServer]     at _write (node:internal/streams/writable:499:10)
+[WebServer]     at Writable.write (node:internal/streams/writable:508:10)
+[WebServer]     at Socket.ondata (node:internal/streams/readable:1012:24)
+[WebServer]     at Socket.emit (node:events:508:28)
+[WebServer]     at addChunk (node:internal/streams/readable:563:12)
+
+
+  1) tests\direct-pin-socket.spec.js:63:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds 
+
+    Error: timed out waiting for "direct-room-joined"
+
+      50 | function once(socket, event, timeoutMs = 8_000) {
+      51 |   return new Promise((resolve, reject) => {
+    > 52 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      53 |     socket.once(event, (payload) => {
+      54 |       clearTimeout(timer);
+      55 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:52:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-e5034-d-join-direct-room-succeeds\error-context.md
+
+  2) tests\direct-pin-socket.spec.js:86:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts 
+
+    Error: timed out waiting for "direct-pin-error"
+
+      50 | function once(socket, event, timeoutMs = 8_000) {
+      51 |   return new Promise((resolve, reject) => {
+    > 52 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      53 |     socket.once(event, (payload) => {
+      54 |       clearTimeout(timer);
+      55 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:52:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-4a817-mpts-block-further-attempts\error-context.md
+
+  3) tests\direct-pin-socket.spec.js:109:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true 
+
+    Error: timed out waiting for "direct-room-joined"
+
+      50 | function once(socket, event, timeoutMs = 8_000) {
+      51 |   return new Promise((resolve, reject) => {
+    > 52 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      53 |     socket.once(event, (payload) => {
+      54 |       clearTimeout(timer);
+      55 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:52:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-18a2b-mpt-and-resumedCall-is-true\error-context.md
+
+  4) tests\direct-pin-socket.spec.js:135:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device 
+
+    Error: timed out waiting for "direct-room-joined"
+
+      50 | function once(socket, event, timeoutMs = 8_000) {
+      51 |   return new Promise((resolve, reject) => {
+    > 52 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      53 |     socket.once(event, (payload) => {
+      54 |       clearTimeout(timer);
+      55 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:52:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-ab36b-ver-evicts-the-first-device\error-context.md
+
+  5) tests\direct-pin-socket.spec.js:173:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working 
+
+    Error: timed out waiting for "direct-room-joined"
+
+      50 | function once(socket, event, timeoutMs = 8_000) {
+      51 |   return new Promise((resolve, reject) => {
+    > 52 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      53 |     socket.once(event, (payload) => {
+      54 |       clearTimeout(timer);
+      55 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:52:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-545c0-fresh-old-PIN-stops-working\error-context.md
+
+  6) tests\direct-pin-socket.spec.js:211:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected 
+
+    Error: timed out waiting for "direct-room-joined"
+
+      50 | function once(socket, event, timeoutMs = 8_000) {
+      51 |   return new Promise((resolve, reject) => {
+    > 52 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      53 |     socket.once(event, (payload) => {
+      54 |       clearTimeout(timer);
+      55 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:52:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-16121-live-device-is-disconnected\error-context.md
+
+  6 failed
+    tests\direct-pin-socket.spec.js:63:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds 
+    tests\direct-pin-socket.spec.js:86:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts 
+    tests\direct-pin-socket.spec.js:109:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true 
+    tests\direct-pin-socket.spec.js:135:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device 
+    tests\direct-pin-socket.spec.js:173:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working 
+    tests\direct-pin-socket.spec.js:211:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected 
+  2 passed (1.1m)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | correct PIN assigns the right role and join-direct-room succeeds | FAIL | 8.2 | Error: timed out waiting for "direct-room-joined" |
+| 2 | wrong PIN is rejected, and 5 wrong attempts block further attempts | FAIL | 8.1 | Error: timed out waiting for "direct-pin-error" |
+| 3 | a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true | FAIL | 8.1 | Error: timed out waiting for "direct-room-joined" |
+| 4 | second device with the same PIN gets a conflict; confirmed takeover evicts the first device | FAIL | 8.1 | Error: timed out waiting for "direct-room-joined" |
+| 5 | regenerate PIN (default): current device's session survives a refresh, old PIN stops working | FAIL | 8.1 | Error: timed out waiting for "direct-room-joined" |
+| 6 | regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected | FAIL | 8.1 | Error: timed out waiting for "direct-room-joined" |
+| 7 | admin can view PINs again after creation, and the view is logged | PASS | 0.1 |  |
+| 8 | per-room brute force: many wrong attempts from different IPs still gets blocked | PASS | 0.3 |  |
+
+EXIT_CODE=1

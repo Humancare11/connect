@@ -1,0 +1,505 @@
+[WebServer] (node:2064) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb100b3ae99091a9efafc7
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 56 tests using 1 worker
+
+[WebServer] 6:40:41 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:40:42 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:40:46 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:40:48 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:40:49 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:49 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:49 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:50 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:40:53 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  1 tests\direct-video-admin.spec.js:42:3 › direct call — admin panel › calls list: status moves waiting -> one joined -> in call (17.3s)
+[WebServer] 6:40:56 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:40:56 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer d3a9a182-43ed-4f29-8cc5-2b200447f28d within 8000ms — rolling back to retry.
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:05 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:05 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:07 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:08 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+[WebServer] 6:41:09 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  2 tests\direct-video-admin.spec.js:77:3 › direct call — admin panel › calls list: a room-full rejection marks the call as a problem (16.4s)
+[WebServer] 6:41:12 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:12 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:13 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:13 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:13 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:14 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:18 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:19 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+[WebServer] 6:41:23 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  3 tests\direct-video-admin.spec.js:111:3 › direct call — admin panel › Phase 4: a room-full rejection raises an in-app admin alert (15.5s)
+[WebServer] 6:41:27 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:27 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 940ce3ca-aaae-491b-85b7-7a8dee786481 within 8000ms — rolling back to retry.
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:37 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:37 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:52 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:41:57 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  4 tests\direct-video-admin.spec.js:162:3 › direct call — admin panel › call report: timeline and participants after join, Retry, and a mic toggle (31.2s)
+[WebServer] 6:41:58 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:01 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  5 tests\direct-video-admin.spec.js:206:3 › direct call — admin panel › Phase 5.2: a join stores only a masked IP, never the full one (5.2s)
+[WebServer] 6:42:04 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  6 tests\direct-video-admin.spec.js:238:3 › direct call — admin panel › admin action: extend link pushes expiresAt forward (2.4s)
+[WebServer] 6:42:06 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:06 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 6f5b0c84-2a07-43eb-8069-2159fc4bb0f4 within 8000ms — rolling back to retry.
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 98edfd48-15b0-48b1-9cef-cd7e63ff1bf4 within 8000ms — rolling back to retry.
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] [direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:16 AM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected 3d89a614-6115-4990-b7c3-4e674f8e0aee, got 6f5b0c84-2a07-43eb-8069-2159fc4bb0f4)
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:22 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  7 tests\direct-video-admin.spec.js:261:3 › direct call — admin panel › admin action: clear stuck seats does not affect a live call (22.5s)
+[WebServer] 6:42:29 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:29 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:30 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:30 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:30 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:31 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:35 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  8 tests\direct-video-admin.spec.js:300:3 › direct call — admin panel › Phase 5.1: Live view streams updates while watched, stops when closed, survives admin disconnect (18.1s)
+[WebServer] 6:42:47 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:47 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 0421b055-e3cb-4051-8cc6-062b8aceadcb within 8000ms — rolling back to retry.
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer b94b2d3b-6d39-4459-8244-431435d1173b within 8000ms — rolling back to retry.
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] [direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:42:56 AM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected f3f1ad17-6749-473b-b09c-aae215e6b072, got 0421b055-e3cb-4051-8cc6-062b8aceadcb)
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:01 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:03 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  9 tests\direct-video-admin.spec.js:361:3 › direct call — admin panel › admin action: force end call disconnects both participants with a clear message (22.4s)
+[WebServer] 6:43:10 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:43:10 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 1444f1cf-6c78-4602-ba6a-970d167eb661 within 8000ms — rolling back to retry.
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 365d4c82-e6b0-45e1-81f9-f6bcb501fe38 within 8000ms — rolling back to retry.
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] [direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:43:20 AM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected 57da11ad-6cc1-49a8-8006-2cffb1afebf5, got 1444f1cf-6c78-4602-ba6a-970d167eb661)
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:24 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  x  10 tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild (17.2s)
+[WebServer] 6:43:30 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:43:30 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:32 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:43:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  ok 11 tests\direct-video-call-extra.spec.js:93:3 › direct call — extra coverage › b1: guest Retry — video resumes on both sides (19.7s)
+[WebServer] 6:43:50 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:43:50 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 621473a4-ab70-4f3d-8a7e-cbaf98bf42a9 within 8000ms — rolling back to retry.
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:00 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:00 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:15 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  ok 12 tests\direct-video-call-extra.spec.js:113:3 › direct call — extra coverage › b2: host Retry — video resumes on both sides (27.6s)
+[WebServer] 6:44:18 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:44:18 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 22bd55cb-9c5e-4b06-a467-0835bb906868 within 8000ms — rolling back to retry.
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:27 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:27 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:42 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  ok 13 tests\direct-video-call-extra.spec.js:133:3 › direct call — extra coverage › b3: both tap Retry within 1s — no rebuild loop, video resumes (27.4s)
+[WebServer] 6:44:45 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:44:45 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer eeb1962f-1d8f-46ba-b616-a898d9060710 within 8000ms — rolling back to retry.
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 6:44:55 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+  ok 14 tests\direct-video-call-extra.spec.js:157:3 › direct call — extra coverage › c: camera+mic off both sides for 60s — no rebuild, call stays up (1.3m)
+  x  15 tests\direct-video-call-extra.spec.js:186:3 › direct call — extra coverage › d1: guest camera/mic denied — still joins receive-only, sees/hears host; manual Retry attaches media (86ms)
+  x  16 tests\direct-video-call-extra.spec.js:211:3 › direct call — extra coverage › d2: guest permission prompt answered after 10s — call still connects, media attaches automatically (0ms)
+  -  17 tests\direct-video-call-extra.spec.js:235:3 › direct call — extra coverage › d3: guest's in-call media Retry does not hang when the permission prompt never answers
+  -  18 tests\direct-video-call-extra.spec.js:266:3 › direct call — extra coverage › d4: pre-join preview does not hang when the permission prompt never answers; Join now still works
+  -  19 tests\direct-video-call-extra.spec.js:306:3 › direct call — extra coverage › e1: guest reopens the link with a DIFFERENT guestId after disconnecting — dead seat taken over instantly
+  -  20 tests\direct-video-call-extra.spec.js:369:3 › direct call — extra coverage › e3: guest's tab freezes during the presence check — seat is taken over after ~3s, frozen tab shows the message once it wakes
+  -  21 tests\direct-video-call-extra.spec.js:446:3 › direct call — extra coverage › e2: guest opens the link in a second tab — original tab evicted, new tab takes the seat (not room full)
+  -  22 tests\direct-video-call-extra.spec.js:478:3 › direct call — extra coverage › f: a real third person is rejected while host and guest are both live
+  -  23 tests\direct-video-call-extra.spec.js:511:3 › direct call — extra coverage › g1: host refreshes mid-call — both recover
+  -  24 tests\direct-video-call-extra.spec.js:531:3 › direct call — extra coverage › g2: host leaves and rejoins — video resumes
+  -  25 tests\direct-video-call-extra.spec.js:553:3 › direct call — extra coverage › h: call end — clean cleanup on both sides
+  -  26 tests\direct-video-call-extra.spec.js:598:3 › direct call — extra coverage › i1: opening an EXPIRED link shows a clear message, no crash
+  -  27 tests\direct-video-call-extra.spec.js:615:3 › direct call — extra coverage › i2: opening a CLOSED link shows a clear message, no crash
+  -  28 tests\direct-video-call-extra.spec.js:630:3 › direct call — extra coverage › i3: opening a NONEXISTENT room id shows a clear message, no crash
+  -  29 tests\direct-video-call-extra.spec.js:646:3 › direct call — extra coverage › j1: WhatsApp in-app browser UA shows the banner, Join still works, call connects
+  -  30 tests\direct-video-call-extra.spec.js:679:3 › direct call — extra coverage › j2: Instagram (iOS) in-app browser UA shows copy-link guidance, banner is dismissible
+  -  31 tests\direct-video-call-extra.spec.js:704:3 › direct call — extra coverage › k1: mic level meter responds to the fake audio device during the pre-join preview
+  -  32 tests\direct-video-call-extra.spec.js:731:3 › direct call — extra coverage › k2: pre-join network check shows a result without blocking anything
+  -  33 tests\direct-video-call-extra.spec.js:743:3 › direct call — extra coverage › k3: Join now still works when /ice-servers is slow
+  -  34 tests\direct-video-call-extra.spec.js:770:3 › direct call — extra coverage › k4: Join now still works when /ice-servers is down
+  -  35 tests\direct-video-call-extra.spec.js:794:3 › direct call — extra coverage › m1: peer mic/camera badges — toggle shows on the other side, late joiner sees correct state
+  -  36 tests\direct-video-call-extra.spec.js:834:3 › direct call — extra coverage › m2: 'You are muted' toast appears when speaking while muted, not when unmuted
+  x  37 tests\direct-video-call.spec.js:22:3 › direct call reconnect › 8 guest taps Retry - video resumes on both sides (0ms)
+  x  38 tests\video-call-extra.spec.js:33:3 › appointment call — extra coverage › a: quick start — both flowing within 8s, no rebuild (0ms)
+  -  39 tests\video-call-extra.spec.js:48:3 › appointment call — extra coverage › c: camera AND mic off on both sides for 60s — no rebuild, call stays up
+  -  40 tests\video-call-extra.spec.js:77:3 › appointment call — extra coverage › d1: patient camera/mic permission denied — no crash, error UI shown
+  -  41 tests\video-call-extra.spec.js:112:3 › appointment call — extra coverage › d2: patient permission prompt answered after 12s — call still connects
+  -  42 tests\video-call-extra.spec.js:136:3 › appointment call — extra coverage › e1: doctor refreshes the page mid-call — both recover
+  -  43 tests\video-call-extra.spec.js:143:3 › appointment call — extra coverage › e2: patient refreshes the page mid-call — both recover
+  -  44 tests\video-call-extra.spec.js:150:3 › appointment call — extra coverage › f: screen share start/stop — call keeps working
+  -  45 tests\video-call-extra.spec.js:172:3 › appointment call — extra coverage › g: call end — leaves cleanly, tracks stopped, pc closed, no lingering activity
+  -  46 tests\video-call-extra.spec.js:212:3 › appointment call — extra coverage › h: 5-minute call — stays connected, no repeated rebuilds, no log spam
+  x  47 tests\video-call-media-denied.spec.js:30:3 › appointment call — camera/mic denied › patient denies camera/mic: joins receive-only, doctor sees it joined, then patient grants via Retry (0ms)
+  -  48 tests\video-call-media-denied.spec.js:70:3 › appointment call — camera/mic denied › doctor denies camera/mic: joins receive-only, patient still receives doctor's video after doctor's Retry
+  -  49 tests\video-call-media-denied.spec.js:112:3 › appointment call — camera/mic denied › camera/mic Retry does not hang when the permission prompt never answers
+  x  50 tests\video-call.spec.js:25:3 › appointment call reconnect › 1 baseline - both join, video flows 30s, no rebuild (0ms)
+  -  51 tests\video-call.spec.js:36:3 › appointment call reconnect › 2 patient taps Retry - video resumes, doctor detects rebuilt peer
+  -  52 tests\video-call.spec.js:51:3 › appointment call reconnect › 3 doctor taps Retry - video resumes, request-peer-rebuild sent and received
+  -  53 tests\video-call.spec.js:64:3 › appointment call reconnect › 4 both tap Retry within 1s - video resumes, no rebuild loop
+  -  54 tests\video-call.spec.js:89:3 › appointment call reconnect › 5 Retry tapped 3 times quickly - one rebuild, banner held as Reconnecting…
+  -  55 tests\video-call.spec.js:121:3 › appointment call reconnect › 6 camera off on patient for 60s - watchdog does not rebuild
+  -  56 tests\video-call.spec.js:138:3 › appointment call reconnect › 7 patient leaves and rejoins - video resumes, no rate-limit block
+
+
+  1) tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild 
+
+    Error: host rebuilds on plain start
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      76 |       // a tight performance budget.
+      77 |       expect(Date.now() - startedAt, "time to first video on both sides").toBeLessThan(30_000);
+    > 78 |       expect(await host.logs.count(/requestPcRebuild:START/), "host rebuilds on plain start").toBe(0);
+         |                                                                                               ^
+      79 |       expect(await guest.logs.count(/requestPcRebuild:START/), "guest rebuilds on plain start").toBe(0);
+      80 |     } finally {
+      81 |       await host.context.close();
+        at C:\aaamain\connect\e2e\tests\direct-video-call-extra.spec.js:78:95
+
+    Error Context: test-results\.pw\direct-video-call-extra-di-b1f7d--flowing-quickly-no-rebuild\error-context.md
+
+  2) tests\direct-video-call-extra.spec.js:186:3 › direct call — extra coverage › d1: guest camera/mic denied — still joins receive-only, sees/hears host; manual Retry attaches media 
+
+    Error: browserContext.newPage: Target crashed 
+
+       at ..\helpers\harness.js:322
+
+      320 |   await context.addInitScript(TRACK_PCS);
+      321 |   await context.addInitScript(TRACK_MEDIA_TRACKS);
+    > 322 |   const page = await context.newPage();
+          |                              ^
+      323 |   const logs = captureLogs(page);
+      324 |
+      325 |   // context.close() has been observed to hang indefinitely on this machine
+        at newParty (C:\aaamain\connect\e2e\helpers\harness.js:322:30)
+        at C:\aaamain\connect\e2e\tests\direct-video-call-extra.spec.js:191:18
+
+    Error Context: test-results\.pw\direct-video-call-extra-di-e5afd-manual-Retry-attaches-media\error-context.md
+
+  3) tests\direct-video-call-extra.spec.js:211:3 › direct call — extra coverage › d2: guest permission prompt answered after 10s — call still connects, media attaches automatically 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  4) tests\direct-video-call.spec.js:22:3 › direct call reconnect › 8 guest taps Retry - video resumes on both sides 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  5) tests\video-call-extra.spec.js:33:3 › appointment call — extra coverage › a: quick start — both flowing within 8s, no rebuild 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  6) tests\video-call-media-denied.spec.js:30:3 › appointment call — camera/mic denied › patient denies camera/mic: joins receive-only, doctor sees it joined, then patient grants via Retry 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  7) tests\video-call.spec.js:25:3 › appointment call reconnect › 1 baseline - both join, video flows 30s, no rebuild 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  7 failed
+    tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild 
+    tests\direct-video-call-extra.spec.js:186:3 › direct call — extra coverage › d1: guest camera/mic denied — still joins receive-only, sees/hears host; manual Retry attaches media 
+    tests\direct-video-call-extra.spec.js:211:3 › direct call — extra coverage › d2: guest permission prompt answered after 10s — call still connects, media attaches automatically 
+    tests\direct-video-call.spec.js:22:3 › direct call reconnect › 8 guest taps Retry - video resumes on both sides 
+    tests\video-call-extra.spec.js:33:3 › appointment call — extra coverage › a: quick start — both flowing within 8s, no rebuild 
+    tests\video-call-media-denied.spec.js:30:3 › appointment call — camera/mic denied › patient denies camera/mic: joins receive-only, doctor sees it joined, then patient grants via Retry 
+    tests\video-call.spec.js:25:3 › appointment call reconnect › 1 baseline - both join, video flows 30s, no rebuild 
+  36 did not run
+  13 passed (5.5m)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | calls list: status moves waiting -> one joined -> in call | PASS | 17.3 |  |
+| 2 | calls list: a room-full rejection marks the call as a problem | PASS | 16.4 |  |
+| 3 | Phase 4: a room-full rejection raises an in-app admin alert | PASS | 15.5 |  |
+| 4 | call report: timeline and participants after join, Retry, and a mic toggle | PASS | 31.2 |  |
+| 5 | Phase 5.2: a join stores only a masked IP, never the full one | PASS | 5.2 |  |
+| 6 | admin action: extend link pushes expiresAt forward | PASS | 2.4 |  |
+| 7 | admin action: clear stuck seats does not affect a live call | PASS | 22.5 |  |
+| 8 | Phase 5.1: Live view streams updates while watched, stops when closed, survives admin disconnect | PASS | 18.1 |  |
+| 9 | admin action: force end call disconnects both participants with a clear message | PASS | 22.4 |  |
+| 10 | a: normal call start — both flowing quickly, no rebuild | FAIL | 17.2 | Error: host rebuilds on plain start |
+| 11 | b1: guest Retry — video resumes on both sides | PASS | 19.7 |  |
+| 12 | b2: host Retry — video resumes on both sides | PASS | 27.6 |  |
+| 13 | b3: both tap Retry within 1s — no rebuild loop, video resumes | PASS | 27.4 |  |
+| 14 | c: camera+mic off both sides for 60s — no rebuild, call stays up | PASS | 75.3 |  |
+| 15 | d1: guest camera/mic denied — still joins receive-only, sees/hears host; manual Retry attaches media | FAIL | 0.1 | Error: browserContext.newPage: Target crashed  |
+| 16 | d2: guest permission prompt answered after 10s — call still connects, media attaches automatically | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+| 17 | d3: guest's in-call media Retry does not hang when the permission prompt never answers | SKIP | 0.0 |  |
+| 18 | d4: pre-join preview does not hang when the permission prompt never answers; Join now still works | SKIP | 0.0 |  |
+| 19 | e1: guest reopens the link with a DIFFERENT guestId after disconnecting — dead seat taken over instantly | SKIP | 0.0 |  |
+| 20 | e3: guest's tab freezes during the presence check — seat is taken over after ~3s, frozen tab shows the message once it wakes | SKIP | 0.0 |  |
+| 21 | e2: guest opens the link in a second tab — original tab evicted, new tab takes the seat (not room full) | SKIP | 0.0 |  |
+| 22 | f: a real third person is rejected while host and guest are both live | SKIP | 0.0 |  |
+| 23 | g1: host refreshes mid-call — both recover | SKIP | 0.0 |  |
+| 24 | g2: host leaves and rejoins — video resumes | SKIP | 0.0 |  |
+| 25 | h: call end — clean cleanup on both sides | SKIP | 0.0 |  |
+| 26 | i1: opening an EXPIRED link shows a clear message, no crash | SKIP | 0.0 |  |
+| 27 | i2: opening a CLOSED link shows a clear message, no crash | SKIP | 0.0 |  |
+| 28 | i3: opening a NONEXISTENT room id shows a clear message, no crash | SKIP | 0.0 |  |
+| 29 | j1: WhatsApp in-app browser UA shows the banner, Join still works, call connects | SKIP | 0.0 |  |
+| 30 | j2: Instagram (iOS) in-app browser UA shows copy-link guidance, banner is dismissible | SKIP | 0.0 |  |
+| 31 | k1: mic level meter responds to the fake audio device during the pre-join preview | SKIP | 0.0 |  |
+| 32 | k2: pre-join network check shows a result without blocking anything | SKIP | 0.0 |  |
+| 33 | k3: Join now still works when /ice-servers is slow | SKIP | 0.0 |  |
+| 34 | k4: Join now still works when /ice-servers is down | SKIP | 0.0 |  |
+| 35 | m1: peer mic/camera badges — toggle shows on the other side, late joiner sees correct state | SKIP | 0.0 |  |
+| 36 | m2: 'You are muted' toast appears when speaking while muted, not when unmuted | SKIP | 0.0 |  |
+| 37 | 8 guest taps Retry - video resumes on both sides | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+| 38 | a: quick start — both flowing within 8s, no rebuild | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+| 39 | c: camera AND mic off on both sides for 60s — no rebuild, call stays up | SKIP | 0.0 |  |
+| 40 | d1: patient camera/mic permission denied — no crash, error UI shown | SKIP | 0.0 |  |
+| 41 | d2: patient permission prompt answered after 12s — call still connects | SKIP | 0.0 |  |
+| 42 | e1: doctor refreshes the page mid-call — both recover | SKIP | 0.0 |  |
+| 43 | e2: patient refreshes the page mid-call — both recover | SKIP | 0.0 |  |
+| 44 | f: screen share start/stop — call keeps working | SKIP | 0.0 |  |
+| 45 | g: call end — leaves cleanly, tracks stopped, pc closed, no lingering activity | SKIP | 0.0 |  |
+| 46 | h: 5-minute call — stays connected, no repeated rebuilds, no log spam | SKIP | 0.0 |  |
+| 47 | patient denies camera/mic: joins receive-only, doctor sees it joined, then patient grants via Retry | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+| 48 | doctor denies camera/mic: joins receive-only, patient still receives doctor's video after doctor's Retry | SKIP | 0.0 |  |
+| 49 | camera/mic Retry does not hang when the permission prompt never answers | SKIP | 0.0 |  |
+| 50 | 1 baseline - both join, video flows 30s, no rebuild | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+| 51 | 2 patient taps Retry - video resumes, doctor detects rebuilt peer | SKIP | 0.0 |  |
+| 52 | 3 doctor taps Retry - video resumes, request-peer-rebuild sent and received | SKIP | 0.0 |  |
+| 53 | 4 both tap Retry within 1s - video resumes, no rebuild loop | SKIP | 0.0 |  |
+| 54 | 5 Retry tapped 3 times quickly - one rebuild, banner held as Reconnecting… | SKIP | 0.0 |  |
+| 55 | 6 camera off on patient for 60s - watchdog does not rebuild | SKIP | 0.0 |  |
+| 56 | 7 patient leaves and rejoins - video resumes, no rate-limit block | SKIP | 0.0 |  |
+

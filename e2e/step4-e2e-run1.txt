@@ -1,0 +1,198 @@
+[WebServer] [slow-query] users.findOne 262ms {"email":"admin@gmail.com"}
+[WebServer] (node:27260) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb93b3db6bf8fb0d9b6162
+[WebServer] [perf] POST /api/doctor/login 200 1158ms (82aec095-854b-4c39-9794-2f41b4cf4748)
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 17 tests using 1 worker
+
+  ok  1 tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds (287ms)
+  ok  2 tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts (212ms)
+  ok  3 tests\direct-pin-socket.spec.js:112:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true (158ms)
+  ok  4 tests\direct-pin-socket.spec.js:138:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device (211ms)
+  ok  5 tests\direct-pin-socket.spec.js:176:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working (327ms)
+  ok  6 tests\direct-pin-socket.spec.js:214:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected (263ms)
+  ok  7 tests\direct-pin-socket.spec.js:247:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged (167ms)
+  ok  8 tests\direct-pin-socket.spec.js:270:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked (1.2s)
+[WebServer] 4:02:31 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:02:35 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:02:44 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:02:48 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:04 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:06 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  9 tests\direct-video-admin.spec.js:70:3 › direct call — admin panel › calls list: status moves waiting -> one joined -> in call (38.5s)
+[WebServer] 4:03:12 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:03:13 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:16 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:20 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:03:24 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+[WebServer] 4:03:27 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 10 tests\direct-video-admin.spec.js:105:3 › direct call — admin panel › calls list: a room-full rejection marks the call as a problem (28.2s)
+[WebServer] 4:03:38 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:03:38 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:03:49 PM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 5d0a0ede-a376-4e7c-a2d1-255c66f79dc8 within 8000ms — rolling back to retry.
+[WebServer] 4:03:49 PM [vite] (client) [console.warn] [direct-video-call] no answer received for offer c2429a5d-fa66-4e30-8de2-343421210200 within 8000ms — rolling back to retry.
+[WebServer] 4:03:49 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:49 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:49 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 4:03:49 PM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected 3b41f10f-db73-460d-b203-31776e24df52, got 5d0a0ede-a376-4e7c-a2d1-255c66f79dc8)
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:54 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:03:58 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:04:02 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+[WebServer] 4:04:05 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 11 tests\direct-video-admin.spec.js:143:3 › direct call — admin panel › Phase 4: a room-full rejection raises an in-app admin alert (36.3s)
+[WebServer] 4:04:14 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:04:14 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:25 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:04:45 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:09 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 12 tests\direct-video-admin.spec.js:196:3 › direct call — admin panel › call report: timeline and participants after join, Retry, and a mic toggle (2.0m)
+[WebServer] 4:06:12 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:06:21 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 13 tests\direct-video-admin.spec.js:240:3 › direct call — admin panel › Phase 5.2: a join stores only a masked IP, never the full one (11.7s)
+[WebServer] 4:06:24 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 14 tests\direct-video-admin.spec.js:272:3 › direct call — admin panel › admin action: extend link pushes expiresAt forward (3.7s)
+[WebServer] 4:06:28 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:06:28 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:36 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:40 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 15 tests\direct-video-admin.spec.js:295:3 › direct call — admin panel › admin action: clear stuck seats does not affect a live call (21.2s)
+[WebServer] 4:06:49 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:06:50 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:06:59 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:03 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 16 tests\direct-video-admin.spec.js:334:3 › direct call — admin panel › Live view: auto-watches on page open (no button), samples land, survives admin disconnect (21.5s)
+[WebServer] 4:07:11 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:07:11 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:20 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 4:07:24 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 4:07:33 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:07:33 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+  ok 17 tests\direct-video-admin.spec.js:381:3 › direct call — admin panel › admin action: force end call disconnects both participants with a clear message (24.4s)
+
+  Slow test file: tests\direct-video-admin.spec.js (5.1m)
+  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel
+  17 passed (5.6m)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | correct PIN assigns the right role and join-direct-room succeeds | PASS | 0.3 |  |
+| 2 | wrong PIN is rejected, and 5 wrong attempts block further attempts | PASS | 0.2 |  |
+| 3 | a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true | PASS | 0.2 |  |
+| 4 | second device with the same PIN gets a conflict; confirmed takeover evicts the first device | PASS | 0.2 |  |
+| 5 | regenerate PIN (default): current device's session survives a refresh, old PIN stops working | PASS | 0.3 |  |
+| 6 | regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected | PASS | 0.3 |  |
+| 7 | admin can view PINs again after creation, and the view is logged | PASS | 0.2 |  |
+| 8 | per-room brute force: many wrong attempts from different IPs still gets blocked | PASS | 1.2 |  |
+| 9 | calls list: status moves waiting -> one joined -> in call | PASS | 38.5 |  |
+| 10 | calls list: a room-full rejection marks the call as a problem | PASS | 28.2 |  |
+| 11 | Phase 4: a room-full rejection raises an in-app admin alert | PASS | 36.3 |  |
+| 12 | call report: timeline and participants after join, Retry, and a mic toggle | PASS | 118.7 |  |
+| 13 | Phase 5.2: a join stores only a masked IP, never the full one | PASS | 11.7 |  |
+| 14 | admin action: extend link pushes expiresAt forward | PASS | 3.7 |  |
+| 15 | admin action: clear stuck seats does not affect a live call | PASS | 21.2 |  |
+| 16 | Live view: auto-watches on page open (no button), samples land, survives admin disconnect | PASS | 21.5 |  |
+| 17 | admin action: force end call disconnects both participants with a clear message | PASS | 24.4 |  |
+
+EXIT_CODE=0

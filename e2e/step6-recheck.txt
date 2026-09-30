@@ -1,0 +1,50 @@
+[WebServer] [slow-query] users.findOne 294ms {"email":"admin@gmail.com"}
+[WebServer] (node:31528) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abba15e2758d05421a7c73a
+[WebServer] [perf] POST /api/doctor/login 200 1025ms (36230157-8080-43c3-b629-5402f9eacfa8)
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 1 test using 1 worker
+
+[WebServer] 5:00:44 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  x  1 tests\direct-video-call-extra.spec.js:704:3 › direct call — extra coverage › k1: mic level meter responds to the fake audio device during the pre-join preview (12.0s)
+
+
+  1) tests\direct-video-call-extra.spec.js:704:3 › direct call — extra coverage › k1: mic level meter responds to the fake audio device during the pre-join preview 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator:  locator('.dvcall-mic-meter__fill')
+    Expected: visible
+    Received: hidden
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toBeVisible" locator('.dvcall-mic-meter__fill') with timeout 10000ms
+      - waiting for locator('.dvcall-mic-meter__fill')
+        19 × locator resolved to <div class="dvcall-mic-meter__fill"></div>
+           - unexpected value "hidden"
+
+
+      713 |       // fill width should move off zero within a few seconds.
+      714 |       const fill = party.page.locator(".dvcall-mic-meter__fill");
+    > 715 |       await expect(fill).toBeVisible({ timeout: 10_000 });
+          |                          ^
+      716 |       await expect
+      717 |         .poll(
+      718 |           async () => {
+        at C:\aaamain\connect\e2e\tests\direct-video-call-extra.spec.js:715:26
+
+    Error Context: test-results\.pw\direct-video-call-extra-di-0660a-during-the-pre-join-preview\error-context.md
+
+  1 failed
+    tests\direct-video-call-extra.spec.js:704:3 › direct call — extra coverage › k1: mic level meter responds to the fake audio device during the pre-join preview 
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | k1: mic level meter responds to the fake audio device during the pre-join preview | FAIL | 12.0 | Error: expect(locator).toBeVisible() failed |
+
+EXIT_CODE=1

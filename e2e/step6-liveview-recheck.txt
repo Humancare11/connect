@@ -1,0 +1,4 @@
+Error: Port 27018 (mongo) is already in use. Stop whatever is using it, or point the tests at an existing environment with E2E_BASE_URL.
+    at file:///C:/aaamain/connect/e2e/playwright.config.js:35:13
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+EXIT_CODE=1

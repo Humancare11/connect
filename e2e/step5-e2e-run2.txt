@@ -1,0 +1,233 @@
+[WebServer] (node:20976) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb9982020b396c157354a6
+[WebServer] [perf] POST /api/doctor/login 200 1124ms (201e7e01-09c2-4a4b-aef0-4cecb2b1aabe)
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 15 tests using 1 worker
+
+  ok  1 tests\direct-disconnect-reasons.spec.js:125:3 › direct call — disconnect reasons, Problems box, superadmin delete › admin_ended: force-end tags the disconnect, and it's excluded from Problems (503ms)
+  ok  2 tests\direct-disconnect-reasons.spec.js:143:3 › direct call — disconnect reasons, Problems box, superadmin delete › session_taken_over: a confirmed takeover tags the evicted device's disconnect (343ms)
+  ok  3 tests\direct-disconnect-reasons.spec.js:171:3 › direct call — disconnect reasons, Problems box, superadmin delete › pin_regenerated: regenerate + endCurrentSession tags the evicted device's disconnect (297ms)
+  ok  4 tests\direct-disconnect-reasons.spec.js:191:3 › direct call — disconnect reasons, Problems box, superadmin delete › link_expired: joining an expired link is rejected and shows in Problems (464ms)
+  ok  5 tests\direct-disconnect-reasons.spec.js:211:3 › direct call — disconnect reasons, Problems box, superadmin delete › no signal at all: a raw disconnect with no hint falls back to 'unknown' and shows in Problems (189ms)
+  ok  6 tests\direct-disconnect-reasons.spec.js:231:3 › direct call — disconnect reasons, Problems box, superadmin delete › pagehide beacon: /leaving tags the next disconnect as tab_closed, excluded from Problems (182ms)
+  x   7 tests\direct-disconnect-reasons.spec.js:251:3 › direct call — disconnect reasons, Problems box, superadmin delete › superadmin-only delete: a regular admin is refused, a superadmin can delete and leaves one audit entry (761ms)
+  x   8 tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds (60ms)
+  x   9 tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts (51ms)
+  x  10 tests\direct-pin-socket.spec.js:112:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true (54ms)
+  x  11 tests\direct-pin-socket.spec.js:138:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device (64ms)
+  x  12 tests\direct-pin-socket.spec.js:176:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working (63ms)
+  x  13 tests\direct-pin-socket.spec.js:214:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected (79ms)
+  x  14 tests\direct-pin-socket.spec.js:247:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged (96ms)
+  x  15 tests\direct-pin-socket.spec.js:270:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked (73ms)
+
+
+  1) tests\direct-disconnect-reasons.spec.js:251:3 › direct call — disconnect reasons, Problems box, superadmin delete › superadmin-only delete: a regular admin is refused, a superadmin can delete and leaves one audit entry 
+
+    TypeError: Cannot read properties of undefined (reading 'length')
+
+      265 |       const before = await api.get(`/api/direct-video-room/${room.roomId}/events`);
+      266 |       const beforeBody = await before.json();
+    > 267 |       const deletedCount = beforeBody.timeline.length;
+          |                                                ^
+      268 |       expect(deletedCount).toBeGreaterThan(0);
+      269 |
+      270 |       const del = await superApi.delete(`/api/direct-video-room/${room.roomId}/events`);
+        at C:\aaamain\connect\e2e\tests\direct-disconnect-reasons.spec.js:267:48
+
+    Error Context: test-results\.pw\direct-disconnect-reasons--cf248--and-leaves-one-audit-entry\error-context.md
+
+  2) tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:70:35
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-e5034-d-join-direct-room-succeeds\error-context.md
+
+  3) tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:93:24
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-4a817-mpts-block-further-attempts\error-context.md
+
+  4) tests\direct-pin-socket.spec.js:112:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:116:36
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-18a2b-mpt-and-resumedCall-is-true\error-context.md
+
+  5) tests\direct-pin-socket.spec.js:138:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:142:35
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-ab36b-ver-evicts-the-first-device\error-context.md
+
+  6) tests\direct-pin-socket.spec.js:176:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:180:36
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-545c0-fresh-old-PIN-stops-working\error-context.md
+
+  7) tests\direct-pin-socket.spec.js:214:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:218:35
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-16121-live-device-is-disconnected\error-context.md
+
+  8) tests\direct-pin-socket.spec.js:247:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:250:47
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-d9e0a-tion-and-the-view-is-logged\error-context.md
+
+  9) tests\direct-pin-socket.spec.js:270:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked 
+
+    Error: create room failed: 401
+
+    expect(received).toBeTruthy()
+
+    Received: false
+
+      22 | async function createRoomWithPins(api) {
+      23 |   const res = await api.post("/api/direct-video-room", { data: { note: "pin-socket test", expiresInHours: 24 } });
+    > 24 |   expect(res.ok(), `create room failed: ${res.status()}`).toBeTruthy();
+         |                                                           ^
+      25 |   const body = await res.json();
+      26 |   return { room: body.room, doctorPin: body.doctorPin, patientPin: body.patientPin };
+      27 | }
+        at createRoomWithPins (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:24:59)
+        at C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:274:24
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-781db-rent-IPs-still-gets-blocked\error-context.md
+
+  9 failed
+    tests\direct-disconnect-reasons.spec.js:251:3 › direct call — disconnect reasons, Problems box, superadmin delete › superadmin-only delete: a regular admin is refused, a superadmin can delete and leaves one audit entry 
+    tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds 
+    tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts 
+    tests\direct-pin-socket.spec.js:112:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true 
+    tests\direct-pin-socket.spec.js:138:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device 
+    tests\direct-pin-socket.spec.js:176:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working 
+    tests\direct-pin-socket.spec.js:214:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected 
+    tests\direct-pin-socket.spec.js:247:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged 
+    tests\direct-pin-socket.spec.js:270:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked 
+  6 passed (22.8s)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | admin_ended: force-end tags the disconnect, and it's excluded from Problems | PASS | 0.5 |  |
+| 2 | session_taken_over: a confirmed takeover tags the evicted device's disconnect | PASS | 0.3 |  |
+| 3 | pin_regenerated: regenerate + endCurrentSession tags the evicted device's disconnect | PASS | 0.3 |  |
+| 4 | link_expired: joining an expired link is rejected and shows in Problems | PASS | 0.5 |  |
+| 5 | no signal at all: a raw disconnect with no hint falls back to 'unknown' and shows in Problems | PASS | 0.2 |  |
+| 6 | pagehide beacon: /leaving tags the next disconnect as tab_closed, excluded from Problems | PASS | 0.2 |  |
+| 7 | superadmin-only delete: a regular admin is refused, a superadmin can delete and leaves one audit entry | FAIL | 0.8 | TypeError: Cannot read properties of undefined (reading 'length') |
+| 8 | correct PIN assigns the right role and join-direct-room succeeds | FAIL | 0.1 | Error: create room failed: 401 |
+| 9 | wrong PIN is rejected, and 5 wrong attempts block further attempts | FAIL | 0.1 | Error: create room failed: 401 |
+| 10 | a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true | FAIL | 0.1 | Error: create room failed: 401 |
+| 11 | second device with the same PIN gets a conflict; confirmed takeover evicts the first device | FAIL | 0.1 | Error: create room failed: 401 |
+| 12 | regenerate PIN (default): current device's session survives a refresh, old PIN stops working | FAIL | 0.1 | Error: create room failed: 401 |
+| 13 | regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected | FAIL | 0.1 | Error: create room failed: 401 |
+| 14 | admin can view PINs again after creation, and the view is logged | FAIL | 0.1 | Error: create room failed: 401 |
+| 15 | per-room brute force: many wrong attempts from different IPs still gets blocked | FAIL | 0.1 | Error: create room failed: 401 |
+
+EXIT_CODE=1

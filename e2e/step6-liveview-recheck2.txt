@@ -1,0 +1,35 @@
+[WebServer] [slow-query] users.findOne 165ms {"email":"admin@gmail.com"}
+[WebServer] (node:15304) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abba20d1446d260f85382b8
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 1 test using 1 worker
+
+[WebServer] 5:03:39 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 5:03:39 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 5:03:50 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:50 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:50 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:51 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 5:03:56 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok 1 tests\direct-video-admin.spec.js:334:3 › direct call — admin panel › Live view: auto-watches on page open (no button), samples land, survives admin disconnect (26.4s)
+
+  1 passed (40.4s)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | Live view: auto-watches on page open (no button), samples land, survives admin disconnect | PASS | 26.4 |  |
+
+EXIT_CODE=0
