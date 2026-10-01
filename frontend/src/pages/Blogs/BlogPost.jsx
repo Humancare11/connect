@@ -72,6 +72,7 @@ export default function BlogPost() {
           title: blog.title,
           coverImage: blog.image,
           category: blog.category,
+          tags: blog.tags,
           publishedAt: blog.publishedAt,
           readTime: blog.readTime,
           content: blog.content,

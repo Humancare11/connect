@@ -11,6 +11,7 @@ const EMPTY_FORM = {
   excerpt: "",
   content: "",
   category: "",
+  tags: "",
   readTime: "",
   metaTitle: "",
   metaDescription: "",
@@ -245,6 +246,7 @@ function BlogForm({ blogId, onClose }) {
           excerpt: b.excerpt || "",
           content: b.content || "",
           category: b.category || "",
+          tags: (b.tags || []).join(", "),
           readTime: b.readTime ? String(b.readTime) : "",
           metaTitle: b.metaTitle || "",
           metaDescription: b.metaDescription || "",
@@ -302,6 +304,7 @@ function BlogForm({ blogId, onClose }) {
       coverImage: form.coverImage,
       excerpt: form.excerpt,
       category: form.category,
+      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       readTime: form.readTime ? Number(form.readTime) : null,
       metaTitle: form.metaTitle,
       metaDescription: form.metaDescription,
@@ -398,6 +401,9 @@ function BlogForm({ blogId, onClose }) {
           <Field label="Category" hint="Shown on the article page only.">
             <input disabled={busy} value={form.category} onChange={(e) => update({ category: e.target.value })} maxLength={80} />
           </Field>
+          <Field label="Tags" hint="Comma separated. The first tag is shown next to the category on the article page.">
+            <input disabled={busy} value={form.tags} onChange={(e) => update({ tags: e.target.value })} maxLength={200} />
+          </Field>
           <Field label="Read time (minutes)" hint="Leave empty to calculate automatically.">
             <input
               type="number"
@@ -457,6 +463,7 @@ function BlogForm({ blogId, onClose }) {
       {showPreview && (
         <div
           id="blog-preview-scroll"
+          data-lenis-prevent
           role="dialog"
           aria-modal="true"
           aria-label="Blog preview"
@@ -488,6 +495,7 @@ function BlogForm({ blogId, onClose }) {
               title: form.title || "Untitled",
               coverImage: form.coverImage,
               category: form.category,
+              tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
               publishedAt: meta.publishedAt || new Date().toISOString(),
               readTime: form.readTime ? Number(form.readTime) : null,
               content: form.content,

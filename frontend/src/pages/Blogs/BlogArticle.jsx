@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./telemedicine.css";
 import "./BlogArticle.css";
 import { blogImageSrc } from "../../api/blogApi";
@@ -14,6 +14,7 @@ import { prepareBlogHtml, formatBlogDate } from "../../utils/blogContent";
 export default function BlogArticle({ blog, preview = false }) {
   const [scrollPct, setScrollPct] = useState(0);
   const [activeSection, setActiveSection] = useState("");
+  const tocCardRef = useRef(null);
 
   const { html, toc } = useMemo(() => prepareBlogHtml(blog.content), [blog.content]);
   const date = formatBlogDate(blog.publishedAt);
@@ -39,21 +40,59 @@ export default function BlogArticle({ blog, preview = false }) {
     return () => target.removeEventListener("scroll", onScroll);
   }, [preview, html]);
 
-  // TOC scrollspy over the h2 headings.
+  // TOC scrollspy: the active section is the last h2 whose top has reached the
+  // reading line (just under the sticky bars). Position-based rather than an
+  // IntersectionObserver on the (short) headings, so something is always
+  // highlighted while scrolling, including fast wheel / Lenis scrolling.
   useEffect(() => {
     if (!toc.length) return undefined;
-    const headings = toc.map((item) => document.getElementById(item.id)).filter(Boolean);
-    const spy = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
-        });
-      },
-      { rootMargin: "-140px 0px -70% 0px", threshold: 0 },
-    );
-    headings.forEach((h) => spy.observe(h));
-    return () => spy.disconnect();
-  }, [toc]);
+    const scroller = preview ? document.getElementById("blog-preview-scroll") : window;
+    if (!scroller) return undefined;
+    const READING_LINE = 151; // matches the 150px scroll-margin used by the jump links
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const base = preview ? scroller.getBoundingClientRect().top : 0;
+      const atBottom = preview
+        ? scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2
+        : window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+      let current = toc[0].id;
+      for (const item of toc) {
+        const el = document.getElementById(item.id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top - base <= READING_LINE) current = item.id;
+        else break;
+      }
+      if (atBottom) current = toc[toc.length - 1].id;
+      setActiveSection(current);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+
+    update();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [toc, preview]);
+
+  // Keep the active item visible inside the TOC card. Only the card scrolls
+  // (element.scrollBy), never the page.
+  useEffect(() => {
+    const card = tocCardRef.current;
+    const link = card?.querySelector("a.active");
+    if (!card || !link) return;
+    const pad = 12;
+    const c = card.getBoundingClientRect();
+    const l = link.getBoundingClientRect();
+    if (l.top < c.top + pad) card.scrollBy({ top: l.top - c.top - pad, behavior: "smooth" });
+    else if (l.bottom > c.bottom - pad) card.scrollBy({ top: l.bottom - c.bottom + pad, behavior: "smooth" });
+  }, [activeSection]);
 
   // Smooth in-page jump that also works inside the preview overlay.
   function jumpTo(event, id) {
@@ -108,13 +147,14 @@ export default function BlogArticle({ blog, preview = false }) {
 
       <main id="main-content">
         <div className="wrap">
-          <section className="hero">
+          <section className="hero blog-hero">
             <div className="hero-top">
-              {blog.category ? (
-                <div className="badge-row">
-                  <span className="badge">{blog.category}</span>
-                </div>
-              ) : null}
+              {/* Always rendered, like the legacy pages: the row's margins create
+                  the space between the reading strip and the title. */}
+              <div className="badge-row">
+                {blog.category ? <span className="badge">{blog.category}</span> : null}
+                {blog.tags?.[0] ? <span className="badge outline">{blog.tags[0]}</span> : null}
+              </div>
               <h1 className="article-title">{blog.title}</h1>
             </div>
 
@@ -125,12 +165,12 @@ export default function BlogArticle({ blog, preview = false }) {
             ) : null}
           </section>
 
-          <div className="article-layout">
+          <div className="article-layout blog-layout">
             {/* Desktop sticky TOC. The (possibly empty) aside always renders so the
                 content keeps its grid column when a post has no h2 headings. */}
             <aside className="toc-col" aria-label="Table of contents">
               {toc.length > 0 && (
-                <nav className="toc-card">
+                <nav className="toc-card" ref={tocCardRef} data-lenis-prevent>
                   <h2>In this guide</h2>
                   <ol>
                     {toc.map((item) => (
