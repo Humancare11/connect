@@ -405,9 +405,9 @@ a.contact-detail__value:hover {
 
 /* Large phone / small tablet */
 @media (max-width: 600px) {
-  .page-hero {
+  /* .page-hero {
     padding: 40px 20px;
-  }
+  } */
 
   .page-hero__title {
     font-size: 28px;

@@ -691,7 +691,7 @@ export default function GeneralEverydayCare() {
         )}
 
         {/* CTA Banner */}
-        <div className="hcc-cta-banner">
+        {/* <div className="hcc-cta-banner">
           <div className="hcc-cta-text">
             <span className="eyebrow">{cat.label}</span>
             <h2>{cat.ctaHeadline}</h2>
@@ -717,7 +717,7 @@ export default function GeneralEverydayCare() {
               <FiPhone size={14} /> Call Us Now
             </button>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Mobile sticky CTA */}

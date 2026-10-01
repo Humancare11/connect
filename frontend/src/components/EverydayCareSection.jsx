@@ -39,7 +39,7 @@ export default function EverydayCareSection() {
             animate={headerInView ? "visible" : "hidden"}
           >
             <span className="ecs-eyebrow-dot" />
-            EVERYDAY & PEDIATRIC CARE
+            POPULAR SERVICES
           </Motion.div>
 
           <Motion.h2
@@ -48,7 +48,7 @@ export default function EverydayCareSection() {
             initial="hidden"
             animate={headerInView ? "visible" : "hidden"}
           >
-            The Care You Need, All in One Place
+            Most Popular Services
           </Motion.h2>
 
           <Motion.p
@@ -57,8 +57,9 @@ export default function EverydayCareSection() {
             initial="hidden"
             animate={headerInView ? "visible" : "hidden"}
           >
-            Everyday healthcare and pediatric care, made more accessible through
-            Humancare Connect.
+            Get convenient, trusted consultations for everyday health concerns and
+            your family’s most common healthcare needs, with easy access to
+            qualified doctors online.
           </Motion.p>
         </div>
 
@@ -73,7 +74,7 @@ export default function EverydayCareSection() {
             <Link
               to="/general-and-everyday-care/general-physician"
               className="ecs-card-link"
-              aria-label="Find Your General Practitioner for everyday care"
+              aria-label="Find Your General Practitioner"
             >
               <div className="ecs-card ecs-card--gp">
                 {/* Background image & gradient overlay */}
@@ -95,8 +96,7 @@ export default function EverydayCareSection() {
                       General Practitioner
                     </span>
                     <h3 className="ecs-card-title">
-                      <span className="text-white">Everyday Care</span>
-                      <span className="text-accent">Starts Here</span>
+                      Everyday Care Starts Here
                     </h3>
                     <p className="ecs-card-desc">
                       Get convenient access to a qualified General Practitioner
@@ -139,7 +139,7 @@ export default function EverydayCareSection() {
             <Link
               to="/child-and-family-care/pediatrics"
               className="ecs-card-link"
-              aria-label="Find a Pediatrician for your child"
+              aria-label="Find a Pediatrician"
             >
               <div className="ecs-card ecs-card--pedia">
                 {/* Background image & gradient overlay */}
@@ -161,8 +161,7 @@ export default function EverydayCareSection() {
                       Pediatrics
                     </span>
                     <h3 className="ecs-card-title">
-                      <span className="text-accent">Expert Care</span>
-                      <span className="text-white">for Your Child</span>
+                      Expert Care for Your Child
                     </h3>
                     <p className="ecs-card-desc">
                       Find the right pediatric care for your child, from routine

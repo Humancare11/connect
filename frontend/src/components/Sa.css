@@ -141,6 +141,24 @@
 
 .services-card-item {}
 
+.services-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.services-card-row-arrow {
+  display: none;
+}
+
+.services-mobile-cta {
+  display: none;
+}
+
+.services-desktop-cta {
+  display: inline;
+}
+
 .services-icon-row {
   display: flex;
   align-items: center;
@@ -374,7 +392,7 @@
   }
 }
 
-@media (max-width: 991px) and (min-width: 768px) {
+@media (max-width: 991px) and (min-width: 821px) {
   .services-section-wrapper {
     padding: 70px 32px;
     width: calc(100% - 32px);
@@ -421,21 +439,63 @@
   }
 }
 
-@media (max-width: 767px) and (min-width: 600px) {
+/* ══════════════════════════════════════════════
+   RESPONSIVE — Mobile & Small Screen Views
+   Compact uniform cards with icons and title
+══════════════════════════════════════════════ */
+
+@media (max-width: 820px) {
   .services-section-wrapper {
-    padding: 60px 24px;
-    width: calc(100% - 24px);
+    padding: 44px 18px 52px;
+    width: calc(100% - 20px);
+    margin: 36px auto 52px;
+    border-radius: 28px;
   }
 
   .services-inner-container {
-    padding: 0;
+    padding: 0 4px;
   }
 
+  .services-header-block {
+    margin-bottom: 26px;
+  }
+
+  /* Eyebrow badge matching reference image */
+  .services-eyebrow-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #7cb7ff;
+    text-transform: uppercase;
+    background: rgba(30, 64, 120, 0.45);
+    border: 1px solid rgba(96, 165, 250, 0.28);
+    border-radius: 50px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Main heading matching reference image */
+  .services-main-heading {
+    font-size: clamp(26px, 7vw, 36px);
+    font-weight: 800;
+    letter-spacing: -0.6px;
+    line-height: 1.15;
+    color: #ffffff;
+    margin: 0;
+  }
+
+  /* Single-column vertical list of cards matching reference image */
   .services-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 9px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
   }
 
+  .services-card-link-wrapper,
   .services-bento-large,
   .services-bento-small-2,
   .services-bento-smal-1,
@@ -443,103 +503,134 @@
   .services-bento-small,
   .services-bento-small-0,
   .services-bento-wide {
-    grid-column: span 1;
-    grid-row: span 1;
+    width: 100% !important;
+    display: block !important;
+    grid-column: unset !important;
+    grid-row: unset !important;
   }
 
-  .services-bento-large .services-card-inner-link,
-  .services-bento-small-2 .services-card-inner-link,
-  .services-bento-smal-1 .services-card-inner-link,
-  .services-bento-small-weightloss .services-card-inner-link,
-  .services-bento-small .services-card-inner-link,
-  .services-bento-small-0 .services-card-inner-link,
-  .services-bento-wide .services-card-inner-link {
-    min-height: auto;
+  /* Sleek horizontal card row matching reference image */
+  .services-card-inner-link {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 18px !important;
+    border-radius: 18px !important;
+    min-height: 66px !important;
+    height: auto !important;
+    background: rgba(255, 255, 255, 0.055) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow:
+      0 4px 18px rgba(0, 0, 0, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    gap: 14px !important;
+    text-decoration: none !important;
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease !important;
   }
 
-  .services-content-split {
-    flex-direction: column;
-    gap: 14px;
+  .services-card-inner-link:hover,
+  .services-card-inner-link:active {
+    background: rgba(255, 255, 255, 0.09) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  /* Icon and Title together on left */
+  .services-card-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 14px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  /* Rounded square icon box */
+  .services-icon-box {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .services-icon-box svg {
+    width: 18px !important;
+    height: 18px !important;
+    color: #ffffff !important;
+  }
+
+  /* Title */
+  .services-card-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+    text-align: left !important;
+    flex: 1 !important;
+    word-break: break-word !important;
+  }
+
+  /* Hide description and desktop cta link on mobile */
+  .services-card-description,
+  .services-card-cta-link,
+  .services-weight-stat-block {
+    display: none !important;
+  }
+
+  /* Blue arrow on the far right */
+  .services-card-row-arrow {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 19px !important;
+    font-weight: 500 !important;
+    color: #60a5fa !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s ease, color 0.2s ease !important;
+  }
+
+  .services-card-inner-link:hover .services-card-row-arrow,
+  .services-card-inner-link:active .services-card-row-arrow {
+    transform: translateX(4px) !important;
+    color: #93c5fd !important;
   }
 }
 
-@media (max-width: 599px) and (min-width: 400px) {
-  .services-section-wrapper {
-    padding: 50px 16px;
-    width: calc(100% - 16px);
-    border-radius: 24px;
+/* Extra small devices (<= 360px) */
+@media (max-width: 360px) {
+  .services-card-inner-link {
+    padding: 10px 14px !important;
+    gap: 10px !important;
   }
 
-  .services-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
+  .services-card-header {
+    gap: 10px !important;
   }
 
-  .services-bento-large,
-  .services-bento-small-2,
-  .services-bento-smal-1,
-  .services-bento-small-weightloss,
-  .services-bento-small,
-  .services-bento-small-0,
-  .services-bento-wide {
-    grid-column: span 1;
-    grid-row: span 1;
+  .services-icon-box {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
   }
 
-  .services-bento-large .services-card-inner-link,
-  .services-bento-small-2 .services-card-inner-link,
-  .services-bento-smal-1 .services-card-inner-link,
-  .services-bento-small-weightloss .services-card-inner-link,
-  .services-bento-small .services-card-inner-link,
-  .services-bento-small-0 .services-card-inner-link,
-  .services-bento-wide .services-card-inner-link {
-    min-height: auto;
-    padding: 18px;
+  .services-icon-box svg {
+    width: 16px !important;
+    height: 16px !important;
   }
 
-  .services-content-split {
-    flex-direction: column;
-    gap: 14px;
-  }
-}
-
-@media (max-width: 399px) {
-  .services-section-wrapper {
-    padding: 40px 14px;
-    width: calc(100% - 12px);
-    border-radius: 20px;
-  }
-
-  .services-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .services-bento-large,
-  .services-bento-small-2,
-  .services-bento-smal-1,
-  .services-bento-small-weightloss,
-  .services-bento-small,
-  .services-bento-small-0,
-  .services-bento-wide {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-
-  .services-bento-large .services-card-inner-link,
-  .services-bento-small-2 .services-card-inner-link,
-  .services-bento-smal-1 .services-card-inner-link,
-  .services-bento-small-weightloss .services-card-inner-link,
-  .services-bento-small .services-card-inner-link,
-  .services-bento-small-0 .services-card-inner-link,
-  .services-bento-wide .services-card-inner-link {
-    min-height: auto;
-    padding: 16px;
-  }
-
-  .services-content-split {
-    flex-direction: column;
-    gap: 12px;
+  .services-card-title {
+    font-size: 14px !important;
   }
 }
 

@@ -123,12 +123,22 @@
 
 /* ── Clickable Card Wrapper ── */
 .ecs-card-link {
-  text-decoration: none;
+  text-decoration: none !important;
   color: inherit;
   display: flex;
   flex-direction: column;
   outline: none;
   height: 100%;
+}
+
+.ecs-card-link:hover,
+.ecs-card-link:focus,
+.ecs-card-link:active,
+.ecs-card-link:visited,
+.ecs-card-link *,
+.ecs-card,
+.ecs-card * {
+  text-decoration: none !important;
 }
 
 .ecs-card {
@@ -142,9 +152,9 @@
   justify-content: space-between;
   padding: 34px 36px 28px;
   box-shadow:
-    0 12px 36px rgba(11, 87, 232, 0.12),
-    0 2px 8px rgba(11, 87, 232, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+    0 10px 30px rgba(18, 38, 71, 0.08),
+    0 2px 8px rgba(18, 38, 71, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   transition:
     transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1),
@@ -154,12 +164,12 @@
 }
 
 .ecs-card:hover {
-  transform: translateY(-8px) scale(1.008);
+  transform: translateY(-6px) scale(1.006);
   box-shadow:
-    0 28px 68px rgba(7, 27, 68, 0.28),
-    0 8px 24px rgba(11, 87, 232, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  border-color: rgba(255, 255, 255, 0.48);
+    0 20px 48px rgba(18, 38, 71, 0.16),
+    0 6px 18px rgba(18, 38, 71, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .ecs-card:focus-visible {
@@ -191,14 +201,14 @@
   left: 140%;
 }
 
-/* ── Card 1 Color Theme: Deep Navy / Primary Blue (General Practitioner) ── */
+/* ── Card 1 Color Theme: Subtle Slate Navy / Blue (General Practitioner) ── */
 .ecs-card--gp {
-  background: linear-gradient(135deg, #071b44 0%, #0b3a8a 50%, #0d4caa 100%);
+  background: linear-gradient(135deg, #1b3052 0%, #233f6b 50%, #2b4f84 100%);
 }
 
-/* ── Card 2 Color Theme: Rich Indigo / Brand Blue (Pediatrics) ── */
+/* ── Card 2 Color Theme: Subtle Balanced Navy / Indigo (Pediatrics) ── */
 .ecs-card--pedia {
-  background: linear-gradient(135deg, #091636 0%, #0b2f7c 50%, #1042a8 100%);
+  background: linear-gradient(135deg, #1d3256 0%, #25416e 50%, #2d5086 100%);
 }
 
 /* ── Subtle Top Glass Edge Highlight ── */
@@ -278,18 +288,18 @@
 
 .ecs-card--gp .ecs-card-gradient-overlay {
   background: linear-gradient(90deg,
-      rgba(7, 27, 68, 0.98) 0%,
-      rgba(11, 58, 138, 0.92) 38%,
-      rgba(11, 58, 138, 0.55) 66%,
-      rgba(11, 58, 138, 0.12) 100%);
+      rgba(24, 44, 76, 0.95) 0%,
+      rgba(29, 53, 90, 0.88) 38%,
+      rgba(38, 69, 115, 0.52) 66%,
+      rgba(43, 79, 132, 0.10) 100%);
 }
 
 .ecs-card--pedia .ecs-card-gradient-overlay {
   background: linear-gradient(90deg,
-      rgba(9, 22, 54, 0.98) 0%,
-      rgba(11, 47, 124, 0.92) 38%,
-      rgba(11, 47, 124, 0.55) 66%,
-      rgba(16, 66, 168, 0.12) 100%);
+      rgba(26, 46, 78, 0.95) 0%,
+      rgba(31, 55, 92, 0.88) 38%,
+      rgba(40, 71, 117, 0.52) 66%,
+      rgba(45, 80, 134, 0.10) 100%);
 }
 
 /* ── Content on Left Side ── */
@@ -329,6 +339,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  text-decoration: none !important;
   transition: transform 0.35s ease, background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -346,26 +357,16 @@
   box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
 }
 
-/* Card Title (Two-Tone Editorial Headline) */
+/* Card Title */
 .ecs-card-title {
   font-family: var(--font-primary, 'Satoshi', sans-serif);
   font-size: clamp(22px, 2.3vw, 29px);
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.22;
   letter-spacing: -0.6px;
   margin: 0 0 12px;
   color: #ffffff;
-}
-
-.ecs-card-title .text-white {
-  color: #ffffff;
-  display: block;
-}
-
-.ecs-card-title .text-accent {
-  color: #7eb8ff;
-  display: block;
-  text-shadow: 0 2px 12px rgba(126, 184, 255, 0.35);
+  text-decoration: none !important;
 }
 
 /* Card Description */
@@ -375,6 +376,7 @@
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.82);
   margin: 0;
+  text-decoration: none !important;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -397,20 +399,25 @@
   font-size: 13.5px;
   font-weight: 700;
   color: #ffffff;
+  text-decoration: none !important;
   transition: color 0.25s ease;
 }
 
 .ecs-card-cta-arrow {
   display: inline-block;
   font-size: 15px;
+  text-decoration: none !important;
   transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ecs-card:hover .ecs-card-cta {
-  color: #a8d4ff;
+.ecs-card:hover .ecs-card-cta,
+.ecs-card-link:hover .ecs-card-cta {
+  color: #dbe8fc;
+  text-decoration: none !important;
 }
 
-.ecs-card:hover .ecs-card-cta-arrow {
+.ecs-card:hover .ecs-card-cta-arrow,
+.ecs-card-link:hover .ecs-card-cta-arrow {
   transform: translateX(6px);
 }
 
