@@ -24,6 +24,7 @@ import {
   FiPackage,
   FiVideo,
   FiActivity,
+  FiCalendar,
 } from "react-icons/fi";
 
 import { Helmet } from "react-helmet-async";
