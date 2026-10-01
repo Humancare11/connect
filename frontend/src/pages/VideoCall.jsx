@@ -537,6 +537,11 @@ const REBUILD_IN_PROGRESS_SAFETY_MS = 5000;
 // onto the rebuilt pc if it's still fresh — the peer re-offers on its own
 // answer timeout otherwise.
 const PENDING_OFFER_MAX_AGE_MS = 15000;
+// How long the manual "Retry" button (after a camera/mic error) waits for
+// getUserMedia before giving up and putting the error + Retry UI back —
+// longer than MEDIA_ACQUIRE_TIMEOUT_MS (join time) since this is a single
+// explicit, already-visible user action rather than a silent background one.
+const RETRY_MEDIA_PERMISSIONS_TIMEOUT_MS = 10000;
 // Doctor-side automatic rebuilds first ask the patient to rebuild too, then
 // wait this long for its fresh offer before rebuilding alone (covers a
 // client that doesn't know the "request-peer-rebuild" event).
@@ -794,6 +799,20 @@ const ensureMediaTransceivers = (pc, { audio = true, video = true } = {}) => {
   }
   if (video && !hasTransceiverForKind(pc, "video")) {
     pc.addTransceiver("video", { direction: "sendrecv" });
+  }
+};
+
+// For the offerer (the patient) when it has no local media at all: adds
+// recvonly transceivers so the offer still asks for, and can receive, the
+// other side's audio/video instead of an empty/no-op offer. See the catch
+// branch of the media-acquisition effect for why this exists.
+const ensureRecvOnlyTransceivers = (pc) => {
+  if (!pc?.addTransceiver || pc.signalingState === "closed") return;
+  if (!hasTransceiverForKind(pc, "audio")) {
+    pc.addTransceiver("audio", { direction: "recvonly" });
+  }
+  if (!hasTransceiverForKind(pc, "video")) {
+    pc.addTransceiver("video", { direction: "recvonly" });
   }
 };
 
@@ -2025,7 +2044,15 @@ export default function VideoCall() {
         // Re-request the camera once; attachLocalMediaStream's own
         // previousStream cleanup stops the old, stuck track for us.
         logVideoEvent("local_video_recapture_attempt", {});
-        const freshStream = await getConsultationMediaStream();
+        const recaptureAttempt = getConsultationMediaStream();
+        if (await mediaAcquireTimedOut(recaptureAttempt)) {
+          // Don't let a silent background recovery hang indefinitely on a
+          // stuck permission prompt — bail and let it try again next stall.
+          retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "verifyLocalPlaybackLiveness:recapture_timed_out", {});
+          recaptureAttempt.then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => {});
+          return;
+        }
+        const freshStream = await recaptureAttempt;
         if (pc.signalingState === "closed" || localStreamRef.current !== stream) {
           freshStream.getTracks().forEach((track) => track.stop());
           return;
@@ -2040,7 +2067,7 @@ export default function VideoCall() {
         localLivenessCheckRef.current = false;
       }
     },
-    [attachLocalMediaStream, logVideoEvent],
+    [attachLocalMediaStream, logVideoEvent, appointmentId, isDoctor],
   );
 
   // ── Rebuild coordination ──────────────────────────────────────────
@@ -2863,6 +2890,49 @@ export default function VideoCall() {
           setCamError(true);
           setCamErrorReason(mediaErrorMessage(err));
           setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
+          // Local media failing (denied, no device) must never mean this
+          // side never enters the call at all — confirmed live: the other
+          // side was stuck on "Waiting for patient…" forever with no sign
+          // we were even here. Join receive-only instead, mirroring the
+          // timeout branch above and DirectVideoCall.jsx's own "proceeds
+          // receive-only rather than not connecting at all" design.
+          setIsReady(true);
+          isReadyRef.current = true;
+          if (!isDoctor) {
+            // We're the sole offerer and have nothing to send — recvonly
+            // transceivers keep the offer asking for (and able to receive)
+            // the doctor's audio/video. attachLocalMediaStream's existing
+            // "safety net" already upgrades these to sendrecv + replaceTrack
+            // once media arrives later via Retry. The doctor needs no
+            // equivalent: setRemoteDescription(offer) auto-creates its
+            // transceivers with the reciprocal (recvonly, i.e. "send only")
+            // direction whenever it also has no track to send back.
+            retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "media:joining_recvonly", {});
+            ensureRecvOnlyTransceivers(pc);
+          }
+          if (socket.connected) joinRoom();
+          // Tell the peer we're here without camera/mic, once actually in
+          // the room (camera-state is dropped server-side otherwise — see
+          // isSocketInAppointmentRoom in server.js) — so it shows "camera
+          // off" instead of an indefinite "Waiting for…", and so the media
+          // watchdog's connectedButSilent check (gated on remoteCamOffRef)
+          // doesn't mistake our silence for a stall needing a rebuild.
+          window.setTimeout(() => {
+            if (!mounted) return;
+            socket.emit("camera-state", { appointmentId, isCamOff: true });
+          }, 500);
+          if (!isDoctor && peerJoinedRef.current) {
+            window.setTimeout(() => {
+              if (!mounted || pc.signalingState === "closed") return;
+              if (
+                pc.connectionState === "connected" ||
+                pc.iceConnectionState === "connected" ||
+                pc.iceConnectionState === "completed"
+              )
+                return;
+              void createAndSendOffer({ iceRestart: inCallRef.current });
+            }, 300);
+          }
         }
         resolveLocalReady(false);
       }
@@ -3388,10 +3458,28 @@ export default function VideoCall() {
           setCamErrorReason(
             "Allow camera or microphone access, then retry to join the consultation.",
           );
-          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:local_media_not_ready", {
+          // Still answer — recvonly, since we have nothing to send — rather
+          // than leaving the offerer's pc waiting for an answer that never
+          // comes: the offerer's own OFFER_ANSWER_TIMEOUT_MS then rolls back
+          // and retries, which (confirmed live) loops forever against a
+          // side that only ever creates an answer once its own media shows
+          // up. Mirrors the offerer-side fix (ensureRecvOnlyTransceivers)
+          // for the answerer: a sendrecv offer's transceivers default to
+          // sendrecv here too (SRD's direction is the offer's reciprocal),
+          // which would otherwise claim sendrecv in the answer with no
+          // track behind it.
+          retryDebugLog(retryDebugRole, appointmentId, "handleOffer:local_media_not_ready_answering_recvonly", {
             offerId: incomingOfferId || null,
           });
-          return;
+          try {
+            pc.getTransceivers().forEach((t) => {
+              if (!t.sender?.track && t.direction !== "recvonly" && t.direction !== "inactive") {
+                t.direction = "recvonly";
+              }
+            });
+          } catch (err) {
+            logger.warn("Could not adjust transceiver direction for a recvonly answer:", err?.message || err);
+          }
         }
         // A collision rollback can leave the matched transceivers recvonly even
         // though we hold live local tracks — fix that before answering.
@@ -3703,6 +3791,28 @@ export default function VideoCall() {
       retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "camera-state:received", {
         isCamOff: Boolean(isCamOff),
       });
+    };
+
+    // The peer's socket just dropped (server-side "disconnect", before its
+    // own SOCKET_LEAVE_GRACE_MS grace period decides whether to declare them
+    // gone via participant-left). This side's own connection is fine — show
+    // "waiting for the other person to reconnect" immediately instead of the
+    // generic stall text, rather than waiting on the existing
+    // OLD_PEER_ICE_RESTART_RECHECK_MS handshake-timeout heuristic to infer it.
+    // Resolved by handlePeerSocketUp or handleParticipantLeft below.
+    const handlePeerSocketDown = () => {
+      if (!mounted || !peerPresentRef.current) return;
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "peer-socket-down:RECEIVED", {});
+      waitingForOldPeerRef.current = true;
+      setWaitingForOldPeer(true);
+      setReconnectStalled(true);
+    };
+
+    // The same peer whose socket dropped has rejoined the room.
+    const handlePeerSocketUp = () => {
+      if (!mounted) return;
+      retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "peer-socket-up:RECEIVED", {});
+      clearWaitingForOldPeer();
     };
 
     const handlePeerJoined = (payload = {}) => {
@@ -4082,6 +4192,8 @@ export default function VideoCall() {
     socket.on("ice-restart-request", handleIceRestartRequest);
     socket.on("peer-joined", handlePeerJoined);
     socket.on("participant-left", handleParticipantLeft);
+    socket.on("peer-socket-down", handlePeerSocketDown);
+    socket.on("peer-socket-up", handlePeerSocketUp);
     socket.on("appointment-message", handleChatMessage);
     socket.on("appointment-chat-history", handleChatHistory);
     socket.on("appointment-updated", handleApptUpdated);
@@ -4323,8 +4435,12 @@ export default function VideoCall() {
         watchdogPrev = { videoBytes, videoFrames, audioBytes };
         if (!prev) return; // first sample — nothing to diff against yet
 
+        // Missing data on either side of the comparison is inconclusive, not
+        // a stall — a stat field the browser doesn't populate (or a report
+        // that briefly didn't come back) must never by itself trigger a
+        // rebuild.
         const grew = (now, before) =>
-          typeof now === "number" && typeof before === "number" && now > before;
+          typeof now !== "number" || typeof before !== "number" || now > before;
         const audioGrew = grew(audioBytes, prev.audioBytes);
         const videoGrew =
           grew(videoBytes, prev.videoBytes) || grew(videoFrames, prev.videoFrames);
@@ -4461,6 +4577,8 @@ export default function VideoCall() {
       socket.off("ice-restart-request", handleIceRestartRequest);
       socket.off("peer-joined", handlePeerJoined);
       socket.off("participant-left", handleParticipantLeft);
+      socket.off("peer-socket-down", handlePeerSocketDown);
+      socket.off("peer-socket-up", handlePeerSocketUp);
       socket.off("appointment-message", handleChatMessage);
       socket.off("appointment-chat-history", handleChatHistory);
       socket.off("appointment-updated", handleApptUpdated);
@@ -5058,7 +5176,27 @@ export default function VideoCall() {
       setDeviceCheck({ ...summary, status: "checking" });
       logVideoEvent("media_retry_started", summary);
 
-      const stream = await getConsultationMediaStream();
+      const mediaAttempt = getConsultationMediaStream();
+      if (await mediaAcquireTimedOut(mediaAttempt, RETRY_MEDIA_PERMISSIONS_TIMEOUT_MS)) {
+        // A stuck permission prompt must not leave the button reading
+        // "Retrying…" forever with no way out — give up on this attempt and
+        // put the error + Retry UI back so the user can try again.
+        retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "retryMediaPermissions:timed_out", {
+          timeoutMs: RETRY_MEDIA_PERMISSIONS_TIMEOUT_MS,
+        });
+        logVideoEvent("media_retry_timeout", { timeoutMs: RETRY_MEDIA_PERMISSIONS_TIMEOUT_MS });
+        setCamError(true);
+        setCamErrorReason(
+          "Your camera or microphone is taking too long to respond. Check that no other app is using it, then tap Retry again.",
+        );
+        setDeviceCheck((prev) => ({ ...prev, status: "failed" }));
+        // If it resolves after all, don't leave the camera/mic light on for
+        // an attempt the user already gave up on — a later Retry click
+        // starts its own fresh, independent capture.
+        mediaAttempt.then((lateStream) => lateStream.getTracks().forEach((t) => t.stop())).catch(() => {});
+        return;
+      }
+      const stream = await mediaAttempt;
       await attachLocalMediaStream(stream, pc);
       void verifyLocalPlaybackLiveness(stream, pc);
 
@@ -5071,6 +5209,14 @@ export default function VideoCall() {
         audioTracks: stream.getAudioTracks().length,
         videoTracks: stream.getVideoTracks().length,
       });
+      // Clears remoteCamOffRef on the peer's side (see the media-acquisition
+      // effect's catch branch, which set it true when we joined without any
+      // media) — a safety net independent of the renegotiation nudges below:
+      // if those get skipped or ignored (e.g. the peer's pc is still inside
+      // REBUILD_GRACE_MS), this still lets its own media watchdog notice
+      // "connected but silent" and self-heal, instead of staying suppressed
+      // forever by a now-stale "camera off" signal.
+      socket.emit("camera-state", { appointmentId, isCamOff: false });
 
       emitOnlineAndJoinRoom();
 
@@ -5089,28 +5235,43 @@ export default function VideoCall() {
           answer: pc.localDescription,
           offerId: lastReceivedOfferIdRef.current,
         });
-      } else if (!isDoctor && peerJoinedRef.current && !inCallRef.current) {
-        // Media was denied on the first attempt, so the patient — the only
-        // side that self-initiates an offer — never sent one, and there's no
-        // remote offer waiting to answer. handlePeerJoined's offer nudge only
-        // re-fires on a fresh "peer-joined", which emitOnlineAndJoinRoom()
-        // above skips when this socket is already in the room — so kick the
-        // handshake here too. Short delay mirrors handlePeerJoined so any
-        // in-flight (re)join settles first; pcRef/createAndSendOffer are read
-        // fresh, and createAndSendOffer's own guards (mounted / signalingState
-        // / makingOfferRef / isReadyRef) keep it idempotent against the
-        // handlePeerJoined nudge if that also fires.
+      } else if (!isDoctor && peerJoinedRef.current) {
+        // Media was denied/absent on the first attempt, so the patient — the
+        // only side that self-initiates an offer — either never sent one, or
+        // sent one with recvonly-only transceivers (joined receive-only; see
+        // the media-acquisition effect's catch branch). Either way there's no
+        // remote offer waiting to answer, and the peer needs a FRESH offer to
+        // learn about the tracks we just attached — not gated on `!inCall`:
+        // the call can already be connected receive-only when this fires.
+        // handlePeerJoined's own nudge only re-fires on a fresh "peer-joined",
+        // which emitOnlineAndJoinRoom() above skips when this socket is
+        // already in the room — so kick the handshake here too. Short delay
+        // mirrors handlePeerJoined so any in-flight (re)join settles first;
+        // pcRef/createAndSendOffer are read fresh, and createAndSendOffer's
+        // own guards (mounted / signalingState / makingOfferRef / isReadyRef)
+        // keep it idempotent against the handlePeerJoined nudge if that also
+        // fires, and harmless if our media was already fully published.
         window.setTimeout(() => {
           const activePc = pcRef.current;
           if (!activePc || activePc.signalingState !== "stable") return;
-          if (
-            activePc.connectionState === "connected" ||
-            activePc.iceConnectionState === "connected" ||
-            activePc.iceConnectionState === "completed"
-          )
-            return;
+          // No "already connected" bail-out here (unlike other nudges):
+          // that's exactly the state a receive-only-then-granted-media
+          // patient is in, and it's precisely why the peer needs this fresh
+          // offer — connected today doesn't mean our tracks were ever sent.
           void createAndSendOfferRef.current?.({ iceRestart: false });
         }, 400);
+      } else if (isDoctor && peerJoinedRef.current) {
+        // Doctor never self-initiates an offer, so it can't publish its
+        // newly-attached tracks by itself the way the patient branch above
+        // does. handleOffer answers recvonly rather than waiting forever
+        // when media wasn't ready (see its own comment), so by now we've
+        // already sent that answer and signalingState is "stable" — the
+        // have-remote-offer branch above no longer applies either. Ask the
+        // patient to rebuild (the same request-peer-rebuild handshake the
+        // manual reconnect Retry already uses): its fresh offer lets our
+        // now-attached tracks get answered properly this time.
+        socket.emit("request-peer-rebuild", { appointmentId });
+        retryDebugLog("doctor", appointmentId, "retryMediaPermissions:requested_peer_rebuild", {});
       }
     } catch (err) {
       setCamError(true);

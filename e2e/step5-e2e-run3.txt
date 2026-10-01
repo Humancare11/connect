@@ -1,0 +1,77 @@
+[WebServer] [slow-query] users.findOne 112ms {"email":"admin@gmail.com"}
+[WebServer] (node:4480) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb99fdbc54269e1347bedb
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 15 tests using 1 worker
+
+  ok  1 tests\direct-disconnect-reasons.spec.js:137:3 › direct call — disconnect reasons, Problems box, superadmin delete › admin_ended: force-end tags the disconnect, and it's excluded from Problems (525ms)
+  ok  2 tests\direct-disconnect-reasons.spec.js:155:3 › direct call — disconnect reasons, Problems box, superadmin delete › session_taken_over: a confirmed takeover tags the evicted device's disconnect (337ms)
+  ok  3 tests\direct-disconnect-reasons.spec.js:183:3 › direct call — disconnect reasons, Problems box, superadmin delete › pin_regenerated: regenerate + endCurrentSession tags the evicted device's disconnect (252ms)
+  ok  4 tests\direct-disconnect-reasons.spec.js:203:3 › direct call — disconnect reasons, Problems box, superadmin delete › link_expired: joining an expired link is rejected and shows in Problems (426ms)
+  ok  5 tests\direct-disconnect-reasons.spec.js:223:3 › direct call — disconnect reasons, Problems box, superadmin delete › no signal at all: a raw disconnect with no hint falls back to 'unknown' and shows in Problems (162ms)
+  ok  6 tests\direct-disconnect-reasons.spec.js:243:3 › direct call — disconnect reasons, Problems box, superadmin delete › pagehide beacon: /leaving tags the next disconnect as tab_closed, excluded from Problems (194ms)
+  ok  7 tests\direct-disconnect-reasons.spec.js:263:3 › direct call — disconnect reasons, Problems box, superadmin delete › superadmin-only delete: a regular admin is refused, a superadmin can delete and leaves one audit entry (1.5s)
+  ok  8 tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds (177ms)
+  ok  9 tests\direct-pin-socket.spec.js:89:3 › direct call — PIN socket layer › wrong PIN is rejected, and 5 wrong attempts block further attempts (196ms)
+  ok 10 tests\direct-pin-socket.spec.js:112:3 › direct call — PIN socket layer › a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true (160ms)
+  ok 11 tests\direct-pin-socket.spec.js:138:3 › direct call — PIN socket layer › second device with the same PIN gets a conflict; confirmed takeover evicts the first device (250ms)
+  ok 12 tests\direct-pin-socket.spec.js:176:3 › direct call — PIN socket layer › regenerate PIN (default): current device's session survives a refresh, old PIN stops working (285ms)
+  ok 13 tests\direct-pin-socket.spec.js:214:3 › direct call — PIN socket layer › regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected (243ms)
+  ok 14 tests\direct-pin-socket.spec.js:247:3 › direct call — PIN socket layer › admin can view PINs again after creation, and the view is logged (139ms)
+  ok 15 tests\direct-pin-socket.spec.js:270:3 › direct call — PIN socket layer › per-room brute force: many wrong attempts from different IPs still gets blocked (1.2s)
+[WebServer] 4:29:18 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 4:29:18 PM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+
+  15 passed (19.1s)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | admin_ended: force-end tags the disconnect, and it's excluded from Problems | PASS | 0.5 |  |
+| 2 | session_taken_over: a confirmed takeover tags the evicted device's disconnect | PASS | 0.3 |  |
+| 3 | pin_regenerated: regenerate + endCurrentSession tags the evicted device's disconnect | PASS | 0.3 |  |
+| 4 | link_expired: joining an expired link is rejected and shows in Problems | PASS | 0.4 |  |
+| 5 | no signal at all: a raw disconnect with no hint falls back to 'unknown' and shows in Problems | PASS | 0.2 |  |
+| 6 | pagehide beacon: /leaving tags the next disconnect as tab_closed, excluded from Problems | PASS | 0.2 |  |
+| 7 | superadmin-only delete: a regular admin is refused, a superadmin can delete and leaves one audit entry | PASS | 1.5 |  |
+| 8 | correct PIN assigns the right role and join-direct-room succeeds | PASS | 0.2 |  |
+| 9 | wrong PIN is rejected, and 5 wrong attempts block further attempts | PASS | 0.2 |  |
+| 10 | a refresh (same sessionToken) rejoins without a new PIN prompt, and resumedCall is true | PASS | 0.2 |  |
+| 11 | second device with the same PIN gets a conflict; confirmed takeover evicts the first device | PASS | 0.3 |  |
+| 12 | regenerate PIN (default): current device's session survives a refresh, old PIN stops working | PASS | 0.3 |  |
+| 13 | regenerate PIN + endCurrentSession: old token is rejected and the live device is disconnected | PASS | 0.2 |  |
+| 14 | admin can view PINs again after creation, and the view is logged | PASS | 0.1 |  |
+| 15 | per-room brute force: many wrong attempts from different IPs still gets blocked | PASS | 1.2 |  |
+
+EXIT_CODE=0

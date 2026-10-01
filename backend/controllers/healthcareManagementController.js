@@ -339,7 +339,13 @@ async function getAppointmentTree(_req, res) {
     const [categories, specialties, conditions, pricingLookup] = await Promise.all([
       HealthcareCategory.find({ isActive: true }).sort({ name: 1 }).lean(),
       HealthcareSpecialty.find({ isActive: true }).sort({ name: 1 }).lean(),
-      HealthcareCondition.find({ isActive: true }).sort({ name: 1 }).lean(),
+      // Public, unauthenticated endpoint: condition documents are projected to
+      // an explicit allowlist so any internal/migration field added to the
+      // schema later never reaches this response by default.
+      HealthcareCondition.find({ isActive: true })
+        .select("_id specialtyId name icon description isActive")
+        .sort({ name: 1 })
+        .lean(),
       buildCategoryPricingLookup(),
     ]);
 

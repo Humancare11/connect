@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const MAX_ALIASES = 30;
+
 const healthcareSpecialtySchema = new mongoose.Schema(
   {
     categoryId: {
@@ -29,6 +31,17 @@ const healthcareSpecialtySchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    // Search-language terms for the specialty, e.g. "skin doctor" for
+    // Dermatology. Internal: not returned by /api/appointment-tree, which
+    // projects specialties to an explicit field list.
+    aliases: {
+      type: [{ type: String, trim: true, maxlength: 60 }],
+      default: [],
+      validate: {
+        validator: (value) => !Array.isArray(value) || value.length <= MAX_ALIASES,
+        message: `A specialty can have at most ${MAX_ALIASES} aliases.`,
+      },
     },
   },
   { timestamps: true },

@@ -171,6 +171,20 @@ const directVideoRoomPublicLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip+room:${key}`,
 });
 
+// Public Healthcare Discovery Search (POST /api/search). Keyed by IP only -
+// the request carries no identity, and the search text is never part of the
+// key or of the logged security event. The frontend debounces keystrokes, so
+// a person typing stays far below this.
+const searchStore = new Map();
+const searchLimiter = buildKeyedLimiter({
+  store:    searchStore,
+  windowMs: 60 * 1000,
+  max:      60,
+  message:  "Too many search requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 module.exports = {
   registrationLimiter,
   contactLimiter,
@@ -180,4 +194,5 @@ module.exports = {
   presignLimiter,
   uploadLimiter,
   directVideoRoomPublicLimiter,
+  searchLimiter,
 };

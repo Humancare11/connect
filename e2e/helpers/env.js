@@ -43,6 +43,11 @@ export function resolveEnv() {
     process.env.TEST_PATIENT_EMAIL ||= `e2e-patient-${rand()}@e2e.invalid`;
     process.env.TEST_DOCTOR_PASSWORD ||= `${rand(10)}Aa1!`;
     process.env.TEST_PATIENT_PASSWORD ||= `${rand(10)}Aa1!`;
+    // Admin panel (Phase 3) tests — optional even locally (they self-skip
+    // via test.skip if unset, same pattern as TEST_DIRECT_ROOM_ID), but
+    // always generated here so they run by default.
+    process.env.TEST_ADMIN_EMAIL ||= `e2e-admin-${rand()}@e2e.invalid`;
+    process.env.TEST_ADMIN_PASSWORD ||= `${rand(10)}Aa1!`;
   }
 
   return { staging, baseURL };
@@ -58,5 +63,12 @@ export function credentials() {
       email: process.env.TEST_PATIENT_EMAIL,
       password: process.env.TEST_PATIENT_PASSWORD,
     },
+    // Only meaningful when both are actually set (local mode auto-generates
+    // them; staging leaves them undefined unless explicitly provided) —
+    // admin tests check for this and skip themselves otherwise.
+    admin:
+      process.env.TEST_ADMIN_EMAIL && process.env.TEST_ADMIN_PASSWORD
+        ? { email: process.env.TEST_ADMIN_EMAIL, password: process.env.TEST_ADMIN_PASSWORD }
+        : null,
   };
 }

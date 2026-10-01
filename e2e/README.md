@@ -54,6 +54,18 @@ normal booking (status must be `confirmed`, doctor and patient assigned); the
 direct room via the admin "direct video room" tool. The repo has no seed script
 for these, so `helpers/seed.js` (local only) is the reference for the shape.
 
+## Workers
+
+Tests run **one at a time by default** (`workers: 1` in `playwright.config.js`)
+— the suite shares server-side state (one appointment/doctor/patient, and
+several tests intentionally race two-or-more browser contexts against the
+same signaling room), so parallel workers don't just run faster, they produce
+failures that have nothing to do with the app. Override with
+`E2E_WORKERS=<n> npx playwright test` for a deliberate parallel run.
+
+A full run of all 6 spec files (53 tests) with `workers=1` takes **~30
+minutes**.
+
 ## Output
 
 - `test-results/<test-title>-doctor.log` / `-patient.log` (direct call: `-host` / `-guest`) — every console line from each page

@@ -1,0 +1,81 @@
+[WebServer] (node:14592) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb90930891314b97cf3a8a
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 2 tests using 1 worker
+
+[WebServer] 3:49:03 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:49:03 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:05 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  ok 1 tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild (4.9s)
+[WebServer] 3:49:08 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:49:08 PM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:49:18 PM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 2f7e0d5b-d403-4d3a-a0f9-a98d508ada44 within 8000ms — rolling back to retry.
+[WebServer] 3:49:18 PM [vite] (client) [console.warn] [direct-video-call] no answer received for offer b66de7b4-c033-4afc-92da-f7b639422e4b within 8000ms — rolling back to retry.
+[WebServer] 3:49:18 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:18 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:18 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.error] [direct-video-call] addIceCandidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:49:18 PM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected 328ce0c4-db3b-4ac8-b6ea-042a3535fa00, got 2f7e0d5b-d403-4d3a-a0f9-a98d508ada44)
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:22 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:23 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:49:23 PM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+  x  2 tests\direct-video-call-extra.spec.js:157:3 › direct call — extra coverage › c: camera+mic off both sides for 60s — no rebuild, call stays up (1.4m)
+
+
+  1) tests\direct-video-call-extra.spec.js:157:3 › direct call — extra coverage › c: camera+mic off both sides for 60s — no rebuild, call stays up 
+
+    Error: host rebuilds
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      176 |       expect(hostState.state, "host pc still connected").toBe("connected");
+      177 |       expect(guestState.state, "guest pc still connected").toBe("connected");
+    > 178 |       expect(await host.logs.count(/requestPcRebuild:START/), "host rebuilds").toBe(0);
+          |                                                                                ^
+      179 |       expect(await guest.logs.count(/requestPcRebuild:START/), "guest rebuilds").toBe(0);
+      180 |     } finally {
+      181 |       await host.context.close();
+        at C:\aaamain\connect\e2e\tests\direct-video-call-extra.spec.js:178:80
+
+    Error Context: test-results\.pw\direct-video-call-extra-di-ed793--—-no-rebuild-call-stays-up\error-context.md
+
+  1 failed
+    tests\direct-video-call-extra.spec.js:157:3 › direct call — extra coverage › c: camera+mic off both sides for 60s — no rebuild, call stays up 
+  1 passed (1.6m)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | a: normal call start — both flowing quickly, no rebuild | PASS | 4.9 |  |
+| 2 | c: camera+mic off both sides for 60s — no rebuild, call stays up | FAIL | 81.3 | Error: host rebuilds |
+
+EXIT_CODE=1

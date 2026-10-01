@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const BACKEND_DIR = path.resolve(here, "../../backend");
 
-export async function seedLocal({ mongoUri, doctor, patient }) {
+export async function seedLocal({ mongoUri, doctor, patient, admin }) {
   const host = new URL(mongoUri).hostname;
   if (!["127.0.0.1", "localhost", "::1"].includes(host)) {
     throw new Error(
@@ -47,6 +47,19 @@ export async function seedLocal({ mongoUri, doctor, patient }) {
       role: "user",
     });
 
+    // Phase 3 admin panel tests (Calls list / call report / admin actions)
+    // need a real admin login — adminLogin (authController.js) checks
+    // User.role is "admin"/"superadmin" and bcrypt-compares the password
+    // itself, same as the patient user above.
+    const adminDoc = admin
+      ? await User.create({
+          name: "E2E Admin",
+          email: admin.email,
+          password: await bcrypt.hash(admin.password, 10),
+          role: "admin",
+        })
+      : null;
+
     const now = new Date();
     const appointment = await Appointment.create({
       patientId: patientDoc._id,
@@ -78,6 +91,8 @@ export async function seedLocal({ mongoUri, doctor, patient }) {
     return {
       appointmentId: String(appointment._id),
       directRoomId: room.roomId,
+      doctorId: String(doctorDoc._id),
+      adminId: adminDoc ? String(adminDoc._id) : null,
     };
   } finally {
     await mongoose.disconnect();

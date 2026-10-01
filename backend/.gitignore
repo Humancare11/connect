@@ -20,6 +20,10 @@ dist
 .env.production
 .env.production.local
 .env.uat
+.env.search-dev
+
+# Search-taxonomy migration run reports (may name databases/record ids)
+scripts/searchTaxonomy/results/
 
 # IDE
 .vscode
@@ -39,5 +43,5 @@ uploads/*
 .DS_Store
 Thumbs.db
 
-# GeoLite2 / GeoIP databases (download separately, see utils/geoIp.js)
+# GeoIP databases, e.g. dbip-city-lite.mmdb (download separately, see utils/geoIp.js)
 data/*.mmdb

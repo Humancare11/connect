@@ -29,8 +29,11 @@ import {
   FiCheckCircle,
 } from "react-icons/fi";
 
-import searchIndex from "../data/searchIndex.js";
-import { searchTreatments } from "../utils/search";
+import {
+  createSearchSession,
+  toSuggestions,
+  SEARCH_MIN_LENGTH,
+} from "../api/searchApi";
 
 import { useNavigate, Link } from "react-router-dom";
 
@@ -229,6 +232,10 @@ export default function HomePage() {
   const searchRef = useRef(null);
   const [noResults, setNoResults] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  // Backend search (POST /api/search). One session per search box: each new
+  // request cancels the previous one, so stale responses never show.
+  const [searchSession] = useState(createSearchSession);
+  const searchDebounceRef = useRef(null);
 
   const itemRefs = useRef([]);
 
@@ -260,26 +267,37 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
+  // ── As-you-type search: backend "instant" mode (never uses AI) ───────────
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    const query = searchQuery.trim();
+    if (query.length < SEARCH_MIN_LENGTH) {
+      searchSession.cancel();
       setFilteredSuggestions([]);
       setNoResults(false);
+      setIsSearching(false);
+      setActiveIndex(-1);
       return;
     }
 
     setIsSearching(true);
     setNoResults(false);
+    setActiveIndex(-1);
 
-    // small debounce just for smoother UX while typing
-    const delay = setTimeout(() => {
-      const { conditions } = searchTreatments(searchQuery);
-      setFilteredSuggestions(conditions);
-      setNoResults(conditions.length === 0);
+    // Debounce keeps typing smooth and request volume under the API limit.
+    searchDebounceRef.current = setTimeout(async () => {
+      const response = await searchSession.run(query, { mode: "instant" });
+      if (!response) return; // superseded by a newer query
+      const suggestions = toSuggestions(response);
+      setFilteredSuggestions(suggestions);
+      setNoResults(suggestions.length === 0);
       setIsSearching(false);
-    }, 150);
+    }, 250);
 
-    return () => clearTimeout(delay);
-  }, [searchQuery]);
+    return () => clearTimeout(searchDebounceRef.current);
+  }, [searchQuery, searchSession]);
+
+  // Cancel any in-flight search when the page unmounts.
+  useEffect(() => () => searchSession.cancel(), [searchSession]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
   useEffect(() => {
@@ -304,18 +322,45 @@ export default function HomePage() {
     [filteredSuggestions, navigate],
   );
 
+  // ── Submit (Search button / Enter): backend "full" mode ───────────────────
+  // Full mode lets the backend apply its query understanding; the page only
+  // receives catalog results. Like before, submitting opens the top result.
+  const submitSearch = useCallback(async () => {
+    const query = searchQuery.trim();
+    if (query.length < SEARCH_MIN_LENGTH) return;
+    clearTimeout(searchDebounceRef.current); // no instant run after submit
+    setShowSuggestions(true);
+    setIsSearching(true);
+    setNoResults(false);
+    setActiveIndex(-1);
+
+    const response = await searchSession.run(query, { mode: "full" });
+    if (!response) return; // superseded (the user kept typing or cleared)
+    const suggestions = toSuggestions(response);
+    setFilteredSuggestions(suggestions);
+    setIsSearching(false);
+    if (suggestions.length) {
+      handleSearch(suggestions[0]);
+    } else {
+      setNoResults(true);
+    }
+  }, [searchQuery, searchSession, handleSearch]);
+
   // ── Keyboard navigation ───────────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e) => {
-      if (!filteredSuggestions.length) return;
+      // Arrow keys only move within results currently on screen.
+      const hasVisibleResults = !isSearching && filteredSuggestions.length > 0;
       switch (e.key) {
         case "ArrowDown":
+          if (!hasVisibleResults) return;
           e.preventDefault();
           setActiveIndex((prev) =>
             prev < filteredSuggestions.length - 1 ? prev + 1 : 0,
           );
           break;
         case "ArrowUp":
+          if (!hasVisibleResults) return;
           e.preventDefault();
           setActiveIndex((prev) =>
             prev > 0 ? prev - 1 : filteredSuggestions.length - 1,
@@ -323,10 +368,12 @@ export default function HomePage() {
           break;
         case "Enter":
           e.preventDefault();
-          if (activeIndex >= 0) {
+          // A highlighted result is only used while it is actually shown for
+          // the current query; otherwise run a full search for what was typed.
+          if (hasVisibleResults && activeIndex >= 0 && activeIndex < filteredSuggestions.length) {
             handleSearch(filteredSuggestions[activeIndex]);
           } else {
-            handleSearch();
+            submitSearch();
           }
           break;
         case "Escape":
@@ -336,7 +383,7 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, handleSearch],
+    [filteredSuggestions, activeIndex, isSearching, handleSearch, submitSearch],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -741,10 +788,10 @@ export default function HomePage() {
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
               />
-              <button onClick={() => handleSearch()}>Search</button>
+              <button onClick={() => submitSearch()}>Search</button>
             </div>
 
-            {showSuggestions && searchQuery.trim() && (
+            {showSuggestions && searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
               <div className="search-suggestions">
                 {/* Loading state */}
                 {isSearching && (
