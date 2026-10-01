@@ -618,6 +618,8 @@ app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/services", require("./routes/services"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
+app.use("/api/superadmin/blogs", require("./routes/superadminBlogs"));
+app.use("/api/blogs", require("./routes/blogs"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));

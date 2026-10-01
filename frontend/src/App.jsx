@@ -21,6 +21,7 @@ const Home = lazy(() => import("./pages/Home"));
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
+const BlogPost = lazy(() => import("./pages/Blogs/BlogPost")); // blogs created in Super Admin
 const Corporates = lazy(() => import("./pages/Corporates"));
 const Contact = lazy(() => import("./pages/Contact"));
 const AppointmentBooking = lazy(() => import("./pages/AppointmentBooking"));
@@ -3079,6 +3080,8 @@ function AppLayout() {
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+          {/* Super Admin blogs: after every static route so existing URLs win */}
+          <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
 
