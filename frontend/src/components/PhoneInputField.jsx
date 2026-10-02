@@ -370,6 +370,14 @@ export default function PhoneInputField({
   // Opt-in: while +91 is selected, keep only the 10 national digits (and
   // tolerate a pasted "+91…" / "0…" prefix). Other callers are unaffected.
   limitIndianNumber = false,
+  // Opt-in: an ISO2 code a sibling field (e.g. a Country dropdown) wants this
+  // widget's country to match right now. Applied by ISO code directly — never
+  // by re-parsing `value`'s digits — because several countries share one dial
+  // code (+1 US/Canada, +7 Russia/Kazakhstan, +44 UK/Guernsey/Isle of
+  // Man/Jersey, …) and digit-based parsing can't tell them apart. Keeps the
+  // typed local digits, same as picking a country from this widget's own
+  // dropdown does. Omit this prop and nothing changes from today's behavior.
+  forceCountryCode,
 }) {
   const init = parseValue(value, defaultCountry);
   const [country, setCountry] = useState(init.country);
@@ -462,6 +470,16 @@ export default function PhoneInputField({
   }, [open]);
 
   useEffect(() => {
+    if (value && value.startsWith(`+${country.dial}`)) {
+      // The dial code already matches the selected country (most likely we
+      // just emitted this value ourselves, e.g. from applyCountry/typing) —
+      // keep that country. Re-deriving it from digits alone can't tell apart
+      // countries that share a dial code (+1 US/Canada, +7 Russia/Kazakhstan,
+      // +44 UK/Guernsey/Isle of Man/Jersey, …), so only reparse below when
+      // the value truly doesn't match the selected country.
+      setLocal(value.slice(1 + country.dial.length));
+      return;
+    }
     const next = parseValue(value, country.code);
     setCountry(next.country);
     setLocal(next.local);
@@ -484,6 +502,17 @@ export default function PhoneInputField({
       cancelled = true;
     };
   }, [defaultCountry, value]);
+
+  useEffect(() => {
+    if (!forceCountryCode) return;
+    const next = findCountry(forceCountryCode);
+    if (!next || next.code === country.code) return;
+    userSelectedRef.current = true;
+    applyCountry(next);
+    // Only react to the sibling field's requested code changing, not to our
+    // own country state (which this effect itself updates).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forceCountryCode]);
   // useEffect(() => {
   //   let cancelled = false;
   //   if (defaultCountry !== "auto" || value) {

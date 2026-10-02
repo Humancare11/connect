@@ -20,6 +20,12 @@ const sameText = (a, b) =>
  *   fieldComponent           wrapper component ({ label, icon, children }) so the
  *                            host page controls label / spacing styling
  *   inputStyle, selectStyle, onFocus, onBlur   host styling for the controls
+ *   layout                   omit for the default two-row block (Country+State,
+ *                             then City). "countryState" renders only the
+ *                             Country+State row. "cityOnly" renders just the
+ *                             City field with no wrapping row div, so a host
+ *                             page can place it inside its own row (e.g. next
+ *                             to a phone field).
  */
 export default function LocationSelects({
   country,
@@ -31,6 +37,7 @@ export default function LocationSelects({
   selectStyle,
   onFocus,
   onBlur,
+  layout,
 }) {
   const Field = fieldComponent;
   const {
@@ -59,8 +66,7 @@ export default function LocationSelects({
   const stateValue = matchedState?.name || state || "";
   const cityNeedsInput = !loadingStates && !loadingCityList && cities.length === 0;
 
-  return (
-    <>
+  const countryStateRow = (
       <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
         <Field label="Country" icon="🌍">
           <select
@@ -133,47 +139,58 @@ export default function LocationSelects({
           )}
         </Field>
       </div>
+  );
 
+  const cityField = (
+    <Field label="City" icon="🏙️">
+      {cityNeedsInput ? (
+        // No city list for this state (or a detected city with no state) — free text.
+        <input
+          style={inputStyle}
+          type="text"
+          id="city"
+          name="city"
+          value={city || ""}
+          maxLength={100}
+          onChange={(e) => set({ city: e.target.value })}
+          placeholder="City"
+          onFocus={onFocus}
+          onBlur={onBlur}
+          disabled={!listCountry}
+        />
+      ) : (
+        <select
+          style={selectStyle}
+          id="city"
+          name="city"
+          value={city || ""}
+          onChange={(e) => set({ city: e.target.value })}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          disabled={!matchedState || loadingCityList}
+        >
+          <option value="">
+            {loadingCityList ? "Loading..." : matchedState ? "Select city" : "Select state first"}
+          </option>
+          {city && !cities.includes(city) && <option value={city}>{city}</option>}
+          {cities.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      )}
+    </Field>
+  );
+
+  if (layout === "countryState") return countryStateRow;
+  if (layout === "cityOnly") return cityField;
+
+  return (
+    <>
+      {countryStateRow}
       <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
-        <Field label="City" icon="🏙️">
-          {cityNeedsInput ? (
-            // No city list for this state (or a detected city with no state) — free text.
-            <input
-              style={inputStyle}
-              type="text"
-              id="city"
-              name="city"
-              value={city || ""}
-              maxLength={100}
-              onChange={(e) => set({ city: e.target.value })}
-              placeholder="City"
-              onFocus={onFocus}
-              onBlur={onBlur}
-              disabled={!listCountry}
-            />
-          ) : (
-            <select
-              style={selectStyle}
-              id="city"
-              name="city"
-              value={city || ""}
-              onChange={(e) => set({ city: e.target.value })}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              disabled={!matchedState || loadingCityList}
-            >
-              <option value="">
-                {loadingCityList ? "Loading..." : matchedState ? "Select city" : "Select state first"}
-              </option>
-              {city && !cities.includes(city) && <option value={city}>{city}</option>}
-              {cities.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          )}
-        </Field>
+        {cityField}
       </div>
     </>
   );
