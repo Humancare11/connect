@@ -653,14 +653,18 @@ const buildLocationUpdate = (body, current) => {
 };
 
 // Shared by register and googleAuthUser's new-account path: both require a
-// non-blank country and state (state accepts the free-text fallback for a
-// country with no subdivisions in the dataset); city is optional. Location is
-// only ever user-submitted at signup now (no IP-based fallback — see the note
-// by the imports above), so a successful result always has locationSource
-// "user". Returns { error } or { set }, same shape as buildLocationUpdate.
+// non-blank country; state is required too unless the submitted country has
+// no subdivisions in the dataset (e.g. Guam, Gibraltar) — those stay blank.
+// City is optional. Location is only ever user-submitted at signup now (no
+// IP-based fallback — see the note by the imports above), so a successful
+// result always has locationSource "user". Returns { error } or { set }, same
+// shape as buildLocationUpdate.
 const validateSignupLocation = (body) => {
   if (!cleanStr(body.country)) return { error: "Country is required." };
-  if (!cleanStr(body.state)) return { error: "State / Province is required." };
+  const countryRecord = findCountryRecord(body.country);
+  if (!countryRecord) return { error: "Select a valid country." };
+  const countryHasStates = (State.getStatesOfCountry(countryRecord.isoCode) || []).length > 0;
+  if (countryHasStates && !cleanStr(body.state)) return { error: "State / Province is required." };
   return buildLocationUpdate(body, { country: "", state: "", city: "" });
 };
 

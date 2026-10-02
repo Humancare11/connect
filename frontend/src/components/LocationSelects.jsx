@@ -1,6 +1,5 @@
 import useCountries from "../hooks/useCountries";
 import useStates from "../hooks/useStates";
-import useCities from "../hooks/useCities";
 
 const sameText = (a, b) =>
   String(a || "").trim().toLowerCase() === String(b || "").trim().toLowerCase();
@@ -9,10 +8,16 @@ const sameText = (a, b) =>
  * Country → State / Province → City fields backed by the same
  * /api/locations endpoints as the rest of the app.
  *
- * Stored values can be names, legacy ISO codes ("IN") or free text (older
- * accounts, or a city detected from the IP that isn't in the list), so any
- * current value that isn't in a list is added as an extra option instead of
- * being silently blanked on save.
+ * Country and State are always dropdowns, never free text — a country with
+ * no subdivisions in the dataset (e.g. Guam, Gibraltar) shows State disabled
+ * with "No states available" instead, and that country's State is optional.
+ * City is always a plain, optional text field.
+ *
+ * Stored values can be names, legacy ISO codes ("IN") or state free text from
+ * before this was a dropdown-only field, so any current value that isn't in
+ * a list is added as an extra option instead of being silently blanked on
+ * save (it still shows, just inside a disabled control if its country turns
+ * out to have no states).
  *
  * Props
  *   country / state / city   current values (strings)
@@ -50,21 +55,21 @@ export default function LocationSelects({
     countries.find((c) => sameText(c.name, country) || sameText(c.isoCode, country)) || null;
 
   // Only ask the API about values it can actually resolve — an unresolvable
-  // country/state would 404 and retry.
+  // country would 404 and retry.
   const listCountry = resolvedCountry?.name || "";
-  const { data: states = [], isLoading: loadingStates } = useStates(listCountry);
+  const {
+    data: states = [],
+    isLoading: loadingStates,
+    error: statesError,
+    refetch: refetchStates,
+  } = useStates(listCountry);
   const matchedState = states.find((s) => sameText(s.name, state)) || null;
-  const { data: cities = [], isLoading: loadingCityList } = useCities(
-    listCountry,
-    matchedState?.name || "",
-  );
+  const noStatesForCountry = Boolean(listCountry) && !loadingStates && !statesError && states.length === 0;
 
   const set = (patch) => onChange({ country, state, city, ...patch });
 
   const countryValue = resolvedCountry?.name || country || "";
-  const showFreeTextState = Boolean(listCountry) && !loadingStates && states.length === 0;
   const stateValue = matchedState?.name || state || "";
-  const cityNeedsInput = !loadingStates && !loadingCityList && cities.length === 0;
 
   const countryStateRow = (
       <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
@@ -97,45 +102,52 @@ export default function LocationSelects({
         </Field>
 
         <Field label="State / Province" icon="📍">
-          {showFreeTextState ? (
-            // Country with no subdivisions in the dataset (e.g. Monaco) — free text.
-            <input
-              style={inputStyle}
-              type="text"
-              id="state"
-              name="state"
-              value={state || ""}
-              maxLength={100}
-              onChange={(e) => set({ state: e.target.value, city: "" })}
-              placeholder="State / Province"
-              onFocus={onFocus}
-              onBlur={onBlur}
-            />
-          ) : (
-            <select
-              style={selectStyle}
-              id="state"
-              name="state"
-              value={stateValue}
-              onChange={(e) => set({ state: e.target.value, city: "" })}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              disabled={!listCountry || loadingStates}
-            >
-              <option value="">
-                {loadingStates
+          <select
+            style={selectStyle}
+            id="state"
+            name="state"
+            value={stateValue}
+            onChange={(e) => set({ state: e.target.value, city: "" })}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            disabled={!listCountry || loadingStates || Boolean(statesError) || noStatesForCountry}
+          >
+            <option value="">
+              {!listCountry
+                ? "Select country first"
+                : loadingStates
                   ? "Loading..."
-                  : listCountry
-                    ? "Select state / province"
-                    : "Select country first"}
+                  : statesError
+                    ? "Failed to load states"
+                    : noStatesForCountry
+                      ? "No states available"
+                      : "Select state / province"}
+            </option>
+            {stateValue && !matchedState && <option value={stateValue}>{stateValue}</option>}
+            {states.map((s) => (
+              <option key={s.isoCode} value={s.name}>
+                {s.name}
               </option>
-              {stateValue && !matchedState && <option value={stateValue}>{stateValue}</option>}
-              {states.map((s) => (
-                <option key={s.isoCode} value={s.name}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
+            ))}
+          </select>
+          {statesError && (
+            <button
+              type="button"
+              onClick={() => refetchStates()}
+              style={{
+                background: "none",
+                border: "none",
+                padding: "4px 0 0",
+                margin: 0,
+                color: "#2563eb",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              Retry
+            </button>
           )}
         </Field>
       </div>
@@ -143,43 +155,19 @@ export default function LocationSelects({
 
   const cityField = (
     <Field label="City" icon="🏙️">
-      {cityNeedsInput ? (
-        // No city list for this state (or a detected city with no state) — free text.
-        <input
-          style={inputStyle}
-          type="text"
-          id="city"
-          name="city"
-          value={city || ""}
-          maxLength={100}
-          onChange={(e) => set({ city: e.target.value })}
-          placeholder="City"
-          onFocus={onFocus}
-          onBlur={onBlur}
-          disabled={!listCountry}
-        />
-      ) : (
-        <select
-          style={selectStyle}
-          id="city"
-          name="city"
-          value={city || ""}
-          onChange={(e) => set({ city: e.target.value })}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          disabled={!matchedState || loadingCityList}
-        >
-          <option value="">
-            {loadingCityList ? "Loading..." : matchedState ? "Select city" : "Select state first"}
-          </option>
-          {city && !cities.includes(city) && <option value={city}>{city}</option>}
-          {cities.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      )}
+      <input
+        style={inputStyle}
+        type="text"
+        id="city"
+        name="city"
+        value={city || ""}
+        maxLength={100}
+        onChange={(e) => set({ city: e.target.value })}
+        placeholder="City"
+        onFocus={onFocus}
+        onBlur={onBlur}
+        disabled={!listCountry}
+      />
     </Field>
   );
 

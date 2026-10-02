@@ -84,7 +84,7 @@ function getPasswordError(password) {
 
 import api, { setUserAuthToken, getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
-import { Country } from "country-state-city";
+import { Country, State } from "country-state-city";
 import PhoneInputField from "../components/PhoneInputField";
 import { getMobileError } from "../utils/phone";
 import LocationSelects from "../components/LocationSelects";
@@ -99,6 +99,14 @@ import LocationSelects from "../components/LocationSelects";
 const isoToCountryName = (iso) => Country.getCountryByCode(iso)?.name || "";
 const countryNameToIso = (name) =>
   Country.getAllCountries().find((c) => c.name === name)?.isoCode || "";
+
+// A handful of countries (mostly small territories — Guam, Gibraltar, Isle of
+// Man, ...) have no subdivisions in the dataset LocationSelects' State
+// dropdown is built from, so it's shown disabled there and isn't required.
+const countryHasStates = (name) => {
+  const iso = countryNameToIso(name);
+  return iso ? State.getStatesOfCountry(iso).length > 0 : true;
+};
 
 // Plain style objects, not a className, because LocationSelects applies
 // `style` directly to its <select>/<input> elements (no className hook).
@@ -422,7 +430,8 @@ export default function AuthPage() {
     const googleMobileError = getMobileError(googleProfile.mobile);
     if (googleMobileError) return setFormError(googleMobileError);
     if (!googleProfile.country.trim()) return setFormError("Select your country");
-    if (!googleProfile.state.trim()) return setFormError("Select your state / province");
+    if (!googleProfile.state.trim() && countryHasStates(googleProfile.country))
+      return setFormError("Select your state / province");
     if (
       !googleProfile.terms ||
       !googleProfile.privacyConsent ||
@@ -495,7 +504,8 @@ export default function AuthPage() {
     const mobileError = getMobileError(registerForm.mobile);
     if (mobileError) return setFormError(mobileError);
     if (!registerForm.country.trim()) return setFormError("Select your country");
-    if (!registerForm.state.trim()) return setFormError("Select your state / province");
+    if (!registerForm.state.trim() && countryHasStates(registerForm.country))
+      return setFormError("Select your state / province");
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", {
