@@ -114,7 +114,7 @@ export default function EverydayCareSection() {
                 </div>
 
                 {/* Corner Arrow Icon */}
-                <div className="ecs-corner-arrow" aria-hidden="true">
+                {/* <div className="ecs-corner-arrow" aria-hidden="true">
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -125,7 +125,7 @@ export default function EverydayCareSection() {
                   >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
-                </div>
+                </div> */}
               </div>
             </Link>
           </Motion.div>
@@ -178,7 +178,7 @@ export default function EverydayCareSection() {
                 </div>
 
                 {/* Corner Arrow Icon */}
-                <div className="ecs-corner-arrow" aria-hidden="true">
+                {/* <div className="ecs-corner-arrow" aria-hidden="true">
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -189,7 +189,7 @@ export default function EverydayCareSection() {
                   >
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
-                </div>
+                </div> */}
               </div>
             </Link>
           </Motion.div>

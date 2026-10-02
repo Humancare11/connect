@@ -1,11 +1,10 @@
 /* ── Section Wrapper ── */
 .services-section-wrapper {
   position: relative;
-  width: calc(100% - 48px);
-  max-width: 1500px;
-  margin: 80px auto;
-  padding: 70px 50px;
-  border-radius: 36px;
+  width: min(calc(100% - clamp(16px, 4vw, 48px)), 1500px);
+  margin: clamp(36px, 6vw, 80px) auto;
+  padding: clamp(36px, 6vw, 70px) clamp(16px, 4vw, 50px);
+  border-radius: clamp(20px, 3.5vw, 36px);
   overflow: hidden;
   isolation: isolate;
   background:
@@ -41,12 +40,12 @@
   width: 100%;
   max-width: 1500px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(4px, 2vw, 24px);
 }
 
 /* ── Header Block ── */
 .services-header-block {
-  margin-bottom: 48px;
+  margin-bottom: clamp(24px, 4vw, 48px);
 }
 
 .services-eyebrow-label {
@@ -62,21 +61,22 @@
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(124, 183, 255, 0.25);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   border-radius: 50px;
   width: fit-content;
-  max-width: 320px;
+  max-width: 100%;
 }
 
 .services-main-heading,
 .services-heading-highlight {
   font-family: var(--font-primary);
   font-weight: 700;
-  font-size: clamp(40px, 6vw, 64px);
+  font-size: clamp(24px, 5.2vw, 62px);
   color: white;
-  letter-spacing: -1px;
+  letter-spacing: -0.02em;
   line-height: 1.15;
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 .services-heading-highlight {
@@ -446,26 +446,26 @@
 
 @media (max-width: 820px) {
   .services-section-wrapper {
-    padding: 44px 18px 52px;
-    width: calc(100% - 20px);
-    margin: 36px auto 52px;
-    border-radius: 28px;
+    padding: clamp(32px, 5vw, 44px) clamp(10px, 3vw, 18px);
+    width: min(calc(100% - 16px), 1500px);
+    margin: 28px auto 44px;
+    border-radius: clamp(18px, 4vw, 28px);
   }
 
   .services-inner-container {
-    padding: 0 4px;
+    padding: 0 clamp(2px, 1.5vw, 6px);
   }
 
   .services-header-block {
-    margin-bottom: 26px;
+    margin-bottom: 24px;
   }
 
   /* Eyebrow badge matching reference image */
   .services-eyebrow-label {
     display: inline-flex;
     align-items: center;
-    padding: 6px 16px;
-    font-size: 11.5px;
+    padding: 5px 14px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.12em;
     color: #7cb7ff;
@@ -473,13 +473,13 @@
     background: rgba(30, 64, 120, 0.45);
     border: 1px solid rgba(96, 165, 250, 0.28);
     border-radius: 50px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
 
   /* Main heading matching reference image */
   .services-main-heading {
-    font-size: clamp(26px, 7vw, 36px);
+    font-size: clamp(22px, 6.5vw, 36px);
     font-weight: 800;
     letter-spacing: -0.6px;
     line-height: 1.15;
@@ -491,7 +491,7 @@
   .services-bento-grid {
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
+    gap: clamp(8px, 2vw, 12px) !important;
     width: 100% !important;
   }
 
@@ -516,16 +516,16 @@
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-between !important;
-    padding: 12px 18px !important;
-    border-radius: 18px !important;
-    min-height: 66px !important;
+    padding: clamp(9px, 2.5vw, 12px) clamp(10px, 3vw, 16px) !important;
+    border-radius: clamp(14px, 3vw, 18px) !important;
+    min-height: 56px !important;
     height: auto !important;
     background: rgba(255, 255, 255, 0.055) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     box-shadow:
       0 4px 18px rgba(0, 0, 0, 0.18),
       inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-    gap: 14px !important;
+    gap: clamp(8px, 2vw, 14px) !important;
     text-decoration: none !important;
     transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease !important;
   }
@@ -542,17 +542,17 @@
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
-    gap: 14px !important;
+    gap: clamp(8px, 2.5vw, 14px) !important;
     flex: 1 !important;
     min-width: 0 !important;
   }
 
   /* Rounded square icon box */
   .services-icon-box {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    border-radius: 12px !important;
+    width: clamp(36px, 9vw, 44px) !important;
+    height: clamp(36px, 9vw, 44px) !important;
+    min-width: clamp(36px, 9vw, 44px) !important;
+    border-radius: 11px !important;
     background: rgba(255, 255, 255, 0.1) !important;
     border: 1px solid rgba(255, 255, 255, 0.15) !important;
     color: #ffffff !important;
@@ -564,14 +564,14 @@
   }
 
   .services-icon-box svg {
-    width: 18px !important;
-    height: 18px !important;
+    width: clamp(15px, 4vw, 18px) !important;
+    height: clamp(15px, 4vw, 18px) !important;
     color: #ffffff !important;
   }
 
   /* Title */
   .services-card-title {
-    font-size: 15px !important;
+    font-size: clamp(13px, 3.4vw, 15px) !important;
     font-weight: 600 !important;
     line-height: 1.25 !important;
     color: #ffffff !important;
@@ -579,6 +579,7 @@
     text-align: left !important;
     flex: 1 !important;
     word-break: break-word !important;
+    overflow-wrap: break-word !important;
   }
 
   /* Hide description and desktop cta link on mobile */
@@ -593,10 +594,11 @@
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 19px !important;
+    font-size: 17px !important;
     font-weight: 500 !important;
     color: #60a5fa !important;
     flex-shrink: 0 !important;
+    margin-left: auto !important;
     transition: transform 0.2s ease, color 0.2s ease !important;
   }
 
@@ -607,30 +609,34 @@
   }
 }
 
-/* Extra small devices (<= 360px) */
 @media (max-width: 360px) {
   .services-card-inner-link {
-    padding: 10px 14px !important;
-    gap: 10px !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
   }
 
   .services-card-header {
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   .services-icon-box {
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 9px !important;
   }
 
   .services-icon-box svg {
-    width: 16px !important;
-    height: 16px !important;
+    width: 14px !important;
+    height: 14px !important;
   }
 
   .services-card-title {
-    font-size: 14px !important;
+    font-size: 12.5px !important;
+  }
+
+  .services-card-row-arrow {
+    font-size: 15px !important;
   }
 }
 

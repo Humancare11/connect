@@ -104,7 +104,7 @@
 
 .sp-hero__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 420px);
+  grid-template-columns: minmax(0, 1.25fr) minmax(min(100%, 300px), 420px);
   gap: clamp(24px, 4vw, 44px);
   align-items: center;
   width: 100%;
@@ -137,12 +137,13 @@
 }
 
 .sp-hero__title {
-  font-size: clamp(28px, 4.5vw, 48px);
+  font-size: clamp(24px, 4.5vw, 48px);
   font-weight: 800;
   color: #fff;
   line-height: 1.1;
   margin: 0 0 10px;
   max-width: 720px;
+  overflow-wrap: break-word;
 }
 
 .sp-hero__tagline {
@@ -1058,7 +1059,7 @@
   }
 
   .sp-hero__layout {
-    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 390px);
+    grid-template-columns: minmax(0, 1.2fr) minmax(min(100%, 300px), 390px);
     gap: 32px;
   }
 

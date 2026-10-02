@@ -325,8 +325,8 @@
   align-items: center;
   gap: 7px;
   font-family: var(--font-primary, 'Satoshi', sans-serif);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 8px;
+  font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.95);
@@ -610,5 +610,48 @@
 
   .ecs-card-cta {
     font-size: 12px;
+  }
+}
+
+/* ── Ultra-Compact Mobile (≤340px / 300px) ── */
+@media (max-width: 340px) {
+  .ecs-section {
+    width: calc(100% - 12px);
+    padding: 24px 12px 28px;
+    border-radius: 18px;
+    margin: 20px auto 32px;
+  }
+
+  .ecs-title {
+    font-size: 21px;
+    letter-spacing: -0.4px;
+  }
+
+  .ecs-card {
+    padding: 16px 12px 14px;
+    min-height: 200px;
+    border-radius: 18px;
+  }
+
+  .ecs-card-content {
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  .ecs-card-bg-img {
+    width: 50%;
+    opacity: 0.25;
+  }
+
+  .ecs-card-title {
+    font-size: 17px;
+  }
+
+  .ecs-card-desc {
+    font-size: 11px;
+  }
+
+  .ecs-card-cta {
+    font-size: 11px;
   }
 }

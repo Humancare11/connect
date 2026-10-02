@@ -100,7 +100,7 @@
 /* ── Two-column body ─────────────────────────────────────────────────────── */
 .mq-body {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: minmax(min(100%, 360px), 420px) minmax(0, 1fr);
   gap: 28px;
   align-items: start;
 }
