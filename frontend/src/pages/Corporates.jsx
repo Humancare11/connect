@@ -263,7 +263,7 @@ const DEFAULT_CENTRE = {
   eyebrow: "Why Choose Us",
   stat: "2.4M+",
   statLbl: "Patients Served",
-  tag: "HIPAA · SOC 2 · 500+ Doctors",
+  tag: "HIPAA · SOC 2 ",
   rows: [
     {
       label: "Visit completion",

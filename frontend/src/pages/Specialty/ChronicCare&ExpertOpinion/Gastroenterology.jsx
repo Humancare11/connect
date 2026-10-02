@@ -292,7 +292,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
@@ -562,9 +562,8 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${
-                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                }`}
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                  }`}
               >
                 <span className="sp-hero__badge">Chronic Care</span>
                 <h1 className="sp-hero__title">{data.name}</h1>

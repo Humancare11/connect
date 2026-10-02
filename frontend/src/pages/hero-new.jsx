@@ -347,7 +347,7 @@ export default function HeroUpdated() {
               </span>
               <span className="hce-chip">
                 <span className="dot" style={{ background: "#223A5E" }} />
-                500+ Verified Doctors
+                Verified Doctors
               </span>
               <span className="hce-chip">
                 <span className="dot" style={{ background: "#0C8B7A" }} />

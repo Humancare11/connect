@@ -342,7 +342,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
