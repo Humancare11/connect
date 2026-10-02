@@ -25,7 +25,11 @@ const { assertPasswordAllowed, rememberPassword, validatePasswordStrength } = re
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin, recordSecurityEvent } = require("../utils/securityMonitor");
 const { validateMobile } = require("../utils/mobileValidation");
-const { lookupLocation } = require("../utils/geoIp");
+// Note: IP-based location detection (utils/geoIp.js) is intentionally not used
+// here. Country/State/City now come only from what the user submits (see
+// validateSignupLocation below). geoIp.js and the DB-IP database are left in
+// place, still loaded at startup via initGeoIp() in server.js, for possible
+// future reuse — just not called from signup.
 const { detectRegistrationClient } = require("../utils/clientInfo");
 const { Country, State } = require("country-state-city");
 
@@ -57,19 +61,6 @@ const validateDob = (dob) => {
 };
 
 // ── helpers ───────────────────────────────────────────
-// Location for a brand-new account, detected from the request IP. Never
-// throws and never blocks signup: on any failure (no DB, private/local IP,
-// unknown IP) every field is left empty.
-const detectSignupLocation = async (ip) => {
-  const geo = await lookupLocation(ip).catch(() => null);
-  const location = {
-    country: geo?.country || "",
-    state: geo?.state || "",
-    city: geo?.city || "",
-  };
-  const detected = Boolean(location.country || location.state || location.city);
-  return { ...location, locationSource: detected ? "ip" : "" };
-};
 
 const safeUser = (user) => ({
   _id:             user._id,
@@ -201,10 +192,10 @@ const sendRegisterOTP = async (req, res) => {
 // ════════════════════════════════════════════
 const register = async (req, res) => {
   try {
-    // dob / gender / country / state / city in the body are deliberately
-    // ignored: they're collected later on the Profile page, and location is
-    // detected server-side from the request IP.
-    const { name, email, password, mobile, otp, privacyConsent, hipaaConsent } = req.body;
+    // dob / gender in the body are ignored: they're collected later on the
+    // Profile page. country / state / city ARE required here — see
+    // validateSignupLocation below.
+    const { name, email, password, mobile, country, state, city, otp, privacyConsent, hipaaConsent } = req.body;
 
     if (!name || !email || !password || !otp || !mobile)
       return res.status(400).json({ msg: "Name, email, mobile number, password and OTP are required." });
@@ -213,6 +204,9 @@ const register = async (req, res) => {
 
     const mobileCheck = validateMobile(mobile);
     if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
+
+    const location = validateSignupLocation({ country, state, city });
+    if (location.error) return res.status(400).json({ msg: location.error });
 
     if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
       return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
@@ -229,12 +223,11 @@ const register = async (req, res) => {
     if (!check.valid) return res.status(400).json({ msg: check.msg });
 
     const ip = getIp(req);
-    const location = await detectSignupLocation(ip);
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
-      mobile: mobileCheck.value, ...location, registrationIp: ip,
+      mobile: mobileCheck.value, ...location.set, registrationIp: ip,
       signupMethod: "email",
       ...detectRegistrationClient(req),
     });
@@ -588,12 +581,17 @@ const findCountryRecord = (value) => {
   return ALL_COUNTRIES.find((c) => c.name.toLowerCase() === q || c.isoCode.toLowerCase() === q) || null;
 };
 
-// Validates the country / state / city fields of a profile update and returns
-// the $set fragment for them. Only fields that actually differ from what is
-// stored are validated, so a legacy free-text value the user didn't touch
-// never blocks saving other fields. Country and state must come from the
-// country-state-city lists (the same data the dropdowns use); city is free
-// text because a detected city may not exist in that list.
+// Validates the country / state / city fields of a profile update, or (called
+// with an all-blank `current`) of a brand-new signup, and returns the $set
+// fragment for them. Only fields that actually differ from `current` are
+// validated — for an update that means a legacy free-text value the user
+// didn't touch never blocks saving other fields; for a signup (current is
+// always blank) it means any non-blank submitted field gets validated, and a
+// field left blank is simply omitted from the result rather than erroring.
+// Country and state must come from the country-state-city lists (the same
+// data the dropdowns use), or the free-text fallback for a state when its
+// country has none; city is free text because a detected/typed city may not
+// exist in that list.
 const buildLocationUpdate = (body, current) => {
   const set = {};
   const has = (key) => body[key] !== undefined;
@@ -652,6 +650,18 @@ const buildLocationUpdate = (body, current) => {
 
   if (Object.keys(set).length > 0) set.locationSource = "user";
   return { set };
+};
+
+// Shared by register and googleAuthUser's new-account path: both require a
+// non-blank country and state (state accepts the free-text fallback for a
+// country with no subdivisions in the dataset); city is optional. Location is
+// only ever user-submitted at signup now (no IP-based fallback — see the note
+// by the imports above), so a successful result always has locationSource
+// "user". Returns { error } or { set }, same shape as buildLocationUpdate.
+const validateSignupLocation = (body) => {
+  if (!cleanStr(body.country)) return { error: "Country is required." };
+  if (!cleanStr(body.state)) return { error: "State / Province is required." };
+  return buildLocationUpdate(body, { country: "", state: "", city: "" });
 };
 
 const updateProfile = async (req, res) => {
@@ -788,8 +798,10 @@ const requestAccountDeletion = async (req, res) => {
 // ════════════════════════════════════════════
 const googleAuthUser = async (req, res) => {
   try {
-    // dob / gender / country in the body are ignored for new accounts (see register).
-    const { accessToken, mobile, privacyConsent, hipaaConsent } = req.body;
+    // dob / gender are ignored for new accounts (see register). country /
+    // state / city ARE required on the completion-screen call — see
+    // validateSignupLocation below.
+    const { accessToken, mobile, country, state, city, privacyConsent, hipaaConsent } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
     const { googleId, email, name } = await getGoogleProfile(accessToken);
@@ -818,12 +830,14 @@ const googleAuthUser = async (req, res) => {
     const mobileCheck = validateMobile(mobile);
     if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
 
+    const location = validateSignupLocation({ country, state, city });
+    if (location.error) return res.status(400).json({ msg: location.error });
+
     const ip = getIp(req);
-    const location = await detectSignupLocation(ip);
 
     user = await User.create({
       name, email, googleId, role: "user",
-      mobile: mobileCheck.value, ...location, registrationIp: ip,
+      mobile: mobileCheck.value, ...location.set, registrationIp: ip,
       signupMethod: "google",
       ...detectRegistrationClient(req),
     });

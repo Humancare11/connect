@@ -462,11 +462,10 @@
   text-align: left;
 }
 
-/* The register form is now short: centre it in the card instead of leaving a
-   blank band at the bottom. "safe" keeps the top reachable if it ever overflows. */
+/* The register form has Country/State/City again, so it's tall enough that
+   top-aligning (the card's default) reads better than vertical centering. */
 .hc-register-form {
-  justify-content: center;
-  justify-content: safe center;
+  justify-content: flex-start;
 }
 
 /* ── Small-caps register label ───────────────────────────── */
