@@ -717,8 +717,8 @@ export default function AuthPage() {
                 onBlur={onLocationBlur}
               />
               <div className="hc-field-wrap hc-mobile-field">
-                <label htmlFor="google-profile-mobile" className="hc-reg-label">
-                  Mobile Number
+                <label htmlFor="google-profile-mobile" style={VISUALLY_HIDDEN}>
+                  Phone
                 </label>
                 <PhoneInputField
                   inputId="google-profile-mobile"
@@ -736,7 +736,7 @@ export default function AuthPage() {
                   }}
                   forceCountryCode={countryNameToIso(googleProfile.country)}
                   defaultCountry="IN"
-                  placeholder="Mobile number"
+                  placeholder="Phone"
                   required
                   maxLength={15}
                   limitIndianNumber
@@ -1162,8 +1162,8 @@ export default function AuthPage() {
                 onBlur={onLocationBlur}
               />
               <div className="hc-field-wrap hc-mobile-field">
-                <label htmlFor="patient-register-mobile" className="hc-reg-label">
-                  Mobile Number
+                <label htmlFor="patient-register-mobile" style={VISUALLY_HIDDEN}>
+                  Phone
                 </label>
                 <PhoneInputField
                   inputId="patient-register-mobile"
@@ -1181,7 +1181,7 @@ export default function AuthPage() {
                   }}
                   forceCountryCode={countryNameToIso(registerForm.country)}
                   defaultCountry="IN"
-                  placeholder="Mobile number"
+                  placeholder="Phone"
                   required
                   maxLength={15}
                   limitIndianNumber
