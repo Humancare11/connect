@@ -1095,9 +1095,16 @@
 
   .hcc-sx .switch button {
     flex: 1 1 calc(50% - 4px);
+    display: inline-flex;
+    align-items: center;
     justify-content: center;
+    min-height: 44px;
     font-size: 12.5px;
     padding: 11px 8px;
+  }
+
+  .hcc-sx .search input {
+    font-size: 16px;
   }
 
   .hcc-sx h2 {

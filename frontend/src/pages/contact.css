@@ -426,6 +426,14 @@ a.contact-detail__value:hover {
     gap: 20px;
   }
 
+  .contact-info-row > div {
+    min-width: 0;
+  }
+
+  .contact-detail__value {
+    overflow-wrap: anywhere;
+  }
+
   .contact-form {
     padding: 28px 20px;
   }
