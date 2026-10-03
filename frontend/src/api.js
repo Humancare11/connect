@@ -158,7 +158,10 @@ api.interceptors.response.use(
       const currentRefreshToken = getRoleTokens(role)?.refreshToken || "";
       setAuthTokenForRole(role, response.data.accessToken, response.data.refreshToken || currentRefreshToken);
     }
-    if (response.data) response.data = _deepNormalizeUrls(response.data);
+    // Rewrites upload-looking strings into API URLs. Requests that carry arbitrary
+    // text (the Email module: subjects like "patients/reports …") or binary data
+    // (file downloads) opt out with { skipUrlNormalize: true }.
+    if (response.data && !response.config?.skipUrlNormalize) response.data = _deepNormalizeUrls(response.data);
     return response;
   },
   async (error) => {

@@ -19,7 +19,7 @@ const SERVICES = [
   {
     label: "Teleconsultation",
     title: "On-Demand Video Visits",
-    desc: "Employees connect with licensed providers in minutes through secure corporate telemedicine services from any device, anywhere.",
+    desc: "Employees connect with licensed providers in minutes through secure corporate telemedicine services from any device in the U.S.",
     stat: "Under 5-minute average wait time",
     accent: "linear-gradient(90deg,#0C8B7A,#1B2F4B)",
     img: TeleconsultImg,
@@ -137,25 +137,25 @@ const SERVICES = [
     label: "Prescriptions",
     title: "Digital Prescription Service",
     desc: "Secure e-prescriptions delivered directly to your employee’s preferred pharmacy through fast corporate telemedicine services.",
-    stat: "99.7% prescription accuracy",
+    // stat: "99.7% prescription accuracy",
     accent: "linear-gradient(90deg,#0C8B7A,#065f52)",
     img: PrescriptionsImg,
     alt: "Digital e-prescription service with secure prescription delivery through corporate telemedicine",
-    statNum: "99.7%",
-    statLbl: "Prescription accuracy",
+    // statNum: "99.7%",
+    // statLbl: "Prescription accuracy",
     centreRows: [
-      {
-        label: "Prescriptions issued",
-        val: "50K+",
-        pct: 99,
-        grad: "linear-gradient(90deg,#0C8B7A,#C97B1A)",
-      },
-      {
-        label: "Pharmacy delivery",
-        val: "< 2 hrs",
-        pct: 95,
-        grad: "linear-gradient(90deg,#0C8B7A,#065f52)",
-      },
+      // {
+      //   label: "Prescriptions issued",
+      //   val: "50K+",
+      //   pct: 99,
+      //   grad: "linear-gradient(90deg,#0C8B7A,#C97B1A)",
+      // },
+      // {
+      //   label: "Pharmacy delivery",
+      //   val: "< 2 hrs",
+      //   pct: 95,
+      //   grad: "linear-gradient(90deg,#0C8B7A,#065f52)",
+      // },
     ],
     icon: (
       <svg
@@ -433,7 +433,7 @@ export default function CorporateDemo() {
               businesses of every size. Humancare Connect helps companies
               simplify healthcare access through fast online doctor
               appointments, virtual healthcare services, and a scalable
-              telemedicine platform employees can access anytime, anywhere.
+              telemedicine platform employees can access anytime, across the U.S..
             </p>
           </div>
         </div>
@@ -457,7 +457,7 @@ export default function CorporateDemo() {
             Build a healthier, more productive workforce with scalable corporate
             telemedicine services, virtual doctor visits, primary care support,
             and connected healthcare solutions employees can access anytime,
-            anywhere.
+            across the U.S.
           </p>
         </div>
 
@@ -497,7 +497,7 @@ export default function CorporateDemo() {
                     <h3 className="ac-title">{svc.title}</h3>
                     <p className="ac-desc">{svc.desc}</p>
 
-                    <div className="ac-stats">
+                    {/* <div className="ac-stats">
                       <div className="ac-stat-main">
                         <span className="val">{svc.statNum}</span>
                         <span className="lbl">{svc.statLbl}</span>
@@ -522,7 +522,7 @@ export default function CorporateDemo() {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* <button className="ac-btn">Explore Feature</button> */}
                   </div>
@@ -540,9 +540,8 @@ export default function CorporateDemo() {
         title="Frequently Asked Questions"
         description="Everything you need to know about our corporate telemedicine services, benefits, and implementation."
         stats={[
-          "Avg. response in 10 min",
-          "HIPAA secure & private",
-          "Available Globally",
+          "HIPAA  & private",
+          "Available in the U.S.",
         ]}
         sections={CORPORATE_FAQS}
       />

@@ -84,7 +84,7 @@ const SERVICES = {
       "Passengers with chronic medical conditions",
       "Pregnant individuals requiring airline documentation",
       "Travelers with recent illnesses or injuries",
-      "International travelers needing medical travel clearance",
+      "U.S. travelers needing medical travel clearance",
     ],
     keyOutcomes: [
       "Same-day consultations with verified physicians",

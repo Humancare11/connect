@@ -88,7 +88,7 @@ export default function WhySection() {
             >
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">HIPAA  Certified</div>
+                  <div className="why-item-title">HIPAA compliant</div>
                   <div className="why-item-desc">
                     Your privacy comes first. Our secure telemedicine platform uses advanced encryption and compliance standards to protect every online doctor consultation, medical record, prescription, and patient interaction.
                   </div>
@@ -97,7 +97,7 @@ export default function WhySection() {
 
               <Motion.div className="why-item" variants={whyItemVariants}>
                 <div>
-                  <div className="why-item-title">Board-Certified Physicians Only</div>
+                  <div className="why-item-title">Licensed U.S. Physicians</div>
                   <div className="why-item-desc">
                     Every provider on Humancare Connect is carefully credentialed and licensed to deliver trusted telehealth services, virtual healthcare consultations, and high-quality patient care across multiple specialties.
 
@@ -144,21 +144,18 @@ export default function WhySection() {
               <div className="sc-divider" />
               <div className="sc-row">
                 <span>Better Care Experiences</span>
-                {/* <strong>98.2%</strong> */}
               </div>
               <div className="sc-prog">
                 <div className="sc-fill" style={{ width: "98.2%" }} />
               </div>
               <div className="sc-row">
                 <span> Seamless Consultations </span>
-                {/* <strong>99.7%</strong> */}
               </div>
               <div className="sc-prog">
                 <div className="sc-fill" style={{ width: "99.7%" }} />
               </div>
               <div className="sc-row">
                 <span>Continuous Healthcare Support</span>
-                {/* <strong>91.4%</strong> */}
               </div>
               <div className="sc-prog">
                 <div className="sc-fill" style={{ width: "91.4%" }} />
@@ -217,7 +214,7 @@ export default function WhySection() {
               initial="hidden"
               animate={visualInView ? "visible" : "hidden"}
             >
-              <div className="sf-label"> Secure & Private Consultationsaa  </div>
+              <div className="sf-label"> Secure & Private Consultations </div>
               {/* <div className="sf-val" style={{ color: "#0c8b7a" }}>97%</div> */}
             </Motion.div>
 

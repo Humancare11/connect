@@ -85,6 +85,12 @@ const ICONS = {
       <path d="M9 9h6M9 12h4" />
     </>
   ),
+  email: svg(
+    <>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </>
+  ),
   ticket: svg(
     <>
       <path d="M15 5v2" /><path d="M15 11v2" /><path d="M15 17v2" />
@@ -153,6 +159,9 @@ const NAV_ITEMS = [
     icon: ICONS.chart,
   },
   { key: "partner-cases", label: "Partner Cases", path: "/admin-dashboard/partner-cases", roles: ["admin", "superadmin"], icon: ICONS.partners },
+  // Shared company mailboxes (support@, tech@). Same visibility rule as the
+  // other admin pages: admin + superadmin, never the payment admin.
+  { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
   { key: "qna", label: "Medical Question Ans", path: "/admin-dashboard/qna", icon: ICONS.qna },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];

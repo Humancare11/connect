@@ -348,14 +348,14 @@ const specialties = [
     tags: ["Vaccinations", "Travel Illness"],
     link: "/travel-and-global-care/travel-medicine",
   },
-  {
-    name: "Global / Cross-Border Care",
-    icon: Globe2,
-    description:
-      "Coordinated medical access and continuity of care across countries.",
-    tags: ["Cross-Border", "Continuity of Care"],
-    link: "/travel-and-global-care/global-cross-border-care",
-  },
+  // {
+  //   name: "Global / Cross-Border Care",
+  //   icon: Globe2,
+  //   description:
+  //     "Coordinated medical access and continuity of care across countries.",
+  //   tags: ["Cross-Border", "Continuity of Care"],
+  //   link: "/travel-and-global-care/global-cross-border-care",
+  // },
 ];
 
 // ── Stats (derived from real data so copy can't drift out of sync) ──────────
@@ -899,7 +899,7 @@ export default function Specialties() {
             <em>in under 2 minutes.</em>
           </h2>
           <p className="sp-cta__copy">
-            Search, book, and consult with a verified physician from anywhere —
+            Search, book, and consult with a verified physician from —
             serve any eligibility across all categories.
           </p>
           <div className="sp-cta__actions">

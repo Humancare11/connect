@@ -27,9 +27,43 @@ async function resolveDoctorFeeCents(doctorMongoId) {
     doctorId: doctorMongoId,
     approvalStatus: "approved",
   }).lean();
-  const feeAmount = enrollment?.consultantFees || 500;
+  // Fail closed: a missing/zero/invalid fee must never be quietly replaced by
+  // a default. Returning null here would make the verifiers skip the amount
+  // check entirely, so reject instead.
+  const rawFee = enrollment?.consultantFees;
+  const feeAmount = Number(rawFee);
+  if (rawFee === null || rawFee === undefined || !Number.isFinite(feeAmount) || feeAmount <= 0) {
+    throw new PaymentVerificationError(
+      "Consultation fee not configured. Please contact support.",
+      400,
+    );
+  }
   const feeCurrency = enrollment?.feeCurrency || "USD";
   return toCents(feeAmount, feeCurrency);
+}
+
+// Logs a payment that was captured but could not be turned into a booking, so
+// it can be found and refunded manually. Searchable prefix: [ORPHANED_PAYMENT].
+// Best-effort look-up of the gateway amount; never throws.
+async function logOrphanedPayment({ reason, paymentIntentId, paypalOrderId, doctorId, patientId }) {
+  let amount = "unknown";
+  try {
+    if (paymentIntentId) {
+      const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+      amount = `${pi.amount} ${pi.currency} (minor units)`;
+    } else if (paypalOrderId) {
+      const order = await paypalFetch("GET", `/v2/checkout/orders/${paypalOrderId}`);
+      const cap = order.purchase_units?.[0]?.payments?.captures?.[0]?.amount;
+      if (cap) amount = `${cap.value} ${cap.currency_code}`;
+    }
+  } catch {
+    // amount stays "unknown"; the gateway dashboard has it
+  }
+  console.error(
+    `[ORPHANED_PAYMENT] reason="${reason}" gateway=${paymentIntentId ? "stripe" : "paypal"} ` +
+    `ref=${paymentIntentId || paypalOrderId || "unknown"} doctorId=${doctorId} ` +
+    `patientId=${patientId} amount=${amount} - manual refund required`,
+  );
 }
 
 // Category price, matched by Mongo _id, by the stable `pricingSlug` (the
@@ -141,6 +175,7 @@ async function claimPaymentOnce({ gateway, ref, consumedFor, resourceId, patient
 module.exports = {
   PaymentVerificationError,
   resolveDoctorFeeCents,
+  logOrphanedPayment,
   resolveCategoryFeeCents,
   resolveServiceFeeCents,
   verifyStripePaymentIntent,

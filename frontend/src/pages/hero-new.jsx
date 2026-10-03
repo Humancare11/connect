@@ -3,60 +3,60 @@ import "./hero-new.css";
 import heroBg from "../assets/hero-bg1.jpeg";
 
 const CARDS = [
-  {
-    key: "teleconsult",
-    title: "Teleconsultation",
-    desc: "Connect with licensed doctors instantly.",
-    stat: "98%",
-    statLbl: "Visit completion",
-    tabs: ["Video", "Audio", "Chat"],
-    tabActive: 0,
-    logo: (
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 72 72"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M36 10 L36 26" />
-        <path d="M24 20 L36 26 L48 20" />
-        <path d="M36 26 L36 56" />
-        <circle cx="24" cy="38" r="5" />
-        <circle cx="48" cy="38" r="5" />
-        <path d="M24 43 Q28 48 36 48 Q44 48 48 43" />
-      </svg>
-    ),
-  },
-  {
-    key: "doctor",
-    title: "Doctor On Call",
-    desc: "24/7 access to a licensed physician.",
-    stat: "< 5 min",
-    statLbl: "Avg. wait time",
-    tabs: null,
-    logo: (
-      <svg
-        width="100%"
-        height="100%"
-        viewBox="0 0 54 54"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M16 10 v14 a11 11 0 0 0 22 0 v-14" />
-        <path d="M16 10 h6" />
-        <path d="M32 10 h6" />
-        <circle cx="27" cy="44" r="4" />
-        <path d="M27 35 v5" />
-      </svg>
-    ),
-  },
+  // {
+  //   key: "teleconsult",
+  //   title: "Teleconsultation",
+  //   desc: "Connect with licensed doctors instantly.",
+  //   stat: "98%",
+  //   statLbl: "Visit completion",
+  //   tabs: ["Video", "Audio", "Chat"],
+  //   tabActive: 0,
+  //   logo: (
+  //     <svg
+  //       width="100%"
+  //       height="100%"
+  //       viewBox="0 0 72 72"
+  //       fill="none"
+  //       stroke="currentColor"
+  //       strokeWidth="2.2"
+  //       strokeLinecap="round"
+  //       strokeLinejoin="round"
+  //     >
+  //       <path d="M36 10 L36 26" />
+  //       <path d="M24 20 L36 26 L48 20" />
+  //       <path d="M36 26 L36 56" />
+  //       <circle cx="24" cy="38" r="5" />
+  //       <circle cx="48" cy="38" r="5" />
+  //       <path d="M24 43 Q28 48 36 48 Q44 48 48 43" />
+  //     </svg>
+  //   ),
+  // },
+  // {
+  //   key: "doctor",
+  //   title: "Doctor On Call",
+  //   desc: "24/7 access to a licensed physician.",
+  //   stat: "< 5 min",
+  //   statLbl: "Avg. wait time",
+  //   tabs: null,
+  //   logo: (
+  //     <svg
+  //       width="100%"
+  //       height="100%"
+  //       viewBox="0 0 54 54"
+  //       fill="none"
+  //       stroke="currentColor"
+  //       strokeWidth="2.2"
+  //       strokeLinecap="round"
+  //       strokeLinejoin="round"
+  //     >
+  //       <path d="M16 10 v14 a11 11 0 0 0 22 0 v-14" />
+  //       <path d="M16 10 h6" />
+  //       <path d="M32 10 h6" />
+  //       <circle cx="27" cy="44" r="4" />
+  //       <path d="M27 35 v5" />
+  //     </svg>
+  //   ),
+  // },
   {
     key: "rx",
     title: "E-Prescriptions",
@@ -285,7 +285,7 @@ function Badge() {
           <polyline points="20 6 9 17 4 12" />
         </svg>
       </span>
-      Available Globally — 24/7
+      Available — 24/7
     </div>
   );
 }
@@ -341,10 +341,10 @@ export default function HeroUpdated() {
                 <span className="dot" style={{ background: "#0C8B7A" }} />
                 HIPAA Compliant
               </span>
-              <span className="hce-chip">
+              {/* <span className="hce-chip">
                 <span className="dot" style={{ background: "#C97B1A" }} />
                 GDPR Ready
-              </span>
+              </span> */}
               <span className="hce-chip">
                 <span className="dot" style={{ background: "#223A5E" }} />
                 Verified Doctors

@@ -58,7 +58,7 @@ const WHY_JOIN = [
   {
     icon: <FaGlobe />,
     title: "Expand Your Professional Reach",
-    desc: "Connect with patients beyond geographical boundaries and make quality healthcare more accessible through a trusted global telemedicine platform.",
+    desc: "Connect with patients beyond geographical boundaries and make quality healthcare more accessible through a trusted U.S. telemedicine platform.",
   },
   {
     icon: <FaShieldHalved />,
@@ -136,7 +136,7 @@ const REQUIREMENTS = [
   "Comfortable using secure digital healthcare solutions",
   "Dedicated to patient-first, ethical medical practice",
   "Looking for flexibility without compromising quality",
-  "Excited to be part of a trusted global healthcare network",
+  "Excited to be part of a trusted  healthcare network",
 ];
 const PROCESS_STEPS = [
   {
@@ -174,8 +174,8 @@ const BENEFITS_FEATURES = [
   },
   {
     icon: <FaGlobe />,
-    title: "Global Patient Reach",
-    desc: "Expand your practice by connecting with patients across regions through one trusted telemedicine platform.",
+    title: "U.S. Patient Reach",
+    desc: "Expand your practice by connecting with patients across the U.S. through one trusted telemedicine platform.",
   },
   {
     icon: <FaShieldHalved />,
@@ -634,9 +634,9 @@ export default function DoctorCareers() {
   return (
     <>
       <SEO
-        title=" Doctor Careers | Join Humancare Connect's Global Network"
-        description="Join Humancare Connect's global network of licensed healthcare professionals. Deliver secure, HIPAA-compliant virtual care, expand your professional reach, and shape the future of healthcare."
-        keywords="Licensed healthcare professionals, Global healthcare network, Telemedicine platform, Virtual consultations, Virtual care, HIPAA-compliant telemedicine platform"
+        title=" Doctor Careers | Join Humancare Connect's  Network"
+        description="Join Humancare Connect's network of licensed healthcare professionals. Deliver secure, HIPAA-compliant virtual care, expand your professional reach, and shape the future of healthcare."
+        keywords="Licensed healthcare professionals, healthcare network, Telemedicine platform, Virtual consultations, Virtual care, HIPAA-compliant telemedicine platform"
         url="https://humancareconnect.co/career"
       />
       <main className="doctor-careers-page">
@@ -649,7 +649,7 @@ export default function DoctorCareers() {
             <div className="corp-hero-inner">
               <h1>The Future of Healthcare Needs Doctors Like You.</h1>
               <p>
-                Join a trusted global telemedicine platform built for licensed
+                Join a trusted telemedicine platform built for licensed
                 healthcare professionals who want to make a greater impact.
                 Humancare Connect helps doctors connect with patients through
                 secure virtual consultations, giving you the flexibility to
@@ -768,7 +768,7 @@ export default function DoctorCareers() {
               <span className="dc-eyebrow">JOIN OUR DOCTOR NETWORK</span>
               <h2>Start Your Application</h2>
               <p>
-                Take the first step toward joining Humancare Connect's global
+                Take the first step toward joining Humancare Connect's
                 network of licensed healthcare professionals. Submit your
                 application below, and our team will be in touch to guide you
                 through the next steps.
@@ -948,7 +948,7 @@ export default function DoctorCareers() {
                   viewport={{ once: true, amount: 0.4 }}
                   variants={fadeUp}
                 >
-                  Join Humancare Connect's trusted global network of healthcare
+                  Join Humancare Connect's trusted network of healthcare
                   professionals and help redefine how quality healthcare is
                   delivered. Practice with confidence through a secure,
                   HIPAA-compliant telemedicine platform built for modern

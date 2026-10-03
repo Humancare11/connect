@@ -46,7 +46,7 @@ export default function HealthcareAlternating() {
     <>
       <SEO
         title="Online Healthcare Services | Doctor Consultation, Prescriptions & Telehealth Care"
-        description="Access reliable online healthcare services including doctor consultations, online prescriptions, lab tests, home care, and medical certificates. Fast, secure, and available anytime, anywhere."
+        description="Access reliable online healthcare services including doctor consultations, online prescriptions, lab tests, home care, and medical certificates. Fast, secure, and available anytime."
         keywords="Online healthcare services, Virtual doctor consultation, Online prescriptions, Telehealth services"
         url="https://humancareconnect.co/medical-services"
       />

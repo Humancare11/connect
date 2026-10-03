@@ -75,7 +75,7 @@ const SCENES = [
     step: 3,
     badge: "Book Appointment",
     title: "Book your appointment",
-    desc: "We'll match you with a board-certified doctor and schedule a time that works for you. No waiting rooms. No phone tag.",
+    desc: "We'll match you with a licensed doctor and schedule a time that works for you. No waiting rooms. No phone tag.",
     metricValue: " 24/7",
     metricLabel: "Booking availability",
     metricIcon: (
@@ -90,7 +90,7 @@ const SCENES = [
     badge: "Consult",
     title: "Consult with your doctor",
     desc: "Meet securely by video, discuss your symptoms, receive a diagnosis, and get a personalized treatment plan.",
-    metricValue: "HIPAA",
+    metricValue: "",
     metricLabel: "Secure connection",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -717,7 +717,7 @@ export default function HomePage() {
             advice, personalized treatment plans & prescriptions from licensed
             healthcare providers at your home. Our HIPAA compliant telemedicine
             and secure healthcare platform makes it easy, convenient, and
-            available worldwide to access quality digital healthcare.
+            available  to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
@@ -733,7 +733,7 @@ export default function HomePage() {
               </svg>
               HIPAA Compliant
             </span>
-            <span className="trust-chip">
+            {/* <span className="trust-chip">
               <svg
                 width="12"
                 height="12"
@@ -745,7 +745,7 @@ export default function HomePage() {
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               GDPR Ready
-            </span>
+            </span> */}
             {/* <span className="trust-chip">
               <svg
                 width="12"
@@ -919,7 +919,7 @@ export default function HomePage() {
                 {" "}
                 Five simple steps to connect with trusted healthcare
                 <br />
-                professionals from anywhere, anytime.
+                professionals from anywhere.
               </p>
             </div>
 
@@ -1169,7 +1169,7 @@ export default function HomePage() {
         stats={[
           "Avg. response in 10 min",
           "HIPAA secure & private",
-          "Available Globally",
+          "Available in the U.S.",
         ]}
         sections={HOME_FAQS}
       />

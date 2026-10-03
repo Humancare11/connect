@@ -33,16 +33,12 @@ export default function Footer() {
           </Link>
 
           <p className="footer-tagline">
-            Connecting patients with trusted healthcare professionals anytime,
-            anywhere through secure and affordable digital healthcare solutions.
+            Connecting patients with trusted healthcare professionals anytime
+            through secure and affordable digital healthcare solutions.
           </p>
 
           {/* COMPLIANCE BADGES */}
-          {/* <div className="footer-badges">
-            <span className="footer-badge">GDPR</span>
-            <span className="footer-badge">SOC 2 Type II</span>
-            <span className="footer-badge">HITRUST R2</span>
-          </div> */}
+          
 
           {/* CONTACT DETAILS — blended into footer background */}
           <div className="footer-contact-list">

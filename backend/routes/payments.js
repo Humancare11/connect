@@ -15,6 +15,14 @@ const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
 
+const FEE_NOT_CONFIGURED_MSG = "Consultation fee not configured. Please contact support.";
+
+// A doctor's fee is only chargeable when it is a finite number greater than 0.
+function isChargeableFee(value) {
+  const fee = Number(value);
+  return value !== null && value !== undefined && Number.isFinite(fee) && fee > 0;
+}
+
 function currencyFactor(currency) {
   return ZERO_DECIMAL_CURRENCIES.has(String(currency).toLowerCase()) ? 1 : 100;
 }
@@ -92,7 +100,10 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
       approvalStatus: "approved",
     }).lean();
 
-    const feeAmount = enrollment?.consultantFees || 500;
+    if (!isChargeableFee(enrollment?.consultantFees)) {
+      return res.status(400).json({ error: FEE_NOT_CONFIGURED_MSG, msg: FEE_NOT_CONFIGURED_MSG });
+    }
+    const feeAmount = Number(enrollment.consultantFees);
     const feeCurrency = enrollment?.feeCurrency || "USD";
     const feeCents = toCents(feeAmount, feeCurrency);
 
@@ -127,7 +138,10 @@ router.get("/fee", verifyUserToken, async (req, res) => {
       doctorId: resolvedDoctorId,
       approvalStatus: "approved",
     }).lean();
-    const feeAmount = enrollment?.consultantFees || 500;
+    if (!isChargeableFee(enrollment?.consultantFees)) {
+      return res.status(400).json({ error: FEE_NOT_CONFIGURED_MSG, msg: FEE_NOT_CONFIGURED_MSG });
+    }
+    const feeAmount = Number(enrollment.consultantFees);
     const feeCurrency = enrollment?.feeCurrency || "USD";
     const feeCents = toCents(feeAmount, feeCurrency);
     res.json({ feeCents, feeAmount, feeCurrency });

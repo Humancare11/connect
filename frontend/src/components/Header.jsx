@@ -29,7 +29,7 @@ const HelpIcons = {
   "Mental Health": <Brain size={18} strokeWidth={1.8} />,
   "Sexual Health": <Heart size={18} strokeWidth={1.8} />,
   "Skin & Hair": <Sparkles size={18} strokeWidth={1.8} />,
-  "Travel & Global Care": <Plane size={18} strokeWidth={1.8} />,
+  // "Travel & Global Care": <Plane size={18} strokeWidth={1.8} />,
   "Weight & Nutrition": <Salad size={18} strokeWidth={1.8} />,
   "Women's Health": <Venus size={18} strokeWidth={1.8} />,
 };
@@ -44,7 +44,7 @@ const helpRoutes = {
   "Mental Health": "/mental-health",
   "Sexual Health": "/sexual-health",
   "Skin & Hair": "/skin-and-hair-care",
-  "Travel & Global Care": "/travel-and-global-care",
+  // "Travel & Global Care": "/travel-and-global-care",
   "Weight & Nutrition": "/weight-and-nurtrition",
   "Women's Health": "/women-health",
 };
@@ -59,7 +59,7 @@ const helpDesc = {
   "Mental Health": "Behavioral Health,Psychiatry,Psychology",
   "Sexual Health": "Sexual Health",
   "Skin & Hair": "Dermatology",
-  "Travel & Global Care": "Travel Medicine, Global / Cross-Border Care",
+  // "Travel & Global Care": "Travel Medicine, Global / Cross-Border Care",
   "Weight & Nutrition": "Lifestyle Medicine, Nutrition & Dietetics, Weight Management",
   "Women's Health": "Menopause Care, OB-GYN, Women Mental Health",
 };
@@ -86,7 +86,7 @@ export default function Header() {
     "Mental Health",
     "Sexual Health",
     "Skin & Hair",
-    "Travel & Global Care",
+    // "Travel & Global Care",
     "Weight & Nutrition",
     "Women's Health",
   ];
