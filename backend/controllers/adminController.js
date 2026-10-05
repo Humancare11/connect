@@ -8,6 +8,7 @@ const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { recordActivity } = require("../utils/activityLogger");
 const { sendDoctorApprovalEmail } = require("../utils/sendEmail");
+const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
 const { randomInt } = require("crypto");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
@@ -418,6 +419,13 @@ const approveUserDeleteRequest = async (req, res) => {
       return res.status(400).json({ msg: "No pending deletion request for this user." });
     }
 
+    // Notify first, while the address is still on file. Best-effort: a mail
+    // failure is recorded below but never blocks the admin's decision.
+    const { sent: emailSent } = await sendAccountDeletionEmail("approved", user.email, {
+      name: user.name,
+      requestedAt: user.deletionRequestedAt,
+    });
+
     await User.findByIdAndDelete(user._id);
     await revokeUserSessions(user._id, "account_deleted");
 
@@ -425,7 +433,7 @@ const approveUserDeleteRequest = async (req, res) => {
       action: "ADMIN_APPROVE_USER_DELETE_REQUEST",
       resource: "User",
       resourceId: req.params.id,
-      details: { deletedUserEmail: user.email, deletedUserName: user.name, deletedUserRole: user.role, reason: user.deletionReason },
+      details: { deletedUserEmail: user.email, deletedUserName: user.name, deletedUserRole: user.role, reason: user.deletionReason, emailSent },
     });
 
     return res.status(200).json({ msg: "Account deletion approved and account deleted." });
@@ -449,11 +457,16 @@ const rejectUserDeleteRequest = async (req, res) => {
     user.deletionRejectedAt = new Date();
     await user.save();
 
+    const { sent: emailSent } = await sendAccountDeletionEmail("rejected", user.email, {
+      name: user.name,
+      requestedAt: user.deletionRequestedAt,
+    });
+
     await recordActivity(req, {
       action: "ADMIN_REJECT_USER_DELETE_REQUEST",
       resource: "User",
       resourceId: user._id,
-      details: { userEmail: user.email, userName: user.name },
+      details: { userEmail: user.email, userName: user.name, emailSent },
     });
 
     const { password, ...safeUser } = user.toObject();

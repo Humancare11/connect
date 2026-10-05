@@ -31,6 +31,7 @@ const { validateMobile } = require("../utils/mobileValidation");
 // place, still loaded at startup via initGeoIp() in server.js, for possible
 // future reuse — just not called from signup.
 const { detectRegistrationClient } = require("../utils/clientInfo");
+const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
 const { shouldSkipSignupLocation } = require("../utils/legacyAppBypass");
 const { Country, State } = require("country-state-city");
 
@@ -87,6 +88,7 @@ const safeUser = (user) => ({
   isVerified:      user.isVerified,
   rating:          user.rating,
   deletionRequestStatus: user.deletionRequestStatus,
+  deletionRequestedAt: user.deletionRequestedAt,
   // Only meaningful for role "partner"; null/undefined for everyone else.
   partner:         user.partner || null,
 });
@@ -766,7 +768,7 @@ const updateProfile = async (req, res) => {
 };
 
 
-// PUT /api/auth/account-delete-request — user requests admin approval to delete their own account
+// POST /api/auth/account-delete-request — user requests admin approval to delete their own account
 const requestAccountDeletion = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -797,12 +799,50 @@ const requestAccountDeletion = async (req, res) => {
       details: { reason: user.deletionReason },
     });
 
+    // Best-effort "we received your request" email; never blocks the request.
+    await sendAccountDeletionEmail("requested", user.email, {
+      name: user.name,
+      requestedAt: user.deletionRequestedAt,
+    });
+
     return res.status(201).json({
       msg: "Account deletion request sent to admin for approval.",
       user: safeUser(user),
     });
   } catch (err) {
     console.error("requestAccountDeletion error:", err.message, err.stack);
+    return res.status(500).json({ msg: "Server error. Please try again." });
+  }
+};
+
+// POST /api/auth/account-delete-request/cancel — user withdraws their own pending deletion request
+const cancelAccountDeletion = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found." });
+
+    if (user.deletionRequestStatus !== "pending") {
+      return res.status(400).json({ msg: "There is no pending account deletion request to cancel." });
+    }
+
+    user.deletionRequestStatus = "none";
+    user.deletionReason = "";
+    user.deletionRequestedAt = null;
+    await user.save();
+
+    await recordActivity(req, {
+      action: "USER_CANCEL_ACCOUNT_DELETION",
+      resource: "User",
+      resourceId: user._id,
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Account deletion request cancelled.", user: safeUser(user) });
+  } catch (err) {
+    console.error("cancelAccountDeletion error:", err.message, err.stack);
     return res.status(500).json({ msg: "Server error. Please try again." });
   }
 };
@@ -1501,6 +1541,6 @@ module.exports = {
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
   partnerLogin, partnerMe, partnerLogout,
-  requestAccountDeletion,
+  requestAccountDeletion, cancelAccountDeletion,
   resolveSignupLocation, // exported for tests
 };

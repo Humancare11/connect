@@ -9,7 +9,7 @@ const {
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
   partnerLogin, partnerMe, partnerLogout,
-  requestAccountDeletion,
+  requestAccountDeletion, cancelAccountDeletion,
 } = require("../controllers/authController");
 
 const requireMinAppVersion                                              = require("../middleware/requireMinAppVersion");
@@ -63,5 +63,6 @@ router.post("/doctor-login",    loginLimiter, doctorLogin);
 router.put("/update-profile",  authMiddleware, updateProfile);
 router.put("/change-password", authMiddleware, changePassword);
 router.post("/account-delete-request", authMiddleware, requestAccountDeletion);
+router.post("/account-delete-request/cancel", authMiddleware, cancelAccountDeletion);
 
 module.exports = router;
