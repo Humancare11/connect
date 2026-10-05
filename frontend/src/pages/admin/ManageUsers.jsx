@@ -157,7 +157,8 @@ export default function ManageUsers() {
         <span className="adp-eyebrow">Admin Panel</span>
         <h1 className="adp-title">Manage Users</h1>
         <p className="adp-sub">
-          View and manage all registered patient accounts.
+          View and manage all registered patient accounts.{" "}
+          <Link to="/admin-dashboard/deletion-requests">Deletion request history →</Link>
         </p>
       </div>
 

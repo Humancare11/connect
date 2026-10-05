@@ -108,7 +108,15 @@ const NAV_ITEMS = [
       { path: "/admin-dashboard/manage-doctors", label: "Manage Doctors", icon: ICONS.users },
     ],
   },
-  { key: "users", label: "Users", title: "Manage Users", path: "/admin-dashboard/manage-users", icon: ICONS.users },
+  {
+    key: "users",
+    label: "Users",
+    icon: ICONS.users,
+    children: [
+      { path: "/admin-dashboard/manage-users", label: "Manage Users", icon: ICONS.users },
+      { path: "/admin-dashboard/deletion-requests", label: "Deletion Requests", icon: ICONS.document },
+    ],
+  },
   {
     key: "appointments",
     label: "Appointments",

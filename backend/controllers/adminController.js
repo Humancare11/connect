@@ -9,6 +9,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { recordActivity } = require("../utils/activityLogger");
 const { sendDoctorApprovalEmail } = require("../utils/sendEmail");
 const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
+const deletionHistory = require("../utils/accountDeletionHistory");
 const { randomInt } = require("crypto");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { revokeUserSessions } = require("../utils/tokenRevocation");
@@ -389,10 +390,41 @@ const getAllUsers = async (req, res) => {
 };
 
 // DELETE /api/admin/users/:id — delete a user
+//
+// Recorded in the deletion history first (and the delete is refused if it can't
+// be): "approved" if the user had a pending request, otherwise "deleted_by_admin".
+// Only patient accounts are tracked; other roles are deleted as before.
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ msg: "User not found" });
+
+    let undo = null;
+    if (user.role === "user") {
+      const decidedBy = await deletionHistory.adminSnapshot(req);
+      if (user.deletionRequestStatus === "pending") {
+        const pending = await deletionHistory.ensurePendingRecord(user);
+        let decided = null;
+        try {
+          decided = pending && (await deletionHistory.decide(user._id, "approved", { decidedBy, via: "direct_delete" }));
+        } catch (err) {
+          console.error("deleteUser: history write failed:", err.message);
+        }
+        if (!decided) return res.status(500).json({ msg: "Could not record the deletion, so nothing was deleted. Please try again." });
+        undo = () => deletionHistory.revertToPending(decided._id);
+      } else {
+        const record = await deletionHistory.recordDirectDelete(user, decidedBy);
+        if (!record) return res.status(500).json({ msg: "Could not record the deletion, so nothing was deleted. Please try again." });
+        undo = () => deletionHistory.removeRecord(record._id);
+      }
+    }
+
+    try {
+      await User.findByIdAndDelete(user._id);
+    } catch (err) {
+      if (undo) await undo();
+      throw err;
+    }
     await revokeUserSessions(user._id, "account_deleted");
 
     await recordActivity(req, {
@@ -419,22 +451,44 @@ const approveUserDeleteRequest = async (req, res) => {
       return res.status(400).json({ msg: "No pending deletion request for this user." });
     }
 
-    // Notify first, while the address is still on file. Best-effort: a mail
-    // failure is recorded below but never blocks the admin's decision.
+    // 1. Claim the request in the history. Atomic, so two admins clicking at
+    //    once can't both approve; and if the history can't be written nothing
+    //    is deleted (we'd lose the only record of who asked).
+    const decidedBy = await deletionHistory.adminSnapshot(req);
+    const pending = await deletionHistory.ensurePendingRecord(user);
+    let decided = null;
+    if (pending) {
+      try {
+        decided = await deletionHistory.decide(user._id, "approved", { decidedBy });
+      } catch (err) {
+        console.error("approveUserDeleteRequest: history write failed:", err.message);
+        return res.status(500).json({ msg: "Could not record the decision, so nothing was deleted. Please try again." });
+      }
+    }
+    if (!decided) {
+      return res.status(pending ? 409 : 500).json({
+        msg: pending
+          ? "This request has already been decided."
+          : "Could not record the decision, so nothing was deleted. Please try again.",
+      });
+    }
+
+    // 2. Notify BEFORE the user record is removed, while the address is still on
+    //    file. Best-effort: a mail failure never blocks the decision.
     const { sent: emailSent } = await sendAccountDeletionEmail("approved", user.email, {
       name: user.name,
       requestedAt: user.deletionRequestedAt,
     });
+    await deletionHistory.setEmailFlag(decided._id, "decision", emailSent);
 
-    await User.findByIdAndDelete(user._id);
+    // 3. Delete. If that fails, put the request back to pending.
+    try {
+      await User.findByIdAndDelete(user._id);
+    } catch (err) {
+      await deletionHistory.revertToPending(decided._id);
+      throw err;
+    }
     await revokeUserSessions(user._id, "account_deleted");
-
-    await recordActivity(req, {
-      action: "ADMIN_APPROVE_USER_DELETE_REQUEST",
-      resource: "User",
-      resourceId: req.params.id,
-      details: { deletedUserEmail: user.email, deletedUserName: user.name, deletedUserRole: user.role, reason: user.deletionReason, emailSent },
-    });
 
     return res.status(200).json({ msg: "Account deletion approved and account deleted." });
   } catch (error) {
@@ -453,21 +507,38 @@ const rejectUserDeleteRequest = async (req, res) => {
       return res.status(400).json({ msg: "No pending deletion request for this user." });
     }
 
-    user.deletionRequestStatus = "rejected";
-    user.deletionRejectedAt = new Date();
-    await user.save();
+    const decidedBy = await deletionHistory.adminSnapshot(req);
+    const pending = await deletionHistory.ensurePendingRecord(user);
+    let decided = null;
+    if (pending) {
+      try {
+        decided = await deletionHistory.decide(user._id, "rejected", { decidedBy });
+      } catch (err) {
+        console.error("rejectUserDeleteRequest: history write failed:", err.message);
+      }
+    }
+    if (!decided) {
+      return res.status(pending ? 409 : 500).json({
+        msg: pending
+          ? "This request has already been decided."
+          : "Could not record the decision. Please try again.",
+      });
+    }
+
+    try {
+      user.deletionRequestStatus = "rejected";
+      user.deletionRejectedAt = decided.decidedAt;
+      await user.save();
+    } catch (err) {
+      await deletionHistory.revertToPending(decided._id);
+      throw err;
+    }
 
     const { sent: emailSent } = await sendAccountDeletionEmail("rejected", user.email, {
       name: user.name,
       requestedAt: user.deletionRequestedAt,
     });
-
-    await recordActivity(req, {
-      action: "ADMIN_REJECT_USER_DELETE_REQUEST",
-      resource: "User",
-      resourceId: user._id,
-      details: { userEmail: user.email, userName: user.name, emailSent },
-    });
+    await deletionHistory.setEmailFlag(decided._id, "decision", emailSent);
 
     const { password, ...safeUser } = user.toObject();
 

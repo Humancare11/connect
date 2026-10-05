@@ -32,6 +32,7 @@ const { validateMobile } = require("../utils/mobileValidation");
 // future reuse — just not called from signup.
 const { detectRegistrationClient } = require("../utils/clientInfo");
 const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
+const deletionHistory = require("../utils/accountDeletionHistory");
 const { shouldSkipSignupLocation } = require("../utils/legacyAppBypass");
 const { Country, State } = require("country-state-city");
 
@@ -799,11 +800,21 @@ const requestAccountDeletion = async (req, res) => {
       details: { reason: user.deletionReason },
     });
 
+    // History row (survives the account being deleted). Best-effort: if it
+    // can't be written the request itself still goes through, and the row is
+    // created later when an admin decides (ensurePendingRecord).
+    const record = await deletionHistory.openRequest(user, {
+      reason: user.deletionReason,
+      requestedAt: user.deletionRequestedAt,
+      requestSource: deletionHistory.requestSourceFromReq(req),
+    });
+
     // Best-effort "we received your request" email; never blocks the request.
-    await sendAccountDeletionEmail("requested", user.email, {
+    const { sent: requestedEmailSent } = await sendAccountDeletionEmail("requested", user.email, {
       name: user.name,
       requestedAt: user.deletionRequestedAt,
     });
+    if (record) await deletionHistory.setEmailFlag(record._id, "requested", requestedEmailSent);
 
     return res.status(201).json({
       msg: "Account deletion request sent to admin for approval.",
@@ -825,10 +836,21 @@ const cancelAccountDeletion = async (req, res) => {
       return res.status(400).json({ msg: "There is no pending account deletion request to cancel." });
     }
 
+    // Make sure the history row exists BEFORE the reason/date are cleared below
+    // (a request made before the history existed has no row yet).
+    await deletionHistory.ensurePendingRecord(user);
+
     user.deletionRequestStatus = "none";
     user.deletionReason = "";
     user.deletionRequestedAt = null;
     await user.save();
+
+    // The history keeps the reason and date; only the live user fields reset.
+    try {
+      await deletionHistory.decide(user._id, "cancelled", { decidedBy: null });
+    } catch (err) {
+      console.error("cancelAccountDeletion: could not update the history:", err.message);
+    }
 
     await recordActivity(req, {
       action: "USER_CANCEL_ACCOUNT_DELETION",

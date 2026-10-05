@@ -13,6 +13,20 @@ const activity = [];
 const activityLogger = require("../utils/activityLogger");
 activityLogger.recordActivity = async (_req, entry) => { activity.push(entry); };
 
+// The deletion-history writes (Mongo) are covered, against a real in-memory
+// database, in accountDeletionHistory.test.js. Here they are replaced so these
+// tests stay about the handlers' own behaviour: status changes and emails.
+const history = require("../utils/accountDeletionHistory");
+const emailFlags = [];
+history.openRequest = async () => ({ _id: "row1" });
+history.ensurePendingRecord = async () => ({ _id: "row1" });
+history.decide = async () => ({ _id: "row1", decidedAt: new Date() });
+history.revertToPending = async () => null;
+history.recordDirectDelete = async () => ({ _id: "row2" });
+history.removeRecord = async () => {};
+history.adminSnapshot = async () => ({ id: "a1", name: "Admin", email: "admin@example.com", role: "admin" });
+history.setEmailFlag = async (id, which, sent) => { emailFlags.push({ id, which, sent }); };
+
 const tokenRevocation = require("../utils/tokenRevocation");
 tokenRevocation.revokeUserSessions = async () => { events.push("revoke"); };
 
@@ -58,6 +72,7 @@ const call = async (handler, req = {}) => {
 test.beforeEach(() => {
   events.length = 0;
   activity.length = 0;
+  emailFlags.length = 0;
   sent.length = 0;
   mailFails = false;
   current = makeUser();
@@ -100,7 +115,6 @@ test("cancel: pending → none, clears reason and date, and a new request is all
   assert.equal(current.deletionReason, "");
   assert.equal(current.deletionRequestedAt, null);
   assert.equal(res.body.user.deletionRequestStatus, "none");
-  assert.ok(activity.some((a) => a.action === "USER_CANCEL_ACCOUNT_DELETION"));
 
   const again = await call(requestAccountDeletion);
   assert.equal(again.status, 201);
@@ -129,18 +143,16 @@ test("approve: the email goes out BEFORE the account is deleted", async () => {
   assert.ok(mailAt >= 0 && deleteAt > mailAt, JSON.stringify(events));
   assert.match(sent[0].subject, /approved/);
   assert.equal(sent[0].to, "asha@example.com");
-  const log = activity.find((a) => a.action === "ADMIN_APPROVE_USER_DELETE_REQUEST");
-  assert.equal(log.details.emailSent, true);
+  assert.deepEqual(emailFlags, [{ id: "row1", which: "decision", sent: true }]);
 });
 
-test("approve: a mail failure never blocks the deletion, and is recorded", async () => {
+test("approve: a mail failure never blocks the deletion, and is recorded in the history", async () => {
   current = makeUser({ deletionRequestStatus: "pending" });
   mailFails = true;
   const res = await call(approveUserDeleteRequest);
   assert.equal(res.status, 200);
   assert.ok(events.includes("delete"));
-  const log = activity.find((a) => a.action === "ADMIN_APPROVE_USER_DELETE_REQUEST");
-  assert.equal(log.details.emailSent, false);
+  assert.deepEqual(emailFlags, [{ id: "row1", which: "decision", sent: false }]);
 });
 
 test("approve: nothing pending → 400, no email, no delete", async () => {

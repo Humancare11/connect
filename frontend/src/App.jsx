@@ -797,6 +797,7 @@ const AdminDoctorProfile = lazy(
 );
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
+const AdminDeletionRequests = lazy(() => import("./pages/admin/AdminDeletionRequests"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
@@ -1674,6 +1675,16 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <ManageUsers />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/deletion-requests"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDeletionRequests />
                 </AdminLayout>
               </PrivateRoute>
             }
