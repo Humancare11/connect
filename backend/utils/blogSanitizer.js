@@ -42,6 +42,52 @@ function sanitizeBlogHtml(html) {
   });
 }
 
+const FAQ_ANSWER_TAGS = ["p", "br", "strong", "b", "em", "i", "ul", "ol", "li", "a"];
+const MAX_FAQS = 30;
+const MAX_FAQ_QUESTION = 300;
+const MAX_FAQ_ANSWER = 3000;
+
+function sanitizeFaqAnswer(html) {
+  return sanitizeHtml(String(html || ""), {
+    allowedTags: FAQ_ANSWER_TAGS,
+    allowedAttributes: { a: ["href", "target", "rel"] },
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowProtocolRelative: false,
+    transformTags: {
+      a: (tagName, attribs) => {
+        const out = { href: attribs.href };
+        if (attribs.target === "_blank") out.target = "_blank";
+        out.rel = "noopener noreferrer";
+        return { tagName, attribs: out };
+      },
+    },
+  })
+    // A link whose href was rejected (e.g. javascript:) is kept as plain text.
+    .replace(/<a(?![^>]*\shref=)[^>]*>([\s\S]*?)<\/a>/g, "$1")
+    .trim();
+}
+
+// Cleans the FAQ list from the admin form: plain-text questions, simple-HTML
+// answers, empty entries dropped, count and lengths capped.
+function sanitizeFaqs(input) {
+  if (!Array.isArray(input)) return [];
+  const out = [];
+  for (const item of input) {
+    if (!item || typeof item !== "object") continue;
+    const question = decodeBasicEntities(
+      sanitizeHtml(String(item.question || ""), { allowedTags: [], allowedAttributes: {} })
+    )
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, MAX_FAQ_QUESTION);
+    const answer = sanitizeFaqAnswer(String(item.answer || "").slice(0, MAX_FAQ_ANSWER * 2));
+    if (!question || !stripTags(answer).trim()) continue;
+    out.push({ question, answer: answer.slice(0, MAX_FAQ_ANSWER) });
+    if (out.length >= MAX_FAQS) break;
+  }
+  return out;
+}
+
 function slugifyHeading(text) {
   return (
     String(text || "")
@@ -100,6 +146,7 @@ module.exports = {
   sanitizeBlogHtml,
   addHeadingIds,
   processBlogContent,
+  sanitizeFaqs,
   estimateReadTime,
   isBlogImageUrl,
 };

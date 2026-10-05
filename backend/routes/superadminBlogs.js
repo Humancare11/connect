@@ -12,6 +12,7 @@ const { storeUploadInS3 } = require("../utils/uploadStorage");
 const {
   BLOG_IMAGE_URL_PREFIX,
   processBlogContent,
+  sanitizeFaqs,
   estimateReadTime,
   isBlogImageUrl,
 } = require("../utils/blogSanitizer");
@@ -173,6 +174,7 @@ router.post("/", ...guard, async (req, res) => {
       excerpt: cleanString(req.body.excerpt, 1000),
       content,
       toc,
+      faqs: sanitizeFaqs(req.body.faqs),
       category: cleanString(req.body.category, 80),
       tags: cleanTags(req.body.tags),
       readTime: readTimeFrom(req.body.readTime, content),
@@ -244,6 +246,7 @@ router.put("/:id", ...guard, async (req, res) => {
 
     if (!blog.isLegacy) {
       if (has("tags")) blog.tags = cleanTags(body.tags);
+      if (has("faqs")) blog.faqs = sanitizeFaqs(body.faqs);
       if (has("content")) {
         const { content, toc } = processBlogContent(body.content);
         blog.content = content;

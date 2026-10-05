@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { fetchBlog, blogImageSrc } from "../../api/blogApi";
 import BlogArticle from "./BlogArticle";
+import { usableFaqs, faqAnswerText } from "../../utils/blogContent";
 
 const NotFound = lazy(() => import("../../components/NotFound"));
 
@@ -49,6 +50,20 @@ export default function BlogPost() {
   const url = `${SITE_ORIGIN}/${blog.slug}`;
   const image = blog.image ? blogImageSrc(blog.image) : "";
 
+  const faqs = usableFaqs(blog.faqs);
+  // "\\u003c" is escaped so the JSON can never close the script tag.
+  const faqJsonLd = faqs.length
+    ? JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faqs.map((f) => ({
+          "@type": "Question",
+          name: String(f.question).trim(),
+          acceptedAnswer: { "@type": "Answer", text: faqAnswerText(f.answer) },
+        })),
+      }).replace(/</g, "\u003c")
+    : "";
+
   return (
     <>
       <Helmet>
@@ -66,6 +81,7 @@ export default function BlogPost() {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         {image && <meta name="twitter:image" content={image} />}
+        {faqJsonLd && <script type="application/ld+json">{faqJsonLd}</script>}
       </Helmet>
       <BlogArticle
         blog={{
@@ -76,6 +92,7 @@ export default function BlogPost() {
           publishedAt: blog.publishedAt,
           readTime: blog.readTime,
           content: blog.content,
+          faqs: blog.faqs,
         }}
       />
     </>

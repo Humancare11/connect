@@ -10,6 +10,31 @@ const PURIFY_CONFIG = {
   ALLOW_DATA_ATTR: false,
 };
 
+// FAQ answers: simple formatting only, same allow-list as the backend.
+const FAQ_PURIFY_CONFIG = {
+  ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i", "ul", "ol", "li", "a"],
+  ALLOWED_ATTR: ["href", "target", "rel"],
+  ALLOW_DATA_ATTR: false,
+};
+
+export function prepareFaqAnswer(html) {
+  return DOMPurify.sanitize(html || "", FAQ_PURIFY_CONFIG);
+}
+
+// FAQs that are complete enough to render (the backend drops the rest on save;
+// this also covers unsaved preview content).
+export function usableFaqs(faqs) {
+  return (Array.isArray(faqs) ? faqs : []).filter(
+    (f) => f && String(f.question || "").trim() && prepareFaqAnswer(f.answer).replace(/<[^>]*>/g, "").trim(),
+  );
+}
+
+// Plain-text answer for the FAQPage structured data.
+export function faqAnswerText(html) {
+  const doc = new DOMParser().parseFromString(`<body>${prepareFaqAnswer(html).replace(/<(\/(p|li)|br\s*\/?)>/gi, " $&")}</body>`, "text/html");
+  return doc.body.textContent.replace(/\s+/g, " ").trim();
+}
+
 function slugifyHeading(text) {
   return (
     String(text || "")

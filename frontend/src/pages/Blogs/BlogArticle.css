@@ -66,3 +66,47 @@
 .blog-hero .badge-row:empty {
   min-height: 36px;
 }
+
+/* ── FAQ answers (blog template only) ─────────────────────────────────────────
+   Legacy FAQ answers are plain text inside .faq-a. Admin answers are simple
+   HTML, which would otherwise pick up the larger .content-col p/ul/li article
+   typography. Keep the formatting inside the same .faq-a look. */
+.blog-layout .faq-a p,
+.blog-layout .faq-a ul,
+.blog-layout .faq-a ol,
+.blog-layout .faq-a li {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.blog-layout .faq-a p,
+.blog-layout .faq-a ul,
+.blog-layout .faq-a ol {
+  margin: 0 0 10px;
+}
+
+.blog-layout .faq-a ul {
+  list-style: disc;
+  padding-left: 22px;
+}
+
+.blog-layout .faq-a ol {
+  list-style: decimal;
+  padding-left: 22px;
+}
+
+.blog-layout .faq-a li {
+  margin-bottom: 4px;
+}
+
+.blog-layout .faq-a > :last-child {
+  margin-bottom: 0;
+}
+
+.blog-layout .faq-a a {
+  color: var(--blue-600);
+  padding: 0;
+  font-weight: 600;
+  text-decoration: underline;
+}
