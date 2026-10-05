@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useNavigationType, useSearchParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
@@ -8,6 +8,7 @@ import {
   mergeUpdatedUser,
   rejectUserDeletion,
 } from "./userAdminActions";
+import DeletionRequestsPanel from "./DeletionRequestsPanel";
 import "./ManageUsers.css";
 
 // Remembers where the list was scrolled when a profile is opened, so coming
@@ -54,13 +55,16 @@ export default function ManageUsers() {
   const setSearch = (q) => updateParams({ q });
   const setFilter = (nextFilter) => updateParams({ filter: nextFilter });
 
+  // Also called after a decision made in the Deletion Requests tab, so the
+  // pending count and the Users list stay in step with the history.
+  const loadUsers = useCallback(
+    () => api.get("/api/admin/users").then((r) => setUsers(r.data)).catch(console.error),
+    [],
+  );
+
   useEffect(() => {
-    api
-      .get("/api/admin/users")
-      .then((r) => setUsers(r.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    loadUsers().finally(() => setLoading(false));
+  }, [loadUsers]);
 
   useEffect(() => {
     if (!location.state?.toast) return undefined;
@@ -132,9 +136,6 @@ export default function ManageUsers() {
   const deletionRequestCount = users.filter((u) => u.deletionRequestStatus === "pending").length;
 
   const filtered = users
-    .filter((u) =>
-      filter === "deletion_requests" ? u.deletionRequestStatus === "pending" : true,
-    )
     .filter(
       (u) =>
         String(u.patientId || "")
@@ -239,22 +240,22 @@ export default function ManageUsers() {
           </div>
         </div>
 
-        {loading ? (
+        {filter === "deletion_requests" ? (
+          // Full history (all statuses), same list as the Deletion Requests page.
+          // The tab badge and the stat card above stay PENDING-only.
+          <DeletionRequestsPanel search={search} onDecided={loadUsers} onToast={showToast} />
+        ) : loading ? (
           <div className="adp-loading">
             <div className="adp-spinner" />
             <p>Loading users…</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="adp-empty">
-            <div className="adp-empty-icon">
-              {filter === "deletion_requests" ? "🗑️" : "👥"}
-            </div>
+            <div className="adp-empty-icon">👥</div>
             <h3>No users found</h3>
             <p>
               {search
                 ? "Try a different search."
-                : filter === "deletion_requests"
-                ? "No pending account deletion requests."
                 : "No users have registered yet."}
             </p>
           </div>
