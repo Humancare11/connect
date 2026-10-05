@@ -21,6 +21,8 @@ const excludedPrefixes = [
 
 const excludedExactPaths = new Set([
   "*",
+  // Removed Medical Q&A page; the route is now just a redirect to "/".
+  "/ask-a-question",
   "/admin-auth",
   "/adminauth",
   "/cookies",

@@ -19,7 +19,6 @@ const CookieBanner = lazy(() => import("./components/CookieBanner"));
 const NotFound = lazy(() => import("./components/NotFound")); // 404 Page
 const Home = lazy(() => import("./pages/Home"));
 
-const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const BlogPost = lazy(() => import("./pages/Blogs/BlogPost")); // blogs created in Super Admin
@@ -779,7 +778,6 @@ const CertificatePreview = lazy(
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
-const DoctorQnA = lazy(() => import("./pages/doctors/DoctorQnA"));
 const DoctorAnalytics = lazy(() => import("./pages/doctors/DoctorAnalytics"));
 const DoctorSettings = lazy(() => import("./pages/doctors/DoctorSettings"));
 const DoctorProfileForUser = lazy(
@@ -821,7 +819,6 @@ const PaymentLinkHistory = lazy(
 );
 const ManualInvoices = lazy(() => import("./pages/admin/ManualInvoices"));
 const GOP = lazy(() => import("./pages/admin/GOP"));
-const QnAPage = lazy(() => import("./pages/admin/QnAPage"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
@@ -857,7 +854,6 @@ const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
 const Appointments = lazy(() => import("./pages/user/Appointments"));
-const MedicalQuestions = lazy(() => import("./pages/user/MedicalQuestions"));
 const FavouriteDoctors = lazy(() => import("./pages/user/FavouriteDoctors"));
 const LabAppointments = lazy(() => import("./pages/user/LabAppointments"));
 const ProfileSettings = lazy(() => import("./pages/user/ProfileSettings"));
@@ -1175,7 +1171,8 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/ask-a-question" element={<AskDoctor />} />
+          {/* The Medical Q&A feature was removed. Keep old links working. */}
+          <Route path="/ask-a-question" element={<Navigate to="/" replace />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
@@ -1228,11 +1225,7 @@ function AppLayout() {
           />
           <Route
             path="/user/medical-questions"
-            element={
-              <UserLayout>
-                <MedicalQuestions />
-              </UserLayout>
-            }
+            element={<Navigate to="/user/dashboard" replace />}
           />
           <Route
             path="/user/favourite-doctors"
@@ -1391,11 +1384,7 @@ function AppLayout() {
           />
           <Route
             path="/doctor-dashboard/qna"
-            element={
-              <DoctorLayout>
-                <DoctorQnA />
-              </DoctorLayout>
-            }
+            element={<Navigate to="/doctor-dashboard" replace />}
           />
           <Route
             path="/doctor-dashboard/analytics"
@@ -1781,13 +1770,7 @@ function AppLayout() {
           />
           <Route
             path="/admin-dashboard/qna"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <QnAPage />
-                </AdminLayout>
-              </PrivateRoute>
-            }
+            element={<Navigate to="/admin-dashboard" replace />}
           />
           <Route
             path="/admin-dashboard/tickets"

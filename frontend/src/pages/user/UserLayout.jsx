@@ -19,13 +19,6 @@ const IconCalendar = () => (
     <line x1="3" y1="10" x2="21" y2="10" />
   </svg>
 );
-const IconQuestion = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-    <circle cx="12" cy="17" r="0.5" fill="currentColor" />
-  </svg>
-);
 const IconRecords = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -94,7 +87,6 @@ const IconMedical = () => (
 const menuItems = [
   { path: "/user/dashboard", label: "Dashboard", icon: <IconDashboard /> },
   { path: "/user/appointments", label: "Appointments", icon: <IconCalendar /> },
-  { path: "/user/medical-questions", label: "Medical Questions", icon: <IconQuestion /> },
   { path: "/user/my-records", label: "My Records", icon: <IconRecords /> },
   { path: "/user/payment-history", label: "Payment History", icon: <IconReceipt /> },
   { path: "/user/raise-ticket", label: "Raise a Ticket", icon: <IconTicket /> },

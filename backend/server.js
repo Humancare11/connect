@@ -29,7 +29,6 @@ const Doctor = require("./models/Doctor");
 const Session = require("./models/Session");
 const RevokedToken = require("./models/RevokedToken");
 const ChatMessage = require("./models/ChatMessage");
-const Question = require("./models/Question");
 const EmployeeTask = require("./models/EmployeeTask");
 const DirectVideoRoom = require("./models/DirectVideoRoom");
 const DirectRoomEvent = require("./models/DirectRoomEvent");
@@ -480,34 +479,9 @@ async function canAccessUpload(req, filename) {
     }
   }
 
-  if (!accessAppointment) {
-    const question = await Question.findOne({
-      $or: [
-        { "attachments.url": fileUrlPattern },
-        { "attachments.key": fileUrlPattern },
-      ],
-    })
-      .select("user assignedDoctorId")
-      .lean();
-
-    if (question) {
-      const matchedQuestionUser = identities.find((identity) => {
-        const identityId = String(identity.id);
-        return (
-          (identity.role === "user" && String(question.user) === identityId) ||
-          (identity.role === "doctor" && String(question.assignedDoctorId) === identityId)
-        );
-      });
-
-      return {
-        allowed: Boolean(matchedQuestionUser),
-        reason: matchedQuestionUser?.role === "user" ? "question_owner" : matchedQuestionUser?.role === "doctor" ? "assigned_doctor" : "not_assigned",
-        identity: matchedQuestionUser,
-        appointmentId: null,
-        patientId: question.user,
-      };
-    }
-  }
+  // Files attached to the removed Medical Q&A stay in storage. Admins, and the
+  // person who uploaded a file, can still open it (checked above); nobody else
+  // is granted access through a question any more.
 
   if (!accessAppointment) return { allowed: false, reason: "unassigned" };
 
@@ -607,7 +581,6 @@ app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
-app.use("/api/qna", require("./routes/qna"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/upload", require("./routes/upload"));

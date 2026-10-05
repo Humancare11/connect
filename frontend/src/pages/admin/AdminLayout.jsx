@@ -79,12 +79,6 @@ const ICONS = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
-  qna: svg(
-    <>
-      <path d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6l4 4 4-4h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
-      <path d="M9 9h6M9 12h4" />
-    </>
-  ),
   email: svg(
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -162,7 +156,6 @@ const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
-  { key: "qna", label: "Medical Question Ans", path: "/admin-dashboard/qna", icon: ICONS.qna },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 

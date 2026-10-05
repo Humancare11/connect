@@ -18,7 +18,6 @@ export default function Header() {
 
   const navItems = [
     { label: "Find a Doctor", link: "/find-a-doctor" },
-    { label: "Ask a Question", link: "/ask-a-question" },
     { label: "Medical Services", link: "/medical-services" },
     { label: "Corporates", link: "/corporates" },
     { label: "Blogs", link: "/blogs" },

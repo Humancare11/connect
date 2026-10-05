@@ -167,6 +167,10 @@
   margin-bottom: 32px;
 }
 
+.hc-dash__overview--two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .hc-dash__ov-card {
   display: flex;
   align-items: center;
@@ -645,11 +649,6 @@
 .hc-dash__activity-tag--appointment {
   background: rgba(8, 58, 176, 0.09);
   color: var(--hd-primary);
-}
-
-.hc-dash__activity-tag--question {
-  background: rgba(217, 119, 6, 0.09);
-  color: #a85f00;
 }
 
 .hc-dash__activity-tag--ticket {
