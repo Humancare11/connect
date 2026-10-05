@@ -1,4 +1,5 @@
 import { Icon } from "./EmailParts";
+import { TRACKING_FILTER_OPTIONS } from "./emailUtils";
 
 // The filter bar for Received and Sent. Every value lives in the URL query, so
 // going back from a mail keeps the filters, and a filtered view can be shared.
@@ -49,6 +50,10 @@ export default function EmailFilters({ folder, inMailboxView, filters, mailboxes
             : [["", "Reply: all"], ["noreply", "Reply pending"], ["replied", "Already replied"]]
         }
       />
+
+      {isSent && (
+        <Select name="open" label="Open status" value={filters.open} onChange={onChange} options={[["", "Open status: all"], ...TRACKING_FILTER_OPTIONS]} />
+      )}
 
       <Select
         name="view"

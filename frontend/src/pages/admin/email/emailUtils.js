@@ -109,5 +109,42 @@ export const EMAIL_RE = /^[^\s@<>(),;:"[\]\\]+@[^\s@<>(),;:"[\]\\]+\.[^\s@<>(),;
 export const newRequestId = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
+// ── open tracking ──
+// Only these three states are ever shown. Deliberately NOT "Seen" or "Read": a
+// tracking image only shows that a mail app loaded the image.
+export const TRACKING_FILTER_OPTIONS = [
+  ["opened", "Opened"],
+  ["pending", "Not opened yet"],
+  ["unavailable", "Tracking unavailable"],
+];
+
+const TRACKING_REASONS = {
+  tracking_off: "Open tracking was not switched on when this mail was sent.",
+  mail_off: "Tracking was switched off for this mail.",
+  internal_recipients: "Sent to a company address, so opens by our own team could not be told apart from the recipient's.",
+  apple_recipient: "Apple Mail hides real opens (Mail Privacy Protection), so tracking is not reliable for this recipient.",
+  opted_out: "A recipient has opted out of tracking.",
+  outside_dashboard: "Sent from Gmail, outside the dashboard.",
+  automated_only: "Only automatic image loads (for example a security scanner or a mail preload) were seen.",
+};
+
+// → { kind: "opened" | "pending" | "na", text, detail } or null (nothing to show: failed / received mail).
+export function trackingInfo(t) {
+  if (!t) return null;
+  if (t.status === "opened") {
+    const first = t.firstOpenedAt ? `First opened ${fmtFull(t.firstOpenedAt)}` : "Opened";
+    const last = t.lastOpenedAt && t.lastOpenedAt !== t.firstOpenedAt ? `, last ${fmtFull(t.lastOpenedAt)}` : "";
+    return {
+      kind: "opened",
+      text: t.multiRecipient ? "Opened (by at least one recipient)" : "Opened",
+      detail: `${first}${last}. ${t.openCount} open${t.openCount === 1 ? "" : "s"}. Based on the mail app loading an image, so it is not proof the mail was read.`,
+    };
+  }
+  if (t.status === "pending") {
+    return { kind: "pending", text: "Not opened yet", detail: "No open detected. The recipient may not have opened it, or their mail app blocks images." };
+  }
+  return { kind: "na", text: "Tracking unavailable", detail: TRACKING_REASONS[t.reason] || "Open tracking is not available for this mail." };
+}
+
 // Refresh interval for counts/lists: new mail is synced every 30–60 s on the server.
 export const POLL_MS = 45_000;

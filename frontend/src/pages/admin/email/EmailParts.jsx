@@ -1,4 +1,4 @@
-import { extClass, firstName, fmtFull, fmtSize, hashColor, initials } from "./emailUtils";
+import { extClass, firstName, fmtFull, fmtSize, fmtTime, hashColor, initials, trackingInfo } from "./emailUtils";
 
 const PATHS = {
   inbox: (<><path d="M3 13h5l2 3h4l2-3h5" /><path d="M5.5 5h13L21 13v6H3v-6z" /></>),
@@ -61,6 +61,57 @@ export function FirstViewed({ firstViewed }) {
       <Icon name="eye" size={15} />
       {firstName(firstViewed.by.name)}
     </span>
+  );
+}
+
+// "Track opens" box of the compose and reply forms. Only rendered while open
+// tracking is switched on; the server decides whether the mail really carries it.
+export function TrackOpensToggle({ checked, onChange, disclosure }) {
+  return (
+    <label className="em-trkopt" title="Adds a tiny image so you can see whether the mail was opened. Not exact: some mail apps block images or load them automatically.">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      Track opens
+      {checked && disclosure ? <small className="em-sub"> · a short notice is added to the footer</small> : null}
+    </label>
+  );
+}
+
+// Open tracking on a Sent row: "Opened · 3:42 pm · ×2", "Not opened yet" or "Tracking unavailable".
+export function TrackingBadge({ tracking }) {
+  const info = trackingInfo(tracking);
+  if (!info) return null;
+  const extra =
+    info.kind === "opened"
+      ? ` · ${tracking.firstOpenedAt ? fmtTime(tracking.firstOpenedAt) : ""}${tracking.openCount > 1 ? ` · ×${tracking.openCount}` : ""}`
+      : "";
+  return (
+    <span className={`em-tag em-trk em-trk-${info.kind}`} title={info.detail}>
+      {info.text}
+      {extra}
+    </span>
+  );
+}
+
+// Open tracking on the mail page: status, first/last open, count, and the caveat.
+export function TrackingNote({ tracking }) {
+  const info = trackingInfo(tracking);
+  if (!info) return null;
+  return (
+    <div className="em-trkbox" aria-label="Open tracking">
+      <span className="em-views-h">Open tracking</span>
+      <span className={`em-tag em-trk em-trk-${info.kind}`}>{info.text}</span>
+      {info.kind === "opened" && (
+        <span className="em-trk-facts">
+          First opened <b>{fmtFull(tracking.firstOpenedAt)}</b>
+          {tracking.openCount > 1 && tracking.lastOpenedAt ? <> · last <b>{fmtFull(tracking.lastOpenedAt)}</b></> : null} · {tracking.openCount} open
+          {tracking.openCount === 1 ? "" : "s"}
+        </span>
+      )}
+      <small className="em-sub">
+        {info.kind === "opened" && tracking.multiRecipient ? "We cannot tell which recipient opened it. " : ""}
+        {info.kind === "opened" ? "Based on the mail app loading an image; not proof the mail was read." : info.detail}
+      </small>
+    </div>
   );
 }
 

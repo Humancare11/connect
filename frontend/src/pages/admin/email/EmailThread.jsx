@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, Icon, MailboxChip } from "./EmailParts";
+import { AttachmentList, Avatar, Icon, MailboxChip, TrackOpensToggle, TrackingNote } from "./EmailParts";
 import {
   ACCEPT_ATTR,
   EMAIL_BASE,
@@ -37,6 +37,7 @@ function MessageBlock({ m, onDownload }) {
         </div>
         <div className="em-msg-body">{m.text || "(no text)"}</div>
         <AttachmentList items={m.attachments.filter((a) => !a.isInline)} onOpen={onDownload} />
+        {outbound && <TrackingNote tracking={m.tracking} />}
       </div>
     </div>
   );
@@ -77,8 +78,10 @@ function ViewsBlock({ views }) {
   );
 }
 
-function ReplyBox({ message, reply, adminName, onSent, onCancel }) {
+function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const [body, setBody] = useState("");
+  const [trackChoice, setTrackChoice] = useState(null);
+  const trackOpens = trackChoice ?? message.mailbox?.trackOpensDefault !== false;
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(null);
@@ -92,6 +95,7 @@ function ReplyBox({ message, reply, adminName, onSent, onCancel }) {
       fd.append("body", body.trim());
       fd.append("clientRequestId", requestId.current);
       if (confirm) fd.append("confirm", "1");
+      if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
       files.forEach((f) => fd.append("files", f));
       return emailApi.reply(message.id, fd);
     },
@@ -164,6 +168,7 @@ function ReplyBox({ message, reply, adminName, onSent, onCancel }) {
           <input type="file" multiple accept={ACCEPT_ATTR} onChange={onFiles} aria-label="Attach files to reply" />
           <Icon name="clip" />
         </label>
+        {tracking?.available && <TrackOpensToggle checked={trackOpens} onChange={setTrackChoice} disclosure={tracking.disclosure} />}
         {error && <span className="em-errtext" role="alert">{error}</span>}
         <span style={{ flex: 1 }} />
         <button type="button" className="em-btn em-btn-ghost" onClick={onCancel}>
@@ -179,7 +184,7 @@ export default function EmailThread() {
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
-  const { admin, showToast, refreshCounts } = useEmailShell();
+  const { admin, showToast, refreshCounts, tracking } = useEmailShell();
   const [replyOpen, setReplyOpen] = useState(false);
   const [actionError, setActionError] = useState("");
 
@@ -361,7 +366,7 @@ export default function EmailThread() {
 
         {reply.allowed &&
           (replyOpen ? (
-            <ReplyBox message={m} reply={reply} adminName={admin.name} onSent={afterReply} onCancel={() => setReplyOpen(false)} />
+            <ReplyBox message={m} reply={reply} adminName={admin.name} tracking={tracking} onSent={afterReply} onCancel={() => setReplyOpen(false)} />
           ) : (
             <div className="em-reply-actions">
               <button className="em-btn em-btn-ghost" onClick={() => setReplyOpen(true)}>

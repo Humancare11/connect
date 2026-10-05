@@ -43,6 +43,9 @@ export default function EmailLayout() {
   });
   const mailboxes = useMemo(() => mailboxesQ.data?.mailboxes || [], [mailboxesQ.data]);
   const counts = mailboxesQ.data?.counts || { received: 0, spam: 0 };
+  // Whether open tracking is switched on (the compose forms show "Track opens" only then).
+  const trackingData = mailboxesQ.data?.tracking;
+  const tracking = useMemo(() => trackingData || { available: false, disclosure: false }, [trackingData]);
 
   const showToast = useCallback((message) => {
     setToast(message);
@@ -80,12 +83,13 @@ export default function EmailLayout() {
     () => ({
       admin,
       mailboxes,
+      tracking,
       showToast,
       refreshCounts,
       clearSearchText: resetSearch,
       openCompose: (mailboxId) => setCompose({ key: Date.now(), mailboxId: mailboxId || here.mailboxId || "" }),
     }),
-    [admin, mailboxes, showToast, refreshCounts, resetSearch, here.mailboxId]
+    [admin, mailboxes, tracking, showToast, refreshCounts, resetSearch, here.mailboxId]
   );
 
   const unreadByFolder = { inbox: counts.received, spam: counts.spam };
@@ -155,6 +159,7 @@ export default function EmailLayout() {
               <EmailComposer
                 key={compose.key}
                 mailboxes={mailboxes}
+                tracking={tracking}
                 defaultMailboxId={compose.mailboxId}
                 adminName={admin.name}
                 onClose={() => setCompose(null)}

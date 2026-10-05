@@ -46,6 +46,16 @@ export const mailIdsApi = {
   update: (id, patch) => api.patch(`${MAILBOX_BASE}/${id}`, patch, RAW).then((r) => r.data),
 };
 
+// Super Admin only: open-tracking switches, disclosure line and the opt-out list.
+const SETTINGS_BASE = "/api/superadmin/email/settings";
+
+export const trackingSettingsApi = {
+  get: () => api.get(SETTINGS_BASE, RAW).then((r) => r.data),
+  update: (patch) => api.patch(SETTINGS_BASE, patch, RAW).then((r) => r.data),
+  addOptOut: (address, note) => api.post(`${SETTINGS_BASE}/opt-outs`, { address, note }, RAW).then((r) => r.data),
+  removeOptOut: (id) => api.delete(`${SETTINGS_BASE}/opt-outs/${id}`, RAW).then((r) => r.data),
+};
+
 // Server errors are { msg }; a blob download error arrives as a Blob.
 export function apiMessage(err, fallback = "Something went wrong. Please try again.") {
   return err?.response?.data?.msg || fallback;

@@ -2,7 +2,7 @@ import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "
 import { useQuery } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
 import EmailFilters from "./EmailFilters";
-import { Avatar, FirstViewed, Icon, MailboxChip } from "./EmailParts";
+import { Avatar, FirstViewed, Icon, MailboxChip, TrackingBadge } from "./EmailParts";
 import {
   EMAIL_BASE,
   FOLDERS,
@@ -19,7 +19,7 @@ import {
 } from "./emailUtils";
 
 const PAGE_SIZE = 50;
-const FILTER_KEYS = ["by", "box", "st", "view", "date", "att"];
+const FILTER_KEYS = ["by", "box", "st", "open", "view", "date", "att"];
 
 const SUBTITLES = {
   inbox: "Mail that came to the company IDs",
@@ -75,13 +75,20 @@ function Row({ m, onOpen }) {
       <div className="em-box-col">
         <MailboxChip mailbox={m.mailbox} />
       </div>
-      <div className="em-line">
-        {m.status === "failed" && <span className="em-tag em-tag-failed">Failed</span>}
-        {m.status === "sending" && <span className="em-tag em-tag-by">Sending…</span>}
-        <span className="em-tag em-tag-by">To: {m.to.map((a) => a.address).join(", ")}</span>
-        <span className="em-subj">{m.subject || "(no subject)"}</span>
-        {m.snippet && <span className="em-snip">— {m.snippet}</span>}
-        {clip}
+      <div className="em-line em-line-stack">
+        <div className="em-line-main">
+          {m.status === "failed" && <span className="em-tag em-tag-failed">Failed</span>}
+          {m.status === "sending" && <span className="em-tag em-tag-by">Sending…</span>}
+          <span className="em-tag em-tag-by">To: {m.to.map((a) => a.address).join(", ")}</span>
+          <span className="em-subj">{m.subject || "(no subject)"}</span>
+          {m.snippet && <span className="em-snip">— {m.snippet}</span>}
+          {clip}
+        </div>
+        {m.tracking && (
+          <div>
+            <TrackingBadge tracking={m.tracking} />
+          </div>
+        )}
       </div>
       <div className="em-view-col">
         <FirstViewed firstViewed={m.firstViewed} />
@@ -114,6 +121,8 @@ export default function EmailList() {
         mailbox: mailboxId || filters.box || undefined,
         sentBy: filters.by || undefined,
         status: filters.st || undefined,
+        // Sent only; the server ignores it elsewhere.
+        openStatus: folder === "sent" ? filters.open || undefined : undefined,
         viewedBy: filters.view || undefined,
         dateFrom: dateFromPreset(filters.date),
         hasAttachment: filters.att || undefined,
