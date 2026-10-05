@@ -1312,12 +1312,34 @@
   background: var(--white);
   text-decoration: none;
   box-shadow: 0 1px 4px rgba(11, 40, 100, 0.05);
-  transition: transform 0.22s var(--ease-std), box-shadow 0.22s ease;
+  transition:
+    transform 0.22s var(--ease-std),
+    box-shadow 0.22s ease;
+}
+
+@media (max-width: 900px) {
+  .cat-spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cat-spec-item {
+    min-width: 0;
+  }
+
+  .cat-spec-item__name {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .cat-spec-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .cat-spec-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(11, 40, 100, 0.10);
+  box-shadow: 0 8px 24px rgba(11, 40, 100, 0.1);
 }
 
 .cat-spec-item__icon {
@@ -1329,7 +1351,9 @@
   background: var(--bg-2);
   color: var(--blue);
   flex-shrink: 0;
-  transition: background 0.22s ease, color 0.22s ease;
+  transition:
+    background 0.22s ease,
+    color 0.22s ease;
 }
 
 .cat-spec-item:hover .cat-spec-item__icon {

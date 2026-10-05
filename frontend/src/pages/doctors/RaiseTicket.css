@@ -93,7 +93,7 @@
 ════════════════════════════════════════ */
 .rt-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: minmax(min(100%, 340px), 380px) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -388,7 +388,7 @@
 
 /* Tablet (1024px) */
 @media (max-width: 1024px) {
-  .rt-layout { grid-template-columns: 1fr 300px; }
+  .rt-layout { grid-template-columns: minmax(0, 1fr) minmax(min(100%, 280px), 300px); }
   .rt-root   { padding: 24px 20px; }
 }
 

@@ -178,7 +178,7 @@ const SPECIALTY_DATA = {
       Icon: FiHeart,
       name: "Menopause Symptoms",
       desc: "Care for menopause-related symptoms",
-      path: "/women-health/menopause-care/hrt-guidance",
+      path: "/women-health/menopause-care/menopause-symptoms",
     },
   ],
 

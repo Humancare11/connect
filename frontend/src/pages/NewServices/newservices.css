@@ -46,15 +46,17 @@
 .service-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 88px 24px;
+  padding: clamp(40px, 6vw, 88px) clamp(16px, 4vw, 24px);
   width: 100%;
+  box-sizing: border-box;
 }
 
 .service-container--hero {
   max-width: 1381px;
   margin: 0 auto;
-  padding: 90px 50px 15px;
+  padding: clamp(76px, 8vw, 90px) clamp(16px, 4vw, 50px) clamp(16px, 3vw, 24px);
   width: 100%;
+  box-sizing: border-box;
 }
 
 .service-section {
@@ -76,21 +78,23 @@
    TYPOGRAPHY
    --------------------------------------------------------- */
 .service-heading-xl {
-  font-size: clamp(36px, 5.5vw, 60px);
+  font-size: clamp(24px, 5.2vw, 58px);
   font-weight: 900;
   color: var(--service-text-primary);
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   margin-bottom: 18px;
   max-width: 760px;
+  overflow-wrap: break-word;
 }
 
 .service-heading-lg {
-  font-size: clamp(26px, 3.5vw, 36px);
+  font-size: clamp(22px, 3.5vw, 36px);
   font-weight: 900;
   color: var(--service-text-primary);
-  line-height: 1.15;
+  line-height: 1.18;
   margin-bottom: 20px;
+  overflow-wrap: break-word;
 }
 
 .service-section-header {
@@ -238,6 +242,7 @@
   overflow: hidden;
   background: var(--service-surface);
   border-bottom: 1px solid var(--service-border);
+  width: 100%;
 }
 
 .service-hero--with-image {
@@ -250,6 +255,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   z-index: 0;
 }
 
@@ -258,8 +264,8 @@
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(15, 23, 42, 0.35) 0%,
-    rgba(15, 23, 42, 0.65) 50%,
+    rgba(15, 23, 42, 0.45) 0%,
+    rgba(15, 23, 42, 0.72) 50%,
     rgba(15, 23, 42, 0.95) 100%
   );
   z-index: 1;
@@ -270,11 +276,11 @@
   z-index: 10;
   max-width: 1381px;
   margin: 0 auto;
-  padding: 90px 50px 15px;
+  padding: clamp(76px, 8vw, 100px) clamp(16px, 4vw, 50px) clamp(24px, 4vw, 36px);
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 450px;
-  gap: 48px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(min(100%, 320px), 440px);
+  gap: clamp(24px, 4vw, 48px);
   align-items: center;
 }
 
@@ -283,18 +289,19 @@
   z-index: 10;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 64px 24px;
+  padding: clamp(48px, 6vw, 64px) clamp(16px, 4vw, 24px);
   width: 100%;
 }
 
 .service-hero__title {
-  font-size: clamp(36px, 5.5vw, 60px);
+  font-size: clamp(24px, 5.2vw, 58px);
   font-weight: 900;
   color: #ffffff;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
-  margin-bottom: 18px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
   max-width: 760px;
+  overflow-wrap: break-word;
 }
 
 .service-hero:not(.service-hero--with-image) .service-hero__title {
@@ -302,7 +309,7 @@
 }
 
 .service-hero__tagline {
-  font-size: 18px;
+  font-size: clamp(14.5px, 1.8vw, 18px);
   color: #E5E7EB;
   font-style: italic;
   margin-bottom: 10px;
@@ -313,11 +320,11 @@
 }
 
 .service-hero__intro {
-  font-size: 16px;
+  font-size: clamp(13.5px, 1.5vw, 16px);
   color: #F3F4F6;
-  line-height: 1.7;
-  max-width: 560px;
-  margin-bottom: 28px;
+  line-height: 1.68;
+  max-width: 580px;
+  margin-bottom: 24px;
 }
 
 .service-hero:not(.service-hero--with-image) .service-hero__intro {
@@ -420,9 +427,10 @@
    --------------------------------------------------------- */
 .service-contact-card {
   border-radius: 24px;
-  padding: 32px;
+  padding: clamp(20px, 4vw, 32px);
   background: #ffffff;
   border: 1px solid var(--service-border);
+  box-sizing: border-box;
 }
 
 .service-contact-icon-wrap {
@@ -527,9 +535,9 @@
    --------------------------------------------------------- */
 .service-outcomes-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 12px;
-  margin-top: 52px;
+  margin-top: clamp(28px, 5vw, 52px);
 }
 
 .service-outcome-card {
@@ -685,7 +693,8 @@
   background: #ffffff;
   border: 1px solid var(--service-border);
   overflow: hidden;
-  padding: 28px;
+  padding: clamp(16px, 4vw, 28px);
+  box-sizing: border-box;
 }
 
 .service-feature-card--grid {
@@ -759,7 +768,7 @@
    --------------------------------------------------------- */
 .service-why-us__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
   gap: 12px;
 }
 
@@ -872,7 +881,7 @@
    --------------------------------------------------------- */
 .service-related__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
   gap: 16px;
 }
 
@@ -941,10 +950,11 @@
 .service-cta-card {
   position: relative;
   border-radius: 28px;
-  padding: 72px 48px;
+  padding: clamp(36px, 6vw, 72px) clamp(16px, 4vw, 48px);
   text-align: center;
   background: color-mix(in srgb, var(--service-accent) 5%, transparent);
   border: 1px solid color-mix(in srgb, var(--service-accent) 20%, transparent);
+  box-sizing: border-box;
 }
 
 .service-cta-title {
@@ -995,98 +1005,38 @@
 /* ---------------------------------------------------------
    RESPONSIVE — TABLET
    --------------------------------------------------------- */
+/* ---------------------------------------------------------
+   RESPONSIVE — TABLET & MOBILE FLUID OVERRIDES
+   --------------------------------------------------------- */
 @media (max-width: 1023px) {
-  .service-container {
-    padding: 64px 20px;
-  }
-
-  .service-container--hero {
-    padding: 80px 24px 20px;
-  }
-
   .service-hero__content-grid {
     grid-template-columns: 1fr;
     gap: 32px;
-    padding: 80px 24px 20px;
+    padding: clamp(64px, 8vw, 80px) clamp(16px, 4vw, 24px) 20px;
   }
 
   .service-overview__grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 36px;
   }
 
   .service-overview__sticky {
     position: static;
   }
 
-  .service-outcomes-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .service-how-it-works__grid {
     grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .service-why-us__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .service-related__grid {
-    grid-template-columns: repeat(2, 1fr);
+    gap: 36px;
   }
 }
 
-/* ---------------------------------------------------------
-   RESPONSIVE — MOBILE
-   --------------------------------------------------------- */
 @media (max-width: 639px) {
-  .service-container {
-    padding: 48px 16px;
-  }
-
-  .service-container--hero {
-    padding: 100px 16px 40px;
-  }
-
-  .service-hero__content-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    padding: 100px 16px 40px;
-  }
-
   .service-hero__content-standalone {
-    padding: 48px 16px;
-  }
-
-  .service-overview__grid {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .service-outcomes-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .service-how-it-works__grid {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .service-why-us__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .service-related__grid {
-    grid-template-columns: 1fr;
-  }
-
-  .service-cta-card {
-    padding: 40px 16px;
+    padding: 36px 16px;
   }
 
   .service-cta-title {
-    font-size: clamp(28px, 8vw, 36px);
+    font-size: clamp(24px, 7vw, 36px);
   }
 
   .service-cta-btn-group {

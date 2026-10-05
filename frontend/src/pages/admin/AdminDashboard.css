@@ -600,6 +600,9 @@
 /* ── Table ────────────────────────────────────────────────────── */
 .adp-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
 }
 
 .adp-table {
@@ -1135,19 +1138,16 @@
     width: 100%;
   }
 }
-/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
-/* The sidebar stays a fixed column down to 769px and becomes the slide-in
-   drawer (768px block above) below that, so these rules must not override it. */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .ad-sidebar { width: 220px; }
-  .ad-main { margin-left: 252px; }
+/* ══ RESPONSIVE — tablet layout ══════════════════════ */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .ad-sidebar {
+    width: 220px;
+  }
+  .ad-main {
+    margin-left: calc(220px + 32px);
+    padding: 16px 20px;
+  }
+  .adp-stats {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  }
 }
-@media (max-width: 1024px) {
-  .adp-stats { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 900px) {
-  .ad-content { padding: 16px; }
-  .adp-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .ad-topbar { padding: 10px 16px; }
-}
-/* (existing 768px and 480px breakpoints retained above) */
