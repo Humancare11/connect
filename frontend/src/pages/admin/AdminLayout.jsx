@@ -164,6 +164,8 @@ const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
+  // Super Admin only: manage the company mail IDs (add / edit / deactivate).
+  { key: "mail-ids", label: "Mail IDs", path: "/admin-dashboard/email/settings/mail-ids", superadminOnly: true, icon: ICONS.email },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 

@@ -267,3 +267,56 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
   .em-compose.full { top: 0; height: 100%; }
   .em-c-head, .em-compose.full .em-c-head { border-radius: 0; }
 }
+
+/* ── Mail IDs settings (Super Admin) — prefix: mi- ── */
+.mi-page { max-width: 1040px; }
+.mi-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.mi-top h1 { margin: 4px 0 2px; font-size: 24px; }
+.mi-back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--em-muted); text-decoration: none; }
+.mi-back:hover { color: var(--em-accent); }
+.mi-card { background: var(--em-surface); border: 1px solid var(--em-line); border-radius: var(--em-radius); overflow: hidden; }
+.mi-tr { display: grid; grid-template-columns: minmax(0, 2.2fr) 100px minmax(0, 1.6fr) 70px 220px; gap: 12px; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--em-line); }
+.mi-tr:last-child { border-bottom: 0; }
+.mi-th { background: var(--em-sunk); font-size: 12px; font-weight: 700; color: var(--em-muted); text-transform: uppercase; letter-spacing: 0.04em; padding-top: 10px; padding-bottom: 10px; }
+.mi-tr.off { background: #fafbfd; }
+.mi-tr.off .mi-id { opacity: 0.65; }
+.mi-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.mi-id > span:last-child { display: flex; flex-direction: column; min-width: 0; }
+.mi-id small { color: var(--em-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mi-num { text-align: right; font-variant-numeric: tabular-nums; }
+.mi-on { background: #e1f3e6; color: #1e6b33; }
+.mi-off { background: var(--em-sunk); color: var(--em-muted); }
+.mi-sync-err { color: var(--em-bad); font-weight: 700; font-size: 13px; }
+.mi-errmsg { color: var(--em-bad); font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mi-row-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.mi-row-actions .em-btn { padding: 6px 14px; font-size: 13px; }
+.mi-error { background: var(--em-bad-soft); color: var(--em-bad); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 8px 0; }
+.mi-ok { background: #e1f3e6; color: #1e6b33; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.mi-scrim { position: fixed; inset: 0; background: rgba(10, 20, 40, 0.45); z-index: 399; }
+.mi-modal { position: fixed; z-index: 400; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow-y: auto; background: var(--em-surface); border-radius: 14px; box-shadow: 0 20px 60px rgba(1, 22, 74, 0.35); }
+.mi-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--em-line); }
+.mi-head h2 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.mi-x { border: 0; background: transparent; font-size: 26px; line-height: 1; color: var(--em-muted); }
+.mi-form { display: flex; flex-direction: column; gap: 8px; padding: 18px 20px 20px; }
+.mi-form label { font-size: 13px; font-weight: 700; margin-top: 6px; }
+.mi-form input[type="text"], .mi-form input[type="email"], .mi-form textarea { border: 1px solid var(--em-line); border-radius: 8px; padding: 9px 12px; background: var(--em-surface); width: 100%; }
+.mi-form textarea { resize: vertical; }
+.mi-form p { margin: 0; }
+.mi-readonly { background: var(--em-sunk) !important; color: var(--em-muted); }
+.mi-inline { display: flex; gap: 8px; }
+.mi-inline input { flex: 1; min-width: 0; }
+.mi-inline .em-btn { white-space: nowrap; }
+.mi-color { display: flex; align-items: center; gap: 10px; }
+.mi-color input[type="color"] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--em-line); border-radius: 8px; background: var(--em-surface); }
+.mi-color input[type="text"] { width: 120px; }
+.mi-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.mi-danger { background: var(--em-bad); color: #fff; }
+@media (max-width: 860px) {
+  .mi-th { display: none; }
+  .mi-tr { grid-template-columns: minmax(0, 1fr) auto; row-gap: 8px; }
+  .mi-tr > span:nth-child(3) { grid-column: 1 / -1; }
+  .mi-tr > span:nth-child(4) { text-align: left; }
+  .mi-tr > span:nth-child(4)::before { content: "Mail stored: "; color: var(--em-muted); }
+  .mi-row-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (max-width: 480px) { .mi-inline { flex-direction: column; } }

@@ -852,6 +852,7 @@ const AdminPartnerCaseDetail = lazy(
 const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
+const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1552,6 +1553,17 @@ function AppLayout() {
             <Route path="box/:mailboxId/:folder" element={<EmailList />} />
             <Route path=":folder" element={<EmailList />} />
           </Route>
+          {/* Super Admin only: add / edit / deactivate the company mail IDs. */}
+          <Route
+            path="/admin-dashboard/email/settings/mail-ids"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <MailIdsSettings />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}

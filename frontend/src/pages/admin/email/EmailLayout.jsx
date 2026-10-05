@@ -132,6 +132,13 @@ export default function EmailLayout() {
                 </NavLink>
               ))}
               {mailboxesQ.isSuccess && !mailboxes.length && <div className="em-sub" style={{ padding: "6px 24px" }}>No mail IDs are set up yet.</div>}
+              {/* Super Admin only (the page and its API refuse everyone else too). */}
+              {admin?.role === "superadmin" && (
+                <NavLink to={`${EMAIL_BASE}/settings/mail-ids`} className="em-nav-item">
+                  <Icon name="mailbox" />
+                  <span className="em-lbl">Manage Mail IDs</span>
+                </NavLink>
+              )}
             </div>
           </nav>
 
