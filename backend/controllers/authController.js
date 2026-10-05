@@ -31,6 +31,7 @@ const { validateMobile } = require("../utils/mobileValidation");
 // place, still loaded at startup via initGeoIp() in server.js, for possible
 // future reuse — just not called from signup.
 const { detectRegistrationClient } = require("../utils/clientInfo");
+const { shouldSkipSignupLocation } = require("../utils/legacyAppBypass");
 const { Country, State } = require("country-state-city");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
@@ -205,7 +206,7 @@ const register = async (req, res) => {
     const mobileCheck = validateMobile(mobile);
     if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
 
-    const location = validateSignupLocation({ country, state, city });
+    const location = resolveSignupLocation(req, { country, state, city });
     if (location.error) return res.status(400).json({ msg: location.error });
 
     if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
@@ -246,7 +247,7 @@ const register = async (req, res) => {
       userName: user.name,
       userEmail: user.email,
       userRole: "user",
-      details: { country: user.country, state: user.state },
+      details: { country: user.country, state: user.state, ...(location.skipped && { locationSkipped: true }) },
     });
 
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
@@ -668,6 +669,15 @@ const validateSignupLocation = (body) => {
   return buildLocationUpdate(body, { country: "", state: "", city: "" });
 };
 
+// validateSignupLocation, except that a legacy app build (one that predates the
+// Country/State fields and so can't send them) may omit the location entirely
+// — see utils/legacyAppBypass.js. Returns { error } or { set, skipped? }; when
+// skipped, `set` is empty so nothing location-related is stored.
+const resolveSignupLocation = (req, body) => {
+  if (shouldSkipSignupLocation(req, body)) return { set: {}, skipped: true };
+  return validateSignupLocation(body);
+};
+
 const updateProfile = async (req, res) => {
   try {
     const { name, email, mobile, dob, gender } = req.body;
@@ -834,7 +844,7 @@ const googleAuthUser = async (req, res) => {
     const mobileCheck = validateMobile(mobile);
     if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
 
-    const location = validateSignupLocation({ country, state, city });
+    const location = resolveSignupLocation(req, { country, state, city });
     if (location.error) return res.status(400).json({ msg: location.error });
 
     const ip = getIp(req);
@@ -846,6 +856,18 @@ const googleAuthUser = async (req, res) => {
       ...detectRegistrationClient(req),
     });
     await recordConsent(req, user);
+    if (location.skipped) {
+      await recordActivity(req, {
+        action: "REGISTER",
+        resource: "User",
+        resourceId: user._id,
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: "user",
+        details: { signupMethod: "google", locationSkipped: true },
+      });
+    }
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
@@ -1480,4 +1502,5 @@ module.exports = {
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
   partnerLogin, partnerMe, partnerLogout,
   requestAccountDeletion,
+  resolveSignupLocation, // exported for tests
 };
