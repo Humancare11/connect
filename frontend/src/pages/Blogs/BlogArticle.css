@@ -67,10 +67,112 @@
   min-height: 36px;
 }
 
-/* ── FAQ answers (blog template only) ─────────────────────────────────────────
-   Legacy FAQ answers are plain text inside .faq-a. Admin answers are simple
-   HTML, which would otherwise pick up the larger .content-col p/ul/li article
-   typography. Keep the formatting inside the same .faq-a look. */
+/* ── Links in the article body and FAQ answers (blog template only) ──────────
+   telemedicine.css makes `.content-col p a` bold with 2px 8px padding and an
+   underline, which makes a linked word look larger than its sentence (and only
+   applies inside <p>, so links in lists were unstyled). Here a link keeps the
+   size, weight and line height of the text around it, is blue and has no
+   underline in any state; keyboard focus keeps a visible outline. */
+.blog-layout .content-col a,
+.blog-layout .content-col a:link,
+.blog-layout .content-col a:visited {
+  color: var(--blue-600);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  border-radius: 0;
+  text-decoration: none;
+}
+
+.blog-layout .content-col a:hover {
+  color: #1d4fc4;
+  text-decoration: none;
+}
+
+.blog-layout .content-col a:focus,
+.blog-layout .content-col a:active {
+  text-decoration: none;
+}
+
+.blog-layout .content-col a:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+  border-radius: 3px;
+  text-decoration: none;
+}
+
+/* A list item gets exactly one marker: the list's own (never a ::before). */
+.content-col.blog-richtext li::before {
+  content: none;
+}
+
+/* ── FAQ: numbered cards (blog template only) ─────────────────────────────────
+   Same markup and classes as the legacy accordion (<details class="faq-item">),
+   restyled as separate cards with a numbered circle. The answer is indented to
+   line up with the question text, not the number. Answer text keeps the fixed
+   .faq-a size instead of the larger article size. */
+.blog-layout .faq-item {
+  --faq-pad: clamp(14px, 2vw, 20px);
+  --faq-num: 28px;
+  --faq-gap: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.blog-layout .faq-item[open] {
+  border-color: var(--blue-600);
+}
+
+.blog-layout .faq-q {
+  justify-content: flex-start;
+  gap: var(--faq-gap);
+  padding: 14px var(--faq-pad);
+}
+
+.blog-layout .faq-item[open] .faq-q {
+  border-bottom: 0;
+}
+
+.blog-layout .faq-q:focus-visible {
+  outline-offset: -3px;
+  border-radius: 12px;
+}
+
+.blog-layout .faq-num {
+  flex: 0 0 var(--faq-num);
+  width: var(--faq-num);
+  height: var(--faq-num);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--blue-100);
+  color: var(--blue-600);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.blog-layout .faq-q-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.blog-layout .faq-q .chev {
+  margin-left: auto;
+}
+
+.blog-layout .faq-a {
+  padding: 0 var(--faq-pad) 16px calc(var(--faq-pad) + var(--faq-num) + var(--faq-gap));
+}
+
 .blog-layout .faq-a p,
 .blog-layout .faq-a ul,
 .blog-layout .faq-a ol,
@@ -102,11 +204,4 @@
 
 .blog-layout .faq-a > :last-child {
   margin-bottom: 0;
-}
-
-.blog-layout .faq-a a {
-  color: var(--blue-600);
-  padding: 0;
-  font-weight: 600;
-  text-decoration: underline;
 }

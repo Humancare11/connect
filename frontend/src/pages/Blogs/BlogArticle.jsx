@@ -230,10 +230,16 @@ export default function BlogArticle({ blog, preview = false }) {
                       key={`${idx}-${item.question}`}
                       className="faq-item"
                       open={openFaq === idx}
-                      onToggle={(e) => setOpenFaq(e.currentTarget.open ? idx : null)}
+                      onToggle={(e) => {
+                        // Only one open at a time. A card that React just closed
+                        // fires its own toggle: it must not clear the new one.
+                        if (e.currentTarget.open) setOpenFaq(idx);
+                        else setOpenFaq((cur) => (cur === idx ? null : cur));
+                      }}
                     >
                       <summary className="faq-q">
-                        {item.question}
+                        <span className="faq-num" aria-hidden="true">{idx + 1}</span>
+                        <span className="faq-q-text">{item.question}</span>
                         <svg className="chev" width="18" height="18" viewBox="0 0 24 24" fill="none">
                           <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>

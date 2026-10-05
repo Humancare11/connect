@@ -108,3 +108,18 @@ test("sanitizeFaqs: plain-text question, simple-HTML answer, junk dropped, cappe
   const many = Array.from({ length: 50 }, (_, i) => ({ question: `Q${i}`, answer: "<p>a</p>" }));
   assert.equal(sanitizeFaqs(many).length, 30);
 });
+
+test("sanitizer drops heading anchors ('#') and strips leading list bullets", () => {
+  const { sanitizeFaqs } = require("../utils/blogSanitizer");
+  const r = processBlogContent(
+    '<h2>Introduction <a href="#introduction">#</a></h2><h2>Why<a href="#w" class="heading-link">#</a></h2>' +
+      "<ul><li>• One</li><li><p>• Two</p></li><li>&bull; Three</li><li>Four <a href=\"https://x.com\">x</a></li></ul>" +
+      '<p>A <a href="https://y.com">#hashtag</a> keeps.</p>'
+  );
+  assert.deepEqual(r.toc, [{ id: "introduction", label: "Introduction" }, { id: "why", label: "Why" }]);
+  assert.ok(!/>#</.test(r.content));
+  assert.match(r.content, /<li>One<\/li><li><p>Two<\/p><\/li><li>Three<\/li>/);
+  assert.match(r.content, />#hashtag<\/a>/);
+  const faq = sanitizeFaqs([{ question: "q", answer: '<ul><li>• a</li></ul><p>b <a href="#x">#</a></p>' }]);
+  assert.equal(faq[0].answer, "<ul><li>a</li></ul><p>b </p>");
+});
