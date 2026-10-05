@@ -13,35 +13,24 @@ require("dotenv").config({
   ),
 });
 
-const { getGmailApi } = require("../services/gmail/gmailAuth");
-const { createGmailClient } = require("../services/gmail/gmailClient");
+// Same check the superadmin "Mail IDs" page runs before saving a mailbox.
+const { checkMailboxConnection } = require("../services/gmail/connectionCheck");
 
 const DEFAULT_ADDRESSES = ["support@humancareconnect.co", "tech@humancareconnect.co"];
-
-async function check(address) {
-  const client = createGmailClient(getGmailApi({ address, isActive: true }));
-  const profile = await client.getProfile();
-  const inbox = await client.listMessageIds({ limit: 5 });
-  const spam = await client.listMessageIds({ q: "in:spam", includeSpamTrash: true, limit: 5 });
-  console.log(`✔ ${address}`);
-  console.log(`    profile address : ${profile.emailAddress}`);
-  console.log(`    history id      : ${profile.historyId}`);
-  console.log(`    latest ids      : ${inbox.length ? inbox.join(", ") : "(none)"}`);
-  console.log(`    spam ids        : ${spam.length ? spam.join(", ") : "(none)"}`);
-}
 
 (async () => {
   const addresses = process.argv.slice(2).length ? process.argv.slice(2) : DEFAULT_ADDRESSES;
   let failed = 0;
   for (const address of addresses) {
-    try {
-      await check(address);
-    } catch (err) {
+    const res = await checkMailboxConnection(address);
+    if (res.ok) {
+      console.log(`✔ ${res.address}`);
+      console.log(`    history id      : ${res.historyId}`);
+      console.log(`    latest ids      : ${res.latestIds.length ? res.latestIds.join(", ") : "(none)"}`);
+    } else {
       failed += 1;
-      const apiError = err?.response?.data?.error;
       console.log(`✖ ${address}`);
-      console.log(`    ${apiError?.error || apiError?.message || err.message}`);
-      if (err?.response?.data?.error_description) console.log(`    ${err.response.data.error_description}`);
+      console.log(`    ${res.message}${res.detail ? ` (${res.detail})` : ""}`);
     }
   }
   process.exit(failed ? 1 : 0);

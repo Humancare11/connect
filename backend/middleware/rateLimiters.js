@@ -166,6 +166,16 @@ const emailSendLimiter = buildUserLimiter({
   message:  "You are sending mail too quickly. Please wait {min} minutes and try again.",
 });
 
+// Super Admin "Mail IDs": every connection check calls Google while impersonating
+// a company address, so keep it modest. Per Super Admin.
+const mailboxCheckStore = new Map();
+const mailboxCheckLimiter = buildUserLimiter({
+  store:    mailboxCheckStore,
+  windowMs: 60 * 1000,
+  max:      10,
+  message:  "Too many mailbox checks. Please wait a minute and try again.",
+});
+
 // The public Direct Video Room endpoints (GET /:roomId/status and
 // /:roomId/ice-servers) carry no login or email, so they're keyed by
 // IP + roomId — different rooms behind one office NAT don't share a bucket.
@@ -244,4 +254,5 @@ module.exports = {
   directVideoRoomPublicLimiter,
   searchLimiter,
   emailSendLimiter,
+  mailboxCheckLimiter,
 };

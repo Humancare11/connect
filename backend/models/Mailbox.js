@@ -50,6 +50,9 @@ const mailboxSchema = new mongoose.Schema(
     },
 
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    // Set when a Super Admin deactivates it; cleared on reactivation. History stays.
+    deactivatedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -83,3 +86,4 @@ mailboxSchema.statics.releaseLease = function releaseLease(mailboxId, owner) {
 
 module.exports = mongoose.model("Mailbox", mailboxSchema);
 module.exports.EMAIL_DOMAIN = EMAIL_DOMAIN;
+module.exports.isCompanyAddress = (v) => ADDRESS_RE.test(v) && v.endsWith(`@${EMAIL_DOMAIN}`);
