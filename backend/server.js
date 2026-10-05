@@ -626,6 +626,7 @@ app.use("/api/blogs", require("./routes/blogs"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
+app.use("/api/app", require("./routes/appVersion"));
 app.use(
   "/api/category-consultation",
   require("./routes/categoryConsultation")

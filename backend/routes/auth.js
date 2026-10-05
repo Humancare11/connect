@@ -12,6 +12,7 @@ const {
   requestAccountDeletion,
 } = require("../controllers/authController");
 
+const requireMinAppVersion                                              = require("../middleware/requireMinAppVersion");
 const authMiddleware                                                    = require("../middleware/authMiddleware");
 const { verifyUserToken, verifyAdminToken, verifyEmployeeAdminToken, verifyPartnerToken } = require("../middleware/verifyToken");
 const {
@@ -22,8 +23,8 @@ const {
 } = require("../middleware/rateLimiters");
 
 // ── User auth ─────────────────────────────────────────────────────────────────
-router.post("/send-register-otp", otpRequestLimiter, sendRegisterOTP);
-router.post("/register",          otpVerifyLimiter, registrationLimiter, register);
+router.post("/send-register-otp", requireMinAppVersion, otpRequestLimiter, sendRegisterOTP);
+router.post("/register",          requireMinAppVersion, otpVerifyLimiter, registrationLimiter, register);
 router.post("/login",             loginLimiter, login);
 router.post("/refresh",           refresh);
 router.post("/logout",            logout);
@@ -35,7 +36,7 @@ router.post("/verify-forgot-otp", otpVerifyLimiter, verifyForgotOTP);
 router.post("/reset-password",    resetPasswordHandler);
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
-router.post("/google",            googleAuthUser);
+router.post("/google",            requireMinAppVersion, googleAuthUser);
 router.post("/google-doctor",     googleAuthDoctor);
 
 // ── Admin auth ────────────────────────────────────────────────────────────────
