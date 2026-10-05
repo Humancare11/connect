@@ -159,11 +159,17 @@
 
 .slider-nav-scroll-wrap {
     width: 100%;
+    max-width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-
     margin-bottom: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.slider-nav-scroll-wrap::-webkit-scrollbar {
+    display: none;
 }
 
 /* ================================================================

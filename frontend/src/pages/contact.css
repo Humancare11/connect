@@ -121,8 +121,6 @@
 }
 
 .contact-detail__value--note {
-
-
   font-size: 12px;
   line-height: 1.65;
   color: var(--muted);
@@ -259,7 +257,9 @@ a.contact-detail__value:hover {
   font-family: var(--font-secondary);
   font-size: 14px;
   color: var(--text);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
 }
 
@@ -315,7 +315,10 @@ a.contact-detail__value:hover {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.1s,
+    box-shadow 0.2s;
 }
 
 .contact-page .btn-primary:hover {
@@ -345,7 +348,9 @@ a.contact-detail__value:hover {
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .contact-page .btn-outline:hover {
@@ -405,9 +410,9 @@ a.contact-detail__value:hover {
 
 /* Large phone / small tablet */
 @media (max-width: 600px) {
-  .page-hero {
+  /* .page-hero {
     padding: 40px 20px;
-  }
+  } */
 
   .page-hero__title {
     font-size: 28px;
@@ -419,6 +424,14 @@ a.contact-detail__value:hover {
 
   .contact-layout {
     gap: 20px;
+  }
+
+  .contact-info-row > div {
+    min-width: 0;
+  }
+
+  .contact-detail__value {
+    overflow-wrap: anywhere;
   }
 
   .contact-form {

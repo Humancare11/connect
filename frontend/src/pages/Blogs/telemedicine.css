@@ -29,12 +29,17 @@
   --font-serif: "Source Serif 4", serif;
   --font-body: var(--font-secondary);
   --content-w: 780px;
-
+  --hdr-h: 83px;
   font-family: var(--font-secondary);
   color: var(--ink-body);
-  background: var(--white);
+  background: transparent;
   -webkit-font-smoothing: antialiased;
   line-height: 1.6;
+  padding-top: var(--hdr-h);
+}
+
+body:has(.glass-header.shrink) .blog-page {
+  --hdr-h: 68px;
 }
 
 .blog-page * {
@@ -84,7 +89,8 @@
 .wrap {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 0 40px;
+  /* Fluid padding: min 16px, ideal 3.4vw, max 40px — no hard jump */
+  padding: 0 clamp(16px, 3.4vw, 40px);
 }
 
 .eyebrow {
@@ -111,15 +117,26 @@
 
 /* ============================================================
    READING PROGRESS BAR
+   ============================================================
+   Both .progress-rail and .progress-meta use position:sticky with
+   top = var(--hdr-h) so they sit flush under the fixed glass-header.
+   The transition:top 0.3s ease mirrors the header's own transition,
+   keeping the gap-free as the header resizes on scroll.
    ============================================================ */
 .progress-rail {
   position: sticky;
-  top: 82px;
+  top: var(--hdr-h);
   z-index: 59;
-  height: 4px;
-  width: 100%;
+  height: 3px;
+  width: calc(100% - 48px);
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
   background: var(--line);
   overflow: visible;
+  transition:
+    top 0.3s ease,
+    transform 0.3s ease;
 }
 
 .progress-fill {
@@ -130,23 +147,62 @@
   transition: width 0.08s linear;
 }
 
+/* progress-meta sits directly below progress-rail (rail = 3px) */
+body:has(.blog-page) {
+  overflow-x: clip;
+}
+
 .progress-meta {
   position: sticky;
-  top: 86px;
+  top: calc(var(--hdr-h) + 3px);
   z-index: 58;
-  background: var(--blue-50);
+  width: calc(100% - 48px);
+  max-width: 1320px;
+  margin-left: auto;
+  margin-right: auto;
+  /* Glass background — blends with body gradient, no opaque white block */
+  background: rgba(245, 249, 255, 0.88);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
   border-bottom: 1px solid var(--line);
   font-size: 12.5px;
   color: var(--navy-500);
   font-weight: 600;
+  transition:
+    top 0.3s ease,
+    transform 0.3s ease;
+}
+
+body:has(.glass-header.shrink) .progress-rail,
+body:has(.glass-header.shrink) .progress-meta {
+  transform: scaleX(0.985);
+}
+
+@media (max-width: 768px) {
+  .progress-rail,
+  .progress-meta {
+    width: calc(100% - 24px);
+  }
+}
+
+@media (max-width: 450px) {
+  .progress-rail,
+  .progress-meta {
+    width: calc(100% - 16px);
+  }
 }
 
 .progress-meta .wrap {
   display: flex;
-  gap: 20px;
+  gap: clamp(10px, 2vw, 20px);
   align-items: center;
   height: 34px;
   overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.progress-meta .wrap::-webkit-scrollbar {
+  display: none;
 }
 
 .progress-meta span {
@@ -208,9 +264,6 @@
 /* ============================================================
   HERO
   ============================================================ */
-.hero {
-  padding: 44px 0 36px;
-}
 
 .hero-top {
   max-width: 1200px;
@@ -221,7 +274,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 50px 0 22px;
+  margin: clamp(24px, 4vw, 50px) 0 22px;
   flex-wrap: wrap;
 }
 
@@ -232,7 +285,7 @@
   background: var(--blue-100);
   color: var(--blue-600);
   font-weight: 700;
-  font-size: 12.5px;
+  font-size: clamp(11px, 1.1vw, 12.5px);
   padding: 7px 14px;
   border-radius: 100px;
   letter-spacing: 0.02em;
@@ -249,7 +302,7 @@ h1.article-title {
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--navy-900);
-  font-size: 44px;
+  font-size: clamp(26px, 4.5vw, 44px);
   line-height: 1.14;
   margin: 0 0 20px;
   max-width: 920px;
@@ -257,7 +310,7 @@ h1.article-title {
 
 .hero-dek {
   font-family: var(--font-secondary);
-  font-size: 19px;
+  font-size: clamp(15px, 1.8vw, 19px);
   line-height: 1.6;
   color: var(--navy-500);
   max-width: 680px;
@@ -268,7 +321,7 @@ h1.article-title {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 22px;
+  gap: clamp(12px, 2.2vw, 22px);
   padding: 20px 0;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -316,7 +369,7 @@ h1.article-title {
 
 .meta-facts {
   display: flex;
-  gap: 22px;
+  gap: clamp(14px, 2.2vw, 22px);
   flex-wrap: wrap;
   margin-left: auto;
 }
@@ -346,7 +399,7 @@ h1.article-title {
   height: 38px;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -369,6 +422,7 @@ h1.article-title {
   box-shadow: var(--shadow-soft);
   aspect-ratio: 16/8;
   background: linear-gradient(135deg, var(--blue-50), var(--blue-100));
+  max-width: 100%;
 }
 
 .hero-media img {
@@ -395,22 +449,25 @@ h1.article-title {
 .article-layout {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
-  gap: 56px;
+  gap: clamp(28px, 4.5vw, 56px);
   padding: 10px 0 60px;
   align-items: start;
 }
 
 .toc-col {
   position: sticky;
-  top: 130px;
+  /* header + rail(3px) + meta(34px) + gap(12px) */
+  top: calc(var(--hdr-h) + 3px + 34px + 12px);
 }
 
 .toc-card {
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 20px;
-  max-height: calc(100vh - 160px);
+  max-height: calc(100vh - 180px);
   overflow-y: auto;
 }
 
@@ -446,12 +503,12 @@ h1.article-title {
 }
 
 .toc-card li a:hover {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.8);
   color: var(--navy-900);
 }
 
 .toc-card li a.active {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.9);
   color: var(--blue-600);
   border-left-color: var(--blue-600);
   box-shadow: var(--shadow-card);
@@ -464,7 +521,7 @@ h1.article-title {
 .toc-mobile-summary {
   cursor: pointer;
   list-style: none;
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.85);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 14px 18px;
@@ -487,6 +544,7 @@ h1.article-title {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .toc-mobile-list li {
@@ -508,45 +566,46 @@ h1.article-title {
 .content-col {
   max-width: var(--content-w);
   width: 100%;
+  overflow-x: hidden;
 }
 
-.content-col>section {
+.content-col > section {
   margin-bottom: 52px;
-  scroll-margin-top: 150px;
+  scroll-margin-top: calc(var(--hdr-h) + 3px + 34px + 18px);
 }
 
 .content-col h2 {
   font-family: var(--font-primary);
   font-weight: 800;
-  font-size: 28px;
+  font-size: clamp(20px, 2.6vw, 28px);
   color: var(--navy-900);
   letter-spacing: -0.01em;
   margin: 0 0 18px;
   display: flex;
   align-items: center;
   gap: 10px;
-  scroll-margin-top: 150px;
+  scroll-margin-top: calc(var(--hdr-h) + 3px + 34px + 18px);
 }
 
 .content-col h3 {
   font-family: var(--font-primary);
   font-weight: 700;
-  font-size: 21px;
+  font-size: clamp(17px, 2vw, 21px);
   color: var(--navy-900);
   margin: 28px 0 12px;
-  scroll-margin-top: 150px;
+  scroll-margin-top: calc(var(--hdr-h) + 3px + 34px + 18px);
 }
 
 .content-col h4 {
   font-family: var(--font-primary);
   font-weight: 700;
-  font-size: 16.5px;
+  font-size: clamp(15px, 1.5vw, 16.5px);
   color: var(--navy-700);
   margin: 20px 0 8px;
 }
 
 .content-col p {
-  font-size: 16.5px;
+  font-size: clamp(15px, 1.5vw, 16.5px);
   line-height: 1.85;
   margin: 0 0 18px;
   color: var(--ink-body);
@@ -574,7 +633,7 @@ h1.article-title {
 .content-col ol.plain {
   margin: 0 0 20px;
   padding-left: 22px;
-  font-size: 16.5px;
+  font-size: clamp(15px, 1.5vw, 16.5px);
   line-height: 1.85;
 }
 
@@ -599,7 +658,7 @@ h1.article-title {
 .takeaway-box {
   background: var(--navy-900);
   border-radius: var(--radius-lg);
-  padding: 30px 32px;
+  padding: clamp(20px, 3vw, 30px) clamp(18px, 3vw, 32px);
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -609,9 +668,11 @@ h1.article-title {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(600px 200px at 90% -10%,
-      rgba(76, 134, 255, 0.35),
-      transparent);
+  background: radial-gradient(
+    600px 200px at 90% -10%,
+    rgba(76, 134, 255, 0.35),
+    transparent
+  );
 }
 
 .takeaway-box h3 {
@@ -661,20 +722,23 @@ h1.article-title {
 /* ---------- Info cards grid ---------- */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  /* Fluid: reflows from 2-col to 1-col without a fixed breakpoint */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 16px;
   margin: 26px 0;
 }
 
 .info-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 22px;
+  padding: clamp(16px, 2vw, 22px);
   box-shadow: var(--shadow-card);
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .info-card:hover {
@@ -696,41 +760,24 @@ h1.article-title {
 
 .info-card h4 {
   margin: 0 0 6px;
-  font-size: 16px;
+  font-size: clamp(14px, 1.4vw, 16px);
 }
 
 .info-card p {
   margin: 0;
-  font-size: 14.5px;
+  font-size: clamp(13px, 1.3vw, 14.5px);
   color: var(--navy-500);
   line-height: 1.6;
 }
 
-/* ---------- Timeline ----------
-   NOTE: the connecting line is now drawn per-step (via .t-marker /
-   .t-connector) rather than as one long ::before spanning the whole
-   .timeline container. That old approach measured the line against the
-   container's full height (including the last card's text), so it always
-   overshot past the final circle. This version stops exactly at the last
-   circle regardless of how many steps a given blog page has or how long
-   each step's text is.
-
-   Markup expected per step:
-   <div class="t-step">
-     <div class="t-marker">
-       <div class="t-num">1</div>
-       <div class="t-connector"></div>  <!-- omit on the last step -->
-     </div>
-     <div class="t-body">...</div>
-   </div>
-------------------------------------------------- */
+/* ---------- Timeline ---------- */
 .timeline {
   margin: 30px 0;
 }
 
 .t-step {
   display: flex;
-  gap: 20px;
+  gap: clamp(10px, 2vw, 20px);
   position: relative;
   padding-bottom: 30px;
 }
@@ -755,8 +802,8 @@ h1.article-title {
 }
 
 .t-num {
-  width: 48px;
-  height: 48px;
+  width: clamp(34px, 4.5vw, 48px);
+  height: clamp(34px, 4.5vw, 48px);
   border-radius: 50%;
   background: var(--blue-600);
   color: #fff;
@@ -766,29 +813,30 @@ h1.article-title {
   justify-content: center;
   font-family: var(--font-primary);
   font-weight: 800;
-  font-size: 17px;
+  font-size: clamp(13px, 1.5vw, 17px);
   position: relative;
   z-index: 1;
-  box-shadow: 0 0 0 6px #fff;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.85);
 }
 
 .t-body {
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.75);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 16px 20px;
+  padding: clamp(12px, 1.5vw, 16px) clamp(14px, 1.8vw, 20px);
   flex: 1;
+  min-width: 0;
 }
 
 .t-body h4 {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: clamp(14px, 1.4vw, 16px);
   color: var(--navy-900);
 }
 
 .t-body p {
   margin: 0;
-  font-size: 14.5px;
+  font-size: clamp(13px, 1.3vw, 14.5px);
   color: var(--navy-500);
 }
 
@@ -799,18 +847,19 @@ h1.article-title {
   border: 1px solid var(--line);
   margin: 26px 0;
   box-shadow: var(--shadow-card);
+  -webkit-overflow-scrolling: touch;
 }
 
 table.compare {
   border-collapse: collapse;
   width: 100%;
-  min-width: 560px;
-  font-size: 14.5px;
+  min-width: 520px;
+  font-size: clamp(13px, 1.3vw, 14.5px);
 }
 
 table.compare th,
 table.compare td {
-  padding: 14px 18px;
+  padding: clamp(10px, 1.4vw, 14px) clamp(12px, 1.6vw, 18px);
   text-align: left;
   border-bottom: 1px solid var(--line);
 }
@@ -826,7 +875,7 @@ table.compare thead th {
 }
 
 table.compare tbody th {
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.9);
   font-weight: 700;
   color: var(--navy-900);
   position: sticky;
@@ -855,16 +904,16 @@ table.compare td.good::before {
 /* ---------- Stats block ---------- */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
   gap: 16px;
   margin: 26px 0;
 }
 
 .stat-card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  padding: 24px 20px;
+  padding: clamp(18px, 2.2vw, 24px) clamp(14px, 1.8vw, 20px);
   text-align: center;
   box-shadow: var(--shadow-card);
 }
@@ -872,13 +921,13 @@ table.compare td.good::before {
 .stat-num {
   font-family: var(--font-primary);
   font-weight: 800;
-  font-size: 34px;
+  font-size: clamp(26px, 3.5vw, 34px);
   color: var(--blue-600);
   line-height: 1;
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: clamp(12px, 1.2vw, 13px);
   color: var(--navy-500);
   margin-top: 8px;
   font-weight: 600;
@@ -888,15 +937,15 @@ table.compare td.good::before {
 /* ---------- Quote block ---------- */
 .quote-block {
   border-left: 4px solid var(--blue-600);
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.75);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
-  padding: 22px 26px;
+  padding: clamp(16px, 2vw, 22px) clamp(18px, 2.2vw, 26px);
   margin: 26px 0;
 }
 
 .quote-block p {
   font-family: var(--font-secondary);
-  font-size: 19px;
+  font-size: clamp(16px, 1.8vw, 19px);
   color: var(--navy-900);
   font-style: italic;
   margin: 0 0 10px;
@@ -913,7 +962,7 @@ table.compare td.good::before {
 /* ---------- Warning / tip boxes ---------- */
 .callout {
   border-radius: var(--radius-md);
-  padding: 20px 22px;
+  padding: clamp(16px, 1.8vw, 20px) clamp(16px, 2vw, 22px);
   margin: 22px 0;
   display: flex;
   gap: 14px;
@@ -934,7 +983,7 @@ table.compare td.good::before {
 
 .callout p {
   margin: 0;
-  font-size: 14.5px;
+  font-size: clamp(13.5px, 1.3vw, 14.5px);
   line-height: 1.7;
 }
 
@@ -949,7 +998,7 @@ table.compare td.good::before {
 }
 
 .callout.tip {
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.8);
   border-color: var(--line);
   color: var(--navy-700);
 }
@@ -961,15 +1010,16 @@ table.compare td.good::before {
 /* ---------- Myths vs facts ---------- */
 .myth-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   gap: 14px;
   margin: 24px 0;
 }
 
 .myth-card {
   border-radius: var(--radius-md);
-  padding: 18px 20px;
+  padding: clamp(14px, 1.6vw, 18px) clamp(14px, 1.8vw, 20px);
   border: 1px solid var(--line);
+  min-width: 0;
 }
 
 .myth-card.myth {
@@ -1000,7 +1050,7 @@ table.compare td.good::before {
 
 .myth-card p {
   margin: 0;
-  font-size: 14.5px;
+  font-size: clamp(13px, 1.3vw, 14.5px);
   line-height: 1.6;
   color: var(--navy-700);
 }
@@ -1011,7 +1061,7 @@ table.compare td.good::before {
 .cta-section {
   background: linear-gradient(150deg, var(--navy-900), var(--navy-700));
   border-radius: var(--radius-lg);
-  padding: 48px 44px;
+  padding: clamp(28px, 4.5vw, 48px) clamp(20px, 4vw, 44px);
   color: #fff;
   text-align: center;
   position: relative;
@@ -1023,23 +1073,25 @@ table.compare td.good::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(500px 220px at 15% 0%,
-      rgba(76, 134, 255, 0.4),
-      transparent);
+  background: radial-gradient(
+    500px 220px at 15% 0%,
+    rgba(76, 134, 255, 0.4),
+    transparent
+  );
 }
 
 .cta-section h2 {
   position: relative;
   font-family: var(--font-primary);
   font-weight: 800;
-  font-size: 30px;
+  font-size: clamp(20px, 2.8vw, 30px);
   margin: 0 0 12px;
   color: #fff;
 }
 
 .cta-section p {
   position: relative;
-  font-size: 16.5px;
+  font-size: clamp(14px, 1.5vw, 16.5px);
   color: #c6d3ee;
   max-width: 650px;
   margin: 0 auto 28px;
@@ -1056,9 +1108,9 @@ table.compare td.good::before {
 .btn {
   border: none;
   border-radius: 100px;
-  padding: 14px 26px;
+  padding: clamp(11px, 1.2vw, 14px) clamp(18px, 2.2vw, 26px);
   font-weight: 700;
-  font-size: 15px;
+  font-size: clamp(13.5px, 1.4vw, 15px);
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
@@ -1103,7 +1155,7 @@ table.compare td.good::before {
   border-radius: var(--radius-md);
   margin-bottom: 12px;
   overflow: hidden;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 .faq-q {
@@ -1111,7 +1163,7 @@ table.compare td.good::before {
   text-align: left;
   background: none;
   border: none;
-  padding: 19px 22px;
+  padding: clamp(14px, 1.8vw, 19px) clamp(16px, 2vw, 22px);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1119,7 +1171,7 @@ table.compare td.good::before {
   gap: 16px;
   font-family: var(--font-primary);
   font-weight: 700;
-  font-size: 15.5px;
+  font-size: clamp(14px, 1.5vw, 15.5px);
   color: var(--navy-900);
 }
 
@@ -1138,8 +1190,8 @@ table.compare td.good::before {
 }
 
 .faq-a {
-  padding: 4px 22px 20px;
-  font-size: 15px;
+  padding: 4px clamp(16px, 2vw, 22px) clamp(14px, 1.8vw, 20px);
+  font-size: clamp(14px, 1.4vw, 15px);
   color: var(--navy-500);
   line-height: 1.75;
 }
@@ -1148,7 +1200,7 @@ table.compare td.good::before {
   display: none;
 }
 
-.faq-item>summary {
+.faq-item > summary {
   list-style: none;
 }
 
@@ -1161,7 +1213,7 @@ table.compare td.good::before {
 
 .related-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: 22px;
 }
 
@@ -1169,7 +1221,7 @@ table.compare td.good::before {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.75);
   box-shadow: var(--shadow-card);
   text-decoration: none;
   color: inherit;
@@ -1177,6 +1229,7 @@ table.compare td.good::before {
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease;
+  min-width: 0;
 }
 
 .related-card:hover {
@@ -1202,7 +1255,7 @@ table.compare td.good::before {
 }
 
 .related-card .body {
-  padding: 18px 20px;
+  padding: clamp(14px, 1.6vw, 18px) clamp(14px, 1.8vw, 20px);
 }
 
 .related-card .cat {
@@ -1215,7 +1268,7 @@ table.compare td.good::before {
 
 .related-card h4 {
   margin: 8px 0 8px;
-  font-size: 16px;
+  font-size: clamp(14px, 1.4vw, 16px);
   color: var(--navy-900);
   line-height: 1.4;
 }
@@ -1237,17 +1290,19 @@ table.compare td.good::before {
    NEWSLETTER
    ============================================================ */
 .newsletter {
-  background: var(--blue-50);
+  background: rgba(245, 249, 255, 0.82);
   border-radius: var(--radius-lg);
-  padding: 44px;
+  padding: clamp(28px, 4vw, 44px) clamp(20px, 4vw, 44px);
   text-align: center;
   border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .newsletter h2 {
   font-family: var(--font-primary);
   font-weight: 800;
-  font-size: 26px;
+  font-size: clamp(20px, 2.4vw, 26px);
   color: var(--navy-900);
   margin: 0 0 10px;
 }
@@ -1269,16 +1324,18 @@ table.compare td.good::before {
 
 .newsletter-form input {
   flex: 1;
-  min-width: 220px;
+  min-width: 200px;
   padding: 14px 18px;
   border-radius: 100px;
   border: 1px solid var(--line);
   font-size: 14.5px;
   font-family: var(--font-secondary);
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .newsletter-form input:focus {
   border-color: var(--blue-500);
+  outline: none;
 }
 
 .newsletter-form button {
@@ -1354,24 +1411,23 @@ table.compare td.good::before {
 
 /* ============================================================
    RESPONSIVE
+   ============================================================
+   Most sizing uses clamp() and auto-fit grids — breakpoints here
+   only handle structural layout changes that clamp cannot cover.
    ============================================================ */
+
+/* 1080px: 4-col footer collapses to 2-col */
 @media (max-width: 1080px) {
-  .card-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .related-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
   .footer-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
+/* 900px: sidebar TOC collapses; mobile accordion TOC appears */
 @media (max-width: 900px) {
   .article-layout {
     grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .toc-col {
@@ -1382,83 +1438,36 @@ table.compare td.good::before {
     display: block;
     margin-bottom: 8px;
   }
-
-  /* Timeline scales down before the full mobile breakpoint so tablets
-     (768–900px) don't inherit oversized desktop circles */
-  .t-num {
-    width: 40px;
-    height: 40px;
-    font-size: 15px;
-  }
-
-  .t-step {
-    gap: 14px;
-  }
-
-  .t-body {
-    padding: 14px 16px;
-  }
 }
 
+/* 760px: meta-bar reflows, hero aspect-ratio changes */
 @media (max-width: 760px) {
-
-  .main-nav ul,
-  .header-cta {
-    display: none;
-  }
-
-  .nav-toggle {
-    display: block;
-  }
-
-  h1.article-title {
-    font-size: 32px;
-  }
-
-  .hero-dek {
-    font-size: 17px;
-  }
-
   .meta-bar {
-    gap: 16px;
+    gap: 14px;
   }
 
   .meta-facts {
     margin-left: 0;
     width: 100%;
     order: 3;
-    gap: 16px;
+    gap: 14px;
   }
 
   .share-row {
     margin-left: 0;
   }
 
-  .card-grid,
-  .stat-grid,
-  .myth-grid,
-  .related-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .cta-section {
-    padding: 36px 24px;
-  }
-
-  .cta-section h2 {
-    font-size: 24px;
-  }
-
-  .newsletter {
-    padding: 32px 22px;
+  .hero-media {
+    aspect-ratio: 4/3;
   }
 
   .newsletter-form {
     flex-direction: column;
+  }
+
+  .newsletter-form input {
+    min-width: unset;
+    width: 100%;
   }
 
   .newsletter-form button {
@@ -1466,49 +1475,8 @@ table.compare td.good::before {
     justify-content: center;
   }
 
-  .hero {
-    padding: 28px 0 24px;
-  }
-
-  .hero-media {
-    aspect-ratio: 4/3;
-  }
-
-  .content-col h2 {
-    font-size: 23px;
-    gap: 8px;
-  }
-
-  .content-col h3 {
-    font-size: 18px;
-  }
-
-  .content-col p,
-  .content-col ul,
-  .content-col ol.plain {
-    font-size: 15px;
-  }
-
-  .takeaway-box {
-    padding: 24px 22px;
-  }
-
-  .info-card {
-    padding: 18px;
-  }
-
-  .faq-q {
-    padding: 16px 18px;
-    font-size: 14.5px;
-  }
-
-  .faq-a {
-    padding: 4px 18px 18px;
-    font-size: 14px;
-  }
-
   .progress-meta .wrap {
-    gap: 14px;
+    gap: 12px;
   }
 
   .progress-meta span {
@@ -1516,122 +1484,72 @@ table.compare td.good::before {
   }
 }
 
+/* 600px: mobile header is shorter (~70px total) */
+@media (max-width: 600px) {
+  .blog-page {
+    --hdr-h: 70px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero-media {
+    border-radius: var(--radius-md);
+  }
+}
+
+/* 480px: small phones, header even shorter (~64px) */
 @media (max-width: 480px) {
+  .blog-page {
+    --hdr-h: 64px;
+  }
+
   .footer-grid {
     grid-template-columns: 1fr;
   }
 
-  .wrap {
-    padding: 0 18px;
-  }
-
   .badge-row {
-    margin: 24px 0 16px;
+    margin: 20px 0 14px;
   }
 
-  h1.article-title {
-    font-size: 26px;
-    line-height: 1.2;
-  }
-
-  .hero-dek {
-    font-size: 15.5px;
-  }
-
-  .content-col>section {
+  .content-col > section {
     margin-bottom: 36px;
   }
 
-  .t-num {
-    width: 34px;
-    height: 34px;
-    font-size: 13px;
-    box-shadow: 0 0 0 4px #fff;
-  }
-
-  .t-step {
-    gap: 10px;
-    padding-bottom: 22px;
-  }
-
-  .t-body h4 {
-    font-size: 14.5px;
-  }
-
-  .t-body p {
-    font-size: 13.5px;
-  }
-
   .takeaway-box {
-    padding: 20px 16px;
     border-radius: var(--radius-md);
   }
 
-  .takeaway-box li {
-    font-size: 14px;
-  }
-
   .table-scroll {
-    margin: 20px -18px;
+    margin: 20px calc(clamp(16px, 3.4vw, 40px) * -1);
     border-radius: 0;
     border-left: none;
     border-right: none;
   }
 
-  table.compare {
-    min-width: 520px;
-  }
-
   .cta-section {
-    padding: 28px 18px;
     border-radius: var(--radius-md);
-  }
-
-  .cta-section h2 {
-    font-size: 20px;
-  }
-
-  .cta-section p {
-    font-size: 14.5px;
-  }
-
-  .btn {
-    padding: 12px 20px;
-    font-size: 14px;
-    width: 100%;
-    justify-content: center;
   }
 
   .cta-buttons {
     flex-direction: column;
   }
 
-  .myth-card,
-  .info-card {
-    padding: 16px;
-  }
-
-  .toc-mobile-summary {
-    padding: 12px 16px;
-    font-size: 13.5px;
-  }
-
-  .toc-mobile-list a {
-    font-size: 13.5px;
+  .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
+/* 360px: very small screens, header ~58px */
 @media (max-width: 360px) {
-  .wrap {
-    padding: 0 14px;
-  }
-
-  h1.article-title {
-    font-size: 23px;
+  .blog-page {
+    --hdr-h: 58px;
   }
 
   .badge {
-    font-size: 11.5px;
-    padding: 6px 12px;
+    font-size: 11px;
+    padding: 5px 10px;
   }
 }

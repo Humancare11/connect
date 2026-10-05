@@ -9,6 +9,7 @@ import {
   FaPills,
   FaBalanceScale,
   FaUserMd,
+  FaPlane,
 } from "react-icons/fa";
 import {
   motion as Motion,
@@ -103,10 +104,10 @@ export default function Sa() {
             initial="hidden"
             animate={headerInView ? "visible" : "hidden"}
           >
-            Everything you need,
+            Everything you need for
             <br />
             <span className="services-heading-highlight">
-              for virtual healthcare, all in one place.
+              virtual healthcare, in one place.
             </span>
           </Motion.h2>
         </div>
@@ -119,28 +120,26 @@ export default function Sa() {
             delay={D[0]}
             to="/online-prescription-refills"
           >
-            <div className="services-icon-row">
+            <div className="services-card-header">
               <div className="services-icon-box">
                 <FaPills />
               </div>
+              <h3 className="services-card-title">Prescription Refills</h3>
             </div>
 
-            <div className="services-content-split">
-              <div className="services-content-left">
-                <h3 className="services-card-title">Prescription Refills</h3>
-                <p className="services-card-description">
-                  Need a refill but don’t want to wait? Refill prescriptions
-                  online with a quick online doctor appointment with a licensed
-                  telemedicine doctor. If you have a chronic condition or just
-                  need to renew a prescription, get care when you need it and
-                  save yourself a trip to the clinic with quick, easy
-                  telemedicine appointments.
-                </p>
-                <span className="services-card-cta-link">
-                  Refill Prescription <span className="cta-arrow">→</span>
-                </span>
-              </div>
-            </div>
+            <p className="services-card-description">
+              Need a refill but don’t want to wait? Refill prescriptions online
+              with a quick online doctor appointment with a licensed
+              telemedicine doctor. If you have a chronic condition or just need
+              to renew a prescription, get care when you need it and save
+              yourself a trip to the clinic with quick, easy telemedicine
+              appointments.
+            </p>
+
+            <span className="services-card-cta-link">
+              Refill Prescription <span className="cta-arrow">→</span>
+            </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
 
           {/* Doctors Notes */}
@@ -149,10 +148,13 @@ export default function Sa() {
             delay={D[1]}
             to="/doctor-note-or-sick-notes"
           >
-            <div className="services-icon-box">
-              <FaBalanceScale />
+            <div className="services-card-header">
+              <div className="services-icon-box">
+                <FaBalanceScale />
+              </div>
+              <h3 className="services-card-title">Doctor Note or Sick Note</h3>
             </div>
-            <h3 className="services-card-title">Doctor Note or Sick Note</h3>
+
             <p className="services-card-description">
               Need a doctor’s note for work, school or daily activities? Chat
               with a licensed telemedicine doctor & receive a medical note when
@@ -160,23 +162,26 @@ export default function Sa() {
               Convenient telemedicine services save you time, avoid unnecessary
               clinic visits, and provide the documentation you need.
             </p>
-            <div className="services-weight-stat-block">
-              <span className="services-card-cta-link services-weight-cta">
-                Get Started <span className="cta-arrow">→</span>
-              </span>
-            </div>
+
+            <span className="services-card-cta-link">
+              Get Started <span className="cta-arrow">→</span>
+            </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
 
-          {/* Fit to Fly — now a standard small card */}
+          {/* Fit to Fly */}
           <RevealCard
             className="services-card-item services-bento-smal-1"
             delay={D[2]}
             to="/fit-to-fly-certificate"
           >
-            <div className="services-icon-box">
-              <FaBrain />
+            <div className="services-card-header">
+              <div className="services-icon-box">
+                <FaPlane />
+              </div>
+              <h3 className="services-card-title">Fit to Fly Certificate</h3>
             </div>
-            <h3 className="services-card-title">Fit to Fly Certificate</h3>
+
             <p className="services-card-description">
               Travel with confidence by getting a fit to fly certificate from a
               licensed telemedicine provider. If medically appropriate, obtain a
@@ -184,21 +189,26 @@ export default function Sa() {
               requirements, recent surgery, pregnancy, or other health
               conditions without an unnecessary clinic visit.
             </p>
+
             <span className="services-card-cta-link">
               Get Certificate <span className="cta-arrow">→</span>
             </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
 
-          {/* ── General Consultation (2-col) ── */}
+          {/* ── General Consultation ── */}
           <RevealCard
             className="services-card-item services-bento-small"
             delay={D[3]}
             to="/general-consultation"
           >
-            <div className="services-icon-box">
-              <FaStethoscope />
+            <div className="services-card-header">
+              <div className="services-icon-box">
+                <FaStethoscope />
+              </div>
+              <h3 className="services-card-title">General Consultation</h3>
             </div>
-            <h3 className="services-card-title">General Consultation</h3>
+
             <p className="services-card-description">
               Get expert care for everyday health concerns with a licensed
               primary care doctor through a fast online doctor appointment. From
@@ -207,9 +217,11 @@ export default function Sa() {
               to get timely medical advice and personalized treatment from the
               comfort of home.
             </p>
+
             <span className="services-card-cta-link">
               See a Doctor <span className="cta-arrow">→</span>
             </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
 
           {/* Lab Requisition */}
@@ -218,10 +230,13 @@ export default function Sa() {
             delay={D[4]}
             to="/lab-requisitions"
           >
-            <div className="services-icon-box">
-              <FaHeart />
+            <div className="services-card-header">
+              <div className="services-icon-box">
+                <FaHeart />
+              </div>
+              <h3 className="services-card-title">Lab Requisition</h3>
             </div>
-            <h3 className="services-card-title">Lab Requisition</h3>
+
             <p className="services-card-description">
               Need lab testing for new symptoms, ongoing conditions, or routine
               health monitoring? Connect with a licensed healthcare provider to
@@ -229,44 +244,54 @@ export default function Sa() {
               take the next step toward an accurate diagnosis and personalized
               treatment.
             </p>
+
             <span className="services-card-cta-link">
               Learn More <span className="cta-arrow">→</span>
             </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
 
-          {/* ── Online Second Medical Opinion (new, 2-col) ── */}
+          {/* ── Online Second Medical Opinion ── */}
           <RevealCard
             className="services-card-item services-bento-small-2"
             delay={D[5]}
             to="/online-second-medical-opinion"
           >
-            <div className="services-icon-box">
-              <FaUserMd />
+            <div className="services-card-header">
+              <div className="services-icon-box">
+                <FaUserMd />
+              </div>
+              <h3 className="services-card-title">
+                Online Second Medical Opinion
+              </h3>
             </div>
-            <h3 className="services-card-title">
-              Online Second Medical Opinion
-            </h3>
+
             <p className="services-card-description">
               Get trusted guidance from qualified specialists with an
               independent review of your diagnosis, treatment plan, or surgery
               recommendation, helping you make informed healthcare decisions
               with confidence.
             </p>
+
             <span className="services-card-cta-link">
               Get a Second Opinion <span className="cta-arrow">→</span>
             </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
 
-          {/* ── Chronic Care (4-col wide) — unchanged ── */}
+          {/* ── Chronic Care Management (4-col wide) ── */}
           <RevealCard
             className="services-card-item services-bento-wide"
             delay={D[6]}
             to="/chronic-care-management"
           >
-            <div className="services-icon-box">
-              <FaHeartbeat />
+            <div className="services-card-header">
+              <div className="services-icon-box">
+                <FaHeartbeat />
+              </div>
+              <h3 className="services-card-title">Chronic Care Management</h3>
             </div>
-            <h3 className="services-card-title">Chronic Care</h3>
+
             <p className="services-card-description">
               Manage chronic conditions with ongoing support from licensed
               healthcare providers through our telemedicine services. Whether
@@ -275,9 +300,11 @@ export default function Sa() {
               plans, regular follow-ups, and continuity of care to help you stay
               healthier every day.
             </p>
+
             <span className="services-card-cta-link">
               Manage condition <span className="cta-arrow">→</span>
             </span>
+            <span className="services-card-row-arrow" aria-hidden="true">→</span>
           </RevealCard>
         </div>
       </div>

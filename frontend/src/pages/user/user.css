@@ -531,7 +531,7 @@
   }
 
   .hc-ul__main {
-    margin-left: 230px;
+    margin-left: calc(230px + 32px);
     padding: 16px 20px;
   }
 

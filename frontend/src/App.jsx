@@ -607,6 +607,7 @@ const TraumaSupport = lazy(
 const HotFlashes = lazy(
   () => import("./pages/Conditions/Conditions/HotFlashes"),
 );
+
 const HrtGuidance = lazy(
   () => import("./pages/Conditions/Conditions/HrtGuidance"),
 );
@@ -2611,7 +2612,7 @@ function AppLayout() {
             element={<BacterialVaginosis categoryId="women" />}
           />
           <Route
-            path="/women-health/obstetrics-and-gynaecology/birth-control"
+            path="/women-health/obstetrics-and-gynaecology/birth-control-consultation"
             element={<BirthControlConsultation categoryId="women" />}
           />
           <Route
@@ -2633,10 +2634,6 @@ function AppLayout() {
           <Route
             path="/women-health/lactation-consulting/low-milk-supply"
             element={<LowMilkSupply categoryId="women" />}
-          />
-          <Route
-            path="/women-health/menopause-care/hrt-guidance"
-            element={<MenopauseSymptoms categoryId="women" />}
           />
           <Route
             path="/women-health/obstetrics-and-gynaecology/menstrual-cramps"
@@ -2754,6 +2751,10 @@ function AppLayout() {
           <Route
             path="/women-health/menopause-care/hot-flashes"
             element={<HotFlashes categoryId="women" />}
+          />
+          <Route
+            path="/women-health/menopause-care/menopause-symptoms"
+            element={<MenopauseSymptoms categoryId="women" />}
           />
           <Route
             path="/women-health/menopause-care/hrt-guidance"

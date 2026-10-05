@@ -178,7 +178,7 @@ const SPECIALTY_DATA = {
       Icon: FiHeart,
       name: "Menopause Symptoms",
       desc: "Care for menopause-related symptoms",
-      path: "/women-health/menopause-care/hrt-guidance",
+      path: "/women-health/menopause-care/menopause-symptoms",
     },
   ],
 
@@ -546,9 +546,8 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${
-                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                }`}
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                  }`}
               >
                 <span className="sp-hero__badge">Women's Health</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
