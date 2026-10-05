@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../api";
 
 const DANGER = "#c0392b";
@@ -19,6 +20,93 @@ const NEXT_STEPS = [
 
 const FOCUSABLE = 'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), a[href]';
 
+// Layout lives in CSS (not inline styles) so it can respond to screen size.
+//
+//  .dam-overlay  full-screen, fixed to the viewport, dimmed, content centred.
+//  .dam-dialog   at most 90% of the viewport height. Its header and footer
+//                never scroll; only .dam-body does, so the checkbox and the
+//                Submit button can always be reached, even at ~650px tall.
+//
+// The modal is rendered through a portal into document.body. Rendering it
+// inside Profile Settings put it under a card with `backdrop-filter`, which
+// turns `position: fixed` into "fixed to that card" — the overlay then covered
+// only the card and sat off-centre.
+const STYLES = `
+.dam-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 16px;
+  background: rgba(11, 4, 67, 0.5);
+  font-family: ${FONT};
+  overscroll-behavior: contain;
+}
+.dam-dialog {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  max-height: 90dvh;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(11, 4, 67, 0.28);
+  overflow: hidden;
+}
+.dam-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+}
+.dam-head {
+  flex: none;
+  padding: 22px 26px 14px;
+}
+.dam-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 26px 8px;
+}
+.dam-foot {
+  flex: none;
+  padding: 14px 26px 20px;
+  border-top: 1px solid #eef1f8;
+  background: #fff;
+}
+.dam-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.dam-done {
+  flex: 1 1 auto;
+  padding: 22px 26px 24px;
+  overflow-y: auto;
+  min-height: 0;
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .dam-overlay { padding: 10px; }
+  .dam-head { padding: 18px 18px 12px; }
+  .dam-body { padding: 0 18px 6px; }
+  .dam-foot { padding: 12px 18px 16px; }
+  .dam-done { padding: 20px 18px 22px; }
+  .dam-actions { flex-direction: column-reverse; gap: 8px; }
+  .dam-actions > button { width: 100%; }
+}
+`;
+
 /**
  * Confirmation modal for "Delete my account". Submits a deletion REQUEST
  * (POST /api/auth/account-delete-request) that an admin approves or rejects;
@@ -35,30 +123,55 @@ export default function DeleteAccountModal({ onClose, onSubmitted }) {
   const dialogRef = useRef(null);
   const reasonRef = useRef(null);
   const doneRef = useRef(null);
-
-  // Lock page scroll while open, and put focus inside.
+  // Lock the page scroll behind the modal (compensating for the scrollbar so
+  // the page doesn't jump), put focus inside, and give it back on close.
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const trigger = document.activeElement;
+    const html = document.documentElement;
+    const body = document.body;
+    const previous = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      bodyPaddingRight: body.style.paddingRight,
+    };
+    const scrollbar = window.innerWidth - html.clientWidth;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    if (scrollbar > 0) {
+      const current = parseFloat(window.getComputedStyle(body).paddingRight) || 0;
+      body.style.paddingRight = `${current + scrollbar}px`;
+    }
     reasonRef.current?.focus();
-    return () => { document.body.style.overflow = previous; };
+
+    return () => {
+      html.style.overflow = previous.htmlOverflow;
+      body.style.overflow = previous.bodyOverflow;
+      body.style.paddingRight = previous.bodyPaddingRight;
+      if (trigger && typeof trigger.focus === "function" && document.contains(trigger)) {
+        trigger.focus();
+      }
+    };
   }, []);
 
   useEffect(() => {
     if (submitted) doneRef.current?.focus();
   }, [submitted]);
 
+  // Esc closes from anywhere (not mid-request), not only while focus is inside.
+  useEffect(() => {
+    const onDocumentKeyDown = (e) => {
+      if (e.key === "Escape" && !submitting) onClose();
+    };
+    document.addEventListener("keydown", onDocumentKeyDown);
+    return () => document.removeEventListener("keydown", onDocumentKeyDown);
+  }, [submitting, onClose]);
+
   const requestClose = () => {
     if (!submitting) onClose();
   };
 
-  // Esc closes (not mid-request); Tab stays inside the dialog.
+  // Tab stays inside the dialog.
   const onKeyDown = (e) => {
-    if (e.key === "Escape") {
-      e.stopPropagation();
-      requestClose();
-      return;
-    }
     if (e.key !== "Tab") return;
     const nodes = dialogRef.current?.querySelectorAll(FOCUSABLE);
     if (!nodes || nodes.length === 0) return;
@@ -68,6 +181,9 @@ export default function DeleteAccountModal({ onClose, onSubmitted }) {
       e.preventDefault();
       last.focus();
     } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    } else if (!dialogRef.current.contains(document.activeElement)) {
       e.preventDefault();
       first.focus();
     }
@@ -106,29 +222,22 @@ export default function DeleteAccountModal({ onClose, onSubmitted }) {
     }
   };
 
-  return (
+  const modal = (
     <div
+      className="dam-overlay"
       onMouseDown={(e) => { if (e.target === e.currentTarget) requestClose(); }}
       onKeyDown={onKeyDown}
-      style={{
-        position: "fixed", inset: 0, zIndex: 1000, background: "rgba(11,4,67,0.45)",
-        display: "flex", alignItems: "center", justifyContent: "center", padding: "16px",
-        fontFamily: FONT,
-      }}
     >
+      <style>{STYLES}</style>
       <div
         ref={dialogRef}
+        className="dam-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="dam-title"
-        style={{
-          background: "#fff", borderRadius: "20px", width: "100%", maxWidth: "520px",
-          maxHeight: "92vh", overflowY: "auto", boxShadow: "0 24px 60px rgba(11,4,67,0.28)",
-          boxSizing: "border-box", padding: "26px 26px 22px",
-        }}
       >
         {submitted ? (
-          <div style={{ textAlign: "center", padding: "10px 4px 2px" }}>
+          <div className="dam-done">
             <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#eaedf9", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }} aria-hidden="true">✉️</div>
             <h2 id="dam-title" style={{ fontSize: 19, fontWeight: 800, color: "#0b0443", margin: "0 0 10px" }}>
               Request submitted
@@ -149,83 +258,93 @@ export default function DeleteAccountModal({ onClose, onSubmitted }) {
             </button>
           </div>
         ) : (
-          <form onSubmit={submit} noValidate>
-            <h2 id="dam-title" style={{ fontSize: 19, fontWeight: 800, color: "#0b0443", margin: "0 0 14px" }}>
-              Delete your account
-            </h2>
-
-            <div role="alert" style={{ display: "flex", gap: 10, background: DANGER_BG, color: DANGER, borderRadius: 12, padding: "13px 14px", fontSize: 13.5, lineHeight: 1.5, marginBottom: 18 }}>
-              <span aria-hidden="true">⚠️</span>
-              <span>{WARNING}</span>
+          <form className="dam-form" onSubmit={submit} noValidate>
+            <div className="dam-head">
+              <h2 id="dam-title" style={{ fontSize: 19, fontWeight: 800, color: "#0b0443", margin: 0 }}>
+                Delete your account
+              </h2>
             </div>
 
-            <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0b0443", margin: "0 0 8px" }}>What happens next</h3>
-            <ul style={{ margin: "0 0 20px", paddingLeft: 18, color: "#6b7ca3", fontSize: 13, lineHeight: 1.55 }}>
-              {NEXT_STEPS.map((text) => (
-                <li key={text} style={{ marginBottom: 5 }}>{text}</li>
-              ))}
-            </ul>
-
-            <label htmlFor="dam-reason" style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#0b0443", marginBottom: 8 }}>
-              Reason (optional)
-            </label>
-            <textarea
-              id="dam-reason"
-              ref={reasonRef}
-              value={reason}
-              onChange={(e) => setReason(e.target.value.slice(0, REASON_MAX))}
-              rows={4}
-              maxLength={REASON_MAX}
-              placeholder="Let us know why you're leaving — it helps us improve."
-              style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", borderRadius: 12, border: "1.5px solid rgba(203,213,225,0.9)", fontFamily: FONT, fontSize: 14, color: "#0b0443", resize: "vertical", outline: "none" }}
-            />
-            <div style={{ textAlign: "right", fontSize: 11.5, color: "#94a3b8", margin: "4px 0 12px" }}>
-              {reason.length}/{REASON_MAX}
-            </div>
-
-            <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 13.5, color: "#0b0443", lineHeight: 1.5, marginBottom: 16 }}>
-              <input
-                type="checkbox"
-                checked={acknowledged}
-                onChange={(e) => setAcknowledged(e.target.checked)}
-                style={{ width: 18, height: 18, marginTop: 2, accentColor: DANGER, flexShrink: 0 }}
-              />
-              <span>I understand this action is permanent and I want to request deletion of my account and data.</span>
-            </label>
-
-            {error && (
-              <div role="alert" style={{ background: DANGER_BG, color: DANGER, borderRadius: 10, padding: "10px 12px", fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
-                {error}
+            <div className="dam-body">
+              <div role="alert" style={{ display: "flex", gap: 10, background: DANGER_BG, color: DANGER, borderRadius: 12, padding: "13px 14px", fontSize: 13.5, lineHeight: 1.5, marginBottom: 18 }}>
+                <span aria-hidden="true">⚠️</span>
+                <span>{WARNING}</span>
               </div>
-            )}
 
-            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={requestClose}
-                disabled={submitting}
-                style={{ padding: "11px 22px", borderRadius: 12, border: "1.5px solid rgba(203,213,225,0.9)", background: "#fff", color: "#6b7ca3", fontFamily: FONT, fontSize: 14, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer" }}
-              >
-                Keep my account
-              </button>
-              <button
-                type="submit"
-                disabled={!acknowledged || submitting}
-                style={{ padding: "11px 24px", borderRadius: 12, border: "none", background: DANGER, color: "#fff", fontFamily: FONT, fontSize: 14, fontWeight: 700, cursor: !acknowledged || submitting ? "not-allowed" : "pointer", opacity: !acknowledged || submitting ? 0.45 : 1 }}
-              >
-                {submitting ? "Submitting…" : "Submit deletion request"}
-              </button>
+              <h3 style={{ fontSize: 14, fontWeight: 800, color: "#0b0443", margin: "0 0 8px" }}>What happens next</h3>
+              <ul style={{ margin: "0 0 20px", paddingLeft: 18, color: "#6b7ca3", fontSize: 13, lineHeight: 1.55 }}>
+                {NEXT_STEPS.map((text) => (
+                  <li key={text} style={{ marginBottom: 5 }}>{text}</li>
+                ))}
+              </ul>
+
+              <label htmlFor="dam-reason" style={{ display: "block", fontSize: 13, fontWeight: 800, color: "#0b0443", marginBottom: 8 }}>
+                Reason (optional)
+              </label>
+              <textarea
+                id="dam-reason"
+                ref={reasonRef}
+                value={reason}
+                onChange={(e) => setReason(e.target.value.slice(0, REASON_MAX))}
+                rows={4}
+                maxLength={REASON_MAX}
+                placeholder="Let us know why you're leaving — it helps us improve."
+                style={{ width: "100%", boxSizing: "border-box", padding: "12px 14px", borderRadius: 12, border: "1.5px solid rgba(203,213,225,0.9)", fontFamily: FONT, fontSize: 14, color: "#0b0443", resize: "vertical", outline: "none" }}
+              />
+              <div style={{ textAlign: "right", fontSize: 11.5, color: "#94a3b8", margin: "4px 0 12px" }}>
+                {reason.length}/{REASON_MAX}
+              </div>
+
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", fontSize: 13.5, color: "#0b0443", lineHeight: 1.5, marginBottom: 14 }}>
+                <input
+                  type="checkbox"
+                  checked={acknowledged}
+                  onChange={(e) => setAcknowledged(e.target.checked)}
+                  style={{ width: 18, height: 18, marginTop: 2, accentColor: DANGER, flexShrink: 0 }}
+                />
+                <span>I understand this action is permanent and I want to request deletion of my account and data.</span>
+              </label>
+
+              {error && (
+                <div role="alert" style={{ background: DANGER_BG, color: DANGER, borderRadius: 10, padding: "10px 12px", fontSize: 13, fontWeight: 600, marginBottom: 12 }}>
+                  {error}
+                </div>
+              )}
+
+              <p style={{ textAlign: "center", fontSize: 12.5, color: "#6b7ca3", margin: "6px 0 8px" }}>
+                Prefer email?{" "}
+                <a href="mailto:support@humancareconnect.co?subject=Account%20Deletion%20Request" style={{ color: "#083ab0", fontWeight: 700 }}>
+                  support@humancareconnect.co
+                </a>
+              </p>
             </div>
 
-            <p style={{ textAlign: "center", fontSize: 12.5, color: "#6b7ca3", margin: "16px 0 0" }}>
-              Prefer email?{" "}
-              <a href="mailto:support@humancareconnect.co?subject=Account%20Deletion%20Request" style={{ color: "#083ab0", fontWeight: 700 }}>
-                support@humancareconnect.co
-              </a>
-            </p>
+            <div className="dam-foot">
+              <div className="dam-actions">
+                <button
+                  type="button"
+                  onClick={requestClose}
+                  disabled={submitting}
+                  style={{ padding: "11px 22px", borderRadius: 12, border: "1.5px solid rgba(203,213,225,0.9)", background: "#fff", color: "#6b7ca3", fontFamily: FONT, fontSize: 14, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer" }}
+                >
+                  Keep my account
+                </button>
+                <button
+                  type="submit"
+                  disabled={!acknowledged || submitting}
+                  style={{ padding: "11px 24px", borderRadius: 12, border: "none", background: DANGER, color: "#fff", fontFamily: FONT, fontSize: 14, fontWeight: 700, cursor: !acknowledged || submitting ? "not-allowed" : "pointer", opacity: !acknowledged || submitting ? 0.45 : 1 }}
+                >
+                  {submitting ? "Submitting…" : "Submit deletion request"}
+                </button>
+              </div>
+            </div>
           </form>
         )}
       </div>
     </div>
   );
+
+  // Straight into <body>: independent of whatever card/stacking context the
+  // trigger lives in.
+  return createPortal(modal, document.body);
 }
