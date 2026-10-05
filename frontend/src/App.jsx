@@ -18,6 +18,7 @@ const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
 const NotFound = lazy(() => import("./components/NotFound")); // 404 Page
 const Home = lazy(() => import("./pages/Home"));
+
 const AskDoctor = lazy(() => import("./pages/AskDoctor"));
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
@@ -30,7 +31,7 @@ const Login = lazy(() => import("./pages/Login"));
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
-
+const Serviceareas = lazy(() => import("./pages/Serviceareas"));
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
@@ -849,6 +850,9 @@ const AdminPartnerCases = lazy(() => import("./pages/admin/PartnerCases"));
 const AdminPartnerCaseDetail = lazy(
   () => import("./pages/admin/PartnerCaseDetail"),
 );
+const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
+const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
+const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1178,6 +1182,8 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
+                    <Route path="/corporates" element={<Corporates />} />
+                    <Route path="/service-areas" element={<Serviceareas />} />
           <Route
             path="/appointment-booking/:catSlug"
             element={<AppointmentBooking />}
@@ -1540,6 +1546,21 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/admin-dashboard/email"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <EmailLayout />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Navigate to="inbox" replace />} />
+            <Route path="mail/:messageId" element={<EmailThread />} />
+            <Route path="box/:mailboxId/:folder" element={<EmailList />} />
+            <Route path=":folder" element={<EmailList />} />
+          </Route>
           <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}

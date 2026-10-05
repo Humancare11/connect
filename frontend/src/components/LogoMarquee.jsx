@@ -7,7 +7,7 @@ const labels = [
   "SAME-DAY APPOINTMENTS",
   "SECURE PRESCRIPTIONS",
   "PRIVATE CONSULTATIONS",
-  "GLOBAL SERVICES",
+  
 ];
 
 export default function MM() {

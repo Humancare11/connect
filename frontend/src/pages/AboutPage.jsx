@@ -226,7 +226,7 @@ const services = [
   },
   {
     // tier: "Flagship",
-    title: "Healthcare for Travelers & Global Communities",
+    title: "Healthcare for Travelers",
     body: "Stay connected to trusted medical support wherever life takes you with accessible virtual healthcare designed for modern lifestyles.",
   },
   {
@@ -262,14 +262,14 @@ export default function AboutPage() {
           <div className="corp-hero about-page-hero">
             <div className="corp-hero-inner">
               <h1>
-                One Global Connection to Better Healthcare.
+                One Connection to Better Healthcare.
               </h1>
               <p>
-                At Humancare Connect, we make quality healthcare accessible
-                beyond borders. Through secure online doctor consultations and
-                virtual healthcare services, we connect individuals,
-                travelers, and organizations with trusted medical care
-                anytime, anywhere.
+               At Humancare Connect, we make quality healthcare more accessible
+for patients across the United States. Through secure online doctor
+consultations and virtual care services, we connect individuals,
+families, and organizations with licensed U.S. providers, right
+from the comfort of home.
               </p>
             </div>
           </div>
@@ -616,7 +616,7 @@ export default function AboutPage() {
                     </p>
                   </div>
                   <div className="trust-privacy__badges">
-                    {["GDPR", "HIPAA-aligned", "Encrypted"].map((b) => (
+                    {[ "HIPAA-aligned", "Encrypted"].map((b) => (
                       <span key={b} className="badge">
                         {b}
                       </span>

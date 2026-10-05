@@ -332,7 +332,7 @@ export default function IndustryCarousel() {
                   </div>
                   {isActive && (
                     <div className="card-footer">
-                      <div className="badge">🌐 Available in 50+ countries</div>
+                      <div className="badge">🌐 Available across the U.S.</div>
                       <button className="cta">Get a Proposal</button>
                     </div>
                   )}

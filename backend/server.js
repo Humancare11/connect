@@ -52,6 +52,7 @@ const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
+const { scheduleEmailSync } = require("./jobs/emailSyncJob");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
 const {
@@ -138,6 +139,7 @@ const startServer = async () => {
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
   scheduleInvoiceReconciliation();
+  scheduleEmailSync();
 
   await ensureBucketCors(allowedOrigins);
 
@@ -604,6 +606,7 @@ app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
+app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/qna", require("./routes/qna"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));

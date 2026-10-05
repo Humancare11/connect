@@ -39,7 +39,12 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
       doctorId: resolvedDoctorId,
       approvalStatus: "approved",
     }).lean();
-    const feeAmount = enrollment?.consultantFees || 500;
+    const rawFee = enrollment?.consultantFees;
+    const feeAmount = Number(rawFee);
+    if (rawFee === null || rawFee === undefined || !Number.isFinite(feeAmount) || feeAmount <= 0) {
+      const feeMsg = "Consultation fee not configured. Please contact support.";
+      return res.status(400).json({ error: feeMsg, msg: feeMsg });
+    }
     const feeCurrency = enrollment?.feeCurrency || "USD";
     const feeUSD = convertAmount(feeAmount, feeCurrency, "USD").toFixed(2);
 

@@ -279,9 +279,17 @@ export function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
-    const doctorId = getBookingDoctorId(doctor);
-    const res = await api.post("/api/paypal/create-order", { doctorId });
-    return res.data.orderId;
+    setPaypalError("");
+    try {
+      const doctorId = getBookingDoctorId(doctor);
+      const res = await api.post("/api/paypal/create-order", { doctorId });
+      return res.data.orderId;
+    } catch (err) {
+      // Rethrow with the server's friendly message so PayPalButtons' onError shows it.
+      throw new Error(
+        err.response?.data?.msg || "Failed to start PayPal payment. Please try again.",
+      );
+    }
   };
 
   const onPaypalApprove = async (data) => {

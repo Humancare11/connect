@@ -305,7 +305,7 @@ const CATEGORIES = [
     icon: "globe",
     name: "Travel & Global Care",
     tagline:
-      "Expert healthcare support for international travelers, expatriates, medical tourists, cross-border healthcare needs, travel-related concerns, medication guidance, and ongoing care anywhere in the world.",
+      "Expert healthcare support for expatriates, medical tourists, cross-border healthcare needs, travel-related concerns, medication guidance, and ongoing care anywhere in the world.",
     specialtyCount: 2,
     conditionsCount: 11,
     color: "#0891B2",

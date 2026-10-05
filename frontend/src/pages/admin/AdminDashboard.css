@@ -1136,15 +1136,16 @@
   }
 }
 /* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
-@media (max-width: 1024px) {
+/* The sidebar stays a fixed column down to 769px and becomes the slide-in
+   drawer (768px block above) below that, so these rules must not override it. */
+@media (min-width: 769px) and (max-width: 1024px) {
   .ad-sidebar { width: 220px; }
-  .ad-main { margin-left: 220px; }
+  .ad-main { margin-left: 252px; }
+}
+@media (max-width: 1024px) {
   .adp-stats { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 900px) {
-  .ad-sidebar { width: 100%; height: auto; position: static; flex-direction: row; padding: 12px 16px; }
-  .ad-nav { display: none; }
-  .ad-main { margin-left: 0; width: 100%; }
   .ad-content { padding: 16px; }
   .adp-stats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .ad-topbar { padding: 10px 16px; }
