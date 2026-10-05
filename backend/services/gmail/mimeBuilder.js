@@ -11,15 +11,18 @@ const {
   stripLineBreaks,
 } = require("../../utils/emailValidation");
 const { EMAIL_DOMAIN } = require("../../models/Mailbox");
+const { buildHtml } = require("../email/emailHtml");
 
 // Visible sender name. Clients only ever see the company, never the admin.
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "Human Care Connect";
 
-// Body is plain text + the mailbox's company footer. The admin's name is
-// deliberately never added — attribution lives only in our database.
-function composeText(body, signature) {
+// Body is plain text + the mailbox's company footer (+ the tracking disclosure line
+// on tracked mail). The admin's name is deliberately never added — attribution
+// lives only in our database. Without a disclosure the result is exactly what
+// it always was.
+function composeText(body, signature, disclosure = "") {
   const text = String(body ?? "").replace(/\r\n/g, "\n").trimEnd();
-  const footer = String(signature || "").trim();
+  const footer = [String(signature || "").trim(), String(disclosure || "").trim()].filter(Boolean).join("\n\n");
   return footer ? `${text}\n\n-- \n${footer}\n` : `${text}\n`;
 }
 
@@ -29,8 +32,11 @@ function composeText(body, signature) {
 //   inReplyTo    RFC Message-ID of the mail being answered (from OUR database)
 //   references   RFC Message-IDs of the thread so far (from OUR database)
 //   attachments  [{ filename, contentType, content: Buffer }]
+//   tracking     { imageUrl, disclosure } → the mail becomes multipart/alternative
+//                (the same plain text + an HTML twin ending in a 1x1 image);
+//                null/absent → plain text only, exactly as before
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [] }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -56,7 +62,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
 
   // We choose the Message-ID so it is stored before Gmail ever sees the mail.
   const rfcMessageId = `<${crypto.randomUUID()}@${EMAIL_DOMAIN}>`;
-  const text = composeText(body, mailbox.signature);
+  const text = composeText(body, mailbox.signature, tracking?.disclosure);
   const cleanRef = (id) => stripLineBreaks(id);
 
   const composer = new MailComposer({
@@ -65,6 +71,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
     cc: cc.map((a) => ({ name: a.name, address: a.address })),
     subject: cleanedSubject,
     text,
+    ...(tracking?.imageUrl ? { html: buildHtml(text, { imageUrl: tracking.imageUrl }) } : {}),
     messageId: rfcMessageId,
     ...(inReplyTo ? { inReplyTo: cleanRef(inReplyTo) } : {}),
     ...(references.length ? { references: references.map(cleanRef).filter(Boolean) } : {}),

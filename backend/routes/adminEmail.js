@@ -14,6 +14,7 @@ const { getAttachmentBytes } = require("../services/email/attachmentFiles");
 const { getGmailApi } = require("../services/gmail/gmailAuth");
 const { createGmailClient } = require("../services/gmail/gmailClient");
 const { emailSendLimiter } = require("../middleware/rateLimiters");
+const { getTrackingState } = require("../services/email/emailSettings");
 const {
   EmailValidationError,
   MAX_ATTACHMENT_BYTES,
@@ -43,6 +44,7 @@ function createAdminEmailRouter({
   getGmail = (mailbox) => createGmailClient(getGmailApi(mailbox)),
   store = createS3AttachmentStore(),
   sendLimiter = emailSendLimiter,
+  trackingState = () => getTrackingState(),
 } = {}) {
   const router = express.Router();
   router.use(...guard);
@@ -98,6 +100,11 @@ function createAdminEmailRouter({
     });
 
   const textField = (req, name) => (typeof req.body?.[name] === "string" ? req.body[name] : "");
+  // The compose form's "Track opens" box: "1" / "0", or absent → the mailbox default.
+  const trackOpensField = (req) => {
+    const v = textField(req, "trackOpens");
+    return v === "1" ? true : v === "0" ? false : undefined;
+  };
   const validatedFiles = async (req) => Promise.all((req.files || []).map(validateAttachment));
 
   const handle = (fn) => async (req, res) => {
@@ -137,9 +144,12 @@ function createAdminEmailRouter({
       }
     }
 
+    // Tells the compose form whether to show "Track opens" at all.
+    const tracking = await trackingState();
     res.json({
       mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0 })),
       counts: { received, spam },
+      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled) },
     });
   }));
 
@@ -276,6 +286,8 @@ function createAdminEmailRouter({
       clientRequestId: textField(req, "clientRequestId"),
       gmail: lazyGmail(mailbox),
       store,
+      trackOpens: trackOpensField(req),
+      trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
     res.status(duplicate ? 200 : 201).json({ duplicate, message: serializeListItem(message, mailboxMap) });
@@ -311,6 +323,8 @@ function createAdminEmailRouter({
       confirm: textField(req, "confirm") === "1",
       gmail: lazyGmail(mailbox),
       store,
+      trackOpens: trackOpensField(req),
+      trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
     res.status(duplicate ? 200 : 201).json({ duplicate, message: message ? serializeListItem(message, mailboxMap) : null });

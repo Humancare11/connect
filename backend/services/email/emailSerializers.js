@@ -19,6 +19,35 @@ function serializeMailbox(mb) {
     address: mb.address,
     displayName: mb.displayName,
     color: mb.color,
+    trackOpensDefault: mb.trackOpensDefault !== false,
+  };
+}
+
+// Open tracking as the screens show it: status "opened" | "pending" | "unavailable".
+// Only for outbound mail that actually went out. Never includes the token or its hash.
+// A row without a tracking block (older mail, or mail sent from Gmail directly)
+// is "unavailable".
+function trackingView(doc) {
+  if (doc.direction !== "out" || !["sent", "replied"].includes(doc.status)) return null;
+  const t = doc.tracking;
+  const multiRecipient = (doc.to?.length || 0) + (doc.cc?.length || 0) > 1;
+  if (!t) {
+    return {
+      status: "unavailable",
+      reason: doc.sentOutsideDashboard ? "outside_dashboard" : "tracking_off",
+      firstOpenedAt: null,
+      lastOpenedAt: null,
+      openCount: 0,
+      multiRecipient,
+    };
+  }
+  return {
+    status: t.status || "unavailable",
+    reason: t.status === "unavailable" ? t.unavailableReason || "" : "",
+    firstOpenedAt: t.firstOpenedAt || null,
+    lastOpenedAt: t.lastOpenedAt || null,
+    openCount: t.openCount || 0,
+    multiRecipient,
   };
 }
 
@@ -45,6 +74,7 @@ function baseFields(doc, mailboxMap) {
     firstViewed: doc.firstViewedAt
       ? { by: { id: idOf(doc.firstViewedBy), name: doc.firstViewedByName }, at: doc.firstViewedAt }
       : null,
+    tracking: trackingView(doc),
     // Shared-inbox meaning: unread = no admin has opened it yet.
     unread: doc.direction === "in" && !doc.firstViewedAt,
   };
@@ -74,4 +104,4 @@ function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsByI
   };
 }
 
-module.exports = { serializeMailbox, serializeListItem, serializeThreadMessage, idOf };
+module.exports = { serializeMailbox, serializeListItem, serializeThreadMessage, trackingView, idOf };

@@ -3,6 +3,7 @@ const EmailAttachment = require("../../models/EmailAttachment");
 const { buildRawMessage } = require("../gmail/mimeBuilder");
 const { makeSnippet } = require("../gmail/mimeParser");
 const { attachmentKey } = require("../../utils/emailAttachments");
+const { planTracking } = require("./emailTracking");
 
 // An error the API shows to the admin as-is (status + message + optional extra JSON).
 class EmailHttpError extends Error {
@@ -34,13 +35,18 @@ function friendlySendError(err) {
 //  - a double-click is caught by the unique (sentByAdmin, clientRequestId) index,
 //  - a failure is visible in Sent as "Failed" with the reason.
 // → { message, duplicate }
-async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = [], clientRequestId, thread = null, gmail, store }) {
+async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = [], clientRequestId, thread = null, gmail, store, trackOpens, trackingState }) {
   const requestId = cleanRequestId(clientRequestId);
 
   if (requestId) {
     const existing = await EmailMessage.findOne({ sentByAdmin: actor.id, clientRequestId: requestId });
     if (existing) return { message: existing, duplicate: true };
   }
+
+  // Open tracking is decided per mail (global switches, the "Track opens" box,
+  // recipients). The token is made now so the stored row can already be found by
+  // a very fast open.
+  const plan = await planTracking({ mailbox, to, cc, requested: trackOpens, state: trackingState });
 
   // Validates addresses/subject/body/size and builds the MIME mail. Throws
   // EmailValidationError before anything is stored or sent.
@@ -53,6 +59,7 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     inReplyTo: thread?.inReplyTo || "",
     references: thread?.references || [],
     attachments: files,
+    tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure: plan.disclosure } : null,
   });
 
   const doc = new EmailMessage({
@@ -75,7 +82,12 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     sentOutsideDashboard: false,
     status: "sending",
     clientRequestId: requestId,
+    tracking: plan.enabled
+      ? { enabled: true, tokenHash: plan.hash, status: "pending" }
+      : { enabled: false, status: "unavailable", unavailableReason: plan.reason },
   });
+  // Only the plain text is stored: the dashboard never renders the tracking image,
+  // so our own admins opening a mail here can never count as the recipient.
   doc.setContent({ text: built.text, html: "", snippet: makeSnippet(body) });
 
   try {
@@ -141,8 +153,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   return { message: await EmailMessage.findById(doc._id), duplicate: false };
 }
 
-function sendNewMail({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store }) {
-  return dispatch({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store });
+function sendNewMail({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, trackingState }) {
+  return dispatch({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, trackingState });
 }
 
 // Decides what a reply to `opened` answers, from stored data only (never the request):
@@ -166,7 +178,7 @@ function pickReplyTarget(opened, thread) {
 // Claim-then-send: the received mail is atomically marked "replied by <admin>"
 // first, so two admins answering at once can't both go through; a failed send
 // restores whatever was there before.
-async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject, body, files, clientRequestId, confirm = false, gmail, store }) {
+async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject, body, files, clientRequestId, confirm = false, gmail, store, trackOpens, trackingState }) {
   // A repeat of a request we already handled must not claim or send again.
   const requestId = cleanRequestId(clientRequestId);
   if (requestId) {
@@ -215,6 +227,8 @@ async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject
       },
       gmail,
       store,
+      trackOpens,
+      trackingState,
     });
   } catch (err) {
     // Nothing went out (or it failed): give the claim back, unless someone else

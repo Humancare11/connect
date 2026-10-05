@@ -9,7 +9,7 @@ const { isCompanyAddress, EMAIL_DOMAIN } = Mailbox;
 
 const DEFAULT_COLOR = "#0d7a6f";
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
-const EDITABLE = ["displayName", "color", "signature", "isActive", "sortOrder"];
+const EDITABLE = ["displayName", "color", "signature", "isActive", "sortOrder", "trackOpensDefault"];
 
 class ValidationError extends Error {
   constructor(message, status = 400, extra = {}) {
@@ -32,6 +32,7 @@ function serialize(mb, messageCount = 0) {
     color: mb.color,
     signature: mb.signature,
     sortOrder: mb.sortOrder,
+    trackOpensDefault: mb.trackOpensDefault !== false,
     isActive: mb.isActive,
     deactivatedAt: mb.deactivatedAt,
     lastSyncAt: mb.lastSyncAt,
@@ -69,6 +70,10 @@ function validateFields(body, { requireAll }) {
       throw new ValidationError("Sort order must be a whole number between 0 and 1000.");
     }
     out.sortOrder = body.sortOrder;
+  }
+  if (body.trackOpensDefault !== undefined) {
+    if (typeof body.trackOpensDefault !== "boolean") throw new ValidationError("trackOpensDefault must be true or false.");
+    out.trackOpensDefault = body.trackOpensDefault;
   }
   if (body.isActive !== undefined) {
     if (typeof body.isActive !== "boolean") throw new ValidationError("isActive must be true or false.");
@@ -170,6 +175,7 @@ function createSuperadminMailboxesRouter({
       displayName: fields.displayName,
       color: fields.color || DEFAULT_COLOR,
       ...(fields.signature !== undefined ? { signature: fields.signature } : {}),
+      ...(fields.trackOpensDefault !== undefined ? { trackOpensDefault: fields.trackOpensDefault } : {}),
       sortOrder: fields.sortOrder ?? (last?.sortOrder || 0) + 1,
       isActive: true,
       createdBy: req.user.id,

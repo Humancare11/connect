@@ -33,6 +33,10 @@ const mailboxSchema = new mongoose.Schema(
     // Company footer appended to outgoing mail. Company only — never the admin.
     signature: { type: String, default: "Human Care Connect", trim: true, maxlength: 500 },
 
+    // Whether "Track opens" starts ticked when composing from this ID (e.g. off for hr@).
+    // Only has an effect while open tracking is switched on globally.
+    trackOpensDefault: { type: Boolean, default: true },
+
     // Empty = every admin/superadmin may use this mailbox (current requirement).
     // Hook for restricting a mailbox to specific admins later.
     allowedAdmins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
