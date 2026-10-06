@@ -91,7 +91,7 @@
 /* ── main pane ── */
 .em-pane {
   background: var(--em-surface); border-radius: 16px; min-width: 0; min-height: calc(100vh - 210px);
-  display: flex; flex-direction: column; overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden; container-type: inline-size;
   border: 1px solid var(--em-line); box-shadow: 0 2px 10px rgba(11, 4, 67, 0.05);
 }
 .em-toolbar {
@@ -281,7 +281,9 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .em-toast { position: fixed; left: 24px; bottom: 24px; background: #01164a; color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 14px; z-index: 310; max-width: calc(100% - 48px); }
 
 /* ── responsive ── */
-@media (max-width: 1100px) {
+/* Row layout follows the width of the list pane (not the screen): the admin sidebar
+   takes 240px, so a 1024px screen leaves the list only ~510px. */
+@container (max-width: 820px) {
   .em-row, .em-rhead { grid-template-columns: 160px minmax(0, 1fr) var(--mc) 130px 60px; }
   .em-to { display: none; }
 }
@@ -304,7 +306,7 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
   .em-compose.full { top: 0; height: 100%; }
   .em-c-head, .em-compose.full .em-c-head { border-radius: 0; }
 }
-@media (max-width: 640px) {
+@container (max-width: 620px) {
   .em-rhead { display: none; }
   .em-row {
     grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "who time" "line line" "stc mc";
@@ -315,6 +317,8 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
   .em-row .em-line { grid-area: line; }
   .em-row .em-mc { grid-area: mc; }
   .em-row .em-stc { grid-area: stc; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; }
+}
+@media (max-width: 640px) {
   .em-search { flex-basis: 100%; max-width: none; }
 }
 
