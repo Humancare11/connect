@@ -61,13 +61,13 @@ function InfoBox({ icon, label, children }) {
   );
 }
 
-// Three small boxes under the subject: who sent / replied, open tracking, who viewed.
-function InfoBoxes({ m, views, adminId }) {
+// Small boxes under the subject. Sent mail: who sent it and open tracking. Received mail:
+// who replied and which team member viewed it first ("Viewed by" is meaningless on sent mail,
+// where "Sent by" already says who handled it).
+function InfoBoxes({ m, views }) {
   const outbound = m.direction === "out";
   const info = trackingInfo(m.tracking);
   const first = views[0];
-  // The sender opening their own mail is never recorded, so "Nobody yet" would read wrongly to them.
-  const ownSentMail = outbound && m.sentBy && adminId && String(m.sentBy.id) === String(adminId);
 
   return (
     <div className="em-info">
@@ -94,27 +94,29 @@ function InfoBoxes({ m, views, adminId }) {
         </InfoBox>
       )}
 
-      <InfoBox icon={<Icon name="eye" size={20} />} label="Viewed by">
-        {first ? (
-          <>
-            <b>{first.admin.name}</b> first
-            <ol className="em-views">
-              {views.map((v) => (
-                <li key={v.admin.id} title={v.count > 1 ? `Opened ${v.count} times, last ${fmtFull(v.lastAt)}` : undefined}>
-                  <Avatar name={v.admin.name} colorKey={v.admin.id} />
-                  <span>{v.admin.name.split(/\s+/)[0]}</span>
-                  <span className="em-n">
-                    {fmtTime(v.firstAt)}
-                    {v.count > 1 ? ` · ×${v.count}` : ""}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </>
-        ) : (
-          <small>{ownSentMail ? "Not opened by another admin" : "Nobody yet"}</small>
-        )}
-      </InfoBox>
+      {!outbound && (
+        <InfoBox icon={<Icon name="eye" size={20} />} label="Viewed by">
+          {first ? (
+            <>
+              <b>{first.admin.name}</b> first
+              <ol className="em-views">
+                {views.map((v) => (
+                  <li key={v.admin.id} title={v.count > 1 ? `Opened ${v.count} times, last ${fmtFull(v.lastAt)}` : undefined}>
+                    <Avatar name={v.admin.name} colorKey={v.admin.id} />
+                    <span>{v.admin.name.split(/\s+/)[0]}</span>
+                    <span className="em-n">
+                      {fmtTime(v.firstAt)}
+                      {v.count > 1 ? ` · ×${v.count}` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </>
+          ) : (
+            <small>Nobody yet</small>
+          )}
+        </InfoBox>
+      )}
     </div>
   );
 }
@@ -352,7 +354,7 @@ export default function EmailThread() {
           </div>
         )}
 
-        <InfoBoxes m={m} views={views} adminId={admin?._id ?? admin?.id} />
+        <InfoBoxes m={m} views={views} />
 
         {actionError && <div className="em-banner spam" role="alert"><span>{actionError}</span></div>}
 
