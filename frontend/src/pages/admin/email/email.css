@@ -409,3 +409,4 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .mi-optlist small { color: var(--em-muted); overflow-wrap: anywhere; }
 .mi-optadd { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 8px; }
 @media (max-width: 640px) { .mi-optadd { grid-template-columns: minmax(0, 1fr); } }
+.em-trk-automated { background: var(--em-sunk); color: var(--em-muted); }

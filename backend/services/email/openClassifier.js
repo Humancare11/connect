@@ -56,12 +56,16 @@ function ipMatches(ip, rules) {
 // → { counted, reason, automated }
 //   counted    a likely human open
 //   reason     why it was ignored (empty when counted)
-//   automated  ignored because it looks machine-made (feeds "Tracking unavailable")
+//   automated  ignored because it looks machine-made (shown as "Only automatic loads seen")
 function classifyOpen({ sentAt, now = new Date(), ip = "", userAgent = "", graceSeconds = 60, ignoreIps = [] }) {
   if (ignoreIps.length && ipMatches(ip, ignoreIps)) return { counted: false, reason: "own_ip", automated: false };
 
+  // Gmail's image proxy loads the image once, often at delivery, and then serves its
+  // cached copy to later opens. That first hit can be the only signal we ever get, so
+  // the grace window must not discard it. Every other client keeps the window.
+  const googleProxy = /GoogleImageProxy/i.test(userAgent);
   const age = new Date(now).getTime() - new Date(sentAt).getTime();
-  if (age < graceSeconds * 1000) return { counted: false, reason: "grace_window", automated: true };
+  if (!googleProxy && age < graceSeconds * 1000) return { counted: false, reason: "grace_window", automated: true };
 
   if (!String(userAgent || "").trim()) return { counted: false, reason: "no_user_agent", automated: true };
   if (SCANNER_UA.test(userAgent) && !/GoogleImageProxy/i.test(userAgent)) {

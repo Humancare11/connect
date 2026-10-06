@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 const FOLDERS = ["inbox", "sent", "spam", "all"];
 const STATUS_FILTERS = ["noreply", "replied", "failed"];
 // Sent folder only: "Open status" (see EmailMessage.tracking).
-const OPEN_FILTERS = ["opened", "pending", "unavailable"];
+const OPEN_FILTERS = ["opened", "pending", "automated", "unavailable"];
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 50;
 const MAX_SEARCH_LENGTH = 100;
@@ -98,14 +98,25 @@ const STATUS_CLAUSES = {
   failed: { direction: "out", status: "failed" },
 };
 
-// Mail that actually went out. Mail without a tracking block counts as "unavailable".
+// Mail that actually went out. Mail without a tracking block counts as "unavailable" (not tracked).
 const OPEN_CLAUSES = {
   opened: { direction: "out", status: { $in: ["sent", "replied"] }, "tracking.status": "opened" },
   pending: { direction: "out", status: { $in: ["sent", "replied"] }, "tracking.status": "pending" },
+  // Only automatic loads (scanner, preview, prefetch) were seen.
+  automated: {
+    direction: "out",
+    status: { $in: ["sent", "replied"] },
+    "tracking.status": "unavailable",
+    "tracking.unavailableReason": "automated_only",
+  },
+  // Not tracked at all (tracking off, mail off, internal/Apple/opted-out recipient, sent from Gmail, older mail).
   unavailable: {
     direction: "out",
     status: { $in: ["sent", "replied"] },
-    $or: [{ "tracking.status": "unavailable" }, { tracking: { $exists: false } }],
+    $or: [
+      { "tracking.status": "unavailable", "tracking.unavailableReason": { $ne: "automated_only" } },
+      { tracking: { $exists: false } },
+    ],
   },
 };
 

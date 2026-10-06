@@ -62,11 +62,12 @@ function InfoBox({ icon, label, children }) {
 }
 
 // Three small boxes under the subject: who sent / replied, open tracking, who viewed.
-function InfoBoxes({ m, views }) {
+function InfoBoxes({ m, views, adminId }) {
   const outbound = m.direction === "out";
   const info = trackingInfo(m.tracking);
-  const t = m.tracking;
   const first = views[0];
+  // The sender opening their own mail is never recorded, so "Nobody yet" would read wrongly to them.
+  const ownSentMail = outbound && m.sentBy && adminId && String(m.sentBy.id) === String(adminId);
 
   return (
     <div className="em-info">
@@ -88,27 +89,8 @@ function InfoBoxes({ m, views }) {
 
       {outbound && info && (
         <InfoBox icon={<Icon name="open" size={20} />} label="Open tracking">
-          {info.kind === "opened" ? (
-            <>
-              <b className="em-ok">
-                Opened {t.openCount}×
-              </b>
-              <small>
-                First opened {fmtFull(t.firstOpenedAt)}
-                {t.multiRecipient ? " · we cannot tell which recipient" : ""}
-              </small>
-            </>
-          ) : info.kind === "pending" ? (
-            <>
-              <b>Not opened yet</b>
-              <small>Recipient may block images</small>
-            </>
-          ) : (
-            <>
-              <b>Not tracked</b>
-              <small>{info.detail}</small>
-            </>
-          )}
+          <b className={info.kind === "opened" ? "em-ok" : undefined}>{info.text}</b>
+          <small>{info.detail}</small>
         </InfoBox>
       )}
 
@@ -130,7 +112,7 @@ function InfoBoxes({ m, views }) {
             </ol>
           </>
         ) : (
-          <small>Nobody yet</small>
+          <small>{ownSentMail ? "Not opened by another admin" : "Nobody yet"}</small>
         )}
       </InfoBox>
     </div>
@@ -370,7 +352,7 @@ export default function EmailThread() {
           </div>
         )}
 
-        <InfoBoxes m={m} views={views} />
+        <InfoBoxes m={m} views={views} adminId={admin?._id ?? admin?.id} />
 
         {actionError && <div className="em-banner spam" role="alert"><span>{actionError}</span></div>}
 

@@ -56,7 +56,7 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
       verdict = { counted: false, reason: "duplicate", automated: false };
     }
   } else if (verdict.automated) {
-    // Looks machine-made: until a real open shows up the honest answer is "unavailable".
+    // Looks machine-made: until a real open shows up the honest answer is "only automatic loads seen".
     await EmailMessage.updateOne(
       { _id: message._id, "tracking.status": "pending" },
       { $set: { "tracking.status": "unavailable", "tracking.unavailableReason": "automated_only" } }

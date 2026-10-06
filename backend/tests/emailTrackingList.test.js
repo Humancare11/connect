@@ -100,8 +100,11 @@ describe("Sent list and mail page show open tracking", () => {
   test("filter: Not opened yet", async () => {
     assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=pending")), ["Pending mail"]);
   });
-  test("filter: Tracking unavailable includes old mail without a tracking block, but never failed/sending", async () => {
-    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=unavailable")), ["Automated only", "Legacy mail (no tracking block)", "Mail off", "Sent from Gmail"]);
+  test("filter: Automatic loads only", async () => {
+    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=automated")), ["Automated only"]);
+  });
+  test("filter: Not tracked includes old mail without a tracking block, but not automated-only, failed or sending mail", async () => {
+    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=unavailable")), ["Legacy mail (no tracking block)", "Mail off", "Sent from Gmail"]);
   });
   test("the filter combines with other filters and is ignored outside Sent", async () => {
     assert.deepEqual(subjects(await get(`/messages?folder=sent&openStatus=opened&status=replied`)), ["Replied mail"]);

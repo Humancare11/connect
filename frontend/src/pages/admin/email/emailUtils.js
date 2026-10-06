@@ -123,11 +123,13 @@ export const newRequestId = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 // ── open tracking ──
-// Only these three states are ever shown. Deliberately NOT "Seen" or "Read": a
-// tracking image only shows that a mail app loaded the image.
+// A tracking image can only show that a mail app (or a scanner) loaded it, never that
+// a person read the mail. So the wording is hedged: "Likely opened", "No signal yet",
+// "Only automatic loads seen". Deliberately NOT "Seen" or "Read".
 export const TRACKING_FILTER_OPTIONS = [
-  ["opened", "Opened"],
-  ["pending", "Not opened yet"],
+  ["opened", "Likely opened"],
+  ["pending", "No signal yet"],
+  ["automated", "Automatic loads only"],
   ["unavailable", "Not tracked"],
 ];
 
@@ -138,23 +140,29 @@ const TRACKING_REASONS = {
   apple_recipient: "Apple Mail hides real opens (Mail Privacy Protection), so tracking is not reliable for this recipient.",
   opted_out: "A recipient has opted out of tracking.",
   outside_dashboard: "Sent from Gmail, outside the dashboard.",
-  automated_only: "Only automatic image loads (for example a security scanner or a mail preload) were seen.",
 };
 
-// → { kind: "opened" | "pending" | "na", text, detail } or null (nothing to show: failed / received mail).
+// → { kind: "opened" | "pending" | "automated" | "na", text, detail } or null (nothing to show: failed / received mail).
 export function trackingInfo(t) {
   if (!t) return null;
   if (t.status === "opened") {
-    const first = t.firstOpenedAt ? `First opened ${fmtFull(t.firstOpenedAt)}` : "Opened";
+    const first = t.firstOpenedAt ? `First loaded ${fmtFull(t.firstOpenedAt)}` : "Loaded";
     const last = t.lastOpenedAt && t.lastOpenedAt !== t.firstOpenedAt ? `, last ${fmtFull(t.lastOpenedAt)}` : "";
     return {
       kind: "opened",
-      text: t.multiRecipient ? "Opened (by at least one recipient)" : "Opened",
-      detail: `${first}${last}. ${t.openCount} open${t.openCount === 1 ? "" : "s"}. Based on the mail app loading an image, so it is not proof the mail was read.`,
+      text: t.multiRecipient ? "Likely opened (by at least one recipient)" : "Likely opened",
+      detail: `${first}${last}. ${t.openCount} load${t.openCount === 1 ? "" : "s"}. Based on the recipient's mail app loading an image, so it isn't proof the mail was read.`,
     };
   }
   if (t.status === "pending") {
-    return { kind: "pending", text: "Not opened yet", detail: "No open detected. The recipient may not have opened it, or their mail app blocks images." };
+    return { kind: "pending", text: "No signal yet", detail: "Nothing has loaded the image. The mail may be unopened, or their mail app blocks images." };
+  }
+  if (t.reason === "automated_only") {
+    return {
+      kind: "automated",
+      text: "Only automatic loads seen",
+      detail: "A security scanner, preview or mail-app prefetch loaded the image. The recipient may or may not have opened it.",
+    };
   }
   return { kind: "na", text: "Not tracked", detail: TRACKING_REASONS[t.reason] || "Open tracking is not available for this mail." };
 }

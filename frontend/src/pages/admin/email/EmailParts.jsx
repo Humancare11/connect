@@ -85,18 +85,15 @@ export function FirstViewed({ firstViewed }) {
 export function TrackingBadge({ tracking }) {
   const info = trackingInfo(tracking);
   if (!info || info.kind === "na") return null;
-  if (info.kind === "opened") {
-    return (
-      <span className="em-m open" title={info.detail}>
-        <Icon name="open" size={14} />
-        Opened{tracking.openCount > 1 ? ` · ${tracking.openCount}×` : ""}
-      </span>
-    );
-  }
+  const label = {
+    opened: `Likely opened${tracking.openCount > 1 ? ` · ${tracking.openCount}×` : ""}`,
+    pending: "No signal",
+    automated: "Auto load only",
+  }[info.kind];
   return (
-    <span className="em-m none" title={info.detail}>
+    <span className={`em-m ${info.kind === "opened" ? "open" : "none"}`} title={info.detail}>
       <Icon name="open" size={14} />
-      Not opened
+      {label}
     </span>
   );
 }
@@ -113,7 +110,7 @@ export function TrackOpensToggle({ checked, onChange, disclosure }) {
   );
 }
 
-// Open tracking on the mail page: status, first/last open, count, and the caveat.
+// Open tracking on a thread message: status, first/last load, count, and the caveat.
 export function TrackingNote({ tracking }) {
   const info = trackingInfo(tracking);
   if (!info) return null;
@@ -121,16 +118,9 @@ export function TrackingNote({ tracking }) {
     <div className="em-trkbox" aria-label="Open tracking">
       <span className="em-views-h">Open tracking</span>
       <span className={`em-tag em-trk em-trk-${info.kind}`}>{info.text}</span>
-      {info.kind === "opened" && (
-        <span className="em-trk-facts">
-          First opened <b>{fmtFull(tracking.firstOpenedAt)}</b>
-          {tracking.openCount > 1 && tracking.lastOpenedAt ? <> · last <b>{fmtFull(tracking.lastOpenedAt)}</b></> : null} · {tracking.openCount} open
-          {tracking.openCount === 1 ? "" : "s"}
-        </span>
-      )}
       <small className="em-sub">
-        {info.kind === "opened" && tracking.multiRecipient ? "We cannot tell which recipient opened it. " : ""}
-        {info.kind === "opened" ? "Based on the mail app loading an image; not proof the mail was read." : info.detail}
+        {info.kind === "opened" && tracking.multiRecipient ? "We cannot tell which recipient loaded it. " : ""}
+        {info.detail}
       </small>
     </div>
   );

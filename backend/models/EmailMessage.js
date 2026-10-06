@@ -19,7 +19,8 @@ const contentSchema = new mongoose.Schema(
 // or mail sent from Gmail directly) reads as "Tracking unavailable".
 //   status  pending      tracked, no real open seen yet   → "Not opened yet"
 //           opened       at least one counted open        → "Opened"
-//           unavailable  see unavailableReason            → "Tracking unavailable"
+//           unavailable  see unavailableReason            → "Not tracked", or for reason
+//                        automated_only (only scanner/prefetch hits) → "Only automatic loads seen"
 const trackingSchema = new mongoose.Schema(
   {
     enabled: { type: Boolean, default: false },

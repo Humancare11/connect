@@ -36,6 +36,16 @@ describe("openClassifier", () => {
   test("Google's image proxy IS a real open (Gmail loads images when the person opens the mail)", () => {
     assert.equal(classifyOpen({ ...base, now: after_(600), userAgent: GOOGLE_PROXY }).counted, true);
   });
+  test("Google's image proxy is NOT held back by the grace window (its delivery-time fetch can be the only hit)", () => {
+    for (const s of [0, 1, 5, 30, 59.9]) {
+      assert.deepEqual(classifyOpen({ ...base, now: after_(s), ip: "8.8.8.8", userAgent: GOOGLE_PROXY }), { counted: true, reason: "", automated: false }, `${s}s`);
+    }
+    // every other client still waits, so the exemption is not a blanket bypass
+    assert.equal(classifyOpen({ ...base, now: after_(5), userAgent: CHROME }).reason, "grace_window");
+    assert.equal(classifyOpen({ ...base, now: after_(5), userAgent: "curl/8" }).reason, "grace_window");
+    // the other rules still apply to the proxy
+    assert.equal(classifyOpen({ ...base, now: after_(5), ip: "203.0.113.5", userAgent: GOOGLE_PROXY, ignoreIps: ["203.0.113.5"] }).reason, "own_ip");
+  });
   test("scanners, crawlers, scripts and empty user agents are ignored as automated", () => {
     for (const ua of ["Googlebot/2.1", "curl/8.4.0", "python-requests/2.31", "Go-http-client/2.0", "Mozilla/5.0 HeadlessChrome/120", "Proofpoint URL Defense", "Mimecast", "Java/17", "facebookexternalhit/1.1", ""]) {
       const v = classifyOpen({ ...base, now: after_(600), userAgent: ua });
@@ -140,6 +150,17 @@ describe("recordOpen", () => {
     assert.deepEqual(await rec(token, {}, { now: after_(5) }), { recorded: true, counted: false, reason: "grace_window" });
     const t = (await row(id)).tracking;
     assert.deepEqual([t.status, t.unavailableReason, t.openCount, t.firstOpenedAt], ["unavailable", "automated_only", 0, null]);
+  });
+
+  test("a Gmail-proxy hit inside the grace window is recorded as a (likely) open, not dropped", async () => {
+    const { token, id } = await tracked();
+    assert.deepEqual(await rec(token, { userAgent: GOOGLE_PROXY }, { now: after_(5) }), { recorded: true, counted: true, reason: "" });
+    const t = (await row(id)).tracking;
+    assert.deepEqual([t.status, t.unavailableReason, t.openCount], ["opened", "", 1]);
+    assert.deepEqual([t.firstOpenedAt, t.lastOpenedAt], [after_(5), after_(5)]);
+    const ev = await EmailOpenEvent.findOne({ message: id }).lean();
+    assert.deepEqual([ev.counted, ev.ignoreReason, ev.uaFamily], [true, "", "GoogleImageProxy"]);
+    assert.equal("ip" in ev || "userAgent" in ev, false, "no raw IP or user agent is stored");
   });
 
   test("a real open after an automated hit flips it to opened; a later automated hit never downgrades", async () => {
