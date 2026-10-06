@@ -148,13 +148,17 @@ async function ingestParsed(mailbox, p) {
 // Copies Gmail's read state onto mail we already hold: ids in `allIds` that are not in
 // Gmail's `is:unread` list are read; unread ones are unread. Only the stored flag changes,
 // and nothing is ever written to Gmail. → number of rows changed.
+// Used by both the one-time pass and the 10-minute reconcile. Mail stored before gmailRead
+// existed has NO such field, and `{ gmailRead: false }` does not match a missing field
+// (Mongoose's default only applies to documents it creates or loads), so "not yet read"
+// must be written as `{ $ne: true }`.
 async function applyReadState(gmail, mailbox, allIds, { window, limit }) {
   const unread = await gmail.listMessageIds({ q: `is:unread ${window}`, includeSpamTrash: true, limit });
   const unreadSet = new Set(unread);
   const read = allIds.filter((id) => !unreadSet.has(id));
   const [nowRead, nowUnread] = await Promise.all([
     read.length
-      ? EmailMessage.updateMany({ mailbox: mailbox._id, direction: "in", gmailRead: false, gmailMessageId: { $in: read } }, { $set: { gmailRead: true } })
+      ? EmailMessage.updateMany({ mailbox: mailbox._id, direction: "in", gmailRead: { $ne: true }, gmailMessageId: { $in: read } }, { $set: { gmailRead: true } })
       : { modifiedCount: 0 },
     unread.length
       ? EmailMessage.updateMany({ mailbox: mailbox._id, direction: "in", gmailRead: true, gmailMessageId: { $in: unread } }, { $set: { gmailRead: false } })
@@ -270,7 +274,7 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
     // Gmail read state. Normally it arrives with label-change events (the message is
     // re-fetched and ingestParsed updates it); this is the safety net for events history
     // can miss, plus a one-time pass for mail stored before this flag existed.
-    const readStateBackfillDue = !mailbox.readStateBackfilledAt;
+    const readStateBackfillDue = !mailbox.readStateBackfillV2At;
     if (readStateBackfillDue) {
       const window = `newer_than:${BACKFILL_DAYS}d`;
       const all = await gmail.listMessageIds({ q: window, includeSpamTrash: true, limit: BACKFILL_LIMIT });
@@ -287,7 +291,7 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
           lastSyncAt: now(),
           lastSyncError: "",
           ...(stats.reconciled || stats.mode === "backfill" ? { lastReconcileAt: now() } : {}),
-          ...(readStateBackfillDue ? { readStateBackfilledAt: now() } : {}),
+          ...(readStateBackfillDue ? { readStateBackfillV2At: now() } : {}),
         },
       }
     );

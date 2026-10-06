@@ -221,19 +221,59 @@ describe("syncMailbox", () => {
       // Stored earlier (flag defaulted to false), mailbox already synced and reconciled.
       await sync(fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] }));
       await EmailMessage.updateMany({}, { $set: { gmailRead: false } });
-      await Mailbox.updateOne({ _id: mailbox._id }, { $set: { readStateBackfilledAt: null, lastReconcileAt: new Date() } });
+      await Mailbox.updateOne({ _id: mailbox._id }, { $set: { readStateBackfillV2At: null, lastReconcileAt: new Date() } });
 
       const client = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] });
       const res = await sync(client);
       assert.equal(res.readStateChanged, 1);
       const by = async (id) => (await EmailMessage.findOne({ gmailMessageId: id })).gmailRead;
       assert.deepEqual([await by("a"), await by("b")], [true, false]);
-      assert.ok((await Mailbox.findById(mailbox._id)).readStateBackfilledAt, "marked done");
+      assert.ok((await Mailbox.findById(mailbox._id)).readStateBackfillV2At, "marked done");
       assert.ok(client.calls.listMessageIds.some((q) => q.startsWith("is:unread newer_than:30d")));
 
       const again = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] })] });
       await sync(again);
       assert.equal(again.calls.listMessageIds.some((q) => q.startsWith("is:unread")), false, "not repeated outside reconcile");
+    });
+
+    // Mail stored before gmailRead existed has no such field. These rows are inserted straight into the
+    // collection (bypassing Mongoose defaults) the way UAT's existing mail looks; {gmailRead:false} would not match them.
+    async function legacyRows(ids) {
+      await EmailMessage.collection.insertMany(
+        ids.map((id, i) => ({
+          mailbox: mailbox._id, direction: "in", status: "received", gmailMessageId: id, gmailThreadId: id,
+          from: { name: "", address: "c@gmail.com" }, to: [], cc: [], subject: "legacy", messageDate: new Date(T0 + i * 60_000),
+          isSpam: false, hasAttachments: false, attachmentCount: 0, firstViewedAt: null,
+        }))
+      );
+      assert.equal(await EmailMessage.collection.countDocuments({ gmailRead: { $exists: true } }), 0, "fixture has no gmailRead field");
+    }
+    const rawState = async (id) => (await EmailMessage.collection.findOne({ gmailMessageId: id })).gmailRead;
+
+    test("one-time pass reaches legacy mail that has no gmailRead field, and re-runs after the old marker was spent", async () => {
+      await legacyRows(["a", "b"]);
+      // The first version of the pass already ran (and matched nothing); only the old marker exists.
+      await Mailbox.collection.updateOne({ _id: mailbox._id }, { $set: { gmailHistoryId: "100", lastReconcileAt: new Date(), readStateBackfilledAt: new Date() } });
+
+      const client = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] });
+      const res = await sync(client);
+      assert.equal(res.readStateChanged, 1, "a (read in Gmail) was updated");
+      assert.deepEqual([await rawState("a"), await rawState("b")], [true, undefined], "b stays unread");
+      assert.ok((await Mailbox.findById(mailbox._id)).readStateBackfillV2At);
+
+      const again = fakeGmail({ messages: [] });
+      await sync(again);
+      assert.equal(again.calls.listMessageIds.some((q) => q.startsWith("is:unread")), false, "runs once");
+    });
+
+    test("the 10-minute reconcile also reaches legacy mail with no gmailRead field", async () => {
+      await legacyRows(["a", "b"]);
+      await Mailbox.collection.updateOne({ _id: mailbox._id }, { $set: { gmailHistoryId: "100", lastReconcileAt: null, readStateBackfillV2At: new Date() } });
+
+      const client = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] });
+      const res = await sync(client);
+      assert.equal(res.reconciled, true);
+      assert.deepEqual([await rawState("a"), await rawState("b")], [true, undefined]);
     });
 
     test("the reconcile pass fixes read state that history missed, both ways", async () => {
