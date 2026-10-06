@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi from "../../../api/emailApi";
 import { useAdmin } from "../../../context/AdminContext";
@@ -9,17 +9,19 @@ import { Icon } from "./EmailParts";
 import { EMAIL_BASE, EmailShellContext, FOLDERS, POLL_MS, folderPath } from "./emailUtils";
 import "./email.css";
 
-// Where in the module the URL is: a list (optionally inside one mailbox) or a mail page.
-function parseLocation(pathname, state) {
+// Where in the module the URL is: a list or a mail page. The selected Mail ID is
+// the ?mb= query (older /box/<id>/<folder> links still resolve to it).
+function parseLocation(pathname, search, state) {
   const rest = pathname.replace(EMAIL_BASE, "").replace(/^\/+/, "");
   const parts = rest.split("/").filter(Boolean);
-  if (parts[0] === "box") return { kind: "list", mailboxId: parts[1], folder: parts[2] };
+  const mbParam = new URLSearchParams(search).get("mb") || "";
+  if (parts[0] === "box") return { kind: "list", mbParam: mbParam || parts[1], folder: parts[2] };
   if (parts[0] === "mail") {
-    // A mail page keeps the sidebar on the folder it was opened from.
-    const m = String(state?.from || "").replace(EMAIL_BASE, "").split("?")[0].split("/").filter(Boolean);
-    return m[0] === "box" ? { kind: "mail", mailboxId: m[1], folder: m[2] } : { kind: "mail", mailboxId: "", folder: m[0] };
+    // A mail page keeps the rail on the folder it was opened from.
+    const from = String(state?.from || "").replace(EMAIL_BASE, "").split("?")[0].split("/").filter(Boolean);
+    return { kind: "mail", mbParam, folder: from[0] === "box" ? from[2] : from[0] };
   }
-  return { kind: "list", mailboxId: "", folder: parts[0] };
+  return { kind: "list", mbParam, folder: parts[0] };
 }
 
 export default function EmailLayout() {
@@ -62,15 +64,40 @@ export default function EmailLayout() {
 
   const refreshCounts = useCallback(() => qc.invalidateQueries({ queryKey: ["email", "mailboxes"] }), [qc]);
 
-  const here = parseLocation(location.pathname, location.state);
+  const here = parseLocation(location.pathname, location.search, location.state);
+
+  // The Mail ID switcher drives every folder. "" = All. No ?mb= → the first active
+  // mail ID (Support). Until the mail IDs have loaded nothing is queried.
+  const mailboxesReady = mailboxesQ.isSuccess;
+  const selectedMailboxId = !mailboxesReady
+    ? ""
+    : here.mbParam === "all"
+      ? ""
+      : mailboxes.find((m) => m.id === here.mbParam)?.id || mailboxes[0]?.id || "";
+  const mbValue = selectedMailboxId || (mailboxes.length ? "all" : "");
+  const selectedMailbox = mailboxes.find((m) => m.id === selectedMailboxId) || null;
+
+  // Unread Spam for the selected Mail ID. The mailboxes API only counts spam overall,
+  // so a one-row list query with viewedBy=none gives the per-ID figure.
+  const spamQ = useQuery({
+    queryKey: ["email", "spam-count", selectedMailboxId],
+    queryFn: () => emailApi.list({ folder: "spam", mailbox: selectedMailboxId, viewedBy: "none", limit: 1 }),
+    enabled: mailboxesReady && Boolean(selectedMailboxId),
+    refetchInterval: POLL_MS,
+    staleTime: 0,
+  });
+  const spamCount = selectedMailboxId ? spamQ.data?.total || 0 : counts.spam;
+  const receivedCount = selectedMailbox ? selectedMailbox.unread : counts.received;
 
   // Global search: always lands on a list (the current one, or Received).
   const onSearch = (value) => {
     setSearch(value);
     clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
-      const base = here.kind === "list" ? location.pathname : folderPath("inbox", here.mailboxId);
-      const params = new URLSearchParams(here.kind === "list" ? location.search : "");
+      const onList = here.kind === "list";
+      const base = onList ? location.pathname : folderPath("inbox");
+      const params = new URLSearchParams(location.search);
+      if (!onList) for (const k of [...params.keys()]) if (k !== "mb") params.delete(k);
       params.delete("page");
       if (value.trim()) params.set("q", value.trim());
       else params.delete("q");
@@ -79,71 +106,100 @@ export default function EmailLayout() {
     }, 300);
   };
 
+  // Switching the Mail ID keeps the folder and the search text, and drops the filters.
+  const chooseMailbox = (id) => {
+    clearTimeout(searchTimer.current);
+    const params = new URLSearchParams();
+    params.set("mb", id);
+    if (search.trim()) params.set("q", search.trim());
+    const folder = FOLDERS.some((f) => f.id === here.folder) ? here.folder : "inbox";
+    navigate(`${EMAIL_BASE}/${folder}?${params.toString()}`);
+  };
+
   const shell = useMemo(
     () => ({
       admin,
       mailboxes,
+      mailboxesReady,
+      selectedMailboxId,
+      mbValue,
       tracking,
       showToast,
       refreshCounts,
       clearSearchText: resetSearch,
-      openCompose: (mailboxId) => setCompose({ key: Date.now(), mailboxId: mailboxId || here.mailboxId || "" }),
+      openCompose: () => setCompose({ key: Date.now(), mailboxId: selectedMailboxId }),
     }),
-    [admin, mailboxes, tracking, showToast, refreshCounts, resetSearch, here.mailboxId]
+    [admin, mailboxes, mailboxesReady, selectedMailboxId, mbValue, tracking, showToast, refreshCounts, resetSearch]
   );
 
-  const unreadByFolder = { inbox: counts.received, spam: counts.spam };
-  const folderOn = (id) => here.folder === id && !here.mailboxId;
+  const folderCounts = { inbox: receivedCount, spam: spamCount };
+  const switcher = [
+    ...mailboxes.map((m) => ({ id: m.id, label: m.displayName, title: m.address, color: m.color, unread: m.unread })),
+    { id: "all", label: "All", title: "All mail IDs", unread: counts.received },
+  ];
 
   return (
     <EmailShellContext.Provider value={shell}>
       <div className="em-root">
-        <label className="em-search">
-          <Icon name="search" />
-          <input type="search" placeholder="Search mail" aria-label="Search mail" value={search} onChange={(e) => onSearch(e.target.value)} />
-        </label>
+        <div className="em-srow">
+          <label className="em-search">
+            <Icon name="search" />
+            <input type="search" placeholder="Search mail" aria-label="Search mail" value={search} onChange={(e) => onSearch(e.target.value)} />
+          </label>
+
+          {mailboxes.length > 0 && (
+            <div className="em-mbsw">
+              <span className="em-mbsw-lab">Mail ID</span>
+              <div className="em-seg" role="group" aria-label="Choose mail ID">
+                {switcher.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    title={o.title}
+                    aria-pressed={mbValue === o.id}
+                    className={mbValue === o.id ? "on" : ""}
+                    onClick={() => chooseMailbox(o.id)}
+                  >
+                    {o.color && <span className="em-dot" style={{ background: o.color }} />}
+                    {o.label}
+                    {o.unread > 0 && <span className="em-seg-n">{o.unread}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="em-shell">
           <nav className="em-rail" aria-label="Mail folders">
-            <button className="em-compose-btn" onClick={() => shell.openCompose("")} disabled={!mailboxes.length}>
+            <button className="em-compose-btn" onClick={() => shell.openCompose()} disabled={!mailboxes.length}>
               <Icon name="compose" />
               Compose
             </button>
 
             <div className="em-nav">
               {FOLDERS.map((f) => (
-                <NavLink key={f.id} to={folderPath(f.id)} onClick={resetSearch} className={`em-nav-item${folderOn(f.id) ? " on" : ""}`}>
+                <NavLink
+                  key={f.id}
+                  to={folderPath(f.id, here.mbParam)}
+                  onClick={resetSearch}
+                  className={`em-nav-item${here.folder === f.id ? " on" : ""}`}
+                >
                   <Icon name={f.id} />
                   <span className="em-lbl">{f.label}</span>
-                  <span className="em-count">{unreadByFolder[f.id] || ""}</span>
+                  <span className={`em-count${f.id === "spam" ? " dim" : ""}`}>{folderCounts[f.id] || ""}</span>
                 </NavLink>
               ))}
             </div>
 
-            <h4>Mail IDs</h4>
-            <div className="em-nav">
-              {mailboxes.map((m) => (
-                <NavLink
-                  key={m.id}
-                  to={folderPath("inbox", m.id)}
-                  title={m.address}
-                  onClick={resetSearch}
-                  className={`em-nav-item${here.mailboxId === m.id ? " on" : ""}`}
-                >
-                  <span className="em-box-dot" style={{ background: m.color }} />
-                  <span className="em-lbl">{m.address}</span>
-                  <span className="em-count">{m.unread || ""}</span>
-                </NavLink>
-              ))}
-              {mailboxesQ.isSuccess && !mailboxes.length && <div className="em-sub" style={{ padding: "6px 24px" }}>No mail IDs are set up yet.</div>}
-              {/* Super Admin only (the page and its API refuse everyone else too). */}
-              {admin?.role === "superadmin" && (
-                <NavLink to={`${EMAIL_BASE}/settings/mail-ids`} className="em-nav-item">
-                  <Icon name="mailbox" />
-                  <span className="em-lbl">Manage Mail IDs</span>
-                </NavLink>
-              )}
-            </div>
+            {mailboxesQ.isSuccess && !mailboxes.length && <div className="em-sub em-rail-note">No mail IDs are set up yet.</div>}
+            {/* Super Admin only (the page and its API refuse everyone else too). */}
+            {admin?.role === "superadmin" && (
+              <Link to={`${EMAIL_BASE}/settings/mail-ids`} className="em-manage">
+                <Icon name="mailbox" size={16} />
+                Manage Mail IDs
+              </Link>
+            )}
           </nav>
 
           <section className="em-pane" aria-live="polite">
@@ -167,7 +223,7 @@ export default function EmailLayout() {
                   setCompose(null);
                   showToast(`Sent from ${message.mailbox.address} · by ${admin.name}`);
                   qc.invalidateQueries({ queryKey: ["email"] });
-                  navigate(folderPath("sent"));
+                  navigate(folderPath("sent", message.mailbox?.id || here.mbParam));
                 }}
               />
             )}

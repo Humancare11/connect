@@ -11,10 +11,18 @@ export const FOLDERS = [
 ];
 export const FOLDER_IDS = FOLDERS.map((f) => f.id);
 
-export const folderPath = (folder, mailboxId) =>
-  mailboxId ? `${EMAIL_BASE}/box/${mailboxId}/${folder}` : `${EMAIL_BASE}/${folder}`;
+// The selected Mail ID travels in the URL as ?mb=<id> ("all" = every mail ID); no
+// ?mb= means the first active mail ID. Folder/mail links carry it along.
+export const withMb = (path, mb, extra = "") => {
+  const params = new URLSearchParams(extra);
+  if (mb) params.set("mb", mb);
+  const qs = params.toString();
+  return qs ? `${path}?${qs}` : path;
+};
 
-export const messagePath = (id) => `${EMAIL_BASE}/mail/${id}`;
+export const folderPath = (folder, mb, extra) => withMb(`${EMAIL_BASE}/${folder}`, mb, extra);
+
+export const messagePath = (id, mb) => withMb(`${EMAIL_BASE}/mail/${id}`, mb);
 
 // ── shared state for the module (compose window, toasts, counts) ──
 export const EmailShellContext = createContext(null);
@@ -47,7 +55,12 @@ export const roleLabel = (role) => (role === "superadmin" ? "Super Admin" : role
 // "Anita Joshi" or, for mail without a name, the address.
 export const personLabel = (p) => (p?.name && p.name.trim()) || p?.address || "Unknown";
 
-export const OUTSIDE_LABEL = "Sent outside dashboard";
+// Mail sent from the Gmail website (not through the dashboard) has no admin behind it.
+export const OUTSIDE_LABEL = "Gmail";
+export const OUTSIDE_NOTE = "Sent from the Gmail website, outside the dashboard";
+
+// Recipients as one short label: "MedCare Assistance" or "MedCare Assistance +2".
+export const recipientsLabel = (list = []) => (list.length ? `${personLabel(list[0])}${list.length > 1 ? ` +${list.length - 1}` : ""}` : "");
 
 // ── dates (all in the admin's own timezone) ──
 const sameDay = (a, b) => a.toDateString() === b.toDateString();
@@ -115,7 +128,7 @@ export const newRequestId = () =>
 export const TRACKING_FILTER_OPTIONS = [
   ["opened", "Opened"],
   ["pending", "Not opened yet"],
-  ["unavailable", "Tracking unavailable"],
+  ["unavailable", "Not tracked"],
 ];
 
 const TRACKING_REASONS = {
@@ -143,7 +156,7 @@ export function trackingInfo(t) {
   if (t.status === "pending") {
     return { kind: "pending", text: "Not opened yet", detail: "No open detected. The recipient may not have opened it, or their mail app blocks images." };
   }
-  return { kind: "na", text: "Tracking unavailable", detail: TRACKING_REASONS[t.reason] || "Open tracking is not available for this mail." };
+  return { kind: "na", text: "Not tracked", detail: TRACKING_REASONS[t.reason] || "Open tracking is not available for this mail." };
 }
 
 // Refresh interval for counts/lists: new mail is synced every 30–60 s on the server.

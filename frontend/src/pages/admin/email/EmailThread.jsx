@@ -2,22 +2,24 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, Icon, MailboxChip, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, TrackOpensToggle, TrackingNote } from "./EmailParts";
 import {
   ACCEPT_ATTR,
   EMAIL_BASE,
   FOLDERS,
   OUTSIDE_LABEL,
+  OUTSIDE_NOTE,
   addFiles,
   fmtFull,
   fmtTime,
   newRequestId,
   personLabel,
   roleLabel,
+  trackingInfo,
   useEmailShell,
 } from "./emailUtils";
 
-function MessageBlock({ m, onDownload }) {
+function MessageBlock({ m, onDownload, showTracking }) {
   const outbound = m.direction === "out";
   const senderName = m.sentBy?.name || OUTSIDE_LABEL;
   const name = outbound ? `${senderName} (via ${m.mailbox?.displayName || "company ID"})` : personLabel(m.from);
@@ -26,7 +28,11 @@ function MessageBlock({ m, onDownload }) {
 
   return (
     <div className="em-msg">
-      {outbound ? <Avatar name={senderName} colorKey={m.sentBy?.id} external={!m.sentBy} large /> : <Avatar name={personLabel(m.from)} external large />}
+      {outbound ? (
+        m.sentBy ? <Avatar name={senderName} colorKey={m.sentBy.id} large /> : <GmailMark large />
+      ) : (
+        <Avatar name={personLabel(m.from)} external large />
+      )}
       <div style={{ minWidth: 0 }}>
         <div className="em-msg-top">
           <div>
@@ -37,43 +43,96 @@ function MessageBlock({ m, onDownload }) {
         </div>
         <div className="em-msg-body">{m.text || "(no text)"}</div>
         <AttachmentList items={m.attachments.filter((a) => !a.isInline)} onOpen={onDownload} />
-        {outbound && <TrackingNote tracking={m.tracking} />}
+        {outbound && showTracking && <TrackingNote tracking={m.tracking} />}
       </div>
     </div>
   );
 }
 
-function ViewsBlock({ views }) {
-  if (!views.length) {
-    return (
-      <div className="em-views">
-        <span className="em-views-h">Who viewed</span>
-        <span className="em-sub">No admin has opened this mail yet.</span>
-      </div>
-    );
-  }
-  const first = views[0];
+function InfoBox({ icon, label, children }) {
   return (
-    <div className="em-views">
-      <div className="em-first">
-        <Avatar name={first.admin.name} colorKey={first.admin.id} />
-        <div>
-          First viewed by <b>{first.admin.name}</b>
-          <small>{fmtFull(first.firstAt)}</small>
-        </div>
+    <div className="em-ibox">
+      <span className="em-ibox-ic">{icon}</span>
+      <div className="em-ibox-main">
+        <div className="em-ibox-k">{label}</div>
+        {children}
       </div>
-      <div>
-        <div className="em-views-h" style={{ marginBottom: 6 }}>Who viewed when</div>
-        <ol>
-          {views.map((v) => (
-            <li key={v.admin.id} title={v.count > 1 ? `Opened ${v.count} times, last ${fmtFull(v.lastAt)}` : undefined}>
-              <Avatar name={v.admin.name} colorKey={v.admin.id} />
-              <span>{v.admin.name}</span>
-              <span className="em-n">{fmtTime(v.firstAt)}{v.count > 1 ? ` · ×${v.count}` : ""}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
+    </div>
+  );
+}
+
+// Three small boxes under the subject: who sent / replied, open tracking, who viewed.
+function InfoBoxes({ m, views }) {
+  const outbound = m.direction === "out";
+  const info = trackingInfo(m.tracking);
+  const t = m.tracking;
+  const first = views[0];
+
+  return (
+    <div className="em-info">
+      {outbound && (
+        <InfoBox icon={m.sentBy ? <Avatar name={m.sentBy.name} colorKey={m.sentBy.id} /> : <GmailMark />} label="Sent by">
+          {m.sentBy ? <b>{m.sentBy.name}</b> : <b>Gmail website</b>}
+          <small>
+            {m.sentBy ? [roleLabel(m.sentBy.role), fmtFull(m.messageDate)].filter(Boolean).join(" · ") : `${OUTSIDE_NOTE} · ${fmtFull(m.messageDate)}`}
+          </small>
+        </InfoBox>
+      )}
+
+      {!outbound && m.repliedAt && (
+        <InfoBox icon={<Avatar name={m.repliedByName} />} label="Replied">
+          <b>{m.repliedByName || "Someone"}</b> replied
+          <small>{fmtFull(m.repliedAt)}</small>
+        </InfoBox>
+      )}
+
+      {outbound && info && (
+        <InfoBox icon={<Icon name="open" size={20} />} label="Open tracking">
+          {info.kind === "opened" ? (
+            <>
+              <b className="em-ok">
+                Opened {t.openCount}×
+              </b>
+              <small>
+                First opened {fmtFull(t.firstOpenedAt)}
+                {t.multiRecipient ? " · we cannot tell which recipient" : ""}
+              </small>
+            </>
+          ) : info.kind === "pending" ? (
+            <>
+              <b>Not opened yet</b>
+              <small>Recipient may block images</small>
+            </>
+          ) : (
+            <>
+              <b>Not tracked</b>
+              <small>{info.detail}</small>
+            </>
+          )}
+        </InfoBox>
+      )}
+
+      <InfoBox icon={<Icon name="eye" size={20} />} label="Viewed by">
+        {first ? (
+          <>
+            <b>{first.admin.name}</b> first
+            <ol className="em-views">
+              {views.map((v) => (
+                <li key={v.admin.id} title={v.count > 1 ? `Opened ${v.count} times, last ${fmtFull(v.lastAt)}` : undefined}>
+                  <Avatar name={v.admin.name} colorKey={v.admin.id} />
+                  <span>{v.admin.name.split(/\s+/)[0]}</span>
+                  <span className="em-n">
+                    {fmtTime(v.firstAt)}
+                    {v.count > 1 ? ` · ×${v.count}` : ""}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </>
+        ) : (
+          <small>Nobody yet</small>
+        )}
+      </InfoBox>
     </div>
   );
 }
@@ -184,7 +243,7 @@ export default function EmailThread() {
   const navigate = useNavigate();
   const location = useLocation();
   const qc = useQueryClient();
-  const { admin, showToast, refreshCounts, tracking } = useEmailShell();
+  const { admin, mailboxes, showToast, refreshCounts, tracking } = useEmailShell();
   const [replyOpen, setReplyOpen] = useState(false);
   const [actionError, setActionError] = useState("");
 
@@ -262,8 +321,9 @@ export default function EmailThread() {
 
   const { message: m, thread, views, reply } = messageQ.data;
   const outbound = m.direction === "out";
-  const senderName = m.sentBy?.name || OUTSIDE_LABEL;
   const folderLabel = FOLDERS.find((f) => f.id === folderId)?.label || "Mail";
+  const mbParam = new URLSearchParams(location.search).get("mb");
+  const mailboxLabel = mbParam === "all" ? "All mail IDs" : mailboxes.find((x) => x.id === mbParam)?.displayName || m.mailbox?.displayName || "";
 
   const afterReply = () => {
     setReplyOpen(false);
@@ -278,28 +338,17 @@ export default function EmailThread() {
         <button className="em-icon-btn" onClick={() => navigate(backTo)} aria-label="Back to list" title="Back">
           <Icon name="back" />
         </button>
-        <span className="em-sub">{folderLabel}</span>
-        {!outbound && (
-          <>
-            <div className="em-spacer" />
-            {m.isSpam ? (
-              <button className="em-btn em-btn-ghost" disabled={spamMutation.isPending} onClick={() => spamMutation.mutate(false)}>
-                Not spam
-              </button>
-            ) : (
-              <button className="em-icon-btn" title="Mark as spam" aria-label="Mark as spam" disabled={spamMutation.isPending} onClick={() => spamMutation.mutate(true)}>
-                <Icon name="spam" />
-              </button>
-            )}
-          </>
-        )}
+        <span className="em-sub">
+          {folderLabel}
+          {mailboxLabel ? ` · ${mailboxLabel}` : ""}
+        </span>
       </div>
 
       <div className="em-reader">
         <div className="em-read-head">
           <h2>{m.subject || "(no subject)"}</h2>
           <div className="em-chips">
-            <span className="em-sub">{outbound ? "Sent:" : "Received:"}</span>
+            <span className="em-sub">{outbound ? "Sent from" : "Received on"}</span>
             <MailboxChip mailbox={m.mailbox} full />
             {m.isSpam && <span className="em-tag em-tag-spam">Spam</span>}
           </div>
@@ -321,71 +370,29 @@ export default function EmailThread() {
           </div>
         )}
 
-        {outbound && (
-          <div className="em-banner by">
-            <div className="em-banner-who">
-              <Avatar name={senderName} colorKey={m.sentBy?.id} external={!m.sentBy} />
-              <div>
-                {m.sentBy ? (
-                  <>
-                    <b>{m.sentBy.name}</b> sent this mail
-                    <small>
-                      {[roleLabel(m.sentBy.role), `from ${m.mailbox.address}`, fmtFull(m.messageDate)].filter(Boolean).join(" · ")}
-                    </small>
-                  </>
-                ) : (
-                  <>
-                    Sent from Gmail, outside the dashboard
-                    <small>{`from ${m.mailbox.address} · ${fmtFull(m.messageDate)}`}</small>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!outbound && m.repliedAt && (
-          <div className="em-banner by">
-            <div className="em-banner-who">
-              <Avatar name={m.repliedByName} />
-              <div>
-                <b>{m.repliedByName || "Someone"}</b> has already replied to this mail
-                <small>{`${m.mailbox.address} · ${fmtFull(m.repliedAt)}`}</small>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <ViewsBlock views={views} />
+        <InfoBoxes m={m} views={views} />
 
         {actionError && <div className="em-banner spam" role="alert"><span>{actionError}</span></div>}
 
         {thread.map((t) => (
-          <MessageBlock key={t.id} m={t} onDownload={download} />
+          <MessageBlock key={t.id} m={t} onDownload={download} showTracking={t.id !== m.id} />
         ))}
 
-        {reply.allowed &&
-          (replyOpen ? (
-            <ReplyBox message={m} reply={reply} adminName={admin.name} tracking={tracking} onSent={afterReply} onCancel={() => setReplyOpen(false)} />
-          ) : (
-            <div className="em-reply-actions">
+        {reply.allowed && replyOpen ? (
+          <ReplyBox message={m} reply={reply} adminName={admin.name} tracking={tracking} onSent={afterReply} onCancel={() => setReplyOpen(false)} />
+        ) : (
+          <div className="em-reply-actions">
+            {reply.allowed && (
               <button className="em-btn em-btn-ghost" onClick={() => setReplyOpen(true)}>
                 <Icon name="reply" size={18} />
                 Reply
               </button>
-              {!outbound && (
-                <button className="em-btn em-btn-ghost" disabled={spamMutation.isPending} onClick={() => spamMutation.mutate(true)}>
-                  Mark as spam
-                </button>
-              )}
-            </div>
-          ))}
-
-        {!reply.allowed && m.isSpam && (
-          <div className="em-reply-actions">
-            <button className="em-btn em-btn-ghost" disabled={spamMutation.isPending} onClick={() => spamMutation.mutate(false)}>
-              Not spam — move to Received
-            </button>
+            )}
+            {!outbound && (
+              <button className="em-btn em-btn-ghost" disabled={spamMutation.isPending} onClick={() => spamMutation.mutate(!m.isSpam)}>
+                {m.isSpam ? "Not spam" : "Mark as spam"}
+              </button>
+            )}
           </div>
         )}
       </div>
