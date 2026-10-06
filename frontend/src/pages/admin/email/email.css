@@ -410,3 +410,8 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .mi-optadd { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 8px; }
 @media (max-width: 640px) { .mi-optadd { grid-template-columns: minmax(0, 1fr); } }
 .em-trk-automated { background: var(--em-sunk); color: var(--em-muted); }
+.em-gm.sm { width: 14px; height: 14px; font-size: 9px; border-width: 1px; }
+.em-ibox small.em-gmailread { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.em-icon-btn.spinning .em-ico { animation: em-spin 0.8s linear infinite; }
+@keyframes em-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .em-icon-btn.spinning .em-ico { animation: none; opacity: 0.4; } }

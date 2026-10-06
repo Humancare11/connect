@@ -141,6 +141,7 @@ function parseGmailMessage(msg) {
     isSent: labelIds.includes("SENT"),
     isDraft: labelIds.includes("DRAFT"),
     isTrash: labelIds.includes("TRASH"),
+    isUnread: labelIds.includes("UNREAD"),
     messageDate: new Date(Number(msg.internalDate) || Date.now()),
     rfcMessageId: String(h["message-id"] || "").trim(),
     inReplyTo: String(h["in-reply-to"] || "").trim(),

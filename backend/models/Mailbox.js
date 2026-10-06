@@ -45,6 +45,8 @@ const mailboxSchema = new mongoose.Schema(
     gmailHistoryId: { type: String, default: "" },
     lastSyncAt: { type: Date, default: null },
     lastReconcileAt: { type: Date, default: null },
+    // Set once the one-time pass that copies Gmail's read state onto already-stored mail has run.
+    readStateBackfilledAt: { type: Date, default: null },
     lastSyncError: { type: String, default: "" },
 
     // Lease so only one backend instance syncs a mailbox at a time.

@@ -227,7 +227,7 @@ describe("superadmin mailboxes API", () => {
       let listed = 0;
       const client = {
         async getProfile() { return { emailAddress: "accounts@humancareconnect.co", historyId: "7" }; },
-        async listMessageIds(opts) { listed += 1; assert.match(opts.q, /^newer_than:30d$|^in:|^newer_than:2d$/); return []; },
+        async listMessageIds(opts) { listed += 1; assert.match(opts.q, /^newer_than:30d$|^is:unread newer_than:30d$|^in:|^newer_than:2d$/); return []; },
         async getMessage() { return null; },
         async listHistory() { throw new Error("must not do an incremental sync first"); },
       };

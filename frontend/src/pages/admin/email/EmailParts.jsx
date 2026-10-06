@@ -55,16 +55,25 @@ export function MailboxChip({ mailbox, full = false }) {
 }
 
 // Mail that did not come from an admin in the dashboard: the Gmail "G".
-export function GmailMark({ large = false }) {
+export function GmailMark({ large = false, small = false, title = "Sent from the Gmail website" }) {
   return (
-    <span className={`em-gm${large ? " lg" : ""}`} title="Sent from the Gmail website" aria-hidden="true">
+    <span className={`em-gm${large ? " lg" : ""}${small ? " sm" : ""}`} title={title} aria-hidden="true">
       G
     </span>
   );
 }
 
-// Status column, line 2: who opened the mail first, or "Not viewed".
-export function FirstViewed({ firstViewed }) {
+// Status column, line 2: who opened the mail first in the dashboard. With nobody, "Read in
+// Gmail" if someone on the team read it there (Gmail cannot say who), else "Not viewed".
+export function FirstViewed({ firstViewed, readInGmail = false }) {
+  if (!firstViewed && readInGmail) {
+    return (
+      <span className="em-m seen" title="Read in Gmail by someone on the team. Gmail does not say who.">
+        <GmailMark small title="Read in Gmail" />
+        Read in Gmail
+      </span>
+    );
+  }
   if (!firstViewed) {
     return (
       <span className="em-m none">

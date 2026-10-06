@@ -43,6 +43,7 @@ function fakeGmail({ messages = [], historyId = "100", history, expired = false,
       calls.listMessageIds.push(opts.q);
       if (opts.q.startsWith("in:spam")) return spamQ || [];
       if (opts.q.startsWith("in:inbox")) return inboxQ || [];
+      if (opts.q.startsWith("is:unread")) return [...byId.values()].filter((m) => (m.labelIds || []).includes("UNREAD")).map((m) => m.id);
       return [...byId.keys()];
     },
     async getMessage(id) { calls.getMessage.push(id); return byId.get(id) || null; },
@@ -167,6 +168,85 @@ describe("syncMailbox", () => {
     assert.equal((await EmailMessage.findOne({ gmailMessageId: "b" })).isSpam, true);
     assert.equal((await EmailMessage.findOne({ gmailMessageId: "s" })).isSpam, true);
     assert.equal((await EmailMessage.findOne({ gmailMessageId: "a" })).isSpam, false);
+  });
+
+  describe("Gmail read state", () => {
+    test("new inbound mail stores whether Gmail has it as read; sent mail is not tracked", async () => {
+      await sync(fakeGmail({
+        messages: [
+          gm({ id: "u", labels: ["INBOX", "UNREAD"], at: 1 }),
+          gm({ id: "r", labels: ["INBOX"], at: 2 }),
+          gm({ id: "s", labels: ["SENT"], from: ME, to: "anita@gmail.com", at: 3 }),
+        ],
+      }));
+      const by = async (id) => (await EmailMessage.findOne({ gmailMessageId: id })).gmailRead;
+      assert.deepEqual([await by("u"), await by("r"), await by("s")], [false, true, false]);
+    });
+
+    test("label changes keep it current in both directions (read in Gmail, then marked unread again)", async () => {
+      await sync(fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX", "UNREAD"] })] }));
+      assert.equal((await EmailMessage.findOne({ gmailMessageId: "a" })).gmailRead, false);
+
+      const readNow = fakeGmail({
+        messages: [gm({ id: "a", labels: ["INBOX"] })],
+        history: { addedIds: [], labelChangedIds: ["a"], historyId: "101" },
+      });
+      assert.equal((await sync(readNow)).updated, 1);
+      assert.equal((await EmailMessage.findOne({ gmailMessageId: "a" })).gmailRead, true);
+
+      const unreadAgain = fakeGmail({
+        messages: [gm({ id: "a", labels: ["INBOX", "UNREAD"] })],
+        history: { addedIds: [], labelChangedIds: ["a"], historyId: "102" },
+      });
+      await sync(unreadAgain);
+      assert.equal((await EmailMessage.findOne({ gmailMessageId: "a" })).gmailRead, false);
+    });
+
+    test("it never touches who viewed the mail in the dashboard, and never writes to Gmail", async () => {
+      await sync(fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX", "UNREAD"] })] }));
+      const admin = new mongoose.Types.ObjectId();
+      await EmailMessage.updateOne({ gmailMessageId: "a" }, { $set: { firstViewedBy: admin, firstViewedByName: "Priya", firstViewedAt: new Date(T0) } });
+      const client = fakeGmail({
+        messages: [gm({ id: "a", labels: ["INBOX"] })],
+        history: { addedIds: [], labelChangedIds: ["a"], historyId: "101" },
+      });
+      client.modifyLabels = () => { throw new Error("the sync must not write to Gmail"); };
+      client.setSpam = client.modifyLabels;
+      await sync(client);
+      const row = await EmailMessage.findOne({ gmailMessageId: "a" });
+      assert.deepEqual([row.gmailRead, String(row.firstViewedBy), row.firstViewedByName], [true, String(admin), "Priya"]);
+    });
+
+    test("one-time pass copies Gmail's read state onto mail stored before the flag existed, once only", async () => {
+      // Stored earlier (flag defaulted to false), mailbox already synced and reconciled.
+      await sync(fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] }));
+      await EmailMessage.updateMany({}, { $set: { gmailRead: false } });
+      await Mailbox.updateOne({ _id: mailbox._id }, { $set: { readStateBackfilledAt: null, lastReconcileAt: new Date() } });
+
+      const client = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] });
+      const res = await sync(client);
+      assert.equal(res.readStateChanged, 1);
+      const by = async (id) => (await EmailMessage.findOne({ gmailMessageId: id })).gmailRead;
+      assert.deepEqual([await by("a"), await by("b")], [true, false]);
+      assert.ok((await Mailbox.findById(mailbox._id)).readStateBackfilledAt, "marked done");
+      assert.ok(client.calls.listMessageIds.some((q) => q.startsWith("is:unread newer_than:30d")));
+
+      const again = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] })] });
+      await sync(again);
+      assert.equal(again.calls.listMessageIds.some((q) => q.startsWith("is:unread")), false, "not repeated outside reconcile");
+    });
+
+    test("the reconcile pass fixes read state that history missed, both ways", async () => {
+      await sync(fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX", "UNREAD"] }), gm({ id: "b", labels: ["INBOX"], at: 1 })] }));
+      assert.deepEqual([(await EmailMessage.findOne({ gmailMessageId: "a" })).gmailRead, (await EmailMessage.findOne({ gmailMessageId: "b" })).gmailRead], [false, true]);
+      await Mailbox.updateOne({ _id: mailbox._id }, { $set: { lastReconcileAt: null } });
+
+      // Gmail now says: a was read, b was marked unread; history reported nothing.
+      const client = fakeGmail({ messages: [gm({ id: "a", labels: ["INBOX"] }), gm({ id: "b", labels: ["INBOX", "UNREAD"], at: 1 })] });
+      const res = await sync(client);
+      assert.equal(res.reconciled, true);
+      assert.deepEqual([(await EmailMessage.findOne({ gmailMessageId: "a" })).gmailRead, (await EmailMessage.findOne({ gmailMessageId: "b" })).gmailRead], [true, false]);
+    });
   });
 
   test("a client's answer marks our earlier sent mail as replied", async () => {

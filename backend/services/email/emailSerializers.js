@@ -75,8 +75,10 @@ function baseFields(doc, mailboxMap) {
       ? { by: { id: idOf(doc.firstViewedBy), name: doc.firstViewedByName }, at: doc.firstViewedAt }
       : null,
     tracking: trackingView(doc),
-    // Shared-inbox meaning: unread = no admin has opened it yet.
-    unread: doc.direction === "in" && !doc.firstViewedAt,
+    // Read in Gmail (by someone on the team, not by name). Separate from firstViewed (dashboard views).
+    readInGmail: doc.direction === "in" && Boolean(doc.gmailRead),
+    // Shared-inbox meaning: unread = no admin has opened it in the dashboard AND it is not read in Gmail.
+    unread: doc.direction === "in" && !doc.firstViewedAt && !doc.gmailRead,
   };
 }
 

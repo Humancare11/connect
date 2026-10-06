@@ -120,8 +120,9 @@ function createAdminEmailRouter({
     }
   };
 
-  // GET /mailboxes — sidebar: company IDs with unread counts.
-  // Unread = received, not spam, not yet viewed by ANY admin.
+  // GET /mailboxes — rail + switcher: company IDs with unread / unread-spam counts.
+  // Unread = received, not viewed by ANY admin in the dashboard, and not read in Gmail.
+  // "Spam" counts follow the same rule, per mailbox (and `counts` has the totals).
   router.get("/mailboxes", handle(async (req, res) => {
     const actor = await loadActor(req, res);
     if (!actor) return;
@@ -129,15 +130,17 @@ function createAdminEmailRouter({
     const ids = mailboxes.map((m) => m._id);
 
     const rows = await EmailMessage.aggregate([
-      { $match: { mailbox: { $in: ids }, direction: "in", firstViewedAt: null } },
+      { $match: { mailbox: { $in: ids }, direction: "in", firstViewedAt: null, gmailRead: { $ne: true } } },
       { $group: { _id: { mailbox: "$mailbox", isSpam: "$isSpam" }, n: { $sum: 1 } } },
     ]);
     const unread = new Map();
+    const spamBy = new Map();
     let received = 0;
     let spam = 0;
     for (const r of rows) {
       if (r._id.isSpam) {
         spam += r.n;
+        spamBy.set(String(r._id.mailbox), r.n);
       } else {
         received += r.n;
         unread.set(String(r._id.mailbox), r.n);
@@ -147,7 +150,7 @@ function createAdminEmailRouter({
     // Tells the compose form whether to show "Track opens" at all.
     const tracking = await trackingState();
     res.json({
-      mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0 })),
+      mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
       tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled) },
     });

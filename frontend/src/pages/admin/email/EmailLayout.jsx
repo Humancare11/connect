@@ -77,16 +77,9 @@ export default function EmailLayout() {
   const mbValue = selectedMailboxId || (mailboxes.length ? "all" : "");
   const selectedMailbox = mailboxes.find((m) => m.id === selectedMailboxId) || null;
 
-  // Unread Spam for the selected Mail ID. The mailboxes API only counts spam overall,
-  // so a one-row list query with viewedBy=none gives the per-ID figure.
-  const spamQ = useQuery({
-    queryKey: ["email", "spam-count", selectedMailboxId],
-    queryFn: () => emailApi.list({ folder: "spam", mailbox: selectedMailboxId, viewedBy: "none", limit: 1 }),
-    enabled: mailboxesReady && Boolean(selectedMailboxId),
-    refetchInterval: POLL_MS,
-    staleTime: 0,
-  });
-  const spamCount = selectedMailboxId ? spamQ.data?.total || 0 : counts.spam;
+  // Unread counts follow one rule everywhere: not opened by any admin in the dashboard
+  // and not read in Gmail. /mailboxes returns them per Mail ID (and in total for All).
+  const spamCount = selectedMailbox ? selectedMailbox.spam || 0 : counts.spam;
   const receivedCount = selectedMailbox ? selectedMailbox.unread : counts.received;
 
   // Global search: always lands on a list (the current one, or Received).

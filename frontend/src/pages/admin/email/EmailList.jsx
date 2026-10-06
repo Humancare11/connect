@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
@@ -67,7 +68,7 @@ function Row({ m, onOpen, showMailbox }) {
           {m.snippet && <span className="em-snip">— {m.snippet}</span>}
         </div>
         <MetaCol m={m} showMailbox={showMailbox} />
-        <div className="em-stc">{!m.isSpam && <FirstViewed firstViewed={m.firstViewed} />}</div>
+        <div className="em-stc">{!m.isSpam && <FirstViewed firstViewed={m.firstViewed} readInGmail={m.readInGmail} />}</div>
         <div className="em-time">{fmtTime(m.messageDate)}</div>
       </div>
     );
@@ -115,6 +116,8 @@ export default function EmailList() {
   const folder = folderParam;
   const valid = FOLDER_IDS.includes(folder);
   const allMailIds = mailboxesReady && !selectedMailboxId;
+
+  const [refreshing, setRefreshing] = useState(false);
 
   const filters = Object.fromEntries(FILTER_KEYS.map((k) => [k, sp.get(k) || ""]));
   const q = sp.get("q") || "";
@@ -174,6 +177,17 @@ export default function EmailList() {
     setSp(next, { replace: true });
   };
   const clearFilters = () => update(Object.fromEntries(FILTER_KEYS.map((k) => [k, ""])));
+  // Reloads this list and the rail counts from our server (new mail from Gmail arrives via the
+  // background sync). The spinner stays up briefly so a click on an unchanged list still shows it ran.
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([listQ.refetch(), refreshCounts(), new Promise((resolve) => setTimeout(resolve, 600))]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const openMail = (id) => navigate(messagePath(id, sp.get("mb")), { state: { from: location.pathname + location.search } });
   const showFilters = folder === "inbox" || folder === "sent";
   const from = items.length ? (page - 1) * PAGE_SIZE + 1 : 0;
@@ -187,15 +201,19 @@ export default function EmailList() {
           {data ? ` · ${data.total} mail` : ""}
         </span>
         <div className="em-spacer" />
+        {refreshing && (
+          <span className="em-sub" role="status">
+            Refreshing…
+          </span>
+        )}
         <button
           type="button"
-          className="em-icon-btn"
-          title="Refresh"
+          className={`em-icon-btn${refreshing ? " spinning" : ""}`}
+          title={refreshing ? "Refreshing…" : "Refresh"}
           aria-label="Refresh"
-          onClick={() => {
-            listQ.refetch();
-            refreshCounts();
-          }}
+          aria-busy={refreshing}
+          disabled={refreshing}
+          onClick={refresh}
         >
           <Icon name="refresh" />
         </button>

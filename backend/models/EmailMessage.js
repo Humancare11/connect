@@ -97,6 +97,11 @@ const emailMessageSchema = new mongoose.Schema(
     firstViewedByName: { type: String, default: "", trim: true, maxlength: 200 },
     firstViewedAt: { type: Date, default: null },
 
+    // Inbound only: Gmail's own read state (the message has no UNREAD label). Gmail keeps
+    // it per mailbox, so it says "someone on the team read it", never who. It is a separate
+    // signal from firstViewed* (who opened it in the dashboard) and is never written back to Gmail.
+    gmailRead: { type: Boolean, default: false },
+
     // Idempotency key from the compose form so a double-click can't send twice.
     clientRequestId: { type: String, default: null, maxlength: 100 },
 

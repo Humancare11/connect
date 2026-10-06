@@ -113,7 +113,13 @@ function InfoBoxes({ m, views }) {
               </ol>
             </>
           ) : (
-            <small>Nobody yet</small>
+            !m.readInGmail && <small>Nobody yet</small>
+          )}
+          {m.readInGmail && (
+            <small className="em-gmailread">
+              <GmailMark small title="Read in Gmail" />
+              Read in Gmail (not by name)
+            </small>
           )}
         </InfoBox>
       )}
