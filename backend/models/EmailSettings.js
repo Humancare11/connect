@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 // Default disclosure line added to every mail that carries a tracking image.
 const DEFAULT_DISCLOSURE =
-  "This email may contain an image that tells us when it was opened. See our Privacy Policy for details.";
+  "";
 
 // One document (key "email") holding the Email module's global switches.
 // Open tracking is OFF until a Super Admin turns it on here AND the server's
