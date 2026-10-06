@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import "./telemedicine.css";
 import "./BlogArticle.css";
 import { blogImageSrc } from "../../api/blogApi";
-import { prepareBlogHtml, formatBlogDate } from "../../utils/blogContent";
+import { prepareBlogHtml, formatBlogDate, prepareFaqAnswer, usableFaqs } from "../../utils/blogContent";
 
 // Generic article template for blogs created in the Super Admin panel. It reuses
 // the existing article classes from telemedicine.css (hero, progress bar, sticky
-// TOC, mobile TOC, content column) and renders ONLY the editor content: no FAQ,
+// TOC, mobile TOC, content column) and renders the editor content plus an
+// optional FAQ accordion (same markup and classes as the legacy pages). No
 // comparison or other special boxes.
 //
 // `preview` is used by the admin form: the sticky bars are pinned to the top of
@@ -16,7 +17,15 @@ export default function BlogArticle({ blog, preview = false }) {
   const [activeSection, setActiveSection] = useState("");
   const tocCardRef = useRef(null);
 
-  const { html, toc } = useMemo(() => prepareBlogHtml(blog.content), [blog.content]);
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const { html, toc: headingToc } = useMemo(() => prepareBlogHtml(blog.content), [blog.content]);
+  const faqs = useMemo(() => usableFaqs(blog.faqs), [blog.faqs]);
+  // "FAQs" goes last in the TOC, like the legacy pages.
+  const toc = useMemo(
+    () => (faqs.length ? [...headingToc, { id: "faq", label: "FAQs" }] : headingToc),
+    [headingToc, faqs.length],
+  );
   const date = formatBlogDate(blog.publishedAt);
   // In the admin preview the overlay has its own 52px header bar.
   const stickyTop = preview ? { top: 52 } : undefined;
@@ -210,7 +219,37 @@ export default function BlogArticle({ blog, preview = false }) {
               </details>
             )}
 
-            <article className="content-col blog-richtext" id="articleBody" dangerouslySetInnerHTML={{ __html: html }} />
+            <article className="content-col blog-richtext">
+              <div id="articleBody" dangerouslySetInnerHTML={{ __html: html }} />
+
+              {faqs.length > 0 && (
+                <section id="faq" className="faq-section">
+                  <h2>Frequently asked questions</h2>
+                  {faqs.map((item, idx) => (
+                    <details
+                      key={`${idx}-${item.question}`}
+                      className="faq-item"
+                      open={openFaq === idx}
+                      onToggle={(e) => {
+                        // Only one open at a time. A card that React just closed
+                        // fires its own toggle: it must not clear the new one.
+                        if (e.currentTarget.open) setOpenFaq(idx);
+                        else setOpenFaq((cur) => (cur === idx ? null : cur));
+                      }}
+                    >
+                      <summary className="faq-q">
+                        <span className="faq-num" aria-hidden="true">{idx + 1}</span>
+                        <span className="faq-q-text">{item.question}</span>
+                        <svg className="chev" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </summary>
+                      <div className="faq-a" dangerouslySetInnerHTML={{ __html: prepareFaqAnswer(item.answer) }} />
+                    </details>
+                  ))}
+                </section>
+              )}
+            </article>
           </div>
         </div>
       </main>

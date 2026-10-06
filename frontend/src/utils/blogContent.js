@@ -10,6 +10,52 @@ const PURIFY_CONFIG = {
   ALLOW_DATA_ATTR: false,
 };
 
+// FAQ answers: simple formatting only, same allow-list as the backend.
+const FAQ_PURIFY_CONFIG = {
+  ALLOWED_TAGS: ["p", "br", "strong", "b", "em", "i", "ul", "ol", "li", "a"],
+  ALLOWED_ATTR: ["href", "target", "rel"],
+  ALLOW_DATA_ATTR: false,
+};
+
+// Posts saved before the backend cleaned these up may still contain heading
+// anchors (<a>#</a>, copied from the legacy pages) and bullets typed into list
+// items. Remove them at render time so they never reach the TOC or the page.
+const HEADING_ANCHOR_TEXT_RE = /^[#¶§\u{1F517}]+$/u;
+const LEADING_BULLET_TEXT_RE = /^\s*[•●▪◦‣∙·]+\s*/;
+
+function cleanPastedArtifacts(root) {
+  root.querySelectorAll("a").forEach((a) => {
+    if (HEADING_ANCHOR_TEXT_RE.test(a.textContent.trim())) a.remove();
+  });
+  root.querySelectorAll("li").forEach((li) => {
+    const walker = document.createTreeWalker(li, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node && !node.nodeValue.trim()) node = walker.nextNode();
+    if (node) node.nodeValue = node.nodeValue.replace(LEADING_BULLET_TEXT_RE, "");
+  });
+}
+
+export function prepareFaqAnswer(html) {
+  const clean = DOMPurify.sanitize(html || "", FAQ_PURIFY_CONFIG);
+  const doc = new DOMParser().parseFromString(`<body>${clean}</body>`, "text/html");
+  cleanPastedArtifacts(doc.body);
+  return doc.body.innerHTML;
+}
+
+// FAQs that are complete enough to render (the backend drops the rest on save;
+// this also covers unsaved preview content).
+export function usableFaqs(faqs) {
+  return (Array.isArray(faqs) ? faqs : []).filter(
+    (f) => f && String(f.question || "").trim() && prepareFaqAnswer(f.answer).replace(/<[^>]*>/g, "").trim(),
+  );
+}
+
+// Plain-text answer for the FAQPage structured data.
+export function faqAnswerText(html) {
+  const doc = new DOMParser().parseFromString(`<body>${prepareFaqAnswer(html).replace(/<(\/(p|li)|br\s*\/?)>/gi, " $&")}</body>`, "text/html");
+  return doc.body.textContent.replace(/\s+/g, " ").trim();
+}
+
 function slugifyHeading(text) {
   return (
     String(text || "")
@@ -26,6 +72,7 @@ function slugifyHeading(text) {
 export function prepareBlogHtml(rawHtml) {
   const clean = DOMPurify.sanitize(resolveBlogImages(rawHtml || ""), PURIFY_CONFIG);
   const doc = new DOMParser().parseFromString(`<body>${clean}</body>`, "text/html");
+  cleanPastedArtifacts(doc.body);
   const used = new Set(Array.from(doc.body.querySelectorAll("h2[id]")).map((h) => h.id));
   const toc = [];
 

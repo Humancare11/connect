@@ -88,3 +88,38 @@ test("legacy seed data: unique slugs, entry 6 has its own slug and is not publis
   assert.ok(six.noDetailPage);
   assert.ok(legacy.every((b) => b.title && b.excerpt && b.imageFile));
 });
+
+test("sanitizeFaqs: plain-text question, simple-HTML answer, junk dropped, capped", () => {
+  const { sanitizeFaqs } = require("../utils/blogSanitizer");
+  const out = sanitizeFaqs([
+    { question: "  What <b>is</b> it?<script>x()</script> ", answer: '<p onclick="x()">Hi <strong>there</strong> <a href="javascript:alert(1)">bad</a> <a href="https://ok.com" target="_blank">ok</a></p><script>x()</script><img src="/api/blogs/image/a.webp"><h2>no</h2>' },
+    { question: "", answer: "<p>no question</p>" },
+    { question: "No answer", answer: "<p> </p>" },
+    null,
+    { question: "List", answer: "<ul><li>one</li></ul>" },
+  ]);
+  assert.equal(out.length, 2);
+  assert.equal(out[0].question, "What is it?");
+  assert.ok(!/script|onclick|javascript:|<img|<h2|<a rel/i.test(out[0].answer));
+  assert.match(out[0].answer, /<strong>there<\/strong>/);
+  assert.match(out[0].answer, /<a href="https:\/\/ok\.com" target="_blank" rel="noopener noreferrer">ok<\/a>/);
+  assert.equal(out[1].answer, "<ul><li>one</li></ul>");
+  assert.deepEqual(sanitizeFaqs("nope"), []);
+  const many = Array.from({ length: 50 }, (_, i) => ({ question: `Q${i}`, answer: "<p>a</p>" }));
+  assert.equal(sanitizeFaqs(many).length, 30);
+});
+
+test("sanitizer drops heading anchors ('#') and strips leading list bullets", () => {
+  const { sanitizeFaqs } = require("../utils/blogSanitizer");
+  const r = processBlogContent(
+    '<h2>Introduction <a href="#introduction">#</a></h2><h2>Why<a href="#w" class="heading-link">#</a></h2>' +
+      "<ul><li>• One</li><li><p>• Two</p></li><li>&bull; Three</li><li>Four <a href=\"https://x.com\">x</a></li></ul>" +
+      '<p>A <a href="https://y.com">#hashtag</a> keeps.</p>'
+  );
+  assert.deepEqual(r.toc, [{ id: "introduction", label: "Introduction" }, { id: "why", label: "Why" }]);
+  assert.ok(!/>#</.test(r.content));
+  assert.match(r.content, /<li>One<\/li><li><p>Two<\/p><\/li><li>Three<\/li>/);
+  assert.match(r.content, />#hashtag<\/a>/);
+  const faq = sanitizeFaqs([{ question: "q", answer: '<ul><li>• a</li></ul><p>b <a href="#x">#</a></p>' }]);
+  assert.equal(faq[0].answer, "<ul><li>a</li></ul><p>b </p>");
+});
