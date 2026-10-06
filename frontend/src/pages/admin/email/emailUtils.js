@@ -59,7 +59,7 @@ export const personLabel = (p) => (p?.name && p.name.trim()) || p?.address || "U
 export const OUTSIDE_LABEL = "Gmail";
 export const OUTSIDE_NOTE = "Sent from the Gmail website, outside the dashboard";
 
-// Recipients as one short label: "MedCare Assistance" or "MedCare Assistance +2".
+// Recipients as one short label: "Acme Support" or "Acme Support +2".
 export const recipientsLabel = (list = []) => (list.length ? `${personLabel(list[0])}${list.length > 1 ? ` +${list.length - 1}` : ""}` : "");
 
 // ── dates (all in the admin's own timezone) ──
