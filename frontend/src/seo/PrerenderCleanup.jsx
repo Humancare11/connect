@@ -18,7 +18,11 @@ export default function PrerenderCleanup() {
       done = true;
       observer.disconnect();
       clearTimeout(fallback);
-      document.head.querySelectorAll(SERVER_TAGS).forEach((el) => el.remove());
+      document.head.querySelectorAll(SERVER_TAGS).forEach((el) => {
+        // Keep a fallback <title> when the page rendered none of its own (dashboards, login).
+        if (el.tagName === "TITLE" && !document.head.querySelector("title:not([data-prerendered-head])")) return;
+        el.remove();
+      });
     };
 
     // Every page that emits head tags emits a robots meta, so a robots meta that is NOT a server

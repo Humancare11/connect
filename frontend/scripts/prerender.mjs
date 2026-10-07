@@ -66,7 +66,7 @@ function splitHead(html) {
 const mark = (tags) => tags.map((t) => t.replace(/^<(link|meta|title|base)\b/, "<$1 data-prerendered-head"));
 
 function assemble({ head, body, data }) {
-  let page = template.replace(/<title>[\s\S]*?<\/title>\s*/, "");
+  let page = template.replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/, "");
   page = page.replace("</head>", `    ${mark(head).join("\n    ")}\n  </head>`);
   const dataScript = data
     ? `<script id="__PRERENDER_DATA__" type="application/json">${JSON.stringify(data)
@@ -152,7 +152,7 @@ for (const page of pages) {
   // No data-prerendered: the browser renders from scratch, so a post published after this build
   // can still resolve client-side while crawlers get a real 404 status for unknown URLs.
   const page = template
-    .replace(/<title>[\s\S]*?<\/title>\s*/, "")
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/, "")
     .replace("</head>", `    ${mark(head).join("\n    ")}\n  </head>`)
     .replace('<div id="root"></div>', `<div id="root">${body}</div>`);
   fs.writeFileSync(path.join(dist, "404.html"), page);

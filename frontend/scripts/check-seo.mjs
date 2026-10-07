@@ -195,6 +195,14 @@ if (checkDist) {
       const canonical = html.match(/<link[^>]*\srel="canonical"[^>]*\shref="([^"]+)"/);
       const want = SITE_ORIGIN + (SEO_ROUTES[key].canonical || key);
       if (!canonical || canonical[1].replace(/&amp;/g, "&") !== want) err(`[prerender] ${key} canonical is ${canonical && canonical[1]}, expected ${want}`);
+      const count = (re) => (html.match(re) || []).length;
+      const once = [
+        ["<title>", count(/<title[\s>]/g)],
+        ["canonical link", count(/<link[^>]*\srel="canonical"/g)],
+        ["meta description", count(/<meta[^>]*\sname="description"/g)],
+        ["meta robots", count(/<meta[^>]*\sname="robots"/g)],
+      ];
+      for (const [label, n] of once) if (n !== 1) err(`[prerender] ${key} has ${n} ${label} tags in the raw HTML (expected exactly 1)`);
       if ((html.match(/<h1[\s>]/g) || []).length < 1) warn(`[prerender] ${key} has no <h1> in the raw HTML`);
     }
     if (!fs.existsSync(path.join(root, "dist", "404.html"))) err(`[prerender] dist/404.html is missing`);
