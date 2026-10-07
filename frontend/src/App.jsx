@@ -1615,7 +1615,14 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route path="/services-prices" element={<ServicesPrices />} />
+          <Route
+            path="/services-prices"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <ServicesPrices />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/admin-auth"
             element={<Navigate to="/adminauth" replace />}
