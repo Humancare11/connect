@@ -12,6 +12,9 @@ import { PrerenderDataProvider } from "./seo/PrerenderDataProvider";
 export function render(url, data = null) {
   return new Promise((resolve, reject) => {
     const errors = [];
+    // The SSR build wraps every lazy(() => import(...)) (see trackLazyImports in vite.config.js) so we learn
+    // which route/component chunks this page used; prerender.mjs links their CSS and JS from the page.
+    globalThis.__ssrLazy = new Set();
     let html = "";
     const sink = new Writable({
       write(chunk, _encoding, callback) {
@@ -19,7 +22,7 @@ export function render(url, data = null) {
         callback();
       },
       final(callback) {
-        resolve({ html, errors });
+        resolve({ html, errors, lazyModules: [...globalThis.__ssrLazy] });
         callback();
       },
     });

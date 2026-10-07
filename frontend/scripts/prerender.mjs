@@ -46,6 +46,48 @@ if (!template.includes('<div id="root"></div>')) {
 
 const { render } = await import(pathToFileURL(ssrEntry).href);
 
+// ---- route chunk assets -----------------------------------------------------------------------
+// Pages are lazy-loaded route chunks with their own CSS. The server markup must be styled before that chunk
+// arrives, so each prerendered page links the CSS and preloads the JS of the lazy modules it rendered
+// (entry-server reports them as lazyModules), read from the client build's manifest.
+const manifestFile = path.join(dist, ".vite", "manifest.json");
+if (!fs.existsSync(manifestFile)) {
+  console.error("prerender: dist/.vite/manifest.json is missing (the client build must run with build.manifest)");
+  process.exit(1);
+}
+const manifest = JSON.parse(fs.readFileSync(manifestFile, "utf8"));
+const alreadyInTemplate = new Set([...template.matchAll(/(?:href|src)="(\/assets\/[^"]+)"/g)].map((m) => m[1]));
+
+function manifestKeyFor(mod) {
+  for (const candidate of [`${mod}.jsx`, `${mod}.js`, `${mod}.tsx`, `${mod}.ts`, `${mod}/index.jsx`, `${mod}/index.js`]) {
+    if (manifest[candidate]) return candidate;
+  }
+  return null;
+}
+
+function assetLinks(lazyModules) {
+  const css = new Set();
+  const js = new Set();
+  const seen = new Set();
+  const visit = (key, top) => {
+    if (seen.has(key) || !manifest[key]) return;
+    seen.add(key);
+    const entry = manifest[key];
+    if (entry.isEntry) return; // the app entry is already in the template
+    js.add("/" + entry.file);
+    for (const c of entry.css || []) css.add("/" + c);
+    for (const dep of entry.imports || []) visit(dep, false);
+  };
+  for (const mod of lazyModules) {
+    const key = manifestKeyFor(mod);
+    if (key) visit(key, true);
+  }
+  const lines = [];
+  for (const href of css) if (!alreadyInTemplate.has(href)) lines.push(`<link rel="stylesheet" crossorigin href="${href}">`);
+  for (const href of js) if (!alreadyInTemplate.has(href)) lines.push(`<link rel="modulepreload" crossorigin href="${href}">`);
+  return lines;
+}
+
 // ---- helpers ----------------------------------------------------------------------------------
 // React 19 hoists <title>, <meta>, <link> to the front of the rendered markup. Move them into
 // <head>; the browser's hydration adopts the identical tags that are already there.
@@ -65,9 +107,9 @@ function splitHead(html) {
 // (src/seo/PrerenderCleanup.jsx); React 19 does not adopt head tags it did not create.
 const mark = (tags) => tags.map((t) => t.replace(/^<(link|meta|title|base)\b/, "<$1 data-prerendered-head"));
 
-function assemble({ head, body, data }) {
+function assemble({ head, body, data, assets = [] }) {
   let page = template.replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/, "");
-  page = page.replace("</head>", `    ${mark(head).join("\n    ")}\n  </head>`);
+  page = page.replace("</head>", `    ${[...mark(head), ...assets].join("\n    ")}\n  </head>`);
   const dataScript = data
     ? `<script id="__PRERENDER_DATA__" type="application/json">${JSON.stringify(data)
         .replace(/</g, "\\u003c")
@@ -125,7 +167,7 @@ let rendered = 0;
 
 for (const page of pages) {
   try {
-    const { html, errors } = await render(page.route, page.data);
+    const { html, errors, lazyModules } = await render(page.route, page.data);
     if (errors.length) {
       failures.push(`${page.route}: ${errors.map((e) => e?.message || String(e)).join(" | ").slice(0, 300)}`);
       continue;
@@ -143,7 +185,7 @@ for (const page of pages) {
       failures.push(`${page.route}: unresolved Suspense boundary in the output`);
       continue;
     }
-    write(page.route, assemble({ head, body, data: page.data }));
+    write(page.route, assemble({ head, body, data: page.data, assets: assetLinks(lazyModules) }));
     rendered += 1;
   } catch (error) {
     failures.push(`${page.route}: ${error.message}`);
@@ -153,14 +195,14 @@ for (const page of pages) {
 // ---- 404 page ---------------------------------------------------------------------------------
 {
   // Several unmatched segments fall through to the catch-all <NotFound/> route, not the /:slug blog route.
-  const { html, errors } = await render("/404/not/found", null);
+  const { html, errors, lazyModules } = await render("/404/not/found", null);
   if (errors.length) failures.push(`404.html: ${errors.map((e) => e?.message || String(e)).join(" | ").slice(0, 300)}`);
   const { head, body } = splitHead(html);
   // No data-prerendered: the browser renders from scratch, so a post published after this build
   // can still resolve client-side while crawlers get a real 404 status for unknown URLs.
   const page = template
     .replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/, "")
-    .replace("</head>", `    ${mark(head).join("\n    ")}\n  </head>`)
+    .replace("</head>", `    ${[...mark(head), ...assetLinks(lazyModules)].join("\n    ")}\n  </head>`)
     .replace('<div id="root"></div>', `<div id="root">${body}</div>`);
   fs.writeFileSync(path.join(dist, "404.html"), page);
 }
@@ -170,6 +212,9 @@ if (failures.length) {
   for (const f of failures.slice(0, 30)) console.error("  " + f);
   process.exit(1);
 }
+
+// The client build manifest was only needed to link route assets above; do not publish it.
+fs.rmSync(path.join(dist, ".vite"), { recursive: true, force: true });
 
 fs.writeFileSync(
   path.join(dist, ".prerender-manifest.json"),
