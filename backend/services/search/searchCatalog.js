@@ -10,7 +10,7 @@ const HealthcareSpecialty = require("../../models/HealthcareSpecialty");
 const HealthcareCondition = require("../../models/HealthcareCondition");
 const Enrollment = require("../../models/Enrollment");
 const Doctor = require("../../models/Doctor");
-const publicBlogs = require("../../data/publicBlogs");
+const Blog = require("../../models/Blog");
 const { DOCTOR_SPECIALIZATION_MAP } = require("./searchConstants");
 
 const DEFAULT_TTL_MS = 5 * 60 * 1000;
@@ -114,6 +114,24 @@ function toPublicBlog(raw) {
   };
 }
 
+// Published blogs only, as { id, title, description, path, readTime }. A
+// `sources.blogs` array (used by tests) takes precedence over the database.
+async function loadPublicBlogs(sources) {
+  if (Array.isArray(sources.blogs)) return sources.blogs;
+  if (!sources.Blog) return [];
+  const rows = await sources.Blog.find({ status: "published" })
+    .select("slug title excerpt readTime")
+    .sort({ isLegacy: 1, legacyOrder: 1, publishedAt: -1 })
+    .lean();
+  return rows.map((row) => ({
+    id: idString(row._id),
+    title: row.title,
+    description: row.excerpt,
+    path: `/${row.slug}`,
+    readTime: row.readTime,
+  }));
+}
+
 function deepFreeze(value) {
   if (value && typeof value === "object" && !Object.isFrozen(value)) {
     Object.values(value).forEach(deepFreeze);
@@ -128,7 +146,7 @@ const defaultSources = {
   HealthcareCondition,
   Enrollment,
   Doctor,
-  blogs: publicBlogs,
+  Blog,
 };
 
 async function buildSearchCatalog(sources = defaultSources) {
@@ -185,7 +203,7 @@ async function buildSearchCatalog(sources = defaultSources) {
     }));
 
   const doctors = rawDoctors.map(toPublicDoctor).filter(Boolean);
-  const blogs = (sources.blogs || []).map(toPublicBlog).filter(Boolean);
+  const blogs = (await loadPublicBlogs(sources)).map(toPublicBlog).filter(Boolean);
 
   return deepFreeze({
     categories,

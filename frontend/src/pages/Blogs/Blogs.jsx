@@ -1,164 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import "./Blogs.css";
-import bestTelemedicineProvider from "../../assets/BlogImages/best-telemedicine-provider.webp";
-import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
-import futureOfTelemedicine from "../../assets/BlogImages/future-of-telemedicine.webp";
-import medicalConditions from "../../assets/BlogImages/medical-conditions.webp";
-import realDoctors from "../../assets/BlogImages/real-doctors.webp";
-import telemedicineAppointment from "../../assets/BlogImages/telemedicine-appointment.webp";
-import telemedicineCost from "../../assets/BlogImages/telemedicine-cost.webp";
-import telemedicineSafe from "../../assets/BlogImages/telemedicine-safe.webp";
-import telemedicineServices from "../../assets/BlogImages/telemedicine-services.webp";
-import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
-import telemedicine from "../../assets/BlogImages/telemedicine.webp";
-import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
-import UTIimage from "../../assets/BlogImages/uti-online-treatment.webp";
-import MigraineVsHeadache from "../../assets/BlogImages/Migrane-Vs-Headache.webp";
-import TelehealthforHypertensionImg from "../../assets/BlogImages/Telehealth-for-Hypertension.webp";
 import SEO from "../../components/Seo";
+import { fetchBlogs, blogImageSrc } from "../../api/blogApi";
 
 import heroBg from "../../assets/BannerImages/blog-banner.webp";
-
-const blogs = [
-  {
-    id: 1,
-    title:
-      "What Is Telemedicine? Complete Guide to Meaning, Benefits, Types & How It Works",
-    description:
-      "Telemedicine refers to the delivery of healthcare services remotely through digital technologies, including video consultations, phone calls, mobile applications, and secure online platforms. It enables the patients to get the consultation of doctors and healthcare professionals without visiting the hospital or a clinic physically.",
-    image: telemedicine,
-    path: "/what-is-telemedicine",
-    readTime: 5,
-  },
-  {
-    id: 2,
-    title:
-      "Telemedicine Services: Everything You Need to Know About Virtual Healthcare",
-    description:
-      "Telemedicine services are healthcare services provided remotely using digital technologies such as video consultations, phone calls, secure messaging, and online healthcare platforms",
-    image: telemedicineServices,
-    path: "/telemedicine-services",
-  },
-  {
-    id: 3,
-    title:
-      "How Does a Telemedicine Appointment Work? A Complete Step-by-Step Guide",
-    description:
-      "The future of telemedicine involves a combination of artificial intelligence, remote patient monitoring, wearable health technology, improved digital platforms, and more personalized virtual healthcare experiences. ",
-    image: telemedicineAppointment,
-    path: "/how-does-a-telemedicine-appointment-work",
-  },
-  {
-    id: 4,
-    title:
-      "Online Doctor Consultation: Benefits, Process & When to Choose Virtual Care",
-    description:
-      "An online doctor consultation is a virtual healthcare appointment where patients connect with doctors or specialists through video calls, phone calls, or secure digital platforms. It allows patients to discuss symptoms, share medical reports, receive professional medical guidance, and understand the next steps in their care without visiting a clinic or hospital in person.",
-    image: doctorConsultation,
-    path: "/online-doctor-consultation",
-  },
-  {
-    id: 5,
-    title:
-      "What Medical Conditions Can Be Treated Through Telemedicine? Complete List",
-    description:
-      "Telemedicine can help manage many non-emergency health concerns, including common illnesses, chronic disease follow-ups, skin conditions, mental health concerns, medication reviews, specialist consultations, and medical second opinions.",
-    image: medicalConditions,
-    path: "/conditions-treated-through-telemedicine",
-  },
-  {
-    id: 6,
-    title:
-      "How to Choose the Best Telemedicine Provider: 10 Important Factors to Consider",
-    description:
-      "The best telemedicine provider should offer qualified healthcare professionals, multiple medical specialties, secure technology, transparent pricing, convenient appointment scheduling, and reliable patient support. Patients should also consider privacy standards, ease of use, availability of second opinions, and the provider's overall healthcare approach before making a decision.",
-    image: bestTelemedicineProvider,
-    path: "/conditions-treated-through-telemedicine",
-  },
-  {
-    id: 7,
-    title:
-      "Top Telemedicine Platforms & Providers: Features, Benefits & How to Choose",
-    description:
-      "The best telemedicine platforms provide access to qualified healthcare professionals, multiple medical specialties, secure technology, easy appointment scheduling, transparent communication, and reliable patient support.",
-    image: topTelemedicinePlatforms,
-    path: "/top-telemedicine-platforms-providers",
-  },
-  {
-    id: 8,
-    title:
-      "Is Telemedicine Safe? A Complete Guide to Privacy, Security & Trust",
-    description:
-      "Yes, telemedicine can be a safe and secure way to receive healthcare when provided through reputable healthcare organizations using appropriate security practices and following applicable privacy and healthcare regulations.",
-    image: telemedicineSafe,
-    path: "/is-telemedicine-safe",
-  },
-  {
-    id: 9,
-    title:
-      "Telemedicine vs In-Person Doctor Visits: Benefits, Differences & Limitations",
-    description:
-      "Telemedicine and in-person doctor visits each have unique advantages. Telemedicine provides convenience, faster access to healthcare professionals, easier follow-up care, and access to specialists without travel. In-person visits are essential for physical examinations, emergency treatment, diagnostic procedures, and complex medical situations requiring direct evaluation.",
-    image: telemedicineVsInPersonDoctorVisits,
-    path: "/telemedicine-vs-in-person-doctor-visits",
-  },
-
-  {
-    id: 10,
-    title: "The Cost of Telemedicine: What You Should Know Before Booking",
-    description:
-      "Understanding telemedicine pricing, insurance coverage, and what to expect when comparing virtual care costs against traditional in-person visits.",
-    image: telemedicineCost,
-    path: "/telemedicine-cost-usa",
-    readTime: 6,
-  },
-  {
-    id: 11,
-    title: "Meet the Real Doctors Behind Virtual Healthcare",
-    description:
-      "A look at the licensed physicians and healthcare professionals who provide consultations through telemedicine platforms, and how their credentials are verified.",
-    image: realDoctors,
-    path: "/are-online-doctors-real-doctors",
-    readTime: 6,
-  },
-  {
-    id: 12,
-    title: "The Future of Telemedicine: Trends Shaping Virtual Care",
-    description:
-      "Artificial intelligence, remote monitoring, and wearable technology are reshaping how patients and doctors connect. Here's what's coming next.",
-    image: futureOfTelemedicine,
-    path: "/future-of-telemedicine",
-    readTime: 7,
-  },
-  {
-    id: 13,
-    title: "UTI: Symptoms, Causes, Treatment & When to See a Doctor",
-    description:
-      "UTI is short for urinary tract infection. It’s a common infection that can affect the bladder, urethra, ureters or kidneys. Most UTIs are caused by bacteria that enter the urinary tract and multiply. Cystitis is the most common type of UTI.",
-    image: UTIimage,
-    path: "/uti-symptoms-causes-treatment-&-when-to-see-a-doctor",
-    readTime: 8,
-  },
-  {
-    id: 14,
-    title: "Migraine vs. Headache: Symptoms, Causes, Differences & Treatment Options",
-    description:
-      "The majority of people experience headaches occasionally. Still, when the pain is very intense, the episodes are frequent, and it is accompanied by nausea and/or light sensitivity or a change in visual perception, you might ponder: is this a headache or a migraine?",
-    image: MigraineVsHeadache,
-    path: "/migraine-vs-headache-symptoms-causes-differences-and-treatment-options",
-    readTime: 9,
-  },
-  {
-    id: 15,
-    title: "Telehealth for Hypertension: Can You Treat High Blood Pressure Online?",
-    description:
-      "Hypertension, or high blood pressure, is a health condition in which the heart pumps blood at high pressure throughout the body. Since hypertension can bring the heart disease stroke kidney disease, and other complications if ignored, it is necessary to check the blood pressure frequently and follow the recommended therapy.",
-    image: TelehealthforHypertensionImg,
-    path: "/telehealth-for-hypertension",
-    readTime: 8,
-  },
-];
 
 const CARDS_PER_PAGE = 9;
 
@@ -180,25 +26,58 @@ export default function BlogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [data, setData] = useState({ blogs: [], page: 1, total: 0, totalPages: 1 });
+  const [loadedKey, setLoadedKey] = useState(null);
 
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
   const rawPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
-  const filtered = useMemo(() => {
-    return blogs.filter((b) => {
-      const matchCat =
-        activeCategory === "All" || b.category === activeCategory;
-      const matchSearch =
-        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchCat && matchSearch;
-    });
-  }, [activeCategory, searchQuery]);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+  // Blogs come from the API (published posts only); search and pagination are
+  // done server-side.
+  const requestKey = `${rawPage}|${debouncedSearch}|${activeCategory}`;
+  const loading = loadedKey !== requestKey;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchBlogs(
+      {
+        page: rawPage,
+        limit: CARDS_PER_PAGE,
+        search: debouncedSearch,
+        category: activeCategory === "All" ? "" : activeCategory,
+      },
+      controller.signal,
+    )
+      .then((res) => {
+        setData(res);
+        setLoadedKey(requestKey);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted || err?.code === "ERR_CANCELED") return;
+        console.error("Failed to load blogs:", err);
+        setData({ blogs: [], page: 1, total: 0, totalPages: 1 });
+        setLoadedKey(requestKey);
+      });
+    return () => controller.abort();
+  }, [requestKey, rawPage, debouncedSearch, activeCategory]);
+
+  // Same card shape as before. Category is intentionally not mapped: the list
+  // cards do not show a category badge (it appears on the article page only).
+  const visibleBlogs = data.blogs.map((b) => ({
+    id: b.id,
+    title: b.title,
+    description: b.description,
+    image: blogImageSrc(b.image),
+    path: b.path,
+  }));
+  const totalPages = Math.max(1, data.totalPages);
   const currentPage = Math.min(rawPage, totalPages);
-  const start = (currentPage - 1) * CARDS_PER_PAGE;
-  const visibleBlogs = filtered.slice(start, start + CARDS_PER_PAGE);
 
   useEffect(() => {
     if (currentPage > 1) {
@@ -361,9 +240,9 @@ export default function BlogPage() {
           <div className="section-header">
             <h2 className="section-title">Latest Articles</h2>
             <p className="section-sub">
-              {filtered.length === blogs.length
+              {!debouncedSearch && activeCategory === "All"
                 ? "Stay informed with our most recent health guides"
-                : `${filtered.length} article${filtered.length !== 1 ? "s" : ""} found`}
+                : `${data.total} article${data.total !== 1 ? "s" : ""} found`}
             </p>
           </div>
 
@@ -408,7 +287,7 @@ export default function BlogPage() {
                 );
               })}
             </div>
-          ) : (
+          ) : loading ? null : (
             <div className="empty-state">
               <div className="empty-icon">
                 <svg

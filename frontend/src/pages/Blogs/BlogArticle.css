@@ -1,0 +1,68 @@
+/* Rich-text elements for blogs created in the Super Admin panel.
+   Scoped to .blog-richtext (set only by BlogArticle.jsx), so no existing
+   article page is affected. The global Tailwind reset removes list markers and
+   blockquote styling, and telemedicine.css only styles p/ul/h2-h4 inside
+   .content-col, so the editor's lists, quotes and inline images are restored
+   here using the same design tokens. */
+.content-col.blog-richtext ul {
+  list-style: disc;
+}
+
+.content-col.blog-richtext ol {
+  list-style: decimal;
+  margin: 0 0 20px;
+  padding-left: 22px;
+  font-size: 16.5px;
+  line-height: 1.85;
+}
+
+.content-col.blog-richtext li {
+  color: var(--ink-body);
+}
+
+.content-col.blog-richtext blockquote {
+  margin: 0 0 20px;
+  padding: 4px 0 4px 18px;
+  border-left: 3px solid var(--blue-500);
+  color: var(--navy-500);
+  font-size: 16.5px;
+  line-height: 1.85;
+}
+
+.content-col.blog-richtext img {
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 18px;
+  border-radius: var(--radius-md);
+}
+
+/* ── Sticky "In this guide" TOC (blog template only) ──────────────────────────
+   Scoped to .blog-layout (set only by BlogArticle.jsx); the legacy article pages
+   keep telemedicine.css untouched. The column is a grid item aligned to the top
+   of its row so it sticks below the header and stops where the article ends; a
+   TOC taller than the viewport scrolls inside its own card. Hidden on narrow
+   screens by the existing ≤900px rule, where the mobile "Jump to a section"
+   list is used instead. */
+.blog-layout {
+  align-items: start;
+}
+
+.blog-layout .toc-col {
+  position: sticky;
+  top: 130px;
+  align-self: start;
+}
+
+.blog-layout .toc-card {
+  max-height: calc(100vh - 160px);
+  max-height: calc(100dvh - 160px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Hero badge row (blog template only). The legacy pages always show badges, and
+   the row's margins plus its 36px height set the gap between the reading strip
+   and the title. A post with no category/tag keeps that same height. */
+.blog-hero .badge-row:empty {
+  min-height: 36px;
+}

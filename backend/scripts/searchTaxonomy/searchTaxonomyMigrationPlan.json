@@ -2,7 +2,7 @@
   "planVersion": 1,
   "dryRun": true,
   "executed": false,
-  "generatedAt": "2026-09-30T06:50:15.236Z",
+  "generatedAt": "2026-10-01T10:06:01.096Z",
   "generator": "backend/scripts/searchTaxonomy/prepareSearchTaxonomyMigration.js",
   "sources": {
     "searchIndex": {
@@ -11,12 +11,12 @@
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "0ae970b2cdf36fd7dfc09c96adc6da5d72a85c4d78f053e35361711e8526ac84",
-      "staticRoutes": 399
+      "sha256": "5a7696b91e35c589f0e02ac965cbc72ed91769666bade5390dc4a9d421985555",
+      "staticRoutes": 402
     },
     "decisions": {
       "path": "backend/scripts/searchTaxonomy/searchTaxonomyDecisions.js",
-      "sha256": "3c57c8dd34da1848c7cd76adc6e2496b8a2498bd5c8d04c991c89f5a93c2bf93"
+      "sha256": "d5f7fc4a63bd1d86fc426cbdc422ab5ae5e3494e7ef8983be329bd46822863c5"
     }
   },
   "liveSnapshot": {
@@ -359,9 +359,9 @@
   },
   "doctors": {
     "summary": {
-      "approvedEnrollments": 33,
-      "linkedDoctorAccounts": 32,
-      "publicDoctors": 32,
+      "approvedEnrollments": 34,
+      "linkedDoctorAccounts": 33,
+      "publicDoctors": 33,
       "approvedWithoutDoctorAccount": 1,
       "disabledAccounts": 0,
       "unlinkedBySpecialization": {
@@ -371,8 +371,8 @@
     "specializationMapping": [
       {
         "specialization": "General Practice",
-        "approvedEnrollments": 13,
-        "publicDoctors": 13,
+        "approvedEnrollments": 14,
+        "publicDoctors": 14,
         "mappedSpecialty": "General Physician",
         "mappingType": "APPROVED_MAPPING",
         "specialtyStatus": "LIVE_ACTIVE"

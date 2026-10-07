@@ -44,6 +44,7 @@
     "nodemailer": "^8.0.11",
     "openai": "^7.25.0",
     "pdfkit": "^0.15.2",
+    "sanitize-html": "^2.18.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "stripe": "^22.1.0"

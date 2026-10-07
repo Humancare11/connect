@@ -172,13 +172,10 @@ test("blogs: title match, path match, and non-matching blogs excluded", () => {
   assert.deepEqual(titles(run("vaccination"), "blog"), []);
 });
 
-test("backend blog metadata stays in sync with Blogs.jsx", () => {
-  const src = fs.readFileSync(path.join(__dirname, "..", "..", "..", "frontend", "src", "pages", "Blogs", "Blogs.jsx"), "utf8");
+// Blogs now come from the Blog collection (see tests/blogs.test.js for the
+// catalog loader); this static list is only deterministic fixture data.
+test("fixture blog paths are unique", () => {
   const publicBlogs = require("../../data/publicBlogs");
-  for (const blog of publicBlogs) {
-    assert.ok(src.includes(`"${blog.path}"`), `path ${blog.path} missing from Blogs.jsx`);
-    assert.ok(src.includes(blog.title), `title of blog ${blog.id} differs from Blogs.jsx`);
-  }
   assert.equal(new Set(publicBlogs.map((b) => b.path)).size, publicBlogs.length, "duplicate blog paths");
 });
 

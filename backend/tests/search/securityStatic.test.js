@@ -47,6 +47,7 @@ test("the legacy searchRoutes.js is not imported anywhere", () => {
 test("catalog loads only the allowed models", () => {
   const requires = [...read("services/search/searchCatalog.js").matchAll(/require\(["']([^"']+)["']\)/g)].map((m) => m[1]);
   assert.deepEqual(requires.filter((r) => r.includes("models/")).sort(), [
+    "../../models/Blog", // published posts only; explicit field selection
     "../../models/Doctor",
     "../../models/Enrollment",
     "../../models/HealthcareCategory",
