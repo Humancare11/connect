@@ -4,6 +4,9 @@ import { Helmet } from "react-helmet-async";
 import { fetchBlog, blogImageSrc } from "../../api/blogApi";
 import BlogArticle from "./BlogArticle";
 
+// Blogs without a cover image fall back to the site-wide 1200x630 preview.
+const DEFAULT_OG_IMAGE_URL = "https://humancareconnect.co/og-default.jpg";
+
 const NotFound = lazy(() => import("../../components/NotFound"));
 
 const SITE_ORIGIN = "https://humancareconnect.co";
@@ -60,12 +63,12 @@ export default function BlogPost() {
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={url} />
-        {image && <meta property="og:image" content={image} />}
+        <meta property="og:image" content={image || DEFAULT_OG_IMAGE_URL} />
         <meta property="og:site_name" content="Humancare Connect" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
-        {image && <meta name="twitter:image" content={image} />}
+        <meta name="twitter:image" content={image || DEFAULT_OG_IMAGE_URL} />
       </Helmet>
       <BlogArticle
         blog={{

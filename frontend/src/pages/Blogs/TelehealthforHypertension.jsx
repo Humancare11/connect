@@ -76,14 +76,14 @@ const SCHEMA_DATA = {
       headline:
         "Telehealth for Hypertension: Can You Treat High Blood Pressure Online?",
       description: PAGE_DESCRIPTION,
-      image: "https://humancareconnect.co/Logo.png",
+      image: "https://humancareconnect.co/single-logo.png",
       publisher: {
         "@type": "Organization",
         name: "Humancare Connect",
         url: "https://humancareconnect.co",
         logo: {
           "@type": "ImageObject",
-          url: "https://humancareconnect.co/Logo.png",
+          url: "https://humancareconnect.co/single-logo.png",
         },
       },
       about: [
