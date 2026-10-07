@@ -252,20 +252,33 @@ export default function HomePage() {
   // Video lazy loading with Intersection Observer
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShouldLoadVideo(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }, // Load before visible
-    );
+    let observer;
+    let timer;
+    // The 1.7 MB hero video is decorative (its poster is already on screen), so it must not compete with
+    // the page's own JS/CSS/fonts for bandwidth: start observing only after the page has loaded and gone idle.
+    const start = () => {
+      timer = setTimeout(() => {
+        observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0].isIntersecting) {
+              setShouldLoadVideo(true);
+              observer.disconnect();
+            }
+          },
+          { rootMargin: "200px" }, // Load before visible
+        );
+        const videoSection = rightRef.current;
+        if (videoSection) observer.observe(videoSection);
+      }, 1500);
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
 
-    const videoSection = rightRef.current;
-    if (videoSection) observer.observe(videoSection);
-
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("load", start);
+      clearTimeout(timer);
+      if (observer) observer.disconnect();
+    };
   }, []);
 
   // ── As-you-type search: backend "instant" mode (never uses AI) ───────────
@@ -885,6 +898,19 @@ export default function HomePage() {
         <div className="hero-right" ref={rightRef}>
           {/* The poster is the page's LCP image; start fetching it before the video element mounts. */}
           <PreloadImage src={heroPoster} />
+          {/* The poster is a real <img> in the server HTML, so the LCP image paints before any JavaScript
+              runs. The video is mounted on top of it later with the same class and no poster of its own
+              (a second poster would become a later, larger LCP candidate). */}
+          <img
+            src={heroPoster}
+            alt=""
+            aria-hidden="true"
+            className="hero-right-video-bg"
+            width="1600"
+            height="900"
+            decoding="async"
+            fetchPriority="high"
+          />
           {shouldLoadVideo && (
             <video
               autoPlay
@@ -892,7 +918,6 @@ export default function HomePage() {
               muted
               playsInline
               preload="metadata"
-              poster={heroPoster}
               className="hero-right-video-bg"
             >
               <source src={sceneVideo} type="video/mp4" />
