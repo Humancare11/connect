@@ -3,6 +3,11 @@
 // Head tags for a page. Everything comes from the central map in src/seo/routes.js, resolved
 // from the current pathname (self-referencing canonical, robots, title, description, JSON-LD).
 // Props are overrides only: pass one when a page genuinely differs from its map entry.
+//
+// One emitter per route: on React 19 react-helmet-async renders real elements and does NOT
+// de-duplicate, so two emitters for the same route would produce duplicate tags.
+//   - indexable route   -> the page's own <SEO/> (default export below)
+//   - non-public route  -> <RouteSeo/> only (default export renders nothing there)
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import { getRouteSeo, SITE_ORIGIN, SITE_NAME, DEFAULT_OG_IMAGE } from "../seo/routes";
@@ -13,7 +18,7 @@ const ROBOTS_NOINDEX = "noindex, nofollow";
 
 const absolute = (url) => (url && !/^https?:\/\//i.test(url) ? SITE_ORIGIN + url : url);
 
-const SEO = ({ title, description, robots, image, type = "website", schemaData }) => {
+export function SeoTags({ title, description, robots, image, type = "website", schemaData }) {
   const { pathname } = useLocation();
   const { path, entry, noindex: routeNoindex, canonical } = getRouteSeo(pathname);
 
@@ -45,9 +50,7 @@ const SEO = ({ title, description, robots, image, type = "website", schemaData }
       <meta name="robots" content={noindex ? ROBOTS_NOINDEX : ROBOTS_INDEX} />
       {!noindex && canonical && <link rel="canonical" href={canonical} />}
 
-      {!noindex && (
-        <meta property="og:type" content={type} />
-      )}
+      {!noindex && <meta property="og:type" content={type} />}
       {!noindex && <meta property="og:locale" content="en_US" />}
       {!noindex && <meta property="og:site_name" content={SITE_NAME} />}
       {!noindex && finalTitle && <meta property="og:title" content={finalTitle} />}
@@ -69,6 +72,12 @@ const SEO = ({ title, description, robots, image, type = "website", schemaData }
       {jsonLd && <script type="application/ld+json">{jsonLd}</script>}
     </Helmet>
   );
+}
+
+const SEO = (props) => {
+  const { pathname } = useLocation();
+  if (getRouteSeo(pathname).noindex) return null; // <RouteSeo/> owns non-public routes
+  return <SeoTags {...props} />;
 };
 
 export default SEO;
