@@ -23,6 +23,7 @@ import {
   FiBarChart2,
   FiPackage,
   FiVideo,
+  FiCalendar,
 } from "react-icons/fi";
 
 import SEO from "../../components/Seo";
