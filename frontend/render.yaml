@@ -46,9 +46,131 @@ routes:
   - type: redirect
     source: /mental-health/psychiatry/Ocd
     destination: /mental-health/psychiatry/ocd
+  # App-only routes load the SPA shell (200.html, the untouched client index.html). Everything else
+  # is a prerendered file, or falls through to dist/404.html, which Render serves with a real 404.
+  # There is deliberately NO catch-all /* rewrite. Keep this list in sync with NOINDEX_PREFIXES /
+  # NOINDEX_EXACT in src/seo/routes.js (scripts/check-seo.mjs enforces it).
   - type: rewrite
-    source: /*
-    destination: /index.html
+    source: /user
+    destination: /200.html
+  - type: rewrite
+    source: /user/*
+    destination: /200.html
+  - type: rewrite
+    source: /doctor-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /doctor-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /admin-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /admin-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /superadmin-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /superadmin-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /employee-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /employee-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /payment-admin
+    destination: /200.html
+  - type: rewrite
+    source: /payment-admin/*
+    destination: /200.html
+  - type: rewrite
+    source: /partner-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /partner-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /appointment-booking
+    destination: /200.html
+  - type: rewrite
+    source: /appointment-booking/*
+    destination: /200.html
+  - type: rewrite
+    source: /pay
+    destination: /200.html
+  - type: rewrite
+    source: /pay/*
+    destination: /200.html
+  - type: rewrite
+    source: /video-call
+    destination: /200.html
+  - type: rewrite
+    source: /video-call/*
+    destination: /200.html
+  - type: rewrite
+    source: /direct-video-call
+    destination: /200.html
+  - type: rewrite
+    source: /direct-video-call/*
+    destination: /200.html
+  - type: rewrite
+    source: /login
+    destination: /200.html
+  - type: rewrite
+    source: /book-appointment
+    destination: /200.html
+  - type: rewrite
+    source: /test
+    destination: /200.html
+  - type: rewrite
+    source: /cookies
+    destination: /200.html
+  - type: rewrite
+    source: /images
+    destination: /200.html
+  - type: rewrite
+    source: /doctor-login
+    destination: /200.html
+  - type: rewrite
+    source: /adminauth
+    destination: /200.html
+  - type: rewrite
+    source: /admin-auth
+    destination: /200.html
+  - type: rewrite
+    source: /payment-admin-login
+    destination: /200.html
+  - type: rewrite
+    source: /employee-login
+    destination: /200.html
+  - type: rewrite
+    source: /partner-login
+    destination: /200.html
+  - type: rewrite
+    source: /services-prices
+    destination: /200.html
+  - type: rewrite
+    source: /category-consultant
+    destination: /200.html
+  - type: rewrite
+    source: /service-consultant
+    destination: /200.html
+  - type: rewrite
+    source: /profile
+    destination: /200.html
+  - type: rewrite
+    source: /ask-a-question
+    destination: /200.html
+  # Doctor profiles: prerendered ones are real files; new ones render in the browser until the next build.
+  - type: rewrite
+    source: /doctors/*
+    destination: /200.html
+  - type: rewrite
+    source: /doctor/*
+    destination: /200.html
 
 # Response headers Render applies to every static asset. These can't be set
 # via a <meta> tag (frame-ancestors / X-Frame-Options in particular are
