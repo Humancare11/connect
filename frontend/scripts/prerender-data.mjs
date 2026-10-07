@@ -1,7 +1,7 @@
 // Build-time data for the prerender step: published blog posts and approved doctors, fetched
 // from the public API. Nothing here needs credentials.
 //
-//   API base:   VITE_API_URL (same variable the app itself uses)
+//   API base:   VITE_API_URL (same variable the app itself uses), or PRERENDER_API_URL to override it
 //   offline:    PRERENDER_SKIP_API=1 skips both fetches (static pages only, with a warning)
 //
 // In every other case an API failure fails the build: shipping a site that silently dropped its
@@ -11,8 +11,11 @@ const BLOG_PAGE_SIZE = 24; // the API caps limit at 24
 const BLOG_LIST_CARDS = 9; // first page of /blogs, same size as CARDS_PER_PAGE in pages/Blogs/Blogs.jsx
 const TIMEOUT_MS = 15000;
 
+// PRERENDER_API_URL overrides VITE_API_URL for the build-time fetches only (the browser bundle keeps
+// using VITE_API_URL). Useful locally, where VITE_API_URL is empty because the dev proxy handles /api.
 function apiBase(env) {
-  return String(env.VITE_API_URL || process.env.VITE_API_URL || "").replace(/\/+$/, "");
+  const url = process.env.PRERENDER_API_URL || env.PRERENDER_API_URL || env.VITE_API_URL || process.env.VITE_API_URL || "";
+  return String(url).replace(/\/+$/, "");
 }
 
 async function getJsonOnce(base, pathAndQuery) {
@@ -72,7 +75,7 @@ export function doctorSlug(doctor) {
 // Returns [{ route, key, record, lastmod }]
 export async function fetchBlogPages(env, { reservedRoutes }) {
   const base = apiBase(env);
-  if (!base) throw new Error("VITE_API_URL is not set, cannot fetch blog posts");
+  if (!base) throw new Error("VITE_API_URL (or PRERENDER_API_URL) is not set, cannot fetch blog posts");
   const pages = [];
   const seen = new Set();
   let page = 1;
@@ -104,7 +107,7 @@ export async function fetchBlogPages(env, { reservedRoutes }) {
 
 export async function fetchDoctorPages(env) {
   const base = apiBase(env);
-  if (!base) throw new Error("VITE_API_URL is not set, cannot fetch doctors");
+  if (!base) throw new Error("VITE_API_URL (or PRERENDER_API_URL) is not set, cannot fetch doctors");
   const { data: list } = await getJson(base, "/api/doctor/approved");
   const pages = [];
   for (const d of Array.isArray(list) ? list : []) {
@@ -120,7 +123,7 @@ export async function fetchDoctorPages(env) {
 // First page of the /blogs index, embedded so the listing (and its post links) is in the HTML.
 export async function fetchBlogIndexPage(env) {
   const base = apiBase(env);
-  if (!base) throw new Error("VITE_API_URL is not set, cannot fetch the blog index");
+  if (!base) throw new Error("VITE_API_URL (or PRERENDER_API_URL) is not set, cannot fetch the blog index");
   const { data } = await getJson(base, `/api/blogs?page=1&limit=${BLOG_LIST_CARDS}`);
   return data;
 }
