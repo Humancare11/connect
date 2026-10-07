@@ -162,12 +162,6 @@ const SPECIALTY_DATA = {
       path: "/chronic-care/neurology/migraine",
     },
     {
-      Icon: FiHeart,
-      name: "Chronic Migraine",
-      desc: "Support for healthy infant feeding",
-      path: "/chronic-care/neurology/migraine",
-    },
-    {
       Icon: FiZap,
       name: "Seizures / Epilepsy follow-up",
       desc: "Cold and flu symptoms in children",

@@ -224,10 +224,6 @@ const conditionCategories = [
         path: "/chronic-care/neurology/migraine",
       },
       {
-        name: "Chronic Migraine",
-        path: "/chronic-care/neurology/migraine",
-      },
-      {
         name: "Seizures / Epilepsy Follow-Up",
         path: "/chronic-care/neurology/seizures-epilepsy-follow-up",
       },

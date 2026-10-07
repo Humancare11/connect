@@ -158,11 +158,6 @@ const cat = {
       path: "/chronic-care/neurology/migraine",
     },
     {
-      name: "Chronic Migraine",
-      // desc: "Support for healthy infant feeding",
-      path: "/chronic-care/neurology/migraine",
-    },
-    {
       name: "Seizures / Epilepsy follow-up",
       // desc: "Cold and flu symptoms in children",
       path: "/chronic-care/neurology/seizures-epilepsy-follow-up",

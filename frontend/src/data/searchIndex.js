@@ -203,10 +203,6 @@ export const conditions = [
     keywords: ["chronic kidney disease", "ckd", "renal disease"]
   },
   {
-    id: "chronic-migraine", title: "Chronic Migraine", type: "condition", category: "chronic-care", specialty: "neurology", route: "/chronic-care/neurology/migraine",
-    keywords: ["chronic migraine", "migraine", "severe headache"]
-  },
-  {
     id: "complex-diagnosis", title: "Complex Diagnosis Review", type: "condition", category: "chronic-care", specialty: "export-medical-opinion", route: "/online-second-medical-opinion/complex-diagnosis-review",
     keywords: ["complex diagnosis", "diagnosis review"]
   },
@@ -298,7 +294,7 @@ export const conditions = [
   },
   {
     id: "asthma", title: "Asthma", type: "condition", category: "chronic-care", specialty: "pulmonology", route: "/chronic-care/pulmonology/asthma",
-    keywords: ["asthma", "wheezing", "inhaler"]
+    keywords: ["asthma", "wheezing", "inhaler", "child asthma", "kids wheezing"]
   },
   {
     id: "asthma-flare-up", title: "Asthma Flare-Up", type: "condition", category: "chronic-care", specialty: "pulmonology", route: "/asthma-flare-up",
@@ -499,10 +495,6 @@ export const conditions = [
     keywords: ["feeding concerns", "baby feeding"]
   },
   {
-    id: "mild-asthma-symptoms", title: "Mild Asthma Symptoms", type: "condition", category: "child-and-family-care", specialty: "pediatrics", route: "/chronic-care/pulmonology/asthma",
-    keywords: ["child asthma", "kids wheezing"]
-  },
-  {
     id: "mood-anxiety-teens", title: "Mood & Anxiety in Teens", type: "condition", category: "child-and-family-care", specialty: "adolescent-medicine", route: "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
     keywords: ["teen anxiety", "teen mood", "adolescent mental health"]
   },
@@ -559,10 +551,6 @@ export const conditions = [
   {
     id: "lab-results-review", title: "Lab Results Review", type: "condition", category: "general-and-everyday-care", route: "/lab-results-review",
     keywords: ["lab results", "blood test review"]
-  },
-  {
-    id: "medical-certificate", title: "Medical Certificate", type: "condition", category: "general-and-everyday-care", route: "/doctors-note",
-    keywords: ["medical certificate"]
   },
   {
     id: "medication-review", title: "Medication Review", type: "condition", category: "general-and-everyday-care", route: "/general-and-everyday-care/internal-medicine/medication-review",
@@ -818,7 +806,7 @@ export const conditions = [
   },
   {
     id: "migraines", title: "Migraine", type: "condition", category: "general-and-everyday-care", specialty: "general-physician", route: "/chronic-care/neurology/migraine",
-    keywords: ["migraine", "severe headache"]
+    keywords: ["migraine", "severe headache", "chronic migraine"]
   },
   {
     id: "minor-burns", title: "Minor Burns", type: "condition", category: "general-and-everyday-care", specialty: "general-physician", route: "/minor-burns",
@@ -878,10 +866,6 @@ export const conditions = [
   },
 
   // ── Urinary & Kidney (grouped under Men's Health / Urology) ──────────────
-  {
-    id: "bladder-infection", title: "Bladder Infection", type: "condition", category: "men-health", specialty: "urology", route: "/urinary-tract-infection",
-    keywords: ["bladder infection"]
-  },
   {
     id: "blood-in-urine", title: "Blood in Urine", type: "condition", category: "men-health", specialty: "urology", route: "/mens-health/urology/blood-in-urine",
     keywords: ["blood in urine", "hematuria"]
