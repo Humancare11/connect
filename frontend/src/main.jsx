@@ -9,6 +9,7 @@ installSecureConsole();
 import AppProviders from "./AppProviders";
 import { readPrerenderData } from "./seo/prerenderData";
 import PrerenderCleanup from "./seo/PrerenderCleanup";
+import "./fonts.css";
 import "./index.css";
 import App from "./App.jsx";
 
