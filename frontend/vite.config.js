@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'url'
 
-export default ({ mode }) => {
+export default ({ mode, isSsrBuild }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   const apiUrl = env.VITE_API_URL || 'http://localhost:5000'
@@ -22,6 +22,7 @@ export default ({ mode }) => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
+      copyPublicDir: !isSsrBuild,
       target: 'es2020',
       cssCodeSplit: true,
       cssMinify: false,
@@ -30,7 +31,8 @@ export default ({ mode }) => {
         polyfill: false,
       },
       rollupOptions: {
-        output: {
+        // The prerender bundle (vite build --ssr) is run by Node, not shipped: no manual chunking.
+        output: isSsrBuild ? {} : {
           manualChunks(id) {
             if (!id.includes('node_modules')) return undefined
             if (id.includes('react') || id.includes('react-router-dom')) return 'vendor-react'

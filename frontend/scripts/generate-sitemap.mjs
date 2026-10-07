@@ -62,12 +62,21 @@ function changeFrequencyFor(routePath) {
   return "monthly";
 }
 
-function buildSitemap(routePaths) {
-  const entries = routePaths
+// Blog posts and doctor profiles are not in the static map: scripts/prerender.mjs lists the ones it
+// rendered in dist/.prerender-manifest.json (with the post's own published date).
+function dynamicRoutes() {
+  const file = path.join(outDir, ".prerender-manifest.json");
+  if (!fs.existsSync(file)) return [];
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function buildSitemap(routePaths, extra) {
+  const lastmods = new Map(extra.map((e) => [e.route, e.lastmod]));
+  const entries = [...routePaths, ...extra.map((e) => e.route)]
     .map((routePath) => {
       const loc = escapeXml(routeToUrl(routePath));
-      // Real content date from the metadata map; never the build date.
-      const lastmod = SEO_ROUTES[routePath].lastmod;
+      // Real content date from the metadata map / the post itself; never the build date.
+      const lastmod = lastmods.has(routePath) ? lastmods.get(routePath) : SEO_ROUTES[routePath].lastmod;
 
       return [
         "  <url>",
@@ -141,6 +150,6 @@ if (routes.length === 0) {
   throw new Error("No indexable routes in src/seo/routes.js for sitemap generation.");
 }
 
-fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(routes));
+fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(routes, dynamicRoutes()));
 fs.writeFileSync(path.join(outDir, "robots.txt"), buildRobotsTxt(isProduction));
 

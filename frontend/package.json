@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run check:seo && vite build && npm run generate:sitemap -- --mode=production && npm run check:seo -- --dist && npm run copy:spa-fallback",
-    "build:prod": "npm run check:seo && vite build --mode production && npm run generate:sitemap -- --mode=production && npm run check:seo -- --dist && npm run copy:spa-fallback",
-    "build:uat": "npm run check:seo && vite build --mode uat && npm run generate:sitemap -- --mode=uat && npm run check:seo -- --dist && npm run copy:spa-fallback",
+    "build": "npm run check:seo && vite build && npm run build:ssr && npm run copy:spa-fallback && node scripts/prerender.mjs --mode=production && npm run generate:sitemap -- --mode=production && npm run check:seo -- --dist",
+    "build:prod": "npm run check:seo && vite build --mode production && npm run build:ssr -- --mode production && npm run copy:spa-fallback && node scripts/prerender.mjs --mode=production && npm run generate:sitemap -- --mode=production && npm run check:seo -- --dist",
+    "build:uat": "npm run check:seo && vite build --mode uat && npm run build:ssr -- --mode uat && npm run copy:spa-fallback && node scripts/prerender.mjs --mode=uat && npm run generate:sitemap -- --mode=uat && npm run check:seo -- --dist",
+    "build:ssr": "vite build --ssr src/entry-server.jsx --outDir dist-ssr",
     "check:seo": "node scripts/check-seo.mjs",
     "generate:sitemap": "node scripts/generate-sitemap.mjs",
     "copy:spa-fallback": "node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','dist/200.html')\"",

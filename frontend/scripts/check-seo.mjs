@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { SEO_ROUTES, SITE_ORIGIN, isNoindexPath, isIndexable } from "../src/seo/routes.js";
+import { SEO_ROUTES, SITE_ORIGIN, NOINDEX_PREFIXES, NOINDEX_EXACT, isNoindexPath, isIndexable } from "../src/seo/routes.js";
 import { REDIRECTS, CASE_REDIRECTS } from "../src/seo/redirects.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -119,9 +119,28 @@ const renderYaml = fs.readFileSync(path.join(root, "render.yaml"), "utf8");
   for (const r of yamlRedirects) {
     if (!want.some((w) => w.from === r.source)) err(`[render.yaml] redirect ${r.source} is not in src/seo/redirects.js`);
   }
-  const rewrite = yamlRoutes.find((r) => r.type === "rewrite" && r.source === "/*");
-  if (!rewrite) err(`[render.yaml] catch-all rewrite "/*" not found`);
-  else if (yamlRedirects.some((r) => r.at > rewrite.at)) err(`[render.yaml] redirects must come before the "/*" rewrite`);
+  // Rewrites: only app-only routes load the SPA shell. A catch-all would turn every unknown URL
+  // into a soft 404, so it is forbidden; unknown URLs must fall through to dist/404.html.
+  const rewrites = yamlRoutes.filter((r) => r.type === "rewrite");
+  if (rewrites.some((r) => r.source === "/*" || r.source === "*")) {
+    err(`[render.yaml] catch-all rewrite found; unknown URLs must return a real 404 (dist/404.html)`);
+  }
+  for (const r of rewrites) {
+    if (r.destination !== "/200.html") err(`[render.yaml] rewrite ${r.source} must point at /200.html (the SPA shell), not ${r.destination}`);
+  }
+  const rewriteSources = new Set(rewrites.map((r) => r.source));
+  for (const p of NOINDEX_PREFIXES) {
+    for (const src of [p, p + "/*"]) {
+      if (!rewriteSources.has(src)) err(`[render.yaml] non-public route ${src} has no rewrite to the SPA shell (it would 404)`);
+    }
+  }
+  for (const p of NOINDEX_EXACT) {
+    if (!rewriteSources.has(p)) err(`[render.yaml] non-public route ${p} has no rewrite to the SPA shell (it would 404)`);
+  }
+  const firstRewrite = rewrites[0];
+  if (firstRewrite && yamlRedirects.some((r) => r.at > firstRewrite.at)) {
+    err(`[render.yaml] redirects must come before the rewrites`);
+  }
 }
 
 // ---- 5. index.html must not carry page-level tags again -------------------------------------
@@ -145,6 +164,10 @@ if (checkDist) {
   if (!fs.existsSync(sitemapFile)) err(`[sitemap] dist/sitemap.xml not found`);
   else {
     const xml = fs.readFileSync(sitemapFile, "utf8");
+    const manifestFile = path.join(root, "dist", ".prerender-manifest.json");
+    const dynamicRoutes = fs.existsSync(manifestFile)
+      ? new Set(JSON.parse(fs.readFileSync(manifestFile, "utf8")).map((e) => e.route))
+      : new Set();
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, "&"));
     const seen = new Set();
     for (const loc of locs) {
@@ -155,11 +178,26 @@ if (checkDist) {
         continue;
       }
       const p = loc.slice(SITE_ORIGIN.length) || "/";
-      if (!isIndexable(p)) err(`[sitemap] ${loc} is not an indexable route`);
+      if (!isIndexable(p) && !dynamicRoutes.has(p)) err(`[sitemap] ${loc} is not an indexable route`);
     }
-    if (locs.length !== indexable.length) {
-      err(`[sitemap] ${locs.length} URLs but ${indexable.length} indexable routes in the map`);
+    if (locs.length !== indexable.length + dynamicRoutes.size) {
+      err(`[sitemap] ${locs.length} URLs but ${indexable.length} indexable routes in the map + ${dynamicRoutes.size} prerendered blog/doctor pages`);
     }
+    // Every indexable route must have been prerendered with its own content.
+    for (const key of indexable) {
+      const file = key === "/" ? path.join(root, "dist", "index.html") : path.join(root, "dist", key.slice(1), "index.html");
+      if (!fs.existsSync(file)) {
+        err(`[prerender] ${key} has no prerendered HTML (${path.relative(root, file)})`);
+        continue;
+      }
+      const html = fs.readFileSync(file, "utf8");
+      if (!html.includes("data-prerendered")) err(`[prerender] ${key} HTML is not marked data-prerendered`);
+      const canonical = html.match(/<link[^>]*\srel="canonical"[^>]*\shref="([^"]+)"/);
+      const want = SITE_ORIGIN + (SEO_ROUTES[key].canonical || key);
+      if (!canonical || canonical[1].replace(/&amp;/g, "&") !== want) err(`[prerender] ${key} canonical is ${canonical && canonical[1]}, expected ${want}`);
+      if ((html.match(/<h1[\s>]/g) || []).length < 1) warn(`[prerender] ${key} has no <h1> in the raw HTML`);
+    }
+    if (!fs.existsSync(path.join(root, "dist", "404.html"))) err(`[prerender] dist/404.html is missing`);
     for (const m of xml.matchAll(/<lastmod>([^<]*)<\/lastmod>/g)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(m[1])) err(`[sitemap] bad lastmod "${m[1]}"`);
     }
