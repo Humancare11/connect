@@ -49,6 +49,13 @@ const helpRoutes = {
   "Women's Health": "/women-health",
 };
 
+/* Plain clicks on the sliding links keep toggling the dropdown; modified clicks
+   (new tab / window) follow the link normally. */
+const keepPillBehaviour = (e) => {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+};
+
 /* ── Short descriptor shown in dropdown ── */
 const helpDesc = {
   "Child & Family Care": "Pediatrics, Adolescent Medicine",
@@ -263,16 +270,30 @@ export default function Header() {
                   <div
                     className={`help-slide-track ${helpOpen ? "paused" : ""}`}
                   >
+                    {/* Real links so crawlers can follow them. A plain click still just
+                        toggles the dropdown (handled by the pill), as before. */}
                     {helpItems.map((item, i) => (
-                      <span key={i} className="help-slide-item">
+                      <Link
+                        key={i}
+                        to={helpRoutes[item]}
+                        className="help-slide-item"
+                        onClick={keepPillBehaviour}
+                      >
                         {item}
-                      </span>
+                      </Link>
                     ))}
                     {/* Duplicate for seamless loop */}
                     {helpItems.map((item, i) => (
-                      <span key={`d-${i}`} className="help-slide-item">
+                      <Link
+                        key={`d-${i}`}
+                        to={helpRoutes[item]}
+                        className="help-slide-item"
+                        onClick={keepPillBehaviour}
+                        aria-hidden="true"
+                        tabIndex={-1}
+                      >
                         {item}
-                      </span>
+                      </Link>
                     ))}
                   </div>
                 </div>
