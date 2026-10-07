@@ -25,7 +25,7 @@ export default ({ mode, isSsrBuild }) => {
       copyPublicDir: !isSsrBuild,
       target: 'es2020',
       cssCodeSplit: true,
-      cssMinify: false,
+      cssMinify: true,
       sourcemap: env.VITE_BUILD_SOURCEMAP === 'true',
       modulePreload: {
         polyfill: false,
@@ -33,14 +33,13 @@ export default ({ mode, isSsrBuild }) => {
       rollupOptions: {
         // The prerender bundle (vite build --ssr) is run by Node, not shipped: no manual chunking.
         output: isSsrBuild ? {} : {
+          // Only the framework core is pinned to a shared vendor chunk. Everything else (icons, animation,
+          // payments, sockets, PDF, country data...) is split by the routes that import it, so a page
+          // only downloads what it uses.
           manualChunks(id) {
-            if (!id.includes('node_modules')) return undefined
-            if (id.includes('react') || id.includes('react-router-dom')) return 'vendor-react'
-            if (id.includes('socket.io-client')) return 'vendor-realtime'
-            if (id.includes('gsap') || id.includes('framer-motion') || id.includes('swiper') || id.includes('lenis')) {
-              return 'vendor-animation'
-            }
-            if (id.includes('@stripe') || id.includes('@paypal')) return 'vendor-payments'
+            const bs = String.fromCharCode(92)
+            const p = id.split(bs).join('/')
+            if (/\/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(p)) return 'vendor-react'
             return undefined
           },
         },
