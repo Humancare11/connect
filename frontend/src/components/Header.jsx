@@ -2,8 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import "./header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
-import logo from "../assets/NewLogo.png";
-import miniLogo from "../assets/logo-2.png";
+import logo from "../assets/NewLogo.webp";
+import miniLogo from "../assets/logo-2.webp";
 import { useAuth } from "../context/AuthContext";
 import {
   Baby,
@@ -236,12 +236,16 @@ export default function Header() {
               src={logo}
               alt="Humancare Logo"
               className="logo-full"
+              width="400"
+              height="400"
               decoding="async"
             />
             <img
               src={miniLogo}
               alt="Humancare Mini Logo"
               className="logo-mini"
+              width="256"
+              height="256"
               decoding="async"
             />
           </Link>
