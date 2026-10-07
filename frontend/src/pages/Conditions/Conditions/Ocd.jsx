@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/OCD.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -68,6 +69,7 @@ export default function Ocd() {
       <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

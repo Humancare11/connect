@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -68,6 +69,7 @@ export default function EarInfection({ categoryId } = {}) {
       <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

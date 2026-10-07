@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Burnout.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -131,6 +132,7 @@ export default function AdhdEvaluation({ categoryId } = {}) {
       <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
