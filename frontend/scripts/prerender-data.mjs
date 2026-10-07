@@ -15,7 +15,7 @@ function apiBase(env) {
   return String(env.VITE_API_URL || process.env.VITE_API_URL || "").replace(/\/+$/, "");
 }
 
-async function getJson(base, pathAndQuery) {
+async function getJsonOnce(base, pathAndQuery) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -24,11 +24,34 @@ async function getJson(base, pathAndQuery) {
       signal: controller.signal,
     });
     if (res.status === 404) return { status: 404, data: null };
-    if (!res.ok) throw new Error(`${pathAndQuery} -> HTTP ${res.status}`);
+    if (!res.ok) {
+      const error = new Error(`${pathAndQuery} -> HTTP ${res.status}`);
+      error.retryable = res.status === 429 || res.status >= 500;
+      throw error;
+    }
     return { status: res.status, data: await res.json() };
+  } catch (error) {
+    // Network errors and timeouts are worth another try; 4xx (other than 429) are not.
+    if (error.retryable === undefined) error.retryable = true;
+    throw error;
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Up to 4 attempts with 1s / 2s / 4s backoff, so a rate limit or a cold API does not fail the build.
+async function getJson(base, pathAndQuery) {
+  let lastError;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      return await getJsonOnce(base, pathAndQuery);
+    } catch (error) {
+      lastError = error;
+      if (!error.retryable || attempt === 3) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
+    }
+  }
+  throw lastError;
 }
 
 export function slugifyName(name) {
