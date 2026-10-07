@@ -24,6 +24,8 @@ function slugifyHeading(text) {
 // stable ids to every <h2> on save; headings that still lack one (unsaved
 // preview content) get ids generated with the same rule.
 export function prepareBlogHtml(rawHtml) {
+  // Build-time prerender (Node, no DOM): see prepareBlogHtmlWithoutDom.
+  if (typeof DOMParser === "undefined") return prepareBlogHtmlWithoutDom(rawHtml);
   const clean = DOMPurify.sanitize(resolveBlogImages(rawHtml || ""), PURIFY_CONFIG);
   const doc = new DOMParser().parseFromString(`<body>${clean}</body>`, "text/html");
   const used = new Set(Array.from(doc.body.querySelectorAll("h2[id]")).map((h) => h.id));
@@ -43,6 +45,47 @@ export function prepareBlogHtml(rawHtml) {
   });
 
   return { html: doc.body.innerHTML, toc };
+}
+
+// Prerender-only path. The backend sanitizes blog HTML against the same allow-list when a post is
+// saved and assigns an id to every <h2>, so the server needs only the table of contents (and ids
+// for any heading that still lacks one). The browser still runs the full DOMPurify pass above.
+function prepareBlogHtmlWithoutDom(rawHtml) {
+  const used = new Set();
+  const html = resolveBlogImages(rawHtml || "");
+  const headings = [];
+  const withIds = html.replace(/<h2\b([^>]*)>([\s\S]*?)<\/h2>/gi, (match, attrs, inner) => {
+    const label = decodeEntities(inner.replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim();
+    const existing = /\sid="([^"]*)"/i.exec(" " + attrs);
+    headings.push({ existing: existing ? existing[1] : "", label, match, attrs, inner });
+    if (existing) used.add(existing[1]);
+    return match;
+  });
+  const toc = [];
+  let out = withIds;
+  for (const h of headings) {
+    if (!h.label) continue;
+    let id = h.existing;
+    if (!id) {
+      const base = slugifyHeading(h.label);
+      id = base;
+      for (let n = 2; used.has(id); n += 1) id = `${base}-${n}`;
+      used.add(id);
+      out = out.replace(h.match, `<h2${h.attrs} id="${id}">${h.inner}</h2>`);
+    }
+    toc.push({ id, label: h.label });
+  }
+  return { html: out, toc };
+}
+
+function decodeEntities(text) {
+  return text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0*39;|&apos;/g, "'")
+    .replace(/&amp;/g, "&");
 }
 
 export function formatBlogDate(value) {

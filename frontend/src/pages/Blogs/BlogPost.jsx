@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { fetchBlog, blogImageSrc } from "../../api/blogApi";
 import BlogArticle from "./BlogArticle";
+import { usePrerendered } from "../../seo/prerenderData";
 
 // Blogs without a cover image fall back to the site-wide 1200x630 preview.
 const DEFAULT_OG_IMAGE_URL = "https://humancareconnect.co/og-default.jpg";
@@ -16,7 +17,12 @@ const SITE_ORIGIN = "https://humancareconnect.co";
 // or unpublished slugs fall through to the 404 page.
 export default function BlogPost() {
   const { slug } = useParams();
-  const [result, setResult] = useState({ slug: null, status: "loading", blog: null });
+  // Posts fetched at build time (scripts/prerender.mjs) are already in the prerendered HTML; start
+  // from the same data so hydration matches, then refresh from the API below.
+  const prerendered = usePrerendered(`blog:${slug}`);
+  const [result, setResult] = useState(() =>
+    prerendered ? { slug, status: "ready", blog: prerendered } : { slug: null, status: "loading", blog: null }
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -24,9 +30,12 @@ export default function BlogPost() {
       .then((blog) => setResult({ slug, status: "ready", blog }))
       .catch((err) => {
         if (controller.signal.aborted || err?.code === "ERR_CANCELED") return;
+        // A transient failure must not replace content that is already on screen.
+        if (prerendered && err?.response?.status !== 404) return;
         setResult({ slug, status: err?.response?.status === 404 ? "notfound" : "error", blog: null });
       });
     return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   // A result for a previous slug counts as "still loading".
@@ -51,6 +60,16 @@ export default function BlogPost() {
   const description = blog.metaDescription || blog.description;
   const url = `${SITE_ORIGIN}/${blog.slug}`;
   const image = blog.image ? blogImageSrc(blog.image) : "";
+  const articleJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: title,
+    description,
+    image: image || DEFAULT_OG_IMAGE_URL,
+    datePublished: blog.publishedAt || undefined,
+    mainEntityOfPage: url,
+    publisher: { "@type": "Organization", name: "Humancare Connect", logo: { "@type": "ImageObject", url: `${SITE_ORIGIN}/single-logo.png` } },
+  }).replace(/</g, "\\u003c");
 
   return (
     <>
@@ -69,6 +88,7 @@ export default function BlogPost() {
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={image || DEFAULT_OG_IMAGE_URL} />
+        <script type="application/ld+json">{articleJsonLd}</script>
       </Helmet>
       <BlogArticle
         blog={{
