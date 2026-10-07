@@ -1181,7 +1181,6 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
-                    <Route path="/corporates" element={<Corporates />} />
                     <Route path="/service-areas" element={<Serviceareas />} />
           <Route
             path="/appointment-booking/:catSlug"
@@ -1861,10 +1860,6 @@ function AppLayout() {
             path="/chronic-care-and-expert-opinion/cardiology"
             element={<Cardiology />}
           />
-          <Route
-            path="/child-and-family-care/pediatrics"
-            element={<Pediatrics />}
-          />
           <Route path="/chronic-care/cardiology" element={<Cardiology />} />
           <Route
             path="/chronic-care/gastroenterology"
@@ -1900,12 +1895,6 @@ function AppLayout() {
             path="/women-health/lactation-consulting"
             element={<LactationConsulting />}
           />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
           <Route path="/eye-ear-bone/ear-nose-throat" element={<Ent />} />
           <Route
             path="/eye-ear-bone/ophthalmology"
@@ -2862,10 +2851,6 @@ function AppLayout() {
             path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
-          <Route
-            path="/doctors-note"
-            element={<DoctorsNote categoryId="general" />}
-          />
           {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
           {/* Legacy query-param URL — redirects to the path-based form URL above. */}
           <Route
@@ -3006,56 +2991,11 @@ function AppLayout() {
             path="/expert-medical-opinion"
             element={<ExpertMedicalOpinion />}
           />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
           <Route path="/ent" element={<Ent />} />
-          <Route
-            path="/eye-ear-bone/ophthalmology"
-            element={<Ophthalmology />}
-          />
-          <Route path="/eye-ear-bone/orthopedics" element={<Orthopedics />} />
           {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
-          <Route path="/mens-health/urology" element={<Urology />} />
-          <Route
-            path="/mental-health/behavioral-health"
-            element={<BehavioralHealth />}
-          />
-          <Route path="/mental-health/psychiatry" element={<Psychiatry />} />
-          <Route
-            path="/mental-health/psychology-counseling"
-            element={<PsychologyCounseling />}
-          />
           <Route
             path="/sexual-health/sexual-health-and-wellness"
             element={<SexualHealthSpeciality />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology"
-            element={<Dermatology />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care"
-            element={<GlobalCrossBorderCare />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine"
-            element={<TravelMedicine />}
-          />
-          <Route
-            path="/weight-and-nurtrition/weight-management"
-            element={<WeightManagement />}
-          />
-          <Route
-            path="/weight-and-nurtrition/lifestyle-medicine"
-            element={<LifestyleMedicine />}
-          />
-          <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics"
-            element={<NutritionAndDietetics />}
           />
           <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
