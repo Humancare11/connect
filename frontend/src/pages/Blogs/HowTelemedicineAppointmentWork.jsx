@@ -329,8 +329,11 @@ export default function HowTelemedicineAppointmentWork() {
               <figure className="hero-media">
                 <img
                   src={telemedicineAppointment}
+                  width="1168"
+                  height="586"
                   alt="Process of Telemedicine Appointment Working"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   A virtual consultation in progress — patient and physician

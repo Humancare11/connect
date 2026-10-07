@@ -295,8 +295,11 @@ export default function OnlineDoctorsRealDoctors() {
               <figure className="hero-media">
                 <img
                   src={realDoctors}
+                  width="1168"
+                  height="586"
                   alt="Licensed doctor speaking with a patient during a secure video consultation"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   A licensed physician meeting with a patient through a secure

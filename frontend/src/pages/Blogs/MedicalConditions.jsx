@@ -309,8 +309,11 @@ export default function MedicalConditions() {
               <figure className="hero-media">
                 <img
                   src={bestTelemedicineProvider}
+                  width="1168"
+                  height="586"
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   A virtual consultation in progress — patient and physician

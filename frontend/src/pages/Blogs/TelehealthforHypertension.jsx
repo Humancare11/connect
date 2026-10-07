@@ -335,6 +335,7 @@ export default function TelehealthforHypertension() {
                   src={PAGE_IMAGE}
                   alt="Telehealth for Hypertension: Can You Treat High Blood Pressure Online?"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   Understanding how telehealth can help manage high blood pressure, review readings, discuss medications, and support ongoing care.

@@ -287,6 +287,8 @@ from the comfort of home.
                   <div className="why__img-wrap">
                     <img
                       src={WhyHumancareImg}
+                      width="1790"
+                      height="1860"
                       alt="Healthcare professionals collaborating to improve access to virtual healthcare services"
                       className="why__img"
                       loading="lazy"
@@ -421,6 +423,8 @@ from the comfort of home.
               <div className="network__img-wrap">
                 <img
                   src={NetworkDoctorsImg}
+                  width="1790"
+                  height="1860"
                   alt="Licensed healthcare professionals providing trusted online medical consultations"
                   className="network__img"
                   loading="lazy"

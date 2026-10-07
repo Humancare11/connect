@@ -295,8 +295,11 @@ export default function TelemedicineCost() {
               <figure className="hero-media">
                 <img
                   src={telemedicineCost}
+                  width="1168"
+                  height="586"
                   alt="Patient reviewing telemedicine consultation pricing and insurance coverage on a laptop"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   Understanding telemedicine pricing, insurance coverage, and

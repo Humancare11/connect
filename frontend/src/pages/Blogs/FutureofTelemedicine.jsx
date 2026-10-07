@@ -301,8 +301,11 @@ export default function FutureofTelemedicine() {
               <figure className="hero-media">
                 <img
                   src={futureOfTelemedicine}
+                  width="1168"
+                  height="586"
                   alt="Patient have a virtual chat with the doctor online"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   A virtual consultation in progress — patient and physician

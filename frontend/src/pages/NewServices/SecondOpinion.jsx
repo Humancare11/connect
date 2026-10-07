@@ -339,6 +339,7 @@ export default function SecondOpinion() {
                 width={HERO_IMAGE.width}
                 height={HERO_IMAGE.height}
                 loading="eager"
+                fetchPriority="high"
                 className="service-hero__bg-img"
               />
               <div className="service-hero__overlay" />

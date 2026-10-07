@@ -1,4 +1,4 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import {
   FiActivity,
@@ -535,9 +535,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <div className="sp-hero__bg">
           <img
             src={data.heroImage}
+            width="1920"
+            height="1178"
             alt={data.heroAlt}
             className="sp-hero__img"
             loading="eager"
+            fetchPriority="high"
           />
           <div className="sp-hero__overlay" />
         </div>
@@ -573,6 +576,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               <div className="sp-overview__img-wrap">
                 <img
                   src={data.overviewImage}
+                  width="562"
+                  height="430"
                   alt={data.overviewAlt}
                   className="sp-overview__img"
                   loading="lazy"

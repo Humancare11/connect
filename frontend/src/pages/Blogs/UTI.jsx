@@ -266,6 +266,7 @@ export default function UTI() {
                   src={PAGE_IMAGE}
                   alt="UTI Symptoms, Causes, Treatment & When to See a Doctor"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   Understanding UTI symptoms, causes, diagnosis, and treatment

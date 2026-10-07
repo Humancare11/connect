@@ -330,8 +330,11 @@ export default function OnlineDoctorConsultation() {
               <figure className="hero-media">
                 <img
                   src={doctorConsultation}
+                  width="1168"
+                  height="586"
                   alt="Patient waiting in line to consult doctor vs Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   A virtual consultation in progress — patient and physician

@@ -257,8 +257,11 @@ export default function TelemedicineServices() {
               <figure className="hero-media">
                 <img
                   src={telemedicineServices}
+                  width="1168"
+                  height="586"
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   A virtual consultation in progress — patient and physician

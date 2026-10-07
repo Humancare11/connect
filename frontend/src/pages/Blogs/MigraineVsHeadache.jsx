@@ -347,6 +347,7 @@ export default function MigraineVsHeadache() {
                   src={PAGE_IMAGE}
                   alt="Migraine vs. Headache: Symptoms, Causes, Differences & Treatment Options"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   Understanding the differences between migraines and headaches, their symptoms, causes, triggers, and treatment options.
