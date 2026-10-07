@@ -65,12 +65,7 @@ export default function EarInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Ear Infection Treatment Online | Telemedicine Ear Care"
-        description="Get expert ear infection treatment online."
-        keywords="Ear infection treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/ear-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

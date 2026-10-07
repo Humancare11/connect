@@ -523,12 +523,7 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Menopause Care Specialists | Menopause Symptoms, HRT Guidance & Women's Health Support"
-        description="Connect with menopause care specialists for menopause symptom management, hot flashes, hormone replacement therapy guidance, hormonal health support, and personalized women's healthcare."
-        keywords="Menopause care, HRT guidance, Hormone health support, Online menopause consultation"
-        url="https://humancareconnect.co/menopause-care"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

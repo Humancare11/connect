@@ -33,12 +33,7 @@ export default function JointPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Joint Pain Treatment Online | Orthopedic Consultation from Home"
-        description="Get expert care for joint pain online. Consult a licensed provider for knee, shoulder, hip, back, or hand pain, stiffness, swelling, and personalized treatment through secure telemedicine services."
-        keywords="Joint pain treatment, Online orthopedic consultation, Online doctor appointment, Pain management care"
-        url="https://humancareconnect.co/joint-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

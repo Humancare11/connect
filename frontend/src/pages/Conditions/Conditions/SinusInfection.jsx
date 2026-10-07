@@ -66,12 +66,7 @@ export default function SinusInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sinus Infection Treatment Online | Virtual Care for Sinusitis"
-        description="Get online treatment for sinus infections. Connect with a licensed provider for sinus pressure, nasal congestion, facial pain, headaches, and personalized care."
-        keywords="sinus infection treatment, sinusitis treatment online, online sinus doctor, nasal congestion treatment, sinus pressure relief, virtual sinus consultation, telehealth sinus care, online ENT consultation"
-        url="https://humancareconnect.co/sinus-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

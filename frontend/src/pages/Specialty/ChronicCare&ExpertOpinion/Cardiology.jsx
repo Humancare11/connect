@@ -536,12 +536,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Cardiology Specialists | Heart Care & Cardiovascular Health"
-        description="Receive expert cardiology care for heart disease, high blood pressure, high cholesterol, chest pain, palpitations, and preventive cardiovascular wellness."
-        keywords="Cardiology specialists, Heart care, Cardiovascular health, Telehealth services, Virtual cardiology appointments, Virtual visits"
-        url="https://humancareconnect.co/cardiology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

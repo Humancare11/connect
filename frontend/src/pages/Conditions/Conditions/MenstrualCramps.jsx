@@ -65,12 +65,7 @@ export default function MenstrualCramps({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Menstrual Cramps Treatment Online | Period Pain Relief Consultation"
-        description="Get expert care for menstrual cramps online. Consult a licensed provider for period pain, lower abdominal cramps, back pain, bloating, and personalized treatment to help you feel better."
-        keywords="Menstrual cramps treatment, Period pain relief, Women's health consultation, Online gynecologist"
-        url="https://humancareconnect.co/menstrual-cramps"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

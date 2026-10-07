@@ -66,12 +66,7 @@ export default function Migraine({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Migraine Treatment Online | Headache Specialist Consultation"
-        description="Get expert migraine treatment online. Consult a licensed provider for severe headaches, nausea, light sensitivity, dizziness, migraine relief, and personalized treatment plans from home."
-        keywords="Migraine treatment, Online headache consultation, Migraine relief, Virtual neurology care"
-        url="https://humancareconnect.co/migraines"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

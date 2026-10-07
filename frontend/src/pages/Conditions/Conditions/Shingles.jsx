@@ -66,12 +66,7 @@ export default function Shingles({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Shingles Treatment Online | Virtual Care for Rash & Nerve Pain"
-        description="Get fast online treatment for shingles. Connect with a licensed provider for painful rashes, blisters, nerve pain, antiviral treatment, and symptom relief."
-        keywords="shingles treatment online, shingles symptoms, herpes zoster treatment, painful skin rash, antiviral treatment for shingles, online dermatologist, nerve pain from shingles, virtual skin consultation"
-        url="https://humancareconnect.co/shingles"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

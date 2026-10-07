@@ -544,12 +544,7 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Neurology Specialists | Brain, Nerve & Neurological Care"
-        description="Get expert neurology care for migraines, dizziness, memory concerns, tremors, seizures, numbness, tingling, and neurological disorders."
-        keywords="Neurology specialist, Migraine treatment, Neurological care, Online neurology consultation"
-        url="https://humancareconnect.co/neurology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

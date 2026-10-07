@@ -33,12 +33,7 @@ export default function Hoarseness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hoarseness Treatment Online | Expert Voice & Throat Care"
-        description="Get expert care for hoarseness online. Connect with a licensed provider for voice changes, sore throat, vocal strain, and personalized treatment through secure telemedicine services."
-        keywords="Hoarseness treatment, Voice and throat care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hoarseness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

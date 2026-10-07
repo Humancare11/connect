@@ -65,12 +65,7 @@ export default function Ptsd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="PTSD Treatment Online | Virtual Trauma & Mental Health Support"
-        description="Get confidential PTSD treatment online. Connect with a licensed provider for trauma, flashbacks, anxiety, nightmares, emotional distress, and personalized mental health care."
-        keywords="PTSD treatment online, post-traumatic stress disorder, trauma therapy online, PTSD counseling, online psychiatrist for PTSD, virtual mental health care, anxiety after trauma, PTSD support"
-        url="https://humancareconnect.co/ptsd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

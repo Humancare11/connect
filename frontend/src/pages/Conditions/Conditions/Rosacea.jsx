@@ -66,12 +66,7 @@ export default function Rosacea({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Rosacea Treatment Online | Virtual Dermatologist for Facial Redness"
-        description="Get expert online treatment for rosacea. Connect with a licensed provider for facial redness, flushing, skin irritation, and personalized skincare solutions."
-        keywords="rosacea treatment online, rosacea symptoms, facial redness treatment, online dermatologist, rosacea flare-up, virtual skin consultation, redness and flushing, telehealth dermatology"
-        url="https://humancareconnect.co/rosacea"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

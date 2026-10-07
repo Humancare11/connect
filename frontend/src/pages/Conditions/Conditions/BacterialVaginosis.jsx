@@ -66,12 +66,7 @@ export default function BacterialVaginosis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bacterial Vaginosis Care Online | Private BV Symptom Support"
-        description="Unusual vaginal discharge, odor, itching, or irritation? Get discreet bacterial vaginosis care with symptom evaluation, treatment guidance, and prescription support online."
-        keywords="Bacterial vaginosis, Bacterial vaginosis symptoms, Vaginal discharge, Vaginal bacterial imbalance, Treatment guidance, Online doctor appointment"
-        url="https://humancareconnect.co/bacterial-vaginosis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

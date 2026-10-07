@@ -65,12 +65,7 @@ export default function ProstateHealth({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Prostate Health Consultation Online | Men's Urinary & Prostate Care"
-        description="Talk to a licensed provider online about prostate health, urinary symptoms, frequent urination, weak urine flow, and personalized treatment options."
-        keywords="prostate health, online prostate consultation, enlarged prostate symptoms, frequent urination, BPH treatment online, men's urinary health, virtual men's health care, prostate doctor online"
-        url="https://humancareconnect.co/prostate-health"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

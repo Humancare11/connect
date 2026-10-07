@@ -39,12 +39,7 @@ export default function Asthma({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Asthma Treatment Online | Breathing & Respiratory Care"
-        description="Get convenient asthma care online for wheezing, shortness of breath, chest tightness, and coughing. Connect with a licensed provider for personalized treatment guidance."
-        keywords="Asthma, asthma treatment, asthma symptoms, asthma care, wheezing, shortness of breath, chest tightness, breathing difficulties, respiratory care, telemedicine services, online doctor appointment, online provider"
-        url="https://humancareconnect.co/asthma"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

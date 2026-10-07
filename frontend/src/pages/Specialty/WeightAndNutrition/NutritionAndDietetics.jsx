@@ -555,12 +555,7 @@ export default function NutritionAndDietetics({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Nutrition & Dietetics Specialists | Personalized Nutrition & Healthy Eating Plans"
-        description="Connect with nutrition and dietetics specialists for diabetic diets, cholesterol management, sports nutrition, pregnancy nutrition, food intolerance planning, and personalized nutrition support."
-        keywords="Nutrition and dietetics, Online nutrition consultation, Personalized meal planning, Registered dietitian online"
-        url="https://humancareconnect.co/nutrition-and-dietetics"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

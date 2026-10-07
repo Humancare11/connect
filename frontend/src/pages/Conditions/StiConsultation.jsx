@@ -33,12 +33,7 @@ export default function StiConsultation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="STI Consultation Online | Confidential Sexual Health Care"
-        description="Get confidential online STI consultation for symptoms, testing guidance, treatment options, prescriptions, and expert sexual health support."
-        keywords="STI consultation online, sexually transmitted infection treatment, online STI doctor, STD consultation, confidential sexual health care, STI testing guidance, STD symptoms, virtual sexual health consultation, telehealth STI treatment, online doctor for STI"
-        url="https://humancareconnect.co/sti-consultation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

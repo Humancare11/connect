@@ -27,12 +27,7 @@ export default function PregnancyNutrition({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pregnancy Nutrition Online | Prenatal Diet & Nutrition Support"
-        description="Get expert pregnancy nutrition guidance online. Connect with a licensed provider for prenatal nutrition, healthy eating, dietary planning, fetal development support, and personalized pregnancy care."
-        keywords="Pregnancy nutrition, Prenatal nutrition, Online pregnancy nutrition consultation, Healthy pregnancy diet, Prenatal wellness support"
-        url="https://humancareconnect.co/pregnancy-nutrition"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

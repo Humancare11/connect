@@ -33,12 +33,7 @@ export default function PartnerExposureConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Partner Exposure Concerns | Online STI Exposure Consultation"
-        description="Get confidential care for partner exposure concerns. Connect with a licensed provider online for STI exposure assessment, testing guidance, prevention options, treatment recommendations, and sexual health support."
-        keywords="Partner exposure concerns, STI exposure consultation, Sexual health consultation, Online STI assessment"
-        url="https://humancareconnect.co/partner-exposure-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

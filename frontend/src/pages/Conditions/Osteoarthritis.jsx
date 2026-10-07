@@ -33,12 +33,7 @@ export default function Osteoarthritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Osteoarthritis Treatment Online | Joint Pain & Arthritis Care"
-        description="Get expert osteoarthritis treatment online. Connect with a licensed provider for joint pain, stiffness, reduced mobility, arthritis management, and personalized care from home."
-        keywords="Osteoarthritis treatment, Joint pain relief, Arthritis care online, Online orthopedic consultation"
-        url="https://humancareconnect.co/osteoarthritis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

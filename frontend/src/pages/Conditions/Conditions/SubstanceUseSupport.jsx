@@ -65,12 +65,7 @@ export default function SubstanceUseSupport({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Substance Use Support Online | Confidential Recovery & Mental Health Care"
-        description="Get confidential online support for substance use challenges. Connect with a licensed provider for recovery guidance, mental health support, and personalized care."
-        keywords="substance use support, substance use treatment online, addiction support online, recovery support, online mental health care, substance use counseling, virtual recovery support, telehealth addiction care, confidential substance use care, addiction recovery guidance"
-        url="https://humancareconnect.co/substance-use-support"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

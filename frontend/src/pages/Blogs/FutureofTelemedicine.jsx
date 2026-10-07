@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
@@ -221,12 +220,7 @@ export default function FutureofTelemedicine() {
 
   return (
     <>
-      <SEO title="Future of Telemedicine | Healthcare Technology Trends" description="Explore the future of telemedicine and healthcare technology trends." keywords="Future of telemedicine" url="https://humancareconnect.co/future-of-telemedicine" />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">

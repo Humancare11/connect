@@ -33,12 +33,7 @@ export default function Gonorrhea({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Gonorrhea Treatment Online | Confidential STI Care"
-        description="Get confidential gonorrhea treatment online from licensed providers. Receive STI evaluation, sexual health guidance, treatment recommendations, and prescriptions when appropriate through telemedicine services."
-        keywords="Gonorrhea treatment online, Confidential STI care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/gonorrhea"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

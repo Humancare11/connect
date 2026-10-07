@@ -27,12 +27,7 @@ export default function EarPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Ear Pain Treatment Online | Telemedicine Ear Care"
-        description="Get expert ear pain treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized ear care from home."
-        keywords="Ear pain treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/ear-pain"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

@@ -33,12 +33,7 @@ export default function EyeStrain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Eye Strain Treatment Online | Digital Eye Fatigue Relief"
-        description="Experiencing tired or strained eyes? Connect with a licensed provider online for expert eye strain treatment, digital eye fatigue relief, and personalized eye care through telemedicine services."
-        keywords="Eye strain treatment, Digital eye fatigue, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/eye-strain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -25,7 +25,6 @@ import {
   FiVideo,
 } from "react-icons/fi";
 
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
 import CentralFAQ from "../../components/FAQ/FAQ";
@@ -275,22 +274,7 @@ export default function SexualHealth() {
 
   return (
     <>
-      <SEO
-        title="Sexual Health Services Online | Confidential Virtual Care | Humancare Connect"
-        description="Access confidential sexual health services online. Connect with licensed healthcare providers for sexual wellness support, preventive care, and personalized guidance through telemedicine."
-        keywords="online sexual health services, confidential sexual health care, STI consultation online, sexual wellness consultation, PrEP consultation, HIV prevention, reproductive health consultation, online STI care, virtual sexual health clinic, telehealth sexual health, safe sex counseling, online healthcare provider"
-        url="https://humancareconnect.co/sexual-health"
-      />
-      <Helmet>
-        <title>
-          Sexual Health Services Online | Confidential Virtual Care | Humancare
-          Connect
-        </title>
-        <meta
-          name="description"
-          content="Access confidential sexual health services online. Connect with licensed healthcare providers for sexual wellness support, preventive care, and personalized guidance through telemedicine."
-        />
-      </Helmet>
+      <SEO />
 
       <main
         className="service-page service-page--sexual-health"

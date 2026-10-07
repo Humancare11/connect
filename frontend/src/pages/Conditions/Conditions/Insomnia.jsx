@@ -65,12 +65,7 @@ export default function Insomnia({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Insomnia Treatment Online | Expert Sleep Health Support"
-        description="Get expert treatment for insomnia online. Connect with a licensed provider for sleep problems, insomnia evaluation, personalized treatment, and ongoing sleep support through secure telemedicine services."
-        keywords="Insomnia treatment online, Sleep health support, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/insomnia"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

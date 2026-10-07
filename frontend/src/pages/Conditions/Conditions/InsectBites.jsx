@@ -65,12 +65,7 @@ export default function InsectBites({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Insect Bite Treatment Online | Fast Relief for Bug Bites"
-        description="Get expert treatment for insect bites online. Connect with a licensed provider for itching, swelling, redness, allergic reactions, and personalized care through secure telemedicine services."
-        keywords="Insect bite treatment, Bug bite care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/insect-bite"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

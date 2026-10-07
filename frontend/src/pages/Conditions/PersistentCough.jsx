@@ -33,12 +33,7 @@ export default function PersistentCough({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Persistent Cough Treatment Online | Expert Respiratory Care"
-        description="Get expert care for a persistent cough online. Connect with a licensed provider for cough, throat irritation, wheezing, mucus, respiratory symptoms, and personalized treatment guidance."
-        keywords="Persistent cough, Chronic cough treatment, Online cough consultation, Respiratory care, Telemedicine cough treatment"
-        url="https://humancareconnect.co/persistent-cough"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

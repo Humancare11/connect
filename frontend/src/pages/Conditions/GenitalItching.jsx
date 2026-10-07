@@ -33,12 +33,7 @@ export default function GenitalItching({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Genital Itching Treatment Online | Private Virtual Consultation"
-        description="Get confidential treatment for genital itching online. Connect with a licensed provider for symptom evaluation, treatment recommendations, and prescription support through secure telemedicine services."
-        keywords="Genital itching treatment, Private online consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/genital-itching"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

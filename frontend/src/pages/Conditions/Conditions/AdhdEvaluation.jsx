@@ -66,12 +66,7 @@ export default function AdhdEvaluation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="ADHD Evaluation Online | Virtual ADHD Care & Support"
-        description="Get an ADHD evaluation online with licensed providers. Schedule an online doctor appointment for symptom evaluation, personalized guidance, and ongoing ADHD care."
-        keywords="ADHD evaluation, ADHD support, ADHD symptoms, attention problems, difficulty focusing, hyperactivity, impulsive behavior, mental health guidance, telemedicine services, online doctor appointment, online provider"
-        url="https://humancareconnect.co/ADHD-evaluation"
-      />
+      <SEO />
 
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}

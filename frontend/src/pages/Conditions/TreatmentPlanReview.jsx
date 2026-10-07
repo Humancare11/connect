@@ -33,12 +33,7 @@ export default function TreatmentPlanReview({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Treatment Plan Review Online | Expert Medical Care Evaluation"
-        description="Get your treatment plan reviewed online. Consult a licensed provider to evaluate medications, therapies, symptoms, and personalized care options."
-        keywords="treatment plan review, medical treatment review, online treatment evaluation, medication review, second medical opinion, care plan review, virtual doctor consultation, treatment assessment, telehealth consultation, personalized healthcare recommendations"
-        url="https://humancareconnect.co/treatment-plan-review"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

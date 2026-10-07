@@ -33,12 +33,7 @@ export default function PediatricColdFlu({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pediatric Cold & Flu Treatment Online | Children's Virtual Care"
-        description="Get expert pediatric cold and flu care online. Connect with a licensed provider for fever, cough, congestion, sore throat, flu symptoms, and personalized treatment for your child."
-        keywords="Pediatric cold and flu, Children's cold treatment, Online pediatric consultation, Virtual pediatric care"
-        url="https://humancareconnect.co/pediatric-cold-flu"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

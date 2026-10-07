@@ -65,12 +65,7 @@ export default function Depression({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Depression Treatment Online | Telemedicine Mental Health Care"
-        description="Get compassionate depression treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized mental health support from home."
-        keywords="Depression treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/depression"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

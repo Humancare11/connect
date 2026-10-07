@@ -27,12 +27,7 @@ export default function ReturnWorkClearance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Return-to-Work Clearance Online | Medical Fitness Evaluation"
-        description="Get a return-to-work clearance online. Connect with a licensed provider for medical evaluations, recovery assessments, and work clearance documentation when appropriate."
-        keywords="return-to-work clearance, work clearance online, fitness for work evaluation, medical clearance certificate, return to work assessment, online doctor consultation, work fitness exam, telehealth medical clearance"
-        url="https://humancareconnect.co/return-to-work-clearance"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

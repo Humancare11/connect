@@ -571,12 +571,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="ENT Specialists | Ear, Nose & Throat Care Services"
-        description="Get expert ENT care for ear infections, ear pain, sore throat, tonsillitis, nasal congestion, hoarseness, vertigo, and other ear, nose, and throat conditions."
-        keywords="ENT specialists, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/ear-nose-throat"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

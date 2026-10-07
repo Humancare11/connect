@@ -33,12 +33,7 @@ export default function Gastritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Gastritis Treatment Online | Stomach Pain & Acid Relief"
-        description="Get expert gastritis treatment online for stomach pain, nausea, bloating, indigestion, and acid-related discomfort. Connect with a licensed provider through secure telemedicine services."
-        keywords="Gastritis treatment online, Stomach pain relief, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/gastritis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

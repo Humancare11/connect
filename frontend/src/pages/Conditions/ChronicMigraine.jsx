@@ -27,12 +27,7 @@ export default function ChronicMigraine({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Chronic Migraine Management | Support for Recurring Headaches"
-        description="Recurring migraines can disrupt work, sleep, and daily life. Access personalized migraine management, symptom evaluation, and ongoing treatment guidance from home."
-        keywords="Chronic migraine, Chronic migraines, Migraine management support, Telemedicine services, Online doctor appointment, Telemedicine platform"
-        url="https://humancareconnect.co/chronic-migraine"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

@@ -65,12 +65,7 @@ export default function PerinatalAnxiety({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Perinatal Anxiety Treatment Online | Pregnancy & Postpartum Mental Health"
-        description="Get compassionate support for perinatal anxiety online. Connect with a licensed provider for pregnancy and postpartum anxiety, emotional wellness, symptom evaluation, and personalized mental health care."
-        keywords="Perinatal anxiety, Pregnancy anxiety treatment, Postpartum anxiety support, Online mental health consultation"
-        url="https://humancareconnect.co/perinatal-anxiety"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

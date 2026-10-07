@@ -581,12 +581,7 @@ export default function ObstetricsGynaecology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="OB-GYN Specialists | Women's Health, Fertility, Pregnancy & Gynecological Care"
-        description="Connect with OB-GYN specialists for PCOS, fertility concerns, birth control consultations, pregnancy care, menstrual health, vaginal infections, pelvic pain, and personalized women's healthcare."
-        keywords="OB-GYN online, Women's health specialist, Fertility consultation, Online gynecology consultation"
-        url="https://humancareconnect.co/obstetrics-and-gynaecology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

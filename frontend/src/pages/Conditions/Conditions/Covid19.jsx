@@ -65,12 +65,7 @@ export default function Covid19({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="COVID-19 Treatment Online | Telemedicine Services & Virtual Care"
-        description="Get trusted COVID-19 treatment online with secure telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive expert care from home."
-        keywords="COVID-19 treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/covid-19"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

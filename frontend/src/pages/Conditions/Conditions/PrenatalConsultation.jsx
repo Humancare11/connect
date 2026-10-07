@@ -65,12 +65,7 @@ export default function PrenatalConsultation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Online Prenatal Consultation | Pregnancy Care & OB-GYN Support"
-        description="Meet with a licensed prenatal care provider online for pregnancy check-ins, symptom assessment, nutrition advice, medication safety, prenatal planning, and expert guidance from the first trimester through delivery."
-        keywords="online prenatal consultation, prenatal care online, pregnancy doctor consultation, virtual prenatal care, pregnancy health advice, online OB-GYN consultation, prenatal telehealth, pregnancy wellness support"
-        url="https://humancareconnect.co/prenatal-consultation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

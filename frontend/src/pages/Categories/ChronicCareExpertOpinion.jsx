@@ -17,7 +17,6 @@ import {
   FiMinus,
   FiMapPin,
 } from "react-icons/fi";
-import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import chronicCareHero from "../../assets/HomeImageCategories/chronic-care-expert-medical-opinion.webp";
 import SEO from "../../components/Seo";
@@ -596,22 +595,7 @@ export default function ChronicCareExpertOpinion() {
         minHeight: "100vh",
       }}
     >
-      <SEO
-        title="Online Chronic Care Management & Expert Medical Opinions | Humancare Connect"
-        description="Get expert online chronic care management and medical opinions from trusted healthcare professionals. Receive personalized treatment guidance, ongoing support, and virtual consultations from home."
-        keywords="Chronic care management, Expert medical opinions, Chronic condition management, Online doctor consultations, Virtual chronic care, Virtual healthcare"
-        url="https://humancareconnect.co/chronic-care-and-expert-opinion"
-      />
-      <Helmet>
-        <title>
-          Online Chronic Care Management & Expert Medical Opinions | Humancare
-          Connect
-        </title>
-        <meta
-          name="description"
-          content="Get expert online chronic care management and medical opinions from trusted healthcare professionals. Receive personalized treatment guidance, ongoing support, and virtual consultations from home."
-        />
-      </Helmet>
+      <SEO />
 
       {/* ── Hero ── */}
       <section

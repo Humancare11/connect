@@ -27,12 +27,7 @@ export default function ContactDermatitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Contact Dermatitis Treatment Online | Telemedicine Services"
-        description="Get expert contact dermatitis treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized skin care from home."
-        keywords="Contact dermatitis treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/contact-dermatitis"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

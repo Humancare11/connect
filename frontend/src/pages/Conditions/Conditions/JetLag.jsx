@@ -65,12 +65,7 @@ export default function JetLag({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Jet Lag Treatment Online | Travel Sleep & Recovery Support"
-        description="Beat jet lag with expert online care. Consult a licensed provider for sleep disruption, fatigue, time zone adjustment, and personalized travel recovery support from anywhere."
-        keywords="Jet lag treatment, Travel sleep recovery, Online doctor for travelers, Circadian rhythm support"
-        url="https://humancareconnect.co/jet-lag"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

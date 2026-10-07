@@ -65,12 +65,7 @@ export default function BloodInUrine({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Blood in Urine Care Online | Urinary Symptom Evaluation"
-        description="Noticed pink, red, or dark urine? Get prompt online care for blood in urine symptoms with evaluation, treatment guidance, and personalized next-step recommendations."
-        keywords="Blood in urine, Blood in urine symptoms, Urinary tract infections, Kidney stones, Urinary symptom care, Online doctor appointment"
-        url="https://humancareconnect.co/blood-in-urine"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

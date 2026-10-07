@@ -512,12 +512,7 @@ export default function WomenMentalHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Women's Mental Health Specialists | Anxiety, PMDD & Postpartum Mental Health Support"
-        description="Connect with women's mental health specialists for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, emotional wellness support, and personalized mental healthcare."
-        keywords="Women's mental health, women's mental health specialists, women's mental health care, perinatal anxiety, PMDD, Premenstrual Dysphoric Disorder, postpartum depression, postnatal depression, pregnancy-related stress, pregnancy anxiety, hormonal mood changes, maternal mental health, emotional wellness, emotional overwhelm"
-        url="https://humancareconnect.co/women-mental-health"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

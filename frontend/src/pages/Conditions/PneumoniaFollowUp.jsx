@@ -33,12 +33,7 @@ export default function PneumoniaFollowUp({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pneumonia Follow-Up Online | Recovery & Respiratory Care"
-        description="Get expert pneumonia follow-up care online. Connect with a licensed provider for recovery monitoring, lingering cough, fatigue, breathing concerns, chest discomfort, and personalized treatment guidance."
-        keywords="Pneumonia follow-up, Pneumonia recovery care, Online pneumonia consultation, Respiratory follow-up, Virtual respiratory care"
-        url="https://humancareconnect.co/pneumonia-follow-up"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

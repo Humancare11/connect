@@ -33,12 +33,7 @@ export default function Acne({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Online Acne Treatment | Virtual Dermatology & Acne Care"
-        description="Get online acne treatment for pimples, blackheads, whiteheads, and skin irritation. Connect with a licensed provider for personalized acne care and skincare guidance."
-        keywords="Acne, Acne care, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/acne"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

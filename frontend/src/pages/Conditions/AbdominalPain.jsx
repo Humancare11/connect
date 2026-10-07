@@ -33,12 +33,7 @@ export default function AbdominalPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Abdominal Pain Treatment Online | Virtual Digestive Care"
-        description="Get online care for abdominal pain, stomach pain, cramping, bloating, and digestive discomfort. Connect with a licensed provider for evaluation and treatment guidance."
-        keywords="Abdominal pain, Abdominal pain symptoms, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/abdominal-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

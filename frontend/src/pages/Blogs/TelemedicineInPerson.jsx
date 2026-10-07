@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicineVsInPersonDoctorVisits from "../../assets/BlogImages/telemedicine-vs-in-person-doctor-visits.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -246,12 +245,7 @@ export default function TelemedicineInPerson() {
 
   return (
     <>
-      <SEO title="Telemedicine vs In-Person Doctor Visits | Comparison Guide" description="Compare telemedicine vs in-person doctor visits." keywords="Telemedicine vs in person" url="https://humancareconnect.co/telemedicine-vs-in-person" />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">

@@ -65,12 +65,7 @@ export default function NauseaAndVomiting({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Nausea & Vomiting Treatment Online | Stomach Relief & Virtual Care"
-        description="Get expert treatment for nausea and vomiting online. Consult a licensed provider for stomach illness, food poisoning, motion sickness, dehydration, and personalized care from home."
-        keywords="Nausea and vomiting treatment, Stomach illness care, Online doctor consultation, Digestive health support"
-        url="https://humancareconnect.co/nausea-and-vomiting"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

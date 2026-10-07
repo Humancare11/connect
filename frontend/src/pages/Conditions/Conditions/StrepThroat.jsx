@@ -66,12 +66,7 @@ export default function StrepThroat({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Strep Throat Treatment Online | Virtual Doctor Consultation"
-        description="Get online treatment for strep throat. Consult a licensed provider for severe throat pain, fever, swollen glands, difficulty swallowing, and prescription care."
-        keywords="strep throat treatment online, strep throat symptoms, online doctor for strep throat, bacterial throat infection, sore throat treatment, throat infection consultation, virtual doctor consultation, telehealth strep throat care, prescription treatment online, fever and sore throat"
-        url="https://humancareconnect.co/strep-throat"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

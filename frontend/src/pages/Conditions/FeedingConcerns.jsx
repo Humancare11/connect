@@ -33,12 +33,7 @@ export default function FeedingConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Infant Feeding Support Online | Expert Feeding Guidance"
-        description="Get expert support for infant feeding concerns online. Connect with a licensed provider for breastfeeding, bottle feeding, nutrition guidance, and personalized feeding recommendations through telemedicine services."
-        keywords="Infant feeding support, Feeding concerns, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/feeding-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -66,12 +66,7 @@ export default function Ringworm({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Ringworm Treatment Online | Virtual Care for Fungal Skin Infections"
-        description="Get fast online treatment for ringworm. Connect with a licensed provider for itchy, red, circular rashes, antifungal treatment, and personalized skincare guidance."
-        keywords="ringworm treatment online, fungal skin infection, ringworm rash, antifungal treatment, online dermatologist, itchy skin rash, tinea infection, virtual skin consultation"
-        url="https://humancareconnect.co/ringworm"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

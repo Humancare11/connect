@@ -65,12 +65,7 @@ export default function Ocd() {
 
   return (
     <>
-      <SEO
-        title="OCD Treatment Online | Virtual Mental Health Support"
-        description="Get expert online care for OCD symptoms."
-        keywords="OCD"
-        url="https://humancareconnect.co/ocd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

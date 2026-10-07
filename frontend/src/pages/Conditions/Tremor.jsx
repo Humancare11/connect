@@ -33,12 +33,7 @@ export default function Tremor({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Tremor Treatment Online | Virtual Neurology Consultation"
-        description="Get online care for tremors and involuntary shaking. Consult a licensed provider for symptom evaluation, neurological guidance, and personalized care."
-        keywords="tremor treatment online, hand tremor, involuntary shaking, tremor symptoms, online neurologist, neurological consultation, movement disorder, virtual neurology care, telehealth neurology, shaking hands treatment"
-        url="https://humancareconnect.co/tremor"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

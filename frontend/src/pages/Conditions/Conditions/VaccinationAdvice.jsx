@@ -66,12 +66,7 @@ export default function VaccinationAdvice({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vaccination Advice Online | Immunization & Vaccine Guidance"
-        description="Get trusted vaccination advice through telemedicine services. Connect with an online provider for vaccine recommendations, immunization planning, booster guidance, and travel vaccines."
-        keywords="Vaccination advice, vaccine schedules, booster requirements, travel vaccines, vaccine recommendations, immunization planning, travel health guidance, vaccination guidance, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
-        url="https://humancareconnect.co/vaccination-advice"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

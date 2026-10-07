@@ -39,12 +39,7 @@ export default function HighCholesterol({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="High Cholesterol Treatment Online | Heart Health Management"
-        description="Manage high cholesterol with expert online care. Connect with a licensed provider for cholesterol management, heart health guidance, lifestyle recommendations, and personalized treatment through telemedicine services."
-        keywords="High cholesterol treatment, Heart health management, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/high-cholesterol"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

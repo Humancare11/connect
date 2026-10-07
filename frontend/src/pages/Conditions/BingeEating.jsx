@@ -27,12 +27,7 @@ export default function BingeEating({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Binge Eating Support Online | Healthier Eating & Emotional Care"
-        description="Struggling with loss of control, emotional eating, or guilt around food? Get personalized binge eating support, coping strategies, and emotional wellness guidance online."
-        keywords="Binge eating, Eating behaviors, Emotional distress, Emotional wellness support, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/binge-eating"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

@@ -38,12 +38,7 @@ export default function ChestPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Non-Emergency Chest Pain | Understand Ongoing Chest Discomfort"
-        description="Experiencing mild chest pressure, tightness, or ongoing discomfort? Discuss your symptoms and possible causes with a licensed provider and get personalized next-step guidance."
-        keywords="Non emergency chest pain, Chest discomfort, Chest pressure, Online doctor appointment, Virtual healthcare services, Telehealth services"
-        url="https://humancareconnect.co/chest-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

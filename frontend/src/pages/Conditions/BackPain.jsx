@@ -33,12 +33,7 @@ export default function BackPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Back Pain Relief Online | Care for Stiffness & Muscle Pain"
-        description="Back stiffness, soreness, or sharp pain affecting daily movement? Get personalized back pain care, pain management guidance, and treatment recommendations online."
-        keywords="Back pain, Back pain care, Muscle tension, Back stiffness, Pain management guidance, Online doctor appointment"
-        url="https://humancareconnect.co/back-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

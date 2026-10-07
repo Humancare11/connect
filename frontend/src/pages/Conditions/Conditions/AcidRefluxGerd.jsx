@@ -65,12 +65,7 @@ export default function AcidRefluxGerd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Acid Reflux & GERD Treatment Online | Virtual Doctor Care"
-        description="Get online care for acid reflux and GERD symptoms, including heartburn and chest discomfort. Connect with a licensed provider for treatment guidance and symptom management."
-        keywords="Acid reflux, GERD symptoms, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/chronic-care/gastroenterology/acid-reflux-gerd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

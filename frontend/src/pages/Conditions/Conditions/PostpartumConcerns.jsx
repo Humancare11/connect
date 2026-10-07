@@ -65,12 +65,7 @@ export default function PostpartumConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Postpartum Care Online | Recovery & Postnatal Health Support"
-        description="Get expert postpartum care online. Connect with a licensed provider for recovery after childbirth, breastfeeding support, mood changes, healing concerns, and personalized postnatal care."
-        keywords="Postpartum care, Postpartum recovery, Online postpartum consultation, Postnatal health support, Virtual women's healthcare"
-        url="https://humancareconnect.co/postpartum-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -4,7 +4,6 @@ import PatientTrustImg from "../assets/AboutUsPage/global-healthcare-professiona
 import NetworkDoctorsImg from "../assets/AboutUsPage//patient-virtual-healthcare-experience.webp";
 import DoctorTrustImg from "../assets/AboutUsPage/doctor-telemedicine-consultation.webp";
 import SEO from "../components/Seo";
-import { Helmet } from "react-helmet-async";
 /* ─── Shared primitives ─── */
 function Eyebrow({ children, light }) {
   return (
@@ -250,12 +249,7 @@ const offices = [
 export default function AboutPage() {
   return (
     <>
-      <SEO
-        title="About Humancare Connect | Trusted Virtual Healthcare "
-        description="Learn about Humancare Connect, a trusted virtual healthcare platform offering secure online doctor consultations, quality care, and telemedicine services. "
-        keywords="virtual healthcare platform, online doctor consultations, virtual healthcare services, telemedicine services, online healthcare, virtual care, online medical consultation, digital healthcare, licensed providers, Humancare Connect"
-        url="https://humancareconnect.co/about-us"
-      />
+      <SEO />
       <div className="about-page">
         {/* 1. Hero */}
         <section>

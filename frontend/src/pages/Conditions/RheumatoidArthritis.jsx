@@ -27,12 +27,7 @@ export default function RheumatoidArthritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Rheumatoid Arthritis Treatment Online | Joint Pain & Inflammation Care"
-        description="Connect with a licensed provider online for rheumatoid arthritis treatment, joint pain relief, inflammation management, medication support, and ongoing care."
-        keywords="rheumatoid arthritis treatment, rheumatoid arthritis symptoms, online rheumatology consultation, joint inflammation, autoimmune arthritis, RA treatment online, chronic joint pain, virtual arthritis care"
-        url="https://humancareconnect.co/rheumatoid-arthritis"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

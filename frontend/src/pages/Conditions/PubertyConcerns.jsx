@@ -27,12 +27,7 @@ export default function PubertyConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Puberty Concerns Consultation Online | Adolescent Growth & Development Care"
-        description="Talk to a licensed provider online about puberty concerns, growth, hormonal changes, delayed or early puberty, menstrual health, and adolescent development."
-        keywords="puberty concerns, online puberty consultation, adolescent health, delayed puberty, early puberty, hormonal changes, teen development, pediatric telehealth, puberty doctor online"
-        url="https://humancareconnect.co/puberty-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

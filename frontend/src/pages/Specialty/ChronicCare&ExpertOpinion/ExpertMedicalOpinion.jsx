@@ -582,12 +582,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Expert Medical Opinion Services | Trusted Healthcare Guidance"
-        description="Get expert medical opinions for complex diagnoses, cancer treatment plans, surgery recommendations, and healthcare decisions from experienced specialists."
-        keywords="Expert medical opinion, Second medical opinion, Online specialist consultation, Telemedicine services"
-        url="https://humancareconnect.co/expert-medical-opinion"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

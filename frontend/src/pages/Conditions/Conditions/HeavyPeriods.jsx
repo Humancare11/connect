@@ -65,12 +65,7 @@ export default function HeavyPeriods({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Heavy Period Treatment Online | Women's Health Consultation"
-        description="Get expert care for heavy periods online. Connect with a licensed provider for excessive menstrual bleeding, severe cramps, hormone health guidance, and personalized treatment through telemedicine services."
-        keywords="Heavy period treatment, Women's health consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/heavy-periods"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

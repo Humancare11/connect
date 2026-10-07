@@ -65,12 +65,7 @@ export default function MenopauseSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Menopause Symptoms Treatment Online | Hot Flashes & Hormone Care"
-        description="Find relief from menopause symptoms with expert online care. Consult a licensed provider for hot flashes, night sweats, mood changes, sleep issues, hormone support, and personalized treatment."
-        keywords="Menopause symptoms, Hot flashes treatment, Hormone health, Online menopause care"
-        url="https://humancareconnect.co/menopause-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

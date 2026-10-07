@@ -27,12 +27,7 @@ export default function DryEyes({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Dry Eyes Treatment Online | Telemedicine Eye Care"
-        description="Get expert dry eyes treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized eye care from home."
-        keywords="Dry eyes treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dry-eyes"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

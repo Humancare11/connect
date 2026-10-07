@@ -27,12 +27,7 @@ export default function ColdSores({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cold Sores & HSV-1 | Care for Painful Lip Blisters"
-        description="Tingling, burning, or painful blisters around the lips may signal a cold sore. Receive symptom evaluation, treatment guidance, and prescription support when appropriate."
-        keywords="Cold sores, Cold sore symptoms, Herpes simplex virus (HSV-1), Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/cold-sores"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

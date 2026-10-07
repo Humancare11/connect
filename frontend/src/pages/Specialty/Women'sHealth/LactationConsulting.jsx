@@ -532,12 +532,7 @@ export default function LactationConsulting({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Lactation Consulting Specialists | Breastfeeding Support & Infant Feeding Guidance"
-        description="Connect with lactation consultants for breastfeeding support, latch problems, low milk supply concerns, nipple pain management, weaning guidance, and personalized infant feeding support."
-        keywords="Lactation consultant, Breastfeeding support, Online doctor appointment, Infant feeding guidance"
-        url="https://humancareconnect.co/lactation-consulting"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

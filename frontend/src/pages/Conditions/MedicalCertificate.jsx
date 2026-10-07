@@ -38,12 +38,7 @@ export default function MedicalCertificate({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Medical Certificate Online | Doctor's Note & Medical Clearance"
-        description="Request a medical certificate online through a licensed healthcare provider. Get doctor's notes, sick leave certificates, fitness clearance, and medical documentation when clinically appropriate."
-        keywords="Medical certificate online, Doctor's note, Sick leave certificate, Medical clearance"
-        url="https://humancareconnect.co/medical-certificate"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

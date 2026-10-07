@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import realDoctors from "../../assets/BlogImages/real-doctors.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -220,12 +219,7 @@ export default function OnlineDoctorsRealDoctors() {
 
   return (
     <>
-      <SEO title="Are Online Doctors Real Doctors? | Telemedicine Facts" description="Learn the truth about online doctors and telemedicine." keywords="Are online doctors real doctors" url="https://humancareconnect.co/are-online-doctors-real-doctors" />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">

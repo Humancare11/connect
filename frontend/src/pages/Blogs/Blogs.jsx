@@ -125,16 +125,7 @@ export default function BlogPage() {
 
   return (
     <>
-      <SEO
-        title=" Healthcare & Wellness | Telemedicine Insights"
-        description="Explore trusted healthcare insights, telemedicine guidance, wellness tips, and expert information to help you make informed decisions about your health."
-        keywords="Healthcare insights, Telemedicine guidance, Wellness tips, Healthcare information, Expert guidance, Health and wellness"
-        url={
-          currentPage > 1
-            ? `https://humancareconnect.co/blogs?page=${currentPage}`
-            : "https://humancareconnect.co/blogs"
-        }
-      />
+      <SEO />
       <div className="blog-page">
         {/* ── HERO ── */}
         <section>

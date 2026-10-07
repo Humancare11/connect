@@ -27,12 +27,7 @@ export default function SportsInjuries({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sports Injury Treatment Online | Virtual Care for Sprains & Strains"
-        description="Get online care for sports injuries. Consult a licensed provider for sprains, strains, joint pain, swelling, muscle injuries, and personalized recovery guidance."
-        keywords="sports injury treatment online, sports injury consultation, sprain treatment, muscle strain treatment, joint injury care, online orthopedic consultation, sports medicine online, virtual injury assessment, telehealth sports injuries, sports injury recovery"
-        url="https://humancareconnect.co/sports-injuries"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

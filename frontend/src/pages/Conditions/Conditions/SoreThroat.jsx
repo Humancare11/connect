@@ -66,12 +66,7 @@ export default function SoreThroat({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sore Throat Treatment Online | Virtual Doctor Consultation"
-        description="Get online treatment for a sore throat. Connect with a licensed provider for throat pain, difficulty swallowing, irritation, and personalized care."
-        keywords="sore throat treatment online, sore throat symptoms, online doctor for sore throat, throat pain treatment, difficulty swallowing, virtual doctor consultation, telehealth sore throat care, strep throat evaluation, throat infection treatment, online medical consultation"
-        url="https://humancareconnect.co/sore-throat"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

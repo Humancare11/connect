@@ -65,12 +65,7 @@ export default function HairLoss({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hair Loss Treatment Online | Expert Hair & Scalp Care"
-        description="Concerned about hair loss? Connect with a licensed provider online for hair thinning, excessive shedding, scalp evaluations, personalized treatment plans, and prescription support through telemedicine services."
-        keywords="Hair loss treatment online, Hair & scalp care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hair-loss"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

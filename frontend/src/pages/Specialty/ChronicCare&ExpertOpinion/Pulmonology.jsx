@@ -539,12 +539,7 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Pulmonology Specialists | Lung & Respiratory Health Care"
-        description="Get expert pulmonology care for asthma, COPD, chronic cough, shortness of breath, sleep apnea, and post-COVID respiratory concerns."
-        keywords="online pulmonologist, pulmonology consultation, lung specialist online, asthma treatment, COPD management, chronic cough treatment, shortness of breath, sleep apnea care, respiratory specialist, virtual lung doctor, telehealth pulmonology, respiratory care online"
-        url="https://humancareconnect.co/pulmonology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

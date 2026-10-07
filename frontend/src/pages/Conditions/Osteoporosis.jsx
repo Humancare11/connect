@@ -33,12 +33,7 @@ export default function Osteoporosis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Osteoporosis Treatment Online | Bone Health & Fracture Prevention"
-        description="Connect with a licensed provider online for osteoporosis care. Get expert guidance on bone health, fracture prevention, osteoporosis treatment, risk assessment, and personalized management."
-        keywords="Osteoporosis treatment, Bone health, Fracture prevention, Online osteoporosis consultation"
-        url="https://humancareconnect.co/osteoporosis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

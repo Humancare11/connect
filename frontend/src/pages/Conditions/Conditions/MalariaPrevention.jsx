@@ -65,12 +65,7 @@ export default function MalariaPrevention({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Malaria Prevention Online | Travel Health & Antimalarial Guidance"
-        description="Traveling to a malaria-risk area? Consult a licensed provider online for malaria prevention, travel vaccinations, antimalarial medication guidance, and personalized travel health recommendations."
-        keywords="Malaria prevention, Travel health consultation, Antimalarial medication, Online travel medicine"
-        url="https://humancareconnect.co/malaria-prevention"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

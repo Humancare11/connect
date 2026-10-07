@@ -33,12 +33,7 @@ export default function HeartDisease({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Heart Disease Follow-Up Online | Ongoing Cardiac Care"
-        description="Manage your heart health with online follow-up care. Connect with a licensed provider for heart disease monitoring, treatment guidance, medication reviews, and ongoing cardiac support through telemedicine services."
-        keywords="Heart disease follow-up, Cardiac care online, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/heart-disease-follow-up"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

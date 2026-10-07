@@ -27,12 +27,7 @@ export default function SleepHygiene({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sleep Hygiene Support Online | Virtual Consultation for Better Sleep"
-        description="Improve your sleep with online sleep hygiene support. Get expert guidance for healthy sleep habits, insomnia, poor sleep quality, and lasting wellness."
-        keywords="sleep hygiene, sleep hygiene tips, improve sleep quality, healthy sleep habits, online sleep consultation, insomnia support, better sleep routine, virtual sleep health, sleep wellness, telehealth sleep care"
-        url="https://humancareconnect.co/sleep-hygiene"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

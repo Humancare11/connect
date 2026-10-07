@@ -65,12 +65,7 @@ export default function HairLoss({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hives Treatment Online | Fast Allergy & Skin Rash Care"
-        description="Get expert treatment for hives online. Connect with a licensed provider for itchy skin welts, allergic reactions, symptom evaluation, and prescription support through secure telemedicine services."
-        keywords="Hives treatment online, Allergy skin rash care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hives"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

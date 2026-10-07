@@ -27,12 +27,7 @@ export default function Chlamydia({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Chlamydia Care | Confidential STI Guidance & Treatment Support"
-        description="Chlamydia may cause burning urination, unusual discharge, or pelvic discomfort, while some people have no symptoms. Access private sexual health guidance and appropriate care online."
-        keywords="Chlamydia, Chlamydia care, Sexually transmitted bacterial infection, Sexual health guidance, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/chlamydia"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

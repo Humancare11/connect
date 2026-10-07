@@ -66,12 +66,7 @@ export default function PreTravelVaccination({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pre-Travel Vaccination Online | Travel Vaccine Consultation"
-        description="Get expert pre-travel vaccination guidance online. Connect with a licensed provider for travel vaccines, destination-specific immunization advice, health assessments, and personalized travel health recommendations."
-        keywords="Pre-travel vaccination, Travel vaccine consultation, Travel immunizations, Online travel health consultation, Travel medicine services"
-        url="https://humancareconnect.co/pre-travel-vaccinations"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

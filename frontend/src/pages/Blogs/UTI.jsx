@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import UTIImage from "../../assets/BlogImages/uti-online-treatment.webp";
 
 import "./telemedicine.css";
@@ -190,17 +189,7 @@ export default function UTI() {
 
   return (
     <>
-      <SEO
-        title={PAGE_TITLE}
-        description={PAGE_DESCRIPTION}
-        keywords="UTI symptoms, UTI causes, UTI treatment, urinary tract infection, UTI antibiotics, Humancare Connect"
-        url={PAGE_URL}
-      />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">

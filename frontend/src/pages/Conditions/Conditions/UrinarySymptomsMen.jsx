@@ -65,12 +65,7 @@ export default function UrinarySymptomsMen({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Urinary Symptoms in Men | Online Men�s Urinary Care"
-        description="Get online care for male urinary symptoms, including frequent urination, weak urine flow, burning, urgency, and prostate-related concerns."
-        keywords="urinary symptoms in men, frequent urination in men, weak urine flow, burning urination in men, male urinary problems, prostate health, online urologist, bladder problems in men, virtual urology consultation, telehealth urinary care"
-        url="https://humancareconnect.co/urinary-symptoms-in-men"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

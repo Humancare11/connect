@@ -65,12 +65,7 @@ export default function BodyAches({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Body Aches Relief Online | Muscle Soreness & Pain Care"
-        description="Feeling sore, stiff, or achy all over? Get online care for body aches with symptom evaluation, pain management recommendations, and personalized treatment guidance."
-        keywords="Body aches, Body ache relief, Muscle soreness, Body discomfort, Pain management recommendations, Online doctor appointment"
-        url="https://humancareconnect.co/body-aches"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

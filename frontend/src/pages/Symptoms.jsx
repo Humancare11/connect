@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import {
   Globe2,
   ArrowRight,
@@ -860,22 +859,7 @@ export default function Symptoms() {
 
   return (
     <>
-      <SEO
-        title="Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect"
-        description="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
-        keywords="Consult a doctor online for symptoms, online doctor consultation, symptom-based online care, virtual healthcare services, symptom evaluation, medical advice online"
-        url="https://humancareconnect.co/conditions"
-      />
-      <Helmet>
-        <title>
-          Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare
-          Connect
-        </title>
-        <meta
-          name="description"
-          content="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
-        />
-      </Helmet>
+      <SEO />
 
       <section id="top" className="sy-hero">
         <div className="sy-hero-inner">

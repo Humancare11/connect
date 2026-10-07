@@ -65,12 +65,7 @@ export default function AdjustmentDifficulties({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Adjustment Difficulties Support Online | Virtual Mental Care"
-        description="Get online support for adjustment difficulties, stress, and life changes. Connect with a licensed provider for coping strategies, emotional support, and personalized care."
-        keywords="Adjustment difficulties, Telemedicine services, Virtual healthcare services, Telehealth services"
-        url="https://humancareconnect.co/adjustment-difficulties"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -33,12 +33,7 @@ export default function Hemorrhoids({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hemorrhoid Treatment Online | Private Relief for Piles"
-        description="Get confidential hemorrhoid treatment online for pain, itching, swelling, bleeding, and rectal discomfort. Connect with a licensed provider through secure telemedicine services."
-        keywords="Hemorrhoid treatment online, Piles treatment, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hemorrhoids"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

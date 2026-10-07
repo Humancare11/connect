@@ -65,12 +65,7 @@ export default function NipplePain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Nipple Pain Treatment Online | Breastfeeding & Lactation Support"
-        description="Get expert care for nipple pain during breastfeeding. Connect with a licensed provider online for lactation support, sore nipples, latch guidance, breastfeeding discomfort, and personalized treatment."
-        keywords="Nipple pain treatment, Breastfeeding support, Lactation consultation, Online breastfeeding care"
-        url="https://humancareconnect.co/nipple-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

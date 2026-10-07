@@ -65,12 +65,7 @@ export default function BladderInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bladder Infection Treatment Online | UTI Symptom Care"
-        description="Burning urination, pelvic pressure, or frequent urges to urinate? Get online bladder infection care with symptom evaluation, treatment guidance, and prescriptions when appropriate."
-        keywords="Bladder infection, Bladder infection symptoms, Burning during urination, Urinary discomfort, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/bladder-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function ColdAndFlu({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cold & Flu Symptoms | Fever, Cough & Congestion Care"
-        description="Fever, chills, cough, congestion, or body aches slowing you down? Get symptom relief, treatment guidance, and prescription support when appropriate from home."
-        keywords="Cold and flu symptoms, Viral respiratory infections, Symptom relief, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/cold-and-flu"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function PanicAttacks({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Panic Attack Treatment Online | Anxiety & Mental Health Support"
-        description="Get expert care for panic attacks online. Connect with a licensed provider for anxiety, sudden fear, rapid heartbeat, treatment guidance, therapy support, and personalized mental health care."
-        keywords="Panic attack treatment, Anxiety support, Online mental health consultation, Panic disorder care"
-        url="https://humancareconnect.co/panic-attack"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

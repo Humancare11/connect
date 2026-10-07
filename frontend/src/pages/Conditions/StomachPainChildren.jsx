@@ -33,12 +33,7 @@ export default function StomachPainChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Stomach Pain in Children Treatment Online | Virtual Pediatric Care"
-        description="Get online care for your child's stomach pain. Consult a licensed provider for abdominal pain, cramps, nausea, constipation, diarrhea, and digestive concerns."
-        keywords="stomach pain in children, pediatric stomach pain, child abdominal pain, online pediatric consultation, stomach ache in kids, pediatric digestive care, constipation in children, diarrhea in children, virtual pediatric doctor, telehealth pediatric care"
-        url="https://humancareconnect.co/stomach-pain-children"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

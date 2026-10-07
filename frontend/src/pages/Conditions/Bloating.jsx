@@ -27,12 +27,7 @@ export default function Bloating({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bloating Relief Online | Digestive Health & Stomach Discomfort Care"
-        description="Feeling full, gassy, or uncomfortable after eating? Get personalized support for bloating symptoms with digestive health guidance and treatment recommendations online."
-        keywords="Bloating, Bloating symptoms, Stomach fullness, Digestive discomfort, Digestive health guidance, Online doctor appointment"
-        url="https://humancareconnect.co/bloating"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

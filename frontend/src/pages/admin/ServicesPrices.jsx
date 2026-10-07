@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import api from "../../api";
 import "./Dashboard.css";
 
@@ -121,9 +120,6 @@ function ServicesPrices() {
 
   return (
     <>
-      <Helmet>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
       <div className="dash-section">
         <h2 className="dash-section-title">
           {editingId ? "Edit Service" : "Create New Service"}

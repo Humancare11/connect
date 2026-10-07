@@ -27,12 +27,7 @@ export default function Dehydration({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Dehydration Treatment Online | Telemedicine Services for Fast Care"
-        description="Get expert dehydration treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized hydration care from home."
-        keywords="Dehydration treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dehydration"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

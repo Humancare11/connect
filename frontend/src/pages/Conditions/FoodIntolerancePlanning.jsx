@@ -33,12 +33,7 @@ export default function FoodIntolerancePlanning({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Food Intolerance Planning Online | Personalized Nutrition Support"
-        description="Identify food sensitivities with expert food intolerance planning online. Connect with a licensed provider for dietary guidance, nutrition advice, and personalized digestive health support."
-        keywords="Food intolerance planning, Food sensitivity support, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/food-intolerance-planning"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

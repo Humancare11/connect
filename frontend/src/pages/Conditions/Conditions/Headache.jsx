@@ -65,12 +65,7 @@ export default function Headache({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Headache Treatment Online | Fast Relief from Head Pain"
-        description="Get expert headache treatment online for migraines, tension headaches, head pain, and pressure. Connect with a licensed provider through secure telemedicine services for fast relief."
-        keywords="Headache treatment online, Migraine & head pain, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/headache"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

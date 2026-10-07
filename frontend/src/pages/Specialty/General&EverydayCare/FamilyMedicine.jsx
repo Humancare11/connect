@@ -520,12 +520,7 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
   return (
     <>
       <main className="sp-page">
-        <SEO
-          title="Family Medicine Specialists | Comprehensive Care for All Ages"
-          description="Get personalized family medicine care for routine check-ups, vaccinations, preventive care, and common illnesses for individuals and families."
-          keywords="Family medicine specialists, Primary care online, Online doctor appointment, Telemedicine services"
-          url="https://humancareconnect.co/family-medicine"
-        />
+        <SEO />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">

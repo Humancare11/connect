@@ -33,12 +33,7 @@ export default function Palpitations({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Palpitations Evaluation Online | Irregular Heartbeat Consultation"
-        description="Get expert care for heart palpitations online. Connect with a licensed provider for racing heartbeat, fluttering sensations, irregular heart rhythm evaluation, and personalized heart health guidance."
-        keywords="Heart palpitations, Irregular heartbeat, Online heart consultation, Palpitations evaluation"
-        url="https://humancareconnect.co/palpitations"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

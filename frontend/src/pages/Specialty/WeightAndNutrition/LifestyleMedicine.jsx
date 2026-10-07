@@ -538,12 +538,7 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness Care"
-        description="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
-        keywords="Lifestyle medicine specialist, Healthy lifestyle coaching, Weight management, Preventive wellness care"
-        url="https://humancareconnect.co/lifestyle-medicine"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

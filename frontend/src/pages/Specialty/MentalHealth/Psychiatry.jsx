@@ -572,12 +572,7 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Psychiatry Specialists | Mental Health, Medication Management & Emotional Wellness"
-        description="Connect with experienced psychiatry specialists for anxiety, depression, ADHD, PTSD, insomnia, bipolar disorder, panic attacks, OCD, and personalized mental health care."
-        keywords="online psychiatrist, psychiatry services, psychiatrist online, anxiety treatment, depression treatment, ADHD evaluation, PTSD treatment, OCD treatment, bipolar disorder care, medication management, virtual mental health care, telepsychiatry"
-        url="https://humancareconnect.co/psychiatry"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

@@ -66,12 +66,7 @@ export default function MultiSystemComplaints({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Multi-System Complaints Online | Complex Symptom Evaluation & Care"
-        description="Get expert evaluation for multiple unexplained symptoms online. Consult a licensed provider for fatigue, pain, digestive issues, dizziness, headaches, and personalized treatment recommendations."
-        keywords="Multi-system complaints, Complex symptom evaluation, Online internal medicine consultation, Unexplained symptoms"
-        url="https://humancareconnect.co/multi-system-complaints"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

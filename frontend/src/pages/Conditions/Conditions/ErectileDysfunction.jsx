@@ -65,12 +65,7 @@ export default function ErectileDysfunction({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Erectile Dysfunction Treatment Online | Discreet ED Care"
-        description="Get confidential erectile dysfunction treatment online with licensed providers. Book a secure online consultation for ED evaluation, personalized treatment, and prescriptions when appropriate."
-        keywords="Erectile dysfunction treatment, ED treatment online, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/erectile-dysfunction"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

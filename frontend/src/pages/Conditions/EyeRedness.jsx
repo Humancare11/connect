@@ -33,12 +33,7 @@ export default function EyeRedness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Eye Redness Treatment Online | Virtual Eye Care Consultation"
-        description="Get expert treatment for eye redness online. Connect with a licensed provider for redness, irritation, burning, itching, or bloodshot eyes through secure telemedicine services."
-        keywords="Eye redness treatment, Virtual eye care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/eye-redness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

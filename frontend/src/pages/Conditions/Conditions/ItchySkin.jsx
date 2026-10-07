@@ -65,12 +65,7 @@ export default function ItchySkin({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Itchy Skin Treatment Online | Dermatologist for Skin Irritation"
-        description="Relieve itchy skin with expert online dermatology care. Consult a licensed skin specialist for itching, rashes, eczema, allergies, redness, and personalized treatment from home."
-        keywords="Itchy skin treatment, Online dermatologist, Skin irritation relief, Eczema and allergy care"
-        url="https://humancareconnect.co/itchy-skin"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

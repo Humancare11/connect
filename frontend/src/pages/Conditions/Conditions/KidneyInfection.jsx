@@ -66,12 +66,7 @@ export default function KidneyInfection() {
 
   return (
     <>
-      <SEO
-        title="Kidney Infection Treatment Online | Urinary Health Care"
-        description="Get expert care for kidney infections online."
-        keywords="Kidney infection"
-        url="https://humancareconnect.co/kidney-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function Anxiety({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Online Anxiety Treatment | Virtual Mental Health Support"
-        description="Get online anxiety support for excessive worry, stress, racing thoughts, and restlessness. Connect with a licensed provider for evaluation and personalized care."
-        keywords="Anxiety, Anxiety support, Mental health support, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/anxiety"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

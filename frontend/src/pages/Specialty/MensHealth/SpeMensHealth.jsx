@@ -546,12 +546,7 @@ export default function SpeMensHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Men's Health Specialists | Sexual Wellness, Hormone Health & Preventive Care"
-        description="Connect with experienced men's health specialists for erectile dysfunction, low testosterone, low libido, prostate health, hair loss, fertility concerns, and preventive wellness care."
-        keywords="Men's health specialist, Erectile dysfunction treatment, Low testosterone, Online men's health consultation"
-        url="https://humancareconnect.co/mens-health"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

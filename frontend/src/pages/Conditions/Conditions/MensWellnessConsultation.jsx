@@ -65,12 +65,7 @@ export default function MensWellnessConsultation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Men's Wellness Consultation Online | Preventive Health & Wellness Care"
-        description="Book an online men's wellness consultation for preventive care, hormone health, sexual wellness, weight management, stress, and personalized health guidance from licensed providers"
-        keywords="Men's wellness consultation, Preventive men's health, Men's health checkup, Online men's health care"
-        url="https://humancareconnect.co/mens-wellness-consultation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

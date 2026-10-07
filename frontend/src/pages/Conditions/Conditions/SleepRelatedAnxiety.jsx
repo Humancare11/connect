@@ -65,12 +65,7 @@ export default function SleepRelatedAnxiety({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sleep-Related Anxiety Treatment Online | Virtual Anxiety & Sleep Support"
-        description="Get online support for sleep-related anxiety. Connect with a licensed provider for racing thoughts, stress, insomnia, and personalized sleep care"
-        keywords="sleep-related anxiety, sleep anxiety treatment online, anxiety and insomnia, racing thoughts at night, online anxiety consultation, virtual mental health care, sleep disorder support, stress and sleep problems, telehealth anxiety treatment, better sleep support"
-        url="https://humancareconnect.co/sleep-related-anxiety"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

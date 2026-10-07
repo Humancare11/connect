@@ -65,12 +65,7 @@ export default function MotionSickness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Motion Sickness Treatment Online | Travel Nausea & Dizziness Relief"
-        description="Get expert treatment for motion sickness online. Consult a licensed provider for nausea, dizziness, vomiting, travel sickness, and personalized care before or during your trip."
-        keywords="Motion sickness treatment, Travel sickness relief, Online doctor consultation, Nausea and dizziness care"
-        url="https://humancareconnect.co/motion-sickness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

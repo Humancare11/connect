@@ -65,12 +65,7 @@ export default function FoodPoisoning({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Food Poisoning Treatment Online | Fast Stomach Care"
-        description="Get fast food poisoning treatment online for nausea, vomiting, diarrhea, stomach cramps, and dehydration. Connect with a licensed provider through secure telemedicine services."
-        keywords="Food poisoning treatment, Stomach illness online, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/food-poisoning"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

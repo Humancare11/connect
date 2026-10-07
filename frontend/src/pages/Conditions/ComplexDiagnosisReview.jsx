@@ -27,12 +27,7 @@ export default function ComplexDiagnosisReview({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Complex Diagnosis Review | Clarity for Difficult Health Conditions"
-        description="Unclear symptoms or multiple medical conditions can make care decisions difficult. Get a detailed review of your health history, test results, and treatment journey for clearer next steps."
-        keywords="Complex diagnosis review, Complex health concerns, Medical record reviews, Telemedicine services, Virtual healthcare services, Telehealth services"
-        url="https://humancareconnect.co/complex-diagnosis"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

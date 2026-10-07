@@ -33,12 +33,7 @@ export default function VomitingDiarrheaChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vomiting and Diarrhea in Children | Pediatric Care Online"
-        description="Get trusted pediatric care for vomiting and diarrhea in children. Connect with an online provider for symptom evaluation, hydration guidance, and treatment recommendations."
-        keywords="Vomiting and diarrhea in children, pediatric care, child vomiting, diarrhea in children, dehydration in children, stomach cramps, fever, nausea, digestive discomfort, viral infections, food poisoning, stomach bugs, hydration guidance, telemedicine services, online doctor appointment, virtual healthcare services, online provider"
-        url="https://humancareconnect.co/vomiting-diarrhea-children"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

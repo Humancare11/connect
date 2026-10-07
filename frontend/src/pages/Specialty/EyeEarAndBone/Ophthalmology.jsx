@@ -549,12 +549,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Ophthalmology Specialists | Eye Care & Vision Health Services"
-        description="Get expert ophthalmology care for dry eyes, eye irritation, eye redness, vision changes, styes, eye strain, and comprehensive vision health support."
-        keywords="Ophthalmology specialist, Online eye care, Vision health consultation, Eye doctor online"
-        url="https://humancareconnect.co/ophthalmology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

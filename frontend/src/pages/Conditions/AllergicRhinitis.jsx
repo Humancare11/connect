@@ -39,12 +39,7 @@ export default function AllergicRhinitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Online Asthma Treatment | Virtual Asthma Care & Support"
-        description="Get online asthma care for wheezing, shortness of breath, chest tightness, and breathing problems. Connect with a licensed provider for evaluation and treatment guidance."
-        keywords="Asthma, Asthma symptoms, Breathing problems, Telemedicine services, Online doctor appointment, Telemedicine platform"
-        url="https://humancareconnect.co/allergic-rhinitis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

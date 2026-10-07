@@ -65,12 +65,7 @@ export default function EmergencyContraceptionGuidance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Emergency Contraception Online | Fast & Confidential Care"
-        description="Need emergency contraception advice? Connect with a licensed provider online for confidential guidance, birth control support, treatment recommendations, and prescriptions when appropriate."
-        keywords="Emergency contraception online, Confidential online care, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/emergency-contraception-guidance"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

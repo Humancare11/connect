@@ -65,12 +65,7 @@ export default function VaginalYeastInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vaginal Yeast Infection Treatment Online | Symptom Care"
-        description="Get fast, discreet care for vaginal yeast infection symptoms. Connect with an online provider for symptom evaluation, treatment guidance, and prescriptions when appropriate."
-        keywords="Vaginal yeast infection, Yeast infection treatment, vaginal yeast infection symptoms, vaginal itching, vaginal burning, vaginal irritation, unusual vaginal discharge, vaginal discomfort, yeast overgrowth, telemedicine services, online doctor appointment, telemedicine platform, online provider, prescription support"
-        url="https://humancareconnect.co/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

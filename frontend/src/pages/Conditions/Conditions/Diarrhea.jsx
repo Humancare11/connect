@@ -65,12 +65,7 @@ export default function Diarrhea({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Diarrhea Treatment Online | Telemedicine Services for Fast Relief"
-        description="Get expert diarrhea treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized digestive care from home."
-        keywords="Diarrhea treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/diarrhea"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

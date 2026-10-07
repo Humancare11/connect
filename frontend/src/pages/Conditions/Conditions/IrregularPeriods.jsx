@@ -65,12 +65,7 @@ export default function IrregularPeriods({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Irregular Periods Treatment | Online Gynecologist Consultation"
-        description="Missed, delayed, or irregular periods? Consult a licensed gynecologist online for menstrual cycle concerns, hormone imbalance evaluation, personalized treatment, and expert women's health support."
-        keywords="Irregular periods treatment, Online gynecologist consultation, Menstrual cycle problems, Hormone imbalance"
-        url="https://humancareconnect.co/irregular-periods"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

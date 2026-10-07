@@ -65,12 +65,7 @@ export default function LowMilkSupply({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Low Milk Supply Support Online | Lactation Consultant for Breastfeeding"
-        description="Worried about low milk supply? Connect with an online lactation consultant for breastfeeding support, milk production guidance, feeding assessments, and personalized care for you and your baby."
-        keywords="Low milk supply, Online lactation consultant, Breastfeeding support, Milk production guidance"
-        url="https://humancareconnect.co/low-milk-supply"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

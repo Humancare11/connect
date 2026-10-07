@@ -66,12 +66,7 @@ export default function PinkEye({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pink Eye Treatment Online | Conjunctivitis Virtual Care"
-        description="Get fast online treatment for pink eye. Connect with a licensed provider for red, itchy, watery eyes, conjunctivitis symptoms, treatment recommendations, and prescriptions when appropriate."
-        keywords="Pink eye treatment, Conjunctivitis treatment, Online eye consultation, Red eye treatment, Virtual eye care"
-        url="https://humancareconnect.co/pink-eye"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function RelationshipStress({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Relationship Stress Counseling Online | Emotional & Relationship Support"
-        description="Talk to a licensed mental health provider online for relationship stress, communication challenges, emotional support, and healthy coping strategies."
-        keywords="relationship stress counseling, online relationship counseling, relationship anxiety, communication problems, emotional support, couples stress, virtual counseling, mental health consultation"
-        url="https://humancareconnect.co/relationship-stress"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

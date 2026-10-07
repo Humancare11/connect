@@ -34,12 +34,7 @@ export default function ChronicKidneyDisease({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Chronic Kidney Disease Management | Long-Term Kidney Health Support"
-        description="Protect your kidney health with ongoing symptom monitoring, lifestyle guidance, and personalized support for chronic kidney disease and long-term care needs."
-        keywords="Chronic kidney disease, Kidney function, Kidney health, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/chronic-kidney-disease"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -66,12 +66,7 @@ export default function AltitudeSickness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Altitude Sickness Treatment Online | Virtual Travel Health Care"
-        description="Get online care for altitude sickness symptoms, including headaches, dizziness, nausea, and shortness of breath. Connect with a licensed provider for treatment guidance."
-        keywords="Altitude sickness, Altitude sickness symptoms, Telemedicine services, Online doctor appointment, Telemedicine platform, Online provider"
-        url="https://humancareconnect.co/altitude-sickness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

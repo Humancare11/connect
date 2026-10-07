@@ -39,12 +39,7 @@ export default function DoctorsNote({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Doctor�s Note Online | Telemedicine Medical Documentation"
-        description="Get a doctor�s note online through trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive medical documentation when clinically appropriate."
-        keywords="Doctor�s note online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/doctors-note"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -565,12 +565,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
   return (
     <>
       <main className="sp-page">
-        <SEO
-          title="Sexual Health Specialists | STI Care, HIV Prevention & Sexual Wellness"
-          description="Connect with experienced sexual health specialists for STI consultations, HIV prevention, herpes, chlamydia, gonorrhea, partner exposure concerns, and confidential sexual wellness care."
-          keywords="online sexual health consultation, STI consultation online, STI treatment, HIV prevention, PrEP consultation, herpes treatment, chlamydia treatment, gonorrhea treatment, confidential sexual health, sexual wellness, virtual sexual health clinic, telehealth STI care"
-          url="https://humancareconnect.co/sexual-health-speciality"
-        />
+        <SEO />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">

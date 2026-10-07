@@ -27,12 +27,7 @@ export default function ChronicMedicationManagement() {
 
   return (
     <>
-      <SEO
-        title="Chronic Medication Management Online | Ongoing Prescription Support | Humancare Connect"
-        description="Get expert chronic medication management online. Connect with a licensed provider for prescription support, medication reviews, and personalized care through telemedicine services."
-        keywords="Chronic medication management, Prescription support, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/chronic-medication-management"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

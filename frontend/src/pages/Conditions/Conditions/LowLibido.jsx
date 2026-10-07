@@ -65,12 +65,7 @@ export default function LowLibido({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Low Libido Treatment Online | Sexual Wellness & Hormone Support"
-        description="Concerned about low libido? Connect with a licensed provider online for personalized evaluation, hormone health support, sexual wellness guidance, and treatment options tailored to your needs."
-        keywords="Low libido treatment, Sexual wellness, Hormone health support, Online doctor consultation"
-        url="https://humancareconnect.co/low-libido"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

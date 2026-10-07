@@ -65,12 +65,7 @@ export default function BurningUrination({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Burning Urination Relief Online | Painful Urination Care"
-        description="Pain, stinging, or burning while urinating? Get prompt online care for burning urination symptoms with evaluation, treatment guidance, and prescription support when appropriate."
-        keywords="Burning urination, Burning urination symptoms, Pain while urinating, Urinary tract infections, Urinary symptom relief, Online doctor appointment"
-        url="https://humancareconnect.co/burning-urination"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

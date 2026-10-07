@@ -65,12 +65,7 @@ export default function Pmdd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="PMDD Treatment Online | Premenstrual Dysphoric Disorder Care"
-        description="Get expert online care for PMDD. Connect with a licensed provider for severe premenstrual symptoms, mood changes, anxiety, depression, hormone-related concerns, and personalized treatment."
-        keywords="PMDD treatment, Premenstrual dysphoric disorder, Online PMDD consultation, Women's hormonal health, Virtual women's healthcare"
-        url="https://humancareconnect.co/pmdd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

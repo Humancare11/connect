@@ -66,12 +66,7 @@ export default function MinorBurns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Minor Burn Treatment Online | First Aid & Wound Care Consultation"
-        description="Get expert care for minor burns online. Consult a licensed provider for burn treatment, blister care, pain relief, wound management, and personalized recovery guidance from home."
-        keywords="Minor burn treatment, Online burn care, Wound care consultation, First aid for burns"
-        url="https://humancareconnect.co/minor-burns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

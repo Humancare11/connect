@@ -33,12 +33,7 @@ export default function GenitalRash({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Genital Rash Treatment Online | Confidential Virtual Care"
-        description="Get expert care for genital rash online. Connect with a licensed provider for redness, itching, burning, skin irritation, and personalized treatment through secure telemedicine services."
-        keywords="Genital rash treatment, Confidential online care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/genital-rash"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function LatchProblems({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Breastfeeding Latch Problems | Online Lactation Consultant"
-        description="Get expert help for breastfeeding latch problems online. Connect with a lactation consultant for latch assessments, feeding support, nipple pain relief, and personalized breastfeeding guidance."
-        keywords="Breastfeeding latch problems, Online lactation consultant, Breastfeeding support, Infant feeding guidance"
-        url="https://humancareconnect.co/latch-problems"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

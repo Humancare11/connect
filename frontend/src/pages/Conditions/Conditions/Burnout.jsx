@@ -128,12 +128,7 @@ export default function AdhdEvaluation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Burnout Recovery Support Online | Mental Health & Stress Care"
-        description="Get online support for burnout symptoms."
-        keywords="Burnout"
-        url="https://humancareconnect.co/burnout"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

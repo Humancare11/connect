@@ -65,12 +65,7 @@ export default function Fatigue({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fatigue Treatment Online | Find the Cause of Low Energy"
-        description="Feeling tired all the time? Connect with a licensed provider online to evaluate fatigue, identify possible causes, and receive personalized treatment guidance through secure telemedicine services."
-        keywords="Fatigue treatment online, Low energy evaluation, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fatigue"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

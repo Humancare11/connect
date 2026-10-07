@@ -568,12 +568,7 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
   return (
     <>
       <main className="sp-page">
-        <SEO
-          title="General Physician (GP) | Primary Care & Everyday Healthcare"
-          description="Connect with experienced General Physicians for cold and flu, fever, cough, headaches, minor infections, fatigue, body aches, and everyday healthcare needs."
-          keywords="General physician, Primary care online, Online doctor appointment, Telemedicine services"
-          url="https://humancareconnect.co/general-physician"
-        />
+        <SEO />
 
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

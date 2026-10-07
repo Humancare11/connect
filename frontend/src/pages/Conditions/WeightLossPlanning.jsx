@@ -33,12 +33,7 @@ export default function WeightLossPlanning({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Weight-Loss Planning Online | Personalized Weight Management"
-        description="Get personalized weight-loss planning with an online provider. Access nutrition guidance, lifestyle planning, weight management support, and customized care recommendations."
-        keywords="Weight-loss planning, weight loss plan, weight management, personalized weight loss, weight loss journey, sustainable weight loss, healthy weight, nutrition guidance, physical activity, lifestyle changes, weight management assessments, lifestyle planning, customized weight loss plan, weight loss goals, health and wellness, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
-        url="https://humancareconnect.co/weight-loss-planning"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

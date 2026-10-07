@@ -65,12 +65,7 @@ export default function Fever({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fever Treatment Online | Fast Virtual Doctor Consultation"
-        description="Get expert fever treatment online for high temperature, chills, body aches, and flu-like symptoms. Connect with a licensed provider through secure telemedicine services from home."
-        keywords="Fever treatment online, Virtual doctor consultation, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fever"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -33,12 +33,7 @@ export default function KneePain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Knee Pain Treatment Online | Orthopedic Knee Specialist"
-        description="Get expert care for knee pain online. Consult a licensed provider for knee injuries, arthritis, swelling, stiffness, reduced mobility, and personalized treatment through secure telemedicine services."
-        keywords="Knee pain treatment, Online orthopedic specialist, Online doctor appointment, Knee pain relief"
-        url="https://humancareconnect.co/knee-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

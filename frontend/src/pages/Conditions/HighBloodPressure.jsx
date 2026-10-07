@@ -33,12 +33,7 @@ export default function HighBloodPressure({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="High Blood Pressure Treatment Online | Hypertension Care"
-        description="Take control of high blood pressure with expert online care. Connect with a licensed provider for hypertension management, medication reviews, lifestyle guidance, and ongoing support through telemedicine services."
-        keywords="High blood pressure treatment, Hypertension care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/high-blood-pressure"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

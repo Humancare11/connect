@@ -65,12 +65,7 @@ export default function Cough({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cough Treatment Online | Telemedicine Services for Fast Relief"
-        description="Get expert cough treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized care from home."
-        keywords="Cough treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/cough"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

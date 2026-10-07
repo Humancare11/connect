@@ -27,12 +27,7 @@ export default function EyeIrritation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Eye Irritation Treatment Online | Fast Virtual Eye Care"
-        description="Get expert eye irritation treatment online for redness, itching, burning, dryness, and eye discomfort. Connect with a licensed provider through secure telemedicine services from home."
-        keywords="Eye irritation treatment, Online eye doctor, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/eye-irritation"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

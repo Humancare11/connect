@@ -546,12 +546,7 @@ export default function Urology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Urology Specialists | Urinary & Kidney Health Care"
-        description="Connect with experienced urology specialists for bladder problems, kidney stones, blood in urine, urinary incontinence, UTIs, and comprehensive urinary health care."
-        keywords="Urology care, urinary health care, kidney health, bladder problems, kidney stones, blood in urine, urinary incontinence, urinary tract infection (UTI), recurrent UTIs, frequent urination, painful urination, urinary urgency, bladder health, male urinary health, preventive urology care, urology specialist online, telehealth urology appointments"
-        url="https://humancareconnect.co/urology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

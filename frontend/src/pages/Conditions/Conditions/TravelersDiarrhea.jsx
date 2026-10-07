@@ -66,12 +66,7 @@ export default function TravelersDiarrhea({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Traveler�s Diarrhea Treatment Online | Virtual Travel Health Care"
-        description="Get online care for traveler�s diarrhea. Consult a licensed provider for diarrhea, stomach cramps, nausea, dehydration, and digestive symptoms during travel."
-        keywords="traveler�s diarrhea treatment, traveler�s diarrhea treatment online, diarrhea during travel, travel digestive illness, stomach cramps while traveling, online travel doctor, travel health consultation, dehydration support, virtual doctor consultation, telehealth travel care"
-        url="https://humancareconnect.co/travelers-diarrhea"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

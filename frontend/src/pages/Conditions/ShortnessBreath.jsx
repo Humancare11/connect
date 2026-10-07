@@ -27,12 +27,7 @@ export default function ShortnessOfBreath({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Shortness of Breath Treatment Online | Virtual Respiratory Care"
-        description="Talk to a licensed provider online for shortness of breath, wheezing, chest tightness, breathing difficulties, and personalized treatment guidance."
-        keywords="shortness of breath treatment, breathing difficulty, online pulmonologist, wheezing treatment, respiratory consultation online, chest tightness, virtual respiratory care, telehealth breathing support"
-        url="https://humancareconnect.co/shortness-of-breath"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

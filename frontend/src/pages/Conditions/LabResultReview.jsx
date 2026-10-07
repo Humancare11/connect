@@ -33,12 +33,7 @@ export default function LabResultReview({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Lab Result Review Online | Understand Your Blood Test Results"
-        description="Confused about your lab results? Consult a licensed provider online to review blood tests, cholesterol, hormone panels, urine reports, and receive clear explanations with personalized medical guidance."
-        keywords="Lab result review, Blood test interpretation, Online doctor appointment, Medical test results"
-        url="https://humancareconnect.co/lab-results-review"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

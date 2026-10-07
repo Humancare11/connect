@@ -65,12 +65,7 @@ export default function HrtGuidance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="HRT Guidance Online | Hormone Replacement Therapy Support"
-        description="Get expert HRT guidance online. Connect with a licensed provider to discuss hormone replacement therapy, menopause symptoms, treatment options, and personalized hormone health care through secure telemedicine services."
-        keywords="Hormone replacement therapy, HRT guidance, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hrt-guidance"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function LowSelfEsteem({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Low Self-Esteem Support Online | Confidence & Mental Wellness Care"
-        description="Struggling with low self-esteem? Connect with a licensed mental health provider online for confidence building, emotional support, coping strategies, and personalized mental wellness care."
-        keywords="Low self-esteem support, Confidence building, Online mental health care, Emotional wellness"
-        url="https://humancareconnect.co/low-self-esteem"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

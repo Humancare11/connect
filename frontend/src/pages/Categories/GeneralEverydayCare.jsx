@@ -17,7 +17,6 @@ import {
   FiMinus,
   FiMapPin,
 } from "react-icons/fi";
-import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import generalCareHero from "../../assets/HomeImageCategories/general-everyday-healthcare-services.webp";
 import SEO from "../../components/Seo";
@@ -508,23 +507,7 @@ export default function GeneralEverydayCare() {
         minHeight: "100vh",
       }}
     >
-      <SEO
-        title="Online General & Everyday Care | Virtual Doctor Consultation | Humancare Connect"
-        description="Access online general and everyday care with trusted healthcare professionals. Get virtual doctor consultations for common illnesses, preventive care, symptoms, and personalized medical guidance from home."
-        keywords="General & everyday care, Virtual primary care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/general-and-everyday-care"
-      />
-      <Helmet>
-        <title>
-          Online General & Everyday Care | Virtual Doctor Consultation |
-          Humancare Connect
-        </title>
-        <meta
-          name="description"
-          content=" Access online general and everyday care with trusted healthcare professionals. Get virtual doctor consultations for common illnesses, preventive care, symptoms, and personalized medical guidance from home.
-"
-        />
-      </Helmet>
+      <SEO />
 
       {/* ── Hero ── */}
       <section

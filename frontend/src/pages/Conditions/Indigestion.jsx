@@ -41,12 +41,7 @@ export default function Indigestion({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Indigestion Treatment Online | Fast Digestive Health Care"
-        description="Get expert indigestion treatment online for heartburn, bloating, stomach pain, nausea, and digestive discomfort. Connect with a licensed provider through secure telemedicine services."
-        keywords="Indigestion treatment online, Digestive health care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/indigestion"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

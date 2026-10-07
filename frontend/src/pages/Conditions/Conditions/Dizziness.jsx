@@ -65,12 +65,7 @@ export default function Dizziness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Dizziness Treatment Online | Telemedicine Services for Fast Care"
-        description="Get expert dizziness treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized care from home."
-        keywords="Dizziness treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dizziness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

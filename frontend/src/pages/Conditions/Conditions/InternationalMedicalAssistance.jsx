@@ -65,12 +65,7 @@ export default function InternationalMedicalAssistance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="International Medical Assistance | Online Doctor While Traveling"
-        description="Get international medical assistance online while traveling abroad. Connect with a licensed provider for illness, prescriptions, travel health concerns, and personalized care through secure telemedicine services."
-        keywords="International medical assistance, Online doctor while traveling, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/international-medical-assistance"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

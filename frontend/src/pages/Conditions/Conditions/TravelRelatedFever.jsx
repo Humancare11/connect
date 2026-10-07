@@ -66,12 +66,7 @@ export default function TravelRelatedFever({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Travel-Related Fever Treatment Online | Virtual Travel Health Care"
-        description="Get online care for travel-related fever. Consult a licensed provider for fever, chills, fatigue, body aches, and illness during or after travel."
-        keywords="travel-related fever, fever after travel, fever during travel, travel illness treatment, online travel doctor, post-travel fever, travel health consultation, virtual doctor consultation, telehealth travel care, international travel illness"
-        url="https://humancareconnect.co/travel-related-fever"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

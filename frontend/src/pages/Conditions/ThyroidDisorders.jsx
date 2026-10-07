@@ -33,12 +33,7 @@ export default function ThyroidDisorders({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Thyroid Disorder Treatment Online | Virtual Thyroid Care"
-        description="Get online care for thyroid disorders. Consult a licensed provider for fatigue, weight changes, hormone imbalances, and personalized thyroid treatment."
-        keywords="thyroid disorder treatment, thyroid treatment online, hypothyroidism treatment, hyperthyroidism treatment, thyroid symptoms, online thyroid doctor, thyroid hormone management, virtual thyroid care, telehealth endocrinology, thyroid consultation online"
-        url="https://humancareconnect.co/thyroid-disorders"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

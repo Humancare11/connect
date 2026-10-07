@@ -33,12 +33,7 @@ export default function MildAsthmaSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Mild Asthma Treatment Online | Virtual Asthma Care & Breathing Support"
-        description="Manage mild asthma symptoms with expert online care. Consult a licensed provider for wheezing, coughing, chest tightness, shortness of breath, asthma treatment, and personalized breathing support."
-        keywords="Mild asthma treatment, Online asthma consultation, Breathing support, Virtual asthma care"
-        url="https://humancareconnect.co/mild-asthma-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -64,12 +64,7 @@ export default function Stress({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Stress Management Online | Virtual Mental Health Support"
-        description="Get online support for stress, anxiety, burnout, and emotional exhaustion. Connect with a licensed provider for personalized stress management strategies."
-        keywords="stress management online, stress treatment, online mental health support, stress relief consultation, anxiety and stress, burnout support, virtual therapy consultation, emotional wellness, telehealth mental health services, stress counseling online"
-        url="https://humancareconnect.co/stress"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

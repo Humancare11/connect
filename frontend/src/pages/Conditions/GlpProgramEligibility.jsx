@@ -33,12 +33,7 @@ export default function GlpProgramEligibility({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="GLP-1 Weight Loss Program | Online Eligibility Assessment"
-        description="Find out if you're eligible for a GLP-1 weight loss program. Connect with a licensed provider online for a personalized assessment, treatment guidance, and weight management support."
-        keywords="GLP-1 weight loss program, GLP-1 eligibility assessment, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/glp-program-eligibility"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

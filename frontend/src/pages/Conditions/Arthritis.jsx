@@ -27,12 +27,7 @@ export default function Arthritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Arthritis Pain Relief Online | Joint Pain & Stiffness Care"
-        description="Joint pain, swelling, or stiffness making daily life harder? Get personalized arthritis care, pain management guidance, and treatment recommendations from a licensed provider online."
-        keywords="Arthritis, Arthritis symptoms, Joint pain, Joint stiffness, Pain management guidance, Telemedicine services"
-        url="https://humancareconnect.co/arthritis"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

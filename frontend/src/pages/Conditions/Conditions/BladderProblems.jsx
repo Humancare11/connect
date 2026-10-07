@@ -66,12 +66,7 @@ export default function BladderProblems({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bladder Problems Care Online | Urinary Health & Symptom Support"
-        description="Frequent urination, urgency, leakage, or bladder discomfort? Get personalized urinary health support, symptom evaluation, and treatment guidance from an online provider."
-        keywords="Bladder problems, Urinary health, Frequent urination, Bladder concerns, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/bladder-problems"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -66,12 +66,7 @@ export default function HairLossMensHealth({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hair Loss Treatment for Men | Online Consultation"
-        description="Concerned about male hair loss?"
-        keywords="Hair loss men"
-        url="https://humancareconnect.co/hair-loss-mens-health"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

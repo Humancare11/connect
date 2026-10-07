@@ -33,12 +33,7 @@ export default function MedicationReview({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Medication Review Online | Safe Prescription & Drug Management"
-        description="Review your medications with a licensed provider online. Get expert guidance on side effects, drug interactions, dosage adjustments, prescription management, and treatment effectiveness."
-        keywords="Medication review, Prescription management, Drug interaction check, Online medication consultation"
-        url="https://humancareconnect.co/general-and-everyday-care/internal-medicine/medication-revieww"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

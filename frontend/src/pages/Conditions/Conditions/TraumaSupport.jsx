@@ -65,12 +65,7 @@ export default function TraumaSupport({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Trauma Support Online | Virtual Mental Health & Emotional Care"
-        description="Get confidential online trauma support. Connect with a licensed provider for anxiety, emotional distress, sleep concerns, and personalized recovery guidance."
-        keywords="trauma support online, trauma counseling online, emotional trauma support, virtual mental health care, trauma recovery, online therapy for trauma, mental health support, trauma-related anxiety, telehealth counseling, emotional wellness support"
-        url="https://humancareconnect.co/trauma-support"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

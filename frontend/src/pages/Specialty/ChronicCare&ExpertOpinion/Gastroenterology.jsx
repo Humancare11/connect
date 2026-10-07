@@ -539,12 +539,7 @@ export default function Gastroenterology({ data = SPECIALTY_DATA }) {
   }, [data.categoryId]);
   return (
     <>
-      <SEO
-        title="Gastroenterology Specialists | Digestive Health & GI Care"
-        description="Get expert gastroenterology care for abdominal pain, acid reflux, bloating, constipation, IBS, fatty liver disease, and digestive health concerns."
-        keywords="Gastroenterology specialists, Digestive health care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/gastroenterology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

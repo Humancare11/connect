@@ -591,12 +591,7 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Dermatology Specialists | Skin, Hair & Nail Care Online"
-        description="Connect with experienced dermatology specialists for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail problems, and personalized skin care treatment."
-        keywords="Dermatology specialists, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dermatology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

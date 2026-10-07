@@ -65,12 +65,7 @@ export default function Constipation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Constipation Treatment Online | Telemedicine Services & Online Doctor"
-        description="Get expert constipation treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized treatment from home."
-        keywords="Constipation treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/constipation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

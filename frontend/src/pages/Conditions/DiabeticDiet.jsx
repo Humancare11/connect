@@ -27,12 +27,7 @@ export default function DiabeticDiet({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Diabetic Diet Consultation Online | Telemedicine Nutrition Care"
-        description="Get personalized diabetic diet guidance online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive expert nutrition support for diabetes management."
-        keywords="Diabetic diet consultation, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/diabetic-diet"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

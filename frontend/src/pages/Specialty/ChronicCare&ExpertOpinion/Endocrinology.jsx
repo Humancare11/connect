@@ -56,7 +56,6 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
-import { Helmet } from "react-helmet-async";
 
 import heroImage from "../../../assets/SpecialitiesImage/endocrinology-specialist-hormone-metabolic-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-endocrinologist-hormone-health-consultation.webp";
@@ -528,12 +527,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Endocrinology Specialists | Hormone & Metabolic Health Care"
-        description="Get expert endocrinology care for hormone imbalances, thyroid disorders, diabetes, osteoporosis, and metabolic conditions with personalized treatment plans."
-        keywords="Endocrinology specialists, Hormone health, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/endocrinology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}

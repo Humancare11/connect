@@ -27,12 +27,7 @@ export default function Copd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="COPD Treatment Online | Telemedicine Services for COPD Care"
-        description="Get expert COPD treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized breathing care from home."
-        keywords="COPD treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/copd"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

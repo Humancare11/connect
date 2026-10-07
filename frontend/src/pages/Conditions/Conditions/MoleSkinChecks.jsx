@@ -65,12 +65,7 @@ export default function MoleSkinChecks({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Mole & Skin Check Online | Skin Lesion & Mole Evaluation"
-        description="Get expert online mole and skin checks. Consult a licensed provider for new or changing moles, skin spots, lesions, discoloration, and personalized skin health guidance."
-        keywords="Mole and skin check, Online skin evaluation, Skin lesion assessment, Virtual dermatology consultation"
-        url="https://humancareconnect.co/mole-skin-checks"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

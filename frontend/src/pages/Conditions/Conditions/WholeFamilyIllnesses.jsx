@@ -66,12 +66,7 @@ export default function WholeFamilyIllnesses({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Whole-Family Illnesses Care Online | Family Healthcare"
-        description="Get convenient care for whole-family illnesses, including colds, flu, respiratory infections, and stomach viruses. Connect with an online provider from home."
-        keywords="Whole-family illnesses, family healthcare, family illness care, family healthcare online, contagious conditions, colds, flu, respiratory infections, stomach viruses, common health concerns, symptom evaluation, treatment guidance, recovery recommendations, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
-        url="https://humancareconnect.co/whole-family-illnesses"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

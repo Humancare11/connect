@@ -66,12 +66,7 @@ export default function SkinRash({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Skin Rash Treatment Online | Virtual Dermatologist for Rashes & Itching"
-        description="Get online treatment for skin rashes. Connect with a licensed provider for itchy skin, redness, bumps, allergic reactions, and personalized skincare guidance."
-        keywords="skin rash treatment online, itchy skin rash, online dermatologist, rash diagnosis online, allergic skin rash, eczema rash treatment, virtual skin consultation, telehealth dermatology, skin irritation treatment, red skin rash"
-        url="https://humancareconnect.co/skin-rash"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

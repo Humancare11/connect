@@ -65,12 +65,7 @@ export default function FoodPoisoningWhileTraveling({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Travel Food Poisoning Treatment | Online Doctor Abroad"
-        description="Get expert care for food poisoning while traveling. Connect with a licensed provider online for treatment, hydration guidance, and recovery support through secure telemedicine services."
-        keywords="Travel food poisoning, Food poisoning while traveling, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/food-poisoning-while-traveling"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

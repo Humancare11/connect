@@ -685,12 +685,7 @@ export default function HomePage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      <SEO
-        title="Telemedicine Services | Online Doctor Appointments | Humancare Connect"
-        description="Telemedicine services with fast online doctor appointments, virtual healthcare services, prescription refills, mental health support, chronic care, and secure telehealth services through Humancare Connect."
-        keywords="Telemedicine services, online doctor appointments, virtual healthcare services, telehealth services, telemedicine platform, online doctor consultation, licensed healthcare providers, prescription refills online, chronic care, mental health support, same-day online medical care, secure telemedicine platform"
-        url="https://humancareconnect.co"
-      />
+      <SEO />
       <div className="hero-light" />
       <div className="hero-grid" />
 

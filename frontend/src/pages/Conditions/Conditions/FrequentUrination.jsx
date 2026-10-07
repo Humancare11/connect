@@ -65,12 +65,7 @@ export default function FrequentUrination({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Frequent Urination Treatment Online | Bladder Health Consultation"
-        description="Get expert care for frequent urination online. Connect with a licensed provider for bladder health evaluation, treatment guidance, and personalized care through secure telemedicine services."
-        keywords="Frequent urination treatment, Bladder health consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/frequent-urination"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function WeaningGuidance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Weaning Guidance Online | Baby Feeding & Nutrition Support"
-        description="Get personalized weaning guidance for transitioning your baby from breastfeeding or bottle feeding. Connect with an online provider for feeding and nutrition support."
-        keywords="Weaning guidance, weaning support, baby weaning, breastfeeding, bottle feeding, baby feeding guidance, infant nutrition, nutrition support, infant development, feeding guidance, developmental recommendations, parental well being, personalized care planning, telemedicine services, online doctor appointment, telemedicine platform, virtual healthcare services, telehealth services, online provider"
-        url="https://humancareconnect.co/weaning-guidance"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

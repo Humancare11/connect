@@ -33,12 +33,7 @@ export default function MetabolicSyndrome({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Metabolic Syndrome Treatment Online | Heart & Diabetes Risk Management"
-        description="Manage metabolic syndrome with expert online care. Connect with a licensed provider for high blood pressure, blood sugar, cholesterol, weight management, and personalized treatment plans."
-        keywords="Metabolic syndrome treatment, Heart disease risk management, Diabetes prevention, Online metabolic health consultation"
-        url="https://humancareconnect.co/metabolic-syndrome"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

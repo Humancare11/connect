@@ -65,12 +65,7 @@ export default function FungalSkinInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fungal Skin Infection Treatment Online | Virtual Dermatology Care"
-        description="Get expert treatment for fungal skin infections online. Connect with a licensed provider for itchy rashes, redness, peeling skin, and prescription treatment through secure telemedicine services."
-        keywords="Fungal skin infection treatment, Online dermatology consultation, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fungal-skin-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

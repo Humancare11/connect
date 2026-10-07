@@ -543,12 +543,7 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Psychology Counseling Services | Stress, Trauma, Relationships & Emotional Support"
-        description="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
-        keywords="online psychology counseling, licensed psychologist online, online therapist, stress counseling, trauma counseling, relationship counseling, grief counseling, self-esteem counseling, emotional wellness, virtual therapy, online mental health counseling, telepsychology"
-        url="https://humancareconnect.co/psychology-counseling"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

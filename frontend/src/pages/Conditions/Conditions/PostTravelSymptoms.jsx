@@ -66,12 +66,7 @@ export default function PostTravelSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Post-Travel Symptoms Treatment Online | Travel Health Consultation"
-        description="Get expert care for post-travel symptoms online. Connect with a licensed provider for fever, diarrhea, nausea, fatigue, rash, respiratory symptoms, and personalized travel health guidance."
-        keywords="Post-travel symptoms, Travel health consultation, Online travel medicine, Post-travel illness treatment, Virtual healthcare services"
-        url="https://humancareconnect.co/post-travel-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

@@ -65,12 +65,7 @@ export default function HotFlashes({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hot Flashes Treatment Online | Menopause & Hormone Support"
-        description="Get expert care for hot flashes online. Connect with a licensed provider for menopause symptoms, hormone health evaluations, personalized treatment, and ongoing support through secure telemedicine services."
-        keywords="Hot flashes treatment, Menopause support, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hot-flashes"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

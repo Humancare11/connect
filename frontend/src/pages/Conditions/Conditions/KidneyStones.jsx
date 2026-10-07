@@ -66,12 +66,7 @@ export default function KidneyStones({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Kidney Stone Treatment Online | Expert Urology Consultation"
-        description="Get expert care for kidney stones online. Consult a licensed provider for severe side pain, painful urination, blood in urine, nausea, and personalized treatment through secure telemedicine services."
-        keywords="Kidney stone treatment, Online urology consultation, Online doctor appointment, Urinary health care"
-        url="https://humancareconnect.co/kidney-stones"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

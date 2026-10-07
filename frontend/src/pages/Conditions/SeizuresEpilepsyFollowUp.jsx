@@ -27,12 +27,7 @@ export default function SeizuresEpilepsyFollowUp({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Seizure & Epilepsy Follow-Up Online | Ongoing Neurology Care"
-        description="Book an online epilepsy follow-up to review seizure symptoms, medications, treatment progress, and ongoing neurological care with a licensed provider."
-        keywords="epilepsy follow-up, seizure management, online neurologist, epilepsy treatment online, seizure medication review, neurology follow-up, virtual epilepsy care, seizure disorder consultation"
-        url="https://humancareconnect.co/seizures-epilepsy-follow-up"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

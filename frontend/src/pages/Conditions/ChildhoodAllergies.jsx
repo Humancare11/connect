@@ -27,12 +27,7 @@ export default function ChildhoodAllergies({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Childhood Allergies | Relief for Rashes, Sneezing & Congestion"
-        description="Pollen, dust, pet dander, or food may trigger allergy symptoms in children. Access personalized allergy management guidance and treatment recommendations from home."
-        keywords="Childhood allergies, Allergy symptoms, Allergy care, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/childhood-allergies"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

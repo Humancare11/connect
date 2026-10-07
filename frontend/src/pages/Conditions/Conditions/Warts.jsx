@@ -66,12 +66,7 @@ export default function Warts({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Warts Treatment Online | Skin Evaluation & Care"
-        description="Get convenient wart treatment online with expert skin evaluations. Connect with a licensed provider for personalized treatment options and prescriptions when appropriate."
-        keywords="Warts, wart treatment, warts treatment online, skin growths, viral infection, warts on hands, warts on feet, warts on face, skin evaluation, wart removal, telemedicine services, online doctor appointment, virtual healthcare services, online provider, skin care, treatment options"
-        url="https://humancareconnect.co/warts"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

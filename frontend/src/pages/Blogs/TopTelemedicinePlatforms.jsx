@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -228,17 +227,7 @@ export default function TopTelemedicinePlatforms() {
 
   return (
     <>
-      <SEO
-        title="Top Telemedicine Platforms & Providers | Best Telehealth Services"
-        description="Discover the top telemedicine platforms and providers."
-        keywords="Top telemedicine platforms"
-        url="https://humancareconnect.co/top-telemedicine-platforms"
-      />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">

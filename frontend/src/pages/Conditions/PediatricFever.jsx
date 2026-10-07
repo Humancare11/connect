@@ -33,12 +33,7 @@ export default function PediatricFever({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pediatric Fever Treatment Online | Children's Fever Care"
-        description="Get expert pediatric fever care online. Connect with a licensed provider for fever evaluation, viral illnesses, flu symptoms, treatment guidance, and personalized care for your child."
-        keywords="Pediatric fever, Children's fever treatment, Online pediatric consultation, Virtual pediatric care"
-        url="https://humancareconnect.co/pediatric-fever"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

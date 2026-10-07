@@ -65,12 +65,7 @@ export default function Bronchitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bronchitis Care Online | Cough, Mucus & Chest Symptom Relief"
-        description="Dealing with a persistent cough, mucus, wheezing, or chest discomfort? Get online bronchitis care with symptom relief, treatment guidance, and prescriptions when appropriate."
-        keywords="Bronchitis, Bronchitis symptoms, Persistent cough, Chest discomfort, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/bronchitis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

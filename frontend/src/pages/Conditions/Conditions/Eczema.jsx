@@ -65,12 +65,7 @@ export default function Eczema({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Eczema Treatment Online | Telemedicine Skin Care"
-        description="Get expert eczema treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized skin care from home."
-        keywords="Eczema treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/eczema"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

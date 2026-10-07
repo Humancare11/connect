@@ -27,12 +27,7 @@ export default function Cellulitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cellulitis Symptoms & Skin Infection Care | Get Help Online"
-        description="Red, swollen, warm, or tender skin may be signs of cellulitis. Share your symptoms and photos with a licensed provider for evaluation and treatment guidance online."
-        keywords="Cellulitis, Cellulitis symptoms, Bacterial skin infection, Skin inflammation, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/cellulitis"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

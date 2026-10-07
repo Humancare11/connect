@@ -33,12 +33,7 @@ export default function Vomiting({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vomiting Treatment Online | Nausea & Digestive Care"
-        description="Get fast care for vomiting symptoms, nausea, dehydration, and stomach discomfort. Connect with an online provider for treatment guidance and recovery support."
-        keywords="Vomiting symptoms, vomiting treatment, nausea, dehydration, stomach discomfort, weakness, dizziness, digestive issues, food poisoning, stomach illnesses, vomiting relief, hydration guidance, telemedicine services, online doctor appointment, telemedicine platform, online provider"
-        url="https://humancareconnect.co/vomiting"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

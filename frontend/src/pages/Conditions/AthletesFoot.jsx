@@ -27,12 +27,7 @@ export default function AthletesFoot({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Athlete�s Foot Treatment Online | Fungal Skin Infection Care"
-        description="Itchy, burning, or peeling skin between your toes? Get athlete�s foot treatment guidance, skincare support, and prescription care when appropriate from a licensed provider online."
-        keywords="Athlete�s foot, Athlete�s foot treatment, Fungal skin infection, Peeling skin, Skincare guidance, Online doctor appointment"
-        url="https://humancareconnect.co/athletes-foot"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

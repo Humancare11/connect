@@ -33,12 +33,7 @@ export default function NeckPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Neck Pain Treatment Online | Stiff Neck & Pain Relief Consultation"
-        description="Get expert treatment for neck pain online. Consult a licensed provider for neck stiffness, muscle strain, soreness, headaches, posture-related pain, and personalized recovery guidance."
-        keywords="Neck pain treatment, Stiff neck relief, Muscle strain consultation, Online doctor consultation"
-        url="https://humancareconnect.co/neck-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

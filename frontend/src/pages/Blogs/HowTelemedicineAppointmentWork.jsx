@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import SEO from "../../components/Seo";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicineAppointment from "../../assets/BlogImages/telemedicine-appointment.webp";
 
@@ -253,11 +253,7 @@ export default function HowTelemedicineAppointmentWork() {
 
   return (
     <>
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">

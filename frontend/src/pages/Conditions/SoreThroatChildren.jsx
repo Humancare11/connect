@@ -27,12 +27,7 @@ export default function SoreThroatChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sore Throat in Children Treatment Online | Virtual Pediatric Care"
-        description="Get online care for your child's sore throat. Consult a licensed provider for throat pain, fever, swallowing difficulty, cough, and personalized treatment."
-        keywords="sore throat in children, pediatric sore throat treatment, child throat pain, online pediatric consultation, strep throat in children, fever and sore throat, virtual pediatric care, throat infection in kids, telehealth pediatric doctor, sore throat treatment online"
-        url="https://humancareconnect.co/sore-throat-children"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

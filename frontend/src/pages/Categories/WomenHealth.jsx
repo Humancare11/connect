@@ -17,7 +17,6 @@ import {
   FiMinus,
   FiMapPin,
 } from "react-icons/fi";
-import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import womenHealthHero from "../../assets/HomeImageCategories/womens-healthcare-services.webp";
 import SEO from "../../components/Seo";
@@ -508,23 +507,7 @@ export default function WomenHealth() {
         minHeight: "100vh",
       }}
     >
-      <SEO
-        title="Online Women�s Health Care | Virtual Doctor Consultation | Humancare Connect"
-        description="Access online women�s health care with trusted healthcare professionals. Get virtual consultations for menstrual health, hormonal concerns, pregnancy guidance, menopause support, and personalized medical care."
-        keywords="Women�s health care, online women�s health care, women�s health consultation, virtual doctor consultation, reproductive health, menstrual health, period problems, irregular periods, painful periods, hormonal concerns, hormonal changes, birth control, contraception options, pregnancy guidance, prenatal wellness, menopause support, menopause symptoms, fertility concerns, sexual health, vaginal infections, preventive women�s healthcare, reproductive wellness"
-        url="https://humancareconnect.co/women-health"
-      />
-      <Helmet>
-        <title>
-          Women's Mental Health Specialists | Anxiety, PMDD & Postpartum Mental
-          Health Support
-        </title>
-        <meta
-          name="description"
-          content="Connect with women's mental health specialists for PMDD, perinatal anxiety, postpartum depression, hormonal mood changes, emotional wellness support, and personalized mental healthcare.
-"
-        />
-      </Helmet>
+      <SEO />
 
       {/* ── Hero ── */}
       <section

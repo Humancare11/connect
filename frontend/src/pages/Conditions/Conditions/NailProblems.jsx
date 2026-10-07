@@ -66,12 +66,7 @@ export default function NeilProblems({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Nail Problems Treatment Online | Virtual Dermatology Care"
-        description="Get expert care for nail problems online."
-        keywords="Nail problems"
-        url="https://humancareconnect.co/nail-problems"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

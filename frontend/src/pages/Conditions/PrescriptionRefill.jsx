@@ -27,12 +27,7 @@ export default function PrescriptionRefill({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Online Prescription Refill Service | Fast Medication Renewal by Licensed Doctors"
-        description="Need a prescription refill? Connect with a licensed provider online to renew eligible medications, review your treatment plan, manage ongoing conditions, and receive prescription support without an unnecessary clinic visit."
-        keywords="online prescription refill, prescription renewal online, medication refill service, refill prescription without doctor visit, online medication renewal, telehealth prescription refill, virtual prescription service, online doctor for prescription refill"
-        url="https://humancareconnect.co/prescription-refill"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

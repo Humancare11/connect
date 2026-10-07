@@ -66,12 +66,7 @@ export default function UrinaryIncontinence({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Urinary Incontinence Treatment Online | Virtual Bladder Care"
-        description="Get online care for urinary incontinence. Consult a licensed provider for bladder leakage, frequent urination, urgency, and personalized treatment guidance."
-        keywords="urinary incontinence treatment, bladder leakage treatment, loss of bladder control, frequent urination, urinary urgency, online urologist, bladder control treatment, virtual bladder care, telehealth urology, urinary incontinence consultation"
-        url="https://humancareconnect.co/urinary-incontinence"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

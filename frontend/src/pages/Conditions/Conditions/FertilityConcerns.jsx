@@ -65,12 +65,7 @@ export default function FertilityConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fertility Consultation Online | Expert Reproductive Health Care"
-        description="Get personalized fertility guidance online from licensed providers. Discuss fertility concerns, family planning, reproductive health, and next steps through secure telemedicine services."
-        keywords="Fertility consultation online, Reproductive health, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fertility-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

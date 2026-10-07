@@ -65,12 +65,7 @@ export default function PrematureEjaculation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Premature Ejaculation Treatment Online | Men's Sexual Health Care"
-        description="Get discreet online treatment for premature ejaculation. Connect with a licensed provider for early ejaculation, sexual performance concerns, personalized treatment plans, and men's sexual wellness support."
-        keywords="Premature ejaculation treatment, Early ejaculation, Online men's health consultation, Sexual wellness, Men's sexual health"
-        url="https://humancareconnect.co/premature-ejaculation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

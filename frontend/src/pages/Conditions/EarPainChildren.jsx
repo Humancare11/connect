@@ -27,12 +27,7 @@ export default function EarPainChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Ear Pain in Children Treatment Online | Pediatric Telemedicine Care"
-        description="Get expert ear pain treatment for children online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized pediatric care from home."
-        keywords="Ear pain in children, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/ear-pain-children"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

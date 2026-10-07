@@ -27,12 +27,7 @@ export default function DietExercisePlanning({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Diet & Exercise Planning Online | Telemedicine Wellness Care"
-        description="Get personalized diet and exercise planning online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and achieve your health and wellness goals."
-        keywords="Diet & exercise planning, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/diet-exercise-planning"
-      />
+      <SEO />
       <div className="condition-root">
         <section
           className="condition-hero"

@@ -33,12 +33,7 @@ export default function MuscleStrain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Muscle Strain Treatment Online | Sprain, Pain & Recovery Support"
-        description="Get expert care for muscle strains online. Consult a licensed provider for pulled muscles, pain, stiffness, swelling, sports injuries, and personalized recovery guidance from home."
-        keywords="Muscle strain treatment, Pulled muscle care, Sports injury consultation, Online doctor consultation"
-        url="https://humancareconnect.co/muscle-strain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

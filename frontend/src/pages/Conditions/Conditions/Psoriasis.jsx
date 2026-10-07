@@ -66,12 +66,7 @@ export default function Psoriasis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Psoriasis Treatment Online | Virtual Dermatology Consultation"
-        description="Get online care for psoriasis from a licensed provider. Receive expert treatment for itchy, scaly skin, flare-ups, redness, and personalized skincare recommendations."
-        keywords="psoriasis treatment online, psoriasis symptoms, virtual dermatologist, online skin specialist, psoriasis flare-up treatment, chronic skin condition, telehealth dermatology, psoriasis consultation"
-        url="https://humancareconnect.co/psoriasis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

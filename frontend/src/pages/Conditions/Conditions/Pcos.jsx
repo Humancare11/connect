@@ -65,12 +65,7 @@ export default function Pcos({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="PCOS Treatment Online | Hormonal Health & Women's Care"
-        description="Connect with a licensed provider online for PCOS care. Get expert support for irregular periods, hormonal imbalance, fertility concerns, acne, weight management, and personalized treatment."
-        keywords="PCOS treatment, Hormonal health, Online PCOS consultation, Women's health specialist"
-        url="https://humancareconnect.co/pcos"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

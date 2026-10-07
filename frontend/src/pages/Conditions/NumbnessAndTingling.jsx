@@ -33,12 +33,7 @@ export default function NumbnessAndTingling({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Numbness & Tingling Treatment Online | Nerve Pain & Sensation Care"
-        description="Get expert care for numbness and tingling online. Consult a licensed provider for pins and needles, nerve pain, loss of sensation, weakness, and personalized treatment guidance."
-        keywords="Numbness and tingling, Nerve pain treatment, Online neurology consultation, Peripheral neuropathy care"
-        url="https://humancareconnect.co/numbness-tingling"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

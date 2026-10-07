@@ -65,12 +65,7 @@ export default function PostnatalDepression({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Postnatal Depression Treatment Online | Postpartum Mental Health Care"
-        description="Get compassionate support for postnatal depression online. Connect with a licensed provider for postpartum depression, anxiety, mood changes, emotional wellness, and personalized mental health treatment."
-        keywords="Postnatal depression, Postpartum depression treatment, Online postpartum mental health, Postpartum anxiety support, Virtual mental healthcare"
-        url="https://humancareconnect.co/postnatal-depression"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section

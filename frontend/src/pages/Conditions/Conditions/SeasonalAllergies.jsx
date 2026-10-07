@@ -66,12 +66,7 @@ export default function SeasonalAllergies({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Seasonal Allergy Treatment Online | Fast Relief for Allergy Symptoms"
-        description="Get online treatment for seasonal allergies. Connect with a licensed provider for sneezing, congestion, itchy eyes, sinus pressure, and personalized allergy relief."
-        keywords="seasonal allergy treatment, online allergy doctor, hay fever treatment, pollen allergy, allergy relief online, itchy eyes and sneezing, allergic rhinitis, virtual allergy consultation"
-        url="https://humancareconnect.co/seasonal-allergies"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <section
