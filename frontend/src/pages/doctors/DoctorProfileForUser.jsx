@@ -244,64 +244,13 @@ function extractDoctorId(raw) {
   return null;
 }
 
-const SITE = "https://humancareconnect.co";
-
-function slugifyName(name) {
-  return String(name || "")
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-// Title, description, canonical and Physician schema for a public doctor profile. Built from the
-// doctor record, so it works both in the prerendered HTML and when the page renders in the browser.
-function DoctorSeo({ doctor, loadFailed }) {
-  if (!doctor) {
-    return <SEO title="Doctor profile | Humancare Connect" robots="noindex, nofollow" />;
-  }
-  const name = String(doctor.name || "").trim();
-  const specialty = String(doctor.specialty || "").trim();
-  const place = [doctor.city, doctor.state].filter(Boolean).join(", ");
-  const title = [name, specialty].filter(Boolean).join(" | ") + " | Humancare Connect";
-
-  let description = `Consult ${name}${specialty ? `, ${specialty}` : ""}${place ? ` in ${place}` : ""} online with Humancare Connect.`;
-  const tail = " Secure video visits, prescriptions and follow-up care from a licensed provider.";
-  if ((description + tail).length <= 160) description += tail;
-
-  const numericId = String(doctor.doctorId || "");
-  const slug = /^\d{5}$/.test(numericId) ? `${numericId}-${slugifyName(name)}`.replace(/-$/, "") : "";
-  const canonical = slug ? `${SITE}/doctors/${slug}` : undefined;
-
-  const physician = {
-    "@type": "Physician",
-    name,
-    ...(specialty ? { medicalSpecialty: specialty } : {}),
-    ...(doctor.about ? { description: String(doctor.about).replace(/\s+/g, " ").trim().slice(0, 300) } : {}),
-    ...(canonical ? { url: canonical } : {}),
-    ...(place || doctor.country
-      ? {
-          address: {
-            "@type": "PostalAddress",
-            ...(doctor.city ? { addressLocality: doctor.city } : {}),
-            ...(doctor.state ? { addressRegion: doctor.state } : {}),
-            ...(doctor.country ? { addressCountry: doctor.country } : {}),
-          },
-        }
-      : {}),
-    ...(Array.isArray(doctor.languages) && doctor.languages.length ? { knowsLanguage: doctor.languages } : {}),
-  };
-
-  return (
-    <SEO
-      title={title}
-      description={description}
-      canonical={canonical}
-      robots={loadFailed ? "noindex, nofollow" : undefined}
-      schemaData={physician}
-    />
-  );
+// Doctor profiles are kept out of search results (noindex, nofollow) until doctors have agreed to be
+// indexed. The pages work as before; <SEO> only sets a title and the robots tag (no canonical, no schema).
+function DoctorSeo({ doctor }) {
+  const name = String(doctor?.name || "").trim();
+  const specialty = String(doctor?.specialty || "").trim();
+  const title = name ? `${[name, specialty].filter(Boolean).join(" | ")} | Humancare Connect` : "Doctor profile | Humancare Connect";
+  return <SEO title={title} robots="noindex, nofollow" />;
 }
 
 export default function DoctorProfileForUser({
@@ -400,7 +349,7 @@ export default function DoctorProfileForUser({
   if (error || !doctor) {
     return (
       <div className="dpfu-error">
-        <DoctorSeo doctor={null} loadFailed />
+        <DoctorSeo doctor={null} />
         <div className="dpfu-error-inner">
           <p className="dpfu-error-emoji">⚠️</p>
           <h2>Profile not found</h2>

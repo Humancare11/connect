@@ -177,7 +177,8 @@ for (const page of pages) {
       failures.push(`${page.route}: rendered without a <title>`);
       continue;
     }
-    if (!head.some((t) => /rel="canonical"/.test(t))) {
+    // Doctor profiles are noindex, so they intentionally have no canonical.
+    if (page.kind !== "doctor" && !head.some((t) => /rel="canonical"/.test(t))) {
       failures.push(`${page.route}: rendered without a canonical link`);
       continue;
     }
@@ -219,7 +220,8 @@ fs.rmSync(path.join(dist, ".vite"), { recursive: true, force: true });
 fs.writeFileSync(
   path.join(dist, ".prerender-manifest.json"),
   JSON.stringify(
-    dynamic.map((p) => ({ route: p.route, kind: p.kind, lastmod: p.lastmod })),
+    // Doctor profiles are noindex: they are prerendered but must not be in the sitemap.
+    dynamic.filter((p) => p.kind !== "doctor").map((p) => ({ route: p.route, kind: p.kind, lastmod: p.lastmod })),
     null,
     1
   )
