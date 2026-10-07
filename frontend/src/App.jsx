@@ -8,6 +8,7 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { REDIRECTS } from "./seo/redirects";
+import RouteSeo from "./seo/RouteSeo";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 
@@ -1137,6 +1138,7 @@ function AppLayout() {
   return (
     <>
       <ScrollToTop />
+      <RouteSeo />
       <SessionTimeoutManager />
       {!hideLayout && <Header />}
 
