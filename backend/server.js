@@ -328,6 +328,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// The API serves no indexable content; keep every response out of search results.
+app.use((req, res, next) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  next();
+});
+
 // CORS Config
 const corsOptions = {
   origin: (origin, callback) => {
