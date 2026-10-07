@@ -1,6 +1,8 @@
 // Local production-like server for dist/, mirroring how Render serves the static site:
 //   - redirects and rewrites are read from render.yaml (first match wins, like Render)
 //   - real files win over rewrites ("Render does not apply rules to a path if a resource exists")
+//   - response headers (cache-control, security headers) come from the headers: block of render.yaml
+//   - text responses are gzip-compressed, as Render does
 //   - unmatched paths get dist/404.html with a real 404 status
 //   - /api and /socket.io are proxied to the backend so login, booking and payment work locally
 //
@@ -10,10 +12,11 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import net from "node:net";
+import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const dist = path.join(root, "dist");
+const dist = path.resolve(process.env.DIST_DIR || path.join(root, "dist"));
 const port = Number(process.env.PORT || 4173);
 const apiTarget = new URL(process.env.API_TARGET || "http://localhost:5000");
 
@@ -32,6 +35,18 @@ for (const m of yaml.matchAll(/-\s*type:\s*(\w+)\s*\n\s*source:\s*(\S+)\s*\n\s*d
   const [, type, source, destination] = m;
   const pattern = new RegExp("^" + source.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "(.*)") + "$");
   rules.push({ type, pattern, destination });
+}
+
+// ---- render.yaml headers: (path / name / value) ------------------------------------------------
+const headerRules = [];
+for (const m of yaml.matchAll(/-\s*path:\s*(\S+)\s*\n\s*name:\s*(\S+)\s*\n\s*value:\s*(.+)/g)) {
+  const escaped = m[1].replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*");
+  headerRules.push({ pattern: new RegExp("^" + escaped + "$"), name: m[2], value: m[3].trim().replace(/^"(.*)"$/, "$1") });
+}
+function headersFor(urlPath) {
+  const out = {};
+  for (const r of headerRules) if (r.pattern.test(urlPath)) out[r.name] = r.value;
+  return out;
 }
 
 function fileFor(urlPath) {
@@ -53,10 +68,20 @@ function fileFor(urlPath) {
   return null;
 }
 
-function send(res, status, file, extraHeaders = {}) {
+const COMPRESSIBLE = /\.(html|js|mjs|css|json|xml|txt|svg)$/i;
+
+function send(res, status, file, urlPath, req) {
   const ext = path.extname(file).toLowerCase();
-  res.writeHead(status, { "Content-Type": MIME[ext] || "application/octet-stream", ...extraHeaders });
-  fs.createReadStream(file).pipe(res);
+  const headers = { "Content-Type": MIME[ext] || "application/octet-stream", ...headersFor(urlPath) };
+  const gzip = COMPRESSIBLE.test(file) && /\bgzip\b/.test(req.headers["accept-encoding"] || "");
+  if (gzip) {
+    headers["Content-Encoding"] = "gzip";
+    headers.Vary = "Accept-Encoding";
+  }
+  res.writeHead(status, headers);
+  const stream = fs.createReadStream(file);
+  if (gzip) stream.pipe(zlib.createGzip({ level: 6 })).pipe(res);
+  else stream.pipe(res);
 }
 
 const server = http.createServer((req, res) => {
@@ -80,7 +105,7 @@ const server = http.createServer((req, res) => {
 
   // 1. real file
   const direct = fileFor(url.pathname);
-  if (direct) return send(res, 200, direct);
+  if (direct) return send(res, 200, direct, url.pathname, req);
 
   // 2. redirects / rewrites in file order
   for (const rule of rules) {
@@ -92,12 +117,12 @@ const server = http.createServer((req, res) => {
       return res.end();
     }
     const dest = fileFor(rule.destination);
-    if (dest) return send(res, 200, dest);
+    if (dest) return send(res, 200, dest, url.pathname, req);
   }
 
   // 3. real 404
   const notFound = path.join(dist, "404.html");
-  if (fs.existsSync(notFound)) return send(res, 404, notFound);
+  if (fs.existsSync(notFound)) return send(res, 404, notFound, url.pathname, req);
   res.writeHead(404, { "Content-Type": "text/plain" });
   res.end("Not found");
 });
