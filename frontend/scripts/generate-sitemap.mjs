@@ -17,6 +17,12 @@ const excludedPrefixes = [
   "/payment-admin",
   "/superadmin-dashboard",
   "/user",
+  "/partner-dashboard",
+  "/appointment-booking/form",
+  "/appointment-booking/category-confirm",
+  "/pay",
+  "/video-call",
+  "/direct-video-call",
 ];
 
 const excludedExactPaths = new Set([
@@ -33,6 +39,11 @@ const excludedExactPaths = new Set([
   "/payment-admin-login",
   "/profile",
   "/test",
+  "/partner-login",
+  "/services-prices",
+  "/ServiceDemo",
+  "/category-consultant",
+  "/service-consultant",
 ]);
 
 function readAppRoutes() {
@@ -153,6 +164,15 @@ function buildRobotsTxt(isProduction) {
     "Disallow: /user/",
     "Disallow: /pay/",
     "Disallow: /video-call/",
+    "Disallow: /partner-dashboard",
+    "Disallow: /partner-login",
+    "Disallow: /services-prices",
+    "Disallow: /ServiceDemo",
+    "Disallow: /appointment-booking/form",
+    "Disallow: /appointment-booking/category-confirm",
+    "Disallow: /category-consultant",
+    "Disallow: /service-consultant",
+    "Disallow: /direct-video-call/",
     "",
     `Sitemap: ${PRODUCTION_ORIGIN}/sitemap.xml`,
     "",
