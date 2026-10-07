@@ -179,7 +179,7 @@ const SPECIALTY_DATA = {
       Icon: FiDroplet,
       name: "Urinary Tract Infections (UTI)",
       desc: "Relief for sore throat and swollen tonsils",
-      path: "/mens-health/urology/urinary-tract-infection",
+      path: "/urinary-tract-infection",
     },
     {
       Icon: FiShield,

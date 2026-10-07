@@ -165,7 +165,7 @@ const SPECIALTY_DATA = {
       Icon: FiHeart,
       name: "Chronic Migraine",
       desc: "Support for healthy infant feeding",
-      path: "/chronic-care/neurology/chronic-migraine",
+      path: "/chronic-care/neurology/migraine",
     },
     {
       Icon: FiZap,

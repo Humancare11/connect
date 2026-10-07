@@ -1,4 +1,51 @@
 routes:
+  # 301 redirects (source of truth: src/seo/redirects.js; checked by scripts/check-seo.mjs).
+  # Must stay above the catch-all rewrite. Render source paths are case-sensitive.
+  - type: redirect
+    source: /doctor-note-or-sick-notes
+    destination: /doctors-note
+  - type: redirect
+    source: /medical-certificate
+    destination: /doctors-note
+  - type: redirect
+    source: /prescription-refill
+    destination: /online-prescription-refills
+  - type: redirect
+    source: /second-medical-opinion
+    destination: /online-second-medical-opinion
+  - type: redirect
+    source: /expert-medical-opinion
+    destination: /online-second-medical-opinion
+  - type: redirect
+    source: /chronic-care-and-expert-opinion/cardiology
+    destination: /chronic-care/cardiology
+  - type: redirect
+    source: /mental-health-support
+    destination: /mental-health
+  - type: redirect
+    source: /ent
+    destination: /eye-ear-bone/ear-nose-throat
+  - type: redirect
+    source: /mild-asthma-symptoms
+    destination: /chronic-care/pulmonology/asthma
+  - type: redirect
+    source: /chronic-care/neurology/chronic-migraine
+    destination: /chronic-care/neurology/migraine
+  - type: redirect
+    source: /mens-health/urology/urinary-tract-infection
+    destination: /urinary-tract-infection
+  - type: redirect
+    source: /bladder-infection
+    destination: /urinary-tract-infection
+  - type: redirect
+    source: /Blogs
+    destination: /blogs
+  - type: redirect
+    source: /Specialties
+    destination: /specialties
+  - type: redirect
+    source: /mental-health/psychiatry/Ocd
+    destination: /mental-health/psychiatry/ocd
   - type: rewrite
     source: /*
     destination: /index.html

@@ -95,7 +95,7 @@ export default function Footer() {
           <Link to="/appointment-booking" state={{ tab: "spec" }}>
             Online Doctor Consultation
           </Link>
-          <a href="/doctor-note-or-sick-notes">Sick Notes</a>
+          <a href="/doctors-note">Sick Notes</a>
           <a href="/lab-requisitions"> Lab Requisition </a>
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
           <a href="/online-second-medical-opinion">

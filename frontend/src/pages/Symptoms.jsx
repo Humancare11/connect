@@ -198,7 +198,7 @@ const conditionCategories = [
         name: "Treatment-Plan Review",
         path: "/online-second-medical-opinion/treatment-plan-review",
       },
-      { name: "Second Medical Opinion", path: "/second-medical-opinion" },
+      { name: "Second Medical Opinion", path: "/online-second-medical-opinion" },
       {
         name: "Acid Reflux / GERD",
         path: "/chronic-care/gastroenterology/acid-reflux-gerd",
@@ -226,7 +226,7 @@ const conditionCategories = [
       },
       {
         name: "Chronic Migraine",
-        path: "/chronic-care/neurology/chronic-migraine",
+        path: "/chronic-care/neurology/migraine",
       },
       {
         name: "Seizures / Epilepsy Follow-Up",
@@ -408,7 +408,7 @@ const conditionCategories = [
       { name: "Low Libido", path: "/mens-health/men-health/low-libido" },
       {
         name: "Urinary Tract Infections",
-        path: "/mens-health/urology/urinary-tract-infection",
+        path: "/urinary-tract-infection",
       },
       { name: "Kidney Stones", path: "/mens-health/urology/kidney-stones" },
       { name: "Blood in Urine", path: "/mens-health/urology/blood-in-urine" },

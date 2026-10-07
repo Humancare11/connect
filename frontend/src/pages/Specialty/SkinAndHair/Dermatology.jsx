@@ -621,7 +621,7 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
                 <p className="sp-hero__description">{data.heroDescription}</p>
 
                 <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <a href="/specialties" className="sp-btn sp-btn--primary">
                     <FiSearch size={17} />
                     Find Specialists
                   </a>

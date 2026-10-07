@@ -431,7 +431,7 @@ const CONDITIONS = [
   },
   {
     slug: "chronic-migraine",
-    path: "/chronic-care/neurology/chronic-migraine",
+    path: "/chronic-care/neurology/migraine",
     icon: "brain",
     name: "Chronic Migraine",
   },

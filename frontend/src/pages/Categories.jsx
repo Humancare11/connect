@@ -385,7 +385,7 @@ const SPECIALTIES = [
   },
   {
     slug: "cardiology",
-    path: "/chronic-care-and-expert-opinion/cardiology",
+    path: "/chronic-care/cardiology",
     icon: "heart",
     name: "Cardiology",
     featured: false,
@@ -426,7 +426,7 @@ const CONDITIONS = [
   },
   {
     slug: "chronic-migraine",
-    path: "/chronic-care/neurology/chronic-migraine",
+    path: "/chronic-care/neurology/migraine",
     icon: "brain",
     name: "Chronic Migraine",
   },

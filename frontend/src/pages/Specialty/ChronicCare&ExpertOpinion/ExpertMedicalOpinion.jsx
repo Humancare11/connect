@@ -173,7 +173,7 @@ const SPECIALTY_DATA = {
     {
       Icon: FiWind,
       name: "Second Medical Opinion",
-      path: "/second-medical-opinion",
+      path: "/online-second-medical-opinion",
       description:
         "Comprehensive assessment of diagnoses and treatment recommendations from an experienced specialist.",
     },
@@ -612,7 +612,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
                 <p className="sp-hero__description">{data.heroDescription}</p>
 
                 <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <a href="/specialties" className="sp-btn sp-btn--primary">
                     <FiSearch size={17} />
                     Find Specialists
                   </a>

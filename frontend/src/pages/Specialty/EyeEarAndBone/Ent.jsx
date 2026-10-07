@@ -689,7 +689,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                   key={i}
                   {...s}
                   delay={i * 55}
-                  href={`/Specialties/${data.slug}#service-${i}`}
+                  href={`/specialties/${data.slug}#service-${i}`}
                 />
               ))}
             </div>
@@ -734,7 +734,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                   key={i}
                   {...c}
                   delay={Math.min(i, 7) * 45}
-                  href={`/Specialties/${data.slug}#condition-${slugify(c.name)}`}
+                  href={`/specialties/${data.slug}#condition-${slugify(c.name)}`}
                 />
               ))}
             </div>

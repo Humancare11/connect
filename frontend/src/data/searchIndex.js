@@ -64,7 +64,7 @@ export const specialties = [
   },
 
   // Chronic Care & Expert Opinion
-  { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care-and-expert-opinion", route: "/chronic-care-and-expert-opinion/cardiology",
+  { id: "cardiology", title: "Cardiology", type: "specialty", category: "chronic-care-and-expert-opinion", route: "/chronic-care/cardiology",
     keywords: ["cardiology", "heart", "cardiac"] },
   { id: "export-medical-opinion", title: "Expert Medical Opinion", type: "specialty", category: "chronic-care", route: "/export-medical-opinion",
     keywords: ["expert opinion", "second opinion", "specialist review"] },
@@ -203,7 +203,7 @@ export const conditions = [
     keywords: ["chronic kidney disease", "ckd", "renal disease"]
   },
   {
-    id: "chronic-migraine", title: "Chronic Migraine", type: "condition", category: "chronic-care", specialty: "neurology", route: "/chronic-care/neurology/chronic-migraine",
+    id: "chronic-migraine", title: "Chronic Migraine", type: "condition", category: "chronic-care", specialty: "neurology", route: "/chronic-care/neurology/migraine",
     keywords: ["chronic migraine", "migraine", "severe headache"]
   },
   {
@@ -499,7 +499,7 @@ export const conditions = [
     keywords: ["feeding concerns", "baby feeding"]
   },
   {
-    id: "mild-asthma-symptoms", title: "Mild Asthma Symptoms", type: "condition", category: "child-and-family-care", specialty: "pediatrics", route: "/mild-asthma-symptoms",
+    id: "mild-asthma-symptoms", title: "Mild Asthma Symptoms", type: "condition", category: "child-and-family-care", specialty: "pediatrics", route: "/chronic-care/pulmonology/asthma",
     keywords: ["child asthma", "kids wheezing"]
   },
   {
@@ -561,7 +561,7 @@ export const conditions = [
     keywords: ["lab results", "blood test review"]
   },
   {
-    id: "medical-certificate", title: "Medical Certificate", type: "condition", category: "general-and-everyday-care", route: "/medical-certificate",
+    id: "medical-certificate", title: "Medical Certificate", type: "condition", category: "general-and-everyday-care", route: "/doctors-note",
     keywords: ["medical certificate"]
   },
   {
@@ -569,7 +569,7 @@ export const conditions = [
     keywords: ["medication review", "medicine review"]
   },
   {
-    id: "prescription-refill", title: "Prescription Refill", type: "condition", category: "general-and-everyday-care", route: "/prescription-refill",
+    id: "prescription-refill", title: "Prescription Refill", type: "condition", category: "general-and-everyday-care", route: "/online-prescription-refills",
     keywords: ["prescription refill", "refill medication", "renew prescription"]
   },
   {
@@ -577,7 +577,7 @@ export const conditions = [
     keywords: ["return to work", "work clearance"]
   },
   {
-    id: "second-medical-opinion", title: "Second Medical Opinion", type: "condition", category: "general-and-everyday-care", specialty: "export-medical-opinion", route: "/second-medical-opinion",
+    id: "second-medical-opinion", title: "Second Medical Opinion", type: "condition", category: "general-and-everyday-care", specialty: "export-medical-opinion", route: "/online-second-medical-opinion",
     keywords: ["second opinion"]
   },
   {
@@ -879,7 +879,7 @@ export const conditions = [
 
   // ── Urinary & Kidney (grouped under Men's Health / Urology) ──────────────
   {
-    id: "bladder-infection", title: "Bladder Infection", type: "condition", category: "men-health", specialty: "urology", route: "/bladder-infection",
+    id: "bladder-infection", title: "Bladder Infection", type: "condition", category: "men-health", specialty: "urology", route: "/urinary-tract-infection",
     keywords: ["bladder infection"]
   },
   {
@@ -903,7 +903,7 @@ export const conditions = [
     keywords: ["urinary incontinence"]
   },
   {
-    id: "urinary-tract-infection", title: "Urinary Tract Infection", type: "condition", category: "men-health", specialty: "urology", route: "/mens-health/urology/urinary-tract-infection",
+    id: "urinary-tract-infection", title: "Urinary Tract Infection", type: "condition", category: "men-health", specialty: "urology", route: "/urinary-tract-infection",
     keywords: ["uti", "urinary tract infection", "bladder infection"]
   },
 

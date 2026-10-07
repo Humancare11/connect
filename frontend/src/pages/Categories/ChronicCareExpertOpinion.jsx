@@ -42,7 +42,7 @@ const cat = {
     {
       name: "Cardiology",
       desc: "Cardiology specialists provide comprehensive care for the heart and blood vessels, helping patients prevent, diagnose, and manage cardiovascular conditions. ",
-      path: "/chronic-care-and-expert-opinion/cardiology",
+      path: "/chronic-care/cardiology",
     },
     {
       name: "Endocrinology",
@@ -52,7 +52,7 @@ const cat = {
     // {
     //   name: "Expert Medical Opinion",
     //   desc: "Expert Medical Opinion services provide patients with access to experienced specialists who review diagnoses, treatment recommendations, and complex medical conditions. ",
-    //   path: "/expert-medical-opinion",
+    //   path: "/online-second-medical-opinion",
     // },
     {
       name: "Gastroenterology",
@@ -161,7 +161,7 @@ const cat = {
     {
       name: "Chronic Migraine",
       // desc: "Support for healthy infant feeding",
-      path: "/chronic-care/neurology/chronic-migraine",
+      path: "/chronic-care/neurology/migraine",
     },
     {
       name: "Seizures / Epilepsy follow-up",
