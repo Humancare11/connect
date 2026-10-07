@@ -1120,7 +1120,7 @@ function DoctorEnrollmentsWrapper() {
   );
 }
 
-function AppLayout() {
+export function AppLayout() {
   const location = useLocation();
 
   const hideLayout =

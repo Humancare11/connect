@@ -1,69 +1,36 @@
 import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import { createRoot, hydrateRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import { installSecureConsole } from "./utils/secureConsole";
 
 // Must run before anything else can call console.error/warn with a raw
 // Axios error object (see utils/secureConsole.js for why).
 installSecureConsole();
-import { AuthProvider } from "./context/AuthContext";
-import { DoctorAuthProvider } from "./context/DoctorAuthContext";
-import { AdminProvider } from "./context/AdminContext";
-import { PricingProvider } from "./context/PricingContext";
-import { EmployeeAdminProvider } from "./context/EmployeeAdminContext";
-import { PartnerProvider } from "./context/PartnerContext";
+import AppProviders from "./AppProviders";
+import { readPrerenderData } from "./seo/prerenderData";
+import PrerenderCleanup from "./seo/PrerenderCleanup";
 import "./index.css";
 import App from "./App.jsx";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 2, // Retry failed requests twice
-      refetchOnWindowFocus: false, // Don't refetch when user returns to tab
-      staleTime: 1000 * 60 * 5, // 5 minutes default staleTime
-    },
-  },
-});
-
-createRoot(document.getElementById("root")).render(
+const app = (
   <StrictMode>
     <HelmetProvider>
-    <QueryClientProvider client={queryClient}>
-      {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-          <AuthProvider>
-            <DoctorAuthProvider>
-              <AdminProvider>
-                <EmployeeAdminProvider>
-                  <PartnerProvider>
-                    <PricingProvider>
-                      <App />
-                    </PricingProvider>
-                  </PartnerProvider>
-                </EmployeeAdminProvider>
-              </AdminProvider>
-            </DoctorAuthProvider>
-          </AuthProvider>
-        </GoogleOAuthProvider>
-      ) : (
-        // If no Google client ID is configured, render the app without the
-        // GoogleOAuthProvider to avoid runtime errors from the provider.
-        <AuthProvider>
-          <DoctorAuthProvider>
-            <AdminProvider>
-              <PartnerProvider>
-                <PricingProvider>
-                  <App />
-                </PricingProvider>
-              </PartnerProvider>
-            </AdminProvider>
-          </DoctorAuthProvider>
-        </AuthProvider>
-      )}
-    </QueryClientProvider>
+      <AppProviders>
+        <PrerenderCleanup />
+        <App />
+      </AppProviders>
     </HelmetProvider>
-  </StrictMode>,
+  </StrictMode>
 );
+
+const rootElement = document.getElementById("root");
+
+// Pages prerendered at build time (see scripts/prerender.mjs) carry data-prerendered and are
+// hydrated; the SPA shell (dashboards, login, booking, payment, video call) and the 404 page are
+// rendered from scratch.
+if (rootElement.hasAttribute("data-prerendered")) {
+  readPrerenderData();
+  hydrateRoot(rootElement, app);
+} else {
+  createRoot(rootElement).render(app);
+}
