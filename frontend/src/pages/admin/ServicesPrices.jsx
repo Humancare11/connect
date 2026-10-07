@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Helmet, HelmetProvider } from "react-helmet-async";
+import { Helmet } from "react-helmet-async";
 import api from "../../api";
 import "./Dashboard.css";
 
@@ -120,7 +120,7 @@ function ServicesPrices() {
   };
 
   return (
-    <HelmetProvider>
+    <>
       <Helmet>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
@@ -266,7 +266,7 @@ function ServicesPrices() {
           </div>
         )}
       </div>
-    </HelmetProvider>
+    </>
   );
 }
 

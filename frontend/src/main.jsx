@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { HelmetProvider } from "react-helmet-async";
 import { installSecureConsole } from "./utils/secureConsole";
 
 // Must run before anything else can call console.error/warn with a raw
@@ -29,6 +30,7 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+    <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
@@ -62,5 +64,6 @@ createRoot(document.getElementById("root")).render(
         </AuthProvider>
       )}
     </QueryClientProvider>
+    </HelmetProvider>
   </StrictMode>,
 );

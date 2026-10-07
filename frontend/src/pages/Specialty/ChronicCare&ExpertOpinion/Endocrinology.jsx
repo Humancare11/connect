@@ -1,7 +1,6 @@
 ﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-// import { HelmetProvider } from "react-helmet-async";
-import {
+// import {
   FiActivity,
   FiHeart,
   FiShield,
@@ -57,7 +56,7 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
-import { Helmet, HelmetProvider } from "react-helmet-async";
+import { Helmet } from "react-helmet-async";
 
 import heroImage from "../../../assets/SpecialitiesImage/endocrinology-specialist-hormone-metabolic-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-endocrinologist-hormone-health-consultation.webp";

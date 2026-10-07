@@ -1,6 +1,5 @@
 ﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 
 import {
   FiAward,
