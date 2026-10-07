@@ -15,6 +15,7 @@ const Aa = lazy(() => import("../components/Aa"));
 // import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
 import sceneVideo from "../assets/gifts/HeroVideo.mp4";
 import heroPoster from "../assets/gifts/HeroPoster.webp";
+import PreloadImage from "../components/PreloadImage";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
 import SEO from "../components/Seo";
@@ -882,6 +883,8 @@ export default function HomePage() {
 
         {/* ── RIGHT ── */}
         <div className="hero-right" ref={rightRef}>
+          {/* The poster is the page's LCP image; start fetching it before the video element mounts. */}
+          <PreloadImage src={heroPoster} />
           {shouldLoadVideo && (
             <video
               autoPlay
