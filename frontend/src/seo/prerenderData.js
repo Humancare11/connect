@@ -4,15 +4,10 @@
 //   server: entry-server.jsx wraps the app in <PrerenderDataProvider data={...}>
 //   client: scripts/prerender.mjs embeds the same object as <script id="__PRERENDER_DATA__">;
 //           main.jsx calls readPrerenderData() before hydrating.
-import { createContext, useContext } from "react";
-
-const PrerenderDataContext = createContext(null);
+import { useContext } from "react";
+import { PrerenderDataContext } from "./prerenderContext";
 
 let clientData = null;
-
-export function PrerenderDataProvider({ data, children }) {
-  return <PrerenderDataContext.Provider value={data}>{children}</PrerenderDataContext.Provider>;
-}
 
 export function readPrerenderData() {
   try {
@@ -24,8 +19,6 @@ export function readPrerenderData() {
 }
 
 // Returns the prerendered record for a key such as "blog:my-slug", or null.
-// On the server it reads the context; in the browser it reads the embedded JSON, but only for the
-// first render of the page it was embedded in (see consumePrerendered).
 export function usePrerendered(key) {
   const fromContext = useContext(PrerenderDataContext);
   const source = fromContext || clientData;

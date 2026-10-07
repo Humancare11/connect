@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import "./Blogs.css";
 import SEO from "../../components/Seo";
 import { fetchBlogs, blogImageSrc } from "../../api/blogApi";
+import { usePrerendered } from "../../seo/prerenderData";
 
 import heroBg from "../../assets/BannerImages/blog-banner.webp";
 
@@ -27,8 +28,11 @@ export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [data, setData] = useState({ blogs: [], page: 1, total: 0, totalPages: 1 });
-  const [loadedKey, setLoadedKey] = useState(null);
+  // The first page of posts is fetched at build time and is already in the prerendered HTML (so the
+  // post links are crawlable); start from it, then refresh from the API as before.
+  const prerenderedList = usePrerendered("blogs:list");
+  const [data, setData] = useState(prerenderedList || { blogs: [], page: 1, total: 0, totalPages: 1 });
+  const [loadedKey, setLoadedKey] = useState(prerenderedList ? "1||All" : null);
 
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
   const rawPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;

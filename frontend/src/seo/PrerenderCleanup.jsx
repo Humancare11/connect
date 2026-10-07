@@ -17,7 +17,6 @@ export default function PrerenderCleanup() {
       if (done) return;
       done = true;
       observer.disconnect();
-      clearTimeout(fallback);
       document.head.querySelectorAll(SERVER_TAGS).forEach((el) => {
         // Keep a fallback <title> when the page rendered none of its own (dashboards, login).
         if (el.tagName === "TITLE" && !document.head.querySelector("title:not([data-prerendered-head])")) return;
@@ -33,14 +32,11 @@ export default function PrerenderCleanup() {
       if (clientTagsReady()) removeServerTags();
     });
     observer.observe(document.head, { childList: true });
-    // Lazy pages hydrate when their chunk arrives; give up waiting after a few seconds.
-    const fallback = setTimeout(removeServerTags, 5000);
+    // No timeout on purpose: lazy pages hydrate when their chunk arrives, and if hydration is slow
+    // (or fails) the server tags must stay so the page never ends up without a canonical/robots.
     if (clientTagsReady()) removeServerTags();
 
-    return () => {
-      observer.disconnect();
-      clearTimeout(fallback);
-    };
+    return () => observer.disconnect();
   }, []);
 
   return null;

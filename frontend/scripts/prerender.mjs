@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadEnv } from "vite";
 import { SEO_ROUTES, isIndexable } from "../src/seo/routes.js";
-import { fetchBlogPages, fetchDoctorPages } from "./prerender-data.mjs";
+import { fetchBlogPages, fetchBlogIndexPage, fetchDoctorPages } from "./prerender-data.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
@@ -95,6 +95,7 @@ const staticRoutes = Object.keys(SEO_ROUTES).filter((r) => isIndexable(r));
 const pages = staticRoutes.map((route) => ({ route, data: null, kind: "static" }));
 const reserved = new Set(Object.keys(SEO_ROUTES));
 const dynamic = [];
+let blogIndex = null;
 
 if (skipApi) {
   console.warn("prerender: PRERENDER_SKIP_API=1, blog posts and doctor profiles are NOT prerendered");
@@ -102,6 +103,7 @@ if (skipApi) {
   try {
     const blogs = await fetchBlogPages(env, { reservedRoutes: reserved });
     const doctors = await fetchDoctorPages(env);
+    blogIndex = await fetchBlogIndexPage(env);
     for (const p of blogs) dynamic.push({ ...p, kind: "blog" });
     for (const p of doctors) dynamic.push({ ...p, kind: "doctor" });
   } catch (error) {
@@ -109,6 +111,11 @@ if (skipApi) {
     console.error("prerender: fix VITE_API_URL / API availability, or set PRERENDER_SKIP_API=1 to build static pages only");
     process.exit(1);
   }
+}
+// The /blogs index embeds its first page of posts so the post links are in the HTML.
+if (blogIndex) {
+  const index = pages.find((p) => p.route === "/blogs");
+  if (index) index.data = { "blogs:list": blogIndex };
 }
 for (const p of dynamic) pages.push({ route: p.route, data: { [p.key]: p.record }, kind: p.kind, lastmod: p.lastmod });
 

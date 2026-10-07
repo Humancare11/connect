@@ -8,6 +8,7 @@
 // blog posts would turn them into 404s.
 
 const BLOG_PAGE_SIZE = 24; // the API caps limit at 24
+const BLOG_LIST_CARDS = 9; // first page of /blogs, same size as CARDS_PER_PAGE in pages/Blogs/Blogs.jsx
 const TIMEOUT_MS = 15000;
 
 function apiBase(env) {
@@ -91,4 +92,12 @@ export async function fetchDoctorPages(env) {
     pages.push({ route: `/doctors/${slug}`, key: `doctor:${slug}`, record: doctor, lastmod: null });
   }
   return pages;
+}
+
+// First page of the /blogs index, embedded so the listing (and its post links) is in the HTML.
+export async function fetchBlogIndexPage(env) {
+  const base = apiBase(env);
+  if (!base) throw new Error("VITE_API_URL is not set, cannot fetch the blog index");
+  const { data } = await getJson(base, `/api/blogs?page=1&limit=${BLOG_LIST_CARDS}`);
+  return data;
 }

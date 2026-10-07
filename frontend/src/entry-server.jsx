@@ -7,7 +7,7 @@ import { StaticRouter } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import AppProviders from "./AppProviders";
 import { AppLayout } from "./App.jsx";
-import { PrerenderDataProvider } from "./seo/prerenderData";
+import { PrerenderDataProvider } from "./seo/PrerenderDataProvider";
 
 export function render(url, data = null) {
   return new Promise((resolve, reject) => {
