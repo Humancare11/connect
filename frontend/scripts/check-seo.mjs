@@ -143,6 +143,29 @@ const renderYaml = fs.readFileSync(path.join(root, "render.yaml"), "utf8");
   }
 }
 
+// ---- 4b. cache headers in render.yaml ------------------------------------------------------------
+{
+  const headers = [];
+  const re = /-\s*path:\s*(\S+)\s*\n\s*name:\s*(\S+)\s*\n\s*value:\s*(.+)/g;
+  let m;
+  while ((m = re.exec(renderYaml))) headers.push({ path: m[1], name: m[2], value: m[3].trim().replace(/^"(.*)"$/, "$1") });
+  const cache = headers.filter((h) => h.name.toLowerCase() === "cache-control");
+  const assets = cache.find((h) => h.path === "/assets/*");
+  if (!assets || !/max-age=31536000/.test(assets.value) || !/immutable/.test(assets.value)) {
+    err(`[render.yaml] /assets/* must send "Cache-Control: public, max-age=31536000, immutable" (hashed files)`);
+  }
+  for (const h of cache) {
+    const age = Number((/max-age=(\d+)/.exec(h.value) || [])[1] || 0);
+    if (age > 0 && !(h.path === "/assets/*" || h.path.startsWith("/fonts/"))) {
+      err(`[render.yaml] ${h.path} has a long cache (${h.value}); only hashed assets may be cached (HTML, sitemap and robots must revalidate)`);
+    }
+  }
+  for (const p of ["/sitemap.xml", "/robots.txt"]) {
+    const h = cache.find((x) => x.path === p);
+    if (!h || !/max-age=0/.test(h.value)) err(`[render.yaml] ${p} must revalidate (Cache-Control max-age=0)`);
+  }
+}
+
 // ---- 5. index.html must not carry page-level tags again -------------------------------------
 {
   const html = fs.readFileSync(path.join(root, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "");
