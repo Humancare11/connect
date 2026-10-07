@@ -65,10 +65,12 @@ export default function BlogPage() {
       .catch((err) => {
         if (controller.signal.aborted || err?.code === "ERR_CANCELED") return;
         console.error("Failed to load blogs:", err);
-        setData({ blogs: [], page: 1, total: 0, totalPages: 1 });
+        // Keep the prerendered first page on screen if the refresh fails.
+        if (!(prerenderedList && requestKey === "1||All")) setData({ blogs: [], page: 1, total: 0, totalPages: 1 });
         setLoadedKey(requestKey);
       });
     return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestKey, rawPage, debouncedSearch, activeCategory]);
 
   // Same card shape as before. Category is intentionally not mapped: the list
