@@ -52,20 +52,20 @@ import {
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
 
 // iNDIVIDUAL bLOG PAGES
-import Telemedicine from "./pages/Blogs/Telemedicine";
-import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
-import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
-import OnlineDoctorConsultation from "./pages/Blogs/OnlineDoctorConsultation";
-import MedicalConditions from "./pages/Blogs/MedicalConditions";
-import TopTelemedicinePlatforms from "./pages/Blogs/TopTelemedicinePlatforms";
-import TelemedicineSafe from "./pages/Blogs/TelemedicineSafe";
-import TelemedicineInPerson from "./pages/Blogs/TelemedicineInPerson";
-import TelemedicineCost from "./pages/Blogs/TelemedicineCost";
-import OnlineDoctorRealDoctor from "./pages/Blogs/OnlineDoctorsRealDoctors";
-import FutureofTelemedicine from "./pages/Blogs/FutureofTelemedicine";
-import UTI from "./pages/Blogs/UTI";
-import MigraineVsHeadache from "./pages/Blogs/MigraineVsHeadache";
-import TelehealthforHypertension from "./pages/Blogs/TelehealthforHypertension";
+const Telemedicine = lazy(() => import("./pages/Blogs/Telemedicine"));
+const TelemedicineServices = lazy(() => import("./pages/Blogs/TelemedicineServices"));
+const HowTelemedicineAppointmentWork = lazy(() => import("./pages/Blogs/HowTelemedicineAppointmentWork"));
+const OnlineDoctorConsultation = lazy(() => import("./pages/Blogs/OnlineDoctorConsultation"));
+const MedicalConditions = lazy(() => import("./pages/Blogs/MedicalConditions"));
+const TopTelemedicinePlatforms = lazy(() => import("./pages/Blogs/TopTelemedicinePlatforms"));
+const TelemedicineSafe = lazy(() => import("./pages/Blogs/TelemedicineSafe"));
+const TelemedicineInPerson = lazy(() => import("./pages/Blogs/TelemedicineInPerson"));
+const TelemedicineCost = lazy(() => import("./pages/Blogs/TelemedicineCost"));
+const OnlineDoctorRealDoctor = lazy(() => import("./pages/Blogs/OnlineDoctorsRealDoctors"));
+const FutureofTelemedicine = lazy(() => import("./pages/Blogs/FutureofTelemedicine"));
+const UTI = lazy(() => import("./pages/Blogs/UTI"));
+const MigraineVsHeadache = lazy(() => import("./pages/Blogs/MigraineVsHeadache"));
+const TelehealthforHypertension = lazy(() => import("./pages/Blogs/TelehealthforHypertension"));
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
@@ -598,7 +598,7 @@ const HrtGuidance = lazy(
 const FertilityConcerns = lazy(
   () => import("./pages/Conditions/Conditions/FertilityConcerns"),
 );
-import Ocd from "./pages/Conditions/Conditions/Ocd";
+const Ocd = lazy(() => import("./pages/Conditions/Conditions/Ocd"));
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
 const AdolescentMedicine = lazy(
@@ -716,12 +716,12 @@ const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 
-import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
-import ServicesPrices from "./pages/admin/ServicesPrices";
+const AdminAssignCategoryDoctor = lazy(() => import("./pages/admin/AdminAssignCategoryDoctor"));
+const ServicesPrices = lazy(() => import("./pages/admin/ServicesPrices"));
 
-import CategoryConsultant from "./pages/CategoryConsultant";
-import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
-import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails";
+const CategoryConsultant = lazy(() => import("./pages/CategoryConsultant"));
+const CategoryAppointmentConfirm = lazy(() => import("./pages/CategoryAppointmentConfirm"));
+const AdminCategoryConsultationDetails = lazy(() => import("./pages/admin/AdminCategoryConsultationDetails"));
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
