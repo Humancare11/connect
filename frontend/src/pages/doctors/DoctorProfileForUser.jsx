@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useCurrency } from "../../hooks/useCurrency";
 import { useAuth } from "../../context/AuthContext";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import { Country, State } from "country-state-city";
+import SEO from "../../components/Seo";
+import { usePrerendered } from "../../seo/prerenderData";
 import "./DoctorProfile.css";
 
 // Helper functions to convert ISO codes to display names
@@ -242,6 +244,66 @@ function extractDoctorId(raw) {
   return null;
 }
 
+const SITE = "https://humancareconnect.co";
+
+function slugifyName(name) {
+  return String(name || "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Title, description, canonical and Physician schema for a public doctor profile. Built from the
+// doctor record, so it works both in the prerendered HTML and when the page renders in the browser.
+function DoctorSeo({ doctor, loadFailed }) {
+  if (!doctor) {
+    return <SEO title="Doctor profile | Humancare Connect" robots="noindex, nofollow" />;
+  }
+  const name = String(doctor.name || "").trim();
+  const specialty = String(doctor.specialty || "").trim();
+  const place = [doctor.city, doctor.state].filter(Boolean).join(", ");
+  const title = [name, specialty].filter(Boolean).join(" | ") + " | Humancare Connect";
+
+  let description = `Consult ${name}${specialty ? `, ${specialty}` : ""}${place ? ` in ${place}` : ""} online with Humancare Connect.`;
+  const tail = " Secure video visits, prescriptions and follow-up care from a licensed provider.";
+  if ((description + tail).length <= 160) description += tail;
+
+  const numericId = String(doctor.doctorId || "");
+  const slug = /^\d{5}$/.test(numericId) ? `${numericId}-${slugifyName(name)}`.replace(/-$/, "") : "";
+  const canonical = slug ? `${SITE}/doctors/${slug}` : undefined;
+
+  const physician = {
+    "@type": "Physician",
+    name,
+    ...(specialty ? { medicalSpecialty: specialty } : {}),
+    ...(doctor.about ? { description: String(doctor.about).replace(/\s+/g, " ").trim().slice(0, 300) } : {}),
+    ...(canonical ? { url: canonical } : {}),
+    ...(place || doctor.country
+      ? {
+          address: {
+            "@type": "PostalAddress",
+            ...(doctor.city ? { addressLocality: doctor.city } : {}),
+            ...(doctor.state ? { addressRegion: doctor.state } : {}),
+            ...(doctor.country ? { addressCountry: doctor.country } : {}),
+          },
+        }
+      : {}),
+    ...(Array.isArray(doctor.languages) && doctor.languages.length ? { knowsLanguage: doctor.languages } : {}),
+  };
+
+  return (
+    <SEO
+      title={title}
+      description={description}
+      canonical={canonical}
+      robots={loadFailed ? "noindex, nofollow" : undefined}
+      schemaData={physician}
+    />
+  );
+}
+
 export default function DoctorProfileForUser({
   legacyId = false,
   adminView = false,
@@ -252,13 +314,21 @@ export default function DoctorProfileForUser({
   const { user } = useAuth();
   const { doctor: currentDoctor } = useDoctorAuth();
 
-  const [doctor, setDoctor] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // A profile fetched at build time is already in the prerendered HTML; start from it so hydration
+  // matches and the page does not flash a loading state.
+  const prerendered = usePrerendered(slug ? `doctor:${slug}` : "");
+  const skipFirstFetch = useRef(Boolean(prerendered));
+  const [doctor, setDoctor] = useState(prerendered);
+  const [loading, setLoading] = useState(!prerendered);
   const [error, setError] = useState(null);
   const { formatPrice } = useCurrency();
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
     setLoading(true);
     // If requested to show the logged-in doctor's public profile,
     // use the doctor data from DoctorAuthContext and skip remote fetch.
@@ -318,6 +388,7 @@ export default function DoctorProfileForUser({
   if (loading) {
     return (
       <div className="dpfu-loading">
+        <DoctorSeo doctor={null} />
         <div className="dpfu-loading-inner">
           <div className="dpfu-spinner" />
           <p className="dpfu-loading-text">Loading profile…</p>
@@ -329,6 +400,7 @@ export default function DoctorProfileForUser({
   if (error || !doctor) {
     return (
       <div className="dpfu-error">
+        <DoctorSeo doctor={null} loadFailed />
         <div className="dpfu-error-inner">
           <p className="dpfu-error-emoji">⚠️</p>
           <h2>Profile not found</h2>
@@ -435,6 +507,7 @@ export default function DoctorProfileForUser({
 
   return (
     <div className="dpfu-root">
+      <DoctorSeo doctor={doctor} />
       <div className="dpfu-wrapper">
         {/* Back link */}
         <button

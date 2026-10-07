@@ -18,9 +18,11 @@ const ROBOTS_NOINDEX = "noindex, nofollow";
 
 const absolute = (url) => (url && !/^https?:\/\//i.test(url) ? SITE_ORIGIN + url : url);
 
-export function SeoTags({ title, description, robots, image, type = "website", schemaData }) {
+export function SeoTags({ title, description, robots, image, canonical: canonicalOverride, type = "website", schemaData }) {
   const { pathname } = useLocation();
-  const { path, entry, noindex: routeNoindex, canonical } = getRouteSeo(pathname);
+  const { path, entry, noindex: routeNoindex, canonical: routeCanonical } = getRouteSeo(pathname);
+  // Dynamic pages (doctor profiles) pass their own canonical; everything else is self-referencing.
+  const canonical = canonicalOverride || routeCanonical;
 
   const noindex = routeNoindex || /noindex/i.test(robots || "");
   const finalTitle = title ?? entry?.title;
