@@ -66,6 +66,12 @@ if (!staging && isMainProcess) {
         FRONTEND_URL: baseURL,
         SMTP_HOST: "127.0.0.1",
         SMTP_PORT: "1",
+        // Test-only: shortens the access-token lifetime so the session-
+        // refresh e2e tests can exercise real expiry in seconds instead of
+        // waiting out the real 15 minutes. Empty/unset in a normal run —
+        // see verifyToken.js's own gate, which additionally refuses this
+        // override outright in production regardless of what's set here.
+        ACCESS_TOKEN_TTL: process.env.ACCESS_TOKEN_TTL || "",
       },
     },
     {
@@ -90,7 +96,14 @@ export default defineConfig({
   // One appointment / one doctor / one patient are shared, so tests must not
   // overlap.
   fullyParallel: false,
-  workers: 1,
+  // Default to one test at a time — this suite reuses shared server-side
+  // state (one appointment/doctor/patient, and several tests intentionally
+  // race two-or-more browser contexts against the same signaling room), so
+  // running tests in parallel isn't just slower, it produces flaky failures
+  // that have nothing to do with the app (cross-test state collisions, and
+  // plain resource contention slowing down timing-sensitive assertions).
+  // Override with E2E_WORKERS=<n> for a deliberate parallel run.
+  workers: process.env.E2E_WORKERS ? Number(process.env.E2E_WORKERS) : 1,
   retries: 0,
   timeout: 180_000,
   expect: { timeout: 15_000 },

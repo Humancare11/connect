@@ -1,0 +1,39 @@
+/* Admin · User Profile page. The content styles (.mu-hero, .mu-section,
+   .mu-ctable, …) live in ManageUsers.css; this file is page layout only. */
+.mu-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 8px 24px;
+}
+
+.mu-page-message {
+  padding: 40px 20px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #e6ecf7;
+  border-radius: 16px;
+}
+.mu-page-message h3 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  color: #0b0443;
+}
+.mu-page-message p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #6b7ca3;
+}
+
+.mu-skeleton--hero {
+  width: 100%;
+  height: 112px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+}
+.mu-skeleton--card {
+  width: 100%;
+  height: 150px;
+  border-radius: 14px;
+}

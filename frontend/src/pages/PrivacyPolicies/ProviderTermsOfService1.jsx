@@ -15,7 +15,17 @@ const ProviderTermsofService1 = () => {
                 <section className="rcp-section">
                     <h2 className="rcp-heading">Eligibility and Credentialing</h2>
                     <p>
-                        To access the Platform as a Provider, you must hold a valid, unrestricted license to practice medicine or your applicable healthcare profession in each state where you provide services, maintain current DEA registration where required for prescribing activities, complete Humancare Connect's credentialing and onboarding process and keep your credentialing information current and accurate, carry professional liability insurance meeting our minimum requirements, and pass background screening as required by us. You agree to notify us within 5 business days of any disciplinary action, license restriction, DEA sanction, malpractice claim, or criminal investigation involving you.
+                        To access the Platform as a Provider, you must:
+
+                        hold a valid, unrestricted license or equivalent authorization to practice medicine or your applicable healthcare profession in each jurisdiction (country, state, or province) where you provide services, and satisfy any local credentialing requirements;
+                        maintain any registration or authorization required for prescribing activities in the jurisdictions where you practice (for example, DEA registration in the United States);
+                        complete Humancare Connect's credentialing and onboarding process, and keep your credentialing information current and accurate;
+                        carry professional liability insurance that meets our minimum requirements; and
+                        pass background screening as required by us.
+
+                        Humancare Connect may, at its sole discretion, grant access to Providers who do not hold an unrestricted license.
+
+                        You agree to notify us within 5 business days of any disciplinary action, license restriction or revocation, sanction against your prescribing registration, malpractice claim, or criminal investigation involving you. Humancare Connect may suspend or terminate your access at any time if you no longer meet these eligibility requirements.
                     </p>
                 </section>
 

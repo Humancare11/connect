@@ -146,6 +146,10 @@ const consultationSchema = new mongoose.Schema(
   }
 );
 
+// Looks up a patient's bookings (patient "my appointments" list and the admin
+// user-profile consultation summary).
+consultationSchema.index({ patientId: 1 });
+
 module.exports = mongoose.model(
   "CategoryConsultation",
   consultationSchema

@@ -1,0 +1,13 @@
+/* Typography inside the Super Admin blog editor only (scoped to .blog-editor).
+   The global Tailwind reset flattens headings, lists and quotes, which would make
+   the rich-text editor look like plain text. */
+.blog-editor .ProseMirror h2 { font-size: 1.6em; font-weight: 800; margin: 1.1em 0 0.5em; }
+.blog-editor .ProseMirror h3 { font-size: 1.3em; font-weight: 700; margin: 1em 0 0.4em; }
+.blog-editor .ProseMirror h4 { font-size: 1.1em; font-weight: 700; margin: 0.9em 0 0.4em; }
+.blog-editor .ProseMirror p { margin: 0 0 0.9em; }
+.blog-editor .ProseMirror ul { list-style: disc; padding-left: 24px; margin: 0 0 0.9em; }
+.blog-editor .ProseMirror ol { list-style: decimal; padding-left: 24px; margin: 0 0 0.9em; }
+.blog-editor .ProseMirror blockquote { margin: 0 0 0.9em; padding-left: 14px; border-left: 3px solid #c4b5fd; color: #4b5563; }
+.blog-editor .ProseMirror a { color: #2563eb; text-decoration: underline; }
+.blog-editor .ProseMirror img { max-width: 100%; height: auto; border-radius: 8px; margin: 0.4em 0; }
+.blog-editor .ProseMirror img.ProseMirror-selectednode { outline: 3px solid #8b5cf6; }

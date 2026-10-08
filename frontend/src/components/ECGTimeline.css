@@ -12,10 +12,12 @@
 /* Container for entire ECG section */
 .hc-ecg-container {
   background: #0a1628;
-  border-radius: 16px;
+  border-radius: clamp(12px, 2vw, 16px);
   overflow: hidden;
-  padding: 48px 32px 0;
-  margin: 50px 120px;
+  padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 32px) 0;
+  width: min(calc(100% - clamp(16px, 4vw, 64px)), 1200px);
+  margin: clamp(24px, 4vw, 50px) auto;
+  box-sizing: border-box;
 }
 
 /* Header Section */

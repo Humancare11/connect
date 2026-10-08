@@ -1,14 +1,6 @@
-// Public blog metadata for Healthcare Discovery Search.
-//
-// Mirrors the static `blogs` array in frontend/src/pages/Blogs/Blogs.jsx
-// (the only blog source today - there is no blog model or API). Only safe
-// listing metadata is kept here: no article bodies. Keep the two lists in
-// sync when an article is added, renamed or removed.
-//
-// Intentionally omitted: Blogs.jsx entry id 6 ("How to Choose the Best
-// Telemedicine Provider...") - its path duplicates entry 5
-// (/conditions-treated-through-telemedicine), so it would open the wrong
-// article. Add it back once it has its own route.
+// TEST FIXTURE ONLY. Search now reads published blogs from the Blog collection
+// (services/search/searchCatalog.js); this static list is kept as deterministic
+// fixture data for tests/search. It is no longer synced with the site.
 const publicBlogs = [
   {
     id: 1,

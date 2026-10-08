@@ -1,0 +1,36 @@
+[WebServer] [slow-query] users.findOne 139ms {"email":"admin@gmail.com"}
+[WebServer] (node:17348) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abb6dc33e70350e42f6c34b
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 1 test using 1 worker
+
+  x  1 tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds (8.2s)
+
+
+  1) tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds 
+
+    Error: timed out waiting for "direct-room-joined"
+
+      53 | function once(socket, event, timeoutMs = 8_000) {
+      54 |   return new Promise((resolve, reject) => {
+    > 55 |     const timer = setTimeout(() => reject(new Error(`timed out waiting for "${event}"`)), timeoutMs);
+         |                                           ^
+      56 |     socket.once(event, (payload) => {
+      57 |       clearTimeout(timer);
+      58 |       resolve(payload);
+        at Timeout._onTimeout (C:\aaamain\connect\e2e\tests\direct-pin-socket.spec.js:55:43)
+
+    Error Context: test-results\.pw\direct-pin-socket-direct-c-e5034-d-join-direct-room-succeeds\error-context.md
+
+  1 failed
+    tests\direct-pin-socket.spec.js:66:3 › direct call — PIN socket layer › correct PIN assigns the right role and join-direct-room succeeds 
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | correct PIN assigns the right role and join-direct-room succeeds | FAIL | 8.2 | Error: timed out waiting for "direct-room-joined" |
+
+EXIT_CODE=1

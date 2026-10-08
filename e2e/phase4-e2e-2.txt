@@ -1,0 +1,457 @@
+[WebServer] [slow-query] users.findOne 141ms {"email":"admin@gmail.com"}
+[WebServer] (node:10932) [MONGOOSE] Warning: mongoose: Duplicate schema index on {"specialtyId":1,"name":1} for model "HealthcareCondition". This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] [geoip] Could not open C:\aaamain\connect\backend\data\dbip-city-lite.mmdb (ENOENT). New users will have an empty location until the database is installed.
+[e2e] seeded local DB: appointment 6abae07a44f9491bd3b67cbf
+[e2e] doctor + patient sessions saved
+[e2e] admin session saved
+
+Running 35 tests using 1 worker
+
+[WebServer] 3:17:44 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:17:47 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:17:51 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:17:55 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:17:55 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:58 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:58 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:17:59 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:18:01 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  1 tests\direct-video-admin.spec.js:42:3 › direct call — admin panel › calls list: status moves waiting -> one joined -> in call (22.1s)
+[WebServer] 3:18:06 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:18:06 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:18:16 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 5094b486-b39d-41c5-9b79-f79aec8e56e9 within 8000ms — rolling back to retry.
+[WebServer] 3:18:16 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 5b9653c5-1e0d-4138-b3a7-8ac5d5cf2f5f within 8000ms — rolling back to retry.
+[WebServer] 3:18:16 AM [vite] (client) [console.warn] [direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable
+[WebServer] 3:18:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:18:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:18:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:18:17 AM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected 1393b330-10a2-4058-866e-15dcb94f220c, got 5094b486-b39d-41c5-9b79-f79aec8e56e9)
+[WebServer] 3:18:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+[WebServer] 3:18:20 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+  x   2 tests\direct-video-admin.spec.js:77:3 › direct call — admin panel › calls list: a room-full rejection marks the call as a problem (25.7s)
+[WebServer] 3:18:36 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:18:36 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:18:44 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+[WebServer] 3:18:44 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted because the media was removed from the document. https://goo.gl/LdLk22
+  x   3 tests\direct-video-admin.spec.js:111:3 › direct call — admin panel › Phase 4: a room-full rejection raises an in-app admin alert (27.0s)
+[WebServer] 3:19:05 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:19:05 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:19:16 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 9b174bd3-d50e-4fef-bd76-8cd8e30b7159 within 8000ms — rolling back to retry.
+[WebServer] 3:19:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:19:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:19:16 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:16 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:19:17 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:19:17 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:19:17 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+  x   4 tests\direct-video-admin.spec.js:157:3 › direct call — admin panel › call report: timeline and participants after join, Retry, and a mic toggle (56.8s)
+[WebServer] 3:20:02 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  5 tests\direct-video-admin.spec.js:201:3 › direct call — admin panel › admin action: extend link pushes expiresAt forward (5.0s)
+[WebServer] 3:20:07 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:20:07 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 4301812b-7393-469e-8310-9fe3771ce44c within 8000ms — rolling back to retry.
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 54960457-ff47-48bc-8a9d-2432a34de4c1 within 8000ms — rolling back to retry.
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] [direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] ICE restart offer failed InvalidStateError: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Failed to set local offer sdp: Called in wrong state: have-remote-offer
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:18 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:18 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:23 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+  ok  6 tests\direct-video-admin.spec.js:224:3 › direct call — admin panel › admin action: clear stuck seats does not affect a live call (25.6s)
+[WebServer] 3:20:32 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:20:33 AM [vite] (client) [console.warn] You may test your Stripe.js integration over HTTP. However, live Stripe.js integrations must use HTTPS.
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 050698b8-ccb9-45d2-b3f5-51f2b1d12d60 within 8000ms — rolling back to retry.
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] [direct-video-call] no answer received for offer 37940949-723c-4c90-8939-9a9ef3512e4e within 8000ms — rolling back to retry.
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] [direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.error] [direct-video-call] queued ICE candidate failed OperationError: Failed to execute 'addIceCandidate' on 'RTCPeerConnection': Error processing ICE candidate
+[WebServer] 3:20:43 AM [vite] (client) [console.warn] [direct-video-call] rejecting stale answer (expected aac06e28-1b89-45d1-bf65-b6516d839285, got 050698b8-ccb9-45d2-b3f5-51f2b1d12d60)
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:47 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:48 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:48 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:48 AM [vite] (client) [console.warn] Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22
+[WebServer] 3:20:51 AM [vite] ws proxy error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+[WebServer] 3:20:51 AM [vite] ws proxy socket error:
+[WebServer] Error: read ECONNRESET
+[WebServer]     at TCP.onStreamRead (node:internal/stream_base_commons:216:20)
+  x   7 tests\direct-video-admin.spec.js:263:3 › direct call — admin panel › admin action: force end call disconnects both participants with a clear message (21.2s)
+  x   8 tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild (0ms)
+  -   9 tests\direct-video-call-extra.spec.js:93:3 › direct call — extra coverage › b1: guest Retry — video resumes on both sides
+  -  10 tests\direct-video-call-extra.spec.js:113:3 › direct call — extra coverage › b2: host Retry — video resumes on both sides
+  -  11 tests\direct-video-call-extra.spec.js:133:3 › direct call — extra coverage › b3: both tap Retry within 1s — no rebuild loop, video resumes
+  -  12 tests\direct-video-call-extra.spec.js:157:3 › direct call — extra coverage › c: camera+mic off both sides for 60s — no rebuild, call stays up
+  -  13 tests\direct-video-call-extra.spec.js:186:3 › direct call — extra coverage › d1: guest camera/mic denied — still joins receive-only, sees/hears host; manual Retry attaches media
+  -  14 tests\direct-video-call-extra.spec.js:211:3 › direct call — extra coverage › d2: guest permission prompt answered after 10s — call still connects, media attaches automatically
+  -  15 tests\direct-video-call-extra.spec.js:235:3 › direct call — extra coverage › d3: guest's in-call media Retry does not hang when the permission prompt never answers
+  -  16 tests\direct-video-call-extra.spec.js:266:3 › direct call — extra coverage › d4: pre-join preview does not hang when the permission prompt never answers; Join now still works
+  -  17 tests\direct-video-call-extra.spec.js:306:3 › direct call — extra coverage › e1: guest reopens the link with a DIFFERENT guestId after disconnecting — dead seat taken over instantly
+  -  18 tests\direct-video-call-extra.spec.js:369:3 › direct call — extra coverage › e3: guest's tab freezes during the presence check — seat is taken over after ~3s, frozen tab shows the message once it wakes
+  -  19 tests\direct-video-call-extra.spec.js:446:3 › direct call — extra coverage › e2: guest opens the link in a second tab — original tab evicted, new tab takes the seat (not room full)
+  -  20 tests\direct-video-call-extra.spec.js:478:3 › direct call — extra coverage › f: a real third person is rejected while host and guest are both live
+  -  21 tests\direct-video-call-extra.spec.js:511:3 › direct call — extra coverage › g1: host refreshes mid-call — both recover
+  -  22 tests\direct-video-call-extra.spec.js:531:3 › direct call — extra coverage › g2: host leaves and rejoins — video resumes
+  -  23 tests\direct-video-call-extra.spec.js:553:3 › direct call — extra coverage › h: call end — clean cleanup on both sides
+  -  24 tests\direct-video-call-extra.spec.js:598:3 › direct call — extra coverage › i1: opening an EXPIRED link shows a clear message, no crash
+  -  25 tests\direct-video-call-extra.spec.js:615:3 › direct call — extra coverage › i2: opening a CLOSED link shows a clear message, no crash
+  -  26 tests\direct-video-call-extra.spec.js:630:3 › direct call — extra coverage › i3: opening a NONEXISTENT room id shows a clear message, no crash
+  -  27 tests\direct-video-call-extra.spec.js:646:3 › direct call — extra coverage › j1: WhatsApp in-app browser UA shows the banner, Join still works, call connects
+  -  28 tests\direct-video-call-extra.spec.js:679:3 › direct call — extra coverage › j2: Instagram (iOS) in-app browser UA shows copy-link guidance, banner is dismissible
+  -  29 tests\direct-video-call-extra.spec.js:704:3 › direct call — extra coverage › k1: mic level meter responds to the fake audio device during the pre-join preview
+  -  30 tests\direct-video-call-extra.spec.js:731:3 › direct call — extra coverage › k2: pre-join network check shows a result without blocking anything
+  -  31 tests\direct-video-call-extra.spec.js:743:3 › direct call — extra coverage › k3: Join now still works when /ice-servers is slow
+  -  32 tests\direct-video-call-extra.spec.js:770:3 › direct call — extra coverage › k4: Join now still works when /ice-servers is down
+  -  33 tests\direct-video-call-extra.spec.js:794:3 › direct call — extra coverage › m1: peer mic/camera badges — toggle shows on the other side, late joiner sees correct state
+  -  34 tests\direct-video-call-extra.spec.js:834:3 › direct call — extra coverage › m2: 'You are muted' toast appears when speaking while muted, not when unmuted
+  x  35 tests\direct-video-call.spec.js:22:3 › direct call reconnect › 8 guest taps Retry - video resumes on both sides (0ms)
+
+
+  1) tests\direct-video-admin.spec.js:77:3 › direct call — admin panel › calls list: a room-full rejection marks the call as a problem 
+
+    Error: host inbound video did not flow within 20000ms (last sample: {"pcIndex":-1,"pcCount":1})
+
+       at ..\helpers\harness.js:193
+
+      191 |     await page.waitForTimeout(500);
+      192 |   }
+    > 193 |   throw new Error(
+          |         ^
+      194 |     `${label} inbound video did not flow within ${timeoutMs}ms (last sample: ${JSON.stringify(last)})`,
+      195 |   );
+      196 | }
+        at waitForVideoFlowing (C:\aaamain\connect\e2e\helpers\harness.js:193:9)
+        at C:\aaamain\connect\e2e\tests\direct-video-admin.spec.js:86:7
+
+    Error Context: test-results\.pw\direct-video-admin-direct--1143a-marks-the-call-as-a-problem\error-context.md
+
+  2) tests\direct-video-admin.spec.js:111:3 › direct call — admin panel › Phase 4: a room-full rejection raises an in-app admin alert 
+
+    Error: host inbound video did not flow within 20000ms (last sample: {"pcIndex":-1,"pcCount":1})
+
+       at ..\helpers\harness.js:193
+
+      191 |     await page.waitForTimeout(500);
+      192 |   }
+    > 193 |   throw new Error(
+          |         ^
+      194 |     `${label} inbound video did not flow within ${timeoutMs}ms (last sample: ${JSON.stringify(last)})`,
+      195 |   );
+      196 | }
+        at waitForVideoFlowing (C:\aaamain\connect\e2e\helpers\harness.js:193:9)
+        at C:\aaamain\connect\e2e\tests\direct-video-admin.spec.js:120:7
+
+    Error Context: test-results\.pw\direct-video-admin-direct--bce0d-aises-an-in-app-admin-alert\error-context.md
+
+  3) tests\direct-video-admin.spec.js:157:3 › direct call — admin panel › call report: timeline and participants after join, Retry, and a mic toggle 
+
+    TimeoutError: locator.waitFor: Timeout 40000ms exceeded.
+    Call log:
+      - waiting for locator('.hc-vc__reconnect-stalled-notice button.hc-vc__rx-btn-primary') to be visible
+
+
+       at ..\helpers\harness.js:290
+
+      288 | export async function waitForRetryButton(page, timeout = 40_000) {
+      289 |   const btn = retryButton(page);
+    > 290 |   await btn.waitFor({ state: "visible", timeout });
+          |             ^
+      291 |   return btn;
+      292 | }
+      293 |
+        at waitForRetryButton (C:\aaamain\connect\e2e\helpers\harness.js:290:13)
+        at C:\aaamain\connect\e2e\tests\direct-video-admin.spec.js:174:20
+
+    Error Context: test-results\.pw\direct-video-admin-direct--84b49-join-Retry-and-a-mic-toggle\error-context.md
+
+  4) tests\direct-video-admin.spec.js:263:3 › direct call — admin panel › admin action: force end call disconnects both participants with a clear message 
+
+    Error: locator.click: Target page, context or browser has been closed
+    Browser logs:
+
+    [pid=11352][err] [0929/032034.844:INFO:CONSOLE:43] "[socket] connected [object Object]", source: http://localhost:5173/src/socket.js (43)
+    [pid=11352][err] [0929/032034.882:INFO:CONSOLE:51] "[socket] transport_upgraded [object Object]", source: http://localhost:5173/src/socket.js (51)
+    [pid=11352][err] [0929/032035.101:INFO:CONSOLE:43] "[socket] connected [object Object]", source: http://localhost:5173/src/socket.js (43)
+    [pid=11352][err] [0929/032035.124:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.124Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handlePeerJoined [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.130:INFO:CONSOLE:51] "[socket] transport_upgraded [object Object]", source: http://localhost:5173/src/socket.js (51)
+    [pid=11352][err] [0929/032035.135:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.134Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handlePeerJoined [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.139:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.138Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:new_pc_created [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.142:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.142Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.145:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.146Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.148:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.148Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:new_pc_created [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.150:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.151Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.154:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.155Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.211:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.210Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onnegotiationneeded:offer_sent [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.219:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.218Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:arrived [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.220:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.219Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:collision_not_rollbackable_stashed [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.222:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.222Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onnegotiationneeded:offer_sent [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.234:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.233Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:arrived [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032035.235:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:35.235Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:IGNORED_collision [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.214:INFO:CONSOLE:510] "[direct-video-call] no answer received for offer 050698b8-ccb9-45d2-b3f5-51f2b1d12d60 within 8000ms — rolling back to retry.", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.224:ERROR:third_party\webrtc\media\engine\webrtc_video_engine.cc:1533] No sending stream on ssrc 1254317430
+    [pid=11352][err] [0929/032043.226:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.226Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 createAndSendIceRestartOffer:offer_sent [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.229:INFO:CONSOLE:510] "[direct-video-call] no answer received for offer 37940949-723c-4c90-8939-9a9ef3512e4e within 8000ms — rolling back to retry.", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.231:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.231Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:arrived [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.231:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:3790] Called in wrong signalingState: stable (INVALID_STATE)
+    [pid=11352][err] [0929/032043.233:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.233Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:arrived [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.235:INFO:CONSOLE:510] "[direct-video-call] SDP rollback unsupported or failed: Failed to execute 'setLocalDescription' on 'RTCPeerConnection': Called in wrong signalingState: stable", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.235:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.236Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:rollback_local_offer [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.272:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.272Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 pc.ontrack [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.275:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.275:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.275Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 pc.ontrack [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.276:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.276:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.277:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.278Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:setRemoteDescription:ok [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.401:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.401:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.402:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.403:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.403:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.404:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.404:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.404:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.405:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.406:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.406:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.408:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.408:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.408:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.409:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.409:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.410:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.411:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.411:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:6040] Mid 2 specified but no media section with that mid found. (INVALID_PARAMETER)
+    [pid=11352][err] [0929/032043.411:ERROR:third_party\webrtc\pc\sdp_offer_answer.cc:5990] ReadyToUseRemoteCandidate: Invalid candidate. Mid 2 specified but no media section with that mid found.
+    [pid=11352][err] [0929/032043.412:INFO:CONSOLE:510] "[direct-video-call] queued ICE candidate failed [object DOMException]", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.415:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.414Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 answer:transceivers_before_createAnswer [object Object],[object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.428:ERROR:third_party\webrtc\media\engine\webrtc_video_engine.cc:1533] No sending stream on ssrc 811976851
+    [pid=11352][err] [0929/032043.436:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.437Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:answer_sent [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.454:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.454Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 oniceconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.457:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.456Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleAnswer:received [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.458:INFO:CONSOLE:510] "[direct-video-call] rejecting stale answer (expected aac06e28-1b89-45d1-bf65-b6516d839285, got 050698b8-ccb9-45d2-b3f5-51f2b1d12d60)", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032043.458:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.458Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.459:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.459Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleAnswer:ORPHANED_offerid_mismatch [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032043.460:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:43.460Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 scheduleOrphanedAnswerRecheck:armed [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032045.440:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:45.441Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:post_answer:stats_tick_1/10 [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.441:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.441Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:post_answer:stats_tick_2/10 [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.462:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.462Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 scheduleOrphanedAnswerRecheck:fired [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.462:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.462Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 requestPcRebuild:START [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.462:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.463Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 requestPcRebuild:closing_stale_pc [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.522:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.522Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:new_pc_created [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.523:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.524Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.527:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.527Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.528:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.527Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 requestPcRebuild:DONE [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.538:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.539Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onnegotiationneeded:offer_sent [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.551:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.551Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:arrived [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.551:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.552Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:peer_rebuilt_detected_via_fingerprint [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.552:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.552Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 requestPcRebuild:START [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.553:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.553Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 requestPcRebuild:closing_stale_pc [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.615:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.615Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:new_pc_created [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.618:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.618Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.621:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.621Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 setupPeerConnection:track_added [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.622:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.622Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:arrived [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.624:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.624Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 requestPcRebuild:DONE [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.690:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.690Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 pc.ontrack [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.693:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.693:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.693Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 pc.ontrack [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.694:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.694:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.695:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.695Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:setRemoteDescription:ok [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.741:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.741Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 answer:transceivers_before_createAnswer [object Object],[object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.812:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.812Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:answer_sent [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.818:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.818Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 oniceconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.820:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.820Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.825:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.825Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleAnswer:received [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.828:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.828Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 oniceconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.829:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.828Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 oniceconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.829:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.829Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.829:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.829Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleConnectedState:called [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.834:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.834Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 oniceconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.835:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.835Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleConnectedState:called [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.891:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.890Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 pc.ontrack [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.894:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.895:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.895Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 pc.ontrack [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.895:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.896:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.896:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.905:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.906Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.905:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.906Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleConnectedState:called [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.930:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.931:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.931:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032047.935:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.935Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleAnswer:applied_ok [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.982:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.982Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 onconnectionstatechange [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032047.982:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:47.982Z role=initiator appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleConnectedState:called [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032048.064:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032048.101:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032048.101:INFO:CONSOLE:510] "Video playback was blocked: The play() request was interrupted by a new load request. https://goo.gl/LdLk22", source: http://localhost:5173/@vite/client (510)
+    [pid=11352][err] [0929/032049.192:INFO:CONSOLE:827] "[vite] connecting...", source: http://localhost:5173/@vite/client (827)
+    [pid=11352][err] [0929/032049.247:INFO:CONSOLE:931] "[vite] connected.", source: http://localhost:5173/@vite/client (931)
+    [pid=11352][err] [0929/032049.829:INFO:CONSOLE:22] "[RETRY-DEBUG] 2026-09-28T21:50:49.830Z role=guest appt=c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 handleOffer:post_answer:stats_tick_1/10 [object Object]", source: http://localhost:5173/src/utils/retryDebug.js (22)
+    [pid=11352][err] [0929/032049.995:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/D7WD5OXZFWQ5T76HSPWAC7MNKAJXE2YG/LUGNSPO5YC34ABNB2O6K7AFDSOJZT56V/WNDVG7O66ENLOD43GS7FBUCC4KMT5OM2.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.995:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/D7WD5OXZFWQ5T76HSPWAC7MNKAJXE2YG/LUGNSPO5YC34ABNB2O6K7AFDSOJZT56V/WNDVG7O66ENLOD43GS7FBUCC4KMT5OM2.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.996:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/D7WD5OXZFWQ5T76HSPWAC7MNKAJXE2YG/LUGNSPO5YC34ABNB2O6K7AFDSOJZT56V/WNDVG7O66ENLOD43GS7FBUCC4KMT5OM2.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.997:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.997:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.998:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.998:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.998:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.999:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.999:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032049.999:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032050.000:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032050.000:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/NHPGVFYUXYXE33DZ75OIT4JFGHITX5PE/PSUTMASCDJTVPERDYJZPN23BVUFUCQIF/J64QX5IPOHK56I2KYUNBQ5M2XWZEYKYX.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032050.001:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/NHPGVFYUXYXE33DZ75OIT4JFGHITX5PE/PSUTMASCDJTVPERDYJZPN23BVUFUCQIF/J64QX5IPOHK56I2KYUNBQ5M2XWZEYKYX.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032050.001:INFO:CONSOLE:2] "Loading the font 'https://cdn.fontshare.com/wf/NHPGVFYUXYXE33DZ75OIT4JFGHITX5PE/PSUTMASCDJTVPERDYJZPN23BVUFUCQIF/J64QX5IPOHK56I2KYUNBQ5M2XWZEYKYX.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: https://scripts.clarity.ms/0.8.70/clarity.js (2)
+    [pid=11352][err] [0929/032050.850:INFO:CONSOLE:14338] "%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold", source: http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=ef5300b6 (14338)
+    [pid=11352][err] [0929/032051.083:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/D7WD5OXZFWQ5T76HSPWAC7MNKAJXE2YG/LUGNSPO5YC34ABNB2O6K7AFDSOJZT56V/WNDVG7O66ENLOD43GS7FBUCC4KMT5OM2.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.084:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/D7WD5OXZFWQ5T76HSPWAC7MNKAJXE2YG/LUGNSPO5YC34ABNB2O6K7AFDSOJZT56V/WNDVG7O66ENLOD43GS7FBUCC4KMT5OM2.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.084:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/D7WD5OXZFWQ5T76HSPWAC7MNKAJXE2YG/LUGNSPO5YC34ABNB2O6K7AFDSOJZT56V/WNDVG7O66ENLOD43GS7FBUCC4KMT5OM2.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.085:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.085:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.085:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/TTX2Z3BF3P6Y5BQT3IV2VNOK6FL22KUT/7QYRJOI3JIMYHGY6CH7SOIFRQLZOLNJ6/KFIAZD4RUMEZIYV6FQ3T3GP5PDBDB6JY.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.085:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.086:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.087:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/P2LQKHE6KA6ZP4AAGN72KDWMHH6ZH3TA/ZC32TK2P7FPS5GFTL46EU6KQJA24ZYDB/7AHDUZ4A7LFLVFUIFSARGIWCRQJHISQP.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.087:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.087:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.woff' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.088:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/LAFFD4SDUCDVQEXFPDC7C53EQ4ZELWQI/PXCT3G6LO6ICM5I3NTYENYPWJAECAWDD/GHM6WVH6MILNYOOCXHXB5GTSGNTMGXZR.ttf' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.088:INFO:CONSOLE:0] "Loading the font 'https://cdn.fontshare.com/wf/NHPGVFYUXYXE33DZ75OIT4JFGHITX5PE/PSUTMASCDJTVPERDYJZPN23BVUFUCQIF/J64QX5IPOHK56I2KYUNBQ5M2XWZEYKYX.woff2' violates the following Content Security Policy directive: "font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com". The action has been blocked.", source: http://localhost:5173/admin-dashboard/direct-video-consultation/calls/c03c5c45404a78a8d7249b7549ab7c6778ea498865690262 (0)
+    [pid=11352][err] [0929/032051.091:ERROR:content\browser\gpu\gpu_process_host.cc:1054] GPU process exited unexpectedly: exit_code=-1
+    [pid=11352][err] [0929/032051.092:WARNING:content\browser\gpu\gpu_process_host.cc:1506] The GPU process has crashed 1 time(s)
+    Call log:
+      - waiting for getByRole('button', { name: /^force end call$/i })
+
+
+      280 |         waitUntil: "domcontentloaded",
+      281 |       });
+    > 282 |       await admin.page.getByRole("button", { name: /^force end call$/i }).click();
+          |                                                                           ^
+      283 |       await admin.page.getByRole("button", { name: /yes, end it/i }).click();
+      284 |       await expect(admin.page.getByText(/call ended/i)).toBeVisible({ timeout: 10_000 });
+      285 |
+        at C:\aaamain\connect\e2e\tests\direct-video-admin.spec.js:282:75
+
+    Error Context: test-results\.pw\direct-video-admin-direct--2b3c0-ipants-with-a-clear-message\error-context.md
+
+  5) tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  6) tests\direct-video-call.spec.js:22:3 › direct call reconnect › 8 guest taps Retry - video resumes on both sides 
+
+    Error: worker process exited unexpectedly (code=3221225794, signal=null)
+
+  6 failed
+    tests\direct-video-admin.spec.js:77:3 › direct call — admin panel › calls list: a room-full rejection marks the call as a problem 
+    tests\direct-video-admin.spec.js:111:3 › direct call — admin panel › Phase 4: a room-full rejection raises an in-app admin alert 
+    tests\direct-video-admin.spec.js:157:3 › direct call — admin panel › call report: timeline and participants after join, Retry, and a mic toggle 
+    tests\direct-video-admin.spec.js:263:3 › direct call — admin panel › admin action: force end call disconnects both participants with a clear message 
+    tests\direct-video-call-extra.spec.js:61:3 › direct call — extra coverage › a: normal call start — both flowing quickly, no rebuild 
+    tests\direct-video-call.spec.js:22:3 › direct call reconnect › 8 guest taps Retry - video resumes on both sides 
+  26 did not run
+  3 passed (3.5m)
+
+| # | Test | Result | Time (s) | Detail |
+|---|------|--------|----------|--------|
+| 1 | calls list: status moves waiting -> one joined -> in call | PASS | 22.1 |  |
+| 2 | calls list: a room-full rejection marks the call as a problem | FAIL | 25.7 | Error: host inbound video did not flow within 20000ms (last sample: {"pcIndex":-1,"pcCount":1}) |
+| 3 | Phase 4: a room-full rejection raises an in-app admin alert | FAIL | 27.0 | Error: host inbound video did not flow within 20000ms (last sample: {"pcIndex":-1,"pcCount":1}) |
+| 4 | call report: timeline and participants after join, Retry, and a mic toggle | FAIL | 56.8 | TimeoutError: locator.waitFor: Timeout 40000ms exceeded. |
+| 5 | admin action: extend link pushes expiresAt forward | PASS | 5.0 |  |
+| 6 | admin action: clear stuck seats does not affect a live call | PASS | 25.6 |  |
+| 7 | admin action: force end call disconnects both participants with a clear message | FAIL | 21.2 | Error: locator.click: Target page, context or browser has been closed |
+| 8 | a: normal call start — both flowing quickly, no rebuild | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+| 9 | b1: guest Retry — video resumes on both sides | SKIP | 0.0 |  |
+| 10 | b2: host Retry — video resumes on both sides | SKIP | 0.0 |  |
+| 11 | b3: both tap Retry within 1s — no rebuild loop, video resumes | SKIP | 0.0 |  |
+| 12 | c: camera+mic off both sides for 60s — no rebuild, call stays up | SKIP | 0.0 |  |
+| 13 | d1: guest camera/mic denied — still joins receive-only, sees/hears host; manual Retry attaches media | SKIP | 0.0 |  |
+| 14 | d2: guest permission prompt answered after 10s — call still connects, media attaches automatically | SKIP | 0.0 |  |
+| 15 | d3: guest's in-call media Retry does not hang when the permission prompt never answers | SKIP | 0.0 |  |
+| 16 | d4: pre-join preview does not hang when the permission prompt never answers; Join now still works | SKIP | 0.0 |  |
+| 17 | e1: guest reopens the link with a DIFFERENT guestId after disconnecting — dead seat taken over instantly | SKIP | 0.0 |  |
+| 18 | e3: guest's tab freezes during the presence check — seat is taken over after ~3s, frozen tab shows the message once it wakes | SKIP | 0.0 |  |
+| 19 | e2: guest opens the link in a second tab — original tab evicted, new tab takes the seat (not room full) | SKIP | 0.0 |  |
+| 20 | f: a real third person is rejected while host and guest are both live | SKIP | 0.0 |  |
+| 21 | g1: host refreshes mid-call — both recover | SKIP | 0.0 |  |
+| 22 | g2: host leaves and rejoins — video resumes | SKIP | 0.0 |  |
+| 23 | h: call end — clean cleanup on both sides | SKIP | 0.0 |  |
+| 24 | i1: opening an EXPIRED link shows a clear message, no crash | SKIP | 0.0 |  |
+| 25 | i2: opening a CLOSED link shows a clear message, no crash | SKIP | 0.0 |  |
+| 26 | i3: opening a NONEXISTENT room id shows a clear message, no crash | SKIP | 0.0 |  |
+| 27 | j1: WhatsApp in-app browser UA shows the banner, Join still works, call connects | SKIP | 0.0 |  |
+| 28 | j2: Instagram (iOS) in-app browser UA shows copy-link guidance, banner is dismissible | SKIP | 0.0 |  |
+| 29 | k1: mic level meter responds to the fake audio device during the pre-join preview | SKIP | 0.0 |  |
+| 30 | k2: pre-join network check shows a result without blocking anything | SKIP | 0.0 |  |
+| 31 | k3: Join now still works when /ice-servers is slow | SKIP | 0.0 |  |
+| 32 | k4: Join now still works when /ice-servers is down | SKIP | 0.0 |  |
+| 33 | m1: peer mic/camera badges — toggle shows on the other side, late joiner sees correct state | SKIP | 0.0 |  |
+| 34 | m2: 'You are muted' toast appears when speaking while muted, not when unmuted | SKIP | 0.0 |  |
+| 35 | 8 guest taps Retry - video resumes on both sides | FAIL | 0.0 | Error: worker process exited unexpectedly (code=3221225794, signal=null) |
+

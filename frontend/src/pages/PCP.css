@@ -57,10 +57,10 @@
 
 
 .pcp-card-section {
-  width: calc(100% - 12px);
+  width: min(calc(100% - clamp(16px, 4vw, 48px)), 1500px);
   max-width: 1500px;
-  margin: 80px auto;
-  border-radius: 20px;
+  margin: clamp(40px, 6vw, 80px) auto;
+  border-radius: clamp(16px, 3vw, 36px);
   background: #fff;
   border: 1px solid rgba(255, 255, 255, 0.8);
   box-shadow:
@@ -68,38 +68,7 @@
     0 20px 60px rgba(15, 23, 42, 0.07);
   overflow: hidden;
   position: relative;
-}
-
-@media (min-width: 400px) {
-  .pcp-card-section {
-    width: calc(100% - 16px);
-    border-radius: 24px;
-  }
-}
-
-@media (min-width: 600px) {
-  .pcp-card-section {
-    width: calc(100% - 24px);
-    border-radius: 36px;
-  }
-}
-
-@media (min-width: 768px) {
-  .pcp-card-section {
-    width: calc(100% - 32px);
-  }
-}
-
-@media (min-width: 992px) {
-  .pcp-card-section {
-    width: calc(100% - 40px);
-  }
-}
-
-@media (min-width: 1200px) {
-  .pcp-card-section {
-    width: calc(100% - 48px);
-  }
+  box-sizing: border-box;
 }
 
 .pcp-card-section:first-child {

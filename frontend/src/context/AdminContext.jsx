@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import api, { clearUserAuthToken } from "../api";
+import api, { clearUserAuthToken, setActiveAuthRole } from "../api";
 import { clearClientSession } from "../utils/session";
 
 const AdminContext = createContext(null);
@@ -19,13 +19,40 @@ export function AdminProvider({ children }) {
 
     if (!shouldCheckAdmin) {
       setLoading(false);
-      return;
+      return undefined;
     }
 
-    api.get("/api/auth/admin-me", { authRole: "admin", skipAuthRefresh: true })
-      .then((res) => setAdmin(res.data.user))
-      .catch(() => setAdmin(null))
-      .finally(() => setLoading(false));
+    // Declared before any request fires — see setActiveAuthRole's own
+    // comment in api.js.
+    setActiveAuthRole("admin");
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get("/api/auth/admin-me", { authRole: "admin", skipAuthRefresh: true });
+        if (!cancelled) setAdmin(res.data.user);
+      } catch {
+        // A stale/expired access token 401s here — unlike AuthContext/
+        // DoctorAuthContext, this previously had no refresh fallback at
+        // all, so an admin whose access token expired (15 min) while their
+        // refresh cookie (8h) was still valid stayed permanently logged out
+        // until they manually re-authenticated. Try one explicit refresh
+        // and re-check before concluding there's no session.
+        try {
+          await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true });
+          const res = await api.get("/api/auth/admin-me", { authRole: "admin", skipAuthRefresh: true });
+          if (!cancelled) setAdmin(res.data.user);
+        } catch {
+          if (!cancelled) setAdmin(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = useCallback((adminData) => setAdmin(adminData), []);

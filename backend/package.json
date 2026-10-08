@@ -10,7 +10,7 @@
     "start:uat": "NODE_ENV=uat node server.js",
     "backfill:uploads": "node scripts/backfillUploadsToS3.js",
     "backfill:patient-ids": "node scripts/backfillPatientIds.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test \"tests/**/*.test.js\""
   },
   "keywords": [],
   "author": "",
@@ -24,6 +24,7 @@
     "apple-signin-auth": "^2.0.0",
     "axios": "^1.19.0",
     "bcryptjs": "^3.0.3",
+    "bowser": "^2.14.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "country-state-city": "^3.2.1",
@@ -43,6 +44,7 @@
     "nodemailer": "^8.0.11",
     "openai": "^7.25.0",
     "pdfkit": "^0.15.2",
+    "sanitize-html": "^2.18.0",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "stripe": "^22.1.0"

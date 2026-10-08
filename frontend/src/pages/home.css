@@ -1017,7 +1017,7 @@ h4 {
   .hero {
     flex-direction: column;
     width: calc(100% - 32px);
-    margin: 70px auto 32px;
+    margin: 90px auto 32px;
     padding: 44px 36px;
     gap: 32px;
     border-radius: 28px;
@@ -1154,7 +1154,7 @@ h4 {
   .hero {
     flex-direction: column;
     width: calc(100% - 16px);
-    margin: 44px auto 20px;
+    margin: 80px auto 20px;
     padding: 28px 20px;
     gap: 24px;
     border-radius: 20px;

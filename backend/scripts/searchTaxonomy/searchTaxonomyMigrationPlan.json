@@ -2,7 +2,11 @@
   "planVersion": 1,
   "dryRun": true,
   "executed": false,
+<<<<<<< HEAD
   "generatedAt": "2026-10-06T09:23:59.396Z",
+=======
+  "generatedAt": "2026-10-01T10:06:01.096Z",
+>>>>>>> ea3ebc8cb5d6051ffb03749f7e05e6c7e78e7935
   "generator": "backend/scripts/searchTaxonomy/prepareSearchTaxonomyMigration.js",
   "sources": {
     "searchIndex": {
@@ -11,6 +15,7 @@
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
+<<<<<<< HEAD
       "sha256": "1d108fcafdd953a673a7059890122072077e99b6ae53e610972a3f7916ea7832",
       "staticRoutes": 383,
       "duplicateDeclarations": [
@@ -37,6 +42,14 @@
     "decisions": {
       "path": "backend/scripts/searchTaxonomy/searchTaxonomyDecisions.js",
       "sha256": "e3230a29389785e7987d0c54ae92f8008253cdd22dddeaece3174c400065472d"
+=======
+      "sha256": "5a7696b91e35c589f0e02ac965cbc72ed91769666bade5390dc4a9d421985555",
+      "staticRoutes": 402
+    },
+    "decisions": {
+      "path": "backend/scripts/searchTaxonomy/searchTaxonomyDecisions.js",
+      "sha256": "d5f7fc4a63bd1d86fc426cbdc422ab5ae5e3494e7ef8983be329bd46822863c5"
+>>>>>>> ea3ebc8cb5d6051ffb03749f7e05e6c7e78e7935
     }
   },
   "liveSnapshot": {

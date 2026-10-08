@@ -174,7 +174,7 @@
 }
 
 .pcp-img-main {
-  width: 490px;
+  width: 490px; max-width: 100%;
   height: 600px;
   object-fit: cover;
   border-radius: 40px;
@@ -187,7 +187,7 @@
 }
 
 .pcp-img-small {
-  width: 250px;
+  width: 250px; max-width: 60%;
   height: 310px;
   object-fit: cover;
   border-radius: 32px;

@@ -185,7 +185,31 @@ const searchLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Public blog list/detail and the blog image proxy. Per-IP; the image limit is
+// high because a list page loads up to ~10 images and pages are revisited.
+const blogPublicStore = new Map();
+const blogPublicLimiter = buildKeyedLimiter({
+  store:    blogPublicStore,
+  windowMs: 60 * 1000,
+  max:      120,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
+const blogImageStore = new Map();
+const blogImageLimiter = buildKeyedLimiter({
+  store:    blogImageStore,
+  windowMs: 60 * 1000,
+  max:      600,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 module.exports = {
+  blogPublicLimiter,
+  blogImageLimiter,
   registrationLimiter,
   contactLimiter,
   loginLimiter,
