@@ -1130,6 +1130,7 @@ export function AppLayout() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/services-prices") ||
     location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/partner") ||
     location.pathname.startsWith("/user") ||
