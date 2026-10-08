@@ -33,6 +33,10 @@ const mailboxSchema = new mongoose.Schema(
     // Company footer appended to outgoing mail. Company only — never the admin.
     signature: { type: String, default: "Human Care Connect", trim: true, maxlength: 500 },
 
+    // Whether "Track opens" starts ticked when composing from this ID (e.g. off for hr@).
+    // Only has an effect while open tracking is switched on globally.
+    trackOpensDefault: { type: Boolean, default: true },
+
     // Empty = every admin/superadmin may use this mailbox (current requirement).
     // Hook for restricting a mailbox to specific admins later.
     allowedAdmins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -41,6 +45,10 @@ const mailboxSchema = new mongoose.Schema(
     gmailHistoryId: { type: String, default: "" },
     lastSyncAt: { type: Date, default: null },
     lastReconcileAt: { type: Date, default: null },
+    // Set once the one-time pass that copies Gmail's read state onto already-stored mail has run.
+    // (V2: the first version of the pass matched nothing on mail stored before the flag existed,
+    // so a new marker makes it run again once. The old `readStateBackfilledAt` is ignored.)
+    readStateBackfillV2At: { type: Date, default: null },
     lastSyncError: { type: String, default: "" },
 
     // Lease so only one backend instance syncs a mailbox at a time.
@@ -50,6 +58,9 @@ const mailboxSchema = new mongoose.Schema(
     },
 
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    // Set when a Super Admin deactivates it; cleared on reactivation. History stays.
+    deactivatedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -83,3 +94,4 @@ mailboxSchema.statics.releaseLease = function releaseLease(mailboxId, owner) {
 
 module.exports = mongoose.model("Mailbox", mailboxSchema);
 module.exports.EMAIL_DOMAIN = EMAIL_DOMAIN;
+module.exports.isCompanyAddress = (v) => ADDRESS_RE.test(v) && v.endsWith(`@${EMAIL_DOMAIN}`);

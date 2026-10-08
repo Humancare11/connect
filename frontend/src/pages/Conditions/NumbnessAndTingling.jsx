@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function NumbnessAndTingling({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Numbness & Tingling Treatment Online | Nerve Pain & Sensation Care"
-        description="Get expert care for numbness and tingling online. Consult a licensed provider for pins and needles, nerve pain, loss of sensation, weakness, and personalized treatment guidance."
-        keywords="Numbness and tingling, Nerve pain treatment, Online neurology consultation, Peripheral neuropathy care"
-        url="https://humancareconnect.co/numbness-tingling"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function NumbnessAndTingling({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

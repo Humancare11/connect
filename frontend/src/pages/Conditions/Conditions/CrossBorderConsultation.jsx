@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function CrossBorderConsultation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cross-Border Consultation Online | Global Telemedicine Services"
-        description="Access expert cross-border consultation online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized healthcare guidance from anywhere."
-        keywords="Cross-border consultation online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/cross-border-consultation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

@@ -14,6 +14,28 @@ const contentSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Open tracking of an outbound mail (a 1x1 image — see services/email/emailTracking.js).
+// Only the SHA-256 of the token is stored. A row without this block (older mail,
+// or mail sent from Gmail directly) reads as "Tracking unavailable".
+//   status  pending      tracked, no real open seen yet   → "Not opened yet"
+//           opened       at least one counted open        → "Opened"
+//           unavailable  see unavailableReason            → "Not tracked", or for reason
+//                        automated_only (only scanner/prefetch hits) → "Only automatic loads seen"
+const trackingSchema = new mongoose.Schema(
+  {
+    enabled: { type: Boolean, default: false },
+    tokenHash: { type: String, default: undefined },
+    status: { type: String, enum: ["pending", "opened", "unavailable"], default: "unavailable" },
+    unavailableReason: { type: String, default: "", maxlength: 40 },
+    firstOpenedAt: { type: Date, default: null },
+    lastOpenedAt: { type: Date, default: null },
+    // Last counted open: opens within the dedupe window of it are not counted again.
+    lastCountedAt: { type: Date, default: null },
+    openCount: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 // One row per mail message, inbound or outbound. The list screens are per
 // message; the thread page loads every row sharing a gmailThreadId.
 //
@@ -75,8 +97,16 @@ const emailMessageSchema = new mongoose.Schema(
     firstViewedByName: { type: String, default: "", trim: true, maxlength: 200 },
     firstViewedAt: { type: Date, default: null },
 
+    // Inbound only: Gmail's own read state (the message has no UNREAD label). Gmail keeps
+    // it per mailbox, so it says "someone on the team read it", never who. It is a separate
+    // signal from firstViewed* (who opened it in the dashboard) and is never written back to Gmail.
+    gmailRead: { type: Boolean, default: false },
+
     // Idempotency key from the compose form so a double-click can't send twice.
     clientRequestId: { type: String, default: null, maxlength: 100 },
+
+    // outbound only; absent on inbound and on mail sent outside the dashboard.
+    tracking: { type: trackingSchema, default: undefined },
   },
   { timestamps: true }
 );
@@ -90,6 +120,13 @@ emailMessageSchema.index(
   { sentByAdmin: 1, clientRequestId: 1 },
   { unique: true, partialFilterExpression: { clientRequestId: { $type: "string" } } }
 );
+// The tracking image looks mail up by the hash of its token.
+emailMessageSchema.index(
+  { "tracking.tokenHash": 1 },
+  { unique: true, partialFilterExpression: { "tracking.tokenHash": { $type: "string" } } }
+);
+// Sent folder "open status" filter.
+emailMessageSchema.index({ direction: 1, "tracking.status": 1, messageDate: -1 });
 // Folder lists + filters.
 emailMessageSchema.index({ mailbox: 1, direction: 1, isSpam: 1, messageDate: -1 });
 emailMessageSchema.index({ direction: 1, isSpam: 1, messageDate: -1 });

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -65,14 +66,10 @@ export default function VaginalYeastInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vaginal Yeast Infection Treatment Online | Symptom Care"
-        description="Get fast, discreet care for vaginal yeast infection symptoms. Connect with an online provider for symptom evaluation, treatment guidance, and prescriptions when appropriate."
-        keywords="Vaginal yeast infection, Yeast infection treatment, vaginal yeast infection symptoms, vaginal itching, vaginal burning, vaginal irritation, unusual vaginal discharge, vaginal discomfort, yeast overgrowth, telemedicine services, online doctor appointment, telemedicine platform, online provider, prescription support"
-        url="https://humancareconnect.co/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function VaginalYeastInfection({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function MenopauseSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Menopause Symptoms Treatment Online | Hot Flashes & Hormone Care"
-        description="Find relief from menopause symptoms with expert online care. Consult a licensed provider for hot flashes, night sweats, mood changes, sleep issues, hormone support, and personalized treatment."
-        keywords="Menopause symptoms, Hot flashes treatment, Hormone health, Online menopause care"
-        url="https://humancareconnect.co/menopause-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function MenopauseSymptoms({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

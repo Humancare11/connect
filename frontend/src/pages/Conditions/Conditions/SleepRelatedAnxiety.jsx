@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Sleep-Related-Anxiety.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -65,14 +66,10 @@ export default function SleepRelatedAnxiety({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sleep-Related Anxiety Treatment Online | Virtual Anxiety & Sleep Support"
-        description="Get online support for sleep-related anxiety. Connect with a licensed provider for racing thoughts, stress, insomnia, and personalized sleep care"
-        keywords="sleep-related anxiety, sleep anxiety treatment online, anxiety and insomnia, racing thoughts at night, online anxiety consultation, virtual mental health care, sleep disorder support, stress and sleep problems, telehealth anxiety treatment, better sleep support"
-        url="https://humancareconnect.co/sleep-related-anxiety"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function SleepRelatedAnxiety({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

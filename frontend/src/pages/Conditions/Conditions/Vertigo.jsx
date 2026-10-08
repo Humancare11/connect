@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/vertigo.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function Vertigo({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vertigo Treatment Online | Dizziness & Balance Care"
-        description="Get fast care for vertigo symptoms, dizziness, spinning sensations, nausea, and balance problems. Connect with an online provider for personalized treatment guidance."
-        keywords="Vertigo symptoms, vertigo treatment, dizziness, spinning sensation, balance problems, nausea, motion sensitivity, inner ear disorders, balance disorders, vertigo care, telemedicine services, online doctor appointment, virtual healthcare services, online provider"
-        url="https://humancareconnect.co/vertigo"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function Vertigo({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

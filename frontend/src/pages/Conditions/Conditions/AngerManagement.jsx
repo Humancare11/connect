@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 import {
   Calendar,
@@ -66,14 +67,10 @@ export default function AngerManagement({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Anger Management Online | Virtual Emotional Wellness Support"
-        description="Get online anger management support to understand emotional triggers, manage stress, and build healthier coping strategies with guidance from a licensed provider."
-        keywords="Anger management, Emotional wellness support, Coping strategies, Stress management, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/anger-management"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

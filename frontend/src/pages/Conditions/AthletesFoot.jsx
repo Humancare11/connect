@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function AthletesFoot({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Athlete�s Foot Treatment Online | Fungal Skin Infection Care"
-        description="Itchy, burning, or peeling skin between your toes? Get athlete�s foot treatment guidance, skincare support, and prescription care when appropriate from a licensed provider online."
-        keywords="Athlete�s foot, Athlete�s foot treatment, Fungal skin infection, Peeling skin, Skincare guidance, Online doctor appointment"
-        url="https://humancareconnect.co/athletes-foot"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function AthletesFoot({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

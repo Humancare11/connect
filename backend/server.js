@@ -74,6 +74,11 @@ const app = express();
 // set TRUST_PROXY to match the real chain (e.g. 2 for load balancer + nginx).
 app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 
+// Public tracking image for mail sent from the dashboard (no login, no CORS).
+// Mounted before helmet/CORS/cookies on purpose: it sets its own headers and
+// must answer every request identically. Inert unless open tracking is switched on.
+app.use("/api/e", require("./routes/publicTracking"));
+
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside
 // development a random password is generated and printed to the server
@@ -325,6 +330,12 @@ app.use(
 
 app.use((req, res, next) => {
   res.setHeader("Permissions-Policy", "camera=(self), microphone=(self), geolocation=()");
+  next();
+});
+
+// The API serves no indexable content; keep every response out of search results.
+app.use((req, res, next) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
   next();
 });
 
@@ -581,6 +592,8 @@ app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
+app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
+app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/upload", require("./routes/upload"));

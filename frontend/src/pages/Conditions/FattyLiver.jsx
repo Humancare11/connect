@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -39,14 +40,10 @@ export default function FattyLiver({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fatty Liver Follow-Up Online | Ongoing Liver Health Care"
-        description="Manage fatty liver disease with expert online follow-up care. Connect with a licensed provider for liver health monitoring, lifestyle guidance, and personalized treatment through telemedicine services."
-        keywords="Fatty liver follow-up, Liver health monitoring, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fatty-liver"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

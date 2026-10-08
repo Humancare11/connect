@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 
 const FOLDERS = ["inbox", "sent", "spam", "all"];
 const STATUS_FILTERS = ["noreply", "replied", "failed"];
+// Sent folder only: "Open status" (see EmailMessage.tracking).
+const OPEN_FILTERS = ["opened", "pending", "automated", "unavailable"];
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 50;
 const MAX_SEARCH_LENGTH = 100;
@@ -41,6 +43,9 @@ function parseListQuery(query = {}) {
   const status = str(query, "status");
   if (status && !STATUS_FILTERS.includes(status)) throw new EmailQueryError("Invalid status filter.");
 
+  const openStatus = str(query, "openStatus");
+  if (openStatus && !OPEN_FILTERS.includes(openStatus)) throw new EmailQueryError("Invalid open status filter.");
+
   // "none" = not viewed by anyone; otherwise an admin id.
   const viewedByRaw = str(query, "viewedBy");
   if (viewedByRaw && viewedByRaw !== "none" && !mongoose.isValidObjectId(viewedByRaw)) {
@@ -67,6 +72,7 @@ function parseListQuery(query = {}) {
     mailbox: objectId(query, "mailbox"),
     sentBy: objectId(query, "sentBy"),
     status,
+    openStatus,
     viewedBy: viewedByRaw === "none" ? "none" : viewedByRaw ? new mongoose.Types.ObjectId(viewedByRaw) : null,
     dateFrom,
     hasAttachment: str(query, "hasAttachment") === "1",
@@ -92,6 +98,28 @@ const STATUS_CLAUSES = {
   failed: { direction: "out", status: "failed" },
 };
 
+// Mail that actually went out. Mail without a tracking block counts as "unavailable" (not tracked).
+const OPEN_CLAUSES = {
+  opened: { direction: "out", status: { $in: ["sent", "replied"] }, "tracking.status": "opened" },
+  pending: { direction: "out", status: { $in: ["sent", "replied"] }, "tracking.status": "pending" },
+  // Only automatic loads (scanner, preview, prefetch) were seen.
+  automated: {
+    direction: "out",
+    status: { $in: ["sent", "replied"] },
+    "tracking.status": "unavailable",
+    "tracking.unavailableReason": "automated_only",
+  },
+  // Not tracked at all (tracking off, mail off, internal/Apple/opted-out recipient, sent from Gmail, older mail).
+  unavailable: {
+    direction: "out",
+    status: { $in: ["sent", "replied"] },
+    $or: [
+      { "tracking.status": "unavailable", "tracking.unavailableReason": { $ne: "automated_only" } },
+      { tracking: { $exists: false } },
+    ],
+  },
+};
+
 // accessibleMailboxIds: ObjectIds this admin may use (see Mailbox.allowedAdmins).
 function buildMessageFilter(params, accessibleMailboxIds) {
   const and = [];
@@ -106,6 +134,7 @@ function buildMessageFilter(params, accessibleMailboxIds) {
   and.push(FOLDER_FILTERS[params.folder]);
   if (params.sentBy) and.push({ sentByAdmin: params.sentBy });
   if (params.status) and.push(STATUS_CLAUSES[params.status]);
+  if (params.openStatus && params.folder === "sent") and.push(OPEN_CLAUSES[params.openStatus]);
   if (params.viewedBy === "none") and.push({ firstViewedAt: null });
   else if (params.viewedBy) and.push({ firstViewedBy: params.viewedBy });
   if (params.dateFrom) and.push({ messageDate: { $gte: params.dateFrom } });
@@ -131,4 +160,4 @@ function buildMessageFilter(params, accessibleMailboxIds) {
   return { $and: and };
 }
 
-module.exports = { FOLDERS, STATUS_FILTERS, EmailQueryError, parseListQuery, buildMessageFilter, escapeRegex };
+module.exports = { FOLDERS, STATUS_FILTERS, OPEN_FILTERS, EmailQueryError, parseListQuery, buildMessageFilter, escapeRegex };

@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -546,20 +545,18 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
   return (
     <>
       <main className="sp-page">
-        <SEO
-          title="Global Cross-Border Care | International Telemedicine & Medical Support"
-          description="Access global healthcare support through international telemedicine services, cross-border consultations, medication refill assistance, referral coordination, and medical guidance while traveling abroad."
-          keywords="Global cross-border care, International telemedicine, Cross-border consultation, Online doctor appointment"
-          url="https://humancareconnect.co/global-cross-border-care"
-        />
+        <SEO />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -597,6 +594,8 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

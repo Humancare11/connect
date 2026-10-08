@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Icon } from "./EmailParts";
+import { AttachmentList, Icon, TrackOpensToggle } from "./EmailParts";
 import { ACCEPT_ATTR, EMAIL_RE, addFiles, newRequestId } from "./emailUtils";
 
 // Gmail-style compose window: docked bottom-right, with a full-view toggle.
 // Mounted by EmailLayout so a half-written mail survives moving between folders.
 // "Sent by <admin>" is shown for information only — the server always records
 // the logged-in admin, never anything sent from here.
-export default function EmailComposer({ mailboxes, defaultMailboxId, adminName, onClose, onSent }) {
+export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, adminName, onClose, onSent }) {
   const [from, setFrom] = useState(defaultMailboxId || mailboxes[0]?.id || "");
+  // "Track opens" starts as the chosen mailbox's default until the admin touches the box.
+  const [trackChoice, setTrackChoice] = useState(null);
+  const mailboxDefault = mailboxes.find((m) => m.id === from)?.trackOpensDefault !== false;
+  const trackOpens = trackChoice ?? mailboxDefault;
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState("");
@@ -52,6 +56,7 @@ export default function EmailComposer({ mailboxes, defaultMailboxId, adminName, 
       fd.append("subject", subject.trim());
       fd.append("body", body.trim());
       fd.append("clientRequestId", requestId.current);
+      if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
       files.forEach((f) => fd.append("files", f));
       return emailApi.send(fd);
     },
@@ -129,6 +134,7 @@ export default function EmailComposer({ mailboxes, defaultMailboxId, adminName, 
             <span className="em-hint">
               Sent by <b>{adminName}</b>
             </span>
+            {tracking?.available && <TrackOpensToggle checked={trackOpens} onChange={setTrackChoice} disclosure={tracking.disclosure} />}
             {error && <div className="em-errtext" role="alert">{error}</div>}
           </div>
         </form>

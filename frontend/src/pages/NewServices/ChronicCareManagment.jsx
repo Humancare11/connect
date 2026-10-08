@@ -27,7 +27,6 @@ import {
   FiVideo,
 } from "react-icons/fi";
 
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 
 import heroBanner from "../../assets/MedicalServices/chronic-care-management-telemedicine.webp";
@@ -264,22 +263,7 @@ export default function ChronicCareManagement() {
 
   return (
     <>
-      <SEO
-        title="Chronic Care Management Online | Ongoing Healthcare Support | Humancare Connect"
-        description="Manage chronic health conditions through secure telemedicine services. Connect with licensed healthcare providers for ongoing care, monitoring, and personalized support."
-        keywords="Chronic care management, Chronic health conditions, Telemedicine services, Virtual healthcare services, Telehealth services, Virtual chronic care management"
-        url="https://humancareconnect.co/chronic-care-management"
-      />
-      <Helmet>
-        <title>
-          Chronic Care Management Online | Ongoing Healthcare Support |
-          Humancare Connect
-        </title>
-        <meta
-          name="description"
-          content="Manage chronic health conditions through secure telemedicine services. Connect with licensed healthcare providers for ongoing care, monitoring, and personalized support."
-        />
-      </Helmet>
+      <SEO />
 
       <main
         className="service-page service-page--chronic-care"
@@ -305,6 +289,7 @@ export default function ChronicCareManagement() {
                 width={HERO_IMAGE.width}
                 height={HERO_IMAGE.height}
                 loading="eager"
+                fetchPriority="high"
                 className="service-hero__bg-img"
               />
               <div className="service-hero__overlay" />

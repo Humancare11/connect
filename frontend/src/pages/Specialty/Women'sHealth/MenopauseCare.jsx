@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 
 import {
   FiAward,
@@ -524,21 +523,19 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Menopause Care Specialists | Menopause Symptoms, HRT Guidance & Women's Health Support"
-        description="Connect with menopause care specialists for menopause symptom management, hot flashes, hormone replacement therapy guidance, hormonal health support, and personalized women's healthcare."
-        keywords="Menopause care, HRT guidance, Hormone health support, Online menopause consultation"
-        url="https://humancareconnect.co/menopause-care"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -574,6 +571,8 @@ export default function MenopauseCare({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

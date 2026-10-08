@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Nail-Problems.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function NeilProblems({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Nail Problems Treatment Online | Virtual Dermatology Care"
-        description="Get expert care for nail problems online."
-        keywords="Nail problems"
-        url="https://humancareconnect.co/nail-problems"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function NeilProblems({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

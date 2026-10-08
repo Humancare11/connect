@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Travel-Related-Fever.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function TravelRelatedFever({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Travel-Related Fever Treatment Online | Virtual Travel Health Care"
-        description="Get online care for travel-related fever. Consult a licensed provider for fever, chills, fatigue, body aches, and illness during or after travel."
-        keywords="travel-related fever, fever after travel, fever during travel, travel illness treatment, online travel doctor, post-travel fever, travel health consultation, virtual doctor consultation, telehealth travel care, international travel illness"
-        url="https://humancareconnect.co/travel-related-fever"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function TravelRelatedFever({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/routine-check-ups.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function RoutineCheckUps({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Routine Check-Up Online | Preventive Health & Wellness Consultation"
-        description="Book an online routine check-up to review your health, manage ongoing conditions, receive preventive care guidance, and stay on track with your wellness goals."
-        keywords="routine check-up online, annual health check-up, preventive healthcare, wellness consultation, online primary care, health assessment, virtual doctor consultation, preventive health services"
-        url="https://humancareconnect.co/routine-check-ups"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

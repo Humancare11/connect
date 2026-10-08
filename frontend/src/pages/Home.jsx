@@ -15,6 +15,7 @@ const Aa = lazy(() => import("../components/Aa"));
 // import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
 import sceneVideo from "../assets/gifts/HeroVideo.mp4";
 import heroPoster from "../assets/gifts/HeroPoster.webp";
+import PreloadImage from "../components/PreloadImage";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
 import SEO from "../components/Seo";
@@ -251,20 +252,33 @@ export default function HomePage() {
   // Video lazy loading with Intersection Observer
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShouldLoadVideo(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }, // Load before visible
-    );
+    let observer;
+    let timer;
+    // The 1.7 MB hero video is decorative (its poster is already on screen), so it must not compete with
+    // the page's own JS/CSS/fonts for bandwidth: start observing only after the page has loaded and gone idle.
+    const start = () => {
+      timer = setTimeout(() => {
+        observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0].isIntersecting) {
+              setShouldLoadVideo(true);
+              observer.disconnect();
+            }
+          },
+          { rootMargin: "200px" }, // Load before visible
+        );
+        const videoSection = rightRef.current;
+        if (videoSection) observer.observe(videoSection);
+      }, 1500);
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
 
-    const videoSection = rightRef.current;
-    if (videoSection) observer.observe(videoSection);
-
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("load", start);
+      clearTimeout(timer);
+      if (observer) observer.disconnect();
+    };
   }, []);
 
   // ── As-you-type search: backend "instant" mode (never uses AI) ───────────
@@ -685,12 +699,7 @@ export default function HomePage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      <SEO
-        title="Telemedicine Services | Online Doctor Appointments | Humancare Connect"
-        description="Telemedicine services with fast online doctor appointments, virtual healthcare services, prescription refills, mental health support, chronic care, and secure telehealth services through Humancare Connect."
-        keywords="Telemedicine services, online doctor appointments, virtual healthcare services, telehealth services, telemedicine platform, online doctor consultation, licensed healthcare providers, prescription refills online, chronic care, mental health support, same-day online medical care, secure telemedicine platform"
-        url="https://humancareconnect.co"
-      />
+      <SEO />
       <div className="hero-light" />
       <div className="hero-grid" />
 
@@ -887,6 +896,21 @@ export default function HomePage() {
 
         {/* ── RIGHT ── */}
         <div className="hero-right" ref={rightRef}>
+          {/* The poster is the page's LCP image; start fetching it before the video element mounts. */}
+          <PreloadImage src={heroPoster} />
+          {/* The poster is a real <img> in the server HTML, so the LCP image paints before any JavaScript
+              runs. The video is mounted on top of it later with the same class and no poster of its own
+              (a second poster would become a later, larger LCP candidate). */}
+          <img
+            src={heroPoster}
+            alt=""
+            aria-hidden="true"
+            className="hero-right-video-bg"
+            width="1600"
+            height="900"
+            decoding="async"
+            fetchPriority="high"
+          />
           {shouldLoadVideo && (
             <video
               autoPlay
@@ -894,7 +918,6 @@ export default function HomePage() {
               muted
               playsInline
               preload="metadata"
-              poster={heroPoster}
               className="hero-right-video-bg"
             >
               <source src={sceneVideo} type="video/mp4" />

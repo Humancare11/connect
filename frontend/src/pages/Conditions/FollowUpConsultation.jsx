@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function FollowUpConsultation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Follow-Up Consultation Online | Ongoing Virtual Medical Care"
-        description="Continue your care with an online follow-up consultation. Review treatment progress, discuss lab results, adjust medications, and receive ongoing support from licensed providers."
-        keywords="Follow-up consultation, Ongoing medical care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/follow-up-consultation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

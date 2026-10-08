@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrineryKidneyHealth/urinary-incontinence.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function UrinaryIncontinence({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Urinary Incontinence Treatment Online | Virtual Bladder Care"
-        description="Get online care for urinary incontinence. Consult a licensed provider for bladder leakage, frequent urination, urgency, and personalized treatment guidance."
-        keywords="urinary incontinence treatment, bladder leakage treatment, loss of bladder control, frequent urination, urinary urgency, online urologist, bladder control treatment, virtual bladder care, telehealth urology, urinary incontinence consultation"
-        url="https://humancareconnect.co/urinary-incontinence"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function UrinaryIncontinence({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function UpperRespiratoryInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Upper Respiratory Infection Treatment Online | Virtual Care"
-        description="Get online care for an upper respiratory infection. Consult a licensed provider for cough, congestion, sore throat, fever, and personalized treatment."
-        keywords="upper respiratory infection treatment, URI treatment online, respiratory infection, online doctor consultation, cough and congestion treatment, sore throat and fever, virtual urgent care, telehealth respiratory care, viral respiratory infection, upper respiratory infection symptoms"
-        url="https://humancareconnect.co/upper-respiratory-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function UpperRespiratoryInfection({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

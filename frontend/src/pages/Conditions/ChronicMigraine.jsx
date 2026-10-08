@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function ChronicMigraine({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Chronic Migraine Management | Support for Recurring Headaches"
-        description="Recurring migraines can disrupt work, sleep, and daily life. Access personalized migraine management, symptom evaluation, and ongoing treatment guidance from home."
-        keywords="Chronic migraine, Chronic migraines, Migraine management support, Telemedicine services, Online doctor appointment, Telemedicine platform"
-        url="https://humancareconnect.co/chronic-migraine"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function ChronicMigraine({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

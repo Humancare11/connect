@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function MildAsthmaSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Mild Asthma Treatment Online | Virtual Asthma Care & Breathing Support"
-        description="Manage mild asthma symptoms with expert online care. Consult a licensed provider for wheezing, coughing, chest tightness, shortness of breath, asthma treatment, and personalized breathing support."
-        keywords="Mild asthma treatment, Online asthma consultation, Breathing support, Virtual asthma care"
-        url="https://humancareconnect.co/mild-asthma-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function MildAsthmaSymptoms({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

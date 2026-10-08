@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function DietExercisePlanning({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Diet & Exercise Planning Online | Telemedicine Wellness Care"
-        description="Get personalized diet and exercise planning online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and achieve your health and wellness goals."
-        keywords="Diet & exercise planning, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/diet-exercise-planning"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

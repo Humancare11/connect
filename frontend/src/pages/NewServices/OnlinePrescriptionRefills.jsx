@@ -21,7 +21,6 @@ import {
 
 } from "react-icons/fi";
 
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
 import CentralFAQ from "../../components/FAQ/FAQ";
@@ -290,22 +289,7 @@ export default function OnlinePrescriptionRefills() {
 
   return (
     <>
-      <SEO
-        title="Online Prescription Refills | Renew Medications Online | Humancare Connect"
-        description="Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
-        keywords="Second Medical Opinion, Online Second Medical Opinion, Second Medical Opinion Service, Qualified Specialists, Telemedicine Services, Virtual Consultation"
-        url="https://humancareconnect.co/online-prescription-refills"
-      />
-      <Helmet>
-        <title>
-          Online Prescription Refills | Renew Medications Online | Humancare
-          Connect
-        </title>
-        <meta
-          name="description"
-          content="Need a prescription refill? Connect with licensed healthcare providers through secure telemedicine services and renew eligible medications online."
-        />
-      </Helmet>
+      <SEO />
 
       <main
         className="service-page service-page--prescription-refills"
@@ -331,6 +315,7 @@ export default function OnlinePrescriptionRefills() {
                 width={HERO_IMAGE.width}
                 height={HERO_IMAGE.height}
                 loading="eager"
+                fetchPriority="high"
                 className="service-hero__bg-img"
               />
               <div className="service-hero__overlay" />

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function AbdominalPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Abdominal Pain Treatment Online | Virtual Digestive Care"
-        description="Get online care for abdominal pain, stomach pain, cramping, bloating, and digestive discomfort. Connect with a licensed provider for evaluation and treatment guidance."
-        keywords="Abdominal pain, Abdominal pain symptoms, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/abdominal-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function AbdominalPain({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

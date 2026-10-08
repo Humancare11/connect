@@ -61,18 +61,20 @@ async function ingestParsed(mailbox, p) {
   if (p.isDraft) return "skipped"; // Drafts/Trash are not part of this module.
 
   const existing = await EmailMessage.findOne({ mailbox: mailbox._id, gmailMessageId: p.gmailMessageId })
-    .select("_id direction isSpam");
+    .select("_id direction isSpam gmailRead");
   if (existing) {
-    // Only the spam label can change for a stored message (mirrors Gmail-side moves).
-    if (existing.direction === "in" && existing.isSpam !== p.isSpam) {
-      await EmailMessage.updateOne({ _id: existing._id }, { $set: { isSpam: p.isSpam } });
-      if (!p.isSpam) {
-        const doc = await EmailMessage.findById(existing._id);
-        if (doc) await linkReplies(doc);
-      }
-      return "updated";
+    // Only two labels can change for a stored inbound message: SPAM and UNREAD (mirrors Gmail-side moves/reads).
+    if (existing.direction !== "in") return "skipped";
+    const set = {};
+    if (existing.isSpam !== p.isSpam) set.isSpam = p.isSpam;
+    if (Boolean(existing.gmailRead) === p.isUnread) set.gmailRead = !p.isUnread;
+    if (!Object.keys(set).length) return "skipped";
+    await EmailMessage.updateOne({ _id: existing._id }, { $set: set });
+    if ("isSpam" in set && !p.isSpam) {
+      const doc = await EmailMessage.findById(existing._id);
+      if (doc) await linkReplies(doc);
     }
-    return "skipped";
+    return "updated";
   }
   if (p.isTrash) return "skipped";
 
@@ -107,6 +109,7 @@ async function ingestParsed(mailbox, p) {
     subject: p.subject,
     messageDate: p.messageDate,
     isSpam: direction === "in" && p.isSpam,
+    gmailRead: direction === "in" && !p.isUnread,
     hasAttachments: p.hasAttachments,
     attachmentCount: p.attachmentCount,
     status: direction === "in" ? "received" : "sent",
@@ -142,6 +145,28 @@ async function ingestParsed(mailbox, p) {
   return "created";
 }
 
+// Copies Gmail's read state onto mail we already hold: ids in `allIds` that are not in
+// Gmail's `is:unread` list are read; unread ones are unread. Only the stored flag changes,
+// and nothing is ever written to Gmail. → number of rows changed.
+// Used by both the one-time pass and the 10-minute reconcile. Mail stored before gmailRead
+// existed has NO such field, and `{ gmailRead: false }` does not match a missing field
+// (Mongoose's default only applies to documents it creates or loads), so "not yet read"
+// must be written as `{ $ne: true }`.
+async function applyReadState(gmail, mailbox, allIds, { window, limit }) {
+  const unread = await gmail.listMessageIds({ q: `is:unread ${window}`, includeSpamTrash: true, limit });
+  const unreadSet = new Set(unread);
+  const read = allIds.filter((id) => !unreadSet.has(id));
+  const [nowRead, nowUnread] = await Promise.all([
+    read.length
+      ? EmailMessage.updateMany({ mailbox: mailbox._id, direction: "in", gmailRead: { $ne: true }, gmailMessageId: { $in: read } }, { $set: { gmailRead: true } })
+      : { modifiedCount: 0 },
+    unread.length
+      ? EmailMessage.updateMany({ mailbox: mailbox._id, direction: "in", gmailRead: true, gmailMessageId: { $in: unread } }, { $set: { gmailRead: false } })
+      : { modifiedCount: 0 },
+  ]);
+  return nowRead.modifiedCount + nowUnread.modifiedCount;
+}
+
 async function mapLimit(items, limit, fn) {
   const results = new Array(items.length);
   let next = 0;
@@ -160,7 +185,7 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
   let mailbox = await Mailbox.acquireLease(mailboxId, owner, LEASE_MS);
   if (!mailbox) return { skipped: true };
 
-  const stats = { mode: "incremental", created: 0, updated: 0, skipped: 0, reconciled: false };
+  const stats = { mode: "incremental", created: 0, updated: 0, skipped: 0, reconciled: false, readStateChanged: 0 };
 
   const renewLease = async () => {
     if (!(await Mailbox.acquireLease(mailboxId, owner, LEASE_MS))) {
@@ -206,6 +231,7 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
 
     // Safety net for what history.list can miss (e.g. mail delivered straight
     // to Spam) and for Gmail-side spam moves: cheap, fetches only unknown mail.
+    let reconciledIds = [];
     async function reconcile() {
       stats.reconciled = true;
       const spamIds = await gmail.listMessageIds({ q: `in:spam ${RECONCILE_WINDOW}`, includeSpamTrash: true, limit: 500 });
@@ -224,6 +250,7 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
       }
       const recent = await gmail.listMessageIds({ q: RECONCILE_WINDOW, includeSpamTrash: true, limit: 500 });
       await processIds(recent, { skipExisting: true });
+      reconciledIds = recent;
     }
 
     let historyId = mailbox.gmailHistoryId;
@@ -244,6 +271,18 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
       !mailbox.lastReconcileAt || now().getTime() - new Date(mailbox.lastReconcileAt).getTime() > RECONCILE_EVERY_MS;
     if (reconcileDue) await reconcile();
 
+    // Gmail read state. Normally it arrives with label-change events (the message is
+    // re-fetched and ingestParsed updates it); this is the safety net for events history
+    // can miss, plus a one-time pass for mail stored before this flag existed.
+    const readStateBackfillDue = !mailbox.readStateBackfillV2At;
+    if (readStateBackfillDue) {
+      const window = `newer_than:${BACKFILL_DAYS}d`;
+      const all = await gmail.listMessageIds({ q: window, includeSpamTrash: true, limit: BACKFILL_LIMIT });
+      stats.readStateChanged = await applyReadState(gmail, mailbox, all, { window, limit: BACKFILL_LIMIT });
+    } else if (stats.reconciled) {
+      stats.readStateChanged = await applyReadState(gmail, mailbox, reconciledIds, { window: RECONCILE_WINDOW, limit: 500 });
+    }
+
     await Mailbox.updateOne(
       { _id: mailboxId },
       {
@@ -252,6 +291,7 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
           lastSyncAt: now(),
           lastSyncError: "",
           ...(stats.reconciled || stats.mode === "backfill" ? { lastReconcileAt: now() } : {}),
+          ...(readStateBackfillDue ? { readStateBackfillV2At: now() } : {}),
         },
       }
     );
@@ -267,4 +307,4 @@ async function syncMailbox(mailboxId, { client, owner = defaultOwner(), now = ()
   }
 }
 
-module.exports = { syncMailbox, ingestParsed, linkReplies, OUTSIDE_REPLIER };
+module.exports = { syncMailbox, ingestParsed, linkReplies, applyReadState, OUTSIDE_REPLIER };

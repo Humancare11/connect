@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function MuscleStrain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Muscle Strain Treatment Online | Sprain, Pain & Recovery Support"
-        description="Get expert care for muscle strains online. Consult a licensed provider for pulled muscles, pain, stiffness, swelling, sports injuries, and personalized recovery guidance from home."
-        keywords="Muscle strain treatment, Pulled muscle care, Sports injury consultation, Online doctor consultation"
-        url="https://humancareconnect.co/muscle-strain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function MuscleStrain({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

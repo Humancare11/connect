@@ -140,6 +140,7 @@ describe("admin email read API", () => {
       assert.equal(bySupport.unread, 3);
       assert.equal(byTech.unread, 0);
       assert.deepEqual(body.counts, { received: 3, spam: 1 });
+      assert.deepEqual([bySupport.spam, byTech.spam], [0, 1], "unread spam is counted per mailbox");
       assert.deepEqual(body.mailboxes.map((m) => m.displayName), ["Support", "Tech"]);
     });
 
@@ -147,6 +148,32 @@ describe("admin email read API", () => {
       await post(`/messages/${ids.in2}/view`, aman);
       const { body } = await get("/mailboxes", priya);
       assert.equal(body.mailboxes.find((m) => m.address === support.address).unread, 2);
+    });
+
+    test("mail read in Gmail stops counting as unread (received and spam), per mailbox and in the totals", async () => {
+      await EmailMessage.updateOne({ _id: ids.in2 }, { $set: { gmailRead: true } });
+      await EmailMessage.updateOne({ _id: ids.spam1 }, { $set: { gmailRead: true } });
+      const { body } = await get("/mailboxes", priya);
+      const bySupport = body.mailboxes.find((m) => m.address === support.address);
+      const byTech = body.mailboxes.find((m) => m.address === tech.address);
+      assert.deepEqual([bySupport.unread, bySupport.spam, byTech.spam], [2, 0, 0]);
+      assert.deepEqual(body.counts, { received: 2, spam: 0 });
+    });
+
+    test("a mail read in Gmail is not bold/unread, says so, and is still 'nobody yet' for dashboard viewers", async () => {
+      await EmailMessage.updateOne({ _id: ids.in2 }, { $set: { gmailRead: true } });
+      const row = (await get("/messages?folder=inbox", priya)).body.items.find((i) => i.id === String(ids.in2));
+      assert.deepEqual([row.unread, row.readInGmail, row.firstViewed], [false, true, null]);
+      const other = (await get("/messages?folder=inbox", priya)).body.items.find((i) => i.id === String(ids.in3));
+      assert.deepEqual([other.unread, other.readInGmail], [true, false]);
+      // "First viewed by: nobody yet" still means dashboard views only.
+      const none = (await get("/messages?folder=inbox&viewedBy=none", priya)).body.items.map((i) => i.id);
+      assert.ok(none.includes(String(ids.in2)));
+    });
+
+    test("a mail we sent never reports Gmail read state", async () => {
+      const sent = (await get("/messages?folder=sent", priya)).body.items[0];
+      assert.deepEqual([sent.unread, sent.readInGmail], [false, false]);
     });
 
     test("a mailbox limited to specific admins is hidden from the others", async () => {

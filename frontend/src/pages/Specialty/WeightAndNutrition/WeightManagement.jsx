@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -548,21 +547,19 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Weight Management Specialists | Personalized Weight Loss & Obesity Care"
-        description="Connect with weight management specialists for obesity care, weight loss planning, binge eating support, GLP-1 eligibility assessments, nutrition guidance, and long-term weight management solutions."
-        keywords="Weight management, weight management specialists, personalized weight loss, obesity care, weight loss planning, weight loss programs, sustainable weight loss, obesity management, binge eating, binge eating support, GLP-1 eligibility assessments, GLP-1 program eligibility, GLP-1 medications, nutrition guidance, nutrition counseling, meal planning, behavioral health support, emotional eating, appetite management, metabolic health, weight gain concerns, weight maintenance, lifestyle modification, personalized care plans"
-        url="https://humancareconnect.co/weight-management"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -598,6 +595,8 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

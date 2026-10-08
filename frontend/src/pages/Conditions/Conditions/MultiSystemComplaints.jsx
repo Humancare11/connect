@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/Multi-System-Complaints.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function MultiSystemComplaints({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Multi-System Complaints Online | Complex Symptom Evaluation & Care"
-        description="Get expert evaluation for multiple unexplained symptoms online. Consult a licensed provider for fatigue, pain, digestive issues, dizziness, headaches, and personalized treatment recommendations."
-        keywords="Multi-system complaints, Complex symptom evaluation, Online internal medicine consultation, Unexplained symptoms"
-        url="https://humancareconnect.co/multi-system-complaints"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

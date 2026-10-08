@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function HealthyHabitCoaching({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Healthy Habit Coaching Online | Build Better Lifestyle Habits"
-        description="Build healthier routines with expert healthy habit coaching online. Connect with a licensed provider for wellness coaching, nutrition, exercise, sleep, and stress management through telemedicine services."
-        keywords="Healthy habit coaching, Lifestyle wellness coaching, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/healthy-habit-coaching"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

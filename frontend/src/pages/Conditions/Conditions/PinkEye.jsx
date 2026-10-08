@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/pink-eye.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function PinkEye({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pink Eye Treatment Online | Conjunctivitis Virtual Care"
-        description="Get fast online treatment for pink eye. Connect with a licensed provider for red, itchy, watery eyes, conjunctivitis symptoms, treatment recommendations, and prescriptions when appropriate."
-        keywords="Pink eye treatment, Conjunctivitis treatment, Online eye consultation, Red eye treatment, Virtual eye care"
-        url="https://humancareconnect.co/pink-eye"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function PinkEye({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

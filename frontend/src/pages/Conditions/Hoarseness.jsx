@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Hoarseness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hoarseness Treatment Online | Expert Voice & Throat Care"
-        description="Get expert care for hoarseness online. Connect with a licensed provider for voice changes, sore throat, vocal strain, and personalized treatment through secure telemedicine services."
-        keywords="Hoarseness treatment, Voice and throat care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hoarseness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Hoarseness({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

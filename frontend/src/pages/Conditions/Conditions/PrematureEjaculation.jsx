@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MensHealth/Premature-Ejaculation.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -65,14 +66,10 @@ export default function PrematureEjaculation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Premature Ejaculation Treatment Online | Men's Sexual Health Care"
-        description="Get discreet online treatment for premature ejaculation. Connect with a licensed provider for early ejaculation, sexual performance concerns, personalized treatment plans, and men's sexual wellness support."
-        keywords="Premature ejaculation treatment, Early ejaculation, Online men's health consultation, Sexual wellness, Men's sexual health"
-        url="https://humancareconnect.co/premature-ejaculation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function PrematureEjaculation({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

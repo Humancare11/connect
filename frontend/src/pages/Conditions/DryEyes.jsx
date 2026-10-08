@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function DryEyes({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Dry Eyes Treatment Online | Telemedicine Eye Care"
-        description="Get expert dry eyes treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized eye care from home."
-        keywords="Dry eyes treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dry-eyes"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function DryEyes({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

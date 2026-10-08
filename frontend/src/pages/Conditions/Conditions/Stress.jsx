@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/HomeImageConditions/stress-management-mental-wellness.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -64,14 +65,10 @@ export default function Stress({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Stress Management Online | Virtual Mental Health Support"
-        description="Get online support for stress, anxiety, burnout, and emotional exhaustion. Connect with a licensed provider for personalized stress management strategies."
-        keywords="stress management online, stress treatment, online mental health support, stress relief consultation, anxiety and stress, burnout support, virtual therapy consultation, emotional wellness, telehealth mental health services, stress counseling online"
-        url="https://humancareconnect.co/stress"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -91,7 +88,7 @@ export default function Stress({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

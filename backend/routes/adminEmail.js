@@ -14,6 +14,7 @@ const { getAttachmentBytes } = require("../services/email/attachmentFiles");
 const { getGmailApi } = require("../services/gmail/gmailAuth");
 const { createGmailClient } = require("../services/gmail/gmailClient");
 const { emailSendLimiter } = require("../middleware/rateLimiters");
+const { getTrackingState } = require("../services/email/emailSettings");
 const {
   EmailValidationError,
   MAX_ATTACHMENT_BYTES,
@@ -43,6 +44,7 @@ function createAdminEmailRouter({
   getGmail = (mailbox) => createGmailClient(getGmailApi(mailbox)),
   store = createS3AttachmentStore(),
   sendLimiter = emailSendLimiter,
+  trackingState = () => getTrackingState(),
 } = {}) {
   const router = express.Router();
   router.use(...guard);
@@ -98,6 +100,11 @@ function createAdminEmailRouter({
     });
 
   const textField = (req, name) => (typeof req.body?.[name] === "string" ? req.body[name] : "");
+  // The compose form's "Track opens" box: "1" / "0", or absent → the mailbox default.
+  const trackOpensField = (req) => {
+    const v = textField(req, "trackOpens");
+    return v === "1" ? true : v === "0" ? false : undefined;
+  };
   const validatedFiles = async (req) => Promise.all((req.files || []).map(validateAttachment));
 
   const handle = (fn) => async (req, res) => {
@@ -113,8 +120,9 @@ function createAdminEmailRouter({
     }
   };
 
-  // GET /mailboxes — sidebar: company IDs with unread counts.
-  // Unread = received, not spam, not yet viewed by ANY admin.
+  // GET /mailboxes — rail + switcher: company IDs with unread / unread-spam counts.
+  // Unread = received, not viewed by ANY admin in the dashboard, and not read in Gmail.
+  // "Spam" counts follow the same rule, per mailbox (and `counts` has the totals).
   router.get("/mailboxes", handle(async (req, res) => {
     const actor = await loadActor(req, res);
     if (!actor) return;
@@ -122,24 +130,29 @@ function createAdminEmailRouter({
     const ids = mailboxes.map((m) => m._id);
 
     const rows = await EmailMessage.aggregate([
-      { $match: { mailbox: { $in: ids }, direction: "in", firstViewedAt: null } },
+      { $match: { mailbox: { $in: ids }, direction: "in", firstViewedAt: null, gmailRead: { $ne: true } } },
       { $group: { _id: { mailbox: "$mailbox", isSpam: "$isSpam" }, n: { $sum: 1 } } },
     ]);
     const unread = new Map();
+    const spamBy = new Map();
     let received = 0;
     let spam = 0;
     for (const r of rows) {
       if (r._id.isSpam) {
         spam += r.n;
+        spamBy.set(String(r._id.mailbox), r.n);
       } else {
         received += r.n;
         unread.set(String(r._id.mailbox), r.n);
       }
     }
 
+    // Tells the compose form whether to show "Track opens" at all.
+    const tracking = await trackingState();
     res.json({
-      mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0 })),
+      mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
+      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled) },
     });
   }));
 
@@ -276,6 +289,8 @@ function createAdminEmailRouter({
       clientRequestId: textField(req, "clientRequestId"),
       gmail: lazyGmail(mailbox),
       store,
+      trackOpens: trackOpensField(req),
+      trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
     res.status(duplicate ? 200 : 201).json({ duplicate, message: serializeListItem(message, mailboxMap) });
@@ -311,6 +326,8 @@ function createAdminEmailRouter({
       confirm: textField(req, "confirm") === "1",
       gmail: lazyGmail(mailbox),
       store,
+      trackOpens: trackOpensField(req),
+      trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
     res.status(duplicate ? 200 : 201).json({ duplicate, message: message ? serializeListItem(message, mailboxMap) : null });

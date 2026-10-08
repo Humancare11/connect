@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -537,21 +536,19 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Cardiology Specialists | Heart Care & Cardiovascular Health"
-        description="Receive expert cardiology care for heart disease, high blood pressure, high cholesterol, chest pain, palpitations, and preventive cardiovascular wellness."
-        keywords="Cardiology specialists, Heart care, Cardiovascular health, Telehealth services, Virtual cardiology appointments, Virtual visits"
-        url="https://humancareconnect.co/cardiology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -588,6 +585,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

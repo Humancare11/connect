@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function PediatricFever({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pediatric Fever Treatment Online | Children's Fever Care"
-        description="Get expert pediatric fever care online. Connect with a licensed provider for fever evaluation, viral illnesses, flu symptoms, treatment guidance, and personalized care for your child."
-        keywords="Pediatric fever, Children's fever treatment, Online pediatric consultation, Virtual pediatric care"
-        url="https://humancareconnect.co/pediatric-fever"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function PediatricFever({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

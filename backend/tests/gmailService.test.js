@@ -134,6 +134,8 @@ describe("mimeParser", () => {
 
   test("flags spam from the SPAM label", () => {
     assert.equal(parseGmailMessage({ ...fixture, labelIds: ["SPAM"] }).isSpam, true);
+    assert.equal(parseGmailMessage(fixture).isUnread, true, "fixture carries the UNREAD label");
+    assert.equal(parseGmailMessage({ ...fixture, labelIds: ["INBOX"] }).isUnread, false, "no UNREAD label = read in Gmail");
   });
 
   test("falls back to text derived from html when there is no text part", () => {

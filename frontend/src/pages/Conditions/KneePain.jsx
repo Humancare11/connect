@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function KneePain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Knee Pain Treatment Online | Orthopedic Knee Specialist"
-        description="Get expert care for knee pain online. Consult a licensed provider for knee injuries, arthritis, swelling, stiffness, reduced mobility, and personalized treatment through secure telemedicine services."
-        keywords="Knee pain treatment, Online orthopedic specialist, Online doctor appointment, Knee pain relief"
-        url="https://humancareconnect.co/knee-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function KneePain({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/seasonal-allergies.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function SeasonalAllergies({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Seasonal Allergy Treatment Online | Fast Relief for Allergy Symptoms"
-        description="Get online treatment for seasonal allergies. Connect with a licensed provider for sneezing, congestion, itchy eyes, sinus pressure, and personalized allergy relief."
-        keywords="seasonal allergy treatment, online allergy doctor, hay fever treatment, pollen allergy, allergy relief online, itchy eyes and sneezing, allergic rhinitis, virtual allergy consultation"
-        url="https://humancareconnect.co/seasonal-allergies"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function SeasonalAllergies({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

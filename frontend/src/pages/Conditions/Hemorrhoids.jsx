@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Hemorrhoids({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hemorrhoid Treatment Online | Private Relief for Piles"
-        description="Get confidential hemorrhoid treatment online for pain, itching, swelling, bleeding, and rectal discomfort. Connect with a licensed provider through secure telemedicine services."
-        keywords="Hemorrhoid treatment online, Piles treatment, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hemorrhoids"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Hemorrhoids({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

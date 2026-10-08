@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -544,21 +543,19 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Psychology Counseling Services | Stress, Trauma, Relationships & Emotional Support"
-        description="Connect with licensed psychology counselors for stress, grief and loss, trauma support, relationship challenges, self-esteem concerns, and emotional wellness counseling."
-        keywords="online psychology counseling, licensed psychologist online, online therapist, stress counseling, trauma counseling, relationship counseling, grief counseling, self-esteem counseling, emotional wellness, virtual therapy, online mental health counseling, telepsychology"
-        url="https://humancareconnect.co/psychology-counseling"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -594,6 +591,8 @@ export default function PsychologyCounseling({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

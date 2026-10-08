@@ -6,7 +6,6 @@ import {
   FiUserCheck, FiBarChart2, FiPackage, FiVideo,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import "../Specialty/SpecialtyPage.css";
 import "../Categories/categoriesGlobal.css";
@@ -111,16 +110,7 @@ export default function MentalHealthSupport() {
 
   return (
     <>
-      <SEO
-        title="Mental Health Support Online | Virtual Mental Health Care | Humancare Connect"
-        description="Access confidential mental health support through secure telemedicine services. Connect with licensed healthcare providers for anxiety, stress, depression, and emotional wellness care."
-        keywords="Mental health support, Online therapy, Virtual counseling, Emotional wellness care"
-        url="https://humancareconnect.co/mental-health-support"
-      />
-      <Helmet>
-        <title>Mental Health Support Online | Virtual Mental Health Care | Humancare Connect</title>
-        <meta name="description" content="Access confidential mental health support through secure telemedicine services. Connect with licensed healthcare providers for anxiety, stress, depression, and emotional wellness care." />
-      </Helmet>
+      <SEO />
 
       <main className="service-page service-page--mental-health" style={{ "--service-accent": s.accentColor }}>
         <AnimatePresence mode="wait">

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Wheezing({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Wheezing Treatment Online | Breathing & Respiratory Care"
-        description="Get fast care for wheezing symptoms, chest tightness, coughing, and shortness of breath. Connect with an online provider for breathing care and treatment guidance."
-        keywords="Wheezing, wheezing symptoms, wheezing treatment, noisy breathing, chest tightness, coughing, shortness of breath, airway irritation, asthma, allergies, respiratory infections, breathing conditions, breathing care guidance, respiratory care, symptom evaluation, treatment recommendations, telemedicine services, online doctor appointment, telemedicine platform, online provider"
-        url="https://humancareconnect.co/wheezing"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Wheezing({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

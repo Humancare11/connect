@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function StomachPainChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Stomach Pain in Children Treatment Online | Virtual Pediatric Care"
-        description="Get online care for your child's stomach pain. Consult a licensed provider for abdominal pain, cramps, nausea, constipation, diarrhea, and digestive concerns."
-        keywords="stomach pain in children, pediatric stomach pain, child abdominal pain, online pediatric consultation, stomach ache in kids, pediatric digestive care, constipation in children, diarrhea in children, virtual pediatric doctor, telehealth pediatric care"
-        url="https://humancareconnect.co/stomach-pain-children"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function StomachPainChildren({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

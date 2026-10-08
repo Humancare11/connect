@@ -25,7 +25,6 @@ import {
   FiVideo,
 } from "react-icons/fi";
 
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
 import CentralFAQ from "../../components/FAQ/FAQ";
@@ -226,19 +225,7 @@ export default function ServiceDemo() {
 
   return (
     <>
-      <SEO
-        title="Online Doctor Service Demo | Humancare Connect"
-        description="Explore our healthcare service demo."
-        keywords="Service demo"
-        url="https://humancareconnect.co/ServiceDemo"
-      />
-      <Helmet>
-        <title>Online Doctor Service Demo | Humancare Connect</title>
-        <meta
-          name="description"
-          content="Explore our healthcare service demo."
-        />
-      </Helmet>
+      <SEO />
 
       <main
         className="service-page service-page--demo"

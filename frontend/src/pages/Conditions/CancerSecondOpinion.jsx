@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function CancerSecondOpinion({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cancer Second Opinion | Expert Review of Your Diagnosis & Treatment"
-        description="Need more clarity about a cancer diagnosis or treatment plan? Get an expert second opinion to review your medical records, explore treatment options, and make informed care decisions."
-        keywords="Cancer second opinion, Cancer diagnosis, Treatment options, Diagnosis reviews, Cancer care, Treatment discussions"
-        url="https://humancareconnect.co/cancer-second-opinion"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

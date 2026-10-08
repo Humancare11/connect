@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./Categories.css";
 
 /* ── react-icons ─────────────────────────────────────────── */
@@ -385,7 +384,7 @@ const SPECIALTIES = [
   },
   {
     slug: "cardiology",
-    path: "/chronic-care-and-expert-opinion/cardiology",
+    path: "/chronic-care/cardiology",
     icon: "heart",
     name: "Cardiology",
     featured: false,
@@ -426,7 +425,7 @@ const CONDITIONS = [
   },
   {
     slug: "chronic-migraine",
-    path: "/chronic-care/neurology/chronic-migraine",
+    path: "/chronic-care/neurology/migraine",
     icon: "brain",
     name: "Chronic Migraine",
   },
@@ -669,22 +668,7 @@ export default function Categories() {
 
   return (
     <>
-      <SEO
-        title="Online Doctor Consultation | Virtual Healthcare Services | Humancare Connect"
-        description="Book secure online doctor consultations with experienced healthcare professionals. Get personalized virtual healthcare services for everyday health, specialist care, mental wellness, and more with Humancare Connect."
-        keywords="Online doctor consultation, Online doctor consultation services, Virtual healthcare services, Online doctor consultations, Virtual healthcare experience, Healthcare professionals"
-        url="https://humancareconnect.co/categories"
-      />
-      <Helmet>
-        <title>
-          Online Doctor Consultation | Virtual Healthcare Services | Humancare
-          Connect
-        </title>
-        <meta
-          name="description"
-          content="Book secure online doctor consultations with experienced healthcare professionals. Get personalized virtual healthcare services for everyday health, specialist care, mental wellness, and more with Humancare Connect."
-        />
-      </Helmet>
+      <SEO />
 
       {/* ── Hero ── */}
       <section className="cat-hero">
