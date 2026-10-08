@@ -13,6 +13,7 @@ import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
+import { TextWidget } from '@livechat/widget-react'
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -1166,6 +1167,7 @@ function AppLayout() {
     <>
       <ScrollToTop />
       <SessionTimeoutManager />
+      <TextWidget organizationId="d29e3595-c3ba-48b3-9229-3a4835984ec7" />
       {!hideLayout && <Header />}
 
       <Suspense

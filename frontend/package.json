@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+    "@livechat/widget-react": "^1.4.1",
     "@paypal/react-paypal-js": "^9.2.0",
     "@react-oauth/google": "^0.13.5",
     "@stripe/react-stripe-js": "^6.3.0",
