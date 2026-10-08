@@ -2,7 +2,7 @@
   "planVersion": 1,
   "dryRun": true,
   "executed": false,
-  "generatedAt": "2026-09-30T06:50:15.236Z",
+  "generatedAt": "2026-10-06T09:23:59.396Z",
   "generator": "backend/scripts/searchTaxonomy/prepareSearchTaxonomyMigration.js",
   "sources": {
     "searchIndex": {
@@ -11,12 +11,32 @@
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "0ae970b2cdf36fd7dfc09c96adc6da5d72a85c4d78f053e35361711e8526ac84",
-      "staticRoutes": 399
+      "sha256": "1d108fcafdd953a673a7059890122072077e99b6ae53e610972a3f7916ea7832",
+      "staticRoutes": 383,
+      "duplicateDeclarations": [
+        "/child-and-family-care/pediatrics",
+        "/chronic-care/gastroenterology",
+        "/chronic-care/neurology",
+        "/chronic-care/pulmonology",
+        "/doctors-note",
+        "/eye-ear-bone/ophthalmology",
+        "/eye-ear-bone/orthopedics",
+        "/mens-health/urology",
+        "/mental-health/behavioral-health",
+        "/mental-health/psychiatry",
+        "/mental-health/psychology-counseling",
+        "/skin-and-hair-care/dermatology",
+        "/travel-and-global-care/global-cross-border-care",
+        "/travel-and-global-care/travel-medicine",
+        "/weight-and-nurtrition/lifestyle-medicine",
+        "/weight-and-nurtrition/nutrition-and-dietetics",
+        "/weight-and-nurtrition/weight-management",
+        "/women-health/menopause-care/hrt-guidance"
+      ]
     },
     "decisions": {
       "path": "backend/scripts/searchTaxonomy/searchTaxonomyDecisions.js",
-      "sha256": "3c57c8dd34da1848c7cd76adc6e2496b8a2498bd5c8d04c991c89f5a93c2bf93"
+      "sha256": "e3230a29389785e7987d0c54ae92f8008253cdd22dddeaece3174c400065472d"
     }
   },
   "liveSnapshot": {
@@ -314,6 +334,7 @@
         "name": "Pediatric Fever",
         "specialtyId": "6a4d41c9ebc7b05ffd844a5d",
         "isActive": true,
+        "isSearchable": null,
         "legacyId": null,
         "slug": "",
         "kind": null,
@@ -322,13 +343,21 @@
         "parentExists": false,
         "globalSearch": "EXCLUDED FROM GLOBAL SEARCH",
         "migrationAction": "NO_CHANGE",
-        "note": "Orphan/test data: parent specialty no longer exists."
+        "note": "Orphan/test data: parent specialty no longer exists.",
+        "review": {
+          "assessment": "ORPHAN",
+          "orphan": true,
+          "testNameSuspect": false,
+          "action": "NO_CHANGE_RECOMMEND_MANUAL_DEACTIVATION",
+          "reason": "specialtyId points to a specialty that no longer exists, so it is already invisible to search and to /api/appointment-tree. The canonical Pediatric Fever (Pediatrics, legacyId pediatric-fever) is created by this migration with no unique-index conflict (different specialtyId). Recommend manual deactivation or deletion by an administrator after review."
+        }
       },
       {
         "_id": "6a4d4b14ebc7b05ffd844dc7",
         "name": "jhvj",
         "specialtyId": "6a4d41c9ebc7b05ffd844a5d",
         "isActive": true,
+        "isSearchable": null,
         "legacyId": null,
         "slug": "",
         "kind": null,
@@ -337,31 +366,46 @@
         "parentExists": false,
         "globalSearch": "EXCLUDED FROM GLOBAL SEARCH",
         "migrationAction": "NO_CHANGE",
-        "note": "Orphan/test data: parent specialty no longer exists."
+        "note": "Orphan/test data: parent specialty no longer exists.",
+        "review": {
+          "assessment": "TEST_DATA_ORPHAN",
+          "orphan": true,
+          "testNameSuspect": true,
+          "action": "NO_CHANGE_RECOMMEND_MANUAL_DEACTIVATION",
+          "reason": "Nonsense name and a missing parent specialty: test data. Already invisible to search. Recommend manual deactivation or deletion by an administrator."
+        }
       },
       {
         "_id": "6a509248c08910eba9bf8478",
         "name": "Teen acne",
         "specialtyId": "6a4f8b71c08910eba9bf83ad",
         "isActive": true,
+        "isSearchable": null,
         "legacyId": null,
         "slug": "",
         "kind": null,
         "specialty": "Adolescent Care",
         "category": "Children & Family",
         "parentExists": true,
-        "globalSearch": "INCLUDED (active hierarchy)",
+        "globalSearch": "INCLUDED (legacy: isSearchable unset, active, valid hierarchy)",
         "migrationAction": "NO_CHANGE",
-        "note": "Only usable live condition (Adolescent Care). Unchanged."
+        "note": "Only usable live condition (Adolescent Care). Unchanged.",
+        "review": {
+          "assessment": "REAL_RECORD_KEEP",
+          "orphan": false,
+          "testNameSuspect": false,
+          "action": "NO_CHANGE",
+          "reason": "Valid parent (Adolescent Care), active and searchable. No dedicated 'Teen acne' page exists, so it resolves to the Adolescent Care specialty page. KEEP_SEPARATE with canonical Acne (Dermatology) was approved in PR 4. Recommend an admin review of the casing and whether a dedicated page is wanted."
+        }
       }
     ],
     "duplicateConditionNamePairs": 0
   },
   "doctors": {
     "summary": {
-      "approvedEnrollments": 33,
-      "linkedDoctorAccounts": 32,
-      "publicDoctors": 32,
+      "approvedEnrollments": 34,
+      "linkedDoctorAccounts": 33,
+      "publicDoctors": 33,
       "approvedWithoutDoctorAccount": 1,
       "disabledAccounts": 0,
       "unlinkedBySpecialization": {
@@ -371,8 +415,8 @@
     "specializationMapping": [
       {
         "specialization": "General Practice",
-        "approvedEnrollments": 13,
-        "publicDoctors": 13,
+        "approvedEnrollments": 14,
+        "publicDoctors": 14,
         "mappedSpecialty": "General Physician",
         "mappingType": "APPROVED_MAPPING",
         "specialtyStatus": "LIVE_ACTIVE"
@@ -453,45 +497,56 @@
     "recordsModified": 0
   },
   "counts": {
-    "legacyRecordsInspected": 245,
+    "legacyRecordsInspected": 266,
     "legacyCategoryRecords": 11,
     "legacySpecialtyRecords": 30,
-    "legacyConditionRecords": 204,
+    "legacyConditionRecords": 225,
     "classification": {
-      "EXACT": 121,
-      "NAME_VARIATION": 44,
+      "EXACT": 132,
+      "NAME_VARIATION": 54,
       "CLEAR_SEMANTIC_MATCH": 3,
       "NEEDS_REVIEW": 22,
       "INSUFFICIENT_DATA": 14
     },
-    "importable": 201,
-    "importableConditions": 194,
+    "importable": 222,
+    "importableConditions": 215,
     "importableServices": 7,
     "excluded": 0,
-    "canonicalRecords": 201,
+    "canonicalRecords": 222,
     "aliasMerges": 3,
     "serviceRecords": 7,
     "newSpecialties": 2,
     "specialtyAliasUpdates": 15,
     "indexesToCreate": 3,
-    "totalConditionAliases": 280,
+    "totalConditionAliases": 310,
     "aliasesDroppedAsDuplicateOfName": 147,
     "collisionCount": 0,
-    "warningCount": 12,
+    "warningCount": 15,
     "parentMissingCount": 0,
+    "pr8AdditionalPages": 21,
+    "plannedSearchable": 222,
+    "plannedBookingActive": 0,
+    "unmappedAppPages": 2,
+    "routeResolution": {
+      "FOUND_IN_APP": 173,
+      "OVERRIDE_VERIFIED": 5,
+      "DERIVED_VERIFIED": 44
+    },
     "routeConflicts": {
       "legacyRouteNotFoundInApp": 49,
       "routeSpecialtyDiffersFromTarget": 2,
+      "withoutDedicatedPage": 0,
       "duplicateStoredRoutes": 0
     },
     "slugConflicts": 0,
     "legacyIdConflicts": 0,
     "decisionBasis": {
       "approved-hierarchy": 9,
-      "exact": 119,
+      "exact": 129,
       "approved-unresolved": 7,
       "approved-clear-semantic-match": 3,
-      "name_variation": 43,
+      "approved-page-structure": 1,
+      "name_variation": 53,
       "approved-service": 7,
       "approved-specialty-route": 13
     },
@@ -503,28 +558,31 @@
       "Neurology": 7,
       "Gastroenterology": 9,
       "Endocrinology": 5,
-      "Weight Management": 3,
+      "Weight Management": 4,
       "Pulmonology": 10,
-      "Lifestyle Medicine": 4,
       "Nutrition & Dietetics": 5,
       "General Physician": 26,
-      "Ophthalmology": 5,
+      "Lifestyle Medicine": 3,
+      "Ophthalmology": 6,
       "ENT": 7,
       "Pediatrics": 12,
       "Adolescent Care": 3,
       "Sexual Health": 9,
-      "Dermatology": 17,
+      "Dermatology": 18,
       "Travel Medicine": 12,
       "Global / Cross-Border Care": 4,
       "Family Medicine": 3,
       "Urology": 9,
-      "OB-GYN": 12,
+      "OB-GYN": 13,
       "Lactation Consulting": 4,
-      "Menopause Care": 1,
+      "Menopause Care": 2,
       "Women's Mental Health": 3,
-      "Men's Health": 6
+      "Men's Health": 6,
+      "Psychiatry": 8,
+      "Psychology / Counselling": 5,
+      "Behavioral Health": 4
     },
-    "schemaValidatedDocuments": 218
+    "schemaValidatedDocuments": 239
   },
   "collisions": [
     {
@@ -610,11 +668,36 @@
       ]
     },
     {
+      "check": "B_ALIAS_EQUALS_SIBLING_NAME",
+      "blocking": false,
+      "detail": "Menopause Care: alias \"hot flashes\" on \"menopause-symptoms\" = name of \"hot-flashes\" (PR8_SEPARATE_PAGES)",
+      "legacyIds": [
+        "menopause-symptoms",
+        "hot-flashes"
+      ]
+    },
+    {
       "check": "E_LIVE_NAME_ELSEWHERE",
       "blocking": false,
       "detail": "\"Pediatric Fever\" also exists live under another specialty id 6a4d41c9ebc7b05ffd844a5d (6a4d420cebc7b05ffd844a98); no unique-index conflict",
       "legacyIds": [
         "pediatric-fever"
+      ]
+    },
+    {
+      "check": "L_ROUTE_PARENT_SPECIALTY_MISMATCH",
+      "blocking": false,
+      "detail": "\"medication-refills-traveling\" → Travel Medicine, but /travel-and-global-care/global-cross-border-care/medication-refill-while-traveling sits under Global / Cross-Border Care (approved decision kept: approved-specialty-route)",
+      "legacyIds": [
+        "medication-refills-traveling"
+      ]
+    },
+    {
+      "check": "L_ROUTE_PARENT_SPECIALTY_MISMATCH",
+      "blocking": false,
+      "detail": "\"prostate-health\" → Urology, but /mens-health/men-health/prostate-health sits under Men's Health (approved decision kept: approved-specialty-route)",
+      "legacyIds": [
+        "prostate-health"
       ]
     },
     {
@@ -630,7 +713,9 @@
       "legacyIds": []
     }
   ],
-  "warnings": [],
+  "warnings": [
+    "Decision overrides a clean EXACT record: \"binge-eating\"."
+  ],
   "fatal": [],
   "safety": {
     "guard": "driver-level, throwing (installed before connect)",
@@ -657,7 +742,7 @@
       "collectionDeletions": 0
     }
   },
-  "operationsSha256": "18e71b0cb91f124d876784d409df8caab3722268a09b42d685cbf4c80fc918bf",
+  "operationsSha256": "c7bbd5b77a6b589f6a2d3a0a79aef94aacdd648efcae05aeec17fb153b4b275c",
   "operations": [
     {
       "op": "CREATE_INDEX",
@@ -769,7 +854,8 @@
         "legacyId": "mood-anxiety-teens",
         "slug": "mood-anxiety-in-teens",
         "route": "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Adolescent Care",
       "categoryName": "Children & Family",
@@ -795,7 +881,8 @@
         "legacyId": "puberty-concerns",
         "slug": "puberty-concerns",
         "route": "/child-and-family-care/adolescent-medicine/puberty-concerns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Adolescent Care",
       "categoryName": "Children & Family",
@@ -821,7 +908,8 @@
         "legacyId": "sports-injuries",
         "slug": "sports-injuries",
         "route": "/child-and-family-care/adolescent-medicine/sports-injuries",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Adolescent Care",
       "categoryName": "Children & Family",
@@ -848,7 +936,8 @@
         "legacyId": "childhood-allergies",
         "slug": "childhood-allergies",
         "route": "/childhood-allergies",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -875,7 +964,8 @@
         "legacyId": "ear-pain-children",
         "slug": "ear-pain-in-children",
         "route": "/child-and-family-care/pediatrics/ear-pain-children",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -901,7 +991,8 @@
         "legacyId": "feeding-concerns",
         "slug": "feeding-concerns",
         "route": "/child-and-family-care/pediatrics/feeding-concerns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -928,7 +1019,8 @@
         "legacyId": "growth-development",
         "slug": "growth-development",
         "route": "/growth-development",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -955,7 +1047,8 @@
         "legacyId": "mild-asthma-symptoms",
         "slug": "mild-asthma-symptoms",
         "route": "/mild-asthma-symptoms",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -983,7 +1076,8 @@
         "legacyId": "pediatric-cold-flu",
         "slug": "pediatric-cold-flu",
         "route": "/child-and-family-care/pediatrics/pediatric-cold-flu",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1011,7 +1105,8 @@
         "legacyId": "pediatric-fever",
         "slug": "pediatric-fever",
         "route": "/child-and-family-care/pediatrics/pediatric-fever",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1038,7 +1133,8 @@
         "legacyId": "pink-eye-children",
         "slug": "pink-eye-in-children",
         "route": "/pink-eye-children",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1066,7 +1162,8 @@
         "legacyId": "skin-rash-children",
         "slug": "skin-rash-in-children",
         "route": "/child-and-family-care/pediatrics/skin-rash-in-children",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1093,7 +1190,8 @@
         "legacyId": "sore-throat-children",
         "slug": "sore-throat-in-children",
         "route": "/sore-throat-children",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1120,7 +1218,8 @@
         "legacyId": "stomach-pain-children",
         "slug": "stomach-pain-in-children",
         "route": "/stomach-pain-children",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1147,7 +1246,8 @@
         "legacyId": "vomiting-diarrhea-children",
         "slug": "vomiting-diarrhea-in-children",
         "route": "/vomiting-diarrhea-children",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pediatrics",
       "categoryName": "Children & Family",
@@ -1173,7 +1273,8 @@
         "legacyId": "chest-pain",
         "slug": "chest-pain",
         "route": "/chronic-care/cardiology/chest-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Cardiology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1198,15 +1299,16 @@
         "kind": "condition",
         "legacyId": "heart-disease",
         "slug": "heart-disease",
-        "route": "",
-        "isActive": false
+        "route": "/chronic-care/cardiology/heart-disease-follow-up",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Cardiology",
       "categoryName": "Chronic Care & Expert Opinion",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/heart-disease",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "OVERRIDE_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -1226,7 +1328,8 @@
         "legacyId": "high-blood-pressure",
         "slug": "high-blood-pressure",
         "route": "/chronic-care/cardiology/high-blood-pressure",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Cardiology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1253,7 +1356,8 @@
         "legacyId": "high-cholesterol",
         "slug": "high-cholesterol",
         "route": "/chronic-care/cardiology/high-cholesterol",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Cardiology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1280,7 +1384,8 @@
         "legacyId": "palpitations",
         "slug": "palpitations",
         "route": "/chronic-care/cardiology/palpitations",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Cardiology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1308,7 +1413,8 @@
         "legacyId": "pre-op-cardiac-clearance",
         "slug": "pre-op-cardiac-clearance",
         "route": "/chronic-care/cardiology/pre-op-cardiac-clearance",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Cardiology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1333,15 +1439,16 @@
         "kind": "condition",
         "legacyId": "hormone-imblance",
         "slug": "hormone-imbalance",
-        "route": "",
-        "isActive": false
+        "route": "/chronic-care/endocrinology/hormone-imbalance",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Endocrinology",
       "categoryName": "Chronic Care & Expert Opinion",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/hormone-imblance",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -1358,7 +1465,8 @@
         "legacyId": "metabolic-syndrome",
         "slug": "metabolic-syndrome",
         "route": "/metabolic-syndrome",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Endocrinology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1385,7 +1493,8 @@
         "legacyId": "osteoporosis",
         "slug": "osteoporosis",
         "route": "/chronic-care/endocrinology/osteoporosis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Endocrinology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1413,7 +1522,8 @@
         "legacyId": "thyroid-disorders",
         "slug": "thyroid-disorders",
         "route": "/chronic-care/endocrinology/thyroid-disorders",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Endocrinology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1440,7 +1550,8 @@
         "legacyId": "type-2-diabetes",
         "slug": "type-2-diabetes",
         "route": "/chronic-care/endocrinology/type-2-diabetes",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Endocrinology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1468,7 +1579,8 @@
         "legacyId": "cancer-second-opinion",
         "slug": "cancer-second-opinion",
         "route": "/online-second-medical-opinion/cancer-second-opinion",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Expert Medical Opinion",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1495,7 +1607,8 @@
         "legacyId": "complex-diagnosis",
         "slug": "complex-diagnosis-review",
         "route": "/online-second-medical-opinion/complex-diagnosis-review",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Expert Medical Opinion",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1521,7 +1634,8 @@
         "legacyId": "second-medical-opinion",
         "slug": "second-medical-opinion",
         "route": "/second-medical-opinion",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Expert Medical Opinion",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1547,7 +1661,8 @@
         "legacyId": "surgery-second-opinion",
         "slug": "surgery-second-opinion",
         "route": "/online-second-medical-opinion/surgery-second-opinion",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Expert Medical Opinion",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1571,7 +1686,8 @@
         "legacyId": "treatment-plan-review",
         "slug": "treatment-plan-review",
         "route": "/online-second-medical-opinion/treatment-plan-review",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Expert Medical Opinion",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1598,7 +1714,8 @@
         "legacyId": "abdominal-pain",
         "slug": "abdominal-pain",
         "route": "/chronic-care/gastroenterology/abdominal-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1626,7 +1743,8 @@
         "legacyId": "acid-reflux-gerd",
         "slug": "acid-reflux-gerd",
         "route": "/chronic-care/gastroenterology/acid-reflux-gerd",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1653,7 +1771,8 @@
         "legacyId": "bloating",
         "slug": "bloating",
         "route": "/chronic-care/gastroenterology/bloating",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1677,7 +1796,8 @@
         "legacyId": "constipation",
         "slug": "constipation",
         "route": "/chronic-care/gastroenterology/constipation",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1704,7 +1824,8 @@
         "legacyId": "fatty-liver",
         "slug": "fatty-liver",
         "route": "/chronic-care/gastroenterology/fatty-liver",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1730,7 +1851,8 @@
         "legacyId": "gastritis",
         "slug": "gastritis",
         "route": "/gastritis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1756,7 +1878,8 @@
         "legacyId": "hemorrhoids",
         "slug": "hemorrhoids",
         "route": "/hemorrhoids",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1782,7 +1905,8 @@
         "legacyId": "indigestion",
         "slug": "indigestion",
         "route": "/indigestion",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1808,7 +1932,8 @@
         "legacyId": "irritable-bowel-syndrome",
         "slug": "irritable-bowel-syndrome",
         "route": "/chronic-care/gastroenterology/irritable-bowel-syndrome",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Gastroenterology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1835,7 +1960,8 @@
         "legacyId": "chronic-migraine",
         "slug": "chronic-migraine",
         "route": "/chronic-care/neurology/chronic-migraine",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1861,7 +1987,8 @@
         "legacyId": "dizziness",
         "slug": "dizziness",
         "route": "/chronic-care/neurology/dizziness",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1888,7 +2015,8 @@
         "legacyId": "memory-concerns",
         "slug": "memory-concerns",
         "route": "/chronic-care/neurology/memory-concerns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1914,7 +2042,8 @@
         "legacyId": "migraines",
         "slug": "migraine",
         "route": "/chronic-care/neurology/migraine",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1942,7 +2071,8 @@
         "legacyId": "numbness-tingling",
         "slug": "numbness-tingling",
         "route": "/chronic-care/neurology/numbness-and-tingling",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1969,7 +2099,8 @@
         "legacyId": "seizures-epilepsy-follow-up",
         "slug": "seizures-epilepsy-follow-up",
         "route": "/chronic-care/neurology/seizures-epilepsy-follow-up",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -1996,7 +2127,8 @@
         "legacyId": "tremor",
         "slug": "tremor",
         "route": "/chronic-care/neurology/tremor",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Neurology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2024,7 +2156,8 @@
         "legacyId": "allergic-rhinitis",
         "slug": "allergic-rhinitis",
         "route": "/allergic-rhinitis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2051,7 +2184,8 @@
         "legacyId": "asthma",
         "slug": "asthma",
         "route": "/chronic-care/pulmonology/asthma",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2079,7 +2213,8 @@
         "legacyId": "asthma-flare-up",
         "slug": "asthma-flare-up",
         "route": "/asthma-flare-up",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2105,7 +2240,8 @@
         "legacyId": "copd",
         "slug": "copd",
         "route": "/chronic-care/pulmonology/copd",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2131,7 +2267,8 @@
         "legacyId": "persistent-cough",
         "slug": "persistent-cough",
         "route": "/chronic-care/pulmonology/persistent-cough",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2157,7 +2294,8 @@
         "legacyId": "pneumonia-follow-up",
         "slug": "pneumonia-follow-up",
         "route": "/pneumonia-follow-up",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2184,7 +2322,8 @@
         "legacyId": "post-covid-concerns",
         "slug": "post-covid-concerns",
         "route": "/chronic-care/pulmonology/post-covid-concerns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2210,7 +2349,8 @@
         "legacyId": "shortness-of-breath",
         "slug": "shortness-of-breath",
         "route": "/chronic-care/pulmonology/shortness-of-breath",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2237,7 +2377,8 @@
         "legacyId": "sleep-apnea",
         "slug": "sleep-apnea",
         "route": "/chronic-care/pulmonology/sleep-apnea-screening",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2263,7 +2404,8 @@
         "legacyId": "upper-respiratory-infection",
         "slug": "upper-respiratory-infection",
         "route": "/upper-respiratory-infection",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Pulmonology",
       "categoryName": "Chronic Care & Expert Opinion",
@@ -2290,7 +2432,8 @@
         "legacyId": "ear-infection",
         "slug": "ear-infection",
         "route": "/eye-ear-bone/ear-nose-throat/ear-infection",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2316,7 +2459,8 @@
         "legacyId": "ear-pain",
         "slug": "ear-pain",
         "route": "/eye-ear-bone/ear-nose-throat/ear-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2342,7 +2486,8 @@
         "legacyId": "hoarseness",
         "slug": "hoarseness",
         "route": "/eye-ear-bone/ear-nose-throat/hoarseness",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2368,7 +2513,8 @@
         "legacyId": "nasal-congestion",
         "slug": "nasal-congestion",
         "route": "/eye-ear-bone/ear-nose-throat/nasal-congestion",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2392,7 +2538,8 @@
         "legacyId": "sore-throat",
         "slug": "sore-throat",
         "route": "/eye-ear-bone/ear-nose-throat/sore-throat",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2418,7 +2565,8 @@
         "legacyId": "tonsillitis",
         "slug": "tonsillitis",
         "route": "/eye-ear-bone/ear-nose-throat/tonsillitis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2445,7 +2593,8 @@
         "legacyId": "vertigo",
         "slug": "vertigo",
         "route": "/eye-ear-bone/ear-nose-throat/vertigo",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
@@ -2471,13 +2620,42 @@
         "legacyId": "dry-eyes",
         "slug": "dry-eyes",
         "route": "/eye-ear-bone/ophthalmology/dry-eyes",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Ophthalmology",
       "categoryName": "Eye, Ear & Bone",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/eye-ear-bone/ophthalmology/dry-eyes",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "eye-irritation"
+      },
+      "document": {
+        "specialtyId": "6a4f8c34c08910eba9bf83b7",
+        "name": "Eye Irritation",
+        "aliases": [
+          "irritated eyes",
+          "itchy eyes"
+        ],
+        "kind": "condition",
+        "legacyId": "eye-irritation",
+        "slug": "eye-irritation",
+        "route": "/eye-ear-bone/ophthalmology/eye-irritation",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Ophthalmology",
+      "categoryName": "Eye, Ear & Bone",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/eye-ear-bone/ophthalmology/eye-irritation",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -2497,7 +2675,8 @@
         "legacyId": "eye-redness",
         "slug": "eye-redness",
         "route": "/eye-ear-bone/ophthalmology/eye-redness",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Ophthalmology",
       "categoryName": "Eye, Ear & Bone",
@@ -2524,7 +2703,8 @@
         "legacyId": "eye-strain",
         "slug": "eye-strain",
         "route": "/eye-ear-bone/ophthalmology/eye-strain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Ophthalmology",
       "categoryName": "Eye, Ear & Bone",
@@ -2550,7 +2730,8 @@
         "legacyId": "stye",
         "slug": "stye",
         "route": "/eye-ear-bone/ophthalmology/stye",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Ophthalmology",
       "categoryName": "Eye, Ear & Bone",
@@ -2576,7 +2757,8 @@
         "legacyId": "vision-changes",
         "slug": "vision-changes",
         "route": "/eye-ear-bone/ophthalmology/vision-changes",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Ophthalmology",
       "categoryName": "Eye, Ear & Bone",
@@ -2602,7 +2784,8 @@
         "legacyId": "arthritis",
         "slug": "arthritis",
         "route": "/eye-ear-bone/orthopedics/arthritis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2629,7 +2812,8 @@
         "legacyId": "back-pain",
         "slug": "back-pain",
         "route": "/eye-ear-bone/orthopedics/back-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2656,7 +2840,8 @@
         "legacyId": "joint-pain",
         "slug": "joint-pain",
         "route": "/joint-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2686,7 +2871,8 @@
         "legacyId": "knee-pain",
         "slug": "knee-pain",
         "route": "/eye-ear-bone/orthopedics/knee-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2712,7 +2898,8 @@
         "legacyId": "muscle-strain",
         "slug": "muscle-strain",
         "route": "/eye-ear-bone/orthopedics/muscle-strain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2739,7 +2926,8 @@
         "legacyId": "neck-pain",
         "slug": "neck-pain",
         "route": "/eye-ear-bone/orthopedics/neck-pain",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2765,7 +2953,8 @@
         "legacyId": "osteoarthritis",
         "slug": "osteoarthritis",
         "route": "/eye-ear-bone/orthopedics/osteoarthritis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2791,7 +2980,8 @@
         "legacyId": "rheumatoid-arthritis",
         "slug": "rheumatoid-arthritis",
         "route": "/rheumatoid-arthritis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2819,7 +3009,8 @@
         "legacyId": "swollen-feet-ankles",
         "slug": "swollen-feet-ankles",
         "route": "/swollen-feet-ankles",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
@@ -2846,7 +3037,8 @@
         "legacyId": "routine-check-ups",
         "slug": "routine-check-ups",
         "route": "/general-and-everyday-care/family-medicine/routine-check-ups",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Family Medicine",
       "categoryName": "General & Everyday Care",
@@ -2872,7 +3064,8 @@
         "legacyId": "vaccination-advice",
         "slug": "vaccination-advice",
         "route": "/general-and-everyday-care/family-medicine/vaccination-advice",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Family Medicine",
       "categoryName": "General & Everyday Care",
@@ -2899,7 +3092,8 @@
         "legacyId": "whole-family-illnesses",
         "slug": "whole-family-illnesses",
         "route": "/general-and-everyday-care/family-medicine/whole-family-illnesses",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Family Medicine",
       "categoryName": "General & Everyday Care",
@@ -2925,7 +3119,8 @@
         "legacyId": "body-aches",
         "slug": "body-aches",
         "route": "/general-and-everyday-care/general-physician/body-aches",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -2949,7 +3144,8 @@
         "legacyId": "bronchitis",
         "slug": "bronchitis",
         "route": "/bronchitis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -2978,7 +3174,8 @@
         "legacyId": "cold-and-flu",
         "slug": "cold-flu",
         "route": "/general-and-everyday-care/general-physician/cold-and-flu",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3002,7 +3199,8 @@
         "legacyId": "cough",
         "slug": "cough",
         "route": "/general-and-everyday-care/general-physician/cough",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3030,7 +3228,8 @@
         "legacyId": "covid-19",
         "slug": "covid-19",
         "route": "/covid-19",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3056,7 +3255,8 @@
         "legacyId": "dehydration",
         "slug": "dehydration",
         "route": "/dehydration",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3080,7 +3280,8 @@
         "legacyId": "diarrhea",
         "slug": "diarrhea",
         "route": "/diarrhea",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3108,7 +3309,8 @@
         "legacyId": "doctors-note",
         "slug": "doctor-s-note",
         "route": "/doctors-note",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3135,7 +3337,8 @@
         "legacyId": "fatigue",
         "slug": "fatigue",
         "route": "/general-and-everyday-care/general-physician/fatigue",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3161,7 +3364,8 @@
         "legacyId": "fever",
         "slug": "fever",
         "route": "/general-and-everyday-care/general-physician/fever",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3187,7 +3391,8 @@
         "legacyId": "follow-up-consultation",
         "slug": "follow-up-consultation",
         "route": "/follow-up-consultation",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3211,7 +3416,8 @@
         "legacyId": "food-poisoning",
         "slug": "food-poisoning",
         "route": "/food-poisoning",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3237,7 +3443,8 @@
         "legacyId": "headache",
         "slug": "headache",
         "route": "/general-and-everyday-care/general-physician/headache",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3263,7 +3470,8 @@
         "legacyId": "insect-bite",
         "slug": "insect-bites",
         "route": "/insect-bite",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3290,7 +3498,8 @@
         "legacyId": "lab-results-review",
         "slug": "lab-results-review",
         "route": "/lab-results-review",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3314,7 +3523,8 @@
         "legacyId": "medical-certificate",
         "slug": "medical-certificate",
         "route": "/medical-certificate",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3338,7 +3548,8 @@
         "legacyId": "minor-burns",
         "slug": "minor-burns",
         "route": "/minor-burns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3362,7 +3573,8 @@
         "legacyId": "minor-infections",
         "slug": "minor-infections",
         "route": "/general-and-everyday-care/general-physician/minor-infections",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3389,7 +3601,8 @@
         "legacyId": "nausea-and-vomiting",
         "slug": "nausea-vomiting",
         "route": "/general-and-everyday-care/general-physician/nausea-and-vomiting",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3415,7 +3628,8 @@
         "legacyId": "pink-eye",
         "slug": "pink-eye",
         "route": "/general-and-everyday-care/general-physician/pink-eye",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3442,7 +3656,8 @@
         "legacyId": "prescription-refill",
         "slug": "prescription-refill",
         "route": "/prescription-refill",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3469,7 +3684,8 @@
         "legacyId": "return-to-work-clearance",
         "slug": "return-to-work-clearance",
         "route": "/return-to-work-clearance",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3495,7 +3711,8 @@
         "legacyId": "sinus-infection",
         "slug": "sinus-infection",
         "route": "/general-and-everyday-care/general-physician/sinus-infection",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3521,7 +3738,8 @@
         "legacyId": "specialist-referral",
         "slug": "specialist-referral",
         "route": "/specialist-referral",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3545,7 +3763,8 @@
         "legacyId": "strep-throat",
         "slug": "strep-throat",
         "route": "/strep-throat",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3571,7 +3790,8 @@
         "legacyId": "vomiting",
         "slug": "vomiting",
         "route": "/vomiting",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "General Physician",
       "categoryName": "General & Everyday Care",
@@ -3598,7 +3818,8 @@
         "legacyId": "chronic-kidney-disease",
         "slug": "chronic-kidney-disease",
         "route": "/chronic-kidney-disease",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Internal Medicine",
       "categoryName": "General & Everyday Care",
@@ -3624,7 +3845,8 @@
         "legacyId": "medication-review",
         "slug": "medication-review",
         "route": "/general-and-everyday-care/internal-medicine/medication-review",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Internal Medicine",
       "categoryName": "General & Everyday Care",
@@ -3650,7 +3872,8 @@
         "legacyId": "multi-system-complaints",
         "slug": "multi-system-complaints",
         "route": "/general-and-everyday-care/internal-medicine/multi-system-complaints",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Internal Medicine",
       "categoryName": "General & Everyday Care",
@@ -3676,7 +3899,8 @@
         "legacyId": "preventive-screening",
         "slug": "preventive-screening",
         "route": "/general-and-everyday-care/internal-medicine/preventive-screening",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Internal Medicine",
       "categoryName": "General & Everyday Care",
@@ -3700,7 +3924,8 @@
         "legacyId": "undiagnosed-symptoms",
         "slug": "undiagnosed-symptoms",
         "route": "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Internal Medicine",
       "categoryName": "General & Everyday Care",
@@ -3727,7 +3952,8 @@
         "legacyId": "erectile-dysfunction",
         "slug": "erectile-dysfunction",
         "route": "/mens-health/men-health/erectile-dysfunction",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Men's Health",
       "categoryName": "Men's Health",
@@ -3755,7 +3981,8 @@
         "legacyId": "hair-loss-mens-health",
         "slug": "hair-loss-men-s-health",
         "route": "/mens-health/men-health/hair-loss",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Men's Health",
       "categoryName": "Men's Health",
@@ -3781,7 +4008,8 @@
         "legacyId": "low-libido",
         "slug": "low-libido",
         "route": "/mens-health/men-health/low-libido",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Men's Health",
       "categoryName": "Men's Health",
@@ -3808,7 +4036,8 @@
         "legacyId": "low-testosterone-symptoms",
         "slug": "low-testosterone-symptoms",
         "route": "/mens-health/men-health/low-testosterone-symptoms",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Men's Health",
       "categoryName": "Men's Health",
@@ -3834,7 +4063,8 @@
         "legacyId": "mens-wellness-consultation",
         "slug": "men-s-wellness-consultation",
         "route": "/mens-wellness-consultation",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Men's Health",
       "categoryName": "Men's Health",
@@ -3858,7 +4088,8 @@
         "legacyId": "premature-ejaculation",
         "slug": "premature-ejaculation",
         "route": "/premature-ejaculation",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Men's Health",
       "categoryName": "Men's Health",
@@ -3882,7 +4113,8 @@
         "legacyId": "bladder-problems",
         "slug": "bladder-problems",
         "route": "/mens-health/urology/bladder-problems",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -3908,7 +4140,8 @@
         "legacyId": "blood-in-urine",
         "slug": "blood-in-urine",
         "route": "/mens-health/urology/blood-in-urine",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -3932,7 +4165,8 @@
         "legacyId": "burning-urination",
         "slug": "burning-urination",
         "route": "/burning-urination",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -3956,7 +4190,8 @@
         "legacyId": "frequent-urination",
         "slug": "frequent-urination",
         "route": "/frequent-urination",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -3982,7 +4217,8 @@
         "legacyId": "kidney-stones",
         "slug": "kidney-stones",
         "route": "/mens-health/urology/kidney-stones",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -4008,7 +4244,8 @@
         "legacyId": "prostate-health",
         "slug": "prostate-health",
         "route": "/mens-health/men-health/prostate-health",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -4032,7 +4269,8 @@
         "legacyId": "urinary-incontinence",
         "slug": "urinary-incontinence",
         "route": "/mens-health/urology/urinary-incontinence",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -4058,7 +4296,8 @@
         "legacyId": "urinary-symptoms-in-men",
         "slug": "urinary-symptoms-in-men",
         "route": "/urinary-symptoms-in-men",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
@@ -4086,13 +4325,479 @@
         "legacyId": "urinary-tract-infection",
         "slug": "urinary-tract-infection-uti",
         "route": "/mens-health/urology/urinary-tract-infection",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Urology",
       "categoryName": "Men's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/mens-health/urology/urinary-tract-infection",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "adjustment-difficulties"
+      },
+      "document": {
+        "specialtyId": "6a4f8ad3c08910eba9bf83a4",
+        "name": "Adjustment Difficulties",
+        "aliases": [
+          "adjustment disorder"
+        ],
+        "kind": "condition",
+        "legacyId": "adjustment-difficulties",
+        "slug": "adjustment-difficulties",
+        "route": "/mental-health/behavioral-health/adjustment-difficulties",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Behavioral Health",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/behavioral-health/adjustment-difficulties",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "anger-management"
+      },
+      "document": {
+        "specialtyId": "6a4f8ad3c08910eba9bf83a4",
+        "name": "Anger Management",
+        "aliases": [
+          "anger"
+        ],
+        "kind": "condition",
+        "legacyId": "anger-management",
+        "slug": "anger-management",
+        "route": "/mental-health/behavioral-health/anger-management",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Behavioral Health",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/behavioral-health/anger-management",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "sleep-related-anxiety"
+      },
+      "document": {
+        "specialtyId": "6a4f8ad3c08910eba9bf83a4",
+        "name": "Sleep-Related Anxiety",
+        "aliases": [
+          "sleep anxiety"
+        ],
+        "kind": "condition",
+        "legacyId": "sleep-related-anxiety",
+        "slug": "sleep-related-anxiety",
+        "route": "/mental-health/behavioral-health/sleep-related-anxiety",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Behavioral Health",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/behavioral-health/sleep-related-anxiety",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "substance-use-support"
+      },
+      "document": {
+        "specialtyId": "6a4f8ad3c08910eba9bf83a4",
+        "name": "Substance Use Support",
+        "aliases": [
+          "addiction",
+          "substance abuse"
+        ],
+        "kind": "condition",
+        "legacyId": "substance-use-support",
+        "slug": "substance-use-support",
+        "route": "/mental-health/behavioral-health/substance-use-support",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Behavioral Health",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/behavioral-health/substance-use-support",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "adhd-evaluation"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "ADHD Evaluation",
+        "aliases": [
+          "adhd",
+          "attention deficit"
+        ],
+        "kind": "condition",
+        "legacyId": "adhd-evaluation",
+        "slug": "adhd-evaluation",
+        "route": "/mental-health/psychiatry/adhd-evaluation",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/adhd-evaluation",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "anxiety"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "Anxiety",
+        "aliases": [
+          "anxious",
+          "feeling anxious"
+        ],
+        "kind": "condition",
+        "legacyId": "anxiety",
+        "slug": "anxiety",
+        "route": "/mental-health/psychiatry/anxiety",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/anxiety",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "bipolar-disorder-follow-up"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "Bipolar Disorder Follow-Up",
+        "aliases": [
+          "bipolar"
+        ],
+        "kind": "condition",
+        "legacyId": "bipolar-disorder-follow-up",
+        "slug": "bipolar-disorder-follow-up",
+        "route": "/mental-health/psychiatry/bipolar-disorder-follow-up",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/bipolar-disorder-follow-up",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "depression"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "Depression",
+        "aliases": [
+          "low mood",
+          "feeling low"
+        ],
+        "kind": "condition",
+        "legacyId": "depression",
+        "slug": "depression",
+        "route": "/mental-health/psychiatry/depression",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/depression",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "insomnia"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "Insomnia",
+        "aliases": [
+          "trouble sleeping",
+          "can't sleep"
+        ],
+        "kind": "condition",
+        "legacyId": "insomnia",
+        "slug": "insomnia",
+        "route": "/mental-health/psychiatry/insomnia",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/insomnia",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "ocd"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "OCD",
+        "aliases": [
+          "obsessive compulsive disorder"
+        ],
+        "kind": "condition",
+        "legacyId": "ocd",
+        "slug": "ocd",
+        "route": "/mental-health/psychiatry/Ocd",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/Ocd",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "panic-attacks"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "Panic Attacks",
+        "aliases": [
+          "panic"
+        ],
+        "kind": "condition",
+        "legacyId": "panic-attacks",
+        "slug": "panic-attacks",
+        "route": "/mental-health/psychiatry/panic-attacks",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/panic-attacks",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "ptsd"
+      },
+      "document": {
+        "specialtyId": "6a4f8aafc08910eba9bf83a2",
+        "name": "PTSD",
+        "aliases": [
+          "post traumatic stress disorder"
+        ],
+        "kind": "condition",
+        "legacyId": "ptsd",
+        "slug": "ptsd",
+        "route": "/mental-health/psychiatry/ptsd",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychiatry",
+      "categoryName": "Mental Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/mental-health/psychiatry/ptsd",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "grief-and-loss"
+      },
+      "document": {
+        "specialtyId": "6a4f8abfc08910eba9bf83a3",
+        "name": "Grief & Loss",
+        "aliases": [
+          "grief",
+          "bereavement"
+        ],
+        "kind": "condition",
+        "legacyId": "grief-and-loss",
+        "slug": "grief-loss",
+        "route": "/mental-health/psychology-counseling/grief-and-loss",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychology / Counselling",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/psychology-counseling/grief-and-loss",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "low-self-esteem"
+      },
+      "document": {
+        "specialtyId": "6a4f8abfc08910eba9bf83a3",
+        "name": "Low Self-Esteem",
+        "aliases": [
+          "self esteem"
+        ],
+        "kind": "condition",
+        "legacyId": "low-self-esteem",
+        "slug": "low-self-esteem",
+        "route": "/mental-health/psychology-counseling/low-self-esteem",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychology / Counselling",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/psychology-counseling/low-self-esteem",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "relationship-stress"
+      },
+      "document": {
+        "specialtyId": "6a4f8abfc08910eba9bf83a3",
+        "name": "Relationship Stress",
+        "aliases": [
+          "relationship problems"
+        ],
+        "kind": "condition",
+        "legacyId": "relationship-stress",
+        "slug": "relationship-stress",
+        "route": "/mental-health/psychology-counseling/relationship-stress",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychology / Counselling",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/psychology-counseling/relationship-stress",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "stress"
+      },
+      "document": {
+        "specialtyId": "6a4f8abfc08910eba9bf83a3",
+        "name": "Stress",
+        "aliases": [
+          "feeling stressed"
+        ],
+        "kind": "condition",
+        "legacyId": "stress",
+        "slug": "stress",
+        "route": "/mental-health/psychology-counseling/stress",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychology / Counselling",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/psychology-counseling/stress",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "trauma-support"
+      },
+      "document": {
+        "specialtyId": "6a4f8abfc08910eba9bf83a3",
+        "name": "Trauma Support",
+        "aliases": [
+          "trauma"
+        ],
+        "kind": "condition",
+        "legacyId": "trauma-support",
+        "slug": "trauma-support",
+        "route": "/mental-health/psychology-counseling/trauma-support",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Psychology / Counselling",
+      "categoryName": "Mental Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/mental-health/psychology-counseling/trauma-support",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -4112,7 +4817,8 @@
         "legacyId": "chlamydia",
         "slug": "chlamydia",
         "route": "/sexual-health/sexual-health-and-wellness/chlamydia",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4136,7 +4842,8 @@
         "legacyId": "genital-itching",
         "slug": "genital-itching",
         "route": "/genital-itching",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4160,7 +4867,8 @@
         "legacyId": "genital-rash",
         "slug": "genital-rash",
         "route": "/genital-rash",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4186,7 +4894,8 @@
         "legacyId": "gonorrhea",
         "slug": "gonorrhea",
         "route": "/sexual-health/sexual-health-and-wellness/gonorrhea",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4213,7 +4922,8 @@
         "legacyId": "herpes",
         "slug": "herpes",
         "route": "/sexual-health/sexual-health-and-wellness/herpes",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4241,7 +4951,8 @@
         "legacyId": "hiv-prevention-guidance",
         "slug": "hiv-prevention-guidance",
         "route": "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4268,7 +4979,8 @@
         "legacyId": "partner-exposure-concerns",
         "slug": "partner-exposure-concerns",
         "route": "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4295,7 +5007,8 @@
         "legacyId": "safe-sex-counseling",
         "slug": "safe-sex-counseling",
         "route": "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4321,7 +5034,8 @@
         "legacyId": "sti-consultation",
         "slug": "sti-consultation",
         "route": "/sexual-health/sexual-health-and-wellness/sti-consultation",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Sexual Health",
       "categoryName": "Sexual Health",
@@ -4348,15 +5062,16 @@
         "kind": "condition",
         "legacyId": "acne",
         "slug": "acne",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/acne",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/acne",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4375,7 +5090,8 @@
         "legacyId": "athletes-foot",
         "slug": "athlete-s-foot",
         "route": "/athletes-foot",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
@@ -4401,7 +5117,8 @@
         "legacyId": "cellulitis",
         "slug": "cellulitis",
         "route": "/cellulitis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
@@ -4426,15 +5143,16 @@
         "kind": "condition",
         "legacyId": "cold-sores",
         "slug": "cold-sores",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/cold-sores",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/cold-sores",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4453,7 +5171,8 @@
         "legacyId": "contact-dermatitis",
         "slug": "contact-dermatitis",
         "route": "/contact-dermatitis",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
@@ -4480,15 +5199,16 @@
         "kind": "condition",
         "legacyId": "eczema",
         "slug": "eczema",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/eczema",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/eczema",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4507,15 +5227,44 @@
         "kind": "condition",
         "legacyId": "fungal-skin-infection",
         "slug": "fungal-skin-infection",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/fungal-skin-infection",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/fungal-skin-infection",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "hair-loss"
+      },
+      "document": {
+        "specialtyId": "6a4f8ae7c08910eba9bf83a5",
+        "name": "Hair Loss",
+        "aliases": [
+          "balding",
+          "thinning hair"
+        ],
+        "kind": "condition",
+        "legacyId": "hair-loss",
+        "slug": "hair-loss",
+        "route": "/skin-and-hair-care/dermatology/hair-loss",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Dermatology",
+      "categoryName": "Skin & Hair",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/skin-and-hair-care/dermatology/hair-loss",
+      "routeStatus": "FOUND_IN_APP"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4534,15 +5283,16 @@
         "kind": "condition",
         "legacyId": "hives",
         "slug": "hives",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/hives",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/hives",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4561,7 +5311,8 @@
         "legacyId": "itchy-skin",
         "slug": "itchy-skin",
         "route": "/itchy-skin",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
@@ -4588,15 +5339,16 @@
         "kind": "condition",
         "legacyId": "mole-skin-checks",
         "slug": "mole-skin-checks",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/mole-skin-checks",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/mole-skin-checks",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4614,15 +5366,16 @@
         "kind": "condition",
         "legacyId": "nail-problems",
         "slug": "nail-problems",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/nail-problems",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/nail-problems",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4641,15 +5394,16 @@
         "kind": "condition",
         "legacyId": "psoriasis",
         "slug": "psoriasis",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/psoriasis",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/psoriasis",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4668,7 +5422,8 @@
         "legacyId": "ringworm",
         "slug": "ringworm",
         "route": "/ringworm",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
@@ -4693,15 +5448,16 @@
         "kind": "condition",
         "legacyId": "rosacea",
         "slug": "rosacea",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/rosacea",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/rosacea",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4720,7 +5476,8 @@
         "legacyId": "shingles",
         "slug": "shingles",
         "route": "/shingles",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
@@ -4745,15 +5502,16 @@
         "kind": "condition",
         "legacyId": "skin-rash",
         "slug": "skin-rash",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/skin-rash",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/skin-rash",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4769,15 +5527,16 @@
         "kind": "condition",
         "legacyId": "warts",
         "slug": "warts",
-        "route": "",
-        "isActive": false
+        "route": "/skin-and-hair-care/dermatology/warts",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Dermatology",
       "categoryName": "Skin & Hair",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/warts",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4793,15 +5552,16 @@
         "kind": "condition",
         "legacyId": "cross-border-consultation",
         "slug": "cross-border-consultation",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/global-cross-border-care/cross-border-consultation",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Global / Cross-Border Care",
       "categoryName": "Travel & Global Care",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/cross-border-consultation",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4821,7 +5581,8 @@
         "legacyId": "emergency-teleconsultation-abroad",
         "slug": "emergency-teleconsultation-abroad",
         "route": "/emergency-teleconsultation-abroad",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Global / Cross-Border Care",
       "categoryName": "Travel & Global Care",
@@ -4844,15 +5605,16 @@
         "kind": "condition",
         "legacyId": "international-medical-assistance",
         "slug": "international-medical-assistance",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/global-cross-border-care/international-medical-assistance",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Global / Cross-Border Care",
       "categoryName": "Travel & Global Care",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/international-medical-assistance",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4868,15 +5630,16 @@
         "kind": "condition",
         "legacyId": "referral-coordination-overseas",
         "slug": "referral-coordination-overseas",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/global-cross-border-care/referral-coordination-overseas",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Global / Cross-Border Care",
       "categoryName": "Travel & Global Care",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/referral-coordination-overseas",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4892,15 +5655,16 @@
         "kind": "condition",
         "legacyId": "altitude-sickness",
         "slug": "altitude-sickness",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/altitude-sickness",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/altitude-sickness",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4920,7 +5684,8 @@
         "legacyId": "fitness-travel-evaluation",
         "slug": "fitness-to-travel-evaluation",
         "route": "/fitness-travel-evaluation",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
@@ -4945,15 +5710,16 @@
         "kind": "condition",
         "legacyId": "food-poisoning-while-traveling",
         "slug": "food-poisoning-while-traveling",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/food-poisoning-while-traveling",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/food-poisoning-while-traveling",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -4970,7 +5736,8 @@
         "legacyId": "jet-lag",
         "slug": "jet-lag",
         "route": "/jet-lag",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
@@ -4995,15 +5762,16 @@
         "kind": "condition",
         "legacyId": "malaria-prevention",
         "slug": "malaria-prevention",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/malaria-prevention",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/malaria-prevention",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5022,7 +5790,8 @@
         "legacyId": "medication-refills-traveling",
         "slug": "medication-refills-while-traveling",
         "route": "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
@@ -5049,7 +5818,8 @@
         "legacyId": "motion-sickness",
         "slug": "motion-sickness",
         "route": "/motion-sickness",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
@@ -5072,15 +5842,16 @@
         "kind": "condition",
         "legacyId": "post-travel-symptoms",
         "slug": "post-travel-symptoms",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/post-travel-symptoms",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/post-travel-symptoms",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5099,15 +5870,16 @@
         "kind": "condition",
         "legacyId": "pre-travel-vaccinations",
         "slug": "pre-travel-vaccinations",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/pre-travel-vaccinations",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/pre-travel-vaccinations",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5124,7 +5896,8 @@
         "legacyId": "travel-medical-certification",
         "slug": "travel-medical-certificate",
         "route": "/travel-medical-certification",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
@@ -5149,15 +5922,16 @@
         "kind": "condition",
         "legacyId": "travel-related-fever",
         "slug": "travel-related-fever",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/travel-related-fever",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/travel-related-fever",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5175,39 +5949,16 @@
         "kind": "condition",
         "legacyId": "travelers-diarrhea",
         "slug": "traveler-s-diarrhea",
-        "route": "",
-        "isActive": false
+        "route": "/travel-and-global-care/travel-medicine/travelers-diarrhea",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Travel Medicine",
       "categoryName": "Travel & Global Care",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/travelers-diarrhea",
-      "routeStatus": "NOT_FOUND_IN_APP"
-    },
-    {
-      "op": "CREATE_CONDITION",
-      "phase": 3,
-      "collection": "healthcareconditions",
-      "idempotencyKey": {
-        "legacyId": "binge-eating"
-      },
-      "document": {
-        "specialtyId": "6a4f8baac08910eba9bf83b0",
-        "name": "Binge Eating",
-        "aliases": [],
-        "kind": "condition",
-        "legacyId": "binge-eating",
-        "slug": "binge-eating",
-        "route": "",
-        "isActive": false
-      },
-      "specialtyName": "Lifestyle Medicine",
-      "categoryName": "Weight & Nutrition",
-      "classification": "EXACT",
-      "basis": "exact",
-      "legacyRoute": "/binge-eating",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5226,15 +5977,16 @@
         "kind": "condition",
         "legacyId": "diet-exercise-planning",
         "slug": "diet-exercise-planning",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lifestyle Medicine",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/diet-exercise-planning",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "OVERRIDE_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5253,15 +6005,16 @@
         "kind": "condition",
         "legacyId": "healthy-habit-coaching",
         "slug": "healthy-habit-coaching",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lifestyle Medicine",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/healthy-habit-coaching",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5279,15 +6032,16 @@
         "kind": "condition",
         "legacyId": "sleep-hygiene",
         "slug": "sleep-hygiene",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lifestyle Medicine",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/sleep-hygiene",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5306,15 +6060,16 @@
         "kind": "condition",
         "legacyId": "cholesterol-lowering-diet",
         "slug": "cholesterol-lowering-diet",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Nutrition & Dietetics",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/cholesterol-lowering-diet",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5332,15 +6087,16 @@
         "kind": "condition",
         "legacyId": "diabetic-diet",
         "slug": "diabetic-diet",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Nutrition & Dietetics",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/diabetic-diet",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5359,15 +6115,16 @@
         "kind": "condition",
         "legacyId": "food-intolerance-planning",
         "slug": "food-intolerance-planning",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Nutrition & Dietetics",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/food-intolerance-planning",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5385,15 +6142,16 @@
         "kind": "condition",
         "legacyId": "pregnancy-nutrition",
         "slug": "pregnancy-nutrition",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Nutrition & Dietetics",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/pregnancy-nutrition",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5411,15 +6169,41 @@
         "kind": "condition",
         "legacyId": "sports-nutrition",
         "slug": "sports-nutrition",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Nutrition & Dietetics",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/sports-nutrition",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "binge-eating"
+      },
+      "document": {
+        "specialtyId": "6a4f8b91c08910eba9bf83ae",
+        "name": "Binge Eating",
+        "aliases": [],
+        "kind": "condition",
+        "legacyId": "binge-eating",
+        "slug": "binge-eating",
+        "route": "/weight-and-nurtrition/weight-management/binge-eating",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Weight Management",
+      "categoryName": "Weight & Nutrition",
+      "classification": "EXACT",
+      "basis": "approved-page-structure",
+      "legacyRoute": "/binge-eating",
+      "routeStatus": "OVERRIDE_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5441,7 +6225,8 @@
         "legacyId": "glp-program-eligibility",
         "slug": "glp-1-program-eligibility",
         "route": "/glp-program-eligibility",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Weight Management",
       "categoryName": "Weight & Nutrition",
@@ -5466,15 +6251,16 @@
         "kind": "condition",
         "legacyId": "obesity",
         "slug": "obesity",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/weight-management/obesity",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Weight Management",
       "categoryName": "Weight & Nutrition",
       "classification": "INSUFFICIENT_DATA",
       "basis": "approved-unresolved",
       "legacyRoute": "/obesity",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5492,15 +6278,16 @@
         "kind": "condition",
         "legacyId": "weight-loss-planning",
         "slug": "weight-loss-planning",
-        "route": "",
-        "isActive": false
+        "route": "/weight-and-nurtrition/weight-management/weight-loss-planning",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Weight Management",
       "categoryName": "Weight & Nutrition",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/weight-loss-planning",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5518,15 +6305,16 @@
         "kind": "condition",
         "legacyId": "latch-problems",
         "slug": "latch-problems",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/lactation-consulting/latch-problems",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lactation Consulting",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/latch-problems",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5544,15 +6332,16 @@
         "kind": "condition",
         "legacyId": "low-milk-supply",
         "slug": "low-milk-supply",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/lactation-consulting/low-milk-supply",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lactation Consulting",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/low-milk-supply",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5570,15 +6359,16 @@
         "kind": "condition",
         "legacyId": "nipple-pain",
         "slug": "nipple-pain",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/lactation-consulting/nipple-pain",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lactation Consulting",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/nipple-pain",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5594,15 +6384,43 @@
         "kind": "condition",
         "legacyId": "weaning-guidance",
         "slug": "weaning-guidance",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/lactation-consulting/weaning-guidance",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Lactation Consulting",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/weaning-guidance",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "hot-flashes"
+      },
+      "document": {
+        "specialtyId": "6a4f8b05c08910eba9bf83a7",
+        "name": "Hot Flashes",
+        "aliases": [
+          "hot flushes"
+        ],
+        "kind": "condition",
+        "legacyId": "hot-flashes",
+        "slug": "hot-flashes",
+        "route": "/women-health/menopause-care/hot-flashes",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "Menopause Care",
+      "categoryName": "Women's Health",
+      "classification": "EXACT",
+      "basis": "exact",
+      "legacyRoute": "/women-health/menopause-care/hot-flashes",
+      "routeStatus": "FOUND_IN_APP"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5623,15 +6441,16 @@
         "kind": "condition",
         "legacyId": "menopause-symptoms",
         "slug": "menopause-symptoms",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/menopause-care/hrt-guidance",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Menopause Care",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/menopause-symptoms",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "OVERRIDE_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5649,15 +6468,16 @@
         "kind": "condition",
         "legacyId": "bacterial-vaginosis",
         "slug": "bacterial-vaginosis",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/bacterial-vaginosis",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5677,15 +6497,16 @@
         "kind": "condition",
         "legacyId": "birth-control-consultation",
         "slug": "birth-control-consultation",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/birth-control",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/birth-control-consultation",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "OVERRIDE_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5705,13 +6526,42 @@
         "legacyId": "emergency-contraception-guidance",
         "slug": "emergency-contraception-guidance",
         "route": "/emergency-contraception-guidance",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/emergency-contraception-guidance",
+      "routeStatus": "FOUND_IN_APP"
+    },
+    {
+      "op": "CREATE_CONDITION",
+      "phase": 3,
+      "collection": "healthcareconditions",
+      "idempotencyKey": {
+        "legacyId": "fertility-concerns"
+      },
+      "document": {
+        "specialtyId": "6a4f8af9c08910eba9bf83a6",
+        "name": "Fertility Concerns",
+        "aliases": [
+          "infertility",
+          "trying to conceive"
+        ],
+        "kind": "condition",
+        "legacyId": "fertility-concerns",
+        "slug": "fertility-concerns",
+        "route": "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+        "isActive": false,
+        "isSearchable": true
+      },
+      "specialtyName": "OB-GYN",
+      "categoryName": "Women's Health",
+      "classification": "NAME_VARIATION",
+      "basis": "name_variation",
+      "legacyRoute": "/women-health/obstetrics-and-gynaecology/fertility-concerns",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -5731,7 +6581,8 @@
         "legacyId": "heavy-periods",
         "slug": "heavy-periods",
         "route": "/heavy-periods",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
@@ -5754,15 +6605,16 @@
         "kind": "condition",
         "legacyId": "irregular-periods",
         "slug": "irregular-periods",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/irregular-periods",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/irregular-periods",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5780,15 +6632,16 @@
         "kind": "condition",
         "legacyId": "menstrual-cramps",
         "slug": "menstrual-cramps",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/menstrual-cramps",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/menstrual-cramps",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5806,15 +6659,16 @@
         "kind": "condition",
         "legacyId": "pcos",
         "slug": "pcos",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/pcos",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/pcos",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5830,15 +6684,16 @@
         "kind": "condition",
         "legacyId": "pelvic-pain",
         "slug": "pelvic-pain",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/pelvic-pain",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/pelvic-pain",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5855,7 +6710,8 @@
         "legacyId": "postpartum-concerns",
         "slug": "postpartum-concerns",
         "route": "/postpartum-concerns",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
@@ -5881,7 +6737,8 @@
         "legacyId": "pregnancy-related-questions",
         "slug": "pregnancy-related-questions",
         "route": "/pregnancy-related-questions",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
@@ -5904,15 +6761,16 @@
         "kind": "condition",
         "legacyId": "prenatal-consultation",
         "slug": "prenatal-consultation",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
       "legacyRoute": "/prenatal-consultation",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5934,7 +6792,8 @@
         "legacyId": "vaginal-yeast-infection",
         "slug": "vaginal-yeast-infection",
         "route": "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
-        "isActive": false
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "OB-GYN",
       "categoryName": "Women's Health",
@@ -5959,15 +6818,16 @@
         "kind": "condition",
         "legacyId": "perinatal-anxiety",
         "slug": "perinatal-anxiety",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/women-mental-health/perinatal-anxiety",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Women's Mental Health",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/perinatal-anxiety",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -5985,15 +6845,16 @@
         "kind": "condition",
         "legacyId": "pmdd",
         "slug": "pmdd",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/women-mental-health/pmdd",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Women's Mental Health",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/pmdd",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -6011,15 +6872,16 @@
         "kind": "condition",
         "legacyId": "postnatal-depression",
         "slug": "postnatal-depression",
-        "route": "",
-        "isActive": false
+        "route": "/women-health/women-mental-health/postnatal-depression",
+        "isActive": false,
+        "isSearchable": true
       },
       "specialtyName": "Women's Mental Health",
       "categoryName": "Women's Health",
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/postnatal-depression",
-      "routeStatus": "NOT_FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "MERGE_ALIAS",
@@ -6917,6 +7779,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/orthopedics/arthritis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/orthopedics/arthritis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "joint inflammation": [
@@ -6938,6 +7801,7 @@
         "mergeInto": null,
         "legacyRoute": "/online-second-medical-opinion/cancer-second-opinion",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/online-second-medical-opinion/cancer-second-opinion",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "cancer": [
@@ -6965,6 +7829,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/cardiology/chest-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/cardiology/chest-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "chest tightness": [
@@ -6988,6 +7853,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-kidney-disease",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-kidney-disease",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "ckd": [
@@ -7012,6 +7878,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/chronic-migraine",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/chronic-migraine",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "migraine": [
@@ -7038,6 +7905,7 @@
         "mergeInto": null,
         "legacyRoute": "/online-second-medical-opinion/complex-diagnosis-review",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/online-second-medical-opinion/complex-diagnosis-review",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "complex diagnosis": [
@@ -7062,6 +7930,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/gastroenterology/fatty-liver",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/gastroenterology/fatty-liver",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "liver disease": [
@@ -7085,7 +7954,8 @@
         "category": "Chronic Care & Expert Opinion",
         "mergeInto": null,
         "legacyRoute": "/heart-disease",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "OVERRIDE_VERIFIED",
+        "route": "/chronic-care/cardiology/heart-disease-follow-up",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "cardiac disease": [
@@ -7107,6 +7977,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/cardiology/high-blood-pressure",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/cardiology/high-blood-pressure",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hypertension": [
@@ -7131,6 +8002,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/cardiology/high-cholesterol",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/cardiology/high-cholesterol",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "cholesterol": [
@@ -7154,7 +8026,8 @@
         "category": "Chronic Care & Expert Opinion",
         "mergeInto": null,
         "legacyRoute": "/hormone-imblance",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/chronic-care/endocrinology/hormone-imbalance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hormonal": [
@@ -7176,6 +8049,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/memory-concerns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/memory-concerns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "memory loss": [
@@ -7201,7 +8075,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/obesity",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/weight-management/obesity",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "overweight": [
@@ -7225,6 +8100,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/orthopedics/osteoarthritis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/orthopedics/osteoarthritis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "joint wear": [
@@ -7248,6 +8124,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/endocrinology/osteoporosis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/endocrinology/osteoporosis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "bone density": [
@@ -7272,6 +8149,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/cardiology/palpitations",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/cardiology/palpitations",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "heart racing": [
@@ -7298,6 +8176,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/pulmonology/post-covid-concerns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/pulmonology/post-covid-concerns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "post-covid": [
@@ -7322,6 +8201,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/cardiology/pre-op-cardiac-clearance",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/cardiology/pre-op-cardiac-clearance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pre-op clearance": [
@@ -7351,6 +8231,7 @@
         "mergeInto": null,
         "legacyRoute": "/rheumatoid-arthritis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/rheumatoid-arthritis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "ra": [
@@ -7372,6 +8253,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/seizures-epilepsy-follow-up",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/seizures-epilepsy-follow-up",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "seizures": [
@@ -7396,6 +8278,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/pulmonology/sleep-apnea-screening",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/pulmonology/sleep-apnea-screening",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "snoring": [
@@ -7420,6 +8303,7 @@
         "mergeInto": null,
         "legacyRoute": "/online-second-medical-opinion/surgery-second-opinion",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/online-second-medical-opinion/surgery-second-opinion",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "surgical opinion": [
@@ -7441,6 +8325,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/endocrinology/thyroid-disorders",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/endocrinology/thyroid-disorders",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "thyroid": [
@@ -7468,6 +8353,7 @@
         "mergeInto": null,
         "legacyRoute": "/online-second-medical-opinion/treatment-plan-review",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/online-second-medical-opinion/treatment-plan-review",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -7485,6 +8371,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/tremor",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/tremor",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "shaking": [
@@ -7509,6 +8396,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/endocrinology/type-2-diabetes",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/endocrinology/type-2-diabetes",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "diabetes": [
@@ -7533,6 +8421,7 @@
         "mergeInto": null,
         "legacyRoute": "/allergic-rhinitis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/allergic-rhinitis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hay fever": [
@@ -7562,6 +8451,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/pulmonology/asthma",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/pulmonology/asthma",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "wheezing": [
@@ -7589,6 +8479,7 @@
         "mergeInto": null,
         "legacyRoute": "/asthma-flare-up",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/asthma-flare-up",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "asthma attack": [
@@ -7617,6 +8508,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/pulmonology/copd",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/pulmonology/copd",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "chronic obstructive pulmonary disease": [
@@ -7638,6 +8530,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/pulmonology/persistent-cough",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/pulmonology/persistent-cough",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "chronic cough": [
@@ -7659,6 +8552,7 @@
         "mergeInto": null,
         "legacyRoute": "/pneumonia-follow-up",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/pneumonia-follow-up",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pneumonia": [
@@ -7680,6 +8574,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/pulmonology/shortness-of-breath",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/pulmonology/shortness-of-breath",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "breathlessness": [
@@ -7701,6 +8596,7 @@
         "mergeInto": null,
         "legacyRoute": "/upper-respiratory-infection",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/upper-respiratory-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "uri": [
@@ -7722,6 +8618,7 @@
         "mergeInto": "asthma",
         "legacyRoute": "/wheezing",
         "routeStatus": null,
+        "route": null,
         "routeSpecialtyMismatch": false,
         "aliasSources": null
       },
@@ -7741,6 +8638,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/gastroenterology/abdominal-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/gastroenterology/abdominal-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "stomach pain": [
@@ -7757,14 +8655,15 @@
         "classification": "EXACT",
         "reasons": [],
         "decision": "IMPORT",
-        "basis": "exact",
+        "basis": "approved-page-structure",
         "name": "Binge Eating",
         "kind": "condition",
-        "specialty": "Lifestyle Medicine",
+        "specialty": "Weight Management",
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/binge-eating",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "OVERRIDE_VERIFIED",
+        "route": "/weight-and-nurtrition/weight-management/binge-eating",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -7784,6 +8683,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/gastroenterology/bloating",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/gastroenterology/bloating",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "gas": [
@@ -7807,7 +8707,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/cholesterol-lowering-diet",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "cholesterol diet": [
@@ -7834,6 +8735,7 @@
         "mergeInto": null,
         "legacyRoute": "/dehydration",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/dehydration",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "fluid loss": [
@@ -7854,7 +8756,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/diabetic-diet",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "diabetes nutrition": [
@@ -7875,7 +8778,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/diet-exercise-planning",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "OVERRIDE_VERIFIED",
+        "route": "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "diet planning": [
@@ -7899,7 +8803,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/food-intolerance-planning",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "food intolerance": [
@@ -7926,6 +8831,7 @@
         "mergeInto": null,
         "legacyRoute": "/gastritis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/gastritis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "stomach lining inflammation": [
@@ -7947,6 +8853,7 @@
         "mergeInto": null,
         "legacyRoute": "/glp-program-eligibility",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/glp-program-eligibility",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "glp-1": [
@@ -7976,7 +8883,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/healthy-habit-coaching",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "healthy habits": [
@@ -8003,6 +8911,7 @@
         "mergeInto": null,
         "legacyRoute": "/hemorrhoids",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/hemorrhoids",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "piles": [
@@ -8026,6 +8935,7 @@
         "mergeInto": null,
         "legacyRoute": "/indigestion",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/indigestion",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "dyspepsia": [
@@ -8049,6 +8959,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/gastroenterology/irritable-bowel-syndrome",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/gastroenterology/irritable-bowel-syndrome",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "ibs": [
@@ -8069,7 +8980,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/pregnancy-nutrition",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "prenatal diet": [
@@ -8090,7 +9002,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/sleep-hygiene",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "sleep habits": [
@@ -8111,7 +9024,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/sports-nutrition",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "athletic diet": [
@@ -8135,6 +9049,7 @@
         "mergeInto": null,
         "legacyRoute": "/metabolic-syndrome",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/metabolic-syndrome",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -8154,6 +9069,7 @@
         "mergeInto": null,
         "legacyRoute": "/vomiting",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/vomiting",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "throwing up": [
@@ -8174,7 +9090,8 @@
         "category": "Weight & Nutrition",
         "mergeInto": null,
         "legacyRoute": "/weight-loss-planning",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/weight-and-nurtrition/weight-management/weight-loss-planning",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "weight loss program": [
@@ -8196,6 +9113,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/orthopedics/back-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/orthopedics/back-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "spine": [
@@ -8220,6 +9138,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ophthalmology/dry-eyes",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ophthalmology/dry-eyes",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "eye dryness": [
@@ -8243,6 +9162,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/ear-infection",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/ear-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "earache": [
@@ -8269,6 +9189,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/ear-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/ear-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "earache": [
@@ -8290,6 +9211,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ophthalmology/eye-redness",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ophthalmology/eye-redness",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "red eye": [
@@ -8311,6 +9233,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ophthalmology/eye-strain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ophthalmology/eye-strain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "tired eyes": [
@@ -8337,6 +9260,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/hoarseness",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/hoarseness",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hoarse voice": [
@@ -8358,6 +9282,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/orthopedics/knee-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/orthopedics/knee-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "knee": [
@@ -8391,6 +9316,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/orthopedics/muscle-strain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/orthopedics/muscle-strain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pulled muscle": [
@@ -8414,6 +9340,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/nasal-congestion",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/nasal-congestion",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "stuffy nose": [
@@ -8435,6 +9362,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/orthopedics/neck-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/orthopedics/neck-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "stiff neck": [
@@ -8461,6 +9389,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/numbness-and-tingling",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/numbness-and-tingling",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "numbness": [
@@ -8488,6 +9417,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ophthalmology/stye",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ophthalmology/stye",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "eyelid bump": [
@@ -8509,6 +9439,7 @@
         "mergeInto": null,
         "legacyRoute": "/swollen-feet-ankles",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/swollen-feet-ankles",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "swollen feet": [
@@ -8538,6 +9469,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/tonsillitis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/tonsillitis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "swollen tonsils": [
@@ -8559,6 +9491,7 @@
         "mergeInto": null,
         "legacyRoute": "/joint-pain",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/joint-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "joints": [
@@ -8583,6 +9516,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ophthalmology/vision-changes",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ophthalmology/vision-changes",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "blurry vision": [
@@ -8606,6 +9540,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/vertigo",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/vertigo",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "dizziness": [
@@ -8630,6 +9565,7 @@
         "mergeInto": null,
         "legacyRoute": "/childhood-allergies",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/childhood-allergies",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "kids allergy": [
@@ -8654,6 +9590,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/pediatrics/ear-pain-children",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/pediatrics/ear-pain-children",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child ear pain": [
@@ -8678,6 +9615,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/pediatrics/feeding-concerns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/pediatrics/feeding-concerns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "baby feeding": [
@@ -8699,6 +9637,7 @@
         "mergeInto": null,
         "legacyRoute": "/mild-asthma-symptoms",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mild-asthma-symptoms",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child asthma": [
@@ -8725,6 +9664,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "teen anxiety": [
@@ -8752,6 +9692,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/pediatrics/pediatric-cold-flu",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/pediatrics/pediatric-cold-flu",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child cold": [
@@ -8779,6 +9720,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/pediatrics/pediatric-fever",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/pediatrics/pediatric-fever",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child fever": [
@@ -8806,6 +9748,7 @@
         "mergeInto": null,
         "legacyRoute": "/pink-eye-children",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/pink-eye-children",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child pink eye": [
@@ -8832,6 +9775,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/adolescent-medicine/puberty-concerns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/adolescent-medicine/puberty-concerns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "puberty": [
@@ -8853,6 +9797,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/pediatrics/skin-rash-in-children",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/pediatrics/skin-rash-in-children",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child skin rash": [
@@ -8880,6 +9825,7 @@
         "mergeInto": null,
         "legacyRoute": "/sore-throat-children",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sore-throat-children",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child sore throat": [
@@ -8906,6 +9852,7 @@
         "mergeInto": null,
         "legacyRoute": "/child-and-family-care/adolescent-medicine/sports-injuries",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/child-and-family-care/adolescent-medicine/sports-injuries",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "youth sports injury": [
@@ -8927,6 +9874,7 @@
         "mergeInto": null,
         "legacyRoute": "/stomach-pain-children",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/stomach-pain-children",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child stomach pain": [
@@ -8951,6 +9899,7 @@
         "mergeInto": null,
         "legacyRoute": "/growth-development",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/growth-development",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "growth": [
@@ -8975,6 +9924,7 @@
         "mergeInto": null,
         "legacyRoute": "/vomiting-diarrhea-children",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/vomiting-diarrhea-children",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "child vomiting": [
@@ -9001,6 +9951,7 @@
         "mergeInto": null,
         "legacyRoute": "/doctors-note",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/doctors-note",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "sick note": [
@@ -9030,6 +9981,7 @@
         "mergeInto": null,
         "legacyRoute": "/follow-up-consultation",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/follow-up-consultation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "follow up visit": [
@@ -9053,6 +10005,7 @@
         "mergeInto": null,
         "legacyRoute": "/lab-results-review",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/lab-results-review",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "lab results": [
@@ -9079,6 +10032,7 @@
         "mergeInto": null,
         "legacyRoute": "/medical-certificate",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/medical-certificate",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9098,6 +10052,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/internal-medicine/medication-review",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/internal-medicine/medication-review",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "medicine review": [
@@ -9121,6 +10076,7 @@
         "mergeInto": null,
         "legacyRoute": "/prescription-refill",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/prescription-refill",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "refill medication": [
@@ -9147,6 +10103,7 @@
         "mergeInto": null,
         "legacyRoute": "/return-to-work-clearance",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/return-to-work-clearance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "return to work": [
@@ -9173,6 +10130,7 @@
         "mergeInto": null,
         "legacyRoute": "/second-medical-opinion",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/second-medical-opinion",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "second opinion": [
@@ -9196,6 +10154,7 @@
         "mergeInto": null,
         "legacyRoute": "/specialist-referral",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/specialist-referral",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "referral": [
@@ -9217,6 +10176,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/chlamydia",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/chlamydia",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "sti": [
@@ -9238,6 +10198,7 @@
         "mergeInto": null,
         "legacyRoute": "/genital-itching",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/genital-itching",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9255,6 +10216,7 @@
         "mergeInto": null,
         "legacyRoute": "/genital-rash",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/genital-rash",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9272,6 +10234,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/gonorrhea",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/gonorrhea",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "sti": [
@@ -9293,6 +10256,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/herpes",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/herpes",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "sti": [
@@ -9317,6 +10281,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hiv prevention": [
@@ -9344,6 +10309,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "partner exposure": [
@@ -9368,6 +10334,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "safe sex": [
@@ -9392,6 +10359,7 @@
         "mergeInto": null,
         "legacyRoute": "/sexual-health/sexual-health-and-wellness/sti-consultation",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/sexual-health/sexual-health-and-wellness/sti-consultation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "std consultation": [
@@ -9412,7 +10380,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/acne",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/acne",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pimples": [
@@ -9440,6 +10409,7 @@
         "mergeInto": null,
         "legacyRoute": "/athletes-foot",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/athletes-foot",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "fungal foot infection": [
@@ -9461,6 +10431,7 @@
         "mergeInto": null,
         "legacyRoute": "/cellulitis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/cellulitis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "skin infection": [
@@ -9481,7 +10452,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/cold-sores",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/cold-sores",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "fever blisters": [
@@ -9503,6 +10475,7 @@
         "mergeInto": null,
         "legacyRoute": "/contact-dermatitis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/contact-dermatitis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "skin allergy": [
@@ -9523,7 +10496,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/eczema",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/eczema",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "dry skin": [
@@ -9550,7 +10524,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/fungal-skin-infection",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/fungal-skin-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "fungal infection": [
@@ -9574,7 +10549,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/hives",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/hives",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "urticaria": [
@@ -9599,6 +10575,7 @@
         "mergeInto": null,
         "legacyRoute": "/itchy-skin",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/itchy-skin",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pruritus": [
@@ -9619,7 +10596,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/mole-skin-checks",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/mole-skin-checks",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "mole check": [
@@ -9646,7 +10624,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/nail-problems",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/nail-problems",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "fungal nail": [
@@ -9667,7 +10646,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/psoriasis",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/psoriasis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "scaly skin": [
@@ -9692,6 +10672,7 @@
         "mergeInto": null,
         "legacyRoute": "/ringworm",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/ringworm",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "circular rash": [
@@ -9712,7 +10693,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/rosacea",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/rosacea",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "facial redness": [
@@ -9734,6 +10716,7 @@
         "mergeInto": null,
         "legacyRoute": "/shingles",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/shingles",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "herpes zoster": [
@@ -9754,7 +10737,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/skin-rash",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/skin-rash",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "rash": [
@@ -9775,7 +10759,8 @@
         "category": "Skin & Hair",
         "mergeInto": null,
         "legacyRoute": "/warts",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/skin-and-hair-care/dermatology/warts",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9792,7 +10777,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/altitude-sickness",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/altitude-sickness",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9811,7 +10797,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/cross-border-consultation",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/global-cross-border-care/cross-border-consultation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9831,6 +10818,7 @@
         "mergeInto": null,
         "legacyRoute": "/emergency-teleconsultation-abroad",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/emergency-teleconsultation-abroad",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "emergency abroad": [
@@ -9855,6 +10843,7 @@
         "mergeInto": null,
         "legacyRoute": "/fitness-travel-evaluation",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/fitness-travel-evaluation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "fit to fly": [
@@ -9878,7 +10867,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/food-poisoning-while-traveling",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/food-poisoning-while-traveling",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "travel food poisoning": [
@@ -9901,7 +10891,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/international-medical-assistance",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/global-cross-border-care/international-medical-assistance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9918,7 +10909,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/malaria-prevention",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/malaria-prevention",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "antimalarial": [
@@ -9940,6 +10932,7 @@
         "mergeInto": null,
         "legacyRoute": "/jet-lag",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/jet-lag",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -9959,6 +10952,7 @@
         "mergeInto": null,
         "legacyRoute": "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
         "routeSpecialtyMismatch": true,
         "aliasSources": {
           "travel medication refill": [
@@ -9980,6 +10974,7 @@
         "mergeInto": null,
         "legacyRoute": "/motion-sickness",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/motion-sickness",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "car sick": [
@@ -10003,7 +10998,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/post-travel-symptoms",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/post-travel-symptoms",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10020,7 +11016,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/pre-travel-vaccinations",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/pre-travel-vaccinations",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pre-travel vaccination": [
@@ -10046,7 +11043,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/referral-coordination-overseas",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/global-cross-border-care/referral-coordination-overseas",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10064,6 +11062,7 @@
         "mergeInto": null,
         "legacyRoute": "/travel-medical-certification",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/travel-medical-certification",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10080,7 +11079,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/travel-related-fever",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/travel-related-fever",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "travel fever": [
@@ -10101,7 +11101,8 @@
         "category": "Travel & Global Care",
         "mergeInto": null,
         "legacyRoute": "/travelers-diarrhea",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/travel-and-global-care/travel-medicine/travelers-diarrhea",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "delhi belly": [
@@ -10125,6 +11126,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/gastroenterology/acid-reflux-gerd",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/gastroenterology/acid-reflux-gerd",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "acid reflux": [
@@ -10154,6 +11156,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/body-aches",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/body-aches",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "muscle aches": [
@@ -10177,6 +11180,7 @@
         "mergeInto": null,
         "legacyRoute": "/bronchitis",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/bronchitis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10196,6 +11200,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/cold-and-flu",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/cold-and-flu",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "cold": [
@@ -10228,6 +11233,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/gastroenterology/constipation",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/gastroenterology/constipation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10247,6 +11253,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/cough",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/cough",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10266,6 +11273,7 @@
         "mergeInto": null,
         "legacyRoute": "/covid-19",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/covid-19",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "covid": [
@@ -10295,6 +11303,7 @@
         "mergeInto": null,
         "legacyRoute": "/diarrhea",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/diarrhea",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10314,6 +11323,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/dizziness",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/dizziness",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "lightheaded": [
@@ -10337,6 +11347,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/fatigue",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/fatigue",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "tiredness": [
@@ -10363,6 +11374,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/fever",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/fever",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "high temperature": [
@@ -10386,6 +11398,7 @@
         "mergeInto": null,
         "legacyRoute": "/food-poisoning",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/food-poisoning",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10405,6 +11418,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/headache",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/headache",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "head pain": [
@@ -10428,6 +11442,7 @@
         "mergeInto": null,
         "legacyRoute": "/insect-bite",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/insect-bite",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "bug bites": [
@@ -10451,6 +11466,7 @@
         "mergeInto": null,
         "legacyRoute": "/chronic-care/neurology/migraine",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/chronic-care/neurology/migraine",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "severe headache": [
@@ -10474,6 +11490,7 @@
         "mergeInto": null,
         "legacyRoute": "/minor-burns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/minor-burns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10493,6 +11510,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/minor-infections",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/minor-infections",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10512,6 +11530,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/internal-medicine/multi-system-complaints",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/internal-medicine/multi-system-complaints",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "undiagnosed general symptoms": [
@@ -10535,6 +11554,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/nausea-and-vomiting",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/nausea-and-vomiting",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "nausea": [
@@ -10561,6 +11581,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/pink-eye",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/pink-eye",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "conjunctivitis": [
@@ -10584,6 +11605,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/internal-medicine/preventive-screening",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/internal-medicine/preventive-screening",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "health screening": [
@@ -10607,6 +11629,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/family-medicine/routine-check-ups",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/family-medicine/routine-check-ups",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "routine check-up": [
@@ -10633,6 +11656,7 @@
         "mergeInto": "allergic-rhinitis",
         "legacyRoute": "/seasonal-allergies",
         "routeStatus": null,
+        "route": null,
         "routeSpecialtyMismatch": false,
         "aliasSources": null
       },
@@ -10652,6 +11676,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/general-physician/sinus-infection",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/general-physician/sinus-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "sinusitis": [
@@ -10675,6 +11700,7 @@
         "mergeInto": null,
         "legacyRoute": "/eye-ear-bone/ear-nose-throat/sore-throat",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ear-nose-throat/sore-throat",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10694,6 +11720,7 @@
         "mergeInto": null,
         "legacyRoute": "/strep-throat",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/strep-throat",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10713,6 +11740,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10732,6 +11760,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/family-medicine/vaccination-advice",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/family-medicine/vaccination-advice",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "immunization": [
@@ -10755,6 +11784,7 @@
         "mergeInto": null,
         "legacyRoute": "/general-and-everyday-care/family-medicine/whole-family-illnesses",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/general-and-everyday-care/family-medicine/whole-family-illnesses",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "whole family illness": [
@@ -10779,6 +11809,7 @@
         "mergeInto": "urinary-tract-infection",
         "legacyRoute": "/bladder-infection",
         "routeStatus": null,
+        "route": null,
         "routeSpecialtyMismatch": false,
         "aliasSources": null
       },
@@ -10796,6 +11827,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/urology/blood-in-urine",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/urology/blood-in-urine",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hematuria": [
@@ -10817,6 +11849,7 @@
         "mergeInto": null,
         "legacyRoute": "/burning-urination",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/burning-urination",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10834,6 +11867,7 @@
         "mergeInto": null,
         "legacyRoute": "/frequent-urination",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/frequent-urination",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10851,6 +11885,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/urology/kidney-stones",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/urology/kidney-stones",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "renal stones": [
@@ -10872,6 +11907,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/urology/urinary-incontinence",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/urology/urinary-incontinence",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -10891,6 +11927,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/urology/urinary-tract-infection",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/urology/urinary-tract-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "uti": [
@@ -10921,7 +11958,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/bacterial-vaginosis",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "bv": [
@@ -10944,7 +11982,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/birth-control-consultation",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "OVERRIDE_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/birth-control",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "birth control": [
@@ -10974,6 +12013,7 @@
         "mergeInto": null,
         "legacyRoute": "/emergency-contraception-guidance",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/emergency-contraception-guidance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "emergency contraception": [
@@ -11000,6 +12040,7 @@
         "mergeInto": null,
         "legacyRoute": "/heavy-periods",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/heavy-periods",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "menorrhagia": [
@@ -11022,7 +12063,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/irregular-periods",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/irregular-periods",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11039,7 +12081,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/latch-problems",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/lactation-consulting/latch-problems",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "breastfeeding latch": [
@@ -11060,7 +12103,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/low-milk-supply",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/lactation-consulting/low-milk-supply",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "breastfeeding supply": [
@@ -11081,7 +12125,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/menopause-symptoms",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "OVERRIDE_VERIFIED",
+        "route": "/women-health/menopause-care/hrt-guidance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "menopause": [
@@ -11113,7 +12158,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/menstrual-cramps",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/menstrual-cramps",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "period cramps": [
@@ -11134,7 +12180,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/nipple-pain",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/lactation-consulting/nipple-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "breastfeeding pain": [
@@ -11157,7 +12204,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/pcos",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/pcos",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "polycystic ovary": [
@@ -11180,7 +12228,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/pelvic-pain",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/pelvic-pain",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11197,7 +12246,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/perinatal-anxiety",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/women-mental-health/perinatal-anxiety",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pregnancy anxiety": [
@@ -11218,7 +12268,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/pmdd",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/women-mental-health/pmdd",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "premenstrual dysphoric disorder": [
@@ -11239,7 +12290,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/postnatal-depression",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/women-mental-health/postnatal-depression",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "postpartum depression": [
@@ -11263,6 +12315,7 @@
         "mergeInto": null,
         "legacyRoute": "/postpartum-concerns",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/postpartum-concerns",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11282,6 +12335,7 @@
         "mergeInto": null,
         "legacyRoute": "/pregnancy-related-questions",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/pregnancy-related-questions",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "pregnancy questions": [
@@ -11304,7 +12358,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/prenatal-consultation",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11324,6 +12379,7 @@
         "mergeInto": null,
         "legacyRoute": "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "yeast infection": [
@@ -11353,7 +12409,8 @@
         "category": "Women's Health",
         "mergeInto": null,
         "legacyRoute": "/weaning-guidance",
-        "routeStatus": "NOT_FOUND_IN_APP",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/women-health/lactation-consulting/weaning-guidance",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11371,6 +12428,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/urology/bladder-problems",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/urology/bladder-problems",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11388,6 +12446,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/men-health/erectile-dysfunction",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/men-health/erectile-dysfunction",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "ed": [
@@ -11412,6 +12471,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/men-health/hair-loss",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/men-health/hair-loss",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "hair loss": [
@@ -11439,6 +12499,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/men-health/low-libido",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/men-health/low-libido",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "low sex drive": [
@@ -11460,6 +12521,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/men-health/low-testosterone-symptoms",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/men-health/low-testosterone-symptoms",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "low testosterone": [
@@ -11484,6 +12546,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-wellness-consultation",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-wellness-consultation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "men's wellness": [
@@ -11505,6 +12568,7 @@
         "mergeInto": null,
         "legacyRoute": "/premature-ejaculation",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/premature-ejaculation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {}
       },
@@ -11524,6 +12588,7 @@
         "mergeInto": null,
         "legacyRoute": "/mens-health/men-health/prostate-health",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/mens-health/men-health/prostate-health",
         "routeSpecialtyMismatch": true,
         "aliasSources": {
           "prostate": [
@@ -11545,10 +12610,520 @@
         "mergeInto": null,
         "legacyRoute": "/urinary-symptoms-in-men",
         "routeStatus": "FOUND_IN_APP",
+        "route": "/urinary-symptoms-in-men",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "urinary symptoms men": [
             "legacy-keyword"
+          ]
+        }
+      },
+      {
+        "legacyId": "anxiety",
+        "legacyTitle": "Anxiety",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Anxiety",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/anxiety",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/anxiety",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "anxious": [
+            "pr8-page"
+          ],
+          "feeling anxious": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "depression",
+        "legacyTitle": "Depression",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Depression",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/depression",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/depression",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "low mood": [
+            "pr8-page"
+          ],
+          "feeling low": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "adhd-evaluation",
+        "legacyTitle": "ADHD Evaluation",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "ADHD Evaluation",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/adhd-evaluation",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/adhd-evaluation",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "adhd": [
+            "pr8-page"
+          ],
+          "attention deficit": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "bipolar-disorder-follow-up",
+        "legacyTitle": "Bipolar Disorder Follow-Up",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Bipolar Disorder Follow-Up",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/bipolar-disorder-follow-up",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/bipolar-disorder-follow-up",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "bipolar": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "insomnia",
+        "legacyTitle": "Insomnia",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Insomnia",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/insomnia",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/insomnia",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "trouble sleeping": [
+            "pr8-page"
+          ],
+          "can't sleep": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "ocd",
+        "legacyTitle": "OCD",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "OCD",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/Ocd",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/Ocd",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "obsessive compulsive disorder": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "panic-attacks",
+        "legacyTitle": "Panic Attacks",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Panic Attacks",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/panic-attacks",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/panic-attacks",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "panic": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "ptsd",
+        "legacyTitle": "PTSD",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "PTSD",
+        "kind": "condition",
+        "specialty": "Psychiatry",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychiatry/ptsd",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychiatry/ptsd",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "post traumatic stress disorder": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "stress",
+        "legacyTitle": "Stress",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Psychology Counseling\" → \"Psychology / Counselling\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Stress",
+        "kind": "condition",
+        "specialty": "Psychology / Counselling",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychology-counseling/stress",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychology-counseling/stress",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "feeling stressed": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "grief-and-loss",
+        "legacyTitle": "Grief & Loss",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Psychology Counseling\" → \"Psychology / Counselling\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Grief & Loss",
+        "kind": "condition",
+        "specialty": "Psychology / Counselling",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychology-counseling/grief-and-loss",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychology-counseling/grief-and-loss",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "grief": [
+            "pr8-page"
+          ],
+          "bereavement": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "relationship-stress",
+        "legacyTitle": "Relationship Stress",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Psychology Counseling\" → \"Psychology / Counselling\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Relationship Stress",
+        "kind": "condition",
+        "specialty": "Psychology / Counselling",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychology-counseling/relationship-stress",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychology-counseling/relationship-stress",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "relationship problems": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "low-self-esteem",
+        "legacyTitle": "Low Self-Esteem",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Psychology Counseling\" → \"Psychology / Counselling\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Low Self-Esteem",
+        "kind": "condition",
+        "specialty": "Psychology / Counselling",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychology-counseling/low-self-esteem",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychology-counseling/low-self-esteem",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "self esteem": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "trauma-support",
+        "legacyTitle": "Trauma Support",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Psychology Counseling\" → \"Psychology / Counselling\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Trauma Support",
+        "kind": "condition",
+        "specialty": "Psychology / Counselling",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/psychology-counseling/trauma-support",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/psychology-counseling/trauma-support",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "trauma": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "anger-management",
+        "legacyTitle": "Anger Management",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Behavioral Medicine\" → \"Behavioral Health\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Anger Management",
+        "kind": "condition",
+        "specialty": "Behavioral Health",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/behavioral-health/anger-management",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/behavioral-health/anger-management",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "anger": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "adjustment-difficulties",
+        "legacyTitle": "Adjustment Difficulties",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Behavioral Medicine\" → \"Behavioral Health\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Adjustment Difficulties",
+        "kind": "condition",
+        "specialty": "Behavioral Health",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/behavioral-health/adjustment-difficulties",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/behavioral-health/adjustment-difficulties",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "adjustment disorder": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "sleep-related-anxiety",
+        "legacyTitle": "Sleep-Related Anxiety",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Behavioral Medicine\" → \"Behavioral Health\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Sleep-Related Anxiety",
+        "kind": "condition",
+        "specialty": "Behavioral Health",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/behavioral-health/sleep-related-anxiety",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/behavioral-health/sleep-related-anxiety",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "sleep anxiety": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "substance-use-support",
+        "legacyTitle": "Substance Use Support",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Behavioral Medicine\" → \"Behavioral Health\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Substance Use Support",
+        "kind": "condition",
+        "specialty": "Behavioral Health",
+        "category": "Mental Health",
+        "mergeInto": null,
+        "legacyRoute": "/mental-health/behavioral-health/substance-use-support",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/mental-health/behavioral-health/substance-use-support",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "addiction": [
+            "pr8-page"
+          ],
+          "substance abuse": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "eye-irritation",
+        "legacyTitle": "Eye Irritation",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Eye Irritation",
+        "kind": "condition",
+        "specialty": "Ophthalmology",
+        "category": "Eye, Ear & Bone",
+        "mergeInto": null,
+        "legacyRoute": "/eye-ear-bone/ophthalmology/eye-irritation",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/eye-ear-bone/ophthalmology/eye-irritation",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "irritated eyes": [
+            "pr8-page"
+          ],
+          "itchy eyes": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "hair-loss",
+        "legacyTitle": "Hair Loss",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Hair Loss",
+        "kind": "condition",
+        "specialty": "Dermatology",
+        "category": "Skin & Hair",
+        "mergeInto": null,
+        "legacyRoute": "/skin-and-hair-care/dermatology/hair-loss",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/skin-and-hair-care/dermatology/hair-loss",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "balding": [
+            "pr8-page"
+          ],
+          "thinning hair": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "hot-flashes",
+        "legacyTitle": "Hot Flashes",
+        "classification": "EXACT",
+        "reasons": [],
+        "decision": "IMPORT",
+        "basis": "exact",
+        "name": "Hot Flashes",
+        "kind": "condition",
+        "specialty": "Menopause Care",
+        "category": "Women's Health",
+        "mergeInto": null,
+        "legacyRoute": "/women-health/menopause-care/hot-flashes",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/women-health/menopause-care/hot-flashes",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "hot flushes": [
+            "pr8-page"
+          ]
+        }
+      },
+      {
+        "legacyId": "fertility-concerns",
+        "legacyTitle": "Fertility Concerns",
+        "classification": "NAME_VARIATION",
+        "reasons": [
+          "specialty \"Obstetrics & Gynaecology (OB-GYN)\" → \"OB-GYN\""
+        ],
+        "decision": "IMPORT",
+        "basis": "name_variation",
+        "name": "Fertility Concerns",
+        "kind": "condition",
+        "specialty": "OB-GYN",
+        "category": "Women's Health",
+        "mergeInto": null,
+        "legacyRoute": "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+        "routeStatus": "FOUND_IN_APP",
+        "route": "/women-health/obstetrics-and-gynaecology/fertility-concerns",
+        "routeSpecialtyMismatch": false,
+        "aliasSources": {
+          "infertility": [
+            "pr8-page"
+          ],
+          "trying to conceive": [
+            "pr8-page"
           ]
         }
       }
