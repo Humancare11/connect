@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function GrowthDevelopment({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Child Growth & Development Support | Pediatric Care Online"
-        description="Get expert guidance for your child's growth and development. Connect with licensed providers online for milestone assessments, developmental support, and personalized pediatric care through telemedicine services."
-        keywords="Child growth and development, Pediatric developmental assessment, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/growth-development"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

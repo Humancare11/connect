@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function Arthritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Arthritis Pain Relief Online | Joint Pain & Stiffness Care"
-        description="Joint pain, swelling, or stiffness making daily life harder? Get personalized arthritis care, pain management guidance, and treatment recommendations from a licensed provider online."
-        keywords="Arthritis, Arthritis symptoms, Joint pain, Joint stiffness, Pain management guidance, Telemedicine services"
-        url="https://humancareconnect.co/arthritis"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function Arthritis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

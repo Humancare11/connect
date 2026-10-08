@@ -2,66 +2,20 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PRODUCTION_ORIGIN = "https://humancareconnect.co";
+import { SEO_ROUTES, SITE_ORIGIN, isIndexable } from "../src/seo/routes.js";
+
+const PRODUCTION_ORIGIN = SITE_ORIGIN;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, "..");
-const appFile = path.join(projectRoot, "src", "App.jsx");
 const outDir = path.join(projectRoot, "dist");
 
-const excludedPrefixes = [
-  "/admin-dashboard",
-  "/doctor-dashboard",
-  "/employee-dashboard",
-  "/payment-admin",
-  "/superadmin-dashboard",
-  "/user",
-];
-
-const excludedExactPaths = new Set([
-  "*",
-  // Removed Medical Q&A page; the route is now just a redirect to "/".
-  "/ask-a-question",
-  "/admin-auth",
-  "/adminauth",
-  "/cookies",
-  "/doctor-login",
-  "/employee-login",
-  "/images",
-  "/login",
-  "/payment-admin-login",
-  "/profile",
-  "/test",
-]);
-
-function readAppRoutes() {
-  const source = fs.readFileSync(appFile, "utf8");
-  const withoutJsxComments = source.replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
-  const pathAttributePattern = /\bpath\s*=\s*["']([^"']+)["']/g;
-  const routes = [];
-  let match;
-
-  while ((match = pathAttributePattern.exec(withoutJsxComments)) !== null) {
-    routes.push(match[1]);
-  }
-
-  return routes;
-}
-
-function isIndexableRoute(routePath) {
-  if (!routePath || excludedExactPaths.has(routePath)) return false;
-  if (!routePath.startsWith("/")) return false;
-  if (routePath.includes(":") || routePath.includes("*")) return false;
-  if (excludedPrefixes.some((prefix) => routePath === prefix || routePath.startsWith(`${prefix}/`))) {
-    return false;
-  }
-
-  return true;
-}
-
-function normalizeRoutes(routePaths) {
-  return [...new Set(routePaths.filter(isIndexableRoute))]
+// The sitemap is an allow-list: only routes declared in src/seo/routes.js that are indexable
+// (not noindex, not under a non-public prefix) are listed. New routes never leak in by accident.
+function indexableRoutes() {
+  return Object.keys(SEO_ROUTES)
+    .filter((routePath) => isIndexable(routePath))
     .sort((a, b) => {
       if (a === "/") return -1;
       if (b === "/") return 1;
@@ -79,8 +33,8 @@ function escapeXml(value) {
 }
 
 function routeToUrl(routePath) {
-  if (routePath === "/") return PRODUCTION_ORIGIN;
-  return `${PRODUCTION_ORIGIN}${routePath}`;
+  // Same form as the page's <link rel="canonical"> (see src/seo/routes.js getRouteSeo).
+  return `${PRODUCTION_ORIGIN}${SEO_ROUTES[routePath]?.canonical || routePath}`;
 }
 
 function priorityFor(routePath) {
@@ -108,16 +62,26 @@ function changeFrequencyFor(routePath) {
   return "monthly";
 }
 
-function buildSitemap(routePaths) {
-  const lastmod = new Date().toISOString().slice(0, 10);
-  const entries = routePaths
+// Blog posts and doctor profiles are not in the static map: scripts/prerender.mjs lists the ones it
+// rendered in dist/.prerender-manifest.json (with the post's own published date).
+function dynamicRoutes() {
+  const file = path.join(outDir, ".prerender-manifest.json");
+  if (!fs.existsSync(file)) return [];
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function buildSitemap(routePaths, extra) {
+  const lastmods = new Map(extra.map((e) => [e.route, e.lastmod]));
+  const entries = [...routePaths, ...extra.map((e) => e.route)]
     .map((routePath) => {
       const loc = escapeXml(routeToUrl(routePath));
+      // Real content date from the metadata map / the post itself; never the build date.
+      const lastmod = lastmods.has(routePath) ? lastmods.get(routePath) : SEO_ROUTES[routePath].lastmod;
 
       return [
         "  <url>",
         `    <loc>${loc}</loc>`,
-        `    <lastmod>${lastmod}</lastmod>`,
+        ...(lastmod ? [`    <lastmod>${lastmod}</lastmod>`] : []),
         `    <changefreq>${changeFrequencyFor(routePath)}</changefreq>`,
         `    <priority>${priorityFor(routePath)}</priority>`,
         "  </url>",
@@ -153,6 +117,15 @@ function buildRobotsTxt(isProduction) {
     "Disallow: /user/",
     "Disallow: /pay/",
     "Disallow: /video-call/",
+    "Disallow: /partner-dashboard",
+    "Disallow: /partner-login",
+    "Disallow: /services-prices",
+    "Disallow: /appointment-booking/form",
+    "Disallow: /appointment-booking/category-confirm",
+    "Disallow: /category-consultant",
+    "Disallow: /service-consultant",
+    "Disallow: /direct-video-call/",
+    "Disallow: /api/",
     "",
     `Sitemap: ${PRODUCTION_ORIGIN}/sitemap.xml`,
     "",
@@ -171,12 +144,12 @@ const modeArg = process.argv.find((arg) => arg.startsWith("--mode="));
 const mode = modeArg ? modeArg.slice("--mode=".length) : "production";
 const isProduction = mode === "production";
 
-const routes = normalizeRoutes(readAppRoutes());
+const routes = indexableRoutes();
 
 if (routes.length === 0) {
-  throw new Error("No indexable React routes were found for sitemap generation.");
+  throw new Error("No indexable routes in src/seo/routes.js for sitemap generation.");
 }
 
-fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(routes));
+fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(routes, dynamicRoutes()));
 fs.writeFileSync(path.join(outDir, "robots.txt"), buildRobotsTxt(isProduction));
 

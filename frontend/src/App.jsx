@@ -7,6 +7,8 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { REDIRECTS } from "./seo/redirects";
+import RouteSeo from "./seo/RouteSeo";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 
@@ -50,20 +52,20 @@ import {
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
 
 // iNDIVIDUAL bLOG PAGES
-import Telemedicine from "./pages/Blogs/Telemedicine";
-import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
-import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
-import OnlineDoctorConsultation from "./pages/Blogs/OnlineDoctorConsultation";
-import MedicalConditions from "./pages/Blogs/MedicalConditions";
-import TopTelemedicinePlatforms from "./pages/Blogs/TopTelemedicinePlatforms";
-import TelemedicineSafe from "./pages/Blogs/TelemedicineSafe";
-import TelemedicineInPerson from "./pages/Blogs/TelemedicineInPerson";
-import TelemedicineCost from "./pages/Blogs/TelemedicineCost";
-import OnlineDoctorRealDoctor from "./pages/Blogs/OnlineDoctorsRealDoctors";
-import FutureofTelemedicine from "./pages/Blogs/FutureofTelemedicine";
-import UTI from "./pages/Blogs/UTI";
-import MigraineVsHeadache from "./pages/Blogs/MigraineVsHeadache";
-import TelehealthforHypertension from "./pages/Blogs/TelehealthforHypertension";
+const Telemedicine = lazy(() => import("./pages/Blogs/Telemedicine"));
+const TelemedicineServices = lazy(() => import("./pages/Blogs/TelemedicineServices"));
+const HowTelemedicineAppointmentWork = lazy(() => import("./pages/Blogs/HowTelemedicineAppointmentWork"));
+const OnlineDoctorConsultation = lazy(() => import("./pages/Blogs/OnlineDoctorConsultation"));
+const MedicalConditions = lazy(() => import("./pages/Blogs/MedicalConditions"));
+const TopTelemedicinePlatforms = lazy(() => import("./pages/Blogs/TopTelemedicinePlatforms"));
+const TelemedicineSafe = lazy(() => import("./pages/Blogs/TelemedicineSafe"));
+const TelemedicineInPerson = lazy(() => import("./pages/Blogs/TelemedicineInPerson"));
+const TelemedicineCost = lazy(() => import("./pages/Blogs/TelemedicineCost"));
+const OnlineDoctorRealDoctor = lazy(() => import("./pages/Blogs/OnlineDoctorsRealDoctors"));
+const FutureofTelemedicine = lazy(() => import("./pages/Blogs/FutureofTelemedicine"));
+const UTI = lazy(() => import("./pages/Blogs/UTI"));
+const MigraineVsHeadache = lazy(() => import("./pages/Blogs/MigraineVsHeadache"));
+const TelehealthforHypertension = lazy(() => import("./pages/Blogs/TelehealthforHypertension"));
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
@@ -105,9 +107,6 @@ const CancerSecond = lazy(
 const ChestPain = lazy(() => import("./pages/Conditions/ChestPain"));
 const ChronicKidney = lazy(
   () => import("./pages/Conditions/ChronicKidneyDisease"),
-);
-const ChronicMigraine = lazy(
-  () => import("./pages/Conditions/ChronicMigraine"),
 );
 const ComplexDiagnosis = lazy(
   () => import("./pages/Conditions/ComplexDiagnosisReview"),
@@ -224,9 +223,6 @@ const EarPainChildren = lazy(
 const FeedingConcerns = lazy(
   () => import("./pages/Conditions/FeedingConcerns"),
 );
-const MildAsthmaSymptoms = lazy(
-  () => import("./pages/Conditions/MildAsthmaSymptoms"),
-);
 const MoodAnxietyTeens = lazy(
   () => import("./pages/Conditions/MoodAnxietyTeens"),
 );
@@ -263,20 +259,11 @@ const FollowUpConsultation = lazy(
 const LabResultsReview = lazy(
   () => import("./pages/Conditions/LabResultReview"),
 );
-const MedicalCertificate = lazy(
-  () => import("./pages/Conditions/MedicalCertificate"),
-);
 const MedicationReview = lazy(
   () => import("./pages/Conditions/MedicationReview"),
 );
-const PrescriptionRefill = lazy(
-  () => import("./pages/Conditions/PrescriptionRefill"),
-);
 const ReturnWorkClearance = lazy(
   () => import("./pages/Conditions/ReturnWorkClearance"),
-);
-const SecondMedicalOpinion = lazy(
-  () => import("./pages/Conditions/SecondMedicalOpinion"),
 );
 const SpecialistReferral = lazy(
   () => import("./pages/Conditions/SpecialistReferral"),
@@ -459,9 +446,6 @@ const VaccinationAdvice = lazy(
 const WholeFamilyIllnesses = lazy(
   () => import("./pages/Conditions/Conditions/WholeFamilyIllnesses"),
 );
-const BladderInfection = lazy(
-  () => import("./pages/Conditions/Conditions/BladderInfection"),
-);
 const BloodInUrine = lazy(
   () => import("./pages/Conditions/Conditions/BloodInUrine"),
 );
@@ -614,7 +598,7 @@ const HrtGuidance = lazy(
 const FertilityConcerns = lazy(
   () => import("./pages/Conditions/Conditions/FertilityConcerns"),
 );
-import Ocd from "./pages/Conditions/Conditions/Ocd";
+const Ocd = lazy(() => import("./pages/Conditions/Conditions/Ocd"));
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
 const AdolescentMedicine = lazy(
@@ -625,10 +609,6 @@ const Pediatrics = lazy(
 );
 const Cardiology = lazy(
   () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology"),
-);
-const ExpertMedicalOpinion = lazy(
-  () =>
-    import("./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion"),
 );
 const Gastroenterology = lazy(
   () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology"),
@@ -721,15 +701,9 @@ const ChronicCareManagement = lazy(
 const GeneralConsultation = lazy(
   () => import("./pages/NewServices/GeneralConsultation"),
 );
-const MentalHealthSupport = lazy(
-  () => import("./pages/NewServices/MentalHealthSupport"),
-);
 const SexualHealth = lazy(() => import("./pages/NewServices/SexualHealth"));
 const WeightLossPrograms = lazy(
   () => import("./pages/NewServices/WeightLossPrograms"),
-);
-const DoctorNoteSickNote = lazy(
-  () => import("./pages/NewServices/DoctorNoteSickNote"),
 );
 const FittoFly = lazy(() => import("./pages/NewServices/FittoFly"));
 const LABREQUISITIONS = lazy(
@@ -741,14 +715,13 @@ const ChronicMedicationManagement = lazy(
 const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
-const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
 
-import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
-import ServicesPrices from "./pages/admin/ServicesPrices";
+const AdminAssignCategoryDoctor = lazy(() => import("./pages/admin/AdminAssignCategoryDoctor"));
+const ServicesPrices = lazy(() => import("./pages/admin/ServicesPrices"));
 
-import CategoryConsultant from "./pages/CategoryConsultant";
-import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
-import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails";
+const CategoryConsultant = lazy(() => import("./pages/CategoryConsultant"));
+const CategoryAppointmentConfirm = lazy(() => import("./pages/CategoryAppointmentConfirm"));
+const AdminCategoryConsultationDetails = lazy(() => import("./pages/admin/AdminCategoryConsultationDetails"));
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -1148,7 +1121,7 @@ function DoctorEnrollmentsWrapper() {
   );
 }
 
-function AppLayout() {
+export function AppLayout() {
   const location = useLocation();
 
   const hideLayout =
@@ -1166,6 +1139,7 @@ function AppLayout() {
   return (
     <>
       <ScrollToTop />
+      <RouteSeo />
       <SessionTimeoutManager />
       {!hideLayout && <Header />}
 
@@ -1182,7 +1156,6 @@ function AppLayout() {
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
-                    <Route path="/corporates" element={<Corporates />} />
                     <Route path="/service-areas" element={<Serviceareas />} />
           <Route
             path="/appointment-booking/:catSlug"
@@ -1627,7 +1600,14 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route path="/services-prices" element={<ServicesPrices />} />
+          <Route
+            path="/services-prices"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <ServicesPrices />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/admin-auth"
             element={<Navigate to="/adminauth" replace />}
@@ -1862,14 +1842,6 @@ function AppLayout() {
             path="/child-and-family-care/pediatrics"
             element={<Pediatrics />}
           />
-          <Route
-            path="/chronic-care-and-expert-opinion/cardiology"
-            element={<Cardiology />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics"
-            element={<Pediatrics />}
-          />
           <Route path="/chronic-care/cardiology" element={<Cardiology />} />
           <Route
             path="/chronic-care/gastroenterology"
@@ -1905,12 +1877,6 @@ function AppLayout() {
             path="/women-health/lactation-consulting"
             element={<LactationConsulting />}
           />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
           <Route path="/eye-ear-bone/ear-nose-throat" element={<Ent />} />
           <Route
             path="/eye-ear-bone/ophthalmology"
@@ -1976,10 +1942,6 @@ function AppLayout() {
           <Route
             path="/chronic-kidney-disease"
             element={<ChronicKidney categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/neurology/chronic-migraine"
-            element={<ChronicMigraine categoryId="chronic" />}
           />
           <Route
             path="/online-second-medical-opinion/complex-diagnosis-review"
@@ -2216,10 +2178,6 @@ function AppLayout() {
             element={<FeedingConcerns categoryId="family" />}
           />
           <Route
-            path="/mild-asthma-symptoms"
-            element={<MildAsthmaSymptoms categoryId="family" />}
-          />
-          <Route
             path="/child-and-family-care/adolescent-medicine/mood-anxiety-teens"
             element={<MoodAnxietyTeens categoryId="family" />}
           />
@@ -2276,24 +2234,12 @@ function AppLayout() {
             element={<LabResultsReview categoryId="general" />}
           />
           <Route
-            path="/medical-certificate"
-            element={<MedicalCertificate categoryId="general" />}
-          />
-          <Route
             path="/general-and-everyday-care/internal-medicine/medication-review"
             element={<MedicationReview categoryId="general" />}
           />
           <Route
-            path="/prescription-refill"
-            element={<PrescriptionRefill categoryId="general" />}
-          />
-          <Route
             path="/return-to-work-clearance"
             element={<ReturnWorkClearance categoryId="general" />}
-          />
-          <Route
-            path="/second-medical-opinion"
-            element={<SecondMedicalOpinion categoryId="chronic" />}
           />
           <Route
             path="/specialist-referral"
@@ -2607,10 +2553,6 @@ function AppLayout() {
             element={<WholeFamilyIllnesses categoryId="general" />}
           />
           <Route
-            path="/bladder-infection"
-            element={<BladderInfection categoryId="men" />}
-          />
-          <Route
             path="/mens-health/urology/blood-in-urine"
             element={<BloodInUrine categoryId="men" />}
           />
@@ -2631,7 +2573,7 @@ function AppLayout() {
             element={<UrinaryIncontinence categoryId="men" />}
           />
           <Route
-            path="/mens-health/urology/urinary-tract-infection"
+            path="/urinary-tract-infection"
             element={<UrinaryTractInfection categoryId="men" />}
           />
           <Route
@@ -2858,7 +2800,7 @@ function AppLayout() {
             path="/women-health/obstetrics-and-gynaecology/fertility-concerns"
             element={<FertilityConcerns categoryId="women" />}
           />
-          <Route path="/mental-health/psychiatry/Ocd" element={<Ocd />} />
+          <Route path="/mental-health/psychiatry/ocd" element={<Ocd />} />
           <Route
             path="/eye-ear-bone/ophthalmology/eye-irritation"
             element={<EyeIrritation categoryId="eeb" />}
@@ -2867,10 +2809,6 @@ function AppLayout() {
             path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
-          <Route
-            path="/doctors-note"
-            element={<DoctorsNote categoryId="general" />}
-          />
           {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
           {/* Legacy query-param URL — redirects to the path-based form URL above. */}
           <Route
@@ -2981,7 +2919,6 @@ function AppLayout() {
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/support-center" element={<FAQ />} />
           {/* ---------------------Service Pages---------------------------- */}
-          <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route
             path="/chronic-care-management"
             element={<ChronicCareManagement />}
@@ -2989,10 +2926,6 @@ function AppLayout() {
           <Route
             path="/general-consultation"
             element={<GeneralConsultation />}
-          />
-          <Route
-            path="/mental-health-support"
-            element={<MentalHealthSupport />}
           />
           <Route
             path="/online-prescription-refills"
@@ -3007,67 +2940,13 @@ function AppLayout() {
             path="/online-second-medical-opinion"
             element={<SecondOpinion />}
           />
-          <Route
-            path="/expert-medical-opinion"
-            element={<ExpertMedicalOpinion />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
-          <Route path="/ent" element={<Ent />} />
-          <Route
-            path="/eye-ear-bone/ophthalmology"
-            element={<Ophthalmology />}
-          />
-          <Route path="/eye-ear-bone/orthopedics" element={<Orthopedics />} />
           {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
-          <Route path="/mens-health/urology" element={<Urology />} />
-          <Route
-            path="/mental-health/behavioral-health"
-            element={<BehavioralHealth />}
-          />
-          <Route path="/mental-health/psychiatry" element={<Psychiatry />} />
-          <Route
-            path="/mental-health/psychology-counseling"
-            element={<PsychologyCounseling />}
-          />
           <Route
             path="/sexual-health/sexual-health-and-wellness"
             element={<SexualHealthSpeciality />}
           />
-          <Route
-            path="/skin-and-hair-care/dermatology"
-            element={<Dermatology />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care"
-            element={<GlobalCrossBorderCare />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine"
-            element={<TravelMedicine />}
-          />
-          <Route
-            path="/weight-and-nurtrition/weight-management"
-            element={<WeightManagement />}
-          />
-          <Route
-            path="/weight-and-nurtrition/lifestyle-medicine"
-            element={<LifestyleMedicine />}
-          />
-          <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics"
-            element={<NutritionAndDietetics />}
-          />
           <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
-          <Route
-            path="/doctor-note-or-sick-notes"
-            element={<DoctorNoteSickNote />}
-          />
           <Route
             path="/eye-ear-bone/ear-nose-throat/vertigo"
             element={<Vertigo categoryId="eeb" />}
@@ -3108,6 +2987,10 @@ function AppLayout() {
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+          {/* Retired/duplicate URLs: real 301s live in render.yaml; this is the in-app safety net. */}
+          {REDIRECTS.map(({ from, to }) => (
+            <Route key={from} path={from} element={<Navigate to={to} replace />} />
+          ))}
           {/* Super Admin blogs: after every static route so existing URLs win */}
           <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />

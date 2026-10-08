@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function Bronchitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bronchitis Care Online | Cough, Mucus & Chest Symptom Relief"
-        description="Dealing with a persistent cough, mucus, wheezing, or chest discomfort? Get online bronchitis care with symptom relief, treatment guidance, and prescriptions when appropriate."
-        keywords="Bronchitis, Bronchitis symptoms, Persistent cough, Chest discomfort, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/bronchitis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function Bronchitis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

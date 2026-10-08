@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -65,14 +66,10 @@ export default function PostnatalDepression({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Postnatal Depression Treatment Online | Postpartum Mental Health Care"
-        description="Get compassionate support for postnatal depression online. Connect with a licensed provider for postpartum depression, anxiety, mood changes, emotional wellness, and personalized mental health treatment."
-        keywords="Postnatal depression, Postpartum depression treatment, Online postpartum mental health, Postpartum anxiety support, Virtual mental healthcare"
-        url="https://humancareconnect.co/postnatal-depression"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function PostnatalDepression({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

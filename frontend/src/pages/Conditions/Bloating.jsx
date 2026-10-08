@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function Bloating({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bloating Relief Online | Digestive Health & Stomach Discomfort Care"
-        description="Feeling full, gassy, or uncomfortable after eating? Get personalized support for bloating symptoms with digestive health guidance and treatment recommendations online."
-        keywords="Bloating, Bloating symptoms, Stomach fullness, Digestive discomfort, Digestive health guidance, Online doctor appointment"
-        url="https://humancareconnect.co/bloating"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function Bloating({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

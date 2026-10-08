@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -38,14 +39,10 @@ export default function Obesity({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Obesity Treatment Online | Weight Management & Medical Support"
-        description="Get expert obesity treatment online. Connect with a licensed provider for weight management, healthy weight loss, lifestyle guidance, GLP-1 eligibility assessment, and personalized care."
-        keywords="Obesity treatment, Weight management, Healthy weight loss, Online weight loss consultation"
-        url="https://humancareconnect.co/obesity"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -65,7 +62,7 @@ export default function Obesity({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

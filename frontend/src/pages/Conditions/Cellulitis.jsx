@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function Cellulitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cellulitis Symptoms & Skin Infection Care | Get Help Online"
-        description="Red, swollen, warm, or tender skin may be signs of cellulitis. Share your symptoms and photos with a licensed provider for evaluation and treatment guidance online."
-        keywords="Cellulitis, Cellulitis symptoms, Bacterial skin infection, Skin inflammation, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/cellulitis"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function Cellulitis({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

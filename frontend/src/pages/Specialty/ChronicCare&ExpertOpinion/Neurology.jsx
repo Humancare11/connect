@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -161,12 +160,6 @@ const SPECIALTY_DATA = {
       name: "Migraine ",
       desc: "Evaluation for irregular heart sensations.",
       path: "/chronic-care/neurology/migraine",
-    },
-    {
-      Icon: FiHeart,
-      name: "Chronic Migraine",
-      desc: "Support for healthy infant feeding",
-      path: "/chronic-care/neurology/chronic-migraine",
     },
     {
       Icon: FiZap,
@@ -545,21 +538,19 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Neurology Specialists | Brain, Nerve & Neurological Care"
-        description="Get expert neurology care for migraines, dizziness, memory concerns, tremors, seizures, numbness, tingling, and neurological disorders."
-        keywords="Neurology specialist, Migraine treatment, Neurological care, Online neurology consultation"
-        url="https://humancareconnect.co/neurology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -595,6 +586,8 @@ export default function Neurology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

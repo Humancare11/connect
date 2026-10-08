@@ -71,11 +71,7 @@ export default function Contact() {
 
   return (
     <>
-      <SEO
-        title=" Telemedicine Services Support | Contact Humancare Connect"
-        description="Telemedicine services support for online doctor appointments, virtual healthcare solutions, and general questions. Contact the Humancare Connect team 24/7."
-        url="https://humancareconnect.co/contact-us"
-      />
+      <SEO />
       <div className="contact-page">
         <section className="page-hero">
           <div className="page-hero__inner">

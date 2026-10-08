@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function MetabolicSyndrome({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Metabolic Syndrome Treatment Online | Heart & Diabetes Risk Management"
-        description="Manage metabolic syndrome with expert online care. Connect with a licensed provider for high blood pressure, blood sugar, cholesterol, weight management, and personalized treatment plans."
-        keywords="Metabolic syndrome treatment, Heart disease risk management, Diabetes prevention, Online metabolic health consultation"
-        url="https://humancareconnect.co/metabolic-syndrome"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function MetabolicSyndrome({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

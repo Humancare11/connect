@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -592,21 +591,19 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Dermatology Specialists | Skin, Hair & Nail Care Online"
-        description="Connect with experienced dermatology specialists for acne, eczema, psoriasis, rosacea, hair loss, fungal skin infections, hives, nail problems, and personalized skin care treatment."
-        keywords="Dermatology specialists, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dermatology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="1178"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -622,7 +619,7 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
                 <p className="sp-hero__description">{data.heroDescription}</p>
 
                 <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <a href="/specialties" className="sp-btn sp-btn--primary">
                     <FiSearch size={17} />
                     Find Specialists
                   </a>
@@ -654,6 +651,8 @@ export default function Dermatology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

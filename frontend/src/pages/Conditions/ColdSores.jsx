@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function ColdSores({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cold Sores & HSV-1 | Care for Painful Lip Blisters"
-        description="Tingling, burning, or painful blisters around the lips may signal a cold sore. Receive symptom evaluation, treatment guidance, and prescription support when appropriate."
-        keywords="Cold sores, Cold sore symptoms, Herpes simplex virus (HSV-1), Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/cold-sores"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function ColdSores({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

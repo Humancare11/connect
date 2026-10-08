@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Gonorrhea({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Gonorrhea Treatment Online | Confidential STI Care"
-        description="Get confidential gonorrhea treatment online from licensed providers. Receive STI evaluation, sexual health guidance, treatment recommendations, and prescriptions when appropriate through telemedicine services."
-        keywords="Gonorrhea treatment online, Confidential STI care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/gonorrhea"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Gonorrhea({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

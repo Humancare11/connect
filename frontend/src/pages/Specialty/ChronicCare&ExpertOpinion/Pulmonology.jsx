@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -540,21 +539,19 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Pulmonology Specialists | Lung & Respiratory Health Care"
-        description="Get expert pulmonology care for asthma, COPD, chronic cough, shortness of breath, sleep apnea, and post-COVID respiratory concerns."
-        keywords="online pulmonologist, pulmonology consultation, lung specialist online, asthma treatment, COPD management, chronic cough treatment, shortness of breath, sleep apnea care, respiratory specialist, virtual lung doctor, telehealth pulmonology, respiratory care online"
-        url="https://humancareconnect.co/pulmonology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -590,6 +587,8 @@ export default function Pulmonology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 import {
   Calendar,
@@ -66,14 +67,10 @@ export default function AltitudeSickness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Altitude Sickness Treatment Online | Virtual Travel Health Care"
-        description="Get online care for altitude sickness symptoms, including headaches, dizziness, nausea, and shortness of breath. Connect with a licensed provider for treatment guidance."
-        keywords="Altitude sickness, Altitude sickness symptoms, Telemedicine services, Online doctor appointment, Telemedicine platform, Online provider"
-        url="https://humancareconnect.co/altitude-sickness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function AltitudeSickness({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

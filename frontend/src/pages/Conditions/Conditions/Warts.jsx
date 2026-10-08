@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Warts.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function Warts({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Warts Treatment Online | Skin Evaluation & Care"
-        description="Get convenient wart treatment online with expert skin evaluations. Connect with a licensed provider for personalized treatment options and prescriptions when appropriate."
-        keywords="Warts, wart treatment, warts treatment online, skin growths, viral infection, warts on hands, warts on feet, warts on face, skin evaluation, wart removal, telemedicine services, online doctor appointment, virtual healthcare services, online provider, skin care, treatment options"
-        url="https://humancareconnect.co/warts"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function Warts({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -572,21 +571,19 @@ export default function Ent({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="ENT Specialists | Ear, Nose & Throat Care Services"
-        description="Get expert ENT care for ear infections, ear pain, sore throat, tonsillitis, nasal congestion, hoarseness, vertigo, and other ear, nose, and throat conditions."
-        keywords="ENT specialists, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/ear-nose-throat"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="1178"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -622,6 +619,8 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"
@@ -690,7 +689,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                   key={i}
                   {...s}
                   delay={i * 55}
-                  href={`/Specialties/${data.slug}#service-${i}`}
+                  href={`/specialties/${data.slug}#service-${i}`}
                 />
               ))}
             </div>
@@ -735,7 +734,7 @@ export default function Ent({ data = SPECIALTY_DATA }) {
                   key={i}
                   {...c}
                   delay={Math.min(i, 7) * 45}
-                  href={`/Specialties/${data.slug}#condition-${slugify(c.name)}`}
+                  href={`/specialties/${data.slug}#condition-${slugify(c.name)}`}
                 />
               ))}
             </div>

@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -65,14 +66,10 @@ export default function Pmdd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="PMDD Treatment Online | Premenstrual Dysphoric Disorder Care"
-        description="Get expert online care for PMDD. Connect with a licensed provider for severe premenstrual symptoms, mood changes, anxiety, depression, hormone-related concerns, and personalized treatment."
-        keywords="PMDD treatment, Premenstrual dysphoric disorder, Online PMDD consultation, Women's hormonal health, Virtual women's healthcare"
-        url="https://humancareconnect.co/pmdd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function Pmdd({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

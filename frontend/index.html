@@ -12,103 +12,25 @@
   content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://js.stripe.com https://www.paypal.com https://www.paypalobjects.com https://accounts.google.com https://www.clarity.ms https://scripts.clarity.ms; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com; img-src 'self' data: https:; connect-src 'self' https: wss:; frame-src https://js.stripe.com https://www.paypal.com https://accounts.google.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self';"
 />
 
-    <title>
+    <!-- Fallback page title for routes that set none (dashboards etc.). Marked so PrerenderCleanup
+         removes it once React has rendered a title of its own, leaving exactly one title element. -->
+    <title data-prerendered-head>
       Humancare Connect | Online Doctor Consultation &amp; Telehealth Services
     </title>
 
     <!-- Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
-    <link rel="preconnect" href="https://api.fontshare.com" />
     <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
-    <!-- Fonts -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    />
+    <!-- Fonts are self-hosted (src/fonts.css, font-display: swap). Preload the faces used above the fold. -->
+    <link rel="preload" href="/src/assets/fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/src/assets/fonts/satoshi-700.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/src/assets/fonts/satoshi-400.woff2" as="font" type="font/woff2" crossorigin />
 
-    <link
-      rel="stylesheet"
-      href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,800,900&display=swap"
-    />
-
-    <!-- Primary SEO -->
-    <meta
-      name="title"
-      content="Humancare Connect | Online Doctor Consultation &amp; Telehealth Services"
-    />
-
-    <meta
-      name="description"
-      content="Consult doctors online with Humancare Connect. Get expert medical advice, teleconsultation, and healthcare support anytime."
-    />
-
-    <meta
-      name="keywords"
-      content="online doctor consultation, telemedicine, telehealth services, doctor online, medical consultation online, Humancare Connect"
-    />
-
+    <!-- Per-page title/description/canonical/robots/og/twitter are set by Seo.jsx -->
     <meta name="author" content="Humancare Connect" />
-
-    <!-- Indexing -->
-    <meta name="robots" content="index, follow" />
-
-    <!-- Canonical -->
-    <link rel="canonical" href="https://humancareconnect.co/" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/single-logo.png" />
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Humancare Connect" />
-    <meta property="og:url" content="https://humancareconnect.co/" />
-
-    <meta property="og:title"
-      content="Humancare Connect | Online Doctor Consultation &amp; Telehealth Services"
-    />
-
-    <meta
-      property="og:description"
-      content="Consult doctors online with Humancare Connect. Get expert medical advice, teleconsultation, and healthcare support anytime."
-    />
-
-    <meta
-      property="og:image"
-      content="https://humancareconnect.co/preview.jpg"
-    />
-
-    <meta
-      property="og:image:alt"
-      content="Humancare Connect online doctor consultation and telehealth services"
-    />
-
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-
-    <meta
-      name="twitter:title"
-      content="Humancare Connect | Online Doctor Consultation &amp; Telehealth Services"
-    />
-
-    <meta
-      name="twitter:description"
-      content="Consult doctors online with Humancare Connect. Get expert medical advice, teleconsultation, and healthcare support anytime, anywhere."
-    />
-
-    <meta
-      name="twitter:image"
-      content="https://humancareconnect.co/preview.jpg"
-    />
-
-    <meta
-      name="twitter:image:alt"
-      content="Humancare Connect online doctor consultation and telehealth services"
-    />
 
     <!-- Theme -->
     <meta name="theme-color" content="#223A5E" />

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function RheumatoidArthritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Rheumatoid Arthritis Treatment Online | Joint Pain & Inflammation Care"
-        description="Connect with a licensed provider online for rheumatoid arthritis treatment, joint pain relief, inflammation management, medication support, and ongoing care."
-        keywords="rheumatoid arthritis treatment, rheumatoid arthritis symptoms, online rheumatology consultation, joint inflammation, autoimmune arthritis, RA treatment online, chronic joint pain, virtual arthritis care"
-        url="https://humancareconnect.co/rheumatoid-arthritis"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function RheumatoidArthritis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

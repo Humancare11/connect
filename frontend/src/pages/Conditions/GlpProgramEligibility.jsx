@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function GlpProgramEligibility({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="GLP-1 Weight Loss Program | Online Eligibility Assessment"
-        description="Find out if you're eligible for a GLP-1 weight loss program. Connect with a licensed provider online for a personalized assessment, treatment guidance, and weight management support."
-        keywords="GLP-1 weight loss program, GLP-1 eligibility assessment, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/glp-program-eligibility"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

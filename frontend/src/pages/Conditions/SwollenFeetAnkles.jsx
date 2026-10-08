@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function SwollenFeetAnkles({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Swollen Feet & Ankles Treatment Online | Virtual Doctor Consultation"
-        description="Get online care for swollen feet or ankles. Consult a licensed provider for swelling, fluid retention, discomfort, and personalized treatment guidance."
-        keywords="swollen feet treatment, swollen ankles treatment, ankle swelling, foot swelling, edema treatment online, fluid retention, online doctor consultation, virtual healthcare services, telehealth swelling care, swollen feet and ankles causes"
-        url="https://humancareconnect.co/swollen-feet-ankles"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function SwollenFeetAnkles({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

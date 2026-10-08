@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-// import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -57,7 +56,6 @@ import {
 } from "react-icons/gi";
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
-import { Helmet, HelmetProvider } from "react-helmet-async";
 
 import heroImage from "../../../assets/SpecialitiesImage/endocrinology-specialist-hormone-metabolic-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-endocrinologist-hormone-health-consultation.webp";
@@ -529,12 +527,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Endocrinology Specialists | Hormone & Metabolic Health Care"
-        description="Get expert endocrinology care for hormone imbalances, thyroid disorders, diabetes, osteoporosis, and metabolic conditions with personalized treatment plans."
-        keywords="Endocrinology specialists, Hormone health, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/endocrinology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
@@ -542,9 +535,12 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -580,6 +576,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

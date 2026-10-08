@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MensHealth/Urinary-Symptoms-in-Men.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -65,14 +66,10 @@ export default function UrinarySymptomsMen({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Urinary Symptoms in Men | Online Men�s Urinary Care"
-        description="Get online care for male urinary symptoms, including frequent urination, weak urine flow, burning, urgency, and prostate-related concerns."
-        keywords="urinary symptoms in men, frequent urination in men, weak urine flow, burning urination in men, male urinary problems, prostate health, online urologist, bladder problems in men, virtual urology consultation, telehealth urinary care"
-        url="https://humancareconnect.co/urinary-symptoms-in-men"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function UrinarySymptomsMen({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

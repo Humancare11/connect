@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import {
   Globe2,
   ArrowRight,
@@ -198,7 +197,7 @@ const conditionCategories = [
         name: "Treatment-Plan Review",
         path: "/online-second-medical-opinion/treatment-plan-review",
       },
-      { name: "Second Medical Opinion", path: "/second-medical-opinion" },
+      { name: "Second Medical Opinion", path: "/online-second-medical-opinion" },
       {
         name: "Acid Reflux / GERD",
         path: "/chronic-care/gastroenterology/acid-reflux-gerd",
@@ -223,10 +222,6 @@ const conditionCategories = [
       {
         name: "Migraine",
         path: "/chronic-care/neurology/migraine",
-      },
-      {
-        name: "Chronic Migraine",
-        path: "/chronic-care/neurology/chronic-migraine",
       },
       {
         name: "Seizures / Epilepsy Follow-Up",
@@ -408,7 +403,7 @@ const conditionCategories = [
       { name: "Low Libido", path: "/mens-health/men-health/low-libido" },
       {
         name: "Urinary Tract Infections",
-        path: "/mens-health/urology/urinary-tract-infection",
+        path: "/urinary-tract-infection",
       },
       { name: "Kidney Stones", path: "/mens-health/urology/kidney-stones" },
       { name: "Blood in Urine", path: "/mens-health/urology/blood-in-urine" },
@@ -860,22 +855,7 @@ export default function Symptoms() {
 
   return (
     <>
-      <SEO
-        title="Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare Connect"
-        description="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
-        keywords="Consult a doctor online for symptoms, online doctor consultation, symptom-based online care, virtual healthcare services, symptom evaluation, medical advice online"
-        url="https://humancareconnect.co/conditions"
-      />
-      <Helmet>
-        <title>
-          Consult a Doctor Online for Symptoms | Virtual Healthcare | Humancare
-          Connect
-        </title>
-        <meta
-          name="description"
-          content="Consult a doctor online for symptoms with Humancare Connect. Get expert medical advice, personalized treatment guidance, and secure virtual healthcare consultations from trusted professionals."
-        />
-      </Helmet>
+      <SEO />
 
       <section id="top" className="sy-hero">
         <div className="sy-hero-inner">

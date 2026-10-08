@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function GriefAndLoss({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Grief Counseling Online | Compassionate Mental Health Support"
-        description="Find compassionate support for grief and loss online. Connect with a licensed provider for emotional guidance, grief counseling, and personalized mental health care through telemedicine services."
-        keywords="Grief counseling online, Grief and loss support, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/grief-and-loss"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

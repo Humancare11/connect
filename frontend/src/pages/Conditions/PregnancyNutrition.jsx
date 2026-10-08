@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function PregnancyNutrition({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pregnancy Nutrition Online | Prenatal Diet & Nutrition Support"
-        description="Get expert pregnancy nutrition guidance online. Connect with a licensed provider for prenatal nutrition, healthy eating, dietary planning, fetal development support, and personalized pregnancy care."
-        keywords="Pregnancy nutrition, Prenatal nutrition, Online pregnancy nutrition consultation, Healthy pregnancy diet, Prenatal wellness support"
-        url="https://humancareconnect.co/pregnancy-nutrition"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -545,21 +544,19 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Behavioral Health Specialists | Mental Health & Emotional Wellness Support"
-        description="Connect with experienced behavioral health specialists for adjustment difficulties, anger management, sleep-related anxiety, substance use support, stress management, and emotional wellness care."
-        keywords="Behavioral Health, Behavioral Health Specialists, Mental Health, Emotional Wellness, Behavioral Health Care, Telehealth Access"
-        url="https://humancareconnect.co/behavioral-health"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="800"
+              height="533"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -595,6 +592,8 @@ export default function BehavioralHealth({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

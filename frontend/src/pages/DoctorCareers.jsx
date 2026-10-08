@@ -633,12 +633,7 @@ export default function DoctorCareers() {
 
   return (
     <>
-      <SEO
-        title=" Doctor Careers | Join Humancare Connect's  Network"
-        description="Join Humancare Connect's network of licensed healthcare professionals. Deliver secure, HIPAA-compliant virtual care, expand your professional reach, and shape the future of healthcare."
-        keywords="Licensed healthcare professionals, healthcare network, Telemedicine platform, Virtual consultations, Virtual care, HIPAA-compliant telemedicine platform"
-        url="https://humancareconnect.co/career"
-      />
+      <SEO />
       <main className="doctor-careers-page">
         {/* ---------------------------------------------------------- */}
         {/* 1. Hero                                                     */}

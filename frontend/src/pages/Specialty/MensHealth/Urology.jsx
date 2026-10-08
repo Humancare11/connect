@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -180,7 +179,7 @@ const SPECIALTY_DATA = {
       Icon: FiDroplet,
       name: "Urinary Tract Infections (UTI)",
       desc: "Relief for sore throat and swollen tonsils",
-      path: "/mens-health/urology/urinary-tract-infection",
+      path: "/urinary-tract-infection",
     },
     {
       Icon: FiShield,
@@ -547,21 +546,19 @@ export default function Urology({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Urology Specialists | Urinary & Kidney Health Care"
-        description="Connect with experienced urology specialists for bladder problems, kidney stones, blood in urine, urinary incontinence, UTIs, and comprehensive urinary health care."
-        keywords="Urology care, urinary health care, kidney health, bladder problems, kidney stones, blood in urine, urinary incontinence, urinary tract infection (UTI), recurrent UTIs, frequent urination, painful urination, urinary urgency, bladder health, male urinary health, preventive urology care, urology specialist online, telehealth urology appointments"
-        url="https://humancareconnect.co/urology"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -597,6 +594,8 @@ export default function Urology({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

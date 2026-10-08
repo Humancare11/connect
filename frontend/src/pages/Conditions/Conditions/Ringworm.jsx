@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Ringworm.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function Ringworm({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Ringworm Treatment Online | Virtual Care for Fungal Skin Infections"
-        description="Get fast online treatment for ringworm. Connect with a licensed provider for itchy, red, circular rashes, antifungal treatment, and personalized skincare guidance."
-        keywords="ringworm treatment online, fungal skin infection, ringworm rash, antifungal treatment, online dermatologist, itchy skin rash, tinea infection, virtual skin consultation"
-        url="https://humancareconnect.co/ringworm"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function Ringworm({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

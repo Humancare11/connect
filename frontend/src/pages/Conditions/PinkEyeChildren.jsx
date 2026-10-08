@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function PinkEyeChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pink Eye in Children Treatment Online | Pediatric Eye Care"
-        description="Get expert online care for pink eye in children. Connect with a licensed pediatric provider for red, itchy, watery eyes, conjunctivitis symptoms, treatment guidance, and prescriptions when appropriate."
-        keywords="Pink eye in children, Pediatric pink eye treatment, Children's conjunctivitis, Online pediatric consultation, Virtual pediatric care"
-        url="https://humancareconnect.co/pink-eye-children"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function PinkEyeChildren({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

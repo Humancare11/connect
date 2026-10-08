@@ -113,10 +113,7 @@ export default function Serviceareas() {
   return (
     <>
       <SEO
-        title="Service Areas | Humancare Connect"
         description={`Humancare Connect offers teleconsultation to patients physically located in ${AVAILABLE_COUNT} U.S. states. Teleconsultation is not currently available in California, Massachusetts, Rhode Island, or Vermont.`}
-        keywords="Humancare Connect service areas, telehealth states, online doctor availability by state"
-        url="https://humancareconnect.co/service-areas"
       />
 
       <main className="sa-page">

@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function Headache({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Headache Treatment Online | Fast Relief from Head Pain"
-        description="Get expert headache treatment online for migraines, tension headaches, head pain, and pressure. Connect with a licensed provider through secure telemedicine services for fast relief."
-        keywords="Headache treatment online, Migraine & head pain, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/headache"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function Headache({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

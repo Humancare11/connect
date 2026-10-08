@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -65,14 +66,10 @@ export default function PostpartumConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Postpartum Care Online | Recovery & Postnatal Health Support"
-        description="Get expert postpartum care online. Connect with a licensed provider for recovery after childbirth, breastfeeding support, mood changes, healing concerns, and personalized postnatal care."
-        keywords="Postpartum care, Postpartum recovery, Online postpartum consultation, Postnatal health support, Virtual women's healthcare"
-        url="https://humancareconnect.co/postpartum-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

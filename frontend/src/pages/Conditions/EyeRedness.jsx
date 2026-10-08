@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function EyeRedness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Eye Redness Treatment Online | Virtual Eye Care Consultation"
-        description="Get expert treatment for eye redness online. Connect with a licensed provider for redness, irritation, burning, itching, or bloodshot eyes through secure telemedicine services."
-        keywords="Eye redness treatment, Virtual eye care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/eye-redness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function EyeRedness({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

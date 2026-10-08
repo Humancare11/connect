@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 
 import {
   FiAward,
@@ -534,21 +533,19 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
   }, [data.categoryId]);
   return (
     <>
-      <SEO
-        title="Internal Medicine Specialists | Adult Health & Complex Care"
-        description="Get expert internal medicine care for medication reviews, preventive screenings, unexplained symptoms, chronic conditions, and complex adult health concerns."
-        keywords="Internal medicine specialists, Adult healthcare, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/internal-medicine"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -566,7 +563,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
                 <p className="sp-hero__description">{data.heroDescription}</p>
 
                 {/* <div className="sp-hero__actions">
-                  <a href="/Specialties" className="sp-btn sp-btn--primary">
+                  <a href="/specialties" className="sp-btn sp-btn--primary">
                     <FiSearch size={17} />
                     Find Specialists
                   </a>
@@ -601,6 +598,8 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

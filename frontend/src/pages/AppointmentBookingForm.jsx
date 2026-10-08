@@ -987,7 +987,6 @@ export default function AppointmentBookingForm() {
       <SEO
         title={seoTitle}
         description={seoDescription}
-        url={canonicalUrl}
         schemaData={breadcrumbSchema}
       />
       {/* Page-level heading */}

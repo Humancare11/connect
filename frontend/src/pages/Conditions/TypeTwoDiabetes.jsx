@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function TypeTwoDiabetes({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Type 2 Diabetes Treatment Online | Virtual Diabetes Care"
-        description="Manage Type 2 diabetes online with a licensed provider. Get support for blood sugar control, medications, lifestyle changes, and personalized diabetes care."
-        keywords="Type 2 diabetes treatment, diabetes treatment online, blood sugar management, online diabetes doctor, diabetes medication management, insulin resistance, virtual diabetes care, telehealth diabetes consultation, diabetes management, Type 2 diabetes symptoms"
-        url="https://humancareconnect.co/type-2-diabetes"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function TypeTwoDiabetes({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

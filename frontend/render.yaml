@@ -1,7 +1,176 @@
 routes:
+  # 301 redirects (source of truth: src/seo/redirects.js; checked by scripts/check-seo.mjs).
+  # Must stay above the catch-all rewrite. Render source paths are case-sensitive.
+  - type: redirect
+    source: /doctor-note-or-sick-notes
+    destination: /doctors-note
+  - type: redirect
+    source: /medical-certificate
+    destination: /doctors-note
+  - type: redirect
+    source: /prescription-refill
+    destination: /online-prescription-refills
+  - type: redirect
+    source: /second-medical-opinion
+    destination: /online-second-medical-opinion
+  - type: redirect
+    source: /expert-medical-opinion
+    destination: /online-second-medical-opinion
+  - type: redirect
+    source: /chronic-care-and-expert-opinion/cardiology
+    destination: /chronic-care/cardiology
+  - type: redirect
+    source: /mental-health-support
+    destination: /mental-health
+  - type: redirect
+    source: /ent
+    destination: /eye-ear-bone/ear-nose-throat
+  - type: redirect
+    source: /mild-asthma-symptoms
+    destination: /chronic-care/pulmonology/asthma
+  - type: redirect
+    source: /chronic-care/neurology/chronic-migraine
+    destination: /chronic-care/neurology/migraine
+  - type: redirect
+    source: /mens-health/urology/urinary-tract-infection
+    destination: /urinary-tract-infection
+  - type: redirect
+    source: /bladder-infection
+    destination: /urinary-tract-infection
+  - type: redirect
+    source: /Blogs
+    destination: /blogs
+  - type: redirect
+    source: /Specialties
+    destination: /specialties
+  - type: redirect
+    source: /mental-health/psychiatry/Ocd
+    destination: /mental-health/psychiatry/ocd
+  # App-only routes load the SPA shell (200.html, the untouched client index.html). Everything else
+  # is a prerendered file, or falls through to dist/404.html, which Render serves with a real 404.
+  # There is deliberately NO catch-all /* rewrite. Keep this list in sync with NOINDEX_PREFIXES /
+  # NOINDEX_EXACT in src/seo/routes.js (scripts/check-seo.mjs enforces it).
   - type: rewrite
-    source: /*
-    destination: /index.html
+    source: /user
+    destination: /200.html
+  - type: rewrite
+    source: /user/*
+    destination: /200.html
+  - type: rewrite
+    source: /doctor-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /doctor-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /admin-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /admin-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /superadmin-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /superadmin-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /employee-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /employee-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /payment-admin
+    destination: /200.html
+  - type: rewrite
+    source: /payment-admin/*
+    destination: /200.html
+  - type: rewrite
+    source: /partner-dashboard
+    destination: /200.html
+  - type: rewrite
+    source: /partner-dashboard/*
+    destination: /200.html
+  - type: rewrite
+    source: /appointment-booking
+    destination: /200.html
+  - type: rewrite
+    source: /appointment-booking/*
+    destination: /200.html
+  - type: rewrite
+    source: /pay
+    destination: /200.html
+  - type: rewrite
+    source: /pay/*
+    destination: /200.html
+  - type: rewrite
+    source: /video-call
+    destination: /200.html
+  - type: rewrite
+    source: /video-call/*
+    destination: /200.html
+  - type: rewrite
+    source: /direct-video-call
+    destination: /200.html
+  - type: rewrite
+    source: /direct-video-call/*
+    destination: /200.html
+  - type: rewrite
+    source: /login
+    destination: /200.html
+  - type: rewrite
+    source: /book-appointment
+    destination: /200.html
+  - type: rewrite
+    source: /test
+    destination: /200.html
+  - type: rewrite
+    source: /cookies
+    destination: /200.html
+  - type: rewrite
+    source: /images
+    destination: /200.html
+  - type: rewrite
+    source: /doctor-login
+    destination: /200.html
+  - type: rewrite
+    source: /adminauth
+    destination: /200.html
+  - type: rewrite
+    source: /admin-auth
+    destination: /200.html
+  - type: rewrite
+    source: /payment-admin-login
+    destination: /200.html
+  - type: rewrite
+    source: /employee-login
+    destination: /200.html
+  - type: rewrite
+    source: /partner-login
+    destination: /200.html
+  - type: rewrite
+    source: /services-prices
+    destination: /200.html
+  - type: rewrite
+    source: /category-consultant
+    destination: /200.html
+  - type: rewrite
+    source: /service-consultant
+    destination: /200.html
+  - type: rewrite
+    source: /profile
+    destination: /200.html
+  - type: rewrite
+    source: /ask-a-question
+    destination: /200.html
+  # Doctor profiles: prerendered ones are real files; new ones render in the browser until the next build.
+  - type: rewrite
+    source: /doctors/*
+    destination: /200.html
+  - type: rewrite
+    source: /doctor/*
+    destination: /200.html
 
 # Response headers Render applies to every static asset. These can't be set
 # via a <meta> tag (frame-ancestors / X-Frame-Options in particular are
@@ -19,3 +188,22 @@ headers:
   - path: /*
     name: Permissions-Policy
     value: "camera=(self), microphone=(self), geolocation=()"
+  # Caching. Everything under /assets/ is content-hashed by Vite (a changed file gets a new name), so it
+  # can be cached for a year. HTML pages, sitemap.xml and robots.txt must always revalidate; they carry
+  # the links to the hashed files. (Pages get Render's default revalidating header: no long-cache rule
+  # may ever match them, which scripts/check-seo.mjs enforces.)
+  - path: /assets/*
+    name: Cache-Control
+    value: "public, max-age=31536000, immutable"
+  - path: /sitemap.xml
+    name: Cache-Control
+    value: "public, max-age=0, must-revalidate"
+  - path: /robots.txt
+    name: Cache-Control
+    value: "public, max-age=0, must-revalidate"
+  - path: /404.html
+    name: Cache-Control
+    value: "public, max-age=0, must-revalidate"
+  - path: /200.html
+    name: Cache-Control
+    value: "public, max-age=0, must-revalidate"
