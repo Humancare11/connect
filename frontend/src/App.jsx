@@ -16,6 +16,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
 import { TextWidget } from '@livechat/widget-react'
+import LiveChatTracker from "./features/livechat/LiveChatTracker";
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -827,6 +828,8 @@ const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
+const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
+const LiveChatPlaceholder = lazy(() => import("./pages/admin/livechat/LiveChatPlaceholder"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1144,6 +1147,7 @@ export function AppLayout() {
       <RouteSeo />
       <SessionTimeoutManager />
       <TextWidget organizationId="d29e3595-c3ba-48b3-9229-3a4835984ec7" />
+      <LiveChatTracker />
       {!hideLayout && <Header />}
 
       <Suspense
@@ -1536,6 +1540,67 @@ export function AppLayout() {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <AdminLayout>
                   <MailIdsSettings />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          {/* Live Chat (admin + superadmin; the server module is switched by LIVECHAT_ENABLED). */}
+          <Route
+            path="/admin-dashboard/live-chat"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminLiveVisitors />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/ai-chats"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <LiveChatPlaceholder title="AI chats" />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/agent-chats"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <LiveChatPlaceholder title="Live agent chats" />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/team"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <LiveChatPlaceholder title="Team" />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/reports"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <LiveChatPlaceholder title="Reports" />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/settings"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <LiveChatPlaceholder title="AI agent settings" />
                 </AdminLayout>
               </PrivateRoute>
             }

@@ -79,6 +79,11 @@ const ICONS = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
+  chat: svg(
+    <>
+      <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </>
+  ),
   email: svg(
     <>
       <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -164,6 +169,22 @@ const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
+  // Live Chat (admin + superadmin only; employeeadmin is not a live agent). The module itself is switched on and
+  // off by LIVECHAT_ENABLED on the server.
+  {
+    key: "live-chat",
+    label: "Live Chat",
+    badge: "NEW",
+    icon: ICONS.chat,
+    children: [
+      { path: "/admin-dashboard/live-chat", label: "Real-time visitors", exact: true, roles: ["admin", "superadmin"], icon: ICONS.users },
+      { path: "/admin-dashboard/live-chat/ai-chats", label: "AI chats", roles: ["admin", "superadmin"], icon: ICONS.chat },
+      { path: "/admin-dashboard/live-chat/agent-chats", label: "Live agent chats", roles: ["admin", "superadmin"], icon: ICONS.chat },
+      { path: "/admin-dashboard/live-chat/team", label: "Team", roles: ["admin", "superadmin"], icon: ICONS.users },
+      { path: "/admin-dashboard/live-chat/reports", label: "Reports", roles: ["admin", "superadmin"], icon: ICONS.chart },
+      { path: "/admin-dashboard/live-chat/settings", label: "AI agent settings", roles: ["admin", "superadmin"], icon: ICONS.shield },
+    ],
+  },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 
@@ -350,6 +371,22 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
       >
         <span className="ad-nav-icon">{item.icon}</span>
         {item.label}
+        {item.badge && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: "0.06em",
+              background: "#22c55e",
+              color: "#062814",
+              borderRadius: 6,
+              padding: "2px 6px",
+            }}
+          >
+            {item.badge}
+          </span>
+        )}
         <span className="ad-nav-arrow" aria-hidden="true">›</span>
       </button>
 

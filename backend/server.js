@@ -52,6 +52,7 @@ const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
 const { scheduleEmailSync } = require("./jobs/emailSyncJob");
+const { mountLiveChat, seedLiveChatDefaults } = require("./services/liveChat");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
 const {
@@ -144,6 +145,7 @@ const startServer = async () => {
   scheduleRetentionCleanup();
   scheduleInvoiceReconciliation();
   scheduleEmailSync();
+  await seedLiveChatDefaults().catch((err) => console.error("[livechat] seed failed:", err.message));
 
   await ensureBucketCors(allowedOrigins);
 
@@ -3215,6 +3217,10 @@ io.on("connection", (socket) => {
   });
 
 }); // end io.on("connection")
+
+// Live Chat (kill switch: LIVECHAT_ENABLED, default off). Registers the /livechat and /livechat-admin socket
+// namespaces and /api/admin/livechat; does nothing at all when the module is disabled or misconfigured.
+mountLiveChat({ app, io, validateAccessToken: validateSocketAccessToken });
 
 // ── Global error handler ──────────────────────────────────────────────────
 // Catches uncaught errors from routes/middleware (Express 5 auto-forwards

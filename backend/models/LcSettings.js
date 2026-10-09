@@ -1,0 +1,57 @@
+const mongoose = require("mongoose");
+const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
+
+// Live Chat settings: a single document (key "default"). Admin-edited in AI agent settings; seeded with the
+// defaults from services/liveChat/settingsDefaults.js the first time the module starts.
+const settingsSchema = new mongoose.Schema(
+  {
+    key: { type: String, default: "default", unique: true },
+    aiMode: { type: String, enum: ["ai_first", "ai_when_no_agent", "ai_off"], default: "ai_first" },
+    agentDisplayName: { type: String, default: "Sam", trim: true, maxlength: 40 },
+    greeting: { type: String, default: "", maxlength: 600 },
+    supportHours: {
+      timezone: { type: String, default: "America/New_York" },
+      days: [
+        {
+          _id: false,
+          day: { type: String, enum: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] },
+          enabled: { type: Boolean, default: true },
+          open: { type: String, default: "08:00" },
+          close: { type: String, default: "22:00" },
+        },
+      ],
+    },
+    handoffRules: {
+      onPatientRequest: { type: Boolean, default: true },
+      onAiRequest: { type: Boolean, default: true },
+      maxAiRepliesPerChat: { type: Number, default: 30, min: 1, max: 200 },
+    },
+    quickOptions: [
+      {
+        _id: false,
+        key: { type: String, required: true },
+        label: { type: String, required: true, maxlength: 80 },
+        icon: { type: String, default: "dots" },
+        reply: { type: String, default: "", maxlength: 1200 },
+      },
+    ],
+    prices: [{ _id: false, name: { type: String, required: true }, price: { type: Number, required: true } }],
+    businessFacts: { type: String, default: "", maxlength: 8000 },
+    dailySpendCapUsd: { type: Number, default: 3, min: 0 },
+    unavailableMessage: { type: String, default: "", maxlength: 600 },
+    offlineMessage: { type: String, default: "", maxlength: 600 },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+  },
+  { timestamps: true }
+);
+
+// Returns the settings document, creating it with the seeded defaults if it does not exist yet.
+settingsSchema.statics.getSettings = async function getSettings() {
+  return this.findOneAndUpdate(
+    { key: "default" },
+    { $setOnInsert: DEFAULT_SETTINGS },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
+  );
+};
+
+module.exports = mongoose.model("LcSettings", settingsSchema);

@@ -1,0 +1,1092 @@
+<title>Humancare Live Chat Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: two linked views. Admin = the existing Humancare admin shell (navy rounded sidebar + navy top bar) with a new Live Chat group. Patient = a mock of humancareconnect.co (frosted nav, light-blue wash) with the chat widget. Single light theme, to match both real surfaces. */
+:root{
+  --bg:#EEF3FA; --surface:#FFFFFF; --surface-2:#F2F5FB; --line:#DCE3EF; --ink:#0F1B3D; --muted:#5B6B8C;
+  --accent:#1D4ED8; --accent-ink:#FFFFFF; --accent-soft:#E3EBFD;
+  --ai:#6D4AE0; --ai-soft:#EEE9FD; --urgent:#D23B2A; --urgent-soft:#FDE6E2; --warn:#C2570C; --warn-soft:#FDEEDF;
+  --ok:#0E9F6E; --ok-soft:#DDF5EC;
+  --rail:#0B1F5C; --rail-ink:#C9D4F0; --rail-hi:#1B3478; --brand:#223A5E;
+  --shadow:0 18px 40px -16px rgba(11,31,92,.35);
+  --f-body:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45}
+h1,h2,h3,h4{margin:0;letter-spacing:-.01em;text-wrap:balance;font-weight:800}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-size:12px;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+/* ---------- Admin shell ---------- */
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;height:100%;min-height:640px;padding:16px}
+.rail{background:var(--rail);border-radius:22px;display:flex;flex-direction:column;gap:2px;padding:14px;overflow-y:auto;color:var(--rail-ink)}
+.sa{display:flex;gap:12px;align-items:center;background:linear-gradient(135deg,#5E6E98,#8592B3);border:1px solid rgba(255,255,255,.35);border-radius:16px;padding:14px;margin-bottom:16px}
+.sa .b{width:46px;height:46px;border-radius:12px;background:var(--rail);color:#fff;display:grid;place-items:center;font-weight:800;font-size:17px;flex:none;position:relative}
+.sa .b i{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:50%;background:#22C55E;border:2px solid #7180A6}
+.sa .b i.off{background:#9AA3B8}
+.sa strong{display:block;color:#fff;font-size:15px}
+.sa small{color:#9DC0FF;font-size:11px;font-weight:700;letter-spacing:.1em}
+.mi{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;color:#fff;font-weight:600;font-size:14.5px;border:0;background:transparent;width:100%;text-align:left}
+.mi svg{width:19px;height:19px;flex:none;opacity:.9}
+.mi .chev{margin-left:auto;opacity:.7}
+.mi:hover{background:var(--rail-hi)}
+.grp{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:var(--rail-hi);color:#fff;font-weight:700;margin-top:6px}
+.grp .new{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.06em;background:#22C55E;color:#062814;border-radius:6px;padding:2px 6px}
+.sub{display:flex;flex-direction:column;gap:2px;padding:4px 0 6px 22px;border-left:1px solid rgba(255,255,255,.15);margin-left:22px}
+.nav{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:var(--rail-ink);padding:9px 12px;border-radius:10px;font-weight:600;font-size:14px;text-align:left;width:100%}
+.nav:hover{background:var(--rail-hi);color:#fff}
+.nav[aria-current="page"]{background:#fff;color:var(--rail)}
+.nav .nb{margin-left:auto;background:var(--urgent);color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;min-width:18px;height:18px;display:grid;place-items:center;padding:0 5px}
+.rail .grow{flex:1;min-height:16px}
+.signout{display:flex;gap:10px;align-items:center;border:1px solid rgba(239,68,68,.45);background:rgba(239,68,68,.08);color:#F87171;border-radius:12px;padding:12px 14px;font-weight:700;width:100%}
+
+.main{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;gap:14px}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:20px;background:var(--rail);color:#fff;flex-wrap:wrap;box-shadow:0 8px 24px -14px rgba(11,31,92,.6)}
+.topbar .ttl{display:flex;align-items:center;gap:14px;font-size:19px;font-weight:800}
+.pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.pill b{font-family:var(--f-mono);font-size:13px}
+.search{flex:1;min-width:180px;max-width:420px;margin-inline:auto;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border-radius:12px;padding:0 12px;color:#fff}
+.search input{border:0;background:transparent;padding:9px 0;flex:1;min-width:0;outline:none;color:#fff}
+.search input::placeholder{color:#AFC0EA}
+.bell{width:42px;height:42px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;display:grid;place-items:center}
+.super{border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;border-radius:12px;padding:9px 14px;font-weight:700}
+.toggle{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;border-radius:12px;padding:8px 12px 8px 8px}
+.toggle .sw{width:30px;height:18px;border-radius:999px;background:#5B6B8C;position:relative;transition:background .2s}
+.toggle .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .2s}
+.toggle[aria-checked="true"] .sw{background:#22C55E}
+.toggle[aria-checked="true"] .sw::after{left:14px}
+.banner{background:var(--accent-soft);color:var(--accent);display:flex;gap:12px;align-items:center;justify-content:center;padding:8px 16px;font-size:13.5px;font-weight:700;flex-wrap:wrap;border-radius:14px}
+.banner button{border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:8px;padding:4px 12px;font-weight:700}
+.banner .x{border:0;background:transparent;padding:4px 8px;margin-left:auto}
+
+.view{flex:1;overflow:auto;min-height:0;padding:2px 2px 80px}
+.view-title{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.view-title h2{font-size:22px}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px}
+.kpi{background:var(--surface);border-radius:16px;padding:16px 20px;border-top:3px solid var(--accent);box-shadow:0 6px 18px -12px rgba(11,31,92,.35)}
+.kpi .n{font-size:34px;font-weight:800;line-height:1.1;color:var(--accent);font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.kpi.g{border-color:var(--ok)}.kpi.g .n{color:var(--ok)}
+.kpi.o{border-color:var(--warn)}.kpi.o .n{color:var(--warn)}
+.kpi.p{border-color:var(--ai)}.kpi.p .n{color:var(--ai)}
+
+.radar{display:flex;gap:14px;align-items:center;border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap}
+.radar .ping{width:30px;height:30px;border-radius:50%;border:2px solid var(--accent);position:relative;flex:none}
+.radar .ping::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--accent);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.8);opacity:0}}
+.radar .r-text{flex:1;min-width:220px;color:var(--muted);font-size:13.5px}
+.radar .r-text b{color:var(--ink)}
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.fbtn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;font-weight:600;font-size:13px}
+.fbtn select{border:0;background:transparent;font-weight:600;outline:none}
+.fchip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:13px}
+.count{font-size:17px;font-weight:800;margin:6px 0 10px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:1080px}
+th{font-size:12px;font-weight:700;color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:13.5px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+tr.flash{animation:fl 1.6s}
+@keyframes fl{0%{background:var(--accent-soft)}100%{background:transparent}}
+.who{display:flex;align-items:center;gap:10px}
+.av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;background:var(--surface-2);color:var(--ink)}
+.av.anon{background:var(--ai-soft);color:var(--ai)}
+.who small{display:block;color:var(--muted);font-size:11.5px}
+.act{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.act i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.act.chatting i{background:#22C55E}.act.invited i{background:var(--ai)}.act.waiting i{background:var(--warn)}
+.abtn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 14px;font-weight:700;font-size:13px;min-width:110px}
+.abtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.abtn.join{background:var(--warn);border-color:var(--warn);color:#fff}
+.mate{display:inline-flex;align-items:center;gap:7px}
+.mate .dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700}
+.mate .dot.ai{background:var(--ai-soft);color:var(--ai)}
+.mate .dot.hu{background:var(--accent-soft);color:var(--accent)}
+
+/* Chats */
+.view.chats-view{padding:2px 2px 70px}
+.inbox{display:grid;grid-template-columns:270px minmax(0,1fr) 310px;height:100%;min-height:520px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.list{border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+.tab-intro{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--accent-soft)}
+.tab-intro b{font-size:14px;color:var(--accent)}
+.tab-intro span{font-size:12px;color:var(--muted)}
+.tab-intro.ai{background:var(--ai-soft)}.tab-intro.ai b{color:var(--ai)}
+.list-head{padding:12px 14px 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.conv{display:flex;gap:10px;padding:10px 14px;border:0;border-left:3px solid transparent;width:100%;text-align:left;background:transparent;border-bottom:1px solid var(--line)}
+.conv:hover{background:var(--surface-2)}
+.conv.active{background:var(--accent-soft);border-left-color:var(--accent)}
+.conv.closed{opacity:.65}
+.c-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.c-row{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.c-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-prev{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 4px}
+.c-prev.tp{color:var(--accent);font-style:italic}
+.badge{background:var(--urgent);color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;min-width:18px;height:18px;display:grid;place-items:center;padding:0 5px}
+.tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px}
+.tag.ai{background:var(--ai-soft);color:var(--ai)}.tag.human{background:var(--accent-soft);color:var(--accent)}
+.tag.wait{background:var(--warn-soft);color:var(--warn)}.tag.done{background:var(--surface-2);color:var(--muted)}
+.chat{display:flex;flex-direction:column;min-height:0;min-width:0}
+.c-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+.c-head .t{display:flex;gap:8px;align-items:center}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600}
+.btn:hover{border-color:var(--ink)}
+.btn.go{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.ai{color:var(--ai);border-color:var(--ai)}
+.c-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--bg);min-height:0}
+.c-foot{border-top:1px solid var(--line);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.c-foot.is-note .composer input{background:var(--warn-soft)}
+.mode-tabs{display:flex;gap:4px}
+.mode-tabs button{border:0;background:transparent;font-size:12px;font-weight:600;color:var(--muted);padding:3px 8px;border-radius:6px}
+.mode-tabs button[aria-selected="true"]{background:var(--surface-2);color:var(--ink)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:12px;white-space:nowrap}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.composer{display:flex;gap:6px;align-items:center}
+.composer input[type=text]{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:9px 11px}
+.send{border:0;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:0 14px;height:38px;font-weight:700}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:38px;height:38px;display:grid;place-items:center;flex:none;cursor:pointer}
+.empty{margin:auto;color:var(--muted);text-align:center;font-size:13px;max-width:32ch;padding:20px}
+
+/* Patient panel */
+.profile{border-left:1px solid var(--line);overflow-y:auto;min-height:0}
+.p-head{display:flex;gap:10px;align-items:center;padding:16px 16px 10px}
+.p-head .av{width:40px;height:40px;position:relative}
+.p-head .av i{position:absolute;right:-1px;top:-1px;width:11px;height:11px;border-radius:50%;background:#22C55E;border:2px solid var(--surface)}
+.p-head .av i.gone{background:#9AA3B8}
+.p-head b{display:block;font-size:15px}
+.p-head small{color:var(--muted);font-size:12.5px}
+.facts{list-style:none;margin:0;padding:4px 16px 10px;display:flex;flex-direction:column;gap:9px;font-size:13px}
+.facts li{display:flex;gap:10px;align-items:center;min-width:0}
+.facts li > span:first-child{width:18px;text-align:center;flex:none;opacity:.8}
+.facts .add{color:var(--muted)}
+.lnk{color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.schips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 14px;border-bottom:1px solid var(--line)}
+.schips span{background:var(--surface-2);border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600}
+.schips .first{background:var(--ai-soft);color:var(--ai)}
+.schips .ret{background:var(--accent-soft);color:var(--accent)}
+.profile details{border-bottom:1px solid var(--line)}
+.profile summary{list-style:none;cursor:pointer;padding:13px 16px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center}
+.profile summary::-webkit-details-marker{display:none}
+.profile summary::after{content:"›";font-size:18px;color:var(--muted);transition:transform .15s}
+.profile details[open] summary::after{transform:rotate(90deg)}
+.profile summary small{font-weight:600;font-size:11px;background:var(--surface-2);padding:2px 8px;border-radius:6px;margin-left:8px;color:var(--muted)}
+.d-body{padding:0 16px 14px;font-size:12.5px;display:flex;flex-direction:column;gap:8px}
+.d-body input{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:7px 9px;width:100%}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;margin:0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-weight:500;word-break:break-word}
+.kv dd.link{color:var(--accent)}
+.pages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
+.pages li{display:flex;justify-content:space-between;gap:8px}
+.ai-sum{background:var(--ai-soft);border-radius:10px;padding:10px;font-size:12.5px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.ctag{display:inline-flex;align-items:center;gap:4px;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;font-weight:700}
+.ctag button{border:0;background:transparent;color:inherit;font-size:14px;line-height:1;padding:0 4px}
+.tagform input{border:1px dashed var(--line)!important}
+.tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.tl li{position:relative;display:flex;flex-direction:column;min-width:0;font-size:12px}
+.tl li::before{content:"";position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--line);border:2px solid var(--surface)}
+.tl li.cur::before{background:var(--ok)}
+.tl b{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tl .mono{color:var(--muted);font-size:11px}
+.note-line{font-size:12px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+
+/* Messages */
+.msg{max-width:80%;padding:8px 11px;border-radius:14px;font-size:13.5px;white-space:pre-wrap;word-wrap:break-word}
+.msg .meta{display:block;font-size:10.5px;margin-top:3px;opacity:.72}
+.msg.right{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
+.msg.left{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.left.ai{background:var(--ai-soft);border-color:transparent}
+.msg.right.ai{background:var(--ai);color:#fff}
+.msg.note{align-self:stretch;max-width:none;background:var(--warn-soft);border-radius:8px;font-size:12.5px}
+.sys{align-self:center;font-size:11.5px;color:var(--muted);background:var(--surface-2);padding:3px 10px;border-radius:999px;text-align:center}
+.typing{align-self:flex-start;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.dots{display:inline-flex;gap:3px}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:b 1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3}30%{opacity:1}}
+
+/* Team / reports / settings */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:14px 16px}
+.card small{color:var(--muted);font-size:12px;font-weight:600}
+.card .big{font-size:28px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.card .delta{font-size:12px;color:var(--ok);font-weight:600}
+.panel{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:16px;margin-bottom:16px}
+.panel h3{font-size:15px;margin-bottom:12px}
+.bars{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;align-items:end;height:160px;border-bottom:1px solid var(--line);padding-bottom:4px}
+.bars div{display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%}
+.bars span{display:block}
+.bars .h{background:var(--accent);border-radius:0}.bars .a{background:var(--ai);border-radius:3px 3px 0 0}
+.blabels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:6px;margin-top:4px;font-size:10.5px;color:var(--muted);text-align:center}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.status{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.status i{width:8px;height:8px;border-radius:50%}
+.set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.radio{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer}
+.radio:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.radio small{display:block;color:var(--muted)}
+.check{display:flex;gap:10px;align-items:center;margin-bottom:10px;font-size:13.5px}
+.field{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field label{font-size:12px;font-weight:700}
+.field input,.field select,textarea{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:9px 10px;width:100%}
+textarea{min-height:84px;resize:vertical}
+.saved{color:var(--ok);font-weight:600;font-size:13px;margin-left:8px}
+
+/* Toasts */
+.toasts{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:50;max-width:min(340px,calc(100% - 32px))}
+.toast{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:flex-start;cursor:pointer;text-align:left;width:100%}
+.toast b{display:block;font-size:13px}
+.toast span{font-size:12.5px;color:var(--muted)}
+
+/* ---------- Patient website (mock of humancareconnect.co) ---------- */
+.site{height:100%;overflow-y:auto;background:radial-gradient(1200px 500px at 10% -10%,#DCE7FF,transparent),radial-gradient(900px 400px at 100% 0,#E8EEFF,transparent),#F7F9FE}
+.s-nav{position:sticky;top:10px;z-index:5;margin:10px auto 0;max-width:1180px;width:calc(100% - 32px);background:rgba(255,255,255,.82);backdrop-filter:blur(10px);border:1px solid #E3E9F6;border-radius:18px;display:flex;align-items:center;gap:20px;padding:10px 14px;flex-wrap:wrap;box-shadow:0 8px 24px -18px rgba(34,58,94,.5)}
+.s-brand{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--brand);line-height:1}
+.s-brand i{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#2F6FED,#1B3D8F);color:#fff;display:grid;place-items:center;font-style:normal;font-size:20px}
+.s-brand small{display:block;font-size:9px;font-weight:700;color:#5B6B8C;margin-top:2px}
+.s-help{display:flex;align-items:center;gap:8px;border:1px solid #DCE3EF;border-radius:999px;padding:6px 6px 6px 12px;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--brand)}
+.s-help select{border:0;background:#F2F5FB;border-radius:999px;padding:5px 10px;color:var(--accent);font-weight:600;font-size:12.5px}
+.s-links{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.s-links a{color:var(--brand);text-decoration:none;font-weight:600;font-size:14px;cursor:pointer}
+.s-links a[aria-current="page"]{color:var(--accent)}
+.s-login{border:0;background:var(--brand);color:#fff;border-radius:999px;padding:10px 18px;font-weight:700}
+.s-main{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:28px 160px;display:flex;flex-direction:column;gap:36px}
+.s-hero{display:grid;grid-template-columns:1.1fr 1fr;gap:32px;align-items:center;background:rgba(255,255,255,.7);border:1px solid #E3E9F6;border-radius:24px;padding:32px}
+.avail{display:inline-flex;align-items:center;gap:6px;border:1px solid #CFDCF7;background:#EEF3FE;color:var(--accent);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;letter-spacing:.08em}
+.s-hero h1{font-size:clamp(32px,4.6vw,54px);line-height:1.05;color:var(--brand);margin:14px 0 12px;font-weight:600}
+.s-hero h1 b{font-weight:800}
+.s-hero p{color:var(--muted);font-size:15.5px;max-width:52ch;margin:0}
+.s-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.s-cta{border:0;background:var(--accent);color:#fff;border-radius:12px;padding:11px 18px;font-weight:700}
+.s-ghost{border:1px solid #CFDCF7;background:#fff;color:var(--brand);border-radius:12px;padding:11px 18px;font-weight:700}
+.trust{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.trust span{border:1px solid #DCE3EF;background:#fff;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--brand)}
+.journey{background:linear-gradient(160deg,#C9D6EE,#9FB2D6);border-radius:22px;padding:22px;color:var(--brand)}
+.journey .k{display:inline-block;background:rgba(255,255,255,.6);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:800;letter-spacing:.08em}
+.journey h3{margin:12px 0 4px;font-size:20px}
+.journey ol{list-style:none;padding:0;margin:16px 0 0;display:flex;flex-direction:column;gap:8px}
+.journey li{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.75);border-radius:12px;padding:10px 12px;font-weight:600;font-size:13.5px}
+.journey li b{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;display:grid;place-items:center;font-size:12px;flex:none}
+.s-sec h2{font-size:26px;color:var(--brand);margin-bottom:6px}
+.s-sec > p{color:var(--muted);margin:0 0 16px}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.cats button{border:1px solid #E3E9F6;background:#fff;border-radius:16px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.cats button:hover{border-color:var(--accent)}
+.cats .ic{font-size:22px}
+.cats b{font-size:15px;color:var(--brand)}
+.cats .sp{font-size:12px;color:var(--accent);font-weight:600}
+.cats .sm{font-size:12.5px;color:var(--muted)}
+.price-tbl{min-width:0}
+.price-tbl td,.price-tbl th{white-space:normal}
+.democard{border:1px dashed var(--warn);background:var(--warn-soft);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.democard p{margin:0;flex:1;min-width:220px;font-size:13.5px}
+.s-foot{border-top:1px solid #E3E9F6;padding-top:18px;color:var(--muted);font-size:12.5px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cookie{position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:44;max-width:420px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.cookie b{font-size:14px}
+.cookie .r{display:flex;gap:8px}
+.cookie .r button{flex:1;border-radius:10px;padding:9px;font-weight:700}
+.cookie .acc{border:0;background:var(--accent);color:#fff}
+.cookie .dec{border:1px solid var(--line);background:#fff}
+
+/* ---------- Chat widget ---------- */
+.launcher{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.l-btn{display:flex;align-items:center;gap:8px;border:0;background:var(--accent);color:#fff;border-radius:999px;padding:12px 18px;font-weight:700;box-shadow:var(--shadow)}
+.l-hint{background:var(--ink);color:#fff;font-size:12px;padding:5px 10px;border-radius:8px;max-width:260px}
+.widget{width:380px;max-width:calc(100vw - 32px);height:600px;max-height:calc(100vh - 110px);background:var(--surface);border-radius:20px;box-shadow:0 24px 60px -20px rgba(11,31,92,.45);border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.w-site{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:5px 14px;background:var(--surface-2)}
+.w-head{background:#fff;color:var(--ink);padding:14px 12px 12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
+.w-head .av{background:linear-gradient(135deg,var(--brand),var(--accent));color:#fff;width:46px;height:46px;font-size:14px;position:relative}
+.w-head .av i{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;background:#22C55E;border:2px solid #fff}
+.w-head .av i.wait{background:#FBBF24}
+.w-who{min-width:0;flex:1}
+.w-who strong{display:block;font-size:17px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w-who small{display:block;font-size:12.5px;color:var(--muted)}
+.w-who small i{width:7px;height:7px;border-radius:50%;background:#4ADE80}
+.w-who small i.wait{background:#FBBF24}
+.w-live{display:flex;align-items:center;gap:6px;border:1px solid #C9D7FA;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;white-space:nowrap;flex:none}
+.w-live:hover{background:var(--accent);color:#fff}
+.w-live svg{width:15px;height:15px}
+@media (max-width:400px){.w-live span{display:none}}
+.w-head .x{border:0;background:transparent;color:var(--muted);font-size:18px;padding:4px 7px;border-radius:8px}
+.w-head .x:hover{background:var(--surface-2)}
+.w-body{flex:1;overflow-y:auto;padding:16px 14px;display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.w-foot{border-top:1px solid var(--line);padding:10px 10px 8px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.w-foot .composer input[type=text]{border-radius:999px;padding:10px 14px}
+.w-foot .send{border-radius:50%;width:40px;padding:0;font-size:15px;flex:none}
+.w-foot .icon-btn{border-radius:50%}
+.w-note{font-size:10.5px;color:var(--muted);text-align:center}
+.w-welcome{background:var(--surface);border-radius:16px;padding:16px;border:1px solid var(--line)}
+.w-welcome .av{width:40px;height:40px;background:var(--accent-soft);color:var(--accent);margin-bottom:10px}
+.w-welcome h3{font-size:19px;margin-bottom:4px}
+.w-welcome p{margin:0;color:var(--muted);font-size:13.5px}
+.w-faq{background:var(--surface);border-radius:16px;border:1px solid var(--line);padding:6px 14px}
+.w-faq > span{display:block;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 0 4px}
+.faq{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;border:0;border-bottom:1px solid var(--line);background:transparent;text-align:left;padding:11px 0;font-size:13.5px;font-weight:600}
+.faq:last-child{border-bottom:0}
+.faq span{color:var(--accent);font-size:16px}
+.faq:hover{color:var(--accent)}
+.w-livecard{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--accent-soft);border-radius:14px;padding:12px 14px;font-size:13px;font-weight:600;flex-wrap:wrap}
+.w-livecard button{border:0;background:var(--accent);color:#fff;border-radius:999px;padding:7px 13px;font-weight:700;font-size:12.5px}
+.lead{background:var(--surface);border:1px solid var(--accent);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:9px;align-self:stretch}
+.lead b{font-size:14.5px}
+.lead p{margin:0;color:var(--muted);font-size:12.5px}
+.lead label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700}
+.lead input{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:9px 11px;font-weight:500}
+.lead .row{display:flex;gap:8px}
+.lead .row button{flex:1;border-radius:10px;padding:10px;font-weight:700;font-size:13px}
+.lead .cancel{border:1px solid var(--line);background:var(--surface)}
+.lead .ok{border:0;background:var(--accent);color:#fff}
+.lead small{font-size:11px;color:var(--muted)}
+.lead .err{color:var(--urgent);font-size:12px;font-weight:600}
+.rating{align-self:stretch;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:13px}
+.rating .stars button{border:0;background:transparent;font-size:22px;color:var(--line)}
+.rating .stars button.on{color:#E0A100}
+.peek{width:300px;max-width:calc(100vw - 40px);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px;animation:pop .3s ease-out}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.peek .ph{display:flex;gap:8px;align-items:center;font-size:12.5px;font-weight:700}
+.peek .ph .av{width:26px;height:26px;font-size:10px;background:var(--accent-soft);color:var(--accent)}
+.peek p{margin:0;font-size:13.5px}
+.peek .pr{display:flex;gap:6px}
+.peek .pr button{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px;font-weight:600;font-size:12.5px}
+.peek .pr button.go{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.switcher{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;gap:4px;background:var(--ink);padding:4px;border-radius:999px;box-shadow:var(--shadow)}
+.switcher button{border:0;background:transparent;color:#fff;opacity:.7;border-radius:999px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap}
+.switcher button[aria-pressed="true"]{background:#fff;color:var(--ink);opacity:1}
+
+@media (max-width:1280px){.inbox{grid-template-columns:240px minmax(0,1fr) 280px}}
+@media (max-width:1120px){.inbox{grid-template-columns:240px minmax(0,1fr)}.profile{display:none}}
+@media (max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);padding:10px;gap:10px}
+  .rail{flex-direction:row;align-items:center;padding:8px;overflow-x:auto;border-radius:16px}
+  .rail .sa,.rail .mi,.rail .grow,.rail .signout,.rail .grp{display:none}
+  .sub{flex-direction:row;border:0;margin:0;padding:0}
+  .nav{white-space:nowrap;width:auto}
+  .topbar .pill,.topbar .super{display:none}
+  .s-hero{grid-template-columns:1fr;padding:22px}
+  .s-help{display:none}
+}
+@media (max-width:760px){
+  .inbox{grid-template-columns:minmax(0,1fr);grid-template-rows:180px minmax(360px,1fr)}
+  .list{border-right:0;border-bottom:1px solid var(--line)}
+  .s-links{margin-left:0}
+}
+@media (max-width:640px){.launcher{bottom:calc(72px + env(safe-area-inset-bottom,0px))}.switcher{left:16px;transform:none}.cookie{bottom:calc(72px + env(safe-area-inset-bottom,0px));right:16px}}
+@media (max-width:520px){.widget{position:fixed;inset:8px;width:auto;height:auto;max-height:none;max-width:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Widget v2: contact first, then guided options */
+.w-body{background:#F7F8FB}
+.bot{display:flex;gap:8px;align-items:flex-start;max-width:88%}
+.bot .av{width:30px;height:30px;font-size:10.5px;background:linear-gradient(135deg,var(--brand),var(--accent));color:#fff;flex:none;margin-top:18px}
+.bot .bw{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bot .bn{font-size:11.5px;font-weight:700;color:var(--muted);padding-left:2px}
+.bot .msg{max-width:none;background:#ECEEF2;border:0;color:var(--ink)}
+.w-body .msg.right{background:#1E4E8C}
+.opts{display:flex;flex-direction:column;gap:8px;align-self:stretch}
+.opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 14px;font-weight:600;font-size:14px;color:var(--ink);box-shadow:0 2px 6px -4px rgba(11,31,92,.25)}
+.opt:hover{border-color:var(--accent)}
+.opt svg{width:22px;height:22px;flex:none;color:var(--accent)}
+.opt .lab{flex:1}
+.opt .ch{color:var(--muted);font-size:18px}
+.opt.live{background:var(--accent-soft);border-color:#C9D7FA}
+.cform{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.cform h3{font-size:18px}
+.cform p{margin:0;color:var(--muted);font-size:13px}
+.cform label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:700}
+.cform label span{font-weight:500;color:var(--muted)}
+.cform input{border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:10px 12px;font-weight:500}
+.cform .err{color:var(--urgent);font-size:12.5px;font-weight:600}
+.cform small{font-size:11px;color:var(--muted)}
+.cform button{border:0;background:var(--accent);color:#fff;border-radius:12px;padding:12px;font-weight:700}
+.w-foot.locked .composer{opacity:.5;pointer-events:none}
+.w-foot .send{background:linear-gradient(135deg,#7AA7FF,var(--accent))}
+</style>
+
+<!-- ================= ADMIN ================= -->
+<div class="app" id="admin">
+  <nav class="rail" aria-label="Admin">
+    <div class="sa"><span class="b">SA<i id="meDot"></i></span><div><strong>Super Admin</strong><small>SUPER ADMIN</small></div></div>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Dashboard</button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>Doctors<span class="chev">›</span></button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/></svg>Users<span class="chev">›</span></button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Appointments<span class="chev">›</span></button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="13" height="10" rx="2"/><path d="m16 11 5-3v8l-5-3"/></svg>Direct Video Consultation</button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6z"/></svg>Documents<span class="chev">›</span></button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c0-2.8 2.2-5 5-5M21 19c0-2.8-2.2-5-5-5"/></svg>Partner Cases</button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="m4 7 8 6 8-6"/></svg>Email</button>
+    <button class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/></svg>Support Tickets</button>
+    <div class="grp"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H8l-4 4z"/></svg>Live Chat<span class="new">NEW</span></div>
+    <div class="sub">
+      <button class="nav" data-view="visitors" aria-current="page">Real-time visitors</button>
+      <button class="nav" data-view="aichats">AI chats<span class="nb" id="nbAi" hidden></span></button>
+      <button class="nav" data-view="livechats">Live agent chats<span class="nb" id="nbLive" hidden></span></button>
+      <button class="nav" data-view="team">Team</button>
+      <button class="nav" data-view="reports">Reports</button>
+      <button class="nav" data-view="settings">AI agent settings</button>
+    </div>
+    <div class="grow"></div>
+    <button class="signout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>Sign Out</button>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <span class="ttl"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span id="ttl">Live Chat</span></span>
+      <label class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="q" type="text" placeholder="Search name, email, IP or city…"></label>
+      <span class="pill">Chats today <b id="pToday">23</b></span>
+      <button class="toggle" id="onlineToggle" role="switch" aria-checked="true"><span class="sw"></span><span id="onlineLabel">You're online</span></button>
+      <button class="bell" aria-label="Notifications"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4"/></svg></button>
+      <button class="super">👋 Super</button>
+    </header>
+    <div class="banner" id="banner">
+      <span>🔔 Never miss a patient chat.</span>
+      <button id="notifBtn">Turn on notifications</button>
+      <button class="x" id="bannerX" aria-label="Dismiss">✕</button>
+    </div>
+
+    <section class="view" id="v-visitors">
+      <div class="view-title"><div><div class="eyebrow">Humancare Admin · Live Chat</div><h2>Real-time visitors</h2></div><span id="clock" class="mono"></span></div>
+      <div class="kpis">
+        <div class="kpi"><div class="n" id="kVis">0</div><div class="l">On website now</div></div>
+        <div class="kpi g"><div class="n" id="kChat">0</div><div class="l">Chatting</div></div>
+        <div class="kpi o"><div class="n" id="kWait">0</div><div class="l">Waiting for agent</div></div>
+        <div class="kpi p"><div class="n" id="kAi">0</div><div class="l">With AI agent</div></div>
+      </div>
+      <div class="radar" id="radar"></div>
+      <div class="filters">
+        <label class="fbtn">Activity
+          <select id="fAct"><option value="all">All</option><option value="chatting">Chatting</option><option value="waiting">Waiting for agent</option><option value="invited">Invited</option><option value="browsing">Browsing</option></select></label>
+        <span class="fchip">🌐 Website is <b>humancareconnect.co</b></span>
+        <span class="fchip">🍪 Only visitors who accepted cookies</span>
+      </div>
+      <div class="count" id="vCount"></div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Name</th><th>Activity</th><th>Action</th><th>Assigned to</th><th>Current page</th><th>Time on site</th><th>City</th><th>State / region</th><th>Country</th><th>Source</th></tr></thead>
+        <tbody id="vBody"></tbody></table></div>
+    </section>
+
+    <section class="view chats-view" id="v-chats" hidden>
+      <div class="inbox">
+        <nav class="list" id="list" aria-label="Chats"></nav>
+        <div class="chat" id="chat"></div>
+        <aside class="profile" id="profile"></aside>
+      </div>
+    </section>
+
+    <section class="view" id="v-team" hidden>
+      <div class="view-title"><div><div class="eyebrow">Live Chat</div><h2>Team</h2></div><span class="muted">Only admin roles can take chats. Doctors never see this inbox.</span></div>
+      <div class="tbl-wrap"><table style="min-width:720px">
+        <thead><tr><th>Name</th><th>Role</th><th>Shown to patients as</th><th>Status</th><th>Open chats</th><th>Chats today</th><th>Avg. first reply</th></tr></thead>
+        <tbody id="tBody"></tbody></table></div>
+    </section>
+
+    <section class="view" id="v-reports" hidden>
+      <div class="view-title"><div><div class="eyebrow">Live Chat</div><h2>Reports · Today</h2></div><span class="muted">Example data</span></div>
+      <div class="cards">
+        <div class="card"><small>Total chats</small><div class="big" id="rTotal">23</div><span class="delta">+18% vs yesterday</span></div>
+        <div class="card"><small>Solved by AI alone</small><div class="big">68%</div><span class="delta">16 chats</span></div>
+        <div class="card"><small>First reply (agents)</small><div class="big">42s</div><span class="delta">Target under 60s</span></div>
+        <div class="card"><small>Patient rating</small><div class="big">4.6★</div><span class="delta">19 ratings</span></div>
+        <div class="card"><small>Bookings after chat</small><div class="big">9</div><span class="delta">$457 in consultations</span></div>
+      </div>
+      <div class="panel"><h3>Chats by hour</h3><div class="bars" id="bars"></div><div class="blabels" id="blabels"></div>
+        <div class="legend"><span><i style="background:var(--ai)"></i>Handled by AI</span><span><i style="background:var(--accent)"></i>Handled by an agent</span></div></div>
+    </section>
+
+    <section class="view" id="v-settings" hidden>
+      <div class="view-title"><div><div class="eyebrow">Live Chat</div><h2>AI agent settings</h2></div><span class="muted">Changes apply to this demo straight away</span></div>
+      <div class="set-grid">
+        <div class="panel">
+          <h3>When should the AI answer?</h3>
+          <label class="radio"><input type="radio" name="aimode" value="ai-first" checked><span><b>AI first, agents can take over</b><small>AI answers every chat right away. Any agent can step in.</small></span></label>
+          <label class="radio"><input type="radio" name="aimode" value="offline-only"><span><b>Only when no agent is available</b><small>If an agent is online, new chats go straight to the queue.</small></span></label>
+          <label class="radio"><input type="radio" name="aimode" value="manual"><span><b>AI off (agents only)</b><small>AI only suggests replies to agents.</small></span></label>
+        </div>
+        <div class="panel">
+          <h3>Handing a chat to a live agent</h3>
+          <label class="check"><input type="checkbox" checked disabled> Contact form before any chat: name and email required, phone optional (always on)</label>
+          <label class="check"><input type="checkbox" checked> When the patient asks for a person</label>
+          <label class="check"><input type="checkbox" checked> When the AI is not sure of the answer</label>
+          <label class="check"><input type="checkbox" checked> When the patient asks about a specific booking or payment</label>
+          <div class="field"><label for="hours">Support hours (patient's view)</label><input id="hours" value="Mon–Sun, 8:00 AM – 10:00 PM ET"></div>
+          <div class="field"><label for="offlineRule">Team counts as offline when</label><select id="offlineRule"><option>Outside support hours OR no agent is online</option><option>No agent is online</option><option>Outside support hours</option></select></div>
+        </div>
+        <div class="panel">
+          <h3>What the AI says</h3>
+          <label class="check"><input type="checkbox" checked disabled> Never diagnose or suggest medication (always on)</label>
+          <label class="check"><input type="checkbox" checked> Answer only about Humancare services, prices and booking</label>
+          <div class="field"><label for="greet">Greeting</label><textarea id="greet">Hi {first name}! 👋 Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?</textarea></div>
+          <div class="field"><label>Quick options shown after the greeting</label><textarea readonly>Online Consultation with Prescription
+Prescription &amp; Prescription refill
+Medical Advice/Second Opinion
+Sick Notes
+Others
+Talk to a live agent</textarea></div>
+          <div class="field"><label for="agentName">Agent name shown to patients</label><input id="agentName" value="Sam"></div>
+          <button class="btn go" id="saveSet">Save</button><span class="saved" id="savedMsg" hidden>Saved</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= PATIENT WEBSITE ================= -->
+<div class="site" id="site" hidden>
+  <nav class="s-nav">
+    <span class="s-brand"><i>+</i><span>Humancare<br>Connect<small>Global Health Passport</small></span></span>
+    <label class="s-help">GET HELP FOR <select id="helpFor"><option>General &amp; Everyday Care</option><option>Chronic Care</option><option>Mental Health</option><option>Skin &amp; Hair</option><option>Women's Health</option></select></label>
+    <div class="s-links"><a data-page="Home">Home</a><a data-page="About Us">About Us</a><a data-page="Book Appointment">Book Appointment</a><a data-page="Services &amp; Prices">Services &amp; Prices</a><a data-page="Blogs">Blogs</a></div>
+    <button class="s-login">Login / Register</button>
+  </nav>
+  <main class="s-main" id="sMain"></main>
+</div>
+<div class="cookie" id="cookie" hidden>
+  <b>We value your privacy</b>
+  <span>We use cookies to run this site and, if you agree, to show our support team which pages you visit so they can help you faster. See our Cookie Policy.</span>
+  <div class="r"><button class="dec" id="ckDecline">Decline</button><button class="acc" id="ckAccept">Accept</button></div>
+</div>
+
+<div class="switcher" role="group" aria-label="View">
+  <button aria-pressed="true" data-mode="admin">Admin dashboard</button>
+  <button aria-pressed="false" data-mode="patient">Patient website</button>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- ================= CHAT WIDGET ================= -->
+<div class="launcher">
+  <div class="widget" id="widget" hidden>
+    <div class="w-site" id="wSite">Patient's screen · humancareconnect.co</div>
+    <div class="w-head">
+      <div class="av" id="wAvatar">HC<i id="wDot"></i></div>
+      <div class="w-who"><strong id="wName">Humancare AI</strong><small id="wStatus">AI Healthcare Coordinator</small></div>
+      <button class="w-live" id="wLive" hidden title="Talk to a live agent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg><span>Talk to live agent</span></button>
+      <button class="x" id="wMin" aria-label="Minimize chat">–</button>
+      <button class="x" id="wClose" aria-label="Close chat">✕</button>
+    </div>
+    <div class="w-body" id="wBody"></div>
+    <div class="w-foot" id="wFoot">
+      <form class="composer" id="wForm">
+        <label class="icon-btn" for="wFile" title="Attach a report">📎</label><input type="file" id="wFile" hidden>
+        <input type="text" id="wInput" placeholder="Message..." autocomplete="off">
+        <button class="send" type="submit" aria-label="Send">➤</button>
+      </form>
+      <div class="w-note">AI answers are general information, not medical advice.</div>
+    </div>
+  </div>
+  <div class="peek" id="peek" hidden></div>
+  <span class="l-hint" id="lHint">This is the patient's chat. Try "Start chat" on a visitor →</span>
+  <button class="l-btn" id="lBtn">💬 Chat with us</button>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const now=()=>new Date();
+const hm=d=>d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+const ago=m=>new Date(Date.now()-m*60000);
+const ini=n=>n.split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
+const dur=s=>s>=3600?`${Math.floor(s/3600)}h ${Math.floor(s%3600/60)}m`:`${Math.floor(s/60)}m ${String(s%60).padStart(2,"0")}s`;
+const FLAG={US:"🇺🇸",CA:"🇨🇦",IN:"🇮🇳",GB:"🇬🇧"}, CNAME={US:"United States",CA:"Canada",IN:"India",GB:"United Kingdom"};
+const agentName=()=>($("#agentName")?.value||"Sam").trim()||"Sam";
+const AG=()=>({name:agentName()});
+const agIni=()=>agentName().slice(0,2).toUpperCase();
+
+const cid=()=>"HC"+Math.random().toString(36).slice(2,10).toUpperCase();
+const conv=(mode,msgs,x={})=>({id:cid(),started:msgs[0]?.t||now(),mode,msgs,unread:0,resolved:false,left:false,typing:false,aiTyping:false,agentTyping:false,wasLive:false,...x});
+const P=o=>({invited:false,conv:null,flash:false,left:false,visits:1,browser:"Chrome",os:"Windows",ref:"Direct",email:"",tags:[],recent:[],consent:"yes",...o});
+
+const state={view:"visitors",mode:"admin",agentOnline:true,aiMode:"ai-first",activeId:"sophia",filter:"all",q:"",rated:0,noteMode:false,today:23,secOpen:{},
+ people:[
+  P({id:"ip1",ip:"73.162.45.10",page:"Book Appointment",secs:479,city:"Austin",region:"Texas",cc:"US",tz:"America/Chicago",src:"Google search",ref:"google.com",device:"Mobile",os:"iOS",browser:"Safari",visits:2,pages:[["Home",60],["General & Everyday Care",120],["Book Appointment",299]]}),
+  P({id:"ip5",name:"Emma Wilson",email:"emma.w@example.com",ip:"98.44.201.7",page:"Services & Prices",secs:517,city:"Toronto",region:"Ontario",cc:"CA",tz:"America/Toronto",src:"Instagram ad",ref:"instagram.com",device:"Mobile",os:"Android",browser:"Chrome Mobile",issue:"Prices",pages:[["Home",100],["Services & Prices",417]],
+    conv:conv("ai",[{from:"sys",text:"Contact details received: Emma Wilson · emma.w@example.com",t:ago(5)},{from:"ai",text:"Hi Emma! 👋 Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?",t:ago(5)},{from:"options",text:"",t:ago(5),used:true},{from:"patient",text:"Medical Advice/Second Opinion",t:ago(4)},{from:"ai",text:"Happy to help. For a second opinion, a specialist reviews your reports and treatment plan for $60.",t:ago(4)},{from:"patient",text:"How much is a second medical opinion?",t:ago(4)},{from:"ai",text:"An Online Second Medical Opinion is $60. You can book it from Book Appointment → choose a category → Second opinion.",t:ago(4)}])}),
+  P({id:"michael",name:"Michael Brown",phone:"+1 415 555 0142",email:"michael.b@example.com",page:"Online Prescription Refill",secs:742,city:"San Francisco",region:"California",cc:"US",tz:"America/Los_Angeles",src:"Direct",device:"Desktop",os:"macOS",browser:"Safari",visits:4,issue:"Prescription refill",tags:["prescription","returning"],recent:[["Video link not received","Sep 12","Resolved"],["Refund question","Aug 28","Resolved"]],pages:[["Login",40],["Online Prescription Refill",702]],
+    conv:conv("human",[{from:"patient",text:"My refill was approved but the pharmacy says they haven't received it.",t:ago(9)},{from:"ai",text:"Sorry about that. I can't see pharmacy orders, so let me connect you with our team.",t:ago(9)},{from:"sys",text:"Sam joined the chat",t:ago(7)},{from:"agent",text:"Hi Michael, I've re-sent the prescription to your pharmacy. It should show up within 30 minutes.",t:ago(6)}],{wasLive:true})}),
+  P({id:"sophia",name:"Sophia Martinez",phone:"+1 305 555 0188",email:"sophia.m@example.com",page:"Lab Requisitions",secs:305,city:"Miami",region:"Florida",cc:"US",tz:"America/New_York",src:"Google search",ref:"google.com",device:"Mobile",os:"Android",browser:"Chrome Mobile",visits:2,issue:"Lab results",tags:["lab"],recent:[["How to book","Oct 3","Solved by AI"]],pages:[["Lab Requisitions",305]],
+    conv:conv("waiting",[{from:"patient",text:"I uploaded my lab results but my doctor can't see them.",t:ago(2)},{from:"patient",text:"Talk to a live agent",t:ago(2)},{from:"sys",text:"In the live agent queue",t:ago(2)}],{unread:1,wasLive:true})}),
+  P({id:"ip2",ip:"49.36.112.8",page:"Home",secs:64,city:"Mumbai",region:"Maharashtra",cc:"IN",tz:"Asia/Kolkata",src:"Direct",device:"Desktop",os:"Windows",browser:"Edge",pages:[["Home",64]]}),
+  P({id:"ip3",ip:"81.2.69.160",page:"Mental Health",secs:188,city:"London",region:"England",cc:"GB",tz:"Europe/London",src:"Facebook",ref:"facebook.com",device:"Mobile",os:"iOS",browser:"Safari",pages:[["Home",30],["Mental Health",158]]}),
+  P({id:"me",isMe:true,ip:"103.178.62.21",page:"Home",secs:12,city:"Mumbai",region:"Maharashtra",cc:"IN",tz:"Asia/Kolkata",src:"Direct",device:"Desktop",os:"Windows",browser:"Chrome",consent:null,pages:[["Home",12]]})
+ ]};
+const byId=id=>state.people.find(p=>p.id===id);
+const me=()=>byId("me");
+const label=p=>p.name||p.ip;
+const closed=c=>c.resolved||c.left;
+const isChatView=()=>state.view==="aichats"||state.view==="livechats";
+const isLive=p=>!!(p.conv&&(p.conv.wasLive||p.conv.mode==="waiting"||p.conv.mode==="human"));
+const viewFor=p=>isLive(p)?"livechats":"aichats";
+const isOpen=p=>isChatView()&&state.view===viewFor(p)&&state.activeId===p.id;
+const tracked=p=>p.consent==="yes";
+
+/* ---------- AI (demo rules; the real build calls the model from the server) ---------- */
+const has=(t,w)=>w.some(x=>t.includes(x));
+function aiAnswer(text,topic){
+  const t=text.toLowerCase();
+  if(has(t,["human","agent","person","someone","representative","talk to","live","support team","call me","real person"])) return {k:"handoff"};
+  if(has(t,["my booking","my appointment","my payment","charged","refund","cancel"])) return {k:"handoff",note:"account"};
+  if(has(t,["medicine","medication","dose","dosage","diagnos","what do i have","antibiotic","pill","treat my","symptom"])) return {k:"info",text:"I can't give medical advice, diagnoses or medication guidance. A licensed doctor can help with that.\n\nA General consultation is $49 and you can book a video visit 24/7. Want me to show you how to book?"};
+  if(has(t,["refill","prescription"])) return {k:"info",text:"Yes. A licensed provider can prescribe or refill medication when it's medically appropriate. An Online Prescription Refill visit is $60."};
+  if(has(t,["second opinion"])) return {k:"info",text:"An Online Second Medical Opinion is $60. A specialist reviews your reports and treatment plan."};
+  if(has(t,["price","cost","fee","how much","$","pricing"])) return {k:"info",text:"Our prices:\n• General consultation – $49\n• Mental health support – $49\n• Doctor notes & sick notes – $49\n• Lab requisitions – $49\n• Chronic care management – $55\n• Prescription refills – $60\n• Second medical opinion – $60\n• Fit to fly – $69"};
+  if(has(t,["book","appointment","schedule","slot"])) return {k:"info",text:"Booking takes a few minutes:\n1. Tap Book Appointment\n2. Choose a category, specialty or condition\n3. Pick a time and pay\n4. Join your secure video visit from your dashboard"};
+  if(has(t,["insurance"])) return {k:"info",text:"You don't need insurance. We use simple flat prices, starting at $49 for a general consultation."};
+  if(has(t,["hipaa","secure","privacy","safe","data"])) return {k:"info",text:"Yes. Humancare Connect follows HIPAA privacy and security standards, and your visits and records are handled on a secure platform."};
+  if(has(t,["sick note","doctor note","fit to fly","certificate"])) return {k:"info",text:"Doctor notes and sick notes are $49. A Fit to fly certificate is $69. Both start with a short video visit."};
+  if(has(t,["24","available","open","today","same day","how soon","quick"])) return {k:"info",text:"Booking is available 24/7, and same-day appointments are common for non-emergency concerns."};
+  if(has(t,["hi","hello","hey"])) return {k:"info",text:"Hi! Ask me about prices, booking, prescriptions or how online visits work."};
+  if(topic==="consult"||topic==="advice") return {k:"info",text:"Thank you for sharing that. The right next step is a video visit with a licensed doctor, who can assess it properly and prescribe if needed ($49). You can book 24/7 from Book Appointment, or I can connect you with a live agent to help you book."};
+  if(topic==="rx") return {k:"info",text:"Thanks. A licensed provider will review your current medication and history during a short video visit, then send the prescription to your pharmacy if appropriate. Would you like help booking, or to talk to a live agent?"};
+  if(topic==="note") return {k:"info",text:"Got it. Book a short video visit from Book Appointment and mention you need a sick note. The doctor can issue it after the visit. Need help booking?"};
+  return {k:"unknown",text:"I'm not sure about that one. Would you like me to connect you with a live agent?"};
+}
+
+const ICON={
+ consult:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="10" r="2.5"/><path d="M8 17c.6-2 2.1-3 4-3s3.4 1 4 3"/></svg>',
+ rx:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="3" width="12" height="4" rx="1"/><path d="M5 10h14M5 14h14M5 18h14"/></svg>',
+ advice:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>',
+ note:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/></svg>',
+ other:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><text x="12" y="16.5" text-anchor="middle" font-size="13" font-weight="700" fill="#fff" font-family="sans-serif">?</text></svg>',
+ live:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/><path d="M19 19c0 1.5-2 2.5-5 2.5"/></svg>'};
+const OPTIONS=[
+ {k:"consult",label:"Online Consultation with Prescription",reply:"I'm here to assist you with your online consultation. Please share your medical concern so I can help further. A general consultation with a licensed doctor is $49, and they can prescribe when it's medically appropriate."},
+ {k:"rx",label:"Prescription & Prescription refill",reply:"I can help with that. Is this a new prescription, or a refill of a medicine you already take? An Online Prescription Refill visit is $60."},
+ {k:"advice",label:"Medical Advice/Second Opinion",reply:"Happy to help. For medical advice, a licensed doctor reviews your concern in a $49 video visit. For a second opinion, a specialist reviews your reports and treatment plan for $60. Which one do you need?"},
+ {k:"note",label:"Sick Notes",reply:"We can provide a doctor's note or sick note after a short video visit with a licensed doctor. It's $49. Is it for work or school, and from which date do you need it?"},
+ {k:"other",label:"Others",reply:"Sure. Tell me what you need help with and I'll point you in the right direction."},
+ {k:"live",label:"Talk to a live agent"}];
+function optionsHTML(){ return `<div class="opts">${OPTIONS.map(o=>`<button class="opt ${o.k==="live"?"live":""}" data-opt="${o.k}">${ICON[o.k]}<span class="lab">${esc(o.label)}</span><span class="ch">›</span></button>`).join("")}</div>`; }
+function pickOption(k){
+  const p=me(), o=OPTIONS.find(x=>x.k===k); if(!o||!p.conv) return;
+  p.conv.msgs.forEach(m=>{ if(m.from==="options") m.used=true; });
+  push(p,"patient",o.label); p.conv.optionsUsed=true; bumpUnread(p,o.label);
+  if(k==="live"){ renderAll(); requestLive(p); return; }
+  p.conv.topic=k; p.issue=o.label;
+  if(p.conv.mode!=="ai"){ renderAll(); return; }
+  const c=p.conv; c.aiTyping=true; renderAll();
+  setTimeout(()=>{ c.aiTyping=false; if(c.mode==="ai") push(p,"ai",o.reply); renderAll(); },900);
+}
+
+/* ---------- Logic ---------- */
+const push=(p,from,text,x={})=>p.conv.msgs.push({from,text,t:now(),...x});
+function bumpUnread(p,text){ if(!isOpen(p)){ p.conv.unread++; toast(p,text); } }
+function ensureConv(p){
+  if(p.conv&&!closed(p.conv)) return;
+  p.conv=conv("ai",[{from:"sys",text:`Chat started · page: ${p.page}`,t:now()},{from:"ai",text:`Hi ${(p.name||"there").split(" ")[0]}! 👋 Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?`,t:now()},{from:"options",text:"",t:now()}],{startPage:p.page});
+  state.today++; p.flash=true; toast(p,"Started a chat with the AI agent");
+}
+function widgetSend(text){ if(!text.trim()||!me().name)return; ensureConv(me()); patientSend(me(),text); }
+function patientSend(p,text){
+  if(!text.trim()||!p.conv) return;
+  push(p,"patient",text); p.conv.typing=false; p.invited=false;
+  bumpUnread(p,text); renderAll();
+  if(p.conv.mode==="ai") aiRespond(p,text);
+}
+function aiRespond(p,text){
+  const c=p.conv; c.aiTyping=true; renderAll();
+  setTimeout(()=>{
+    c.aiTyping=false;
+    if(c.mode!=="ai"){renderAll();return;}
+    const a=aiAnswer(text,c.topic);
+    if(a.k==="handoff"){ requestLive(p,a.note); return; }
+    const useAi=state.aiMode==="ai-first"||(state.aiMode==="offline-only"&&!state.agentOnline);
+    if(!useAi){ requestLive(p); return; }
+    push(p,"ai",a.text); renderAll();
+  },1100);
+}
+function requestLive(p,note){
+  const c=p.conv; if(c.mode==="human"||c.mode==="waiting") return;
+  if(note==="account") push(p,"ai","A live agent can check your booking or payment for you.");
+  goWaiting(p);
+}
+function goWaiting(p){
+  const c=p.conv; c.mode="waiting"; c.wasLive=true;
+  if(state.view==="aichats"&&state.activeId===p.id) state.view="livechats";
+  if(state.agentOnline){
+    push(p,"sys","In the live agent queue · usually 1–2 minutes");
+    push(p,"ai",`Thanks, ${p.name.split(" ")[0]}! Connecting you with a live agent now. You can keep typing your question here.`);
+  } else {
+    push(p,"sys","Team offline · callback request saved");
+    push(p,"ai",`Thanks, ${p.name.split(" ")[0]}! Our support team is offline right now (${$("#hours").value}). We've saved your details and will email you at ${p.email}.`);
+  }
+  bumpUnread(p,"Asked for a live agent · "+p.name); renderAll();
+}
+function startChat(p){
+  if(!p.conv||closed(p.conv)){
+    p.conv=conv("human",[{from:"sys",text:`${AG().name} started the chat · page: ${p.page}`,t:now()}],{startPage:p.page,wasLive:true});
+    p.invited=true; state.today++;
+  }
+  state.view="livechats"; state.activeId=p.id; state.noteMode=false; renderAll();
+  const i=$("#aInput"); if(i){ i.value=i.value||`Hi! I'm ${AG().name} from Humancare support. Can I help you find the right care today?`; i.focus(); }
+}
+function simulateVisitorReply(p){
+  if(p.isMe||p.simReplied) return; p.simReplied=true;
+  setTimeout(()=>{ if(p.left) return; p.name=p.name||"Daniel Lee"; p.email=p.email||"daniel.lee@example.com"; push(p,"sys",`Contact details received: ${p.name} · ${p.email}`); p.conv.typing=true; renderAll();
+    setTimeout(()=>{ p.conv.typing=false; patientSend(p,"Yes please. My payment went through but I didn't get a confirmation email."); },2200); },2500);
+}
+function takeOver(p){ const c=p.conv; c.mode="human"; c.wasLive=true; if(state.view==="aichats"&&state.activeId===p.id) state.view="livechats"; push(p,"sys",`${AG().name} joined the chat`); renderAll(); $("#aInput")?.focus(); }
+function backToAi(p){ p.conv.mode="ai"; push(p,"sys","Handed back to the AI assistant"); renderAll(); }
+function agentSend(p,text){ if(!text.trim())return; if(state.noteMode){push(p,"note",text);renderAll();return;} if(p.conv.mode!=="human")takeOver(p); push(p,"agent",text); renderAll(); if(p.invited) simulateVisitorReply(p); }
+function resolveC(p){ p.conv.resolved=true; push(p,"sys","Chat resolved"); renderAll(); }
+const lastPat=c=>{for(let i=c.msgs.length-1;i>=0;i--)if(c.msgs[i].from==="patient")return c.msgs[i].text;return"";};
+function activity(p){
+  if(!p.conv) return ["browsing","Browsing"];
+  const c=p.conv;
+  if(c.left) return ["browsing","Left the website"];
+  if(c.resolved) return ["browsing","Chat ended"];
+  if(p.invited) return ["invited","Invited"];
+  if(c.mode==="waiting") return ["waiting","Waiting for agent"];
+  return ["chatting","Chatting"];
+}
+const localTime=p=>{ try{ return now().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:p.tz})+", "+now().toLocaleDateString("en-US",{weekday:"short",timeZone:p.tz}); }catch(e){ return hm(now()); } };
+
+/* ---------- Render: admin ---------- */
+function modeTag(c){
+  if(c.left) return '<span class="tag done">Left</span>';
+  if(c.resolved) return '<span class="tag done">Resolved</span>';
+  return {ai:'<span class="tag ai">AI</span>',human:'<span class="tag human">Agent</span>',waiting:'<span class="tag wait">Waiting</span>'}[c.mode];
+}
+function msgHTML(m,side){
+  if(m.from==="sys") return `<div class="sys">${esc(m.text)} · ${hm(m.t)}</div>`;
+  if(m.from==="options") return side==="patient"?(m.used?"":optionsHTML()):`<div class="sys">Quick options shown to patient · ${hm(m.t)}</div>`;
+  if(side==="patient"&&(m.from==="ai"||m.from==="agent")){ const nm=m.from==="ai"?"Humancare AI":AG().name; return `<div class="bot"><span class="av">${m.from==="ai"?"HC":agIni()}</span><div class="bw"><span class="bn">${esc(nm)}</span><div class="msg left">${esc(m.text)}<span class="meta">${hm(m.t)}</span></div></div></div>`; }
+  if(m.from==="note") return side==="admin"?`<div class="msg note"><b>Internal note:</b> ${esc(m.text)}<span class="meta">Only your team sees this · ${hm(m.t)}</span></div>`:"";
+  if(m.from==="file") return `<div class="msg ${side==="patient"?"right":"left"}">📄 ${esc(m.text)}<span class="meta">File · ${hm(m.t)}</span></div>`;
+  const fromPat=m.from==="patient", right=side==="patient"?fromPat:!fromPat;
+  const cls=["msg",right?"right":"left"]; if(m.from==="ai") cls.push("ai");
+  const lab=m.from==="ai"?"AI assistant":m.from==="agent"?AG().name:"";
+  return `<div class="${cls.join(" ")}">${esc(m.text)}<span class="meta">${lab?lab+" · ":""}${hm(m.t)}</span></div>`;
+}
+function renderNav(){
+  $("#ttl").textContent={visitors:"Live Chat · Real-time",aichats:"Live Chat · AI chats",livechats:"Live Chat · Live agent chats",team:"Live Chat · Team",reports:"Live Chat · Reports",settings:"Live Chat · AI agent settings"}[state.view];
+  const ua=state.people.reduce((a,p)=>a+(p.conv&&!isLive(p)?p.conv.unread:0),0);
+  const ul=state.people.reduce((a,p)=>a+(p.conv&&isLive(p)?p.conv.unread:0),0);
+  $("#nbAi").hidden=!ua; $("#nbAi").textContent=ua; $("#nbLive").hidden=!ul; $("#nbLive").textContent=ul;
+  document.querySelectorAll(".nav[data-view]").forEach(b=>{ if(b.dataset.view===state.view) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  ["visitors","team","reports","settings"].forEach(v=>$("#v-"+v).hidden=v!==state.view); $("#v-chats").hidden=!isChatView();
+  $("#pToday").textContent=state.today; $("#rTotal").textContent=state.today;
+  $("#meDot").classList.toggle("off",!state.agentOnline);
+}
+function radarHTML(){
+  const stuck=state.people.filter(p=>tracked(p)&&!p.left&&!p.conv&&p.page==="Book Appointment"&&p.pages.at(-1)[1]>240);
+  if(!stuck.length) return `<div class="ping"></div><strong>Care radar</strong><span class="r-text">Watching live traffic. Visitors who seem stuck on booking will show up here.</span>`;
+  const p=stuck[0];
+  return `<div class="ping"></div><strong>Care radar</strong><span class="r-text"><b>${esc(label(p))}</b> (${esc(p.city)}, ${p.cc}) has been on <b>Book Appointment</b> for ${Math.floor(p.pages.at(-1)[1]/60)} minutes without booking. They may need help.</span><button class="abtn primary" data-start="${p.id}">Start chat</button>`;
+}
+function renderVisitors(){
+  $("#radar").innerHTML=radarHTML();
+  const live=state.people.filter(p=>!p.left&&tracked(p)), act=p=>activity(p)[0];
+  $("#kVis").textContent=live.length;
+  $("#kChat").textContent=live.filter(p=>["chatting","invited"].includes(act(p))).length;
+  $("#kWait").textContent=live.filter(p=>act(p)==="waiting").length;
+  $("#kAi").textContent=live.filter(p=>p.conv&&!closed(p.conv)&&p.conv.mode==="ai").length;
+  const q=state.q.toLowerCase();
+  const rows=live.filter(p=>(state.filter==="all"||act(p)===state.filter)&&(!q||[label(p),p.email,p.phone,p.ip,p.city,p.region].join(" ").toLowerCase().includes(q)))
+    .sort((a,b)=>{const o={waiting:0,chatting:1,invited:2,browsing:3};return o[act(a)]-o[act(b)]||b.secs-a.secs;});
+  $("#vCount").textContent=`${rows.length} ${rows.length===1?"visitor":"visitors"} on the website`;
+  $("#vBody").innerHTML=rows.map(p=>{
+    const [a,al]=activity(p);
+    let action;
+    if(!p.conv||closed(p.conv)) action=`<button class="abtn primary" data-start="${p.id}">Start chat</button>`;
+    else if(p.conv.mode==="waiting") action=`<button class="abtn join" data-open="${p.id}">Join</button>`;
+    else action=`<button class="abtn" data-open="${p.id}">View chat</button>`;
+    let mate='<span class="muted">–</span>';
+    if(p.conv&&!closed(p.conv)){ if(p.conv.mode==="ai") mate=`<span class="mate"><span class="dot ai">AI</span>AI agent</span>`; else if(p.conv.mode==="human") mate=`<span class="mate"><span class="dot hu">${agIni()}</span>${esc(AG().name)}</span>`; }
+    return `<tr class="${p.flash?"flash":""}">
+      <td><div class="who"><span class="av ${p.name?"":"anon"}">${p.name?ini(p.name):"V"}</span><span>${esc(label(p))}${p.isMe?" · you (test)":""}<small>${p.name?"IP "+esc(p.ip)+" · ":""}${p.device}</small></span></div></td>
+      <td><span class="act ${a}"><i></i>${al}</span></td><td>${action}</td><td>${mate}</td>
+      <td>${esc(p.page)}</td><td class="mono" data-t="${p.id}">${dur(p.secs)}</td>
+      <td>${esc(p.city)}</td><td>${esc(p.region)}</td><td>${FLAG[p.cc]} ${CNAME[p.cc]}</td><td class="muted">${esc(p.src)}</td></tr>`;
+  }).join("")||`<tr><td colspan="10" class="muted" style="text-align:center;padding:30px">No visitors match this filter</td></tr>`;
+  state.people.forEach(p=>p.flash=false);
+}
+function renderChats(){
+  const live=state.view==="livechats";
+  const all=state.people.filter(p=>p.conv&&isLive(p)===live).sort((a,b)=>(closed(a.conv)-closed(b.conv))||(b.conv.msgs.at(-1).t-a.conv.msgs.at(-1).t));
+  if(!all.some(p=>p.id===state.activeId)) state.activeId=all[0]?.id||null;
+  const groups=live?[["Queue · waiting for an agent",c=>!closed(c)&&c.mode==="waiting"],["My chats",c=>!closed(c)&&c.mode==="human"],["Archived",closed]]:[["Talking to the AI",c=>!closed(c)],["Archived",closed]];
+  const item=p=>{
+    const c=p.conv, last=[...c.msgs].reverse().find(m=>m.from!=="sys"&&m.from!=="note")||c.msgs.at(-1);
+    const prev=c.typing?`<span class="c-prev tp">typing…</span>`:c.left?`<span class="c-prev">Archived · patient left the website</span>`:p.invited&&last.from!=="patient"?`<span class="c-prev">Invited · no reply yet</span>`:`<span class="c-prev">${last.from==="ai"?"AI: ":last.from==="agent"?"You: ":""}${esc(last.text)}</span>`;
+    return `<button class="conv ${p.id===state.activeId?"active":""} ${closed(c)?"closed":""}" data-id="${p.id}"><span class="av ${p.name?"":"anon"}">${p.name?ini(p.name):"V"}</span><span class="c-main"><span class="c-row"><span class="c-name">${esc(label(p))}</span><span class="mono" style="font-size:11px">${hm(last.t)}</span></span>${prev}<span class="c-row">${p.invited&&!closed(c)?'<span class="tag ai">Invited</span>':modeTag(c)}${c.unread?`<span class="badge">${c.unread}</span>`:""}</span></span></button>`;
+  };
+  const intro=live?`<div class="tab-intro"><b>Live agent chats</b><span>Patients who shared their contact details to talk to a person, and chats your team started.</span></div>`:`<div class="tab-intro ai"><b>AI chats</b><span>Patients talking only to the AI assistant. Reply or take over and the chat moves to Live agent chats.</span></div>`;
+  $("#list").innerHTML=intro+(all.length?"":`<div class="empty">${live?"No live agent chats yet":"No AI chats right now"}</div>`)+groups.map(([h,f])=>{const g=all.filter(p=>f(p.conv)); return g.length?`<div class="list-head">${h} · ${g.length}</div>`+g.map(item).join(""):"";}).join("");
+  const p=byId(state.activeId);
+  if(!p||!p.conv){ $("#chat").innerHTML='<div class="empty">Pick a chat on the left</div>'; $("#profile").innerHTML=""; return; }
+  const c=p.conv; c.unread=0;
+  const draft=$("#aInput")?.value||"";
+  const btns=[];
+  if(!closed(c)){ btns.push(c.mode!=="human"?`<button class="btn go" data-act="take">Take over chat</button>`:`<button class="btn ai" data-act="ai">Hand back to AI</button>`); btns.push(`<button class="btn" data-act="resolve">Resolve</button>`); }
+  $("#chat").innerHTML=`
+   <div class="c-head"><div class="t"><strong>${esc(label(p))}</strong>${modeTag(c)}</div><div class="actions">${btns.join("")}</div></div>
+   <div class="c-body" id="aBody">${c.msgs.map(m=>msgHTML(m,"admin")).join("")}
+     ${c.typing?`<div class="typing"><span class="dots"><i></i><i></i><i></i></span> ${esc(label(p))} is typing…</div>`:""}
+     ${c.aiTyping?`<div class="typing" style="align-self:flex-end"><span class="dots"><i></i><i></i><i></i></span> AI is replying</div>`:""}</div>
+   <div class="c-foot ${state.noteMode?"is-note":""}">
+     <div class="c-row" style="flex-wrap:wrap"><div class="mode-tabs"><button data-nm="0" aria-selected="${!state.noteMode}">Reply to patient</button><button data-nm="1" aria-selected="${state.noteMode}">Internal note</button></div>
+     <button class="btn ai" data-act="suggest">✨ Suggest a reply</button></div>
+     <div class="chips">
+       <button class="chip" data-canned="Hi, I'm ${esc(AG().name)} from Humancare support. How can I help?">Greeting</button>
+       <button class="chip" data-canned="I've booked a General consultation for you today at 6:00 PM. You'll get the video link by email.">Slot booked</button>
+       <button class="chip" data-canned="Your payment went through. A confirmation email will reach you within 5 minutes.">Payment confirmed</button>
+       <button class="chip" data-canned="I've re-sent your prescription to your pharmacy. It should arrive within 30 minutes.">Prescription re-sent</button></div>
+     <form class="composer" id="aForm"><input type="text" id="aInput" autocomplete="off" value="${esc(draft)}" placeholder="${state.noteMode?"Note for your team…":c.mode==="human"?"Type a reply…":"Typing here takes over the chat…"}"><button class="send" type="submit">${state.noteMode?"Save note":"Send"}</button></form>
+   </div>`;
+  const b=$("#aBody"); b.scrollTop=b.scrollHeight;
+  renderProfile(p);
+}
+function renderProfile(p){
+  const c=p.conv, [,al]=activity(p);
+  const pc=c.msgs.filter(m=>m.from==="patient").length, ac=c.msgs.filter(m=>m.from==="ai").length;
+  const assignee=c.mode==="human"?AG().name+" (Super Admin)":c.mode==="ai"?"AI agent":"Nobody yet (queue)";
+  const op=k=>{const o=state.secOpen[k]; return (o===undefined?({qual:!p.name,ctx:false}[k]??true):o)?"open":"";};
+  const slug=n=>n==="Home"?"":n.toLowerCase().replace(/&/g,"").replace(/\s+/g,"-").replace(/-+/g,"-");
+  const title=n=>n==="Home"?"Telemedicine Services | Online Doctor Appointments | Humancare Connect":`${n} | Humancare Connect`;
+  const pagesHTML=tracked(p)?`<ol class="tl">${[...p.pages].reverse().map((x,i)=>`<li class="${i===0&&!p.left?"cur":""}"><b>${esc(title(x[0]))}</b><span class="lnk">humancareconnect.co/${esc(slug(x[0]))}</span><span class="mono" ${i===0?`data-lp="${p.id}"`:""}>${dur(x[1])}</span></li>`).join("")}</ol>`:`<div class="note-line">Not tracked. This visitor declined cookies, so only the chat is recorded.</div>`;
+  $("#profile").innerHTML=`
+   <div class="p-head"><span class="av ${p.name?"":"anon"}">${p.name?ini(p.name):"V"}<i class="${p.left?"gone":""}"></i></span><div><b>${esc(label(p))}</b><small>${p.left?"Left the website":al}</small></div></div>
+   <ul class="facts">
+     <li><span>✉</span>${p.email?`<span class="lnk">${esc(p.email)}</span>`:'<span class="add">No email yet</span>'}</li>
+     <li><span>☎</span>${p.phone?`<span class="mono">${esc(p.phone)}</span>`:'<span class="add">No phone yet</span>'}</li>
+     <li><span>📍</span>${esc(p.city)}, ${esc(p.region)}, ${CNAME[p.cc]} ${FLAG[p.cc]}</li>
+     <li><span>🕒</span>${localTime(p)} (their time)</li>
+   </ul>
+   <div class="schips"><span title="Chats">💬 ${1+p.recent.length}</span><span title="Support tickets">🎫 0</span><span title="Visits">👁 ${p.visits}</span><span class="${p.visits>1?"ret":"first"}">${p.visits>1?"Returning visitor":"First visit"}</span></div>
+   <details data-sec="qual" ${op("qual")}><summary><span>Qualification<small>${p.name?"Contact saved":"Add contact"}</small></span></summary>
+     <form class="d-body" id="qForm"><input id="qName" placeholder="Name" value="${esc(p.name||"")}"><input id="qPhone" placeholder="Phone" value="${esc(p.phone||"")}"><input id="qEmail" placeholder="Email" value="${esc(p.email||"")}"><button class="btn go" type="submit">Save contact</button></form></details>
+   <details data-sec="ctx" ${op("ctx")}><summary>Customer context</summary><div class="d-body">
+     <dl class="kv"><dt>Topic</dt><dd>${esc(p.issue||"–")}</dd><dt>Source</dt><dd>${esc(p.src)}</dd><dt>Cookies</dt><dd>${p.consent==="yes"?"Accepted":p.consent==="no"?"Declined":"Not answered"}</dd></dl>
+     <div class="ai-sum">Patient sent ${pc} messages; the AI replied ${ac} times. ${c.mode==="waiting"?"Waiting for an agent.":c.mode==="human"?"An agent is handling it.":"The AI is handling it."}</div></div></details>
+   <details data-sec="info" ${op("info")}><summary>Chat info</summary><div class="d-body"><dl class="kv">
+     <dt>Assignee</dt><dd>${assignee}</dd><dt>Chat ID</dt><dd class="mono">${c.id}</dd>
+     <dt>Duration</dt><dd class="mono" data-cd="${p.id}">${dur(Math.max(0,Math.floor((now()-c.started)/1000)))}</dd>
+     <dt>Started on</dt><dd class="link">…humancareconnect.co/${esc(slug(c.startPage||p.pages[0][0]))}</dd></dl></div></details>
+   <details data-sec="tags" ${op("tags")}><summary>Chat tags</summary><div class="d-body">
+     <div class="tags">${p.tags.map((t,i)=>`<span class="ctag">${esc(t)}<button data-untag="${i}" aria-label="Remove tag">×</button></span>`).join("")}</div>
+     <form class="tagform" id="tagForm"><input id="tagIn" placeholder="+ Add a tag (e.g. booking, refund)"></form></div></details>
+   <details data-sec="recent" ${op("recent")}><summary>Recent conversations</summary><div class="d-body">
+     ${p.recent.length?`<ul class="pages">${p.recent.map(r=>`<li><span>${esc(r[0])}<br><small class="muted">${esc(r[2])}</small></span><span class="mono">${esc(r[1])}</span></li>`).join("")}</ul>`:'<span class="muted">No earlier conversations</span>'}</div></details>
+   <details data-sec="pages" ${op("pages")}><summary><span>Visited pages<small>${tracked(p)?p.pages.length:0}</small></span></summary><div class="d-body">${pagesHTML}</div></details>
+   <details data-sec="visit" ${op("visit")}><summary>Visit info</summary><div class="d-body"><dl class="kv">
+     <dt>Device</dt><dd>${p.device==="Mobile"?"📱":"🖥"} ${p.device} · ${esc(p.os)} · ${esc(p.browser)}</dd>
+     <dt>Referring page</dt><dd>${esc(p.ref)}</dd>
+     <dt>Visit duration</dt><dd class="mono" data-t="${p.id}">${dur(p.secs)}</dd>
+     <dt>IP</dt><dd class="mono">${esc(p.ip)}</dd>
+     <dt>Location</dt><dd>${esc(p.city)}, ${esc(p.region)}, ${p.cc}</dd></dl></div></details>`;
+}
+const TEAM=[{n:"Neha Kapoor",r:"Admin",as:"Neha",s:"busy",cur:1,today:6,fr:"38s"},{n:"Ravi Patil",r:"Employee admin",as:"Ravi",s:"off",cur:0,today:4,fr:"55s"}];
+function renderTeam(){
+  const open=state.people.filter(p=>p.conv&&!closed(p.conv));
+  const st={on:["#22C55E","Online"],busy:["#D99A00","Busy"],off:["#9AA3B8","Offline"]};
+  const rows=[{n:"AI agent",r:"Assistant (24/7)",as:"Humancare AI assistant",s:"on",cur:open.filter(p=>p.conv.mode==="ai").length,today:16,fr:"2s",ai:true},
+    {n:"Super Admin (you)",r:"Super admin",as:AG().name,s:state.agentOnline?"on":"off",cur:open.filter(p=>p.conv.mode==="human").length,today:7,fr:"42s"},...TEAM];
+  $("#tBody").innerHTML=rows.map(t=>`<tr><td><div class="who"><span class="av ${t.ai?"anon":""}">${t.ai?"AI":ini(t.n)}</span>${esc(t.n)}</div></td><td class="muted">${t.r}</td><td>${esc(t.as)}</td><td><span class="status"><i style="background:${st[t.s][0]}"></i>${st[t.s][1]}</span></td><td class="mono">${t.cur}</td><td class="mono">${t.today}</td><td class="mono">${t.fr}</td></tr>`).join("");
+}
+function renderReports(){
+  const hrs=["8a","9a","10a","11a","12p","1p","2p","3p","4p","5p","6p","7p"], ai=[1,2,3,2,1,2,1,1,1,1,0,1], hu=[0,1,1,1,1,0,1,1,0,1,0,0], max=5;
+  $("#bars").innerHTML=hrs.map((h,i)=>`<div title="${h}: AI ${ai[i]}, agent ${hu[i]}"><span class="a" style="height:${ai[i]/max*100}%"></span><span class="h" style="height:${hu[i]/max*100}%"></span></div>`).join("");
+  $("#blabels").innerHTML=hrs.map(h=>`<span>${h}</span>`).join("");
+}
+
+/* ---------- Render: widget ---------- */
+const FAQ=["How much does a consultation cost?","How do I book an appointment?","Can I get a prescription refill online?","Is my information secure?"];
+function renderPeek(){
+  const p=me(), pk=$("#peek"), c=p.conv;
+  const unseen=c&&!closed(c)?c.msgs.slice(p.seen||0).filter(m=>m.from==="agent"||m.from==="ai"):[];
+  if(!$("#widget").hidden||!unseen.length){ pk.hidden=true; return; }
+  const m=unseen.at(-1), who=m.from==="agent"?AG().name+" · Humancare support":"Humancare AI assistant";
+  pk.innerHTML=`<div class="ph"><span class="av">${m.from==="agent"?agIni():"AI"}</span>${esc(who)}${unseen.length>1?` <span class="badge">${unseen.length}</span>`:""}</div><p>${esc(m.text)}</p><div class="pr"><button data-pk="close">Later</button><button class="go" data-pk="open">Reply</button></div>`;
+  pk.hidden=false; $("#lHint").hidden=true;
+}
+function renderWidget(){
+  renderPeek();
+  const p=me(), w=$("#wBody"), c=p.conv;
+  const keep={}; ["cfName","cfEmail","cfPhone"].forEach(id=>{const el=document.getElementById(id); if(el) keep[id]=el.value;});
+  const foc=document.activeElement&&document.activeElement.id;
+  if(c&&!$("#widget").hidden) p.seen=c.msgs.length;
+  const open=c&&!closed(c), hu=open&&c.mode==="human", wait=open&&c.mode==="waiting";
+  $("#wAvatar").firstChild.textContent=hu?agIni():"HC";
+  $("#wName").textContent=hu?AG().name:"Humancare AI";
+  $("#wStatus").textContent=hu?"Live agent · Humancare support":wait?(state.agentOnline?"Connecting you with a live agent…":"Team offline · we'll email you"):"AI Healthcare Coordinator";
+  $("#wDot").className=wait?"wait":"";
+  const needContact=!p.name||!p.email;
+  $("#wFoot").classList.toggle("locked",needContact);
+  $("#wLive").hidden=needContact||!open||c.mode!=="ai";
+  let h="";
+  if(c) h=c.msgs.map(m=>msgHTML(m,"patient")).join("");
+  if(needContact){
+    h+=`<form class="cform" id="contactForm" novalidate>
+      <h3>${c?"Reply to Humancare":"Welcome to Humancare 👋"}</h3>
+      <p>Please share a few details so we can help you. You'll then chat with Humancare AI, or with a live agent anytime.</p>
+      <label>Full name *<input id="cfName" autocomplete="name" placeholder="e.g. Emma Wilson"></label>
+      <label>Email *<input id="cfEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+      <label>Phone <span>(optional)</span><input id="cfPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+1 302 303 9993"></label>
+      <span class="err" id="cfErr" hidden></span>
+      <small>Only the Humancare support team sees these details. See our Privacy Policy.</small>
+      <button type="submit">Start chat</button></form>`;
+  } else if(!open){
+    if(c&&c.resolved) h+=`<div class="rating">This chat has ended. How did we do?<div class="stars">${[1,2,3,4,5].map(i=>`<button data-star="${i}" class="${i<=state.rated?"on":""}" aria-label="${i} stars">★</button>`).join("")}</div></div>`;
+    h+=`<div class="opts"><button class="opt" data-newchat>${ICON.other}<span class="lab">Start a new chat</span><span class="ch">›</span></button></div>`;
+  } else if(c.aiTyping||c.agentTyping){
+    h+=`<div class="typing"><span class="dots"><i></i><i></i><i></i></span> ${c.agentTyping?esc(AG().name)+" is typing":"Humancare AI is typing"}</div>`;
+  }
+  w.innerHTML=h;
+  Object.entries(keep).forEach(([id,v])=>{const el=document.getElementById(id); if(el) el.value=v;});
+  if(foc&&foc.startsWith("cf")&&document.getElementById(foc)) document.getElementById(foc).focus();
+  else w.scrollTop=w.scrollHeight;
+}
+function renderAll(){ renderNav(); if(state.view==="visitors")renderVisitors(); if(isChatView())renderChats(); if(state.view==="team")renderTeam(); renderWidget(); }
+function toast(p,text){
+  if(state.mode!=="admin") return;
+  const t=document.createElement("button"); t.className="toast";
+  t.innerHTML=`<span class="av">${p.name?ini(p.name):"V"}</span><span><b>${esc(label(p))}</b><span>${esc(text)}</span></span>`;
+  t.onclick=()=>{state.view=viewFor(p);state.activeId=p.id;t.remove();renderAll();};
+  $("#toasts").prepend(t); setTimeout(()=>t.remove(),5000);
+  while($("#toasts").children.length>3) $("#toasts").lastChild.remove();
+}
+
+/* ---------- Render: patient website ---------- */
+const CATS=[["🧒","Children & Family","2 specialties · 8 conditions","Pediatrics, Adolescent Care"],["📋","Chronic Care","5 specialties · 29 conditions","Cardiology, Neurology, Endocrinology…"],["🦴","Eye, Ear & Bone","3 specialties · 19 conditions","Ophthalmology, ENT, Orthopedics"],["🩺","General & Everyday Care","3 specialties · 17 conditions","General Physician, Internal Medicine, Family Medicine"],["♂️","Men's Health","2 specialties · 10 conditions","Men's Health, Urology"],["🧠","Mental Health","3 specialties · 17 conditions","Psychiatry, Counselling, Behavioral Health"],["🧴","Skin & Hair","1 specialty · 12 conditions","Dermatology"],["🌸","Women's Health","4 specialties · 19 conditions","OB-GYN, Menopause Care, Women's Mental Health…"]];
+const PRICES=[["General consultations",49],["Mental Health Support",49],["Doctor Notes & Sick Notes",49],["Lab Requisitions",49],["Chronic Care Management",55],["Online Prescription Refills",60],["Online Second Medical Opinion",60],["Fit to fly",69]];
+function renderSite(){
+  const pg=me().page;
+  document.querySelectorAll(".s-links a").forEach(a=>{ if(a.dataset.page===pg) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
+  const consentTxt=me().consent==="yes"?"Because you accepted cookies, the admin team sees you on Real-time visitors as <b>IP 103.178.62.21</b> on <b>"+esc(pg)+"</b>.":"You haven't accepted cookies, so you don't appear on Real-time visitors. Chat still works, and it shows up in the admin's chat lists.";
+  const demo=`<div class="democard"><p><b>Demo:</b> ${consentTxt} Send yourself a message from the admin side to see it pop up even with the chat closed.</p><button class="s-cta" id="demoMsg">Send an admin message</button></div>`;
+  let h="";
+  if(pg==="Home") h=`<section class="s-hero"><div>
+      <span class="avail">● AVAILABLE 24/7</span>
+      <h1>Talk to a <b>licensed doctor</b> online in minutes.</h1>
+      <p>Book an online doctor appointment and get medical advice, treatment plans and prescriptions from licensed providers, from home.</p>
+      <div class="s-row"><button class="s-cta" data-page="Book Appointment">Book Appointment</button><button class="s-ghost" data-page="Services &amp; Prices">See prices</button></div>
+      <div class="trust"><span>HIPAA Compliant</span><span>Prescriptions Available</span><span>From $49</span></div>
+    </div><div class="journey"><span class="k">THE HUMANCARE CONNECT EXPERIENCE</span><h3>Your care journey, simplified</h3>
+      <ol><li><b>1</b>Create account</li><li><b>2</b>Choose service</li><li><b>3</b>Book appointment</li><li><b>4</b>Consult by video</li><li><b>5</b>Complete care</li></ol></div></section>${demo}
+    <section class="s-sec"><h2>Get help for</h2><p>10+ categories, 30+ specialties and 150+ conditions.</p><div class="cats">${CATS.slice(0,4).map(c=>`<button data-page="Book Appointment"><span class="ic">${c[0]}</span><b>${c[1]}</b><span class="sp">${c[2]}</span><span class="sm">${c[3]}</span></button>`).join("")}</div></section>`;
+  if(pg==="Book Appointment") h=`<section class="s-sec"><h2>Find the right online doctor for your needs.</h2><p>Book an online doctor appointment in minutes, without long waits or clinic visits.</p><div class="cats">${CATS.map(c=>`<button data-cat="${esc(c[1])}"><span class="ic">${c[0]}</span><b>${c[1]}</b><span class="sp">${c[2]}</span><span class="sm">${c[3]}</span><span class="sp">Explore →</span></button>`).join("")}</div></section>${demo}`;
+  if(pg==="Services & Prices") h=`<section class="s-sec"><h2>Services &amp; prices</h2><p>Simple flat prices. No insurance needed.</p><div class="tbl-wrap"><table class="price-tbl"><thead><tr><th>Service</th><th>Price</th></tr></thead><tbody>${PRICES.map(r=>`<tr><td>${r[0]}</td><td class="mono">$${r[1]}.00</td></tr>`).join("")}</tbody></table></div></section>${demo}`;
+  if(pg==="About Us"||pg==="Blogs") h=`<section class="s-sec"><h2>${esc(pg)}</h2><p>Placeholder page for the demo. Navigate around and watch the admin's Real-time view follow along.</p></section>${demo}`;
+  if(CATS.some(c=>c[1]===pg)) h=`<section class="s-sec"><h2>${esc(pg)}</h2><p>Choose a specialty and condition, then pick a time. General consultations start at $49.</p><div class="s-row"><button class="s-cta" data-page="Book Appointment">← All categories</button></div></section>${demo}`;
+  h+=`<footer class="s-foot"><span>© 2026 Humancare Connect, Inc. · support@humancareconnect.co</span><span>Chat messages and, with your consent, the pages you visit are used to provide support. Privacy Policy · Cookie Policy</span></footer>`;
+  $("#sMain").innerHTML=h;
+}
+function setPage(pg){ const p=me(); if(p.page===pg){renderSite();return;} p.page=pg; p.pages.push([pg,0]); p.flash=true; renderSite(); $("#site").scrollTop=0; renderAll(); }
+function adminDemoMsg(){
+  const p=me();
+  if(!p.conv||closed(p.conv)){ p.conv=conv("human",[{from:"sys",text:`${AG().name} started the chat · page: ${p.page}`,t:now()}],{startPage:p.page,wasLive:true}); p.invited=true; state.today++; }
+  push(p,"agent",p.page==="Book Appointment"?`Hi! I'm ${AG().name} from Humancare support. Need help choosing the right category or booking a time?`:`Hi! I'm ${AG().name} from Humancare support. Can I help you find the right care today?`);
+  renderAll();
+}
+function setMode(m){
+  state.mode=m;
+  document.querySelectorAll(".switcher button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mode===m));
+  $("#admin").hidden=m!=="admin"; $("#site").hidden=m!=="patient";
+  $("#cookie").hidden=!(m==="patient"&&me().consent===null);
+  $("#wSite").hidden=m==="patient"; $("#toasts").hidden=m==="patient";
+  $("#lHint").textContent=m==="patient"?"Questions? Chat with us":"This is the patient's chat. Try \"Start chat\" on a visitor →";
+  if(m==="patient") renderSite(); else renderAll();
+}
+
+/* ---------- Events: admin ---------- */
+document.querySelectorAll(".nav[data-view]").forEach(b=>b.addEventListener("click",()=>{state.view=b.dataset.view;renderAll();}));
+$("#v-visitors").addEventListener("click",e=>{
+  const s=e.target.closest("[data-start]"), o=e.target.closest("[data-open]");
+  if(s) startChat(byId(s.dataset.start));
+  if(o){ const p=byId(o.dataset.open); state.view=viewFor(p); state.activeId=p.id; renderAll(); }
+});
+$("#fAct").addEventListener("change",e=>{state.filter=e.target.value;renderVisitors();});
+$("#q").addEventListener("input",e=>{state.q=e.target.value; if(state.view!=="visitors"){state.view="visitors";renderAll();} else renderVisitors();});
+$("#list").addEventListener("click",e=>{const b=e.target.closest(".conv"); if(!b)return; state.activeId=b.dataset.id; if($("#aInput"))$("#aInput").value=""; renderAll();});
+let agTimer;
+$("#chat").addEventListener("click",e=>{
+  const p=byId(state.activeId); if(!p)return;
+  const a=e.target.closest("[data-act]"), cn=e.target.closest("[data-canned]"), nm=e.target.closest("[data-nm]");
+  if(a){ const k=a.dataset.act;
+    if(k==="take")takeOver(p); if(k==="ai")backToAi(p); if(k==="resolve")resolveC(p);
+    if(k==="suggest"){ const t=lastPat(p.conv), r=t?aiAnswer(t):null; $("#aInput").value=r&&r.text?r.text.replace(/\n+/g," "):"Thanks for reaching out. Let me check that for you."; $("#aInput").focus(); } }
+  if(cn){$("#aInput").value=cn.dataset.canned;$("#aInput").focus();}
+  if(nm){state.noteMode=nm.dataset.nm==="1";renderChats();}
+});
+$("#chat").addEventListener("input",e=>{
+  if(e.target.id!=="aInput"||state.noteMode||state.activeId!=="me")return;
+  const c=me().conv; c.agentTyping=true; renderWidget(); clearTimeout(agTimer); agTimer=setTimeout(()=>{c.agentTyping=false;renderWidget();},1500);
+});
+$("#chat").addEventListener("submit",e=>{e.preventDefault(); const p=byId(state.activeId); const i=$("#aInput"); const v=i.value; i.value=""; p.conv.agentTyping=false; agentSend(p,v);});
+$("#profile").addEventListener("toggle",e=>{const d=e.target; if(d.dataset&&d.dataset.sec) state.secOpen[d.dataset.sec]=d.open;},true);
+$("#profile").addEventListener("click",e=>{const u=e.target.closest("[data-untag]"); if(!u)return; byId(state.activeId).tags.splice(+u.dataset.untag,1); renderChats();});
+$("#profile").addEventListener("submit",e=>{
+  e.preventDefault(); const p=byId(state.activeId); if(!p)return;
+  if(e.target.id==="tagForm"){ const v=$("#tagIn").value.trim(); if(v&&!p.tags.includes(v)) p.tags.push(v); renderChats(); $("#tagIn")?.focus(); return; }
+  p.name=$("#qName").value.trim()||p.name; p.phone=$("#qPhone").value.trim(); p.email=$("#qEmail").value.trim();
+  push(p,"sys","Contact saved"); renderAll();
+});
+$("#onlineToggle").addEventListener("click",()=>{state.agentOnline=!state.agentOnline; $("#onlineToggle").setAttribute("aria-checked",state.agentOnline); $("#onlineLabel").textContent=state.agentOnline?"You're online":"You're offline"; renderAll();});
+$("#notifBtn").addEventListener("click",()=>{$("#banner").innerHTML='<span>✓ Notifications are on. New chats will pop up with a sound.</span>'; setTimeout(()=>$("#banner").hidden=true,2500);});
+$("#bannerX").addEventListener("click",()=>$("#banner").hidden=true);
+document.querySelectorAll('input[name="aimode"]').forEach(r=>r.addEventListener("change",e=>state.aiMode=e.target.value));
+$("#saveSet").addEventListener("click",()=>{$("#savedMsg").hidden=false; setTimeout(()=>$("#savedMsg").hidden=true,1800); renderAll();});
+
+/* ---------- Events: patient ---------- */
+function openWidget(show){ $("#widget").hidden=!show; $("#lHint").hidden=true; $("#lBtn").textContent=show?"✕ Close":"💬 Chat with us"; renderWidget(); if(show)$("#wInput").focus(); }
+$("#lBtn").addEventListener("click",()=>openWidget($("#widget").hidden));
+$("#wClose").addEventListener("click",()=>openWidget(false));
+$("#peek").addEventListener("click",e=>{const b=e.target.closest("[data-pk]"); if(!b)return; if(b.dataset.pk==="open") openWidget(true); else { me().seen=me().conv.msgs.length; renderPeek(); }});
+$("#wMin").addEventListener("click",()=>openWidget(false));
+$("#wLive").addEventListener("click",()=>{ const p=me(); if(!p.conv||closed(p.conv))return; push(p,"patient","Talk to a live agent"); bumpUnread(p,"Talk to a live agent"); renderAll(); requestLive(p); });
+$("#wForm").addEventListener("submit",e=>{e.preventDefault(); const v=$("#wInput").value; $("#wInput").value=""; widgetSend(v);});
+$("#wFile").addEventListener("change",e=>{const f=e.target.files[0]; if(!f)return; if(f.size>10*1024*1024){ alertInChat("That file is over 10 MB. Please send a smaller file."); e.target.value=""; return; } ensureConv(me()); push(me(),"file",f.name); bumpUnread(me(),"📄 "+f.name); renderAll(); e.target.value="";});
+function alertInChat(t){ ensureConv(me()); push(me(),"sys",t); renderAll(); }
+let tpTimer;
+$("#wInput").addEventListener("input",()=>{ const c=me().conv; if(!c)return; c.typing=true; clearTimeout(tpTimer); tpTimer=setTimeout(()=>{c.typing=false;if(isChatView())renderChats();},1800); if(isChatView())renderChats(); });
+$("#wBody").addEventListener("click",e=>{
+  const o=e.target.closest("[data-opt]"); if(o){ pickOption(o.dataset.opt); return; }
+  if(e.target.closest("[data-newchat]")){ ensureConv(me()); renderAll(); return; }
+  const s=e.target.closest("[data-star]"); if(!s)return; state.rated=+s.dataset.star; push(me(),"sys",`Patient rated the chat ${state.rated}★`); renderAll();
+});
+$("#wBody").addEventListener("submit",e=>{
+  if(e.target.id!=="contactForm")return; e.preventDefault();
+  const n=$("#cfName").value.trim(), em=$("#cfEmail").value.trim(), ph=$("#cfPhone").value.trim(), digits=ph.replace(/\D/g,"");
+  const err=!n?"Please enter your name.":!/^\S+@\S+\.\S+$/.test(em)?"Please enter a valid email, like you@example.com.":(ph&&(digits.length<7||digits.length>15))?"That phone number doesn't look right. Include the country code, or leave it empty.":"";
+  if(err){ const el=$("#cfErr"); el.textContent=err; el.hidden=false; return; }
+  const p=me(); p.name=n; p.email=em; p.phone=ph; p.flash=true;
+  if(p.conv&&!closed(p.conv)){ push(p,"sys",`Contact details received: ${n} · ${em}${ph?" · "+ph:""}`); renderAll(); $("#wInput").focus(); return; }
+  ensureConv(p); p.conv.msgs.splice(1,0,{from:"sys",text:`Contact details received: ${n} · ${em}${ph?" · "+ph:""}`,t:now()}); renderAll();
+});
+$("#site").addEventListener("click",e=>{
+  const pg=e.target.closest("[data-page]"); if(pg){ setPage(pg.dataset.page); return; }
+  const ct=e.target.closest("[data-cat]"); if(ct){ setPage(ct.dataset.cat); return; }
+  if(e.target.closest("#demoMsg")) adminDemoMsg();
+});
+$("#helpFor").addEventListener("change",e=>setPage(e.target.value));
+function setConsent(v){ const p=me(); p.consent=v; if(v==="yes") p.flash=true; $("#cookie").hidden=true; renderSite(); renderAll(); }
+$("#ckAccept").addEventListener("click",()=>setConsent("yes"));
+$("#ckDecline").addEventListener("click",()=>setConsent("no"));
+document.querySelectorAll(".switcher button").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+
+/* ---------- Live simulation ---------- */
+setInterval(()=>{
+  state.people.forEach(p=>{p.secs++; p.pages.at(-1)[1]++;});
+  document.querySelectorAll("[data-t]").forEach(td=>{const p=byId(td.dataset.t); if(p) td.textContent=dur(p.secs);});
+  document.querySelectorAll("[data-lp]").forEach(td=>{const p=byId(td.dataset.lp); if(p) td.textContent=dur(p.pages.at(-1)[1]);});
+  document.querySelectorAll("[data-cd]").forEach(td=>{const p=byId(td.dataset.cd); if(p&&p.conv&&!closed(p.conv)) td.textContent=dur(Math.floor((now()-p.conv.started)/1000));});
+  $("#clock").textContent="Live · "+hm(now());
+},1000);
+$("#clock").textContent="Live · "+hm(now());
+setTimeout(()=>{const p=byId("ip2"); p.page="Services & Prices"; p.pages.push(["Services & Prices",0]); p.flash=true; if(state.view==="visitors")renderVisitors();},6000);
+setTimeout(()=>{const r=byId("ip5"); r.conv.typing=true; if(isChatView())renderChats(); setTimeout(()=>{r.conv.typing=false; patientSend(r,"Do I need insurance for that?");},2200);},10000);
+setTimeout(()=>{state.people.push(P({id:"ip4",ip:"24.17.88.3",page:"Home",secs:0,city:"Seattle",region:"Washington",cc:"US",tz:"America/Los_Angeles",src:"Google search",ref:"google.com",device:"Mobile",os:"iOS",browser:"Safari",pages:[["Home",0]],flash:true})); if(state.view==="visitors")renderVisitors();},18000);
+setTimeout(()=>{const p=byId("ip3"); p.left=true; if(p.conv&&!closed(p.conv)){p.conv.left=true; p.invited=false; push(p,"sys","Archived · patient left the website");} renderAll();},45000);
+
+renderReports(); renderAll(); setMode("admin");
+</script>

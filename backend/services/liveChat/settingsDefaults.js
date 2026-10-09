@@ -1,0 +1,78 @@
+// Seeded defaults for the LcSettings singleton. Everything here is editable later in AI agent settings (Phase 5).
+// Wording and options follow docs/chat-demo.html.
+
+const DAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+const SUPPORT_HOURS = {
+  timezone: "America/New_York",
+  days: DAYS.map((day) => ({ day, enabled: true, open: "08:00", close: "22:00" })),
+};
+
+const QUICK_OPTIONS = [
+  {
+    key: "consultation",
+    label: "Online Consultation with Prescription",
+    icon: "stethoscope",
+    reply:
+      "You can see a licensed US doctor online. A general consultation is $49, and if the doctor decides a prescription is appropriate it is issued after the visit. Book from Book Appointment, choose a category and pick a time.",
+  },
+  {
+    key: "refill",
+    label: "Prescription & Prescription refill",
+    icon: "pill",
+    reply:
+      "Prescription refills are $60. Go to Book Appointment, choose Prescription refill and a doctor will review your request.",
+  },
+  {
+    key: "second_opinion",
+    label: "Medical Advice/Second Opinion",
+    icon: "clipboard",
+    reply:
+      "A Second Medical Opinion is $60. A specialist reviews your reports and treatment plan. Book it from Book Appointment, then choose Second opinion.",
+  },
+  {
+    key: "sick_notes",
+    label: "Sick Notes",
+    icon: "document",
+    reply:
+      "Doctor notes and sick notes are $49. A doctor reviews your request and, where appropriate, issues the note. Book from Book Appointment, then choose Doctor notes.",
+  },
+  {
+    key: "others",
+    label: "Others",
+    icon: "dots",
+    reply: "Sure, tell me what you need help with and I'll do my best, or I can connect you with a live agent.",
+  },
+  { key: "live", label: "Talk to a live agent", icon: "agent", reply: "" },
+];
+
+const PRICES = [
+  { name: "General consultation", price: 49 },
+  { name: "Mental health support", price: 49 },
+  { name: "Doctor notes & sick notes", price: 49 },
+  { name: "Lab requisitions", price: 49 },
+  { name: "Chronic care management", price: 55 },
+  { name: "Prescription refills", price: 60 },
+  { name: "Second medical opinion", price: 60 },
+  { name: "Fit to fly", price: 69 },
+];
+
+const DEFAULT_SETTINGS = {
+  key: "default",
+  aiMode: "ai_first",
+  agentDisplayName: "Sam",
+  greeting:
+    "Hi {firstName}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?",
+  supportHours: SUPPORT_HOURS,
+  handoffRules: { onPatientRequest: true, onAiRequest: true, maxAiRepliesPerChat: 30 },
+  quickOptions: QUICK_OPTIONS,
+  prices: PRICES,
+  businessFacts: "",
+  dailySpendCapUsd: 3,
+  unavailableMessage:
+    "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.",
+  offlineMessage:
+    "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
+};
+
+module.exports = { DAYS, SUPPORT_HOURS, QUICK_OPTIONS, PRICES, DEFAULT_SETTINGS };
