@@ -7,6 +7,7 @@ import ChatConversation from "./ChatConversation";
 import PatientPanel from "./PatientPanel";
 import { hub } from "./liveChatHub";
 import { useLiveChatAdmin } from "./useLiveChatAdmin";
+import NotificationsBanner from "./NotificationsBanner";
 import "./ChatWorkspace.css";
 
 // AI chats and Live agent chats: chat list | conversation | patient panel (docs/chat-demo.html).
@@ -141,7 +142,7 @@ export default function ChatWorkspace({ view }) {
   useEffect(() => {
     let readTimer;
     const off = hub.on((event, p) => {
-      if (event === "chat:new" || event === "queue:new") {
+      if (event === "chat:new" || event === "queue:new" || event === "chat:reopened") {
         reloadListSoon();
       } else if (event === "chat:updated") {
         const belongs = p.row?.everLive ? "live" : "ai";
@@ -259,6 +260,30 @@ export default function ChatWorkspace({ view }) {
       }
       return r.ok;
     },
+    // A patient's file opens through a short-lived link made by the server after a role check. The tab is opened on
+    // the click itself (browsers block pop-ups opened after a wait) and pointed at the link once the server answers;
+    // its opener is cleared so the file page can never reach this admin page.
+    openFile: async (file) => {
+      const tab = window.open("", "_blank");
+      if (tab) tab.opener = null;
+      try {
+        const { data } = await api.get(`${BASE}/files/${file.id}/url`);
+        if (tab) tab.location.href = data.url;
+        else setActionError("Your browser blocked the new tab. Allow pop-ups for this site to open files.");
+      } catch (err) {
+        tab?.close();
+        setActionError(err?.response?.status === 502 ? "The file storage is not reachable right now. Try again in a moment." : "Could not open that file.");
+      }
+    },
+    blockIp: async () => {
+      const ip = detail?.conversation.ip;
+      if (!ip || !window.confirm(`Block IP ${ip}? Its chats are closed and it cannot connect again until you unblock it (Real-time visitors > Blocked IPs).`)) return;
+      const r = await act(post("block-ip", { reason: "Blocked from a chat" }));
+      if (r.ok) {
+        loadDetail(id);
+        reloadListSoon();
+      }
+    },
     suggest: async () => {
       const r = await act(post("suggest"));
       return r.ok ? r.data.reply : "";
@@ -304,6 +329,7 @@ export default function ChatWorkspace({ view }) {
 
   return (
     <div className="wk-wrap-page">
+      <NotificationsBanner />
       <div className="wk-inbox">
         <ChatList view={view} rows={rows} me={me} activeId={activeId} typing={typing} query={query} onQuery={setQuery} onSelect={(cid) => go(cid)} loading={loading} />
         {detail ? (
@@ -323,6 +349,8 @@ export default function ChatWorkspace({ view }) {
             onNote={handlers.note}
             onSuggest={handlers.suggest}
             onTyping={onTyping}
+            onOpenFile={handlers.openFile}
+            onBlockIp={handlers.blockIp}
           />
         ) : (
           <div className="wk-chat">

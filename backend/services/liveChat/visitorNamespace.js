@@ -95,7 +95,7 @@ function countryCodeFor(name) {
 }
 
 const TRACKING_EVENTS = ["visitor:page", "visitor:heartbeat"];
-const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:typing"];
+const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:typing", "chat:rate"];
 const EVENTS = [...TRACKING_EVENTS, ...CHAT_EVENTS];
 const MAX_CHAT_MESSAGE_BYTES = 5000; // 1,000 characters can be up to 4 bytes each, plus JSON overhead
 
@@ -154,6 +154,8 @@ function setupVisitorNamespace(ns, ctx) {
     });
 
     if (chatEnabled) socket.join(`visitor:${visitorId}`);
+    // Counts this connection: when a visitor has had none for ~30 s they have left (an open chat is archived).
+    const releaseConnection = ctx.chat.trackConnection(visitorId);
 
     if (tracking) {
       const isNew = !presence.get(visitorId);
@@ -170,6 +172,13 @@ function setupVisitorNamespace(ns, ctx) {
           })
           .catch(() => {});
       }
+
+      // Tracking sockets can receive the "an agent wrote to you" bubble (it carries only the agent's name).
+      socket.join(`track:${visitorId}`);
+      ctx.chat
+        .pendingInvite(visitorId)
+        .then((invite) => invite && socket.emit("chat:invite", invite))
+        .catch(() => {});
 
       // A visitor who already has a chat open shows up with it (also after a page reload).
       ctx.chat.syncPresenceFor(visitorId).catch(() => {});
@@ -241,6 +250,11 @@ function setupVisitorNamespace(ns, ctx) {
         safely(cb, () => ctx.chat.talkToAgent(visitorId));
       });
 
+      socket.on("chat:rate", (a, b) => {
+        const [payload, cb] = args(a, b);
+        safely(cb, () => ctx.chat.rate(visitorId, payload.stars));
+      });
+
       // Typing carries a boolean only, never the text being typed.
       socket.on("chat:typing", (a) => {
         ctx.chat.relayTyping(visitorId, (a && typeof a === "object" ? a.typing : a) === true);
@@ -248,6 +262,7 @@ function setupVisitorNamespace(ns, ctx) {
     }
 
     socket.on("disconnect", () => {
+      releaseConnection();
       ctx.visitorIpCap.remove(ip);
       limiter.dispose(socket.id);
       if (tracking) presence.detach(visitorId, socket.id);

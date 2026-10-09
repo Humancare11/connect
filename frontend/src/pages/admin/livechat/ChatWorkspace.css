@@ -763,3 +763,30 @@
     animation: none;
   }
 }
+
+/* Files, rating, danger button */
+.wk-file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.wk-file-name {
+  overflow-wrap: anywhere;
+}
+.wk-file-name small {
+  color: var(--wk-muted);
+}
+.wk-rating {
+  color: #e0a100;
+  letter-spacing: 1px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.wk-btn--danger {
+  color: var(--wk-urgent);
+  border-color: #f0c4be;
+}
+.wk-btn--danger:hover:not(:disabled) {
+  border-color: var(--wk-urgent);
+}

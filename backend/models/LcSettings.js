@@ -25,6 +25,8 @@ const settingsSchema = new mongoose.Schema(
       onPatientRequest: { type: Boolean, default: true },
       onAiRequest: { type: Boolean, default: true },
       maxAiRepliesPerChat: { type: Number, default: 30, min: 1, max: 200 },
+      // If the agent holding a chat goes offline or logs out, the chat returns to the Queue after this long.
+      agentOfflineGraceSeconds: { type: Number, default: 120, min: 0, max: 3600 },
     },
     quickOptions: [
       {

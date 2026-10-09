@@ -4,6 +4,8 @@ import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
 import { hub } from "./liveChatHub";
 import { useLiveChatAdmin } from "./useLiveChatAdmin";
+import NotificationsBanner from "./NotificationsBanner";
+import BlockedIpsPanel from "./BlockedIpsPanel";
 import "./AdminLiveVisitors.css";
 
 // Live Chat > Real-time visitors. Layout, wording and colours follow docs/chat-demo.html.
@@ -59,6 +61,7 @@ export default function AdminLiveVisitors() {
   const [now, setNow] = useState(() => Date.now());
   const [starting, setStarting] = useState("");
   const [startError, setStartError] = useState("");
+  const [blockedVersion, setBlockedVersion] = useState(0);
   const userId = String(admin?._id || admin?.id || "");
 
   useEffect(() => hub.acquire(userId), [userId]);
@@ -82,9 +85,20 @@ export default function AdminLiveVisitors() {
       const { data } = await api.post("/api/admin/livechat/conversations/start", { visitorId: visitor.visitorId });
       navigate(`/admin-dashboard/live-chat/agent-chats/${data.conversationId}`);
     } catch (err) {
-      setStartError(err?.response?.data?.error === "contact_required" ? "This visitor has not shared contact details yet." : "Could not start the chat.");
+      setStartError(err?.response?.data?.error === "contact_required" ? "This visitor has left the website." : "Could not start the chat.");
     } finally {
       setStarting("");
+    }
+  };
+
+  // Blocks the visitor's IP: their chats are closed, they are disconnected and cannot come back until unblocked.
+  const blockVisitor = async (visitor) => {
+    if (!window.confirm(`Block IP ${visitor.ip}? They cannot use the website chat until you unblock it (Blocked IPs, below).`)) return;
+    try {
+      await api.post(`/api/admin/livechat/visitors/${visitor.visitorId}/block-ip`, { reason: "Blocked from the visitor list" });
+      setBlockedVersion((v) => v + 1);
+    } catch {
+      setStartError("Could not block that IP.");
     }
   };
 
@@ -97,13 +111,12 @@ export default function AdminLiveVisitors() {
         </button>
       );
     }
-    const known = Boolean(visitor.name);
     return (
       <button
         type="button"
         className="lcv-btn lcv-btn--primary"
-        disabled={!known || starting === visitor.visitorId}
-        title={known ? "" : "This visitor has not shared contact details yet. Chats with new visitors arrive in a later phase."}
+        disabled={starting === visitor.visitorId}
+        title={visitor.name ? "" : "They have not shared contact details yet: they will see a bubble and fill in the form before replying."}
         onClick={() => startChat(visitor)}
       >
         {starting === visitor.visitorId ? "Starting…" : "Start chat"}
@@ -178,6 +191,8 @@ export default function AdminLiveVisitors() {
           </button>
         </div>
       </div>
+
+      <NotificationsBanner />
 
       <div className="lcv-kpis">
         <div className="lcv-kpi">
@@ -299,7 +314,14 @@ export default function AdminLiveVisitors() {
                       {ACTIVITY[visitor.activity] || "Browsing"}
                     </span>
                   </td>
-                  <td>{actionFor(visitor)}</td>
+                  <td>
+                    <div className="lcv-actions">
+                      {actionFor(visitor)}
+                      <button type="button" className="lcv-btn lcv-btn--icon" aria-label={`Block IP ${visitor.ip}`} title={`Block IP ${visitor.ip}`} onClick={() => blockVisitor(visitor)}>
+                        ⛔
+                      </button>
+                    </div>
+                  </td>
                   <td>{visitor.assignedTo ? visitor.assignedTo : <span className="lcv-muted">–</span>}</td>
                   <td>{pageLabel(visitor)}</td>
                   <td className="lcv-mono">{duration(secondsOnSite(visitor))}</td>
@@ -330,6 +352,8 @@ export default function AdminLiveVisitors() {
           </tbody>
         </table>
       </div>
+
+      <BlockedIpsPanel refreshKey={blockedVersion} />
     </div>
   );
 }

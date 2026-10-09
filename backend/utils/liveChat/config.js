@@ -93,7 +93,28 @@ function readLimits(env = process.env) {
   };
 }
 
+// File uploads from patients (reports): pdf / jpg / png only.
+function readFileLimits(env = process.env) {
+  return {
+    maxBytes: 10 * 1024 * 1024,
+    maxFilesPerChat: intFromEnv("LIVECHAT_MAX_FILES_PER_CHAT", 10, env),
+    uploadsPer10Min: intFromEnv("LIVECHAT_UPLOADS_PER_10_MIN", 5, env),
+  };
+}
+
+// Abuse alerts: an IP or visitor that starts this many chats within an hour raises one admin alert.
+function readAbuseLimits(env = process.env) {
+  return { chatsPerHourAlert: intFromEnv("LIVECHAT_ABUSE_CHATS_PER_HOUR", 3, env) };
+}
+
+// Mailbox the offline follow-up email is sent from (an active mailbox of the Email module).
+const followUpMailboxAddress = (env = process.env) =>
+  String(env.LIVECHAT_FOLLOWUP_MAILBOX || "support@humancareconnect.co").trim().toLowerCase();
+
 module.exports = {
+  readFileLimits,
+  readAbuseLimits,
+  followUpMailboxAddress,
   isLiveChatEnabled,
   isProduction,
   parseLiveChatKey,

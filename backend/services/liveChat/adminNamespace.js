@@ -79,6 +79,16 @@ function setupAdminNamespace(ns, ctx) {
 
     socket.join("agents");
     socket.join(`agent:${identity.id}`);
+    // A session that was revoked (logout) or demoted is noticed within sessionCheckMs even if the tab is idle; the
+    // socket is dropped, which starts the grace period after which the agent's chats go back to the Queue.
+    const sessionTimer = setInterval(async () => {
+      try {
+        if (!(await stillAgent(socket))) socket.disconnect(true);
+      } catch {
+        /* try again next time */
+      }
+    }, ctx.sessionCheckMs);
+    sessionTimer.unref?.();
     socket.emit("visitors:snapshot", snapshot());
     // Register as connected (availability = Online switch AND a live socket), then tell the agent their status.
     ctx.agentStore
@@ -113,6 +123,7 @@ function setupAdminNamespace(ns, ctx) {
     });
 
     socket.on("disconnect", () => {
+      clearInterval(sessionTimer);
       ctx.adminIpCap.remove(ip);
       ctx.agents.disconnect(identity.id, socket.id);
       limiter.dispose(socket.id);

@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 import api, { getUserAuthToken } from "../../../api";
+import { installAudioUnlock, playChime, showBrowserNotification } from "./liveChatNotify";
 
 // One shared connection to /livechat-admin for the whole admin session.
 //
@@ -42,11 +43,19 @@ function set(patch) {
 
 const pagePath = (everLive, id) => `/admin-dashboard/live-chat/${everLive ? "agent-chats" : "ai-chats"}/${id}`;
 
-function pushToast({ title, body, path }) {
+// `notify` is what a browser notification may say (who / what kind of event, never message text).
+function pushToast({ title, body, path, notify }) {
   const id = ++toastSeq;
   set({ toasts: [{ id, title, body, path }, ...snapshot.toasts].slice(0, MAX_TOASTS) });
   setTimeout(() => hub.dismissToast(id), TOAST_MS);
+  playChime();
+  if (notify) showBrowserNotification({ ...notify, path, tag: `lc-${path || title}` });
 }
+
+const AI_PROBLEMS = {
+  quota: "The AI credits are used up.",
+  spend_cap: "The daily AI spend cap was reached.",
+};
 
 async function refreshUnread() {
   try {
@@ -76,6 +85,7 @@ function onChatEvent(event, payload) {
           title: "New chat",
           body: payload.mode === "live" ? "A chat was started" : `${payload.name || "A patient"} started a chat with the AI`,
           path: pagePath(payload.everLive, payload.conversationId),
+          notify: { title: "New chat", body: `${payload.name || "A patient"} started a chat` },
         });
       }
       break;
@@ -85,6 +95,7 @@ function onChatEvent(event, payload) {
         title: payload.offline ? "Request while the team is offline" : "Waiting for an agent",
         body: `${payload.name || "A patient"} asked for a live agent`,
         path: pagePath(true, payload.conversationId),
+        notify: { title: payload.offline ? "Request while the team is offline" : "Waiting for an agent", body: `${payload.name || "A patient"} asked for a live agent` },
       });
       break;
     case "chat:message":
@@ -95,8 +106,9 @@ function onChatEvent(event, payload) {
       if (payload.assigneeId && payload.assigneeId !== snapshot.agentId) break;
       pushToast({
         title: payload.name || "Patient",
-        body: preview(payload.message.text),
+        body: payload.message.file ? "Sent a file" : preview(payload.message.text),
         path: pagePath(payload.everLive, payload.conversationId),
+        notify: { title: "New message", body: `${payload.name || "A patient"} sent a message` },
       });
       break;
     case "chat:updated":
@@ -107,7 +119,26 @@ function onChatEvent(event, payload) {
       pushToast({ title: "Chat taken over", body: `${payload.by} took over one of your chats`, path: pagePath(true, payload.conversationId) });
       break;
     case "ai:unavailable":
-      pushToast({ title: "AI assistant unavailable", body: "Patients are being sent to live agents until it is back.", path: "" });
+      pushToast({
+        title: "AI assistant unavailable",
+        body: `${AI_PROBLEMS[payload.kind] || "The AI assistant is having problems."} Patients are being sent to live agents.`,
+        path: "",
+        notify: { title: "AI assistant unavailable", body: "Patients are being sent to live agents." },
+      });
+      break;
+    case "abuse:alert":
+      pushToast({
+        title: "Possible abuse",
+        body:
+          payload.reason === "daily_limit"
+            ? `IP ${payload.ip} reached the daily chat limit`
+            : `${payload.count} chats from ${payload.ip ? `IP ${payload.ip}` : "one visitor"} in the last hour`,
+        path: payload.conversationId ? pagePath(true, payload.conversationId) : "",
+        notify: { title: "Possible abuse", body: "Unusually many chats from one visitor." },
+      });
+      break;
+    case "chat:reopened":
+      scheduleUnread();
       break;
     default:
   }
@@ -115,6 +146,7 @@ function onChatEvent(event, payload) {
 
 function connect() {
   if (socket || !ENABLED) return;
+  installAudioUnlock();
   socket = io(`${SOCKET_URL}/livechat-admin`, {
     path: "/socket.io/",
     transports: ["websocket", "polling"],
@@ -156,7 +188,7 @@ function connect() {
     set({ visitors: next });
   });
   socket.on("agent:status", (agent) => set({ agent }));
-  ["chat:new", "queue:new", "chat:message", "chat:updated", "chat:typing", "chat:taken", "ai:unavailable"].forEach((event) =>
+  ["chat:new", "queue:new", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>
     socket.on(event, (payload) => onChatEvent(event, payload || {}))
   );
 }

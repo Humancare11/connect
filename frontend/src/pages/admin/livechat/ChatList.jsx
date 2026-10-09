@@ -33,7 +33,10 @@ const groupsFor = (view, me) =>
       ];
 
 function ModeTag({ row, me }) {
-  if (row.mode === "archived") return <span className="wk-tag wk-tag--done">{row.closedReason === "patient_left" ? "Left" : "Resolved"}</span>;
+  if (row.mode === "archived") {
+    const label = { patient_left: "Left", blocked: "Blocked" }[row.closedReason] || "Resolved";
+    return <span className="wk-tag wk-tag--done">{label}</span>;
+  }
   if (row.mode === "queue") return <span className="wk-tag wk-tag--wait">{row.offline ? "Offline request" : "Waiting"}</span>;
   if (row.mode === "live") return <span className="wk-tag wk-tag--human">{row.assignee?.id === me ? "You" : row.assignee?.name || "Agent"}</span>;
   return <span className="wk-tag wk-tag--ai">AI</span>;
@@ -44,6 +47,7 @@ function Item({ row, me, active, typing, onSelect }) {
   let preview = "";
   if (typing) preview = null;
   else if (row.mode === "archived" && row.closedReason === "patient_left") preview = "Archived · patient left the website";
+  else if (row.invited) preview = "Invited · no reply yet";
   else if (last) {
     const who = last.sender === "ai" ? "AI: " : last.sender === "agent" ? (row.assignee?.id === me ? "You: " : "Agent: ") : "";
     preview = `${who}${last.text}`;
@@ -59,6 +63,7 @@ function Item({ row, me, active, typing, onSelect }) {
         {typing ? <span className="wk-prev wk-prev--typing">typing…</span> : <span className="wk-prev">{preview}</span>}
         <span className="wk-row">
           <ModeTag row={row} me={me} />
+          {row.rating ? <span className="wk-rating">{"★".repeat(row.rating)}</span> : null}
           {row.unread > 0 && <span className="wk-badge">{row.unread}</span>}
         </span>
       </span>

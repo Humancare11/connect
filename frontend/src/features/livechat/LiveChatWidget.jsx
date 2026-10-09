@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import ContactForm from "./ContactForm";
+import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
+import RatingCard from "./RatingCard";
 import { useLiveChat } from "./useLiveChat";
 import "./LiveChatWidget.css";
 
@@ -16,6 +18,7 @@ const timeOf = (iso) => {
   }
 };
 
+const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase() || "HS";
 
 function Message({ message }) {
@@ -25,7 +28,14 @@ function Message({ message }) {
   if (message.sender === "patient") {
     return (
       <div className="lcw-msg lcw-msg--right">
-        {message.text}
+        {message.file ? (
+          <span className="lcw-file">
+            <span aria-hidden="true">📄</span> {message.file.name}
+            <small> · {sizeOf(message.file.size)}</small>
+          </span>
+        ) : (
+          message.text
+        )}
         <span className="lcw-meta">{timeOf(message.at)}</span>
       </div>
     );
@@ -52,6 +62,7 @@ export default function LiveChatWidget() {
   const [sending, setSending] = useState(false);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
+  const fileRef = useRef(null);
 
   const mode = conversation?.mode;
   const waiting = mode === "queue";
@@ -127,7 +138,7 @@ export default function LiveChatWidget() {
           </header>
 
           <div className="lcw-body" ref={bodyRef} aria-live="polite">
-            {phase === "form" && <ContactForm onSubmit={chat.submitContact} />}
+            {phase === "form" && <ContactForm onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
             {phase === "chat" && !conversation && <div className="lcw-sys">Starting your chat…</div>}
             {phase === "chat" && conversation && (
@@ -136,6 +147,7 @@ export default function LiveChatWidget() {
                   <Message key={message.id} message={message} />
                 ))}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
+                {ended && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
                 {ended && (
                   <div className="lcw-opts">
                     <button type="button" className="lcw-opt" onClick={chat.startNew}>
@@ -177,7 +189,29 @@ export default function LiveChatWidget() {
               </div>
             )}
             {chat.connection === "offline" && phase === "chat" && <div className="lcw-notice">Reconnecting…</div>}
+            {chat.uploading && <div className="lcw-note">Uploading your file…</div>}
             <form className="lcw-composer" onSubmit={submit}>
+              <input
+                ref={fileRef}
+                type="file"
+                hidden
+                accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) await chat.uploadFile(file);
+                }}
+              />
+              <button
+                type="button"
+                className="lcw-attach"
+                aria-label="Attach a report (PDF, JPG or PNG, up to 10 MB)"
+                title="Attach a report (PDF, JPG or PNG, up to 10 MB)"
+                disabled={locked || chat.uploading}
+                onClick={() => fileRef.current?.click()}
+              >
+                📎
+              </button>
               <input
                 ref={inputRef}
                 type="text"
@@ -201,6 +235,8 @@ export default function LiveChatWidget() {
           </footer>
         </section>
       )}
+
+      {!open && chat.invite && <InviteBubble agentName={chat.invite.agentName} onReply={() => setOpen(true)} onLater={chat.dismissInvite} />}
 
       <button type="button" className="lcw-launcher" onClick={() => setOpen(!open)} aria-expanded={open}>
         {open ? "✕ Close" : "💬 Chat with us"}

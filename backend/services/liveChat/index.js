@@ -138,53 +138,49 @@ function createAgentStore() {
   };
 }
 
-function createIpBlockCheck() {
-  const cache = new Map(); // ip -> { blocked, until }
-  return async function isIpBlocked(ip) {
-    const hit = cache.get(ip);
-    if (hit && hit.until > Date.now()) return hit.blocked;
-    let blocked = false;
-    try {
-      const LcBlockedIp = require("../../models/LcBlockedIp");
-      const row = await LcBlockedIp.findOne({ ip }).select("expiresAt").lean();
-      blocked = Boolean(row && (!row.expiresAt || row.expiresAt > new Date()));
-    } catch {
-      blocked = false; // a lookup failure must not take the tracker down
-    }
-    cache.set(ip, { blocked, until: Date.now() + 30_000 });
-    return blocked;
-  };
-}
-
 // Which agents are online right now: the Online/Offline switch is on AND at least one admin socket is connected.
 // In memory, behind a tiny interface (same reason as presence.js).
-function createAgentRegistry() {
-  const users = new Map(); // userId -> { online, sockets: Set }
+//   onGone(userId)  the agent's last connection closed, or they switched to Offline
+//   onBack(userId)  the agent is available again (connected and online)
+// index.js uses them to return an absent agent's chats to the Queue after a grace period.
+function createAgentRegistry({ onGone = () => {}, onBack = () => {} } = {}) {
+  const users = new Map(); // userId -> { online, explicit, sockets: Set }
   const entry = (userId) => {
     if (!users.has(userId)) users.set(userId, { online: false, explicit: false, sockets: new Set() });
     return users.get(userId);
   };
+  const available = (e) => Boolean(e && e.online && e.sockets.size);
   return {
     connect(userId, socketId, online) {
       const e = entry(userId);
+      const was = available(e);
       e.sockets.add(socketId);
       // The stored flag only seeds the first socket; a switch flipped meanwhile wins.
       if (e.sockets.size === 1 && !e.explicit) e.online = Boolean(online);
+      if (!was && available(e)) onBack(userId);
     },
     disconnect(userId, socketId) {
       const e = users.get(userId);
       if (!e) return;
       e.sockets.delete(socketId);
-      if (!e.sockets.size) users.delete(userId);
+      if (!e.sockets.size) {
+        users.delete(userId);
+        onGone(userId);
+      }
     },
     setOnline(userId, online) {
       const e = entry(userId);
+      const was = available(e);
+      const wasOnline = e.online;
       e.online = Boolean(online);
       e.explicit = true;
+      if (!available(e) && (was || (wasOnline && !e.online))) onGone(userId);
+      else if (!was && available(e)) onBack(userId);
     },
+    isAvailable: (userId) => available(users.get(userId)),
     availableCount() {
       let n = 0;
-      for (const e of users.values()) if (e.online && e.sockets.size) n += 1;
+      for (const e of users.values()) if (available(e)) n += 1;
       return n;
     },
   };
@@ -225,8 +221,9 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     presence,
     validateAccessToken,
     revalidateMs: options.revalidateMs ?? 60_000,
+    sessionCheckMs: options.sessionCheckMs ?? 60_000,
     agentStore: options.agentStore || createAgentStore(),
-    isIpBlocked: options.isIpBlocked || createIpBlockCheck(),
+    isIpBlocked: options.isIpBlocked || (async () => false), // replaced below by the real block store
     lookupLocation: options.lookupLocation || require("../../utils/geoIp").lookupLocation,
     visitorIpCap: createIpCap(intFromEnv("LIVECHAT_MAX_VISITOR_SOCKETS_PER_IP", 20, env)),
     adminIpCap: createIpCap(intFromEnv("LIVECHAT_MAX_ADMIN_SOCKETS_PER_IP", 10, env)),
@@ -242,6 +239,8 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     LcAiUsage: require("../../models/LcAiUsage"),
     LcPageVisit: require("../../models/LcPageVisit"),
     LcCannedReply: require("../../models/LcCannedReply"),
+    LcFile: require("../../models/LcFile"),
+    LcBlockedIp: require("../../models/LcBlockedIp"),
   };
   const settingsCacheMs = options.settingsCacheMs ?? 5000;
   let cached = { at: 0, value: null };
@@ -258,8 +257,22 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createChatService } = require("./chatService");
   const { verifyTurnstile } = require("./turnstile");
   const limits = createLimits({ models, readLimits: () => readLimits(env) });
-  const agents = createAgentRegistry();
+  const agents = createAgentRegistry({
+    onGone: (userId) => agentSvc?.agentGone(userId),
+    onBack: (userId) => agentSvc?.agentBack(userId),
+  });
   const ai = options.ai || createAiService({ env });
+  const { createIpBlockStore, createAbuseDetector } = require("./ipBlock");
+  const { createFollowUpMailer } = require("./followUpEmail");
+  const { createFileService } = require("./fileService");
+  const ipBlock = createIpBlockStore({ models });
+  if (!options.isIpBlocked) ctx.isIpBlocked = ipBlock.isBlocked;
+  const abuse = createAbuseDetector({ models, env, emit: (event, payload) => adminNs.to("agents").emit(event, payload) });
+  // Load the Email module now (startup), unless a test supplies its own mailer: its first load blocks for seconds.
+  if (!options.sendMail) require("./followUpEmail").loadEmailModule();
+  const followUp = createFollowUpMailer({ models, loadSettings, sendMail: options.sendMail, env });
+  let announce = () => {}; // set below, once the agent service exists
+  let agentSvc = null;
   const chat = createChatService({
     models,
     loadSettings,
@@ -269,19 +282,32 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     agents,
     emitToVisitor: (visitorId, event, payload) => visitorNs.to(`visitor:${visitorId}`).emit(event, payload),
     emitToAgents: (event, payload) => adminNs.to("agents").emit(event, payload),
+    emitToTrackers: (visitorId, event, payload) => visitorNs.to(`track:${visitorId}`).emit(event, payload),
+    announce: (conv) => announce(conv),
+    followUp,
+    abuse,
+    leaveGraceMs: graceMs,
   });
+  const files = createFileService({ models, chat, store: options.fileStore, env });
   const { createAgentService } = require("./agentService");
-  const agentSvc = createAgentService({
+  agentSvc = createAgentService({
     models,
     chat,
     loadSettings,
     ai,
     limits,
     presence,
+    agents,
+    ipBlock,
     agentStore: ctx.agentStore,
+    // blocking an IP drops the visitor sockets that come from it
+    disconnectIp: (ip) => {
+      for (const socket of visitorNs.sockets.values()) if (socket.data.ip === ip) socket.disconnect(true);
+    },
     emitToAgent: (userId, event, payload) => adminNs.to(`agent:${userId}`).emit(event, payload),
   });
-  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc });
+  announce = agentSvc.announce;
+  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
   require("./adminNamespace").setupAdminNamespace(adminNs, ctx);
@@ -293,7 +319,8 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
         chat,
         loadSettings,
         verifyTurnstile: options.verifyTurnstile || verifyTurnstile,
-        isIpBlocked: ctx.isIpBlocked,
+        isIpBlocked: (ip) => ctx.isIpBlocked(ip),
+        files,
         env,
         limiters: options.publicLimiters,
       })
@@ -301,7 +328,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files })
     );
   }
 
@@ -313,7 +340,13 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     agents,
     limits,
     agentSvc,
+    files,
+    followUp,
+    ipBlock,
+    abuse,
     shutdown() {
+      chat.shutdown();
+      agentSvc.shutdown();
       presence.clear();
       adminNs.disconnectSockets(true);
       visitorNs.disconnectSockets(true);

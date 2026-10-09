@@ -1,12 +1,15 @@
 const express = require("express");
+const multer = require("multer");
 const { getClientIp } = require("../utils/clientIp");
-const { liveChatContactLimiter, liveChatConfigLimiter } = require("../middleware/rateLimiters");
-const { signChatToken } = require("../services/liveChat/chatToken");
+const { liveChatContactLimiter, liveChatConfigLimiter, liveChatUploadLimiter } = require("../middleware/rateLimiters");
+const { signChatToken, verifyChatToken } = require("../services/liveChat/chatToken");
+const { FileError } = require("../services/liveChat/fileService");
 
 // Public Live Chat API (visitors). Only mounted when LIVECHAT_ENABLED=true, so with the kill switch off these
 // URLs do not exist.
 //
 //   GET  /api/livechat/config   tells the widget the module is on (the widget stays hidden on a 404)
+//   POST /api/livechat/upload   a patient's report (pdf/jpg/png, max 10 MB) into their own open chat; needs the chat token
 //   POST /api/livechat/contact  the contact form: validates, checks Turnstile + honeypot, registers the visitor and
 //                               returns the chat token that unlocks the chat sockets
 //
@@ -14,11 +17,17 @@ const { signChatToken } = require("../services/liveChat/chatToken");
 //   chat, loadSettings, verifyTurnstile, isIpBlocked, env, limiters
 const HONEYPOT_FIELD = "companyUrl"; // hidden in the form; real people never fill it in
 
-function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, env = process.env, limiters = {} }) {
+function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env = process.env, limiters = {} }) {
   const router = express.Router();
   router.use(express.json({ limit: "8kb" }));
   const contactLimiter = limiters.contact || liveChatContactLimiter;
   const configLimiter = limiters.config || liveChatConfigLimiter;
+  const uploadLimiter = limiters.upload || liveChatUploadLimiter;
+
+  // One file, in memory. The parser stops one byte past the limit (it flags a file that reaches its limit as cut off);
+  // fileService enforces the exact limit and checks the real type from the bytes.
+  const uploadOne = multer({ storage: multer.memoryStorage(), limits: { fileSize: files.limits.maxBytes + 1, files: 1, fields: 2 } }).single("file");
+  const bearer = (req) => (req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : "");
 
   router.get("/config", configLimiter, async (req, res, next) => {
     try {
@@ -29,6 +38,39 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, env = proces
       next(err);
     }
   });
+
+  router.post(
+    "/upload",
+    uploadLimiter,
+    // Who is it? Checked BEFORE the body is read, so an anonymous caller cannot make the server buffer 10 MB.
+    async (req, res, next) => {
+      try {
+        const visitorId = verifyChatToken(bearer(req), env);
+        if (!visitorId) return res.status(401).json({ ok: false, error: "unauthorized" });
+        if (await isIpBlocked(getClientIp(req))) return res.status(403).json({ ok: false, error: "blocked" });
+        req.visitorId = visitorId;
+        return next();
+      } catch (err) {
+        return next(err);
+      }
+    },
+    (req, res, next) =>
+      uploadOne(req, res, (err) => {
+        if (err?.code === "LIMIT_FILE_SIZE") return res.status(413).json({ ok: false, error: "file_too_large" });
+        if (err) return res.status(400).json({ ok: false, error: "invalid_upload" });
+        return next();
+      }),
+    async (req, res, next) => {
+      try {
+        res.set("Cache-Control", "no-store");
+        if (!req.file) return res.status(400).json({ ok: false, error: "no_file" });
+        return res.json(await files.upload({ visitorId: req.visitorId, file: req.file }));
+      } catch (err) {
+        if (err instanceof FileError) return res.status(err.status).json({ ok: false, error: err.code });
+        return next(err);
+      }
+    }
+  );
 
   router.post("/contact", contactLimiter, async (req, res, next) => {
     try {

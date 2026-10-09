@@ -26,6 +26,7 @@ const SUPER_S = "64b000000000000000000c03";
 async function startLiveChatServer({ env = {}, mount = {} } = {}) {
   const identities = { ...ROLE_TOKENS };
   const app = express();
+  app.set("trust proxy", 1);
   const server = http.createServer(app);
   const io = new Server(server, { cors: { origin: true, credentials: true } });
 
@@ -39,6 +40,10 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
 
   const statuses = [];
   const agentNames = {}; // userId -> display name shown to patients
+  const emails = []; // every follow-up email the module "sent" (no real mail in tests)
+  const store = new Map(); // fake file store: key -> { buffer, contentType }
+  const presigned = []; // every presigned URL the module issued
+  const failures = { put: false, presign: false, mail: false }; // tests flip these to make storage / mail fail
   const livechat = mountLiveChat({
     app,
     io,
@@ -57,6 +62,23 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
     isIpBlocked: async (ip) => ip === "6.6.6.6",
     lookupLocation: async () => ({ city: "Austin", state: "Texas", country: "United States" }),
     getSettings: async () => ({ key: "default" }),
+    sendMail: async (mail) => {
+      if (failures.mail) throw Object.assign(new Error(`550 mailbox unavailable for ${mail.to}`), { code: 550 });
+      emails.push(mail);
+    },
+    fileStore: {
+      put: async (key, buffer, contentType) => {
+        if (failures.put) throw new Error("AccessDenied: bucket secret-bucket-name");
+        store.set(key, { buffer, contentType });
+      },
+      presign: async (key, opts) => {
+        if (failures.presign) throw new Error("AccessDenied: bucket secret-bucket-name");
+        presigned.push({ key, ...opts });
+        return `https://files.test/${key}?sig=fake`;
+      },
+      remove: async (key) => void store.delete(key),
+    },
+    sessionCheckMs: 100,
     guard: [fakeAuth, liveChatAgentOnly],
     ...mount,
   });
@@ -76,6 +98,9 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
         forceNew: true,
       });
       sockets.push(socket);
+      // Everything the server sends, including what arrives right at connect, before a test can attach listeners.
+      socket.events = [];
+      socket.onAny((event, payload) => socket.events.push([event, payload]));
       // The server sends the visitor snapshot as soon as an agent connects, so capture it before "connect".
       socket.snapshotPromise = new Promise((done) => socket.once("visitors:snapshot", done));
       socket.once("connect", () => resolve(socket));
@@ -94,6 +119,10 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
     identities,
     statuses,
     agentNames,
+    emails,
+    store,
+    presigned,
+    failures,
     connect,
     agent: (token = "admin-token") => connect("/livechat-admin", { auth: { token } }),
     visitor: (extra = {}) =>
@@ -170,6 +199,8 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     LcAiUsage: require("../../models/LcAiUsage"),
     LcPageVisit: require("../../models/LcPageVisit"),
     LcCannedReply: require("../../models/LcCannedReply"),
+    LcFile: require("../../models/LcFile"),
+    LcBlockedIp: require("../../models/LcBlockedIp"),
   };
   await Promise.all(Object.values(models).map((m) => m.init()));
   await require("../../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
@@ -183,7 +214,7 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     mount: {
       ai,
       settingsCacheMs: 0,
-      publicLimiters: { contact: PASS, config: PASS },
+      publicLimiters: { contact: PASS, config: PASS, upload: PASS }, // the per-IP route limiters are not under test
       verifyTurnstile: async ({ token }) => (token === "good-token" ? { ok: true } : { ok: false, reason: "failed" }),
       ...mount,
     },
@@ -198,29 +229,47 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     async setSettings(patch) {
       await models.LcSettings.updateOne({ key: "default" }, { $set: patch });
     },
-    async post(path, body) {
+    async post(path, body, headers = {}) {
       const res = await fetch(`${lc.url}/api/livechat${path}`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...headers },
         body: JSON.stringify(body),
       });
       return { status: res.status, body: await res.json().catch(() => ({})) };
     },
-    // Fills the contact form like a real visitor and returns { visitorId, token }.
-    async submitContact(extra = {}) {
-      seq += 1;
-      const res = await api.post("/contact", {
-        name: "Emma Wilson",
-        email: `emma${seq}@example.com`,
-        phone: "",
-        consent: true,
-        turnstileToken: "good-token",
-        ...extra,
+    // Uploads a file as a patient (multipart). Returns { status, body }.
+    async upload(token, { name, buffer, type }, headers = {}) {
+      const form = new FormData();
+      form.append("file", new Blob([buffer], { type: type || "application/octet-stream" }), name);
+      const res = await fetch(`${lc.url}/api/livechat/upload`, {
+        method: "POST",
+        headers: token ? { authorization: `Bearer ${token}`, ...headers } : headers,
+        body: form,
       });
+      return { status: res.status, body: await res.json().catch(() => ({})) };
+    },
+    // A tracking-only socket (cookies accepted, no chat token), like a visitor who never opened the widget.
+    trackerSocket: (visitorId, headers = {}) =>
+      lc.connect("/livechat", { auth: { visitorId, consent: true }, headers }),
+    // Fills the contact form like a real visitor and returns { visitorId, token }.
+    async submitContact(extra = {}, headers = {}) {
+      seq += 1;
+      const res = await api.post(
+        "/contact",
+        {
+          name: "Emma Wilson",
+          email: `emma${seq}@example.com`,
+          phone: "",
+          consent: true,
+          turnstileToken: "good-token",
+          ...extra,
+        },
+        headers
+      );
       return { ...res.body, status: res.status };
     },
     // A chat socket for a visitor that has submitted the form.
-    chatSocket: (token, extra = {}) => lc.connect("/livechat", { auth: { chatToken: token, ...extra } }),
+    chatSocket: (token, extra = {}, headers = {}) => lc.connect("/livechat", { auth: { chatToken: token, ...extra }, headers }),
     // emit with an acknowledgement
     call: (socket, event, payload) =>
       new Promise((resolve, reject) => {
@@ -257,4 +306,13 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
   return api;
 }
 
-module.exports = { startLiveChatServer, startChatServer, scriptedAi, once, sleep, dayKey, VISITOR_ID, ROLE_TOKENS, AGENT_A, AGENT_B, SUPER_S };
+// Minimal real files (the module reads the actual bytes to find the type).
+const FILES = {
+  png: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64"),
+  pdf: Buffer.from("%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n"),
+  jpg: Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/yQALCAABAAEBAREA/8wABgAQEAX/2gAIAQEAAD8A0s8g/9k=", "base64"),
+  exe: Buffer.from("MZ\x90\x00\x03\x00\x00\x00 this is not a pdf", "binary"),
+  html: Buffer.from("<html><script>alert(1)</script></html>"),
+};
+
+module.exports = { FILES, startLiveChatServer, startChatServer, scriptedAi, once, sleep, dayKey, VISITOR_ID, ROLE_TOKENS, AGENT_A, AGENT_B, SUPER_S };

@@ -90,10 +90,15 @@ function createChatService({
   agents,
   emitToVisitor = () => {},
   emitToAgents = () => {},
+  emitToTrackers = () => {}, // the visitor's tracking sockets (used for the "an agent wrote to you" bubble)
+  announce = () => {}, // tells agents a conversation changed (agentService builds the list row)
+  followUp = null, // offline follow-up email ({ send(conv) })
+  abuse = null, // abuse alerts ({ noteChat, noteDailyLimit })
+  leaveGraceMs = 30_000, // a visitor with no connection for this long has left
   now = () => Date.now(),
   log = () => {},
 }) {
-  const { LcVisitor, LcConversation, LcMessage, LcPageVisit } = models;
+  const { LcVisitor, LcConversation, LcMessage, LcPageVisit, LcFile } = models;
   const locks = new Map(); // conversationId -> promise chain, so one chat handles one turn at a time
   const breaker = { until: 0, kind: "", alerted: false };
 
@@ -135,13 +140,16 @@ function createChatService({
     const id = VISITOR_ID_RE.test(String(visitorId || "")) ? visitorId : newVisitorId();
     const { values } = check;
     const stamp = new Date(now());
+    const enc = {
+      name: encryptLiveChatText(values.name),
+      email: encryptLiveChatText(values.email),
+      phone: encryptLiveChatText(values.phone),
+    };
     await LcVisitor.findOneAndUpdate(
       { visitorId: id },
       {
         $set: {
-          name: encryptLiveChatText(values.name),
-          email: encryptLiveChatText(values.email),
-          phone: encryptLiveChatText(values.phone),
+          ...enc,
           emailHash: hashLiveChatEmail(values.email),
           "consent.privacyAcceptedAt": stamp,
           lastSeenAt: stamp,
@@ -150,6 +158,11 @@ function createChatService({
         $setOnInsert: { firstSeenAt: stamp },
       },
       { upsert: true }
+    );
+    // A chat an admin started (invite) has no contact yet: the visitor's details now belong to it.
+    await LcConversation.updateMany(
+      { visitorId: id, mode: { $ne: "archived" }, "contact.email.cipherText": "" },
+      { $set: { contact: enc } }
     );
     const record = presence.get(id);
     if (record) presence.update(id, { name: values.name });
@@ -161,17 +174,27 @@ function createChatService({
 
   // ── Serialisation (what the widget may see) ──────────────────────────────────
 
+  // { fileId -> { id, name, mime, size } } for the file messages in a list of message rows.
+  async function filesMeta(rows) {
+    const ids = rows.map((m) => m.fileId).filter(Boolean);
+    if (!ids.length || !LcFile) return new Map();
+    const docs = await LcFile.find({ _id: { $in: ids } }).lean();
+    return new Map(docs.map((d) => [String(d._id), { id: String(d._id), name: decryptLiveChatText(d.name), mime: d.mimeType, size: d.size }]));
+  }
+
   async function serialize(conv, settings) {
     const rows = await LcMessage.find({ conversationId: conv.conversationId, sender: { $ne: "note" }, internal: { $ne: true } })
       .sort({ createdAt: 1 })
       .limit(MESSAGE_PAGE)
       .lean();
+    const files = await filesMeta(rows);
     const messages = rows.map((m) => ({
       id: String(m._id),
       sender: m.sender,
       text: decryptLiveChatText(m.text),
       at: m.createdAt,
       ...(m.sender === "agent" ? { agentName: m.agentName || conv.agentName || "" } : {}),
+      ...(m.fileId && files.get(String(m.fileId)) ? { file: { name: files.get(String(m.fileId)).name, mime: files.get(String(m.fileId)).mime, size: files.get(String(m.fileId)).size } } : {}),
     }));
     const canRequestAgent = conv.mode === "ai";
     return {
@@ -186,16 +209,19 @@ function createChatService({
       offline: Boolean(conv.offlineRequested),
       aiUnavailable: aiUnavailableNow(),
       agent: conv.mode === "live" && conv.agentName ? { name: conv.agentName } : null,
+      rating: conv.rating?.stars ? { stars: conv.rating.stars } : null,
+      canRate: conv.mode === "archived" && conv.closedReason === "resolved" && !conv.rating?.stars,
       messages,
     };
   }
 
   async function addMessage(conv, sender, text, extra = {}) {
+    const { file, ...stored } = extra; // `file` is display info; only fileId is stored
     const doc = await LcMessage.create({
       conversationId: conv.conversationId,
       sender,
       text: encryptLiveChatText(text),
-      ...extra,
+      ...stored,
     });
     const update = { $set: { lastMessageAt: new Date(now()) } };
     if (sender === "patient") update.$inc = { patientMessageCount: 1 };
@@ -206,6 +232,7 @@ function createChatService({
       text,
       at: doc.createdAt,
       ...(sender === "agent" ? { agentName: extra.agentName || conv.agentName || "" } : {}),
+      ...(file ? { file } : {}),
     };
     // Internal notes and team-only lines are for agents only; they are never sent to the patient.
     if (sender !== "note" && !extra.internal) {
@@ -228,7 +255,8 @@ function createChatService({
   }
 
   function setActivity(visitorId, conv) {
-    const activity = conv.mode === "ai" ? "ai" : conv.mode === "queue" ? "waiting" : conv.mode === "live" ? "chatting" : "browsing";
+    const activity =
+      conv.mode === "ai" ? "ai" : conv.mode === "queue" ? "waiting" : conv.mode === "live" ? (conv.invited ? "invited" : "chatting") : "browsing";
     if (!presence.get(visitorId)) return;
     presence.update(visitorId, {
       activity,
@@ -294,14 +322,147 @@ function createChatService({
     if (!hasContact(visitor)) return { ok: true, needContact: true };
     await touchVisitor(visitorId);
     const settings = await loadSettings();
-    const conv = await findOpen(visitorId);
-    return {
-      ok: true,
-      needContact: false,
-      firstName: firstNameOf(decryptLiveChatText(visitor.name)),
-      conversation: conv ? await serialize(conv.toObject(), settings) : null,
+    let conv = await findOpen(visitorId);
+    if (!conv) conv = await reopenIfLeft(visitorId, visitor); // back within 24 h of leaving: the chat continues
+    let conversation = conv ? await serialize(conv.toObject(), settings) : null;
+    if (!conversation) {
+      // A chat that was just resolved and not rated yet stays reachable, so the patient can rate after moving on.
+      const rateable = await LcConversation.findOne({
+        visitorId,
+        mode: "archived",
+        closedReason: "resolved",
+        "rating.stars": null,
+        closedAt: { $gte: new Date(now() - 24 * 3_600_000) },
+      }).sort({ closedAt: -1 });
+      if (rateable) conversation = await serialize(rateable.toObject(), settings);
+    }
+    return { ok: true, needContact: false, firstName: firstNameOf(decryptLiveChatText(visitor.name)), conversation };
+  }
+
+  // A visitor who left (tab closed, 30 s) and comes back within 24 hours continues the same chat: an AI chat goes
+  // back to the AI; a chat that had an agent goes back to the Queue (the agent may have moved on).
+  async function reopenIfLeft(visitorId, visitor) {
+    const doc = await LcConversation.findOne({
+      visitorId,
+      mode: "archived",
+      closedReason: "patient_left",
+      leftAt: { $gte: new Date(now() - 24 * 3_600_000) },
+    }).sort({ leftAt: -1 });
+    if (!doc) return null;
+    const settings = await loadSettings();
+    const target = doc.modeBeforeLeft === "ai" ? "ai" : "queue";
+    const available = teamAvailable(settings);
+    const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "" };
+    if (target === "queue") Object.assign(set, { assigneeId: null, agentName: "", queuedAt: new Date(now()), offlineRequested: !available });
+    const won = await LcConversation.findOneAndUpdate(
+      { _id: doc._id, mode: "archived", closedReason: "patient_left" },
+      { $set: set },
+      { returnDocument: "after" }
+    );
+    if (!won) return findOpen(visitorId); // someone else reopened it first
+    const first = firstNameOf(decryptLiveChatText(visitor.name));
+    const welcome =
+      target === "ai"
+        ? `Welcome back, ${first}!`
+        : available
+          ? `Welcome back, ${first}! We're reconnecting you with an agent.`
+          : `Welcome back, ${first}! ${settings.offlineMessage || "Our team is offline right now."}`;
+    await addMessage(won, "system", welcome);
+    setActivity(visitorId, won);
+    emitToAgents("chat:reopened", { conversationId: won.conversationId, visitorId, everLive: Boolean(won.everLive), name: first, mode: target });
+    if (target === "queue") {
+      emitToAgents("queue:new", { conversationId: won.conversationId, visitorId, name: first, everLive: true, offline: !available, reason: "returned" });
+    }
+    announce(won);
+    return won;
+  }
+
+  // ── Visitor left ─────────────────────────────────────────────────────────────
+
+  // About 30 s after the last connection of a visitor (tracker or chat) closes, an open chat is archived as
+  // "patient left". A request left while the team was offline stays in the Queue: the patient asked for an email.
+  async function visitorLeft(visitorId) {
+    const open = await findOpen(visitorId);
+    if (!open || open.offlineRequested) return;
+    await withLock(open.conversationId, async () => {
+      const current = await LcConversation.findById(open._id);
+      if (!current || current.mode === "archived" || current.offlineRequested) return;
+      const stamp = new Date(now());
+      const archived = await LcConversation.findOneAndUpdate(
+        { _id: current._id, mode: { $ne: "archived" } },
+        { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_left", leftAt: stamp, closedAt: stamp } },
+        { returnDocument: "after" }
+      );
+      if (!archived) return;
+      await addMessage(archived, "system", "Patient left the website", { internal: true });
+      announce(archived);
+    });
+  }
+
+  // Counts a visitor's open connections (tracker and chat sockets together). Returns a function to call when one
+  // closes. When the last one has been closed for leaveGraceMs, visitorLeft() runs; a reconnect in time cancels it.
+  const connections = new Map();
+  const leaveTimers = new Map();
+  function trackConnection(visitorId) {
+    clearTimeout(leaveTimers.get(visitorId));
+    leaveTimers.delete(visitorId);
+    connections.set(visitorId, (connections.get(visitorId) || 0) + 1);
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const remaining = (connections.get(visitorId) || 1) - 1;
+      if (remaining > 0) {
+        connections.set(visitorId, remaining);
+        return;
+      }
+      connections.delete(visitorId);
+      const timer = setTimeout(() => {
+        leaveTimers.delete(visitorId);
+        if (!connections.has(visitorId)) visitorLeft(visitorId).catch(() => {});
+      }, leaveGraceMs);
+      timer.unref?.();
+      leaveTimers.set(visitorId, timer);
     };
   }
+
+  // ── Rating ───────────────────────────────────────────────────────────────────
+
+  // The patient rates a chat that was just resolved: 1-5 stars, once.
+  async function rate(visitorId, rawStars) {
+    const stars = Number(rawStars);
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) return { ok: false, error: "invalid_rating" };
+    const conv = await LcConversation.findOne({
+      visitorId,
+      mode: "archived",
+      closedReason: "resolved",
+      "rating.stars": null,
+      closedAt: { $gte: new Date(now() - 24 * 3_600_000) },
+    }).sort({ closedAt: -1 });
+    if (!conv) return { ok: false, error: "nothing_to_rate" };
+    const rated = await LcConversation.findOneAndUpdate(
+      { _id: conv._id, "rating.stars": null },
+      { $set: { rating: { stars, ratedAt: new Date(now()) } } },
+      { returnDocument: "after" }
+    );
+    if (!rated) return { ok: false, error: "already_rated" };
+    await addMessage(rated, "system", `Patient rated the chat ${stars}★`, { internal: true });
+    announce(rated);
+    await pushState(rated);
+    return { ok: true };
+  }
+
+  // ── Invites (an admin started a chat with a visitor who has not opened the widget) ──
+
+  async function pendingInvite(visitorId) {
+    const conv = await findOpen(visitorId);
+    if (!conv || !conv.invited || conv.patientMessageCount > 0) return null;
+    const hasAgentMessage = await LcMessage.exists({ conversationId: conv.conversationId, sender: "agent" });
+    // Only the agent's name goes to the bubble. The text is shown after the visitor has filled in the contact form.
+    return hasAgentMessage ? { conversationId: conv.conversationId, agentName: conv.agentName } : null;
+  }
+
+  const findOpenConversation = (visitorId) => findOpen(visitorId);
 
   async function startConversation(visitorId, context = {}) {
     const visitor = await loadVisitor(visitorId);
@@ -310,7 +471,10 @@ function createChatService({
     const existing = await findOpen(visitorId);
     if (existing) return { ok: true, conversation: await serialize(existing.toObject(), settings) };
 
-    if (!(await limits.canStartChat(context.ip))) return { ok: false, error: "chat_limit" };
+    if (!(await limits.canStartChat(context.ip))) {
+      abuse?.noteDailyLimit(context.ip); // one alert per IP per day
+      return { ok: false, error: "chat_limit" };
+    }
 
     const record = presence.get(visitorId);
     const conv = await LcConversation.create({
@@ -344,6 +508,7 @@ function createChatService({
     await addMessage(conv, "ai", greeting);
     setActivity(visitorId, conv);
     emitToAgents("chat:new", { conversationId: conv.conversationId, visitorId, mode: "ai", everLive: false, name: first });
+    abuse?.noteChat({ ip: conv.ip, visitorId, conversationId: conv.conversationId }).catch(() => {});
     const fresh = await LcConversation.findById(conv._id).lean();
     return { ok: true, conversation: await serialize(fresh, settings) };
   }
@@ -370,6 +535,12 @@ function createChatService({
       const conv = await LcConversation.findById(loaded.conv._id);
       if (!conv || conv.mode === "archived") return null;
       await addMessage(conv, "patient", text.text);
+      if (conv.invited) {
+        await LcConversation.updateOne({ _id: conv._id }, { $set: { invited: false } });
+        conv.invited = false;
+        setActivity(conv.visitorId, conv);
+        announce(await LcConversation.findById(conv._id)); // the "Invited" tag disappears on every admin's screen
+      }
       return conv;
     });
     if (!saved) return { ok: false, error: "no_conversation" };
@@ -446,7 +617,8 @@ function createChatService({
   }
 
   async function recentHistory(conv) {
-    const rows = await LcMessage.find({ conversationId: conv.conversationId, sender: { $in: ["patient", "ai", "agent"] } })
+    // File messages are left out: their text is the file name, which can reveal health information.
+    const rows = await LcMessage.find({ conversationId: conv.conversationId, sender: { $in: ["patient", "ai", "agent"] }, fileId: null })
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
@@ -485,6 +657,8 @@ function createChatService({
       await addMessage(fresh, "ai", cfg.offlineMessage || "Our team is offline right now. We've saved your request and will reply by email.");
     }
     setActivity(conv.visitorId, fresh);
+    // The team is offline: one follow-up email goes to the patient (no health details; never blocks the chat).
+    if (!available && followUp) followUp.send(fresh).catch(() => {});
     emitToAgents("queue:new", {
       conversationId: conv.conversationId,
       visitorId: conv.visitorId,
@@ -559,6 +733,20 @@ function createChatService({
     relayTyping,
     // used by the agent side (agentService) and the socket layer
     withLock,
+    findOpenConversation,
+    trackConnection,
+    visitorLeft,
+    rate,
+    pendingInvite,
+    filesMeta,
+    backfillPages,
+    sendFollowUp: (conv) => (followUp ? followUp.send(conv) : Promise.resolve({ sent: false, reason: "disabled" })),
+    toTrackers: (visitorId, event, payload) => emitToTrackers(visitorId, event, payload),
+    shutdown() {
+      for (const timer of leaveTimers.values()) clearTimeout(timer);
+      leaveTimers.clear();
+      connections.clear();
+    },
     addMessage,
     pushState,
     setActivity,

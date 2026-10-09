@@ -11,6 +11,35 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (typeof window !== "undefi
 const TOKEN_KEY = "hcLiveChatToken";
 const ID_KEY = "hcLiveChatVisitorId"; // shared with the visitor tracker so chats and presence line up
 const OPEN_KEY = "hcLiveChatOpen";
+const INVITE_KEY = "hcLiveChatInviteDismissed"; // the chat whose "an agent wrote to you" bubble was dismissed (this session)
+
+// Reports a patient may send: pdf, jpg, png, up to 10 MB. The server checks the real file type again.
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const FILE_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"];
+const FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+
+const UPLOAD_ERRORS = {
+  file_too_large: "That file is over 10 MB. Please send a smaller file.",
+  unsupported_type: "Only PDF, JPG or PNG files can be sent.",
+  extension_mismatch: "That file doesn't look like a PDF, JPG or PNG. Please check it and try again.",
+  empty_file: "That file is empty.",
+  too_many_files: "You've reached the limit of files for this chat. Please email support@humancareconnect.co.",
+  rate_limited: "You're sending files too quickly. Please wait a few minutes.",
+  no_conversation: "This chat has ended. Please start a new one.",
+  unauthorized: "Please fill in your details to start the chat.",
+  blocked: "Chat is not available right now.",
+  storage_failed: "We couldn't save that file. Please try again.",
+};
+
+// Friendly check before uploading (the server is the real gatekeeper).
+function fileProblem(file) {
+  if (!file) return "Choose a file first.";
+  const extension = String(file.name || "").split(".").pop().toLowerCase();
+  if (!FILE_EXTENSIONS.includes(extension) || (file.type && !FILE_TYPES.includes(file.type))) return UPLOAD_ERRORS.unsupported_type;
+  if (file.size > MAX_FILE_BYTES) return UPLOAD_ERRORS.file_too_large;
+  if (file.size === 0) return UPLOAD_ERRORS.empty_file;
+  return "";
+}
 
 const store = {
   get(key, area = "local") {
@@ -69,6 +98,12 @@ export function useLiveChat() {
   const [firstName, setFirstName] = useState("");
   const [aiTyping, setAiTyping] = useState(false);
   const [agentTyping, setAgentTyping] = useState(""); // the agent's name while they type, else ""
+  const [uploading, setUploading] = useState(false);
+  // An admin wrote to this visitor, who never opened the widget: { conversationId, agentName } (name only).
+  const [invite, setInvite] = useState(() => {
+    const pending = typeof window !== "undefined" ? window.__hcChatInvite : null;
+    return pending && store.get(INVITE_KEY, "session") !== pending.conversationId ? pending : null;
+  });
   const [connection, setConnection] = useState("connecting"); // connecting | online | offline
   const [notice, setNotice] = useState("");
   const [unread, setUnread] = useState(0);
@@ -281,6 +316,65 @@ export function useLiveChat() {
     else setNotice(ERRORS[res.error] ?? ERRORS.server_error);
   }, [emit]);
 
+  // Rates a chat the team has just resolved (1-5, once). The result arrives as a chat:state update.
+  const rate = useCallback(
+    async (stars) => {
+      setNotice("");
+      const res = await emit("chat:rate", { stars });
+      if (!res.ok) setNotice(res.error === "already_rated" || res.error === "nothing_to_rate" ? "" : ERRORS.server_error);
+      return Boolean(res.ok);
+    },
+    [emit]
+  );
+
+  // Sends a report (pdf/jpg/png, max 10 MB) into the open chat. The file message arrives over the socket.
+  const uploadFile = useCallback(async (file) => {
+    setNotice("");
+    const problem = fileProblem(file);
+    if (problem) {
+      setNotice(problem);
+      return false;
+    }
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch(`${API_BASE}/api/livechat/upload`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
+        body: form,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.ok) {
+        setNotice(UPLOAD_ERRORS[body.error] || (res.status === 429 ? UPLOAD_ERRORS.rate_limited : "We couldn't send that file. Please try again."));
+        return false;
+      }
+      return true;
+    } catch {
+      setNotice("We couldn't reach the server. Please check your connection and try again.");
+      return false;
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  const dismissInvite = useCallback(() => {
+    setInvite((current) => {
+      if (current) store.set(INVITE_KEY, current.conversationId, "session");
+      return null;
+    });
+  }, []);
+
+  // The visitor tracker announces "an agent wrote to you" as a window event (it holds that connection).
+  useEffect(() => {
+    const onInvite = (event) => {
+      const next = event.detail;
+      if (next && store.get(INVITE_KEY, "session") !== next.conversationId) setInvite(next);
+    };
+    window.addEventListener("hc:chat-invite", onInvite);
+    return () => window.removeEventListener("hc:chat-invite", onInvite);
+  }, []);
+
   const talkToAgent = useCallback(async () => {
     setNotice("");
     const res = await emit("chat:agent");
@@ -303,6 +397,9 @@ export function useLiveChat() {
     firstName,
     aiTyping,
     agentTyping,
+    uploading,
+    // the bubble is only for a visitor who has no chat on screen yet
+    invite: conversation ? null : invite,
     connection,
     notice,
     unread,
@@ -313,6 +410,9 @@ export function useLiveChat() {
     pickOption,
     talkToAgent,
     startNew,
+    rate,
+    uploadFile,
+    dismissInvite,
     notifyTyping,
     dismissNotice: () => setNotice(""),
   };

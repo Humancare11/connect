@@ -12,10 +12,18 @@ const conversationSchema = new mongoose.Schema(
     assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     closedReason: {
       type: String,
-      enum: ["", "resolved", "patient_left", "offline_request", "ai_unavailable"],
+      enum: ["", "resolved", "patient_left", "offline_request", "ai_unavailable", "blocked"],
       default: "",
     },
     topic: { type: String, default: "", maxlength: 80 },
+    invited: { type: Boolean, default: false }, // an admin started this chat; the visitor has not replied yet
+    leftAt: { type: Date, default: null }, // archived as "patient left" at this time
+    modeBeforeLeft: { type: String, enum: ["", "ai", "queue", "live"], default: "" }, // lets a returning visitor continue
+    followUp: {
+      // the offline follow-up email: sent at most once per chat
+      status: { type: String, enum: ["", "sending", "sent", "failed", "skipped"], default: "" },
+      at: { type: Date, default: null },
+    },
     optionsUsed: { type: Boolean, default: false }, // quick-option cards are shown until one is picked
     offlineRequested: { type: Boolean, default: false }, // asked for an agent while the team was offline
     aiNoticeShown: { type: Boolean, default: false }, // the "AI unavailable" notice was shown in this chat

@@ -18,7 +18,7 @@ function validate({ name, email, phone }) {
   return errors;
 }
 
-export default function ContactForm({ onSubmit }) {
+export default function ContactForm({ onSubmit, reply = false }) {
   const [values, setValues] = useState({ name: "", email: "", phone: "" });
   const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState({});
@@ -93,8 +93,12 @@ export default function ContactForm({ onSubmit }) {
 
   return (
     <form className="lcw-cform" onSubmit={submit} noValidate>
-      <h3>Welcome to Humancare 👋</h3>
-      <p>Please share a few details so we can help you. You'll then chat with Humancare AI, or with a live agent anytime.</p>
+      <h3>{reply ? "Reply to Humancare" : "Welcome to Humancare 👋"}</h3>
+      <p>
+        {reply
+          ? "Please share a few details so we can pass your reply on. You'll then see the message from our team."
+          : "Please share a few details so we can help you. You'll then chat with Humancare AI, or with a live agent anytime."}
+      </p>
 
       <label>
         Full name *

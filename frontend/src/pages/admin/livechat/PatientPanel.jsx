@@ -203,6 +203,12 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
           <dd className="wk-mono">{p.info.chatId}</dd>
           <dt>{p.info.liveStartedAt ? "Live duration" : "Duration"}</dt>
           <dd className="wk-mono">{dur((endMs - startMs) / 1000)}</dd>
+          {(closed || p.info.rating) && (
+            <>
+              <dt>Rating</dt>
+              <dd>{p.info.rating ? <span className="wk-rating">{"★".repeat(p.info.rating.stars)}{"☆".repeat(5 - p.info.rating.stars)}</span> : "Not rated"}</dd>
+            </>
+          )}
           <dt>Started on</dt>
           <dd className="wk-link">{p.info.startedPage.path ? `…humancareconnect.co${p.info.startedPage.path}` : "–"}</dd>
         </dl>

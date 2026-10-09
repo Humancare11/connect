@@ -412,3 +412,57 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.lcv-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.lcv-btn--icon {
+  min-width: 0;
+  padding: 7px 9px;
+}
+
+/* Blocked IPs */
+.lcv-blocked {
+  margin-top: 14px;
+  border: 1px solid var(--lcv-line);
+  border-radius: 14px;
+  background: var(--lcv-surface);
+}
+.lcv-blocked-toggle {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: var(--lcv-ink);
+}
+.lcv-blocked-count {
+  background: var(--lcv-surface-2);
+  border-radius: 6px;
+  padding: 1px 8px;
+  font-size: 12px;
+  margin-left: 6px;
+}
+.lcv-blocked-body {
+  padding: 0 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lcv-blocked-row {
+  display: grid;
+  grid-template-columns: 150px 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+}
+@media (max-width: 640px) {
+  .lcv-blocked-row {
+    grid-template-columns: 1fr auto;
+  }
+}

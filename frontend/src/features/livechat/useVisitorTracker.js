@@ -114,6 +114,12 @@ export default function useVisitorTracker() {
         // A short wait lets the page title settle after the route renders.
         window.setTimeout(reportPage, 400);
       });
+      // An admin started a chat with this visitor: pass it to the chat widget (name only; the text stays on the server
+      // until the visitor has filled in the contact form).
+      socket.on("chat:invite", (invite) => {
+        window.__hcChatInvite = invite;
+        window.dispatchEvent(new CustomEvent("hc:chat-invite", { detail: invite }));
+      });
       socket.on("connect_error", (err) => {
         if (FATAL_ERRORS.some((message) => String(err?.message).includes(message))) stop();
       });

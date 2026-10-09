@@ -217,6 +217,16 @@ const liveChatContactLimiter = buildKeyedLimiter({
   keyFn:    () => "",
   describeKey: (req, key) => `ip:${key}`,
 });
+// Patient file uploads: per IP (the per-visitor limit lives in the file service).
+const liveChatUploadStore = new Map();
+const liveChatUploadLimiter = buildKeyedLimiter({
+  store:    liveChatUploadStore,
+  windowMs: 10 * 60 * 1000,
+  max:      30,
+  message:  "Too many uploads. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
 const liveChatConfigStore = new Map();
 const liveChatConfigLimiter = buildKeyedLimiter({
   store:    liveChatConfigStore,
@@ -262,6 +272,7 @@ const appVersionLimiter = buildKeyedLimiter({
 });
 
 module.exports = {
+  liveChatUploadLimiter,
   liveChatContactLimiter,
   liveChatConfigLimiter,
   appVersionLimiter,

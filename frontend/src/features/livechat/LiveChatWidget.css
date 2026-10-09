@@ -503,6 +503,123 @@ html.hc-cookie-open .lcw-window {
   text-align: center;
 }
 
+/* Attach button, file bubble */
+.lcw-attach {
+  border: 1px solid var(--lcw-line);
+  background: var(--lcw-surface);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+.lcw-attach:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lcw-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.lcw-file small {
+  opacity: 0.8;
+}
+
+/* Rating after the team resolved the chat */
+.lcw-rating {
+  align-self: stretch;
+  background: var(--lcw-surface);
+  border: 1px solid var(--lcw-line);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+}
+.lcw-stars button {
+  border: 0;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--lcw-line);
+  cursor: pointer;
+  padding: 2px 3px;
+}
+.lcw-stars button.is-on {
+  color: #e0a100;
+}
+.lcw-stars-done {
+  color: #e0a100;
+  letter-spacing: 1px;
+}
+
+/* "An agent wrote to you" bubble above the launcher */
+.lcw-peek {
+  width: 300px;
+  max-width: calc(100vw - 40px);
+  background: var(--lcw-surface);
+  border: 1px solid var(--lcw-line);
+  box-shadow: 0 18px 40px -16px rgba(11, 31, 92, 0.35);
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lcw-peek-head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.lcw-av--xs {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+  margin-top: 0;
+}
+.lcw-peek p {
+  margin: 0;
+  font-size: 13.5px;
+}
+.lcw-peek-actions {
+  display: flex;
+  gap: 6px;
+}
+.lcw-peek-actions button {
+  flex: 1;
+  border: 1px solid var(--lcw-line);
+  background: var(--lcw-surface);
+  border-radius: 8px;
+  padding: 7px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.lcw-peek-actions button.is-go {
+  background: var(--lcw-accent);
+  border-color: var(--lcw-accent);
+  color: #fff;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lcw-peek {
+    animation: lcw-pop 0.3s ease-out;
+  }
+  @keyframes lcw-pop {
+    from {
+      transform: translateY(8px);
+      opacity: 0;
+    }
+  }
+}
+
 /* Phones: the chat takes the whole screen. */
 @media (max-width: 520px) {
   html.hc-cookie-open .lcw-window,

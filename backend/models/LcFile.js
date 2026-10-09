@@ -11,6 +11,8 @@ const fileSchema = new mongoose.Schema(
     name: ENC_FIELD,
     mimeType: { type: String, required: true },
     size: { type: Number, required: true, min: 1, max: 10 * 1024 * 1024 },
+    // Who opened the file (presigned URL issued), newest last. A record of access for PHI.
+    accessLog: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, at: { type: Date, default: Date.now } }],
   },
   { timestamps: true }
 );

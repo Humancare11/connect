@@ -10,7 +10,9 @@ const timeOf = (iso) => {
   }
 };
 
-function Message({ m }) {
+const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round((bytes || 0) / 1024))} KB`);
+
+function Message({ m, onOpenFile }) {
   if (m.sender === "system") {
     return (
       <div className="wk-sys">
@@ -33,7 +35,23 @@ function Message({ m }) {
   if (m.sender === "patient") {
     return (
       <div className="wk-msg wk-left">
-        {m.text}
+        {m.file ? (
+          <span className="wk-file">
+            <span aria-hidden="true">📄</span>
+            <span className="wk-file-name">
+              {m.file.name}
+              <small>
+                {" "}
+                · {sizeOf(m.file.size)} · {m.file.mime === "application/pdf" ? "PDF" : m.file.mime === "image/png" ? "PNG" : "JPG"}
+              </small>
+            </span>
+            <button type="button" className="wk-btn" onClick={() => onOpenFile(m.file)}>
+              Open
+            </button>
+          </span>
+        ) : (
+          m.text
+        )}
         <span className="wk-meta">{timeOf(m.at)}</span>
       </div>
     );
@@ -50,13 +68,16 @@ function Message({ m }) {
 }
 
 function ModeTag({ c, me }) {
-  if (c.mode === "archived") return <span className="wk-tag wk-tag--done">{c.closedReason === "patient_left" ? "Left" : "Resolved"}</span>;
+  if (c.mode === "archived") {
+    const label = { patient_left: "Left", blocked: "Blocked" }[c.closedReason] || "Resolved";
+    return <span className="wk-tag wk-tag--done">{label}</span>;
+  }
   if (c.mode === "queue") return <span className="wk-tag wk-tag--wait">{c.offline ? "Offline request" : "Waiting"}</span>;
   if (c.mode === "live") return <span className="wk-tag wk-tag--human">{c.assignee?.id === me ? "You" : c.assignee?.name}</span>;
   return <span className="wk-tag wk-tag--ai">AI</span>;
 }
 
-export default function ChatConversation({ detail, me, role, typing, canned, busy, error, onTakeOver, onHandBack, onResolve, onSend, onNote, onSuggest, onTyping }) {
+export default function ChatConversation({ detail, me, role, typing, canned, busy, error, onTakeOver, onHandBack, onResolve, onSend, onNote, onSuggest, onTyping, onOpenFile, onBlockIp }) {
   const { conversation: c, messages } = detail;
   const [noteMode, setNoteMode] = useState(false);
   const [draft, setDraft] = useState("");
@@ -109,6 +130,12 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
         <div className="wk-head-t">
           <strong>{c.name || c.ip || "Visitor"}</strong>
           <ModeTag c={c} me={me} />
+          {c.invited && <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">Invited</span>}
+          {c.rating ? (
+            <span className="wk-rating" title={`Patient rating: ${c.rating} of 5`}>
+              {"★".repeat(c.rating)}
+            </span>
+          ) : null}
           {heldByOther && <span className="wk-small wk-muted">held by {c.assignee?.name}</span>}
         </div>
         <div className="wk-actions">
@@ -127,6 +154,11 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
               Resolve
             </button>
           )}
+          {c.ip && (
+            <button type="button" className="wk-btn wk-btn--danger" onClick={onBlockIp} disabled={busy} title={`Block IP ${c.ip}`}>
+              Block IP
+            </button>
+          )}
         </div>
       </div>
 
@@ -138,7 +170,7 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
 
       <div className="wk-body" ref={bodyRef}>
         {messages.map((m) => (
-          <Message key={m.id} m={m} />
+          <Message key={m.id} m={m} onOpenFile={onOpenFile} />
         ))}
         {typing && (
           <div className="wk-typing">

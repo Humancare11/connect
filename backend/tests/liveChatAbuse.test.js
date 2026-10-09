@@ -63,13 +63,14 @@ describe("abuse limits (live)", () => {
   });
 
   test("an oversized chat packet is dropped before any handler runs", async () => {
-    const { socket } = await openChat();
-    const before = await lc.models.LcMessage.countDocuments();
+    const { socket, started } = await openChat();
+    const mine = { conversationId: started.conversation.conversationId, sender: "patient" };
+    const before = await lc.models.LcMessage.countDocuments(mine);
     let acked = false;
     socket.emit("chat:message", { text: "x".repeat(20_000) }, () => (acked = true));
     await sleep(200);
     assert.equal(acked, false);
-    assert.equal(await lc.models.LcMessage.countDocuments(), before);
+    assert.equal(await lc.models.LcMessage.countDocuments(mine), before);
     socket.close();
   });
 

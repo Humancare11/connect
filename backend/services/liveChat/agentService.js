@@ -9,9 +9,10 @@
 //   - internal notes and team-only lines never reach the patient (chat.addMessage keeps them off the visitor room);
 //   - everything is done under the chat's lock, so an agent action and an AI turn never interleave.
 // Errors are thrown as AgentError (status + code) and mapped to JSON by routes/adminLiveChat.js.
+const net = require("net");
 const mongoose = require("mongoose");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
-const { validateContact, newConversationId } = require("./chatService");
+const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { createWindowLimiter } = require("./limits");
 
 class AgentError extends Error {
@@ -46,6 +47,9 @@ function createAgentService({
   limits,
   presence,
   agentStore,
+  agents = { isAvailable: () => true }, // who is online right now (index.js passes the registry)
+  ipBlock = null, // block / unblock store
+  disconnectIp = () => {}, // drops the visitor sockets of an IP
   emitToAgent = () => {},
   now = () => Date.now(),
 }) {
@@ -98,8 +102,15 @@ function createAgentService({
       queuedAt: conv.queuedAt,
       unread: userId ? unreadFor(conv, userId) : 0,
       online: Boolean(presence.get(conv.visitorId)),
+      invited: Boolean(conv.invited),
+      rating: conv.rating?.stars || null,
       preview: last || null,
     };
+  }
+
+  // Tells every agent that a conversation changed (list row, header, badges).
+  function announce(conv) {
+    chat.toAgents("chat:updated", { conversationId: conv.conversationId, row: rowOf(conv) });
   }
 
   async function lastMessages(ids) {
@@ -181,6 +192,7 @@ function createAgentService({
         .limit(5)
         .lean(),
     ]);
+    const files = await chat.filesMeta(rows);
     const messages = rows.map((m) => ({
       id: String(m._id),
       sender: m.sender,
@@ -188,6 +200,7 @@ function createAgentService({
       at: m.createdAt,
       agentName: m.agentName || "",
       internal: Boolean(m.internal),
+      ...(m.fileId && files.get(String(m.fileId)) ? { file: files.get(String(m.fileId)) } : {}),
     }));
     const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
     const live = presence.get(conv.visitorId);
@@ -219,6 +232,7 @@ function createAgentService({
         info: {
           assignee: conv.assigneeId ? { id: String(conv.assigneeId), name: conv.agentName || "Agent" } : null,
           chatId: conv.conversationId,
+          rating: conv.rating?.stars ? { stars: conv.rating.stars, ratedAt: conv.rating.ratedAt } : null,
           startedAt: conv.startedAt,
           liveStartedAt: conv.liveStartedAt,
           closedAt: conv.closedAt,
@@ -353,6 +367,11 @@ function createAgentService({
       const name = conv.agentName || (await displayNameOf(me, settings));
       const message = await chat.addMessage(conv, "agent", text, { agentId: oid(me), agentName: name });
       await LcConversation.updateOne({ _id: conv._id, firstAgentReplyAt: null }, { $set: { firstAgentReplyAt: new Date(now()) } });
+      // A chat the admin started: until the visitor replies, show the bubble above their launcher. The bubble carries
+      // only the agent's name; the text is revealed after the contact form (the visitor id alone must not unlock it).
+      if (conv.invited && !conv.patientMessageCount) {
+        chat.toTrackers(conv.visitorId, "chat:invite", { conversationId: conv.conversationId, agentName: name });
+      }
       const fresh = await updated(conv);
       return { ok: true, message, conversation: rowOf(fresh, { userId: actor.id }) };
     });
@@ -474,35 +493,164 @@ function createAgentService({
   // ── Admin-started chat with a visitor who already has contact details ────────
 
   async function startChat(actor, visitorId) {
-    const visitor = await chat.loadVisitor(String(visitorId || ""));
-    if (!chat.hasContact(visitor)) throw new AgentError(409, "contact_required");
-    const open = await LcConversation.findOne({ visitorId: visitor.visitorId, mode: { $ne: "archived" } });
+    const id = String(visitorId || "");
+    const visitor = await chat.loadVisitor(id);
+    const known = chat.hasContact(visitor);
+    const record = presence.get(id);
+    // Someone who is not on the website (or not tracked) cannot be invited: there is no way to reach them.
+    if (!known && !record) throw new AgentError(409, "contact_required");
+    const open = await LcConversation.findOne({ visitorId: id, mode: { $ne: "archived" } });
     if (open) return { ok: true, existing: true, conversationId: open.conversationId };
 
     const settings = await loadSettings();
     const name = await displayNameOf(actor.id, settings);
-    const record = presence.get(visitor.visitorId);
     const conv = await LcConversation.create({
       conversationId: newConversationId(),
-      visitorId: visitor.visitorId,
+      visitorId: id,
       mode: "live",
       everLive: true,
+      invited: true, // until the visitor replies
       assigneeId: oid(actor.id),
       agentName: name,
       liveStartedAt: new Date(now()),
-      ip: record?.ip || visitor.lastIp || "",
+      ip: record?.ip || visitor?.lastIp || "",
       geo: { city: record?.geo?.city || "", state: record?.geo?.state || "", country: record?.geo?.country || "" },
       device: { type: record?.device || "", os: record?.os || "", browser: record?.browser || "" },
       source: record?.source || "",
       referrer: record?.referrer || "",
       startedPage: { path: record?.page?.path || "", title: record?.page?.title || "" },
-      contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
+      ...(known ? { contact: { name: visitor.name, email: visitor.email, phone: visitor.phone } } : {}),
     });
-    await LcVisitor.updateOne({ visitorId: visitor.visitorId }, { $inc: { chatCount: 1 } });
+    if (known) await LcVisitor.updateOne({ visitorId: id }, { $inc: { chatCount: 1 } });
+    await chat.backfillPages(conv, record?.pages);
     await chat.addMessage(conv, "system", `${name} started the chat`);
     const fresh = await updated(conv);
-    chat.toAgents("chat:new", { conversationId: conv.conversationId, visitorId: visitor.visitorId, mode: "live", everLive: true, name });
-    return { ok: true, conversationId: fresh.conversationId };
+    chat.toAgents("chat:new", { conversationId: conv.conversationId, visitorId: id, mode: "live", everLive: true, name });
+    return { ok: true, conversationId: fresh.conversationId, invited: !known };
+  }
+
+  // ── Blocking abusive visitors ─────────────────────────────────────────────────
+
+  // Blocks the IP of a chat or of a visitor on the list: no new connections, form posts or uploads from it; its open
+  // chats are closed and its sockets dropped. Lasts until an admin unblocks it.
+  async function blockIp(actor, { conversationId, visitorId, reason }) {
+    let ip = "";
+    if (conversationId) ip = (await load(conversationId)).ip;
+    else if (visitorId) {
+      ip = presence.get(String(visitorId))?.ip || (await LcVisitor.findOne({ visitorId: String(visitorId) }).select("lastIp").lean())?.lastIp || "";
+    }
+    if (!ip || !net.isIP(ip)) throw new AgentError(400, "no_ip");
+    const settings = await loadSettings();
+    const name = await displayNameOf(actor.id, settings);
+    await ipBlock.block({ ip, reason, by: oid(actor.id) });
+
+    let closed = 0;
+    const open = await LcConversation.find({ ip, mode: { $ne: "archived" } });
+    for (const conv of open) {
+      await chat.withLock(conv.conversationId, async () => {
+        const archived = await LcConversation.findOneAndUpdate(
+          { _id: conv._id, mode: { $ne: "archived" } },
+          { $set: { mode: "archived", closedReason: "blocked", closedAt: new Date(now()) } },
+          { returnDocument: "after" }
+        );
+        if (!archived) return;
+        closed += 1;
+        await chat.addMessage(archived, "system", `IP blocked by ${name}`, { internal: true });
+        announce(archived);
+      });
+    }
+    for (const record of presence.list()) if (record.ip === ip) presence.remove(record.visitorId);
+    disconnectIp(ip);
+    return { ok: true, ip, closed };
+  }
+
+  const blockedIps = async () => ({ ok: true, blocked: await ipBlock.list() });
+
+  async function unblockIp(actor, id) {
+    if (!mongoose.isValidObjectId(id)) throw new AgentError(404, "not_found");
+    const removed = await ipBlock.unblock(id);
+    if (!removed) throw new AgentError(404, "not_found");
+    return { ok: true };
+  }
+
+  // ── An agent goes offline or logs out ─────────────────────────────────────────
+
+  // Their open chats go back to the Queue after a grace period (LcSettings handoffRules.agentOfflineGraceSeconds,
+  // default 120 s). Coming back in time cancels it.
+  const pendingRequeue = new Map(); // userId -> { token, timer }
+
+  function agentBack(userId) {
+    const pending = pendingRequeue.get(userId);
+    if (pending) clearTimeout(pending.timer);
+    pendingRequeue.delete(userId);
+  }
+
+  async function agentGone(userId) {
+    agentBack(userId);
+    const token = Symbol("requeue");
+    pendingRequeue.set(userId, { token, timer: null });
+    let seconds = 120;
+    try {
+      const settings = await loadSettings();
+      seconds = Number(settings.handoffRules?.agentOfflineGraceSeconds ?? 120);
+    } catch {
+      /* keep the default */
+    }
+    const pending = pendingRequeue.get(userId);
+    if (!pending || pending.token !== token) return; // they came back while the settings loaded
+    pending.timer = setTimeout(() => {
+      pendingRequeue.delete(userId);
+      if (!agents.isAvailable(userId)) requeueAgentChats(userId).catch(() => {});
+    }, Math.max(0, seconds) * 1000);
+    pending.timer.unref?.();
+  }
+
+  async function requeueAgentChats(userId) {
+    const held = await LcConversation.find({ mode: "live", assigneeId: oid(userId) });
+    let count = 0;
+    for (const conv of held) {
+      await chat.withLock(conv.conversationId, async () => {
+        const current = await LcConversation.findById(conv._id);
+        if (!current || current.mode !== "live" || !sameId(current.assigneeId, userId)) return;
+        if (agents.isAvailable(userId)) return; // back just in time
+        const settings = await loadSettings();
+        const available = chat.teamAvailable(settings);
+        const previousName = current.agentName || "The agent";
+        const queued = await LcConversation.findOneAndUpdate(
+          { _id: current._id, mode: "live", assigneeId: current.assigneeId },
+          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), offlineRequested: !available } },
+          { returnDocument: "after" }
+        );
+        if (!queued) return;
+        count += 1;
+        await chat.addMessage(
+          queued,
+          "system",
+          available
+            ? "Your agent is no longer available. We're reconnecting you with another agent…"
+            : settings.offlineMessage || "Our team is offline right now. We've saved your request and will reply by email."
+        );
+        await chat.addMessage(queued, "system", `${previousName} went offline. The chat is back in the queue.`, { internal: true });
+        chat.setActivity(queued.visitorId, queued);
+        await chat.pushState(queued);
+        announce(queued);
+        chat.toAgents("queue:new", {
+          conversationId: queued.conversationId,
+          visitorId: queued.visitorId,
+          name: firstNameOf(decryptLiveChatText(queued.contact?.name)),
+          everLive: true,
+          offline: !available,
+          reason: "agent_offline",
+        });
+        if (!available) chat.sendFollowUp(queued).catch(() => {});
+      });
+    }
+    return count;
+  }
+
+  function shutdown() {
+    for (const pending of pendingRequeue.values()) clearTimeout(pending.timer);
+    pendingRequeue.clear();
   }
 
   // Typing indicator towards the patient: only the agent who holds the chat, a boolean only.
@@ -529,6 +677,15 @@ function createAgentService({
     suggest,
     startChat,
     relayTyping,
+    blockIp,
+    blockedIps,
+    unblockIp,
+    agentGone,
+    agentBack,
+    requeueAgentChats,
+    announce,
+    rowOf,
+    shutdown,
   };
 }
 
