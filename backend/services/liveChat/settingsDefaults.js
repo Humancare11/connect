@@ -72,7 +72,15 @@ const DEFAULT_SETTINGS = {
   greeting:
     "Hi {firstName}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?",
   supportHours: SUPPORT_HOURS,
-  handoffRules: { onPatientRequest: true, onAiRequest: true, maxAiRepliesPerChat: 30, agentOfflineGraceSeconds: 120 },
+  offlineRule: "hours_or_no_agent",
+  handoffRules: {
+    onPatientRequest: true,
+    onUnsure: true,
+    onAccountOrPayment: true,
+    onAiRequest: true,
+    maxAiRepliesPerChat: 30,
+    agentOfflineGraceSeconds: 120,
+  },
   quickOptions: QUICK_OPTIONS,
   prices: PRICES,
   businessFacts: "",

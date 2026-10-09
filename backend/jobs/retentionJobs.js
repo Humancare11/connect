@@ -33,6 +33,14 @@ async function runRetentionCleanup(req = null) {
     result.uploadedFiles = await deleteUploadsOlderThan(olderThan);
   }
 
+  // Website live chat has its own policy and its own collections (Lc*); it runs even when the module is switched off.
+  if (byKey.liveChat) {
+    const { runLiveChatRetention } = require("../services/liveChat/retention");
+    const liveChat = await runLiveChatRetention({ cutoff: cutoff(byKey.liveChat.retentionDays) });
+    result.liveChat = liveChat.chats + liveChat.contacts;
+    result.liveChatDetail = liveChat;
+  }
+
   await recordActivity(req, {
     action: "RETENTION_CLEANUP_RUN",
     resource: "RetentionPolicy",

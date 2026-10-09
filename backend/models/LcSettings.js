@@ -21,7 +21,14 @@ const settingsSchema = new mongoose.Schema(
         },
       ],
     },
+    // When the team counts as offline (the patient is told and gets an email instead of waiting):
+    //   hours_or_no_agent  outside support hours OR no agent online (default)
+    //   no_agent           no agent online (support hours are not used)
+    //   hours              outside support hours (agents being online is not required)
+    offlineRule: { type: String, enum: ["hours_or_no_agent", "no_agent", "hours"], default: "hours_or_no_agent" },
     handoffRules: {
+      onUnsure: { type: Boolean, default: true }, // the AI hands over when the facts do not answer the question
+      onAccountOrPayment: { type: Boolean, default: true }, // ... when the patient asks about their own booking or payment
       onPatientRequest: { type: Boolean, default: true },
       onAiRequest: { type: Boolean, default: true },
       maxAiRepliesPerChat: { type: Number, default: 30, min: 1, max: 200 },
@@ -49,6 +56,9 @@ const settingsSchema = new mongoose.Schema(
 
 // Returns the settings document, creating it with the seeded defaults if it does not exist yet.
 settingsSchema.statics.getSettings = async function getSettings() {
+  // Read first: an upsert counts as an update to Mongoose and would change updatedAt on every read.
+  const existing = await this.findOne({ key: "default" });
+  if (existing) return existing;
   return this.findOneAndUpdate(
     { key: "default" },
     { $setOnInsert: DEFAULT_SETTINGS },

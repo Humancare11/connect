@@ -58,6 +58,15 @@ This is the approved implementation plan, with the owner's answers and correctio
 - IP block: Block IP in the conversation header and on visitor rows. Blocks last until an admin unblocks them (Blocked IPs panel on Real-time visitors). A blocked IP cannot connect, post the contact form or upload; its open chats are closed as "Blocked". One abuse alert when an IP or a visitor starts 3 chats within an hour (`LIVECHAT_ABUSE_CHATS_PER_HOUR`) or hits the daily new-chat limit.
 - Not done in Phase 4: a real upload/presign/delete round-trip against the S3 bucket (the owner's answer was left open; the fake store is used in tests).
 
+## Phase 5 decisions (approved)
+- Superadmin edits AI settings; admins view only. Each agent edits their own display name; a superadmin edits anyone's.
+- Bookings after chat: patient email matched to a booking made within 7 days after the chat.
+- Retention: RetentionPolicy key liveChat, 12 months, S3 objects first; AI usage totals kept; runs even when the module is off; ChatMessage retention untouched.
+- /services-prices is NOT changed in this branch; two checks added to the go-live checklist.
+- Real S3 check skipped; to be tested on staging (go-live checklist).
+- CSP: report-only proposal in docs/live-chat-csp-review.md, no site-wide change. Privacy wording is draft only (docs/live-chat-privacy-draft.md). DB-IP attribution link added to the footer.
+- Text widget stays out whenever VITE_LIVECHAT_ENABLED=true; removal steps in docs/live-chat.md.
+
 ## Models (`backend/models/`)
 `LcVisitor`, `LcConversation`, `LcMessage`, `LcFile`, `LcPageVisit`, `LcAgentProfile`, `LcSettings` (seeded defaults), `LcAiUsage`, `LcBlockedIp`, `LcCannedReply`. All PHI fields are encrypted with the live-chat key.
 

@@ -831,7 +831,9 @@ const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
 const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
-const LiveChatPlaceholder = lazy(() => import("./pages/admin/livechat/LiveChatPlaceholder"));
+const AdminLiveTeam = lazy(() => import("./pages/admin/livechat/AdminLiveTeam"));
+const AdminLiveReports = lazy(() => import("./pages/admin/livechat/AdminLiveReports"));
+const AdminLiveSettings = lazy(() => import("./pages/admin/livechat/AdminLiveSettings"));
 const AdminAiChats = lazy(() => import("./pages/admin/livechat/AdminAiChats"));
 const AdminLiveAgentChats = lazy(() => import("./pages/admin/livechat/AdminLiveAgentChats"));
 
@@ -1626,7 +1628,7 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
-                  <LiveChatPlaceholder title="Team" />
+                  <AdminLiveTeam />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1636,7 +1638,7 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
-                  <LiveChatPlaceholder title="Reports" />
+                  <AdminLiveReports />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1646,7 +1648,7 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
-                  <LiveChatPlaceholder title="AI agent settings" />
+                  <AdminLiveSettings />
                 </AdminLayout>
               </PrivateRoute>
             }

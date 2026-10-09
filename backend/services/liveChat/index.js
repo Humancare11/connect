@@ -241,9 +241,14 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     LcCannedReply: require("../../models/LcCannedReply"),
     LcFile: require("../../models/LcFile"),
     LcBlockedIp: require("../../models/LcBlockedIp"),
+    LcSettingsAudit: require("../../models/LcSettingsAudit"),
+    LcAgentProfile: require("../../models/LcAgentProfile"),
   };
   const settingsCacheMs = options.settingsCacheMs ?? 5000;
   let cached = { at: 0, value: null };
+  const invalidateSettings = () => {
+    cached = { at: 0, value: null }; // a saved change applies at once
+  };
   const loadSettings =
     options.loadSettings ||
     (async () => {
@@ -307,6 +312,10 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     emitToAgent: (userId, event, payload) => adminNs.to(`agent:${userId}`).emit(event, payload),
   });
   announce = agentSvc.announce;
+  const { createSettingsService } = require("./settingsService");
+  const { createStatsService } = require("./statsService");
+  const settingsSvc = createSettingsService({ models, invalidateSettings });
+  const statsSvc = createStatsService({ models, loadSettings, agents });
   Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
@@ -328,7 +337,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc })
     );
   }
 
@@ -340,6 +349,8 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     agents,
     limits,
     agentSvc,
+    settingsSvc,
+    statsSvc,
     files,
     followUp,
     ipBlock,

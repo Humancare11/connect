@@ -1,8 +1,10 @@
 const express = require("express");
-const { verifyAdminToken, liveChatAgentOnly } = require("../middleware/verifyToken");
+const { verifyAdminToken, liveChatAgentOnly, superAdminOnly } = require("../middleware/verifyToken");
 const { toPublicVisitor } = require("../services/liveChat/presence");
 const { AgentError, CONVERSATION_ID_RE } = require("../services/liveChat/agentService");
 const { FileError } = require("../services/liveChat/fileService");
+const { SettingsError } = require("../services/liveChat/settingsService");
+const { StatsError } = require("../services/liveChat/statsService");
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 
 // Live Chat admin API. Admin + Super Admin only (employeeadmin, paymentadmin, doctors, patients and partners
@@ -18,6 +20,11 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET  /files/:id/url                                   a 5-minute presigned link to a patient's file (role-checked)
 //   POST /conversations/:id/block-ip, /visitors/:visitorId/block-ip   block an abusive IP
 //   GET  /blocked-ips, DELETE /blocked-ips/:id            list / unblock
+//   GET  /settings, /settings/audit                       AI agent settings and their change log (admin: read only)
+//   PUT  /settings                                        save settings (superadmin only; applies at once, logged)
+//   GET/POST/PUT/DELETE /canned-replies                   canned replies (writes: superadmin only)
+//   GET  /team, PUT /team/:userId/display-name            Team page; an agent renames themselves, a superadmin anyone
+//   GET  /reports?from=YYYY-MM-DD&to=YYYY-MM-DD           Reports page
 //
 // Options exist so tests can run without real sessions:
 //   guard     auth middleware chain (default: verified admin session, then agent role)
@@ -26,7 +33,7 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   getSettings  () => settings document
 const DEFAULT_GUARD = [verifyAdminToken, liveChatAgentOnly];
 
-function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files } = {}) {
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats } = {}) {
   const router = express.Router();
   router.use(guard);
   router.use(express.json({ limit: "16kb" }));
@@ -39,6 +46,8 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files } =
     } catch (err) {
       if (err instanceof AgentError) return res.status(err.status).json({ ok: false, error: err.code, ...err.extra });
       if (err instanceof FileError) return res.status(err.status).json({ ok: false, error: err.code });
+      if (err instanceof SettingsError) return res.status(err.status).json({ ok: false, error: err.code, ...err.extra });
+      if (err instanceof StatsError) return res.status(err.status).json({ ok: false, error: err.code });
       return next(err);
     }
   };
@@ -65,15 +74,24 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files } =
     });
   });
 
-  router.get("/settings", async (req, res, next) => {
-    try {
-      const loader = getSettings || (() => require("../models/LcSettings").getSettings());
-      const settings = await loader();
-      res.json({ settings: settings?.toObject ? settings.toObject() : settings });
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.get(
+    "/settings",
+    handle(async (req) => {
+      const loader = getSettings || (() => settings.get());
+      const doc = await loader();
+      return { ok: true, settings: doc?.toObject ? doc.toObject() : doc, canEdit: req.user.role === "superadmin" };
+    })
+  );
+  router.put("/settings", superAdminOnly, handle((req) => settings.update(actor(req), req.body)));
+  router.get("/settings/audit", handle(async (req) => ({ ok: true, entries: await settings.audit(req.query.limit) })));
+
+  router.post("/canned-replies", superAdminOnly, handle((req) => settings.createCanned(actor(req), req.body)));
+  router.put("/canned-replies/:id", superAdminOnly, handle((req) => settings.updateCanned(actor(req), req.params.id, req.body)));
+  router.delete("/canned-replies/:id", superAdminOnly, handle((req) => settings.deleteCanned(actor(req), req.params.id)));
+
+  router.get("/team", handle(() => stats.team()));
+  router.put("/team/:userId/display-name", handle((req) => settings.setDisplayName(actor(req), req.params.userId, req.body?.displayName)));
+  router.get("/reports", handle((req) => stats.reports({ from: req.query.from, to: req.query.to })));
 
   // ── Chats ─────────────────────────────────────────────────────────────────────
 
@@ -116,7 +134,14 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files } =
   router.get("/files/:id/url", handle((req) => files.presign(actor(req), req.params.id)));
 
   router.get("/unread", handle(async (req) => ({ ok: true, ...(await agent.unread(actor(req))) })));
-  router.get("/canned-replies", handle(async (req) => ({ ok: true, ...(await agent.canned(actor(req))) })));
+  // In a chat: the active canned replies plus the agent's display name. With ?all=1 (settings page): every reply.
+  router.get(
+    "/canned-replies",
+    handle(async (req) => {
+      if (req.query.all === "1") return { ok: true, replies: await settings.listCanned() };
+      return { ok: true, ...(await agent.canned(actor(req))) };
+    })
+  );
 
   return router;
 }

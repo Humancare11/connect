@@ -6,6 +6,9 @@ const DEFAULT_POLICIES = [
   { key: "chatMessages", label: "Clinical chat messages", retentionDays: 2555 },
   { key: "medicalRecords", label: "Medical records", retentionDays: 2555 },
   { key: "uploadedFiles", label: "Uploaded files", retentionDays: 2555 },
+  // Website live chat: chats, messages, page timelines, files (S3 objects included) and contacts. Separate from
+  // "Clinical chat messages" above, which covers the doctor-patient appointment chat only.
+  { key: "liveChat", label: "Website live chat (chats, files, contacts)", retentionDays: 365 },
 ];
 
 async function ensureDefaults() {

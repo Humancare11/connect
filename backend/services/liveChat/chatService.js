@@ -601,7 +601,7 @@ function createChatService({
       if (!current.topic && result.topic) update.$set = { topic: result.topic };
       await LcConversation.updateOne({ _id: current._id }, update);
       await addMessage(current, "ai", result.reply);
-      if (result.handoff) {
+      if (result.handoff && handoffAllowed(settings, result.handoffReason)) {
         await requestAgent(await LcConversation.findById(current._id), { first, settings, reason: result.handoffReason });
       }
       return undefined;
@@ -637,8 +637,28 @@ function createChatService({
 
   // ── Live agent ───────────────────────────────────────────────────────────────
 
+  // The team counts as offline according to the "offline rule" in the AI settings.
   function teamAvailable(settings) {
-    return isWithinSupportHours(settings, new Date(now())) && agents.availableCount() > 0;
+    const inHours = isWithinSupportHours(settings, new Date(now()));
+    const agentOnline = agents.availableCount() > 0;
+    switch (settings?.offlineRule) {
+      case "no_agent":
+        return agentOnline;
+      case "hours":
+        return inHours;
+      default:
+        return inHours && agentOnline;
+    }
+  }
+
+  // The AI may ask for a hand-over; the settings decide which reasons are allowed. An emergency always is.
+  function handoffAllowed(settings, reason) {
+    const rules = settings?.handoffRules || {};
+    if (reason === "emergency") return true;
+    if (reason === "unsure") return rules.onUnsure !== false;
+    if (reason === "account_or_payment") return rules.onAccountOrPayment !== false;
+    if (reason === "patient_request") return rules.onPatientRequest !== false;
+    return true;
   }
 
   async function requestAgent(conv, { first, settings, reason } = {}) {

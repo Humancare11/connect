@@ -56,7 +56,7 @@ async function inspectUpload({ buffer, originalName, maxBytes }) {
 
 // The real S3 store. Required lazily so a disabled module loads nothing from AWS.
 function createS3FileStore() {
-  const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+  const { PutObjectCommand, GetObjectCommand, DeleteObjectCommand, DeleteObjectsCommand } = require("@aws-sdk/client-s3");
   const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
   const { s3Client, getBucketName } = require("../../config/s3");
   const asciiName = (name) => String(name).replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
@@ -84,6 +84,16 @@ function createS3FileStore() {
     },
     async remove(key) {
       await s3Client.send(new DeleteObjectCommand({ Bucket: getBucketName(), Key: key }));
+    },
+    // Deletes many objects (retention). Returns the keys that could NOT be deleted; a missing key counts as deleted.
+    async removeMany(keys) {
+      const failed = [];
+      for (let i = 0; i < keys.length; i += 1000) {
+        const chunk = keys.slice(i, i + 1000);
+        const out = await s3Client.send(new DeleteObjectsCommand({ Bucket: getBucketName(), Delete: { Objects: chunk.map((Key) => ({ Key })), Quiet: true } }));
+        for (const err of out.Errors || []) if (err.Code !== "NoSuchKey") failed.push(err.Key);
+      }
+      return failed;
     },
   };
 }

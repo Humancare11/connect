@@ -201,6 +201,8 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     LcCannedReply: require("../../models/LcCannedReply"),
     LcFile: require("../../models/LcFile"),
     LcBlockedIp: require("../../models/LcBlockedIp"),
+    LcSettingsAudit: require("../../models/LcSettingsAudit"),
+    LcAgentProfile: require("../../models/LcAgentProfile"),
   };
   await Promise.all(Object.values(models).map((m) => m.init()));
   await require("../../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
@@ -214,6 +216,7 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     mount: {
       ai,
       settingsCacheMs: 0,
+      getSettings: undefined, // the real settings reader (the Phase 1 stub only suits the socket tests)
       publicLimiters: { contact: PASS, config: PASS, upload: PASS }, // the per-IP route limiters are not under test
       verifyTurnstile: async ({ token }) => (token === "good-token" ? { ok: true } : { ok: false, reason: "failed" }),
       ...mount,
