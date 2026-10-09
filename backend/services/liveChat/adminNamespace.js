@@ -7,7 +7,7 @@
 const { LIVE_CHAT_AGENT_ROLES } = require("../../middleware/verifyToken");
 const { toPublicVisitor } = require("./presence");
 
-const EVENTS = ["visitors:get", "agent:status"];
+const EVENTS = ["visitors:get", "agent:status", "chat:typing"];
 const MAX_EVENT_BYTES = 4096;
 
 function handshakeTokens(socket, helpers) {
@@ -104,6 +104,12 @@ function setupAdminNamespace(ns, ctx) {
       } catch {
         if (typeof ack === "function") ack({ ok: false });
       }
+    });
+
+    // Typing indicator for the patient: only the agent who holds the chat, a boolean only, never any text.
+    socket.on("chat:typing", (payload) => {
+      const typing = payload && typeof payload === "object" ? payload.typing === true : false;
+      ctx.agentSvc.relayTyping(socket.data.identity, payload?.conversationId, typing).catch(() => {});
     });
 
     socket.on("disconnect", () => {

@@ -832,6 +832,8 @@ const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
 const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
 const LiveChatPlaceholder = lazy(() => import("./pages/admin/livechat/LiveChatPlaceholder"));
+const AdminAiChats = lazy(() => import("./pages/admin/livechat/AdminAiChats"));
+const AdminLiveAgentChats = lazy(() => import("./pages/admin/livechat/AdminLiveAgentChats"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1584,7 +1586,17 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
-                  <LiveChatPlaceholder title="AI chats" />
+                  <AdminAiChats />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/ai-chats/:conversationId"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAiChats />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1594,7 +1606,17 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
-                  <LiveChatPlaceholder title="Live agent chats" />
+                  <AdminLiveAgentChats />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/agent-chats/:conversationId"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminLiveAgentChats />
                 </AdminLayout>
               </PrivateRoute>
             }

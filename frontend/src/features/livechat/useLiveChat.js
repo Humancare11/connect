@@ -36,6 +36,23 @@ const store = {
   },
 };
 
+// Sent when a chat starts: the browser's time zone ("their time" in the support panel) and the cookie choice.
+const startDetails = () => {
+  let tz = "";
+  try {
+    tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+  } catch {
+    tz = "";
+  }
+  const consent = store.get("cookieConsent");
+  return {
+    path: window.location.pathname,
+    title: document.title || "",
+    tz,
+    cookies: consent === "accepted" ? "accepted" : consent === "rejected" ? "declined" : "unknown",
+  };
+};
+
 const ERRORS = {
   rate_limited: "You're sending messages too quickly. Please wait a moment.",
   message_too_long: "Messages can be up to 1,000 characters.",
@@ -51,6 +68,7 @@ export function useLiveChat() {
   const [conversation, setConversation] = useState(null);
   const [firstName, setFirstName] = useState("");
   const [aiTyping, setAiTyping] = useState(false);
+  const [agentTyping, setAgentTyping] = useState(""); // the agent's name while they type, else ""
   const [connection, setConnection] = useState("connecting"); // connecting | online | offline
   const [notice, setNotice] = useState("");
   const [unread, setUnread] = useState(0);
@@ -123,11 +141,13 @@ export function useLiveChat() {
           if (current.messages.some((m) => m.id === message.id)) return current;
           return { ...current, messages: [...current.messages, message] };
         });
+        if (message.sender === "agent") setAgentTyping("");
         if (message.sender !== "patient" && !openRef.current) setUnread((n) => n + 1);
       });
       socket.on("chat:state", (state) => setConversation(state));
-      socket.on("chat:typing", ({ from, typing }) => {
+      socket.on("chat:typing", ({ from, typing, name }) => {
         if (from === "ai") setAiTyping(Boolean(typing));
+        if (from === "agent") setAgentTyping(typing ? name || "Support" : "");
       });
       let first = true;
       socket.on("connect", () => {
@@ -188,7 +208,7 @@ export function useLiveChat() {
   useEffect(() => {
     if (!open || phase !== "chat" || conversation || startedRef.current) return;
     startedRef.current = true;
-    emit("chat:start", { path: window.location.pathname, title: document.title || "" }).then((res) => {
+    emit("chat:start", startDetails()).then((res) => {
       startedRef.current = false;
       if (res.ok) setConversation(res.conversation);
       else setNotice(ERRORS[res.error] || ERRORS.server_error);
@@ -253,6 +273,14 @@ export function useLiveChat() {
     [emit]
   );
 
+  // After a chat ended (resolved by the team): open a fresh one.
+  const startNew = useCallback(async () => {
+    setNotice("");
+    const res = await emit("chat:start", startDetails());
+    if (res.ok) setConversation(res.conversation);
+    else setNotice(ERRORS[res.error] ?? ERRORS.server_error);
+  }, [emit]);
+
   const talkToAgent = useCallback(async () => {
     setNotice("");
     const res = await emit("chat:agent");
@@ -274,6 +302,7 @@ export function useLiveChat() {
     conversation,
     firstName,
     aiTyping,
+    agentTyping,
     connection,
     notice,
     unread,
@@ -283,6 +312,7 @@ export function useLiveChat() {
     send,
     pickOption,
     talkToAgent,
+    startNew,
     notifyTyping,
     dismissNotice: () => setNotice(""),
   };

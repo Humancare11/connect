@@ -112,6 +112,14 @@ function createAgentStore() {
       const LcAgentProfile = require("../../models/LcAgentProfile");
       return LcAgentProfile.findOne({ userId }).lean();
     },
+    // The name patients see: the agent's display name, else the first name on their account.
+    async displayName(userId) {
+      const profile = await this.get(userId);
+      if (profile?.displayName) return profile.displayName;
+      const User = require("../../models/User");
+      const user = await User.findById(userId).select("name").lean();
+      return String(user?.name || "").trim().split(/\s+/)[0].slice(0, 40);
+    },
     async setOnline(userId, online) {
       const LcAgentProfile = require("../../models/LcAgentProfile");
       const User = require("../../models/User");
@@ -232,6 +240,8 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     LcMessage: require("../../models/LcMessage"),
     LcSettings: require("../../models/LcSettings"),
     LcAiUsage: require("../../models/LcAiUsage"),
+    LcPageVisit: require("../../models/LcPageVisit"),
+    LcCannedReply: require("../../models/LcCannedReply"),
   };
   const settingsCacheMs = options.settingsCacheMs ?? 5000;
   let cached = { at: 0, value: null };
@@ -249,17 +259,29 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { verifyTurnstile } = require("./turnstile");
   const limits = createLimits({ models, readLimits: () => readLimits(env) });
   const agents = createAgentRegistry();
+  const ai = options.ai || createAiService({ env });
   const chat = createChatService({
     models,
     loadSettings,
-    ai: options.ai || createAiService({ env }),
+    ai,
     limits,
     presence,
     agents,
     emitToVisitor: (visitorId, event, payload) => visitorNs.to(`visitor:${visitorId}`).emit(event, payload),
     emitToAgents: (event, payload) => adminNs.to("agents").emit(event, payload),
   });
-  Object.assign(ctx, { chat, agents, limits, loadSettings });
+  const { createAgentService } = require("./agentService");
+  const agentSvc = createAgentService({
+    models,
+    chat,
+    loadSettings,
+    ai,
+    limits,
+    presence,
+    agentStore: ctx.agentStore,
+    emitToAgent: (userId, event, payload) => adminNs.to(`agent:${userId}`).emit(event, payload),
+  });
+  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
   require("./adminNamespace").setupAdminNamespace(adminNs, ctx);
@@ -279,7 +301,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc })
     );
   }
 
@@ -290,6 +312,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     chat,
     agents,
     limits,
+    agentSvc,
     shutdown() {
       presence.clear();
       adminNs.disconnectSockets(true);
@@ -308,6 +331,11 @@ async function seedLiveChatDefaults(env = process.env) {
     await LcSettings.getSettings();
   } catch (err) {
     if (err?.code !== 11000) throw err; // two instances seeding at once: the other one won, fine
+  }
+  const LcCannedReply = require("../../models/LcCannedReply");
+  if ((await LcCannedReply.estimatedDocumentCount()) === 0) {
+    const { CANNED_REPLIES } = require("./settingsDefaults");
+    await LcCannedReply.insertMany(CANNED_REPLIES.map((reply, order) => ({ ...reply, order })));
   }
   return true;
 }

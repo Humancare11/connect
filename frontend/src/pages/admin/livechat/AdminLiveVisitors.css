@@ -15,6 +15,9 @@
   color: var(--lcv-ink);
   font-size: 14px;
   line-height: 1.45;
+  /* The admin shell sizes itself from its content; this page must not widen it (the table scrolls inside its card). */
+  width: 0;
+  min-width: 100%;
 }
 
 .lcv-title {
@@ -386,4 +389,26 @@
   .lcv-search {
     flex: 1 1 100%;
   }
+}
+
+.lcv-btn--join {
+  background: var(--lcv-warn);
+  border-color: var(--lcv-warn);
+  color: #fff;
+}
+.lcv-start-error {
+  background: #fdeceb;
+  color: var(--lcv-urgent);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+/* The page title can be long; the table scrolls, but one cell should not take half the screen. */
+.lcv-table td:nth-child(5) {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

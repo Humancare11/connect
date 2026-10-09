@@ -57,6 +57,14 @@ const PRICES = [
   { name: "Fit to fly", price: 69 },
 ];
 
+// Canned replies for agents (seeded once; {agentName} is replaced with the agent's display name when inserted).
+const CANNED_REPLIES = [
+  { title: "Greeting", text: "Hi, I'm {agentName} from Humancare support. How can I help?" },
+  { title: "Slot booked", text: "I've booked a General consultation for you today at 6:00 PM. You'll get the video link by email." },
+  { title: "Payment confirmed", text: "Your payment went through. A confirmation email will reach you within 5 minutes." },
+  { title: "Prescription re-sent", text: "I've re-sent your prescription to your pharmacy. It should arrive within 30 minutes." },
+];
+
 const DEFAULT_SETTINGS = {
   key: "default",
   aiMode: "ai_first",
@@ -75,4 +83,4 @@ const DEFAULT_SETTINGS = {
     "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
 };
 
-module.exports = { DAYS, SUPPORT_HOURS, QUICK_OPTIONS, PRICES, DEFAULT_SETTINGS };
+module.exports = { DAYS, SUPPORT_HOURS, QUICK_OPTIONS, PRICES, CANNED_REPLIES, DEFAULT_SETTINGS };

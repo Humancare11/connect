@@ -32,6 +32,23 @@ This is the approved implementation plan, with the owner's answers and correctio
 - Quick-option clicks reply with the configured topic text (no AI call).
 - Offline / outside hours: the patient is told and the request is saved in the queue (`offlineRequested`). The email follow-up and the "alert admins once" notice are Phase 4.
 
+## Phase 3 decisions (approved)
+- AI chats = chats that were never live. Any admin reply or "Take over" moves a chat to Live agent chats, where it stays for good (Queue, My chats, Other agents' chats, Back with the AI, Archived).
+- One agent per chat: taking over is a single conditional update, so when two admins act at once only one wins and the other gets a 409 naming the winner. Only the assignee replies; other admins can read and add internal notes.
+- A superadmin can take over a chat another agent holds (admins cannot). A system line "Super Admin took over from Sam" is shown to the team only; the patient sees "Super Admin joined the chat". The previous agent gets a toast.
+- The patient sees the agent's display name ("Sam joined the chat", header, message labels).
+- Internal notes and team-only system lines never reach the patient or the AI.
+- Typing is a boolean in both directions, never text.
+- Unread is per admin (a read marker per chat); badges on "AI chats" and "Live agent chats"; in-app toasts for new chats, patient messages and queue entries. Sound and browser notifications are Phase 4.
+- Matching tickets: the contact's email is matched to a registered user; no match shows 0.
+- Summary in Customer context is a plain factual summary (counts and state), not an AI summary.
+- Page timeline (`LcPageVisit`) is saved only for visitors who chat, including pages seen before the chat started.
+- The admin socket connection is shared for the whole admin session and only connects when `VITE_LIVECHAT_ENABLED=true`.
+- "Start chat" on Real-time visitors works for visitors who already gave contact details; invites for brand-new visitors are Phase 4.
+
+## Phase 4 additions
+- If the assigned agent goes offline or logs out, return their open chats to the Queue after a short grace period (configurable, default 2 minutes) and tell the patient they are being reconnected.
+
 ## Models (`backend/models/`)
 `LcVisitor`, `LcConversation`, `LcMessage`, `LcFile`, `LcPageVisit`, `LcAgentProfile`, `LcSettings` (seeded defaults), `LcAiUsage`, `LcBlockedIp`, `LcCannedReply`. All PHI fields are encrypted with the live-chat key.
 

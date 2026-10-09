@@ -18,6 +18,10 @@ const ROLE_TOKENS = {
 };
 
 const VISITOR_ID = "visitor-0123456789abcdef";
+// Real ObjectId-shaped ids: assignees and read markers are stored as ObjectIds.
+const AGENT_A = "64b000000000000000000a01";
+const AGENT_B = "64b000000000000000000b02";
+const SUPER_S = "64b000000000000000000c03";
 
 async function startLiveChatServer({ env = {}, mount = {} } = {}) {
   const identities = { ...ROLE_TOKENS };
@@ -29,11 +33,12 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
   const fakeAuth = (req, res, next) => {
     const role = req.headers["x-test-role"];
     if (!role) return res.status(401).json({ msg: "No token provided." });
-    req.user = { id: "t1", role };
+    req.user = { id: req.headers["x-test-user"] || "t1", role };
     return next();
   };
 
   const statuses = [];
+  const agentNames = {}; // userId -> display name shown to patients
   const livechat = mountLiveChat({
     app,
     io,
@@ -43,6 +48,7 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
     revalidateMs: 0, // re-check the session on every event
     agentStore: {
       get: async () => ({ online: false, displayName: "Sam" }),
+      displayName: async (id) => agentNames[id] || "",
       setOnline: async (id, online) => {
         statuses.push([id, online]);
         return { online, displayName: "Sam" };
@@ -87,6 +93,7 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
     livechat,
     identities,
     statuses,
+    agentNames,
     connect,
     agent: (token = "admin-token") => connect("/livechat-admin", { auth: { token } }),
     visitor: (extra = {}) =>
@@ -123,13 +130,22 @@ const PASS = (req, res, next) => next();
 // Scripted AI: each call takes the next scripted result (or the default "ok" answer) and records what it was asked.
 function scriptedAi(script = []) {
   const queue = [...script];
+  const suggestions = [];
   const ai = {
     calls: [],
     queue,
+    suggestions,
+    suggestCalls: [],
+    async suggestReply(input) {
+      ai.suggestCalls.push(input);
+      return suggestions.shift() || { ok: true, reply: "Thanks for waiting. Let me check that for you.", usage: { inputTokens: 800, cachedInputTokens: 0, outputTokens: 20, costUsd: 0.0001 } };
+    },
     async generateReply(input) {
       ai.calls.push(input);
+      const next = queue.shift();
+      if (typeof next === "function") return next(); // lets a test hold the reply back
       return (
-        queue.shift() || {
+        next || {
           ok: true,
           reply: "A general consultation is $49.",
           handoff: false,
@@ -152,8 +168,11 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     LcMessage: require("../../models/LcMessage"),
     LcSettings: require("../../models/LcSettings"),
     LcAiUsage: require("../../models/LcAiUsage"),
+    LcPageVisit: require("../../models/LcPageVisit"),
+    LcCannedReply: require("../../models/LcCannedReply"),
   };
   await Promise.all(Object.values(models).map((m) => m.init()));
+  await require("../../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
   const settingsDoc = await models.LcSettings.getSettings();
   // Support hours: open all day, so tests do not depend on when they run.
   settingsDoc.supportHours.days.forEach((d) => Object.assign(d, ALL_DAY));
@@ -213,6 +232,15 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
         if (payload === undefined) socket.emit(event, done);
         else socket.emit(event, payload, done);
       }),
+    // Calls the agent REST API as a given admin. Returns { status, body }.
+    async rest(method, path, { user = AGENT_A, role = "admin", body } = {}) {
+      const res = await fetch(`${lc.url}/api/admin/livechat${path}`, {
+        method,
+        headers: { "content-type": "application/json", "x-test-role": role, "x-test-user": user },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { status: res.status, body: await res.json().catch(() => ({})) };
+    },
     // A signed-in, online agent, so the team counts as available.
     async onlineAgent(token = "admin-token") {
       const socket = await lc.agent(token);
@@ -229,4 +257,4 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
   return api;
 }
 
-module.exports = { startLiveChatServer, startChatServer, scriptedAi, once, sleep, dayKey, VISITOR_ID, ROLE_TOKENS };
+module.exports = { startLiveChatServer, startChatServer, scriptedAi, once, sleep, dayKey, VISITOR_ID, ROLE_TOKENS, AGENT_A, AGENT_B, SUPER_S };

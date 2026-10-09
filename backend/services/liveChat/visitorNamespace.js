@@ -171,10 +171,18 @@ function setupVisitorNamespace(ns, ctx) {
           .catch(() => {});
       }
 
+      // A visitor who already has a chat open shows up with it (also after a page reload).
+      ctx.chat.syncPresenceFor(visitorId).catch(() => {});
+
       socket.on("visitor:page", (payload) => {
         const path = cleanPath(payload?.path);
         if (!path || !isTrackablePath(path)) return;
-        presence.setPage(visitorId, { path, title: cleanTitle(payload?.title) });
+        const title = cleanTitle(payload?.title);
+        const record = presence.setPage(visitorId, { path, title });
+        // The page timeline is stored only for visitors who chat; everyone else stays in memory.
+        if (record?.conversationId) {
+          ctx.chat.recordPageVisit(record.conversationId, visitorId, { path, title }).catch(() => {});
+        }
       });
       socket.on("visitor:heartbeat", () => {
         presence.heartbeat(visitorId);
@@ -208,6 +216,9 @@ function setupVisitorNamespace(ns, ctx) {
           return ctx.chat.startConversation(visitorId, {
             ip,
             source,
+            referrer: classifySource(socket.handshake.auth?.referrer).referrer,
+            timeZone: payload.tz,
+            cookieChoice: payload.cookies,
             geo: geo ? { city: geo.city, state: geo.state, country: geo.country } : null,
             device: { type: agent.device, os: agent.os, browser: agent.browser },
             page: path && isTrackablePath(path) ? { path, title: cleanTitle(payload.title) } : null,

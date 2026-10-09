@@ -20,6 +20,15 @@ const conversationSchema = new mongoose.Schema(
     offlineRequested: { type: Boolean, default: false }, // asked for an agent while the team was offline
     aiNoticeShown: { type: Boolean, default: false }, // the "AI unavailable" notice was shown in this chat
     source: { type: String, default: "", maxlength: 120 },
+    referrer: { type: String, default: "", maxlength: 120 }, // referring host only
+    timeZone: { type: String, default: "", maxlength: 64 }, // reported by the patient's browser, for "their time"
+    cookieChoice: { type: String, enum: ["", "accepted", "declined", "unknown"], default: "" },
+    agentName: { type: String, default: "", maxlength: 40 }, // display name patients see while an agent holds the chat
+    queuedAt: { type: Date, default: null },
+    // Unread tracking per admin: patientMessageCount grows with every patient message; reads holds, per admin, the
+    // count they had seen when they last opened the chat. unread = patientMessageCount - that count.
+    patientMessageCount: { type: Number, default: 0 },
+    reads: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, count: { type: Number, default: 0 } }],
     aiSummary: ENC_FIELD,
     tags: [{ type: String, trim: true, maxlength: 40 }],
     contact: { name: ENC_FIELD, email: ENC_FIELD, phone: ENC_FIELD },

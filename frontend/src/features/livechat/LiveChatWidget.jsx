@@ -16,6 +16,8 @@ const timeOf = (iso) => {
   }
 };
 
+const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase() || "HS";
+
 function Message({ message }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
@@ -31,9 +33,9 @@ function Message({ message }) {
   const isAgent = message.sender === "agent";
   return (
     <div className="lcw-bot">
-      <span className="lcw-av lcw-av--sm">{isAgent ? "HS" : "HC"}</span>
+      <span className="lcw-av lcw-av--sm">{isAgent ? initialsOf(message.agentName) : "HC"}</span>
       <div className="lcw-bw">
-        <span className="lcw-bn">{isAgent ? "Humancare support" : "Humancare AI"}</span>
+        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare support" : "Humancare AI"}</span>
         <div className="lcw-msg lcw-msg--left">
           {message.text}
           <span className="lcw-meta">{timeOf(message.at)}</span>
@@ -54,6 +56,8 @@ export default function LiveChatWidget() {
   const mode = conversation?.mode;
   const waiting = mode === "queue";
   const withAgent = mode === "live";
+  const ended = mode === "archived";
+  const agentName = conversation?.agent?.name || "";
   const messageCount = conversation?.messages.length ?? 0;
 
   // Keep the newest message in view.
@@ -86,7 +90,7 @@ export default function LiveChatWidget() {
   if (waiting) status = conversation.offline ? "Team offline · we'll email you" : "Connecting you with a live agent…";
   if (withAgent) status = "Live agent · Humancare support";
 
-  const locked = phase !== "chat" || !conversation;
+  const locked = phase !== "chat" || !conversation || ended;
 
   return (
     <div className="lcw-root">
@@ -94,11 +98,11 @@ export default function LiveChatWidget() {
         <section className="lcw-window" role="dialog" aria-label="Humancare chat">
           <header className="lcw-head">
             <div className="lcw-av lcw-av--lg">
-              {withAgent ? "HS" : "HC"}
+              {withAgent ? initialsOf(agentName) : "HC"}
               <i className={waiting ? "lcw-dot lcw-dot--wait" : "lcw-dot"} />
             </div>
             <div className="lcw-who">
-              <strong>{withAgent ? "Humancare support" : "Humancare AI"}</strong>
+              <strong>{withAgent ? agentName || "Humancare support" : "Humancare AI"}</strong>
               <small>
                 <i className={waiting ? "lcw-dot-sm lcw-dot-sm--wait" : "lcw-dot-sm"} />
                 <span title={status}>{status}</span>
@@ -132,6 +136,26 @@ export default function LiveChatWidget() {
                   <Message key={message.id} message={message} />
                 ))}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
+                {ended && (
+                  <div className="lcw-opts">
+                    <button type="button" className="lcw-opt" onClick={chat.startNew}>
+                      <span className="lcw-opt-label">Start a new chat</span>
+                      <span className="lcw-opt-chev" aria-hidden="true">
+                        ›
+                      </span>
+                    </button>
+                  </div>
+                )}
+                {chat.agentTyping && (
+                  <div className="lcw-typing">
+                    <span className="lcw-dots">
+                      <i />
+                      <i />
+                      <i />
+                    </span>{" "}
+                    {chat.agentTyping} is typing
+                  </div>
+                )}
                 {chat.aiTyping && (
                   <div className="lcw-typing">
                     <span className="lcw-dots">
@@ -163,7 +187,7 @@ export default function LiveChatWidget() {
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={locked ? "Fill in the form to start" : "Message..."}
+                placeholder={ended ? "This chat has ended" : locked ? "Fill in the form to start" : "Message..."}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"

@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { io } from "socket.io-client";
-import { getUserAuthToken } from "../../../api";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../../../api";
+import { useAdmin } from "../../../context/AdminContext";
+import { hub } from "./liveChatHub";
+import { useLiveChatAdmin } from "./useLiveChatAdmin";
 import "./AdminLiveVisitors.css";
 
 // Live Chat > Real-time visitors. Layout, wording and colours follow docs/chat-demo.html.
-// Data comes from the /livechat-admin socket (snapshot on connect, then upsert/remove deltas). Visitors who never
+// Data comes from the shared /livechat-admin connection (snapshot, then upsert/remove deltas). Visitors who never
 // chat exist in server memory only; nothing on this page is stored.
-
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || window.location.origin;
 const STUCK_SECONDS = 4 * 60; // Care radar: more than 4 minutes on the booking page without booking
 const BOOKING_PREFIXES = ["/book-appointment", "/appointment-booking"];
 
@@ -41,67 +42,6 @@ const flag = (code) =>
 const pageLabel = (visitor) => visitor.page?.title || visitor.page?.path || "–";
 const displayName = (visitor) => visitor.name || visitor.ip || "Visitor";
 
-function useLiveVisitors() {
-  const [visitors, setVisitors] = useState(() => new Map());
-  const [status, setStatus] = useState("connecting"); // connecting | live | reconnecting | denied | off
-  const [agent, setAgent] = useState({ online: false, displayName: "" });
-  const [clockOffset, setClockOffset] = useState(0);
-  const socketRef = useRef(null);
-
-  useEffect(() => {
-    const socket = io(`${SOCKET_URL}/livechat-admin`, {
-      path: "/socket.io/",
-      transports: ["websocket", "polling"],
-      withCredentials: true,
-      auth: { token: getUserAuthToken("admin") },
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 15_000,
-    });
-    socketRef.current = socket;
-
-    socket.on("connect", () => setStatus("live"));
-    socket.on("disconnect", (reason) => setStatus(reason === "io server disconnect" ? "denied" : "reconnecting"));
-    socket.on("connect_error", (err) => {
-      const message = String(err?.message || "");
-      if (message.includes("Invalid namespace")) {
-        setStatus("off");
-        socket.close();
-      } else if (message === "forbidden") {
-        setStatus("denied");
-        socket.close();
-      } else {
-        setStatus("reconnecting");
-      }
-    });
-    socket.on("visitors:snapshot", ({ visitors: list = [], serverTime }) => {
-      setVisitors(new Map(list.map((visitor) => [visitor.visitorId, visitor])));
-      if (serverTime) setClockOffset(serverTime - Date.now());
-    });
-    socket.on("visitors:delta", (delta) => {
-      setVisitors((current) => {
-        const next = new Map(current);
-        if (delta.type === "remove") next.delete(delta.visitorId);
-        else if (delta.visitor) next.set(delta.visitor.visitorId, delta.visitor);
-        return next;
-      });
-    });
-    socket.on("agent:status", setAgent);
-
-    return () => {
-      socket.close();
-      socketRef.current = null;
-    };
-  }, []);
-
-  const setOnline = (online) => {
-    socketRef.current?.emit("agent:status", { online }, (reply) => {
-      if (reply?.ok) setAgent({ online: reply.online, displayName: reply.displayName });
-    });
-  };
-
-  return { visitors, status, agent, clockOffset, setOnline };
-}
-
 const STATUS_TEXT = {
   connecting: "Connecting…",
   live: "Live",
@@ -111,10 +51,17 @@ const STATUS_TEXT = {
 };
 
 export default function AdminLiveVisitors() {
-  const { visitors, status, agent, clockOffset, setOnline } = useLiveVisitors();
+  const { visitors, status, agent, clockOffset } = useLiveChatAdmin();
+  const { admin } = useAdmin();
+  const navigate = useNavigate();
   const [activityFilter, setActivityFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [now, setNow] = useState(() => Date.now());
+  const [starting, setStarting] = useState("");
+  const [startError, setStartError] = useState("");
+  const userId = String(admin?._id || admin?.id || "");
+
+  useEffect(() => hub.acquire(userId), [userId]);
 
   // One timer drives every "time on site" cell.
   useEffect(() => {
@@ -123,6 +70,46 @@ export default function AdminLiveVisitors() {
   }, []);
   const serverNow = now + clockOffset;
   const secondsOnSite = (visitor) => (serverNow - visitor.joinedAt) / 1000;
+
+  const openChat = (visitor) =>
+    navigate(`/admin-dashboard/live-chat/${visitor.activity === "ai" ? "ai-chats" : "agent-chats"}/${visitor.conversationId}`);
+
+  // "Start chat" works for visitors who already gave their contact details (a new visitor needs the invite flow).
+  const startChat = async (visitor) => {
+    setStarting(visitor.visitorId);
+    setStartError("");
+    try {
+      const { data } = await api.post("/api/admin/livechat/conversations/start", { visitorId: visitor.visitorId });
+      navigate(`/admin-dashboard/live-chat/agent-chats/${data.conversationId}`);
+    } catch (err) {
+      setStartError(err?.response?.data?.error === "contact_required" ? "This visitor has not shared contact details yet." : "Could not start the chat.");
+    } finally {
+      setStarting("");
+    }
+  };
+
+  const actionFor = (visitor) => {
+    if (visitor.conversationId) {
+      const waiting = visitor.activity === "waiting";
+      return (
+        <button type="button" className={`lcv-btn${waiting ? " lcv-btn--join" : ""}`} onClick={() => openChat(visitor)}>
+          {waiting ? "Join" : "View chat"}
+        </button>
+      );
+    }
+    const known = Boolean(visitor.name);
+    return (
+      <button
+        type="button"
+        className="lcv-btn lcv-btn--primary"
+        disabled={!known || starting === visitor.visitorId}
+        title={known ? "" : "This visitor has not shared contact details yet. Chats with new visitors arrive in a later phase."}
+        onClick={() => startChat(visitor)}
+      >
+        {starting === visitor.visitorId ? "Starting…" : "Start chat"}
+      </button>
+    );
+  };
 
   const all = useMemo(() => Array.from(visitors.values()), [visitors]);
 
@@ -183,7 +170,7 @@ export default function AdminLiveVisitors() {
             className="lcv-toggle"
             role="switch"
             aria-checked={agent.online}
-            onClick={() => setOnline(!agent.online)}
+            onClick={() => hub.setOnline(!agent.online)}
             disabled={status !== "live"}
           >
             <span className="lcv-sw" />
@@ -222,9 +209,7 @@ export default function AdminLiveVisitors() {
               been on <b>{pageLabel(stuck)}</b> for {Math.floor((serverNow - stuck.page.enteredAt) / 60000)} minutes
               without booking. They may need help.
             </span>
-            <button type="button" className="lcv-btn lcv-btn--primary" disabled title="Starting a chat arrives in a later phase">
-              Start chat
-            </button>
+            {actionFor(stuck)}
           </>
         ) : (
           <span className="lcv-radar-text">
@@ -262,6 +247,12 @@ export default function AdminLiveVisitors() {
         </span>
         <span className="lcv-chip">🍪 Only visitors who accepted cookies</span>
       </div>
+
+      {startError && (
+        <div className="lcv-start-error" role="alert">
+          {startError}
+        </div>
+      )}
 
       <div className="lcv-count">
         {rows.length} {rows.length === 1 ? "visitor" : "visitors"} on the website
@@ -308,12 +299,7 @@ export default function AdminLiveVisitors() {
                       {ACTIVITY[visitor.activity] || "Browsing"}
                     </span>
                   </td>
-                  <td>
-                    {/* Start chat / View chat / Join are wired up when chats exist (later phases). */}
-                    <button type="button" className="lcv-btn lcv-btn--primary" disabled title="Starting a chat arrives in a later phase">
-                      Start chat
-                    </button>
-                  </td>
+                  <td>{actionFor(visitor)}</td>
                   <td>{visitor.assignedTo ? visitor.assignedTo : <span className="lcv-muted">–</span>}</td>
                   <td>{pageLabel(visitor)}</td>
                   <td className="lcv-mono">{duration(secondsOnSite(visitor))}</td>

@@ -4,6 +4,8 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
+import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
+import { useLiveChatAdmin } from "./livechat/useLiveChatAdmin";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -178,8 +180,8 @@ const NAV_ITEMS = [
     icon: ICONS.chat,
     children: [
       { path: "/admin-dashboard/live-chat", label: "Real-time visitors", exact: true, roles: ["admin", "superadmin"], icon: ICONS.users },
-      { path: "/admin-dashboard/live-chat/ai-chats", label: "AI chats", roles: ["admin", "superadmin"], icon: ICONS.chat },
-      { path: "/admin-dashboard/live-chat/agent-chats", label: "Live agent chats", roles: ["admin", "superadmin"], icon: ICONS.chat },
+      { path: "/admin-dashboard/live-chat/ai-chats", label: "AI chats", badgeKey: "ai", roles: ["admin", "superadmin"], icon: ICONS.chat },
+      { path: "/admin-dashboard/live-chat/agent-chats", label: "Live agent chats", badgeKey: "live", roles: ["admin", "superadmin"], icon: ICONS.chat },
       { path: "/admin-dashboard/live-chat/team", label: "Team", roles: ["admin", "superadmin"], icon: ICONS.users },
       { path: "/admin-dashboard/live-chat/reports", label: "Reports", roles: ["admin", "superadmin"], icon: ICONS.chart },
       { path: "/admin-dashboard/live-chat/settings", label: "AI agent settings", roles: ["admin", "superadmin"], icon: ICONS.shield },
@@ -217,7 +219,18 @@ function useMediaQuery(query) {
 
 // A parent entry with a submenu: a flyout to the right of the sidebar on
 // desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
+// Unread count chip (live chat pages); nothing when there is nothing unread.
+const UnreadBadge = ({ count, style }) =>
+  count > 0 ? (
+    <span className="ad-nav-badge" style={style}>
+      {count > 99 ? "99+" : count}
+    </span>
+  ) : null;
+
 function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChange, onNavigate }) {
+  const { unread } = useLiveChatAdmin();
+  const countFor = (link) => (link.badgeKey ? unread[link.badgeKey] || 0 : 0);
+  const groupTotal = item.key === "live-chat" ? (unread.ai || 0) + (unread.live || 0) : 0;
   const buttonRef = useRef(null);
   const flyoutRef = useRef(null);
   const closeTimer = useRef(null);
@@ -387,6 +400,7 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
             {item.badge}
           </span>
         )}
+        <UnreadBadge count={groupTotal} style={{ marginLeft: 8 }} />
         <span className="ad-nav-arrow" aria-hidden="true">›</span>
       </button>
 
@@ -396,6 +410,7 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
             <Link key={link.target} to={link.target} className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={handleNavigate}>
               <span className="ad-nav-icon">{link.icon}</span>
               {link.label}
+              <UnreadBadge count={countFor(link)} />
             </Link>
           ))}
         </div>
@@ -419,6 +434,7 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
               <Link key={link.target} to={link.target} role="menuitem" className={linkClass(link)} onClick={handleNavigate}>
                 <span className="ad-nav-icon">{link.icon}</span>
                 {link.label}
+                <UnreadBadge count={countFor(link)} />
               </Link>
             ))}
           </div>,
@@ -511,6 +527,8 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="ad-root">
+      {/* Live chat: one shared connection for every admin page (unread badges, toasts). Admin + superadmin only. */}
+      <LiveChatAdminProvider user={user} />
       {sideOpen && (
         <div
           style={{

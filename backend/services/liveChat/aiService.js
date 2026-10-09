@@ -27,6 +27,13 @@ const SCHEMA = {
   },
 };
 
+const SUGGEST_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["reply"],
+  properties: { reply: { type: "string" } },
+};
+
 // Facts that are always available to the AI. Admin-editable facts and prices (AI settings) are added on top.
 const BASE_FACTS = [
   "Humancare Connect is a US online telehealth service. Patients book a video visit with a licensed doctor.",
@@ -160,7 +167,49 @@ function createAiService({ env = process.env, providers = {}, log = defaultLog, 
     return { ok: true, ...parsed, usage };
   }
 
-  return { generateReply };
+  // "Suggest a reply" for a human agent: a draft the agent can edit and send. Same safety rules, same provider, same
+  // limits; resolves to { ok: true, reply, usage } or { ok: false, kind } and never throws.
+  async function suggestReply({ settings, history, agentName }) {
+    const config = readAiConfig(env);
+    const active = config.usable ? getProvider(config) : null;
+    if (!active) return { ok: false, kind: "not_configured" };
+
+    const system = [
+      buildSystemPrompt(settings),
+      "",
+      `TASK: You are drafting the next reply for a human Humancare support agent${agentName ? ` named ${agentName}` : ""}, who will edit it and send it to the patient. Write only the reply text, in the agent's voice, short and helpful. Do not mention that you are an AI. Follow every rule above.`,
+    ].join("\n");
+
+    const started = now();
+    let result;
+    try {
+      result = await active.complete({
+        system,
+        messages: buildMessages(history),
+        schema: SUGGEST_SCHEMA,
+        schemaName: "livechat_suggestion",
+        maxOutputTokens: config.maxOutputTokens,
+      });
+    } catch (err) {
+      log({ outcome: `suggest_${err?.kind || "api_error"}`, latencyMs: now() - started });
+      return { ok: false, kind: err?.kind || "api_error" };
+    }
+    const usage = { ...result.usage, costUsd: costOf(result.usage, config) };
+    let reply = "";
+    try {
+      reply = String(JSON.parse(result.text || "{}").reply || "").trim();
+    } catch {
+      reply = "";
+    }
+    if (result.finishReason !== "stop" || result.refusal || !reply || reply.length > MAX_REPLY_CHARS) {
+      log({ outcome: "suggest_incomplete", latencyMs: now() - started, ...tokenFields(usage) });
+      return { ok: false, kind: "incomplete", usage };
+    }
+    log({ outcome: "suggest_ok", latencyMs: now() - started, ...tokenFields(usage) });
+    return { ok: true, reply, usage };
+  }
+
+  return { generateReply, suggestReply };
 }
 
 const tokenFields = (usage) => ({ in: usage.inputTokens, cached: usage.cachedInputTokens, out: usage.outputTokens });
