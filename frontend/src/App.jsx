@@ -1140,6 +1140,8 @@ function SiteCookieBanner() {
   const { pathname } = useLocation();
   // false while prerendering and hydrating, true afterwards (no setState-in-effect needed)
   const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  // Part of the live chat rollout: without VITE_LIVECHAT_ENABLED=true the site behaves as before (banner only at /cookies).
+  if (import.meta.env.VITE_LIVECHAT_ENABLED !== "true") return null;
   if (!mounted || !isPublicPagePath(pathname) || pathname === "/cookies") return null;
   return (
     <Suspense fallback={null}>

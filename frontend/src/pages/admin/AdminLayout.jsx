@@ -507,7 +507,8 @@ export default function AdminLayout({ children }) {
   const pageTitle = (titleLeaf && (titleLeaf.title || titleLeaf.label)) || EXTRA_TITLES[pathname] || "Admin";
 
   // Menu entries this role can see. Parents need at least one visible child.
-  const visibleItems = NAV_ITEMS.map((item) =>
+  // The Live Chat group exists only in builds with VITE_LIVECHAT_ENABLED=true (otherwise the panel is as before).
+  const visibleItems = NAV_ITEMS.filter((item) => item.key !== "live-chat" || import.meta.env.VITE_LIVECHAT_ENABLED === "true").map((item) =>
     item.children
       ? { ...item, links: item.children.filter((c) => isVisibleTo(c, user.role)).map(withTarget) }
       : item

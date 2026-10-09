@@ -13,6 +13,10 @@ Plan and decisions per phase: `docs/live-chat-plan.md`. Go-live steps: `docs/liv
 
 Rollback: set both to `false`, rebuild the frontend, restart the backend. The Text widget returns at once (its package is still installed).
 
+### What the flags change (flags off = the site as on main)
+
+With `LIVECHAT_ENABLED` unset/false AND `VITE_LIVECHAT_ENABLED` unset/false: the Text widget is rendered, no live chat routes, sockets, widget, tracker or contact form exist, no site-wide cookie banner (only the old /cookies page), and no Live Chat group in the admin sidebar. Two small things are always present: the DB-IP attribution link in the footer, and a live chat row in the retention settings (nothing to delete while the module is off). Both flags must be changed together.
+
 ## Who can do what
 
 - Agents are users with role `admin` or `superadmin`. `employeeadmin` and `partner` are not agents.
