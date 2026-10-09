@@ -184,6 +184,12 @@ function verifyPlanIntegrity(plan, currentSourceHashes = {}) {
       if (!d.legacyId || d.legacyId !== o.idempotencyKey?.legacyId) err(`CREATE_CONDITION legacyId/idempotencyKey mismatch ("${d.legacyId}").`);
       if (legacyIds.has(d.legacyId)) err(`Duplicate legacyId "${d.legacyId}" in plan.`);
       if (!["condition", "service"].includes(d.kind)) err(`CREATE_CONDITION "${d.legacyId}" has invalid kind "${d.kind}".`);
+      // PR 8.1: booking visibility (isActive) stays off; search visibility is a
+      // separate flag and may only be on for a record with a stored route.
+      if (typeof d.isSearchable !== "boolean") err(`CREATE_CONDITION "${d.legacyId}" must carry a boolean isSearchable.`);
+      if (d.isSearchable === true && !(typeof d.route === "string" && d.route.startsWith("/"))) {
+        err(`CREATE_CONDITION "${d.legacyId}" is isSearchable but has no stored route.`);
+      }
       legacyIds.add(d.legacyId);
       conditionOps.set(d.legacyId, d);
     }
@@ -407,7 +413,9 @@ function buildConditionDocument(planDoc, ObjectId, now) {
     legacyId: planDoc.legacyId,
     slug: planDoc.slug,
     route: planDoc.route || "",
+    // isActive (booking) is forced false; isSearchable follows the reviewed plan.
     isActive: false,
+    isSearchable: planDoc.isSearchable === true,
     createdAt: now,
     updatedAt: now,
     __v: 0,

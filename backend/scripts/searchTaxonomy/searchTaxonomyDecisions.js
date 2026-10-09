@@ -154,6 +154,12 @@ const APPROVED_SPECIALTY_DECISIONS = Object.freeze({
   "metabolic-syndrome": { legacyTitle: "Metabolic Syndrome", specialty: "Endocrinology", basis: "approved-unresolved" },
   vomiting: { legacyTitle: "Vomiting", specialty: "General Physician", basis: "approved-unresolved" },
 
+  // PR 8: the frontend places this page (and the Weight Management specialty
+  // page lists it) under weight-management, while the legacy index said
+  // lifestyle-medicine. The page structure wins, so category > specialty >
+  // condition matches the route the user actually lands on. Confirmed in PR 8.1.
+  "binge-eating": { legacyTitle: "Binge Eating", specialty: "Weight Management", basis: "approved-page-structure" },
+
   // CLEAR_SEMANTIC_MATCH records (no legacy specialty field; the route names
   // one live specialty in the record's own category). Approved in PR 4.5,
   // Decision 1. The planner checks the approved specialty equals the route's.
@@ -246,6 +252,11 @@ const KEEP_SEPARATE = Object.freeze([
   { a: "cancer-second-opinion", b: "second-medical-opinion", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
   { a: "vomiting", b: "nausea-and-vomiting", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
   { a: "doctors-note", b: "medical-certificate", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
+  // PR 8: overlapping pages that stay separate (different specialties or pages).
+  { a: "hair-loss", b: "hair-loss-mens-health", status: "PR8_DIFFERENT_SPECIALTY_PAGES" },
+  { a: "menopause-symptoms", b: "hot-flashes", status: "PR8_SEPARATE_PAGES" },
+  { a: "anxiety", b: "sleep-related-anxiety", status: "PR8_SEPARATE_PAGES" },
+  { a: "stress", b: "relationship-stress", status: "PR8_SEPARATE_PAGES" },
 ]);
 
 // Live condition documents known from the audit that are not valid search
@@ -256,7 +267,90 @@ const KNOWN_LIVE_CONDITION_NOTES = Object.freeze({
   jhvj: "Orphan/test data: parent specialty no longer exists.",
 });
 
+// ── PR 8: synchronisation with the existing dedicated pages ─────────────────
+
+// Pages that exist in frontend/src/App.jsx (and are linked from
+// frontend/src/pages/Symptoms.jsx) but were never in the legacy
+// searchIndex.js, so PR 4 had no record for them. They are fed to the planner
+// as extra legacy-style records; category/specialty use the legacy id
+// vocabulary above. `route` is the exact App.jsx path (verified by the
+// planner and by tests; nothing here is slugified). `keywords` become
+// aliases (plain patient-language synonyms only).
+const PR8_ADDITIONAL_CONDITIONS = Object.freeze([
+  // Mental Health > Psychiatry
+  { id: "anxiety", title: "Anxiety", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/anxiety", keywords: ["anxious", "feeling anxious"] },
+  { id: "depression", title: "Depression", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/depression", keywords: ["low mood", "feeling low"] },
+  { id: "adhd-evaluation", title: "ADHD Evaluation", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/adhd-evaluation", keywords: ["adhd", "attention deficit"] },
+  { id: "bipolar-disorder-follow-up", title: "Bipolar Disorder Follow-Up", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/bipolar-disorder-follow-up", keywords: ["bipolar"] },
+  { id: "insomnia", title: "Insomnia", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/insomnia", keywords: ["trouble sleeping", "can't sleep"] },
+  { id: "ocd", title: "OCD", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/Ocd", keywords: ["obsessive compulsive disorder"] },
+  { id: "panic-attacks", title: "Panic Attacks", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/panic-attacks", keywords: ["panic"] },
+  { id: "ptsd", title: "PTSD", category: "mental-health", specialty: "psychiatry", route: "/mental-health/psychiatry/ptsd", keywords: ["post traumatic stress disorder"] },
+  // Mental Health > Psychology / Counselling
+  { id: "stress", title: "Stress", category: "mental-health", specialty: "psychology-counseling", route: "/mental-health/psychology-counseling/stress", keywords: ["feeling stressed"] },
+  { id: "grief-and-loss", title: "Grief & Loss", category: "mental-health", specialty: "psychology-counseling", route: "/mental-health/psychology-counseling/grief-and-loss", keywords: ["grief", "bereavement"] },
+  { id: "relationship-stress", title: "Relationship Stress", category: "mental-health", specialty: "psychology-counseling", route: "/mental-health/psychology-counseling/relationship-stress", keywords: ["relationship problems"] },
+  { id: "low-self-esteem", title: "Low Self-Esteem", category: "mental-health", specialty: "psychology-counseling", route: "/mental-health/psychology-counseling/low-self-esteem", keywords: ["self esteem"] },
+  { id: "trauma-support", title: "Trauma Support", category: "mental-health", specialty: "psychology-counseling", route: "/mental-health/psychology-counseling/trauma-support", keywords: ["trauma"] },
+  // Mental Health > Behavioral Health
+  { id: "anger-management", title: "Anger Management", category: "mental-health", specialty: "behavioral-health", route: "/mental-health/behavioral-health/anger-management", keywords: ["anger"] },
+  { id: "adjustment-difficulties", title: "Adjustment Difficulties", category: "mental-health", specialty: "behavioral-health", route: "/mental-health/behavioral-health/adjustment-difficulties", keywords: ["adjustment disorder"] },
+  { id: "sleep-related-anxiety", title: "Sleep-Related Anxiety", category: "mental-health", specialty: "behavioral-health", route: "/mental-health/behavioral-health/sleep-related-anxiety", keywords: ["sleep anxiety"] },
+  { id: "substance-use-support", title: "Substance Use Support", category: "mental-health", specialty: "behavioral-health", route: "/mental-health/behavioral-health/substance-use-support", keywords: ["addiction", "substance abuse"] },
+  // Other categories
+  { id: "eye-irritation", title: "Eye Irritation", category: "eye-ear-bone", specialty: "ophthalmology", route: "/eye-ear-bone/ophthalmology/eye-irritation", keywords: ["irritated eyes", "itchy eyes"] },
+  { id: "hair-loss", title: "Hair Loss", category: "skin-and-hair-care", specialty: "dermatology", route: "/skin-and-hair-care/dermatology/hair-loss", keywords: ["balding", "thinning hair"] },
+  { id: "hot-flashes", title: "Hot Flashes", category: "women-health", specialty: "menopause-care", route: "/women-health/menopause-care/hot-flashes", keywords: ["hot flushes"] },
+  { id: "fertility-concerns", title: "Fertility Concerns", category: "women-health", specialty: "obstetrics-and-gynaecology", route: "/women-health/obstetrics-and-gynaecology/fertility-concerns", keywords: ["infertility", "trying to conceive"] },
+]);
+
+// Legacy records whose stored route is stale: the real page is at this exact
+// App.jsx path. Each is checked against App.jsx by the planner.
+const ROUTE_OVERRIDES = Object.freeze({
+  "heart-disease": "/chronic-care/cardiology/heart-disease-follow-up",
+  "binge-eating": "/weight-and-nurtrition/weight-management/binge-eating",
+  "diet-exercise-planning": "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+  "birth-control-consultation": "/women-health/obstetrics-and-gynaecology/birth-control",
+  // App.jsx declares this path twice; the FIRST declaration renders the
+  // MenopauseSymptoms page, so that is the page a user reaches. The second
+  // (HrtGuidance) is unreachable until the duplicate is fixed in App.jsx.
+  "menopause-symptoms": "/women-health/menopause-care/hrt-guidance",
+});
+
+// Condition pages that exist in App.jsx but are deliberately NOT planned as
+// taxonomy records, with the reason. They need a product decision before a
+// record (and its category/specialty parent) is invented for them.
+const UNMAPPED_APP_PAGES = Object.freeze({
+  // Confirmed deferred in PR 8.1: do not guess a mapping.
+  "/burnout": "No category/specialty evidence: top-level route, not linked from any specialty page or Symptoms.jsx, never in the legacy index.",
+  "/chronic-medication-management": "No category/specialty evidence: top-level route, no categoryId, not linked from any specialty page or Symptoms.jsx.",
+});
+
+// Existing live condition documents, reviewed in PR 8. Nothing is deleted,
+// renamed or deactivated by the migration (the apply script cannot).
+const LIVE_RECORD_REVIEW = Object.freeze({
+  "Teen acne": {
+    assessment: "REAL_RECORD_KEEP",
+    action: "NO_CHANGE",
+    reason: "Valid parent (Adolescent Care), active and searchable. No dedicated 'Teen acne' page exists, so it resolves to the Adolescent Care specialty page. KEEP_SEPARATE with canonical Acne (Dermatology) was approved in PR 4. Recommend an admin review of the casing and whether a dedicated page is wanted.",
+  },
+  "Pediatric Fever": {
+    assessment: "ORPHAN",
+    action: "NO_CHANGE_RECOMMEND_MANUAL_DEACTIVATION",
+    reason: "specialtyId points to a specialty that no longer exists, so it is already invisible to search and to /api/appointment-tree. The canonical Pediatric Fever (Pediatrics, legacyId pediatric-fever) is created by this migration with no unique-index conflict (different specialtyId). Recommend manual deactivation or deletion by an administrator after review.",
+  },
+  jhvj: {
+    assessment: "TEST_DATA_ORPHAN",
+    action: "NO_CHANGE_RECOMMEND_MANUAL_DEACTIVATION",
+    reason: "Nonsense name and a missing parent specialty: test data. Already invisible to search. Recommend manual deactivation or deletion by an administrator.",
+  },
+});
+
 module.exports = {
+  PR8_ADDITIONAL_CONDITIONS,
+  ROUTE_OVERRIDES,
+  UNMAPPED_APP_PAGES,
+  LIVE_RECORD_REVIEW,
   LEGACY_CATEGORY_TO_LIVE,
   LEGACY_SPECIALTY_TO_LIVE,
   ROUTE_SECTION_TO_SPECIALTY,
