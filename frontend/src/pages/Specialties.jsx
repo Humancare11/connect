@@ -40,7 +40,8 @@ import {
 } from "lucide-react";
 import "./Specialties.css";
 import SEO from "../components/Seo";
-import ServiceSwitcher from "../components/ServiceSwitcher";
+import CatHeroSection from "../components/CatHeroSection";
+import CareHighlightsSection from "../components/CareHighlightsSection";
 import FAQ from "../components/FAQ/FAQ";
 
 const conditionIcons = {
@@ -360,9 +361,9 @@ const specialties = [
 
 // ── Stats (derived from real data so copy can't drift out of sync) ──────────
 const stats = [
-  [String(specialties.length), "Specialties"],
-  ["11", "Categories"],
-  ["140+", "Conditions"],
+  { value: String(specialties.length), label: "Specialties" },
+  { value: "11", label: "Categories" },
+  { value: "140+", label: "Conditions" },
 ];
 
 const audiences = [
@@ -667,41 +668,13 @@ export default function Specialties() {
       </Helmet>
 
       {/* hero */}
-      <section id="top" className="sp-hero">
-        <div className="sp-hero__inner">
-          {/* Left column */}
-          <div>
-            {/* <div className="sp-hero__badge">
-              <Globe2 size={14} />
-              Discover Care Categories
-            </div> */}
-
-            <h1 className="sp-hero__title">
-              Online Specialist Doctor Services for Your Unique Health Needs
-            </h1>
-
-            <p className="sp-hero__copy">
-              Connect with an online specialist doctor through Humancare Connect
-              and receive expert medical guidance, personalized treatment
-              support, and secure virtual consultations designed around your
-              specific health concerns. Our platform makes it easier to access
-              experienced specialists from the comfort of your home.
-            </p>
-
-            <div className="sp-hero__stats">
-              {stats.map(([num, label]) => (
-                <div key={label} className="sp-hero__stat">
-                  <div className="sp-hero__stat-num">{num}</div>
-                  <div className="sp-hero__stat-label">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right panel — service switcher */}
-          <ServiceSwitcher services={HERO_SERVICES} />
-        </div>
-      </section>
+      <CatHeroSection
+        id="top"
+        title="Online Specialist Doctor Services for Your Unique Health Needs"
+        description="Connect with an online specialist doctor through Humancare Connect and receive expert medical guidance, personalized treatment support, and secure virtual consultations designed around your specific health concerns. Our platform makes it easier to access experienced specialists from the comfort of your home."
+        stats={stats}
+        services={HERO_SERVICES}
+      />
 
       {/* Specialties */}
       <section id="specialties" className="specialties">
@@ -841,37 +814,13 @@ export default function Specialties() {
       </section>
 
       {/* B2B */}
-      <section id="businesses" className="sp-b2b">
-        <div className="sp-b2b__inner">
-          <div>
-            <span className="sp-b2b__eyebrow">ONLINE SPECIALIST CARE</span>
-            <h2 className="sp-b2b__heading">
-              Expert Care from an Online Specialist Doctor
-            </h2>
-            <p className="sp-b2b__copy">
-              Humancare Connect provides convenient access to an online
-              specialist doctor who understands your unique healthcare needs.
-              Whether you need expert advice for a specific condition, ongoing
-              care, or a second opinion, our virtual specialist consultations
-              connect you with trusted healthcare professionals.
-            </p>
-          </div>
-
-          <div className="sp-b2b__grid">
-            {audiences.map((item, i) => (
-              <div
-                key={item.title}
-                className="sp-b2b__card"
-                style={{ "--delay": `${i * 50}ms` }}
-              >
-                <div className="sp-b2b__card-name">{item.title}</div>
-
-                <p className="sp-b2b__card-desc">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CareHighlightsSection
+        id="businesses"
+        eyebrow="ONLINE SPECIALIST CARE"
+        title="Expert Care from an Online Specialist Doctor"
+        description="Humancare Connect provides convenient access to an online specialist doctor who understands your unique healthcare needs. Whether you need expert advice for a specific condition, ongoing care, or a second opinion, our virtual specialist consultations connect you with trusted healthcare professionals."
+        items={audiences}
+      />
 
       {/* FAQ */}
       <FAQ

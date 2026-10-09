@@ -207,7 +207,19 @@ const blogImageLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Public careers application (POST /api/careers/apply). 
+const careersStore = new Map();
+const careersLimiter = buildKeyedLimiter({
+  store:    careersStore,
+  windowMs: 15 * 60 * 1000,
+  max:      5,
+  message:  "Too many applications submitted. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 module.exports = {
+  careersLimiter,
   blogPublicLimiter,
   blogImageLimiter,
   registrationLimiter,

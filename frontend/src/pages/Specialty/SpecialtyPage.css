@@ -1075,8 +1075,8 @@
   }
 
   .sp-hero__content {
-    /* 84px top: comfortably clears 72px sticky navbar */
-    padding: 84px clamp(16px, 4vw, 40px) 48px;
+    /* 108px top: badge clears the fixed navbar (bottom edge ~82px) */
+    padding: 108px clamp(16px, 4vw, 40px) 48px;
     max-width: 100%;
     overflow: hidden;
   }
@@ -1099,7 +1099,7 @@
   .hcc-booking-card {
     max-width: 560px;
     width: 100%;
-    margin: 0;
+    margin: 0 auto; /* center the card once the hero stacks */
     box-sizing: border-box;
   }
 
@@ -1147,8 +1147,8 @@
   }
 
   .sp-hero__content {
-    /* 80px top: clears sticky navbar on tablet / large phones */
-    padding: 80px 16px 38px;
+    /* 100px top: clears the fixed navbar (bottom edge ~74px) */
+    padding: 100px 16px 38px;
     gap: 24px;
     overflow: hidden;
   }
@@ -1182,7 +1182,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    margin: 0;
+    margin: 0 auto; /* center the card once the hero stacks */
   }
 
   .hcc-booking-price {
@@ -1260,8 +1260,8 @@
   }
 
   .sp-hero__content {
-    /* 76px top: clears navbar on standard mobile devices */
-    padding: 76px 16px 34px;
+    /* 100px top: clears navbar on standard mobile devices */
+    padding: 100px 16px 34px;
     gap: 20px;
     overflow: hidden;
   }
@@ -1314,7 +1314,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    margin: 0;
+    margin: 0 auto; /* center the card once the hero stacks */
     overflow: hidden;
   }
 
@@ -1670,8 +1670,8 @@
   }
 
   .sp-hero__content {
-    /* 72px top: clears sticky navbar on small devices */
-    padding: 72px 12px 28px;
+    /* 96px top: clears navbar on small devices */
+    padding: 96px 12px 28px;
     gap: 18px;
     overflow: hidden;
   }

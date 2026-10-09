@@ -41,7 +41,8 @@ import {
 import { MdChildCare, MdOutlineLocalHospital } from "react-icons/md";
 import { RiMentalHealthLine } from "react-icons/ri";
 import SEO from "../components/Seo";
-import ServiceSwitcher from "../components/ServiceSwitcher";
+import CatHeroSection from "../components/CatHeroSection";
+import CareHighlightsSection from "../components/CareHighlightsSection";
 import FAQ from "../components/FAQ/FAQ";
 
 /* ─────────────────────────────────────────────────────────────
@@ -451,9 +452,9 @@ const CONDITIONS = [
 ];
 
 const HERO_STATS = [
-  { n: "11", l: "Categories" },
-  { n: "30", l: "Specialties" },
-  { n: "140+", l: "Conditions" },
+  { value: "11", label: "Categories" },
+  { value: "30", label: "Specialties" },
+  { value: "140+", label: "Conditions" },
 ];
 
 const CARE_CAT = [
@@ -573,32 +574,12 @@ const FAQ_GROUPS = [
 ───────────────────────────────────────────────────────────── */
 function CareSection() {
   return (
-    <section className="cat-b2b">
-      <div className="cat-section__wrap">
-        <div className="cat-b2b__grid">
-          <div className="cat-b2b__left">
-            <span className="cat-b2b__eyebrow">CARE MADE SIMPLE</span>
-            <h2 className="cat-b2b__title">
-              Care Designed Around Your Health Needs
-            </h2>
-            <p className="cat-b2b__copy">
-              Humancare Connect provides a comprehensive virtual healthcare
-              experience that makes it easier to access trusted medical
-              guidance, connect with experienced healthcare professionals, and
-              receive personalized care tailored to your unique health journey.
-            </p>
-          </div>
-          <div className="cat-b2b__cards">
-            {CARE_CAT.map((item, i) => (
-              <div className="cat-b2b__card" key={i}>
-                <h3>{item.title}</h3>
-                <p>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
+    <CareHighlightsSection
+      eyebrow="CARE MADE SIMPLE"
+      title="Care Designed Around Your Health Needs"
+      description="Humancare Connect provides a comprehensive virtual healthcare experience that makes it easier to access trusted medical guidance, connect with experienced healthcare professionals, and receive personalized care tailored to your unique health journey."
+      items={CARE_CAT}
+    />
   );
 }
 
@@ -687,39 +668,12 @@ export default function Categories() {
       </Helmet>
 
       {/* ── Hero ── */}
-      <section className="cat-hero">
-        <div className="cat-hero__inner">
-          <div className="cat-hero__left">
-            {/* <div className="cat-hero__eyebrow">
-              <Icon name="globe" size={14} />
-              Discover Care Categories
-            </div> */}
-            <h1 className="cat-hero__title">
-              Explore Online Doctor Consultation Services Designed Around Your
-              Needs
-            </h1>
-            <p className="cat-hero__copy">
-              Find the right care with Humancare Connect's comprehensive range
-              of virtual healthcare services. From everyday health concerns and
-              mental wellness to chronic care, women's health, skin and hair
-              care, and specialized medical support, our online doctor
-              consultation services are designed to connect you with appropriate
-              healthcare professionals and personalized care solutions.
-            </p>
-            <div className="cat-hero-stats">
-              {HERO_STATS.map(({ n, l }) => (
-                <div key={l} className="cat-hero-stat">
-                  <span className="cat-hero-stat__num">{n}</span>
-                  <span className="cat-hero-stat__label">{l}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="cat-hero__right">
-            <ServiceSwitcher services={HERO_SERVICES} />
-          </div>
-        </div>
-      </section>
+      <CatHeroSection
+        title="Explore Online Doctor Consultation Services Designed Around Your Needs"
+        description="Find the right care with Humancare Connect's comprehensive range of virtual healthcare services. From everyday health concerns and mental wellness to chronic care, women's health, skin and hair care, and specialized medical support, our online doctor consultation services are designed to connect you with appropriate healthcare professionals and personalized care solutions."
+        stats={HERO_STATS}
+        services={HERO_SERVICES}
+      />
 
       {/* ── Category Cards ── */}
       <section className="cat-section cat-section--bg">

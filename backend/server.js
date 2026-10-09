@@ -373,6 +373,7 @@ app.use("/api", (req, res, next) => {
 
 const contactRoutes = require("./routes/contact");
 app.use("/api/contact", contactRoutes);
+app.use("/api/careers", require("./routes/careers"));
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
