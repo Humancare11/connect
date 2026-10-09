@@ -43,4 +43,64 @@ const intFromEnv = (name, fallback, env = process.env) => {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
-module.exports = { isLiveChatEnabled, isProduction, parseLiveChatKey, checkLiveChatConfig, intFromEnv };
+// ── Phase 2: AI, Turnstile and abuse limits ───────────────────────────────────
+
+const numberOrNull = (value) => {
+  if (value === undefined || value === null || String(value).trim() === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+};
+
+// Cloudflare's published test secret key ("always passes"). Used only outside production when no secret is set.
+const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
+
+// AI provider settings. Prices are USD per 1M tokens and are required: the daily spend cap cannot work without
+// them, so the AI refuses to run (and the widget shows the unavailable fallback) when they are missing.
+function readAiConfig(env = process.env) {
+  // LIVECHAT_REASONING_EFFORT: unset -> "none" (the lowest value gpt-6-luna supports); set to an empty string to
+  // send no reasoning parameter at all (for models that do not accept one).
+  const effortRaw = env.LIVECHAT_REASONING_EFFORT;
+  const reasoningEffort = effortRaw === undefined ? "none" : String(effortRaw).trim();
+  const priceInput = numberOrNull(env.LIVECHAT_PRICE_INPUT_PER_1M);
+  const priceOutput = numberOrNull(env.LIVECHAT_PRICE_OUTPUT_PER_1M);
+  const priceCached = numberOrNull(env.LIVECHAT_PRICE_CACHED_INPUT_PER_1M);
+  return {
+    provider: String(env.LIVECHAT_AI_PROVIDER || "openai").trim().toLowerCase(),
+    model: String(env.LIVECHAT_MODEL || "").trim(),
+    apiKey: String(env.LIVECHAT_OPENAI_API_KEY || "").trim(),
+    reasoningEffort,
+    maxOutputTokens: intFromEnv("LIVECHAT_MAX_OUTPUT_TOKENS", 300, env),
+    timeoutMs: intFromEnv("LIVECHAT_AI_TIMEOUT_MS", 20_000, env),
+    priceInput,
+    priceOutput,
+    priceCached: priceCached ?? priceInput,
+    usable: Boolean(env.LIVECHAT_MODEL && env.LIVECHAT_OPENAI_API_KEY && priceInput !== null && priceOutput !== null),
+  };
+}
+
+function readTurnstileSecret(env = process.env) {
+  const secret = String(env.TURNSTILE_SECRET_KEY || "").trim();
+  if (secret) return secret;
+  return isProduction(env) ? "" : TURNSTILE_TEST_SECRET;
+}
+
+// Abuse limits. Message length and per-minute rate are fixed by the brief; the others can be tuned by env.
+function readLimits(env = process.env) {
+  return {
+    maxMessageChars: 1000,
+    messagesPerMinute: intFromEnv("LIVECHAT_MESSAGES_PER_MINUTE", 6, env),
+    chatsPerIpPerDay: intFromEnv("LIVECHAT_IP_DAILY_CHAT_LIMIT", 5, env),
+  };
+}
+
+module.exports = {
+  isLiveChatEnabled,
+  isProduction,
+  parseLiveChatKey,
+  checkLiveChatConfig,
+  intFromEnv,
+  readAiConfig,
+  readTurnstileSecret,
+  readLimits,
+  TURNSTILE_TEST_SECRET,
+};

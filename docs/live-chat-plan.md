@@ -22,6 +22,16 @@ This is the approved implementation plan, with the owner's answers and correctio
 - `LIVECHAT_ENABLED` (default `false`) is a kill switch for the whole module, backend and widget.
 - `backend/.env` is git-ignored and never committed. Real keys stay out of the repo.
 
+## Phase 2 decisions (approved)
+- Cookie banner: mounted site-wide on public pages (not admin, login, payment, patient dashboard, video-call), client-side only; the dead `loadLiveChat()` call is removed; the banner dispatches `hc:cookie-consent` so the tracker reacts without polling.
+- The Text widget is not rendered when `VITE_LIVECHAT_ENABLED=true` (removed for good in Phase 5).
+- No streaming: the reply is structured JSON and the server decides on handoff before anything is shown.
+- Emergency: if the patient describes an emergency, the AI tells them to call 911 and hands off to a live agent. No emergency banner or box in the widget UI.
+- gpt-6-luna prices (USD per 1M tokens, context under 272K): input 0.10, cached input 0.01, output 0.50. `LIVECHAT_REASONING_EFFORT` defaults to `none`, the lowest value the model accepts (it rejects `minimal`). Empty or incomplete output shows the unavailable fallback.
+- Chat works without cookie consent (functional); presence tracking still needs consent.
+- Quick-option clicks reply with the configured topic text (no AI call).
+- Offline / outside hours: the patient is told and the request is saved in the queue (`offlineRequested`). The email follow-up and the "alert admins once" notice are Phase 4.
+
 ## Models (`backend/models/`)
 `LcVisitor`, `LcConversation`, `LcMessage`, `LcFile`, `LcPageVisit`, `LcAgentProfile`, `LcSettings` (seeded defaults), `LcAiUsage`, `LcBlockedIp`, `LcCannedReply`. All PHI fields are encrypted with the live-chat key.
 

@@ -206,6 +206,27 @@ const searchLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Live chat: public contact form and widget config. Per IP. The contact form is the gate to every chat, so it is
+// limited tightly; Turnstile and the honeypot sit in front of the real work.
+const liveChatContactStore = new Map();
+const liveChatContactLimiter = buildKeyedLimiter({
+  store:    liveChatContactStore,
+  windowMs: 10 * 60 * 1000,
+  max:      12,
+  message:  "Too many attempts. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+const liveChatConfigStore = new Map();
+const liveChatConfigLimiter = buildKeyedLimiter({
+  store:    liveChatConfigStore,
+  windowMs: 60 * 1000,
+  max:      60,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 // Public blog list/detail and the blog image proxy. Per-IP; the image limit is
 // high because a list page loads up to ~10 images and pages are revisited.
 const blogPublicStore = new Map();
@@ -241,6 +262,8 @@ const appVersionLimiter = buildKeyedLimiter({
 });
 
 module.exports = {
+  liveChatContactLimiter,
+  liveChatConfigLimiter,
   appVersionLimiter,
   blogPublicLimiter,
   blogImageLimiter,

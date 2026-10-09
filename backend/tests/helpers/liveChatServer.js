@@ -111,4 +111,122 @@ const once = (socket, event, timeoutMs = 2000) =>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-module.exports = { startLiveChatServer, once, sleep, VISITOR_ID, ROLE_TOKENS };
+// ── Chat tests: real in-memory MongoDB, scripted AI, fake Turnstile ───────────────────────────────────────────
+
+const mongoose = require("mongoose");
+const { MongoMemoryServer } = require("mongodb-memory-server");
+const { dayKey } = require("../../services/liveChat/limits");
+
+const ALL_DAY = { open: "00:00", close: "23:59", enabled: true };
+const PASS = (req, res, next) => next();
+
+// Scripted AI: each call takes the next scripted result (or the default "ok" answer) and records what it was asked.
+function scriptedAi(script = []) {
+  const queue = [...script];
+  const ai = {
+    calls: [],
+    queue,
+    async generateReply(input) {
+      ai.calls.push(input);
+      return (
+        queue.shift() || {
+          ok: true,
+          reply: "A general consultation is $49.",
+          handoff: false,
+          handoffReason: "none",
+          topic: "pricing",
+          usage: { inputTokens: 1000, cachedInputTokens: 0, outputTokens: 50, costUsd: 0.000125 },
+        }
+      );
+    },
+  };
+  return ai;
+}
+
+async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {}) {
+  const mongod = await MongoMemoryServer.create();
+  await mongoose.connect(mongod.getUri());
+  const models = {
+    LcVisitor: require("../../models/LcVisitor"),
+    LcConversation: require("../../models/LcConversation"),
+    LcMessage: require("../../models/LcMessage"),
+    LcSettings: require("../../models/LcSettings"),
+    LcAiUsage: require("../../models/LcAiUsage"),
+  };
+  await Promise.all(Object.values(models).map((m) => m.init()));
+  const settingsDoc = await models.LcSettings.getSettings();
+  // Support hours: open all day, so tests do not depend on when they run.
+  settingsDoc.supportHours.days.forEach((d) => Object.assign(d, ALL_DAY));
+  await settingsDoc.save();
+
+  const lc = await startLiveChatServer({
+    env: { JWT_SECRET: "test-secret", ...env },
+    mount: {
+      ai,
+      settingsCacheMs: 0,
+      publicLimiters: { contact: PASS, config: PASS },
+      verifyTurnstile: async ({ token }) => (token === "good-token" ? { ok: true } : { ok: false, reason: "failed" }),
+      ...mount,
+    },
+  });
+
+  let seq = 0;
+  const api = {
+    ...lc,
+    ai,
+    models,
+    mongod,
+    async setSettings(patch) {
+      await models.LcSettings.updateOne({ key: "default" }, { $set: patch });
+    },
+    async post(path, body) {
+      const res = await fetch(`${lc.url}/api/livechat${path}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return { status: res.status, body: await res.json().catch(() => ({})) };
+    },
+    // Fills the contact form like a real visitor and returns { visitorId, token }.
+    async submitContact(extra = {}) {
+      seq += 1;
+      const res = await api.post("/contact", {
+        name: "Emma Wilson",
+        email: `emma${seq}@example.com`,
+        phone: "",
+        consent: true,
+        turnstileToken: "good-token",
+        ...extra,
+      });
+      return { ...res.body, status: res.status };
+    },
+    // A chat socket for a visitor that has submitted the form.
+    chatSocket: (token, extra = {}) => lc.connect("/livechat", { auth: { chatToken: token, ...extra } }),
+    // emit with an acknowledgement
+    call: (socket, event, payload) =>
+      new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error(`no ack for ${event}`)), 3000);
+        const done = (reply) => {
+          clearTimeout(timer);
+          resolve(reply);
+        };
+        if (payload === undefined) socket.emit(event, done);
+        else socket.emit(event, payload, done);
+      }),
+    // A signed-in, online agent, so the team counts as available.
+    async onlineAgent(token = "admin-token") {
+      const socket = await lc.agent(token);
+      await socket.snapshotPromise;
+      await api.call(socket, "agent:status", { online: true });
+      return socket;
+    },
+    async close() {
+      await lc.close();
+      await mongoose.disconnect();
+      await mongod.stop();
+    },
+  };
+  return api;
+}
+
+module.exports = { startLiveChatServer, startChatServer, scriptedAi, once, sleep, dayKey, VISITOR_ID, ROLE_TOKENS };

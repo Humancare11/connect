@@ -7,10 +7,10 @@
 // Handshake auth: { visitorId, consent: true, referrer? }. The tracker only connects after the visitor accepted
 // cookies, and the server refuses a handshake that does not say so.
 const Bowser = require("bowser");
+const { verifyChatToken } = require("./chatToken");
 const { Country } = require("country-state-city");
 
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
-const EVENTS = ["visitor:page", "visitor:heartbeat"];
 const MAX_EVENT_BYTES = 2048;
 
 // Pages that are never tracked (same areas the site hides its public layout on, plus login and payment).
@@ -94,21 +94,43 @@ function countryCodeFor(name) {
   return countryCodeByName.get(name) || "";
 }
 
+const TRACKING_EVENTS = ["visitor:page", "visitor:heartbeat"];
+const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:typing"];
+const EVENTS = [...TRACKING_EVENTS, ...CHAT_EVENTS];
+const MAX_CHAT_MESSAGE_BYTES = 5000; // 1,000 characters can be up to 4 bytes each, plus JSON overhead
+
+// Normalises (payload, ack) for events a client may emit without a payload.
+const args = (a, b) => (typeof a === "function" ? [{}, a] : [a && typeof a === "object" ? a : {}, b]);
+const reply = (cb, payload) => {
+  if (typeof cb === "function") cb(payload);
+};
+
+// A socket can be a tracker (visitor accepted cookies: presence only), a chat client (holds a chat token from the
+// contact form), or both. Tracking never needs a token; chat never works without one.
 function setupVisitorNamespace(ns, ctx) {
   const { presence, helpers } = ctx;
 
   ns.use(async (socket, next) => {
     try {
       const auth = socket.handshake.auth || {};
-      const visitorId = String(auth.visitorId || "");
+      const tokenVisitorId = auth.chatToken ? verifyChatToken(auth.chatToken, ctx.env) : null;
+      if (auth.chatToken && !tokenVisitorId) return next(new Error("invalid_token"));
+      const tracking = auth.consent === true;
+      if (!tokenVisitorId && !tracking) {
+        // keep the original error order: a bad id is reported before a missing consent
+        return next(new Error(VISITOR_ID_RE.test(String(auth.visitorId || "")) ? "consent_required" : "invalid_visitor"));
+      }
+      const visitorId = tokenVisitorId || String(auth.visitorId || "");
       if (!VISITOR_ID_RE.test(visitorId)) return next(new Error("invalid_visitor"));
-      if (auth.consent !== true) return next(new Error("consent_required"));
+      if (tokenVisitorId && auth.visitorId && auth.visitorId !== tokenVisitorId) return next(new Error("invalid_visitor"));
       const ip = helpers.resolveSocketIp(socket, ctx.env);
       if (!ip) return next(new Error("invalid_visitor"));
       if (ctx.visitorIpCap.isFull(ip)) return next(new Error("too_many_connections"));
       if (await ctx.isIpBlocked(ip)) return next(new Error("blocked"));
       socket.data.visitorId = visitorId;
       socket.data.ip = ip;
+      socket.data.tracking = tracking;
+      socket.data.chat = Boolean(tokenVisitorId);
       return next();
     } catch {
       return next(new Error("server_error"));
@@ -116,54 +138,108 @@ function setupVisitorNamespace(ns, ctx) {
   });
 
   ns.on("connection", (socket) => {
-    const { visitorId, ip } = socket.data;
+    const { visitorId, ip, tracking, chat: chatEnabled } = socket.data;
     ctx.visitorIpCap.add(ip);
     const limiter = helpers.makeSocketLimiter({ windowMs: 10_000, max: 40 });
+    const userAgent = socket.handshake.headers?.["user-agent"];
 
-    // A visitor socket can only ever be a visitor: the only events it may send are the tracking events below,
-    // and there is no code path from here to agent data.
+    // Every event is checked against what this socket is allowed to do. A tracker cannot chat, a chat client
+    // without cookie consent cannot be tracked, and nothing here reaches agent data.
     helpers.installPacketGuard(socket, {
       events: EVENTS,
-      maxBytes: MAX_EVENT_BYTES,
+      maxBytes: (event) => (event === "chat:message" ? MAX_CHAT_MESSAGE_BYTES : MAX_EVENT_BYTES),
       limiter,
-      check: (s) => s.data.visitorId === visitorId,
+      check: (s, event) =>
+        s.data.visitorId === visitorId && (TRACKING_EVENTS.includes(event) ? s.data.tracking : s.data.chat),
     });
 
-    const isNew = !presence.get(visitorId);
-    const { source, referrer } = classifySource(socket.handshake.auth?.referrer);
-    presence.attach(visitorId, socket.id, {
-      ip,
-      ...parseUserAgent(socket.handshake.headers?.["user-agent"]),
-      source,
-      referrer,
-    });
+    if (chatEnabled) socket.join(`visitor:${visitorId}`);
 
-    if (isNew) {
-      // Server-side location from the IP. Never throws; an unknown IP simply leaves the location empty.
-      Promise.resolve(ctx.lookupLocation(ip))
-        .then((geo) => {
-          if (!geo || !presence.get(visitorId)) return;
-          presence.update(visitorId, {
-            geo: { city: geo.city || "", state: geo.state || "", country: geo.country || "", countryCode: countryCodeFor(geo.country) },
-          });
-        })
-        .catch(() => {});
+    if (tracking) {
+      const isNew = !presence.get(visitorId);
+      const { source, referrer } = classifySource(socket.handshake.auth?.referrer);
+      presence.attach(visitorId, socket.id, { ip, ...parseUserAgent(userAgent), source, referrer });
+      if (isNew) {
+        // Server-side location from the IP. Never throws; an unknown IP simply leaves the location empty.
+        Promise.resolve(ctx.lookupLocation(ip))
+          .then((geo) => {
+            if (!geo || !presence.get(visitorId)) return;
+            presence.update(visitorId, {
+              geo: { city: geo.city || "", state: geo.state || "", country: geo.country || "", countryCode: countryCodeFor(geo.country) },
+            });
+          })
+          .catch(() => {});
+      }
+
+      socket.on("visitor:page", (payload) => {
+        const path = cleanPath(payload?.path);
+        if (!path || !isTrackablePath(path)) return;
+        presence.setPage(visitorId, { path, title: cleanTitle(payload?.title) });
+      });
+      socket.on("visitor:heartbeat", () => {
+        presence.heartbeat(visitorId);
+      });
     }
 
-    socket.on("visitor:page", (payload) => {
-      const path = cleanPath(payload?.path);
-      if (!path || !isTrackablePath(path)) return;
-      presence.setPage(visitorId, { path, title: cleanTitle(payload?.title) });
-    });
+    if (chatEnabled) {
+      // Never log the error object or its message: it could carry patient text.
+      const safely = async (cb, fn) => {
+        try {
+          reply(cb, await fn());
+        } catch (err) {
+          console.error(`[livechat] chat event failed: ${err?.name || "Error"}`);
+          reply(cb, { ok: false, error: "server_error" });
+        }
+      };
 
-    socket.on("visitor:heartbeat", () => {
-      presence.heartbeat(visitorId);
-    });
+      socket.on("chat:resume", (a, b) => {
+        const [, cb] = args(a, b);
+        safely(cb, () => ctx.chat.resume(visitorId));
+      });
+
+      socket.on("chat:start", (a, b) => {
+        const [payload, cb] = args(a, b);
+        safely(cb, async () => {
+          const { source } = classifySource(socket.handshake.auth?.referrer);
+          const agent = parseUserAgent(userAgent);
+          const path = cleanPath(payload.path);
+          const known = presence.get(visitorId);
+          const geo = known ? null : await ctx.lookupLocation(ip);
+          return ctx.chat.startConversation(visitorId, {
+            ip,
+            source,
+            geo: geo ? { city: geo.city, state: geo.state, country: geo.country } : null,
+            device: { type: agent.device, os: agent.os, browser: agent.browser },
+            page: path && isTrackablePath(path) ? { path, title: cleanTitle(payload.title) } : null,
+          });
+        });
+      });
+
+      socket.on("chat:message", (a, b) => {
+        const [payload, cb] = args(a, b);
+        safely(cb, () => ctx.chat.sendMessage(visitorId, payload.text));
+      });
+
+      socket.on("chat:option", (a, b) => {
+        const [payload, cb] = args(a, b);
+        safely(cb, () => ctx.chat.pickOption(visitorId, String(payload.key || "").slice(0, 40)));
+      });
+
+      socket.on("chat:agent", (a, b) => {
+        const [, cb] = args(a, b);
+        safely(cb, () => ctx.chat.talkToAgent(visitorId));
+      });
+
+      // Typing carries a boolean only, never the text being typed.
+      socket.on("chat:typing", (a) => {
+        ctx.chat.relayTyping(visitorId, (a && typeof a === "object" ? a.typing : a) === true);
+      });
+    }
 
     socket.on("disconnect", () => {
       ctx.visitorIpCap.remove(ip);
       limiter.dispose(socket.id);
-      presence.detach(visitorId, socket.id);
+      if (tracking) presence.detach(visitorId, socket.id);
     });
   });
 }

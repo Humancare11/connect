@@ -16,6 +16,9 @@ const conversationSchema = new mongoose.Schema(
       default: "",
     },
     topic: { type: String, default: "", maxlength: 80 },
+    optionsUsed: { type: Boolean, default: false }, // quick-option cards are shown until one is picked
+    offlineRequested: { type: Boolean, default: false }, // asked for an agent while the team was offline
+    aiNoticeShown: { type: Boolean, default: false }, // the "AI unavailable" notice was shown in this chat
     source: { type: String, default: "", maxlength: 120 },
     aiSummary: ENC_FIELD,
     tags: [{ type: String, trim: true, maxlength: 40 }],

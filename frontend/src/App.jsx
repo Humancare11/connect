@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
@@ -17,6 +17,8 @@ import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
 import { TextWidget } from '@livechat/widget-react'
 import LiveChatTracker from "./features/livechat/LiveChatTracker";
+import LiveChatWidgetLoader from "./features/livechat/LiveChatWidgetLoader";
+import { isTrackablePath as isPublicPagePath } from "./features/livechat/useVisitorTracker";
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -1125,6 +1127,23 @@ function DoctorEnrollmentsWrapper() {
   );
 }
 
+// Cookie banner on public pages (not admin, login, payment, patient dashboard or video-call pages). Mounted only
+// in the browser after hydration, so prerendered HTML, SEO and layout are unchanged; the banner itself is
+// position:fixed, so it causes no layout shift.
+const subscribeNever = () => () => {};
+
+function SiteCookieBanner() {
+  const { pathname } = useLocation();
+  // false while prerendering and hydrating, true afterwards (no setState-in-effect needed)
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  if (!mounted || !isPublicPagePath(pathname) || pathname === "/cookies") return null;
+  return (
+    <Suspense fallback={null}>
+      <CookieBanner />
+    </Suspense>
+  );
+}
+
 export function AppLayout() {
   const location = useLocation();
 
@@ -1146,8 +1165,13 @@ export function AppLayout() {
       <ScrollToTop />
       <RouteSeo />
       <SessionTimeoutManager />
-      <TextWidget organizationId="d29e3595-c3ba-48b3-9229-3a4835984ec7" />
+      {/* The Text widget is replaced by our own chat when VITE_LIVECHAT_ENABLED=true (removed for good in Phase 5). */}
+      {import.meta.env.VITE_LIVECHAT_ENABLED !== "true" && (
+        <TextWidget organizationId="d29e3595-c3ba-48b3-9229-3a4835984ec7" />
+      )}
       <LiveChatTracker />
+      <LiveChatWidgetLoader />
+      <SiteCookieBanner />
       {!hideLayout && <Header />}
 
       <Suspense

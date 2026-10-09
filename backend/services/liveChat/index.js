@@ -3,7 +3,7 @@
 // mountLiveChat() is the only thing server.js calls. It does nothing unless LIVECHAT_ENABLED=true and the config
 // is valid (see utils/liveChat/config.js), so with the kill switch off no route, namespace, timer or model is
 // registered and /livechat, /livechat-admin and /api/admin/livechat do not exist.
-const { checkLiveChatConfig, intFromEnv } = require("../../utils/liveChat/config");
+const { checkLiveChatConfig, intFromEnv, readLimits } = require("../../utils/liveChat/config");
 const { normalizeIp, parseTrustProxy } = require("../../utils/clientIp");
 const { makeSocketLimiter } = require("../../utils/socketRateLimit");
 const { MemoryPresenceStore, DEFAULT_GRACE_MS } = require("./presence");
@@ -69,7 +69,7 @@ function createIpCap(max) {
 //   - the event name must be on the namespace's allow-list,
 //   - no binary payloads, and the JSON size must be under maxBytes,
 //   - per-socket rate limit,
-//   - `check(socket)` re-validates the caller's role on every event (it may be async).
+//   - `check(socket, event)` re-validates the caller's role on every event (it may be async).
 // A failing event gets an "error" back and its handler never runs. `onDeny` runs for role failures so the
 // namespace can disconnect the socket.
 function installPacketGuard(socket, { events, maxBytes, limiter, check }) {
@@ -88,9 +88,10 @@ function installPacketGuard(socket, { events, maxBytes, limiter, check }) {
       } catch {
         return next(new Error("invalid_payload"));
       }
-      if (size > maxBytes) return next(new Error("payload_too_large"));
+      const limit = typeof maxBytes === "function" ? maxBytes(event) : maxBytes;
+      if (size > limit) return next(new Error("payload_too_large"));
       if (!limiter.allow(socket.id)) return next(new Error("rate_limited"));
-      const verdict = await check(socket);
+      const verdict = await check(socket, event);
       if (verdict !== true) {
         next(new Error("forbidden"));
         socket.disconnect(true);
@@ -147,6 +148,40 @@ function createIpBlockCheck() {
   };
 }
 
+// Which agents are online right now: the Online/Offline switch is on AND at least one admin socket is connected.
+// In memory, behind a tiny interface (same reason as presence.js).
+function createAgentRegistry() {
+  const users = new Map(); // userId -> { online, sockets: Set }
+  const entry = (userId) => {
+    if (!users.has(userId)) users.set(userId, { online: false, explicit: false, sockets: new Set() });
+    return users.get(userId);
+  };
+  return {
+    connect(userId, socketId, online) {
+      const e = entry(userId);
+      e.sockets.add(socketId);
+      // The stored flag only seeds the first socket; a switch flipped meanwhile wins.
+      if (e.sockets.size === 1 && !e.explicit) e.online = Boolean(online);
+    },
+    disconnect(userId, socketId) {
+      const e = users.get(userId);
+      if (!e) return;
+      e.sockets.delete(socketId);
+      if (!e.sockets.size) users.delete(userId);
+    },
+    setOnline(userId, online) {
+      const e = entry(userId);
+      e.online = Boolean(online);
+      e.explicit = true;
+    },
+    availableCount() {
+      let n = 0;
+      for (const e of users.values()) if (e.online && e.sockets.size) n += 1;
+      return n;
+    },
+  };
+}
+
 // ── Mount ──────────────────────────────────────────────────────────────────────
 
 // Options (all optional; tests use them to avoid real sessions / DB / geo lookups):
@@ -190,10 +225,57 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     helpers: { parseCookies, resolveSocketIp, installPacketGuard, makeSocketLimiter },
   };
 
+  // Phase 2: chat services. Everything here can be replaced in tests (options.ai, options.loadSettings, ...).
+  const models = options.models || {
+    LcVisitor: require("../../models/LcVisitor"),
+    LcConversation: require("../../models/LcConversation"),
+    LcMessage: require("../../models/LcMessage"),
+    LcSettings: require("../../models/LcSettings"),
+    LcAiUsage: require("../../models/LcAiUsage"),
+  };
+  const settingsCacheMs = options.settingsCacheMs ?? 5000;
+  let cached = { at: 0, value: null };
+  const loadSettings =
+    options.loadSettings ||
+    (async () => {
+      if (cached.value && Date.now() - cached.at < settingsCacheMs) return cached.value;
+      const doc = await models.LcSettings.getSettings();
+      cached = { at: Date.now(), value: doc.toObject ? doc.toObject() : doc };
+      return cached.value;
+    });
+  const { createAiService } = require("./aiService");
+  const { createLimits } = require("./limits");
+  const { createChatService } = require("./chatService");
+  const { verifyTurnstile } = require("./turnstile");
+  const limits = createLimits({ models, readLimits: () => readLimits(env) });
+  const agents = createAgentRegistry();
+  const chat = createChatService({
+    models,
+    loadSettings,
+    ai: options.ai || createAiService({ env }),
+    limits,
+    presence,
+    agents,
+    emitToVisitor: (visitorId, event, payload) => visitorNs.to(`visitor:${visitorId}`).emit(event, payload),
+    emitToAgents: (event, payload) => adminNs.to("agents").emit(event, payload),
+  });
+  Object.assign(ctx, { chat, agents, limits, loadSettings });
+
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
   require("./adminNamespace").setupAdminNamespace(adminNs, ctx);
 
   if (app) {
+    app.use(
+      "/api/livechat",
+      require("../../routes/liveChatPublic").create({
+        chat,
+        loadSettings,
+        verifyTurnstile: options.verifyTurnstile || verifyTurnstile,
+        isIpBlocked: ctx.isIpBlocked,
+        env,
+        limiters: options.publicLimiters,
+      })
+    );
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
@@ -205,6 +287,9 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
 
   return {
     presence,
+    chat,
+    agents,
+    limits,
     shutdown() {
       presence.clear();
       adminNs.disconnectSockets(true);
@@ -227,4 +312,4 @@ async function seedLiveChatDefaults(env = process.env) {
   return true;
 }
 
-module.exports = { mountLiveChat, seedLiveChatDefaults, resolveSocketIp, parseCookies, createIpCap };
+module.exports = { mountLiveChat, seedLiveChatDefaults, resolveSocketIp, parseCookies, createIpCap, createAgentRegistry };

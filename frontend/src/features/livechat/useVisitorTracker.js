@@ -6,7 +6,8 @@ import { useLocation } from "react-router-dom";
 // Privacy / performance rules:
 //   - Does nothing unless VITE_LIVECHAT_ENABLED === "true" (build-time kill switch for the browser side; the
 //     server has its own LIVECHAT_ENABLED).
-//   - Starts only when localStorage.cookieConsent === "accepted". No consent, no visitor id, no connection.
+//   - Starts only when localStorage.cookieConsent === "accepted". No consent, no tracking connection. The tracker
+//     never creates a visitor id without consent; it reuses the id the chat widget stored if the visitor chatted.
 //   - Client-side only and after the browser is idle, so prerendering, SEO and LCP are unaffected. The Socket.IO
 //     client is loaded with a dynamic import at that moment, not in the main bundle.
 //   - Only the page path (no query string or hash), page title and referrer are sent. The server adds IP and
@@ -27,7 +28,6 @@ const UNTRACKED_PREFIXES = [
 const FATAL_ERRORS = ["Invalid namespace", "consent_required", "invalid_visitor", "blocked"];
 
 const HEARTBEAT_MS = 25_000;
-const CONSENT_POLL_MS = 4_000;
 
 export const isTrackablePath = (pathname) => {
   const lower = String(pathname || "/").toLowerCase();
@@ -82,7 +82,6 @@ export default function useVisitorTracker() {
     if (!ENABLED || typeof window === "undefined") return undefined;
 
     let cancelIdle = null;
-    let pollTimer = null;
     let heartbeatTimer = null;
     let disposed = false;
 
@@ -131,8 +130,6 @@ export default function useVisitorTracker() {
 
     const check = () => {
       if (consentAccepted()) {
-        window.clearInterval(pollTimer);
-        pollTimer = null;
         if (!socketRef.current) schedule();
       } else if (socketRef.current) {
         stop(); // consent withdrawn
@@ -140,21 +137,6 @@ export default function useVisitorTracker() {
     };
 
     check();
-    // The cookie banner lives in the same tab and does not announce its choice, so while the visitor has not
-    // decided yet, look again every few seconds. Stops as soon as a choice exists.
-    const undecided = () => {
-      try {
-        return !localStorage.getItem("cookieConsent");
-      } catch {
-        return false;
-      }
-    };
-    if (!consentAccepted() && undecided()) {
-      pollTimer = window.setInterval(() => {
-        if (!undecided()) window.clearInterval(pollTimer);
-        check();
-      }, CONSENT_POLL_MS);
-    }
 
     // Closing or leaving the tab: tell the server right away (it still waits its grace period before removing
     // the visitor). A page restored from the back/forward cache reconnects.
@@ -162,17 +144,20 @@ export default function useVisitorTracker() {
     const onPageShow = (event) => {
       if (event.persisted && consentAccepted()) socketRef.current?.connect();
     };
+    // The cookie banner announces its choice in this tab (hc:cookie-consent); "storage" covers other tabs.
+    const onConsent = () => check();
     const onStorage = (event) => {
       if (event.key === "cookieConsent") check();
     };
     window.addEventListener("pagehide", onPageHide);
     window.addEventListener("pageshow", onPageShow);
     window.addEventListener("storage", onStorage);
+    window.addEventListener("hc:cookie-consent", onConsent);
 
     return () => {
       disposed = true;
       cancelIdle?.();
-      window.clearInterval(pollTimer);
+      window.removeEventListener("hc:cookie-consent", onConsent);
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
       window.removeEventListener("storage", onStorage);

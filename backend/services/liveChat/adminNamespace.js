@@ -80,6 +80,11 @@ function setupAdminNamespace(ns, ctx) {
     socket.join("agents");
     socket.join(`agent:${identity.id}`);
     socket.emit("visitors:snapshot", snapshot());
+    // Register as connected (availability = Online switch AND a live socket), then tell the agent their status.
+    ctx.agentStore
+      .get(identity.id)
+      .then((profile) => socket.connected && ctx.agents.connect(identity.id, socket.id, profile?.online))
+      .catch(() => socket.connected && ctx.agents.connect(identity.id, socket.id, false));
     sendAgentStatus(socket).catch(() => {});
 
     socket.on("visitors:get", (ack) => {
@@ -92,6 +97,7 @@ function setupAdminNamespace(ns, ctx) {
       try {
         const online = payload?.online === true;
         const profile = await ctx.agentStore.setOnline(identity.id, online);
+        ctx.agents.setOnline(identity.id, Boolean(profile?.online));
         const state = { online: Boolean(profile?.online), displayName: profile?.displayName || "" };
         ns.to(`agent:${identity.id}`).emit("agent:status", state);
         if (typeof ack === "function") ack({ ok: true, ...state });
@@ -102,6 +108,7 @@ function setupAdminNamespace(ns, ctx) {
 
     socket.on("disconnect", () => {
       ctx.adminIpCap.remove(ip);
+      ctx.agents.disconnect(identity.id, socket.id);
       limiter.dispose(socket.id);
     });
   });
