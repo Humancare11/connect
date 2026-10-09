@@ -265,7 +265,8 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       const state = (await lc.call(socket, "chat:resume")).conversation;
       assert.equal(state.mode, "queue");
       assert.equal(state.offline, true);
-      assert.match(state.messages.at(-1).text, /offline/i);
+      assert.match(state.messages.at(-1).text, /^Thanks, .+! We've received your question and details\. Our team will get back to you at .+@.+ shortly\.$/);
+      assert.doesNotMatch(state.messages.at(-1).text, /offline/i);
       const conv = await lc.models.LcConversation.findOne({ conversationId: conversation.conversationId }).lean();
       assert.equal(conv.offlineRequested, true);
       socket.close();

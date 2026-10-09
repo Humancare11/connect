@@ -11,6 +11,7 @@ const SUPPORT_HOURS = {
 const QUICK_OPTIONS = [
   {
     key: "consultation",
+    link: "/online-doctor-consultation",
     label: "Online Consultation with Prescription",
     icon: "stethoscope",
     reply:
@@ -18,6 +19,7 @@ const QUICK_OPTIONS = [
   },
   {
     key: "refill",
+    link: "/online-prescription-refills",
     label: "Prescription & Prescription refill",
     icon: "pill",
     reply:
@@ -25,6 +27,7 @@ const QUICK_OPTIONS = [
   },
   {
     key: "second_opinion",
+    link: "/online-second-medical-opinion",
     label: "Medical Advice/Second Opinion",
     icon: "clipboard",
     reply:
@@ -32,6 +35,7 @@ const QUICK_OPTIONS = [
   },
   {
     key: "sick_notes",
+    link: "/doctors-note",
     label: "Sick Notes",
     icon: "document",
     reply:
@@ -87,8 +91,9 @@ const DEFAULT_SETTINGS = {
   dailySpendCapUsd: 3,
   unavailableMessage:
     "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.",
+  // Shown when no agent can take the chat right now. {firstName} and {email} are filled in. Never says "offline".
   offlineMessage:
-    "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
+    "Thanks, {firstName}! We've received your question and details. Our team will get back to you at {email} shortly.",
 };
 
 module.exports = { DAYS, SUPPORT_HOURS, QUICK_OPTIONS, PRICES, CANNED_REPLIES, DEFAULT_SETTINGS };

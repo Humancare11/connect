@@ -10,6 +10,9 @@
 const crypto = require("crypto");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
+const { DEFAULT_SETTINGS } = require("./settingsDefaults");
+
+const DEFAULT_NO_AGENT_TEXT = DEFAULT_SETTINGS.offlineMessage;
 
 const ID_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
@@ -94,6 +97,7 @@ function createChatService({
   announce = () => {}, // tells agents a conversation changed (agentService builds the list row)
   followUp = null, // offline follow-up email ({ send(conv) })
   abuse = null, // abuse alerts ({ noteChat, noteDailyLimit })
+  sitePages = require("./sitePages").createSitePages(), // the pages the AI may link to (allowlist)
   leaveGraceMs = 30_000, // a visitor with no connection for this long has left
   now = () => Date.now(),
   log = () => {},
@@ -194,13 +198,17 @@ function createChatService({
       text: decryptLiveChatText(m.text),
       at: m.createdAt,
       ...(m.sender === "agent" ? { agentName: m.agentName || conv.agentName || "" } : {}),
+      ...(m.links?.length ? { links: m.links.map((l) => ({ title: l.title, url: l.url })) } : {}),
       ...(m.fileId && files.get(String(m.fileId)) ? { file: { name: files.get(String(m.fileId)).name, mime: files.get(String(m.fileId)).mime, size: files.get(String(m.fileId)).size } } : {}),
     }));
     const canRequestAgent = conv.mode === "ai";
+    // A patient with an agent (or waiting for one) can hand the chat back to the AI, unless the AI is switched off.
+    const canSwitchToAi = (conv.mode === "live" || conv.mode === "queue") && settings.aiMode !== "ai_off";
     return {
       conversationId: conv.conversationId,
       mode: conv.mode,
       canRequestAgent,
+      canSwitchToAi,
       optionsUsed: Boolean(conv.optionsUsed),
       options:
         conv.mode === "ai" && !conv.optionsUsed
@@ -232,6 +240,7 @@ function createChatService({
       text,
       at: doc.createdAt,
       ...(sender === "agent" ? { agentName: extra.agentName || conv.agentName || "" } : {}),
+      ...(stored.links?.length ? { links: stored.links } : {}),
       ...(file ? { file } : {}),
     };
     // Internal notes and team-only lines are for agents only; they are never sent to the patient.
@@ -366,7 +375,7 @@ function createChatService({
         ? `Welcome back, ${first}!`
         : available
           ? `Welcome back, ${first}! We're reconnecting you with an agent.`
-          : `Welcome back, ${first}! ${settings.offlineMessage || "Our team is offline right now."}`;
+          : `Welcome back, ${first}! ${noAgentText(won, settings)}`;
     await addMessage(won, "system", welcome);
     setActivity(visitorId, won);
     emitToAgents("chat:reopened", { conversationId: won.conversationId, visitorId, everLive: Boolean(won.everLive), name: first, mode: target });
@@ -585,7 +594,9 @@ function createChatService({
     let result;
     try {
       const history = (await recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
-      result = await ai.generateReply({ settings, history });
+      // Pages that fit what the patient just wrote; the model may only point at these.
+      const lastPatient = history.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
+      result = await ai.generateReply({ settings, history, pages: sitePages.candidatesFor(lastPatient).map((p) => ({ title: p.title, url: p.url })) });
     } catch {
       result = { ok: false, kind: "api_error" };
     }
@@ -600,7 +611,9 @@ function createChatService({
       const update = { $inc: { aiReplyCount: 1 } };
       if (!current.topic && result.topic) update.$set = { topic: result.topic };
       await LcConversation.updateOne({ _id: current._id }, update);
-      await addMessage(current, "ai", result.reply);
+      // Only pages on the server's own list reach the patient (an invented url is dropped).
+      const links = sitePages.filterLinks(result.links);
+      await addMessage(current, "ai", result.reply, links.length ? { links } : {});
       if (result.handoff && handoffAllowed(settings, result.handoffReason)) {
         await requestAgent(await LcConversation.findById(current._id), { first, settings, reason: result.handoffReason });
       }
@@ -661,6 +674,20 @@ function createChatService({
     return true;
   }
 
+  // What the patient reads when no agent can take the chat right now: a thank-you with their own first name and
+  // email, never a word about the team being offline. (The two older default texts are replaced on the fly.)
+  const LEGACY_NO_AGENT_TEXTS = new Set([
+    "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
+    "Our team is offline right now. We've saved your request and will reply by email.",
+  ]);
+  function noAgentText(conv, settings) {
+    const first = firstNameOf(decryptLiveChatText(conv?.contact?.name));
+    const email = decryptLiveChatText(conv?.contact?.email);
+    let template = String(settings?.offlineMessage || "");
+    if (!template || LEGACY_NO_AGENT_TEXTS.has(template)) template = DEFAULT_NO_AGENT_TEXT;
+    return template.replace(/\{\s*first\s*name\s*\}/gi, first).replace(/\{\s*email\s*\}/gi, email || "your email");
+  }
+
   async function requestAgent(conv, { first, settings, reason } = {}) {
     if (conv.mode === "queue" || conv.mode === "live") return { ok: true };
     const cfg = settings || (await loadSettings());
@@ -674,7 +701,7 @@ function createChatService({
     if (available) {
       await addMessage(fresh, "ai", `Thanks, ${name}! Connecting you with a live agent now. You can keep typing your question here.`);
     } else {
-      await addMessage(fresh, "ai", cfg.offlineMessage || "Our team is offline right now. We've saved your request and will reply by email.");
+      await addMessage(fresh, "ai", noAgentText(fresh, cfg));
     }
     setActivity(conv.visitorId, fresh);
     // The team is offline: one follow-up email goes to the patient (no health details; never blocks the chat).
@@ -709,6 +736,34 @@ function createChatService({
     });
   }
 
+  // Header button "Switch to AI": the chat goes back to the AI at once. A chat that was ever live stays in Live agent
+  // chats (group "Back with the AI"); the agent holding it sees a team-only line and the AI carries on.
+  async function switchToAi(visitorId) {
+    const loaded = await loadOpenForMessage(visitorId);
+    if (loaded.error) return { ok: false, error: loaded.error };
+    return withLock(loaded.conv.conversationId, async () => {
+      const conv = await LcConversation.findById(loaded.conv._id);
+      if (!conv || (conv.mode !== "live" && conv.mode !== "queue")) return { ok: false, error: "not_available" };
+      const settings = await loadSettings();
+      if (settings.aiMode === "ai_off") return { ok: false, error: "ai_off" };
+      if (!limits.allowMessage(visitorId)) return { ok: false, error: "rate_limited" };
+      const previous = { assigneeId: conv.assigneeId, agentName: conv.agentName };
+      const switched = await LcConversation.findOneAndUpdate(
+        { _id: conv._id, mode: { $in: ["live", "queue"] } },
+        { $set: { mode: "ai", assigneeId: null, agentName: "", offlineRequested: false, invited: false } },
+        { returnDocument: "after" }
+      );
+      if (!switched) return { ok: false, error: "not_available" };
+      await addMessage(switched, "system", "Patient switched to the AI assistant", { internal: true });
+      await addMessage(switched, "system", "You're now chatting with Humancare AI. You can ask for a live agent at any time.");
+      setActivity(switched.visitorId, switched);
+      if (previous.assigneeId) emitToAgents("chat:handed-back", { conversationId: switched.conversationId, agentName: previous.agentName || "" });
+      announce(switched);
+      await pushState(switched);
+      return { ok: true };
+    });
+  }
+
   // Quick option card: its label becomes the patient's message; the cards then disappear for good.
   async function pickOption(visitorId, key) {
     const loaded = await loadOpenForMessage(visitorId);
@@ -729,7 +784,8 @@ function createChatService({
       if (key === "live") {
         await requestAgent(fresh, { first: firstNameOf(decryptLiveChatText(loaded.visitor.name)), settings });
       } else if (fresh.mode === "ai" && option.reply) {
-        await addMessage(fresh, "ai", option.reply);
+        const link = option.link ? sitePages.linkFor(option.link) : null;
+        await addMessage(fresh, "ai", option.reply, link ? { links: [link] } : {});
         await pushState(fresh);
       } else {
         await pushState(fresh);
@@ -750,6 +806,8 @@ function createChatService({
     sendMessage,
     pickOption,
     talkToAgent,
+    switchToAi,
+    noAgentText,
     relayTyping,
     // used by the agent side (agentService) and the socket layer
     withLock,

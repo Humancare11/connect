@@ -66,6 +66,7 @@ export default function AdminLiveSettings() {
   const [audit, setAudit] = useState([]);
   const [canned, setCanned] = useState([]);
   const [loadError, setLoadError] = useState("");
+  const [linkPages, setLinkPages] = useState([]);
   const [version, setVersion] = useState(0);
   const [cannedError, setCannedError] = useState("");
 
@@ -78,6 +79,7 @@ export default function AdminLiveSettings() {
         if (cancelled) return;
         setForm((current) => current || pick(s.data.settings));
         setCanEdit(Boolean(s.data.canEdit));
+        setLinkPages(s.data.linkPages || []);
         setAudit(a.data.entries || []);
         setCanned(c.data.replies || []);
       })
@@ -263,8 +265,9 @@ export default function AdminLiveSettings() {
               <ErrorText errors={errors} name="unavailableMessage" />
             </div>
             <div className="lcp-field">
-              <label htmlFor="offmsg">Message when the team is offline</label>
+              <label htmlFor="offmsg">Message when no agent is available</label>
               <textarea id="offmsg" value={form.offlineMessage} maxLength={600} onChange={(e) => set("offlineMessage", e.target.value)} />
+              <span className="lcp-help">Use {"{firstName}"} and {"{email}"}. Patients also get one follow-up email. Avoid saying the team is offline.</span>
               <ErrorText errors={errors} name="offlineMessage" />
             </div>
             <div className="lcp-field">
@@ -355,12 +358,23 @@ export default function AdminLiveSettings() {
               {o.key === "live" ? (
                 <span className="lcp-help">This option sends the patient to a live agent, so it has no reply text.</span>
               ) : (
-                <textarea value={o.reply} maxLength={1200} aria-label="Reply" placeholder="What the AI answers when this option is picked" onChange={(e) => setOption(i, { reply: e.target.value })} />
+                <>
+                  <textarea value={o.reply} maxLength={1200} aria-label="Reply" placeholder="What the AI answers when this option is picked" onChange={(e) => setOption(i, { reply: e.target.value })} />
+                  <select value={o.link || ""} aria-label="Page button" onChange={(e) => setOption(i, { link: e.target.value })}>
+                    <option value="">No page button</option>
+                    {linkPages.map((p) => (
+                      <option key={p.url} value={p.url}>
+                        Page button: {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </>
               )}
               <ErrorText errors={errors} name={`quickOptions.${i}.key`} />
               <ErrorText errors={errors} name={`quickOptions.${i}.label`} />
               <ErrorText errors={errors} name={`quickOptions.${i}.icon`} />
               <ErrorText errors={errors} name={`quickOptions.${i}.reply`} />
+              <ErrorText errors={errors} name={`quickOptions.${i}.link`} />
             </div>
           ))}
         </div>

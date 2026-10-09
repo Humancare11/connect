@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
@@ -21,7 +22,34 @@ const timeOf = (iso) => {
 const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase() || "HS";
 
-function Message({ message }) {
+// Buttons to real pages of this site (the server only sends pages from its own list). A plain click moves within the
+// site (client-side routing), so the widget and the conversation stay alive on the next page.
+function PageLinks({ links, onNavigate }) {
+  const navigate = useNavigate();
+  if (!links?.length) return null;
+  return (
+    <div className="lcw-links">
+      {links.map((link) => (
+        <a
+          key={link.url}
+          className="lcw-link"
+          href={link.url}
+          onClick={(event) => {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            navigate(link.url);
+            onNavigate?.();
+          }}
+        >
+          <span>{link.title}</span>
+          <span aria-hidden="true">{link.url === "/appointment-booking" ? "Book →" : "Learn more & book →"}</span>
+        </a>
+      ))}
+    </div>
+  );
+}
+
+function Message({ message, onNavigate }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
@@ -50,6 +78,7 @@ function Message({ message }) {
           {message.text}
           <span className="lcw-meta">{timeOf(message.at)}</span>
         </div>
+        <PageLinks links={message.links} onNavigate={onNavigate} />
       </div>
     </div>
   );
@@ -97,16 +126,22 @@ export default function LiveChatWidget() {
     if (ok) setDraft("");
   };
 
-  let status = "AI Healthcare Coordinator";
-  if (waiting) status = conversation.offline ? "Team offline · we'll email you" : "Connecting you with a live agent…";
+  // Nothing here ever says the team is offline.
+  let status = "Humancare AI · Online";
+  if (waiting) status = conversation.offline ? "Message received" : "Connecting you with a live agent…";
   if (withAgent) status = "Live agent · Humancare support";
+
+  // On a phone the window covers the page: after a page link it folds away so the patient can read the page.
+  const afterNavigate = () => {
+    if (window.matchMedia?.("(max-width: 520px)").matches) setOpen(false);
+  };
 
   const locked = phase !== "chat" || !conversation || ended;
 
   return (
     <div className="lcw-root">
       {open && (
-        <section className="lcw-window" role="dialog" aria-label="Humancare chat">
+        <section className="lcw-window" role="dialog" aria-label="Humancare chat" data-lenis-prevent>
           <header className="lcw-head">
             <div className="lcw-av lcw-av--lg">
               {withAgent ? initialsOf(agentName) : "HC"}
@@ -129,6 +164,15 @@ export default function LiveChatWidget() {
                 <span>Talk to live agent</span>
               </button>
             )}
+            {phase === "chat" && !conversation?.canRequestAgent && conversation?.canSwitchToAi && (
+              <button type="button" className="lcw-live" onClick={chat.switchToAi} title="Switch back to the AI assistant">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <rect x="4" y="7" width="16" height="12" rx="3" />
+                  <path d="M12 7V4M9 13h.01M15 13h.01" />
+                </svg>
+                <span>Switch to AI</span>
+              </button>
+            )}
             <button type="button" className="lcw-x" onClick={() => setOpen(false)} aria-label="Minimize chat">
               –
             </button>
@@ -137,14 +181,14 @@ export default function LiveChatWidget() {
             </button>
           </header>
 
-          <div className="lcw-body" ref={bodyRef} aria-live="polite">
+          <div className="lcw-body" ref={bodyRef} aria-live="polite" data-lenis-prevent>
             {phase === "form" && <ContactForm onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
             {phase === "chat" && !conversation && <div className="lcw-sys">Starting your chat…</div>}
             {phase === "chat" && conversation && (
               <>
                 {conversation.messages.map((message) => (
-                  <Message key={message.id} message={message} />
+                  <Message key={message.id} message={message} onNavigate={afterNavigate} />
                 ))}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
                 {ended && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}

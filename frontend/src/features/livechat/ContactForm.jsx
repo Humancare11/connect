@@ -24,6 +24,7 @@ export default function ContactForm({ onSubmit, reply = false }) {
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [token, setToken] = useState("");
+  const [challenge, setChallenge] = useState(false); // true only while Cloudflare needs the person to act
   const widgetRef = useRef(null);
   const widgetId = useRef(null);
   const siteKey = turnstileSiteKey();
@@ -43,6 +44,7 @@ export default function ContactForm({ onSubmit, reply = false }) {
         setErrors((e) => (e.captcha ? { ...e, captcha: undefined } : e));
       },
       onExpire: () => setToken(""),
+      onInteractive: setChallenge,
       onError: () => setErrors((e) => ({ ...e, captcha: "Verification failed to load. Please reload the page." })),
     })
       .then((renderedId) => {
@@ -121,7 +123,7 @@ export default function ContactForm({ onSubmit, reply = false }) {
         </label>
       </div>
 
-      {siteKey ? <div ref={widgetRef} className="lcw-captcha" /> : <span className="lcw-err">Chat is not available right now. Please try again later.</span>}
+      {siteKey ? <div ref={widgetRef} className={`lcw-captcha${challenge ? " is-active" : ""}`} /> : <span className="lcw-err">Chat is not available right now. Please try again later.</span>}
 
       {firstError && (
         <span className="lcw-err" role="alert">

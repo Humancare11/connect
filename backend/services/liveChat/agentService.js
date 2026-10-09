@@ -628,7 +628,7 @@ function createAgentService({
           "system",
           available
             ? "Your agent is no longer available. We're reconnecting you with another agent…"
-            : settings.offlineMessage || "Our team is offline right now. We've saved your request and will reply by email."
+            : chat.noAgentText(queued, settings)
         );
         await chat.addMessage(queued, "system", `${previousName} went offline. The chat is back in the queue.`, { internal: true });
         chat.setActivity(queued.visitorId, queued);

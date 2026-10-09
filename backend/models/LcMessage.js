@@ -12,6 +12,8 @@ const messageSchema = new mongoose.Schema(
     internal: { type: Boolean, default: false }, // team-only line (e.g. "Super Admin took over from Sam"); never sent to the patient
     text: ENC_FIELD,
     fileId: { type: mongoose.Schema.Types.ObjectId, ref: "LcFile", default: null },
+    // Site pages shown as buttons under an AI reply (titles and urls come from the server allowlist, not patient data).
+    links: [{ _id: false, title: { type: String, maxlength: 120 }, url: { type: String, maxlength: 200 } }],
   },
   { timestamps: true }
 );

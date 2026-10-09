@@ -17,6 +17,20 @@ Rollback: set both to `false`, rebuild the frontend, restart the backend. The Te
 
 With `LIVECHAT_ENABLED` unset/false AND `VITE_LIVECHAT_ENABLED` unset/false: the Text widget is rendered, no live chat routes, sockets, widget, tracker or contact form exist, no site-wide cookie banner (only the old /cookies page), and no Live Chat group in the admin sidebar. Two small things are always present: the DB-IP attribution link in the footer, and a live chat row in the retention settings (nothing to delete while the module is off). Both flags must be changed together.
 
+## Patient experience rules (local-testing round)
+
+- The patient is never told the team is "offline" and never sees support hours. With no agent available the chat shows: "Thanks, {first name}! We've received your question and details. Our team will get back to you at {email} shortly." (setting "Message when no agent is available", placeholders `{firstName}` and `{email}`; the two older "team is offline" defaults are replaced automatically). One follow-up email goes out with no hours and no health details; admins still see the request in the Queue. Header status: "Humancare AI · Online" with the AI, "Message received" after the thank-you.
+- Header buttons: "Talk to live agent" is always there while with the AI. With a live agent (or while waiting) there is "Switch to AI": the chat goes back to the AI at once, the agent sees "Patient switched to the AI assistant", and a chat that was ever live stays in Live agent chats under "Back with the AI". Hidden when AI mode is "AI off".
+- Page links: the AI can attach up to 3 buttons to a reply. The allowlist is `backend/data/liveChatSitePages.json`, built from `frontend/src/data/searchIndex.js` (categories, specialties, conditions) plus service pages and `/appointment-booking`, keeping only routes that are active in `App.jsx`. After changing routes or the taxonomy run `node backend/scripts/buildLiveChatSitePages.js` (a test fails if the file is out of date). The model is shown only the pages that fit the patient's words and the server drops any url not on the list; titles come from the list. Quick options can have a "Page button" (AI agent settings). Buttons use client-side routing, so the chat stays open on the next page (on a phone the window folds away so the page can be read).
+- Scrolling: the site's smooth scroller (Lenis) swallows wheel events inside nested scroll areas unless the area carries `data-lenis-prevent`; the widget window and message area have it. Do not remove it.
+- Turnstile uses appearance "interaction-only": nothing shows unless Cloudflare needs the person to act. The "Success! For testing only" box only comes from Cloudflare's test keys (the development fallback key); a real `VITE_TURNSTILE_SITE_KEY` never shows it.
+
+## Location (GeoIP) and the real client IP
+
+- Location comes from the free DB-IP "IP to City Lite" file, never a web service. Download https://db-ip.com/db/download/ip-to-city-lite (monthly `.mmdb.gz`, direct form `https://download.db-ip.com/free/dbip-city-lite-YYYY-MM.mmdb.gz`), unzip, and save as `backend/data/dbip-city-lite.mmdb` (git-ignored) or set `GEOIP_DB_PATH`. Production: put the same file on the server and set `GEOIP_DB_PATH` to it; replacing the file is picked up without a restart. A clear warning is logged at startup when it is missing.
+- On localhost the IP is `::1` / `127.0.0.1`, which has no location. Development only: set `LIVECHAT_DEV_FAKE_IP=<a real public IP>` in `backend/.env` (ignored when `NODE_ENV=production` and when the value is not a public address; a warning shows at startup when it is active).
+- Behind Render/Nginx the visitor's address is read from `X-Forwarded-For` according to `TRUST_PROXY` (default 1 hop; use 2 for Cloudflare/Render + Nginx; `false` when nothing is in front). `CF-Connecting-IP` is only used with `USE_CLOUDFLARE_HEADERS=true`.
+
 ## Who can do what
 
 - Agents are users with role `admin` or `superadmin`. `employeeadmin` and `partner` are not agents.

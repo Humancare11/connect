@@ -1,0 +1,1722 @@
+[
+ {
+  "type": "service",
+  "url": "/appointment-booking",
+  "title": "Book an appointment",
+  "keywords": [
+   "book",
+   "booking",
+   "appointment",
+   "schedule",
+   "visit",
+   "see a doctor",
+   "how to book"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/medical-services",
+  "title": "All medical services",
+  "keywords": [
+   "services",
+   "what do you treat",
+   "what can you treat"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/online-doctor-consultation",
+  "title": "Online doctor consultation",
+  "keywords": [
+   "consultation",
+   "online doctor",
+   "talk to a doctor",
+   "video visit",
+   "telehealth"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/how-does-a-telemedicine-appointment-work",
+  "title": "How a telemedicine visit works",
+  "keywords": [
+   "how does it work",
+   "telemedicine",
+   "video call"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/online-prescription-refills",
+  "title": "Online prescription refills",
+  "keywords": [
+   "prescription",
+   "refill",
+   "renew",
+   "medication refill"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/online-second-medical-opinion",
+  "title": "Online second medical opinion",
+  "keywords": [
+   "second opinion",
+   "another opinion",
+   "review my diagnosis"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/doctors-note",
+  "title": "Doctor's note (sick note)",
+  "keywords": [
+   "sick note",
+   "doctor's note",
+   "doctors note",
+   "work note",
+   "school note",
+   "medical certificate"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/return-to-work-clearance",
+  "title": "Return-to-work clearance",
+  "keywords": [
+   "return to work",
+   "work clearance"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/fit-to-fly-certificate",
+  "title": "Fit-to-fly certificate",
+  "keywords": [
+   "fit to fly",
+   "flight certificate",
+   "travel certificate"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/lab-requisitions",
+  "title": "Lab requisitions",
+  "keywords": [
+   "lab requisition",
+   "lab test",
+   "blood test",
+   "lab order"
+  ]
+ },
+ {
+  "type": "service",
+  "url": "/lab-results-review",
+  "title": "Lab results review",
+  "keywords": [
+   "lab results",
+   "test results",
+   "review my results"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Children & Family Care",
+  "url": "/child-and-family-care",
+  "keywords": [
+   "children",
+   "family",
+   "kids",
+   "pediatric",
+   "baby",
+   "toddler"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Chronic Care & Expert Opinion",
+  "url": "/chronic-care",
+  "keywords": [
+   "chronic care"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Eye, Ear & Bone",
+  "url": "/eye-ear-bone",
+  "keywords": [
+   "eye",
+   "ear",
+   "bone",
+   "joint",
+   "musculoskeletal",
+   "vision",
+   "hearing"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "General & Everyday Care",
+  "url": "/general-and-everyday-care",
+  "keywords": [
+   "general care",
+   "everyday care",
+   "primary care",
+   "common illness"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Mental Health",
+  "url": "/mental-health",
+  "keywords": [
+   "mental health",
+   "psychiatry",
+   "psychology",
+   "emotional health",
+   "therapy",
+   "counseling"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Skin & Hair Care",
+  "url": "/skin-and-hair-care",
+  "keywords": [
+   "skin",
+   "hair",
+   "dermatology",
+   "rash",
+   "acne"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Weight & Nutrition",
+  "url": "/weight-and-nurtrition",
+  "keywords": [
+   "weight",
+   "nutrition",
+   "diet",
+   "obesity",
+   "weight loss"
+  ]
+ },
+ {
+  "type": "category",
+  "title": "Women's Health",
+  "url": "/women-health",
+  "keywords": [
+   "women's health",
+   "gynaecology",
+   "pregnancy",
+   "menopause",
+   "period"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Adolescent Medicine",
+  "url": "/child-and-family-care/adolescent-medicine",
+  "keywords": [
+   "adolescent",
+   "teen",
+   "teenager"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Pediatrics",
+  "url": "/child-and-family-care/pediatrics",
+  "keywords": [
+   "pediatrics",
+   "pediatrician",
+   "child health",
+   "baby"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Cardiology",
+  "url": "/chronic-care/cardiology",
+  "keywords": [
+   "cardiology",
+   "heart",
+   "cardiac"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Gastroenterology",
+  "url": "/chronic-care/gastroenterology",
+  "keywords": [
+   "gastroenterology",
+   "digestive",
+   "stomach",
+   "gi"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Neurology",
+  "url": "/chronic-care/neurology",
+  "keywords": [
+   "neurology",
+   "brain",
+   "nerve",
+   "neurological"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Pulmonology",
+  "url": "/chronic-care/pulmonology",
+  "keywords": [
+   "pulmonology",
+   "lungs",
+   "breathing",
+   "respiratory"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Endocrinology",
+  "url": "/chronic-care/endocrinology",
+  "keywords": [
+   "endocrinology",
+   "hormones",
+   "thyroid",
+   "diabetes"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "ENT (Ear, Nose & Throat)",
+  "url": "/eye-ear-bone/ear-nose-throat",
+  "keywords": [
+   "ent",
+   "ear nose throat",
+   "sinus",
+   "throat"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Ophthalmology",
+  "url": "/eye-ear-bone/ophthalmology",
+  "keywords": [
+   "ophthalmology",
+   "eye doctor",
+   "vision"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Orthopedics",
+  "url": "/eye-ear-bone/orthopedics",
+  "keywords": [
+   "orthopedics",
+   "bone",
+   "joint",
+   "musculoskeletal"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Family Medicine",
+  "url": "/general-and-everyday-care/family-medicine",
+  "keywords": [
+   "family medicine",
+   "family doctor"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "General Physician (GP)",
+  "url": "/general-and-everyday-care/general-physician",
+  "keywords": [
+   "general physician",
+   "gp",
+   "family doctor"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Internal Medicine",
+  "url": "/general-and-everyday-care/internal-medicine",
+  "keywords": [
+   "internal medicine",
+   "internist"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Men's Health",
+  "url": "/mens-health/men-health",
+  "keywords": [
+   "men's health",
+   "male wellness"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Urology",
+  "url": "/mens-health/urology",
+  "keywords": [
+   "urology",
+   "urologist",
+   "bladder",
+   "kidney"
+  ]
+ },
+ {
+  "type": "specialty",
+  "title": "Behavioral Medicine",
+  "url": "/mental-health/behavioral-health",
+  "keywords": [
+   "behavioral medicine",
+   "behavioral health",
+   "stress",
+   "burnout"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Arthritis",
+  "url": "/eye-ear-bone/orthopedics/arthritis",
+  "keywords": [
+   "arthritis",
+   "joint inflammation"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Cancer Second Opinion",
+  "url": "/online-second-medical-opinion/cancer-second-opinion",
+  "keywords": [
+   "cancer",
+   "oncology",
+   "second opinion"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Chest Pain",
+  "url": "/chronic-care/cardiology/chest-pain",
+  "keywords": [
+   "chest pain",
+   "chest tightness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Chronic Kidney Disease",
+  "url": "/chronic-kidney-disease",
+  "keywords": [
+   "chronic kidney disease",
+   "ckd",
+   "renal disease"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Complex Diagnosis Review",
+  "url": "/online-second-medical-opinion/complex-diagnosis-review",
+  "keywords": [
+   "complex diagnosis",
+   "diagnosis review"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Fatty Liver",
+  "url": "/chronic-care/gastroenterology/fatty-liver",
+  "keywords": [
+   "fatty liver",
+   "liver disease",
+   "nafld"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "High Blood Pressure",
+  "url": "/chronic-care/cardiology/high-blood-pressure",
+  "keywords": [
+   "high blood pressure",
+   "hypertension",
+   "bp"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "High Cholesterol",
+  "url": "/chronic-care/cardiology/high-cholesterol",
+  "keywords": [
+   "high cholesterol",
+   "cholesterol",
+   "lipids"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Memory Concerns",
+  "url": "/chronic-care/neurology/memory-concerns",
+  "keywords": [
+   "memory concerns",
+   "memory loss",
+   "forgetfulness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Osteoarthritis",
+  "url": "/eye-ear-bone/orthopedics/osteoarthritis",
+  "keywords": [
+   "osteoarthritis",
+   "joint wear"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Osteoporosis",
+  "url": "/chronic-care/endocrinology/osteoporosis",
+  "keywords": [
+   "osteoporosis",
+   "bone density",
+   "weak bones"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Palpitations",
+  "url": "/chronic-care/cardiology/palpitations",
+  "keywords": [
+   "palpitations",
+   "heart racing",
+   "irregular heartbeat"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Post-COVID Concerns",
+  "url": "/chronic-care/pulmonology/post-covid-concerns",
+  "keywords": [
+   "post-covid",
+   "long covid"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pre-Op Cardiac Clearance",
+  "url": "/chronic-care/cardiology/pre-op-cardiac-clearance",
+  "keywords": [
+   "pre-op clearance",
+   "cardiac clearance",
+   "surgery clearance"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Rheumatoid Arthritis",
+  "url": "/rheumatoid-arthritis",
+  "keywords": [
+   "rheumatoid arthritis",
+   "ra"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Seizures / Epilepsy Follow-Up",
+  "url": "/chronic-care/neurology/seizures-epilepsy-follow-up",
+  "keywords": [
+   "seizures",
+   "epilepsy"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Sleep Apnea",
+  "url": "/chronic-care/pulmonology/sleep-apnea-screening",
+  "keywords": [
+   "sleep apnea",
+   "snoring",
+   "breathing during sleep"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Surgery Second Opinion",
+  "url": "/online-second-medical-opinion/surgery-second-opinion",
+  "keywords": [
+   "surgery second opinion",
+   "surgical opinion"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Thyroid Disorders",
+  "url": "/chronic-care/endocrinology/thyroid-disorders",
+  "keywords": [
+   "thyroid",
+   "hypothyroid",
+   "hyperthyroid"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Treatment Plan Review",
+  "url": "/online-second-medical-opinion/treatment-plan-review",
+  "keywords": [
+   "treatment plan review"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Tremor",
+  "url": "/chronic-care/neurology/tremor",
+  "keywords": [
+   "tremor",
+   "shaking",
+   "hand tremor"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Type 2 Diabetes",
+  "url": "/chronic-care/endocrinology/type-2-diabetes",
+  "keywords": [
+   "type 2 diabetes",
+   "diabetes",
+   "blood sugar"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Allergic Rhinitis",
+  "url": "/allergic-rhinitis",
+  "keywords": [
+   "allergic rhinitis",
+   "hay fever",
+   "nasal allergy"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Asthma",
+  "url": "/chronic-care/pulmonology/asthma",
+  "keywords": [
+   "asthma",
+   "wheezing",
+   "inhaler",
+   "child asthma",
+   "kids wheezing"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Asthma Flare-Up",
+  "url": "/asthma-flare-up",
+  "keywords": [
+   "asthma flare-up",
+   "asthma attack"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "COPD",
+  "url": "/chronic-care/pulmonology/copd",
+  "keywords": [
+   "copd",
+   "chronic obstructive pulmonary disease"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Persistent Cough",
+  "url": "/chronic-care/pulmonology/persistent-cough",
+  "keywords": [
+   "persistent cough",
+   "chronic cough"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pneumonia Follow-Up",
+  "url": "/pneumonia-follow-up",
+  "keywords": [
+   "pneumonia",
+   "pneumonia follow-up"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Shortness of Breath",
+  "url": "/chronic-care/pulmonology/shortness-of-breath",
+  "keywords": [
+   "shortness of breath",
+   "breathlessness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Upper Respiratory Infection",
+  "url": "/upper-respiratory-infection",
+  "keywords": [
+   "upper respiratory infection",
+   "uri"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Wheezing",
+  "url": "/wheezing",
+  "keywords": [
+   "wheezing"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Abdominal Pain",
+  "url": "/chronic-care/gastroenterology/abdominal-pain",
+  "keywords": [
+   "abdominal pain",
+   "stomach pain",
+   "belly pain"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Bloating",
+  "url": "/chronic-care/gastroenterology/bloating",
+  "keywords": [
+   "bloating",
+   "gas",
+   "distension"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Dehydration",
+  "url": "/dehydration",
+  "keywords": [
+   "dehydration",
+   "fluid loss"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Gastritis",
+  "url": "/gastritis",
+  "keywords": [
+   "gastritis",
+   "stomach lining inflammation"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "GLP-1 Program Eligibility",
+  "url": "/glp-program-eligibility",
+  "keywords": [
+   "glp-1",
+   "weight loss medication",
+   "ozempic",
+   "wegovy"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Hemorrhoids",
+  "url": "/hemorrhoids",
+  "keywords": [
+   "hemorrhoids",
+   "piles"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Indigestion",
+  "url": "/indigestion",
+  "keywords": [
+   "indigestion",
+   "dyspepsia"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Irritable Bowel Syndrome",
+  "url": "/chronic-care/gastroenterology/irritable-bowel-syndrome",
+  "keywords": [
+   "ibs",
+   "irritable bowel syndrome"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Metabolic Syndrome",
+  "url": "/metabolic-syndrome",
+  "keywords": [
+   "metabolic syndrome"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Vomiting",
+  "url": "/vomiting",
+  "keywords": [
+   "vomiting",
+   "throwing up"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Back Pain",
+  "url": "/eye-ear-bone/orthopedics/back-pain",
+  "keywords": [
+   "back pain",
+   "spine",
+   "lumbar"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Dry Eyes",
+  "url": "/eye-ear-bone/ophthalmology/dry-eyes",
+  "keywords": [
+   "dry eyes",
+   "eye dryness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Ear Infection",
+  "url": "/eye-ear-bone/ear-nose-throat/ear-infection",
+  "keywords": [
+   "ear infection",
+   "earache",
+   "otitis"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Ear Pain",
+  "url": "/eye-ear-bone/ear-nose-throat/ear-pain",
+  "keywords": [
+   "ear pain",
+   "earache"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Eye Redness",
+  "url": "/eye-ear-bone/ophthalmology/eye-redness",
+  "keywords": [
+   "eye redness",
+   "red eye"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Eye Strain",
+  "url": "/eye-ear-bone/ophthalmology/eye-strain",
+  "keywords": [
+   "eye strain",
+   "tired eyes",
+   "screen fatigue"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Hoarseness",
+  "url": "/eye-ear-bone/ear-nose-throat/hoarseness",
+  "keywords": [
+   "hoarseness",
+   "hoarse voice"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Knee Pain",
+  "url": "/eye-ear-bone/orthopedics/knee-pain",
+  "keywords": [
+   "knee pain",
+   "knee",
+   "kneecap",
+   "patella",
+   "acl",
+   "meniscus"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Muscle Strain",
+  "url": "/eye-ear-bone/orthopedics/muscle-strain",
+  "keywords": [
+   "muscle strain",
+   "pulled muscle"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Nasal Congestion",
+  "url": "/eye-ear-bone/ear-nose-throat/nasal-congestion",
+  "keywords": [
+   "nasal congestion",
+   "stuffy nose"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Neck Pain",
+  "url": "/eye-ear-bone/orthopedics/neck-pain",
+  "keywords": [
+   "neck pain",
+   "stiff neck",
+   "cervical"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Numbness & Tingling",
+  "url": "/chronic-care/neurology/numbness-and-tingling",
+  "keywords": [
+   "numbness",
+   "tingling",
+   "pins and needles"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Stye",
+  "url": "/eye-ear-bone/ophthalmology/stye",
+  "keywords": [
+   "stye",
+   "eyelid bump"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Swollen Feet & Ankles",
+  "url": "/swollen-feet-ankles",
+  "keywords": [
+   "swollen feet",
+   "swollen ankles",
+   "edema"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Tonsillitis",
+  "url": "/eye-ear-bone/ear-nose-throat/tonsillitis",
+  "keywords": [
+   "tonsillitis",
+   "swollen tonsils"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Joint Pain",
+  "url": "/joint-pain",
+  "keywords": [
+   "joint pain",
+   "joints",
+   "stiffness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Vision Changes",
+  "url": "/eye-ear-bone/ophthalmology/vision-changes",
+  "keywords": [
+   "vision changes",
+   "blurry vision"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Vertigo",
+  "url": "/eye-ear-bone/ear-nose-throat/vertigo",
+  "keywords": [
+   "vertigo",
+   "dizziness",
+   "balance"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Childhood Allergies",
+  "url": "/childhood-allergies",
+  "keywords": [
+   "childhood allergies",
+   "kids allergy",
+   "baby allergy"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Ear Pain in Children",
+  "url": "/child-and-family-care/pediatrics/ear-pain-children",
+  "keywords": [
+   "child ear pain",
+   "kids earache"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Feeding Concerns",
+  "url": "/child-and-family-care/pediatrics/feeding-concerns",
+  "keywords": [
+   "feeding concerns",
+   "baby feeding"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Mood & Anxiety in Teens",
+  "url": "/child-and-family-care/adolescent-medicine/mood-anxiety-teens",
+  "keywords": [
+   "teen anxiety",
+   "teen mood",
+   "adolescent mental health"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pediatric Cold & Flu",
+  "url": "/child-and-family-care/pediatrics/pediatric-cold-flu",
+  "keywords": [
+   "child cold",
+   "kids flu",
+   "baby cold"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pediatric Fever",
+  "url": "/child-and-family-care/pediatrics/pediatric-fever",
+  "keywords": [
+   "child fever",
+   "baby fever",
+   "kids temperature"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pink Eye in Children",
+  "url": "/pink-eye-children",
+  "keywords": [
+   "child pink eye",
+   "kids conjunctivitis"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Puberty Concerns",
+  "url": "/child-and-family-care/adolescent-medicine/puberty-concerns",
+  "keywords": [
+   "puberty",
+   "puberty concerns"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Skin Rash in Children",
+  "url": "/child-and-family-care/pediatrics/skin-rash-in-children",
+  "keywords": [
+   "child skin rash",
+   "kids rash",
+   "baby rash"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Sore Throat in Children",
+  "url": "/sore-throat-children",
+  "keywords": [
+   "child sore throat",
+   "kids throat pain"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Sports Injuries",
+  "url": "/child-and-family-care/adolescent-medicine/sports-injuries",
+  "keywords": [
+   "sports injuries",
+   "youth sports injury"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Stomach Pain in Children",
+  "url": "/stomach-pain-children",
+  "keywords": [
+   "child stomach pain",
+   "kids belly ache"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Growth & Development",
+  "url": "/growth-development",
+  "keywords": [
+   "growth",
+   "development milestones"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Vomiting & Diarrhea in Children",
+  "url": "/vomiting-diarrhea-children",
+  "keywords": [
+   "child vomiting",
+   "kids diarrhea"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Follow-Up Consultation",
+  "url": "/follow-up-consultation",
+  "keywords": [
+   "follow-up consultation",
+   "follow up visit"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Medication Review",
+  "url": "/general-and-everyday-care/internal-medicine/medication-review",
+  "keywords": [
+   "medication review",
+   "medicine review"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Specialist Referral",
+  "url": "/specialist-referral",
+  "keywords": [
+   "specialist referral",
+   "referral"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Chlamydia",
+  "url": "/sexual-health/sexual-health-and-wellness/chlamydia",
+  "keywords": [
+   "chlamydia",
+   "sti"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Genital Itching",
+  "url": "/genital-itching",
+  "keywords": [
+   "genital itching"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Genital Rash",
+  "url": "/genital-rash",
+  "keywords": [
+   "genital rash"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Gonorrhea",
+  "url": "/sexual-health/sexual-health-and-wellness/gonorrhea",
+  "keywords": [
+   "gonorrhea",
+   "sti"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Herpes",
+  "url": "/sexual-health/sexual-health-and-wellness/herpes",
+  "keywords": [
+   "herpes",
+   "sti",
+   "cold sores genital"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "HIV Prevention Guidance",
+  "url": "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
+  "keywords": [
+   "hiv prevention",
+   "prep",
+   "truvada"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Partner Exposure Concerns",
+  "url": "/sexual-health/sexual-health-and-wellness/partner-exposure-concerns",
+  "keywords": [
+   "partner exposure",
+   "sti exposure"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Safe Sex Counseling",
+  "url": "/sexual-health/sexual-health-and-wellness/safe-sex-counseling",
+  "keywords": [
+   "safe sex",
+   "sexual health counseling"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "STI Consultation",
+  "url": "/sexual-health/sexual-health-and-wellness/sti-consultation",
+  "keywords": [
+   "sti consultation",
+   "std consultation"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Athlete's Foot",
+  "url": "/athletes-foot",
+  "keywords": [
+   "athlete's foot",
+   "fungal foot infection"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Cellulitis",
+  "url": "/cellulitis",
+  "keywords": [
+   "cellulitis",
+   "skin infection"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Contact Dermatitis",
+  "url": "/contact-dermatitis",
+  "keywords": [
+   "contact dermatitis",
+   "skin allergy"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Itchy Skin",
+  "url": "/itchy-skin",
+  "keywords": [
+   "itchy skin",
+   "pruritus"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Ringworm",
+  "url": "/ringworm",
+  "keywords": [
+   "ringworm",
+   "circular rash"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Shingles",
+  "url": "/shingles",
+  "keywords": [
+   "shingles",
+   "herpes zoster"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Emergency Teleconsultation Abroad",
+  "url": "/emergency-teleconsultation-abroad",
+  "keywords": [
+   "emergency abroad",
+   "teleconsultation abroad"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Fitness-to-Travel Evaluation",
+  "url": "/fitness-travel-evaluation",
+  "keywords": [
+   "fit to fly",
+   "fitness to travel"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Jet Lag",
+  "url": "/jet-lag",
+  "keywords": [
+   "jet lag"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Medication Refills While Traveling",
+  "url": "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
+  "keywords": [
+   "travel medication refill"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Motion Sickness",
+  "url": "/motion-sickness",
+  "keywords": [
+   "motion sickness",
+   "car sick",
+   "sea sick"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Travel Medical Certificate",
+  "url": "/travel-medical-certification",
+  "keywords": [
+   "travel medical certificate"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Acid Reflux / GERD",
+  "url": "/chronic-care/gastroenterology/acid-reflux-gerd",
+  "keywords": [
+   "acid reflux",
+   "gerd",
+   "heartburn"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Body Aches",
+  "url": "/general-and-everyday-care/general-physician/body-aches",
+  "keywords": [
+   "body aches",
+   "muscle aches"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Bronchitis",
+  "url": "/bronchitis",
+  "keywords": [
+   "bronchitis"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Cold & Flu",
+  "url": "/general-and-everyday-care/general-physician/cold-and-flu",
+  "keywords": [
+   "cold",
+   "flu",
+   "fever",
+   "runny nose"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Constipation",
+  "url": "/chronic-care/gastroenterology/constipation",
+  "keywords": [
+   "constipation"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Cough",
+  "url": "/general-and-everyday-care/general-physician/cough",
+  "keywords": [
+   "cough"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "COVID-19",
+  "url": "/covid-19",
+  "keywords": [
+   "covid",
+   "coronavirus",
+   "covid19"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Diarrhea",
+  "url": "/diarrhea",
+  "keywords": [
+   "diarrhea"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Dizziness",
+  "url": "/chronic-care/neurology/dizziness",
+  "keywords": [
+   "dizziness",
+   "lightheaded"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Fatigue",
+  "url": "/general-and-everyday-care/general-physician/fatigue",
+  "keywords": [
+   "fatigue",
+   "tiredness",
+   "low energy"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Fever",
+  "url": "/general-and-everyday-care/general-physician/fever",
+  "keywords": [
+   "fever",
+   "high temperature"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Food Poisoning",
+  "url": "/food-poisoning",
+  "keywords": [
+   "food poisoning"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Headache",
+  "url": "/general-and-everyday-care/general-physician/headache",
+  "keywords": [
+   "headache",
+   "head pain"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Insect Bites",
+  "url": "/insect-bite",
+  "keywords": [
+   "insect bites",
+   "bug bites"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Migraine",
+  "url": "/chronic-care/neurology/migraine",
+  "keywords": [
+   "migraine",
+   "severe headache",
+   "chronic migraine"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Minor Burns",
+  "url": "/minor-burns",
+  "keywords": [
+   "minor burns"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Minor Infections",
+  "url": "/general-and-everyday-care/general-physician/minor-infections",
+  "keywords": [
+   "minor infections"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Multi-System Complaints",
+  "url": "/general-and-everyday-care/internal-medicine/multi-system-complaints",
+  "keywords": [
+   "multi-system complaints",
+   "undiagnosed general symptoms"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Nausea & Vomiting",
+  "url": "/general-and-everyday-care/general-physician/nausea-and-vomiting",
+  "keywords": [
+   "nausea",
+   "vomiting"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pink Eye",
+  "url": "/general-and-everyday-care/general-physician/pink-eye",
+  "keywords": [
+   "pink eye",
+   "conjunctivitis"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Preventive Screening",
+  "url": "/general-and-everyday-care/internal-medicine/preventive-screening",
+  "keywords": [
+   "preventive screening",
+   "health screening"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Routine Check-Ups",
+  "url": "/general-and-everyday-care/family-medicine/routine-check-ups",
+  "keywords": [
+   "routine check-up",
+   "annual physical"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Seasonal Allergies",
+  "url": "/seasonal-allergies",
+  "keywords": [
+   "seasonal allergies",
+   "hay fever"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Sinus Infection",
+  "url": "/general-and-everyday-care/general-physician/sinus-infection",
+  "keywords": [
+   "sinus infection",
+   "sinusitis"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Sore Throat",
+  "url": "/eye-ear-bone/ear-nose-throat/sore-throat",
+  "keywords": [
+   "sore throat"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Strep Throat",
+  "url": "/strep-throat",
+  "keywords": [
+   "strep throat"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Undiagnosed Symptoms",
+  "url": "/general-and-everyday-care/internal-medicine/undiagnosed-symptoms",
+  "keywords": [
+   "undiagnosed symptoms"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Vaccination Advice",
+  "url": "/general-and-everyday-care/family-medicine/vaccination-advice",
+  "keywords": [
+   "vaccination advice",
+   "immunization"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Whole-Family Illnesses",
+  "url": "/general-and-everyday-care/family-medicine/whole-family-illnesses",
+  "keywords": [
+   "whole family illness",
+   "family sick"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Blood in Urine",
+  "url": "/mens-health/urology/blood-in-urine",
+  "keywords": [
+   "blood in urine",
+   "hematuria"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Burning Urination",
+  "url": "/burning-urination",
+  "keywords": [
+   "burning urination"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Frequent Urination",
+  "url": "/frequent-urination",
+  "keywords": [
+   "frequent urination"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Kidney Stones",
+  "url": "/mens-health/urology/kidney-stones",
+  "keywords": [
+   "kidney stones",
+   "renal stones"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Urinary Incontinence",
+  "url": "/mens-health/urology/urinary-incontinence",
+  "keywords": [
+   "urinary incontinence"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Urinary Tract Infection",
+  "url": "/urinary-tract-infection",
+  "keywords": [
+   "uti",
+   "urinary tract infection",
+   "bladder infection"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Emergency Contraception Guidance",
+  "url": "/emergency-contraception-guidance",
+  "keywords": [
+   "emergency contraception",
+   "morning after pill"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Heavy Periods",
+  "url": "/heavy-periods",
+  "keywords": [
+   "heavy periods",
+   "menorrhagia"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Postpartum Concerns",
+  "url": "/postpartum-concerns",
+  "keywords": [
+   "postpartum concerns"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Pregnancy-Related Questions",
+  "url": "/pregnancy-related-questions",
+  "keywords": [
+   "pregnancy questions"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Vaginal Yeast Infection",
+  "url": "/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection",
+  "keywords": [
+   "yeast infection",
+   "vaginal itch",
+   "candida",
+   "thrush"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Bladder Problems",
+  "url": "/mens-health/urology/bladder-problems",
+  "keywords": [
+   "bladder problems"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Erectile Dysfunction",
+  "url": "/mens-health/men-health/erectile-dysfunction",
+  "keywords": [
+   "erectile dysfunction",
+   "ed",
+   "impotence"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Hair Loss (Men's Health)",
+  "url": "/mens-health/men-health/hair-loss",
+  "keywords": [
+   "hair loss",
+   "balding",
+   "male pattern baldness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Low Libido",
+  "url": "/mens-health/men-health/low-libido",
+  "keywords": [
+   "low libido",
+   "low sex drive"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Low Testosterone Symptoms",
+  "url": "/mens-health/men-health/low-testosterone-symptoms",
+  "keywords": [
+   "low testosterone",
+   "low t"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Men's Wellness Consultation",
+  "url": "/mens-wellness-consultation",
+  "keywords": [
+   "men's wellness"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Premature Ejaculation",
+  "url": "/premature-ejaculation",
+  "keywords": [
+   "premature ejaculation"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Prostate Health",
+  "url": "/mens-health/men-health/prostate-health",
+  "keywords": [
+   "prostate health",
+   "prostate"
+  ]
+ },
+ {
+  "type": "condition",
+  "title": "Urinary Symptoms in Men",
+  "url": "/urinary-symptoms-in-men",
+  "keywords": [
+   "urinary symptoms men"
+  ]
+ }
+]

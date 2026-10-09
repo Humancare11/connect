@@ -111,7 +111,19 @@ function readAbuseLimits(env = process.env) {
 const followUpMailboxAddress = (env = process.env) =>
   String(env.LIVECHAT_FOLLOWUP_MAILBOX || "support@humancareconnect.co").trim().toLowerCase();
 
+// DEVELOPMENT ONLY: LIVECHAT_DEV_FAKE_IP=<a real public IP> makes every visitor look like that address, so the
+// location lookup can be tried on localhost (where the real IP is ::1 / 127.0.0.1 and has no location).
+// Ignored whenever NODE_ENV=production, and ignored unless the value is a valid PUBLIC address.
+function devFakeIp(env = process.env) {
+  if (isProduction(env)) return "";
+  const raw = String(env.LIVECHAT_DEV_FAKE_IP || "").trim();
+  if (!raw) return "";
+  const { isPublicIp, normalizeIp } = require("../clientIp");
+  return isPublicIp(raw) ? normalizeIp(raw) : "";
+}
+
 module.exports = {
+  devFakeIp,
   readFileLimits,
   readAbuseLimits,
   followUpMailboxAddress,

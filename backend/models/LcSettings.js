@@ -42,6 +42,7 @@ const settingsSchema = new mongoose.Schema(
         label: { type: String, required: true, maxlength: 80 },
         icon: { type: String, default: "dots" },
         reply: { type: String, default: "", maxlength: 1200 },
+        link: { type: String, default: "", maxlength: 200 }, // optional site page shown as a button under the reply
       },
     ],
     prices: [{ _id: false, name: { type: String, required: true }, price: { type: Number, required: true } }],

@@ -95,7 +95,7 @@ function countryCodeFor(name) {
 }
 
 const TRACKING_EVENTS = ["visitor:page", "visitor:heartbeat"];
-const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:typing", "chat:rate"];
+const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:switch-ai", "chat:typing", "chat:rate"];
 const EVENTS = [...TRACKING_EVENTS, ...CHAT_EVENTS];
 const MAX_CHAT_MESSAGE_BYTES = 5000; // 1,000 characters can be up to 4 bytes each, plus JSON overhead
 
@@ -248,6 +248,11 @@ function setupVisitorNamespace(ns, ctx) {
       socket.on("chat:agent", (a, b) => {
         const [, cb] = args(a, b);
         safely(cb, () => ctx.chat.talkToAgent(visitorId));
+      });
+
+      socket.on("chat:switch-ai", (a, b) => {
+        const [, cb] = args(a, b);
+        safely(cb, () => ctx.chat.switchToAi(visitorId));
       });
 
       socket.on("chat:rate", (a, b) => {

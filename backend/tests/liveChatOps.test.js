@@ -149,7 +149,7 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
 
       const state = await stateOf(chat.socket);
       assert.deepEqual([state.mode, state.offline], ["queue", true]);
-      assert.ok(state.messages.at(-1).text.includes("offline"));
+      assert.equal(state.messages.at(-1).text, "Thanks, Priya! We've received your question and details. Our team will get back to you at priya@example.com shortly.");
 
       assert.ok(await waitFor(() => lc.emails.length === 1), "one email was sent");
       const mail = lc.emails[0];
@@ -180,7 +180,7 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       chat.socket.close();
     });
 
-    test("support hours in the email come from the settings, not from the code", async () => {
+    test("the email never mentions support hours or the team being offline, whatever the settings say", async () => {
       const settings = await lc.models.LcSettings.findOne({ key: "default" }).lean();
       const original = settings.supportHours;
       const day = (name, enabled, open, close) => ({ day: name, enabled, open, close });
@@ -199,16 +199,19 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
         const chat = await openChat({ email: "hours1@example.com" });
         await lc.call(chat.socket, "chat:agent");
         await waitFor(() => lc.emails.length === 1);
-        assert.match(lc.emails[0].body, /Mon–Fri 9:00 AM – 5:00 PM C[SD]T; Sat 10:00 AM – 2:00 PM C[SD]T/);
-        assert.equal(lc.emails[0].body.includes("every day"), false);
-        assert.equal(lc.emails[0].body.includes("10:00 PM"), false, "the old default hours are not hard-coded");
+        const noHours = (body) => {
+          assert.doesNotMatch(body, /\d{1,2}:\d{2}/, "no opening hours");
+          assert.doesNotMatch(body, /offline|support hours|every day/i);
+          assert.ok(body.includes("We received your message") && body.includes("will get back to you soon"));
+        };
+        noHours(lc.emails[0].body);
 
         lc.emails.length = 0;
         await lc.setSettings({ supportHours: { timezone: "Asia/Kolkata", days: original.days.map((d) => ({ ...d, open: "06:30", close: "20:15", enabled: true })) } });
         const second = await openChat({ email: "hours2@example.com" });
         await lc.call(second.socket, "chat:agent");
         await waitFor(() => lc.emails.length === 1);
-        assert.match(lc.emails[0].body, /6:30 AM – 8:15 PM GMT\+5:30, every day/); // US zones read EDT / CST etc.
+        noHours(lc.emails[0].body);
         chat.socket.close();
         second.socket.close();
       } finally {
@@ -448,7 +451,7 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       maya.socket.close();
     });
 
-    test("nobody else online: the patient is told the team is offline and one email is sent", async () => {
+    test("nobody else online: the patient gets the thank-you text (never the word offline) and one email is sent", async () => {
       await setGrace(0.3);
       const sam = await agentOnline(AGENT_A);
       const chat = await liveChatHeldBy(AGENT_A, { email: "left-alone@example.com" });
@@ -456,7 +459,8 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "queue", 3000));
       const conv = await convOf(chat.id);
       assert.equal(conv.offlineRequested, true);
-      assert.ok(texts(await stateOf(chat.socket)).some((t) => t.includes("offline")));
+      assert.ok(texts(await stateOf(chat.socket)).some((t) => t.includes("We've received your question and details")));
+      assert.equal(texts(await stateOf(chat.socket)).some((t) => /offline/i.test(t)), false, "the patient is never told the team is offline");
       assert.ok(await waitFor(() => lc.emails.length === 1));
       assert.equal(lc.emails[0].to, "left-alone@example.com");
       chat.socket.close();

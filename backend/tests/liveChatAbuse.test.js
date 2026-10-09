@@ -206,7 +206,7 @@ describe("AI service", () => {
     assert.equal(seen.maxOutputTokens, 300);
     assert.equal(seen.schema, SCHEMA);
     assert.equal(SCHEMA.additionalProperties, false);
-    assert.deepEqual(SCHEMA.required, ["reply", "handoff", "handoffReason", "topic"]);
+    assert.deepEqual(SCHEMA.required, ["reply", "handoff", "handoffReason", "topic", "links"]);
   });
 
   test("an emergency always hands off", async () => {

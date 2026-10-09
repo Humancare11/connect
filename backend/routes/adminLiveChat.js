@@ -5,6 +5,7 @@ const { AgentError, CONVERSATION_ID_RE } = require("../services/liveChat/agentSe
 const { FileError } = require("../services/liveChat/fileService");
 const { SettingsError } = require("../services/liveChat/settingsService");
 const { StatsError } = require("../services/liveChat/statsService");
+const sitePages = require("../services/liveChat/sitePages").createSitePages();
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 
 // Live Chat admin API. Admin + Super Admin only (employeeadmin, paymentadmin, doctors, patients and partners
@@ -79,7 +80,9 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
     handle(async (req) => {
       const loader = getSettings || (() => settings.get());
       const doc = await loader();
-      return { ok: true, settings: doc?.toObject ? doc.toObject() : doc, canEdit: req.user.role === "superadmin" };
+      // linkPages: the site pages an option may show as a button (service pages and the booking page).
+      const linkPages = sitePages.pages.filter((p) => p.type === "service").map((p) => ({ title: p.title, url: p.url }));
+      return { ok: true, settings: doc?.toObject ? doc.toObject() : doc, canEdit: req.user.role === "superadmin", linkPages };
     })
   );
   router.put("/settings", superAdminOnly, handle((req) => settings.update(actor(req), req.body)));

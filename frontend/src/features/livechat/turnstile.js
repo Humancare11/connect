@@ -31,7 +31,10 @@ export function loadTurnstile() {
 }
 
 // Renders the widget into `element`. Returns the widget id (or null if it could not be rendered).
-export async function renderTurnstile(element, { onToken, onExpire, onError }) {
+// Nothing is shown unless Cloudflare really needs the person to act (appearance "interaction-only"):
+// onInteractive(true) fires when a challenge must be shown, onInteractive(false) when it is done.
+// The verification text "Success! For testing only" only ever comes from Cloudflare's DEV test keys (above).
+export async function renderTurnstile(element, { onToken, onExpire, onError, onInteractive = () => {} }) {
   const key = turnstileSiteKey();
   if (!key || !element) return null;
   const turnstile = await loadTurnstile();
@@ -39,9 +42,12 @@ export async function renderTurnstile(element, { onToken, onExpire, onError }) {
     sitekey: key,
     theme: "light",
     size: "flexible",
+    appearance: "interaction-only",
     callback: onToken,
     "expired-callback": onExpire,
     "error-callback": onError,
+    "before-interactive-callback": () => onInteractive(true),
+    "after-interactive-callback": () => onInteractive(false),
   });
 }
 

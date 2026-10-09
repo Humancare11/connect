@@ -3,7 +3,7 @@
 // mountLiveChat() is the only thing server.js calls. It does nothing unless LIVECHAT_ENABLED=true and the config
 // is valid (see utils/liveChat/config.js), so with the kill switch off no route, namespace, timer or model is
 // registered and /livechat, /livechat-admin and /api/admin/livechat do not exist.
-const { checkLiveChatConfig, intFromEnv, readLimits } = require("../../utils/liveChat/config");
+const { checkLiveChatConfig, intFromEnv, readLimits, devFakeIp } = require("../../utils/liveChat/config");
 const { normalizeIp, parseTrustProxy } = require("../../utils/clientIp");
 const { makeSocketLimiter } = require("../../utils/socketRateLimit");
 const { MemoryPresenceStore, DEFAULT_GRACE_MS } = require("./presence");
@@ -31,6 +31,8 @@ function parseCookies(header = "") {
 // USE_CLOUDFLARE_HEADERS). X-Forwarded-For is only honoured when a proxy is trusted, otherwise a client could
 // choose its own IP.
 function resolveSocketIp(socket, env = process.env) {
+  const fake = devFakeIp(env); // development only (never in production)
+  if (fake) return fake;
   const handshake = socket.handshake || {};
   const headers = handshake.headers || {};
   if (String(env.USE_CLOUDFLARE_HEADERS || "").trim().toLowerCase() === "true") {
@@ -202,6 +204,10 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     throw new Error("mountLiveChat needs io and validateAccessToken");
   }
 
+  if (String(env.LIVECHAT_DEV_FAKE_IP || "").trim()) {
+    if (devFakeIp(env)) console.warn("[livechat] DEV ONLY: LIVECHAT_DEV_FAKE_IP is active, every visitor gets that IP. Never use this in production.");
+    else console.warn("[livechat] LIVECHAT_DEV_FAKE_IP is ignored (it only works outside production and needs a valid public IP).");
+  }
   const graceMs = options.graceMs ?? intFromEnv("LIVECHAT_PRESENCE_GRACE_MS", DEFAULT_GRACE_MS, env);
   const adminNs = io.of("/livechat-admin");
   const visitorNs = io.of("/livechat");
@@ -365,6 +371,29 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   };
 }
 
+// Small one-time upgrades of an existing settings document (never overwrites anything an admin wrote):
+//   - the old "team is offline" default text becomes the new thank-you text,
+//   - default quick options without a page link get their default link.
+async function migrateSettings(LcSettings) {
+  const { DEFAULT_SETTINGS } = require("./settingsDefaults");
+  const legacy = [
+    "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
+    "Our team is offline right now. We've saved your request and will reply by email.",
+  ];
+  const doc = await LcSettings.findOne({ key: "default" });
+  if (!doc) return;
+  const set = {};
+  if (legacy.includes(doc.offlineMessage)) set.offlineMessage = DEFAULT_SETTINGS.offlineMessage;
+  const defaults = new Map(DEFAULT_SETTINGS.quickOptions.map((o) => [o.key, o]));
+  const options = doc.quickOptions.map((o) => {
+    const plain = o.toObject ? o.toObject() : o;
+    const fallback = defaults.get(plain.key);
+    return !plain.link && fallback?.link ? { ...plain, link: fallback.link } : plain;
+  });
+  if (options.some((o, i) => o.link && !doc.quickOptions[i].link)) set.quickOptions = options;
+  if (Object.keys(set).length) await LcSettings.updateOne({ _id: doc._id }, { $set: set });
+}
+
 // Creates the settings document with its defaults. Called once at startup (after MongoDB is connected) and only
 // when the module is on, so a disabled module never touches the database.
 async function seedLiveChatDefaults(env = process.env) {
@@ -376,6 +405,7 @@ async function seedLiveChatDefaults(env = process.env) {
   } catch (err) {
     if (err?.code !== 11000) throw err; // two instances seeding at once: the other one won, fine
   }
+  await migrateSettings(LcSettings);
   const LcCannedReply = require("../../models/LcCannedReply");
   if ((await LcCannedReply.estimatedDocumentCount()) === 0) {
     const { CANNED_REPLIES } = require("./settingsDefaults");

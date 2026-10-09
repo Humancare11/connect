@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
-const { getClientIp } = require("../utils/clientIp");
+const { getClientIp: realClientIp } = require("../utils/clientIp");
+const { devFakeIp } = require("../utils/liveChat/config");
 const { liveChatContactLimiter, liveChatConfigLimiter, liveChatUploadLimiter } = require("../middleware/rateLimiters");
 const { signChatToken, verifyChatToken } = require("../services/liveChat/chatToken");
 const { FileError } = require("../services/liveChat/fileService");
@@ -18,6 +19,8 @@ const { FileError } = require("../services/liveChat/fileService");
 const HONEYPOT_FIELD = "companyUrl"; // hidden in the form; real people never fill it in
 
 function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env = process.env, limiters = {} }) {
+  // Real client IP (same proxy rules as everywhere); LIVECHAT_DEV_FAKE_IP replaces it outside production only.
+  const getClientIp = (req) => devFakeIp(env) || realClientIp(req);
   const router = express.Router();
   router.use(express.json({ limit: "8kb" }));
   const contactLimiter = limiters.contact || liveChatContactLimiter;

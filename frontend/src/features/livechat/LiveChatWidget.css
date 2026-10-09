@@ -225,12 +225,19 @@ html.hc-cookie-open .lcw-window {
 /* Messages */
 .lcw-body {
   flex: 1;
+  min-height: 0; /* a flex child must be allowed to be shorter than its content, or it never scrolls */
   overflow-y: auto;
+  overscroll-behavior: contain; /* wheel/touch at the end of the chat must not scroll the page behind */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding: 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
   background: var(--lcw-bg);
+}
+.lcw-body > * {
+  flex-shrink: 0; /* messages and the contact form keep their height and scroll instead of being squashed */
 }
 .lcw-msg {
   padding: 8px 11px;
@@ -436,8 +443,53 @@ html.hc-cookie-open .lcw-window {
   font-size: 12.5px;
   font-weight: 600;
 }
+/* Turnstile shows nothing unless Cloudflare needs the person to act (then .is-active makes room for it). */
 .lcw-captcha {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.lcw-captcha.is-active {
+  position: static;
+  width: auto;
+  height: auto;
   min-height: 65px;
+  overflow: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+/* Page links under an AI reply */
+.lcw-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.lcw-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid #c9d7fa;
+  border-radius: 12px;
+  background: var(--lcw-accent-soft);
+  color: var(--lcw-accent);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.lcw-link span:last-child {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.lcw-link:hover,
+.lcw-link:focus-visible {
+  background: var(--lcw-accent);
+  color: #fff;
 }
 /* Honeypot: off-screen, not display:none, so simple bots still fill it in. */
 .lcw-hp {

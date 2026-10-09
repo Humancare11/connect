@@ -9,6 +9,7 @@
 //   - every save is logged: who, when, which setting, before and after.
 const mongoose = require("mongoose");
 const { DAYS } = require("./settingsDefaults");
+const sitePages = require("./sitePages").createSitePages();
 
 class SettingsError extends Error {
   constructor(status, code, extra = {}) {
@@ -127,11 +128,13 @@ function validateSettings(patch) {
         const label = clean(o?.label);
         const reply = cleanBlock(o?.reply);
         const icon = ICONS.includes(o?.icon) ? o.icon : null;
+        const link = clean(o?.link);
         if (!KEY_RE.test(key) || keys.has(key)) errors[`quickOptions.${i}.key`] = "Each option needs a short unique key (letters, digits, underscore).";
         else if (label.length < 1 || label.length > 80) errors[`quickOptions.${i}.label`] = "The label must be 1-80 characters.";
         else if (!icon) errors[`quickOptions.${i}.icon`] = "Choose an icon.";
         else if (key !== "live" && (reply.length < 1 || reply.length > 1200)) errors[`quickOptions.${i}.reply`] = "The reply must be 1-1200 characters.";
-        else out.push({ key, label, icon, reply: key === "live" ? "" : reply });
+        else if (link && !sitePages.has(link)) errors[`quickOptions.${i}.link`] = "Choose a page from the list.";
+        else out.push({ key, label, icon, reply: key === "live" ? "" : reply, link: key === "live" ? "" : link });
         keys.add(key);
       });
       if (!Object.keys(errors).some((k) => k.startsWith("quickOptions"))) values.quickOptions = out;

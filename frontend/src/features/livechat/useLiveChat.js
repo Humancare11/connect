@@ -381,6 +381,13 @@ export function useLiveChat() {
     if (!res.ok) setNotice(ERRORS[res.error] ?? ERRORS.server_error);
   }, [emit]);
 
+  // Header "Switch to AI": the chat goes back to the AI assistant (an agent holding it is told).
+  const switchToAi = useCallback(async () => {
+    setNotice("");
+    const res = await emit("chat:switch-ai");
+    if (!res.ok) setNotice(ERRORS[res.error] ?? ERRORS.server_error);
+  }, [emit]);
+
   // Typing indicator for the support team: a boolean only, never the text.
   const typingTimer = useRef(null);
   const notifyTyping = useCallback(() => {
@@ -409,6 +416,7 @@ export function useLiveChat() {
     send,
     pickOption,
     talkToAgent,
+    switchToAi,
     startNew,
     rate,
     uploadFile,

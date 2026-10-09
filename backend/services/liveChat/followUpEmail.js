@@ -48,13 +48,10 @@ function describeSupportHours(supportHours, date = new Date()) {
 }
 
 function buildFollowUpEmail({ firstName, conversationId, settings, date = new Date() }) {
-  const hours = describeSupportHours(settings?.supportHours, date);
   const lines = [
     `Hi ${firstName || "there"},`,
     "",
-    `Thanks for contacting Humancare Connect. Our support team was offline when you wrote, so we've saved your request (reference ${conversationId}).`,
-    "",
-    `We'll reply to this email address as soon as we're back${hours ? `. Our support hours are ${hours}` : ""}.`,
+    `Thanks for contacting Humancare Connect. We received your message (reference ${conversationId}) and will get back to you soon.`,
     "",
     "Please don't include medical details when you reply by email.",
     "",
