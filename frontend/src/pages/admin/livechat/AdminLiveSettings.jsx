@@ -18,6 +18,7 @@ const ZONES = [
   ["America/Los_Angeles", "Pacific (Los Angeles)"],
   ["America/Anchorage", "Alaska (Anchorage)"],
   ["Pacific/Honolulu", "Hawaii (Honolulu)"],
+  ["Asia/Kolkata", "India (Kolkata)"],
 ];
 const ICONS = [
   ["stethoscope", "Doctor"],
@@ -241,15 +242,26 @@ export default function AdminLiveSettings() {
               </select>
               <ErrorText errors={errors} name="supportHours.timezone" />
             </div>
+            <label className="lcp-check">
+              <input
+                type="checkbox"
+                checked={form.supportHours.alwaysOn === true}
+                onChange={(e) => set("supportHours", { ...form.supportHours, alwaysOn: e.target.checked })}
+              />{" "}
+              Always on (24/7): ignore the days and times below
+            </label>
             {days.map((d) => (
               <div key={d.day}>
                 <div className="lcp-row lcp-row--hours">
                   <span>{DAY_LABELS[d.day]}</span>
                   <label className="lcp-check" style={{ margin: 0 }}>
-                    <input type="checkbox" checked={d.enabled} onChange={(e) => setHours(d.day, { enabled: e.target.checked })} aria-label={`${DAY_LABELS[d.day]} open`} /> Open
+                    <input type="checkbox" checked={d.enabled} disabled={form.supportHours.alwaysOn === true} onChange={(e) => setHours(d.day, { enabled: e.target.checked })} aria-label={`${DAY_LABELS[d.day]} open`} /> Open
                   </label>
-                  <input type="time" value={d.open} disabled={!d.enabled} onChange={(e) => setHours(d.day, { open: e.target.value })} aria-label={`${DAY_LABELS[d.day]} opens`} />
-                  <input type="time" value={d.close} disabled={!d.enabled} onChange={(e) => setHours(d.day, { close: e.target.value })} aria-label={`${DAY_LABELS[d.day]} closes`} />
+                  <input type="time" value={d.open} disabled={!d.enabled || form.supportHours.alwaysOn === true} onChange={(e) => setHours(d.day, { open: e.target.value })} aria-label={`${DAY_LABELS[d.day]} opens`} />
+                  <input type="time" value={d.close} disabled={!d.enabled || form.supportHours.alwaysOn === true} onChange={(e) => setHours(d.day, { close: e.target.value })} aria-label={`${DAY_LABELS[d.day]} closes`} />
+                  {d.enabled && form.supportHours.alwaysOn !== true && d.open && d.close && d.close < d.open && (
+                    <span className="lcp-help">closes next day</span>
+                  )}
                 </div>
                 <ErrorText errors={errors} name={`supportHours.${d.day}`} />
               </div>

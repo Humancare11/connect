@@ -187,7 +187,11 @@ export default function AdminLiveVisitors() {
             disabled={status !== "live"}
           >
             <span className="lcv-sw" />
-            {agent.online ? "You're online" : "You're offline"}
+            {!agent.online
+              ? "You're offline"
+              : agent.reason === "outside_hours"
+                ? `Switch on · Outside hours${agent.hours ? ` (${agent.hours})` : ""}`
+                : "You're online"}
           </button>
         </div>
       </div>

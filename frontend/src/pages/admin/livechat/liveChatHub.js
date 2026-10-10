@@ -35,6 +35,7 @@ let snapshot = {
 
 const listeners = new Set(); // React subscribers (useSyncExternalStore)
 const eventListeners = new Set(); // pages that want the raw chat events
+let statusTimer = null; // re-checks the agent status (switch, hours) once a minute
 
 function set(patch) {
   snapshot = { ...snapshot, ...patch };
@@ -187,7 +188,17 @@ function connect() {
     else if (delta.visitor) next.set(delta.visitor.visitorId, delta.visitor);
     set({ visitors: next });
   });
-  socket.on("agent:status", (agent) => set({ agent }));
+  socket.on("agent:status", (agent) => {
+    set({ agent });
+    onChatEvent("agent:status", agent); // lets the Team page refresh its own row at once
+  });
+  // The hours boundary passes while the panel is open: ask for the status again every minute.
+  clearInterval(statusTimer);
+  statusTimer = setInterval(() => {
+    socket?.emit("agent:status:get", (reply) => {
+      if (reply?.ok) set({ agent: { online: reply.online, displayName: reply.displayName, reason: reply.reason, hours: reply.hours } });
+    });
+  }, 60_000);
   ["chat:new", "queue:new", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>
     socket.on(event, (payload) => onChatEvent(event, payload || {}))
   );
@@ -195,6 +206,7 @@ function connect() {
 
 function disconnect() {
   clearTimeout(unreadTimer);
+  clearInterval(statusTimer);
   socket?.close();
   socket = null;
   set({ status: ENABLED ? "connecting" : "off", visitors: new Map(), toasts: [] });
@@ -233,7 +245,7 @@ export const hub = {
 
   setOnline(online) {
     socket?.emit("agent:status", { online }, (reply) => {
-      if (reply?.ok) set({ agent: { online: reply.online, displayName: reply.displayName } });
+      if (reply?.ok) set({ agent: { online: reply.online, displayName: reply.displayName, reason: reply.reason, hours: reply.hours } });
     });
   },
 

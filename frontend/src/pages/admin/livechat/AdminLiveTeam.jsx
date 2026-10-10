@@ -93,7 +93,7 @@ export default function AdminLiveTeam() {
   useEffect(() => {
     const timer = window.setInterval(() => setVersion((v) => v + 1), 30_000);
     const off = hub.on((event) => {
-      if (event === "chat:updated" || event === "queue:new") setVersion((v) => v + 1);
+      if (event === "chat:updated" || event === "queue:new" || event === "agent:status") setVersion((v) => v + 1);
     });
     return () => {
       window.clearInterval(timer);
@@ -113,10 +113,18 @@ export default function AdminLiveTeam() {
 
   const rows = data?.agents || [];
   const ai = data?.ai;
-  const statusCell = (status) => (
+  // Offline agents say why: switch off, admin panel closed, or the switch is on but it is outside support hours.
+  const statusText = (status, row) => {
+    if (status === "online") return "Online";
+    if (row?.reason === "outside_hours") return `Switch on · Outside hours${row.hours ? ` (${row.hours})` : ""}`;
+    if (row?.reason === "no_connection") return "Offline · Admin panel not open";
+    if (row?.reason === "switch_off") return "Offline · Switch off";
+    return "Offline";
+  };
+  const statusCell = (status, row) => (
     <span className={`lcp-status lcp-status--${status}`}>
       <i />
-      {status === "online" ? "Online" : "Offline"}
+      {statusText(status, row)}
     </span>
   );
 
@@ -173,7 +181,7 @@ export default function AdminLiveTeam() {
                 <td>
                   <NameCell agent={agent} canEdit={agent.userId === me || admin?.role === "superadmin"} onSave={saveName} />
                 </td>
-                <td>{statusCell(agent.status)}</td>
+                <td>{statusCell(agent.status, agent)}</td>
                 <td className="lcp-mono">{agent.openChats}</td>
                 <td className="lcp-mono">{agent.chatsToday}</td>
                 <td className="lcp-mono">{formatSeconds(agent.avgFirstReplySeconds)}</td>
@@ -190,7 +198,7 @@ export default function AdminLiveTeam() {
         </table>
       </div>
       <p className="lcp-note">
-        An agent is Online when their switch is on and they have the admin panel open. "Chats today" counts the chats an agent took today
+        An agent is Online when their switch is on, they have the admin panel open and it is within support hours (unless the team is set to ignore hours). "Chats today" counts the chats an agent took today
         ({data?.timeZone || "support time zone"}). "Avg first reply" is the time from a chat entering the Queue to the agent's first message.
         A new name applies the next time that agent takes a chat. You can change your own name; a Super Admin can change anyone's.
       </p>
