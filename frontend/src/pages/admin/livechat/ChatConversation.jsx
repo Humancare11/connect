@@ -12,7 +12,9 @@ const timeOf = (iso) => {
 
 const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round((bytes || 0) / 1024))} KB`);
 
-function Message({ m, onOpenFile }) {
+// translation: { text, from, fromName } for the English view (or null); shownOriginal: the admin switched this one
+// message back to its original.
+function Message({ m, onOpenFile, translation, language, shownOriginal, onToggleOriginal }) {
   if (m.sender === "system") {
     return (
       <div className="wk-sys">
@@ -50,7 +52,7 @@ function Message({ m, onOpenFile }) {
             </button>
           </span>
         ) : (
-          m.text
+          <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} />
         )}
         <span className="wk-meta">{timeOf(m.at)}</span>
       </div>
@@ -59,11 +61,47 @@ function Message({ m, onOpenFile }) {
   const label = m.sender === "ai" ? "AI assistant" : m.agentName || "Agent";
   return (
     <div className={`wk-msg wk-right${m.sender === "ai" ? " wk-ai" : ""}`}>
-      {m.text}
+      <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} />
+      {m.sourceText ? (
+        <span className="wk-source">
+          Your English: {m.sourceText}
+          {language ? ` (sent in ${language.name})` : ""}
+        </span>
+      ) : null}
       <span className="wk-meta">
         {label} · {timeOf(m.at)}
       </span>
     </div>
+  );
+}
+
+// The English view of one message, with "Translated from German - show original" under it.
+function TranslatedText({ text, translation, shownOriginal, onToggleOriginal }) {
+  if (!translation) return text;
+  const from = translation.fromName || "the original language";
+  if (shownOriginal) {
+    return (
+      <>
+        {text}
+        <span className="wk-trans">
+          Original ({from}) ·{" "}
+          <button type="button" className="wk-link" onClick={onToggleOriginal}>
+            show English
+          </button>
+        </span>
+      </>
+    );
+  }
+  return (
+    <>
+      {translation.text}
+      <span className="wk-trans">
+        Translated from {from} ·{" "}
+        <button type="button" className="wk-link" onClick={onToggleOriginal}>
+          show original
+        </button>
+      </span>
+    </>
   );
 }
 
@@ -77,13 +115,25 @@ function ModeTag({ c, me }) {
   return <span className="wk-tag wk-tag--ai">AI</span>;
 }
 
-export default function ChatConversation({ detail, me, role, typing, canned, busy, error, onTakeOver, onHandBack, onResolve, onSend, onNote, onSuggest, onTyping, onOpenFile, onBlockIp }) {
+export default function ChatConversation({ detail, me, role, typing, canned, busy, error, onTakeOver, onHandBack, onResolve, onSend, onNote, onSuggest, onTyping, onOpenFile, onBlockIp, onTranslate, onTranslateReply, onSetView }) {
   const { conversation: c, messages } = detail;
   const [noteMode, setNoteMode] = useState(false);
   const [draft, setDraft] = useState("");
   const [suggesting, setSuggesting] = useState(false);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Translation (this admin only; the patient never sees any of it)
+  const language = c.language || null; // { code, name } for non-English chats
+  const [view, setView] = useState(detail.view === "en" ? "en" : "original");
+  const [translations, setTranslations] = useState({}); // messageId -> { text, from, fromName }
+  const [originals, setOriginals] = useState(() => new Set()); // messages switched back to the original
+  const [translating, setTranslating] = useState(false);
+  const [transError, setTransError] = useState("");
+  const asked = useRef(new Set()); // message ids already sent for translation
+  const mounted = useRef(true);
+  const [englishSource, setEnglishSource] = useState(""); // the admin's English text while a translation is in the box
+  const [replying, setReplying] = useState(false);
 
   const closed = c.mode === "archived";
   const mine = c.assignee?.id === me;
@@ -101,12 +151,84 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, typing, c.conversationId]);
 
+  const englishView = Boolean(language) && view === "en";
+  // English view: translate what is not translated yet, and every new patient message as it arrives.
+  useEffect(() => {
+    if (!englishView) return undefined;
+    const wanted = messages.filter(
+      (m) => ["patient", "ai", "agent"].includes(m.sender) && !m.internal && !m.file && m.text && !m.translation && !asked.current.has(m.id)
+    );
+    if (!wanted.length) return undefined;
+    wanted.forEach((m) => asked.current.add(m.id));
+    // Results are merged by message id, so a result that arrives after newer messages is still useful: it is only
+    // dropped when this chat is no longer on screen.
+    Promise.resolve().then(() => setTranslating(true));
+    onTranslate(wanted.map((m) => m.id)).then((res) => {
+      if (!mounted.current) return;
+      setTranslating(false);
+      if (!res.ok) {
+        wanted.forEach((m) => asked.current.delete(m.id));
+        setTransError("Translation unavailable right now");
+        return;
+      }
+      setTransError("");
+      setTranslations((t) => ({ ...t, ...res.data.translations }));
+    });
+    return undefined;
+  }, [englishView, messages, onTranslate]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  const chooseView = (next) => {
+    setView(next);
+    setTransError("");
+    onSetView(next);
+  };
+  const translationOf = (m) => (englishView ? translations[m.id] || m.translation || null : null);
+  const toggleOriginal = (id) =>
+    setOriginals((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // Reply translation: the admin's English text is replaced by the patient's language, editable; nothing is sent.
+  const translateReply = async () => {
+    const text = draft.trim();
+    if (!text || replying) return;
+    setReplying(true);
+    setTransError("");
+    const res = await onTranslateReply(text);
+    setReplying(false);
+    if (!res.ok) {
+      setTransError(res.status === 429 ? "Too many translations, wait a moment" : "Translation unavailable right now");
+      return;
+    }
+    setEnglishSource(text);
+    setDraft(res.text);
+    inputRef.current?.focus();
+  };
+  const undoTranslation = () => {
+    setDraft(englishSource);
+    setEnglishSource("");
+    inputRef.current?.focus();
+  };
+
   const submit = async (event) => {
     event.preventDefault();
     const text = draft.trim();
     if (!text || busy) return;
-    const ok = noting ? await onNote(text) : await onSend(text);
-    if (ok) setDraft("");
+    const ok = noting ? await onNote(text) : await onSend(text, englishSource || undefined);
+    if (ok) {
+      setDraft("");
+      setEnglishSource("");
+    }
   };
 
   const suggest = async () => {
@@ -130,6 +252,11 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
         <div className="wk-head-t">
           <strong>{c.name || c.ip || "Visitor"}</strong>
           <ModeTag c={c} me={me} />
+          {language && (
+            <span className="wk-tag wk-tag--lang" title={`The patient writes in ${language.name}`}>
+              {language.name}
+            </span>
+          )}
           {c.invited && <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">Invited</span>}
           {c.rating ? (
             <span className="wk-rating" title={`Patient rating: ${c.rating} of 5`}>
@@ -162,15 +289,30 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
         </div>
       </div>
 
-      {error && (
+      {language && (
+        <div className="wk-viewbar">
+          <div className="wk-seg" role="group" aria-label="Message language">
+            <button type="button" aria-pressed={view === "original"} onClick={() => chooseView("original")}>
+              Original ({language.name})
+            </button>
+            <button type="button" aria-pressed={view === "en"} onClick={() => chooseView("en")}>
+              English
+            </button>
+          </div>
+          {translating && <span className="wk-small wk-muted">Translating…</span>}
+          <span className="wk-small wk-muted">Only your team sees this. The patient always sees the original.</span>
+        </div>
+      )}
+
+      {(error || transError) && (
         <div className="wk-error" role="alert">
-          {error}
+          {error || transError}
         </div>
       )}
 
       <div className="wk-body" ref={bodyRef}>
         {messages.map((m) => (
-          <Message key={m.id} m={m} onOpenFile={onOpenFile} />
+          <Message key={m.id} m={m} onOpenFile={onOpenFile} translation={translationOf(m)} language={language} shownOriginal={originals.has(m.id)} onToggleOriginal={() => toggleOriginal(m.id)} />
         ))}
         {typing && (
           <div className="wk-typing">
@@ -215,6 +357,14 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
             </button>
           ))}
         </div>
+        {!noting && englishSource && (
+          <div className="wk-source wk-source--box">
+            Your English: {englishSource}{" "}
+            <button type="button" className="wk-link" onClick={undoTranslation}>
+              Undo translation
+            </button>
+          </div>
+        )}
         <form className="wk-composer" onSubmit={submit}>
           <input
             ref={inputRef}
@@ -233,6 +383,14 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
             {noting ? "Save note" : "Send"}
           </button>
         </form>
+        {language && !noting && !closed && (
+          <div className="wk-row wk-wrap">
+            <button type="button" className="wk-btn" onClick={translateReply} disabled={replying || busy || !draft.trim() || Boolean(englishSource)}>
+              {replying ? "Translating…" : `Translate to ${language.name}`}
+            </button>
+            <span className="wk-small wk-muted">Type in English, translate, check the text, then Send. Nothing is sent automatically.</span>
+          </div>
+        )}
       </div>
     </div>
   );

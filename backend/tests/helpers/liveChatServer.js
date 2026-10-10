@@ -169,6 +169,31 @@ function scriptedAi(script = []) {
       ai.suggestCalls.push(input);
       return suggestions.shift() || { ok: true, reply: "Thanks for waiting. Let me check that for you.", usage: { inputTokens: 800, cachedInputTokens: 0, outputTokens: 20, costUsd: 0.0001 } };
     },
+    // Translation stubs: every call is recorded (what the model would have been sent). Default: German -> "EN: <text>".
+    translateCalls: [],
+    detectCalls: [],
+    translateOverride: null, // (input) => result, to force a failure or a custom answer
+    detectOverride: null,
+    async translateBatch(input) {
+      ai.translateCalls.push(input);
+      if (ai.translateOverride) return ai.translateOverride(input);
+      const usage = { inputTokens: 500, cachedInputTokens: 0, outputTokens: 80, costUsd: 0.0002 };
+      const toGerman = input.target !== "English";
+      return {
+        ok: true,
+        usage,
+        items: input.items.map((i) =>
+          toGerman
+            ? { id: i.id, code: "en", name: "English", english: false, text: `DE: ${i.text}` }
+            : { id: i.id, code: "de", name: "German", english: false, text: `EN: ${i.text}` }
+        ),
+      };
+    },
+    async detectLanguage(input) {
+      ai.detectCalls.push(input);
+      if (ai.detectOverride) return ai.detectOverride(input);
+      return { ok: true, language: { code: "de", name: "German" }, usage: { inputTokens: 60, cachedInputTokens: 0, outputTokens: 10, costUsd: 0.00001 } };
+    },
     async generateReply(input) {
       ai.calls.push(input);
       const next = queue.shift();

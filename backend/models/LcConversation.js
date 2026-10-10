@@ -38,6 +38,14 @@ const conversationSchema = new mongoose.Schema(
     patientMessageCount: { type: Number, default: 0 },
     reads: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, count: { type: Number, default: 0 } }],
     aiSummary: ENC_FIELD,
+    // The patient's language (not PHI): detected from the AI reply, or by one small model call. No badge for "en".
+    language: {
+      code: { type: String, default: "", maxlength: 8 },
+      name: { type: String, default: "", maxlength: 40 },
+      detectedAt: { type: Date, default: null },
+    },
+    // Admin side only: which view each admin chose for this chat ("original" or "en").
+    translateViews: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, view: { type: String, enum: ["original", "en"], default: "original" } }],
     tags: [{ type: String, trim: true, maxlength: 40 }],
     contact: { name: ENC_FIELD, email: ENC_FIELD, phone: ENC_FIELD },
     ip: { type: String, default: "" },

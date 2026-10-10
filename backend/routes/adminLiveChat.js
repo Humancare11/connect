@@ -14,7 +14,8 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET  /visitors, /summary, /settings                   Real-time visitors and settings (read)
 //   GET  /conversations?view=ai|live                      chat lists (AI chats / Live agent chats)
 //   GET  /conversations/:id                               one chat with its patient panel (marks it read)
-//   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest
+//   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest|translate|translate-reply
+//   PUT  /conversations/:id/view                          English / original view (per admin, per chat)
 //   PUT  /conversations/:id/tags|contact
 //   POST /conversations/start                             admin-started chat with a visitor who has contact details
 //   GET  /unread, /canned-replies
@@ -37,7 +38,7 @@ const DEFAULT_GUARD = [verifyAdminToken, liveChatAgentOnly];
 function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats } = {}) {
   const router = express.Router();
   router.use(guard);
-  router.use(express.json({ limit: "16kb" }));
+  router.use(express.json({ limit: "32kb" }));
 
   // Runs a handler and maps AgentError to JSON ({ ok: false, error, ...extra }).
   const handle = (fn) => async (req, res, next) => {
@@ -113,7 +114,11 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   );
 
   router.get("/conversations/:id", handle((req) => agent.detail(actor(req), idOf(req)).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))));
-  router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text)));
+  router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text, req.body?.sourceText)));
+  // Translation (admin side only): English view of a chat, the reply box, and the per-admin view choice.
+  router.post("/conversations/:id/translate", handle((req) => agent.translate(actor(req), idOf(req), req.body?.messageIds)));
+  router.post("/conversations/:id/translate-reply", handle((req) => agent.translateReply(actor(req), idOf(req), req.body?.text)));
+  router.put("/conversations/:id/view", handle((req) => agent.setTranslateView(actor(req), idOf(req), req.body?.view)));
   router.post("/conversations/:id/notes", handle((req) => agent.addNote(actor(req), idOf(req), req.body?.text)));
   router.post("/conversations/:id/takeover", handle((req) => agent.takeOver(actor(req), idOf(req))));
   router.post("/conversations/:id/handback", handle((req) => agent.handBack(actor(req), idOf(req))));

@@ -63,6 +63,11 @@ function Item({ row, me, active, typing, onSelect }) {
         {typing ? <span className="wk-prev wk-prev--typing">typing…</span> : <span className="wk-prev">{preview}</span>}
         <span className="wk-row">
           <ModeTag row={row} me={me} />
+          {row.language?.name ? (
+            <span className="wk-tag wk-tag--lang" title={`The patient writes in ${row.language.name}`}>
+              {row.language.name}
+            </span>
+          ) : null}
           {row.rating ? <span className="wk-rating">{"★".repeat(row.rating)}</span> : null}
           {row.unread > 0 && <span className="wk-badge">{row.unread}</span>}
         </span>

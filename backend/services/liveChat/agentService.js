@@ -14,6 +14,7 @@ const mongoose = require("mongoose");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { createWindowLimiter } = require("./limits");
+const { createTranslationService, publicLanguage } = require("./translationService");
 
 class AgentError extends Error {
   constructor(status, code, extra = {}) {
@@ -55,6 +56,17 @@ function createAgentService({
 }) {
   const { LcVisitor, LcConversation, LcMessage, LcPageVisit, LcCannedReply } = models;
   const suggestLimiter = createWindowLimiter({ windowMs: 60_000, max: 10, now });
+  // Translation for admins (English view, reply translation, language detection). Admin side only.
+  const translation = createTranslationService({
+    models,
+    ai,
+    limits,
+    loadSettings,
+    chat,
+    now,
+    fail: (status, code, extra) => new AgentError(status, code, extra),
+  });
+  chat.setLanguageDetector((conv, text) => translation.detectFor(conv, text));
 
   async function displayNameOf(userId, settings) {
     const name = agentStore.displayName ? await agentStore.displayName(String(userId)) : "";
@@ -95,6 +107,7 @@ function createAgentService({
       state: conv.geo?.state || "",
       country: conv.geo?.country || "",
       topic: conv.topic || "",
+      language: publicLanguage(conv.language), // badge for non-English chats (admin side only)
       offline: Boolean(conv.offlineRequested),
       closedReason: conv.closedReason || "",
       startedAt: conv.startedAt,
@@ -178,6 +191,13 @@ function createAgentService({
     return `Patient sent ${patient} message${patient === 1 ? "" : "s"}; the AI replied ${aiReplies} time${aiReplies === 1 ? "" : "s"}. ${state}`;
   }
 
+  // English translation already cached on a message (nothing is translated just by opening a chat).
+  function cachedTranslation(m) {
+    const t = (m.translations || []).find((x) => x.lang === "en");
+    if (!t || t.same) return {};
+    return { translation: { text: decryptLiveChatText(t.text), from: t.from, fromName: t.fromName } };
+  }
+
   // The conversation plus everything the patient panel shows. Opening a chat marks it read for this admin.
   async function detail(actor, conversationId) {
     const conv = await load(conversationId);
@@ -201,6 +221,8 @@ function createAgentService({
       agentName: m.agentName || "",
       internal: Boolean(m.internal),
       ...(m.fileId && files.get(String(m.fileId)) ? { file: files.get(String(m.fileId)) } : {}),
+      ...(m.sourceText?.cipherText ? { sourceText: decryptLiveChatText(m.sourceText) } : {}),
+      ...cachedTranslation(m),
     }));
     const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
     const live = presence.get(conv.visitorId);
@@ -216,6 +238,7 @@ function createAgentService({
     const visits = visitor?.visits || 1;
     return {
       conversation: rowOf(conv, { userId: actor.id }),
+      view: translation.viewOf(conv, actor.id),
       messages,
       panel: {
         contact,
@@ -352,8 +375,10 @@ function createAgentService({
   }
 
   // Reply to the patient. In an AI chat or the queue this takes the chat over first (same atomic step).
-  async function sendMessage(actor, conversationId, rawText) {
+  async function sendMessage(actor, conversationId, rawText, rawSource) {
     const text = cleanText(rawText);
+    // The admin's own English text of a translated reply (optional); stored next to what the patient receives.
+    const sourceText = typeof rawSource === "string" && rawSource.trim() ? cleanText(rawSource) : "";
     await load(conversationId);
     return chat.withLock(conversationId, async () => {
       let conv = await load(conversationId);
@@ -365,7 +390,7 @@ function createAgentService({
       }
       if (conv.mode !== "live") conv = (await takeOverLocked(actor, conv, settings)).conv;
       const name = conv.agentName || (await displayNameOf(me, settings));
-      const message = await chat.addMessage(conv, "agent", text, { agentId: oid(me), agentName: name });
+      const message = await chat.addMessage(conv, "agent", text, { agentId: oid(me), agentName: name, ...(sourceText ? { sourceText } : {}) });
       await LcConversation.updateOne({ _id: conv._id, firstAgentReplyAt: null }, { $set: { firstAgentReplyAt: new Date(now()) } });
       // A chat the admin started: until the visitor replies, show the bubble above their launcher. The bubble carries
       // only the agent's name; the text is revealed after the contact form (the visitor id alone must not unlock it).
@@ -373,7 +398,7 @@ function createAgentService({
         chat.toTrackers(conv.visitorId, "chat:invite", { conversationId: conv.conversationId, agentName: name });
       }
       const fresh = await updated(conv);
-      return { ok: true, message, conversation: rowOf(fresh, { userId: actor.id }) };
+      return { ok: true, message: { ...message, ...(sourceText ? { sourceText } : {}) }, conversation: rowOf(fresh, { userId: actor.id }) };
     });
   }
 
@@ -476,6 +501,24 @@ function createAgentService({
       agentName: await displayNameOf(actor.id, settings),
       replies: rows.map((r) => ({ id: String(r._id), title: r.title, text: r.text })),
     };
+  }
+
+  // ── Translation (admin side only) ─────────────────────────────────────────────
+
+  async function translate(actor, conversationId, ids) {
+    const conv = await load(conversationId);
+    const clean = Array.isArray(ids) ? ids.filter((id) => /^[a-f0-9]{24}$/i.test(String(id))).slice(0, 300) : [];
+    return { ok: true, ...(await translation.translateMessages(actor, conv, clean)) };
+  }
+
+  async function translateReply(actor, conversationId, text) {
+    const conv = await load(conversationId);
+    return { ok: true, ...(await translation.translateReply(actor, conv, text)) };
+  }
+
+  async function setTranslateView(actor, conversationId, view) {
+    const conv = await load(conversationId);
+    return translation.setView(actor, conv, view);
   }
 
   async function suggest(actor, conversationId) {
@@ -675,6 +718,9 @@ function createAgentService({
     updateContact,
     canned,
     suggest,
+    translate,
+    translateReply,
+    setTranslateView,
     startChat,
     relayTyping,
     blockIp,

@@ -243,8 +243,8 @@ export default function ChatWorkspace({ view }) {
       const r = await act(post("resolve"));
       if (r.ok) loadDetail(id);
     },
-    send: async (text) => {
-      const r = await act(post("messages", { text }));
+    send: async (text, sourceText) => {
+      const r = await act(post("messages", sourceText ? { text, sourceText } : { text }));
       if (r.ok) {
         const m = r.data.message;
         setDetail((d) => (d && !d.messages.some((x) => x.id === m.id) ? { ...d, messages: [...d.messages, m] } : d));
@@ -252,6 +252,25 @@ export default function ChatWorkspace({ view }) {
       }
       return r.ok;
     },
+    // Translation (admin side only). These do not use act(): a failure must not reload the chat or show the generic
+    // error; the conversation shows "Translation unavailable right now" and carries on.
+    translate: async (messageIds) => {
+      try {
+        const { data } = await api.post(`${BASE}/conversations/${id}/translate`, { messageIds });
+        return { ok: true, data };
+      } catch (err) {
+        return { ok: false, status: err?.response?.status };
+      }
+    },
+    translateReply: async (text) => {
+      try {
+        const { data } = await api.post(`${BASE}/conversations/${id}/translate-reply`, { text });
+        return { ok: true, text: data.text };
+      } catch (err) {
+        return { ok: false, status: err?.response?.status };
+      }
+    },
+    setView: (view) => api.put(`${BASE}/conversations/${id}/view`, { view }).catch(() => {}),
     note: async (text) => {
       const r = await act(post("notes", { text }));
       if (r.ok) {
@@ -346,6 +365,9 @@ export default function ChatWorkspace({ view }) {
             onHandBack={handlers.handback}
             onResolve={handlers.resolve}
             onSend={handlers.send}
+            onTranslate={handlers.translate}
+            onTranslateReply={handlers.translateReply}
+            onSetView={handlers.setView}
             onNote={handlers.note}
             onSuggest={handlers.suggest}
             onTyping={onTyping}

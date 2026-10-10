@@ -11,6 +11,7 @@ const crypto = require("crypto");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
 const { DEFAULT_SETTINGS } = require("./settingsDefaults");
+const { tooShortToTell, looksEnglish } = require("./languageHints");
 
 const DEFAULT_NO_AGENT_TEXT = DEFAULT_SETTINGS.offlineMessage;
 
@@ -98,11 +99,13 @@ function createChatService({
   followUp = null, // offline follow-up email ({ send(conv) })
   abuse = null, // abuse alerts ({ noteChat, noteDailyLimit })
   sitePages = require("./sitePages").createSitePages(), // the pages the AI may link to (allowlist)
+  detectLanguage = null, // (conv, text) => Promise: one small model call when no AI turn has found the language
   leaveGraceMs = 30_000, // a visitor with no connection for this long has left
   now = () => Date.now(),
   log = () => {},
 }) {
   const { LcVisitor, LcConversation, LcMessage, LcPageVisit, LcFile } = models;
+  let detector = detectLanguage;
   const locks = new Map(); // conversationId -> promise chain, so one chat handles one turn at a time
   const breaker = { until: 0, kind: "", alerted: false };
 
@@ -224,11 +227,13 @@ function createChatService({
   }
 
   async function addMessage(conv, sender, text, extra = {}) {
-    const { file, ...stored } = extra; // `file` is display info; only fileId is stored
+    const { file, sourceText, ...stored } = extra; // `file` is display info; only fileId is stored
+    // sourceText: the admin's English text of a translated reply. Stored encrypted, shown to admins only.
     const doc = await LcMessage.create({
       conversationId: conv.conversationId,
       sender,
       text: encryptLiveChatText(text),
+      ...(sourceText ? { sourceText: encryptLiveChatText(sourceText) } : {}),
       ...stored,
     });
     const update = { $set: { lastMessageAt: new Date(now()) } };
@@ -253,9 +258,30 @@ function createChatService({
       name: firstNameOf(decryptLiveChatText(conv.contact?.name)),
       everLive: Boolean(conv.everLive),
       assigneeId: conv.assigneeId ? String(conv.assigneeId) : null,
-      message: { ...message, internal: Boolean(extra.internal) },
+      message: { ...message, internal: Boolean(extra.internal), ...(sourceText ? { sourceText } : {}) },
     });
     return message;
+  }
+
+  // The patient's language, kept on the chat for the admin side only (never part of what a patient receives).
+  async function setLanguage(conv, language, { source = "ai" } = {}) {
+    if (!language?.code) return;
+    const updated = await LcConversation.findOneAndUpdate(
+      { _id: conv._id, "language.code": { $ne: language.code } },
+      { $set: { language: { code: language.code, name: language.name || language.code, detectedAt: new Date(now()), source } } },
+      { returnDocument: "after" }
+    );
+    if (updated) announce(updated); // badge in every admin's list
+  }
+
+  // From the AI reply: the first detection is accepted; a different language later only when the patient's latest
+  // message is long enough to be sure ("clearly switches").
+  async function noteLanguage(conv, language, patientText) {
+    if (!language?.code) return;
+    const stored = conv.language?.code || "";
+    if (stored === language.code) return;
+    if (stored && tooShortToTell(patientText || "")) return;
+    await setLanguage(conv, language, { source: "ai" });
   }
 
   async function pushState(conv) {
@@ -558,6 +584,10 @@ function createChatService({
     // turns of one chat run one after another (their own lock key); every change an AI turn makes re-checks that
     // the chat is still an AI chat (see `ifStillAi`).
     if (saved.mode === "ai") await withLock(`ai:${saved.conversationId}`, () => aiTurn(saved, loaded.visitor));
+    // No language yet (AI off, cap reached, or straight to an agent): one small call on a clearly non-English message.
+    if (detector && !saved.language?.code && !tooShortToTell(text.text) && !looksEnglish(text.text)) {
+      detector(saved, text.text).catch(() => {});
+    }
     return { ok: true };
   }
 
@@ -592,10 +622,12 @@ function createChatService({
 
     emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: true });
     let result;
+    let lastPatientText = "";
     try {
       const history = (await recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
       // Pages that fit what the patient just wrote; the model may only point at these.
       const lastPatient = history.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
+      lastPatientText = history.filter((m) => m.role === "patient").at(-1)?.text || "";
       result = await ai.generateReply({ settings, history, pages: sitePages.candidatesFor(lastPatient).map((p) => ({ title: p.title, url: p.url })) });
     } catch {
       result = { ok: false, kind: "api_error" };
@@ -611,6 +643,7 @@ function createChatService({
       const update = { $inc: { aiReplyCount: 1 } };
       if (!current.topic && result.topic) update.$set = { topic: result.topic };
       await LcConversation.updateOne({ _id: current._id }, update);
+      await noteLanguage(current, result.language, lastPatientText);
       // Only pages on the server's own list reach the patient (an invented url is dropped).
       const links = sitePages.filterLinks(result.links);
       await addMessage(current, "ai", result.reply, links.length ? { links } : {});
@@ -826,6 +859,11 @@ function createChatService({
       connections.clear();
     },
     addMessage,
+    setLanguage,
+    setLanguageDetector: (fn) => {
+      detector = fn;
+    },
+    toObjectId: (id) => new (require("mongoose").Types.ObjectId)(String(id)),
     pushState,
     setActivity,
     syncPresenceFor,
