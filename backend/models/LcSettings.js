@@ -6,28 +6,11 @@ const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
 const settingsSchema = new mongoose.Schema(
   {
     key: { type: String, default: "default", unique: true },
-    aiMode: { type: String, enum: ["ai_first", "ai_when_no_agent", "ai_off"], default: "ai_first" },
+    aiMode: { type: String, enum: ["ai_first", "ai_off"], default: "ai_first" }, // an older "ai_when_no_agent" reads as ai_first
     agentDisplayName: { type: String, default: "Sam", trim: true, maxlength: 40 },
     greeting: { type: String, default: "", maxlength: 600 },
-    supportHours: {
-      timezone: { type: String, default: "America/New_York" },
-      // Open 24/7: the days below are ignored. A day whose close is earlier than its open runs past midnight.
-      alwaysOn: { type: Boolean, default: false },
-      days: [
-        {
-          _id: false,
-          day: { type: String, enum: ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] },
-          enabled: { type: Boolean, default: true },
-          open: { type: String, default: "08:00" },
-          close: { type: String, default: "22:00" },
-        },
-      ],
-    },
-    // When the team counts as offline (the patient is told and gets an email instead of waiting):
-    //   hours_or_no_agent  outside support hours OR no agent online (default)
-    //   no_agent           no agent online (support hours are not used)
-    //   hours              outside support hours (agents being online is not required)
-    offlineRule: { type: String, enum: ["hours_or_no_agent", "no_agent", "hours"], default: "hours_or_no_agent" },
+    // Minutes in the Queue without an admin reply before the patient is told an email follows (and gets it).
+    followUpMinutes: { type: Number, default: 1, min: 1, max: 30 },
     handoffRules: {
       onUnsure: { type: Boolean, default: true }, // "unanswered": hands over after two misses in a row
       onAccountOrPayment: { type: Boolean, default: true }, // ... when the patient asks about their own booking or payment
@@ -53,7 +36,6 @@ const settingsSchema = new mongoose.Schema(
     businessFacts: { type: String, default: "", maxlength: 8000 },
     dailySpendCapUsd: { type: Number, default: 3, min: 0 },
     unavailableMessage: { type: String, default: "", maxlength: 600 },
-    offlineMessage: { type: String, default: "", maxlength: 600 },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }

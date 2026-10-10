@@ -78,7 +78,6 @@ describe("live chat: Team and Reports", () => {
       lc.identities["tok-a"] = { id: AGENT_A, role: "admin" };
       const sam = await lc.agent("tok-a");
       await sam.snapshotPromise;
-      await lc.call(sam, "agent:status", { online: true });
       await lc.models.LcAgentProfile.create({ userId: oid(AGENT_B), displayName: "Maya L." });
 
       const { body } = await rest("GET", "/team", A);
@@ -86,11 +85,12 @@ describe("live chat: Team and Reports", () => {
       assert.deepEqual(Object.keys(by).sort(), ["Maya Lopez", "Sam Carter", "Super Admin"], "agents only: no patients, doctors or disabled accounts");
 
       assert.deepEqual(
-        [by["Sam Carter"].role, by["Sam Carter"].displayName, by["Sam Carter"].status, by["Sam Carter"].openChats, by["Sam Carter"].chatsToday, by["Sam Carter"].avgFirstReplySeconds],
-        ["Admin", "Sam", "online", 2, 3, 60]
+        [by["Sam Carter"].role, by["Sam Carter"].displayName, by["Sam Carter"].openChats, by["Sam Carter"].chatsToday, by["Sam Carter"].avgFirstReplySeconds],
+        ["Admin", "Sam", 2, 3, 60]
       );
-      assert.deepEqual([by["Maya Lopez"].displayName, by["Maya Lopez"].status, by["Maya Lopez"].openChats, by["Maya Lopez"].chatsToday, by["Maya Lopez"].avgFirstReplySeconds], ["Maya L.", "offline", 1, 1, null]);
-      assert.deepEqual([by["Super Admin"].role, by["Super Admin"].status, by["Super Admin"].openChats], ["Super admin", "offline", 0]);
+      assert.deepEqual([by["Maya Lopez"].displayName, by["Maya Lopez"].openChats, by["Maya Lopez"].chatsToday, by["Maya Lopez"].avgFirstReplySeconds], ["Maya L.", 1, 1, null]);
+      assert.deepEqual([by["Super Admin"].role, by["Super Admin"].openChats], ["Super admin", 0]);
+      assert.equal("status" in by["Sam Carter"], false, "no online/offline status any more");
       sam.close();
     });
 
@@ -98,16 +98,9 @@ describe("live chat: Team and Reports", () => {
       const { body } = await rest("GET", "/team", A);
       assert.equal(body.ai.name, "AI agent");
       assert.equal(body.ai.role, "Assistant (24/7)");
-      assert.equal(body.ai.status, "online");
       assert.equal(body.ai.openChats, 3);
       assert.equal(body.ai.chatsToday, 3);
       assert.equal(body.ai.avgFirstReplySeconds, 4);
-    });
-
-    test("when the AI is switched off its status says so", async () => {
-      await lc.setSettings({ aiMode: "ai_off" });
-      assert.equal((await rest("GET", "/team", A)).body.ai.status, "offline");
-      await lc.setSettings({ aiMode: "ai_first" });
     });
 
     test("a chat of the day before does not count towards today", async () => {

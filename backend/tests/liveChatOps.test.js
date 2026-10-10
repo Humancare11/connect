@@ -2,7 +2,7 @@ const { test, describe, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { startChatServer, sleep, dayKey, AGENT_A, AGENT_B } = require("./helpers/liveChatServer");
 
-const UNAVAILABLE = "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.";
+const UNAVAILABLE = 'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.';
 
 async function waitFor(fn, ms = 4000, step = 50) {
   const end = Date.now() + ms;
@@ -51,16 +51,20 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
     return { socket, contact, token: contact.token, id: started.conversation.conversationId, visitorId: contact.visitorId };
   }
 
-  // A signed-in agent who is online (so the team counts as available).
+  // A signed-in agent with the admin panel open.
   const sockets = [];
   async function agentOnline(userId, role = "admin") {
     const token = `tok-${userId}`;
     lc.identities[token] = { id: userId, role };
     const socket = await lc.agent(token);
     await socket.snapshotPromise;
-    await lc.call(socket, "agent:status", { online: true });
     sockets.push(socket);
     return { socket, token };
+  }
+  // Makes the follow-up time of a Queue chat pass and runs the job once (what the 15-second timer does).
+  async function fireFollowUp(conversationId) {
+    await lc.models.LcConversation.updateOne({ conversationId, followUpNoticeAt: null }, { $set: { followUpDueAt: new Date(Date.now() - 1000) } });
+    return lc.livechat.chat.runFollowUpDue();
   }
   const setGrace = (seconds) => lc.setSettings({ "handoffRules.agentOfflineGraceSeconds": seconds });
 
@@ -139,114 +143,9 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
     });
   });
 
-  // ── Offline mode and the follow-up email ──────────────────────────────────────
+  // ── The follow-up email ───────────────────────────────────────────────────────
 
-  describe("offline mode and the follow-up email", () => {
-    test("no agent online: the patient is told, the request is saved, ONE email goes to their own address", async () => {
-      const chat = await openChat({ name: "Priya Raman", email: "priya@example.com" });
-      await lc.call(chat.socket, "chat:message", { text: "I need a sick note for my back pain" });
-      await lc.call(chat.socket, "chat:agent");
-
-      const state = await stateOf(chat.socket);
-      assert.deepEqual([state.mode, state.offline], ["queue", true]);
-      assert.equal(state.messages.at(-1).text, "Thanks, Priya! We've received your question and details. Our team will get back to you at priya@example.com shortly.");
-
-      assert.ok(await waitFor(() => lc.emails.length === 1), "one email was sent");
-      const mail = lc.emails[0];
-      assert.equal(mail.to, "priya@example.com");
-      assert.equal(mail.subject, "We received your message – Humancare Connect");
-      assert.ok(mail.body.startsWith("Hi Priya,"));
-      assert.ok(mail.body.includes(`reference ${chat.id}`));
-      assert.equal((await convOf(chat.id)).followUp.status, "sent");
-
-      // asking again, or another trigger, never sends a second email for this chat
-      await lc.call(chat.socket, "chat:message", { text: "hello?" });
-      await sleep(150);
-      assert.equal(lc.emails.length, 1);
-      chat.socket.close();
-    });
-
-    test("the email contains NO health details: no message text, topic, option label or file name", async () => {
-      const chat = await openChat({ name: "Priya Raman", email: "priya2@example.com" });
-      await lc.call(chat.socket, "chat:option", { key: "sick_notes" }); // topic: Sick Notes
-      await lc.call(chat.socket, "chat:message", { text: "Persistent migraine and I take sumatriptan" });
-      await lc.call(chat.socket, "chat:agent");
-      await waitFor(() => lc.emails.length === 1);
-      const body = `${lc.emails[0].subject}\n${lc.emails[0].body}`.toLowerCase();
-      for (const forbidden of ["migraine", "sumatriptan", "sick note", "prescription", "consultation", "second opinion", "medical advice", "refill", "topic"]) {
-        assert.equal(body.includes(forbidden), false, forbidden);
-      }
-      assert.ok(body.includes("don't include medical details"));
-      chat.socket.close();
-    });
-
-    test("the email never mentions support hours or the team being offline, whatever the settings say", async () => {
-      const settings = await lc.models.LcSettings.findOne({ key: "default" }).lean();
-      const original = settings.supportHours;
-      const day = (name, enabled, open, close) => ({ day: name, enabled, open, close });
-      try {
-        await lc.setSettings({
-          supportHours: {
-            timezone: "America/Chicago",
-            days: [
-              day("sunday", false, "08:00", "22:00"), day("monday", true, "09:00", "17:00"), day("tuesday", true, "09:00", "17:00"),
-              day("wednesday", true, "09:00", "17:00"), day("thursday", true, "09:00", "17:00"), day("friday", true, "09:00", "17:00"),
-              day("saturday", true, "10:00", "14:00"),
-            ],
-          },
-        });
-        // closed right now or not, nobody is online, so this is an offline request
-        const chat = await openChat({ email: "hours1@example.com" });
-        await lc.call(chat.socket, "chat:agent");
-        await waitFor(() => lc.emails.length === 1);
-        const noHours = (body) => {
-          assert.doesNotMatch(body, /\d{1,2}:\d{2}/, "no opening hours");
-          assert.doesNotMatch(body, /offline|support hours|every day/i);
-          assert.ok(body.includes("We received your message") && body.includes("will get back to you soon"));
-        };
-        noHours(lc.emails[0].body);
-
-        lc.emails.length = 0;
-        await lc.setSettings({ supportHours: { timezone: "Asia/Kolkata", days: original.days.map((d) => ({ ...d, open: "06:30", close: "20:15", enabled: true })) } });
-        const second = await openChat({ email: "hours2@example.com" });
-        await lc.call(second.socket, "chat:agent");
-        await waitFor(() => lc.emails.length === 1);
-        noHours(lc.emails[0].body);
-        chat.socket.close();
-        second.socket.close();
-      } finally {
-        await lc.setSettings({ supportHours: original });
-      }
-    });
-
-    test("outside support hours counts as offline even with an agent online", async () => {
-      const settings = await lc.models.LcSettings.findOne({ key: "default" }).lean();
-      const original = settings.supportHours;
-      const { socket } = await agentOnline(AGENT_A);
-      try {
-        await lc.setSettings({ supportHours: { ...original, days: original.days.map((d) => ({ ...d, enabled: false })) } });
-        const chat = await openChat({ email: "closed@example.com" });
-        await lc.call(chat.socket, "chat:agent");
-        assert.equal((await stateOf(chat.socket)).offline, true);
-        assert.ok(await waitFor(() => lc.emails.length === 1));
-        chat.socket.close();
-      } finally {
-        await lc.setSettings({ supportHours: original });
-        socket.close();
-      }
-    });
-
-    test("with an agent online and inside hours there is no email", async () => {
-      const { socket } = await agentOnline(AGENT_A);
-      const chat = await openChat({ email: "open@example.com" });
-      await lc.call(chat.socket, "chat:agent");
-      assert.equal((await stateOf(chat.socket)).offline, false);
-      await sleep(200);
-      assert.equal(lc.emails.length, 0);
-      chat.socket.close();
-      socket.close();
-    });
-
+  describe("follow-up email", () => {
     test("a failing mail server never breaks the chat, and its error (with the address) is not logged", async () => {
       lc.failures.mail = true;
       const logged = [];
@@ -256,10 +155,14 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
         const chat = await openChat({ email: "fail@example.com" });
         const res = await lc.call(chat.socket, "chat:agent");
         assert.equal(res.ok, true);
+        await fireFollowUp(chat.id);
         assert.equal((await stateOf(chat.socket)).mode, "queue");
         assert.ok(await waitFor(async () => (await convOf(chat.id)).followUp.status === "failed"));
         assert.equal(logged.join("\n").includes("fail@example.com"), false);
         assert.ok(logged.some((l) => l.includes("follow-up email failed")));
+        // the admin sees that the promised email did not go out
+        const row = (await rest("GET", "/conversations?view=live")).body.conversations.find((c) => c.conversationId === chat.id);
+        assert.deepEqual([row.emailFollowUp, row.emailStatus], [true, "failed"]);
         chat.socket.close();
       } finally {
         console.error = original;
@@ -400,14 +303,15 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       const patient = await stateOf(chat.socket);
       assert.equal(patient.mode, "queue");
       assert.equal(patient.agent, null);
-      assert.ok(texts(patient).includes("Your agent is no longer available. We're reconnecting you with another agent…"));
+      assert.ok(texts(patient).includes("Your agent was disconnected. We're reconnecting you with our team now."));
       assert.equal(texts(patient).some((t) => t.includes("went offline")), false, "the team-only line is hidden from the patient");
 
       const detail = (await rest("GET", `/conversations/${chat.id}`, B)).body;
       assert.ok(detail.messages.some((m) => m.internal && m.text === "Sam went offline. The chat is back in the queue."));
       assert.ok(mayaEvents.some(([e, p]) => e === "queue:new" && p.conversationId === chat.id && p.reason === "agent_offline"));
       assert.equal((await rowIn("live", chat.id)).mode, "queue");
-      assert.equal(lc.emails.length, 0, "another agent is online: no email");
+      assert.equal(lc.emails.length, 0, "no email before the follow-up time");
+      assert.ok(conv.followUpDueAt, "the follow-up step starts again for the requeued chat");
       chat.socket.close();
       maya.socket.close();
     });
@@ -426,18 +330,6 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       back.socket.close();
     });
 
-    test("switching to Offline starts the same countdown", async () => {
-      await setGrace(0.3);
-      const sam = await agentOnline(AGENT_A);
-      const maya = await agentOnline(AGENT_B);
-      const chat = await liveChatHeldBy(AGENT_A);
-      await lc.call(sam.socket, "agent:status", { online: false });
-      assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "queue", 3000));
-      chat.socket.close();
-      sam.socket.close();
-      maya.socket.close();
-    });
-
     test("a logged-out (revoked) session is noticed without any event, and the chat is requeued", async () => {
       await setGrace(0.3);
       const sam = await agentOnline(AGENT_A);
@@ -451,16 +343,17 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       maya.socket.close();
     });
 
-    test("nobody else online: the patient gets the thank-you text (never the word offline) and one email is sent", async () => {
+    test("a requeued chat gets the follow-up step: notice and ONE email after the follow-up time", async () => {
       await setGrace(0.3);
       const sam = await agentOnline(AGENT_A);
       const chat = await liveChatHeldBy(AGENT_A, { email: "left-alone@example.com" });
       sam.socket.close();
       assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "queue", 3000));
-      const conv = await convOf(chat.id);
-      assert.equal(conv.offlineRequested, true);
-      assert.ok(texts(await stateOf(chat.socket)).some((t) => t.includes("We've received your question and details")));
-      assert.equal(texts(await stateOf(chat.socket)).some((t) => /offline/i.test(t)), false, "the patient is never told the team is offline");
+      assert.equal(lc.emails.length, 0);
+      await fireFollowUp(chat.id);
+      const patient = texts(await stateOf(chat.socket));
+      assert.ok(patient.includes("Our team will connect with you by email at left-alone@example.com shortly."));
+      assert.equal(patient.some((t) => /offline/i.test(t)), false, "the patient is never told the team is offline");
       assert.ok(await waitFor(() => lc.emails.length === 1));
       assert.equal(lc.emails[0].to, "left-alone@example.com");
       chat.socket.close();
@@ -526,13 +419,17 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "archived", 2500));
     });
 
-    test("an offline request is NOT archived when the visitor leaves: they asked for an email reply", async () => {
+    test("a chat waiting in the Queue is NOT archived when the visitor leaves: the email follow-up still applies", async () => {
       const chat = await openChat();
-      await lc.call(chat.socket, "chat:agent"); // no agent online
-      assert.equal((await convOf(chat.id)).offlineRequested, true);
+      await lc.call(chat.socket, "chat:agent");
+      assert.ok((await convOf(chat.id)).followUpDueAt);
       chat.socket.close();
       await sleep(700);
       assert.equal((await convOf(chat.id)).mode, "queue");
+      await fireFollowUp(chat.id);
+      assert.equal((await convOf(chat.id)).offlineRequested, true);
+      await sleep(700);
+      assert.equal((await convOf(chat.id)).mode, "queue", "still in the Queue after the notice");
     });
 
     test("a returning visitor within 24 hours continues the same AI chat", async () => {
@@ -567,7 +464,7 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       const resumed = (await lc.call(back, "chat:resume")).conversation;
       assert.equal(resumed.mode, "queue");
       assert.equal(resumed.agent, null);
-      assert.ok(texts(resumed).includes("Welcome back, Emma! We're reconnecting you with an agent."));
+      assert.ok(texts(resumed).includes("Welcome back, Emma! We're reconnecting you with our team."));
       const conv = await convOf(chat.id);
       assert.deepEqual([conv.assigneeId, conv.agentName], [null, ""]);
       await sleep(100);

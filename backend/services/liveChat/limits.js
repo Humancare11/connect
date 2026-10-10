@@ -93,14 +93,14 @@ function createLimits({ models, readLimits, now = () => Date.now() }) {
     // Daily AI spend. Returns the amount spent today and whether the cap has been reached.
     async spendStatus(settings) {
       const cap = Number(settings?.dailySpendCapUsd ?? 3);
-      const day = dayKey(new Date(now()), settings?.supportHours?.timezone);
+      const day = dayKey(new Date(now()), "America/New_York");
       const row = await models.LcAiUsage.findOne({ day }).select("costUsd").lean();
       const spent = row?.costUsd || 0;
       return { day, spent, cap, capReached: spent >= cap };
     },
 
     async recordUsage(settings, usage) {
-      const day = dayKey(new Date(now()), settings?.supportHours?.timezone);
+      const day = dayKey(new Date(now()), "America/New_York");
       await models.LcAiUsage.updateOne(
         { day },
         {

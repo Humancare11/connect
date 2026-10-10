@@ -99,17 +99,8 @@ describe("live chat: admin-only access", () => {
       await socket.snapshotPromise;
       delete lc.identities["gone-token"];
       const closed = once(socket, "disconnect");
-      socket.emit("agent:status", { online: true });
+      socket.emit("visitors:get");
       assert.equal((await closed)[0], "io server disconnect");
-    });
-
-    test("agents can switch Online/Offline", async () => {
-      const socket = await lc.agent("admin-token");
-      await socket.snapshotPromise;
-      const reply = await new Promise((resolve) => socket.emit("agent:status", { online: true }, resolve));
-      assert.deepEqual(reply, { ok: true, online: true, displayName: "Sam" });
-      assert.deepEqual(lc.statuses.at(-1), ["a1", true]);
-      socket.close();
     });
 
     test("unknown events and oversized payloads are dropped without reaching a handler", async () => {
@@ -137,10 +128,9 @@ describe("live chat: admin-only access", () => {
       visitor.emit("visitors:get", () => {
         received = true;
       });
-      visitor.emit("agent:status", { online: true });
+      visitor.emit("chat:typing", { conversationId: "x", typing: true });
       await sleep(150);
       assert.equal(received, false);
-      assert.equal(lc.statuses.length > 0 && lc.statuses.some(([id]) => id === "visitor-0123456789abcdef"), false);
       visitor.close();
     });
 

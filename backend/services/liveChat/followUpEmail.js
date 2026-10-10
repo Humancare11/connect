@@ -1,52 +1,11 @@
-// Offline follow-up email: when a patient asks for an agent while the team is offline (outside support hours or no
-// agent online), the request is saved and ONE email goes to the contact's own address from the company support
+// Follow-up email: when no admin has replied to a chat in the Queue within the follow-up time (the patient was told
+// "Our team will connect with you by email"), ONE email goes to the contact's own address from the company support
 // mailbox, through the existing Email module (so it shows in the Sent folder like any other mail).
 //
-// The email contains NO health details: no topic, no message text, no file names. Only the first name, the chat
-// reference and the support hours, which are read from the Live Chat settings (never hard-coded).
+// The email contains NO health details: no topic, no message text, no file names, no reason. Only the first name
+// and the chat reference.
 const { followUpMailboxAddress } = require("../../utils/liveChat/config");
 const { decryptLiveChatText } = require("../../utils/liveChat/crypto");
-
-const DAY_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-const DAY_LABEL = { monday: "Mon", tuesday: "Tue", wednesday: "Wed", thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun" };
-
-function formatTime(hhmm) {
-  const [h, m] = String(hhmm).split(":").map(Number);
-  if (!Number.isFinite(h) || !Number.isFinite(m)) return String(hhmm);
-  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
-}
-
-function zoneLabel(timeZone, date) {
-  try {
-    const parts = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" }).formatToParts(date);
-    return parts.find((p) => p.type === "timeZoneName")?.value || timeZone;
-  } catch {
-    return timeZone || "";
-  }
-}
-
-// "8:00 AM – 10:00 PM EDT, every day" or "Mon–Fri 9:00 AM – 5:00 PM EDT; Sat 10:00 AM – 2:00 PM EDT", built from
-// settings.supportHours. Empty string when no day is enabled.
-function describeSupportHours(supportHours, date = new Date()) {
-  if (supportHours?.alwaysOn === true) return "24/7";
-  const days = (supportHours?.days || []).filter((d) => d.enabled && DAY_ORDER.includes(d.day));
-  if (!days.length) return "";
-  const zone = zoneLabel(supportHours.timezone, date);
-  const byDay = new Map(days.map((d) => [d.day, `${formatTime(d.open)} – ${formatTime(d.close)} ${zone}`.trim()]));
-  const sameEverywhere = new Set(byDay.values()).size === 1;
-  if (byDay.size === 7 && sameEverywhere) return `${[...byDay.values()][0]}, every day`;
-
-  // group consecutive days that share the same hours
-  const groups = [];
-  for (const day of DAY_ORDER) {
-    if (!byDay.has(day)) continue;
-    const last = groups[groups.length - 1];
-    const hours = byDay.get(day);
-    if (last && last.hours === hours && DAY_ORDER.indexOf(day) === DAY_ORDER.indexOf(last.to) + 1) last.to = day;
-    else groups.push({ from: day, to: day, hours });
-  }
-  return groups.map((g) => `${g.from === g.to ? DAY_LABEL[g.from] : `${DAY_LABEL[g.from]}–${DAY_LABEL[g.to]}`} ${g.hours}`).join("; ");
-}
 
 function buildFollowUpEmail({ firstName, conversationId, settings, date = new Date() }) {
   const lines = [
@@ -138,4 +97,4 @@ function createFollowUpMailer({ models, loadSettings, sendMail = sendViaEmailMod
   return { send };
 }
 
-module.exports = { createFollowUpMailer, buildFollowUpEmail, describeSupportHours, sendViaEmailModule, loadEmailModule };
+module.exports = { createFollowUpMailer, buildFollowUpEmail, sendViaEmailModule, loadEmailModule };

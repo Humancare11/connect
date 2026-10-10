@@ -38,7 +38,10 @@ function ModeTag({ row, me }) {
     const label = { patient_left: "Left", blocked: "Blocked" }[row.closedReason] || "Resolved";
     return <span className="wk-tag wk-tag--done">{label}</span>;
   }
-  if (row.mode === "queue") return <span className="wk-tag wk-tag--wait">{row.offline ? "Offline request" : "Waiting"}</span>;
+  if (row.mode === "queue") {
+    if (row.emailStatus === "failed") return <span className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">Email failed</span>;
+    return <span className="wk-tag wk-tag--wait">{row.emailFollowUp ? "Email follow-up" : "Waiting"}</span>;
+  }
   if (row.mode === "live") return <span className="wk-tag wk-tag--human">{row.assignee?.id === me ? "You" : row.assignee?.name || "Agent"}</span>;
   return <span className="wk-tag wk-tag--ai">AI</span>;
 }

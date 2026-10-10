@@ -10,10 +10,14 @@
 const crypto = require("crypto");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
-const { DEFAULT_SETTINGS } = require("./settingsDefaults");
 const { tooShortToTell, looksEnglish } = require("./languageHints");
 
-const DEFAULT_NO_AGENT_TEXT = DEFAULT_SETTINGS.offlineMessage;
+// Shown the moment a chat goes to the team, whoever is or is not at their desk.
+const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`;
+// Shown when no admin has replied after followUpMinutes; the generic follow-up email goes with it.
+const EMAIL_NOTICE_TEXT = (email) => `Our team will connect with you by email at ${email || "your email address"} shortly.`;
+const FOLLOW_UP_JOB_MS = 15_000; // how often due follow-ups are looked for
+const followUpMinutesOf = (settings) => Math.min(30, Math.max(1, Math.round(Number(settings?.followUpMinutes) || 1)));
 
 const ID_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
@@ -50,11 +54,6 @@ function validateContact({ name, email, phone } = {}) {
 
 const firstNameOf = (name) => String(name || "").trim().split(/\s+/)[0] || "there";
 
-// ── Support hours ──────────────────────────────────────────────────────────────
-
-// Overnight shifts, "always on" and labels live in supportHours.js (shared with the Team page).
-const { isWithinSupportHours } = require("./supportHours");
-
 function validTimeZone(value) {
   const zone = typeof value === "string" ? value.slice(0, 64) : "";
   if (!zone) return "";
@@ -79,7 +78,7 @@ function createChatService({
   emitToAgents = () => {},
   emitToTrackers = () => {}, // the visitor's tracking sockets (used for the "an agent wrote to you" bubble)
   announce = () => {}, // tells agents a conversation changed (agentService builds the list row)
-  followUp = null, // offline follow-up email ({ send(conv) })
+  followUp = null, // the generic follow-up email ({ send(conv) })
   abuse = null, // abuse alerts ({ noteChat, noteDailyLimit })
   sitePages = require("./sitePages").createSitePages(), // the pages the AI may link to (allowlist)
   detectLanguage = null, // (conv, text) => Promise: one small model call when no AI turn has found the language
@@ -199,7 +198,7 @@ function createChatService({
         conv.mode === "ai" && !conv.optionsUsed
           ? (settings.quickOptions || []).map((o) => ({ key: o.key, label: o.label, icon: o.icon }))
           : [],
-      offline: Boolean(conv.offlineRequested),
+      emailFollowUp: Boolean(conv.offlineRequested || conv.followUpNoticeAt), // "we will email you" was shown
       aiUnavailable: aiUnavailableNow(),
       agent: conv.mode === "live" && conv.agentName ? { name: conv.agentName } : null,
       rating: conv.rating?.stars ? { stars: conv.rating.stars } : null,
@@ -368,9 +367,10 @@ function createChatService({
     if (!doc) return null;
     const settings = await loadSettings();
     const target = doc.modeBeforeLeft === "ai" ? "ai" : "queue";
-    const available = teamAvailable(settings);
     const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "" };
-    if (target === "queue") Object.assign(set, { assigneeId: null, agentName: "", queuedAt: new Date(now()), offlineRequested: !available });
+    if (target === "queue") {
+      Object.assign(set, { assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: followUpDueFor(doc, settings) });
+    }
     const won = await LcConversation.findOneAndUpdate(
       { _id: doc._id, mode: "archived", closedReason: "patient_left" },
       { $set: set },
@@ -379,16 +379,12 @@ function createChatService({
     if (!won) return findOpen(visitorId); // someone else reopened it first
     const first = firstNameOf(decryptLiveChatText(visitor.name));
     const welcome =
-      target === "ai"
-        ? `Welcome back, ${first}!`
-        : available
-          ? `Welcome back, ${first}! We're reconnecting you with an agent.`
-          : `Welcome back, ${first}! ${noAgentText(won, settings)}`;
+      target === "ai" ? `Welcome back, ${first}!` : `Welcome back, ${first}! We're reconnecting you with our team.`;
     await addMessage(won, "system", welcome);
     setActivity(visitorId, won);
     emitToAgents("chat:reopened", { conversationId: won.conversationId, visitorId, everLive: Boolean(won.everLive), name: first, mode: target });
     if (target === "queue") {
-      emitToAgents("queue:new", { conversationId: won.conversationId, visitorId, name: first, everLive: true, offline: !available, reason: "returned" });
+      emitToAgents("queue:new", { conversationId: won.conversationId, visitorId, name: first, everLive: true, reason: "returned" });
     }
     announce(won);
     return won;
@@ -397,13 +393,15 @@ function createChatService({
   // ── Visitor left ─────────────────────────────────────────────────────────────
 
   // About 30 s after the last connection of a visitor (tracker or chat) closes, an open chat is archived as
-  // "patient left". A request left while the team was offline stays in the Queue: the patient asked for an email.
+  // "patient left". A chat in the Queue that is waiting for its email notice (or already has it) stays there: the
+  // patient asked for the team and will be written to by email.
+  const keepsInQueue = (c) => Boolean(c.offlineRequested || (c.mode === "queue" && c.followUpDueAt));
   async function visitorLeft(visitorId) {
     const open = await findOpen(visitorId);
-    if (!open || open.offlineRequested) return;
+    if (!open || keepsInQueue(open)) return;
     await withLock(open.conversationId, async () => {
       const current = await LcConversation.findById(open._id);
-      if (!current || current.mode === "archived" || current.offlineRequested) return;
+      if (!current || current.mode === "archived" || keepsInQueue(current)) return;
       const stamp = new Date(now());
       const archived = await LcConversation.findOneAndUpdate(
         { _id: current._id, mode: { $ne: "archived" } },
@@ -586,8 +584,8 @@ function createChatService({
         return fn(current);
       });
 
-    // Admin chose "AI off", or "AI only when no agent is available" and someone is.
-    if (settings.aiMode === "ai_off" || (settings.aiMode === "ai_when_no_agent" && agents.availableCount() > 0)) {
+    // Admin chose "AI off": new chats go straight to the Queue.
+    if (settings.aiMode === "ai_off") {
       return ifStillAi((current) => requestAgent(current, { first, settings, reason: "ai_off" }));
     }
 
@@ -680,20 +678,6 @@ function createChatService({
 
   // ── Live agent ───────────────────────────────────────────────────────────────
 
-  // The team counts as offline according to the "offline rule" in the AI settings.
-  function teamAvailable(settings) {
-    const inHours = isWithinSupportHours(settings, new Date(now()));
-    const agentOnline = agents.availableCount() > 0;
-    switch (settings?.offlineRule) {
-      case "no_agent":
-        return agentOnline;
-      case "hours":
-        return inHours;
-      default:
-        return inHours && agentOnline;
-    }
-  }
-
   // The AI may ask for a hand-over only with a valid reason; the settings decide which are allowed. An emergency always is.
   function handoffAllowed(settings, reason) {
     const rules = settings?.handoffRules || {};
@@ -706,24 +690,18 @@ function createChatService({
     return false; // "none" or anything unknown never reaches an agent
   }
 
-  // What the patient reads when no agent can take the chat right now: a thank-you with their own first name and
-  // email, never a word about the team being offline. (The two older default texts are replaced on the fly.)
-  const LEGACY_NO_AGENT_TEXTS = new Set([
-    "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
-    "Our team is offline right now. We've saved your request and will reply by email.",
-  ]);
-  function noAgentText(conv, settings) {
-    const first = firstNameOf(decryptLiveChatText(conv?.contact?.name));
-    const email = decryptLiveChatText(conv?.contact?.email);
-    let template = String(settings?.offlineMessage || "");
-    if (!template || LEGACY_NO_AGENT_TEXTS.has(template)) template = DEFAULT_NO_AGENT_TEXT;
-    return template.replace(/\{\s*first\s*name\s*\}/gi, first).replace(/\{\s*email\s*\}/gi, email || "your email");
+  // When the follow-up email notice is due for a chat that enters the Queue now. Nothing is scheduled when the notice
+  // or the email was already given for this chat (at most once per chat).
+  function followUpDueFor(conv, settings) {
+    if (conv?.followUpNoticeAt || (conv?.followUp?.status && conv.followUp.status !== "")) return null;
+    return new Date(now() + followUpMinutesOf(settings) * 60_000);
   }
 
+  // Every hand-over ends here: the chat goes to the Queue and the patient is told it is being connected. There is no
+  // availability check. If nobody replies within followUpMinutes, runFollowUpDue() tells the patient an email follows.
   async function requestAgent(conv, { first, settings, reason } = {}) {
     if (conv.mode === "queue" || conv.mode === "live") return { ok: true };
     const cfg = settings || (await loadSettings());
-    const available = teamAvailable(cfg);
     const name = first || "there";
     await LcConversation.updateOne(
       { _id: conv._id },
@@ -731,8 +709,8 @@ function createChatService({
         $set: {
           mode: "queue",
           everLive: true,
-          offlineRequested: !available,
           queuedAt: new Date(now()),
+          followUpDueAt: followUpDueFor(conv, cfg),
           handoffReason: reason || "explicit_request", // shown to admins; the header button counts as a request
           offTopicStreak: 0,
           unansweredStreak: 0,
@@ -740,24 +718,52 @@ function createChatService({
       }
     );
     const fresh = await LcConversation.findById(conv._id);
-    if (available) {
-      await addMessage(fresh, "ai", `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`);
-    } else {
-      await addMessage(fresh, "ai", noAgentText(fresh, cfg));
-    }
+    await addMessage(fresh, "ai", CONNECTING_TEXT(name));
     setActivity(conv.visitorId, fresh);
-    // The team is offline: one follow-up email goes to the patient (no health details; never blocks the chat).
-    if (!available && followUp) followUp.send(fresh).catch(() => {});
     emitToAgents("queue:new", {
       conversationId: conv.conversationId,
       visitorId: conv.visitorId,
       name,
       everLive: true,
-      offline: !available,
       reason: reason || "explicit_request",
     });
     await pushState(fresh);
     return { ok: true };
+  }
+
+  // The follow-up step. For every chat still in the Queue whose due time has passed: tell the patient an email
+  // follows, mark the chat "Email follow-up" and send the generic email (once per chat). Safe to run from several
+  // places at once: each chat is claimed with one atomic update.
+  async function runFollowUpDue({ limit = 25 } = {}) {
+    const stamp = new Date(now());
+    const due = await LcConversation.find({ mode: "queue", followUpDueAt: { $ne: null, $lte: stamp }, followUpNoticeAt: null })
+      .select("_id conversationId")
+      .limit(limit)
+      .lean();
+    let handled = 0;
+    for (const row of due) {
+      const claimed = await LcConversation.findOneAndUpdate(
+        { _id: row._id, mode: "queue", followUpDueAt: { $ne: null, $lte: stamp }, followUpNoticeAt: null },
+        { $set: { followUpNoticeAt: stamp, followUpDueAt: null, offlineRequested: true } },
+        { returnDocument: "after" }
+      );
+      if (!claimed) continue; // an admin took it, the patient went back to the AI, or another run got it first
+      try {
+        await withLock(claimed.conversationId, async () => {
+          const email = decryptLiveChatText(claimed.contact?.email);
+          await addMessage(claimed, "ai", EMAIL_NOTICE_TEXT(email));
+          setActivity(claimed.visitorId, claimed);
+          announce(claimed);
+          await pushState(claimed);
+        });
+        if (followUp) await followUp.send(claimed).catch(() => {});
+        announce(await LcConversation.findById(claimed._id)); // the email status may have changed (sent / failed)
+        handled += 1;
+      } catch (err) {
+        log({ event: "follow_up_failed", conversationId: claimed.conversationId, message: err?.message });
+      }
+    }
+    return handled;
   }
 
   // Header button.
@@ -792,7 +798,7 @@ function createChatService({
       const previous = { assigneeId: conv.assigneeId, agentName: conv.agentName };
       const switched = await LcConversation.findOneAndUpdate(
         { _id: conv._id, mode: { $in: ["live", "queue"] } },
-        { $set: { mode: "ai", assigneeId: null, agentName: "", offlineRequested: false, invited: false } },
+        { $set: { mode: "ai", assigneeId: null, agentName: "", offlineRequested: false, followUpDueAt: null, invited: false } },
         { returnDocument: "after" }
       );
       if (!switched) return { ok: false, error: "not_available" };
@@ -849,7 +855,9 @@ function createChatService({
     pickOption,
     talkToAgent,
     switchToAi,
-    noAgentText,
+    runFollowUpDue,
+    followUpDueFor,
+    followUpJobMs: FOLLOW_UP_JOB_MS,
     relayTyping,
     // used by the agent side (agentService) and the socket layer
     withLock,
@@ -886,8 +894,7 @@ function createChatService({
     toAgents: (event, payload) => emitToAgents(event, payload),
     // exposed for tests
     aiBreaker: breaker,
-    teamAvailable,
   };
 }
 
-module.exports = { createChatService, validateContact, isWithinSupportHours, firstNameOf, newConversationId, validTimeZone, VISITOR_ID_RE };
+module.exports = { createChatService, validateContact, firstNameOf, newConversationId, validTimeZone, VISITOR_ID_RE };

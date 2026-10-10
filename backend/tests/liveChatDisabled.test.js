@@ -136,9 +136,8 @@ describe("live chat models and seeded settings", () => {
     assert.equal(await LcSettings.countDocuments(), 1);
     const settings = await LcSettings.findOne().lean();
     assert.equal(settings.aiMode, "ai_first");
-    assert.equal(settings.supportHours.timezone, "America/New_York");
-    assert.equal(settings.supportHours.days.length, 7);
-    assert.deepEqual(settings.supportHours.days[0], { day: "sunday", enabled: true, open: "08:00", close: "22:00" });
+    assert.equal(settings.followUpMinutes, 1);
+    assert.equal(settings.supportHours, undefined, "support hours no longer exist");
     assert.deepEqual(settings.quickOptions.map((o) => o.label), [
       "Online Consultation with Prescription",
       "Prescription & Prescription refill",

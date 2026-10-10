@@ -153,7 +153,6 @@ const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 const { dayKey } = require("../../services/liveChat/limits");
 
-const ALL_DAY = { open: "00:00", close: "23:59", enabled: true };
 const PASS = (req, res, next) => next();
 
 // Scripted AI: each call takes the next scripted result (or the default "ok" answer) and records what it was asked.
@@ -232,8 +231,6 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
   await Promise.all(Object.values(models).map((m) => m.init()));
   await require("../../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
   const settingsDoc = await models.LcSettings.getSettings();
-  // Support hours: open all day, so tests do not depend on when they run.
-  settingsDoc.supportHours.days.forEach((d) => Object.assign(d, ALL_DAY));
   await settingsDoc.save();
 
   const lc = await startLiveChatServer({
@@ -317,11 +314,10 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
       });
       return { status: res.status, body: await res.json().catch(() => ({})) };
     },
-    // A signed-in, online agent, so the team counts as available.
+    // A signed-in agent with the admin panel open (there is no Online switch any more).
     async onlineAgent(token = "admin-token") {
       const socket = await lc.agent(token);
       await socket.snapshotPromise;
-      await api.call(socket, "agent:status", { online: true });
       return socket;
     },
     async close() {

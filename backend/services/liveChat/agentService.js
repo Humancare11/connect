@@ -109,7 +109,9 @@ function createAgentService({
       topic: conv.topic || "",
       handoffReason: conv.handoffReason || "",
       language: publicLanguage(conv.language), // badge for non-English chats (admin side only)
-      offline: Boolean(conv.offlineRequested),
+      // The patient was told an email follows (the notice is due after followUpMinutes without an admin reply).
+      emailFollowUp: Boolean(conv.offlineRequested || conv.followUpNoticeAt),
+      emailStatus: conv.followUp?.status || "", // "", sending, sent, failed, skipped
       closedReason: conv.closedReason || "",
       startedAt: conv.startedAt,
       lastMessageAt: conv.lastMessageAt,
@@ -181,8 +183,8 @@ function createAgentService({
     const aiReplies = Math.max(0, messages.filter((m) => m.sender === "ai").length - 1);
     const state =
       conv.mode === "queue"
-        ? conv.offlineRequested
-          ? "Asked for an agent while the team was offline."
+        ? conv.offlineRequested || conv.followUpNoticeAt
+          ? "Waiting for an agent. The patient was told an email follows."
           : "Waiting for an agent."
         : conv.mode === "live"
           ? `${conv.agentName || "An agent"} is handling it.`
@@ -350,6 +352,7 @@ function createAgentService({
           agentName: name,
           everLive: true,
           offlineRequested: false,
+          followUpDueAt: null,
           liveStartedAt: conv.liveStartedAt || new Date(now()),
         },
       },
@@ -658,22 +661,16 @@ function createAgentService({
         if (!current || current.mode !== "live" || !sameId(current.assigneeId, userId)) return;
         if (agents.isAvailable(userId)) return; // back just in time
         const settings = await loadSettings();
-        const available = chat.teamAvailable(settings);
         const previousName = current.agentName || "The agent";
+        // Back in the Queue: the follow-up step applies again, unless the email notice was already given for this chat.
         const queued = await LcConversation.findOneAndUpdate(
           { _id: current._id, mode: "live", assigneeId: current.assigneeId },
-          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), offlineRequested: !available } },
+          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings) } },
           { returnDocument: "after" }
         );
         if (!queued) return;
         count += 1;
-        await chat.addMessage(
-          queued,
-          "system",
-          available
-            ? "Your agent is no longer available. We're reconnecting you with another agent…"
-            : chat.noAgentText(queued, settings)
-        );
+        await chat.addMessage(queued, "system", "Your agent was disconnected. We're reconnecting you with our team now.");
         await chat.addMessage(queued, "system", `${previousName} went offline. The chat is back in the queue.`, { internal: true });
         chat.setActivity(queued.visitorId, queued);
         await chat.pushState(queued);
@@ -683,10 +680,8 @@ function createAgentService({
           visitorId: queued.visitorId,
           name: firstNameOf(decryptLiveChatText(queued.contact?.name)),
           everLive: true,
-          offline: !available,
           reason: "agent_offline",
         });
-        if (!available) chat.sendFollowUp(queued).catch(() => {});
       });
     }
     return count;

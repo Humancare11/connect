@@ -301,7 +301,11 @@ describe("live chat: admin workspace (lists, take over, notes, assignment, panel
       assert.equal(res.status, 200);
       const patient = await state(chat.socket);
       assert.deepEqual([patient.mode, patient.agent.name], ["live", "Maya"]);
-      assert.equal((await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean()).offlineRequested, false);
+      // the patient sees the moment someone is there
+      assert.ok(patient.messages.some((m) => m.text === "Maya joined the chat"));
+      const stored = await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean();
+      assert.equal(stored.offlineRequested, false);
+      assert.equal(stored.followUpDueAt, null, "taking over cancels the follow-up timer");
       chat.socket.close();
       agent.close();
     });

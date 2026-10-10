@@ -64,11 +64,11 @@ describe("live chat: page links come from a server allowlist built from the app'
 
   test("the prompt lists only the candidate pages and keeps the safety rules; the schema has links", () => {
     const pages = [{ title: "Fever", url: "/general-and-everyday-care/general-physician/fever" }];
-    const prompt = buildSystemPrompt({ prices: [], supportHours: { days: [] }, handoffRules: {} }, pages);
+    const prompt = buildSystemPrompt({ prices: [], handoffRules: {} }, pages);
     assert.ok(prompt.includes("Fever -> /general-and-everyday-care/general-physician/fever"));
     assert.ok(prompt.includes("never invent a url"));
     assert.ok(prompt.includes("Never diagnose"));
-    assert.ok(buildSystemPrompt({ prices: [], supportHours: { days: [] }, handoffRules: {} }, []).includes("always return an empty links array"));
+    assert.ok(buildSystemPrompt({ prices: [], handoffRules: {} }, []).includes("always return an empty links array"));
     assert.ok(SCHEMA.required.includes("links"));
     assert.equal(SCHEMA.properties.links.items.additionalProperties, false);
     assert.deepEqual(validate({ reply: "ok", handoff: false, handoffReason: "none", topic: "other" }).links, []);

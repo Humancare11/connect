@@ -128,13 +128,13 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       chat.socket.close();
     });
 
-    test("the daily AI cap and the offline message are used straight away", async () => {
-      await save({ dailySpendCapUsd: 0, offlineMessage: "We are away. NEW OFFLINE TEXT." });
+    test("the daily AI cap is used straight away", async () => {
+      await save({ dailySpendCapUsd: 0 });
       const chat = await openChat();
       await lc.call(chat.socket, "chat:message", { text: "Price?" });
       assert.equal(lc.ai.calls.length, 0, "a cap of 0 stops the AI");
-      assert.ok((await state(chat.socket)).messages.some((m) => m.text === "We are away. NEW OFFLINE TEXT."));
-      await save({ dailySpendCapUsd: 3, offlineMessage: DEFAULT_SETTINGS.offlineMessage });
+      assert.match((await state(chat.socket)).messages.at(-1).text, /Connecting you to our team now/);
+      await save({ dailySpendCapUsd: 3 });
       lc.livechat.chat.aiBreaker.until = 0;
       lc.livechat.chat.aiBreaker.alerted = false;
       chat.socket.close();
@@ -147,53 +147,62 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
     });
   });
 
-  describe("offline rule", () => {
-    async function withAgentOnline(fn) {
-      lc.identities["tok-a"] = { id: AGENT_A, role: "admin" };
-      const sock = await lc.agent("tok-a");
-      await sock.snapshotPromise;
-      await lc.call(sock, "agent:status", { online: true });
-      try {
-        await fn();
-      } finally {
-        sock.close();
+  describe("follow-up time", () => {
+    test("the minutes before the email notice: default 1, 1 to 30, whole numbers", async () => {
+      assert.equal((await current()).followUpMinutes, 1);
+      assert.equal((await save({ followUpMinutes: 5 })).status, 200);
+      assert.equal((await current()).followUpMinutes, 5);
+      for (const bad of [0, 31, 1.5, "2", -1]) {
+        const res = await save({ followUpMinutes: bad });
+        assert.equal(res.status, 400, String(bad));
+        assert.ok(res.body.errors.followUpMinutes);
       }
-    }
-    const offlineNow = async () => {
+      await save({ followUpMinutes: 1 });
+    });
+
+    test("a chat entering the Queue is due after the saved number of minutes", async () => {
+      await save({ followUpMinutes: 3 });
       const chat = await openChat();
       await lc.call(chat.socket, "chat:agent");
-      const s = await state(chat.socket);
+      const row = await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean();
+      const minutes = (new Date(row.followUpDueAt).getTime() - new Date(row.queuedAt).getTime()) / 60000;
+      assert.ok(Math.abs(minutes - 3) < 0.1, `due after ${minutes} minutes`);
       chat.socket.close();
-      return s.offline;
-    };
-    const closedDays = async () => (await current()).supportHours.days.map((d) => ({ ...d, enabled: false }));
-    const openDays = async () => (await current()).supportHours.days.map((d) => ({ ...d, enabled: true, open: "00:00", close: "23:59" }));
-
-    test("default: outside hours OR no agent online", async () => {
-      assert.equal((await current()).offlineRule, "hours_or_no_agent");
-      assert.equal(await offlineNow(), true, "inside hours but nobody online");
-      await withAgentOnline(async () => assert.equal(await offlineNow(), false));
-      const hours = (await current()).supportHours;
-      await save({ supportHours: { ...hours, days: await closedDays() } });
-      await withAgentOnline(async () => assert.equal(await offlineNow(), true, "agent online but outside hours"));
-      await save({ supportHours: { ...hours, days: await openDays() } });
+      await save({ followUpMinutes: 1 });
     });
 
-    test("'No agent is online': support hours are ignored", async () => {
-      const hours = (await current()).supportHours;
-      await save({ offlineRule: "no_agent", supportHours: { ...hours, days: await closedDays() } });
-      await withAgentOnline(async () => assert.equal(await offlineNow(), false, "closed hours do not matter"));
-      assert.equal(await offlineNow(), true, "nobody online");
-      await save({ offlineRule: "hours_or_no_agent", supportHours: { ...hours, days: await openDays() } });
+    test("support hours, time zones and the offline rule no longer exist; an old stored mode reads as AI first", async () => {
+      const cur = await current();
+      assert.equal(cur.supportHours, undefined);
+      assert.equal(cur.offlineRule, undefined);
+      assert.equal(cur.offlineMessage, undefined);
+      // an older document still carrying the removed fields loads, and ai_when_no_agent reads as ai_first
+      await lc.models.LcSettings.collection.updateOne(
+        { key: "default" },
+        { $set: { aiMode: "ai_when_no_agent", offlineRule: "hours", offlineMessage: "old", supportHours: { timezone: "Asia/Kolkata", days: [] } } }
+      );
+      const old = await current();
+      assert.equal(old.aiMode, "ai_first");
+      assert.equal(old.supportHours, undefined);
+      assert.equal((await save({ aiMode: "ai_when_no_agent" })).status, 400, "the mode can no longer be chosen");
+      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { aiMode: "ai_first" }, $unset: { offlineRule: "", offlineMessage: "", supportHours: "" } });
     });
+  });
 
-    test("'Outside support hours': agents being online is not required", async () => {
-      const hours = (await current()).supportHours;
-      await save({ offlineRule: "hours" });
-      assert.equal(await offlineNow(), false, "inside hours, nobody online: the request waits in the Queue");
-      await save({ supportHours: { ...hours, days: await closedDays() } });
-      await withAgentOnline(async () => assert.equal(await offlineNow(), true, "outside hours"));
-      await save({ offlineRule: "hours_or_no_agent", supportHours: { ...hours, days: await openDays() } });
+  describe("AI-unavailable message", () => {
+    const OLD = "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.";
+    const NEW = 'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.';
+    const seed = () => require("../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
+
+    test("the default is the new text; an older default is upgraded; an edited text is left alone", async () => {
+      assert.equal(DEFAULT_SETTINGS.unavailableMessage, NEW);
+      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { unavailableMessage: OLD } });
+      await seed();
+      assert.equal((await current()).unavailableMessage, NEW);
+      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { unavailableMessage: "Custom text from an admin." } });
+      await seed();
+      assert.equal((await current()).unavailableMessage, "Custom text from an admin.");
+      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { unavailableMessage: NEW } });
     });
   });
 
@@ -264,7 +273,7 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
     const base = async () => current();
     const bad = [
       ["a wrong AI mode", { aiMode: "chaos" }, "aiMode"],
-      ["a wrong offline rule", { offlineRule: "never" }, "offlineRule"],
+      ["a follow-up time of 0 minutes", { followUpMinutes: 0 }, "followUpMinutes"],
       ["an empty greeting", { greeting: "   " }, "greeting"],
       ["a greeting over 600 characters", { greeting: "x".repeat(601) }, "greeting"],
       ["an agent name over 40 characters", { agentDisplayName: "x".repeat(41) }, "agentDisplayName"],
@@ -282,19 +291,6 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
         assert.deepEqual(await current(), before, "nothing changed");
       });
     }
-
-    test("refuses a bad time zone, equal opening and closing, and a missing day (a closing time earlier than opening is a shift past midnight)", async () => {
-      const hours = (await base()).supportHours;
-      const zone = await save({ supportHours: { ...hours, timezone: "Mars/Olympus" } });
-      assert.ok(zone.body.errors["supportHours.timezone"]);
-      const days = hours.days.map((d) => (d.day === "monday" ? { ...d, enabled: true, open: "09:00", close: "09:00" } : d));
-      const order = await save({ supportHours: { ...hours, days } });
-      assert.ok(order.body.errors["supportHours.monday"]);
-      const missing = await save({ supportHours: { ...hours, days: hours.days.slice(1) } });
-      assert.ok(missing.body.errors["supportHours.days"]);
-      const format = await save({ supportHours: { ...hours, days: hours.days.map((d) => ({ ...d, open: "8am" })) } });
-      assert.equal(format.status, 400);
-    });
 
     test("refuses bad handoff rules", async () => {
       const rules = (await base()).handoffRules;
@@ -347,7 +343,7 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
     test("every save is logged: who, when, what, before and after", async () => {
       const before = await audit();
       const t0 = Date.now();
-      const res = await save({ aiMode: "ai_when_no_agent", greeting: "Hello {firstName}, logged greeting." });
+      const res = await save({ aiMode: "ai_off", greeting: "Hello {firstName}, logged greeting." });
       assert.equal(res.body.changed, 2);
       const entries = await audit();
       assert.equal(entries.length, before.length + 1);
@@ -355,19 +351,19 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       assert.deepEqual([entry.actor.name, entry.actor.role, entry.actor.id], ["Super Admin", "superadmin", SUPER_S]);
       assert.ok(Math.abs(new Date(entry.at).getTime() - t0) < 5000);
       const aiMode = entry.changes.find((c) => c.field === "aiMode");
-      assert.deepEqual([aiMode.before, aiMode.after], ["ai_first", "ai_when_no_agent"]);
+      assert.deepEqual([aiMode.before, aiMode.after], ["ai_first", "ai_off"]);
       assert.equal(entry.changes.find((c) => c.field === "greeting").after, "Hello {firstName}, logged greeting.");
       await save({ aiMode: "ai_first" });
     });
 
     test("nested settings are logged field by field", async () => {
       const cur = await current();
-      await save({ handoffRules: { ...cur.handoffRules, maxAiRepliesPerChat: 12 }, supportHours: { ...cur.supportHours, timezone: "America/Chicago" } });
+      await save({ handoffRules: { ...cur.handoffRules, maxAiRepliesPerChat: 12 }, followUpMinutes: 4 });
       const entry = (await audit())[0];
       const fields = entry.changes.map((c) => c.field).sort();
-      assert.deepEqual(fields, ["handoffRules.maxAiRepliesPerChat", "supportHours.timezone"]);
-      assert.deepEqual([entry.changes.find((c) => c.field === "supportHours.timezone").before, entry.changes.find((c) => c.field === "supportHours.timezone").after], ["America/New_York", "America/Chicago"]);
-      await save({ handoffRules: cur.handoffRules, supportHours: cur.supportHours });
+      assert.deepEqual(fields, ["followUpMinutes", "handoffRules.maxAiRepliesPerChat"]);
+      assert.deepEqual([entry.changes.find((c) => c.field === "followUpMinutes").before, entry.changes.find((c) => c.field === "followUpMinutes").after], ["1", "4"]);
+      await save({ handoffRules: cur.handoffRules, followUpMinutes: cur.followUpMinutes });
     });
 
     test("a save that changes nothing is not logged; long values are shortened", async () => {

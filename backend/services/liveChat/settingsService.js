@@ -8,7 +8,6 @@
 //     of the module is cleared, no restart;
 //   - every save is logged: who, when, which setting, before and after.
 const mongoose = require("mongoose");
-const { DAYS } = require("./settingsDefaults");
 const sitePages = require("./sitePages").createSitePages();
 
 class SettingsError extends Error {
@@ -20,10 +19,8 @@ class SettingsError extends Error {
   }
 }
 
-const AI_MODES = ["ai_first", "ai_when_no_agent", "ai_off"];
-const OFFLINE_RULES = ["hours_or_no_agent", "no_agent", "hours"];
+const AI_MODES = ["ai_first", "ai_off"];
 const ICONS = ["stethoscope", "pill", "clipboard", "document", "dots", "agent"];
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const KEY_RE = /^[a-z0-9_]{1,30}$/;
 // eslint-disable-next-line no-control-regex
 const CONTROL_RE = /[\u0000-\u001f\u007f]/g;
@@ -33,15 +30,6 @@ const clean = (value) => String(value ?? "").replace(CONTROL_RE, " ").replace(/\
 // eslint-disable-next-line no-control-regex
 const cleanBlock = (value) => String(value ?? "").replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").replace(/\t/g, " ").trim();
 const oid = (id) => new mongoose.Types.ObjectId(String(id));
-
-function validZone(zone) {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: zone });
-    return typeof zone === "string" && zone.length > 0;
-  } catch {
-    return false;
-  }
-}
 
 // Checks the fields that are present in `patch` (a partial save is fine). Returns { values, errors }.
 function validateSettings(patch) {
@@ -61,47 +49,18 @@ function validateSettings(patch) {
     if (AI_MODES.includes(patch.aiMode)) values.aiMode = patch.aiMode;
     else errors.aiMode = "Choose when the AI should answer.";
   }
-  if (has("offlineRule")) {
-    if (OFFLINE_RULES.includes(patch.offlineRule)) values.offlineRule = patch.offlineRule;
-    else errors.offlineRule = "Choose when the team counts as offline.";
+  if (has("followUpMinutes")) {
+    if (number(patch.followUpMinutes, { min: 1, max: 30, integer: true })) values.followUpMinutes = patch.followUpMinutes;
+    else errors.followUpMinutes = "Minutes before the email notice: a whole number from 1 to 30.";
   }
   text("agentDisplayName", { min: 1, max: 40, label: "The default agent name" });
   text("greeting", { min: 1, max: 600, label: "The greeting", block: true });
   text("businessFacts", { max: 8000, label: "Business facts", block: true });
   text("unavailableMessage", { min: 1, max: 600, label: "The AI-unavailable message", block: true });
-  text("offlineMessage", { min: 1, max: 600, label: "The offline message", block: true });
 
   if (has("dailySpendCapUsd")) {
     if (number(patch.dailySpendCapUsd, { min: 0, max: 1000 })) values.dailySpendCapUsd = Math.round(patch.dailySpendCapUsd * 100) / 100;
     else errors.dailySpendCapUsd = "The daily AI cap must be a number from 0 to 1000 (USD).";
-  }
-
-  if (has("supportHours")) {
-    const hours = patch.supportHours;
-    const days = Array.isArray(hours?.days) ? hours.days : null;
-    if (!hours || !validZone(hours.timezone)) errors["supportHours.timezone"] = "Choose a valid time zone.";
-    if (!days || days.length !== 7 || new Set(days.map((d) => d?.day)).size !== 7 || !days.every((d) => DAYS.includes(d?.day))) {
-      errors["supportHours.days"] = "Give the hours for all seven days.";
-    } else {
-      for (const d of days) {
-        if (typeof d.enabled !== "boolean" || !TIME_RE.test(String(d.open)) || !TIME_RE.test(String(d.close))) {
-          errors[`supportHours.${d.day}`] = "Use HH:MM times.";
-        } else if (d.enabled && d.open === d.close) {
-          // A close earlier than the open is fine: the shift runs past midnight into the next day.
-          errors[`supportHours.${d.day}`] = "Opening and closing time must differ (a closing time earlier than opening means it closes the next day).";
-        }
-      }
-    }
-    if (!Object.keys(errors).some((k) => k.startsWith("supportHours"))) {
-      values.supportHours = {
-        timezone: hours.timezone,
-        alwaysOn: hours.alwaysOn === true,
-        days: DAYS.map((name) => {
-          const d = days.find((x) => x.day === name);
-          return { day: name, enabled: d.enabled, open: d.open, close: d.close };
-        }),
-      };
-    }
   }
 
   if (has("handoffRules")) {
@@ -175,14 +134,7 @@ function diffSettings(current, values) {
   };
   for (const [key, next] of Object.entries(values)) {
     const prev = current[key];
-    if (key === "supportHours") {
-      push("supportHours.timezone", prev?.timezone, next.timezone);
-      push("supportHours.alwaysOn", Boolean(prev?.alwaysOn), Boolean(next.alwaysOn));
-      for (const d of next.days) {
-        const was = (prev?.days || []).find((x) => x.day === d.day);
-        push(`supportHours.${d.day}`, was ? { enabled: was.enabled, open: was.open, close: was.close } : null, { enabled: d.enabled, open: d.open, close: d.close });
-      }
-    } else if (key === "handoffRules") {
+    if (key === "handoffRules") {
       for (const [rule, value] of Object.entries(next)) push(`handoffRules.${rule}`, prev?.[rule], value);
     } else {
       push(key, prev, next);
@@ -196,7 +148,11 @@ function createSettingsService({ models, invalidateSettings = () => {}, now = ()
 
   async function currentSettings() {
     const doc = await LcSettings.getSettings();
-    return doc.toObject();
+    const plain = doc.toObject();
+    if (plain.aiMode === "ai_when_no_agent") plain.aiMode = "ai_first"; // the mode was removed: it means AI first
+    // Older documents may still carry the removed hours / offline settings: they are not part of the settings any more.
+    for (const key of ["supportHours", "offlineRule", "offlineMessage"]) delete plain[key];
+    return plain;
   }
 
   // The log says WHO by name: the session carries only an id, so look the name up.
@@ -332,4 +288,4 @@ function createSettingsService({ models, invalidateSettings = () => {}, now = ()
   return { get, update, audit, listCanned, createCanned, updateCanned, deleteCanned, setDisplayName, now };
 }
 
-module.exports = { createSettingsService, SettingsError, validateSettings, diffSettings, AI_MODES, OFFLINE_RULES, ICONS };
+module.exports = { createSettingsService, SettingsError, validateSettings, diffSettings, AI_MODES, ICONS };

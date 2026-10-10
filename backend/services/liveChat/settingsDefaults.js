@@ -1,14 +1,6 @@
 // Seeded defaults for the LcSettings singleton. Everything here is editable later in AI agent settings (Phase 5).
 // Wording and options follow docs/chat-demo.html.
 
-const DAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-
-const SUPPORT_HOURS = {
-  timezone: "America/New_York",
-  alwaysOn: false,
-  days: DAYS.map((day) => ({ day, enabled: true, open: "08:00", close: "22:00" })),
-};
-
 const QUICK_OPTIONS = [
   {
     key: "consultation",
@@ -76,8 +68,7 @@ const DEFAULT_SETTINGS = {
   agentDisplayName: "Sam",
   greeting:
     "Hi {firstName}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?",
-  supportHours: SUPPORT_HOURS,
-  offlineRule: "hours_or_no_agent",
+  followUpMinutes: 1,
   handoffRules: {
     onPatientRequest: true,
     onTechnicalIssue: true,
@@ -93,10 +84,7 @@ const DEFAULT_SETTINGS = {
   businessFacts: "",
   dailySpendCapUsd: 3,
   unavailableMessage:
-    "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.",
-  // Shown when no agent can take the chat right now. {firstName} and {email} are filled in. Never says "offline".
-  offlineMessage:
-    "Thanks, {firstName}! We've received your question and details. Our team will get back to you at {email} shortly.",
+    'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.',
 };
 
-module.exports = { DAYS, SUPPORT_HOURS, QUICK_OPTIONS, PRICES, CANNED_REPLIES, DEFAULT_SETTINGS };
+module.exports = { QUICK_OPTIONS, PRICES, CANNED_REPLIES, DEFAULT_SETTINGS };

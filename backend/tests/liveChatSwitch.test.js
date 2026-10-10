@@ -100,36 +100,4 @@ describe("live chat: switching between the AI and a live agent", () => {
     assert.equal(after.ok, false);
     chat.socket.close();
   });
-
-  test("no agent available: the patient gets the thank-you text with their name and email, one email goes out, nothing says offline", async () => {
-    const chat = await openChat({ name: "Priya Raman", email: "priya.raman@example.com" });
-    await lc.call(chat.socket, "chat:agent");
-    const state = await stateOf(chat.socket);
-    assert.equal(state.mode, "queue");
-    const reply = state.messages.at(-1).text;
-    assert.equal(reply, "Thanks, Priya! We've received your question and details. Our team will get back to you at priya.raman@example.com shortly.");
-    for (let i = 0; i < 20 && lc.emails.length < 1; i += 1) await sleep(50);
-    assert.equal(lc.emails.length, 1);
-    for (const text of [...state.messages.map((m) => m.text), lc.emails[0].subject, lc.emails[0].body]) {
-      assert.doesNotMatch(text, /offline|Connecting you|support hours/i);
-    }
-    // the admin still sees the request in the Queue
-    const row = (await rest("GET", "/conversations?view=live")).body.conversations.find((c) => c.name === "Priya Raman");
-    assert.equal(row.mode, "queue");
-    chat.socket.close();
-  });
-
-  test("an older saved 'team is offline' text is never shown to a patient", async () => {
-    await lc.setSettings({ offlineMessage: "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back." });
-    try {
-      const chat = await openChat({ name: "Old Text", email: "old@example.com" });
-      await lc.call(chat.socket, "chat:agent");
-      const reply = (await stateOf(chat.socket)).messages.at(-1).text;
-      assert.doesNotMatch(reply, /offline/i);
-      assert.match(reply, /old@example\.com/);
-      chat.socket.close();
-    } finally {
-      await lc.setSettings({ offlineMessage: "Thanks, {firstName}! We've received your question and details. Our team will get back to you at {email} shortly." });
-    }
-  });
 });

@@ -26,7 +26,7 @@ Tick each item on staging first, then production.
 
 ## Staging tests
 - [ ] A real file upload, open (presigned link) and delete against the S3 bucket (skipped in tests on purpose).
-- [ ] A real AI chat, a handoff to an agent, an offline request with its email, a rating.
+- [ ] A real AI chat, a handoff to an agent, the email follow-up after the follow-up time with its email, a rating.
 - [ ] Settings change by a superadmin applies to the next chat without a restart; an admin can only view.
 - [ ] Retention: set a short period on staging and confirm chats and S3 objects go.
 - [ ] Footer shows the DB-IP attribution link.

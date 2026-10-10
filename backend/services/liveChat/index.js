@@ -122,74 +122,35 @@ function createAgentStore() {
       const user = await User.findById(userId).select("name").lean();
       return String(user?.name || "").trim().split(/\s+/)[0].slice(0, 40);
     },
-    async setOnline(userId, online) {
-      const LcAgentProfile = require("../../models/LcAgentProfile");
-      const User = require("../../models/User");
-      const existing = await LcAgentProfile.findOne({ userId }).select("_id displayName").lean();
-      const patch = { online: Boolean(online), lastSeenAt: new Date() };
-      if (!existing || !existing.displayName) {
-        const user = await User.findById(userId).select("name").lean();
-        patch.displayName = String(user?.name || "").trim().split(/\s+/)[0].slice(0, 40) || "Agent";
-      }
-      return LcAgentProfile.findOneAndUpdate(
-        { userId },
-        { $set: patch },
-        { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
-      ).lean();
-    },
   };
 }
 
-// Which agents are online right now: the Online/Offline switch is on AND at least one admin socket is connected.
-// In memory, behind a tiny interface (same reason as presence.js).
-//   onGone(userId)  the agent's last connection closed, or they switched to Offline
-//   onBack(userId)  the agent is available again (connected and online)
-// index.js uses them to return an absent agent's chats to the Queue after a grace period.
+// Which agents have the admin panel open right now: at least one admin socket is connected. There is no Online switch
+// and no support hours. In memory, behind a tiny interface (same reason as presence.js).
+//   onGone(userId)  the agent's last connection closed
+//   onBack(userId)  the agent connected again
+// index.js uses them to return the chats an absent agent holds to the Queue after a grace period.
 function createAgentRegistry({ onGone = () => {}, onBack = () => {} } = {}) {
-  const users = new Map(); // userId -> { online, explicit, sockets: Set }
-  const entry = (userId) => {
-    if (!users.has(userId)) users.set(userId, { online: false, explicit: false, sockets: new Set() });
-    return users.get(userId);
-  };
-  const available = (e) => Boolean(e && e.online && e.sockets.size);
+  const users = new Map(); // userId -> Set of socket ids
   return {
-    connect(userId, socketId, online) {
-      const e = entry(userId);
-      const was = available(e);
-      e.sockets.add(socketId);
-      // The stored flag only seeds the first socket; a switch flipped meanwhile wins.
-      if (e.sockets.size === 1 && !e.explicit) e.online = Boolean(online);
-      if (!was && available(e)) onBack(userId);
+    connect(userId, socketId) {
+      const sockets = users.get(userId) || new Set();
+      const was = sockets.size > 0;
+      sockets.add(socketId);
+      users.set(userId, sockets);
+      if (!was) onBack(userId);
     },
     disconnect(userId, socketId) {
-      const e = users.get(userId);
-      if (!e) return;
-      e.sockets.delete(socketId);
-      if (!e.sockets.size) {
+      const sockets = users.get(userId);
+      if (!sockets) return;
+      sockets.delete(socketId);
+      if (!sockets.size) {
         users.delete(userId);
         onGone(userId);
       }
     },
-    setOnline(userId, online) {
-      const e = entry(userId);
-      const was = available(e);
-      const wasOnline = e.online;
-      e.online = Boolean(online);
-      e.explicit = true;
-      if (!available(e) && (was || (wasOnline && !e.online))) onGone(userId);
-      else if (!was && available(e)) onBack(userId);
-    },
-    isAvailable: (userId) => available(users.get(userId)),
-    // The two halves of availability, so a screen can say which one is missing.
-    state(userId) {
-      const e = users.get(userId);
-      return { online: Boolean(e && e.online), connected: Boolean(e && e.sockets.size) };
-    },
-    availableCount() {
-      let n = 0;
-      for (const e of users.values()) if (available(e)) n += 1;
-      return n;
-    },
+    isAvailable: (userId) => Boolean(users.get(userId)?.size),
+    availableCount: () => users.size,
   };
 }
 
@@ -265,7 +226,10 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     (async () => {
       if (cached.value && Date.now() - cached.at < settingsCacheMs) return cached.value;
       const doc = await models.LcSettings.getSettings();
-      cached = { at: Date.now(), value: doc.toObject ? doc.toObject() : doc };
+      const value = doc.toObject ? doc.toObject() : doc;
+      if (value.aiMode === "ai_when_no_agent") value.aiMode = "ai_first"; // the mode was removed
+      for (const key of ["supportHours", "offlineRule", "offlineMessage"]) delete value[key]; // removed settings on older documents
+      cached = { at: Date.now(), value };
       return cached.value;
     });
   const { createAiService } = require("./aiService");
@@ -352,6 +316,13 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     );
   }
 
+  // The follow-up step ("Our team will connect with you by email"): due times live on the conversations, so this job
+  // only has to look. One sweep right now picks up whatever came due while the server was down.
+  const runFollowUp = () => chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+  const followUpTimer = setInterval(runFollowUp, options.followUpJobMs || chat.followUpJobMs);
+  followUpTimer.unref?.();
+  setTimeout(runFollowUp, 2000).unref?.();
+
   console.log("[livechat] enabled: namespaces /livechat and /livechat-admin, API /api/admin/livechat");
 
   return {
@@ -367,6 +338,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     ipBlock,
     abuse,
     shutdown() {
+      clearInterval(followUpTimer);
       chat.shutdown();
       agentSvc.shutdown();
       presence.clear();
@@ -377,18 +349,15 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
 }
 
 // Small one-time upgrades of an existing settings document (never overwrites anything an admin wrote):
-//   - the old "team is offline" default text becomes the new thank-you text,
+//   - the old default AI-unavailable text becomes the new one (a text an admin edited is left alone),
 //   - default quick options without a page link get their default link.
 async function migrateSettings(LcSettings) {
   const { DEFAULT_SETTINGS } = require("./settingsDefaults");
-  const legacy = [
-    "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
-    "Our team is offline right now. We've saved your request and will reply by email.",
-  ];
   const doc = await LcSettings.findOne({ key: "default" });
   if (!doc) return;
   const set = {};
-  if (legacy.includes(doc.offlineMessage)) set.offlineMessage = DEFAULT_SETTINGS.offlineMessage;
+  const OLD_UNAVAILABLE = "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.";
+  if (doc.unavailableMessage === OLD_UNAVAILABLE) set.unavailableMessage = DEFAULT_SETTINGS.unavailableMessage;
   const defaults = new Map(DEFAULT_SETTINGS.quickOptions.map((o) => [o.key, o]));
   const options = doc.quickOptions.map((o) => {
     const plain = o.toObject ? o.toObject() : o;

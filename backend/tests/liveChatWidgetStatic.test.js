@@ -31,11 +31,7 @@ describe("live chat: patient-facing wording", () => {
     assert.match(widget, /Humancare AI · Online/);
   });
 
-  test("backend texts a patient can read never say offline (older saved texts are only listed so they can be replaced)", () => {
-    const allowed = new Set([
-      "Our team is offline right now. Leave your request and we'll reply to your email as soon as we're back.",
-      "Our team is offline right now. We've saved your request and will reply by email.",
-    ]);
+  test("backend texts a patient can read never say offline", () => {
     const patientFacing = [
       ["services", "liveChat", "chatService.js"],
       ["services", "liveChat", "followUpEmail.js"],
@@ -43,20 +39,18 @@ describe("live chat: patient-facing wording", () => {
       ["services", "liveChat", "aiService.js"],
     ];
     for (const parts of patientFacing) {
-      const strings = offlineStrings(read("backend", ...parts)).filter((s) => !allowed.has(s));
+      const strings = offlineStrings(read("backend", ...parts));
       assert.deepEqual(strings, [], `${parts.at(-1)}: ${strings.join(" | ")}`);
     }
     // agentService: the only "offline" strings are team-only lines (internal: true) and the log/reason codes
     const agent = offlineStrings(read("backend", "services", "liveChat", "agentService.js"));
-    assert.deepEqual(agent.sort(), ["Asked for an agent while the team was offline."].concat(agent.filter((s) => /went offline|agent_offline/.test(s))).sort());
+    assert.deepEqual(agent.filter((s) => !/went offline|agent_offline/.test(s)), []);
   });
 
-  test("the default 'no agent available' text is the approved thank-you with the patient's name and email", () => {
-    const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
-    assert.equal(
-      DEFAULT_SETTINGS.offlineMessage,
-      "Thanks, {firstName}! We've received your question and details. Our team will get back to you at {email} shortly."
-    );
+  test("the patient texts for a hand-over are the approved wording", () => {
+    const chat = read("backend", "services", "liveChat", "chatService.js");
+    assert.ok(chat.includes("Thanks, ${name}! Connecting you to our team now. You can keep typing your question here."));
+    assert.ok(chat.includes("Our team will connect with you by email at ${email || \"your email address\"} shortly."));
   });
 });
 

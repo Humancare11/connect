@@ -128,7 +128,7 @@ export default function LiveChatWidget() {
 
   // Nothing here ever says the team is offline.
   let status = "Humancare AI · Online";
-  if (waiting) status = conversation.offline ? "Message received" : "Connecting you with a live agent…";
+  if (waiting) status = conversation.emailFollowUp ? "Message received" : "Connecting you with a live agent…";
   if (withAgent) status = "Live agent · Humancare support";
 
   // On a phone the window covers the page: after a page link it folds away so the patient can read the page.

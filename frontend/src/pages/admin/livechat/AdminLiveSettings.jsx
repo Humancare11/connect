@@ -8,18 +8,6 @@ import "./LiveChatPages.css";
 // A save is checked by the server as a whole, applies at once (no restart) and is written to the change log below.
 const BASE = "/api/admin/livechat";
 
-const DAY_LABELS = { monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday", friday: "Friday", saturday: "Saturday", sunday: "Sunday" };
-const DAY_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-const ZONES = [
-  ["America/New_York", "Eastern (New York)"],
-  ["America/Chicago", "Central (Chicago)"],
-  ["America/Denver", "Mountain (Denver)"],
-  ["America/Phoenix", "Arizona (Phoenix)"],
-  ["America/Los_Angeles", "Pacific (Los Angeles)"],
-  ["America/Anchorage", "Alaska (Anchorage)"],
-  ["Pacific/Honolulu", "Hawaii (Honolulu)"],
-  ["Asia/Kolkata", "India (Kolkata)"],
-];
 const ICONS = [
   ["stethoscope", "Doctor"],
   ["pill", "Prescription"],
@@ -30,19 +18,13 @@ const ICONS = [
 ];
 const AI_MODES = [
   ["ai_first", "AI first, agents can take over", "The AI answers every chat right away. Any agent can step in."],
-  ["ai_when_no_agent", "Only when no agent is available", "If an agent is online, new chats go straight to the Queue."],
   ["ai_off", "AI off (agents only)", "Every chat goes to the Queue. The AI only helps agents with suggested replies."],
-];
-const OFFLINE_RULES = [
-  ["hours_or_no_agent", "Outside support hours OR no agent is online"],
-  ["no_agent", "No agent is online (support hours are ignored)"],
-  ["hours", "Outside support hours (agents do not have to be online)"],
 ];
 
 // the fields the page edits (everything else on the settings document is not sent back)
 const EDITABLE = [
-  "aiMode", "offlineRule", "agentDisplayName", "greeting", "unavailableMessage", "offlineMessage", "businessFacts",
-  "dailySpendCapUsd", "supportHours", "handoffRules", "quickOptions", "prices",
+  "aiMode", "followUpMinutes", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
+  "dailySpendCapUsd", "handoffRules", "quickOptions", "prices",
 ];
 const pick = (settings) => Object.fromEntries(EDITABLE.map((k) => [k, settings[k]]));
 const slug = (label, taken) => {
@@ -107,7 +89,6 @@ export default function AdminLiveSettings() {
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
   const setRule = (key, value) => set("handoffRules", { ...form.handoffRules, [key]: value });
-  const setHours = (day, patch) => set("supportHours", { ...form.supportHours, days: form.supportHours.days.map((d) => (d.day === day ? { ...d, ...patch } : d)) });
   const setOption = (index, patch) => set("quickOptions", form.quickOptions.map((o, i) => (i === index ? { ...o, ...patch } : o)));
   const moveOption = (index, by) => {
     const next = [...form.quickOptions];
@@ -136,9 +117,6 @@ export default function AdminLiveSettings() {
       setSaving(false);
     }
   };
-
-  const days = DAY_ORDER.map((name) => form.supportHours.days.find((d) => d.day === name)).filter(Boolean);
-  const zoneKnown = ZONES.some(([id]) => id === form.supportHours.timezone);
 
   // canned replies save on their own (they are separate records)
   const cannedCall = async (request) => {
@@ -216,57 +194,21 @@ export default function AdminLiveSettings() {
               <ErrorText errors={errors} name="handoffRules.agentOfflineGraceSeconds" />
             </div>
             <div className="lcp-field">
-              <label htmlFor="offlineRule">The team counts as offline when</label>
-              <select id="offlineRule" value={form.offlineRule} onChange={(e) => set("offlineRule", e.target.value)}>
-                {OFFLINE_RULES.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <ErrorText errors={errors} name="offlineRule" />
-            </div>
-          </div>
-
-          <div className="lcp-panel">
-            <h3>Support hours</h3>
-            <div className="lcp-field">
-              <label htmlFor="tz">Time zone</label>
-              <select id="tz" value={form.supportHours.timezone} onChange={(e) => set("supportHours", { ...form.supportHours, timezone: e.target.value })}>
-                {!zoneKnown && <option value={form.supportHours.timezone}>{form.supportHours.timezone}</option>}
-                {ZONES.map(([id, label]) => (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <ErrorText errors={errors} name="supportHours.timezone" />
-            </div>
-            <label className="lcp-check">
+              <label htmlFor="followUpMinutes">Email notice after (minutes, 1-30)</label>
               <input
-                type="checkbox"
-                checked={form.supportHours.alwaysOn === true}
-                onChange={(e) => set("supportHours", { ...form.supportHours, alwaysOn: e.target.checked })}
-              />{" "}
-              Always on (24/7): ignore the days and times below
-            </label>
-            {days.map((d) => (
-              <div key={d.day}>
-                <div className="lcp-row lcp-row--hours">
-                  <span>{DAY_LABELS[d.day]}</span>
-                  <label className="lcp-check" style={{ margin: 0 }}>
-                    <input type="checkbox" checked={d.enabled} disabled={form.supportHours.alwaysOn === true} onChange={(e) => setHours(d.day, { enabled: e.target.checked })} aria-label={`${DAY_LABELS[d.day]} open`} /> Open
-                  </label>
-                  <input type="time" value={d.open} disabled={!d.enabled || form.supportHours.alwaysOn === true} onChange={(e) => setHours(d.day, { open: e.target.value })} aria-label={`${DAY_LABELS[d.day]} opens`} />
-                  <input type="time" value={d.close} disabled={!d.enabled || form.supportHours.alwaysOn === true} onChange={(e) => setHours(d.day, { close: e.target.value })} aria-label={`${DAY_LABELS[d.day]} closes`} />
-                  {d.enabled && form.supportHours.alwaysOn !== true && d.open && d.close && d.close < d.open && (
-                    <span className="lcp-help">closes next day</span>
-                  )}
-                </div>
-                <ErrorText errors={errors} name={`supportHours.${d.day}`} />
-              </div>
-            ))}
-            <ErrorText errors={errors} name="supportHours.days" />
+                id="followUpMinutes"
+                type="number"
+                min="1"
+                max="30"
+                value={form.followUpMinutes ?? 1}
+                onChange={(e) => set("followUpMinutes", Number(e.target.value))}
+              />
+              <span className="lcp-help">
+                A patient waiting in the Queue with no admin reply after this long is told "Our team will connect with you by email" and gets one
+                generic follow-up email. The chat stays in the Queue.
+              </span>
+              <ErrorText errors={errors} name="followUpMinutes" />
+            </div>
           </div>
 
           <div className="lcp-panel">
@@ -284,12 +226,6 @@ export default function AdminLiveSettings() {
               <label htmlFor="unavail">Message when the AI is unavailable</label>
               <textarea id="unavail" value={form.unavailableMessage} maxLength={600} onChange={(e) => set("unavailableMessage", e.target.value)} />
               <ErrorText errors={errors} name="unavailableMessage" />
-            </div>
-            <div className="lcp-field">
-              <label htmlFor="offmsg">Message when no agent is available</label>
-              <textarea id="offmsg" value={form.offlineMessage} maxLength={600} onChange={(e) => set("offlineMessage", e.target.value)} />
-              <span className="lcp-help">Use {"{firstName}"} and {"{email}"}. Patients also get one follow-up email. Avoid saying the team is offline.</span>
-              <ErrorText errors={errors} name="offlineMessage" />
             </div>
             <div className="lcp-field">
               <label htmlFor="facts">Business facts the AI may use</label>

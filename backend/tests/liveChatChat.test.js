@@ -211,7 +211,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       assert.equal(res.ok, true);
       const resumed = await lc.call(socket, "chat:resume");
       assert.equal(resumed.conversation.mode, "queue");
-      assert.equal(resumed.conversation.offline, false);
+      assert.equal(resumed.conversation.emailFollowUp, false);
       assert.match(resumed.conversation.messages.at(-1).text, /Connecting you to our team/);
       const conv = await lc.models.LcConversation.findOne({ conversationId: conversation.conversationId }).lean();
       assert.equal(conv.mode, "queue");
@@ -275,34 +275,19 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
     });
   });
 
-  describe("offline team", () => {
-    test("no agent online: the patient is told, the request is saved in the queue", async () => {
+  describe("handing over to the team", () => {
+    test("no agent online: the same 'Connecting' message, the chat waits in the Queue with a follow-up time", async () => {
       const { socket, conversation } = await openChat();
       await lc.call(socket, "chat:agent");
       const state = (await lc.call(socket, "chat:resume")).conversation;
       assert.equal(state.mode, "queue");
-      assert.equal(state.offline, true);
-      assert.match(state.messages.at(-1).text, /^Thanks, .+! We've received your question and details\. Our team will get back to you at .+@.+ shortly\.$/);
-      assert.doesNotMatch(state.messages.at(-1).text, /offline/i);
+      assert.equal(state.emailFollowUp, false, "the email notice only comes after the follow-up time");
+      assert.equal(state.messages.at(-1).text, `Thanks, Emma! Connecting you to our team now. You can keep typing your question here.`);
+      assert.doesNotMatch(state.messages.at(-1).text, /offline|unavailable|e-?mail/i);
       const conv = await lc.models.LcConversation.findOne({ conversationId: conversation.conversationId }).lean();
-      assert.equal(conv.offlineRequested, true);
+      assert.equal(conv.offlineRequested, false);
+      assert.ok(conv.followUpDueAt && conv.queuedAt);
       socket.close();
-    });
-
-    test("outside support hours counts as offline even with an agent online", async () => {
-      const agent = await lc.onlineAgent();
-      const settings = await lc.models.LcSettings.findOne({ key: "default" });
-      const original = settings.supportHours.days.map((d) => d.toObject());
-      settings.supportHours.days.forEach((d) => (d.enabled = false));
-      await settings.save();
-
-      const { socket } = await openChat();
-      await lc.call(socket, "chat:agent");
-      assert.equal((await lc.call(socket, "chat:resume")).conversation.offline, true);
-
-      await lc.setSettings({ "supportHours.days": original });
-      socket.close();
-      agent.close();
     });
   });
 
@@ -369,7 +354,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
 
       const state = (await lc.call(socket, "chat:resume")).conversation;
       const texts = state.messages.map((m) => m.text);
-      assert.ok(texts.includes("Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you."));
+      assert.ok(texts.includes('Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.'));
       assert.equal(state.aiUnavailable, true);
       assert.equal(state.mode, "queue", "live chat still works");
       assert.equal(JSON.stringify(state).toLowerCase().includes("quota"), false);

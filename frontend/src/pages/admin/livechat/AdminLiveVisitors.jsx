@@ -53,7 +53,7 @@ const STATUS_TEXT = {
 };
 
 export default function AdminLiveVisitors() {
-  const { visitors, status, agent, clockOffset } = useLiveChatAdmin();
+  const { visitors, status, clockOffset } = useLiveChatAdmin();
   const { admin } = useAdmin();
   const navigate = useNavigate();
   const [activityFilter, setActivityFilter] = useState("all");
@@ -178,21 +178,6 @@ export default function AdminLiveVisitors() {
           <span className={`lcv-status lcv-status--${status}`} role="status">
             <i /> {STATUS_TEXT[status]}
           </span>
-          <button
-            type="button"
-            className="lcv-toggle"
-            role="switch"
-            aria-checked={agent.online}
-            onClick={() => hub.setOnline(!agent.online)}
-            disabled={status !== "live"}
-          >
-            <span className="lcv-sw" />
-            {!agent.online
-              ? "You're offline"
-              : agent.reason === "outside_hours"
-                ? `Switch on · Outside hours${agent.hours ? ` (${agent.hours})` : ""}`
-                : "You're online"}
-          </button>
         </div>
       </div>
 

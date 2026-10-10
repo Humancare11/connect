@@ -19,7 +19,9 @@ With `LIVECHAT_ENABLED` unset/false AND `VITE_LIVECHAT_ENABLED` unset/false: the
 
 ## Patient experience rules (local-testing round)
 
-- The patient is never told the team is "offline" and never sees support hours. With no agent available the chat shows: "Thanks, {first name}! We've received your question and details. Our team will get back to you at {email} shortly." (setting "Message when no agent is available", placeholders `{firstName}` and `{email}`; the two older "team is offline" defaults are replaced automatically). One follow-up email goes out with no hours and no health details; admins still see the request in the Queue. Header status: "Humancare AI · Online" with the AI, "Message received" after the thank-you.
+- There is no Online switch and no support hours. Whenever a chat goes to the team (header button, quick option, AI hand-over, a returning patient, a requeued chat) the patient always sees: "Thanks, {first name}! Connecting you to our team now. You can keep typing your question here." and the chat waits in the Queue.
+- If no admin has replied after the follow-up time (AI agent settings, default 1 minute, 1 to 30), the patient sees "Our team will connect with you by email at {email} shortly." and ONE generic follow-up email goes out (no chat text, no symptoms, no reason; at most once per chat). The chat stays in the Queue with the label "Email follow-up" ("Email failed" if the email could not be sent) and an agent can still join. The step is cancelled when an admin takes the chat or replies, or the patient goes back to the AI. The due time is stored on the conversation (`followUpDueAt`) and a job (every 15 seconds, plus a sweep at startup) sends what is due, so it still happens after the patient leaves or the server restarts. A chat waiting for its notice is not archived when the patient leaves.
+- Header status: "Humancare AI · Online" with the AI, "Connecting you with a live agent…" while waiting, "Message received" after the email notice.
 - Header buttons: "Talk to live agent" is always there while with the AI. With a live agent (or while waiting) there is "Switch to AI": the chat goes back to the AI at once, the agent sees "Patient switched to the AI assistant", and a chat that was ever live stays in Live agent chats under "Back with the AI". Hidden when AI mode is "AI off".
 - Page links: the AI can attach up to 3 buttons to a reply. The allowlist is `backend/data/liveChatSitePages.json`, built from `frontend/src/data/searchIndex.js` (categories, specialties, conditions) plus service pages and `/appointment-booking`, keeping only routes that are active in `App.jsx`. After changing routes or the taxonomy run `node backend/scripts/buildLiveChatSitePages.js` (a test fails if the file is out of date). The model is shown only the pages that fit the patient's words and the server drops any url not on the list; titles come from the list. Quick options can have a "Page button" (AI agent settings). Buttons use client-side routing, so the chat stays open on the next page (on a phone the window folds away so the page can be read).
 - Scrolling: the site's smooth scroller (Lenis) swallows wheel events inside nested scroll areas unless the area carries `data-lenis-prevent`; the widget window and message area have it. Do not remove it.
@@ -50,16 +52,16 @@ Admin side only: the patient never sees a badge, toggle or translation, and sees
 ## Admin pages (sidebar group "Live Chat")
 
 - Real-time visitors, AI chats, Live agent chats (Phases 1 to 4).
-- **Team**: role, name patients see, status, open chats, chats today, average first reply, AI row.
-- **Reports**: chats today, % solved by AI, first reply time, rating, bookings after chat (patient email matched to a booking made within 7 days after the chat), AI cost today and this month, chats per hour (AI vs agent), date range filter (max 366 days, in the support time zone).
-- **AI agent settings**: AI mode, handoff rules, support hours and time zone, offline rule, greeting and messages, quick options, business facts, prices, default agent name, daily AI cap, grace seconds, canned replies, and a change log (who, what, when). A save is validated as a whole, applies without a restart and is written to `LcSettingsAudit`.
+- **Team**: role, name patients see, open chats, chats today, average first reply, AI row.
+- **Reports**: chats today, % solved by AI, first reply time, rating, bookings after chat (patient email matched to a booking made within 7 days after the chat), AI cost today and this month, chats per hour (AI vs agent), date range filter (max 366 days, days counted in America/New_York).
+- **AI agent settings**: AI mode (AI first / AI off), handoff rules, the follow-up time, greeting and messages, quick options, business facts, prices, default agent name, daily AI cap, grace seconds, canned replies, and a change log (who, what, when). A save is validated as a whole, applies without a restart and is written to `LcSettingsAudit`.
 
 ## Data and privacy
 
 - Chat content, names, emails, phones and file names are encrypted (AES-256-GCM) with `LIVECHAT_ENCRYPTION_KEY`, a key separate from the existing chat key. Lose the key and the data is unreadable: back it up.
 - Message text, emails and phone numbers are never logged. OpenAI request and response bodies and the API key are never logged.
 - Files (pdf, jpg, png, 10 MB) go to S3 under `livechat/`, opened only through a role-checked 5-minute presigned URL.
-- Emails (offline follow-up) carry no health details.
+- Emails (the follow-up email) carry no health details.
 
 ## Retention
 

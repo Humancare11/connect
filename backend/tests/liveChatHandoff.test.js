@@ -180,34 +180,23 @@ describe("live chat: handoff reasons end to end (scripted AI)", () => {
     chat.socket.close();
   });
 
-  test("agent online: the waiting message connects to the team, makes no email promise, sends no email", async () => {
-    const agent = await lc.onlineAgent();
+  test("every hand-over says it is connecting to the team, whether or not anyone is at their desk, and sends no email at once", async () => {
     lc.emails.length = 0;
-    const chat = await openChat();
-    await say(chat, "I want to talk to a person", ai({ reply: "Of course.", handoff: true, handoffReason: "explicit_request" }));
-    const text = await lastAiText(chat);
-    assert.match(text, /^Thanks, .+! Connecting you to our team now\. You can keep typing your question here\.$/);
-    assert.doesNotMatch(text, /e-?mail|reply to you|get back to you|offline|unavailable/i);
-    const c = await conv(chat);
-    assert.deepEqual([c.mode, c.offlineRequested], ["queue", false]);
+    for (const online of [false, true]) {
+      const agent = online ? await lc.onlineAgent() : null;
+      const chat = await openChat();
+      await say(chat, "I want to talk to a person", ai({ reply: "Of course.", handoff: true, handoffReason: "explicit_request" }));
+      const text = await lastAiText(chat);
+      assert.match(text, /^Thanks, .+! Connecting you to our team now\. You can keep typing your question here\.$/);
+      assert.doesNotMatch(text, /e-?mail|reply to you|get back to you|offline|unavailable/i);
+      const c = await conv(chat);
+      assert.deepEqual([c.mode, c.offlineRequested], ["queue", false]);
+      assert.ok(c.followUpDueAt, "the follow-up step is scheduled");
+      chat.socket.close();
+      agent?.close();
+    }
     await new Promise((resolve) => setTimeout(resolve, 200));
-    assert.equal(lc.emails.length, 0, "no follow-up email while an agent is online");
-    chat.socket.close();
-    agent.close();
-  });
-
-  test("no agent online: the existing offline thank-you and the one follow-up email are unchanged", async () => {
-    lc.emails.length = 0;
-    const chat = await openChat();
-    await say(chat, "I want to talk to a person", ai({ reply: "Of course.", handoff: true, handoffReason: "explicit_request" }));
-    const text = await lastAiText(chat);
-    assert.match(text, /^Thanks, .+! We've received your question and details\. Our team will get back to you at .+@.+ shortly\.$/);
-    assert.doesNotMatch(text, /offline|unavailable/i);
-    const c = await conv(chat);
-    assert.deepEqual([c.mode, c.offlineRequested], ["queue", true]);
-    for (let i = 0; i < 40 && lc.emails.length === 0; i += 1) await new Promise((resolve) => setTimeout(resolve, 50));
-    assert.equal(lc.emails.length, 1, "exactly one follow-up email");
-    chat.socket.close();
+    assert.equal(lc.emails.length, 0, "no email until the follow-up time has passed");
   });
 
   test("an on-topic medical question does not count toward the off-topic streak", async () => {
