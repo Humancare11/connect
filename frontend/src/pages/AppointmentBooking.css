@@ -112,7 +112,7 @@
   font-weight: 900;
   margin: 0 0 20px;
   color: var(--navy-deep);
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   max-width: 700px;
   overflow-wrap: break-word;
 }
@@ -609,7 +609,7 @@
   color: var(--navy-deep);
   margin: 10px 0 0;
   letter-spacing: -0.25px;
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   line-height: 1.25;
 }
 
@@ -745,7 +745,7 @@
   color: var(--navy-deep);
   margin: 0;
   letter-spacing: -0.15px;
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   line-height: 1.3;
 }
 

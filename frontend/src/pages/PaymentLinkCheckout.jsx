@@ -17,7 +17,7 @@ const ELEMENTS_APPEARANCE = {
     colorText: "#0f172a",
     colorDanger: "#dc2626",
     borderRadius: "8px",
-    fontFamily: "var(--font-secondary)",
+    fontFamily: "'Inter', system-ui, sans-serif",
   },
 };
 
@@ -278,7 +278,16 @@ export default function PaymentLinkCheckout() {
                   )}
                 </>
               ) : (
-                <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+                <Elements stripe={stripePromise} options={{
+                  clientSecret,
+                  appearance: ELEMENTS_APPEARANCE,
+                  fonts: [
+                    {
+                      cssSrc:
+                        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+                    },
+                  ],
+                }}>
                   <CheckoutForm amountPaise={link.amountPaise} currency={link.currency} token={token} email={billingEmail} onPaid={handlePaid} />
                 </Elements>
               )}

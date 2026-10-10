@@ -46,7 +46,7 @@ const ELEMENTS_APPEARANCE = {
     colorBackground: "#ffffff",
     colorText: "#0f172a",
     colorDanger: "#dc2626",
-    fontFamily: "var(--font-secondary)",
+    fontFamily: "'Inter', system-ui, sans-serif",
     borderRadius: "10px",
     fontSizeBase: "15px",
     spacingUnit: "4px",
@@ -413,7 +413,16 @@ export function PaymentStage({
         {method === "stripe" && clientSecret && (
           <Elements
             stripe={stripePromise}
-            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+            options={{
+              clientSecret,
+              appearance: ELEMENTS_APPEARANCE,
+              fonts: [
+                {
+                  cssSrc:
+                    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+                },
+              ],
+            }}
           >
             <StripeForm
               clientSecret={clientSecret}
