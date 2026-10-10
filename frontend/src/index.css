@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-primary: "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-secondary: "Inter", "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-primary: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-secondary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 *, *::before, *::after {
@@ -35,7 +35,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 input, button, select, textarea {
-  font-family: var(--font-secondary);
+  font-family: inherit;
 }
 
 /* ================================================================
