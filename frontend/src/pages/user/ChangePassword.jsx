@@ -73,7 +73,7 @@ function PasswordField({ id, label, icon, placeholder, autoComplete, formData, s
       <label htmlFor={id} style={{
         fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em",
         textTransform: "uppercase", color: "#6b7ca3",
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        fontFamily: "var(--font-secondary)",
       }}>
         {label} <span style={{ color: "#3b82f6", marginLeft: "2px" }}>*</span>
       </label>
@@ -109,7 +109,7 @@ function PasswordField({ id, label, icon, placeholder, autoComplete, formData, s
             borderRadius: "13px",
             outline: "none",
             color: "#0b0443",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontFamily: "var(--font-secondary)",
             fontSize: "14px",
             fontWeight: 400,
             boxShadow: hasError
@@ -140,7 +140,7 @@ function PasswordField({ id, label, icon, placeholder, autoComplete, formData, s
         <p style={{
           fontSize: "12px", color: "#ef4444", fontWeight: 600, margin: 0,
           display: "flex", alignItems: "center", gap: "5px",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: "var(--font-secondary)",
         }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -244,14 +244,14 @@ export default function ChangePassword() {
         }
       `}</style>
 
-      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#0b0443", maxWidth: "900px", margin: "0 auto" }}>
+      <div style={{ fontFamily: "var(--font-secondary)", color: "#0b0443", maxWidth: "900px", margin: "0 auto" }}>
 
         {/* ── Header ── */}
         <div style={{ marginBottom: "32px" }}>
           <p style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#3b82f6", margin: "0 0 8px" }}>
             Account Security
           </p>
-          <h1 className="hcp-h1" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "28px", fontWeight: 800, margin: "0 0 8px", lineHeight: 1.2, color: "#0b0443", letterSpacing: "-0.5px" }}>
+          <h1 className="hcp-h1" style={{ fontFamily: "var(--font-primary)", fontSize: "28px", fontWeight: 800, margin: "0 0 8px", lineHeight: 1.2, color: "#0b0443", letterSpacing: "-0.5px" }}>
             Change Password
           </h1>
           <p style={{ fontSize: "14px", color: "#6b7ca3", margin: 0 }}>
@@ -276,7 +276,7 @@ export default function ChangePassword() {
               </div>
 
               <div>
-                <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>Security Tips</h3>
+                <h3 style={{ fontFamily: "var(--font-primary)", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>Security Tips</h3>
                 <p style={{ fontSize: "12px", color: "#6b7ca3", margin: 0 }}>Follow these to stay safe</p>
               </div>
 
@@ -317,7 +317,7 @@ export default function ChangePassword() {
                   </svg>
                 </div>
                 <div>
-                  <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>Update Password</h2>
+                  <h2 style={{ fontFamily: "var(--font-primary)", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>Update Password</h2>
                   <p style={{ fontSize: "13px", color: "#6b7ca3", margin: 0 }}>Fill in the fields below to set a new password</p>
                 </div>
               </div>
@@ -372,7 +372,7 @@ export default function ChangePassword() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "11px 22px", borderRadius: "12px", background: "rgba(255,255,255,0.58)", backdropFilter: "blur(8px)", border: "1.5px solid rgba(203,213,225,0.82)", color: "#6b7ca3", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "11px 22px", borderRadius: "12px", background: "rgba(255,255,255,0.58)", backdropFilter: "blur(8px)", border: "1.5px solid rgba(203,213,225,0.82)", color: "#6b7ca3", fontFamily: "var(--font-secondary)", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.90)"; e.currentTarget.style.color = "#0b0443"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.90)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.58)"; e.currentTarget.style.color = "#6b7ca3"; e.currentTarget.style.borderColor = "rgba(203,213,225,0.82)"; }}
                 >
@@ -383,7 +383,7 @@ export default function ChangePassword() {
                 <button
                   type="submit"
                   disabled={loading}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px", padding: "11px 28px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #3b82f6, #083ab0)", color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "13.5px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", minWidth: "165px", opacity: loading ? 0.75 : 1, boxShadow: "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)", transition: "all 0.2s ease" }}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px", padding: "11px 28px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #3b82f6, #083ab0)", color: "#fff", fontFamily: "var(--font-secondary)", fontSize: "13.5px", fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", minWidth: "165px", opacity: loading ? 0.75 : 1, boxShadow: "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)", transition: "all 0.2s ease" }}
                   onMouseEnter={e => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 26px rgba(59,130,246,0.46), 0 2px 8px rgba(8,58,176,0.28)"; } }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)"; }}
                 >

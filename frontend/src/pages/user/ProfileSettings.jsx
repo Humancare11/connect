@@ -33,7 +33,7 @@ const inputStyle = {
   borderRadius: "13px",
   outline: "none",
   color: "#0b0443",
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  fontFamily: "var(--font-secondary)",
   fontSize: "14px",
   fontWeight: 400,
   transition: "all 0.2s ease",
@@ -66,7 +66,7 @@ function Field({ label, required, icon, children }) {
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: "#6b7ca3",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: "var(--font-secondary)",
         }}
       >
         {label}
@@ -122,7 +122,7 @@ function MetaRow({ icon, label, value }) {
             letterSpacing: "0.5px",
             textTransform: "uppercase",
             margin: "0 0 2px",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontFamily: "var(--font-secondary)",
           }}
         >
           {label}
@@ -271,7 +271,7 @@ export default function ProfileSettings() {
         .ps-fadein { animation: ps-fadein 0.25s ease; }
         .ps-phone .pif-control { height: 47px; min-height: 47px; border-radius: 13px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(203,213,225,0.80); }
         .ps-phone .pif-control.is-active { border-color: rgba(59,130,246,0.65); background: rgba(255,255,255,0.88); box-shadow: 0 0 0 3px rgba(59,130,246,0.13); }
-        .ps-phone .pif-input { font-family: 'Plus Jakarta Sans', sans-serif; color: #0b0443; }
+        .ps-phone .pif-input { font-family: var(--font-secondary); color: #0b0443; }
         @media (max-width: 860px) {
           .ps-body   { grid-template-columns: 1fr !important; }
           .ps-avatar-card { flex-direction: row !important; flex-wrap: wrap !important; padding: 22px 24px !important; }
@@ -290,7 +290,7 @@ export default function ProfileSettings() {
         }
       `}</style>
 
-      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
+      <div style={{ fontFamily: "var(--font-secondary)", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
 
         {/* ══ TWO-COLUMN BODY ══ */}
         <div
@@ -343,7 +343,7 @@ export default function ProfileSettings() {
                   </div>
                 </div>
 
-                <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: 0, textAlign: "center" }}>
+                <h3 style={{ fontFamily: "var(--font-primary)", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: 0, textAlign: "center" }}>
                   {user?.name}
                 </h3>
                 <p style={{ fontSize: "12px", color: "#6b7ca3", margin: 0, textAlign: "center", wordBreak: "break-all" }}>
@@ -417,7 +417,7 @@ export default function ProfileSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>
+                  <h2 style={{ fontFamily: "var(--font-primary)", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>
                     Personal Information
                   </h2>
                   <p style={{ fontSize: "13px", color: "#6b7ca3", margin: 0 }}>
@@ -547,7 +547,7 @@ export default function ProfileSettings() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "11px 22px", borderRadius: "12px", background: "rgba(255,255,255,0.58)", backdropFilter: "blur(8px)", border: "1.5px solid rgba(203,213,225,0.82)", color: "#6b7ca3", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" }}
+                  style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "11px 22px", borderRadius: "12px", background: "rgba(255,255,255,0.58)", backdropFilter: "blur(8px)", border: "1.5px solid rgba(203,213,225,0.82)", color: "#6b7ca3", fontFamily: "var(--font-secondary)", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.90)"; e.currentTarget.style.color = "#0b0443"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.90)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.58)"; e.currentTarget.style.color = "#6b7ca3"; e.currentTarget.style.borderColor = "rgba(203,213,225,0.82)"; }}
                 >
@@ -561,7 +561,7 @@ export default function ProfileSettings() {
                 <button
                   type="submit"
                   disabled={saving}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px", padding: "11px 28px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #3b82f6, #083ab0)", color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "13.5px", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", minWidth: "150px", opacity: saving ? 0.75 : 1, boxShadow: "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)", transition: "all 0.2s ease" }}
+                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px", padding: "11px 28px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #3b82f6, #083ab0)", color: "#fff", fontFamily: "var(--font-secondary)", fontSize: "13.5px", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", minWidth: "150px", opacity: saving ? 0.75 : 1, boxShadow: "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)", transition: "all 0.2s ease" }}
                   onMouseEnter={e => { if (!saving) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 26px rgba(59,130,246,0.46), 0 2px 8px rgba(8,58,176,0.28)"; } }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)"; }}
                 >

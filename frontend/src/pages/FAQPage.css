@@ -11,9 +11,9 @@
   --line: #e4e7ec;
   --mist: #eff3f8;
 
-  --font-display: "Fraunces", Georgia, serif;
+  --font-display: var(--font-primary);
   --font-body: var(--font-secondary);
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-mono: var(--font-secondary);
 
   background: var(--cream);
   color: var(--ink);

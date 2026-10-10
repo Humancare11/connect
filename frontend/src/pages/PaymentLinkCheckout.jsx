@@ -17,7 +17,7 @@ const ELEMENTS_APPEARANCE = {
     colorText: "#0f172a",
     colorDanger: "#dc2626",
     borderRadius: "8px",
-    fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif",
+    fontFamily: "var(--font-secondary)",
   },
 };
 

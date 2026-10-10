@@ -46,7 +46,7 @@ const ELEMENTS_APPEARANCE = {
     colorBackground: "#ffffff",
     colorText: "#0f172a",
     colorDanger: "#dc2626",
-    fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif",
+    fontFamily: "var(--font-secondary)",
     borderRadius: "10px",
     fontSizeBase: "15px",
     spacingUnit: "4px",
