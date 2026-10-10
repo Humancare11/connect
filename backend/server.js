@@ -50,6 +50,7 @@ const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
+const { scheduleSearchAnalyticsRollup } = require("./jobs/searchAnalyticsJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
 const { scheduleEmailSync } = require("./jobs/emailSyncJob");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
@@ -137,6 +138,7 @@ const startServer = async () => {
   await normalizeCategoryPricingCurrency();
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
+  scheduleSearchAnalyticsRollup(); // no-op unless search analytics is enabled; never throws or blocks startup
   scheduleInvoiceReconciliation();
   scheduleEmailSync();
 
@@ -601,6 +603,7 @@ app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/services", require("./routes/services"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/superadmin/blogs", require("./routes/superadminBlogs"));
+app.use("/api/admin/search-analytics", require("./routes/adminSearchAnalytics"));
 app.use("/api/blogs", require("./routes/blogs"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));

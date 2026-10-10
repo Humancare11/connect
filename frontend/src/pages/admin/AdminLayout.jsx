@@ -164,6 +164,7 @@ const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
+  { key: "search-analytics", label: "Search Analytics", path: "/admin-dashboard/search-analytics", roles: ["admin", "superadmin"], icon: ICONS.chart },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 

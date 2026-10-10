@@ -141,90 +141,108 @@ const HOME_FAQS = [
     items: [
       {
         question: "What is telemedicine and how does it work?",
-        answer: "Telemedicine allows you to consult with a licensed healthcare provider online through a secure digital platform. You can discuss symptoms, receive medical advice, get treatment recommendations, and obtain prescriptions when medically appropriate without visiting a clinic."
+        answer:
+          "Telemedicine allows you to consult with a licensed healthcare provider online through a secure digital platform. You can discuss symptoms, receive medical advice, get treatment recommendations, and obtain prescriptions when medically appropriate without visiting a clinic.",
       },
       {
         question: "How quickly can I see an online doctor?",
-        answer: "Virtual doctor appointments are designed to provide convenient access to healthcare, often allowing patients to connect with a licensed provider quickly for non-emergency medical concerns."
+        answer:
+          "Virtual doctor appointments are designed to provide convenient access to healthcare, often allowing patients to connect with a licensed provider quickly for non-emergency medical concerns.",
       },
       {
         question: "Are online doctors real licensed healthcare providers?",
-        answer: "Yes. Online doctors and healthcare providers are licensed professionals who can evaluate symptoms, review medical history, provide treatment guidance, and recommend appropriate next steps based on your health needs."
+        answer:
+          "Yes. Online doctors and healthcare providers are licensed professionals who can evaluate symptoms, review medical history, provide treatment guidance, and recommend appropriate next steps based on your health needs.",
       },
       {
-        question: "What conditions can be treated through telemedicine services?",
-        answer: "Telemedicine services can help with many common healthcare needs including cold and flu symptoms, infections, allergies, skin concerns, digestive issues, mental health support, prescription refills, chronic care management, and general wellness consultations."
-      }
-    ]
+        question:
+          "What conditions can be treated through telemedicine services?",
+        answer:
+          "Telemedicine services can help with many common healthcare needs including cold and flu symptoms, infections, allergies, skin concerns, digestive issues, mental health support, prescription refills, chronic care management, and general wellness consultations.",
+      },
+    ],
   },
   {
     title: "Prescriptions & Care",
     items: [
       {
-        question: "Can I get a prescription through an online doctor appointment?",
-        answer: "Yes. A licensed provider can evaluate your condition during a virtual consultation and prescribe medications when medically appropriate and allowed under applicable healthcare regulations."
+        question:
+          "Can I get a prescription through an online doctor appointment?",
+        answer:
+          "Yes. A licensed provider can evaluate your condition during a virtual consultation and prescribe medications when medically appropriate and allowed under applicable healthcare regulations.",
       },
       {
         question: "Can I get same-day online medical care?",
-        answer: "Many non-emergency health concerns can be addressed through same-day telehealth appointments, allowing patients to receive timely medical support without long waiting periods."
+        answer:
+          "Many non-emergency health concerns can be addressed through same-day telehealth appointments, allowing patients to receive timely medical support without long waiting periods.",
       },
       {
-        question: "Is a virtual doctor visit as effective as an in-person visit?",
-        answer: "For many routine and non-emergency conditions, virtual healthcare can be an effective and convenient way to receive diagnosis guidance, treatment recommendations, and follow-up care. Some medical concerns may still require in-person examinations or testing."
+        question:
+          "Is a virtual doctor visit as effective as an in-person visit?",
+        answer:
+          "For many routine and non-emergency conditions, virtual healthcare can be an effective and convenient way to receive diagnosis guidance, treatment recommendations, and follow-up care. Some medical concerns may still require in-person examinations or testing.",
       },
       {
         question: "What should I prepare before my online doctor appointment?",
-        answer: "Before your virtual visit, prepare details about your symptoms, current medications, allergies, medical history, and any questions you would like to discuss with your healthcare provider."
-      }
-    ]
+        answer:
+          "Before your virtual visit, prepare details about your symptoms, current medications, allergies, medical history, and any questions you would like to discuss with your healthcare provider.",
+      },
+    ],
   },
   {
     title: "Security & Insurance",
     items: [
       {
         question: "Is Humancare Connect HIPAA compliant and secure?",
-        answer: "Yes. Humancare Connect follows strict HIPAA privacy and security standards designed to protect your personal health information. Your online consultations, medical records, and communications are handled through a secure telemedicine platform."
+        answer:
+          "Yes. Humancare Connect follows strict HIPAA privacy and security standards designed to protect your personal health information. Your online consultations, medical records, and communications are handled through a secure telemedicine platform.",
       },
       {
         question: "Can I use telemedicine without health insurance?",
-        answer: "Yes. Telemedicine can provide flexible healthcare options for patients with or without insurance, making it easier to access medical guidance and treatment when needed."
+        answer:
+          "Yes. Telemedicine can provide flexible healthcare options for patients with or without insurance, making it easier to access medical guidance and treatment when needed.",
       },
       {
         question: "How much does an online doctor appointment cost?",
-        answer: "The cost of an online doctor consultation depends on the type of service and healthcare needs. Humancare Connect offers transparent pricing with convenient access to affordable virtual healthcare services."
+        answer:
+          "The cost of an online doctor consultation depends on the type of service and healthcare needs. Humancare Connect offers transparent pricing with convenient access to affordable virtual healthcare services.",
       },
       {
         question: "Why choose Humancare Connect for virtual healthcare?",
-        answer: "Humancare Connect provides access to licensed healthcare providers, secure online consultations, prescription support when appropriate, mental health services, chronic care management, and personalized treatment guidance from the comfort of home."
-      }
-    ]
+        answer:
+          "Humancare Connect provides access to licensed healthcare providers, secure online consultations, prescription support when appropriate, mental health services, chronic care management, and personalized treatment guidance from the comfort of home.",
+      },
+    ],
   },
   {
     title: "Mental Health & Refills",
     items: [
       {
         question: "Can telemedicine help with mental health concerns?",
-        answer: "Yes. Telehealth services provide convenient access to mental health support for concerns such as anxiety, stress, depression, burnout, and emotional wellness."
+        answer:
+          "Yes. Telehealth services provide convenient access to mental health support for concerns such as anxiety, stress, depression, burnout, and emotional wellness.",
       },
       {
         question: "Can I get prescription refills online?",
-        answer: "Yes. Licensed providers can review your medical history and current treatment needs to determine whether a prescription refill is appropriate."
+        answer:
+          "Yes. Licensed providers can review your medical history and current treatment needs to determine whether a prescription refill is appropriate.",
       },
       {
         question: "What if I do not have a primary care doctor?",
-        answer: "You can still receive virtual healthcare services even if you do not have a primary care physician. Online providers can help with everyday health concerns, treatment guidance, and ongoing healthcare support."
+        answer:
+          "You can still receive virtual healthcare services even if you do not have a primary care physician. Online providers can help with everyday health concerns, treatment guidance, and ongoing healthcare support.",
       },
       {
         question: "Can telemedicine help manage chronic health conditions?",
-        answer: "Yes. Telemedicine can support ongoing management of chronic conditions such as diabetes, high blood pressure, asthma, thyroid disorders, and high cholesterol through regular virtual follow-ups and personalized care."
-      }
-    ]
-  }
+        answer:
+          "Yes. Telemedicine can support ongoing management of chronic conditions such as diabetes, high blood pressure, asthma, thyroid disorders, and high cholesterol through regular virtual follow-ups and personalized care.",
+      },
+    ],
+  },
 ];
 
 export default function HomePage() {
   const navigate = useNavigate();
-
   // ── Search state ──────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
@@ -285,7 +303,7 @@ export default function HomePage() {
   useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) {
-      searchSession.cancel();
+      searchSession.reset(); // cancels any request and ends the analytics episode
       setFilteredSuggestions([]);
       setNoResults(false);
       setIsSearching(false);
@@ -310,8 +328,8 @@ export default function HomePage() {
     return () => clearTimeout(searchDebounceRef.current);
   }, [searchQuery, searchSession]);
 
-  // Cancel any in-flight search when the page unmounts.
-  useEffect(() => () => searchSession.cancel(), [searchSession]);
+  // Cancel any in-flight search (and pending idle timer) when the page unmounts.
+  useEffect(() => () => searchSession.reset(), [searchSession]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
   useEffect(() => {
@@ -384,7 +402,12 @@ export default function HomePage() {
           e.preventDefault();
           // A highlighted result is only used while it is actually shown for
           // the current query; otherwise run a full search for what was typed.
-          if (hasVisibleResults && activeIndex >= 0 && activeIndex < filteredSuggestions.length) {
+          if (
+            hasVisibleResults &&
+            activeIndex >= 0 &&
+            activeIndex < filteredSuggestions.length
+          ) {
+            searchSession.select(); // analytics only: never throws, changes nothing visible
             handleSearch(filteredSuggestions[activeIndex]);
           } else {
             submitSearch();
@@ -397,7 +420,14 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, isSearching, handleSearch, submitSearch],
+    [
+      filteredSuggestions,
+      activeIndex,
+      isSearching,
+      handleSearch,
+      submitSearch,
+      searchSession,
+    ],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -726,7 +756,7 @@ export default function HomePage() {
             advice, personalized treatment plans & prescriptions from licensed
             healthcare providers at your home. Our HIPAA compliant telemedicine
             and secure healthcare platform makes it easy, convenient, and
-            available  to access quality digital healthcare.
+            available to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
@@ -800,97 +830,101 @@ export default function HomePage() {
               <button onClick={() => submitSearch()}>Search</button>
             </div>
 
-            {showSuggestions && searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
-              <div className="search-suggestions">
-                {/* Loading state */}
-                {isSearching && (
-                  <div className="search-state">
-                    <div className="search-state-icon searching-pulse">
-                      <svg
-                        width="20"
-                        height="20"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                      </svg>
-                    </div>
-                    <span className="search-state-text">
-                      Searching treatments...
-                    </span>
-                  </div>
-                )}
-
-                {/* No results state */}
-                {!isSearching && noResults && (
-                  <div className="search-state no-results">
-                    <div className="search-state-icon">
-                      <svg
-                        width="22"
-                        height="22"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle cx="11" cy="11" r="8" />
-                        <path d="M21 21l-4.35-4.35" />
-                        <path d="M8 11h6M11 8v6" strokeOpacity="0.3" />
-                      </svg>
-                    </div>
-                    <div className="search-state-content">
-                      <span className="search-state-title">
-                        No treatments found for "{searchQuery}"
-                      </span>
-                      <span className="search-state-subtitle">
-                        Try searching by symptom, condition, or specialty
-                      </span>
-                    </div>
-                    <div className="search-state-suggestions">
-                      <span>Try:</span>
-                      {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
-                        (s) => (
-                          <button
-                            key={s}
-                            className="search-pill"
-                            onClick={() => {
-                              setSearchQuery(s);
-                              setShowSuggestions(true);
-                            }}
-                          >
-                            {s}
-                          </button>
-                        ),
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Results */}
-                {!isSearching &&
-                  !noResults &&
-                  (itemRefs.current = itemRefs.current.slice(
-                    0,
-                    filteredSuggestions.length,
-                  )) &&
-                  filteredSuggestions.map((item, index) => (
-                    <div
-                      key={item.id}
-                      ref={(el) => (itemRefs.current[index] = el)}
-                      className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                      onClick={() => handleSearch(item)}
-                    >
-                      <div className="suggestion-left">
-                        <span className="suggestion-title">{item.title}</span>
+            {showSuggestions &&
+              searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
+                <div className="search-suggestions">
+                  {/* Loading state */}
+                  {isSearching && (
+                    <div className="search-state">
+                      <div className="search-state-icon searching-pulse">
+                        <svg
+                          width="20"
+                          height="20"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="M21 21l-4.35-4.35" />
+                        </svg>
                       </div>
-                      <span className="suggestion-arrow">→</span>
+                      <span className="search-state-text">
+                        Searching treatments...
+                      </span>
                     </div>
-                  ))}
-              </div>
-            )}
+                  )}
+
+                  {/* No results state */}
+                  {!isSearching && noResults && (
+                    <div className="search-state no-results">
+                      <div className="search-state-icon">
+                        <svg
+                          width="22"
+                          height="22"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <path d="M21 21l-4.35-4.35" />
+                          <path d="M8 11h6M11 8v6" strokeOpacity="0.3" />
+                        </svg>
+                      </div>
+                      <div className="search-state-content">
+                        <span className="search-state-title">
+                          No treatments found for "{searchQuery}"
+                        </span>
+                        <span className="search-state-subtitle">
+                          Try searching by symptom, condition, or specialty
+                        </span>
+                      </div>
+                      <div className="search-state-suggestions">
+                        <span>Try:</span>
+                        {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
+                          (s) => (
+                            <button
+                              key={s}
+                              className="search-pill"
+                              onClick={() => {
+                                setSearchQuery(s);
+                                setShowSuggestions(true);
+                              }}
+                            >
+                              {s}
+                            </button>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Results */}
+                  {!isSearching &&
+                    !noResults &&
+                    (itemRefs.current = itemRefs.current.slice(
+                      0,
+                      filteredSuggestions.length,
+                    )) &&
+                    filteredSuggestions.map((item, index) => (
+                      <div
+                        key={item.id}
+                        ref={(el) => (itemRefs.current[index] = el)}
+                        className={`suggestion-item${activeIndex === index ? " active" : ""}`}
+                        onClick={() => {
+                          searchSession.select(); // analytics only: never throws, changes nothing visible
+                          handleSearch(item);
+                        }}
+                      >
+                        <div className="suggestion-left">
+                          <span className="suggestion-title">{item.title}</span>
+                        </div>
+                        <span className="suggestion-arrow">→</span>
+                      </div>
+                    ))}
+                </div>
+              )}
           </div>
         </div>
 

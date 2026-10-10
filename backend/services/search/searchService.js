@@ -98,7 +98,12 @@ function matchesFromIntent(catalog, intent, types) {
 // request: { q (validated, normalised), mode, types } from parseRequest.
 // options.clientKey: opaque per-client key for the AI minute cap (never sent
 // to the AI provider).
-async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey } = {}) {
+//
+// Resolves to { body, facts }. `body` is the public response, byte-for-byte
+// what executeSearch returns. `facts` is INTERNAL (matches with scores, the
+// catalog index and what the AI layer did) for search analytics; it must never
+// be sent to a client.
+async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey } = {}) {
   let catalog;
   try {
     catalog = await getCatalog();
@@ -112,15 +117,18 @@ async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defa
   let matches = matchCatalog(catalog, request.q, limits);
 
   let aiMeta = null;
+  const aiFacts = { requested: request.mode === "full", consulted: false, used: false, status: undefined };
   if (request.mode === "full") {
     aiMeta = { used: false, fallback: false, cached: false };
     if (!hasExactLiteralHit(matches)) {
+      aiFacts.consulted = true;
       let outcome;
       try {
         outcome = await ai.understand(request.q, catalog, { clientKey });
       } catch {
         outcome = { status: "failed" };
       }
+      aiFacts.status = outcome.status;
       if (outcome.status === "failed") {
         aiMeta.fallback = true;
       } else if (outcome.status === "ok") {
@@ -129,6 +137,7 @@ async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defa
         if (Object.values(fromIntent).some((list) => list.length)) {
           matches = mergeMatches([matches, fromIntent], limits);
           aiMeta.used = true;
+          aiFacts.used = true;
         } else {
           aiMeta.fallback = true;
         }
@@ -139,7 +148,13 @@ async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defa
   const { results, total } = buildResults(matches, catalog);
   const meta = { total, mode: request.mode, limits: { perType: MAX_RESULTS_PER_TYPE, total: MAX_RESULTS_TOTAL } };
   if (aiMeta) meta.ai = aiMeta;
-  return { success: true, query: { normalized: request.q }, results, meta };
+  const body = { success: true, query: { normalized: request.q }, results, meta };
+  return { body, facts: { matches, index: catalog.index, ai: aiFacts } };
 }
 
-module.exports = { executeSearch, matchesFromIntent, SearchUnavailableError, EXACT_LITERAL_SCORE };
+// The public entry point: only the response body.
+async function executeSearch(request, options) {
+  return (await executeSearchDetailed(request, options)).body;
+}
+
+module.exports = { executeSearch, executeSearchDetailed, matchesFromIntent, SearchUnavailableError, EXACT_LITERAL_SCORE };

@@ -196,6 +196,31 @@ const searchLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// POST /api/search/settle (search analytics). Its own store, so it never
+// shares a budget with search itself. Keyed by IP only; the text is never part
+// of the key or of the logged security event.
+const searchSettleStore = new Map();
+const searchSettleLimiter = buildKeyedLimiter({
+  store:    searchSettleStore,
+  windowMs: 60 * 1000,
+  max:      30,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
+// Admin Search Analytics read APIs (admin + superadmin). Keyed by the authenticated admin's id
+// (falls back to IP), so it runs AFTER the auth guard. A dashboard page makes a
+// handful of requests per view; 60/min is generous for a person and bounds a
+// runaway script or a stolen session. Own store: never shared with other limiters.
+const searchAnalyticsAdminStore = new Map();
+const searchAnalyticsAdminLimiter = buildUserLimiter({
+  store:    searchAnalyticsAdminStore,
+  windowMs: 60 * 1000,
+  max:      60,
+  message:  "Too many requests. Please wait a moment and try again.",
+});
+
 // Public blog list/detail and the blog image proxy. Per-IP; the image limit is
 // high because a list page loads up to ~10 images and pages are revisited.
 const blogPublicStore = new Map();
@@ -243,5 +268,7 @@ module.exports = {
   uploadLimiter,
   directVideoRoomPublicLimiter,
   searchLimiter,
+  searchSettleLimiter,
+  searchAnalyticsAdminLimiter,
   emailSendLimiter,
 };

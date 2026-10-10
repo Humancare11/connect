@@ -764,6 +764,7 @@ const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
 // const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const SearchAnalytics = lazy(() => import("./pages/admin/SearchAnalytics"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
 const ManageDoctors = lazy(() => import("./pages/admin/ManageDoctors"));
 const AdminDoctorProfile = lazy(
@@ -1763,6 +1764,16 @@ export function AppLayout() {
           <Route
             path="/admin-dashboard/qna"
             element={<Navigate to="/admin-dashboard" replace />}
+          />
+          <Route
+            path="/admin-dashboard/search-analytics"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <SearchAnalytics />
+                </AdminLayout>
+              </PrivateRoute>
+            }
           />
           <Route
             path="/admin-dashboard/tickets"
