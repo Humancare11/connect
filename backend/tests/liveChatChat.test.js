@@ -195,7 +195,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       const resumed = await lc.call(socket, "chat:resume");
       assert.equal(resumed.conversation.mode, "queue");
       assert.equal(resumed.conversation.offline, false);
-      assert.match(resumed.conversation.messages.at(-1).text, /Connecting you with a live agent/);
+      assert.match(resumed.conversation.messages.at(-1).text, /Connecting you to our team/);
       const conv = await lc.models.LcConversation.findOne({ conversationId: conversation.conversationId }).lean();
       assert.equal(conv.mode, "queue");
       assert.equal(conv.everLive, true);

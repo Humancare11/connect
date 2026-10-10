@@ -631,7 +631,14 @@ function createChatService({
       // Pages that fit what the patient just wrote; the model may only point at these.
       const lastPatient = history.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
       lastPatientText = history.filter((m) => m.role === "patient").at(-1)?.text || "";
-      result = await ai.generateReply({ settings, history, pages: sitePages.candidatesFor(lastPatient).map((p) => ({ title: p.title, url: p.url })) });
+      // How many questions in a row the AI already missed: the prompt differs between the first and the second miss.
+      const streakRow = await LcConversation.findById(conv._id).select("unansweredStreak").lean();
+      result = await ai.generateReply({
+        settings,
+        history,
+        pages: sitePages.candidatesFor(lastPatient).map((p) => ({ title: p.title, url: p.url })),
+        unansweredStreak: streakRow?.unansweredStreak || 0,
+      });
     } catch {
       result = { ok: false, kind: "api_error" };
     }
@@ -755,7 +762,7 @@ function createChatService({
     );
     const fresh = await LcConversation.findById(conv._id);
     if (available) {
-      await addMessage(fresh, "ai", `Thanks, ${name}! Connecting you with a live agent now. You can keep typing your question here.`);
+      await addMessage(fresh, "ai", `Thanks, ${name}! Connecting you to our team now. If no one picks up right away, we'll reply at your email.`);
     } else {
       await addMessage(fresh, "ai", noAgentText(fresh, cfg));
     }

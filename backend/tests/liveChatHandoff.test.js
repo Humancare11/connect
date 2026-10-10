@@ -3,7 +3,8 @@ const { test, describe, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { startChatServer } = require("./helpers/liveChatServer");
 const { decryptLiveChatText } = require("../utils/liveChat/crypto");
-const { validate, HANDOFF_REASONS } = require("../services/liveChat/aiService");
+const { validate, HANDOFF_REASONS, buildSystemPrompt } = require("../services/liveChat/aiService");
+const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
 
 const usage = { inputTokens: 500, cachedInputTokens: 0, outputTokens: 20, costUsd: 0.0001 };
 const ai = (over = {}) => ({ ok: true, reply: "ok", handoff: false, handoffReason: "none", offTopic: false, topic: "other", usage, ...over });
@@ -23,6 +24,33 @@ describe("validate: a hand-over needs a real reason", () => {
     const off = validate(raw({ handoff: true, handoffReason: "unanswered", offTopic: true }));
     assert.deepEqual([off.handoff, off.handoffReason, off.offTopic], [false, "none", true]);
     assert.equal(validate(raw({ handoff: false, handoffReason: "emergency", offTopic: true })).handoff, true);
+  });
+});
+
+describe("prompt: first and second 'could not answer'", () => {
+  const rule = (streak, rules) =>
+    buildSystemPrompt({ ...DEFAULT_SETTINGS, handoffRules: { ...DEFAULT_SETTINGS.handoffRules, ...rules } }, [], { unansweredStreak: streak })
+      .split("\n")
+      .find((l) => l.startsWith("UNANSWERED"));
+
+  test("first miss: rephrase and the button, never 'connecting'", () => {
+    const line = rule(0);
+    assert.match(line, /first miss/);
+    assert.match(line, /do NOT say or imply you are connecting/);
+    assert.match(line, /rephrase or add a little more detail/);
+    assert.match(line, /Talk to live agent/);
+  });
+
+  test("second miss: the reply says the team is being connected", () => {
+    const line = rule(1);
+    assert.match(line, /second miss in a row/);
+    assert.match(line, /connecting them with our team/);
+    assert.doesNotMatch(line, /first miss/);
+  });
+
+  test("handover replies never talk about hours or availability", () => {
+    const prompt = buildSystemPrompt(DEFAULT_SETTINGS);
+    assert.match(prompt, /HANDOVER REPLIES:.*nothing about hours, availability, waiting time, or whether anyone is reachable right now/);
   });
 });
 
@@ -116,6 +144,25 @@ describe("live chat: handoff reasons end to end (scripted AI)", () => {
     assert.equal(c.mode, "queue");
     assert.equal(c.handoffReason, "unanswered");
     chat.socket.close();
+  });
+
+  test("the AI is told whether this is the first or the second miss", async () => {
+    const chat = await openChat();
+    await say(chat, "Do you cover X?", ai({ reply: "I am not sure.", handoff: true, handoffReason: "unanswered" }));
+    await say(chat, "Do you cover X, really?", ai({ reply: "Connecting you with our team.", handoff: true, handoffReason: "unanswered" }));
+    assert.deepEqual(lc.ai.calls.map((c) => c.unansweredStreak), [0, 1]);
+    chat.socket.close();
+  });
+
+  test("the message after a hand-over speaks of connecting to the team and an email, never offline", async () => {
+    const agent = await lc.onlineAgent();
+    const chat = await openChat();
+    await say(chat, "I want to talk to a person", ai({ reply: "Of course.", handoff: true, handoffReason: "explicit_request" }));
+    const text = await lastAiText(chat);
+    assert.match(text, /Connecting you to our team now\. If no one picks up right away, we'll reply at your email\./);
+    assert.doesNotMatch(text, /offline|unavailable/i);
+    chat.socket.close();
+    agent.close();
   });
 
   test("an answer in between resets the unanswered count", async () => {
