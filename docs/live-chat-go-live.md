@@ -31,3 +31,6 @@ Tick each item on staging first, then production.
 ## After go-live
 - [ ] Watch AI cost on Reports for a week; adjust the daily cap.
 - [ ] After a quiet period, remove the Text widget (see `docs/live-chat.md`).
+
+## Scaling note
+- Agent presence is in memory per process. Run the backend as a single instance, or add a shared Socket.IO adapter (e.g. Redis) before scaling to more than one instance.
