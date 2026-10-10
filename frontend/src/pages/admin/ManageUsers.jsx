@@ -307,8 +307,8 @@ export default function ManageUsers() {
                     </td>
                     <td
                       style={{
-                        fontFamily:
-                          "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                        fontFamily: "var(--font-secondary)",
+                        fontVariantNumeric: "tabular-nums",
                         color: "#475569",
                       }}
                     >

@@ -894,7 +894,7 @@ function WhyChooseUs() {
               fontSize: 36,
               fontWeight: 800,
               color: "#fff",
-              fontFamily: "'Georgia',serif",
+              fontFamily: "var(--font-secondary)",
               marginTop: 8,
             }}
           >

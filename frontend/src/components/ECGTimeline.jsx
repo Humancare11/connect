@@ -255,7 +255,7 @@ export default function ECGTimeline() {
       txt.setAttribute("font-size", "8");
       txt.setAttribute("font-weight", "700");
       txt.setAttribute("fill", "rgba(255,255,255,0.4)");
-      txt.setAttribute("font-family", "Inter,sans-serif");
+      txt.style.fontFamily = "var(--font-secondary)";
       txt.textContent = i + 1;
       nodeG.appendChild(txt);
     });

@@ -490,7 +490,7 @@
 }
 
 .at-editor__btn--bold { font-weight: 800; }
-.at-editor__btn--italic { font-style: italic; font-weight: 600; font-family: Georgia, serif; }
+.at-editor__btn--italic { font-style: italic; font-weight: 600; font-family: var(--font-secondary); }
 
 .at-editor__divider {
   width: 1px;
