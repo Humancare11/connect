@@ -762,7 +762,7 @@ function createChatService({
     );
     const fresh = await LcConversation.findById(conv._id);
     if (available) {
-      await addMessage(fresh, "ai", `Thanks, ${name}! Connecting you to our team now. If no one picks up right away, we'll reply at your email.`);
+      await addMessage(fresh, "ai", `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`);
     } else {
       await addMessage(fresh, "ai", noAgentText(fresh, cfg));
     }

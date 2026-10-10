@@ -154,15 +154,34 @@ describe("live chat: handoff reasons end to end (scripted AI)", () => {
     chat.socket.close();
   });
 
-  test("the message after a hand-over speaks of connecting to the team and an email, never offline", async () => {
+  test("agent online: the waiting message connects to the team, makes no email promise, sends no email", async () => {
     const agent = await lc.onlineAgent();
+    lc.emails.length = 0;
     const chat = await openChat();
     await say(chat, "I want to talk to a person", ai({ reply: "Of course.", handoff: true, handoffReason: "explicit_request" }));
     const text = await lastAiText(chat);
-    assert.match(text, /Connecting you to our team now\. If no one picks up right away, we'll reply at your email\./);
-    assert.doesNotMatch(text, /offline|unavailable/i);
+    assert.match(text, /^Thanks, .+! Connecting you to our team now\. You can keep typing your question here\.$/);
+    assert.doesNotMatch(text, /e-?mail|reply to you|get back to you|offline|unavailable/i);
+    const c = await conv(chat);
+    assert.deepEqual([c.mode, c.offlineRequested], ["queue", false]);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    assert.equal(lc.emails.length, 0, "no follow-up email while an agent is online");
     chat.socket.close();
     agent.close();
+  });
+
+  test("no agent online: the existing offline thank-you and the one follow-up email are unchanged", async () => {
+    lc.emails.length = 0;
+    const chat = await openChat();
+    await say(chat, "I want to talk to a person", ai({ reply: "Of course.", handoff: true, handoffReason: "explicit_request" }));
+    const text = await lastAiText(chat);
+    assert.match(text, /^Thanks, .+! We've received your question and details\. Our team will get back to you at .+@.+ shortly\.$/);
+    assert.doesNotMatch(text, /offline|unavailable/i);
+    const c = await conv(chat);
+    assert.deepEqual([c.mode, c.offlineRequested], ["queue", true]);
+    for (let i = 0; i < 40 && lc.emails.length === 0; i += 1) await new Promise((resolve) => setTimeout(resolve, 50));
+    assert.equal(lc.emails.length, 1, "exactly one follow-up email");
+    chat.socket.close();
   });
 
   test("an answer in between resets the unanswered count", async () => {
