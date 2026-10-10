@@ -247,3 +247,20 @@ export const hub = {
     set({ toasts: snapshot.toasts.filter((t) => t.id !== id) });
   },
 };
+
+// Why the chat was handed to a person (older chats may carry the previous names).
+const HANDOFF_LABELS = {
+  explicit_request: "Asked for a person",
+  patient_request: "Asked for a person",
+  account_issue: "Account issue",
+  account_or_payment: "Account issue",
+  technical_issue: "Technical issue",
+  emergency: "Emergency",
+  complaint: "Complaint",
+  unanswered: "AI couldn't answer",
+  unsure: "AI couldn't answer",
+  ai_unavailable: "AI unavailable",
+  ai_off: "AI off",
+  ai_limit: "AI reply limit",
+};
+export const handoffLabel = (reason) => HANDOFF_LABELS[reason] || "";

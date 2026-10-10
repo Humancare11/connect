@@ -27,9 +27,11 @@ const settingsSchema = new mongoose.Schema(
     //   hours              outside support hours (agents being online is not required)
     offlineRule: { type: String, enum: ["hours_or_no_agent", "no_agent", "hours"], default: "hours_or_no_agent" },
     handoffRules: {
-      onUnsure: { type: Boolean, default: true }, // the AI hands over when the facts do not answer the question
+      onUnsure: { type: Boolean, default: true }, // "unanswered": hands over after two misses in a row
       onAccountOrPayment: { type: Boolean, default: true }, // ... when the patient asks about their own booking or payment
-      onPatientRequest: { type: Boolean, default: true },
+      onPatientRequest: { type: Boolean, default: true }, // explicit_request
+      onTechnicalIssue: { type: Boolean, default: true },
+      onComplaint: { type: Boolean, default: true },
       onAiRequest: { type: Boolean, default: true },
       maxAiRepliesPerChat: { type: Number, default: 30, min: 1, max: 200 },
       // If the agent holding a chat goes offline or logs out, the chat returns to the Queue after this long.

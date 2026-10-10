@@ -186,15 +186,24 @@ export default function AdminLiveSettings() {
               <input type="checkbox" checked disabled /> Contact form before any chat: name and email required, phone optional (always on)
             </label>
             <label className="lcp-check">
-              <input type="checkbox" checked={form.handoffRules.onPatientRequest} onChange={(e) => setRule("onPatientRequest", e.target.checked)} /> When the patient asks for a person
+              <input type="checkbox" checked={form.handoffRules.onPatientRequest} onChange={(e) => setRule("onPatientRequest", e.target.checked)} /> The patient asks for a person
             </label>
             <label className="lcp-check">
-              <input type="checkbox" checked={form.handoffRules.onUnsure} onChange={(e) => setRule("onUnsure", e.target.checked)} /> When the AI is not sure of the answer
+              <input type="checkbox" checked={form.handoffRules.onAccountOrPayment !== false} onChange={(e) => setRule("onAccountOrPayment", e.target.checked)} /> Account issue: a specific booking, payment, refund, prescription or account problem
             </label>
             <label className="lcp-check">
-              <input type="checkbox" checked={form.handoffRules.onAccountOrPayment} onChange={(e) => setRule("onAccountOrPayment", e.target.checked)} /> When the patient asks about their own booking or payment
+              <input type="checkbox" checked={form.handoffRules.onTechnicalIssue !== false} onChange={(e) => setRule("onTechnicalIssue", e.target.checked)} /> Technical issue: the site, login, video call or an upload is not working
             </label>
-            <span className="lcp-help">An emergency always reaches a live agent.</span>
+            <label className="lcp-check">
+              <input type="checkbox" checked disabled /> Emergency: the patient describes an emergency (always on)
+            </label>
+            <label className="lcp-check">
+              <input type="checkbox" checked={form.handoffRules.onComplaint !== false} onChange={(e) => setRule("onComplaint", e.target.checked)} /> Complaint: the patient is upset or asks for a manager
+            </label>
+            <label className="lcp-check">
+              <input type="checkbox" checked={form.handoffRules.onUnsure} onChange={(e) => setRule("onUnsure", e.target.checked)} /> Unanswered after two tries: a Humancare question the AI could not answer twice in a row
+            </label>
+            <span className="lcp-help">Off-topic or personal questions never go to an agent; after three in a row the patient is reminded they can tap "Talk to live agent".</span>
             <div className="lcp-field">
               <label htmlFor="maxAi">AI replies per chat (1-200)</label>
               <input id="maxAi" type="number" min="1" max="200" value={form.handoffRules.maxAiRepliesPerChat} onChange={(e) => setRule("maxAiRepliesPerChat", Number(e.target.value))} />

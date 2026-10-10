@@ -19,6 +19,9 @@ const ID_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const MESSAGE_PAGE = 200;
+const OFF_TOPIC_REMINDER_AT = 3; // consecutive off-topic messages before the patient is reminded of the button
+const OFF_TOPIC_REMINDER = 'If you need a person, you can tap "Talk to live agent" at any time.';
+const UNANSWERED_HANDOFF_AT = 2; // consecutive "could not answer" replies before the chat goes to an agent
 
 const newConversationId = () =>
   "HC" + Array.from({ length: 8 }, () => ID_ALPHABET[crypto.randomInt(ID_ALPHABET.length)]).join("");
@@ -606,13 +609,13 @@ function createChatService({
 
     // Admin chose "AI off", or "AI only when no agent is available" and someone is.
     if (settings.aiMode === "ai_off" || (settings.aiMode === "ai_when_no_agent" && agents.availableCount() > 0)) {
-      return ifStillAi((current) => requestAgent(current, { first, settings }));
+      return ifStillAi((current) => requestAgent(current, { first, settings, reason: "ai_off" }));
     }
 
     if (!limits.aiRepliesLeft(conv, settings)) {
       return ifStillAi(async (current) => {
         await addMessage(current, "ai", "I've reached my limit for this chat. Let me connect you with a live agent who can help further.");
-        return requestAgent(await LcConversation.findById(current._id), { first, settings });
+        return requestAgent(await LcConversation.findById(current._id), { first, settings, reason: "ai_limit" });
       });
     }
 
@@ -640,14 +643,22 @@ function createChatService({
     // An admin may have taken the chat over while the model was thinking: such a reply is never posted.
     return ifStillAi(async (current) => {
       if (!result.ok) return aiFallback(current, { first, settings });
-      const update = { $inc: { aiReplyCount: 1 } };
-      if (!current.topic && result.topic) update.$set = { topic: result.topic };
+      // Streaks of consecutive off-topic messages and consecutive "could not answer" replies.
+      const offTopicStreak = result.offTopic ? (current.offTopicStreak || 0) + 1 : 0;
+      const unansweredStreak = result.handoffReason === "unanswered" ? (current.unansweredStreak || 0) + 1 : 0;
+      const update = { $inc: { aiReplyCount: 1 }, $set: { offTopicStreak, unansweredStreak } };
+      if (!current.topic && result.topic) update.$set.topic = result.topic;
       await LcConversation.updateOne({ _id: current._id }, update);
       await noteLanguage(current, result.language, lastPatientText);
       // Only pages on the server's own list reach the patient (an invented url is dropped).
       const links = sitePages.filterLinks(result.links);
-      await addMessage(current, "ai", result.reply, links.length ? { links } : {});
-      if (result.handoff && handoffAllowed(settings, result.handoffReason)) {
+      // Off-topic never hands over; from the third in a row the patient is reminded of the button.
+      const reply =
+        result.offTopic && offTopicStreak >= OFF_TOPIC_REMINDER_AT ? `${result.reply} ${OFF_TOPIC_REMINDER}` : result.reply;
+      await addMessage(current, "ai", reply, links.length ? { links } : {});
+      // One "not sure" is not enough: "unanswered" hands over on the second miss in a row.
+      const due = result.handoffReason === "unanswered" ? unansweredStreak >= UNANSWERED_HANDOFF_AT : true;
+      if (result.handoff && !result.offTopic && due && handoffAllowed(settings, result.handoffReason)) {
         await requestAgent(await LcConversation.findById(current._id), { first, settings, reason: result.handoffReason });
       }
       return undefined;
@@ -697,14 +708,16 @@ function createChatService({
     }
   }
 
-  // The AI may ask for a hand-over; the settings decide which reasons are allowed. An emergency always is.
+  // The AI may ask for a hand-over only with a valid reason; the settings decide which are allowed. An emergency always is.
   function handoffAllowed(settings, reason) {
     const rules = settings?.handoffRules || {};
     if (reason === "emergency") return true;
-    if (reason === "unsure") return rules.onUnsure !== false;
-    if (reason === "account_or_payment") return rules.onAccountOrPayment !== false;
-    if (reason === "patient_request") return rules.onPatientRequest !== false;
-    return true;
+    if (reason === "unanswered") return rules.onUnsure !== false;
+    if (reason === "account_issue") return rules.onAccountOrPayment !== false;
+    if (reason === "explicit_request") return rules.onPatientRequest !== false;
+    if (reason === "technical_issue") return rules.onTechnicalIssue !== false;
+    if (reason === "complaint") return rules.onComplaint !== false;
+    return false; // "none" or anything unknown never reaches an agent
   }
 
   // What the patient reads when no agent can take the chat right now: a thank-you with their own first name and
@@ -728,7 +741,17 @@ function createChatService({
     const name = first || "there";
     await LcConversation.updateOne(
       { _id: conv._id },
-      { $set: { mode: "queue", everLive: true, offlineRequested: !available, queuedAt: new Date(now()) } }
+      {
+        $set: {
+          mode: "queue",
+          everLive: true,
+          offlineRequested: !available,
+          queuedAt: new Date(now()),
+          handoffReason: reason || "explicit_request", // shown to admins; the header button counts as a request
+          offTopicStreak: 0,
+          unansweredStreak: 0,
+        },
+      }
     );
     const fresh = await LcConversation.findById(conv._id);
     if (available) {
@@ -745,7 +768,7 @@ function createChatService({
       name,
       everLive: true,
       offline: !available,
-      reason: reason || "patient_request",
+      reason: reason || "explicit_request",
     });
     await pushState(fresh);
     return { ok: true };

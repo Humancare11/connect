@@ -16,6 +16,12 @@ const conversationSchema = new mongoose.Schema(
       default: "",
     },
     topic: { type: String, default: "", maxlength: 80 },
+    // Why the chat went to the Queue: explicit_request | account_issue | technical_issue | emergency | complaint |
+    // unanswered (from the AI), or ai_unavailable | ai_off | ai_limit (server). Older chats may hold the previous
+    // names patient_request | account_or_payment | unsure.
+    handoffReason: { type: String, default: "", maxlength: 40 },
+    offTopicStreak: { type: Number, default: 0 }, // consecutive off-topic patient messages
+    unansweredStreak: { type: Number, default: 0 }, // consecutive questions the AI could not answer
     invited: { type: Boolean, default: false }, // an admin started this chat; the visitor has not replied yet
     leftAt: { type: Date, default: null }, // archived as "patient left" at this time
     modeBeforeLeft: { type: String, enum: ["", "ai", "queue", "live"], default: "" }, // lets a returning visitor continue

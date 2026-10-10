@@ -105,8 +105,10 @@ function validateSettings(patch) {
   if (has("handoffRules")) {
     const r = patch.handoffRules || {};
     const out = {};
-    for (const key of ["onPatientRequest", "onUnsure", "onAccountOrPayment"]) {
-      if (typeof r[key] !== "boolean") errors[`handoffRules.${key}`] = "Must be on or off.";
+    for (const key of ["onPatientRequest", "onUnsure", "onAccountOrPayment", "onTechnicalIssue", "onComplaint"]) {
+      // The two newer toggles may be missing from an older client: they stay on.
+      if (r[key] === undefined && (key === "onTechnicalIssue" || key === "onComplaint")) out[key] = true;
+      else if (typeof r[key] !== "boolean") errors[`handoffRules.${key}`] = "Must be on or off.";
       else out[key] = r[key];
     }
     if (!number(r.maxAiRepliesPerChat, { min: 1, max: 200, integer: true })) errors["handoffRules.maxAiRepliesPerChat"] = "AI replies per chat: a whole number from 1 to 200.";

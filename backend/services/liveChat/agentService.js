@@ -107,6 +107,7 @@ function createAgentService({
       state: conv.geo?.state || "",
       country: conv.geo?.country || "",
       topic: conv.topic || "",
+      handoffReason: conv.handoffReason || "",
       language: publicLanguage(conv.language), // badge for non-English chats (admin side only)
       offline: Boolean(conv.offlineRequested),
       closedReason: conv.closedReason || "",

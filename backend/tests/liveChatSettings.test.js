@@ -202,44 +202,50 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       ok: true, reply: "A live agent can help.", handoff: true, handoffReason: reason, topic: "other",
       usage: { inputTokens: 500, cachedInputTokens: 0, outputTokens: 20, costUsd: 0.0001 },
     });
+    // "unanswered" hands over only on the second miss in a row, so it is asked twice.
     async function modeAfterHandoff(reason) {
-      lc.ai.queue.push(aiHandoff(reason));
+      const times = reason === "unanswered" ? 2 : 1;
       const chat = await openChat();
-      await lc.call(chat.socket, "chat:message", { text: "question" });
+      for (let i = 0; i < times; i += 1) {
+        lc.ai.queue.push(aiHandoff(reason));
+        await lc.call(chat.socket, "chat:message", { text: `question ${i}` });
+      }
       const mode = (await state(chat.socket)).mode;
       chat.socket.close();
       return mode;
     }
     const setRules = async (patch) => save({ handoffRules: { ...(await current()).handoffRules, ...patch } });
+    const ALL_ON = { onUnsure: true, onAccountOrPayment: true, onPatientRequest: true, onTechnicalIssue: true, onComplaint: true };
 
     test("each reason can be switched off; an emergency always hands off", async () => {
-      assert.equal(await modeAfterHandoff("unsure"), "queue");
-      assert.equal(await modeAfterHandoff("account_or_payment"), "queue");
-      assert.equal(await modeAfterHandoff("patient_request"), "queue");
+      for (const reason of ["unanswered", "account_issue", "explicit_request", "technical_issue", "complaint"]) {
+        assert.equal(await modeAfterHandoff(reason), "queue", reason);
+      }
+      assert.equal(await modeAfterHandoff("none"), "ai", "no reason, no hand-over");
 
-      await setRules({ onUnsure: false });
-      assert.equal(await modeAfterHandoff("unsure"), "ai", "'not sure' no longer hands over");
-      assert.equal(await modeAfterHandoff("account_or_payment"), "queue", "the others are unchanged");
-      await setRules({ onUnsure: true, onAccountOrPayment: false });
-      assert.equal(await modeAfterHandoff("account_or_payment"), "ai");
-      await setRules({ onAccountOrPayment: true, onPatientRequest: false });
-      assert.equal(await modeAfterHandoff("patient_request"), "ai");
-      await setRules({ onUnsure: false, onAccountOrPayment: false, onPatientRequest: false });
+      const toggles = { unanswered: "onUnsure", account_issue: "onAccountOrPayment", explicit_request: "onPatientRequest", technical_issue: "onTechnicalIssue", complaint: "onComplaint" };
+      for (const [reason, key] of Object.entries(toggles)) {
+        await setRules({ ...ALL_ON, [key]: false });
+        assert.equal(await modeAfterHandoff(reason), "ai", `${reason} no longer hands over`);
+        const other = reason === "account_issue" ? "complaint" : "account_issue";
+        assert.equal(await modeAfterHandoff(other), "queue", "the others are unchanged");
+      }
+      await setRules(Object.fromEntries(Object.keys(ALL_ON).map((k) => [k, false])));
       assert.equal(await modeAfterHandoff("emergency"), "queue", "an emergency always reaches an agent");
-      await setRules({ onUnsure: true, onAccountOrPayment: true, onPatientRequest: true });
+      await setRules(ALL_ON);
     });
 
     test("the AI prompt follows the toggles", () => {
       const all = { ...DEFAULT_SETTINGS.handoffRules };
-      const line = (rules) => buildSystemPrompt({ ...DEFAULT_SETTINGS, handoffRules: rules }).split("\n").find((l) => l.startsWith("HANDOFF"));
-      assert.match(line(all), /"unsure"/);
-      assert.match(line(all), /"account_or_payment"/);
-      assert.match(line(all), /"patient_request"/);
-      assert.doesNotMatch(line({ ...all, onUnsure: false }), /reason "unsure"\)\./);
-      assert.match(line({ ...all, onUnsure: false }), /never set handoff for that/);
-      assert.doesNotMatch(line({ ...all, onAccountOrPayment: false }), /reason "account_or_payment"/);
-      assert.match(line({ ...all, onAccountOrPayment: false }), /cannot see anyone's bookings/);
-      assert.match(line({ ...all, onUnsure: false }), /emergency/);
+      const text = (rules) => buildSystemPrompt({ ...DEFAULT_SETTINGS, handoffRules: rules }).split("\n").find((l) => l.startsWith("Allowed reasons"));
+      for (const reason of ["explicit_request", "account_issue", "technical_issue", "emergency", "complaint", "unanswered"]) {
+        assert.match(text(all), new RegExp(`"${reason}"`));
+      }
+      assert.doesNotMatch(text({ ...all, onUnsure: false }), /"unanswered"/);
+      assert.doesNotMatch(text({ ...all, onAccountOrPayment: false }), /"account_issue"/);
+      assert.doesNotMatch(text({ ...all, onTechnicalIssue: false }), /"technical_issue"/);
+      assert.doesNotMatch(text({ ...all, onComplaint: false }), /"complaint"/);
+      assert.match(text({ ...all, onUnsure: false, onAccountOrPayment: false, onPatientRequest: false, onTechnicalIssue: false, onComplaint: false }), /"emergency"/);
     });
 
     test("max AI replies per chat is used by the next chat", async () => {

@@ -239,7 +239,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
     test("the AI can hand off: the server decides from the structured output, not from the text", async () => {
       const agent = await lc.onlineAgent();
       lc.ai.queue.push({
-        ok: true, reply: "A live agent can check your booking.", handoff: true, handoffReason: "account_or_payment",
+        ok: true, reply: "A live agent can check your booking.", handoff: true, handoffReason: "account_issue",
         topic: "booking", usage: { inputTokens: 900, cachedInputTokens: 0, outputTokens: 20, costUsd: 0.0001 },
       });
       const { socket } = await openChat();

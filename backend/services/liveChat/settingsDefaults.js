@@ -79,6 +79,8 @@ const DEFAULT_SETTINGS = {
   offlineRule: "hours_or_no_agent",
   handoffRules: {
     onPatientRequest: true,
+    onTechnicalIssue: true,
+    onComplaint: true,
     onUnsure: true,
     onAccountOrPayment: true,
     onAiRequest: true,

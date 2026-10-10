@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { handoffLabel } from "./liveChatHub";
 
 // Left column: the chat list. AI chats: "Talking to the AI" and "Archived". Live agent chats: Queue, My chats,
 // Other agents' chats, Back with the AI (handed back, still a chat that was once live) and Archived.
@@ -63,6 +64,9 @@ function Item({ row, me, active, typing, onSelect }) {
         {typing ? <span className="wk-prev wk-prev--typing">typing…</span> : <span className="wk-prev">{preview}</span>}
         <span className="wk-row">
           <ModeTag row={row} me={me} />
+          {row.mode === "queue" && handoffLabel(row.handoffReason) && (
+            <span className="wk-tag wk-tag--lang" title="Why this chat needs a person">{handoffLabel(row.handoffReason)}</span>
+          )}
           {row.language?.name ? (
             <span className="wk-tag wk-tag--lang" title={`The patient writes in ${row.language.name}`}>
               {row.language.name}

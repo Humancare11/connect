@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { handoffLabel } from "./liveChatHub";
 
 // Middle column: the conversation. Patient on the left, AI and agents on the right, system lines centred,
 // internal notes full width (they never reach the patient). Typing shows "typing…" only, never the draft.
@@ -252,6 +253,9 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
         <div className="wk-head-t">
           <strong>{c.name || c.ip || "Visitor"}</strong>
           <ModeTag c={c} me={me} />
+          {(c.mode === "queue" || c.mode === "live") && handoffLabel(c.handoffReason) && (
+            <span className="wk-tag wk-tag--lang" title="Why this chat was handed to a person">{handoffLabel(c.handoffReason)}</span>
+          )}
           {language && (
             <span className="wk-tag wk-tag--lang" title={`The patient writes in ${language.name}`}>
               {language.name}
