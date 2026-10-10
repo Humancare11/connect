@@ -164,7 +164,9 @@ function buildSystemPrompt(settings = {}, pages = [], { unansweredStreak = 0 } =
   // Only state hours when every enabled day has the same ones; otherwise leave them out rather than guess.
   const days = (settings.supportHours?.days || []).filter((d) => d.enabled);
   const same = days.length > 0 && days.every((d) => d.open === days[0].open && d.close === days[0].close);
-  const hours = same
+  const hours = settings.supportHours?.alwaysOn === true
+    ? "Live agents are available 24/7."
+    : same
     ? `Live agents are available ${days[0].open}-${days[0].close} (${settings.supportHours.timezone}), ${days.length === 7 ? "every day" : "on selected days"}.`
     : "";
   return [

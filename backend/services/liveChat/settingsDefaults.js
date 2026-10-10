@@ -5,6 +5,7 @@ const DAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", 
 
 const SUPPORT_HOURS = {
   timezone: "America/New_York",
+  alwaysOn: false,
   days: DAYS.map((day) => ({ day, enabled: true, open: "08:00", close: "22:00" })),
 };
 

@@ -6,8 +6,9 @@
 // employeeadmin, paymentadmin, doctors, patients and partners are refused at the handshake.
 const { LIVE_CHAT_AGENT_ROLES } = require("../../middleware/verifyToken");
 const { toPublicVisitor } = require("./presence");
+const { agentStatus } = require("./supportHours");
 
-const EVENTS = ["visitors:get", "agent:status", "chat:typing"];
+const EVENTS = ["visitors:get", "agent:status", "agent:status:get", "chat:typing"];
 const MAX_EVENT_BYTES = 4096;
 
 function handshakeTokens(socket, helpers) {
@@ -57,12 +58,26 @@ function setupAdminNamespace(ns, ctx) {
 
   const snapshot = () => ({ visitors: presence.list().map(toPublicVisitor), serverTime: Date.now() });
 
+  // The switch plus, for the top bar, why the agent is (not) available: switch_off | no_connection | outside_hours | online.
+  // `hours` is only set for outside_hours (and never when the offline rule ignores support hours).
+  // `registry: true` takes the switch from the in-memory registry (what handoff and the Team page use); on connect
+  // and right after a switch change the stored profile is the truth, because the registry may not have caught up.
+  async function statusFor(userId, profile, { registry = false } = {}) {
+    const state = registry && typeof ctx.agents.state === "function" ? ctx.agents.state(userId) : null;
+    const base = { online: state ? state.online : Boolean(profile?.online), displayName: profile?.displayName || "" };
+    try {
+      const settings = await ctx.loadSettings();
+      // This socket is connected by definition.
+      const { reason, hours } = agentStatus({ settings, state: { online: base.online, connected: true } });
+      return { ...base, reason, hours };
+    } catch {
+      return base;
+    }
+  }
+
   async function sendAgentStatus(socket) {
     const profile = await ctx.agentStore.get(socket.data.identity.id);
-    socket.emit("agent:status", {
-      online: Boolean(profile?.online),
-      displayName: profile?.displayName || "",
-    });
+    socket.emit("agent:status", await statusFor(socket.data.identity.id, profile));
   }
 
   ns.on("connection", (socket) => {
@@ -108,8 +123,19 @@ function setupAdminNamespace(ns, ctx) {
         const online = payload?.online === true;
         const profile = await ctx.agentStore.setOnline(identity.id, online);
         ctx.agents.setOnline(identity.id, Boolean(profile?.online));
-        const state = { online: Boolean(profile?.online), displayName: profile?.displayName || "" };
+        const state = await statusFor(identity.id, profile);
         ns.to(`agent:${identity.id}`).emit("agent:status", state);
+        if (typeof ack === "function") ack({ ok: true, ...state });
+      } catch {
+        if (typeof ack === "function") ack({ ok: false });
+      }
+    });
+
+    // Re-check without changing anything (the top bar asks every minute: the hours boundary passes while it is open).
+    socket.on("agent:status:get", async (ack) => {
+      try {
+        const profile = await ctx.agentStore.get(identity.id);
+        const state = await statusFor(identity.id, profile, { registry: true });
         if (typeof ack === "function") ack({ ok: true, ...state });
       } catch {
         if (typeof ack === "function") ack({ ok: false });

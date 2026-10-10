@@ -283,11 +283,11 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       });
     }
 
-    test("refuses a bad time zone, closing before opening, and a missing day", async () => {
+    test("refuses a bad time zone, equal opening and closing, and a missing day (a closing time earlier than opening is a shift past midnight)", async () => {
       const hours = (await base()).supportHours;
       const zone = await save({ supportHours: { ...hours, timezone: "Mars/Olympus" } });
       assert.ok(zone.body.errors["supportHours.timezone"]);
-      const days = hours.days.map((d) => (d.day === "monday" ? { ...d, enabled: true, open: "18:00", close: "09:00" } : d));
+      const days = hours.days.map((d) => (d.day === "monday" ? { ...d, enabled: true, open: "09:00", close: "09:00" } : d));
       const order = await save({ supportHours: { ...hours, days } });
       assert.ok(order.body.errors["supportHours.monday"]);
       const missing = await save({ supportHours: { ...hours, days: hours.days.slice(1) } });

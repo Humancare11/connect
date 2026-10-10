@@ -180,6 +180,11 @@ function createAgentRegistry({ onGone = () => {}, onBack = () => {} } = {}) {
       else if (!was && available(e)) onBack(userId);
     },
     isAvailable: (userId) => available(users.get(userId)),
+    // The two halves of availability, so a screen can say which one is missing.
+    state(userId) {
+      const e = users.get(userId);
+      return { online: Boolean(e && e.online), connected: Boolean(e && e.sockets.size) };
+    },
     availableCount() {
       let n = 0;
       for (const e of users.values()) if (available(e)) n += 1;

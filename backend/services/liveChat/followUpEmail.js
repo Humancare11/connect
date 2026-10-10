@@ -28,6 +28,7 @@ function zoneLabel(timeZone, date) {
 // "8:00 AM – 10:00 PM EDT, every day" or "Mon–Fri 9:00 AM – 5:00 PM EDT; Sat 10:00 AM – 2:00 PM EDT", built from
 // settings.supportHours. Empty string when no day is enabled.
 function describeSupportHours(supportHours, date = new Date()) {
+  if (supportHours?.alwaysOn === true) return "24/7";
   const days = (supportHours?.days || []).filter((d) => d.enabled && DAY_ORDER.includes(d.day));
   if (!days.length) return "";
   const zone = zoneLabel(supportHours.timezone, date);

@@ -11,6 +11,8 @@ const settingsSchema = new mongoose.Schema(
     greeting: { type: String, default: "", maxlength: 600 },
     supportHours: {
       timezone: { type: String, default: "America/New_York" },
+      // Open 24/7: the days below are ignored. A day whose close is earlier than its open runs past midnight.
+      alwaysOn: { type: Boolean, default: false },
       days: [
         {
           _id: false,

@@ -52,28 +52,8 @@ const firstNameOf = (name) => String(name || "").trim().split(/\s+/)[0] || "ther
 
 // ── Support hours ──────────────────────────────────────────────────────────────
 
-function isWithinSupportHours(settings, date = new Date()) {
-  const hours = settings?.supportHours;
-  if (!hours?.days?.length) return true;
-  let parts;
-  try {
-    parts = new Intl.DateTimeFormat("en-US", {
-      timeZone: hours.timezone || "America/New_York",
-      weekday: "long",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).formatToParts(date);
-  } catch {
-    return true;
-  }
-  const get = (type) => parts.find((p) => p.type === type)?.value || "";
-  const day = get("weekday").toLowerCase();
-  const hm = `${get("hour")}:${get("minute")}`;
-  const config = hours.days.find((d) => d.day === day);
-  if (!config || !config.enabled) return false;
-  return hm >= config.open && hm < config.close;
-}
+// Overnight shifts, "always on" and labels live in supportHours.js (shared with the Team page).
+const { isWithinSupportHours } = require("./supportHours");
 
 function validTimeZone(value) {
   const zone = typeof value === "string" ? value.slice(0, 64) : "";

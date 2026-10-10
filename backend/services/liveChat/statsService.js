@@ -12,6 +12,7 @@
 const mongoose = require("mongoose");
 const { decryptLiveChatText } = require("../../utils/liveChat/crypto");
 const { dayKey } = require("./limits");
+const { agentStatus } = require("./supportHours");
 
 class StatsError extends Error {
   constructor(status, code) {
@@ -120,6 +121,9 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
     const replyBy = by(replies, "avgMs");
     const profileBy = new Map(profiles.map((p) => [String(p.userId), p]));
 
+    // A registry without state() (an older stub) only knows "available or not".
+    const stateOf = (id) =>
+      typeof agents.state === "function" ? agents.state(id) : { online: agents.isAvailable(id), connected: agents.isAvailable(id) };
     const agentRows = users.map((u) => {
       const id = String(u._id);
       const profile = profileBy.get(id);
@@ -129,7 +133,8 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
         name: u.name || "",
         role: u.role === "superadmin" ? "Super admin" : "Admin",
         displayName: profile?.displayName || first,
-        status: agents.isAvailable(id) ? "online" : "offline",
+        // Switch + live admin socket + (when the offline rule uses hours) support hours, with the reason.
+        ...agentStatus({ settings, state: stateOf(id) }),
         openChats: openBy.get(id) || 0,
         chatsToday: todayBy.get(id) || 0,
         avgFirstReplySeconds: replyBy.has(id) ? Math.round(replyBy.get(id) / 1000) : null,

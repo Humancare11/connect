@@ -86,14 +86,16 @@ function validateSettings(patch) {
       for (const d of days) {
         if (typeof d.enabled !== "boolean" || !TIME_RE.test(String(d.open)) || !TIME_RE.test(String(d.close))) {
           errors[`supportHours.${d.day}`] = "Use HH:MM times.";
-        } else if (d.enabled && d.open >= d.close) {
-          errors[`supportHours.${d.day}`] = "Closing time must be after opening time.";
+        } else if (d.enabled && d.open === d.close) {
+          // A close earlier than the open is fine: the shift runs past midnight into the next day.
+          errors[`supportHours.${d.day}`] = "Opening and closing time must differ (a closing time earlier than opening means it closes the next day).";
         }
       }
     }
     if (!Object.keys(errors).some((k) => k.startsWith("supportHours"))) {
       values.supportHours = {
         timezone: hours.timezone,
+        alwaysOn: hours.alwaysOn === true,
         days: DAYS.map((name) => {
           const d = days.find((x) => x.day === name);
           return { day: name, enabled: d.enabled, open: d.open, close: d.close };
@@ -175,6 +177,7 @@ function diffSettings(current, values) {
     const prev = current[key];
     if (key === "supportHours") {
       push("supportHours.timezone", prev?.timezone, next.timezone);
+      push("supportHours.alwaysOn", Boolean(prev?.alwaysOn), Boolean(next.alwaysOn));
       for (const d of next.days) {
         const was = (prev?.days || []).find((x) => x.day === d.day);
         push(`supportHours.${d.day}`, was ? { enabled: was.enabled, open: was.open, close: was.close } : null, { enabled: d.enabled, open: d.open, close: d.close });
