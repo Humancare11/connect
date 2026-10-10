@@ -131,13 +131,6 @@ export default function ContactForm({ onSubmit, reply = false }) {
         </span>
       )}
 
-      <small>
-        Only the Humancare support team sees these details. By starting the chat you agree to our{" "}
-        <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">
-          Privacy Policy
-        </a>
-        .
-      </small>
       <button type="submit" disabled={busy || !siteKey}>
         {busy ? "Starting…" : "Start chat"}
       </button>

@@ -2,6 +2,9 @@
 
 Tick each item on staging first, then production.
 
+## BLOCKER before go-live
+- [ ] **BLOCKER:** Publish the "Website chat" section of the Privacy Policy (AI processing by OpenAI, message storage and retention, page tracking with cookie consent) after counsel approval, before `LIVECHAT_ENABLED` / `VITE_LIVECHAT_ENABLED` are turned on in production. The in-widget privacy and tracking notices were removed on 2026-10-10, so the Privacy Policy is the only place patients are told. Wording: `docs/live-chat-privacy-draft.md`.
+
 ## Environment
 - [ ] Backend: `LIVECHAT_ENABLED=true`, `LIVECHAT_ENCRYPTION_KEY` (64 hex), `LIVECHAT_OPENAI_API_KEY`, `LIVECHAT_MODEL`, `TURNSTILE_SECRET_KEY`, `LIVECHAT_FOLLOWUP_MAILBOX`, S3 vars (`AWS_S3_BUCKET` etc.). See `backend/.env.example`.
 - [ ] Frontend build: `VITE_LIVECHAT_ENABLED=true`, `VITE_TURNSTILE_SITE_KEY` (production keys, not the Cloudflare test keys; the test key always passes).

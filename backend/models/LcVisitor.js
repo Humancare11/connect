@@ -13,6 +13,7 @@ const visitorSchema = new mongoose.Schema(
     emailHash: { type: String, default: "", index: true },
     consent: {
       cookies: { type: Boolean, default: false },
+      // Kept for records written before 2026-10-10. No longer written: the chat shows no privacy acceptance any more.
       privacyAcceptedAt: { type: Date, default: null },
     },
     firstSeenAt: { type: Date, default: Date.now },

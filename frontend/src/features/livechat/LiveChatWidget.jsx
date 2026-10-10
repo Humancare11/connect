@@ -274,8 +274,6 @@ export default function LiveChatWidget() {
                 ➤
               </button>
             </form>
-            <div className="lcw-note">AI answers are general information, not medical advice.</div>
-            <div className="lcw-note">Chat messages and, with your consent, the pages you visit are used to provide support.</div>
           </footer>
         </section>
       )}

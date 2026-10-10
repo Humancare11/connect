@@ -55,15 +55,13 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       assert.equal(decryptLiveChatText(visitor.phone), "+13023039993");
     });
 
-    test("Turnstile and the privacy consent are required; the honeypot silently drops bots", async () => {
+    test("Turnstile is required; the honeypot silently drops bots", async () => {
       const count = await lc.models.LcVisitor.countDocuments();
-      const noCaptcha = await lc.post("/contact", { name: "Emma Wilson", email: "e@x.co", consent: true, turnstileToken: "bad" });
+      const noCaptcha = await lc.post("/contact", { name: "Emma Wilson", email: "e@x.co", turnstileToken: "bad" });
       assert.equal(noCaptcha.status, 400);
       assert.ok(noCaptcha.body.errors.captcha);
-      const noConsent = await lc.post("/contact", { name: "Emma Wilson", email: "e@x.co", turnstileToken: "good-token" });
-      assert.equal(noConsent.status, 400);
       const bot = await lc.post("/contact", {
-        name: "Bot Botson", email: "bot@x.co", consent: true, turnstileToken: "good-token", companyUrl: "http://spam.example",
+        name: "Bot Botson", email: "bot@x.co", turnstileToken: "good-token", companyUrl: "http://spam.example",
       });
       assert.equal(bot.status, 200);
       assert.equal(bot.body.token, "");
@@ -75,6 +73,25 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       const raw = await require("mongoose").connection.db.collection("lcvisitors").findOne({ visitorId: contact.visitorId });
       assert.equal(JSON.stringify(raw).includes("Priya"), false);
       assert.equal(JSON.stringify(raw).includes("priya.raman"), false);
+    });
+
+    test("no privacy acceptance is asked for or recorded; records from before are left as they are", async () => {
+      // The contact form no longer shows a privacy notice, so the request needs no consent flag and stores none.
+      const res = await lc.post("/contact", { name: "Emma Wilson", email: "noconsent@example.com", turnstileToken: "good-token" });
+      assert.equal(res.status, 200, JSON.stringify(res.body));
+      assert.ok(res.body.token && res.body.visitorId);
+      const fresh = await lc.models.LcVisitor.findOne({ visitorId: res.body.visitorId }).lean();
+      assert.equal(fresh.consent.privacyAcceptedAt, null);
+
+      // An older record keeps its timestamp when the same visitor registers again.
+      const old = new Date("2026-09-01T10:00:00Z");
+      await lc.models.LcVisitor.updateOne({ visitorId: res.body.visitorId }, { $set: { "consent.privacyAcceptedAt": old } });
+      const again = await lc.post("/contact", {
+        name: "Emma Wilson", email: "noconsent@example.com", turnstileToken: "good-token", visitorId: res.body.visitorId,
+      });
+      assert.equal(again.status, 200);
+      const kept = await lc.models.LcVisitor.findOne({ visitorId: res.body.visitorId }).lean();
+      assert.equal(kept.consent.privacyAcceptedAt.toISOString(), old.toISOString());
     });
 
     test("a socket without a chat token cannot chat, even a tracker with cookie consent", async () => {

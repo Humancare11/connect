@@ -263,7 +263,6 @@ export function useLiveChat() {
             phone,
             turnstileToken,
             companyUrl,
-            consent: true,
             visitorId: store.get(ID_KEY) || undefined,
           }),
         });

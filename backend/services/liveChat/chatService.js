@@ -141,7 +141,6 @@ function createChatService({
         $set: {
           ...enc,
           emailHash: hashLiveChatEmail(values.email),
-          "consent.privacyAcceptedAt": stamp,
           lastSeenAt: stamp,
           lastIp: ip || "",
         },

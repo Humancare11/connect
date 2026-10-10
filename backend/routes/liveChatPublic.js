@@ -86,9 +86,6 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env =
         return res.json({ ok: true, visitorId: "", token: "" });
       }
       if (await isIpBlocked(ip)) return res.status(403).json({ ok: false, errors: { form: "Chat is not available right now." } });
-      if (body.consent !== true) {
-        return res.status(400).json({ ok: false, errors: { form: "Please accept the privacy notice to continue." } });
-      }
 
       const captcha = await verifyTurnstile({ token: body.turnstileToken, ip, env });
       if (!captcha.ok) {

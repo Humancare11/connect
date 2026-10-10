@@ -288,7 +288,6 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
           name: "Emma Wilson",
           email: `emma${seq}@example.com`,
           phone: "",
-          consent: true,
           turnstileToken: "good-token",
           ...extra,
         },

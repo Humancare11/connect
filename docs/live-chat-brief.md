@@ -42,7 +42,7 @@ PATIENT WIDGET (public pages only; not admin, login, payment or video-call pages
 - File upload for reports (pdf/jpg/png, max 10 MB) to S3, admin-only access via presigned URLs.
 - After resolve: 1-5 star rating, and a "Start a new chat" button.
 - Persist the visitor with a first-party id so the chat survives page changes and return visits.
-- Footer line: chat messages and, with consent, visited pages are used to provide support.
+- Footer notes (privacy, "not medical advice", page tracking) were removed on 2026-10-10 at the owner's request; see `docs/live-chat-privacy-draft.md`.
 
 VISITOR TRACKING
 - Only after the visitor accepts cookies. Report visitor id, page path + title, page changes, time on page, referrer, device, OS, browser. Server adds IP and city/state/country via utils/geoIp.js.
