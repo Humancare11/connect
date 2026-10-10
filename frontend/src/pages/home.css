@@ -297,6 +297,12 @@ h4 {
   gap: 2px;
 }
 
+/* Stretch the steps across the full track so there is no empty space at the end */
+.step-dots .step-progress {
+  flex: 1;
+  justify-content: space-between;
+}
+
 .step-dot {
   display: flex;
   flex-direction: column;

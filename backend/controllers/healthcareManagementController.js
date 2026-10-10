@@ -102,6 +102,11 @@ function conditionPayload(body, partial = false) {
   if (body.isActive !== undefined || !partial) {
     payload.isActive = parseBoolean(body.isActive, true);
   }
+  // Search visibility (PR 8.1). A condition created here keeps the behaviour
+  // it had before the flag existed (searchable when active); it is only
+  // changed on update when explicitly sent. Booking (isActive) is untouched.
+  if (body.isSearchable !== undefined) payload.isSearchable = parseBoolean(body.isSearchable, false);
+  else if (!partial) payload.isSearchable = payload.isActive;
   return { payload };
 }
 

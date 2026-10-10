@@ -276,7 +276,8 @@
   z-index: 10;
   max-width: 1381px;
   margin: 0 auto;
-  padding: clamp(76px, 8vw, 100px) clamp(16px, 4vw, 50px) clamp(24px, 4vw, 36px);
+  /* 100px top: pill clears the fixed navbar (bottom edge ~84px) */
+  padding: 100px clamp(16px, 4vw, 50px) clamp(24px, 4vw, 36px);
   width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(min(100%, 320px), 440px);
@@ -289,7 +290,7 @@
   z-index: 10;
   max-width: 1200px;
   margin: 0 auto;
-  padding: clamp(48px, 6vw, 64px) clamp(16px, 4vw, 24px);
+  padding: 100px clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px);
   width: 100%;
 }
 
@@ -1012,7 +1013,11 @@
   .service-hero__content-grid {
     grid-template-columns: 1fr;
     gap: 32px;
-    padding: clamp(64px, 8vw, 80px) clamp(16px, 4vw, 24px) 20px;
+    padding: 108px clamp(16px, 4vw, 24px) 20px;
+  }
+
+  .service-hero__content-standalone {
+    padding-top: 108px;
   }
 
   .service-overview__grid {
@@ -1031,8 +1036,12 @@
 }
 
 @media (max-width: 639px) {
+  .service-hero__content-grid {
+    padding-top: 100px;
+  }
+
   .service-hero__content-standalone {
-    padding: 36px 16px;
+    padding: 100px 16px 36px;
   }
 
   .service-cta-title {

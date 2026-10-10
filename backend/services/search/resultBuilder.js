@@ -5,6 +5,7 @@
 
 const { slugify } = require("../../utils/slugify");
 const { RESULT_TYPES, RESULT_GROUPS, CATEGORY_LANDING_ROUTES } = require("./searchConstants");
+const { orderAcrossTypes } = require("./crossTypeOrdering");
 const {
   SPECIALTY_DISCOVERY_ROUTES,
   CONDITION_DISCOVERY_ROUTES,
@@ -189,14 +190,20 @@ const BUILDERS = {
 };
 
 // matches: output of matchCatalog. Returns { results, total }.
+// Each item also carries `rank` (1-based) - its position in the final
+// cross-type order (see crossTypeOrdering.js). It is additive: grouping and the
+// order inside each group are unchanged, and clients that ignore it keep the
+// old group order.
 function buildResults(matches, catalog) {
   const results = Object.fromEntries(RESULT_TYPES.map((type) => [RESULT_GROUPS[type], []]));
+  const rankOf = new Map(orderAcrossTypes(matches, catalog).map((match, index) => [match, index + 1]));
   let total = 0;
   for (const type of RESULT_TYPES) {
     for (const match of matches[type] || []) {
       results[RESULT_GROUPS[type]].push({
         ...BUILDERS[type](match.record, catalog.index),
         matchedOn: match.matchedOn,
+        rank: rankOf.get(match),
       });
       total += 1;
     }

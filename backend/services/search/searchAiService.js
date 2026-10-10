@@ -14,26 +14,23 @@
 // logged: only outcome, latency and model name.
 
 const crypto = require("crypto");
+<<<<<<< HEAD
 const { normalizeForMatch, singularForm, compactForm } = require("./queryNormalizer");
 const { redactQuery } = require("./queryRedaction");
+=======
+const { normalizeForMatch } = require("./queryNormalizer");
+const { validateIntent, resolveConditionTerms, SearchAiError, INTENTS, LIMITS, OUTPUT_KEYS } = require("./searchAiValidator");
+>>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
 
-const INTENTS = ["condition", "specialty", "category", "doctor_name", "blog", "mixed", "unknown"];
-const LIMITS = Object.freeze({
-  categoryNames: 3,
-  specialtyNames: 3,
-  conditionTerms: 5,
-  termLength: 60,
-  doctorNameText: 60,
-  blogTopicText: 60,
-});
-const OUTPUT_KEYS = [
-  "intent", "categoryNames", "specialtyNames", "conditionTerms", "doctorNameText",
-  "blogTopicText", "wantsDoctor", "wantsArticle", "confidence",
-];
 // Vocabulary bounds: the prompt never grows with the database.
 const VOCAB_MAX_ENTRIES = 400;
 const VOCAB_MAX_ALIASES = 5;
+<<<<<<< HEAD
 const VOCAB_MAX_CHARS = 20000;
+=======
+const VOCAB_MAX_CHARS = 24000;
+const MAX_QUERY_CHARS = 100;
+>>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
 const MAX_OUTPUT_TOKENS = 400;
 const MIN_CONFIDENCE = 0.3;
 const PER_CLIENT_PER_MINUTE = 10;
@@ -51,19 +48,13 @@ const SYSTEM_PROMPT = [
   "conditionTerms must be copied exactly from the provided conditions/services names or aliases; omit anything not listed.",
   "doctorNameText: only a person's name the user typed (e.g. after 'Dr'), otherwise null. Never invent names.",
   "blogTopicText: a short topic only when the user asks for articles, guides or blogs, otherwise null.",
+  "intent: the primary thing the phrase looks for (condition, specialty, category, service, doctor or blog), or unknown.",
+  "Return no ids, links, routes or database fields: only the schema fields.",
   "wantsDoctor: true when the user is looking for a doctor or specialist. wantsArticle: true when asking for articles/guides.",
   "You do not diagnose, assess urgency, recommend treatment or medication, or answer medical questions.",
   "If the phrase asks for advice, only extract the searchable topics it mentions.",
   "If nothing fits, use intent 'unknown', empty arrays, nulls and a low confidence.",
 ].join(" ");
-
-class SearchAiError extends Error {
-  constructor(reason) {
-    super(reason);
-    this.name = "SearchAiError";
-    this.reason = reason;
-  }
-}
 
 // ── Configuration ───────────────────────────────────────────────────────────
 
@@ -81,7 +72,8 @@ function readConfig(env = process.env) {
     model,
     hasKey,
     timeoutMs: intInRange(env.OPENAI_SEARCH_TIMEOUT_MS, 3000, 500, 10000),
-    dailyLimit: intInRange(env.SEARCH_AI_DAILY_LIMIT, 500, 0, 100000),
+    // Conservative default (PR 11): at most 100 AI calls per UTC day unless raised.
+    dailyLimit: intInRange(env.SEARCH_AI_DAILY_LIMIT, 100, 0, 100000),
     // AI runs only when explicitly enabled AND fully configured.
     usable: enabled && Boolean(model) && hasKey,
   };
@@ -174,86 +166,13 @@ function buildRequest({ model, query, vocabulary }) {
   };
 }
 
-// ── Output validation (the model is untrusted) ──────────────────────────────
-
-const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
-const cleanText = (value, max) => {
-  if (value === null) return null;
-  if (typeof value !== "string" || value.length > max) throw new SearchAiError("invalid_output");
-  const trimmed = value.replace(/[\u0000-\u001f\u007f]/g, " ").trim();
-  return trimmed || null;
-};
-
-// Returns a normalised intent or throws SearchAiError("invalid_output").
-function validateIntent(raw, vocabulary) {
-  if (!isPlainObject(raw)) throw new SearchAiError("invalid_output");
-  const keys = Object.keys(raw).sort();
-  if (keys.length !== OUTPUT_KEYS.length || !OUTPUT_KEYS.every((k) => keys.includes(k))) {
-    throw new SearchAiError("invalid_output");
-  }
-  if (!INTENTS.includes(raw.intent)) throw new SearchAiError("invalid_output");
-
-  const allowedCategories = new Set(vocabulary.categories);
-  const allowedSpecialties = new Set(vocabulary.specialties.map((s) => s.name));
-  const nameList = (value, max, allowed) => {
-    if (!Array.isArray(value) || value.length > max) throw new SearchAiError("invalid_output");
-    for (const item of value) {
-      // Unknown taxonomy names reject the whole output.
-      if (typeof item !== "string" || !allowed.has(item)) throw new SearchAiError("invalid_taxonomy");
-    }
-    return [...new Set(value)];
-  };
-  const categoryNames = nameList(raw.categoryNames, LIMITS.categoryNames, allowedCategories);
-  const specialtyNames = nameList(raw.specialtyNames, LIMITS.specialtyNames, allowedSpecialties);
-
-  if (!Array.isArray(raw.conditionTerms) || raw.conditionTerms.length > LIMITS.conditionTerms) {
-    throw new SearchAiError("invalid_output");
-  }
-  const conditionTerms = [...new Set(raw.conditionTerms.map((t) => cleanText(t, LIMITS.termLength)).filter(Boolean))];
-
-  if (typeof raw.wantsDoctor !== "boolean" || typeof raw.wantsArticle !== "boolean") throw new SearchAiError("invalid_output");
-  if (typeof raw.confidence !== "number" || !Number.isFinite(raw.confidence) || raw.confidence < 0 || raw.confidence > 1) {
-    throw new SearchAiError("invalid_output");
-  }
-
-  return {
-    intent: raw.intent,
-    categoryNames,
-    specialtyNames,
-    conditionTerms,
-    doctorNameText: cleanText(raw.doctorNameText, LIMITS.doctorNameText),
-    blogTopicText: cleanText(raw.blogTopicText, LIMITS.blogTopicText),
-    wantsDoctor: raw.wantsDoctor,
-    wantsArticle: raw.wantsArticle,
-    confidence: raw.confidence,
-  };
-}
-
-// Maps free-text condition terms onto vocabulary names (name or alias,
-// compared with the search normalisation). Unlisted terms are dropped.
-function resolveConditionTerms(terms, vocabulary) {
-  const keys = new Map();
-  for (const entry of [...vocabulary.conditions, ...vocabulary.services]) {
-    for (const text of [entry.name, ...entry.aliases]) {
-      const n = normalizeForMatch(text);
-      for (const key of [n, singularForm(n), compactForm(n)]) if (key && !keys.has(key)) keys.set(key, entry.name);
-    }
-  }
-  const resolved = [];
-  for (const term of terms) {
-    const n = normalizeForMatch(term);
-    const name = keys.get(n) || keys.get(singularForm(n)) || keys.get(compactForm(n));
-    if (name && !resolved.includes(name)) resolved.push(name);
-  }
-  return resolved;
-}
-
 // ── Service ─────────────────────────────────────────────────────────────────
 
 // SDK errors all report name "Error", so classify by class (the timeout class
 // extends the connection class, so it is checked first) and HTTP status.
 function classifyError(err) {
   const sdk = require("openai");
+  if (err instanceof sdk.APIUserAbortError) return "cancelled"; // our own signal (client left)
   if (err instanceof sdk.APIConnectionTimeoutError) return "timeout";
   if (err instanceof sdk.APIConnectionError) return "unavailable";
   if (err instanceof sdk.RateLimitError || err?.status === 429) return "rate_limited";
@@ -322,7 +241,8 @@ function createSearchAiService({
   //   status "skipped"  - AI not attempted (disabled, limits, empty query)
   //   status "ok"       - validated intent
   //   status "failed"   - attempted but unusable (timeout, error, invalid output...)
-  async function understand(query, catalog, { clientKey } = {}) {
+  //   status "cancelled" - the client disconnected (never an AI result or a fallback)
+  async function understand(query, catalog, { clientKey, signal } = {}) {
     const config = readConfig(env);
     if (!config.usable) {
       if (config.enabled && !warnedMisconfigured) {
@@ -332,6 +252,9 @@ function createSearchAiService({
       }
       return { status: "skipped", reason: "disabled" };
     }
+
+    // The client already left: do not call the provider or spend any budget.
+    if (signal?.aborted) return { status: "cancelled" };
 
     const safeQuery = redactQuery(query);
     if (normalizeForMatch(safeQuery).length < 2) return { status: "skipped", reason: "empty_query" };
@@ -354,7 +277,7 @@ function createSearchAiService({
       const request = buildRequest({ model: config.model, query: safeQuery, vocabulary });
       let completion;
       try {
-        completion = await getClient(config).chat.completions.create(request, { timeout: config.timeoutMs, maxRetries: 0 });
+        completion = await getClient(config).chat.completions.create(request, { timeout: config.timeoutMs, maxRetries: 0, ...(signal ? { signal } : {}) });
       } catch (err) {
         throw new SearchAiError(classifyError(err));
       }
@@ -379,6 +302,7 @@ function createSearchAiService({
       return { status: "ok", intent };
     } catch (err) {
       outcome = err instanceof SearchAiError ? err.reason : "error";
+      if (outcome === "cancelled") return { status: "cancelled" }; // not a provider failure: no breaker, no retry
       consecutiveFailures += 1;
       if (consecutiveFailures >= BREAKER_FAILURES) {
         breakerOpenUntil = now() + BREAKER_COOLDOWN_MS;

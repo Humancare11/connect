@@ -35,6 +35,8 @@ import {
   toSuggestions,
   SEARCH_MIN_LENGTH,
 } from "../api/searchApi";
+import { runSubmitSearch } from "../api/searchSubmit";
+import { createAutoFullSearch } from "../api/searchAuto";
 
 import { useNavigate, Link } from "react-router-dom";
 
@@ -254,6 +256,7 @@ export default function HomePage() {
   // Backend search (POST /api/search). One session per search box: each new
   // request cancels the previous one, so stale responses never show.
   const [searchSession] = useState(createSearchSession);
+  const [autoFull] = useState(() => createAutoFullSearch({ session: searchSession }));
   const searchDebounceRef = useRef(null);
 
   const itemRefs = useRef([]);
@@ -303,7 +306,8 @@ export default function HomePage() {
   useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) {
-      searchSession.reset(); // cancels any request and ends the analytics episode
+      searchSession.cancel();
+      autoFull.cancel();
       setFilteredSuggestions([]);
       setNoResults(false);
       setIsSearching(false);
@@ -323,13 +327,28 @@ export default function HomePage() {
       setFilteredSuggestions(suggestions);
       setNoResults(suggestions.length === 0);
       setIsSearching(false);
+      // Weak instant results: after a pause ONE full search may replace them.
+      autoFull.consider(query, response, (fullSuggestions) => {
+        setFilteredSuggestions(fullSuggestions);
+        setNoResults(false);
+        setActiveIndex(-1);
+      });
     }, 250);
 
-    return () => clearTimeout(searchDebounceRef.current);
-  }, [searchQuery, searchSession]);
+    return () => {
+      clearTimeout(searchDebounceRef.current);
+      autoFull.cancel(); // the query changed: drop pending/running enhancement
+    };
+  }, [searchQuery, searchSession, autoFull]);
 
-  // Cancel any in-flight search (and pending idle timer) when the page unmounts.
-  useEffect(() => () => searchSession.reset(), [searchSession]);
+  // Cancel any in-flight search when the page unmounts.
+  useEffect(
+    () => () => {
+      searchSession.cancel();
+      autoFull.cancel();
+    },
+    [searchSession, autoFull],
+  );
 
   // ── Close dropdown on outside click ──────────────────────────────────────
   useEffect(() => {
@@ -356,7 +375,8 @@ export default function HomePage() {
 
   // ── Submit (Search button / Enter): backend "full" mode ───────────────────
   // Full mode lets the backend apply its query understanding; the page only
-  // receives catalog results. Like before, submitting opens the top result.
+  // receives catalog results. A single result opens directly; several are
+  // shown so the user can choose.
   const submitSearch = useCallback(async () => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) return;
@@ -366,17 +386,17 @@ export default function HomePage() {
     setNoResults(false);
     setActiveIndex(-1);
 
-    const response = await searchSession.run(query, { mode: "full" });
-    if (!response) return; // superseded (the user kept typing or cleared)
-    const suggestions = toSuggestions(response);
+    // Reuse an automatic full search for this query instead of sending a second.
+    const { action, suggestions } = await (autoFull.join(query) ?? runSubmitSearch(searchSession, query));
+    if (action === "superseded") return; // the user kept typing or cleared
     setFilteredSuggestions(suggestions);
     setIsSearching(false);
-    if (suggestions.length) {
-      handleSearch(suggestions[0]);
-    } else {
+    if (action === "navigate") {
+      handleSearch(suggestions[0]); // a single result opens directly
+    } else if (action === "empty") {
       setNoResults(true);
-    }
-  }, [searchQuery, searchSession, handleSearch]);
+    } // "show": several results stay in the dropdown for the user to pick
+  }, [searchQuery, searchSession, autoFull, handleSearch]);
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
   const handleKeyDown = useCallback(

@@ -17,6 +17,7 @@ const { matchCatalog, mergeMatches } = require("./deterministicMatcher");
 const { buildResults } = require("./resultBuilder");
 const { validateQuery, QueryValidationError } = require("./queryNormalizer");
 const { createSearchAiService, MIN_CONFIDENCE } = require("./searchAiService");
+const { correctQuery } = require("./typoTolerance");
 const { MAX_RESULTS_PER_TYPE, MAX_RESULTS_TOTAL } = require("./searchConstants");
 
 // A literal (non-core) match at or above this score is an exact name/alias
@@ -34,6 +35,8 @@ class SearchUnavailableError extends Error {
 }
 
 const defaultAi = createSearchAiService();
+
+const hasAnyMatch = (matches) => Object.values(matches).some((list) => list.length);
 
 function hasExactLiteralHit(matches) {
   return Object.values(matches).some((list) => list.some((m) => m.score >= EXACT_LITERAL_SCORE && !m.viaCore));
@@ -98,12 +101,16 @@ function matchesFromIntent(catalog, intent, types) {
 // request: { q (validated, normalised), mode, types } from parseRequest.
 // options.clientKey: opaque per-client key for the AI minute cap (never sent
 // to the AI provider).
+<<<<<<< HEAD
 //
 // Resolves to { body, facts }. `body` is the public response, byte-for-byte
 // what executeSearch returns. `facts` is INTERNAL (matches with scores, the
 // catalog index and what the AI layer did) for search analytics; it must never
 // be sent to a client.
 async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey } = {}) {
+=======
+async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey, signal } = {}) {
+>>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
   let catalog;
   try {
     catalog = await getCatalog();
@@ -116,6 +123,21 @@ async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, a
   const limits = { types: request.types, perTypeLimit: MAX_RESULTS_PER_TYPE, totalLimit: MAX_RESULTS_TOTAL };
   let matches = matchCatalog(catalog, request.q, limits);
 
+  // PR 10: when nothing matched at all, try ONE conservative spelling repair
+  // against the public catalog vocabulary. The repaired query goes through the
+  // same matcher and ordering; an unconfident repair changes nothing.
+  let corrected = null;
+  if (!hasAnyMatch(matches)) {
+    const repaired = correctQuery(catalog, request.q);
+    if (repaired) {
+      const retry = matchCatalog(catalog, repaired, limits);
+      if (hasAnyMatch(retry)) {
+        matches = retry;
+        corrected = repaired;
+      }
+    }
+  }
+
   let aiMeta = null;
   const aiFacts = { requested: request.mode === "full", consulted: false, used: false, status: undefined };
   if (request.mode === "full") {
@@ -124,18 +146,31 @@ async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, a
       aiFacts.consulted = true;
       let outcome;
       try {
-        outcome = await ai.understand(request.q, catalog, { clientKey });
+        outcome = await ai.understand(request.q, catalog, { clientKey, signal });
       } catch {
         outcome = { status: "failed" };
       }
+<<<<<<< HEAD
       aiFacts.status = outcome.status;
       if (outcome.status === "failed") {
+=======
+      if (outcome.status === "cancelled") {
+        // The client went away: neither an AI result nor a provider fallback.
+      } else if (outcome.status === "failed") {
+>>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
         aiMeta.fallback = true;
       } else if (outcome.status === "ok") {
         aiMeta.cached = Boolean(outcome.cached);
         const fromIntent = matchesFromIntent(catalog, outcome.intent, request.types);
         if (Object.values(fromIntent).some((list) => list.length)) {
           matches = mergeMatches([matches, fromIntent], limits);
+          // Remember which results the AI layer confirmed, even when an equally
+          // strong literal match was kept (used by crossTypeOrdering). Marks a
+          // boolean on in-memory match objects only; nothing is returned or stored.
+          for (const type of Object.keys(fromIntent)) {
+            const chosen = new Set(fromIntent[type].map((m) => m.record));
+            for (const m of matches[type] || []) if (chosen.has(m.record)) m.aiChosen = true;
+          }
           aiMeta.used = true;
           aiFacts.used = true;
         } else {
@@ -148,8 +183,12 @@ async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, a
   const { results, total } = buildResults(matches, catalog);
   const meta = { total, mode: request.mode, limits: { perType: MAX_RESULTS_PER_TYPE, total: MAX_RESULTS_TOTAL } };
   if (aiMeta) meta.ai = aiMeta;
+<<<<<<< HEAD
   const body = { success: true, query: { normalized: request.q }, results, meta };
   return { body, facts: { matches, index: catalog.index, ai: aiFacts } };
+=======
+  return { success: true, query: { normalized: request.q, ...(corrected ? { corrected } : {}) }, results, meta };
+>>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
 }
 
 // The public entry point: only the response body.
