@@ -988,7 +988,7 @@ export default function TravelersDiarrhea() {
 
       <div
         style={{
-          fontFamily: "Satoshi, sans-serif",
+          fontFamily: "var(--font-primary)",
           color: "#0A1F44",
           background: "#fff",
         }}

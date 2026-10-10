@@ -22,8 +22,8 @@
   --de-amber: #f0a050;
   --de-opt-color: #405060;
   --de-radius: 12px;
-  --de-font-head: "Syne", sans-serif;
-  --de-font-body: "Epilogue", sans-serif;
+  --de-font-head: var(--font-primary);
+  --de-font-body: var(--font-secondary);
 
   /* also expose teal as --teal for legacy inner refs */
   --teal: #14c8b8;

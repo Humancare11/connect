@@ -23,7 +23,7 @@
   --accent-lt: rgba(11, 87, 232, 0.08);
 
   /* Typography */
-  --font: "Satoshi", "Inter", sans-serif;
+  --font: var(--font-secondary);
 
   /* Shape */
   --r-xs: 8px;

@@ -435,7 +435,7 @@ export default function ChildFamilyCare() {
   return (
     <div
       style={{
-        fontFamily: "'Satoshi', sans-serif",
+        fontFamily: "var(--font-primary)",
         background: "var(--bg)",
         color: "var(--navy)",
         minHeight: "100vh",
