@@ -84,8 +84,83 @@ function getPasswordError(password) {
 
 import api, { setUserAuthToken, getUserAuthToken } from "../api";
 import { useAuth } from "../context/AuthContext";
+import { Country, State } from "country-state-city";
 import PhoneInputField from "../components/PhoneInputField";
 import { getMobileError } from "../utils/phone";
+import LocationSelects from "../components/LocationSelects";
+
+// Keeps the Mobile field's country code and the Country dropdown in sync.
+// Joined by ISO2 code (never by name or dial digits) because several
+// countries share one dial code (+1 US/Canada, +7 Russia/Kazakhstan, +44
+// UK/Guernsey/Isle of Man/Jersey, +61 Australia/Cocos/Christmas Island, +262
+// Réunion/Mayotte, +590 St. Barthélemy/Guadeloupe/St. Martin, +599 Caribbean
+// Netherlands/Curaçao) and country-state-city's names don't always match the
+// phone widget's names (e.g. "Turkey" vs "Türkiye").
+const isoToCountryName = (iso) => Country.getCountryByCode(iso)?.name || "";
+const countryNameToIso = (name) =>
+  Country.getAllCountries().find((c) => c.name === name)?.isoCode || "";
+
+// A handful of countries (mostly small territories — Guam, Gibraltar, Isle of
+// Man, ...) have no subdivisions in the dataset LocationSelects' State
+// dropdown is built from, so it's shown disabled there and isn't required.
+const countryHasStates = (name) => {
+  const iso = countryNameToIso(name);
+  return iso ? State.getStatesOfCountry(iso).length > 0 : true;
+};
+
+// Plain style objects, not a className, because LocationSelects applies
+// `style` directly to its <select>/<input> elements (no className hook).
+// These replicate .hc-input / .hc-select from Login.css so the three location
+// fields match every other field on this card.
+const LOCATION_INPUT_STYLE = {
+  boxSizing: "border-box",
+  background: "#fff",
+  border: "1.5px solid #d9e2f2",
+  borderRadius: 12,
+  padding: "12px 12px",
+  marginBottom: 10,
+  width: "100%",
+  fontSize: 14,
+  fontWeight: 500,
+  fontFamily: "var(--font-primary)",
+  color: "#1e293b",
+  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  transition: "all 0.2s ease-in-out",
+};
+const LOCATION_SELECT_STYLE = {
+  ...LOCATION_INPUT_STYLE,
+  height: 48,
+  padding: "0 36px 0 16px",
+  appearance: "none",
+  WebkitAppearance: "none",
+  cursor: "pointer",
+  backgroundImage:
+    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 14px center",
+};
+const onLocationFocus = (e) => {
+  e.target.style.borderColor = "#2563eb";
+  e.target.style.boxShadow = "0 0 0 4px rgba(37, 99, 235, 0.1)";
+};
+const onLocationBlur = (e) => {
+  e.target.style.borderColor = "#d9e2f2";
+  e.target.style.boxShadow = "0 1px 2px rgba(15, 23, 42, 0.04)";
+};
+// LocationSelects' own <select>/<input> elements carry fixed ids
+// "country" / "state" / "city" (shared with its other caller, ProfileSettings) —
+// mapped here only so the visually-hidden <label> can point at the right one.
+const LOCATION_FIELD_IDS = { Country: "country", "State / Province": "state", City: "city" };
+function LocationFieldWrap({ label, children }) {
+  return (
+    <div className="hc-field-wrap">
+      <label htmlFor={LOCATION_FIELD_IDS[label]} style={VISUALLY_HIDDEN}>
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
 
 /* ─── Google icon ────────────────────────────────────────────── */
 function GoogleIcon() {
@@ -225,6 +300,9 @@ export default function AuthPage() {
     email: "",
     mobile: "",
     password: "",
+    country: "India",
+    state: "",
+    city: "",
     terms: false,
     privacyConsent: false,
     hipaaConsent: false,
@@ -233,6 +311,9 @@ export default function AuthPage() {
   const [googlePending, setGooglePending] = useState(null);
   const [googleProfile, setGoogleProfile] = useState({
     mobile: "",
+    country: "India",
+    state: "",
+    city: "",
     terms: false,
     privacyConsent: false,
     hipaaConsent: false,
@@ -348,6 +429,9 @@ export default function AuthPage() {
     e.preventDefault();
     const googleMobileError = getMobileError(googleProfile.mobile);
     if (googleMobileError) return setFormError(googleMobileError);
+    if (!googleProfile.country.trim()) return setFormError("Select your country");
+    if (!googleProfile.state.trim() && countryHasStates(googleProfile.country))
+      return setFormError("Select your state / province");
     if (
       !googleProfile.terms ||
       !googleProfile.privacyConsent ||
@@ -363,6 +447,9 @@ export default function AuthPage() {
       const res = await api.post("/api/auth/google", {
         accessToken: googlePending.accessToken,
         mobile: googleProfile.mobile,
+        country: googleProfile.country,
+        state: googleProfile.state,
+        city: googleProfile.city,
         privacyConsent: googleProfile.privacyConsent,
         hipaaConsent: googleProfile.hipaaConsent,
       });
@@ -416,6 +503,9 @@ export default function AuthPage() {
     if (passwordError) return setFormError(passwordError);
     const mobileError = getMobileError(registerForm.mobile);
     if (mobileError) return setFormError(mobileError);
+    if (!registerForm.country.trim()) return setFormError("Select your country");
+    if (!registerForm.state.trim() && countryHasStates(registerForm.country))
+      return setFormError("Select your state / province");
     setLoading(true);
     try {
       await api.post("/api/auth/send-register-otp", {
@@ -456,6 +546,9 @@ export default function AuthPage() {
         email: "",
         mobile: "",
         password: "",
+        country: "",
+        state: "",
+        city: "",
         terms: false,
         privacyConsent: false,
         hipaaConsent: false,
@@ -608,23 +701,57 @@ export default function AuthPage() {
               disabled
               style={{ opacity: 0.55, cursor: "not-allowed" }}
             />
-            <div className="hc-mobile-field">
-              <label htmlFor="google-profile-mobile" className="hc-reg-label">
-                Mobile Number
-              </label>
-              <PhoneInputField
-                inputId="google-profile-mobile"
-                inputName="googleProfileMobile"
-                searchInputId="google-profile-mobile-country-search"
-                searchInputName="googleProfileMobileCountrySearch"
-                value={googleProfile.mobile}
-                onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
-                defaultCountry="IN"
-                placeholder="Mobile number"
-                required
-                maxLength={15}
-                limitIndianNumber
+            <LocationSelects
+              layout="countryState"
+              country={googleProfile.country}
+              state={googleProfile.state}
+              city={googleProfile.city}
+              onChange={(next) => setGoogleProfile((p) => ({ ...p, ...next }))}
+              fieldComponent={LocationFieldWrap}
+              inputStyle={LOCATION_INPUT_STYLE}
+              selectStyle={LOCATION_SELECT_STYLE}
+              onFocus={onLocationFocus}
+              onBlur={onLocationBlur}
+            />
+            <div className="hc-row hc-reg-row hc-country-mobile-row">
+              <LocationSelects
+                layout="cityOnly"
+                country={googleProfile.country}
+                state={googleProfile.state}
+                city={googleProfile.city}
+                onChange={(next) => setGoogleProfile((p) => ({ ...p, ...next }))}
+                fieldComponent={LocationFieldWrap}
+                inputStyle={LOCATION_INPUT_STYLE}
+                selectStyle={LOCATION_SELECT_STYLE}
+                onFocus={onLocationFocus}
+                onBlur={onLocationBlur}
               />
+              <div className="hc-field-wrap hc-mobile-field">
+                <label htmlFor="google-profile-mobile" style={VISUALLY_HIDDEN}>
+                  Phone
+                </label>
+                <PhoneInputField
+                  inputId="google-profile-mobile"
+                  inputName="googleProfileMobile"
+                  searchInputId="google-profile-mobile-country-search"
+                  searchInputName="googleProfileMobileCountrySearch"
+                  value={googleProfile.mobile}
+                  onChange={(ph) => setGoogleProfile((p) => ({ ...p, mobile: ph }))}
+                  onCountryChange={({ code }) => {
+                    const name = isoToCountryName(code);
+                    if (!name) return;
+                    setGoogleProfile((p) =>
+                      p.country === name ? p : { ...p, country: name, state: "", city: "" },
+                    );
+                  }}
+                  forceCountryCode={countryNameToIso(googleProfile.country)}
+                  defaultCountry="IN"
+                  placeholder="Phone"
+                  required
+                  maxLength={15}
+                  limitIndianNumber
+                />
+              </div>
             </div>
             <div className="hc-consent-row">
               <label
@@ -1018,23 +1145,58 @@ export default function AuthPage() {
               style={{ width: "100%" }}
             />
 
-            <div className="hc-mobile-field">
-              <label htmlFor="patient-register-mobile" style={VISUALLY_HIDDEN}>
-                Mobile Number
-              </label>
-              <PhoneInputField
-                inputId="patient-register-mobile"
-                inputName="patientRegisterMobile"
-                searchInputId="patient-register-mobile-country-search"
-                searchInputName="patientRegisterMobileCountrySearch"
-                value={registerForm.mobile}
-                onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
-                defaultCountry="IN"
-                placeholder="Mobile number"
-                required
-                maxLength={15}
-                limitIndianNumber
+            <LocationSelects
+              layout="countryState"
+              country={registerForm.country}
+              state={registerForm.state}
+              city={registerForm.city}
+              onChange={(next) => setRegisterForm((p) => ({ ...p, ...next }))}
+              fieldComponent={LocationFieldWrap}
+              inputStyle={LOCATION_INPUT_STYLE}
+              selectStyle={LOCATION_SELECT_STYLE}
+              onFocus={onLocationFocus}
+              onBlur={onLocationBlur}
+            />
+
+            <div className="hc-row hc-reg-row hc-country-mobile-row">
+              <LocationSelects
+                layout="cityOnly"
+                country={registerForm.country}
+                state={registerForm.state}
+                city={registerForm.city}
+                onChange={(next) => setRegisterForm((p) => ({ ...p, ...next }))}
+                fieldComponent={LocationFieldWrap}
+                inputStyle={LOCATION_INPUT_STYLE}
+                selectStyle={LOCATION_SELECT_STYLE}
+                onFocus={onLocationFocus}
+                onBlur={onLocationBlur}
               />
+              <div className="hc-field-wrap hc-mobile-field">
+                <label htmlFor="patient-register-mobile" style={VISUALLY_HIDDEN}>
+                  Phone
+                </label>
+                <PhoneInputField
+                  inputId="patient-register-mobile"
+                  inputName="patientRegisterMobile"
+                  searchInputId="patient-register-mobile-country-search"
+                  searchInputName="patientRegisterMobileCountrySearch"
+                  value={registerForm.mobile}
+                  onChange={(ph) => setRegisterForm((p) => ({ ...p, mobile: ph }))}
+                  onCountryChange={({ code }) => {
+                    const name = isoToCountryName(code);
+                    if (!name) return;
+                    setRegisterForm((p) =>
+                      p.country === name ? p : { ...p, country: name, state: "", city: "" },
+                    );
+                  }}
+                  forceCountryCode={countryNameToIso(registerForm.country)}
+                  defaultCountry="IN"
+                  placeholder="Phone"
+                  required
+                  maxLength={15}
+                  limitIndianNumber
+                />
+              </div>
             </div>
 
             <div className="hc-pw-wrapper">

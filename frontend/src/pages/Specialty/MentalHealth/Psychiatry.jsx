@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -323,7 +322,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
@@ -573,21 +572,19 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Psychiatry Specialists | Mental Health, Medication Management & Emotional Wellness"
-        description="Connect with experienced psychiatry specialists for anxiety, depression, ADHD, PTSD, insomnia, bipolar disorder, panic attacks, OCD, and personalized mental health care."
-        keywords="online psychiatrist, psychiatry services, psychiatrist online, anxiety treatment, depression treatment, ADHD evaluation, PTSD treatment, OCD treatment, bipolar disorder care, medication management, virtual mental health care, telepsychiatry"
-        url="https://humancareconnect.co/psychiatry"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -595,9 +592,8 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${
-                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                }`}
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                  }`}
               >
                 <span className="sp-hero__badge">Mental health</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
@@ -624,6 +620,8 @@ export default function Psychiatry({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

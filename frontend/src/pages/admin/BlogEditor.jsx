@@ -39,7 +39,10 @@ function ToolButton({ active, disabled, onClick, title, children }) {
 // TipTap rich-text editor for blog content. `value` is the saved HTML (relative
 // image URLs); `onChange` receives HTML in the same relative form. Remount it
 // (change `key`) when switching to a different post.
-export default function BlogEditor({ value, onChange, onUploadImage, disabled }) {
+//
+// `compact` is the small variant used for FAQ answers: only bold, italic, link
+// and bullet / numbered lists (no headings, quote, images or undo toolbar).
+export default function BlogEditor({ value, onChange, onUploadImage, disabled, compact = false, label = "Blog content" }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -47,21 +50,23 @@ export default function BlogEditor({ value, onChange, onUploadImage, disabled })
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        heading: { levels: [2, 3, 4] },
+        heading: compact ? false : { levels: [2, 3, 4] },
+        blockquote: compact ? false : undefined,
+        horizontalRule: compact ? false : undefined,
         link: { openOnClick: false, autolink: false, HTMLAttributes: { rel: "noopener noreferrer" } },
         codeBlock: false,
         code: false,
         strike: false,
       }),
-      Image.configure({ inline: false, allowBase64: false }),
+      ...(compact ? [] : [Image.configure({ inline: false, allowBase64: false })]),
     ],
     content: resolveBlogImages(value || ""),
     editable: !disabled,
     shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
-        "aria-label": "Blog content",
-        style: "min-height: 360px; padding: 14px 16px; outline: none; font-size: 15px; line-height: 1.7;",
+        "aria-label": label,
+        style: `min-height: ${compact ? 90 : 360}px; padding: ${compact ? "10px 12px" : "14px 16px"}; outline: none; font-size: 15px; line-height: 1.7;`,
       },
     },
     onUpdate: ({ editor: ed }) => onChange(relativizeBlogImages(ed.isEmpty ? "" : ed.getHTML())),
@@ -111,20 +116,32 @@ export default function BlogEditor({ value, onChange, onUploadImage, disabled })
         aria-label="Formatting"
         style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: 8, borderBottom: "1px solid #e5e7eb", background: "#f9fafb" }}
       >
-        <ToolButton title="Heading 2 (appears in the table of contents)" active={editor.isActive("heading", { level: 2 })} onClick={run((c) => c.toggleHeading({ level: 2 }))}>H2</ToolButton>
-        <ToolButton title="Heading 3" active={editor.isActive("heading", { level: 3 })} onClick={run((c) => c.toggleHeading({ level: 3 }))}>H3</ToolButton>
-        <ToolButton title="Paragraph" active={editor.isActive("paragraph")} onClick={run((c) => c.setParagraph())}>¶</ToolButton>
-        <ToolButton title="Bold" active={editor.isActive("bold")} onClick={run((c) => c.toggleBold())}><b>B</b></ToolButton>
-        <ToolButton title="Italic" active={editor.isActive("italic")} onClick={run((c) => c.toggleItalic())}><i>I</i></ToolButton>
-        <ToolButton title="Bulleted list" active={editor.isActive("bulletList")} onClick={run((c) => c.toggleBulletList())}>• List</ToolButton>
-        <ToolButton title="Numbered list" active={editor.isActive("orderedList")} onClick={run((c) => c.toggleOrderedList())}>1. List</ToolButton>
-        <ToolButton title="Quote" active={editor.isActive("blockquote")} onClick={run((c) => c.toggleBlockquote())}>❝</ToolButton>
-        <ToolButton title="Link" active={editor.isActive("link")} onClick={setLink}>Link</ToolButton>
-        <ToolButton title="Insert image" disabled={uploading || disabled} onClick={() => fileRef.current?.click()}>
-          {uploading ? "Uploading…" : "Image"}
-        </ToolButton>
-        <ToolButton title="Undo" disabled={!editor.can().undo()} onClick={run((c) => c.undo())}>↶</ToolButton>
-        <ToolButton title="Redo" disabled={!editor.can().redo()} onClick={run((c) => c.redo())}>↷</ToolButton>
+        {compact ? (
+          <>
+          <ToolButton title="Bold" active={editor.isActive("bold")} onClick={run((c) => c.toggleBold())}><b>B</b></ToolButton>
+          <ToolButton title="Italic" active={editor.isActive("italic")} onClick={run((c) => c.toggleItalic())}><i>I</i></ToolButton>
+          <ToolButton title="Bulleted list" active={editor.isActive("bulletList")} onClick={run((c) => c.toggleBulletList())}>• List</ToolButton>
+          <ToolButton title="Numbered list" active={editor.isActive("orderedList")} onClick={run((c) => c.toggleOrderedList())}>1. List</ToolButton>
+          <ToolButton title="Link" active={editor.isActive("link")} onClick={setLink}>Link</ToolButton>
+          </>
+        ) : (
+          <>
+          <ToolButton title="Heading 2 (appears in the table of contents)" active={editor.isActive("heading", { level: 2 })} onClick={run((c) => c.toggleHeading({ level: 2 }))}>H2</ToolButton>
+          <ToolButton title="Heading 3" active={editor.isActive("heading", { level: 3 })} onClick={run((c) => c.toggleHeading({ level: 3 }))}>H3</ToolButton>
+          <ToolButton title="Paragraph" active={editor.isActive("paragraph")} onClick={run((c) => c.setParagraph())}>¶</ToolButton>
+          <ToolButton title="Bold" active={editor.isActive("bold")} onClick={run((c) => c.toggleBold())}><b>B</b></ToolButton>
+          <ToolButton title="Italic" active={editor.isActive("italic")} onClick={run((c) => c.toggleItalic())}><i>I</i></ToolButton>
+          <ToolButton title="Bulleted list" active={editor.isActive("bulletList")} onClick={run((c) => c.toggleBulletList())}>• List</ToolButton>
+          <ToolButton title="Numbered list" active={editor.isActive("orderedList")} onClick={run((c) => c.toggleOrderedList())}>1. List</ToolButton>
+          <ToolButton title="Quote" active={editor.isActive("blockquote")} onClick={run((c) => c.toggleBlockquote())}>❝</ToolButton>
+          <ToolButton title="Link" active={editor.isActive("link")} onClick={setLink}>Link</ToolButton>
+          <ToolButton title="Insert image" disabled={uploading || disabled} onClick={() => fileRef.current?.click()}>
+            {uploading ? "Uploading…" : "Image"}
+          </ToolButton>
+          <ToolButton title="Undo" disabled={!editor.can().undo()} onClick={run((c) => c.undo())}>↶</ToolButton>
+          <ToolButton title="Redo" disabled={!editor.can().redo()} onClick={run((c) => c.redo())}>↷</ToolButton>
+          </>
+        )}
         <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={onPickImage} />
       </div>
       {error && (

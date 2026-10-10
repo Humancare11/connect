@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function SportsNutrition({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sports Nutrition Consultation Online | Virtual Nutrition & Performance Support"
-        description="Get personalized online sports nutrition guidance to improve performance, recovery, endurance, muscle health, and achieve your fitness goals."
-        keywords="sports nutrition consultation, online sports nutrition, sports dietitian online, athletic nutrition, performance nutrition, muscle recovery nutrition, fitness nutrition consultation, virtual nutrition coaching, sports diet plan, telehealth nutrition services"
-        url="https://humancareconnect.co/sports-nutrition"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

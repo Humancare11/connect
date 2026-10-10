@@ -155,6 +155,27 @@ const uploadLimiter = buildUserLimiter({
   message:  "Too many uploads. Please wait {min} minutes and try again.",
 });
 
+// Mail sent from the admin Email module (compose + reply). Per admin: a person
+// answering clients stays far below this, but it bounds a runaway script or a
+// stolen session, and protects the shared mailboxes' Gmail daily sending quota.
+const emailSendStore = new Map();
+const emailSendLimiter = buildUserLimiter({
+  store:    emailSendStore,
+  windowMs: 10 * 60 * 1000,
+  max:      30,
+  message:  "You are sending mail too quickly. Please wait {min} minutes and try again.",
+});
+
+// Super Admin "Mail IDs": every connection check calls Google while impersonating
+// a company address, so keep it modest. Per Super Admin.
+const mailboxCheckStore = new Map();
+const mailboxCheckLimiter = buildUserLimiter({
+  store:    mailboxCheckStore,
+  windowMs: 60 * 1000,
+  max:      10,
+  message:  "Too many mailbox checks. Please wait a minute and try again.",
+});
+
 // The public Direct Video Room endpoints (GET /:roomId/status and
 // /:roomId/ice-servers) carry no login or email, so they're keyed by
 // IP + roomId — different rooms behind one office NAT don't share a bucket.
@@ -218,8 +239,21 @@ const careersLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Public app-version lookup (GET /api/app/version). The app calls it once per
+// launch, so this is far above normal use. Per-IP.
+const appVersionStore = new Map();
+const appVersionLimiter = buildKeyedLimiter({
+  store:    appVersionStore,
+  windowMs: 60 * 1000,
+  max:      60,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 module.exports = {
   careersLimiter,
+  appVersionLimiter,
   blogPublicLimiter,
   blogImageLimiter,
   registrationLimiter,
@@ -231,4 +265,6 @@ module.exports = {
   uploadLimiter,
   directVideoRoomPublicLimiter,
   searchLimiter,
+  emailSendLimiter,
+  mailboxCheckLimiter,
 };

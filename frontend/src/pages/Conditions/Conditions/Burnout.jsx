@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Burnout.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -128,14 +129,10 @@ export default function AdhdEvaluation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Burnout Recovery Support Online | Mental Health & Stress Care"
-        description="Get online support for burnout symptoms."
-        keywords="Burnout"
-        url="https://humancareconnect.co/burnout"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -155,7 +152,7 @@ export default function AdhdEvaluation({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

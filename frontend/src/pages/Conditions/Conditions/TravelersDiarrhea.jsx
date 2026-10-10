@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Travelers-Diarrhea.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function TravelersDiarrhea({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Traveler�s Diarrhea Treatment Online | Virtual Travel Health Care"
-        description="Get online care for traveler�s diarrhea. Consult a licensed provider for diarrhea, stomach cramps, nausea, dehydration, and digestive symptoms during travel."
-        keywords="traveler�s diarrhea treatment, traveler�s diarrhea treatment online, diarrhea during travel, travel digestive illness, stomach cramps while traveling, online travel doctor, travel health consultation, dehydration support, virtual doctor consultation, telehealth travel care"
-        url="https://humancareconnect.co/travelers-diarrhea"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function TravelersDiarrhea({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

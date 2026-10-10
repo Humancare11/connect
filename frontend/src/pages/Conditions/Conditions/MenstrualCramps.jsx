@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function MenstrualCramps({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Menstrual Cramps Treatment Online | Period Pain Relief Consultation"
-        description="Get expert care for menstrual cramps online. Consult a licensed provider for period pain, lower abdominal cramps, back pain, bloating, and personalized treatment to help you feel better."
-        keywords="Menstrual cramps treatment, Period pain relief, Women's health consultation, Online gynecologist"
-        url="https://humancareconnect.co/menstrual-cramps"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function MenstrualCramps({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

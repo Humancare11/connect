@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function Fatigue({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fatigue Treatment Online | Find the Cause of Low Energy"
-        description="Feeling tired all the time? Connect with a licensed provider online to evaluate fatigue, identify possible causes, and receive personalized treatment guidance through secure telemedicine services."
-        keywords="Fatigue treatment online, Low energy evaluation, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fatigue"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function Fatigue({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

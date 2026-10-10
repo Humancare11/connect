@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Tremor({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Tremor Treatment Online | Virtual Neurology Consultation"
-        description="Get online care for tremors and involuntary shaking. Consult a licensed provider for symptom evaluation, neurological guidance, and personalized care."
-        keywords="tremor treatment online, hand tremor, involuntary shaking, tremor symptoms, online neurologist, neurological consultation, movement disorder, virtual neurology care, telehealth neurology, shaking hands treatment"
-        url="https://humancareconnect.co/tremor"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Tremor({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

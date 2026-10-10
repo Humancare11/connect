@@ -25,7 +25,7 @@ const STEPS = [
   {
     num: "02",
     name: "Find Doctor",
-    desc: "Browse 500+ verified specialists by condition or language",
+    desc: "Browse verified specialists by condition or language",
     accent: "#1A56DB",
     icon: (
       <svg

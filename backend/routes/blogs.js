@@ -117,6 +117,7 @@ router.get("/:slug", blogPublicLimiter, async (req, res) => {
       ...listItem(blog),
       content: blog.isLegacy ? "" : blog.content,
       toc: blog.toc || [],
+      faqs: blog.isLegacy ? [] : blog.faqs || [],
       tags: blog.tags || [],
       metaTitle: blog.metaTitle,
       metaDescription: blog.metaDescription,

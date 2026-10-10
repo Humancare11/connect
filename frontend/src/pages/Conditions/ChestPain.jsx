@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -38,14 +39,10 @@ export default function ChestPain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Non-Emergency Chest Pain | Understand Ongoing Chest Discomfort"
-        description="Experiencing mild chest pressure, tightness, or ongoing discomfort? Discuss your symptoms and possible causes with a licensed provider and get personalized next-step guidance."
-        keywords="Non emergency chest pain, Chest discomfort, Chest pressure, Online doctor appointment, Virtual healthcare services, Telehealth services"
-        url="https://humancareconnect.co/chest-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -65,7 +62,7 @@ export default function ChestPain({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

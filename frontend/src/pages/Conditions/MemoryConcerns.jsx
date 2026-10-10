@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function MemoryConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Memory Concerns Evaluation Online | Cognitive Health Consultation"
-        description="Concerned about memory changes or forgetfulness? Connect with a licensed provider online for cognitive health evaluation, memory support, symptom assessment, and personalized care guidance."
-        keywords="Memory concerns, Cognitive health evaluation, Memory loss consultation, Online doctor consultation"
-        url="https://humancareconnect.co/memory-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

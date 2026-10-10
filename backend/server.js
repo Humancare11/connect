@@ -29,7 +29,6 @@ const Doctor = require("./models/Doctor");
 const Session = require("./models/Session");
 const RevokedToken = require("./models/RevokedToken");
 const ChatMessage = require("./models/ChatMessage");
-const Question = require("./models/Question");
 const EmployeeTask = require("./models/EmployeeTask");
 const DirectVideoRoom = require("./models/DirectVideoRoom");
 const DirectRoomEvent = require("./models/DirectRoomEvent");
@@ -52,6 +51,7 @@ const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
+const { scheduleEmailSync } = require("./jobs/emailSyncJob");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
 const {
@@ -73,6 +73,11 @@ const app = express();
 // req.ip is the proxy's address instead of the client's. Defaults to 1 hop;
 // set TRUST_PROXY to match the real chain (e.g. 2 for load balancer + nginx).
 app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
+
+// Public tracking image for mail sent from the dashboard (no login, no CORS).
+// Mounted before helmet/CORS/cookies on purpose: it sets its own headers and
+// must answer every request identically. Inert unless open tracking is switched on.
+app.use("/api/e", require("./routes/publicTracking"));
 
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside
@@ -138,6 +143,7 @@ const startServer = async () => {
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
   scheduleInvoiceReconciliation();
+  scheduleEmailSync();
 
   await ensureBucketCors(allowedOrigins);
 
@@ -327,6 +333,12 @@ app.use((req, res, next) => {
   next();
 });
 
+// The API serves no indexable content; keep every response out of search results.
+app.use((req, res, next) => {
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+  next();
+});
+
 // CORS Config
 const corsOptions = {
   origin: (origin, callback) => {
@@ -479,34 +491,9 @@ async function canAccessUpload(req, filename) {
     }
   }
 
-  if (!accessAppointment) {
-    const question = await Question.findOne({
-      $or: [
-        { "attachments.url": fileUrlPattern },
-        { "attachments.key": fileUrlPattern },
-      ],
-    })
-      .select("user assignedDoctorId")
-      .lean();
-
-    if (question) {
-      const matchedQuestionUser = identities.find((identity) => {
-        const identityId = String(identity.id);
-        return (
-          (identity.role === "user" && String(question.user) === identityId) ||
-          (identity.role === "doctor" && String(question.assignedDoctorId) === identityId)
-        );
-      });
-
-      return {
-        allowed: Boolean(matchedQuestionUser),
-        reason: matchedQuestionUser?.role === "user" ? "question_owner" : matchedQuestionUser?.role === "doctor" ? "assigned_doctor" : "not_assigned",
-        identity: matchedQuestionUser,
-        appointmentId: null,
-        patientId: question.user,
-      };
-    }
-  }
+  // Files attached to the removed Medical Q&A stay in storage. Admins, and the
+  // person who uploaded a file, can still open it (checked above); nobody else
+  // is granted access through a question any more.
 
   if (!accessAppointment) return { allowed: false, reason: "unassigned" };
 
@@ -605,7 +592,9 @@ app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
-app.use("/api/qna", require("./routes/qna"));
+app.use("/api/admin/email", require("./routes/adminEmail"));
+app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
+app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/upload", require("./routes/upload"));
@@ -624,6 +613,7 @@ app.use("/api/blogs", require("./routes/blogs"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));
 app.use("/api/locations", require("./routes/locations"));
+app.use("/api/app", require("./routes/appVersion"));
 app.use(
   "/api/category-consultation",
   require("./routes/categoryConsultation")

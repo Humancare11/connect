@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function EmergencyTeleconsultationAbroad({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Emergency Teleconsultation Abroad | Online Travel Medical Care"
-        description="Get urgent medical support while traveling abroad. Connect with a licensed provider online for emergency teleconsultation, travel health advice, treatment guidance, and prescriptions when appropriate."
-        keywords="Emergency teleconsultation abroad, Travel health consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/emergency-teleconsultation-abroad"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

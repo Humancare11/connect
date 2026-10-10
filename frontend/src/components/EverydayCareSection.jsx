@@ -81,6 +81,8 @@ export default function EverydayCareSection() {
                 <div className="ecs-card-bg-wrap">
                   <img
                     src={gpImage}
+                    width="562"
+                    height="430"
                     alt="General Practitioner doctor consultation"
                     className="ecs-card-bg-img"
                     loading="lazy"
@@ -146,6 +148,8 @@ export default function EverydayCareSection() {
                 <div className="ecs-card-bg-wrap">
                   <img
                     src={pediaImage}
+                    width="562"
+                    height="430"
                     alt="Pediatrician examining a child patient"
                     className="ecs-card-bg-img"
                     loading="lazy"

@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function LowLibido({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Low Libido Treatment Online | Sexual Wellness & Hormone Support"
-        description="Concerned about low libido? Connect with a licensed provider online for personalized evaluation, hormone health support, sexual wellness guidance, and treatment options tailored to your needs."
-        keywords="Low libido treatment, Sexual wellness, Hormone health support, Online doctor consultation"
-        url="https://humancareconnect.co/low-libido"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function LowLibido({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

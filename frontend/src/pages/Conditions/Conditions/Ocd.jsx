@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/OCD.webp";
 
 // ─────────────────────────────────────────────────────────────────
@@ -65,14 +66,10 @@ export default function Ocd() {
 
   return (
     <>
-      <SEO
-        title="OCD Treatment Online | Virtual Mental Health Support"
-        description="Get expert online care for OCD symptoms."
-        keywords="OCD"
-        url="https://humancareconnect.co/ocd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function Ocd() {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

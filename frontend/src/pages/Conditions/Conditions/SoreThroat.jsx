@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/sore-throat.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function SoreThroat({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sore Throat Treatment Online | Virtual Doctor Consultation"
-        description="Get online treatment for a sore throat. Connect with a licensed provider for throat pain, difficulty swallowing, irritation, and personalized care."
-        keywords="sore throat treatment online, sore throat symptoms, online doctor for sore throat, throat pain treatment, difficulty swallowing, virtual doctor consultation, telehealth sore throat care, strep throat evaluation, throat infection treatment, online medical consultation"
-        url="https://humancareconnect.co/sore-throat"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function SoreThroat({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

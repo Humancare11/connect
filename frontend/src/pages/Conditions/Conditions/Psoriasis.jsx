@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Psoriasis.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function Psoriasis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Psoriasis Treatment Online | Virtual Dermatology Consultation"
-        description="Get online care for psoriasis from a licensed provider. Receive expert treatment for itchy, scaly skin, flare-ups, redness, and personalized skincare recommendations."
-        keywords="psoriasis treatment online, psoriasis symptoms, virtual dermatologist, online skin specialist, psoriasis flare-up treatment, chronic skin condition, telehealth dermatology, psoriasis consultation"
-        url="https://humancareconnect.co/psoriasis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function Psoriasis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

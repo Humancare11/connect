@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function BodyAches({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Body Aches Relief Online | Muscle Soreness & Pain Care"
-        description="Feeling sore, stiff, or achy all over? Get online care for body aches with symptom evaluation, pain management recommendations, and personalized treatment guidance."
-        keywords="Body aches, Body ache relief, Muscle soreness, Body discomfort, Pain management recommendations, Online doctor appointment"
-        url="https://humancareconnect.co/body-aches"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function BodyAches({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

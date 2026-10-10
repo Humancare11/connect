@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function NipplePain({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Nipple Pain Treatment Online | Breastfeeding & Lactation Support"
-        description="Get expert care for nipple pain during breastfeeding. Connect with a licensed provider online for lactation support, sore nipples, latch guidance, breastfeeding discomfort, and personalized treatment."
-        keywords="Nipple pain treatment, Breastfeeding support, Lactation consultation, Online breastfeeding care"
-        url="https://humancareconnect.co/nipple-pain"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function NipplePain({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

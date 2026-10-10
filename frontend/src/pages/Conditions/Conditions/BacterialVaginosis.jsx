@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/bacterial-vaginosis.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function BacterialVaginosis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bacterial Vaginosis Care Online | Private BV Symptom Support"
-        description="Unusual vaginal discharge, odor, itching, or irritation? Get discreet bacterial vaginosis care with symptom evaluation, treatment guidance, and prescription support online."
-        keywords="Bacterial vaginosis, Bacterial vaginosis symptoms, Vaginal discharge, Vaginal bacterial imbalance, Treatment guidance, Online doctor appointment"
-        url="https://humancareconnect.co/bacterial-vaginosis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function BacterialVaginosis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

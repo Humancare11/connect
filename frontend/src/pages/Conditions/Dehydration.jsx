@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function Dehydration({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Dehydration Treatment Online | Telemedicine Services for Fast Care"
-        description="Get expert dehydration treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized hydration care from home."
-        keywords="Dehydration treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/dehydration"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function Dehydration({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

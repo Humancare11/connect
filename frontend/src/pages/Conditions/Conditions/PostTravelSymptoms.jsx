@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Post-Travel-Symptoms.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function PostTravelSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Post-Travel Symptoms Treatment Online | Travel Health Consultation"
-        description="Get expert care for post-travel symptoms online. Connect with a licensed provider for fever, diarrhea, nausea, fatigue, rash, respiratory symptoms, and personalized travel health guidance."
-        keywords="Post-travel symptoms, Travel health consultation, Online travel medicine, Post-travel illness treatment, Virtual healthcare services"
-        url="https://humancareconnect.co/post-travel-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

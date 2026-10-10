@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -38,14 +39,10 @@ export default function HormoneImbalance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="�Hormone Imbalance Treatment Online | Expert Hormone Health Care"
-        description="Get expert care for hormone imbalance online. Connect with a licensed provider for hormone health evaluations, symptom assessment, personalized treatment, and ongoing support through secure telemedicine services."
-        keywords="Hormone imbalance treatment, Hormone health care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hormone-imblance"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -65,7 +62,7 @@ export default function HormoneImbalance({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

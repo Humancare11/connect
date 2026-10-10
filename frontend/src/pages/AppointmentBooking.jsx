@@ -600,12 +600,7 @@ export default function Ab() {
 
   return (
     <>
-      <SEO
-        title="Online Doctor Appointment | Find a Doctor Online | Humancare Connect"
-        description="Book an online doctor appointment and connect with licensed providers through secure virtual healthcare services, telemedicine services, and fast online consultations without long clinic wait times."
-        keywords="Online doctor appointment, find a doctor online, online doctor, licensed providers, virtual healthcare services, telemedicine services, online consultation, virtual doctor visit, search providers, healthcare providers, book doctor appointment online, secure virtual care"
-        url="https://humancareconnect.co/appointment-booking"
-      />
+      <SEO />
       <section className="hcc-sx">
         <div className="wrap">
           {/* -- CENTERED HERO -- */}

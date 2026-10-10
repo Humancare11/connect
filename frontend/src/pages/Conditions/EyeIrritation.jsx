@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function EyeIrritation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Eye Irritation Treatment Online | Fast Virtual Eye Care"
-        description="Get expert eye irritation treatment online for redness, itching, burning, dryness, and eye discomfort. Connect with a licensed provider through secure telemedicine services from home."
-        keywords="Eye irritation treatment, Online eye doctor, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/eye-irritation"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function EyeIrritation({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

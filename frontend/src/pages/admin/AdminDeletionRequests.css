@@ -1,0 +1,162 @@
+/* Admin → Deletion Requests. Builds on the shared adp-* admin styles. */
+
+.adr-toolbar {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.adr-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.adr-select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.adr-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.adr-muted {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.adr-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #475569;
+}
+
+.adr-reason {
+  max-width: 280px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.adr-link {
+  display: inline;
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adr-emails {
+  margin-top: 4px;
+}
+
+.adr-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.adr-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.adr-badge--pending { background: #fef3c7; color: #92400e; }
+.adr-badge--approved { background: #fee2e2; color: #991b1b; }
+.adr-badge--rejected { background: #e0e7ff; color: #3730a3; }
+.adr-badge--cancelled { background: #e2e8f0; color: #475569; }
+.adr-badge--deleted_by_admin { background: #fce7f3; color: #9d174d; }
+
+.adr-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.adr-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-top: 1px solid #eef2f7;
+}
+.adr-pager-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.adr-table .adp-btn:disabled,
+.adr-pager .adp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Phones: one card per request instead of a wide table. */
+@media (max-width: 760px) {
+  .adr-table thead {
+    display: none;
+  }
+  .adr-table,
+  .adr-table tbody,
+  .adr-table tr,
+  .adr-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .adr-table tr {
+    margin: 0 0 12px;
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+  }
+  .adr-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 8px 0;
+    border: 0;
+    text-align: right;
+  }
+  .adr-table td::before {
+    content: attr(data-label);
+    flex: none;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: left;
+  }
+  .adr-reason {
+    max-width: none;
+  }
+  .adr-actions {
+    justify-content: flex-end;
+  }
+}

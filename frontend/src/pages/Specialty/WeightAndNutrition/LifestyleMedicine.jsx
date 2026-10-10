@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -291,7 +290,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
@@ -539,21 +538,19 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO
-        title="Lifestyle Medicine Specialists | Healthy Habits, Nutrition & Wellness Care"
-        description="Connect with lifestyle medicine specialists for diet and exercise planning, healthy habit coaching, sleep improvement, preventive wellness care, and long-term health optimization."
-        keywords="Lifestyle medicine specialist, Healthy lifestyle coaching, Weight management, Preventive wellness care"
-        url="https://humancareconnect.co/lifestyle-medicine"
-      />
+      <SEO />
       <main className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -561,9 +558,8 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${
-                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                }`}
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                  }`}
               >
                 <span className="sp-hero__badge">Weight & nutrition</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
@@ -590,6 +586,8 @@ export default function LifestyleMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

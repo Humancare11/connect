@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function PersistentCough({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Persistent Cough Treatment Online | Expert Respiratory Care"
-        description="Get expert care for a persistent cough online. Connect with a licensed provider for cough, throat irritation, wheezing, mucus, respiratory symptoms, and personalized treatment guidance."
-        keywords="Persistent cough, Chronic cough treatment, Online cough consultation, Respiratory care, Telemedicine cough treatment"
-        url="https://humancareconnect.co/persistent-cough"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function PersistentCough({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

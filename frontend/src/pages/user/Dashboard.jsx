@@ -16,7 +16,6 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
-  const [questions, setQuestions] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [certificates, setCertificates] = useState([]);
@@ -29,9 +28,8 @@ export default function Dashboard() {
     if (withLoader) setLoading(true);
 
     try {
-      const [apptRes, qnaRes, ticketRes, rxRes, certRes] = await Promise.allSettled([
+      const [apptRes, ticketRes, rxRes, certRes] = await Promise.allSettled([
         api.get("/api/appointments/mine"),
-        api.get("/api/qna/user-questions"),
         api.get("/api/tickets/user/my"),
         api.get("/api/medical/my-prescriptions"),
         api.get("/api/medical/my-certificates"),
@@ -42,13 +40,6 @@ export default function Dashboard() {
       } else {
         console.error("Dashboard appointments load error", apptRes.reason);
         setAppointments([]);
-      }
-
-      if (qnaRes.status === "fulfilled") {
-        setQuestions(Array.isArray(qnaRes.value.data) ? qnaRes.value.data : []);
-      } else {
-        console.error("Dashboard questions load error", qnaRes.reason);
-        setQuestions([]);
       }
 
       if (ticketRes.status === "fulfilled") {
@@ -97,8 +88,6 @@ export default function Dashboard() {
 
     const socketEvents = [
       "appointment-updated",
-      "question-created",
-      "question-approved",
       "ticket-created",
       "ticket-updated",
       "new-prescription",
@@ -162,20 +151,6 @@ export default function Dashboard() {
       status: ["complete", "completed"].includes(a.status) ? "completed" : a.status === "confirmed" ? "confirmed" : "pending",
       createdAt: new Date(a.createdAt || a.date),
     })),
-    ...questions.map((q) => ({
-      id: q._id,
-      type: "question",
-      icon: q.status === "answered" || q.status === "approved" ? "💡" : "❓",
-      title: q.question?.length > 65 ? q.question.slice(0, 65) + "…" : q.question,
-      detail:
-        q.status === "answered" || q.status === "approved"
-          ? "Answered"
-          : q.status === "assigned"
-            ? "Under review"
-            : "Awaiting answer",
-      status: q.status === "answered" || q.status === "approved" ? "completed" : "pending",
-      createdAt: new Date(q.createdAt),
-    })),
     ...tickets.map((t) => ({
       id: t._id,
       type: "ticket",
@@ -207,10 +182,6 @@ export default function Dashboard() {
       navigate(`/user/appointments?activityId=${encodedId}`);
       return;
     }
-    if (activity.type === "question") {
-      navigate(`/user/medical-questions?activityId=${encodedId}`);
-      return;
-    }
     navigate(`/user/raise-ticket?activityId=${encodedId}`);
   };
 
@@ -232,7 +203,7 @@ export default function Dashboard() {
       </div>
 
       {/* overview cards */}
-      <div className="hc-dash__overview">
+      <div className="hc-dash__overview hc-dash__overview--two">
         <div className="hc-dash__ov-card hc-dash__ov-card--appt">
           <div className="hc-dash__ov-left">
             <span className="hc-dash__ov-icon">🗓️</span>
@@ -242,19 +213,6 @@ export default function Dashboard() {
             <span className="hc-dash__ov-label">Total Appointments</span>
             <span className="hc-dash__ov-sub">
               {pendingCount} pending · {confirmedCount} confirmed · {completedCount} completed
-            </span>
-          </div>
-        </div>
-
-        <div className="hc-dash__ov-card hc-dash__ov-card--qna">
-          <div className="hc-dash__ov-left">
-            <span className="hc-dash__ov-icon">❓</span>
-          </div>
-          <div className="hc-dash__ov-right">
-            <span className="hc-dash__ov-num">{questions.length}</span>
-            <span className="hc-dash__ov-label">Total Questions</span>
-            <span className="hc-dash__ov-sub">
-              {questions.filter((q) => q.status === "answered" || q.status === "approved").length} answered
             </span>
           </div>
         </div>
@@ -339,7 +297,7 @@ export default function Dashboard() {
         <div className="hc-dash__section-header">
           <div>
             <h2 className="hc-dash__section-title">Recent Activity</h2>
-            <p className="hc-dash__section-sub">Your latest actions across appointments, questions &amp; tickets</p>
+            <p className="hc-dash__section-sub">Your latest actions across appointments &amp; tickets</p>
           </div>
         </div>
 
@@ -377,7 +335,7 @@ export default function Dashboard() {
                   <span className="hc-dash__activity-title">{act.title}</span>
                   <span className="hc-dash__activity-meta">
                     <span className={`hc-dash__activity-tag hc-dash__activity-tag--${act.type}`}>
-                      {act.type === "appointment" ? "Appointment" : act.type === "question" ? "Q&A" : "Ticket"}
+                      {act.type === "appointment" ? "Appointment" : "Ticket"}
                     </span>
                     &nbsp;· {act.detail}
                   </span>

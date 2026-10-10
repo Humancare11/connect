@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function ThyroidDisorders({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Thyroid Disorder Treatment Online | Virtual Thyroid Care"
-        description="Get online care for thyroid disorders. Consult a licensed provider for fatigue, weight changes, hormone imbalances, and personalized thyroid treatment."
-        keywords="thyroid disorder treatment, thyroid treatment online, hypothyroidism treatment, hyperthyroidism treatment, thyroid symptoms, online thyroid doctor, thyroid hormone management, virtual thyroid care, telehealth endocrinology, thyroid consultation online"
-        url="https://humancareconnect.co/thyroid-disorders"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function ThyroidDisorders({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

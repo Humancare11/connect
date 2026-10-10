@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function HighBloodPressure({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="High Blood Pressure Treatment Online | Hypertension Care"
-        description="Take control of high blood pressure with expert online care. Connect with a licensed provider for hypertension management, medication reviews, lifestyle guidance, and ongoing support through telemedicine services."
-        keywords="High blood pressure treatment, Hypertension care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/high-blood-pressure"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function HighBloodPressure({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

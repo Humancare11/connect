@@ -349,14 +349,14 @@ const specialties = [
     tags: ["Vaccinations", "Travel Illness"],
     link: "/travel-and-global-care/travel-medicine",
   },
-  {
-    name: "Global / Cross-Border Care",
-    icon: Globe2,
-    description:
-      "Coordinated medical access and continuity of care across countries.",
-    tags: ["Cross-Border", "Continuity of Care"],
-    link: "/travel-and-global-care/global-cross-border-care",
-  },
+  // {
+  //   name: "Global / Cross-Border Care",
+  //   icon: Globe2,
+  //   description:
+  //     "Coordinated medical access and continuity of care across countries.",
+  //   tags: ["Cross-Border", "Continuity of Care"],
+  //   link: "/travel-and-global-care/global-cross-border-care",
+  // },
 ];
 
 // ── Stats (derived from real data so copy can't drift out of sync) ──────────
@@ -432,7 +432,7 @@ const CONDITIONS = [
   },
   {
     slug: "chronic-migraine",
-    path: "/chronic-care/neurology/chronic-migraine",
+    path: "/chronic-care/neurology/migraine",
     icon: "brain",
     name: "Chronic Migraine",
   },
@@ -610,60 +610,9 @@ export default function Specialties() {
 
   return (
     <>
-      <SEO
-        title="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
-        description="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
-        keywords="online specialist doctor, specialist doctor consultation, virtual specialist consultation, online medical specialist, telehealth specialist services, second opinion online, specialist healthcare, chronic disease specialist, expert medical consultation, online healthcare provider, virtual doctor appointment, specialist care online"
-        url="https://humancareconnect.co/specialties"
-      />
+      <SEO />
       <Helmet>
-        <title>
-          Online Specialist Doctor Consultation | Expert Virtual Care |
-          Humancare Connect
-        </title>
-        <meta
-          name="description"
-          content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
-        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          rel="canonical"
-          href="https://www.humancareconnect.com/specialists"
-        />
-
-        {/* Open Graph */}
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:title"
-          content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
-        />
-        <meta
-          property="og:description"
-          content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
-        />
-        <meta
-          property="og:url"
-          content="https://www.humancareconnect.com/specialists"
-        />
-        <meta property="og:site_name" content="Humancare Connect" />
-        {/* TODO: replace with a real, hosted OG image (1200x630) before launch */}
-        <meta
-          property="og:image"
-          content="https://www.humancareconnect.com/og/specialists.jpg"
-        />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content="Online Specialist Doctor Consultation | Expert Virtual Care | Humancare Connect"
-        />
-        <meta
-          name="twitter:description"
-          content="Connect with an online specialist doctor at Humancare Connect. Get expert medical advice, personalized treatment support, second opinions, and secure virtual specialist consultations from home."
-        />
-
-        {/* FAQPage structured data for rich results */}
         <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
       </Helmet>
 
@@ -848,7 +797,7 @@ export default function Specialties() {
             <em>in under 2 minutes.</em>
           </h2>
           <p className="sp-cta__copy">
-            Search, book, and consult with a verified physician from anywhere —
+            Search, book, and consult with a verified physician from —
             serve any eligibility across all categories.
           </p>
           <div className="sp-cta__actions">

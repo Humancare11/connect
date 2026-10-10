@@ -146,7 +146,7 @@ export default function Sa() {
           <RevealCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
-            to="/doctor-note-or-sick-notes"
+            to="/doctors-note"
           >
             <div className="services-card-header">
               <div className="services-icon-box">

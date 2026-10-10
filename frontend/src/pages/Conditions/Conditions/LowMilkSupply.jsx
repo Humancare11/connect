@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function LowMilkSupply({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Low Milk Supply Support Online | Lactation Consultant for Breastfeeding"
-        description="Worried about low milk supply? Connect with an online lactation consultant for breastfeeding support, milk production guidance, feeding assessments, and personalized care for you and your baby."
-        keywords="Low milk supply, Online lactation consultant, Breastfeeding support, Milk production guidance"
-        url="https://humancareconnect.co/low-milk-supply"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function LowMilkSupply({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

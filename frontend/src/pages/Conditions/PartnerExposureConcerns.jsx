@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function PartnerExposureConcerns({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Partner Exposure Concerns | Online STI Exposure Consultation"
-        description="Get confidential care for partner exposure concerns. Connect with a licensed provider online for STI exposure assessment, testing guidance, prevention options, treatment recommendations, and sexual health support."
-        keywords="Partner exposure concerns, STI exposure consultation, Sexual health consultation, Online STI assessment"
-        url="https://humancareconnect.co/partner-exposure-concerns"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

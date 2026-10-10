@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function ShortnessOfBreath({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Shortness of Breath Treatment Online | Virtual Respiratory Care"
-        description="Talk to a licensed provider online for shortness of breath, wheezing, chest tightness, breathing difficulties, and personalized treatment guidance."
-        keywords="shortness of breath treatment, breathing difficulty, online pulmonologist, wheezing treatment, respiratory consultation online, chest tightness, virtual respiratory care, telehealth breathing support"
-        url="https://humancareconnect.co/shortness-of-breath"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function ShortnessOfBreath({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

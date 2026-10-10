@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import doctorConsultation from "../../assets/BlogImages/doctor-consultation.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -250,17 +249,7 @@ export default function OnlineDoctorConsultation() {
 
   return (
     <>
-      <SEO
-        title="Online Doctor Consultation Guide | Virtual Healthcare Benefits"
-        description="Learn about online doctor consultation and virtual healthcare benefits."
-        keywords="Online doctor consultation guide"
-        url="https://humancareconnect.co/online-doctor-consultation-guide"
-      />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">
@@ -341,8 +330,11 @@ export default function OnlineDoctorConsultation() {
               <figure className="hero-media">
                 <img
                   src={doctorConsultation}
+                  width="1168"
+                  height="586"
                   alt="Patient waiting in line to consult doctor vs Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   A virtual consultation in progress — patient and physician

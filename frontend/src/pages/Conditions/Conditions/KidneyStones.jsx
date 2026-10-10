@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrineryKidneyHealth/kidney-stones.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function KidneyStones({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Kidney Stone Treatment Online | Expert Urology Consultation"
-        description="Get expert care for kidney stones online. Consult a licensed provider for severe side pain, painful urination, blood in urine, nausea, and personalized treatment through secure telemedicine services."
-        keywords="Kidney stone treatment, Online urology consultation, Online doctor appointment, Urinary health care"
-        url="https://humancareconnect.co/kidney-stones"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function KidneyStones({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

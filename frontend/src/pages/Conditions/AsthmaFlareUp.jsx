@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function AsthmaFlareUp({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Asthma Flare-Up Care Online | Breathing Symptom Support"
-        description="Wheezing, chest tightness, or sudden breathing problems? Get online support for asthma flare-up symptoms, with evaluation and treatment guidance from a licensed provider."
-        keywords="Asthma flare-up, Asthma flare-up symptoms, Wheezing, Chest tightness, Breathing care guidance, Online doctor appointment"
-        url="https://humancareconnect.co/asthma-flare-up"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function AsthmaFlareUp({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

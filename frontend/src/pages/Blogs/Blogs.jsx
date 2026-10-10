@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import "./Blogs.css";
 import SEO from "../../components/Seo";
 import { fetchBlogs, blogImageSrc } from "../../api/blogApi";
+import { usePrerendered } from "../../seo/prerenderData";
 
 import heroBg from "../../assets/BannerImages/blog-banner.webp";
 
@@ -27,8 +28,11 @@ export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [data, setData] = useState({ blogs: [], page: 1, total: 0, totalPages: 1 });
-  const [loadedKey, setLoadedKey] = useState(null);
+  // The first page of posts is fetched at build time and is already in the prerendered HTML (so the
+  // post links are crawlable); start from it, then refresh from the API as before.
+  const prerenderedList = usePrerendered("blogs:list");
+  const [data, setData] = useState(prerenderedList || { blogs: [], page: 1, total: 0, totalPages: 1 });
+  const [loadedKey, setLoadedKey] = useState(prerenderedList ? "1||All" : null);
 
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
   const rawPage = isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
@@ -61,10 +65,12 @@ export default function BlogPage() {
       .catch((err) => {
         if (controller.signal.aborted || err?.code === "ERR_CANCELED") return;
         console.error("Failed to load blogs:", err);
-        setData({ blogs: [], page: 1, total: 0, totalPages: 1 });
+        // Keep the prerendered first page on screen if the refresh fails.
+        if (!(prerenderedList && requestKey === "1||All")) setData({ blogs: [], page: 1, total: 0, totalPages: 1 });
         setLoadedKey(requestKey);
       });
     return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestKey, rawPage, debouncedSearch, activeCategory]);
 
   // Same card shape as before. Category is intentionally not mapped: the list
@@ -125,16 +131,7 @@ export default function BlogPage() {
 
   return (
     <>
-      <SEO
-        title=" Healthcare & Wellness | Telemedicine Insights"
-        description="Explore trusted healthcare insights, telemedicine guidance, wellness tips, and expert information to help you make informed decisions about your health."
-        keywords="Healthcare insights, Telemedicine guidance, Wellness tips, Healthcare information, Expert guidance, Health and wellness"
-        url={
-          currentPage > 1
-            ? `https://humancareconnect.co/blogs?page=${currentPage}`
-            : "https://humancareconnect.co/blogs"
-        }
-      />
+      <SEO />
       <div className="blog-page">
         {/* ── HERO ── */}
         <section>

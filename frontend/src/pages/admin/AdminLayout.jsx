@@ -79,10 +79,10 @@ const ICONS = {
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </>
   ),
-  qna: svg(
+  email: svg(
     <>
-      <path d="M20 2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6l4 4 4-4h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
-      <path d="M9 9h6M9 12h4" />
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
     </>
   ),
   ticket: svg(
@@ -108,7 +108,15 @@ const NAV_ITEMS = [
       { path: "/admin-dashboard/manage-doctors", label: "Manage Doctors", icon: ICONS.users },
     ],
   },
-  { key: "users", label: "Users", title: "Manage Users", path: "/admin-dashboard/manage-users", icon: ICONS.users },
+  {
+    key: "users",
+    label: "Users",
+    icon: ICONS.users,
+    children: [
+      { path: "/admin-dashboard/manage-users", label: "Manage Users", icon: ICONS.users },
+      { path: "/admin-dashboard/deletion-requests", label: "Deletion Requests", icon: ICONS.document },
+    ],
+  },
   {
     key: "appointments",
     label: "Appointments",
@@ -153,7 +161,9 @@ const NAV_ITEMS = [
     icon: ICONS.chart,
   },
   { key: "partner-cases", label: "Partner Cases", path: "/admin-dashboard/partner-cases", roles: ["admin", "superadmin"], icon: ICONS.partners },
-  { key: "qna", label: "Medical Question Ans", path: "/admin-dashboard/qna", icon: ICONS.qna },
+  // Shared company mailboxes (support@, tech@). Same visibility rule as the
+  // other admin pages: admin + superadmin, never the payment admin.
+  { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 

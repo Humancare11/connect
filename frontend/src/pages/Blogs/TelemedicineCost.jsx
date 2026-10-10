@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicineCost from "../../assets/BlogImages/telemedicine-cost.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -220,12 +219,7 @@ export default function TelemedicineCost() {
 
   return (
     <>
-      <SEO title="Telemedicine Cost USA | Virtual Doctor Visit Prices" description="Learn about telemedicine costs and pricing in the USA." keywords="Telemedicine cost" url="https://humancareconnect.co/telemedicine-cost-usa" />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">
@@ -301,8 +295,11 @@ export default function TelemedicineCost() {
               <figure className="hero-media">
                 <img
                   src={telemedicineCost}
+                  width="1168"
+                  height="586"
                   alt="Patient reviewing telemedicine consultation pricing and insurance coverage on a laptop"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   Understanding telemedicine pricing, insurance coverage, and

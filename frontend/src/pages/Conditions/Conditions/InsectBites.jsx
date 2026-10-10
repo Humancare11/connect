@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function InsectBites({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Insect Bite Treatment Online | Fast Relief for Bug Bites"
-        description="Get expert treatment for insect bites online. Connect with a licensed provider for itching, swelling, redness, allergic reactions, and personalized care through secure telemedicine services."
-        keywords="Insect bite treatment, Bug bite care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/insect-bite"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function InsectBites({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

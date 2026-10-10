@@ -4,7 +4,6 @@ import PatientTrustImg from "../assets/AboutUsPage/global-healthcare-professiona
 import NetworkDoctorsImg from "../assets/AboutUsPage//patient-virtual-healthcare-experience.webp";
 import DoctorTrustImg from "../assets/AboutUsPage/doctor-telemedicine-consultation.webp";
 import SEO from "../components/Seo";
-import { Helmet } from "react-helmet-async";
 /* ─── Shared primitives ─── */
 function Eyebrow({ children, light }) {
   return (
@@ -226,7 +225,7 @@ const services = [
   },
   {
     // tier: "Flagship",
-    title: "Healthcare for Travelers & Global Communities",
+    title: "Healthcare for Travelers",
     body: "Stay connected to trusted medical support wherever life takes you with accessible virtual healthcare designed for modern lifestyles.",
   },
   {
@@ -250,26 +249,21 @@ const offices = [
 export default function AboutPage() {
   return (
     <>
-      <SEO
-        title="About Humancare Connect | Trusted Virtual Healthcare "
-        description="Learn about Humancare Connect, a trusted virtual healthcare platform offering secure online doctor consultations, quality care, and telemedicine services. "
-        keywords="virtual healthcare platform, online doctor consultations, virtual healthcare services, telemedicine services, online healthcare, virtual care, online medical consultation, digital healthcare, licensed providers, Humancare Connect"
-        url="https://humancareconnect.co/about-us"
-      />
+      <SEO />
       <div className="about-page">
         {/* 1. Hero */}
         <section>
           <div className="corp-hero about-page-hero">
             <div className="corp-hero-inner">
               <h1>
-                One Global Connection to Better Healthcare.
+                One Connection to Better Healthcare.
               </h1>
               <p>
-                At Humancare Connect, we make quality healthcare accessible
-                beyond borders. Through secure online doctor consultations and
-                virtual healthcare services, we connect individuals,
-                travelers, and organizations with trusted medical care
-                anytime, anywhere.
+               At Humancare Connect, we make quality healthcare more accessible
+for patients across the United States. Through secure online doctor
+consultations and virtual care services, we connect individuals,
+families, and organizations with licensed U.S. providers, right
+from the comfort of home.
               </p>
             </div>
           </div>
@@ -293,6 +287,8 @@ export default function AboutPage() {
                   <div className="why__img-wrap">
                     <img
                       src={WhyHumancareImg}
+                      width="1790"
+                      height="1860"
                       alt="Healthcare professionals collaborating to improve access to virtual healthcare services"
                       className="why__img"
                       loading="lazy"
@@ -427,6 +423,8 @@ export default function AboutPage() {
               <div className="network__img-wrap">
                 <img
                   src={NetworkDoctorsImg}
+                  width="1790"
+                  height="1860"
                   alt="Licensed healthcare professionals providing trusted online medical consultations"
                   className="network__img"
                   loading="lazy"
@@ -616,7 +614,7 @@ export default function AboutPage() {
                     </p>
                   </div>
                   <div className="trust-privacy__badges">
-                    {["GDPR", "HIPAA-aligned", "Encrypted"].map((b) => (
+                    {[ "HIPAA-aligned", "Encrypted"].map((b) => (
                       <span key={b} className="badge">
                         {b}
                       </span>

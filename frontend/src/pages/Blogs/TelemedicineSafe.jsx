@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicineSafe from "../../assets/BlogImages/telemedicine-safe.webp";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
@@ -246,12 +245,7 @@ export default function TelemedicineSafe() {
 
   return (
     <>
-      <SEO title="Is Telemedicine Safe? | Virtual Healthcare Security" description="Learn about telemedicine safety and security." keywords="Is telemedicine safe" url="https://humancareconnect.co/is-telemedicine-safe" />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">
@@ -332,8 +326,11 @@ export default function TelemedicineSafe() {
               <figure className="hero-media">
                 <img
                   src={telemedicineSafe}
+                  width="1168"
+                  height="586"
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 {/* <figcaption>
                   A virtual consultation in progress — patient and physician

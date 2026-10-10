@@ -1,4 +1,4 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import {
   FiActivity,
@@ -279,7 +279,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
@@ -529,20 +529,18 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <main className="sp-page">
-      <SEO
-        title="Pediatric Specialists | Child Healthcare & Wellness Services"
-        description="Get compassionate pediatric care for infants, children, and adolescents, including colds, fevers, feeding concerns, ear pain, skin conditions, and preventive wellness."
-        keywords="Pediatric specialist, Online pediatric consultation, Child healthcare, Virtual pediatric care"
-        url="https://humancareconnect.co/pediatrics"
-      />
+      <SEO />
       {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
       <section className="sp-hero">
         <div className="sp-hero__bg">
           <img
             src={data.heroImage}
+            width="1920"
+            height="1178"
             alt={data.heroAlt}
             className="sp-hero__img"
             loading="eager"
+            fetchPriority="high"
           />
           <div className="sp-hero__overlay" />
         </div>
@@ -550,9 +548,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <div className="sp-hero__content">
           <div className="sp-hero__layout">
             <div
-              className={`sp-hero__content-inner${
-                heroLoaded ? " sp-hero__content-inner--loaded" : ""
-              }`}
+              className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                }`}
             >
               <span className="sp-hero__badge">Child & Family Care</span>
               <h1 className="sp-hero__title">{data.name}</h1>
@@ -579,6 +576,8 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               <div className="sp-overview__img-wrap">
                 <img
                   src={data.overviewImage}
+                  width="562"
+                  height="430"
                   alt={data.overviewAlt}
                   className="sp-overview__img"
                   loading="lazy"

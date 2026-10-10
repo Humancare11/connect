@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function SportsInjuries({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sports Injury Treatment Online | Virtual Care for Sprains & Strains"
-        description="Get online care for sports injuries. Consult a licensed provider for sprains, strains, joint pain, swelling, muscle injuries, and personalized recovery guidance."
-        keywords="sports injury treatment online, sports injury consultation, sprain treatment, muscle strain treatment, joint injury care, online orthopedic consultation, sports medicine online, virtual injury assessment, telehealth sports injuries, sports injury recovery"
-        url="https://humancareconnect.co/sports-injuries"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -53,7 +50,7 @@ export default function SportsInjuries({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

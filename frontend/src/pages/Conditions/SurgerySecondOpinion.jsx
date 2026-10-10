@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function SurgerySecondOpinion({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Surgery Second Opinion Online | Expert Surgical Review"
-        description="Get an online second opinion before surgery. Review your diagnosis, recommended procedure, risks, benefits, and treatment alternatives with a licensed provider."
-        keywords="surgery second opinion, surgical second opinion online, second opinion before surgery, online medical second opinion, surgery consultation online, surgical procedure review, alternative treatment options, expert surgical review, virtual second opinion, telehealth consultation"
-        url="https://humancareconnect.co/surgery-second-opinion"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

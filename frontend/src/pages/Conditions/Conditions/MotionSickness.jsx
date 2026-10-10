@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function MotionSickness({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Motion Sickness Treatment Online | Travel Nausea & Dizziness Relief"
-        description="Get expert treatment for motion sickness online. Consult a licensed provider for nausea, dizziness, vomiting, travel sickness, and personalized care before or during your trip."
-        keywords="Motion sickness treatment, Travel sickness relief, Online doctor consultation, Nausea and dizziness care"
-        url="https://humancareconnect.co/motion-sickness"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function MotionSickness({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

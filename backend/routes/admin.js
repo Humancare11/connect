@@ -10,6 +10,7 @@ const {
   getApprovedDoctors, getDoctorWorkflowStats, getDoctorPayments, markDoctorPayout, editDoctorPayout,
   processDoctorPayout,
 } = require("../controllers/adminController");
+const { getDeletionRequests } = require("../controllers/deletionRequestController");
 const { verifyAdminToken, adminOnly, superAdminOnly } = require("../middleware/verifyToken");
 
 router.get("/stats", verifyAdminToken, adminOnly, getAdminStats);
@@ -27,6 +28,7 @@ router.put("/doctors/:id/delete/reject",  verifyAdminToken, adminOnly, rejectDoc
 
 router.post("/migrate/doctor-ids", verifyAdminToken, adminOnly, migrateDoctorIds);
 
+router.get("/deletion-requests", verifyAdminToken, adminOnly, getDeletionRequests);
 router.get("/users",        verifyAdminToken, adminOnly, getAllUsers);
 router.get("/users/:id",    verifyAdminToken, adminOnly, getUserDetails);
 router.get("/users/:id/consultations", verifyAdminToken, adminOnly, getUserConsultations);

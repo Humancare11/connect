@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import "./telemedicine.css";
 import telemedicine from "../../assets/BlogImages/telemedicine.webp";
 import topTelemedicinePlatforms from "../../assets/BlogImages/top-telemedicine-platforms.webp";
@@ -183,26 +182,7 @@ export default function Telemedicine() {
 
   return (
     <>
-      <SEO title="What Is Telemedicine? | Virtual Healthcare Explained" description="Learn what telemedicine is and how it works." keywords="What is telemedicine" url="https://humancareconnect.co/what-is-telemedicine" />
-      <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <link rel="canonical" href={PAGE_URL} />
-
-        {/* Open Graph */}
-        <meta property="og:type" content="article" />
-        <meta property="og:title" content={PAGE_TITLE} />
-        <meta property="og:description" content={PAGE_DESCRIPTION} />
-        <meta property="og:url" content={PAGE_URL} />
-        <meta property="og:image" content={PAGE_IMAGE} />
-        <meta property="og:site_name" content="Humancare Connect" />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={PAGE_TITLE} />
-        <meta name="twitter:description" content={PAGE_DESCRIPTION} />
-        <meta name="twitter:image" content={PAGE_IMAGE} />
-      </Helmet>
+      <SEO />
 
       <div className="blog-page">
         <a className="skip-link" href="#main-content">
@@ -283,8 +263,11 @@ export default function Telemedicine() {
               <figure className="hero-media">
                 <img
                   src={telemedicine}
+                  width="1168"
+                  height="586"
                   alt="Patient having a video consultation with a doctor on a laptop from home"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   A virtual consultation in progress — patient and physician

@@ -27,7 +27,6 @@ import {
   FiCalendar,
 } from "react-icons/fi";
 
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import ServiceContact from "./ServiceContact";
 import CentralFAQ from "../../components/FAQ/FAQ";
@@ -314,20 +313,7 @@ export default function SecondOpinion() {
 
   return (
     <>
-      <SEO
-        title="Online Second Medical Opinion | Qualified Specialists"
-        description="Get a trusted online second medical opinion from qualified specialists. Review your diagnosis, treatment plan, surgery recommendations, and cancer care securely."
-        url="https://humancareconnect.co/online-second-medical-opinion"
-      />
-      <Helmet>
-        <title>
-          Online Second Medical Opinion | Qualified Specialists | Humancare Connect
-        </title>
-        <meta
-          name="description"
-          content="Get a trusted online second medical opinion from qualified specialists. Review your diagnosis, treatment plan, surgery recommendations, and cancer care securely."
-        />
-      </Helmet>
+      <SEO />
 
       <main
         className="service-page service-page--second-opinion"
@@ -353,6 +339,7 @@ export default function SecondOpinion() {
                 width={HERO_IMAGE.width}
                 height={HERO_IMAGE.height}
                 loading="eager"
+                fetchPriority="high"
                 className="service-hero__bg-img"
               />
               <div className="service-hero__overlay" />

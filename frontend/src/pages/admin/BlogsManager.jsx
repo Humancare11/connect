@@ -10,12 +10,20 @@ const EMPTY_FORM = {
   coverImage: "",
   excerpt: "",
   content: "",
+  faqs: [],
   category: "",
   tags: "",
   readTime: "",
   metaTitle: "",
   metaDescription: "",
 };
+
+// Each FAQ row gets a client-only `uid` so its editor keeps its state when the
+// rows are re-ordered. It is stripped before saving.
+let faqUid = 0;
+const newFaq = (question = "", answer = "") => ({ uid: `faq-${(faqUid += 1)}`, question, answer });
+
+const MAX_FAQS = 30;
 
 function slugify(text) {
   return String(text || "")
@@ -245,6 +253,7 @@ function BlogForm({ blogId, onClose }) {
           coverImage: b.coverImage || "",
           excerpt: b.excerpt || "",
           content: b.content || "",
+          faqs: (b.faqs || []).map((f) => newFaq(f.question, f.answer)),
           category: b.category || "",
           tags: (b.tags || []).join(", "),
           readTime: b.readTime ? String(b.readTime) : "",
@@ -269,6 +278,19 @@ function BlogForm({ blogId, onClose }) {
   const onTitleChange = (title) => {
     update(slugTouched || meta.isLegacy ? { title } : { title, slug: slugify(title) });
   };
+
+  const updateFaq = (uid, patch) =>
+    setForm((f) => ({ ...f, faqs: f.faqs.map((q) => (q.uid === uid ? { ...q, ...patch } : q)) }));
+  const addFaq = () => setForm((f) => (f.faqs.length >= MAX_FAQS ? f : { ...f, faqs: [...f.faqs, newFaq()] }));
+  const removeFaq = (uid) => setForm((f) => ({ ...f, faqs: f.faqs.filter((q) => q.uid !== uid) }));
+  const moveFaq = (index, dir) =>
+    setForm((f) => {
+      const to = index + dir;
+      if (to < 0 || to >= f.faqs.length) return f;
+      const faqs = [...f.faqs];
+      [faqs[index], faqs[to]] = [faqs[to], faqs[index]];
+      return { ...f, faqs };
+    });
 
   const uploadImage = async (file) => {
     const fd = new FormData();
@@ -309,7 +331,10 @@ function BlogForm({ blogId, onClose }) {
       metaTitle: form.metaTitle,
       metaDescription: form.metaDescription,
     };
-    if (!meta.isLegacy) payload.content = form.content;
+    if (!meta.isLegacy) {
+      payload.content = form.content;
+      payload.faqs = form.faqs.map(({ question, answer }) => ({ question, answer }));
+    }
     if (status) payload.status = status;
     try {
       const res = savedId
@@ -441,6 +466,56 @@ function BlogForm({ blogId, onClose }) {
           </Field>
         )}
 
+        {!meta.isLegacy && (
+          <Field
+            label="FAQs"
+            hint={`Optional. Shown as an accordion below the article, with an "FAQs" item in the table of contents. Items with an empty question or answer are not saved. Up to ${MAX_FAQS}.`}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {form.faqs.length === 0 && <p className="muted" style={{ margin: 0 }}>No FAQs yet.</p>}
+              {form.faqs.map((faq, i) => (
+                <div key={faq.uid} style={{ border: "1.5px solid #e5e7eb", borderRadius: 10, padding: 12, background: "#fafafa" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+                    <strong style={{ fontSize: 13 }}>FAQ {i + 1}</strong>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button type="button" className="btn-view" style={{ fontSize: 12, padding: "4px 10px" }} disabled={busy || i === 0} onClick={() => moveFaq(i, -1)} aria-label={`Move FAQ ${i + 1} up`}>
+                        ▲ Up
+                      </button>
+                      <button type="button" className="btn-view" style={{ fontSize: 12, padding: "4px 10px" }} disabled={busy || i === form.faqs.length - 1} onClick={() => moveFaq(i, 1)} aria-label={`Move FAQ ${i + 1} down`}>
+                        ▼ Down
+                      </button>
+                      <button type="button" className="btn-reject" style={{ fontSize: 12, padding: "4px 10px" }} disabled={busy} onClick={() => removeFaq(faq.uid)} aria-label={`Delete FAQ ${i + 1}`}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    style={{ width: "100%", marginBottom: 8 }}
+                    placeholder="Question"
+                    aria-label={`FAQ ${i + 1} question`}
+                    disabled={busy}
+                    value={faq.question}
+                    onChange={(e) => updateFaq(faq.uid, { question: e.target.value })}
+                    maxLength={300}
+                  />
+                  <BlogEditor
+                    compact
+                    label={`FAQ ${i + 1} answer`}
+                    value={faq.answer}
+                    onChange={(html) => updateFaq(faq.uid, { answer: html })}
+                    disabled={saving}
+                  />
+                </div>
+              ))}
+              <div>
+                <button type="button" className="btn-view" disabled={busy || form.faqs.length >= MAX_FAQS} onClick={addFaq}>
+                  + Add FAQ
+                </button>
+              </div>
+            </div>
+          </Field>
+        )}
+
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           {meta.isLegacy ? (
             <a className="btn-view" style={{ textDecoration: "none", display: "inline-block" }} href={`/${form.slug}`} target="_blank" rel="noopener noreferrer">
@@ -499,6 +574,7 @@ function BlogForm({ blogId, onClose }) {
               publishedAt: meta.publishedAt || new Date().toISOString(),
               readTime: form.readTime ? Number(form.readTime) : null,
               content: form.content,
+              faqs: form.faqs,
             }}
           />
         </div>

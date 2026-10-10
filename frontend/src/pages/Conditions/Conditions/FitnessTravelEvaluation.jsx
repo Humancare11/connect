@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function FitnessTravelEvaluation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fitness-to-Travel Evaluation Online | Travel Health Assessment"
-        description="Get a fitness-to-travel evaluation online with licensed healthcare providers. Receive travel health guidance, medical clearance, and documentation support through secure telemedicine services."
-        keywords="Fitness-to-travel evaluation, Travel health assessment, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/fitness-travel-evaluation"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

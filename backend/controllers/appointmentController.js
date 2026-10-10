@@ -13,6 +13,7 @@ const { sendPushToUser } = require("../utils/pushNotifications");
 const {
   PaymentVerificationError,
   resolveDoctorFeeCents,
+  logOrphanedPayment,
   resolveCategoryFeeCents,
   verifyStripePaymentIntent,
   verifyPaypalOrder,
@@ -235,7 +236,21 @@ const createAppointment = async (req, res) => {
       // whatever amount happens to be on the payment reference the client
       // sends, otherwise a patient could pay for a $1 booking elsewhere and
       // reuse that reference here. See PaymentVerificationError below.
-      const expectedCents = await resolveDoctorFeeCents(resolvedDoctorId);
+      let expectedCents;
+      try {
+        expectedCents = await resolveDoctorFeeCents(resolvedDoctorId);
+      } catch (feeErr) {
+        // The client already holds a payment reference at this point, so if the
+        // fee is unusable the patient may have been charged: flag it for refund.
+        await logOrphanedPayment({
+          reason: feeErr.message,
+          paymentIntentId,
+          paypalOrderId,
+          doctorId: String(resolvedDoctorId),
+          patientId,
+        });
+        throw feeErr;
+      }
       const verified = paymentIntentId
         ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
         : await verifyPaypalOrder({ paypalOrderId, expectedCents });

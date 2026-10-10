@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function HeavyPeriods({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Heavy Period Treatment Online | Women's Health Consultation"
-        description="Get expert care for heavy periods online. Connect with a licensed provider for excessive menstrual bleeding, severe cramps, hormone health guidance, and personalized treatment through telemedicine services."
-        keywords="Heavy period treatment, Women's health consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/heavy-periods"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function HeavyPeriods({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

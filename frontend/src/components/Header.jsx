@@ -2,8 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import "./header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
-import logo from "../assets/NewLogo.png";
-import miniLogo from "../assets/logo-2.png";
+import logo from "../assets/NewLogo.webp";
+import miniLogo from "../assets/logo-2.webp";
 import { useAuth } from "../context/AuthContext";
 import {
   Baby,
@@ -29,7 +29,7 @@ const HelpIcons = {
   "Mental Health": <Brain size={18} strokeWidth={1.8} />,
   "Sexual Health": <Heart size={18} strokeWidth={1.8} />,
   "Skin & Hair": <Sparkles size={18} strokeWidth={1.8} />,
-  "Travel & Global Care": <Plane size={18} strokeWidth={1.8} />,
+  // "Travel & Global Care": <Plane size={18} strokeWidth={1.8} />,
   "Weight & Nutrition": <Salad size={18} strokeWidth={1.8} />,
   "Women's Health": <Venus size={18} strokeWidth={1.8} />,
 };
@@ -44,9 +44,16 @@ const helpRoutes = {
   "Mental Health": "/mental-health",
   "Sexual Health": "/sexual-health",
   "Skin & Hair": "/skin-and-hair-care",
-  "Travel & Global Care": "/travel-and-global-care",
+  // "Travel & Global Care": "/travel-and-global-care",
   "Weight & Nutrition": "/weight-and-nurtrition",
   "Women's Health": "/women-health",
+};
+
+/* Plain clicks on the sliding links keep toggling the dropdown; modified clicks
+   (new tab / window) follow the link normally. */
+const keepPillBehaviour = (e) => {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
 };
 
 /* ── Short descriptor shown in dropdown ── */
@@ -59,7 +66,7 @@ const helpDesc = {
   "Mental Health": "Behavioral Health,Psychiatry,Psychology",
   "Sexual Health": "Sexual Health",
   "Skin & Hair": "Dermatology",
-  "Travel & Global Care": "Travel Medicine, Global / Cross-Border Care",
+  // "Travel & Global Care": "Travel Medicine, Global / Cross-Border Care",
   "Weight & Nutrition": "Lifestyle Medicine, Nutrition & Dietetics, Weight Management",
   "Women's Health": "Menopause Care, OB-GYN, Women Mental Health",
 };
@@ -86,7 +93,7 @@ export default function Header() {
     "Mental Health",
     "Sexual Health",
     "Skin & Hair",
-    "Travel & Global Care",
+    // "Travel & Global Care",
     "Weight & Nutrition",
     "Women's Health",
   ];
@@ -229,12 +236,16 @@ export default function Header() {
               src={logo}
               alt="Humancare Logo"
               className="logo-full"
+              width="400"
+              height="400"
               decoding="async"
             />
             <img
               src={miniLogo}
               alt="Humancare Mini Logo"
               className="logo-mini"
+              width="256"
+              height="256"
               decoding="async"
             />
           </Link>
@@ -263,16 +274,30 @@ export default function Header() {
                   <div
                     className={`help-slide-track ${helpOpen ? "paused" : ""}`}
                   >
+                    {/* Real links so crawlers can follow them. A plain click still just
+                        toggles the dropdown (handled by the pill), as before. */}
                     {helpItems.map((item, i) => (
-                      <span key={i} className="help-slide-item">
+                      <Link
+                        key={i}
+                        to={helpRoutes[item]}
+                        className="help-slide-item"
+                        onClick={keepPillBehaviour}
+                      >
                         {item}
-                      </span>
+                      </Link>
                     ))}
                     {/* Duplicate for seamless loop */}
                     {helpItems.map((item, i) => (
-                      <span key={`d-${i}`} className="help-slide-item">
+                      <Link
+                        key={`d-${i}`}
+                        to={helpRoutes[item]}
+                        className="help-slide-item"
+                        onClick={keepPillBehaviour}
+                        aria-hidden="true"
+                        tabIndex={-1}
+                      >
                         {item}
-                      </span>
+                      </Link>
                     ))}
                   </div>
                 </div>

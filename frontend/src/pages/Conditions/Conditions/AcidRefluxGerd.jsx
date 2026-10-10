@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function AcidRefluxGerd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Acid Reflux & GERD Treatment Online | Virtual Doctor Care"
-        description="Get online care for acid reflux and GERD symptoms, including heartburn and chest discomfort. Connect with a licensed provider for treatment guidance and symptom management."
-        keywords="Acid reflux, GERD symptoms, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/chronic-care/gastroenterology/acid-reflux-gerd"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function AcidRefluxGerd({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -29,7 +29,6 @@ export default function AdminOverview() {
     { icon: "🩺", label: "Manage Doctors", sub: "Review & approve enrollments", path: "/admin-dashboard/manage-doctors" },
     { icon: "👥", label: "Manage Users", sub: "View & manage patient accounts", path: "/admin-dashboard/manage-users" },
     { icon: "📅", label: "Appointments", sub: "Monitor all booked appointments", path: "/admin-dashboard/appointments" },
-    { icon: "💬", label: "Medical Q&A", sub: "Assign questions & approve answers", path: "/admin-dashboard/qna" },
     { icon: "🎫", label: "Support Tickets", sub: "Resolve patient & doctor tickets", path: "/admin-dashboard/tickets" },
   ];
 

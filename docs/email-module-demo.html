@@ -1,0 +1,551 @@
+<title>HCC Mail Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Gmail-style shell — compose + folders on the left rail, mail list or full reading page in the main pane, compose window docked bottom-right */
+:root{
+  --bg:#f3f6f6; --surface:#ffffff; --sunk:#e9efef; --line:#d6e0df; --hover:#e2eaea;
+  --fg:#15292a; --muted:#5b7071; --accent:#0d7a6f; --accent-ink:#ffffff; --accent-soft:#d3ece8;
+  --ok:#1f8a4c; --ok-soft:#dcf2e4; --warn:#a86a00; --warn-soft:#fbefd5; --bad:#b4372f; --bad-soft:#f8e0de;
+  --a1:#2f6fd0; --a2:#b2457e; --a3:#7a5ac8; --a4:#c0711a; --ext:#6b7f80;
+  --box-support:#0d7a6f; --box-support-soft:#d3ece8; --box-tech:#6a4fc0; --box-tech-soft:#e7e1f7;
+  --f-display:"Plus Jakarta Sans",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1817; --surface:#152221; --sunk:#1b2b2a; --line:#29403e; --hover:#203433;
+  --fg:#e3eeed; --muted:#93a9a8; --accent:#38b3a3; --accent-ink:#06201d; --accent-soft:#16413c;
+  --ok:#5cc98b; --ok-soft:#173a27; --warn:#e3a944; --warn-soft:#3a2d12; --bad:#ef7d74; --bad-soft:#401d1a;
+  --a1:#6fa3f0; --a2:#e07fb3; --a3:#a990ef; --a4:#e7a058; --ext:#7d9394;
+  --box-support:#38b3a3; --box-support-soft:#16413c; --box-tech:#a990ef; --box-tech-soft:#2c2547; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1817; --surface:#152221; --sunk:#1b2b2a; --line:#29403e; --hover:#203433;
+  --fg:#e3eeed; --muted:#93a9a8; --accent:#38b3a3; --accent-ink:#06201d; --accent-soft:#16413c;
+  --ok:#5cc98b; --ok-soft:#173a27; --warn:#e3a944; --warn-soft:#3a2d12; --bad:#ef7d74; --bad-soft:#401d1a;
+  --a1:#6fa3f0; --a2:#e07fb3; --a3:#a990ef; --a4:#e7a058; --ext:#7d9394;
+  --box-support:#38b3a3; --box-support-soft:#16413c; --box-tech:#a990ef; --box-tech-soft:#2c2547; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-size:.86em}
+.ico{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.demo-note{background:var(--warn-soft);color:var(--warn);font-size:13px;padding:6px 16px;text-align:center}
+
+.top{display:flex;align-items:center;gap:16px;padding:10px 20px;background:var(--bg);flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:700;font-size:18px;min-width:220px}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-size:14px}
+.brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted)}
+.search{flex:1;min-width:200px;max-width:640px;display:flex;align-items:center;gap:10px;background:var(--sunk);border-radius:999px;padding:9px 16px;color:var(--muted)}
+.search input{border:0;background:transparent;outline:0;flex:1;min-width:0;color:var(--fg)}
+.search:focus-within{background:var(--surface);box-shadow:0 0 0 1px var(--line)}
+.top .spacer{flex:1}
+.who{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.who select{padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);gap:8px;padding-inline:8px 16px;padding-block:0 16px}
+
+/* Gmail-style rail */
+.rail{display:flex;flex-direction:column;gap:6px;padding-top:4px}
+.compose-btn{display:inline-flex;align-items:center;gap:12px;align-self:flex-start;margin:0 0 12px 8px;padding:16px 24px 16px 18px;border:0;border-radius:16px;background:var(--accent-soft);color:var(--fg);font:600 15px/1 var(--f-display);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.compose-btn:hover{box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.nav{display:flex;flex-direction:column}
+.nav-item{display:flex;align-items:center;gap:16px;height:36px;padding:0 14px 0 24px;border:0;background:transparent;border-radius:0 999px 999px 0;text-align:left;width:100%;font-size:14px}
+.nav-item:hover{background:var(--hover)}
+.nav-item.on{background:var(--accent-soft);font-weight:700}
+.nav-item .count{margin-left:auto;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.nav-item .count.dim{font-weight:400;color:var(--muted)}
+.nav-item .lbl{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rail h4{margin:16px 0 4px 24px;font:600 14px/1 var(--f-display);color:var(--fg)}
+.box-dot{width:12px;height:12px;border-radius:3px;flex:none;margin:0 4px}
+
+/* main pane */
+.pane{background:var(--surface);border-radius:16px;min-width:0;min-height:calc(100vh - 110px);display:flex;flex-direction:column;overflow:hidden}
+.toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;min-height:52px}
+.toolbar h1{margin:0;font:700 17px/1.2 var(--f-display)}
+.toolbar .sub{color:var(--muted);font-size:13px}
+.toolbar .spacer{flex:1}
+.tabs{display:flex;gap:4px}
+.tab{border:0;background:transparent;padding:6px 12px;border-radius:8px;font-size:13px;color:var(--muted)}
+.tab.on{background:var(--sunk);color:var(--fg);font-weight:600}
+.icon-btn{border:0;background:transparent;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:var(--muted)}
+.icon-btn:hover{background:var(--hover);color:var(--fg)}
+
+/* mail list rows */
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:180px 120px minmax(0,1fr) 150px 64px;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer;background:var(--surface)}
+.row:hover{box-shadow:inset 0 -1px 0 var(--line),0 1px 4px rgba(0,0,0,.08);position:relative;z-index:1}
+.row.unread{background:var(--surface)}
+.row.read{background:var(--sunk)}
+.row.unread .who-col,.row.unread .subj{font-weight:700}
+.who-col{display:flex;align-items:center;gap:10px;min-width:0}
+.who-col .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.subj{font-weight:500}
+.snip{color:var(--muted)}
+.clip{color:var(--muted);display:inline-flex}
+.clip .ico{width:16px;height:16px}
+.time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;white-space:nowrap;text-align:right}
+.row.unread .time{color:var(--fg);font-weight:700}
+.empty{padding:60px 20px;text-align:center;color:var(--muted)}
+
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 12px/1 var(--f-display);flex:none}
+.av.lg{width:40px;height:40px;font-size:15px}
+
+/* mailbox chip: which company ID it came to / went from */
+.mbox{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap;max-width:100%}
+.mbox .ico{width:14px;height:14px}
+.mbox.support{background:var(--box-support-soft);color:var(--box-support)}
+.mbox.tech{background:var(--box-tech-soft);color:var(--box-tech)}
+.mbox small{font-weight:400;opacity:.85;font-family:var(--f-mono);font-size:11.5px}
+
+.tag{display:inline-flex;align-items:center;padding:1px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;flex:none}
+.tag-spam,.tag-failed{background:var(--bad-soft);color:var(--bad)}
+.tag-replied{background:var(--accent-soft);color:var(--accent)}
+.tag-by{background:var(--sunk);color:var(--muted);font-weight:500}
+
+/* reading page */
+.reader{padding:8px 0 40px}
+.read-head{padding:14px 24px 6px 72px;display:flex;flex-direction:column;gap:8px}
+.read-head h2{margin:0;font:600 22px/1.3 var(--f-display);text-wrap:balance}
+.read-head .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.banner{margin:10px 24px 0 72px;padding:12px 14px;border-radius:var(--r);display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:14px}
+.banner.spam{background:var(--bad-soft);color:var(--bad)}
+.banner.by{background:var(--accent-soft)}
+.banner.by small{display:block;color:var(--muted);font-size:12px}
+.msg{display:grid;grid-template-columns:40px minmax(0,1fr);gap:16px;padding:18px 24px;border-bottom:1px solid var(--line)}
+.msg-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.msg-top b{font-size:15px}
+.msg-top .addr{color:var(--muted);font-size:13px}
+.msg-top .to{color:var(--muted);font-size:13px;display:block}
+.msg-body{white-space:pre-wrap;margin-top:12px;max-width:72ch}
+.atts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.att{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;min-width:0;max-width:260px;background:var(--surface)}
+.att .ext{width:34px;height:34px;border-radius:7px;display:grid;place-items:center;font:700 10px/1 var(--f-display);color:#fff;flex:none}
+.att .nm{font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.att .sz{font-size:12px;color:var(--muted)}
+.att .rm{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0 2px;margin-left:auto}
+.ext.pdf{background:#c2412d}.ext.img{background:#2f6fd0}.ext.doc{background:#2b5ea8}.ext.xls{background:#1f8a4c}.ext.oth{background:var(--ext)}
+
+.replybox{margin:18px 24px 0 72px;border:1px solid var(--line);border-radius:var(--r);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.rb-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.replybox textarea{display:block;width:100%;border:0;outline:0;resize:vertical;min-height:140px;padding:12px 14px;background:transparent}
+.rb-foot{display:flex;align-items:center;gap:10px;padding:10px 14px;flex-wrap:wrap}
+.rb-foot .atts{margin:0;flex-basis:100%}
+.reply-actions{display:flex;gap:10px;margin:18px 24px 0 72px;flex-wrap:wrap}
+
+.btn{border:0;border-radius:999px;padding:9px 20px;font-weight:600;font-family:var(--f-display);font-size:14px;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:transparent;border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--hover)}
+.btn .ico{width:18px;height:18px}
+.attach-lbl{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;color:var(--muted);cursor:pointer}
+.attach-lbl:hover{background:var(--hover);color:var(--fg)}
+.attach-lbl input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.attach-lbl:focus-within{outline:2px solid var(--accent)}
+.hint{font-size:12.5px;color:var(--muted)}
+.hint b{color:var(--fg)}
+.err{color:var(--bad);font-size:13px}
+
+/* Gmail-style docked compose */
+.compose{position:fixed;right:24px;bottom:0;width:min(560px,calc(100% - 32px));max-height:calc(100% - 40px);background:var(--surface);border-radius:12px 12px 0 0;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:30;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0px)}
+.c-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--sunk);border-radius:12px 12px 0 0;font:600 14px/1 var(--f-display)}
+.c-head button{border:0;background:transparent;font-size:20px;line-height:1;color:var(--muted);width:28px;height:28px;border-radius:6px}
+.c-head button:hover{background:var(--hover)}
+.compose form{display:flex;flex-direction:column;overflow-y:auto;min-height:0}
+.c-row{display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line);min-height:42px}
+.c-row label{font-size:13px;color:var(--muted);flex:none;min-width:44px}
+.c-row input,.c-row select{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:10px 0}
+.c-row .by{font-size:13px;color:var(--muted)}
+.compose textarea{border:0;outline:0;resize:none;min-height:200px;padding:12px 14px;background:transparent}
+.c-foot{display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap;border-top:1px solid var(--line)}
+.c-foot .atts{margin:0 0 6px;flex-basis:100%}
+
+/* filter bar */
+.fbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+.fbar label{position:relative;display:inline-flex}
+.fbar select{appearance:none;-webkit-appearance:none;padding:6px 30px 6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;cursor:pointer}
+.fbar select.set{background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.fbar label::after{content:"";position:absolute;right:12px;top:50%;width:6px;height:6px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.fbar .clear{border:0;background:transparent;color:var(--accent);font-weight:600;font-size:13px;padding:6px 8px}
+.fbar .ficon{color:var(--muted);display:inline-flex}
+.tag-view{background:transparent;color:var(--muted);font-weight:500;gap:4px;padding-left:0}
+.tag-view .ico{width:15px;height:15px}
+.tag-unseen{background:var(--warn-soft);color:var(--warn)}
+.views{margin:10px 24px 0 72px;padding:12px 14px;border-radius:var(--r);border:1px solid var(--line);font-size:14px;display:flex;flex-direction:column;gap:10px}
+.views .first{display:flex;gap:12px;align-items:center}
+.views .first small{display:block;color:var(--muted);font-size:12px}
+.views ol{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.views li{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:var(--sunk);font-size:12.5px}
+.views li .av{width:22px;height:22px;font-size:10px}
+.views li .n{font-variant-numeric:tabular-nums;color:var(--muted)}
+.views-h{font:600 12px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+/* compose full view */
+.c-head .c-btns{display:flex;gap:2px}
+.c-scrim{position:fixed;inset:0;background:rgba(10,20,20,.45);z-index:29}
+.compose.full{left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:min(1000px,calc(100% - 48px));height:calc(100% - 48px);max-height:none;border-radius:12px;animation:none}
+.compose.full .c-head{border-radius:12px 12px 0 0;padding:12px 16px;font-size:15px}
+.compose.full form{flex:1}
+.compose.full textarea{flex:1;min-height:260px;font-size:16px;padding:16px}
+.compose.full .c-row{padding:0 16px}
+
+.toast{position:fixed;left:24px;bottom:calc(24px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:8px;font-size:14px;z-index:40;max-width:calc(100% - 48px)}
+
+@media (max-width:860px){
+  .row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who time" "box view" "line line";row-gap:4px}
+  .row .who-col{grid-area:who}.row .time{grid-area:time}.row .box-col{grid-area:box}.row .line{grid-area:line}.row .view-col{grid-area:view;justify-self:end}
+}
+@media (max-width:760px){
+  .shell{grid-template-columns:1fr;padding-inline:8px}
+  .rail{flex-direction:row;flex-wrap:wrap;gap:6px;padding-bottom:6px}
+  .compose-btn{margin:0;padding:10px 16px}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;flex-basis:100%}
+  .nav-item{border-radius:999px;padding:0 12px;width:auto;white-space:nowrap;gap:8px;border:1px solid var(--line)}
+  .rail h4{display:none}
+  .brand{min-width:0}
+  .top{padding:10px 16px}
+  .read-head,.banner,.replybox,.reply-actions{margin-left:16px;margin-right:16px;padding-left:0}
+  .read-head{padding:14px 16px 6px}
+  .msg{padding:16px;grid-template-columns:32px minmax(0,1fr);gap:12px}
+  .compose,.compose.full{right:0;left:0;top:auto;bottom:0;transform:none;width:100%;max-height:100%;border-radius:0}
+  .compose.full{top:0;height:100%}
+  .c-head,.compose.full .c-head{border-radius:0}
+  .views{margin-left:16px;margin-right:16px}
+}
+@media (prefers-reduced-motion:no-preference){.compose{animation:up .18s ease-out}@keyframes up{from{transform:translateY(20px);opacity:.6}}}
+</style>
+
+<div class="demo-note">Demo preview — sample data only. Mail yahan se actually send ya receive nahi hota.</div>
+
+<header class="top">
+  <div class="brand"><div class="brand-mark">HC</div><div>Mail Desk<small>Human Care Connect</small></div></div>
+  <label class="search" for="q"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Search mail"></label>
+  <div class="spacer"></div>
+  <label class="who" for="me">Logged in as <select id="me"></select></label>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Mail folders">
+    <button class="compose-btn" id="composeBtn"><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Compose</button>
+    <div class="nav" id="folderNav"></div>
+    <h4>Mail IDs</h4>
+    <div class="nav" id="boxNav"></div>
+  </nav>
+
+  <section class="pane" id="pane" aria-live="polite"></section>
+</div>
+
+<div class="c-scrim" id="cScrim" hidden></div>
+<div class="compose" id="compose" hidden role="dialog" aria-labelledby="cTitle">
+  <div class="c-head"><span id="cTitle">New Message</span><span class="c-btns"><button type="button" id="cFull" aria-label="Full view" title="Full view"><svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button type="button" id="cClose" aria-label="Close" title="Close">×</button></span></div>
+  <form id="cForm" novalidate>
+    <div class="c-row"><label for="cFrom">From</label><select id="cFrom"></select></div>
+    <div class="c-row"><label for="cTo">To</label><input id="cTo" type="email" placeholder="client@example.com"></div>
+    <div class="c-row"><label for="cCc">Cc</label><input id="cCc" type="text"></div>
+    <div class="c-row"><input id="cSub" type="text" placeholder="Subject" aria-label="Subject"></div>
+    <textarea id="cBody" aria-label="Message"></textarea>
+    <div class="c-foot">
+      <div class="atts" id="cAtts"></div>
+      <button type="submit" class="btn btn-primary">Send</button>
+      <label class="attach-lbl" title="Attach files"><input type="file" id="cFile" multiple aria-label="Attach files"><svg class="ico" viewBox="0 0 24 24"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.5 7"/></svg></label>
+      <span class="hint" id="cHint"></span>
+      <div class="err" id="cErr" hidden></div>
+    </div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const ADMINS=[
+  {id:1,name:"Rahul Sharma",ini:"RS",c:"--a1",role:"Super Admin"},
+  {id:2,name:"Priya Patil",ini:"PP",c:"--a2",role:"Admin"},
+  {id:3,name:"Aman Verma",ini:"AV",c:"--a3",role:"Admin"},
+  {id:4,name:"Sneha Kulkarni",ini:"SK",c:"--a4",role:"Admin"}
+];
+const BOXES=[
+  {id:"support",label:"Support",email:"support@humancareconnect.co"},
+  {id:"tech",label:"Tech",email:"tech@humancareconnect.co"}
+];
+const now=new Date();
+function ago(h,m=0){const d=new Date(now);d.setHours(d.getHours()-h,d.getMinutes()-m);return d}
+const A=(name,size)=>({name,size});
+
+let SENT=[
+  {id:101,by:2,box:"support",to:"anita.joshi@gmail.com",cc:"",sub:"Appointment confirmed for 4 Oct",body:"Namaste Anita ji,\n\nAapka appointment 4 October, 11:00 AM ke liye confirm ho gaya hai. Kripya 10 minute pehle pahunchiye.\n\nRegards,\nHuman Care Connect",st:"replied",t:ago(0,25),att:[A("Appointment_Slip.pdf",182000)]},
+  {id:102,by:1,box:"tech",to:"vendor@cloudhost.in",cc:"devops@humancareconnect.co",sub:"Server downtime on 30 Sep — RCA needed",body:"Hi team,\n\n30 Sep ko 2:10 PM se 2:45 PM tak hamara server down tha. Please iska root cause analysis share karein.\n\nThanks,\nTech Team",st:"sent",t:ago(1,40),att:[A("uptime_log_30sep.xlsx",48000),A("error_screenshot.png",612000)]},
+  {id:103,by:3,box:"support",to:"rohit.mehta@yahoo.com",cc:"",sub:"Your support ticket #4821 is resolved",body:"Hello Rohit,\n\nAapka ticket #4821 (report download issue) resolve ho gaya hai. Ab aap dashboard se report download kar sakte hain.\n\nRegards,\nSupport Team",st:"sent",t:ago(2,5),att:[]},
+  {id:104,by:4,box:"support",to:"kavita.n@outlook.com",cc:"",sub:"Welcome to Human Care Connect",body:"Hi Kavita,\n\nHuman Care Connect mein aapka swagat hai! Aapka account ready hai.\n\nTeam HCC",st:"failed",t:ago(3,15),err:"Recipient address rejected (mailbox does not exist)",att:[]},
+  {id:105,by:2,box:"tech",to:"it@citycarehospital.org",cc:"",sub:"API access credentials — next steps",body:"Hello,\n\nAPI integration ke liye humne sandbox access enable kar diya hai. Next step ke liye ek call schedule karein.\n\nTech Team, HCC",st:"replied",t:ago(5,0),att:[A("API_Integration_Guide.pdf",1240000)]},
+  {id:106,by:1,box:"support",to:"suresh.iyer@gmail.com",cc:"",sub:"Follow-up: feedback on your last visit",body:"Dear Suresh ji,\n\nAapki last visit kaisi rahi? Apna feedback zaroor share karein.\n\nRegards,\nHuman Care Connect",st:"sent",t:ago(26,0),att:[]},
+  {id:107,by:3,box:"tech",to:"support@labpartner.co.in",cc:"",sub:"Report sync failing since morning",body:"Hi,\n\nAaj subah se lab reports sync nahi ho rahe. Error log attach kar raha hoon.\n\nAman, Tech Team",st:"replied",t:ago(29,30),att:[A("sync_error.log",12000)]}
+];
+let RECV=[
+  {id:201,box:"support",from:"anita.joshi@gmail.com",name:"Anita Joshi",sub:"Re: Appointment confirmed for 4 Oct",body:"Thank you, main time par aa jaungi.",t:ago(0,8),spam:false,read:false,replyTo:101,att:[]},
+  {id:202,box:"tech",from:"offers@cheap-seo-rank.biz",name:"SEO Experts",sub:"Rank #1 on Google in 7 days!!! 90% OFF",body:"Dear Website Owner,\n\nWe guarantee #1 ranking on Google in just 7 days. Limited time 90% discount. Click here now to claim.",t:ago(0,50),spam:true,read:false,att:[]},
+  {id:203,box:"support",from:"meera.desai@gmail.com",name:"Meera Desai",sub:"Report download nahi ho raha",body:"Hello,\n\nMain apni blood test report download karne ki koshish kar rahi hoon par button kaam nahi kar raha. Screenshot attach kiya hai. Please help karein.\n\nMeera",t:ago(1,10),spam:false,read:false,att:[A("screenshot_report_error.jpg",340000)]},
+  {id:204,box:"support",from:"no-reply@prize-winner-claim.top",name:"Lucky Draw Team",sub:"Congratulations! You won ₹25,00,000",body:"Your email has been selected in our lucky draw. Send your bank details to claim the prize immediately.",t:ago(2,30),spam:true,read:true,att:[A("claim_form.zip",88000)]},
+  {id:205,box:"tech",from:"it@citycarehospital.org",name:"City Care IT",sub:"Re: API access credentials — next steps",body:"Sure, kal 3 baje call rakhte hain.",t:ago(4,10),spam:false,read:true,replyTo:105,att:[]},
+  {id:206,box:"support",from:"vikram.rao@outlook.com",name:"Vikram Rao",sub:"Invoice copy chahiye — September",body:"Hi,\n\nSeptember ke consultation ka invoice copy bhej dijiye, insurance claim ke liye chahiye.\n\nThanks,\nVikram",t:ago(6,0),spam:false,read:true,att:[],replies:[{by:3,t:ago(5,20),body:"Hello Vikram ji,\n\nSeptember ka invoice attach kar diya hai.\n\nAman, Support Team",att:[A("Invoice_HCC_Sep2026.pdf",96000)]}]},
+  {id:207,box:"tech",from:"security-alert@paypa1-verify.com",name:"Account Security",sub:"Urgent: verify your account now",body:"We noticed unusual activity. Verify your password within 24 hours or your account will be suspended.",t:ago(9,0),spam:true,read:false,att:[]},
+  {id:208,box:"tech",from:"support@labpartner.co.in",name:"LabPartner Support",sub:"Re: Report sync failing since morning",body:"Hi Aman,\n\nIssue fix ho gaya hai. Sync ab chal raha hai, please confirm karein.\n\nLabPartner",t:ago(27,0),spam:false,read:true,replyTo:107,att:[]}
+];
+
+const $=s=>document.querySelector(s);
+// view log: har admin ne kab mail khola (pehla entry = first view)
+const V=(by,h,m)=>({by,t:ago(h,m)});
+const VIEWS={204:[V(4,2,10)],205:[V(2,4,0),V(1,3,30)],206:[V(3,5,40),V(1,5,30)],208:[V(3,26,40),V(1,26,0)],
+  101:[V(1,0,15)],102:[V(2,1,20),V(3,1,0)],104:[V(1,3,0)],105:[V(1,4,50),V(3,4,30)],107:[V(1,29,0)]};
+RECV.forEach(m=>{m.views=VIEWS[m.id]||[];m.read=m.views.length>0});
+SENT.forEach(m=>{m.views=VIEWS[m.id]||[]});
+function markView(m,isSent){if(isSent&&m.by===me)return;if(!m.views.some(v=>v.by===me))m.views.push({by:me,t:new Date()});if(!isSent)m.read=true}
+const admin=id=>ADMINS.find(a=>a.id===id);
+const box=id=>BOXES.find(b=>b.id===id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const av=(a,lg)=>`<span class="av ${lg?"lg":""}" style="background:var(${a.c})">${a.ini}</span>`;
+const avExt=(n,lg)=>`<span class="av ${lg?"lg":""}" style="background:var(--ext)">${esc(n.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase())}</span>`;
+const isToday=d=>d.toDateString()===now.toDateString();
+const fmt=d=>isToday(d)?d.toLocaleTimeString("en-IN",{hour:"numeric",minute:"2-digit"}):d.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+const fmtFull=d=>d.toLocaleString("en-IN",{weekday:"short",day:"numeric",month:"short",hour:"numeric",minute:"2-digit"});
+const kb=n=>n>=1e6?(n/1e6).toFixed(1)+" MB":Math.max(1,Math.round(n/1e3))+" KB";
+function extCls(n){const e=n.split(".").pop().toLowerCase();return e==="pdf"?"pdf":["png","jpg","jpeg","gif","webp"].includes(e)?"img":["doc","docx"].includes(e)?"doc":["xls","xlsx","csv"].includes(e)?"xls":"oth"}
+function attHtml(list,removable,key){return list.length?`<div class="atts">${list.map((f,i)=>`<div class="att"><span class="ext ${extCls(f.name)}">${esc(f.name.split(".").pop().toUpperCase().slice(0,4))}</span><span style="min-width:0"><span class="nm" style="display:block">${esc(f.name)}</span><span class="sz">${kb(f.size)}</span></span>${removable?`<button type="button" class="rm" data-rm="${key}" data-i="${i}" aria-label="Remove ${esc(f.name)}">×</button>`:""}</div>`).join("")}</div>`:""}
+const mboxIco='<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+const mbox=(id,full)=>{const b=box(id);return `<span class="mbox ${id}" title="${b.email}">${mboxIco}${b.label}${full?` <small>${b.email}</small>`:""}</span>`};
+const I={
+  inbox:'<svg class="ico" viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5.5 5h13L21 13v6H3v-6z"/></svg>',
+  sent:'<svg class="ico" viewBox="0 0 24 24"><path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4z"/></svg>',
+  spam:'<svg class="ico" viewBox="0 0 24 24"><path d="M12 3 3 20h18z"/><path d="M12 10v4M12 17h.01"/></svg>',
+  all:'<svg class="ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/></svg>',
+  back:'<svg class="ico" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
+  reply:'<svg class="ico" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 6 6v4"/></svg>',
+  clip:'<svg class="ico" viewBox="0 0 24 24"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7L14 4a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4L15.5 7"/></svg>',
+  eye:'<svg class="ico" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  filter:'<svg class="ico" viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M10 19h4"/></svg>'
+};
+
+let me=1, folder="inbox", viewBox="", openId=null, replyAtts=[], composeAtts=[], replyOpen=false;
+const F0={by:"",box:"",st:"",date:"",att:"",view:""};
+let flt={...F0};
+
+// unify sent + received into list items, then apply filters
+function items(){
+  const r=RECV.map(m=>({...m,kind:"in"})), s=SENT.map(m=>({...m,kind:"out"}));
+  let L=folder==="inbox"?r.filter(m=>!m.spam):folder==="spam"?r.filter(m=>m.spam):folder==="sent"?s:[...r.filter(m=>!m.spam),...s];
+  if(viewBox)L=L.filter(m=>m.box===viewBox);
+  const q=$("#q").value.trim().toLowerCase();
+  if(q)L=L.filter(m=>(m.sub+m.body+(m.from||"")+(m.name||"")+(m.to||"")+(m.by?admin(m.by).name:"")).toLowerCase().includes(q));
+  if(flt.box)L=L.filter(m=>m.box===flt.box);
+  if(flt.by)L=L.filter(m=>m.by==flt.by);
+  if(flt.st==="failed")L=L.filter(m=>m.st==="failed");
+  if(flt.st==="replied")L=L.filter(m=>m.kind==="out"?m.st==="replied":(m.replies||[]).length>0);
+  if(flt.st==="noreply")L=L.filter(m=>m.kind==="out"?m.st==="sent":!(m.replies||[]).length);
+  if(flt.date){const d0=new Date(now);d0.setHours(0,0,0,0);const lim=flt.date==="today"?d0:flt.date==="7d"?new Date(now-7*864e5):new Date(now.getFullYear(),now.getMonth(),1);L=L.filter(m=>m.t>=lim)}
+  if(flt.att)L=L.filter(m=>m.att&&m.att.length);
+  if(flt.view==="unseen")L=L.filter(m=>!m.views.length);
+  else if(flt.view)L=L.filter(m=>m.views.length&&m.views[0].by==flt.view);
+  return L.sort((a,b)=>b.t-a.t);
+}
+function sel(key,label,opts){
+  return `<label><select data-f="${key}" aria-label="${label}" class="${flt[key]?"set":""}">${opts.map(([v,t])=>`<option value="${v}" ${String(flt[key])===String(v)?"selected":""}>${t}</option>`).join("")}</select></label>`;
+}
+function filterBar(){
+  if(folder!=="sent"&&folder!=="inbox")return "";
+  const adm=ADMINS.map(a=>[a.id,a.name]);
+  const parts=[`<span class="ficon" title="Filters">${I.filter}</span>`];
+  if(folder==="sent")parts.push(sel("by","Sent by",[["","Sent by: sab admin"],...adm]));
+  if(!viewBox)parts.push(sel("box","Mail ID",[["","Mail ID: sab"],...BOXES.map(b=>[b.id,b.label+" — "+b.email])]));
+  parts.push(sel("st","Status",folder==="sent"?[["","Status: sab"],["noreply","Sent (reply nahi aaya)"],["replied","Replied"],["failed","Failed"]]:[["","Reply: sab"],["noreply","Reply baaki hai"],["replied","Reply ho gaya"]]));
+  parts.push(sel("view","First viewed by",[["","Pehle kisne dekha: sab"],["unseen","Kisi ne nahi dekha"],...adm.map(([i,n])=>[i,"Pehle dekha: "+n])]));
+  parts.push(sel("date","Date",[["","Date: kabhi bhi"],["today","Aaj"],["7d","Last 7 days"],["month","Is mahine"]]));
+  parts.push(sel("att","Attachment",[["","Attachment: sab"],["1","Sirf attachment wale"]]));
+  if(Object.values(flt).some(Boolean))parts.push(`<button class="clear" data-act="clearf">Clear filters</button>`);
+  return `<div class="fbar">${parts.join("")}</div>`;
+}
+function firstView(m){
+  if(!m.views.length)return `<span class="tag tag-unseen">Kisi ne nahi dekha</span>`;
+  const a=admin(m.views[0].by);
+  return `<span class="tag tag-view" title="Sabse pehle ${esc(a.name)} ne dekha, ${fmtFull(m.views[0].t)}">${I.eye}${esc(a.name.split(" ")[0])}</span>`;
+}
+const FOLDERS=[
+  {id:"inbox",lbl:"Received",ic:I.inbox},
+  {id:"sent",lbl:"Sent",ic:I.sent},
+  {id:"spam",lbl:"Spam",ic:I.spam},
+  {id:"all",lbl:"All mail",ic:I.all}
+];
+
+function renderRail(){
+  const unread=RECV.filter(m=>!m.spam&&!m.read).length, spamU=RECV.filter(m=>m.spam&&!m.read).length;
+  const cnt={inbox:unread||"",spam:spamU||"",sent:"",all:""};
+  $("#folderNav").innerHTML=FOLDERS.map(f=>`<button class="nav-item ${folder===f.id&&!viewBox?"on":""}" data-folder="${f.id}">${f.ic}<span class="lbl">${f.lbl}</span><span class="count">${cnt[f.id]}</span></button>`).join("");
+  $("#boxNav").innerHTML=BOXES.map(b=>{const n=RECV.filter(m=>m.box===b.id&&!m.spam&&!m.read).length;
+    return `<button class="nav-item ${viewBox===b.id?"on":""}" data-box="${b.id}" title="${b.email}"><span class="box-dot" style="background:var(--box-${b.id})"></span><span class="lbl">${b.email}</span><span class="count">${n||""}</span></button>`}).join("");
+}
+
+function renderList(){
+  const L=items();
+  const f=FOLDERS.find(x=>x.id===folder);
+  const title=viewBox?box(viewBox).email:f.lbl;
+  const sub=viewBox?`${f.lbl} · is ID par aaye aur is ID se gaye mail`:
+    folder==="inbox"?"support@ aur tech@ par aaye mail":folder==="sent"?"Har mail par likha hai kis admin ne bheja":folder==="spam"?"Gmail ne jinhe spam mark kiya":"Received + Sent, sab ek jagah";
+  const tabs=viewBox?`<div class="tabs">${FOLDERS.map(x=>`<button class="tab ${folder===x.id?"on":""}" data-tab="${x.id}">${x.lbl}</button>`).join("")}</div>`:"";
+  $("#pane").innerHTML=`<div class="toolbar"><div><h1 class="${viewBox?"mono":""}" style="${viewBox?"font-size:15px":""}">${esc(title)}</h1><div class="sub">${sub}</div></div><div class="spacer"></div>${tabs}<span class="sub">${L.length} mail</span></div>
+  ${filterBar()}
+  <div class="list">${L.length?L.map(row).join(""):`<div class="empty">Yahan koi mail nahi hai.</div>`}</div>`;
+}
+function row(m){
+  const clip=m.att&&m.att.length?`<span class="clip" title="${m.att.length} attachment">${I.clip}</span>`:"";
+  if(m.kind==="in"){
+    const answered=m.replies&&m.replies.length;
+    return `<div class="row ${m.read?"read":"unread"}" data-open="in-${m.id}" tabindex="0" role="button">
+      <div class="who-col">${avExt(m.name)}<span class="nm">${esc(m.name)}</span></div>
+      <div class="box-col">${mbox(m.box)}</div>
+      <div class="line">${m.spam?`<span class="tag tag-spam">Spam</span>`:""}${answered?`<span class="tag tag-replied">${esc(admin(m.replies.at(-1).by).name.split(" ")[0])} ne reply kiya</span>`:""}<span class="subj">${esc(m.sub)}</span><span class="snip">— ${esc(m.body.replace(/\n+/g," "))}</span>${clip}</div>
+      <div class="view-col">${m.spam?"":firstView(m)}</div>
+      <div class="time">${fmt(m.t)}</div></div>`;
+  }
+  const a=admin(m.by);
+  return `<div class="row read" data-open="out-${m.id}" tabindex="0" role="button">
+    <div class="who-col">${av(a)}<span class="nm">${esc(a.name)}</span></div>
+    <div class="box-col">${mbox(m.box)}</div>
+    <div class="line">${m.st==="failed"?`<span class="tag tag-failed">Failed</span>`:""}<span class="tag tag-by">To: ${esc(m.to)}</span><span class="subj">${esc(m.sub)}</span><span class="snip">— ${esc(m.body.replace(/\n+/g," "))}</span>${clip}</div>
+    <div class="view-col">${firstView(m)}</div>
+    <div class="time">${fmt(m.t)}</div></div>`;
+}
+
+function msgBlock({avatar,name,addr,to,t,body,att}){
+  return `<div class="msg">${avatar}<div style="min-width:0"><div class="msg-top"><div><b>${esc(name)}</b> <span class="addr">&lt;${esc(addr)}&gt;</span><span class="to">to ${esc(to)}</span></div><span class="time">${fmtFull(t)}</span></div><div class="msg-body">${esc(body)}</div>${attHtml(att||[],false)}</div></div>`;
+}
+
+function renderRead(){
+  const [kind,idS]=openId.split("-"), id=+idS;
+  let html="", m, thread=[], bannerBy="", spam=false, replyTarget;
+  if(kind==="in"){
+    m=RECV.find(x=>x.id===id); markView(m,false); spam=m.spam;
+    const orig=m.replyTo?SENT.find(s=>s.id===m.replyTo):null;
+    if(orig){const oa=admin(orig.by);thread.push(msgBlock({avatar:av(oa,1),name:`${oa.name} (via ${box(orig.box).label})`,addr:box(orig.box).email,to:orig.to,t:orig.t,body:orig.body,att:orig.att}))}
+    thread.push(msgBlock({avatar:avExt(m.name,1),name:m.name,addr:m.from,to:box(m.box).email,t:m.t,body:m.body,att:m.att}));
+    (m.replies||[]).forEach(r=>{const ra=admin(r.by);thread.push(msgBlock({avatar:av(ra,1),name:`${ra.name} (via ${box(m.box).label})`,addr:box(m.box).email,to:m.from,t:r.t,body:r.body,att:r.att}))});
+    if(m.replies&&m.replies.length){const ra=admin(m.replies.at(-1).by);bannerBy=`<div class="banner by"><div style="display:flex;gap:12px;align-items:center">${av(ra)}<div><b>${esc(ra.name)}</b> ne is mail ka reply kar diya hai<small>${box(m.box).email} se · ${fmtFull(m.replies.at(-1).t)}</small></div></div></div>`}
+    replyTarget={box:m.box,to:m.from,sub:m.sub};
+  }else{
+    m=SENT.find(x=>x.id===id); markView(m,true); const a=admin(m.by);
+    bannerBy=`<div class="banner by"><div style="display:flex;gap:12px;align-items:center">${av(a)}<div><b>${esc(a.name)}</b> ne yeh mail bheja<small>${a.role} · ${box(m.box).email} se · ${fmtFull(m.t)}</small></div></div></div>`;
+    thread.push(msgBlock({avatar:av(a,1),name:`${a.name} (via ${box(m.box).label})`,addr:box(m.box).email,to:m.to+(m.cc?", cc: "+m.cc:""),t:m.t,body:m.body,att:m.att}));
+    if(m.err)thread.push(`<div class="banner spam" style="margin-top:12px">Mail deliver nahi hua: ${esc(m.err)}</div>`);
+    const rep=RECV.find(r=>r.replyTo===m.id);
+    if(rep)thread.push(msgBlock({avatar:avExt(rep.name,1),name:rep.name,addr:rep.from,to:box(m.box).email,t:rep.t,body:rep.body,att:rep.att}));
+    replyTarget={box:m.box,to:rep?rep.from:m.to,sub:m.sub};
+  }
+  const meA=admin(me);
+  const replyUI=spam?`<div class="reply-actions"><button class="btn btn-ghost" data-act="notspam">Not spam — Inbox mein bhejo</button></div>`
+   : replyOpen?`<form class="replybox" id="rForm" novalidate>
+      <div class="rb-head">${I.reply}<span>Reply to <b class="mono">${esc(replyTarget.to)}</b> from</span>${mbox(replyTarget.box,true)}<span>· as <b>${esc(meA.name)}</b></span></div>
+      <textarea id="rBody" aria-label="Reply message" placeholder="Reply likhiye…"></textarea>
+      <div class="rb-foot">${attHtml(replyAtts,true,"r")}
+        <button type="submit" class="btn btn-primary">Send</button>
+        <label class="attach-lbl" title="Attach files"><input type="file" id="rFile" multiple aria-label="Attach files to reply">${I.clip}</label>
+        <span class="err" id="rErr" hidden></span>
+        <span class="spacer" style="flex:1"></span>
+        <button type="button" class="btn btn-ghost" data-act="cancelreply">Discard</button>
+      </div></form>`
+   : `<div class="reply-actions"><button class="btn btn-ghost" data-act="reply">${I.reply}Reply</button>${kind==="in"?`<button class="btn btn-ghost" data-act="markspam">Mark as spam</button>`:""}</div>`;
+
+  $("#pane").innerHTML=`<div class="toolbar"><button class="icon-btn" data-act="back" aria-label="Back to list" title="Back">${I.back}</button><span class="sub">${FOLDERS.find(f=>f.id===folder).lbl}${viewBox?" · "+box(viewBox).email:""}</span>${kind==="in"?`<div class="spacer"></div>${spam?`<button class="btn btn-ghost" data-act="notspam">Not spam</button>`:`<button class="icon-btn" data-act="markspam" title="Mark as spam" aria-label="Mark as spam">${I.spam}</button>`}`:""}</div>
+  <div class="reader">
+    <div class="read-head"><h2>${esc(m.sub)}</h2><div class="chips">${kind==="in"?`<span class="sub">Aaya:</span>`:`<span class="sub">Gaya:</span>`}${mbox(m.box,true)}${spam?`<span class="tag tag-spam">Spam</span>`:""}</div></div>
+    ${spam?`<div class="banner spam"><span>Gmail ne is mail ko <b>spam</b> mark kiya hai. Links ya attachments na kholein.</span></div>`:""}
+    ${bannerBy}
+    ${viewsBlock(m)}
+    ${thread.join("")}
+    ${replyUI}
+  </div>`;
+  renderRead.target=replyTarget;
+  if(replyOpen)$("#rBody").focus();
+}
+
+function viewsBlock(m){
+  if(!m.views.length)return `<div class="views"><span class="views-h">Kisne dekha</span><span class="sub">Abhi tak kisi admin ne yeh mail nahi khola.</span></div>`;
+  const f=m.views[0],fa=admin(f.by);
+  return `<div class="views"><div class="first">${av(fa)}<div>Sabse pehle <b>${esc(fa.name)}</b> ne dekha<small>${fmtFull(f.t)}${f.by===me&&m.views.length===1?" · abhi aapne khola":""}</small></div></div>
+    <div><div class="views-h" style="margin-bottom:6px">Kisne kab dekha</div><ol>${m.views.map((v,i)=>{const a=admin(v.by);return `<li>${av(a)}<span>${esc(a.name)}</span><span class="n">${fmt(v.t)}</span></li>`}).join("")}</ol></div></div>`;
+}
+function render(){renderRail();openId?renderRead():renderList()}
+
+function addFiles(list,files){for(const f of files)list.push({name:f.name,size:f.size});}
+
+/* compose */
+function openCompose(){
+  $("#cForm").reset();composeAtts=[];$("#cAtts").innerHTML="";$("#cErr").hidden=true;
+  if(viewBox)$("#cFrom").value=viewBox;
+  updHint();$("#compose").hidden=false;$("#cTo").focus();
+}
+function updHint(){$("#cHint").innerHTML=`Sent by <b>${esc(admin(me).name)}</b>`}
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>el.hidden=true,2800)}
+
+document.addEventListener("click",e=>{
+  const f=e.target.closest("[data-folder]"); if(f){folder=f.dataset.folder;flt={...F0};viewBox="";openId=null;replyOpen=false;render();return}
+  const b=e.target.closest("[data-box]"); if(b){viewBox=b.dataset.box;flt={...F0};folder="inbox";openId=null;replyOpen=false;render();return}
+  const tb=e.target.closest("[data-tab]"); if(tb){folder=tb.dataset.tab;flt={...F0};render();return}
+  const rm=e.target.closest("[data-rm]"); if(rm){const L=rm.dataset.rm==="r"?replyAtts:composeAtts;L.splice(+rm.dataset.i,1);if(rm.dataset.rm==="r"){const v=$("#rBody").value;renderRead();$("#rBody").value=v}else $("#cAtts").innerHTML=attHtml(composeAtts,true,"c").replace(/^<div class="atts">|<\/div>$/g,"");return}
+  const act=e.target.closest("[data-act]");
+  if(act){
+    const a=act.dataset.act, m=openId&&openId.startsWith("in-")?RECV.find(x=>x.id===+openId.split("-")[1]):null;
+    if(a==="back"){openId=null;replyOpen=false;render()}
+    if(a==="clearf"){flt={...F0};renderList()}
+    if(a==="reply"){replyOpen=true;replyAtts=[];renderRead()}
+    if(a==="cancelreply"){replyOpen=false;replyAtts=[];renderRead()}
+    if(a==="markspam"&&m){m.spam=true;openId=null;render();toast("Mail Spam mein move ho gaya")}
+    if(a==="notspam"&&m){m.spam=false;render();toast("Mail Received mein move ho gaya")}
+    return;
+  }
+  const r=e.target.closest("[data-open]"); if(r){openId=r.dataset.open;replyOpen=false;replyAtts=[];render();$("#pane").scrollIntoView({block:"start"});return}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.matches&&e.target.matches("[data-open]")){e.target.click()}
+  if(e.key==="Escape"){if(!$("#compose").hidden)closeCompose();else if(openId){openId=null;replyOpen=false;render()}}
+});
+document.addEventListener("change",e=>{
+  if(e.target.dataset&&e.target.dataset.f){flt[e.target.dataset.f]=e.target.value;renderList();const n=document.querySelector(`[data-f="${e.target.dataset.f}"]`);if(n)n.focus();return}
+  if(e.target.id==="rFile"){const v=$("#rBody").value;addFiles(replyAtts,e.target.files);renderRead();$("#rBody").value=v}
+  if(e.target.id==="cFile"){addFiles(composeAtts,e.target.files);e.target.value="";$("#cAtts").innerHTML=composeAtts.length?attHtml(composeAtts,true,"c").replace(/^<div class="atts">|<\/div>$/g,""):""}
+});
+document.addEventListener("submit",e=>{
+  if(e.target.id!=="rForm")return;
+  e.preventDefault();
+  const body=$("#rBody").value.trim(),t=renderRead.target;
+  if(!body){const er=$("#rErr");er.textContent="Reply message khaali hai.";er.hidden=false;return}
+  const sub=t.sub.startsWith("Re:")?t.sub:"Re: "+t.sub, att=[...replyAtts];
+  if(openId.startsWith("in-")){const m=RECV.find(x=>x.id===+openId.split("-")[1]);(m.replies=m.replies||[]).push({by:me,t:new Date(),body,att})}
+  SENT.unshift({id:Date.now(),by:me,box:t.box,to:t.to,cc:"",sub,body,st:"sent",t:new Date(),att,views:[]});
+  replyOpen=false;replyAtts=[];renderRead();
+  toast(`Reply sent from ${box(t.box).email} · by ${admin(me).name}`);
+});
+$("#q").addEventListener("input",()=>{openId=null;render()});
+$("#me").addEventListener("change",e=>{me=+e.target.value;updHint();if(openId)renderRead();toast(`Ab aap ${admin(me).name} ke roop mein logged in hain`)});
+$("#composeBtn").addEventListener("click",openCompose);
+function closeCompose(){$("#compose").hidden=true;setFull(false)}
+function setFull(on){$("#compose").classList.toggle("full",on);$("#cScrim").hidden=!on;$("#cFull").title=on?"Exit full view":"Full view";$("#cFull").setAttribute("aria-label",$("#cFull").title)}
+$("#cClose").addEventListener("click",closeCompose);
+$("#cFull").addEventListener("click",()=>setFull(!$("#compose").classList.contains("full")));
+$("#cScrim").addEventListener("click",()=>setFull(false));
+$("#cForm").addEventListener("submit",e=>{
+  e.preventDefault();e.stopPropagation();
+  const to=$("#cTo").value.trim(),sub=$("#cSub").value.trim(),body=$("#cBody").value.trim(),err=$("#cErr");
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){err.textContent="Sahi email address daaliye.";err.hidden=false;return}
+  if(!sub||!body){err.textContent="Subject aur message dono zaroori hain.";err.hidden=false;return}
+  const m={id:Date.now(),by:me,box:$("#cFrom").value,to,cc:$("#cCc").value.trim(),sub,body,st:"sent",t:new Date(),att:[...composeAtts]};
+  m.views=[];SENT.unshift(m);closeCompose();folder="sent";viewBox="";openId=null;render();
+  toast(`Sent from ${box(m.box).email} · by ${admin(me).name}`);
+});
+
+$("#me").innerHTML=ADMINS.map(a=>`<option value="${a.id}">${a.name} (${a.role})</option>`).join("");
+$("#cFrom").innerHTML=BOXES.map(b=>`<option value="${b.id}">${b.label} — ${b.email}</option>`).join("");
+render();
+</script>

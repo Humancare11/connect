@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrineryKidneyHealth/urinary-tract-infection.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function UrinaryTractInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="UTI Treatment Online | Virtual Urinary Tract Infection Care"
-        description="Get online UTI care for burning urination, frequent urges, pelvic discomfort, and other urinary symptoms. Consult a licensed provider for treatment."
-        keywords="UTI treatment online, urinary tract infection treatment, online UTI doctor, UTI symptoms, burning urination, frequent urination, bladder infection treatment, virtual UTI care, telehealth UTI treatment, online doctor consultation"
-        url="https://humancareconnect.co/urinary-tract-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function UrinaryTractInfection({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function ChronicMedicationManagement() {
 
   return (
     <>
-      <SEO
-        title="Chronic Medication Management Online | Ongoing Prescription Support | Humancare Connect"
-        description="Get expert chronic medication management online. Connect with a licensed provider for prescription support, medication reviews, and personalized care through telemedicine services."
-        keywords="Chronic medication management, Prescription support, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/chronic-medication-management"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

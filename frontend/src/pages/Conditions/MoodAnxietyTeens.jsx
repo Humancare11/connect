@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function MoodAnxietyTeens({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Teen Mood & Anxiety Support Online | Adolescent Mental Health Care"
-        description="Get compassionate online support for teen mood and anxiety concerns. Connect with licensed providers for stress, sadness, emotional wellness, behavioral changes, and personalized adolescent mental health care."
-        keywords="Teen anxiety support, Teen mental health, Adolescent counseling, Online mental health consultation"
-        url="https://humancareconnect.co/mood-anxiety-teens"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

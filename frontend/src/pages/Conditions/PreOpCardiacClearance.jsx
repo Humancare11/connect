@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function PreOpCardiacClearance({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Pre-Op Cardiac Clearance Online | Pre-Surgery Heart Evaluation"
-        description="Get expert pre-op cardiac clearance online. Connect with a licensed provider for heart health evaluation, surgical risk assessment, cardiovascular review, and personalized pre-surgery guidance."
-        keywords="Pre-op cardiac clearance, Pre-surgery heart evaluation, Cardiac clearance online, Cardiovascular risk assessment, Virtual preoperative consultation"
-        url="https://humancareconnect.co/pre-op-cardiac-clearance"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

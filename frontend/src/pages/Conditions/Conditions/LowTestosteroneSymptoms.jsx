@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function LowTestosteroneSymptoms({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Low Testosterone Treatment Online | Men's Hormone Health Consultation"
-        description="Experiencing low testosterone symptoms? Consult a licensed provider online for fatigue, low libido, reduced muscle strength, mood changes, hormone evaluation, and personalized treatment options."
-        keywords="Low testosterone treatment, Men's hormone health, Testosterone deficiency, Online hormone consultation"
-        url="https://humancareconnect.co/low-testosterone-symptoms"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function LowTestosteroneSymptoms({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

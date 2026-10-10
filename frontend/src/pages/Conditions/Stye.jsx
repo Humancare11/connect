@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Stye({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Stye Treatment Online | Virtual Eye Care Consultation"
-        description="Get online treatment for a stye. Consult a licensed provider for painful eyelid bumps, swelling, redness, eye irritation, and personalized care guidance."
-        keywords="stye treatment online, eyelid stye treatment, painful eyelid bump, eye infection consultation, online eye doctor, swollen eyelid treatment, virtual eye care, telehealth eye consultation, hordeolum treatment, online ophthalmology consultation"
-        url="https://humancareconnect.co/stye"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Stye({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

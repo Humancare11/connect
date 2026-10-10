@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function VomitingDiarrheaChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vomiting and Diarrhea in Children | Pediatric Care Online"
-        description="Get trusted pediatric care for vomiting and diarrhea in children. Connect with an online provider for symptom evaluation, hydration guidance, and treatment recommendations."
-        keywords="Vomiting and diarrhea in children, pediatric care, child vomiting, diarrhea in children, dehydration in children, stomach cramps, fever, nausea, digestive discomfort, viral infections, food poisoning, stomach bugs, hydration guidance, telemedicine services, online doctor appointment, virtual healthcare services, online provider"
-        url="https://humancareconnect.co/vomiting-diarrhea-children"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function VomitingDiarrheaChildren({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

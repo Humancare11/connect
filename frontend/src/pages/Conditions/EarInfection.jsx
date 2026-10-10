@@ -978,12 +978,7 @@ function WhyChooseUs() {
 export default function EarInfection() {
   return (
     <>
-      <SEO
-        title="Ear Infection Treatment Online | Telemedicine Ear Care"
-        description="Get expert ear infection treatment online with trusted telemedicine services. Book an online doctor appointment, connect with a licensed provider, and receive personalized ear care from home."
-        keywords="Ear infection treatment online, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/ear-infection"
-      />
+      <SEO />
       <style>{STYLES}</style>
 
       <div

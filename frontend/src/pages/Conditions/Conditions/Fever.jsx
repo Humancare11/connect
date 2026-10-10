@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function Fever({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Fever Treatment Online | Fast Virtual Doctor Consultation"
-        description="Get expert fever treatment online for high temperature, chills, body aches, and flu-like symptoms. Connect with a licensed provider through secure telemedicine services from home."
-        keywords="Fever treatment online, Virtual doctor consultation, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/fever"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function Fever({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

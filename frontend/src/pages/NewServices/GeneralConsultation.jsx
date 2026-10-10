@@ -24,7 +24,6 @@ import {
   FiVideo,
 } from "react-icons/fi";
 
-import { Helmet } from "react-helmet-async";
 import SEO from "../../components/Seo";
 import heroBanner from "../../assets/MedicalServices/general-consultation-online.webp";
 import ServiceBookingCard from "../../components/booking/ServiceBookingCard";
@@ -226,19 +225,7 @@ export default function GeneralConsultation() {
 
   return (
     <>
-      <SEO
-        title="General Consultation Online | Virtual Doctor Consultation | Humancare Connect"
-        description="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
-        keywords="General consultation online, Virtual healthcare consultation, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/general-consultation"
-      />
-      <Helmet>
-        <title>General Consultation Online | Virtual Doctor Consultation | Humancare Connect</title>
-        <meta
-          name="description"
-          content="Book a general consultation online with licensed healthcare providers. Get medical advice, symptom evaluation, and personalized care through secure telemedicine services."
-        />
-      </Helmet>
+      <SEO />
 
       <main className="service-page service-page--general" style={{ "--service-accent": s.accentColor }}>
         <AnimatePresence mode="wait">

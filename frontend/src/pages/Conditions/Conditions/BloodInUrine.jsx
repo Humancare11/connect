@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function BloodInUrine({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Blood in Urine Care Online | Urinary Symptom Evaluation"
-        description="Noticed pink, red, or dark urine? Get prompt online care for blood in urine symptoms with evaluation, treatment guidance, and personalized next-step recommendations."
-        keywords="Blood in urine, Blood in urine symptoms, Urinary tract infections, Kidney stones, Urinary symptom care, Online doctor appointment"
-        url="https://humancareconnect.co/blood-in-urine"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function BloodInUrine({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

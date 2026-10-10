@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function BipolarDisorderFollowUp({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bipolar Disorder Follow-Up | Ongoing Mood & Medication Care"
-        description="Stay on track with bipolar disorder follow-up care for mood changes, treatment progress, and medication management. Get personalized mental health support online."
-        keywords="Bipolar disorder follow up, Mood stability, Medication management, Treatment monitoring, Mental health care, Telehealth services"
-        url="https://humancareconnect.co/bipolar-disorder-follow-up"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

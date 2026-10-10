@@ -9,9 +9,11 @@ const reservedSlugs = require("../data/reservedBlogSlugs");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { uploadLimiter } = require("../middleware/rateLimiters");
 const { storeUploadInS3 } = require("../utils/uploadStorage");
+const { scheduleFrontendRebuild } = require("../utils/frontendRebuild");
 const {
   BLOG_IMAGE_URL_PREFIX,
   processBlogContent,
+  sanitizeFaqs,
   estimateReadTime,
   isBlogImageUrl,
 } = require("../utils/blogSanitizer");
@@ -173,6 +175,7 @@ router.post("/", ...guard, async (req, res) => {
       excerpt: cleanString(req.body.excerpt, 1000),
       content,
       toc,
+      faqs: sanitizeFaqs(req.body.faqs),
       category: cleanString(req.body.category, 80),
       tags: cleanTags(req.body.tags),
       readTime: readTimeFrom(req.body.readTime, content),
@@ -191,6 +194,7 @@ router.post("/", ...guard, async (req, res) => {
     }
 
     await blog.save();
+    if (blog.status === "published") scheduleFrontendRebuild(`published ${blog.slug}`);
     res.status(201).json(blog);
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ msg: "A blog with this slug already exists." });
@@ -206,6 +210,7 @@ router.put("/:id", ...guard, async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ msg: "Blog not found." });
     const blog = await Blog.findById(req.params.id);
     if (!blog) return res.status(404).json({ msg: "Blog not found." });
+    const wasPublished = blog.status === "published";
 
     const body = req.body || {};
     const has = (k) => Object.prototype.hasOwnProperty.call(body, k);
@@ -244,6 +249,7 @@ router.put("/:id", ...guard, async (req, res) => {
 
     if (!blog.isLegacy) {
       if (has("tags")) blog.tags = cleanTags(body.tags);
+      if (has("faqs")) blog.faqs = sanitizeFaqs(body.faqs);
       if (has("content")) {
         const { content, toc } = processBlogContent(body.content);
         blog.content = content;
@@ -271,6 +277,7 @@ router.put("/:id", ...guard, async (req, res) => {
     }
 
     await blog.save();
+    if (wasPublished || blog.status === "published") scheduleFrontendRebuild(`updated ${blog.slug}`);
     res.json(blog);
   } catch (err) {
     if (err.code === 11000) return res.status(409).json({ msg: "A blog with this slug already exists." });
@@ -294,8 +301,10 @@ router.patch("/:id/status", ...guard, async (req, res) => {
       if (problem) return res.status(400).json({ msg: problem });
       if (!blog.publishedAt) blog.publishedAt = new Date();
     }
+    const statusChanged = blog.status !== status;
     blog.status = status;
     await blog.save();
+    if (statusChanged) scheduleFrontendRebuild(`${status === "published" ? "published" : "unpublished"} ${blog.slug}`);
     res.json(adminItem(blog));
   } catch (err) {
     console.error("blog status error:", err.message);
@@ -312,7 +321,9 @@ router.delete("/:id", ...guard, async (req, res) => {
     if (blog.isLegacy) {
       return res.status(400).json({ msg: "Legacy articles are managed in code and cannot be deleted. Unpublish it instead." });
     }
+    const wasPublished = blog.status === "published";
     await blog.deleteOne();
+    if (wasPublished) scheduleFrontendRebuild(`deleted ${blog.slug}`);
     res.json({ msg: "Blog deleted." });
   } catch (err) {
     console.error("delete blog error:", err.message);

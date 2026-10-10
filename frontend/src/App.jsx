@@ -7,18 +7,21 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { REDIRECTS } from "./seo/redirects";
+import RouteSeo from "./seo/RouteSeo";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
+import { TextWidget } from '@livechat/widget-react'
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
 const NotFound = lazy(() => import("./components/NotFound")); // 404 Page
 const Home = lazy(() => import("./pages/Home"));
-const AskDoctor = lazy(() => import("./pages/AskDoctor"));
+
 const Services = lazy(() => import("./pages/Services"));
 const Blogs = lazy(() => import("./pages/Blogs/Blogs"));
 const BlogPost = lazy(() => import("./pages/Blogs/BlogPost")); // blogs created in Super Admin
@@ -30,7 +33,7 @@ const Login = lazy(() => import("./pages/Login"));
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
-
+const Serviceareas = lazy(() => import("./pages/Serviceareas"));
 import { useAdmin } from "./context/AdminContext";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
@@ -50,20 +53,20 @@ import {
 const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
 
 // iNDIVIDUAL bLOG PAGES
-import Telemedicine from "./pages/Blogs/Telemedicine";
-import TelemedicineServices from "./pages/Blogs/TelemedicineServices";
-import HowTelemedicineAppointmentWork from "./pages/Blogs/HowTelemedicineAppointmentWork";
-import OnlineDoctorConsultation from "./pages/Blogs/OnlineDoctorConsultation";
-import MedicalConditions from "./pages/Blogs/MedicalConditions";
-import TopTelemedicinePlatforms from "./pages/Blogs/TopTelemedicinePlatforms";
-import TelemedicineSafe from "./pages/Blogs/TelemedicineSafe";
-import TelemedicineInPerson from "./pages/Blogs/TelemedicineInPerson";
-import TelemedicineCost from "./pages/Blogs/TelemedicineCost";
-import OnlineDoctorRealDoctor from "./pages/Blogs/OnlineDoctorsRealDoctors";
-import FutureofTelemedicine from "./pages/Blogs/FutureofTelemedicine";
-import UTI from "./pages/Blogs/UTI";
-import MigraineVsHeadache from "./pages/Blogs/MigraineVsHeadache";
-import TelehealthforHypertension from "./pages/Blogs/TelehealthforHypertension";
+const Telemedicine = lazy(() => import("./pages/Blogs/Telemedicine"));
+const TelemedicineServices = lazy(() => import("./pages/Blogs/TelemedicineServices"));
+const HowTelemedicineAppointmentWork = lazy(() => import("./pages/Blogs/HowTelemedicineAppointmentWork"));
+const OnlineDoctorConsultation = lazy(() => import("./pages/Blogs/OnlineDoctorConsultation"));
+const MedicalConditions = lazy(() => import("./pages/Blogs/MedicalConditions"));
+const TopTelemedicinePlatforms = lazy(() => import("./pages/Blogs/TopTelemedicinePlatforms"));
+const TelemedicineSafe = lazy(() => import("./pages/Blogs/TelemedicineSafe"));
+const TelemedicineInPerson = lazy(() => import("./pages/Blogs/TelemedicineInPerson"));
+const TelemedicineCost = lazy(() => import("./pages/Blogs/TelemedicineCost"));
+const OnlineDoctorRealDoctor = lazy(() => import("./pages/Blogs/OnlineDoctorsRealDoctors"));
+const FutureofTelemedicine = lazy(() => import("./pages/Blogs/FutureofTelemedicine"));
+const UTI = lazy(() => import("./pages/Blogs/UTI"));
+const MigraineVsHeadache = lazy(() => import("./pages/Blogs/MigraineVsHeadache"));
+const TelehealthforHypertension = lazy(() => import("./pages/Blogs/TelehealthforHypertension"));
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
@@ -105,9 +108,6 @@ const CancerSecond = lazy(
 const ChestPain = lazy(() => import("./pages/Conditions/ChestPain"));
 const ChronicKidney = lazy(
   () => import("./pages/Conditions/ChronicKidneyDisease"),
-);
-const ChronicMigraine = lazy(
-  () => import("./pages/Conditions/ChronicMigraine"),
 );
 const ComplexDiagnosis = lazy(
   () => import("./pages/Conditions/ComplexDiagnosisReview"),
@@ -224,9 +224,6 @@ const EarPainChildren = lazy(
 const FeedingConcerns = lazy(
   () => import("./pages/Conditions/FeedingConcerns"),
 );
-const MildAsthmaSymptoms = lazy(
-  () => import("./pages/Conditions/MildAsthmaSymptoms"),
-);
 const MoodAnxietyTeens = lazy(
   () => import("./pages/Conditions/MoodAnxietyTeens"),
 );
@@ -263,20 +260,11 @@ const FollowUpConsultation = lazy(
 const LabResultsReview = lazy(
   () => import("./pages/Conditions/LabResultReview"),
 );
-const MedicalCertificate = lazy(
-  () => import("./pages/Conditions/MedicalCertificate"),
-);
 const MedicationReview = lazy(
   () => import("./pages/Conditions/MedicationReview"),
 );
-const PrescriptionRefill = lazy(
-  () => import("./pages/Conditions/PrescriptionRefill"),
-);
 const ReturnWorkClearance = lazy(
   () => import("./pages/Conditions/ReturnWorkClearance"),
-);
-const SecondMedicalOpinion = lazy(
-  () => import("./pages/Conditions/SecondMedicalOpinion"),
 );
 const SpecialistReferral = lazy(
   () => import("./pages/Conditions/SpecialistReferral"),
@@ -459,9 +447,6 @@ const VaccinationAdvice = lazy(
 const WholeFamilyIllnesses = lazy(
   () => import("./pages/Conditions/Conditions/WholeFamilyIllnesses"),
 );
-const BladderInfection = lazy(
-  () => import("./pages/Conditions/Conditions/BladderInfection"),
-);
 const BloodInUrine = lazy(
   () => import("./pages/Conditions/Conditions/BloodInUrine"),
 );
@@ -614,7 +599,7 @@ const HrtGuidance = lazy(
 const FertilityConcerns = lazy(
   () => import("./pages/Conditions/Conditions/FertilityConcerns"),
 );
-import Ocd from "./pages/Conditions/Conditions/Ocd";
+const Ocd = lazy(() => import("./pages/Conditions/Conditions/Ocd"));
 const EyeIrritation = lazy(() => import("./pages/Conditions/EyeIrritation"));
 // ----------Speciality Pages-------------------
 const AdolescentMedicine = lazy(
@@ -625,10 +610,6 @@ const Pediatrics = lazy(
 );
 const Cardiology = lazy(
   () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Cardiology"),
-);
-const ExpertMedicalOpinion = lazy(
-  () =>
-    import("./pages/Specialty/ChronicCare&ExpertOpinion/ExpertMedicalOpinion"),
 );
 const Gastroenterology = lazy(
   () => import("./pages/Specialty/ChronicCare&ExpertOpinion/Gastroenterology"),
@@ -721,15 +702,9 @@ const ChronicCareManagement = lazy(
 const GeneralConsultation = lazy(
   () => import("./pages/NewServices/GeneralConsultation"),
 );
-const MentalHealthSupport = lazy(
-  () => import("./pages/NewServices/MentalHealthSupport"),
-);
 const SexualHealth = lazy(() => import("./pages/NewServices/SexualHealth"));
 const WeightLossPrograms = lazy(
   () => import("./pages/NewServices/WeightLossPrograms"),
-);
-const DoctorNoteSickNote = lazy(
-  () => import("./pages/NewServices/DoctorNoteSickNote"),
 );
 const FittoFly = lazy(() => import("./pages/NewServices/FittoFly"));
 const LABREQUISITIONS = lazy(
@@ -741,14 +716,13 @@ const ChronicMedicationManagement = lazy(
 const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
-const ServiceDemo = lazy(() => import("./pages/NewServices/ServiceDemo"));
 
-import AdminAssignCategoryDoctor from "./pages/admin/AdminAssignCategoryDoctor";
-import ServicesPrices from "./pages/admin/ServicesPrices";
+const AdminAssignCategoryDoctor = lazy(() => import("./pages/admin/AdminAssignCategoryDoctor"));
+const ServicesPrices = lazy(() => import("./pages/admin/ServicesPrices"));
 
-import CategoryConsultant from "./pages/CategoryConsultant";
-import CategoryAppointmentConfirm from "./pages/CategoryAppointmentConfirm";
-import AdminCategoryConsultationDetails from "./pages/admin/AdminCategoryConsultationDetails";
+const CategoryConsultant = lazy(() => import("./pages/CategoryConsultant"));
+const CategoryAppointmentConfirm = lazy(() => import("./pages/CategoryAppointmentConfirm"));
+const AdminCategoryConsultationDetails = lazy(() => import("./pages/admin/AdminCategoryConsultationDetails"));
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -779,7 +753,6 @@ const CertificatePreview = lazy(
 const DoctorMessages = lazy(() => import("./pages/doctors/DoctorMessages"));
 const DoctorNotes = lazy(() => import("./pages/doctors/DoctorNotes"));
 const RaiseTicket = lazy(() => import("./pages/doctors/RaiseTicket"));
-const DoctorQnA = lazy(() => import("./pages/doctors/DoctorQnA"));
 const DoctorAnalytics = lazy(() => import("./pages/doctors/DoctorAnalytics"));
 const DoctorSettings = lazy(() => import("./pages/doctors/DoctorSettings"));
 const DoctorProfileForUser = lazy(
@@ -799,6 +772,7 @@ const AdminDoctorProfile = lazy(
 );
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
+const AdminDeletionRequests = lazy(() => import("./pages/admin/AdminDeletionRequests"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
@@ -821,7 +795,6 @@ const PaymentLinkHistory = lazy(
 );
 const ManualInvoices = lazy(() => import("./pages/admin/ManualInvoices"));
 const GOP = lazy(() => import("./pages/admin/GOP"));
-const QnAPage = lazy(() => import("./pages/admin/QnAPage"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
@@ -850,11 +823,14 @@ const AdminPartnerCases = lazy(() => import("./pages/admin/PartnerCases"));
 const AdminPartnerCaseDetail = lazy(
   () => import("./pages/admin/PartnerCaseDetail"),
 );
+const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
+const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
+const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
+const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
 const Appointments = lazy(() => import("./pages/user/Appointments"));
-const MedicalQuestions = lazy(() => import("./pages/user/MedicalQuestions"));
 const FavouriteDoctors = lazy(() => import("./pages/user/FavouriteDoctors"));
 const LabAppointments = lazy(() => import("./pages/user/LabAppointments"));
 const ProfileSettings = lazy(() => import("./pages/user/ProfileSettings"));
@@ -1146,7 +1122,7 @@ function DoctorEnrollmentsWrapper() {
   );
 }
 
-function AppLayout() {
+export function AppLayout() {
   const location = useLocation();
 
   const hideLayout =
@@ -1154,6 +1130,7 @@ function AppLayout() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/services-prices") ||
     location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/partner") ||
     location.pathname.startsWith("/user") ||
@@ -1164,7 +1141,9 @@ function AppLayout() {
   return (
     <>
       <ScrollToTop />
+      <RouteSeo />
       <SessionTimeoutManager />
+      <TextWidget organizationId="d29e3595-c3ba-48b3-9229-3a4835984ec7" />
       {!hideLayout && <Header />}
 
       <Suspense
@@ -1172,13 +1151,15 @@ function AppLayout() {
       >
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/ask-a-question" element={<AskDoctor />} />
+          {/* The Medical Q&A feature was removed. Keep old links working. */}
+          <Route path="/ask-a-question" element={<Navigate to="/" replace />} />
           <Route path="/medical-services" element={<Services />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/corporates" element={<Corporates />} />
           <Route path="/contact-us" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/appointment-booking" element={<AppointmentBooking />} />
+                    <Route path="/service-areas" element={<Serviceareas />} />
           <Route
             path="/appointment-booking/:catSlug"
             element={<AppointmentBooking />}
@@ -1223,11 +1204,7 @@ function AppLayout() {
           />
           <Route
             path="/user/medical-questions"
-            element={
-              <UserLayout>
-                <MedicalQuestions />
-              </UserLayout>
-            }
+            element={<Navigate to="/user/dashboard" replace />}
           />
           <Route
             path="/user/favourite-doctors"
@@ -1386,11 +1363,7 @@ function AppLayout() {
           />
           <Route
             path="/doctor-dashboard/qna"
-            element={
-              <DoctorLayout>
-                <DoctorQnA />
-              </DoctorLayout>
-            }
+            element={<Navigate to="/doctor-dashboard" replace />}
           />
           <Route
             path="/doctor-dashboard/analytics"
@@ -1542,6 +1515,32 @@ function AppLayout() {
             }
           />
           <Route
+            path="/admin-dashboard/email"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <EmailLayout />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          >
+            <Route index element={<Navigate to="inbox" replace />} />
+            <Route path="mail/:messageId" element={<EmailThread />} />
+            <Route path="box/:mailboxId/:folder" element={<EmailList />} />
+            <Route path=":folder" element={<EmailList />} />
+          </Route>
+          {/* Super Admin only: add / edit / deactivate the company mail IDs. */}
+          <Route
+            path="/admin-dashboard/email/settings/mail-ids"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <AdminLayout>
+                  <MailIdsSettings />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/payment-admin"
             element={<Navigate to="/payment-admin/payment-links" replace />}
           />
@@ -1604,7 +1603,14 @@ function AppLayout() {
               </PrivateRoute>
             }
           />
-          <Route path="/services-prices" element={<ServicesPrices />} />
+          <Route
+            path="/services-prices"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <ServicesPrices />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/admin-auth"
             element={<Navigate to="/adminauth" replace />}
@@ -1665,6 +1671,16 @@ function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <ManageUsers />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/deletion-requests"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminDeletionRequests />
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1761,13 +1777,7 @@ function AppLayout() {
           />
           <Route
             path="/admin-dashboard/qna"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <QnAPage />
-                </AdminLayout>
-              </PrivateRoute>
-            }
+            element={<Navigate to="/admin-dashboard" replace />}
           />
           <Route
             path="/admin-dashboard/tickets"
@@ -1835,14 +1845,6 @@ function AppLayout() {
             path="/child-and-family-care/pediatrics"
             element={<Pediatrics />}
           />
-          <Route
-            path="/chronic-care-and-expert-opinion/cardiology"
-            element={<Cardiology />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics"
-            element={<Pediatrics />}
-          />
           <Route path="/chronic-care/cardiology" element={<Cardiology />} />
           <Route
             path="/chronic-care/gastroenterology"
@@ -1878,12 +1880,6 @@ function AppLayout() {
             path="/women-health/lactation-consulting"
             element={<LactationConsulting />}
           />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
           <Route path="/eye-ear-bone/ear-nose-throat" element={<Ent />} />
           <Route
             path="/eye-ear-bone/ophthalmology"
@@ -1949,10 +1945,6 @@ function AppLayout() {
           <Route
             path="/chronic-kidney-disease"
             element={<ChronicKidney categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/neurology/chronic-migraine"
-            element={<ChronicMigraine categoryId="chronic" />}
           />
           <Route
             path="/online-second-medical-opinion/complex-diagnosis-review"
@@ -2189,10 +2181,6 @@ function AppLayout() {
             element={<FeedingConcerns categoryId="family" />}
           />
           <Route
-            path="/mild-asthma-symptoms"
-            element={<MildAsthmaSymptoms categoryId="family" />}
-          />
-          <Route
             path="/child-and-family-care/adolescent-medicine/mood-anxiety-teens"
             element={<MoodAnxietyTeens categoryId="family" />}
           />
@@ -2249,24 +2237,12 @@ function AppLayout() {
             element={<LabResultsReview categoryId="general" />}
           />
           <Route
-            path="/medical-certificate"
-            element={<MedicalCertificate categoryId="general" />}
-          />
-          <Route
             path="/general-and-everyday-care/internal-medicine/medication-review"
             element={<MedicationReview categoryId="general" />}
           />
           <Route
-            path="/prescription-refill"
-            element={<PrescriptionRefill categoryId="general" />}
-          />
-          <Route
             path="/return-to-work-clearance"
             element={<ReturnWorkClearance categoryId="general" />}
-          />
-          <Route
-            path="/second-medical-opinion"
-            element={<SecondMedicalOpinion categoryId="chronic" />}
           />
           <Route
             path="/specialist-referral"
@@ -2580,10 +2556,6 @@ function AppLayout() {
             element={<WholeFamilyIllnesses categoryId="general" />}
           />
           <Route
-            path="/bladder-infection"
-            element={<BladderInfection categoryId="men" />}
-          />
-          <Route
             path="/mens-health/urology/blood-in-urine"
             element={<BloodInUrine categoryId="men" />}
           />
@@ -2604,7 +2576,7 @@ function AppLayout() {
             element={<UrinaryIncontinence categoryId="men" />}
           />
           <Route
-            path="/mens-health/urology/urinary-tract-infection"
+            path="/urinary-tract-infection"
             element={<UrinaryTractInfection categoryId="men" />}
           />
           <Route
@@ -2831,7 +2803,7 @@ function AppLayout() {
             path="/women-health/obstetrics-and-gynaecology/fertility-concerns"
             element={<FertilityConcerns categoryId="women" />}
           />
-          <Route path="/mental-health/psychiatry/Ocd" element={<Ocd />} />
+          <Route path="/mental-health/psychiatry/ocd" element={<Ocd />} />
           <Route
             path="/eye-ear-bone/ophthalmology/eye-irritation"
             element={<EyeIrritation categoryId="eeb" />}
@@ -2840,10 +2812,6 @@ function AppLayout() {
             path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
-          <Route
-            path="/doctors-note"
-            element={<DoctorsNote categoryId="general" />}
-          />
           {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
           {/* Legacy query-param URL — redirects to the path-based form URL above. */}
           <Route
@@ -2954,7 +2922,6 @@ function AppLayout() {
           <Route path="/career" element={<DoctorCareers />} />
           <Route path="/support-center" element={<FAQ />} />
           {/* ---------------------Service Pages---------------------------- */}
-          <Route path="/ServiceDemo" element={<ServiceDemo />} />
           <Route
             path="/chronic-care-management"
             element={<ChronicCareManagement />}
@@ -2962,10 +2929,6 @@ function AppLayout() {
           <Route
             path="/general-consultation"
             element={<GeneralConsultation />}
-          />
-          <Route
-            path="/mental-health-support"
-            element={<MentalHealthSupport />}
           />
           <Route
             path="/online-prescription-refills"
@@ -2980,67 +2943,13 @@ function AppLayout() {
             path="/online-second-medical-opinion"
             element={<SecondOpinion />}
           />
-          <Route
-            path="/expert-medical-opinion"
-            element={<ExpertMedicalOpinion />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
-          <Route path="/ent" element={<Ent />} />
-          <Route
-            path="/eye-ear-bone/ophthalmology"
-            element={<Ophthalmology />}
-          />
-          <Route path="/eye-ear-bone/orthopedics" element={<Orthopedics />} />
           {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
-          <Route path="/mens-health/urology" element={<Urology />} />
-          <Route
-            path="/mental-health/behavioral-health"
-            element={<BehavioralHealth />}
-          />
-          <Route path="/mental-health/psychiatry" element={<Psychiatry />} />
-          <Route
-            path="/mental-health/psychology-counseling"
-            element={<PsychologyCounseling />}
-          />
           <Route
             path="/sexual-health/sexual-health-and-wellness"
             element={<SexualHealthSpeciality />}
           />
-          <Route
-            path="/skin-and-hair-care/dermatology"
-            element={<Dermatology />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care"
-            element={<GlobalCrossBorderCare />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine"
-            element={<TravelMedicine />}
-          />
-          <Route
-            path="/weight-and-nurtrition/weight-management"
-            element={<WeightManagement />}
-          />
-          <Route
-            path="/weight-and-nurtrition/lifestyle-medicine"
-            element={<LifestyleMedicine />}
-          />
-          <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics"
-            element={<NutritionAndDietetics />}
-          />
           <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
           <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
-          <Route
-            path="/doctor-note-or-sick-notes"
-            element={<DoctorNoteSickNote />}
-          />
           <Route
             path="/eye-ear-bone/ear-nose-throat/vertigo"
             element={<Vertigo categoryId="eeb" />}
@@ -3081,6 +2990,10 @@ function AppLayout() {
             path="/appointment-booking/category-confirm"
             element={<CategoryAppointmentConfirm />}
           />
+          {/* Retired/duplicate URLs: real 301s live in render.yaml; this is the in-app safety net. */}
+          {REDIRECTS.map(({ from, to }) => (
+            <Route key={from} path={from} element={<Navigate to={to} replace />} />
+          ))}
           {/* Super Admin blogs: after every static route so existing URLs win */}
           <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />

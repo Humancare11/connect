@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/SkinCondition/Shingles.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function Shingles({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Shingles Treatment Online | Virtual Care for Rash & Nerve Pain"
-        description="Get fast online treatment for shingles. Connect with a licensed provider for painful rashes, blisters, nerve pain, antiviral treatment, and symptom relief."
-        keywords="shingles treatment online, shingles symptoms, herpes zoster treatment, painful skin rash, antiviral treatment for shingles, online dermatologist, nerve pain from shingles, virtual skin consultation"
-        url="https://humancareconnect.co/shingles"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function Shingles({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

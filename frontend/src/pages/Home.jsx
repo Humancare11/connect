@@ -15,6 +15,7 @@ const Aa = lazy(() => import("../components/Aa"));
 // import sceneVideo from "../assets/gifts/scene-card-bg-video.mp4";
 import sceneVideo from "../assets/gifts/HeroVideo.mp4";
 import heroPoster from "../assets/gifts/HeroPoster.webp";
+import PreloadImage from "../components/PreloadImage";
 import WordReveal from "../components/WordReveal";
 import StepProgress from "../components/StepProgress";
 import SEO from "../components/Seo";
@@ -77,7 +78,7 @@ const SCENES = [
     step: 3,
     badge: "Book Appointment",
     title: "Book your appointment",
-    desc: "We'll match you with a board-certified doctor and schedule a time that works for you. No waiting rooms. No phone tag.",
+    desc: "We'll match you with a licensed doctor and schedule a time that works for you. No waiting rooms. No phone tag.",
     metricValue: " 24/7",
     metricLabel: "Booking availability",
     metricIcon: (
@@ -92,7 +93,7 @@ const SCENES = [
     badge: "Consult",
     title: "Consult with your doctor",
     desc: "Meet securely by video, discuss your symptoms, receive a diagnosis, and get a personalized treatment plan.",
-    metricValue: "HIPAA",
+    metricValue: "",
     metricLabel: "Secure connection",
     metricIcon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
@@ -254,20 +255,33 @@ export default function HomePage() {
   // Video lazy loading with Intersection Observer
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setShouldLoadVideo(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }, // Load before visible
-    );
+    let observer;
+    let timer;
+    // The 1.7 MB hero video is decorative (its poster is already on screen), so it must not compete with
+    // the page's own JS/CSS/fonts for bandwidth: start observing only after the page has loaded and gone idle.
+    const start = () => {
+      timer = setTimeout(() => {
+        observer = new IntersectionObserver(
+          (entries) => {
+            if (entries[0].isIntersecting) {
+              setShouldLoadVideo(true);
+              observer.disconnect();
+            }
+          },
+          { rootMargin: "200px" }, // Load before visible
+        );
+        const videoSection = rightRef.current;
+        if (videoSection) observer.observe(videoSection);
+      }, 1500);
+    };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
 
-    const videoSection = rightRef.current;
-    if (videoSection) observer.observe(videoSection);
-
-    return () => observer.disconnect();
+    return () => {
+      window.removeEventListener("load", start);
+      clearTimeout(timer);
+      if (observer) observer.disconnect();
+    };
   }, []);
 
   // ── As-you-type search: backend "instant" mode (never uses AI) ───────────
@@ -705,12 +719,7 @@ export default function HomePage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <>
-      <SEO
-        title="Telemedicine Services | Online Doctor Appointments | Humancare Connect"
-        description="Telemedicine services with fast online doctor appointments, virtual healthcare services, prescription refills, mental health support, chronic care, and secure telehealth services through Humancare Connect."
-        keywords="Telemedicine services, online doctor appointments, virtual healthcare services, telehealth services, telemedicine platform, online doctor consultation, licensed healthcare providers, prescription refills online, chronic care, mental health support, same-day online medical care, secure telemedicine platform"
-        url="https://humancareconnect.co"
-      />
+      <SEO />
       <div className="hero-light" />
       <div className="hero-grid" />
 
@@ -737,7 +746,7 @@ export default function HomePage() {
             advice, personalized treatment plans & prescriptions from licensed
             healthcare providers at your home. Our HIPAA compliant telemedicine
             and secure healthcare platform makes it easy, convenient, and
-            available worldwide to access quality digital healthcare.
+            available  to access quality digital healthcare.
           </p>
           <div className="trust" ref={btnRef}>
             <span className="trust-chip">
@@ -753,7 +762,7 @@ export default function HomePage() {
               </svg>
               HIPAA Compliant
             </span>
-            <span className="trust-chip">
+            {/* <span className="trust-chip">
               <svg
                 width="12"
                 height="12"
@@ -765,8 +774,8 @@ export default function HomePage() {
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
               GDPR Ready
-            </span>
-            <span className="trust-chip">
+            </span> */}
+            {/* <span className="trust-chip">
               <svg
                 width="12"
                 height="12"
@@ -777,8 +786,8 @@ export default function HomePage() {
               >
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              500+ Verified Providers
-            </span>
+              50+ Verified Providers
+            </span> */}
 
             <span className="trust-chip">
               <svg
@@ -907,6 +916,21 @@ export default function HomePage() {
 
         {/* ── RIGHT ── */}
         <div className="hero-right" ref={rightRef}>
+          {/* The poster is the page's LCP image; start fetching it before the video element mounts. */}
+          <PreloadImage src={heroPoster} />
+          {/* The poster is a real <img> in the server HTML, so the LCP image paints before any JavaScript
+              runs. The video is mounted on top of it later with the same class and no poster of its own
+              (a second poster would become a later, larger LCP candidate). */}
+          <img
+            src={heroPoster}
+            alt=""
+            aria-hidden="true"
+            className="hero-right-video-bg"
+            width="1600"
+            height="900"
+            decoding="async"
+            fetchPriority="high"
+          />
           {shouldLoadVideo && (
             <video
               autoPlay
@@ -914,7 +938,6 @@ export default function HomePage() {
               muted
               playsInline
               preload="metadata"
-              poster={heroPoster}
               className="hero-right-video-bg"
             >
               <source src={sceneVideo} type="video/mp4" />
@@ -939,7 +962,7 @@ export default function HomePage() {
                 {" "}
                 Five simple steps to connect with trusted healthcare
                 <br />
-                professionals from anywhere, anytime.
+                professionals from anywhere.
               </p>
             </div>
 
@@ -1189,7 +1212,7 @@ export default function HomePage() {
         stats={[
           "Avg. response in 10 min",
           "HIPAA secure & private",
-          "Available Globally",
+          "Available in the U.S.",
         ]}
         sections={HOME_FAQS}
       />

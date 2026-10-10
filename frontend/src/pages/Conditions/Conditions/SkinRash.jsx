@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/HomeImageConditions/skin-issues-dermatology-services.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function SkinRash({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Skin Rash Treatment Online | Virtual Dermatologist for Rashes & Itching"
-        description="Get online treatment for skin rashes. Connect with a licensed provider for itchy skin, redness, bumps, allergic reactions, and personalized skincare guidance."
-        keywords="skin rash treatment online, itchy skin rash, online dermatologist, rash diagnosis online, allergic skin rash, eczema rash treatment, virtual skin consultation, telehealth dermatology, skin irritation treatment, red skin rash"
-        url="https://humancareconnect.co/skin-rash"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function SkinRash({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

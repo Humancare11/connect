@@ -17,7 +17,6 @@ import {
   FiMinus,
   FiMapPin,
 } from "react-icons/fi";
-import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import mentalHealthHero from "../../assets/HomeImageCategories/mental-health-counseling-services.webp";
 import SEO from "../../components/Seo";
@@ -553,22 +552,7 @@ export default function MentalHealth() {
         minHeight: "100vh",
       }}
     >
-      <SEO
-        title="Online Mental Health Support | Virtual Therapy & Counseling | Humancare Connect"
-        description="Access online mental health support with trusted professionals. Get virtual therapy, counseling, and guidance for anxiety, depression, stress, emotional wellness, and overall mental well-being."
-        keywords="Online mental health care, Virtual therapy, Online counseling, Emotional wellness support"
-        url="https://humancareconnect.co/mental-health"
-      />
-      <Helmet>
-        <title>
-          Online Mental Health Support | Virtual Therapy & Counseling |
-          Humancare Connect
-        </title>
-        <meta
-          name="description"
-          content=" Access online mental health support with trusted professionals. Get virtual therapy, counseling, and guidance for anxiety, depression, stress, emotional wellness, and overall mental well-being. "
-        />
-      </Helmet>
+      <SEO />
 
       {/* ── Hero ── */}
       <section

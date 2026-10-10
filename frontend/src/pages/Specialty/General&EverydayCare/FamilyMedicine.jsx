@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -271,7 +270,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
@@ -521,20 +520,18 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
   return (
     <>
       <main className="sp-page">
-        <SEO
-          title="Family Medicine Specialists | Comprehensive Care for All Ages"
-          description="Get personalized family medicine care for routine check-ups, vaccinations, preventive care, and common illnesses for individuals and families."
-          keywords="Family medicine specialists, Primary care online, Online doctor appointment, Telemedicine services"
-          url="https://humancareconnect.co/family-medicine"
-        />
+        <SEO />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="1178"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -542,9 +539,8 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${
-                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                }`}
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                  }`}
               >
                 <span className="sp-hero__badge">
                   General and Everyday Care
@@ -573,6 +569,8 @@ export default function FamilyMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

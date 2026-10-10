@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -27,13 +28,9 @@ export default function Chlamydia({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Chlamydia Care | Confidential STI Guidance & Treatment Support"
-        description="Chlamydia may cause burning urination, unusual discharge, or pelvic discomfort, while some people have no symptoms. Access private sexual health guidance and appropriate care online."
-        keywords="Chlamydia, Chlamydia care, Sexually transmitted bacterial infection, Sexual health guidance, Telemedicine services, Online doctor appointment"
-        url="https://humancareconnect.co/chlamydia"
-      />
+      <SEO />
       <div className="condition-root">
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -49,7 +46,7 @@ export default function Chlamydia({ categoryId } = {}) {
                 ✦ Trusted {pageData.badge}
               </span>
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
               <p className="condition-desc-hero condition-hero-anim-desc">
                 {pageData.description}

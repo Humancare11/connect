@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import PhoneInputField, { parseValue as parsePhoneValue } from "../../components/PhoneInputField";
 import LocationSelects from "../../components/LocationSelects";
 import { getMobileError } from "../../utils/phone";
+import DeleteAccountSection from "../../components/DeleteAccountSection";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -390,7 +391,8 @@ export default function ProfileSettings() {
             </div>
           </div>
 
-          {/* ── RIGHT: Form Card ── */}
+          {/* ── RIGHT: Form Card + Delete account ── */}
+          <div style={{ minWidth: 0 }}>
           <div style={{ ...glassCard, borderRadius: "22px", overflow: "hidden", position: "relative" }}>
             {/* Blue accent strip */}
             <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg, #083ab0, #3b82f6)" }} />
@@ -583,6 +585,9 @@ export default function ProfileSettings() {
               </div>
 
             </form>
+          </div>
+
+          <DeleteAccountSection />
           </div>
 
         </div>

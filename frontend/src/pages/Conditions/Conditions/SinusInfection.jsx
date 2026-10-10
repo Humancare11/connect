@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/sinus-infection.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function SinusInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Sinus Infection Treatment Online | Virtual Care for Sinusitis"
-        description="Get online treatment for sinus infections. Connect with a licensed provider for sinus pressure, nasal congestion, facial pain, headaches, and personalized care."
-        keywords="sinus infection treatment, sinusitis treatment online, online sinus doctor, nasal congestion treatment, sinus pressure relief, virtual sinus consultation, telehealth sinus care, online ENT consultation"
-        url="https://humancareconnect.co/sinus-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function SinusInfection({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

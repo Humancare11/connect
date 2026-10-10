@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -41,14 +42,10 @@ export default function Indigestion({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Indigestion Treatment Online | Fast Digestive Health Care"
-        description="Get expert indigestion treatment online for heartburn, bloating, stomach pain, nausea, and digestive discomfort. Connect with a licensed provider through secure telemedicine services."
-        keywords="Indigestion treatment online, Digestive health care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/indigestion"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -68,7 +65,7 @@ export default function Indigestion({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

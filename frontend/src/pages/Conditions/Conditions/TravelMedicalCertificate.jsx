@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -43,6 +43,7 @@ import {
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Travel-Medical-Certificate.webp";
 
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -66,14 +67,10 @@ export default function TravelMedicalCertificate({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Travel Medical Certificate Online | Virtual Medical Clearance"
-        description="Get online support for travel medical certificates, fitness-to-travel clearance, prescription documentation, and other travel health requirements."
-        keywords="travel medical certificate, medical certificate for travel, fit to fly certificate, fitness to travel certificate, travel medical clearance, online medical certificate, travel health documentation, virtual doctor consultation, international travel medical certificate, telehealth travel care"
-        url="https://humancareconnect.co/travel-medical-certification"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{

@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -66,14 +67,10 @@ export default function BladderProblems({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bladder Problems Care Online | Urinary Health & Symptom Support"
-        description="Frequent urination, urgency, leakage, or bladder discomfort? Get personalized urinary health support, symptom evaluation, and treatment guidance from an online provider."
-        keywords="Bladder problems, Urinary health, Frequent urination, Bladder concerns, Telemedicine services, Virtual healthcare services"
-        url="https://humancareconnect.co/bladder-problems"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -93,7 +90,7 @@ export default function BladderProblems({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Osteoarthritis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Osteoarthritis Treatment Online | Joint Pain & Arthritis Care"
-        description="Get expert osteoarthritis treatment online. Connect with a licensed provider for joint pain, stiffness, reduced mobility, arthritis management, and personalized care from home."
-        keywords="Osteoarthritis treatment, Joint pain relief, Arthritis care online, Online orthopedic consultation"
-        url="https://humancareconnect.co/osteoarthritis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Osteoarthritis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

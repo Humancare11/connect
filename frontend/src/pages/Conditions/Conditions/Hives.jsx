@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function HairLoss({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Hives Treatment Online | Fast Allergy & Skin Rash Care"
-        description="Get expert treatment for hives online. Connect with a licensed provider for itchy skin welts, allergic reactions, symptom evaluation, and prescription support through secure telemedicine services."
-        keywords="Hives treatment online, Allergy skin rash care, Online doctor appointment, Telemedicine services"
-        url="https://humancareconnect.co/hives"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function HairLoss({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

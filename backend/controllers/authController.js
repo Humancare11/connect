@@ -25,8 +25,15 @@ const { assertPasswordAllowed, rememberPassword, validatePasswordStrength } = re
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin, recordSecurityEvent } = require("../utils/securityMonitor");
 const { validateMobile } = require("../utils/mobileValidation");
-const { lookupLocation } = require("../utils/geoIp");
+// Note: IP-based location detection (utils/geoIp.js) is intentionally not used
+// here. Country/State/City now come only from what the user submits (see
+// validateSignupLocation below). geoIp.js and the DB-IP database are left in
+// place, still loaded at startup via initGeoIp() in server.js, for possible
+// future reuse — just not called from signup.
 const { detectRegistrationClient } = require("../utils/clientInfo");
+const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
+const deletionHistory = require("../utils/accountDeletionHistory");
+const { shouldSkipSignupLocation } = require("../utils/legacyAppBypass");
 const { Country, State } = require("country-state-city");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
@@ -57,19 +64,6 @@ const validateDob = (dob) => {
 };
 
 // ── helpers ───────────────────────────────────────────
-// Location for a brand-new account, detected from the request IP. Never
-// throws and never blocks signup: on any failure (no DB, private/local IP,
-// unknown IP) every field is left empty.
-const detectSignupLocation = async (ip) => {
-  const geo = await lookupLocation(ip).catch(() => null);
-  const location = {
-    country: geo?.country || "",
-    state: geo?.state || "",
-    city: geo?.city || "",
-  };
-  const detected = Boolean(location.country || location.state || location.city);
-  return { ...location, locationSource: detected ? "ip" : "" };
-};
 
 const safeUser = (user) => ({
   _id:             user._id,
@@ -95,6 +89,7 @@ const safeUser = (user) => ({
   isVerified:      user.isVerified,
   rating:          user.rating,
   deletionRequestStatus: user.deletionRequestStatus,
+  deletionRequestedAt: user.deletionRequestedAt,
   // Only meaningful for role "partner"; null/undefined for everyone else.
   partner:         user.partner || null,
 });
@@ -201,10 +196,10 @@ const sendRegisterOTP = async (req, res) => {
 // ════════════════════════════════════════════
 const register = async (req, res) => {
   try {
-    // dob / gender / country / state / city in the body are deliberately
-    // ignored: they're collected later on the Profile page, and location is
-    // detected server-side from the request IP.
-    const { name, email, password, mobile, otp, privacyConsent, hipaaConsent } = req.body;
+    // dob / gender in the body are ignored: they're collected later on the
+    // Profile page. country / state / city ARE required here — see
+    // validateSignupLocation below.
+    const { name, email, password, mobile, country, state, city, otp, privacyConsent, hipaaConsent } = req.body;
 
     if (!name || !email || !password || !otp || !mobile)
       return res.status(400).json({ msg: "Name, email, mobile number, password and OTP are required." });
@@ -213,6 +208,9 @@ const register = async (req, res) => {
 
     const mobileCheck = validateMobile(mobile);
     if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
+
+    const location = resolveSignupLocation(req, { country, state, city });
+    if (location.error) return res.status(400).json({ msg: location.error });
 
     if (!hasAcceptedConsent(privacyConsent) || !hasAcceptedConsent(hipaaConsent))
       return res.status(400).json({ msg: "Terms, Privacy Policy, and HIPAA consent must be accepted to register." });
@@ -229,12 +227,11 @@ const register = async (req, res) => {
     if (!check.valid) return res.status(400).json({ msg: check.msg });
 
     const ip = getIp(req);
-    const location = await detectSignupLocation(ip);
 
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({
       name, email: clean, password: hashed, role: "user",
-      mobile: mobileCheck.value, ...location, registrationIp: ip,
+      mobile: mobileCheck.value, ...location.set, registrationIp: ip,
       signupMethod: "email",
       ...detectRegistrationClient(req),
     });
@@ -253,7 +250,7 @@ const register = async (req, res) => {
       userName: user.name,
       userEmail: user.email,
       userRole: "user",
-      details: { country: user.country, state: user.state },
+      details: { country: user.country, state: user.state, ...(location.skipped && { locationSkipped: true }) },
     });
 
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
@@ -588,12 +585,17 @@ const findCountryRecord = (value) => {
   return ALL_COUNTRIES.find((c) => c.name.toLowerCase() === q || c.isoCode.toLowerCase() === q) || null;
 };
 
-// Validates the country / state / city fields of a profile update and returns
-// the $set fragment for them. Only fields that actually differ from what is
-// stored are validated, so a legacy free-text value the user didn't touch
-// never blocks saving other fields. Country and state must come from the
-// country-state-city lists (the same data the dropdowns use); city is free
-// text because a detected city may not exist in that list.
+// Validates the country / state / city fields of a profile update, or (called
+// with an all-blank `current`) of a brand-new signup, and returns the $set
+// fragment for them. Only fields that actually differ from `current` are
+// validated — for an update that means a legacy free-text value the user
+// didn't touch never blocks saving other fields; for a signup (current is
+// always blank) it means any non-blank submitted field gets validated, and a
+// field left blank is simply omitted from the result rather than erroring.
+// Country and state must come from the country-state-city lists (the same
+// data the dropdowns use), or the free-text fallback for a state when its
+// country has none; city is free text because a detected/typed city may not
+// exist in that list.
 const buildLocationUpdate = (body, current) => {
   const set = {};
   const has = (key) => body[key] !== undefined;
@@ -652,6 +654,31 @@ const buildLocationUpdate = (body, current) => {
 
   if (Object.keys(set).length > 0) set.locationSource = "user";
   return { set };
+};
+
+// Shared by register and googleAuthUser's new-account path: both require a
+// non-blank country; state is required too unless the submitted country has
+// no subdivisions in the dataset (e.g. Guam, Gibraltar) — those stay blank.
+// City is optional. Location is only ever user-submitted at signup now (no
+// IP-based fallback — see the note by the imports above), so a successful
+// result always has locationSource "user". Returns { error } or { set }, same
+// shape as buildLocationUpdate.
+const validateSignupLocation = (body) => {
+  if (!cleanStr(body.country)) return { error: "Country is required." };
+  const countryRecord = findCountryRecord(body.country);
+  if (!countryRecord) return { error: "Select a valid country." };
+  const countryHasStates = (State.getStatesOfCountry(countryRecord.isoCode) || []).length > 0;
+  if (countryHasStates && !cleanStr(body.state)) return { error: "State / Province is required." };
+  return buildLocationUpdate(body, { country: "", state: "", city: "" });
+};
+
+// validateSignupLocation, except that a legacy app build (one that predates the
+// Country/State fields and so can't send them) may omit the location entirely
+// — see utils/legacyAppBypass.js. Returns { error } or { set, skipped? }; when
+// skipped, `set` is empty so nothing location-related is stored.
+const resolveSignupLocation = (req, body) => {
+  if (shouldSkipSignupLocation(req, body)) return { set: {}, skipped: true };
+  return validateSignupLocation(body);
 };
 
 const updateProfile = async (req, res) => {
@@ -742,7 +769,7 @@ const updateProfile = async (req, res) => {
 };
 
 
-// PUT /api/auth/account-delete-request — user requests admin approval to delete their own account
+// POST /api/auth/account-delete-request — user requests admin approval to delete their own account
 const requestAccountDeletion = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -773,6 +800,22 @@ const requestAccountDeletion = async (req, res) => {
       details: { reason: user.deletionReason },
     });
 
+    // History row (survives the account being deleted). Best-effort: if it
+    // can't be written the request itself still goes through, and the row is
+    // created later when an admin decides (ensurePendingRecord).
+    const record = await deletionHistory.openRequest(user, {
+      reason: user.deletionReason,
+      requestedAt: user.deletionRequestedAt,
+      requestSource: deletionHistory.requestSourceFromReq(req),
+    });
+
+    // Best-effort "we received your request" email; never blocks the request.
+    const { sent: requestedEmailSent } = await sendAccountDeletionEmail("requested", user.email, {
+      name: user.name,
+      requestedAt: user.deletionRequestedAt,
+    });
+    if (record) await deletionHistory.setEmailFlag(record._id, "requested", requestedEmailSent);
+
     return res.status(201).json({
       msg: "Account deletion request sent to admin for approval.",
       user: safeUser(user),
@@ -783,13 +826,58 @@ const requestAccountDeletion = async (req, res) => {
   }
 };
 
+// POST /api/auth/account-delete-request/cancel — user withdraws their own pending deletion request
+const cancelAccountDeletion = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ msg: "User not found." });
+
+    if (user.deletionRequestStatus !== "pending") {
+      return res.status(400).json({ msg: "There is no pending account deletion request to cancel." });
+    }
+
+    // Make sure the history row exists BEFORE the reason/date are cleared below
+    // (a request made before the history existed has no row yet).
+    await deletionHistory.ensurePendingRecord(user);
+
+    user.deletionRequestStatus = "none";
+    user.deletionReason = "";
+    user.deletionRequestedAt = null;
+    await user.save();
+
+    // The history keeps the reason and date; only the live user fields reset.
+    try {
+      await deletionHistory.decide(user._id, "cancelled", { decidedBy: null });
+    } catch (err) {
+      console.error("cancelAccountDeletion: could not update the history:", err.message);
+    }
+
+    await recordActivity(req, {
+      action: "USER_CANCEL_ACCOUNT_DELETION",
+      resource: "User",
+      resourceId: user._id,
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      userRole: user.role,
+    });
+
+    return res.json({ msg: "Account deletion request cancelled.", user: safeUser(user) });
+  } catch (err) {
+    console.error("cancelAccountDeletion error:", err.message, err.stack);
+    return res.status(500).json({ msg: "Server error. Please try again." });
+  }
+};
+
 // ════════════════════════════════════════════
 //  8. GOOGLE AUTH — USER
 // ════════════════════════════════════════════
 const googleAuthUser = async (req, res) => {
   try {
-    // dob / gender / country in the body are ignored for new accounts (see register).
-    const { accessToken, mobile, privacyConsent, hipaaConsent } = req.body;
+    // dob / gender are ignored for new accounts (see register). country /
+    // state / city ARE required on the completion-screen call — see
+    // validateSignupLocation below.
+    const { accessToken, mobile, country, state, city, privacyConsent, hipaaConsent } = req.body;
     if (!accessToken) return res.status(400).json({ msg: "Google access token is required." });
 
     const { googleId, email, name } = await getGoogleProfile(accessToken);
@@ -818,16 +906,30 @@ const googleAuthUser = async (req, res) => {
     const mobileCheck = validateMobile(mobile);
     if (!mobileCheck.valid) return res.status(400).json({ msg: mobileCheck.msg });
 
+    const location = resolveSignupLocation(req, { country, state, city });
+    if (location.error) return res.status(400).json({ msg: location.error });
+
     const ip = getIp(req);
-    const location = await detectSignupLocation(ip);
 
     user = await User.create({
       name, email, googleId, role: "user",
-      mobile: mobileCheck.value, ...location, registrationIp: ip,
+      mobile: mobileCheck.value, ...location.set, registrationIp: ip,
       signupMethod: "google",
       ...detectRegistrationClient(req),
     });
     await recordConsent(req, user);
+    if (location.skipped) {
+      await recordActivity(req, {
+        action: "REGISTER",
+        resource: "User",
+        resourceId: user._id,
+        userId: user._id,
+        userName: user.name,
+        userEmail: user.email,
+        userRole: "user",
+        details: { signupMethod: "google", locationSkipped: true },
+      });
+    }
     const session = await issueAuthCookies(res, user);
     const tokens = buildTokenPayload(user, session);
     return res.status(201).json({ msg: "Registration successful.", user: safeUser(user), ...tokens });
@@ -1461,5 +1563,6 @@ module.exports = {
   changePassword, me, adminMe, refresh, logout, adminLogout,
   employeeAdminLogin, employeeAdminMe, employeeAdminLogout,
   partnerLogin, partnerMe, partnerLogout,
-  requestAccountDeletion,
+  requestAccountDeletion, cancelAccountDeletion,
+  resolveSignupLocation, // exported for tests
 };

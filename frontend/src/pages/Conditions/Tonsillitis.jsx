@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Tonsillitis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Tonsillitis Treatment Online | Virtual Care for Swollen Tonsils"
-        description="Get online care for tonsillitis. Consult a licensed provider for sore throat, swollen tonsils, fever, painful swallowing, and personalized treatment."
-        keywords="tonsillitis treatment online, swollen tonsils treatment, sore throat treatment, tonsillitis symptoms, online doctor for tonsillitis, painful swallowing, virtual doctor consultation, telehealth tonsillitis care, throat infection treatment, online ENT consultation"
-        url="https://humancareconnect.co/tonsillitis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Tonsillitis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -16,6 +16,9 @@ const blogSchema = new mongoose.Schema(
     toc: [{ _id: false, id: String, label: String }],
     category: { type: String, default: "", trim: true, maxlength: 80 },
     tags: [{ type: String, trim: true, maxlength: 50 }],
+    // FAQ accordion shown below the article. `answer` is sanitized simple HTML
+    // (see sanitizeFaqs in utils/blogSanitizer.js), `question` is plain text.
+    faqs: [{ _id: false, question: { type: String, maxlength: 300 }, answer: { type: String, maxlength: 6000 } }],
     readTime: { type: Number, default: null, min: 1, max: 120 },
     metaTitle: { type: String, default: "", trim: true, maxlength: 200 },
     metaDescription: { type: String, default: "", trim: true, maxlength: 400 },

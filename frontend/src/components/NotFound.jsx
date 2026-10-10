@@ -1,16 +1,16 @@
-import { Helmet, HelmetProvider } from "react-helmet-async";
+import { Helmet } from "react-helmet-async";
 import "./NotFound.css";
-import notFoundIllustration from "../assets/404-hero.png";
+import notFoundIllustration from "../assets/404-hero.webp";
 
 export default function NotFound() {
   return (
-    <HelmetProvider>
+    <>
       <Helmet>
         <title>Page Not Found | Humancare Connect</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <NotFoundContent />
-    </HelmetProvider>
+    </>
   );
 }
 
@@ -39,6 +39,8 @@ function NotFoundContent() {
               src={notFoundIllustration}
               alt="Illustration of a person looking at a signpost with two directional signs: 'We're here to support you' and 'Let's get you back on track'"
               className="nf-illustration"
+              width="612"
+              height="408"
             />
           </div>
         </div>

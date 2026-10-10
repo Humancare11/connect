@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function IrregularPeriods({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Irregular Periods Treatment | Online Gynecologist Consultation"
-        description="Missed, delayed, or irregular periods? Consult a licensed gynecologist online for menstrual cycle concerns, hormone imbalance evaluation, personalized treatment, and expert women's health support."
-        keywords="Irregular periods treatment, Online gynecologist consultation, Menstrual cycle problems, Hormone imbalance"
-        url="https://humancareconnect.co/irregular-periods"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function IrregularPeriods({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

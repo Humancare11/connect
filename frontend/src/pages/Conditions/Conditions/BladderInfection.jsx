@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -41,6 +41,7 @@ import {
   X,
 } from "lucide-react";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -65,14 +66,10 @@ export default function BladderInfection({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Bladder Infection Treatment Online | UTI Symptom Care"
-        description="Burning urination, pelvic pressure, or frequent urges to urinate? Get online bladder infection care with symptom evaluation, treatment guidance, and prescriptions when appropriate."
-        keywords="Bladder infection, Bladder infection symptoms, Burning during urination, Urinary discomfort, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/bladder-infection"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function BladderInfection({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

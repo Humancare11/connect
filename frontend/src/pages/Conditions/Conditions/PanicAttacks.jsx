@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function PanicAttacks({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Panic Attack Treatment Online | Anxiety & Mental Health Support"
-        description="Get expert care for panic attacks online. Connect with a licensed provider for anxiety, sudden fear, rapid heartbeat, treatment guidance, therapy support, and personalized mental health care."
-        keywords="Panic attack treatment, Anxiety support, Online mental health consultation, Panic disorder care"
-        url="https://humancareconnect.co/panic-attack"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function PanicAttacks({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -17,7 +17,6 @@ import {
   FiMinus,
   FiMapPin,
 } from "react-icons/fi";
-import { Helmet } from "react-helmet-async";
 import "./categoriesGlobal.css";
 import weightNutritionHero from "../../assets/HomeImageCategories/weight-and-nutrition-services.webp";
 import SEO from "../../components/Seo";
@@ -476,23 +475,7 @@ export default function WeightNutrition() {
         minHeight: "100vh",
       }}
     >
-      <SEO
-        title="Online Weight & Nutrition Care | Virtual Diet & Wellness Consultation | Humancare Connect"
-        description="Access online weight and nutrition care with trusted healthcare professionals. Get virtual consultations for weight management, healthy eating, personalized nutrition plans, and wellness support."
-        keywords="Weight and nutrition care, online weight management, weight loss consultation, weight gain concerns, personalized nutrition advice, healthy eating guidance, nutrition support, personalized nutrition plans, healthy weight management, weight maintenance, balanced eating habits, meal planning, obesity care, overweight concerns, nutritional deficiencies, digestive health, diet consultation, virtual nutrition consultation, wellness support, online doctor consultation, virtual healthcare services"
-        url="https://humancareconnect.co/weight-and-nurtrition"
-      />
-      <Helmet>
-        <title>
-          Online Weight & Nutrition Care | Virtual Diet & Wellness Consultation
-          | Humancare Connect
-        </title>
-        <meta
-          name="description"
-          content="Access online weight and nutrition care with trusted healthcare professionals. Get virtual consultations for weight management, healthy eating, personalized nutrition plans, and wellness support.
-"
-        />
-      </Helmet>
+      <SEO />
 
       {/* ── Hero ── */}
       <section

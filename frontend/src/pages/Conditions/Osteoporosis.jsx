@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Osteoporosis({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Osteoporosis Treatment Online | Bone Health & Fracture Prevention"
-        description="Connect with a licensed provider online for osteoporosis care. Get expert guidance on bone health, fracture prevention, osteoporosis treatment, risk assessment, and personalized management."
-        keywords="Osteoporosis treatment, Bone health, Fracture prevention, Online osteoporosis consultation"
-        url="https://humancareconnect.co/osteoporosis"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Osteoporosis({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

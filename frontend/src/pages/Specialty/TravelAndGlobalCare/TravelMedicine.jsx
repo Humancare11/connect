@@ -1,6 +1,5 @@
-﻿import { useNavigate, Link } from "react-router-dom";
+﻿﻿import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { HelmetProvider } from "react-helmet-async";
 import {
   FiActivity,
   FiHeart,
@@ -314,7 +313,7 @@ const SPECIALTY_DATA = {
 };
 
 const TRUST_STATS = [
-  { Icon: FiUsers, value: "500+", label: "Board-Certified Providers" },
+  { Icon: FiUsers, value: "", label: "Board-Certified Providers" },
   { Icon: FiBriefcase, value: "30+", label: "Specialties Covered" },
   { Icon: FiCalendar, value: "60 Minutes", label: "Average Appointment Time" },
   { Icon: FiMonitor, value: "24/7", label: "Customer Support" },
@@ -565,20 +564,18 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
   return (
     <>
       <main className="sp-page">
-        <SEO
-          title="Travel Medicine Specialists | Pre-Travel Care, Vaccinations & Travel Health Support"
-          description="Connect with travel medicine specialists for pre-travel vaccinations, travel-related illness prevention, traveler's diarrhea, altitude sickness, malaria prevention, and post-travel health consultations."
-          keywords="travel medicine, travel medicine specialist, travel health consultation, pre-travel consultation, travel vaccinations, malaria prevention, traveler�s diarrhea treatment, altitude sickness, post-travel symptoms, travel health services, online travel doctor, telehealth travel medicine"
-          url="https://humancareconnect.co/travel-medicine"
-        />
+        <SEO />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
             <img
               src={data.heroImage}
+              width="1920"
+              height="520"
               alt={data.heroAlt}
               className="sp-hero__img"
               loading="eager"
+              fetchPriority="high"
             />
             <div className="sp-hero__overlay" />
           </div>
@@ -586,9 +583,8 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${
-                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                }`}
+                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                  }`}
               >
                 <span className="sp-hero__badge">
                   Global & Crosss Border Care
@@ -617,6 +613,8 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
                 <div className="sp-overview__img-wrap">
                   <img
                     src={data.overviewImage}
+                    width="562"
+                    height="430"
                     alt={data.overviewAlt}
                     className="sp-overview__img"
                     loading="lazy"

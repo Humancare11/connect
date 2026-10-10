@@ -76,14 +76,14 @@ const SCHEMA_DATA = {
       headline:
         "Telehealth for Hypertension: Can You Treat High Blood Pressure Online?",
       description: PAGE_DESCRIPTION,
-      image: "https://humancareconnect.co/Logo.png",
+      image: "https://humancareconnect.co/single-logo.png",
       publisher: {
         "@type": "Organization",
         name: "Humancare Connect",
         url: "https://humancareconnect.co",
         logo: {
           "@type": "ImageObject",
-          url: "https://humancareconnect.co/Logo.png",
+          url: "https://humancareconnect.co/single-logo.png",
         },
       },
       about: [
@@ -252,33 +252,9 @@ export default function TelehealthforHypertension() {
   return (
     <>
       <SEO
-        title={PAGE_TITLE}
-        description={PAGE_DESCRIPTION}
-        keywords={PAGE_KEYWORDS}
-        url={PAGE_URL}
         schemaData={SCHEMA_DATA}
       />
       <Helmet>
-        <title>{PAGE_TITLE}</title>
-        <meta name="description" content={PAGE_DESCRIPTION} />
-        <meta name="keywords" content={PAGE_KEYWORDS} />
-        <meta name="robots" content="index, follow, max-image-preview:large" />
-        <link rel="canonical" href={PAGE_URL} />
-
-        {/* Open Graph */}
-        <meta property="og:type" content="article" />
-        <meta property="og:site_name" content="Humancare Connect" />
-        <meta property="og:title" content={PAGE_TITLE} />
-        <meta property="og:description" content={PAGE_DESCRIPTION} />
-        <meta property="og:url" content={PAGE_URL} />
-        <meta property="og:image" content={PAGE_IMAGE} />
-
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={PAGE_TITLE} />
-        <meta name="twitter:description" content={PAGE_DESCRIPTION} />
-        <meta name="twitter:image" content={PAGE_IMAGE} />
-
         <script type="application/ld+json">
           {JSON.stringify(SCHEMA_DATA)}
         </script>
@@ -359,6 +335,7 @@ export default function TelehealthforHypertension() {
                   src={PAGE_IMAGE}
                   alt="Telehealth for Hypertension: Can You Treat High Blood Pressure Online?"
                   loading="eager"
+                  fetchPriority="high"
                 />
                 <figcaption>
                   Understanding how telehealth can help manage high blood pressure, review readings, discuss medications, and support ongoing care.

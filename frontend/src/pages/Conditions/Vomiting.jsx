@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function Vomiting({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Vomiting Treatment Online | Nausea & Digestive Care"
-        description="Get fast care for vomiting symptoms, nausea, dehydration, and stomach discomfort. Connect with an online provider for treatment guidance and recovery support."
-        keywords="Vomiting symptoms, vomiting treatment, nausea, dehydration, stomach discomfort, weakness, dizziness, digestive issues, food poisoning, stomach illnesses, vomiting relief, hydration guidance, telemedicine services, online doctor appointment, telemedicine platform, online provider"
-        url="https://humancareconnect.co/vomiting"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function Vomiting({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

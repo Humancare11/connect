@@ -1,0 +1,109 @@
+// Explicit response shapes for the mail screens. Fields are picked one by one
+// (never spread from the document) so nothing internal — ciphertext, Gmail ids,
+// idempotency keys — can reach the browser.
+
+const idOf = (v) => (v ? String(v._id || v) : null);
+
+// Decrypts content; a key mismatch must not take the whole list down.
+function safeContent(doc) {
+  try {
+    return doc.getContent();
+  } catch {
+    return { text: "", html: "", snippet: "" };
+  }
+}
+
+function serializeMailbox(mb) {
+  return {
+    id: idOf(mb._id),
+    address: mb.address,
+    displayName: mb.displayName,
+    color: mb.color,
+    trackOpensDefault: mb.trackOpensDefault !== false,
+  };
+}
+
+// Open tracking as the screens show it: status "opened" | "pending" | "unavailable".
+// Only for outbound mail that actually went out. Never includes the token or its hash.
+// A row without a tracking block (older mail, or mail sent from Gmail directly)
+// is "unavailable".
+function trackingView(doc) {
+  if (doc.direction !== "out" || !["sent", "replied"].includes(doc.status)) return null;
+  const t = doc.tracking;
+  const multiRecipient = (doc.to?.length || 0) + (doc.cc?.length || 0) > 1;
+  if (!t) {
+    return {
+      status: "unavailable",
+      reason: doc.sentOutsideDashboard ? "outside_dashboard" : "tracking_off",
+      firstOpenedAt: null,
+      lastOpenedAt: null,
+      openCount: 0,
+      multiRecipient,
+    };
+  }
+  return {
+    status: t.status || "unavailable",
+    reason: t.status === "unavailable" ? t.unavailableReason || "" : "",
+    firstOpenedAt: t.firstOpenedAt || null,
+    lastOpenedAt: t.lastOpenedAt || null,
+    openCount: t.openCount || 0,
+    multiRecipient,
+  };
+}
+
+function baseFields(doc, mailboxMap) {
+  const mb = mailboxMap.get(idOf(doc.mailbox));
+  return {
+    id: idOf(doc._id),
+    mailbox: mb ? serializeMailbox(mb) : null,
+    direction: doc.direction,
+    from: { name: doc.from?.name || "", address: doc.from?.address || "" },
+    to: (doc.to || []).map((a) => ({ name: a.name || "", address: a.address })),
+    cc: (doc.cc || []).map((a) => ({ name: a.name || "", address: a.address })),
+    subject: doc.subject,
+    messageDate: doc.messageDate,
+    isSpam: doc.isSpam,
+    status: doc.status,
+    failureReason: doc.status === "failed" ? doc.failureReason : "",
+    hasAttachments: doc.hasAttachments,
+    attachmentCount: doc.attachmentCount,
+    sentBy: doc.direction === "out" && doc.sentByName ? { id: idOf(doc.sentByAdmin), name: doc.sentByName } : null,
+    sentOutsideDashboard: doc.sentOutsideDashboard,
+    repliedAt: doc.repliedAt,
+    repliedByName: doc.direction === "in" ? doc.repliedByName : "",
+    firstViewed: doc.firstViewedAt
+      ? { by: { id: idOf(doc.firstViewedBy), name: doc.firstViewedByName }, at: doc.firstViewedAt }
+      : null,
+    tracking: trackingView(doc),
+    // Read in Gmail (by someone on the team, not by name). Separate from firstViewed (dashboard views).
+    readInGmail: doc.direction === "in" && Boolean(doc.gmailRead),
+    // Shared-inbox meaning: unread = no admin has opened it in the dashboard AND it is not read in Gmail.
+    unread: doc.direction === "in" && !doc.firstViewedAt && !doc.gmailRead,
+  };
+}
+
+function serializeListItem(doc, mailboxMap) {
+  return { ...baseFields(doc, mailboxMap), snippet: safeContent(doc).snippet };
+}
+
+// attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role }).
+function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById) {
+  const content = safeContent(doc);
+  const base = baseFields(doc, mailboxMap);
+  const sender = doc.sentByAdmin ? adminsById.get(idOf(doc.sentByAdmin)) : null;
+  return {
+    ...base,
+    sentBy: base.sentBy ? { ...base.sentBy, role: sender?.role || "" } : null,
+    text: content.text,
+    html: content.html,
+    attachments: (attachmentsByMessage.get(idOf(doc._id)) || []).map((a) => ({
+      id: idOf(a._id),
+      filename: a.filename,
+      mimeType: a.mimeType,
+      size: a.size,
+      isInline: a.isInline,
+    })),
+  };
+}
+
+module.exports = { serializeMailbox, serializeListItem, serializeThreadMessage, trackingView, idOf };

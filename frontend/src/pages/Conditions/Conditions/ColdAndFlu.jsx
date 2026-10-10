@@ -1,8 +1,9 @@
-﻿import { useState } from "react";
+﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
 import SEO from "../../../components/Seo";
+import PreloadImage from "../../../components/PreloadImage";
 import {
   Calendar,
   Star,
@@ -65,14 +66,10 @@ export default function ColdAndFlu({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Cold & Flu Symptoms | Fever, Cough & Congestion Care"
-        description="Fever, chills, cough, congestion, or body aches slowing you down? Get symptom relief, treatment guidance, and prescription support when appropriate from home."
-        keywords="Cold and flu symptoms, Viral respiratory infections, Symptom relief, Telemedicine services, Online doctor appointment, Virtual healthcare services"
-        url="https://humancareconnect.co/cold-and-flu"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -92,7 +89,7 @@ export default function ColdAndFlu({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

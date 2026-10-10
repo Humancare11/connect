@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
+import PreloadImage from "../../components/PreloadImage";
 import {
   Calendar,
   Shield,
@@ -33,14 +34,10 @@ export default function NasalCongestion({ categoryId } = {}) {
 
   return (
     <>
-      <SEO
-        title="Nasal Congestion Treatment Online | Blocked Nose & Sinus Relief"
-        description="Get expert treatment for nasal congestion online. Consult a licensed provider for a blocked nose, sinus pressure, runny nose, allergies, breathing difficulties, and personalized care."
-        keywords="Nasal congestion treatment, Blocked nose relief, Sinus congestion care, Online doctor consultation"
-        url="https://humancareconnect.co/nasal-congestion"
-      />
+      <SEO />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
+        <PreloadImage src={pageData.bgImage} />
         <section
           className="condition-hero"
           style={{
@@ -60,7 +57,7 @@ export default function NasalCongestion({ categoryId } = {}) {
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
-                {pageData.heading}
+                Online {pageData.heading} Treatment
               </h1>
 
               <p className="condition-desc-hero condition-hero-anim-desc">

@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { useCurrency } from "../../hooks/useCurrency";
 import { useAuth } from "../../context/AuthContext";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import { Country, State } from "country-state-city";
+import SEO from "../../components/Seo";
+import { usePrerendered } from "../../seo/prerenderData";
 import "./DoctorProfile.css";
 
 // Helper functions to convert ISO codes to display names
@@ -242,6 +244,15 @@ function extractDoctorId(raw) {
   return null;
 }
 
+// Doctor profiles are kept out of search results (noindex, nofollow) until doctors have agreed to be
+// indexed. The pages work as before; <SEO> only sets a title and the robots tag (no canonical, no schema).
+function DoctorSeo({ doctor }) {
+  const name = String(doctor?.name || "").trim();
+  const specialty = String(doctor?.specialty || "").trim();
+  const title = name ? `${[name, specialty].filter(Boolean).join(" | ")} | Humancare Connect` : "Doctor profile | Humancare Connect";
+  return <SEO title={title} robots="noindex, nofollow" />;
+}
+
 export default function DoctorProfileForUser({
   legacyId = false,
   adminView = false,
@@ -252,13 +263,21 @@ export default function DoctorProfileForUser({
   const { user } = useAuth();
   const { doctor: currentDoctor } = useDoctorAuth();
 
-  const [doctor, setDoctor] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // A profile fetched at build time is already in the prerendered HTML; start from it so hydration
+  // matches and the page does not flash a loading state.
+  const prerendered = usePrerendered(slug ? `doctor:${slug}` : "");
+  const skipFirstFetch = useRef(Boolean(prerendered));
+  const [doctor, setDoctor] = useState(prerendered);
+  const [loading, setLoading] = useState(!prerendered);
   const [error, setError] = useState(null);
   const { formatPrice } = useCurrency();
   const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
     setLoading(true);
     // If requested to show the logged-in doctor's public profile,
     // use the doctor data from DoctorAuthContext and skip remote fetch.
@@ -318,6 +337,7 @@ export default function DoctorProfileForUser({
   if (loading) {
     return (
       <div className="dpfu-loading">
+        <DoctorSeo doctor={null} />
         <div className="dpfu-loading-inner">
           <div className="dpfu-spinner" />
           <p className="dpfu-loading-text">Loading profile…</p>
@@ -329,6 +349,7 @@ export default function DoctorProfileForUser({
   if (error || !doctor) {
     return (
       <div className="dpfu-error">
+        <DoctorSeo doctor={null} />
         <div className="dpfu-error-inner">
           <p className="dpfu-error-emoji">⚠️</p>
           <h2>Profile not found</h2>
@@ -435,6 +456,7 @@ export default function DoctorProfileForUser({
 
   return (
     <div className="dpfu-root">
+      <DoctorSeo doctor={doctor} />
       <div className="dpfu-wrapper">
         {/* Back link */}
         <button

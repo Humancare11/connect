@@ -9,7 +9,6 @@ export default function DoctorDashboard() {
   const navigate = useNavigate();
 
   const [appointments, setAppointments] = useState([]);
-  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const refreshTimerRef = useRef(null);
@@ -18,18 +17,12 @@ export default function DoctorDashboard() {
   const loadData = useCallback(async (withLoader = true) => {
     if (withLoader) setLoading(true);
     try {
-      const [apptRes, qnaRes] = await Promise.allSettled([
+      const [apptRes] = await Promise.allSettled([
         api.get("/api/appointments/doctor"),
-        api.get("/api/qna/doctor/assigned"),
       ]);
       setAppointments(
         apptRes.status === "fulfilled" && Array.isArray(apptRes.value.data)
           ? apptRes.value.data
-          : [],
-      );
-      setQuestions(
-        qnaRes.status === "fulfilled" && Array.isArray(qnaRes.value.data)
-          ? qnaRes.value.data
           : [],
       );
     } catch {
@@ -70,9 +63,6 @@ export default function DoctorDashboard() {
   ).length;
   const confirmedCount = appointments.filter(
     (a) => a.status === "confirmed",
-  ).length;
-  const answeredCount = questions.filter(
-    (q) => q.status === "answered" || q.status === "approved",
   ).length;
 
   const getGreeting = () => {
@@ -126,23 +116,6 @@ export default function DoctorDashboard() {
       createdAt: new Date(a.createdAt || a.date),
       path: `/doctor-dashboard/appointments?activityId=${a._id}`,
     })),
-    ...questions.map((q) => ({
-      id: q._id,
-      type: "question",
-      icon: q.status === "answered" || q.status === "approved" ? "💡" : "❓",
-      title:
-        q.question?.length > 65 ? q.question.slice(0, 65) + "…" : q.question,
-      detail:
-        q.status === "answered" || q.status === "approved"
-          ? "Answered"
-          : "Awaiting your answer",
-      status:
-        q.status === "answered" || q.status === "approved"
-          ? "completed"
-          : "pending",
-      createdAt: new Date(q.createdAt),
-      path: `/doctor-dashboard/qna?activityId=${q._id}`,
-    })),
   ].sort((a, b) => b.createdAt - a.createdAt);
 
   const totalPages = Math.max(
@@ -184,7 +157,7 @@ export default function DoctorDashboard() {
       </div>
 
       {/* ── Overview cards ── */}
-      <div className="hc-dash__overview">
+      <div className="hc-dash__overview hc-dash__overview--two">
         <div className="hc-dash__ov-card hc-dash__ov-card--appt">
           <div className="hc-dash__ov-left">
             <span className="hc-dash__ov-icon">🗓️</span>
@@ -208,17 +181,6 @@ export default function DoctorDashboard() {
             <span className="hc-dash__ov-sub">awaiting confirmation</span>
           </div>
         </div>
-
-        <div className="hc-dash__ov-card hc-dash__ov-card--ticket">
-          <div className="hc-dash__ov-left">
-            <span className="hc-dash__ov-icon">❓</span>
-          </div>
-          <div className="hc-dash__ov-right">
-            <span className="hc-dash__ov-num">{questions.length}</span>
-            <span className="hc-dash__ov-label">Assigned Questions</span>
-            <span className="hc-dash__ov-sub">{answeredCount} answered</span>
-          </div>
-        </div>
       </div>
 
       {/* ── Recent Activity ── */}
@@ -227,7 +189,7 @@ export default function DoctorDashboard() {
           <div>
             <h2 className="hc-dash__section-title">Recent Activity</h2>
             <p className="hc-dash__section-sub">
-              Your latest appointments and assigned questions
+              Your latest appointments
             </p>
           </div>
         </div>
@@ -241,7 +203,7 @@ export default function DoctorDashboard() {
           <div className="hc-dash__empty">
             <div className="hc-dash__empty-icon">📋</div>
             <h3>No activity yet</h3>
-            <p>Your appointments and assigned questions will appear here.</p>
+            <p>Your appointments will appear here.</p>
             <Link
               to="/doctor-dashboard/appointments"
               className="hc-dash__empty-cta"
@@ -275,7 +237,7 @@ export default function DoctorDashboard() {
                     <span
                       className={`hc-dash__activity-tag hc-dash__activity-tag--${act.type}`}
                     >
-                      {act.type === "appointment" ? "Appointment" : "Q&A"}
+                      Appointment
                     </span>
                     &nbsp;· {act.detail}
                   </span>
