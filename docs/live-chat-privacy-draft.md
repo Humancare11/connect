@@ -28,3 +28,27 @@ Buttons: Accept / Decline (unchanged).
 - Whether the HIPAA Notice of Privacy Practices needs a chat reference.
 - Whether the 12-month period matches your retention schedule.
 - Whether chat messages sent to OpenAI need a line in the California notice.
+
+## PROPOSED widget notice changes: NOT IMPLEMENTED, NOT LEGALLY APPROVED
+
+Status as of 2026-10-10. The owner asked to remove three in-widget lines. **None of this has been applied**; the widget still shows all three lines. This section only records the proposal and what is outstanding.
+
+Lines proposed for removal:
+
+1. Contact form: "Only the Humancare support team sees these details. By starting the chat you agree to our Privacy Policy."
+2. Chat footer: "AI answers are general information, not medical advice."
+3. Chat footer: "Chat messages and, with your consent, the pages you visit are used to provide support."
+
+Current decision (owner, 2026-10-10): **keep** the contact-form notice "By starting the chat you agree to our Privacy Policy." The consent requirement and the consent record are unchanged. The two footer lines are not removed in this change either; any removal needs a separate approval.
+
+Why this needs counsel before anything is removed:
+
+- The contact form has no checkbox. The client sends `consent: true` as a fixed value, the server refuses the request without it, and the server stores `consent.privacyAcceptedAt`. The contact-form line is the only text the patient sees that this record can refer to.
+- The "Website chat" Privacy Policy section and the new cookie-banner text in this draft are not published. Until they are, the in-widget lines are the only patient-facing disclosure that chat content is used for support and that pages are tracked only with consent.
+- None of the three lines mentions that messages are sent to an AI provider (OpenAI); that disclosure exists only in the unpublished draft text above.
+- The AI disclaimer ("general information, not medical advice") is now also given by the AI itself when a patient asks a medical question (AI safety rule added 2026-10-10).
+
+Outstanding for counsel:
+
+- Confirm whether any in-chat notice is required (privacy notice, AI disclosure, page-tracking notice) once the Privacy Policy and cookie banner are updated.
+- If the contact-form notice is ever removed, decide what the consent record should be (keep, rename, or drop `consent.privacyAcceptedAt`).
