@@ -3,6 +3,7 @@ import { useCategoryPrice } from "../../hooks/useCategoryPrice";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
 import PreloadImage from "../../components/PreloadImage";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 import {
   Calendar,
   Shield,
@@ -60,6 +61,7 @@ export default function Indigestion({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>

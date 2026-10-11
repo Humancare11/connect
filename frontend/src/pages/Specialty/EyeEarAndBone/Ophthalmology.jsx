@@ -73,6 +73,7 @@ import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -572,6 +573,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
                 className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
                   }`}
               >
+                <Breadcrumb tone="light" />
                 <span className="sp-hero__badge">Eye, Ear & Bone Care</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>

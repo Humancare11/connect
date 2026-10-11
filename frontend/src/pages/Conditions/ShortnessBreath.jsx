@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/RespiratoryHealth/Shortness-of-Breath.webp";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
   badge: "Respiratory Health",
@@ -45,6 +46,7 @@ export default function ShortnessOfBreath({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>

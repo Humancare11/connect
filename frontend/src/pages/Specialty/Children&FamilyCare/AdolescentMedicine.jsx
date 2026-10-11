@@ -64,6 +64,7 @@ import SEO from "../../../components/Seo";
 import heroImage from "../../../assets/HeroImageSpecialities/adolescent-medicine-healthcare-services.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
 import FAQ from "../../../components/FAQ/FAQ";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -532,6 +533,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
               className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
                 }`}
             >
+              <Breadcrumb tone="light" />
               <span className="sp-hero__badge">Child & Family Care</span>
               <h1 className="sp-hero__title">{data.name}</h1>
               <p className="sp-hero__tagline">{data.tagline}</p>

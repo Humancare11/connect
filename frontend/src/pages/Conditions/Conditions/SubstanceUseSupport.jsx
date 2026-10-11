@@ -43,6 +43,7 @@ import {
 import SEO from "../../../components/Seo";
 import PreloadImage from "../../../components/PreloadImage";
 import ConditionBannerImage from "../../../assets/ConditionImages/MentalAndBehavioralHealth/Substance-Use-Support.webp";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -84,6 +85,7 @@ export default function SubstanceUseSupport({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>

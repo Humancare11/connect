@@ -44,6 +44,7 @@ import {
   X,
 } from "lucide-react";
 import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/Altitude-Sickness.webp";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -85,6 +86,7 @@ export default function AltitudeSickness({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>

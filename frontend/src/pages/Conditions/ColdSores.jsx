@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/SkinCondition/Cold-Sores.webp";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
   badge: "Skin Conditions",
@@ -42,6 +43,7 @@ export default function ColdSores({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>

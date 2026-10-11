@@ -71,17 +71,24 @@ function webPage(type, ctx) {
   };
 }
 
-function breadcrumb(ctx) {
-  if (!ctx.canonical || ctx.path === "/") return null;
-  const segments = ctx.path.split("/").filter(Boolean);
-  const items = [{ name: "Home", url: SITE_ORIGIN + "/" }];
+// Home > ...real parent pages... > this page, for a path. Used by the BreadcrumbList JSON-LD below and by
+// the visible <Breadcrumb/> component, so both always agree.
+export function breadcrumbItems(path) {
+  const segments = String(path || "/").split("/").filter(Boolean);
+  const items = [{ name: "Home", path: "/" }];
   segments.forEach((seg, i) => {
     const prefix = "/" + segments.slice(0, i + 1).join("/");
     const isLast = i === segments.length - 1;
     // Skip intermediate segments that are not real, public pages.
     if (!isLast && (!SEO_ROUTES[prefix] || isNoindexPath(prefix))) return;
-    items.push({ name: labelFor(seg), url: SITE_ORIGIN + prefix });
+    items.push({ name: labelFor(seg), path: prefix });
   });
+  return items;
+}
+
+function breadcrumb(ctx) {
+  if (!ctx.canonical || ctx.path === "/") return null;
+  const items = breadcrumbItems(ctx.path).map((it) => ({ name: it.name, url: SITE_ORIGIN + it.path }));
   if (items.length < 2) return null;
   return {
     "@type": "BreadcrumbList",

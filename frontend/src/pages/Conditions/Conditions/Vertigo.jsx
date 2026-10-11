@@ -44,6 +44,7 @@ import ConditionBannerImage from "../../../assets/ConditionImages/UrgentCare/ver
 
 import SEO from "../../../components/Seo";
 import PreloadImage from "../../../components/PreloadImage";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -85,6 +86,7 @@ export default function Vertigo({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>
