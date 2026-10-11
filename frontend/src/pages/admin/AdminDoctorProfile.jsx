@@ -4,6 +4,7 @@ import api, { normalizeFileUrl } from "../../api";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
 import { Country, State } from "country-state-city";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
 } from "../../components/PhoneInputField";
@@ -2772,6 +2773,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
 // MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AdminDoctorProfile() {
+  const confirm = useConfirm();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -2847,12 +2849,13 @@ export default function AdminDoctorProfile() {
   };
   const handleApproveDelete = async () => {
     if (!enrollment) return;
-    if (
-      !window.confirm(
-        "This will permanently delete the doctor's profile. Proceed?",
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Delete doctor profile",
+      message: "This will permanently delete the doctor's profile. Proceed?",
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await api.put(`/api/admin/doctors/${enrollment._id}/delete/approve`, {});

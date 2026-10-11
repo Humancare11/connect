@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import "./AdminAppointments.css";
 import { useToast } from "../../components/ui/Toast";
 import RetryButton from "../../components/ui/RetryButton";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 const STATUS_META = {
   pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
@@ -97,6 +98,7 @@ function StatusPill({ status }) {
 }
 
 export default function AdminCategoryConsultations() {
+  const confirm = useConfirm();
   const toast = useToast();
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,9 +125,12 @@ export default function AdminCategoryConsultations() {
   };
 
   const deleteConsultation = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this consultation?",
-    );
+    const confirmed = await confirm({
+      title: "Delete consultation",
+      message: "Are you sure you want to delete this consultation?",
+      confirmText: "Delete",
+      tone: "danger",
+    });
     if (!confirmed) return;
 
     try {

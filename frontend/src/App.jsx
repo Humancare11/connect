@@ -734,6 +734,7 @@ const DoctorEnrollments = lazy(
   () => import("./pages/doctors/DoctorEnrollments"),
 );
 import { useDoctorAuth } from "./context/DoctorAuthContext";
+import useModalA11y from "./hooks/useModalA11y";
 // const NoticePrivacy = lazy(
 //   () => import("./pages/PrivacyPolicies/NoticePrivacy"),
 // );
@@ -945,6 +946,7 @@ function PartnerPrivateRoute({ children }) {
 }
 
 function SessionTimeoutManager() {
+  const warningPanelRef = useRef(null);
   const { user, logout: logoutUser } = useAuth();
   const { doctor, logout: logoutDoctor } = useDoctorAuth();
   const { admin, logout: logoutAdmin } = useAdmin();
@@ -1079,12 +1081,18 @@ function SessionTimeoutManager() {
     return undefined;
   }, [location.pathname, isAuthenticated]);
 
+  // Escape keeps the session (same as "Stay signed in"): the safe choice.
+  useModalA11y(warningPanelRef, warningOpen, () => {
+    window.dispatchEvent(new Event(SESSION_ACTIVITY_EVENT));
+    setWarningOpen(false);
+  });
+
   if (!warningOpen) return null;
 
   return (
-    <div className="hc-session-warning" role="dialog" aria-modal="true">
-      <div className="hc-session-warning__panel">
-        <h2>Session expiring</h2>
+    <div className="hc-session-warning" role="dialog" aria-modal="true" aria-labelledby="hc-session-title">
+      <div className="hc-session-warning__panel" ref={warningPanelRef}>
+        <h2 id="hc-session-title">Session expiring</h2>
         <p>
           You will be logged out in {Math.ceil(remaining / 60)} minute(s) due to
           inactivity.

@@ -2,15 +2,22 @@ import api from "../../api";
 
 // Delete / approve-deletion / reject-deletion for a patient account, shared by
 // the Manage Users list (row buttons) and the user profile page so both use the
-// same confirmations, API calls and messages.
+// same confirmations, API calls and messages. `confirm` is the useConfirm() function
+// from the calling component.
 //
 // Each returns:
 //   { done: false }                          — the admin cancelled the confirm
 //   { done: true, ok: true,  message, user } — succeeded (user = updated user on reject)
 //   { done: true, ok: false, message }       — failed
 
-export async function deleteUserAccount(userId, userName) {
-  if (!window.confirm(`Delete user "${userName}"? This cannot be undone.`)) return { done: false };
+export async function deleteUserAccount(userId, userName, confirm) {
+  const ok = await confirm({
+    title: "Delete user",
+    message: `Delete user "${userName}"? This cannot be undone.`,
+    confirmText: "Delete",
+    tone: "danger",
+  });
+  if (!ok) return { done: false };
   try {
     await api.delete(`/api/admin/users/${userId}`);
     return { done: true, ok: true, message: "User deleted." };
@@ -19,12 +26,14 @@ export async function deleteUserAccount(userId, userName) {
   }
 }
 
-export async function approveUserDeletion(userId, userName) {
-  if (
-    !window.confirm(`Approve deletion request for "${userName}"? Their account will be permanently deleted.`)
-  ) {
-    return { done: false };
-  }
+export async function approveUserDeletion(userId, userName, confirm) {
+  const ok = await confirm({
+    title: "Approve deletion request",
+    message: `Approve deletion request for "${userName}"? Their account will be permanently deleted.`,
+    confirmText: "Approve and delete",
+    tone: "danger",
+  });
+  if (!ok) return { done: false };
   try {
     await api.put(`/api/admin/users/${userId}/delete-request/approve`, {});
     return { done: true, ok: true, message: "Account deletion approved and account deleted." };
@@ -37,8 +46,13 @@ export async function approveUserDeletion(userId, userName) {
   }
 }
 
-export async function rejectUserDeletion(userId, userName) {
-  if (!window.confirm(`Reject deletion request for "${userName}"?`)) return { done: false };
+export async function rejectUserDeletion(userId, userName, confirm) {
+  const ok = await confirm({
+    title: "Reject deletion request",
+    message: `Reject deletion request for "${userName}"?`,
+    confirmText: "Reject request",
+  });
+  if (!ok) return { done: false };
   try {
     const res = await api.put(`/api/admin/users/${userId}/delete-request/reject`, {});
     return { done: true, ok: true, message: "Deletion request rejected.", user: res.data?.user };

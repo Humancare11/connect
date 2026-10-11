@@ -16,6 +16,7 @@ import {
   formatPrice,
 } from "../utils/booking";
 import "./Appointment.css";
+import useModalA11y from "../hooks/useModalA11y";
 
 const FILE_ICONS = { pdf: "📄", image: "🖼️", doc: "📝", default: "📎" };
 function fileIcon(type = "") {
@@ -56,6 +57,8 @@ export default function CategoryAppointmentConfirm() {
   const fileInputRef = useRef(null);
   const [confirmErr, setConfirmErr] = useState("");
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const consentModalRef = useRef(null);
+  useModalA11y(consentModalRef, showConsentModal, () => setShowConsentModal(false));
   const [consents, setConsents] = useState({
     agree: false,
     age: false,
@@ -451,9 +454,16 @@ export default function CategoryAppointmentConfirm() {
             className="ap-modal-overlay"
             onClick={() => setShowConsentModal(false)}
           >
-            <div className="ap-modal" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="ap-modal"
+              ref={consentModalRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="ap-consent-title"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="ap-modal-header">
-                <div className="ap-modal-title">Patient Informed Consent</div>
+                <div className="ap-modal-title" id="ap-consent-title">Patient Informed Consent</div>
                 <button
                   type="button"
                   className="ap-modal-close"

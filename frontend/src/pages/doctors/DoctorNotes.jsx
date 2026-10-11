@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import "./DoctorNotes.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 const fmtDateTime = (value) => {
   if (!value) return "";
@@ -28,6 +29,7 @@ const fmtAppointmentDate = (date, time) => {
 const getPatientName = (note) => note?.patientId?.name || "Unknown Patient";
 
 export default function DoctorNotes() {
+  const confirm = useConfirm();
   const [notes, setNotes] = useState([]);
   const [selectedId, setSelectedId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -120,7 +122,12 @@ export default function DoctorNotes() {
 
   const deleteSelectedNote = async () => {
     if (!selectedNote || saving) return;
-    const confirmed = window.confirm("Delete this consultation note permanently?");
+    const confirmed = await confirm({
+      title: "Delete note",
+      message: "Delete this consultation note permanently?",
+      confirmText: "Delete",
+      tone: "danger",
+    });
     if (!confirmed) return;
 
     setSaving(true);

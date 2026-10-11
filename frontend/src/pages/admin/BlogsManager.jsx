@@ -3,6 +3,7 @@ import api from "../../api";
 import { blogImageSrc } from "../../api/blogApi";
 import BlogEditor from "./BlogEditor";
 import BlogArticle from "../Blogs/BlogArticle";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 const EMPTY_FORM = {
   title: "",
@@ -66,6 +67,7 @@ function Field({ label, hint, children }) {
 }
 
 export default function BlogsManager() {
+  const confirm = useConfirm();
   // view: "list" | "form"; editingId null = new post
   const [view, setView] = useState("list");
   const [editingId, setEditingId] = useState(null);
@@ -101,7 +103,13 @@ export default function BlogsManager() {
   };
 
   const remove = async (blog) => {
-    if (!window.confirm(`Delete "${blog.title}"? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: "Delete blog",
+      message: `Delete "${blog.title}"? This cannot be undone.`,
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusyId(blog._id);
     try {
       await api.delete(`/api/superadmin/blogs/${blog._id}`);

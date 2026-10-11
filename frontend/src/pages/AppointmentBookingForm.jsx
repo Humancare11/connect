@@ -22,6 +22,7 @@ import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { slugify } from "../utils/slug";
 import { normalizeAppointmentTree } from "../utils/appointmentTree";
 import "./Appointment.css";
+import useModalA11y from "../hooks/useModalA11y";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
@@ -669,6 +670,8 @@ export default function AppointmentBookingForm() {
 
   // ── Consent modal state ──────────────────────────────────────────────────────
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const consentModalRef = useRef(null);
+  useModalA11y(consentModalRef, showConsentModal, () => setShowConsentModal(false));
   const [consents, setConsents] = useState({
     agree: false,
     age: false,
@@ -1414,10 +1417,17 @@ export default function AppointmentBookingForm() {
             className="ap-modal-overlay"
             onClick={() => setShowConsentModal(false)}
           >
-            <div className="ap-modal" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="ap-modal"
+              ref={consentModalRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="ap-consent-title"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Modal header */}
               <div className="ap-modal-header">
-                <div className="ap-modal-title">Patient Informed Consent</div>
+                <div className="ap-modal-title" id="ap-consent-title">Patient Informed Consent</div>
                 <button
                   type="button"
                   className="ap-modal-close"

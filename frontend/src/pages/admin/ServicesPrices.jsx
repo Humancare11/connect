@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import "./Dashboard.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 function ServicesPrices() {
+  const confirm = useConfirm();
   const emptyForm = { name: "", price: "", icon: "", description: "", slug: "" };
   const [services, setServices] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -86,7 +88,13 @@ function ServicesPrices() {
   };
 
   const handleDelete = async (service) => {
-    if (!window.confirm(`Delete ${service.name}?`)) return;
+    const ok = await confirm({
+      title: "Delete service",
+      message: `Delete ${service.name}?`,
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
 
     setError("");
     setMessage("");

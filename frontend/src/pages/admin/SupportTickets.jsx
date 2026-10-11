@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../../api";
+import useModalA11y from "../../hooks/useModalA11y";
 import "./AdminDashboard.css";
 
 const CATEGORY_LABELS = {
@@ -11,6 +12,8 @@ const CATEGORY_LABELS = {
 };
 
 function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
+  const resolveDialogRef = useRef(null);
+  useModalA11y(resolveDialogRef, true, onClose);
   const [resolution, setResolution] = useState("");
   const [saving, setSaving] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -40,7 +43,7 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
         display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
       }}
     >
-      <div
+      <div ref={resolveDialogRef} role="dialog" aria-modal="true" aria-label="Resolve ticket"
         onClick={e => e.stopPropagation()}
         style={{
           background: "#ffffff",

@@ -1,8 +1,9 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./DoctorAppointments.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import useModalA11y from "../../hooks/useModalA11y";
 
 const STATUS_META = {
   assigned: { label: "Assigned", icon: "A", color: "teal" },
@@ -46,6 +47,8 @@ export default function DoctorAppointments() {
   const [completingId, setCompletingId] = useState(null);
   const [toast, setToast] = useState(null);
   const [completeConfirmId, setCompleteConfirmId] = useState(null);
+  const completeDialogRef = useRef(null);
+  useModalA11y(completeDialogRef, !!completeConfirmId, () => setCompleteConfirmId(null));
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok });
@@ -176,7 +179,7 @@ export default function DoctorAppointments() {
           }}
           onClick={() => setCompleteConfirmId(null)}
         >
-          <div
+          <div ref={completeDialogRef} role="alertdialog" aria-modal="true" aria-label="Mark as completed"
             style={{
               background: "#fff",
               borderRadius: 14,

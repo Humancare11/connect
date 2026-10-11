@@ -667,6 +667,8 @@ export default function HomePage() {
   const testimonialsRef = useRef(null);
 
   useEffect(() => {
+    // Parallax is motion: skip it when the visitor prefers reduced motion.
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
     let ticking = false;
 
     const handleScroll = () => {

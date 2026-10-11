@@ -54,7 +54,7 @@ export default function CookieBanner() {
 
   return (
     <div className="cookie-banner-overlay">
-      <div className="cookie-banner">
+      <div className="cookie-banner" role="region" aria-label="Cookie preferences">
         <div className="cookie-banner-content">
           <h4>Cookie Preferences</h4>
 
