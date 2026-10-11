@@ -531,7 +531,7 @@ export default function DoctorAuthPage() {
             disabled={loading || otpValue.length < 6}
             style={{ width: "100%", marginTop: 16 }}
           >
-            {loading ? "Verifying..." : "Verify & Register"}
+            {loading ? "Verifying..." : "Verify & Create Account"}
           </button>
         </form>
       </FlowCard>
@@ -832,7 +832,7 @@ export default function DoctorAuthPage() {
             </div>
 
             <button type="submit" disabled={loading}>
-              {loading ? "Sending OTP…" : "Register"}
+              {loading ? "Sending OTP…" : "Create Account"}
             </button>
 
             <div className="mobile-switch">

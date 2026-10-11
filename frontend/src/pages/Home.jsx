@@ -360,6 +360,14 @@ export default function HomePage() {
     }
   }, [searchQuery, searchSession, handleSearch]);
 
+  // True while a list of results is on screen (drives the combobox ARIA state).
+  const resultsListed =
+    showSuggestions &&
+    searchQuery.trim().length >= SEARCH_MIN_LENGTH &&
+    !isSearching &&
+    !noResults &&
+    filteredSuggestions.length > 0;
+
   // ── Keyboard navigation ───────────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e) => {
@@ -800,12 +808,24 @@ export default function HomePage() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
+                role="combobox"
+                aria-label="Search doctors, specialties, conditions"
+                aria-autocomplete="list"
+                aria-haspopup="listbox"
+                aria-expanded={resultsListed}
+                aria-controls="home-search-listbox"
+                aria-activedescendant={resultsListed && activeIndex >= 0 ? `home-search-option-${activeIndex}` : undefined}
               />
               <button onClick={() => submitSearch()}>Search</button>
             </div>
 
             {showSuggestions && searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
-              <div className="search-suggestions">
+              <div
+                className="search-suggestions"
+                id="home-search-listbox"
+                role={resultsListed ? "listbox" : undefined}
+                aria-label={resultsListed ? "Search suggestions" : undefined}
+              >
                 {/* Loading state */}
                 {isSearching && (
                   <div className="search-state">
@@ -884,6 +904,9 @@ export default function HomePage() {
                     <div
                       key={item.id}
                       ref={(el) => (itemRefs.current[index] = el)}
+                      id={`home-search-option-${index}`}
+                      role="option"
+                      aria-selected={activeIndex === index}
                       className={`suggestion-item${activeIndex === index ? " active" : ""}`}
                       onClick={() => handleSearch(item)}
                     >

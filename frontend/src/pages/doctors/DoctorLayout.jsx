@@ -391,10 +391,10 @@ export default function DoctorLayout({ children }) {
 
           <div className="dl-topbar-left">
             <p className="dl-topbar-eyebrow">Humancare Connect</p>
-            <h1 className="dl-topbar-title">
+            <div className="dl-topbar-title">
               {currentPage?.icon}
               {currentPage?.label || "Dashboard"}
-            </h1>
+            </div>
           </div>
 
           <div className="dl-topbar-right">

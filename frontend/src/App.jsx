@@ -17,6 +17,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
+import PageH1 from "./components/ui/PageH1";
 import RouteFallback from "./components/ui/RouteFallback";
 import { HasMainContext } from "./components/ui/HasMainContext";
 import { TextWidget } from '@livechat/widget-react'
@@ -1259,7 +1260,10 @@ export function AppLayout() {
             path="/user/profile-settings"
             element={
               <UserLayout>
-                <ProfileSettings />
+                <>
+                  <PageH1>Profile settings</PageH1>
+                  <ProfileSettings />
+                </>
               </UserLayout>
             }
           />
@@ -1358,7 +1362,10 @@ export function AppLayout() {
             path="/doctor-dashboard/patients/:patientId/prescriptions/:rxId"
             element={
               <DoctorLayout>
-                <PrescriptionPreview />
+                <>
+                  <PageH1>Prescription preview</PageH1>
+                  <PrescriptionPreview />
+                </>
               </DoctorLayout>
             }
           />
@@ -1366,7 +1373,10 @@ export function AppLayout() {
             path="/doctor-dashboard/patients/:patientId/certificates/:certId"
             element={
               <DoctorLayout>
-                <CertificatePreview />
+                <>
+                  <PageH1>Medical certificate preview</PageH1>
+                  <CertificatePreview />
+                </>
               </DoctorLayout>
             }
           />
@@ -1374,7 +1384,10 @@ export function AppLayout() {
             path="/doctor-dashboard/messages"
             element={
               <DoctorLayout>
-                <DoctorMessages />
+                <>
+                  <PageH1>Messages</PageH1>
+                  <DoctorMessages />
+                </>
               </DoctorLayout>
             }
           />
@@ -1382,7 +1395,10 @@ export function AppLayout() {
             path="/doctor-dashboard/notes"
             element={
               <DoctorLayout>
-                <DoctorNotes />
+                <>
+                  <PageH1>Consultation notes</PageH1>
+                  <DoctorNotes />
+                </>
               </DoctorLayout>
             }
           />
@@ -1402,7 +1418,10 @@ export function AppLayout() {
             path="/doctor-dashboard/analytics"
             element={
               <DoctorLayout>
-                <DoctorAnalytics />
+                <>
+                  <PageH1>Analytics</PageH1>
+                  <DoctorAnalytics />
+                </>
               </DoctorLayout>
             }
           />
@@ -1410,7 +1429,10 @@ export function AppLayout() {
             path="/doctor-dashboard/settings"
             element={
               <DoctorLayout>
-                <DoctorSettings />
+                <>
+                  <PageH1>Settings</PageH1>
+                  <DoctorSettings />
+                </>
               </DoctorLayout>
             }
           />
@@ -1426,7 +1448,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Assign doctor to category consultation</PageH1>
                   <AdminAssignCategoryDoctor />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1558,7 +1583,10 @@ export function AppLayout() {
             }
           >
             <Route index element={<Navigate to="inbox" replace />} />
-            <Route path="mail/:messageId" element={<EmailThread />} />
+            <Route path="mail/:messageId" element={<>
+                  <PageH1>Email message</PageH1>
+                  <EmailThread />
+                </>} />
             <Route path="box/:mailboxId/:folder" element={<EmailList />} />
             <Route path=":folder" element={<EmailList />} />
           </Route>
@@ -1723,7 +1751,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>User profile</PageH1>
                   <AdminUserProfile />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1733,7 +1764,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Appointments</PageH1>
                   <AdminAppointments />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1743,7 +1777,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Category consultations</PageH1>
                   <AdminCategoryConsultations />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1783,7 +1820,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Category consultation details</PageH1>
                   <AdminCategoryConsultationDetails />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1793,7 +1833,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Appointment details</PageH1>
                   <AdminAppointmentDetails />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1803,7 +1846,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Assign doctor</PageH1>
                   <AdminAssignDoctor />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }

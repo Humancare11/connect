@@ -995,7 +995,7 @@ export default function AppointmentBookingForm() {
       {/* Page-level heading */}
       {stage === "form" && (
         <div className="ap-page-title">
-          <h1>Book an Appointment</h1>
+          <h1>Book Appointment</h1>
           <p>Select your preferred date and time, then proceed to payment.</p>
         </div>
       )}
@@ -1292,7 +1292,7 @@ export default function AppointmentBookingForm() {
 
             {/* {!user && (
               <p className="ap-submit-helper">
-                Already have an account? <Link to="/login">Log in</Link>
+                Already have an account? <Link to="/login">Sign in</Link>
               </p>
             )} */}
           </div>

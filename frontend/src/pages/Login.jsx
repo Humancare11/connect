@@ -1313,7 +1313,7 @@ export default function AuthPage() {
               className="hc-btn hc-btn--primary hc-btn--full"
               disabled={loading}
             >
-              {loading ? "Sending OTP…" : "Sign Up"}
+              {loading ? "Sending OTP…" : "Create Account"}
             </button>
 
             <div className="hc-mobile-switch">

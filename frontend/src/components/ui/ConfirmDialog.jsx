@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import Modal from "./Modal";
-import "./ConfirmDialog.css";
+import Button from "./Button";
 
 const ConfirmContext = createContext(null);
 
@@ -46,16 +46,12 @@ export function ConfirmProvider({ children }) {
         initialFocus={danger ? ".hc-confirm__cancel" : ".hc-confirm__ok"}
         actions={
           <>
-            <button type="button" className="hc-confirm__btn hc-confirm__cancel" onClick={() => settle(false)}>
+            <Button variant="secondary" className="hc-confirm__cancel" onClick={() => settle(false)}>
               {state?.cancelText}
-            </button>
-            <button
-              type="button"
-              className={`hc-confirm__btn hc-confirm__ok${danger ? " hc-confirm__ok--danger" : ""}`}
-              onClick={() => settle(true)}
-            >
+            </Button>
+            <Button variant={danger ? "danger" : "primary"} className="hc-confirm__ok" onClick={() => settle(true)}>
               {state?.confirmText}
-            </button>
+            </Button>
           </>
         }
       />

@@ -401,6 +401,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* was an <h1>: keep the heading font */
+  font-family: var(--font-primary);
+  letter-spacing: -0.02em;
 }
 
 .hc-ul__topbar-title svg {

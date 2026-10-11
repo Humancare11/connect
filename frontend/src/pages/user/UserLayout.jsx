@@ -202,10 +202,10 @@ export default function UserLayout({ children }) {
 
           <div className="hc-ul__topbar-left">
             <p className="hc-ul__topbar-eyebrow">Humancare Connect</p>
-            <h1 className="hc-ul__topbar-title">
+            <div className="hc-ul__topbar-title">
               {currentPage?.icon}
               {currentPage?.label || "Dashboard"}
-            </h1>
+            </div>
           </div>
 
           <div className="hc-ul__topbar-right">
