@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { usePartner } from "../../context/PartnerContext";
 import "../admin/AdminDashboard.css";
 
@@ -176,7 +177,7 @@ export default function PartnerLayout({ children }) {
           </div>
         </header>
 
-        <div className="ad-content">{children}</div>
+        <div className="ad-content"><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></div>
       </main>
     </div>
   );

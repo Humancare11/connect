@@ -7,6 +7,7 @@ import SEO from "../components/Seo";
 import FAQ from "../components/FAQ/FAQ";
 import { slugify } from "../utils/slug";
 import { normalizeAppointmentTree } from "../utils/appointmentTree";
+import RetryButton from "../components/ui/RetryButton";
 
 // --- Search helpers ---------------------------------------------------------
 // Plain `.includes()` matches a query ANYWHERE inside a string, including
@@ -850,6 +851,11 @@ export default function Ab() {
                           {treeLoading
                             ? "Loading categories..."
                             : treeError || "No categories match."}
+                          {treeError && !treeLoading && (
+                            <div>
+                              <RetryButton onRetry={() => fetchAppointmentTree()} />
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

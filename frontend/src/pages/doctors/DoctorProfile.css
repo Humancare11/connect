@@ -914,3 +914,7 @@
     padding: 10px 0;
   }
 }
+
+.dpfu-error-btn + .dpfu-error-btn {
+  margin-left: 8px;
+}

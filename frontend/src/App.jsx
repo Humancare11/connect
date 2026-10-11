@@ -15,6 +15,9 @@ import "./App.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
+import RouteFallback from "./components/ui/RouteFallback";
+import { HasMainContext } from "./components/ui/HasMainContext";
 import { TextWidget } from '@livechat/widget-react'
 
 
@@ -1168,9 +1171,11 @@ export function AppLayout() {
       {!hideLayout && <Header />}
 
       <Suspense
-        fallback={<div className="hc-route-loading" aria-hidden="true" />}
+        fallback={<RouteFallback />}
       >
         <MainWrap {...mainProps}>
+        <HasMainContext.Provider value={MainWrap !== Fragment}>
+        <ErrorBoundary resetKey={location.pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
           {/* The Medical Q&A feature was removed. Keep old links working. */}
@@ -1819,17 +1824,23 @@ export function AppLayout() {
           <Route
             path="/video-call/:appointmentId"
             element={
-              <CallErrorBoundary>
-                <VideoCall />
-              </CallErrorBoundary>
+              <>
+                <h1 className="sr-only">Video consultation</h1>
+                <CallErrorBoundary>
+                  <VideoCall />
+                </CallErrorBoundary>
+              </>
             }
           />
           <Route
             path="/direct-video-call/:roomId"
             element={
-              <CallErrorBoundary>
-                <DirectVideoCall />
-              </CallErrorBoundary>
+              <>
+                <h1 className="sr-only">Video consultation</h1>
+                <CallErrorBoundary>
+                  <DirectVideoCall />
+                </CallErrorBoundary>
+              </>
             }
           />
           {/* ALL*/}
@@ -3017,6 +3028,8 @@ export function AppLayout() {
           <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </ErrorBoundary>
+        </HasMainContext.Provider>
         </MainWrap>
 
         {!hideLayout && <Footer />}

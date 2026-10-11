@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import "./Services.css";
 import SEO from "../components/Seo";
+import RetryButton from "../components/ui/RetryButton";
 
 function ServiceIcon({ icon, name }) {
   const value = String(icon || "").trim();
@@ -21,6 +22,7 @@ export default function HealthcareAlternating() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -40,7 +42,7 @@ export default function HealthcareAlternating() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [attempt]);
 
   return (
     <>
@@ -59,7 +61,16 @@ export default function HealthcareAlternating() {
           {loading ? (
             <p className="dynamic-services-state">Loading services...</p>
           ) : error ? (
-            <p className="dynamic-services-state">{error}</p>
+            <div className="dynamic-services-state">
+              <p>{error}</p>
+              <RetryButton
+                onRetry={() => {
+                  setError("");
+                  setLoading(true);
+                  setAttempt((n) => n + 1);
+                }}
+              />
+            </div>
           ) : services.length === 0 ? (
             <p className="dynamic-services-state">No services are available yet.</p>
           ) : (

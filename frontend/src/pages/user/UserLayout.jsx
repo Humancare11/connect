@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { useAuth } from "../../context/AuthContext";
 import { getUserAuthToken } from "../../api";
 import socket from "../../socket";
@@ -217,7 +218,7 @@ export default function UserLayout({ children }) {
           </div>
         </header>
 
-        <main className="hc-ul__content" id="main-content" tabIndex={-1}>{children}</main>
+        <main className="hc-ul__content" id="main-content" tabIndex={-1}><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></main>
       </div>
     </div>
   );

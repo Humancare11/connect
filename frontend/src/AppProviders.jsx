@@ -7,6 +7,7 @@ import { AdminProvider } from "./context/AdminContext";
 import { PricingProvider } from "./context/PricingContext";
 import { EmployeeAdminProvider } from "./context/EmployeeAdminContext";
 import { PartnerProvider } from "./context/PartnerContext";
+import { ToastProvider } from "./components/ui/Toast";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
@@ -22,6 +23,7 @@ const queryClient = new QueryClient({
 export default function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
+      <ToastProvider>
       {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
         <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
           <AuthProvider>
@@ -49,6 +51,7 @@ export default function AppProviders({ children }) {
           </DoctorAuthProvider>
         </AuthProvider>
       )}
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

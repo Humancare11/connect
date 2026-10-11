@@ -1,0 +1,81 @@
+/* z-index 10000: the app's modals and headers top out at 10000 (the toast root is later in the DOM,
+   so it wins the tie), while the in-call screens (10001) stay above toasts. */
+.hc-toasts {
+  position: fixed;
+  z-index: 10000;
+  right: 20px;
+  /* clear of the LiveChat launcher that sits in the bottom-right corner */
+  bottom: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+  font-family: var(--font-secondary);
+}
+.hc-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border-left: 4px solid var(--primary, #2563eb);
+  background: #0f172a;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+  animation: hc-toast-in 0.2s ease-out;
+}
+.hc-toast--success {
+  border-left-color: #16a34a;
+}
+.hc-toast--error {
+  border-left-color: #dc2626;
+}
+.hc-toast__msg {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hc-toast__close {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.8;
+}
+.hc-toast__close:hover {
+  opacity: 1;
+}
+.hc-toast__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+@keyframes hc-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 640px) {
+  .hc-toasts {
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 96px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hc-toast {
+    animation: none;
+  }
+}

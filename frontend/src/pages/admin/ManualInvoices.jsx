@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../api";
 import "./ManualInvoices.css";
+import { useToast } from "../../components/ui/Toast";
 
 // Replace this with the real asset path (or an imported file) later.
 const LOGO_SRC = "/humancare-logo.png";
@@ -112,6 +113,7 @@ function statusLabel(status) {
 }
 
 export default function ManualInvoices() {
+  const toast = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -394,7 +396,7 @@ export default function ManualInvoices() {
       if (res.data?.url)
         window.open(res.data.url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      window.alert(
+      toast.error(
         err.response?.data?.msg || "Failed to generate download link.",
       );
     } finally {

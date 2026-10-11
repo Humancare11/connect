@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"; // useState still used for sideOpen
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
@@ -584,7 +585,7 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        <div className="ad-content">{children}</div>
+        <div className="ad-content"><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></div>
       </main>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { useEmployeeAdmin } from "../../context/EmployeeAdminContext";
 import "../admin/AdminDashboard.css";
 
@@ -147,7 +148,7 @@ export default function EmployeeAdminLayout({ children }) {
           </div>
         </header>
 
-        <div className="ad-content">{children}</div>
+        <div className="ad-content"><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></div>
       </main>
     </div>
   );
