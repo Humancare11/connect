@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import api from "../api";
@@ -102,7 +103,7 @@ function CheckoutForm({ amountPaise, currency, token, email, onPaid }) {
   );
 }
 
-export default function PaymentLinkCheckout() {
+function PaymentLinkCheckoutPage() {
   const { token } = useParams();
   const [link, setLink] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
@@ -289,5 +290,16 @@ export default function PaymentLinkCheckout() {
         )}
       </section>
     </main>
+  );
+}
+
+export default function PaymentLinkCheckout() {
+  return (
+    <>
+      <Helmet>
+        <title>Secure Payment | Humancare Connect</title>
+      </Helmet>
+      <PaymentLinkCheckoutPage />
+    </>
   );
 }

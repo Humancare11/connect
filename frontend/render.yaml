@@ -38,6 +38,63 @@ routes:
     source: /bladder-infection
     destination: /urinary-tract-infection
   - type: redirect
+    source: /refund-and-cancellation-policy
+    destination: /refund-cancellation-policy
+  - type: redirect
+    source: /tele-health-informed-consent
+    destination: /telehealth-informed-consent
+  - type: redirect
+    source: /urinary-symptoms-men
+    destination: /urinary-symptoms-in-men
+  - type: redirect
+    source: /mens-health-men-health
+    destination: /mens-health/men-health
+  - type: redirect
+    source: /weight-and-nurtrition
+    destination: /weight-and-nutrition
+  - type: redirect
+    source: /weight-and-nurtrition/lifestyle-medicine
+    destination: /weight-and-nutrition/lifestyle-medicine
+  - type: redirect
+    source: /weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning
+    destination: /weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning
+  - type: redirect
+    source: /weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching
+    destination: /weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching
+  - type: redirect
+    source: /weight-and-nurtrition/lifestyle-medicine/sleep-hygiene
+    destination: /weight-and-nutrition/lifestyle-medicine/sleep-hygiene
+  - type: redirect
+    source: /weight-and-nurtrition/nutrition-and-dietetics
+    destination: /weight-and-nutrition/nutrition-and-dietetics
+  - type: redirect
+    source: /weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet
+    destination: /weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet
+  - type: redirect
+    source: /weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet
+    destination: /weight-and-nutrition/nutrition-and-dietetics/diabetic-diet
+  - type: redirect
+    source: /weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning
+    destination: /weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning
+  - type: redirect
+    source: /weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition
+    destination: /weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition
+  - type: redirect
+    source: /weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition
+    destination: /weight-and-nutrition/nutrition-and-dietetics/sports-nutrition
+  - type: redirect
+    source: /weight-and-nurtrition/weight-management
+    destination: /weight-and-nutrition/weight-management
+  - type: redirect
+    source: /weight-and-nurtrition/weight-management/binge-eating
+    destination: /weight-and-nutrition/weight-management/binge-eating
+  - type: redirect
+    source: /weight-and-nurtrition/weight-management/obesity
+    destination: /weight-and-nutrition/weight-management/obesity
+  - type: redirect
+    source: /weight-and-nurtrition/weight-management/weight-loss-planning
+    destination: /weight-and-nutrition/weight-management/weight-loss-planning
+  - type: redirect
     source: /Blogs
     destination: /blogs
   - type: redirect

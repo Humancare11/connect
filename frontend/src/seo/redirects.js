@@ -30,6 +30,27 @@ export const REDIRECTS = [
   // UTI (gender-neutral canonical)
   { from: "/mens-health/urology/urinary-tract-infection", to: "/urinary-tract-infection" },
   { from: "/bladder-infection", to: "/urinary-tract-infection" },
+  // Near-duplicate URLs (canonical = the one in the sitemap and internal links)
+  { from: "/refund-and-cancellation-policy", to: "/refund-cancellation-policy" },
+  { from: "/tele-health-informed-consent", to: "/telehealth-informed-consent" },
+  { from: "/urinary-symptoms-men", to: "/urinary-symptoms-in-men" },
+  { from: "/mens-health-men-health", to: "/mens-health/men-health" },
+  // Misspelled category prefix "nurtrition" -> "nutrition"
+  { from: "/weight-and-nurtrition", to: "/weight-and-nutrition" },
+  { from: "/weight-and-nurtrition/lifestyle-medicine", to: "/weight-and-nutrition/lifestyle-medicine" },
+  { from: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning", to: "/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning" },
+  { from: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching", to: "/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching" },
+  { from: "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene", to: "/weight-and-nutrition/lifestyle-medicine/sleep-hygiene" },
+  { from: "/weight-and-nurtrition/nutrition-and-dietetics", to: "/weight-and-nutrition/nutrition-and-dietetics" },
+  { from: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet", to: "/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet" },
+  { from: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet", to: "/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet" },
+  { from: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning", to: "/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning" },
+  { from: "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition", to: "/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition" },
+  { from: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition", to: "/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition" },
+  { from: "/weight-and-nurtrition/weight-management", to: "/weight-and-nutrition/weight-management" },
+  { from: "/weight-and-nurtrition/weight-management/binge-eating", to: "/weight-and-nutrition/weight-management/binge-eating" },
+  { from: "/weight-and-nurtrition/weight-management/obesity", to: "/weight-and-nutrition/weight-management/obesity" },
+  { from: "/weight-and-nurtrition/weight-management/weight-loss-planning", to: "/weight-and-nutrition/weight-management/weight-loss-planning" },
 ];
 
 // Uppercase variants. React Router matches paths case-insensitively, so these

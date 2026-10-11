@@ -20,7 +20,7 @@ const SEGMENT_LABELS = {
   "sexual-health": "Sexual Health",
   "skin-and-hair-care": "Skin & Hair Care",
   "travel-and-global-care": "Travel & Global Care",
-  "weight-and-nurtrition": "Weight & Nutrition",
+  "weight-and-nutrition": "Weight & Nutrition",
   "women-health": "Women's Health",
 };
 

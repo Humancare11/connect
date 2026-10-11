@@ -17,7 +17,6 @@ import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
 import { TextWidget } from '@livechat/widget-react'
 
-const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
 const NotFound = lazy(() => import("./components/NotFound")); // 404 Page
 const Home = lazy(() => import("./pages/Home"));
@@ -71,7 +70,6 @@ const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
 // privacy concerns
-const Images = lazy(() => import("./components/Images"));
 // category pages
 const ChildFamilyCare = lazy(
   () => import("./pages/Categories/ChildFamilyCare"),
@@ -839,7 +837,6 @@ const MyRecords = lazy(() => import("./pages/user/MyRecords"));
 const PaymentHistory = lazy(() => import("./pages/user/PaymentHistory"));
 const UserRaiseTicket = lazy(() => import("./pages/user/RaiseTicket"));
 
-const Test = lazy(() => import("./pages/Test"));
 const PaymentLinkCheckout = lazy(() => import("./pages/PaymentLinkCheckout"));
 
 //Main pages of categories, specialties and conditions
@@ -1175,12 +1172,9 @@ export function AppLayout() {
           />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
-          <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
-          <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          <Route path="/images" element={<Images />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -1833,7 +1827,7 @@ export function AppLayout() {
             path="/travel-and-global-care"
             element={<TravelGlobalCare />}
           />
-          <Route path="/weight-and-nurtrition" element={<WeightNurtrition />} />
+          <Route path="/weight-and-nutrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
           {/* <Route path="/sd" element={<SD />} /> */}
@@ -1918,15 +1912,15 @@ export function AppLayout() {
             element={<TravelMedicine />}
           />
           <Route
-            path="/weight-and-nurtrition/weight-management"
+            path="/weight-and-nutrition/weight-management"
             element={<WeightManagement />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine"
+            path="/weight-and-nutrition/lifestyle-medicine"
             element={<LifestyleMedicine />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics"
+            path="/weight-and-nutrition/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
           {/* condition pages */}
@@ -1975,7 +1969,7 @@ export function AppLayout() {
             element={<MemoryConcerns categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/weight-management/obesity"
+            path="/weight-and-nutrition/weight-management/obesity"
             element={<Obesity categoryId="weight" />}
           />
           <Route
@@ -2035,7 +2029,7 @@ export function AppLayout() {
             element={<AbdominalPain categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/weight-management/binge-eating"
+            path="/weight-and-nutrition/weight-management/binge-eating"
             element={<BingeEating categoryId="weight" />}
           />
           <Route
@@ -2043,7 +2037,7 @@ export function AppLayout() {
             element={<Bloating categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet"
+            path="/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet"
             element={<CholesterolLoweringDiet categoryId="weight" />}
           />
           <Route
@@ -2051,15 +2045,15 @@ export function AppLayout() {
             element={<Dehydration categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet"
+            path="/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet"
             element={<DiabeticDiet categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning"
+            path="/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning"
             element={<DietExercisePlanning categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning"
+            path="/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning"
             element={<FoodIntolerancePlanning categoryId="weight" />}
           />
           <Route
@@ -2071,7 +2065,7 @@ export function AppLayout() {
             element={<GlpProgramEligibility categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching"
+            path="/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching"
             element={<HealthyHabitCoaching categoryId="weight" />}
           />
           <Route
@@ -2087,15 +2081,15 @@ export function AppLayout() {
             element={<IrritableBowelSyndrome categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition"
+            path="/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition"
             element={<PregnancyNutrition categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene"
+            path="/weight-and-nutrition/lifestyle-medicine/sleep-hygiene"
             element={<SleepHygiene categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition"
+            path="/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition"
             element={<SportNutrition categoryId="weight" />}
           />
           <Route
@@ -2104,7 +2098,7 @@ export function AppLayout() {
           />
           <Route path="/vomiting" element={<Vomiting categoryId="chronic" />} />
           <Route
-            path="/weight-and-nurtrition/weight-management/weight-loss-planning"
+            path="/weight-and-nutrition/weight-management/weight-loss-planning"
             element={<WeightLossPlanning categoryId="weight" />}
           />
           <Route

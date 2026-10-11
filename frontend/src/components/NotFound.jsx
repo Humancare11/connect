@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <>
       <Helmet>
-        <title>Page Not Found | Humancare Connect</title>
+        <title>Page not found | Humancare Connect</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <NotFoundContent />

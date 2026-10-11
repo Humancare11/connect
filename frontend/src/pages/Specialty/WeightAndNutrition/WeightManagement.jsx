@@ -176,19 +176,19 @@ const SPECIALTY_DATA = {
       Icon: FiActivity,
       name: "Obesity",
       desc: "Weight management and obesity care",
-      path: "/weight-and-nurtrition/weight-management/obesity",
+      path: "/weight-and-nutrition/weight-management/obesity",
     },
     {
       Icon: FiShield,
       name: "Weight-Loss Planning",
       desc: "Personalized weight loss strategies",
-      path: "/weight-and-nurtrition/weight-management/weight-loss-planning",
+      path: "/weight-and-nutrition/weight-management/weight-loss-planning",
     },
     {
       Icon: FiTrendingUp,
       name: "Binge Eating",
       desc: "Support for binge eating management",
-      path: "/weight-and-nurtrition/weight-management/binge-eating",
+      path: "/weight-and-nutrition/weight-management/binge-eating",
     },
   ],
 

@@ -177,19 +177,19 @@ const SPECIALTY_DATA = {
       Icon: FiActivity,
       name: "Healthy-Habit Coaching",
       desc: "Lifestyle guidance for healthier living",
-      path: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
+      path: "/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching",
     },
     {
       Icon: FiHeart,
       name: "Diet & Exercise Planning",
       desc: "Personalized nutrition and fitness plans",
-      path: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+      path: "/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning",
     },
     {
       Icon: FiMoon,
       name: "Sleep Hygiene",
       desc: "Guidance for better sleep habits",
-      path: "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
+      path: "/weight-and-nutrition/lifestyle-medicine/sleep-hygiene",
     },
   ],
 
