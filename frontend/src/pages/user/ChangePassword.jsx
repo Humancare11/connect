@@ -90,6 +90,8 @@ function PasswordField({ id, label, icon, placeholder, autoComplete, formData, s
 
         <input
           id={id} name={id}
+          aria-invalid={hasError ? "true" : undefined}
+          aria-describedby={hasError ? `${id}-error` : undefined}
           type={show[id] ? "text" : "password"}
           value={formData[id]}
           onChange={onChange}
@@ -137,7 +139,7 @@ function PasswordField({ id, label, icon, placeholder, autoComplete, formData, s
       </div>
 
       {hasError && (
-        <p style={{
+        <p id={`${id}-error`} role="alert" style={{
           fontSize: "12px", color: "#ef4444", fontWeight: 600, margin: 0,
           display: "flex", alignItems: "center", gap: "5px",
           fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -330,7 +332,7 @@ export default function ChangePassword() {
               </div>
             )}
             {serverError && (
-              <div className="hcp-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
+              <div role="alert" className="hcp-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
                 ⚠️ {serverError}
               </div>
             )}

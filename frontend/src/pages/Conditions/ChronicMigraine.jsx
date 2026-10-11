@@ -66,7 +66,7 @@ export default function ChronicMigraine({ categoryId } = {}) {
 
         <div className="condition-mid-section">
           <div className="condition-page-layout">
-            <main>
+            <div className="condition-page-main">
               <div className="condition-glass-card">
                 <div className="condition-glass-shine" />
                 <div className="condition-about-grid">
@@ -148,7 +148,7 @@ export default function ChronicMigraine({ categoryId } = {}) {
                   </div>
                 </div>
               </div>
-            </main>
+            </div>
             <aside>
               <div className="condition-sbc">
                 <div className="condition-sbc-badge">

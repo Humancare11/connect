@@ -206,7 +206,7 @@ function Carousel() {
           const slot = slotFor(i);
           const isCenter = slot === 0;
           return (
-            <div
+            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setIndex(i))(e); } }}
               key={c.key}
               className={"hce-card" + (isCenter ? " center" : "")}
               style={styleFor(slot)}

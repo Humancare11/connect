@@ -583,7 +583,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
   return (
     <>
       <SEO />
-      <main className="sp-page">
+      <div className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
@@ -731,7 +731,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}
@@ -872,7 +872,7 @@ export default function ExpertMedicalOpinion({ data = SPECIALTY_DATA }) {
             },
           ]}
         />
-      </main>
+      </div>
     </>
   );
 }

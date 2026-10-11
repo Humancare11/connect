@@ -449,6 +449,11 @@
 .sp-card-link:hover {
   outline: none;
 }
+.sp-card-link:focus-visible,
+.sp-card-link:hover:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .sp-card-link .sp-service-card,
 .sp-card-link .sp-condition-card {
   cursor: pointer;
@@ -828,6 +833,10 @@
   border: none;
   cursor: pointer;
   outline: none;
+}
+.sp-faq-item__btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .sp-faq-item__question {

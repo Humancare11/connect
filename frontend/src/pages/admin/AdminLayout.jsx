@@ -554,7 +554,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* ── Main ── */}
-      <main className="ad-main">
+      <main className="ad-main" id="main-content" tabIndex={-1}>
         <header className="ad-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button

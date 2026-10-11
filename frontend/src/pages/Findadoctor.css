@@ -170,6 +170,10 @@ h4 {
   font-family: var(--font-secondary);
   font-weight: 500;
 }
+.fd-search-field input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .fd-search-field input::placeholder {
   color: #b0bac9;
@@ -375,6 +379,10 @@ h4 {
   color: var(--text);
   width: 100%;
   font-family: var(--font-secondary);
+}
+.fd-filter-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .fd-filter-search input::placeholder {

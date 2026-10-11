@@ -53,12 +53,12 @@ export default function EmployeeAdminLogin() {
         <h1 className="eal-login-title">Employee Admin Portal</h1>
         <p className="eal-login-subtitle">Sign in to access your workspace</p>
 
-        {error && <p className="eal-login-error">{error}</p>}
+        {error && <p className="eal-login-error" id="ea-login-error" role="alert">{error}</p>}
 
         <form onSubmit={submit} className="eal-login-form">
           <div className="eal-login-field">
             <label htmlFor="ea-email">Email Address</label>
-            <input
+            <input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "ea-login-error" : undefined}
               id="ea-email"
               type="email"
               placeholder="you@humancare.com"
@@ -73,7 +73,7 @@ export default function EmployeeAdminLogin() {
           <div className="eal-login-field">
             <label htmlFor="ea-password">Password</label>
             <div className="eal-login-password-wrap">
-              <input
+              <input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "ea-login-error" : undefined}
                 id="ea-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"

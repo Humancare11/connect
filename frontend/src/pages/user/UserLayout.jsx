@@ -217,7 +217,7 @@ export default function UserLayout({ children }) {
           </div>
         </header>
 
-        <main className="hc-ul__content">{children}</main>
+        <main className="hc-ul__content" id="main-content" tabIndex={-1}>{children}</main>
       </div>
     </div>
   );

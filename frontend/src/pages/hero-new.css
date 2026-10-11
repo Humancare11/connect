@@ -246,6 +246,10 @@ body {
   color: var(--ink);
   background: transparent;
 }
+.hce-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .hce-search input::placeholder {
   color: #9ca3af;
 }

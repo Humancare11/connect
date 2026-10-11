@@ -1195,7 +1195,7 @@ function MultiSelect({
   return (
     <>
       <div className="ms-wrapper" ref={wrapperRef}>
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(!open))(e); } }}
           ref={triggerRef}
           className={`ms-trigger ${open ? "open" : ""} ${hasError ? "error" : ""}`}
           onClick={() => setOpen(!open)}
@@ -1309,7 +1309,7 @@ function SingleSelect({ items, value, onChange, placeholder, hasError }) {
   return (
     <>
       <div className="ms-wrapper" ref={wrapperRef}>
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(!open))(e); } }}
           ref={triggerRef}
           className={`field-select ${hasError ? "error" : ""}`}
           style={{
@@ -1478,7 +1478,7 @@ function ProfilePhotoUpload({
         }}
       >
         {/* ── Avatar circle ── */}
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => !uploading && ref.current?.click())(e); } }}
           onClick={() => !uploading && ref.current?.click()}
           style={{
             width: 90,
@@ -1640,7 +1640,7 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
 
       {!hasFile ? (
         /* ── Empty drop zone ── */
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => ref.current?.click())(e); } }}
           className="upload-zone"
           onClick={() => ref.current?.click()}
           onDragOver={(e) => e.preventDefault()}
@@ -1674,7 +1674,7 @@ function FileUpload({ label, file, onFile, onRemove, required }) {
         </div>
       ) : (
         /* ── File ready / error state ── */
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => ref.current?.click())(e); } }}
           className={`upload-zone has-file ${uploadErr ? "error" : ""}`}
           onClick={() => ref.current?.click()}
           onDragOver={(e) => e.preventDefault()}

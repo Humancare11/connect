@@ -227,7 +227,7 @@ export default function ServiceDemo() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--demo"
         style={{
           "--service-accent": s.accentColor,
@@ -678,7 +678,7 @@ export default function ServiceDemo() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

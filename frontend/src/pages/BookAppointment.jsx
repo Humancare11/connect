@@ -202,7 +202,7 @@ function StripeForm({
         </div>
       )}
 
-      {payError && <p className="ap-error">{payError}</p>}
+      {payError && <p role="alert" className="ap-error">{payError}</p>}
 
       <div className="ap-pay-security">
         <svg
@@ -406,7 +406,7 @@ export function PaymentStage({
             </button>
           </div>
           {stripeError && (
-            <p className="ap-error" style={{ marginTop: 10 }}>
+            <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
               {stripeError}
             </p>
           )}
@@ -463,7 +463,7 @@ export function PaymentStage({
               />
             )}
             {paypalError && (
-              <p className="ap-error" style={{ marginTop: 10 }}>
+              <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
                 {paypalError}
               </p>
             )}
@@ -912,7 +912,7 @@ export default function BookAppointment() {
                   </div>
                 </div>
               </div>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => !uploading && fileInputRef.current?.click())(e); } }}
                 className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""} ${uploading ? "ap-upload-zone--busy" : ""}`}
                 onClick={() => !uploading && fileInputRef.current?.click()}
                 onDragOver={(e) => {
@@ -969,7 +969,7 @@ export default function BookAppointment() {
               )}
             </div>
 
-            {error && <p className="ap-error">{error}</p>}
+            {error && <p role="alert" className="ap-error">{error}</p>}
 
             <button
               className="ap-submit"

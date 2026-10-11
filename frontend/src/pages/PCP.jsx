@@ -342,7 +342,7 @@ export default function PCP() {
     <>
       <SEO />
 
-      <main className="pcp-root">
+      <div className="pcp-root">
         {/* ───────────────────────── Hero ───────────────────────── */}
         {/* 1. Hero */}
         <section>
@@ -707,7 +707,7 @@ export default function PCP() {
             ]}
           />
         </section>
-      </main>
+      </div>
     </>
   );
 }

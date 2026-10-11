@@ -224,7 +224,7 @@ function TicketCard({ ticket, onResolve }) {
 
   return (
     <div className="adp-ticket-card">
-      <div className="adp-ticket-row" onClick={() => setOpen(p => !p)}>
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(p => !p))(e); } }} className="adp-ticket-row" onClick={() => setOpen(p => !p)}>
         <div className="adp-avatar" style={{ background: isResolved ? "#ecfdf5" : "#eff6ff", color: isResolved ? "#059669" : "#2563eb" }}>
           {ticket.createdBy?.name?.[0]?.toUpperCase() || "?"}
         </div>

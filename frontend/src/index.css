@@ -97,3 +97,27 @@ input, button, select, textarea {
     font-size: 14px;
   }
 }
+/* Skip link: first focusable element on every page; visible only while focused. */
+.hc-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100000;
+  padding: 10px 16px;
+  background: #0f172a;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  transform: translateY(-200%);
+}
+.hc-skip-link:focus,
+.hc-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
+/* The skip link moves focus here programmatically; no ring needed on the container. */
+#main-content:focus {
+  outline: none;
+}

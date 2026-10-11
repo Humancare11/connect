@@ -154,7 +154,7 @@ export default function BlogArticle({ blog, preview = false }) {
         </div>
       </div>
 
-      <main id="main-content">
+      <div>
         <div className="wrap">
           <section className="hero blog-hero">
             <div className="hero-top">
@@ -252,7 +252,7 @@ export default function BlogArticle({ blog, preview = false }) {
             </article>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

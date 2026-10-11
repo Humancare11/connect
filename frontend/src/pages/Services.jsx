@@ -55,7 +55,7 @@ export default function HealthcareAlternating() {
           </div>
         </section>
 
-        <main className="dynamic-services-main">
+        <div className="dynamic-services-main">
           {loading ? (
             <p className="dynamic-services-state">Loading services...</p>
           ) : error ? (
@@ -78,7 +78,7 @@ export default function HealthcareAlternating() {
               ))}
             </section>
           )}
-        </main>
+        </div>
       </div>
     </>
   );

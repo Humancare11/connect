@@ -227,7 +227,7 @@ export default function GeneralConsultation() {
     <>
       <SEO />
 
-      <main className="service-page service-page--general" style={{ "--service-accent": s.accentColor }}>
+      <div className="service-page service-page--general" style={{ "--service-accent": s.accentColor }}>
         <AnimatePresence mode="wait">
           <motion.div key={slug} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>
 
@@ -409,7 +409,7 @@ export default function GeneralConsultation() {
 
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

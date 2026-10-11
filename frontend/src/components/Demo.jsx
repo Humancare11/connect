@@ -283,7 +283,7 @@ export default function IndustryCarousel() {
         {/* Tab Bar */}
         <div className="tab-bar">
           {industries.map((ind, i) => (
-            <div
+            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => handleTabClick(i))(e); } }}
               key={ind.id}
               className={`tab-item ${activeIndex === i ? "active" : ""}`}
               onClick={() => handleTabClick(i)}
@@ -304,7 +304,7 @@ export default function IndustryCarousel() {
             const isClickable = Math.abs(offset) <= 2 && !isActive;
 
             return (
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => isClickable && handleTabClick(i))(e); } }}
                 key={ind.id}
                 className="card-slot"
                 style={{

@@ -634,7 +634,7 @@ export default function DoctorCareers() {
   return (
     <>
       <SEO />
-      <main className="doctor-careers-page">
+      <div className="doctor-careers-page">
         {/* ---------------------------------------------------------- */}
         {/* 1. Hero                                                     */}
         {/* ---------------------------------------------------------- */}
@@ -967,7 +967,7 @@ export default function DoctorCareers() {
             </motion.div>
           </div>
         </section>
-      </main>
+      </div>
     </>
   );
 }

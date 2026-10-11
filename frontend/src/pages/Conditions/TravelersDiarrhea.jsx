@@ -997,9 +997,9 @@ export default function TravelersDiarrhea() {
           }}
         >
           <div className="sp-page-layout" style={{ padding: "72px 24px" }}>
-            <main>
+            <div>
               <AboutSpecialty />
-            </main>
+            </div>
             <aside>
               <StickyBookingCard />
             </aside>

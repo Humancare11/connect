@@ -436,7 +436,7 @@ export default function ProfileSettings() {
               </div>
             )}
             {error && (
-              <div className="ps-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
+              <div role="alert" className="ps-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
                 ⚠️ {error}
               </div>
             )}
@@ -451,7 +451,7 @@ export default function ProfileSettings() {
               {/* Row 1: Name + Email */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Full Name" required icon="👤">
-                  <input
+                  <input autoComplete="name"
                     style={inputStyle} type="text" id="name" name="name"
                     value={formData.name} onChange={handleChange}
                     placeholder="Your full name" required
@@ -459,7 +459,7 @@ export default function ProfileSettings() {
                   />
                 </Field>
                 <Field label="Email Address" required icon="✉️">
-                  <input
+                  <input autoComplete="email"
                     style={inputStyle} type="email" id="email" name="email"
                     value={formData.email} onChange={handleChange}
                     placeholder="you@email.com" required
@@ -492,7 +492,7 @@ export default function ProfileSettings() {
                   </div>
                 </Field>
                 <Field label="Gender (optional)" icon="⚧">
-                  <select
+                  <select autoComplete="sex"
                     style={selectStyle}
                     id="gender" name="gender"
                     value={formData.gender} onChange={handleChange}
@@ -509,7 +509,7 @@ export default function ProfileSettings() {
               {/* Row 3: DOB (optional) */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Date of Birth (optional)" icon="🎂">
-                  <input
+                  <input autoComplete="bday"
                     style={inputStyle} type="date" id="dob" name="dob"
                     value={formData.dob} onChange={handleChange}
                     min="1900-01-01" max={todayISO()}

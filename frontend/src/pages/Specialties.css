@@ -308,6 +308,10 @@
   text-align: left;
   width: 100%;
 }
+.sp-hero__mini-card--btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .sp-hero__mini-card {
   border-radius: 1rem;

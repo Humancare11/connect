@@ -172,7 +172,7 @@ const SPECIALTY_DATA = {
       Icon: FiThermometer,
       name: "Hormone imbalance",
       desc: "Red, itchy, irritated skin in kids",
-      path: "/chronic-care/endocrinology/chronic-care/endocrinology/hormone-imbalance",
+      path: "/chronic-care/endocrinology/hormone-imbalance",
     },
     {
       Icon: FiDroplet,
@@ -528,7 +528,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
   return (
     <>
       <SEO />
-      <main className="sp-page">
+      <div className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
@@ -665,7 +665,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}
@@ -809,7 +809,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             },
           ]}
         />
-      </main>
+      </div>
     </>
   );
 }

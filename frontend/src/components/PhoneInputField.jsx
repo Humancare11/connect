@@ -724,7 +724,7 @@ export default function PhoneInputField({
         <div className="pif-divider" />
 
         {/* Phone number input */}
-        <input
+        <input autoComplete="tel-national"
           id={inputId}
           name={inputName}
           ref={inputRef}

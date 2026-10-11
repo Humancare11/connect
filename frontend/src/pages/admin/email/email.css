@@ -49,6 +49,10 @@
   padding: 9px 16px; color: var(--em-muted);
 }
 .em-search input { border: 0; background: transparent; outline: 0; flex: 1; min-width: 0; }
+.em-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .em-search:focus-within { box-shadow: 0 0 0 2px var(--em-accent-soft); border-color: var(--em-accent); }
 .em-mbsw { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .em-mbsw-lab { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--em-faint); }
@@ -238,6 +242,10 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .em-replybox { margin: 18px 24px 0 72px; border: 1px solid var(--em-line); border-radius: var(--em-radius); box-shadow: 0 1px 4px rgba(11, 4, 67, 0.06); overflow: hidden; }
 .em-rb-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--em-line); font-size: 13px; color: var(--em-muted); }
 .em-replybox textarea { display: block; width: 100%; border: 0; outline: 0; resize: vertical; min-height: 140px; padding: 12px 14px; background: transparent; }
+.em-replybox textarea:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .em-rb-foot { display: flex; align-items: center; gap: 10px; padding: 10px 14px; flex-wrap: wrap; }
 .em-rb-foot .em-atts { margin: 0; flex-basis: 100%; }
 .em-reply-actions { display: flex; gap: 10px; margin: 18px 24px 0 72px; flex-wrap: wrap; }
@@ -268,7 +276,16 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .em-c-row { display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--em-line); min-height: 42px; }
 .em-c-row label { font-size: 13px; color: var(--em-muted); flex: none; min-width: 44px; }
 .em-c-row input, .em-c-row select { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 0; }
+.em-c-row input:focus-visible,
+.em-c-row select:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .em-compose textarea { border: 0; outline: 0; resize: none; min-height: 200px; padding: 12px 14px; background: transparent; }
+.em-compose textarea:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .em-c-foot { display: flex; align-items: center; gap: 8px; padding: 10px 14px; flex-wrap: wrap; border-top: 1px solid var(--em-line); }
 .em-c-foot .em-atts { margin: 0 0 6px; flex-basis: 100%; }
 .em-c-scrim { position: fixed; inset: 0; background: rgba(10, 20, 40, 0.45); z-index: 299; }

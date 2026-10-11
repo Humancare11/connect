@@ -1006,7 +1006,7 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
         flexWrap: "wrap",
       }}
     >
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => !uploading && ref.current?.click())(e); } }}
         style={{
           width: 90,
           height: 90,
@@ -1478,7 +1478,7 @@ function AdminMultiSelect({ items, selected, onChange, placeholder }) {
 
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(!open))(e); } }}
         onClick={() => setOpen(!open)}
         style={{
           display: "flex",
@@ -1556,7 +1556,7 @@ function AdminMultiSelect({ items, selected, onChange, placeholder }) {
           {items.map((item) => {
             const isSelected = selected.includes(item);
             return (
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => toggle(item))(e); } }}
                 key={item}
                 onClick={() => toggle(item)}
                 style={{
@@ -2509,7 +2509,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                   >
                     {day_data.enabled ? "Available" : "Off"}
                   </span>
-                  <div
+                  <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => toggleDay(day))(e); } }}
                     style={{
                       position: "relative",
                       width: 40,

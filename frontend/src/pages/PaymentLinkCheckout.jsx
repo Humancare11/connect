@@ -103,6 +103,18 @@ function CheckoutForm({ amountPaise, currency, token, email, onPaid }) {
   );
 }
 
+const VISUALLY_HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
 function PaymentLinkCheckoutPage() {
   const { token } = useParams();
   const [link, setLink] = useState(null);
@@ -186,7 +198,7 @@ function PaymentLinkCheckoutPage() {
   };
 
   return (
-    <main className="plc-page">
+    <div className="plc-page">
       <section className="plc-card">
         <div className="plc-topbar">
           <div className="plc-brand">
@@ -197,9 +209,9 @@ function PaymentLinkCheckoutPage() {
         </div>
 
         {loading ? (
-          <div className="plc-state">Loading payment...</div>
+          <div className="plc-state"><h1 style={VISUALLY_HIDDEN}>Secure Payment</h1>Loading payment...</div>
         ) : error && !link ? (
-          <div className="plc-error">{error}</div>
+          <div className="plc-error"><h1 style={VISUALLY_HIDDEN}>Secure Payment</h1>{error}</div>
         ) : paidRef || link?.status === "paid" ? (
           <div className="plc-grid plc-success-grid">
             <div className="plc-summary-panel">
@@ -289,7 +301,7 @@ function PaymentLinkCheckoutPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }
 

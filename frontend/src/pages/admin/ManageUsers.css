@@ -226,6 +226,10 @@
   cursor: pointer;
   transition: 0.3s ease;
 }
+.adp-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .adp-btn--ghost {
   background: #eef4ff;

@@ -119,7 +119,7 @@ function Card({ card, onOpen }) {
 
   return (
     <div className="wcu-card-wrap">
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (handleClick)(e); } }}
         ref={ref}
         className={`wcu-card wcu-card--${card.size}`}
         style={{ "--delay": card.delay }}

@@ -79,7 +79,7 @@ export default function Acne({ categoryId } = {}) {
         {/* ══════════════════════ ABOUT + STICKY BOOKING ══════════════════════ */}
         <div className="condition-mid-section">
           <div className="condition-page-layout">
-            <main>
+            <div className="condition-page-main">
               {/* ---- About Specialty ---- */}
               <div className="condition-glass-card">
                 <div className="condition-glass-shine" />
@@ -163,7 +163,7 @@ export default function Acne({ categoryId } = {}) {
                   </div>
                 </div>
               </div>
-            </main>
+            </div>
 
             <aside>
               {/* ---- Sticky Booking Card ---- */}

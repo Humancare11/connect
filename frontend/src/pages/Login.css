@@ -269,6 +269,10 @@
 .hc-btn:focus {
   outline: none;
 }
+.hc-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 /* Primary */
 .hc-btn--primary {
@@ -587,6 +591,10 @@
   line-height: 1;
   transition: color 0.15s;
 }
+.hc-country-search-clear:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .hc-country-search-clear:hover {
   color: #94a3b8;
 }
@@ -604,6 +612,10 @@
   color: #334155;
   cursor: pointer;
   transition: background 0.1s;
+}
+.hc-country-option:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 .hc-country-option:hover {
   background: #f8fafc;
@@ -823,6 +835,10 @@
   appearance: auto;
   -webkit-appearance: auto;
 }
+.hc-terms input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .hc-consent-terms a {
   font-weight: 700;
@@ -840,6 +856,10 @@
   align-self: flex-end;
   margin: 0 0 6px;
   transition: color 0.2s;
+}
+.hc-forgot-link:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 .hc-forgot-link:hover {
   color: #1d4ed8;
@@ -868,6 +888,10 @@
   padding: 6px 16px;
   border-radius: 8px;
   transition: color 0.2s;
+}
+.hc-back-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 .hc-back-btn:hover {
   color: #6b7280;
@@ -956,6 +980,10 @@
   text-decoration: underline;
   transition: color 0.2s;
 }
+.hc-otp-resend-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .hc-otp-resend-btn:hover {
   color: #1d4ed8;
 }
@@ -1000,6 +1028,10 @@
   background: #fff;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
+.hc-page-bg .pif-control.is-active:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .hc-page-bg .pif-country-trigger {
   all: unset;
@@ -1013,6 +1045,10 @@
   flex-shrink: 0;
   cursor: pointer;
   transition: background 0.15s;
+}
+.hc-page-bg .pif-country-trigger:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 .hc-page-bg .pif-country-trigger:hover {
   background: rgba(37, 99, 235, 0.06);

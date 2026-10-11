@@ -681,7 +681,7 @@ const conditionCategories = [
       },
       {
         name: "Birth Control",
-        path: "/women-health/obstetrics-and-gynaecology/birth-control",
+        path: "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
       },
       { name: "PCOS", path: "/women-health/obstetrics-and-gynaecology/pcos" },
       {

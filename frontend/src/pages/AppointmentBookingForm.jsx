@@ -270,7 +270,7 @@ function StripeForm({
         </div>
       )}
 
-      {payError && <p className="ap-error">{payError}</p>}
+      {payError && <p role="alert" className="ap-error">{payError}</p>}
 
       <div className="ap-pay-security">
         <svg
@@ -492,7 +492,7 @@ export function PaymentStage({
             </button>
           </div>
           {stripeError && (
-            <p className="ap-error" style={{ marginTop: 10 }}>
+            <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
               {stripeError}
             </p>
           )}
@@ -545,7 +545,7 @@ export function PaymentStage({
               />
             )}
             {paypalError && (
-              <p className="ap-error" style={{ marginTop: 10 }}>
+              <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
                 {paypalError}
               </p>
             )}
@@ -1063,7 +1063,7 @@ export default function AppointmentBookingForm() {
                   )}
                 </div>
               </div>
-              <input
+              <input aria-invalid={errors.date ? "true" : undefined} aria-describedby={errors.date ? "ap-date-error" : undefined}
                 className={`ap-date-input${errors.date ? " ap-date-input--err" : ""}`}
                 type="date"
                 lang="en-US"
@@ -1072,7 +1072,7 @@ export default function AppointmentBookingForm() {
                 onChange={(e) => handleDateChange(e.target.value)}
                 placeholder="MM/DD/YYYY"
               />
-              {errors.date && <p className="ap-error">{errors.date}</p>}
+              {errors.date && <p className="ap-error" id="ap-date-error" role="alert">{errors.date}</p>}
             </div>
 
             {/* ── Step 2: Time slots ── */}
@@ -1122,7 +1122,7 @@ export default function AppointmentBookingForm() {
                     Unavailable
                   </span>
                 </div>
-                {errors.time && <p className="ap-error">{errors.time}</p>}
+                {errors.time && <p className="ap-error" id="ap-time-error" role="alert">{errors.time}</p>}
               </div>
             ) : (
               <div className="ap-step ap-step--locked">
@@ -1149,7 +1149,7 @@ export default function AppointmentBookingForm() {
                 <span className="ap-step-num">3</span>
                 <div className="ap-step-title">Describe Your Problem</div>
               </div>
-              <textarea
+              <textarea aria-invalid={errors.notes ? "true" : undefined} aria-describedby={errors.notes ? "ap-notes-error" : undefined}
                 className="ap-textarea"
                 rows={4}
                 placeholder="Briefly describe your symptoms or reason for visit…"
@@ -1172,7 +1172,7 @@ export default function AppointmentBookingForm() {
                 {/* <span style={{ color: "#e11d48" }}>*</span> */}
               </div>
 
-              <textarea
+              <textarea aria-invalid={errors.notes ? "true" : undefined} aria-describedby={errors.notes ? "ap-notes-error" : undefined}
                 className="ap-textarea"
                 rows={4}
                 placeholder="Briefly describe your symptoms or reason for visit…"
@@ -1194,7 +1194,7 @@ export default function AppointmentBookingForm() {
               <div className="ap-char-count">
                 {form.notes.length}/1000 characters
               </div>
-              {errors.notes && <p className="ap-error">{errors.notes}</p>}
+              {errors.notes && <p className="ap-error" id="ap-notes-error" role="alert">{errors.notes}</p>}
             </div>
 
             {/* ── Step 4: Medical reports ── */}
@@ -1209,7 +1209,7 @@ export default function AppointmentBookingForm() {
                 </div>
               </div>
 
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => fileInputRef.current?.click())(e); } }}
                 className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""}`}
                 onClick={() => fileInputRef.current?.click()}
                 onDragOver={(e) => {
@@ -1268,7 +1268,7 @@ export default function AppointmentBookingForm() {
             </div>
 
             {(pricingIssue || proceedErr) && (
-              <p className="ap-error">{proceedErr || pricingIssue}</p>
+              <p role="alert" className="ap-error">{proceedErr || pricingIssue}</p>
             )}
 
             {/* ── CTA — now opens consent modal ── */}
@@ -1323,7 +1323,7 @@ export default function AppointmentBookingForm() {
         )}
 
         {confirmErr && stage !== "form" && (
-          <p className="ap-error" style={{ margin: "0 28px 20px" }}>
+          <p role="alert" className="ap-error" style={{ margin: "0 28px 20px" }}>
             {confirmErr}
           </p>
         )}

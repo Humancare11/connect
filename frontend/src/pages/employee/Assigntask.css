@@ -965,6 +965,10 @@
 .at-assignee__search:focus {
   outline: none;
 }
+.at-assignee__search:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .at-assignee__search::placeholder {
   color: var(--at-faint);
 }

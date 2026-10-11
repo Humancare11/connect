@@ -46,7 +46,8 @@
 }
 
 /* ── Typography ──────────────────────────────────────────── */
-.auth-wrapper h1 {
+.auth-wrapper h1,
+.auth-wrapper h2 {
   font-family: var(--font-primary);
   font-weight: 700;
   font-size: 28px;
@@ -154,6 +155,10 @@
 
 .auth-wrapper button:focus {
   outline: none;
+}
+.auth-wrapper button:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 /* Transparent / ghost button on the panel */
@@ -354,7 +359,8 @@
   transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
-.panel-content h1 {
+.panel-content h1,
+.panel-content h2 {
   font-family: var(--font-primary);
   color: #fff;
   font-size: 30px;
@@ -606,7 +612,8 @@
     height: auto;
   }
 
-  .auth-wrapper h1 {
+  .auth-wrapper h1,
+  .auth-wrapper h2 {
     font-size: 22px;
   }
 
@@ -874,7 +881,8 @@
 /* ─────────────────────────────────────────────
    HEADINGS
 ───────────────────────────────────────────── */
-.auth-wrapper h1 {
+.auth-wrapper h1,
+.auth-wrapper h2 {
   color: #0b1f66;
 }
 
@@ -1067,6 +1075,10 @@
   background: #fff;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+.auth-wrapper .pif-control.is-active:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .auth-wrapper .pif-country-trigger {
   width: auto !important;
@@ -1157,6 +1169,10 @@
   font-size: 14px !important;
   line-height: 46px;
   outline: none !important;
+}
+.auth-wrapper .pif-input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .auth-wrapper .pif-input::placeholder {
@@ -1275,6 +1291,10 @@
   cursor: pointer !important;
   user-select: none;
 }
+.country-trigger:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .country-dropdown-menu {
   position: absolute;
@@ -1304,6 +1324,10 @@
   color: #334155 !important;
   cursor: pointer !important;
   transition: background 0.1s;
+}
+.country-option:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .country-option:hover {

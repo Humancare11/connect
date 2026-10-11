@@ -16,7 +16,7 @@ export default function NotFound() {
 
 function NotFoundContent() {
   return (
-    <main className="nf-page">
+    <div className="nf-page">
       {/* ---------- HERO ---------- */}
       <section className="nf-hero">
         <div className="nf-hero-left">
@@ -68,6 +68,6 @@ function NotFoundContent() {
           </a>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

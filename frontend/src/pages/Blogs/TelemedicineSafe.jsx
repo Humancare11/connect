@@ -248,10 +248,6 @@ export default function TelemedicineSafe() {
       <SEO />
 
       <div className="blog-page">
-        <a className="skip-link" href="#main-content">
-          Skip to article content
-        </a>
-
         {/* Reading progress */}
         <div className="progress-rail" aria-hidden="true">
           <div className="progress-fill" style={{ width: `${scrollPct}%` }} />
@@ -303,7 +299,7 @@ export default function TelemedicineSafe() {
           </div>
         </div>
 
-        <main id="main-content">
+        <div>
           <div className="wrap">
             {/* ============ HERO ============ */}
             <section className="hero">
@@ -1267,7 +1263,7 @@ export default function TelemedicineSafe() {
               </div>
             </section> */}
           </div>
-        </main>
+        </div>
       </div>
     </>
   );

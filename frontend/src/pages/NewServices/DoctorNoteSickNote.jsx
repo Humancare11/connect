@@ -266,7 +266,7 @@ export default function DoctorNote() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--doctor-notes"
         style={{ "--service-accent": s.accentColor }}
       >
@@ -679,7 +679,7 @@ export default function DoctorNote() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

@@ -830,7 +830,7 @@ export default function SuperAdminDashboard() {
         </button>
       </aside>
 
-      <main className="dash-main">
+      <main className="dash-main" id="main-content" tabIndex={-1}>
         <header
           className="dash-topbar"
           style={{ borderBottom: "1px solid #ede9fe" }}

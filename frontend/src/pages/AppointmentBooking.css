@@ -105,6 +105,7 @@
   border-radius: 50%;
 }
 
+.hcc-sx h1,
 .hcc-sx h2 {
   font-size: clamp(32px, 5.5vw, 62px);
   line-height: 1.05;
@@ -303,6 +304,10 @@
   font-weight: 500;
   padding: 14px 6px;
 }
+.hcc-sx .search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .hcc-sx .search input::placeholder {
   /* [CHANGED] muted tone to suit the new lighter background */
@@ -382,6 +387,10 @@
 .hcc-sx .search-result:focus-visible {
   background: rgba(11, 87, 232, 0.08);
   outline: none;
+}
+.hcc-sx .search-result:hover:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .hcc-sx .search-result-ico {
@@ -1060,6 +1069,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .hcc-sx h1,
   .hcc-sx h2 {
     font-size: 44px;
   }
@@ -1105,6 +1115,7 @@
     font-size: 16px;
   }
 
+  .hcc-sx h1,
   .hcc-sx h2 {
     font-size: 34px;
     letter-spacing: -1px;

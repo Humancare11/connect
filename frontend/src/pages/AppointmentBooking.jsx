@@ -610,7 +610,7 @@ export default function Ab() {
               Discover Care
             </span> */}
 
-            <h2>Find the right online doctor for your needs.</h2>
+            <h1>Find the right online doctor for your needs.</h1>
 
             <p className="lead">
               Book an online doctor appointment in minutes and access secure
@@ -817,7 +817,8 @@ export default function Ab() {
                           const description =
                             c.description || "No description added yet.";
                           return (
-                            <div
+                            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ((e) =>
+                                handleCardClick(e, () => handleOpenCat(c)))(e); } }}
                               key={c.id}
                               className="catcard"
                               onClick={(e) =>
@@ -875,7 +876,10 @@ export default function Ab() {
                             catLabel: activeCat.label,
                           };
                           return (
-                            <div
+                            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ((e) =>
+                                handleCardClick(e, () =>
+                                  handleOpenSpec(specialtyWithCat),
+                                ))(e); } }}
                               key={s.id || s.name}
                               className="spec"
                               onClick={(e) =>
@@ -924,7 +928,10 @@ export default function Ab() {
                           ([name]) => !q || name.toLowerCase().includes(q),
                         )
                         .map(([name, icon]) => (
-                          <div
+                          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ((e) =>
+                              handleCardClick(e, () =>
+                                handleSelectCond(name, icon, activeSpec),
+                              ))(e); } }}
                             key={name}
                             className="condcard"
                             onClick={(e) =>
@@ -940,7 +947,14 @@ export default function Ab() {
                             <div className="book-link">Book →</div>
                           </div>
                         ))}
-                      <div
+                      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ((e) =>
+                          handleCardClick(e, () =>
+                            handleSelectCond(
+                              "General Consultation",
+                              "stethoscope",
+                              activeSpec,
+                            ),
+                          ))(e); } }}
                         className={`condcard condcard-other${!activeSpec.priceAvailable ? " condcard--disabled" : ""}`}
                         onClick={(e) =>
                           handleCardClick(e, () =>
@@ -974,7 +988,8 @@ export default function Ab() {
                 <div className="grid">
                   {visibleFlatSpecialties.length ? (
                     visibleFlatSpecialties.map((s) => (
-                      <div
+                      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ((e) =>
+                          handleCardClick(e, () => handleFlatSpecClick(s)))(e); } }}
                         key={(s.id || s.name) + s.catId}
                         className="spec"
                         onClick={(e) =>
@@ -1011,7 +1026,8 @@ export default function Ab() {
                 <div className="condgrid">
                   {visibleFlatConditions.length ? (
                     visibleFlatConditions.map((c, i) => (
-                      <div
+                      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); ((e) =>
+                          handleCardClick(e, () => handleFlatCondClick(c)))(e); } }}
                         key={i}
                         className={`condcard${!c.priceAvailable ? " condcard--disabled" : ""}`}
                         onClick={(e) =>

@@ -464,7 +464,10 @@ export default function CorporateDemo() {
           {SERVICES.map((svc, i) => {
             const isActive = i === activeIdx;
             return (
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => {
+                  setActiveIdx(i);
+                  setIsPaused(true);
+                })(e); } }}
                 key={svc.label}
                 className={`accordion-panel ${isActive ? "active" : ""}`}
                 onMouseEnter={() => {

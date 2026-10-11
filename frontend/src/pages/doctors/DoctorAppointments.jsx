@@ -252,7 +252,7 @@ export default function DoctorAppointments() {
           { key: "complete", label: "Complete", dot: "green" },
           { key: "all", label: "Total", dot: "purple" },
         ].map(({ key, label, dot }, i) => (
-          <div
+          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setFilter(key))(e); } }}
             key={key}
             className={`da-stat ${filter === key ? "da-stat--active" : ""}`}
             style={{ animationDelay: `${i * 0.07}s` }}

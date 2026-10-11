@@ -318,7 +318,7 @@ export default function CategoryAppointmentConfirm() {
                   </div>
                 </div>
               </div>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => !uploading && fileInputRef.current?.click())(e); } }}
                 className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""} ${uploading ? "ap-upload-zone--busy" : ""}`}
                 onClick={() => !uploading && fileInputRef.current?.click()}
                 onDragOver={(e) => {
@@ -409,7 +409,7 @@ export default function CategoryAppointmentConfirm() {
         )}
 
         {confirmErr && stage !== "form" && (
-          <p className="ap-error" style={{ margin: "0 28px 20px" }}>
+          <p role="alert" className="ap-error" style={{ margin: "0 28px 20px" }}>
             {confirmErr}
           </p>
         )}

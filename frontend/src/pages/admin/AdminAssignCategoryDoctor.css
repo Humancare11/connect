@@ -167,6 +167,10 @@
   color: #1a1d23;
   width: 240px;
 }
+.aad-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .aad-search input::placeholder {
   color: #bcc1cc;
 }

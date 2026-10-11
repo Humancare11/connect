@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
@@ -895,6 +895,26 @@ function ScrollToTop() {
   return null;
 }
 
+// First focusable element on every page. Moves focus to the page's <main id="main-content">.
+function SkipLink() {
+  const onClick = (e) => {
+    const target = document.getElementById("main-content");
+    if (!target) return;
+    e.preventDefault();
+    target.focus({ preventScroll: true });
+    target.scrollIntoView();
+  };
+  return (
+    <a className="hc-skip-link" href="#main-content" onClick={onClick}>
+      Skip to content
+    </a>
+  );
+}
+
+// Dashboards render their own <main id="main-content"> inside their layout component.
+const LAYOUT_OWNS_MAIN =
+  /^\/(?!doctor-dashboard\/enrollments)(doctor-dashboard|admin-dashboard|superadmin-dashboard|employee-dashboard|partner-dashboard|payment-admin)(\/|$)|^\/user\//;
+
 function PrivateRoute({ children, allowedRoles, loginPath = "/adminauth" }) {
   const { admin, loading } = useAdmin();
 
@@ -1135,8 +1155,12 @@ export function AppLayout() {
     location.pathname.startsWith("/video-call") ||
     location.pathname.startsWith("/direct-video-call");
 
+  const MainWrap = LAYOUT_OWNS_MAIN.test(location.pathname) ? Fragment : "main";
+  const mainProps = MainWrap === Fragment ? {} : { id: "main-content", tabIndex: -1 };
+
   return (
     <>
+      <SkipLink />
       <ScrollToTop />
       <RouteSeo />
       <SessionTimeoutManager />
@@ -1144,8 +1168,9 @@ export function AppLayout() {
       {!hideLayout && <Header />}
 
       <Suspense
-        fallback={<main className="hc-route-loading" aria-hidden="true" />}
+        fallback={<div className="hc-route-loading" aria-hidden="true" />}
       >
+        <MainWrap {...mainProps}>
         <Routes>
           <Route path="/" element={<Home />} />
           {/* The Medical Q&A feature was removed. Keep old links working. */}
@@ -2992,6 +3017,7 @@ export function AppLayout() {
           <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </MainWrap>
 
         {!hideLayout && <Footer />}
       </Suspense>

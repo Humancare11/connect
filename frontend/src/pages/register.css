@@ -45,6 +45,10 @@
   color: #1A1714;
   box-sizing: border-box;
 }
+.country-search:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .country-dropdown ul {
   list-style: none;

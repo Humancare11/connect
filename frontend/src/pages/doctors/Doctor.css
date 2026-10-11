@@ -1243,6 +1243,10 @@
 .doctor-auth-wrapper button:focus {
   outline: none;
 }
+.doctor-auth-wrapper button:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .doctor-auth-wrapper button.doctor-transparent-btn {
   background: transparent;

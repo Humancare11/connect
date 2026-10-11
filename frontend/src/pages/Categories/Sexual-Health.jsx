@@ -64,7 +64,7 @@ const cat = {
     {
       name: "HIV Prevention / PrEP Guidance",
       // desc: "Preventive care for HIV protection",
-      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention",
+      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
     },
     {
       name: "Partner Exposure Concerns",

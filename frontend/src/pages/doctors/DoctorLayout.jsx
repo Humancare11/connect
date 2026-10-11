@@ -461,7 +461,7 @@ export default function DoctorLayout({ children }) {
           </div>
         </header>
 
-        <main className="dl-content">{children}</main>
+        <main className="dl-content" id="main-content" tabIndex={-1}>{children}</main>
       </div>
     </div>
   );
