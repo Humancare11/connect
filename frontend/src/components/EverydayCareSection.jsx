@@ -79,7 +79,7 @@ export default function EverydayCareSection() {
               <div className="ecs-card ecs-card--gp">
                 {/* Background image & gradient overlay */}
                 <div className="ecs-card-bg-wrap">
-                  <img
+                  <img decoding="async"
                     src={gpImage}
                     width="562"
                     height="430"
@@ -146,7 +146,7 @@ export default function EverydayCareSection() {
               <div className="ecs-card ecs-card--pedia">
                 {/* Background image & gradient overlay */}
                 <div className="ecs-card-bg-wrap">
-                  <img
+                  <img decoding="async"
                     src={pediaImage}
                     width="562"
                     height="430"

@@ -690,7 +690,7 @@ export default function PhoneInputField({
           aria-expanded={open}
           className="pif-country-trigger"
         >
-          <img
+          <img decoding="async" loading="lazy"
             src={getFlagUrl(country.code)}
             alt={country.code}
             style={{
@@ -858,7 +858,7 @@ export default function PhoneInputField({
                     onClick={() => handleSelect(c)}
                     className={`pif-item${country.code === c.code ? " sel" : ""}`}
                   >
-                    <img
+                    <img decoding="async" loading="lazy"
                       src={getFlagUrl(c.code)}
                       alt={c.code}
                       style={{

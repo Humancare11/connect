@@ -103,7 +103,7 @@ function ServicesPrices() {
   const renderIcon = (icon) => {
     const value = String(icon || "").trim();
     if (/^(https?:)?\/\//.test(value) || value.startsWith("/") || value.startsWith("data:image/")) {
-      return <img className="sp-icon-img" src={value} alt="" />;
+      return <img decoding="async" className="sp-icon-img" src={value} alt="" />;
     }
     return <span className="sp-icon-text">{value}</span>;
   };

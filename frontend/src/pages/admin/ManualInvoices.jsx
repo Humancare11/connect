@@ -488,7 +488,7 @@ export default function ManualInvoices() {
       <form onSubmit={submit} className="mi-doc">
         <header className="mi-doc__masthead">
           <div className="mi-doc__brand">
-            <img
+            <img decoding="async"
               className="mi-doc__logo"
               src={LOGO_SRC}
               alt="Humancare Connect"

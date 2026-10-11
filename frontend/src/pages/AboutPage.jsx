@@ -38,7 +38,7 @@ function PhotoSlot({ label, image, icon, className = "", variant = "blue" }) {
       <div className="photo-slot__texture" />
       <div className="photo-slot__sheen" />
       {image ? (
-        <img
+        <img decoding="async"
           src={image}
           alt={label}
           className="photo-slot__image"
@@ -285,7 +285,7 @@ from the comfort of home.
                     Started
                   </h2>
                   <div className="why__img-wrap">
-                    <img
+                    <img decoding="async"
                       src={WhyHumancareImg}
                       width="1790"
                       height="1860"
@@ -421,7 +421,7 @@ from the comfort of home.
                 </p>
               </div>
               <div className="network__img-wrap">
-                <img
+                <img decoding="async"
                   src={NetworkDoctorsImg}
                   width="1790"
                   height="1860"

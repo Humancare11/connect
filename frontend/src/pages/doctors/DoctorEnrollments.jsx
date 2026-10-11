@@ -1142,7 +1142,7 @@ function MultiSelect({
                     }}
                   >
                     {showFlags && countryData && (
-                      <img
+                      <img decoding="async"
                         src={getFlagUrl(countryData.code)}
                         alt={countryData.code}
                         style={{
@@ -1497,7 +1497,7 @@ function ProfilePhotoUpload({
           }}
         >
           {imgSrc ? (
-            <img
+            <img decoding="async"
               src={imgSrc}
               alt="Profile preview"
               style={{ width: "100%", height: "100%", objectFit: "cover" }}

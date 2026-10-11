@@ -1108,7 +1108,7 @@ export default function TelemedicineCost() {
                     key={article.title}
                   >
                     <div className="thumb">
-                      <img src={article.img} alt={article.alt} loading="lazy" />
+                      <img decoding="async" src={article.img} alt={article.alt} loading="lazy" />
                     </div>
                     <div className="body">
                       <span className="cat">{article.cat}</span>

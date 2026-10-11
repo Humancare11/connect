@@ -1119,7 +1119,7 @@ function SignedImage({ doctorId, field, alt, fallback, className }) {
   }, [doctorId, field]);
   if (failed || !src) return fallback || null;
   return (
-    <img
+    <img decoding="async"
       className={className}
       src={src}
       alt={alt}
@@ -1234,9 +1234,9 @@ function PhotoEditor({ value, doctorId, editable, onChange, initials }) {
         onClick={() => editable && ref.current?.click()}
       >
         {preview ? (
-          <img src={preview} alt="Profile preview" />
+          <img decoding="async" src={preview} alt="Profile preview" />
         ) : showDirect ? (
-          <img src={directUrl} alt="Profile" />
+          <img decoding="async" src={directUrl} alt="Profile" />
         ) : value ? (
           <SignedImage
             doctorId={doctorId}

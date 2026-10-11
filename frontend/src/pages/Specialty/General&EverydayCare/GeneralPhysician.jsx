@@ -616,7 +616,7 @@ export default function GeneralPhysician({ data = SPECIALTY_DATA }) {
               {/* Image column */}
               <Reveal>
                 <div className="sp-overview__img-wrap">
-                  <img
+                  <img decoding="async"
                     src={data.overviewImage}
                     width="562"
                     height="430"

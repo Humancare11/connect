@@ -49,7 +49,7 @@ export default function PartnerLogin() {
         <div className="ptl-login-brand">
 
 <div className="ptl-login-logo">
-<img src={logo} alt="Logo" />
+<img decoding="async" src={logo} alt="Logo" width="225" height="90" />
   </div>        </div>
 
         <h1 className="ptl-login-title">Partner Portal</h1>

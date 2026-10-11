@@ -705,9 +705,9 @@ export default function DoctorCareers() {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <img
+              <img decoding="async"
                 src={NetworkImg}
-                alt="Network Trusted by Doctors"
+                alt="Network Trusted by Doctors" width="1226" height="968"
                 loading="lazy"
               />
             </motion.div>

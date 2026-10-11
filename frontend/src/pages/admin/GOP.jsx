@@ -297,7 +297,7 @@ export default function GOP() {
           sections, and signature block, matching backend/utils/gopPdf.js. */}
       <form onSubmit={submit} className="gop-doc">
         <header className="gop-doc__masthead">
-          <img
+          <img decoding="async"
             className="gop-doc__logo"
             src={LOGO_SRC}
             alt="Humancare Connect"

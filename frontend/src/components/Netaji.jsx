@@ -352,7 +352,7 @@ export default function WhyChooseUs() {
         <div className={overlayClass} onClick={closeCard}>
           <div className={popupClass} onClick={(e) => e.stopPropagation()}>
             <div className="wcu-popup__photo">
-              <img
+              <img decoding="async" loading="lazy"
                 src={activeCard.photo}
                 alt={activeCard.alt}
                 title={activeCard.title}

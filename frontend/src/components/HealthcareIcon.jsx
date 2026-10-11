@@ -127,7 +127,7 @@ export default function HealthcareIcon({
   fallback = "HC",
 }) {
   if (isImageValue(name)) {
-    return <img className={className} src={name} alt="" />;
+    return <img decoding="async" className={className} src={name} alt="" />;
   }
 
   const Icon = getHealthcareIconComponent(name);

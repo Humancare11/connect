@@ -805,7 +805,7 @@ function SignedImage({ enrollmentId, field, alt, style, fallback }) {
   if (failed) return fallback || null;
   if (!src) return fallback || null;
   return (
-    <img src={src} alt={alt} style={style} onError={() => setFailed(true)} />
+    <img decoding="async" src={src} alt={alt} style={style} onError={() => setFailed(true)} />
   );
 }
 
@@ -1024,7 +1024,7 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
         onClick={() => !uploading && ref.current?.click()}
       >
         {imgSrc ? (
-          <img
+          <img decoding="async"
             src={imgSrc}
             alt="Profile"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -1276,7 +1276,7 @@ function AdminDocUpload({
             lineHeight: 0,
           }}
         >
-          <img
+          <img decoding="async"
             src={fileUrl}
             alt={label}
             crossOrigin="use-credentials"

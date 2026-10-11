@@ -40,7 +40,7 @@ function NotFoundContent() {
 
         <div className="nf-hero-right">
           <div className="nf-illustration-card">
-            <img
+            <img decoding="async"
               src={notFoundIllustration}
               alt="Illustration of a person looking at a signpost with two directional signs: 'We're here to support you' and 'Let's get you back on track'"
               className="nf-illustration"

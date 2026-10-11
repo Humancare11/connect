@@ -129,7 +129,7 @@ export default function LABREQUISITIONS() {
 
             {/* HERO */}
             <section ref={heroRef} className="service-hero service-hero--with-image">
-              <img src={HERO_IMAGE.src} alt={HERO_IMAGE.alt} width={HERO_IMAGE.width} height={HERO_IMAGE.height} loading="eager" className="service-hero__bg-img" />
+              <img decoding="async" src={HERO_IMAGE.src} alt={HERO_IMAGE.alt} width={HERO_IMAGE.width} height={HERO_IMAGE.height} loading="eager" className="service-hero__bg-img" />
               <div className="service-hero__overlay" />
               <motion.div style={{ opacity: heroOpacity }} className="service-hero__content-grid">
                 <div>

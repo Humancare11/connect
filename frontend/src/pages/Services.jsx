@@ -8,7 +8,7 @@ function ServiceIcon({ icon, name }) {
   const value = String(icon || "").trim();
 
   if (/^(https?:)?\/\//.test(value) || value.startsWith("/") || value.startsWith("data:image/")) {
-    return <img className="dynamic-service-icon-img" src={value} alt="" loading="lazy" />;
+    return <img decoding="async" className="dynamic-service-icon-img" src={value} alt="" loading="lazy" />;
   }
 
   return (

@@ -169,7 +169,7 @@ export default function BlogArticle({ blog, preview = false }) {
 
             {blog.coverImage ? (
               <figure className="hero-media">
-                <img src={blogImageSrc(blog.coverImage)} alt={blog.title} loading="eager" />
+                <img decoding="async" src={blogImageSrc(blog.coverImage)} alt={blog.title} loading="eager" />
               </figure>
             ) : null}
           </section>

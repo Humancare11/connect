@@ -402,7 +402,7 @@ function BlogForm({ blogId, onClose }) {
         <Field label="Cover image" hint="JPG, PNG, WEBP or GIF, up to 5 MB. Required to publish.">
           <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
             {form.coverImage && (
-              <img
+              <img decoding="async"
                 src={blogImageSrc(form.coverImage)}
                 alt="Cover preview"
                 style={{ width: 160, height: 90, objectFit: "cover", borderRadius: 8, border: "1px solid #e5e7eb" }}
