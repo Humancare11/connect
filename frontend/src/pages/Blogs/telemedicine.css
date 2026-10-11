@@ -135,8 +135,8 @@ body:has(.glass-header.shrink) .blog-page {
   background: var(--line);
   overflow: visible;
   transition:
-    top 0.3s ease,
-    transform 0.3s ease;
+    top var(--duration-slow) ease,
+    transform var(--duration-slow) ease;
 }
 
 .progress-fill {
@@ -169,8 +169,8 @@ body:has(.blog-page) {
   color: var(--navy-500);
   font-weight: 600;
   transition:
-    top 0.3s ease,
-    transform 0.3s ease;
+    top var(--duration-slow) ease,
+    transform var(--duration-slow) ease;
 }
 
 body:has(.glass-header.shrink) .progress-rail,
@@ -266,7 +266,7 @@ body:has(.glass-header.shrink) .progress-meta {
   ============================================================ */
 
 .hero-top {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
 }
 
@@ -405,14 +405,18 @@ h1.article-title {
   justify-content: center;
   cursor: pointer;
   color: var(--navy-700);
-  transition: all 0.2s ease;
+  transition: background var(--duration-base) ease, border-color var(--duration-base) ease, color var(--duration-base) ease, transform var(--duration-base) ease;
 }
 
 .share-btn:hover {
   background: var(--blue-600);
   color: #fff;
   border-color: var(--blue-600);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .share-btn:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .hero-media {
@@ -499,7 +503,7 @@ h1.article-title {
   padding: 8px 10px;
   border-radius: 9px;
   border-left: 2px solid transparent;
-  transition: all 0.15s ease;
+  transition: all var(--duration-fast) ease;
 }
 
 .toc-card li a:hover {
@@ -619,7 +623,7 @@ h1.article-title {
   border-radius: 6px;
   font-weight: 700;
   text-decoration: underline;
-  transition: all 0.2s ease;
+  transition: all var(--duration-base) ease;
 }
 
 .content-col p a:hover,
@@ -646,7 +650,7 @@ h1.article-title {
   text-decoration: none;
   color: var(--blue-500);
   font-size: 16px;
-  transition: opacity 0.15s ease;
+  transition: opacity var(--duration-fast) ease;
 }
 
 .content-col h2:hover .heading-link,
@@ -741,9 +745,11 @@ h1.article-title {
   min-width: 0;
 }
 
-.info-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-soft);
+@media (hover: hover) and (pointer: fine) {
+  .info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft);
+  }
 }
 
 .info-card .icon {
@@ -1117,8 +1123,8 @@ table.compare td.good::before {
   align-items: center;
   gap: 8px;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform var(--duration-base) ease,
+    box-shadow var(--duration-base) ease;
 }
 
 .btn-primary {
@@ -1126,9 +1132,11 @@ table.compare td.good::before {
   color: #fff;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 24px -8px rgba(76, 134, 255, 0.6);
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -8px rgba(76, 134, 255, 0.6);
+  }
 }
 
 .btn-secondary {
@@ -1140,7 +1148,11 @@ table.compare td.good::before {
 
 .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-secondary:hover {
+    transform: translateY(-2px);
+  }
 }
 
 /* ============================================================
@@ -1232,9 +1244,11 @@ table.compare td.good::before {
   min-width: 0;
 }
 
-.related-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-soft);
+@media (hover: hover) and (pointer: fine) {
+  .related-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-soft);
+  }
 }
 
 .related-card .thumb {
@@ -1250,8 +1264,10 @@ table.compare td.good::before {
   transition: transform 0.4s ease;
 }
 
-.related-card:hover .thumb img {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .related-card:hover .thumb img {
+    transform: scale(1.06);
+  }
 }
 
 .related-card .body {

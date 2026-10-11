@@ -2,7 +2,7 @@
    so it wins the tie), while the in-call screens (10001) stay above toasts. */
 .hc-toasts {
   position: fixed;
-  z-index: 10000;
+  z-index: var(--z-toast);
   right: 20px;
   /* clear of the LiveChat launcher that sits in the bottom-right corner */
   bottom: 96px;

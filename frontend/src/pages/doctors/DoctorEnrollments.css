@@ -114,8 +114,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background 0.2s,
-    box-shadow 0.2s;
+    background var(--duration-base),
+    box-shadow var(--duration-base);
 }
 .de-edit-btn:hover {
   background: rgba(20, 200, 184, 0.2);
@@ -163,8 +163,8 @@
   cursor: pointer;
   border-radius: 8px;
   transition:
-    color 0.2s,
-    background 0.2s;
+    color var(--duration-base),
+    background var(--duration-base);
   text-align: left;
   position: relative;
 }
@@ -322,9 +322,9 @@
   font-family: var(--font-secondary);
   color: var(--de-text);
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    background var(--duration-base);
 }
 
 .de-input::placeholder {
@@ -372,8 +372,8 @@
   border-radius: var(--de-radius);
   overflow: hidden;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base);
 }
 
 .de-phone:focus-within {
@@ -432,7 +432,7 @@
   font-weight: 500;
   font-family: var(--font-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--duration-base);
 }
 
 .de-toggle:hover:not(:disabled) {
@@ -498,8 +498,8 @@
   height: 100%;
   border-radius: 2px;
   transition:
-    width 0.2s,
-    background 0.3s;
+    width var(--duration-base),
+    background var(--duration-slow);
 }
 
 .de-charcount > span {
@@ -569,7 +569,7 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--duration-base);
 }
 .de-upload-pill:hover {
   background: rgba(20, 200, 184, 0.2);
@@ -583,7 +583,7 @@
   cursor: pointer;
   font-family: inherit;
   padding: 0;
-  transition: color 0.2s;
+  transition: color var(--duration-base);
 }
 .de-remove-link:hover {
   color: var(--de-red);
@@ -602,8 +602,8 @@
   cursor: pointer;
   color: var(--de-muted);
   transition:
-    border-color 0.2s,
-    background 0.2s;
+    border-color var(--duration-base),
+    background var(--duration-base);
 }
 
 .de-upload-zone:hover {
@@ -643,7 +643,7 @@
   font-size: 11px;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.2s;
+  transition: background var(--duration-base);
 }
 .de-replace-btn:hover {
   background: var(--de-teal-dim);
@@ -711,14 +711,16 @@
   letter-spacing: 0.5px;
   cursor: pointer;
   transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+    transform var(--duration-base),
+    box-shadow var(--duration-base);
   box-shadow: 0 6px 24px rgba(20, 200, 184, 0.3);
 }
 
-.de-submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 32px rgba(20, 200, 184, 0.45);
+@media (hover: hover) and (pointer: fine) {
+  .de-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 32px rgba(20, 200, 184, 0.45);
+  }
 }
 
 .de-submit-btn:disabled {

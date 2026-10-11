@@ -158,7 +158,7 @@
 a.contact-detail__value {
   text-decoration: none;
   display: inline-block;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 a.contact-detail__value:hover {
@@ -258,8 +258,8 @@ a.contact-detail__value:hover {
   font-size: 14px;
   color: var(--text);
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base);
   outline: none;
 }
 
@@ -316,9 +316,9 @@ a.contact-detail__value:hover {
   font-weight: 600;
   cursor: pointer;
   transition:
-    background 0.2s,
+    background var(--duration-base),
     transform 0.1s,
-    box-shadow 0.2s;
+    box-shadow var(--duration-base);
 }
 
 .contact-page .btn-primary:hover {
@@ -349,8 +349,8 @@ a.contact-detail__value:hover {
   font-weight: 600;
   cursor: pointer;
   transition:
-    background 0.2s,
-    color 0.2s;
+    background var(--duration-base),
+    color var(--duration-base);
 }
 
 .contact-page .btn-outline:hover {

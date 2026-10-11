@@ -477,7 +477,7 @@
   color: var(--muted);
   border: 2px solid var(--border);
   flex-shrink: 0;
-  transition: all .2s;
+  transition: all var(--duration-base);
 }
 .dr-step.active .dr-step-circle {
   background: var(--teal);
@@ -493,7 +493,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--muted);
-  transition: color .2s;
+  transition: color var(--duration-base);
 }
 .dr-step.active .dr-step-label { color: var(--teal); }
 .dr-step.done  .dr-step-label  { color: var(--teal); }
@@ -503,7 +503,7 @@
   background: var(--border);
   margin: 0 8px;
   border-radius: 1px;
-  transition: background .2s;
+  transition: background var(--duration-base);
 }
 .dr-step.done .dr-step-line { background: var(--teal); }
 
@@ -563,7 +563,7 @@
   color: var(--text);
   background: var(--bg);
   outline: none;
-  transition: border-color .15s, background .15s;
+  transition: border-color var(--duration-fast), background var(--duration-fast);
   width: 100%;
 }
 .dr-field input::placeholder,
@@ -601,7 +601,7 @@
   display: flex;
   align-items: center;
   padding: 3px;
-  transition: color .15s;
+  transition: color var(--duration-fast);
 }
 .dr-pw-toggle:hover { color: var(--text); }
 
@@ -618,7 +618,7 @@
   font-size: 13.5px;
   font-weight: 500;
   color: var(--muted);
-  transition: all .15s;
+  transition: all var(--duration-fast);
   user-select: none;
 }
 .dr-radio input[type="radio"] { display: none; }
@@ -650,7 +650,7 @@
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  transition: all .15s;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
 }
 .dr-btn-back:hover { border-color: var(--primary); color: var(--primary); }
 .dr-btn-primary {
@@ -669,7 +669,14 @@
   cursor: pointer;
   transition: background .18s, transform .14s;
 }
-.dr-btn-primary:hover:not(:disabled) { background: #0a7a6b; transform: translateY(-1px); }
+.dr-btn-primary:hover:not(:disabled) {
+  background: #0a7a6b;
+}
+@media (hover: hover) and (pointer: fine) {
+  .dr-btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
 .dr-btn-primary:disabled { opacity: .55; cursor: not-allowed; }
 .dr-btn-full { width: 100%; }
 
@@ -751,7 +758,7 @@
   color: rgba(255,255,255,.55);
   cursor: pointer;
   text-align: left;
-  transition: all .15s;
+  transition: all var(--duration-fast);
   width: 100%;
 }
 .dd-nav-item:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.9); }
@@ -769,7 +776,7 @@
   font-weight: 600;
   color: rgba(255,255,255,.4);
   cursor: pointer;
-  transition: color .15s;
+  transition: color var(--duration-fast);
   width: 100%;
 }
 .dd-logout:hover { color: #EF4444; }
@@ -814,7 +821,7 @@
   color: var(--muted); cursor: pointer;
   padding: 8px;
   border-radius: 9px;
-  transition: background .15s;
+  transition: background var(--duration-fast);
   display: flex;
 }
 .dd-icon-btn:hover { background: var(--section); }
@@ -863,7 +870,12 @@
   gap: 14px;
   transition: transform .22s, box-shadow .22s;
 }
-.dd-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(34,58,94,.09); }
+@media (hover: hover) and (pointer: fine) {
+  .dd-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(34,58,94,.09);
+  }
+}
 .dd-stat-icon {
   width: 48px; height: 48px;
   border-radius: 13px;
@@ -945,7 +957,7 @@
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--bg);
-  transition: border-color .15s, background .15s;
+  transition: border-color var(--duration-fast), background var(--duration-fast);
 }
 .dd-appt-item:hover { border-color: rgba(12,139,122,.25); background: #f0fdf8; }
 .dd-appt-avatar {
@@ -1062,7 +1074,7 @@
   font-weight: 600;
   color: var(--muted);
   cursor: pointer;
-  transition: all .15s;
+  transition: border-color var(--duration-fast), color var(--duration-fast);
 }
 .dd-edit-btn:hover { border-color: var(--teal); color: var(--teal); }
 
@@ -1082,12 +1094,16 @@
   border: 1.5px solid var(--border);
   border-radius: 13px;
   cursor: pointer;
-  transition: all .18s;
+  transition: background .18s, border-color .18s, transform .18s;
 }
 .dd-quick-btn:hover {
   border-color: var(--teal);
   background: var(--teal-lt);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dd-quick-btn:hover {
+    transform: translateY(-2px);
+  }
 }
 .dd-quick-lbl {
   font-size: 11.5px;
@@ -1208,7 +1224,7 @@
   font-size: 14px;
   text-decoration: none;
   margin: 15px 0;
-  transition: color 0.3s ease;
+  transition: color var(--duration-slow) ease;
 }
 
 .doctor-auth-wrapper a:hover {
@@ -1226,14 +1242,16 @@
   padding: 14px 50px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(20,184,166,0.4);
 }
 
-.doctor-auth-wrapper button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(20,184,166,0.6);
+@media (hover: hover) and (pointer: fine) {
+  .doctor-auth-wrapper button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(20,184,166,0.6);
+  }
 }
 
 .doctor-auth-wrapper button:active {
@@ -1279,7 +1297,7 @@
   margin: 8px 0;
   width: 100%;
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
 }
 
 .doctor-auth-wrapper input:focus {
@@ -1410,7 +1428,7 @@
   margin: 0 8px;
   height: 45px;
   width: 45px;
-  transition: all 0.3s ease;
+  transition: background var(--duration-slow) ease, border-color var(--duration-slow) ease, box-shadow var(--duration-slow) ease, color var(--duration-slow) ease, transform var(--duration-slow) ease;
   color: #14b8a6;
 }
 
@@ -1418,8 +1436,12 @@
   border-color: #14b8a6;
   background: #14b8a6;
   color: #fff;
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(20,184,166,0.4);
+}
+@media (hover: hover) and (pointer: fine) {
+  .doctor-social-links a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(20,184,166,0.4);
+  }
 }
 
 /* Error */
@@ -1562,14 +1584,18 @@
   text-transform: none !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
   margin: 0 !important;
-  transition: all 0.2s ease !important;
+  transition: border-color var(--duration-base) ease !important, box-shadow var(--duration-base) ease !important, transform var(--duration-base) ease !important;
   cursor: pointer;
 }
 
 .doctor-google-btn:hover {
   border-color: #14b8a6 !important;
-  box-shadow: 0 2px 10px rgba(20,184,166,0.14) !important;
-  transform: translateY(-1px) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .doctor-google-btn:hover {
+    box-shadow: 0 2px 10px rgba(20,184,166,0.14) !important;
+    transform: translateY(-1px) !important;
+  }
 }
 
 /* ── Doctor Apple button ────────────────────────────────── */
@@ -1590,14 +1616,18 @@
   text-transform: none !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.12) !important;
   margin: 0 !important;
-  transition: all 0.2s ease !important;
+  transition: background var(--duration-base) ease !important, box-shadow var(--duration-base) ease !important, transform var(--duration-base) ease !important;
   cursor: pointer;
 }
 
 .doctor-apple-btn:hover {
   background: #000 !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25) !important;
-  transform: translateY(-1px) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .doctor-apple-btn:hover {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25) !important;
+    transform: translateY(-1px) !important;
+  }
 }
 
 /* ── Forgot password link ───────────────────────────────── */
@@ -1620,8 +1650,12 @@
 
 .doctor-forgot-link:hover {
   color: #0f766e !important;
-  transform: none !important;
-  box-shadow: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .doctor-forgot-link:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* ── OTP boxes container (shared with user auth) ─────────── */
@@ -1645,7 +1679,7 @@
   font-weight: 700 !important;
   font-family: var(--font-secondary) !important;
   color: #0f766e !important;
-  transition: all 0.2s !important;
+  transition: all var(--duration-base) !important;
   padding: 0 !important;
   margin: 0 !important;
   box-shadow: none !important;
@@ -1689,8 +1723,12 @@
 
 .doctor-otp-resend button:hover {
   color: #0f766e !important;
-  transform: none !important;
-  box-shadow: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .doctor-otp-resend button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* ── Flow card (OTP / Forgot PW screens) ────────────────── */
@@ -1744,7 +1782,7 @@
   font-size: 14px !important;
   font-family: var(--font-secondary) !important;
   color: #1f2937 !important;
-  transition: all 0.2s !important;
+  transition: all var(--duration-base) !important;
   margin: 6px 0 !important;
 }
 

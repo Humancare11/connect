@@ -32,9 +32,9 @@
   max-width: 1328px;
   z-index: 80;
   transition:
-    top 0.3s ease,
-    width 0.3s ease,
-    transform 0.3s ease;
+    top var(--duration-slow) ease,
+    width var(--duration-slow) ease,
+    transform var(--duration-slow) ease;
 }
 
 .glass-header.shrink {
@@ -344,12 +344,16 @@
   cursor: pointer;
   transition:
     background 0.18s ease,
-    transform 0.2s var(--ease-out-expo);
+    transform var(--duration-base) var(--ease-out-expo);
 }
 
 .help-dropdown-item:hover {
   background: rgba(11, 87, 232, 0.06);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .help-dropdown-item:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .help-dropdown-item:hover .help-dropdown-icon {
@@ -453,7 +457,7 @@
   white-space: nowrap;
   text-decoration: none;
   flex-shrink: 0;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .nav-item:hover {
@@ -513,15 +517,19 @@
     0 10px 24px -10px rgba(46, 74, 122, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
   transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
+    transform var(--duration-base) ease,
+    background var(--duration-base) ease,
+    box-shadow var(--duration-base) ease;
 }
 
 .auth-combined:hover {
-  transform: translateY(-1px);
   background: #35558b;
-  box-shadow: 0 14px 30px -10px rgba(46, 74, 122, 0.58);
+}
+@media (hover: hover) and (pointer: fine) {
+  .auth-combined:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px -10px rgba(46, 74, 122, 0.58);
+  }
 }
 
 .auth-link {
@@ -542,8 +550,10 @@
   transition: transform 0.22s ease;
 }
 
-.profile-icon:hover {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .profile-icon:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* ============================================================
@@ -568,7 +578,7 @@
   background: var(--ink);
   transition:
     transform 0.28s var(--ease-out-expo),
-    opacity 0.2s ease;
+    opacity var(--duration-base) ease;
 }
 
 .hamburger.open span:nth-child(1) {

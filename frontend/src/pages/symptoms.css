@@ -150,9 +150,11 @@
   transition: transform .25s var(--ease), box-shadow .25s var(--ease);
 }
 
-.sy-hero-btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-2);
+@media (hover: hover) and (pointer: fine) {
+  .sy-hero-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-2);
+  }
 }
 
 /* Secondary button */
@@ -174,8 +176,12 @@
 }
 
 .sy-hero-btn-secondary:hover {
-  transform: translateY(-2px);
   border-color: rgba(11, 87, 232, .30);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-hero-btn-secondary:hover {
+    transform: translateY(-2px);
+  }
 }
 
 /* ── Stats row ── */
@@ -276,13 +282,13 @@
   font-size: 0.72rem;
   color: rgba(255, 255, 255, .55);
   margin-bottom: 4px;
-  transition: opacity .2s ease;
+  transition: opacity var(--duration-base) ease;
 }
 
 .sy-hero__card-title {
   font-size: 1.18rem;
   font-weight: 900;
-  transition: opacity .2s ease;
+  transition: opacity var(--duration-base) ease;
 }
 
 .sy-hero__card-icon {
@@ -344,9 +350,11 @@
   transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .25s var(--ease), color .25s var(--ease);
 }
 
-.sy-hero__mini-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 34px rgba(11, 40, 100, .08);
+@media (hover: hover) and (pointer: fine) {
+  .sy-hero__mini-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 34px rgba(11, 40, 100, .08);
+  }
 }
 
 .sy-hero__mini-card--active {
@@ -381,7 +389,7 @@
 .sy-hero__feature-row {
   text-decoration: none;
   cursor: pointer;
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: transform var(--duration-base) ease, box-shadow var(--duration-base) ease;
   margin-top: 10px;
   display: flex;
   align-items: center;
@@ -394,9 +402,11 @@
   padding: 14px 16px;
 }
 
-.sy-hero__feature-row:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(11, 40, 100, .08);
+@media (hover: hover) and (pointer: fine) {
+  .sy-hero__feature-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px rgba(11, 40, 100, .08);
+  }
 }
 
 .sy-hero__feature-left {
@@ -444,13 +454,17 @@
   background: rgba(255, 255, 255, .92);
   color: var(--ink);
   cursor: pointer;
-  transition: background .2s ease, transform .2s ease, color .2s ease;
+  transition: background var(--duration-base) ease, transform var(--duration-base) ease, color var(--duration-base) ease;
 }
 
 .sy-hero__nav-arrow:hover {
   background: var(--blue);
   color: var(--white);
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-hero__nav-arrow:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .sy-hero__nav-dots {
@@ -571,7 +585,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   outline: none;
-  transition: border-color .2s, box-shadow .2s;
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
 }
 
 .symptoms__input:focus {
@@ -620,7 +634,7 @@
   cursor: pointer;
   background: rgba(11, 87, 232, .06);
   color: var(--ink-2);
-  transition: all .2s ease;
+  transition: all var(--duration-base) ease;
 }
 
 .symptoms__filter-btn:hover {
@@ -669,9 +683,11 @@
   animation-delay: var(--delay, 0ms);
 }
 
-.symptoms__item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgba(11, 40, 100, .10);
+@media (hover: hover) and (pointer: fine) {
+  .symptoms__item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgba(11, 40, 100, .10);
+  }
 }
 
 .symptoms__item-icon {
@@ -733,9 +749,11 @@
   transition: transform .25s var(--ease);
 }
 
-.symptoms__view-more:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 36px rgba(11, 87, 232, .28);
+@media (hover: hover) and (pointer: fine) {
+  .symptoms__view-more:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(11, 87, 232, .28);
+  }
 }
 
 .symptoms__view-more--ghost {
@@ -881,11 +899,11 @@
     0 14px 30px rgba(11, 87, 232, .22);
 }
 
-.sy-b2b__cta:hover {
-  transform: translateY(-3px);
-
-  box-shadow:
-    0 20px 40px rgba(11, 87, 232, .28);
+@media (hover: hover) and (pointer: fine) {
+  .sy-b2b__cta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(11, 87, 232, .28);
+  }
 }
 
 /* GRID */
@@ -919,13 +937,13 @@
 }
 
 .sy-b2b__card:hover {
-  transform: translateY(-6px);
-
-  border-color:
-    rgba(11, 87, 232, .18);
-
-  box-shadow:
-    0 20px 45px rgba(11, 40, 100, .10);
+  border-color: rgba(11, 87, 232, .18);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-b2b__card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 45px rgba(11, 40, 100, .10);
+  }
 }
 
 .sy-b2b__card-name {
@@ -1073,15 +1091,17 @@
     1px solid rgba(11, 87, 232, .06);
 
   transition:
-    transform .2s ease,
-    background .2s ease;
+    transform var(--duration-base) ease,
+    background var(--duration-base) ease;
 }
 
 .sy-eme__item:hover {
-  transform: translateY(-2px);
-
-  background:
-    rgba(11, 87, 232, .07);
+  background: rgba(11, 87, 232, .07);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-eme__item:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .sy-eme__item span {
@@ -1222,9 +1242,13 @@
 }
 
 .sy-care__card:hover {
-  transform: translateY(-5px);
   border-color: rgba(11, 87, 232, .20);
-  box-shadow: 0 18px 40px rgba(11, 40, 100, .10);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-care__card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 40px rgba(11, 40, 100, .10);
+  }
 }
 
 .sy-care__card-name {
@@ -1327,9 +1351,11 @@
   transition: transform .25s var(--ease), box-shadow .25s var(--ease);
 }
 
-.sy-faq__chat-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 36px rgba(11, 87, 232, .28);
+@media (hover: hover) and (pointer: fine) {
+  .sy-faq__chat-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(11, 87, 232, .28);
+  }
 }
 
 .sy-faq__meta {
@@ -1381,7 +1407,7 @@
   border: 1px solid rgba(11, 87, 232, .10);
   background: rgba(255, 255, 255, .92);
   overflow: hidden;
-  transition: border-color .2s ease, box-shadow .2s ease;
+  transition: border-color var(--duration-base) ease, box-shadow var(--duration-base) ease;
 }
 
 .sy-faq__item--open {
@@ -1516,9 +1542,11 @@
   transition: transform .25s var(--ease), box-shadow .25s var(--ease);
 }
 
-.sy-cta__btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-2);
+@media (hover: hover) and (pointer: fine) {
+  .sy-cta__btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-2);
+  }
 }
 
 .sy-cta__btn-secondary {
@@ -1537,6 +1565,10 @@
 }
 
 .sy-cta__btn-secondary:hover {
-  transform: translateY(-2px);
   border-color: rgba(11, 87, 232, .30);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sy-cta__btn-secondary:hover {
+    transform: translateY(-2px);
+  }
 }

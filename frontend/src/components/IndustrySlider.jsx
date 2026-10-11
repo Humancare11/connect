@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./industrySlider.css";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 import { BsBuildingsFill } from "react-icons/bs";
 import { MdHealthAndSafety } from "react-icons/md";
 import { FaAnchor, FaBalanceScale, FaHotel } from "react-icons/fa";
@@ -115,6 +116,15 @@ const industries = [
 
 export default function IndustrySlider() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
+
+  // Swiper reads its autoplay option once at init, so stop/resume it when the preference changes.
+  useEffect(() => {
+    const autoplay = swiperRef.current?.autoplay;
+    if (!autoplay) return;
+    if (reducedMotion) autoplay.stop();
+    else autoplay.start();
+  }, [reducedMotion]);
   const swiperRef = useRef(null);
 
   const handleTabClick = (index) => {
@@ -189,10 +199,14 @@ export default function IndustrySlider() {
               modifier: 2.5,
               slideShadows: false,
             }}
-            autoplay={{
-              delay: 5000,
-              disableOnInteraction: false,
-            }}
+            autoplay={
+              reducedMotion
+                ? false
+                : {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                  }
+            }
             pagination={{ clickable: true }}
             onSwiper={(swiper) => (swiperRef.current = swiper)}
             onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}

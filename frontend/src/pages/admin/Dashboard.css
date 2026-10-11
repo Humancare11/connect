@@ -97,7 +97,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--duration-fast), color var(--duration-fast);
 }
 
 .dash-nav-item:hover,
@@ -116,7 +116,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
-  transition: background 0.2s;
+  transition: background var(--duration-base);
 }
 
 .dash-logout:hover { background: #b91c1c; }
@@ -321,7 +321,7 @@
   font-size: 14px;
   color: #111827;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--duration-base);
 }
 
 .sa-field input:focus,
@@ -340,7 +340,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-weight: 700;
-  transition: opacity 0.2s;
+  transition: opacity var(--duration-base);
 }
 
 .sa-create-btn:hover:not(:disabled) { opacity: 0.88; }

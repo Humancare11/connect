@@ -199,7 +199,7 @@
   -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 10px;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 
 .hc-ps__meta-row:hover {
@@ -452,7 +452,7 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s var(--ps-ease);
+  transition: all var(--duration-base) var(--ps-ease);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
@@ -465,9 +465,11 @@
   box-shadow: 0 4px 16px rgba(14, 108, 235, 0.30);
 }
 
-.hc-ps__btn--primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(14, 108, 235, 0.42);
+@media (hover: hover) and (pointer: fine) {
+  .hc-ps__btn--primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(14, 108, 235, 0.42);
+  }
 }
 
 .hc-ps__btn--primary:disabled {

@@ -137,16 +137,20 @@
   border: 1.5px solid rgba(255, 255, 255, 0.26);
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.2s var(--hd-ease), background 0.2s, box-shadow 0.2s;
+  transition: transform var(--duration-base) var(--hd-ease), background var(--duration-base), box-shadow var(--duration-base);
   flex-shrink: 0;
   position: relative;
   z-index: 1;
 }
 
 .hc-dash__book-btn:hover {
-  transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 8px 28px rgba(8, 3, 58, 0.3);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hc-dash__book-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(8, 3, 58, 0.3);
+  }
 }
 
 .hc-dash__book-btn span {
@@ -222,9 +226,13 @@
 }
 
 .hc-dash__ov-card:hover {
-  transform: translateY(-5px);
   background: var(--hd-glass-bg-hover);
-  box-shadow: var(--hd-glass-shadow-hover);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hc-dash__ov-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--hd-glass-shadow-hover);
+  }
 }
 
 .hc-dash__ov-left {
@@ -338,7 +346,7 @@
   background: var(--hd-a-soft);
   border-radius: 8px;
   border: 1px solid rgba(14, 108, 235, 0.14);
-  transition: all 0.15s;
+  transition: background var(--duration-fast), color var(--duration-fast);
   flex-shrink: 0;
 }
 
@@ -364,7 +372,7 @@
   border-radius: var(--hd-radius);
   padding: 26px 28px 22px;
   box-shadow: var(--hd-glass-shadow);
-  transition: transform 0.2s var(--hd-ease), box-shadow 0.2s var(--hd-ease), background 0.2s;
+  transition: transform var(--duration-base) var(--hd-ease), box-shadow var(--duration-base) var(--hd-ease), background var(--duration-base);
   position: relative;
   overflow: hidden;
 }
@@ -382,9 +390,13 @@
 }
 
 .hc-dash__record-card:hover {
-  transform: translateY(-3px);
   background: var(--hd-glass-bg-hover);
-  box-shadow: var(--hd-glass-shadow-hover);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hc-dash__record-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--hd-glass-shadow-hover);
+  }
 }
 
 .hc-dash__record-header {
@@ -444,7 +456,7 @@
   -webkit-backdrop-filter: blur(6px);
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.65);
-  transition: all 0.15s;
+  transition: all var(--duration-fast);
 }
 
 .hc-dash__record-item:hover {
@@ -500,7 +512,7 @@
   font-weight: 600;
   color: var(--hd-accent);
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color var(--duration-fast);
 }
 
 .hc-dash__record-cta:hover {
@@ -545,7 +557,7 @@
   gap: 14px;
   padding: 16px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.45);
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 
 .hc-dash__activity-item:last-child {
@@ -760,9 +772,11 @@
   transition: transform 0.18s var(--hd-ease), box-shadow 0.18s;
 }
 
-.hc-dash__empty-cta:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(8, 58, 176, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  .hc-dash__empty-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(8, 58, 176, 0.4);
+  }
 }
 
 /* ── Pagination ──────────────────────────────── */
@@ -791,7 +805,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--duration-fast);
   box-shadow: 0 1px 4px rgba(8, 58, 176, 0.06);
 }
 

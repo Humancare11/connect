@@ -127,12 +127,14 @@
 .why-item:hover::after { left: 100%; }
 
 .why-item:hover {
-  transform: translateY(-4px);
   background: rgba(255, 255, 255, 0.88);
-  box-shadow:
-    0 12px 36px rgba(15, 23, 42, 0.10),
-    inset 0 1px 1px rgba(255, 255, 255, 1);
   border-color: rgba(67, 109, 186, 0.18);
+}
+@media (hover: hover) and (pointer: fine) {
+  .why-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.10), inset 0 1px 1px rgba(255, 255, 255, 1);
+  }
 }
 
 .why-item-title {

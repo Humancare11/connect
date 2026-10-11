@@ -3,6 +3,23 @@
 :root {
   --font-primary: "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-secondary: "Inter", "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Layout containers (values already used across the app) */
+  --container-sm: 900px;
+  --container-md: 1200px;
+  --container-lg: 1280px;
+
+  /* Stacking scale: the values the app actually uses today */
+  --z-sticky: 80; /* fixed site header */
+  --z-dropdown: 100;
+  --z-overlay: 9998;
+  --z-modal: 9999;
+  --z-toast: 10000; /* above modals; in-call screens (10001) stay above toasts */
+
+  /* Transition durations */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
 }
 
 *, *::before, *::after {
@@ -132,4 +149,23 @@ input, button, select, textarea {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Visitors who asked for reduced motion: effectively no animation or smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Horizontal scroller for wide tables (CMS blog content). */
+.hc-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

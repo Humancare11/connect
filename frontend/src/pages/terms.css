@@ -29,7 +29,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   line-height: 1.4;
-  transition: color 0.2s, background 0.2s;
+  transition: color var(--duration-base), background var(--duration-base);
 }
 .legal-nav__link:hover { color: var(--teal); background: var(--teal-lt); }
 .legal-sidebar__meta {

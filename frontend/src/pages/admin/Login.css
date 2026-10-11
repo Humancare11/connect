@@ -137,7 +137,7 @@
   font-size: 14px;
   color: #111827;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--duration-base);
 }
 
 .login-field input:focus {
@@ -159,7 +159,7 @@
   font-size: 15px;
   font-weight: 700;
   margin-top: 8px;
-  transition: background 0.2s, opacity 0.2s;
+  transition: background var(--duration-base), opacity var(--duration-base);
 }
 
 .login-btn:hover:not(:disabled) {

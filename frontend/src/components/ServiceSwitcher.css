@@ -132,11 +132,13 @@
   transition:
     background 0.25s ease,
     color 0.25s ease,
-    transform 0.2s ease,
+    transform var(--duration-base) ease,
     box-shadow 0.25s ease;
 }
-.svc-switcher__card:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .svc-switcher__card:hover {
+    transform: translateY(-2px);
+  }
 }
 .svc-switcher__card.is-active {
   background: var(--svc-accent);
@@ -258,9 +260,9 @@
   color: #6b7280;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+    background var(--duration-base) ease,
+    border-color var(--duration-base) ease,
+    color var(--duration-base) ease;
 }
 .svc-switcher__nav-btn:hover {
   background: #f8fafc;

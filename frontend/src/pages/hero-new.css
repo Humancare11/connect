@@ -145,9 +145,11 @@ body {
     transform 0.25s var(--ease),
     box-shadow 0.25s var(--ease);
 }
-.hce-nav-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(12, 139, 122, 0.32);
+@media (hover: hover) and (pointer: fine) {
+  .hce-nav-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(12, 139, 122, 0.32);
+  }
 }
 
 /* ─── Hero ───────────────────────────────────────────────── */
@@ -265,9 +267,11 @@ body {
     transform 0.22s var(--ease),
     box-shadow 0.22s var(--ease);
 }
-.hce-search button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(12, 139, 122, 0.28);
+@media (hover: hover) and (pointer: fine) {
+  .hce-search button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(12, 139, 122, 0.28);
+  }
 }
 
 /* Trust chips */
@@ -463,9 +467,9 @@ body {
   background: transparent;
   border: none;
   transition:
-    background 0.2s,
-    color 0.2s,
-    box-shadow 0.2s;
+    background var(--duration-base),
+    color var(--duration-base),
+    box-shadow var(--duration-base);
 }
 .hce-card-tab.active {
   background: white;
@@ -514,8 +518,12 @@ body {
 }
 .hce-card-btn:hover {
   background: var(--navy);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(34, 58, 94, 0.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hce-card-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(34, 58, 94, 0.2);
+  }
 }
 .hce-pedestal {
   position: absolute;
@@ -610,7 +618,7 @@ body {
   border: 1px solid rgba(34, 58, 94, 0.1);
   box-shadow: 0 2px 4px rgba(34, 58, 94, 0.1);
   padding: 0;
-  transition: all 0.3s var(--ease);
+  transition: all var(--duration-slow) var(--ease);
 }
 .hce-dot.active {
   background: #0f1827;

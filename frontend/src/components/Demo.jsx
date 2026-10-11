@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import "./demo.css";
 import { BsBuildingsFill } from "react-icons/bs";
 import { MdHealthAndSafety } from "react-icons/md";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 import {
   FaAnchor,
   FaBalanceScale,
@@ -130,6 +131,7 @@ const TOTAL = industries.length;
 export default function IndustryCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const reducedMotion = usePrefersReducedMotion();
   const [screenWidth, setScreenWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200,
   );
@@ -149,10 +151,10 @@ export default function IndustryCarousel() {
   };
 
   useEffect(() => {
-    if (isPlaying) startAuto();
+    if (isPlaying && !reducedMotion) startAuto();
     else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
-  }, [isPlaying]);
+  }, [isPlaying, reducedMotion]);
 
   const handleTabClick = (i) => {
     setActiveIndex(((i % TOTAL) + TOTAL) % TOTAL);

@@ -107,7 +107,7 @@
 
 .profile-table tbody tr {
   border-bottom: 1px solid #f3f4f6;
-  transition: background 0.2s;
+  transition: background var(--duration-base);
 }
 
 .profile-table tbody tr:hover {
@@ -133,12 +133,16 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: background var(--duration-base), transform var(--duration-base);
 }
 
 .profile-action:hover {
   background: #1d4ed8;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .profile-action:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .ap-btn {
@@ -148,7 +152,7 @@
   border-radius: 6px;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: background var(--duration-base), transform var(--duration-base);
   border: none;
   cursor: pointer;
   font-size: 14px;
@@ -156,7 +160,11 @@
 
 .ap-btn:hover {
   background: #1d4ed8;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ap-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* Responsive */

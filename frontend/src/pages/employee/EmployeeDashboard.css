@@ -114,9 +114,13 @@
     border-color 0.16s ease;
 }
 .ead-stat:hover {
-  box-shadow: var(--ead-shadow);
-  transform: translateY(-2px);
   border-color: var(--ead-line-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ead-stat:hover {
+    box-shadow: var(--ead-shadow);
+    transform: translateY(-2px);
+  }
 }
 
 .ead-stat-icon {
@@ -338,8 +342,12 @@
 }
 .ead-action-card:hover {
   border-color: var(--ead-accent);
-  box-shadow: var(--ead-shadow);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ead-action-card:hover {
+    box-shadow: var(--ead-shadow);
+    transform: translateY(-2px);
+  }
 }
 
 .ead-action-icon {

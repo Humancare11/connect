@@ -15,7 +15,7 @@
 }
 
 .dpfu-wrapper {
-  max-width: 900px;
+  max-width: var(--container-sm);
   margin: 0 auto;
   padding: 100px 16px 56px;
 }
@@ -100,7 +100,7 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 
 .dpfu-error-btn:hover {
@@ -121,7 +121,7 @@
   margin-bottom: 18px;
   padding: 0;
   font-family: inherit;
-  transition: color 0.15s;
+  transition: color var(--duration-fast);
 }
 
 .dpfu-back-btn:hover {
@@ -392,7 +392,7 @@
   padding: 22px 24px;
   box-shadow: 0 1px 8px rgba(15, 45, 94, 0.07);
   border: 1px solid #e5eaf4;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--duration-base);
 }
 
 .dpfu-card:hover {
@@ -446,7 +446,7 @@
   margin-top: 8px;
   padding: 0;
   font-family: inherit;
-  transition: opacity 0.15s;
+  transition: opacity var(--duration-fast);
 }
 
 .dpfu-read-more-btn:hover {
@@ -562,11 +562,13 @@
 .dpfu-avail-day {
   border-radius: 10px;
   padding: 10px 12px;
-  transition: transform 0.15s;
+  transition: transform var(--duration-fast);
 }
 
-.dpfu-avail-day:hover {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .dpfu-avail-day:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .dpfu-avail-day--available {
@@ -740,12 +742,14 @@
   cursor: pointer;
   letter-spacing: 0.03em;
   box-shadow: 0 4px 18px rgba(15, 45, 94, 0.28);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
 }
 
-.dpfu-book-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(15, 45, 94, 0.38);
+@media (hover: hover) and (pointer: fine) {
+  .dpfu-book-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(15, 45, 94, 0.38);
+  }
 }
 
 .dpfu-book-btn:active {

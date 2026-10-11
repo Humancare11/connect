@@ -68,12 +68,16 @@
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
   white-space: nowrap;
   flex-shrink: 0;
-  transition: opacity 0.18s, transform 0.15s;
+  transition: opacity 0.18s, transform var(--duration-fast);
 }
 
 .appt-book-btn:hover {
   opacity: 0.9;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .appt-book-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .appt-book-icon {
@@ -330,14 +334,14 @@
     0 4px 20px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   animation: appt-fadein 0.35s ease both;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform var(--duration-base), box-shadow var(--duration-base);
 }
 
-.appt-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.75) inset,
-    0 8px 28px rgba(99, 102, 241, 0.12);
+@media (hover: hover) and (pointer: fine) {
+  .appt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75) inset, 0 8px 28px rgba(99, 102, 241, 0.12);
+  }
 }
 
 /* Focused highlight (deep-linked) */
@@ -515,7 +519,7 @@
   font-weight: 500;
   text-decoration: none;
   max-width: 180px;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 
 .appt-report-chip span {
@@ -578,13 +582,17 @@
   text-decoration: none;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity var(--duration-fast), transform var(--duration-fast);
   white-space: nowrap;
 }
 
 .appt-btn:hover {
   opacity: 0.88;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .appt-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .appt-btn:active {
@@ -704,7 +712,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--duration-fast), color var(--duration-fast);
   flex-shrink: 0;
 }
 

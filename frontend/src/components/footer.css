@@ -80,8 +80,8 @@
   padding: 5px 13px;
   white-space: nowrap;
   transition:
-    border-color 0.2s ease,
-    color 0.2s ease;
+    border-color var(--duration-base) ease,
+    color var(--duration-base) ease;
 }
 
 .footer-badge:hover {
@@ -183,16 +183,20 @@ a.footer-contact-text:hover {
   text-decoration: none;
   margin-bottom: 15px;
   transition:
-    transform 0.3s ease,
-    color 0.3s ease;
+    transform var(--duration-slow) ease,
+    color var(--duration-slow) ease;
   font-size: 14px;
   width: fit-content;
 }
 
 .footer-col a:hover {
   color: #ffffff;
-  transform: translateX(6px);
   padding-left: 6px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .footer-col a:hover {
+    transform: translateX(6px);
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -288,11 +292,15 @@ a.footer-contact-text:hover {
 }
 
 .soc-btn:hover {
-  transform: translateY(-4px);
   background: linear-gradient(135deg, #1e6bff, #0b57e8);
   border-color: rgba(124, 183, 255, 0.35);
   color: #ffffff;
-  box-shadow: 0 8px 20px rgba(11, 87, 232, 0.35);
+}
+@media (hover: hover) and (pointer: fine) {
+  .soc-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(11, 87, 232, 0.35);
+  }
 }
 
 /* ══════════════════════════════════════════════
@@ -461,7 +469,7 @@ a.footer-contact-text:hover {
 .footer-dropdown-panel {
   overflow: hidden;
   max-height: 0px;
-  transition: max-height 0.3s ease;
+  transition: max-height var(--duration-slow) ease;
 }
 
 .footer-sublink {
@@ -480,5 +488,21 @@ a.footer-contact-text:hover {
 .footer-sublink:hover {
   color: #ffffff;
   border-left-color: rgba(124, 183, 255, 0.8);
-  transform: translateX(3px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .footer-sublink:hover {
+    transform: translateX(3px);
+  }
+}
+
+/* Touch targets: larger invisible hit area, layout unchanged */
+.footer-col a,
+a.footer-contact-text {
+  position: relative;
+}
+.footer-col a::after,
+a.footer-contact-text::after {
+  content: "";
+  position: absolute;
+  inset: -8px -4px;
 }

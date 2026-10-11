@@ -75,8 +75,10 @@
   transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
 }
 
-.dn-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .dn-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
 }
 
 .dn-btn:disabled {

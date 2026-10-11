@@ -582,10 +582,14 @@
 }
 
 .hcc-sx .catcard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(11, 87, 232, 0.16);
   border-color: rgba(11, 87, 232, 0.32);
   background: rgba(255, 255, 255, 0.85);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .catcard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(11, 87, 232, 0.16);
+  }
 }
 
 /* [NEW] Row 1 — icon + title side by side */
@@ -608,8 +612,10 @@
   transition: transform var(--t);
 }
 
-.hcc-sx .catcard:hover .ic {
-  transform: scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .catcard:hover .ic {
+    transform: scale(1.08);
+  }
 }
 
 .hcc-sx .catcard h3 {
@@ -718,10 +724,14 @@
 }
 
 .hcc-sx .spec:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(11, 87, 232, 0.14);
   border-color: rgba(11, 87, 232, 0.25);
   background: rgba(255, 255, 255, 0.8);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .spec:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(11, 87, 232, 0.14);
+  }
 }
 
 /* [NEW] Row 1 — icon + title side by side */
@@ -744,8 +754,10 @@
   transition: transform var(--t);
 }
 
-.hcc-sx .spec:hover .ic {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .spec:hover .ic {
+    transform: scale(1.06);
+  }
 }
 
 .hcc-sx .spec h3 {
@@ -801,9 +813,11 @@
     background var(--t);
 }
 
-.hcc-sx .spec-book-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(11, 87, 232, 0.18);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .spec-book-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(11, 87, 232, 0.18);
+  }
 }
 
 .hcc-sx .spec--price-missing .count {
@@ -904,21 +918,33 @@
 }
 
 .hcc-sx .condcard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(11, 87, 232, 0.12);
   border-color: rgba(11, 87, 232, 0.22);
-  /* [FIX] was hard-coded #ffffff, identical to the resting state,
-     so hovering produced no visible background change */
   background: rgba(255, 255, 255, 0.85);
 }
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .condcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(11, 87, 232, 0.12);
+  }
+}
 
-.hcc-sx .condcard--disabled,
-.hcc-sx .condcard--disabled:hover {
+.hcc-sx .condcard--disabled {
   cursor: not-allowed;
   opacity: 0.62;
   transform: none;
   box-shadow: 0 1px 3px rgba(17, 28, 46, 0.04);
   border-color: rgba(225, 29, 72, 0.18);
+}
+.hcc-sx .condcard--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.62;
+  border-color: rgba(225, 29, 72, 0.18);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .condcard--disabled:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(17, 28, 46, 0.04);
+  }
 }
 
 .hcc-sx .condcard-ico {
@@ -934,8 +960,10 @@
   transition: transform var(--t);
 }
 
-.hcc-sx .condcard:hover .condcard-ico {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .condcard:hover .condcard-ico {
+    transform: scale(1.06);
+  }
 }
 
 /* [NEW] Text stack — title above description, vertically centered with icon */

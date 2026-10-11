@@ -7,6 +7,7 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
 import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -1162,7 +1163,7 @@ export function AppLayout() {
   const mainProps = MainWrap === Fragment ? {} : { id: "main-content", tabIndex: -1 };
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <SkipLink />
       <ScrollToTop />
       <RouteSeo />
@@ -3034,7 +3035,7 @@ export function AppLayout() {
 
         {!hideLayout && <Footer />}
       </Suspense>
-    </>
+    </MotionConfig>
   );
 }
 

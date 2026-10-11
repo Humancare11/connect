@@ -115,8 +115,12 @@
 
 .dc-btn--primary:hover {
   background: #2a446d;
-  transform: translateY(-2px);
-  /* box-shadow: 0 14px 30px #35558b; */
+  ;
+}
+@media (hover: hover) and (pointer: fine) {
+  .dc-btn--primary:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .dc-btn--secondary {
@@ -128,7 +132,11 @@
 .dc-btn--secondary:hover {
   border-color: var(--dc-blue);
   color: var(--dc-blue);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dc-btn--secondary:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .dc-btn--ghost {
@@ -139,7 +147,11 @@
 
 .dc-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.12);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dc-btn--ghost:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .dc-btn--lg {
@@ -163,12 +175,14 @@
   border: 1px solid var(--dc-glass-border);
   border-radius: var(--dc-radius-md);
   box-shadow: var(--dc-shadow-sm);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform var(--duration-slow) ease, box-shadow var(--duration-slow) ease;
 }
 
-.dc-card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--dc-shadow-md);
+@media (hover: hover) and (pointer: fine) {
+  .dc-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--dc-shadow-md);
+  }
 }
 
 .dc-grid {
@@ -563,8 +577,12 @@
 
 .dc-benefit-tile:hover {
   background: var(--dc-white);
-  box-shadow: var(--dc-shadow-sm);
-  transform: translateY(-3px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dc-benefit-tile:hover {
+    box-shadow: var(--dc-shadow-sm);
+    transform: translateY(-3px);
+  }
 }
 
 .dc-benefit-tile h4 {
@@ -668,7 +686,11 @@
 .dc-carousel-nav:hover {
   background: var(--dc-blue);
   color: var(--dc-white);
-  transform: scale(1.06);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dc-carousel-nav:hover {
+    transform: scale(1.06);
+  }
 }
 
 .dc-carousel-dots {
@@ -737,7 +759,7 @@
 
 .dc-faq-chevron {
   flex-shrink: 0;
-  transition: transform 0.3s ease;
+  transition: transform var(--duration-slow) ease;
   color: var(--dc-blue);
 }
 

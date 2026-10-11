@@ -651,6 +651,8 @@ export default function HomePage() {
             { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
             "+=0.3",
           );
+          // Reduced motion: jump straight to the end state (content stays visible, nothing animates).
+          if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) tl.progress(1);
         }, wrapperRef);
       });
     });

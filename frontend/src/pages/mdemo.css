@@ -65,7 +65,7 @@ img, svg { display: block; }
 .nav { position: sticky; top: 14px; z-index: 80; padding: 0 24px; }
 .nav-inner {
   display: flex; align-items: center; justify-content: space-between; gap: 24px;
-  max-width: 1280px; margin: 0 auto;
+  max-width: var(--container-lg); margin: 0 auto;
   background: rgba(255,255,255,.6);
   backdrop-filter: blur(22px) saturate(140%);
   -webkit-backdrop-filter: blur(22px) saturate(140%);
@@ -73,7 +73,7 @@ img, svg { display: block; }
   border-radius: 100px;
   padding: 8px 8px 8px 22px;
   box-shadow: var(--shadow-1);
-  transition: box-shadow .3s;
+  transition: box-shadow var(--duration-slow);
 }
 .nav-inner.scrolled { box-shadow: 0 18px 50px -20px rgba(11,40,100,.28); }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-primary); font-weight: 700; letter-spacing: -.02em; }
@@ -85,7 +85,7 @@ img, svg { display: block; }
 .brand-mark svg { width: 20px; height: 20px; }
 .brand-name { font-size: 18px; }
 .nav-links { display: flex; gap: 6px; font-size: 14px; color: var(--ink-2); }
-.nav-links a { padding: 8px 14px; border-radius: 100px; transition: background .2s, color .2s; }
+.nav-links a { padding: 8px 14px; border-radius: 100px; transition: background var(--duration-base), color var(--duration-base); }
 .nav-links a:hover { background: rgba(11,87,232,.08); color: var(--blue); }
 .nav-cta { display: flex; gap: 6px; align-items: center; }
 .auth-combined {
@@ -93,9 +93,14 @@ img, svg { display: block; }
   padding: 11px 18px; border-radius: 100px; font-weight: 600; font-size: 14px; font-family: var(--font-primary);
   background: linear-gradient(135deg,var(--blue),var(--blue-2)); color: #fff;
   box-shadow: 0 10px 24px -10px rgba(11,87,232,.6), inset 0 1px 0 rgba(255,255,255,.25);
-  transition: transform .2s, box-shadow .2s;
+  transition: transform var(--duration-base), box-shadow var(--duration-base);
 }
-.auth-combined:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -10px rgba(11,87,232,.7); }
+@media (hover: hover) and (pointer: fine) {
+  .auth-combined:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px -10px rgba(11,87,232,.7);
+  }
+}
 .auth-combined .divider { opacity: .55; }
 
 /* ── Shared ── */
@@ -103,15 +108,24 @@ img, svg { display: block; }
   display: inline-flex; align-items: center; gap: 8px;
   padding: 11px 18px; border-radius: 100px; font-weight: 600; font-size: 14px;
   font-family: var(--font-primary); letter-spacing: -.005em;
-  transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+  transition: transform var(--duration-base) ease, box-shadow var(--duration-base) ease, background var(--duration-base) ease;
   white-space: nowrap;
 }
 .btn-ghost { color: var(--ink); border: 1px solid rgba(11,87,232,.18); background: rgba(255,255,255,.4); }
 .btn-ghost:hover { background: rgba(255,255,255,.8); }
 .btn-primary { background: linear-gradient(135deg,var(--blue),var(--blue-2)); color: #fff; box-shadow: 0 10px 24px -10px rgba(11,87,232,.6), inset 0 1px 0 rgba(255,255,255,.25); }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -10px rgba(11,87,232,.7); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px -10px rgba(11,87,232,.7);
+  }
+}
 .btn-white { background: #fff; color: var(--blue-deep); padding: 14px 24px; }
-.btn-white:hover { transform: translateY(-1px); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-white:hover {
+    transform: translateY(-1px);
+  }
+}
 .btn-link-light { color: #fff; opacity: .85; padding: 14px 8px; }
 .btn-link-light:hover { opacity: 1; }
 .btn.full { display: flex; justify-content: center; width: 100%; }
@@ -144,7 +158,7 @@ img, svg { display: block; }
 /* ── STATS ── */
 .stats { padding: 120px 24px 100px; }
 .stats-inner {
-  max-width: 1280px; margin: 0 auto;
+  max-width: var(--container-lg); margin: 0 auto;
   background: linear-gradient(160deg,#0A1F44 0%,#061333 100%);
   border-radius: 36px; padding: 64px 48px;
   position: relative; overflow: hidden; box-shadow: var(--shadow-3); isolation: isolate;
