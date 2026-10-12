@@ -6,6 +6,7 @@ import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
 import { useLiveChatAdmin } from "./livechat/useLiveChatAdmin";
+import { openLiveChat } from "./livechat/liveChatTabs";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -171,21 +172,16 @@ const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
-  // Live Chat (admin + superadmin only; employeeadmin is not a live agent). The module itself is switched on and
-  // off by LIVECHAT_ENABLED on the server.
+  // Live Chat (admin + superadmin only; employeeadmin is not a live agent). It has its own menu and opens in its own
+  // browser tab (see liveChatTabs.js). The module itself is switched on and off by LIVECHAT_ENABLED on the server.
   {
     key: "live-chat",
     label: "Live Chat",
     badge: "NEW",
+    path: "/admin-dashboard/live-chat",
+    external: true,
+    roles: ["admin", "superadmin"],
     icon: ICONS.chat,
-    children: [
-      { path: "/admin-dashboard/live-chat", label: "Real-time visitors", exact: true, roles: ["admin", "superadmin"], icon: ICONS.users },
-      { path: "/admin-dashboard/live-chat/ai-chats", label: "AI chats", badgeKey: "ai", roles: ["admin", "superadmin"], icon: ICONS.chat },
-      { path: "/admin-dashboard/live-chat/agent-chats", label: "Live agent chats", badgeKey: "live", roles: ["admin", "superadmin"], icon: ICONS.chat },
-      { path: "/admin-dashboard/live-chat/team", label: "Team", roles: ["admin", "superadmin"], icon: ICONS.users },
-      { path: "/admin-dashboard/live-chat/reports", label: "Reports", roles: ["admin", "superadmin"], icon: ICONS.chart },
-      { path: "/admin-dashboard/live-chat/settings", label: "AI agent settings", roles: ["admin", "superadmin"], icon: ICONS.shield },
-    ],
   },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
@@ -227,10 +223,47 @@ const UnreadBadge = ({ count, style }) =>
     </span>
   ) : null;
 
-function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChange, onNavigate }) {
+// "Live Chat": a link that opens (or re-uses) the one Live Chat browser tab. A plain click goes through
+// openLiveChat; middle-click and Ctrl/Cmd-click keep the normal new-tab behaviour of the anchor.
+function LiveChatNavLink({ item, onNavigate }) {
   const { unread } = useLiveChatAdmin();
-  const countFor = (link) => (link.badgeKey ? unread[link.badgeKey] || 0 : 0);
-  const groupTotal = item.key === "live-chat" ? (unread.ai || 0) + (unread.live || 0) : 0;
+  const total = (unread.ai || 0) + (unread.live || 0);
+  return (
+    <a
+      href={item.path}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ad-nav-item"
+      title="Opens in a new tab"
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        openLiveChat(item.path);
+        onNavigate();
+      }}
+    >
+      <span className="ad-nav-icon">{item.icon}</span>
+      {item.label}
+      <span
+        style={{
+          marginLeft: 8,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.06em",
+          background: "#22c55e",
+          color: "#062814",
+          borderRadius: 6,
+          padding: "2px 6px",
+        }}
+      >
+        {item.badge}
+      </span>
+      <UnreadBadge count={total} style={{ marginLeft: 8 }} />
+    </a>
+  );
+}
+
+function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChange, onNavigate }) {
   const buttonRef = useRef(null);
   const flyoutRef = useRef(null);
   const closeTimer = useRef(null);
@@ -400,7 +433,6 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
             {item.badge}
           </span>
         )}
-        <UnreadBadge count={groupTotal} style={{ marginLeft: 8 }} />
         <span className="ad-nav-arrow" aria-hidden="true">›</span>
       </button>
 
@@ -410,7 +442,6 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
             <Link key={link.target} to={link.target} className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={handleNavigate}>
               <span className="ad-nav-icon">{link.icon}</span>
               {link.label}
-              <UnreadBadge count={countFor(link)} />
             </Link>
           ))}
         </div>
@@ -434,7 +465,6 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
               <Link key={link.target} to={link.target} role="menuitem" className={linkClass(link)} onClick={handleNavigate}>
                 <span className="ad-nav-icon">{link.icon}</span>
                 {link.label}
-                <UnreadBadge count={countFor(link)} />
               </Link>
             ))}
           </div>,
@@ -582,6 +612,7 @@ export default function AdminLayout({ children }) {
                 />
               );
             }
+            if (item.external) return <LiveChatNavLink key={item.key} item={item} onNavigate={closeDrawer} />;
             const link = withTarget(item);
             return (
               <Link

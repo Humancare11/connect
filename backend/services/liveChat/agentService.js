@@ -489,9 +489,94 @@ function createAgentService({
       { upsert: true }
     );
     await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $ne: "archived" } }, { $set: { contact: enc } });
-    if (presence.get(conv.visitorId)) presence.update(conv.visitorId, { name: values.name });
+    if (presence.get(conv.visitorId)) presence.update(conv.visitorId, { name: values.name, email: values.email });
     const fresh = await LcConversation.findById(conv._id);
     chat.toAgents("chat:updated", { conversationId, row: rowOf(fresh) });
+    return { ok: true, contact: values };
+  }
+
+  // Time zone of a visitor who has not started a chat: the first zone of their country (good enough for "their time").
+  function zoneOfCountry(code) {
+    if (!/^[A-Z]{2}$/.test(code || "")) return "";
+    try {
+      const { Country } = require("country-state-city");
+      return Country.getCountryByCode(code)?.timezones?.[0]?.zoneName || "";
+    } catch {
+      return "";
+    }
+  }
+
+  // The right-hand panel of Real-time visitors: works for a visitor who is only browsing (memory) or who has a record.
+  async function visitorPanel(actor, visitorId) {
+    const id = String(visitorId || "");
+    const record = presence.get(id);
+    const visitor = await chat.loadVisitor(id);
+    if (!record && !visitor) throw new AgentError(404, "not_found");
+    const contact = contactOf(visitor);
+    const [chats, recent, tickets] = await Promise.all([
+      LcConversation.countDocuments({ visitorId: id }),
+      LcConversation.find({ visitorId: id }).sort({ startedAt: -1 }).limit(5).lean(),
+      ticketCount(contact.email),
+    ]);
+    const visits = visitor?.visits || 1;
+    const geo = record?.geo || visitor?.geo || {};
+    const t = now();
+    const pages = (record?.pages || []).map((p, i, all) => ({
+      path: p.path,
+      title: p.title,
+      enteredAt: p.enteredAt,
+      seconds: i === all.length - 1 ? Math.round((t - p.enteredAt) / 1000) : p.seconds,
+      current: i === all.length - 1,
+    }));
+    return {
+      ok: true,
+      panel: {
+        visitorId: id,
+        contact,
+        location: { city: geo.city || "", state: geo.state || "", country: geo.country || "", countryCode: geo.countryCode || "" },
+        timeZone: zoneOfCountry(geo.countryCode),
+        counts: { chats, tickets, visits },
+        returning: visits > 1 || chats > 1,
+        pages,
+        recent: recent.map((o) => ({
+          conversationId: o.conversationId,
+          topic: o.topic || "",
+          startedAt: o.startedAt,
+          status: o.mode === "archived" ? (o.everLive ? "Resolved" : "Solved by AI") : "Open",
+        })),
+        visit: {
+          online: Boolean(record),
+          device: record?.device || visitor?.device?.type || "",
+          os: record?.os || visitor?.device?.os || "",
+          browser: record?.browser || visitor?.device?.browser || "",
+          referrer: record?.referrer || "",
+          joinedAt: record?.joinedAt || null,
+          ip: record?.ip || visitor?.lastIp || "",
+        },
+      },
+      serverTime: t,
+    };
+  }
+
+  // Saves contact details for a visitor who may not have a chat yet (the pencil on Real-time visitors).
+  async function updateVisitorContact(actor, visitorId, body) {
+    const id = String(visitorId || "");
+    if (!presence.get(id) && !(await chat.loadVisitor(id))) throw new AgentError(404, "not_found");
+    const check = validateContact(body || {});
+    if (!check.ok) throw new AgentError(400, "invalid_contact", { errors: check.errors });
+    const { values } = check;
+    const enc = {
+      name: encryptLiveChatText(values.name),
+      email: encryptLiveChatText(values.email),
+      phone: encryptLiveChatText(values.phone),
+    };
+    await LcVisitor.updateOne(
+      { visitorId: id },
+      { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
+      { upsert: true }
+    );
+    await LcConversation.updateMany({ visitorId: id, mode: { $ne: "archived" } }, { $set: { contact: enc } });
+    if (presence.get(id)) presence.update(id, { name: values.name, email: values.email });
     return { ok: true, contact: values };
   }
 
@@ -712,6 +797,8 @@ function createAgentService({
     addNote,
     setTags,
     updateContact,
+    visitorPanel,
+    updateVisitorContact,
     canned,
     suggest,
     translate,

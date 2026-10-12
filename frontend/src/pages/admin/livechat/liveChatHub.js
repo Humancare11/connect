@@ -1,6 +1,7 @@
 import { io } from "socket.io-client";
 import api, { getUserAuthToken } from "../../../api";
 import { installAudioUnlock, playChime, showBrowserNotification } from "./liveChatNotify";
+import { shouldAlert } from "./liveChatTabs";
 
 // One shared connection to /livechat-admin for the whole admin session.
 //
@@ -44,6 +45,8 @@ const pagePath = (everLive, id) => `/admin-dashboard/live-chat/${everLive ? "age
 
 // `notify` is what a browser notification may say (who / what kind of event, never message text).
 function pushToast({ title, body, path, notify }) {
+  // While the Live Chat tab is open only that tab alerts; the dashboard tab just updates its badge.
+  if (!shouldAlert()) return;
   const id = ++toastSeq;
   set({ toasts: [{ id, title, body, path }, ...snapshot.toasts].slice(0, MAX_TOASTS) });
   setTimeout(() => hub.dismissToast(id), TOAST_MS);

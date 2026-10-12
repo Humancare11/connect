@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../../api";
+import Icon from "./lcIcons";
 
 // Blocked IPs (collapsed by default): a block lasts until someone removes it here.
 export default function BlockedIpsPanel({ refreshKey }) {
@@ -24,22 +25,22 @@ export default function BlockedIpsPanel({ refreshKey }) {
   }, [refreshKey, version]);
 
   return (
-    <div className="lcv-blocked">
-      <button type="button" className="lcv-blocked-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
-        ⛔ Blocked IPs <span className="lcv-blocked-count">{blocked.length}</span>
+    <div className="rt-blocked">
+      <button type="button" className="rt-blocked-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Icon name="block" size={15} /> Blocked IPs <span className="rt-pill">{blocked.length}</span>
       </button>
       {open && (
-        <div className="lcv-blocked-body">
-          {error && <div className="lcv-start-error">{error}</div>}
-          {blocked.length === 0 && <span className="lcv-muted">No IP is blocked.</span>}
+        <div className="rt-blocked-body">
+          {error && <div className="rt-error">{error}</div>}
+          {blocked.length === 0 && <span className="wk-muted">No IP is blocked.</span>}
           {blocked.map((entry) => (
-            <div key={entry.id} className="lcv-blocked-row">
-              <span className="lcv-mono">{entry.ip}</span>
-              <span className="lcv-muted">{entry.reason || "No reason given"}</span>
-              <span className="lcv-muted">{new Date(entry.createdAt).toLocaleDateString()}</span>
+            <div key={entry.id} className="rt-blocked-row">
+              <span className="wk-mono">{entry.ip}</span>
+              <span className="wk-muted">{entry.reason || "No reason given"}</span>
+              <span className="wk-muted">{new Date(entry.createdAt).toLocaleDateString()}</span>
               <button
                 type="button"
-                className="lcv-btn"
+                className="wk-btn"
                 onClick={async () => {
                   try {
                     await api.delete(`/api/admin/livechat/blocked-ips/${entry.id}`);

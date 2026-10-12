@@ -1,0 +1,21 @@
+/* Additions to livechat-ui.css (which is generated from the design file): what the real app needs on top of the
+   design (theme button, connection status, blocked IPs). Still scoped under .lcx. */
+.lcx .lx-nav a{text-decoration:none}
+.lcx .lx-theme{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);border-radius:20px;padding:5px 12px;font-size:12.5px;font-weight:600}
+.lcx .lx-theme:hover{background:var(--surface-3)}
+.lcx .lx-status{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.lcx .lx-status i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.lcx .lx-status--live i{background:var(--ok)}
+.lcx .lx-status--reconnecting i,.lcx .lx-status--connecting i{background:var(--warn)}
+.lcx .lx-status--denied i,.lcx .lx-status--off i{background:var(--urgent)}
+.lcx .rt-error{margin:0 0 12px;background:var(--err-bg);color:var(--danger-ink);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+.lcx .rt-radar .rt-btn{min-width:0}
+.lcx .rt-blocked{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.lcx .rt-blocked-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:transparent;border-radius:10px;padding:7px 12px;font-weight:600;font-size:13px}
+.lcx .rt-blocked-toggle:hover{background:var(--surface-2)}
+.lcx .rt-blocked-body{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.lcx .rt-blocked-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}
+.lcx .rt-blocked-row .wk-btn{margin-left:auto}
+.lcx .rt-danger{color:var(--danger-ink);border-color:var(--danger-line)}
+.lcx .rt-search{border:1px solid var(--line-2);background:transparent;border-radius:10px;padding:8px 14px;font-size:13px;min-width:240px;outline:none}
+.lcx .rt-search:focus{border-color:var(--accent)}

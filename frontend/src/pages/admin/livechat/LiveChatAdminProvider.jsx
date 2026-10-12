@@ -1,15 +1,14 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { hub } from "./liveChatHub";
 import LiveChatToasts from "./LiveChatToasts";
 import { useLiveChatAdmin } from "./useLiveChatAdmin";
+import { openLiveChat } from "./liveChatTabs";
 
 const AGENT_ROLES = ["admin", "superadmin"];
 
 // Mounted once in AdminLayout for admins and superadmins: keeps the connection open on every admin page, so unread
 // badges and toasts work everywhere, and renders the toasts. Renders nothing when the module is off.
 export function LiveChatAdminProvider({ user }) {
-  const navigate = useNavigate();
   const { toasts, status } = useLiveChatAdmin();
   const allowed = hub.enabled && user && AGENT_ROLES.includes(user.role);
   const userId = user ? String(user._id || user.id || "") : "";
@@ -26,7 +25,8 @@ export function LiveChatAdminProvider({ user }) {
       toasts={toasts}
       onOpen={(toast) => {
         hub.dismissToast(toast.id);
-        if (toast.path) navigate(toast.path);
+        // Opens the chat in the Live Chat tab (this tab, if that is where we are).
+        if (toast.path) openLiveChat(toast.path);
       }}
     />
   );

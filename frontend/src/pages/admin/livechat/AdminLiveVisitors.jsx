@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
@@ -6,43 +6,24 @@ import { hub } from "./liveChatHub";
 import { useLiveChatAdmin } from "./useLiveChatAdmin";
 import NotificationsBanner from "./NotificationsBanner";
 import BlockedIpsPanel from "./BlockedIpsPanel";
-import "./AdminLiveVisitors.css";
+import VisitorPanel from "./VisitorPanel";
+import Icon from "./lcIcons";
+import {
+  ACTIVITY,
+  ACTIVITY_CLASS,
+  ACTIVITY_FILTERS,
+  avatarColor,
+  displayName,
+  duration,
+  flag,
+  initials,
+  pageLabel,
+} from "./visitorUtils";
 
-// Live Chat > Real-time visitors. Layout, wording and colours follow docs/chat-demo.html.
-// Data comes from the shared /livechat-admin connection (snapshot, then upsert/remove deltas). Visitors who never
-// chat exist in server memory only; nothing on this page is stored.
+// Live Chat > Real-time visitors (docs/live-chat-admin-ui.html). Data comes from the shared /livechat-admin connection
+// (snapshot, then upsert/remove deltas). Visitors who never chat exist in server memory only; the table stores nothing.
 const STUCK_SECONDS = 4 * 60; // Care radar: more than 4 minutes on the booking page without booking
 const BOOKING_PREFIXES = ["/book-appointment", "/appointment-booking"];
-
-const ACTIVITY = {
-  browsing: "Browsing",
-  chatting: "Chatting",
-  waiting: "Waiting for agent",
-  invited: "Invited",
-  ai: "Chatting",
-};
-const ACTIVITY_CLASS = { ai: "chatting" };
-const ACTIVITY_ORDER = { waiting: 0, chatting: 1, ai: 1, invited: 2, browsing: 3 };
-
-const initials = (name) =>
-  String(name || "")
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-const duration = (seconds) => {
-  const s = Math.max(0, Math.floor(seconds));
-  if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
-  return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
-};
-
-const flag = (code) =>
-  /^[A-Z]{2}$/.test(code || "") ? String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)) : "";
-
-const pageLabel = (visitor) => visitor.page?.title || visitor.page?.path || "–";
-const displayName = (visitor) => visitor.name || visitor.ip || "Visitor";
 
 const STATUS_TEXT = {
   connecting: "Connecting…",
@@ -57,10 +38,16 @@ export default function AdminLiveVisitors() {
   const { admin } = useAdmin();
   const navigate = useNavigate();
   const [activityFilter, setActivityFilter] = useState("all");
+  const [match, setMatch] = useState("all");
+  const [menu, setMenu] = useState(""); // "", "match" or "filter"
   const [query, setQuery] = useState("");
+  const [sortDesc, setSortDesc] = useState(false);
+  const [selected, setSelected] = useState("");
+  const [showPanel, setShowPanel] = useState(true);
+  const [focusContact, setFocusContact] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [starting, setStarting] = useState("");
-  const [startError, setStartError] = useState("");
+  const [error, setError] = useState("");
   const [blockedVersion, setBlockedVersion] = useState(0);
   const userId = String(admin?._id || admin?.id || "");
 
@@ -74,18 +61,32 @@ export default function AdminLiveVisitors() {
   const serverNow = now + clockOffset;
   const secondsOnSite = (visitor) => (serverNow - visitor.joinedAt) / 1000;
 
+  // Close the filter menus on any outside click or Escape.
+  useEffect(() => {
+    if (!menu) return undefined;
+    const close = (event) => {
+      if (event.type === "keydown" ? event.key === "Escape" : !event.target.closest?.(".rt-fwrap")) setMenu("");
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [menu]);
+
   const openChat = (visitor) =>
     navigate(`/admin-dashboard/live-chat/${visitor.activity === "ai" ? "ai-chats" : "agent-chats"}/${visitor.conversationId}`);
 
   // "Start chat" works for visitors who already gave their contact details (a new visitor needs the invite flow).
   const startChat = async (visitor) => {
     setStarting(visitor.visitorId);
-    setStartError("");
+    setError("");
     try {
       const { data } = await api.post("/api/admin/livechat/conversations/start", { visitorId: visitor.visitorId });
       navigate(`/admin-dashboard/live-chat/agent-chats/${data.conversationId}`);
     } catch (err) {
-      setStartError(err?.response?.data?.error === "contact_required" ? "This visitor has left the website." : "Could not start the chat.");
+      setError(err?.response?.data?.error === "contact_required" ? "This visitor has left the website." : "Could not start the chat.");
     } finally {
       setStarting("");
     }
@@ -98,7 +99,7 @@ export default function AdminLiveVisitors() {
       await api.post(`/api/admin/livechat/visitors/${visitor.visitorId}/block-ip`, { reason: "Blocked from the visitor list" });
       setBlockedVersion((v) => v + 1);
     } catch {
-      setStartError("Could not block that IP.");
+      setError("Could not block that IP.");
     }
   };
 
@@ -106,7 +107,14 @@ export default function AdminLiveVisitors() {
     if (visitor.conversationId) {
       const waiting = visitor.activity === "waiting";
       return (
-        <button type="button" className={`lcv-btn${waiting ? " lcv-btn--join" : ""}`} onClick={() => openChat(visitor)}>
+        <button
+          type="button"
+          className={`rt-btn${waiting ? " rt-btn--join" : ""}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            openChat(visitor);
+          }}
+        >
           {waiting ? "Join" : "View chat"}
         </button>
       );
@@ -114,10 +122,13 @@ export default function AdminLiveVisitors() {
     return (
       <button
         type="button"
-        className="lcv-btn lcv-btn--primary"
+        className="rt-btn"
         disabled={starting === visitor.visitorId}
         title={visitor.name ? "" : "They have not shared contact details yet: they will see a bubble and fill in the form before replying."}
-        onClick={() => startChat(visitor)}
+        onClick={(e) => {
+          e.stopPropagation();
+          startChat(visitor);
+        }}
       >
         {starting === visitor.visitorId ? "Starting…" : "Start chat"}
       </button>
@@ -125,16 +136,6 @@ export default function AdminLiveVisitors() {
   };
 
   const all = useMemo(() => Array.from(visitors.values()), [visitors]);
-
-  const counts = useMemo(
-    () => ({
-      website: all.length,
-      chatting: all.filter((v) => v.activity === "chatting" || v.activity === "invited").length,
-      waiting: all.filter((v) => v.activity === "waiting").length,
-      ai: all.filter((v) => v.activity === "ai").length,
-    }),
-    [all]
-  );
 
   const stuck = useMemo(
     () =>
@@ -156,193 +157,241 @@ export default function AdminLiveVisitors() {
       .filter(
         (v) =>
           !q ||
-          [v.name, v.ip, v.geo?.city, v.geo?.state, v.geo?.country, v.page?.title, v.page?.path]
+          [v.name, v.email, v.ip, v.geo?.city, v.geo?.state, v.geo?.country, v.page?.title, v.page?.path]
             .join(" ")
             .toLowerCase()
             .includes(q)
       )
-      .sort(
-        (a, b) =>
-          (ACTIVITY_ORDER[a.activity] ?? 9) - (ACTIVITY_ORDER[b.activity] ?? 9) || a.joinedAt - b.joinedAt
-      );
-  }, [all, activityFilter, query]);
+      .sort((a, b) => {
+        // Visitors waiting for an agent stay at the top, whatever the sort.
+        const waiting = (b.activity === "waiting") - (a.activity === "waiting");
+        if (waiting) return waiting;
+        return (sortDesc ? -1 : 1) * (a.joinedAt < b.joinedAt ? 1 : a.joinedAt > b.joinedAt ? -1 : 0);
+      });
+  }, [all, activityFilter, query, sortDesc]);
+
+  // Keep a visitor selected so the panel is never empty while the list is not.
+  const selectedId = rows.some((v) => v.visitorId === selected) ? selected : rows[0]?.visitorId || "";
+  const selectedVisitor = rows.find((v) => v.visitorId === selectedId) || null;
+
+  const onFocused = useCallback(() => setFocusContact(false), []);
+  const hidePanel = useCallback(() => setShowPanel(false), []);
 
   return (
-    <div className="lcv">
-      <div className="lcv-title">
-        <div>
-          <div className="lcv-eyebrow">Humancare Admin · Live Chat</div>
-          <h2>Real-time visitors</h2>
-        </div>
-        <div className="lcv-title-side">
-          <span className={`lcv-status lcv-status--${status}`} role="status">
-            <i /> {STATUS_TEXT[status]}
-          </span>
-        </div>
-      </div>
-
-      <NotificationsBanner />
-
-      <div className="lcv-kpis">
-        <div className="lcv-kpi">
-          <div className="lcv-n">{counts.website}</div>
-          <div className="lcv-l">On website now</div>
-        </div>
-        <div className="lcv-kpi lcv-kpi--g">
-          <div className="lcv-n">{counts.chatting}</div>
-          <div className="lcv-l">Chatting</div>
-        </div>
-        <div className="lcv-kpi lcv-kpi--o">
-          <div className="lcv-n">{counts.waiting}</div>
-          <div className="lcv-l">Waiting for agent</div>
-        </div>
-        <div className="lcv-kpi lcv-kpi--p">
-          <div className="lcv-n">{counts.ai}</div>
-          <div className="lcv-l">With AI agent</div>
-        </div>
-      </div>
-
-      <div className="lcv-radar">
-        <div className="lcv-ping" />
-        <strong>Care radar</strong>
-        {stuck ? (
-          <>
-            <span className="lcv-radar-text">
-              <b>{displayName(stuck)}</b>
-              {stuck.geo?.city ? ` (${stuck.geo.city}${stuck.geo.countryCode ? `, ${stuck.geo.countryCode}` : ""})` : ""} has
-              been on <b>{pageLabel(stuck)}</b> for {Math.floor((serverNow - stuck.page.enteredAt) / 60000)} minutes
-              without booking. They may need help.
+    <div className={`rt${showPanel ? "" : " no-panel"}`}>
+      <section className="rt-main">
+        <div className="rt-head">
+          <h2>Real-time</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span className={`lx-status lx-status--${status}`} role="status">
+              <i /> {STATUS_TEXT[status]}
             </span>
-            {actionFor(stuck)}
-          </>
-        ) : (
-          <span className="lcv-radar-text">
-            Watching live traffic. Visitors who seem stuck on booking will show up here.
-          </span>
-        )}
-      </div>
-
-      <div className="lcv-filters">
-        <label className="lcv-fbtn">
-          Activity
-          <select value={activityFilter} onChange={(e) => setActivityFilter(e.target.value)}>
-            <option value="all">All</option>
-            <option value="chatting">Chatting</option>
-            <option value="waiting">Waiting for agent</option>
-            <option value="invited">Invited</option>
-            <option value="browsing">Browsing</option>
-          </select>
-        </label>
-        <label className="lcv-search">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-4-4" />
-          </svg>
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, IP or city…"
-            aria-label="Search visitors"
-          />
-        </label>
-        <span className="lcv-chip">
-          🌐 Website is <b>humancareconnect.co</b>
-        </span>
-        <span className="lcv-chip">🍪 Only visitors who accepted cookies</span>
-      </div>
-
-      {startError && (
-        <div className="lcv-start-error" role="alert">
-          {startError}
-        </div>
-      )}
-
-      <div className="lcv-count">
-        {rows.length} {rows.length === 1 ? "visitor" : "visitors"} on the website
-      </div>
-
-      <div className="lcv-table-wrap">
-        <table className="lcv-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Activity</th>
-              <th>Action</th>
-              <th>Assigned to</th>
-              <th>Current page</th>
-              <th>Time on site</th>
-              <th>City</th>
-              <th>State / region</th>
-              <th>Country</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((visitor) => {
-              const activity = ACTIVITY_CLASS[visitor.activity] || visitor.activity;
-              return (
-                <tr key={visitor.visitorId}>
-                  <td>
-                    <div className="lcv-who">
-                      <span className={`lcv-av${visitor.name ? "" : " lcv-av--anon"}`}>
-                        {visitor.name ? initials(visitor.name) : "V"}
-                      </span>
-                      <span>
-                        {displayName(visitor)}
-                        <small>
-                          {visitor.name ? `IP ${visitor.ip} · ` : ""}
-                          {visitor.device}
-                        </small>
-                      </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`lcv-act lcv-act--${activity}`}>
-                      <i />
-                      {ACTIVITY[visitor.activity] || "Browsing"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="lcv-actions">
-                      {actionFor(visitor)}
-                      <button type="button" className="lcv-btn lcv-btn--icon" aria-label={`Block IP ${visitor.ip}`} title={`Block IP ${visitor.ip}`} onClick={() => blockVisitor(visitor)}>
-                        ⛔
-                      </button>
-                    </div>
-                  </td>
-                  <td>{visitor.assignedTo ? visitor.assignedTo : <span className="lcv-muted">–</span>}</td>
-                  <td>{pageLabel(visitor)}</td>
-                  <td className="lcv-mono">{duration(secondsOnSite(visitor))}</td>
-                  <td>{visitor.geo?.city || <span className="lcv-muted">–</span>}</td>
-                  <td>{visitor.geo?.state || <span className="lcv-muted">–</span>}</td>
-                  <td>
-                    {visitor.geo?.country ? (
-                      <>
-                        {flag(visitor.geo.countryCode)} {visitor.geo.country}
-                      </>
-                    ) : (
-                      <span className="lcv-muted">–</span>
-                    )}
-                  </td>
-                  <td className="lcv-muted">{visitor.source}</td>
-                </tr>
-              );
-            })}
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={10} className="lcv-empty">
-                  {status === "off"
-                    ? "Live chat is switched off. Set LIVECHAT_ENABLED=true on the server to turn it on."
-                    : "No visitors match this filter"}
-                </td>
-              </tr>
+            {!showPanel && (
+              <button type="button" className="rt-ptab" onClick={() => setShowPanel(true)} aria-label="Show patient details" title="Show patient details">
+                <Icon name="panel" size={18} />
+              </button>
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+        <div className="rt-body">
+          <NotificationsBanner />
+          <div className="rt-radar">
+            <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+              <circle cx="15" cy="15" r="14" fill="var(--surface-2)" />
+              <circle cx="15" cy="15" r="9" fill="none" stroke="var(--muted)" strokeWidth="1" opacity=".6" />
+              <circle cx="15" cy="15" r="4" fill="var(--accent)" />
+            </svg>
+            <b>Care radar</b>
+            <Icon name="info" size={15} className="i" />
+            <span className="rt-sep" />
+            {stuck ? (
+              <>
+                <span className="rt-rt">
+                  <b>{displayName(stuck)}</b>
+                  {stuck.geo?.city ? ` (${stuck.geo.city}${stuck.geo.countryCode ? `, ${stuck.geo.countryCode}` : ""})` : ""} has been on{" "}
+                  <b>{pageLabel(stuck)}</b> for {Math.floor((serverNow - stuck.page.enteredAt) / 60000)} minutes without booking. They may
+                  need help.
+                </span>
+                {actionFor(stuck)}
+              </>
+            ) : (
+              <span className="rt-rt">
+                Monitoring your live traffic. <b>Patients who seem stuck on booking</b> will appear here.
+              </span>
+            )}
+          </div>
 
-      <BlockedIpsPanel refreshKey={blockedVersion} />
+          <div className="rt-filters">
+            <div className="rt-fwrap">
+              <button type="button" className="rt-fbtn" aria-expanded={menu === "match"} onClick={() => setMenu(menu === "match" ? "" : "match")}>
+                Match {match} <Icon name="chevD" size={15} />
+              </button>
+              {menu === "match" && (
+                <div className="rt-pop" role="menu">
+                  {["all", "any"].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className={match === m ? "is-on" : ""}
+                      onClick={() => {
+                        setMatch(m);
+                        setMenu("");
+                      }}
+                    >
+                      Match {m}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rt-fwrap">
+              <button type="button" className="rt-fbtn" aria-expanded={menu === "filter"} onClick={() => setMenu(menu === "filter" ? "" : "filter")}>
+                <Icon name="funnel" size={16} className="i" /> Filter
+                {activityFilter !== "all" && <span className="rt-fcount">1</span>}
+              </button>
+              {menu === "filter" && (
+                <div className="rt-pop" role="menu">
+                  {ACTIVITY_FILTERS.map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={activityFilter === key ? "is-on" : ""}
+                      onClick={() => {
+                        setActivityFilter(key);
+                        setMenu("");
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="rt-fwrap">
+              <input
+                type="search"
+                className="rt-search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search name, email, IP or city…"
+                aria-label="Search patients"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="rt-error" role="alert">
+              {error}
+            </div>
+          )}
+
+          <div className="rt-count">
+            {rows.length} {rows.length === 1 ? "patient" : "patients"}
+          </div>
+          <div className="rt-tablewrap">
+            <table className="rt-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Activity</th>
+                  <th>Actions</th>
+                  <th>Teammate</th>
+                  <th>
+                    <button
+                      type="button"
+                      className={`rt-sort${sortDesc ? " is-desc" : ""}`}
+                      onClick={() => setSortDesc(!sortDesc)}
+                      title="Sort by time on all pages"
+                    >
+                      Time on all pages <Icon name="up" size={14} className="i" />
+                    </button>
+                  </th>
+                  <th>Country</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((visitor) => {
+                  const activity = ACTIVITY_CLASS[visitor.activity] || visitor.activity;
+                  const geo = visitor.geo || {};
+                  return (
+                    <tr
+                      key={visitor.visitorId}
+                      className={`rt-row${visitor.visitorId === selectedId ? " is-sel" : ""}`}
+                      onClick={() => {
+                        setSelected(visitor.visitorId);
+                        setShowPanel(true);
+                      }}
+                    >
+                      <td>
+                        <div className="rt-who">
+                          <span className="rt-av" style={{ background: avatarColor(visitor) }}>
+                            {visitor.name ? initials(visitor.name) : "P"}
+                          </span>
+                          <span>{displayName(visitor)}</span>
+                        </div>
+                      </td>
+                      <td>{visitor.email ? <span className="rt-email">{visitor.email}</span> : "-"}</td>
+                      <td>
+                        <span className={`rt-act rt-act--${activity}`}>
+                          <i />
+                          {ACTIVITY[visitor.activity] || "Browsing"}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="rt-actions">
+                          {actionFor(visitor)}
+                          <button
+                            type="button"
+                            className="rt-icbtn"
+                            aria-label={`Add contact details for ${displayName(visitor)}`}
+                            title="Add contact details"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelected(visitor.visitorId);
+                              setShowPanel(true);
+                              setFocusContact(true);
+                            }}
+                          >
+                            <Icon name="pencil" size={15} className="i" />
+                          </button>
+                        </div>
+                      </td>
+                      <td>{visitor.assignedTo || "-"}</td>
+                      <td>{duration(secondsOnSite(visitor))}</td>
+                      <td>{geo.country ? `${flag(geo.countryCode)} ${geo.country}` : "-"}</td>
+                      <td>{geo.state || "-"}</td>
+                    </tr>
+                  );
+                })}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="rt-empty">
+                      {status === "off"
+                        ? "Live chat is switched off. Set LIVECHAT_ENABLED=true on the server to turn it on."
+                        : "No patients match this filter"}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <BlockedIpsPanel refreshKey={blockedVersion} />
+        </div>
+      </section>
+      <aside className="wk-profile rt-panel" aria-label="Patient details">
+        <VisitorPanel
+          visitor={selectedVisitor}
+          now={now}
+          serverNow={serverNow}
+          onHide={hidePanel}
+          onBlock={blockVisitor}
+          focusContact={focusContact}
+          onFocused={onFocused}
+        />
+      </aside>
     </div>
   );
 }

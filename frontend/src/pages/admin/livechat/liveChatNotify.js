@@ -6,6 +6,8 @@
 //  - Browser notifications only after the admin clicked "Turn on notifications" AND the browser granted permission.
 //    They are shown only while the tab is hidden, and never contain message text or health details: just who and
 //    what kind of event ("Emma Wilson: new message").
+import { openLiveChat } from "./liveChatTabs";
+
 const SOUND_KEY = "hcLiveChatSound";
 const DISMISS_KEY = "hcLiveChatNotifyDismissed";
 
@@ -96,7 +98,7 @@ export function showBrowserNotification({ title, body, path, tag }) {
     const n = new Notification(title, { body, tag, icon: "/favicon.svg", silent: true });
     n.onclick = () => {
       window.focus();
-      if (path) window.location.assign(path);
+      if (path) openLiveChat(path);
       n.close();
     };
   } catch {

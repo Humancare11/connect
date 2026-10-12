@@ -153,7 +153,7 @@ function createChatService({
       { $set: { contact: enc } }
     );
     const record = presence.get(id);
-    if (record) presence.update(id, { name: values.name });
+    if (record) presence.update(id, { name: values.name, email: values.email });
     return { ok: true, visitorId: id, firstName: firstNameOf(values.name) };
   }
 
@@ -288,7 +288,7 @@ function createChatService({
     const conv = await findOpen(visitorId);
     if (!conv) return;
     const visitor = await loadVisitor(visitorId);
-    if (hasContact(visitor) && presence.get(visitorId)) presence.update(visitorId, { name: decryptLiveChatText(visitor.name) });
+    if (hasContact(visitor) && presence.get(visitorId)) presence.update(visitorId, { name: decryptLiveChatText(visitor.name), email: decryptLiveChatText(visitor.email) });
     setActivity(visitorId, conv);
   }
 

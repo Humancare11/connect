@@ -43,6 +43,7 @@ class MemoryPresenceStore {
       record = {
         visitorId,
         name: "",
+        email: "",
         ip: "",
         geo: { city: "", state: "", country: "", countryCode: "" },
         device: "",
@@ -158,6 +159,7 @@ function toPublicVisitor(record) {
   return {
     visitorId: record.visitorId,
     name: record.name,
+    email: record.email || "",
     ip: record.ip,
     geo: record.geo,
     device: record.device,

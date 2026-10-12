@@ -17,6 +17,7 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest|translate|translate-reply
 //   PUT  /conversations/:id/view                          English / original view (per admin, per chat)
 //   PUT  /conversations/:id/tags|contact
+//   GET  /visitors/:visitorId/panel, PUT /visitors/:visitorId/contact   Real-time visitors side panel and contact edit
 //   POST /conversations/start                             admin-started chat with a visitor who has contact details
 //   GET  /unread, /canned-replies
 //   GET  /files/:id/url                                   a 5-minute presigned link to a patient's file (role-checked)
@@ -129,6 +130,12 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.put("/conversations/:id/contact", handle((req) => agent.updateContact(actor(req), idOf(req), req.body)));
 
   router.post("/conversations/:id/block-ip", handle((req) => agent.blockIp(actor(req), { conversationId: idOf(req), reason: req.body?.reason })));
+  const visitorIdOf = (req) => {
+    if (!VISITOR_ID_RE.test(String(req.params.visitorId))) throw new AgentError(404, "not_found");
+    return req.params.visitorId;
+  };
+  router.get("/visitors/:visitorId/panel", handle((req) => agent.visitorPanel(actor(req), visitorIdOf(req))));
+  router.put("/visitors/:visitorId/contact", handle((req) => agent.updateVisitorContact(actor(req), visitorIdOf(req), req.body)));
   router.post(
     "/visitors/:visitorId/block-ip",
     handle((req) => {

@@ -830,6 +830,7 @@ const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
+const LiveChatShell = lazy(() => import("./pages/admin/livechat/LiveChatShell"));
 const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
 const AdminLiveTeam = lazy(() => import("./pages/admin/livechat/AdminLiveTeam"));
 const AdminLiveReports = lazy(() => import("./pages/admin/livechat/AdminLiveReports"));
@@ -1579,9 +1580,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminLiveVisitors />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1589,9 +1590,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/ai-chats"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminAiChats />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1599,9 +1600,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/ai-chats/:conversationId"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminAiChats />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1609,9 +1610,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/agent-chats"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminLiveAgentChats />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1619,9 +1620,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/agent-chats/:conversationId"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminLiveAgentChats />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1629,9 +1630,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/team"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminLiveTeam />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1639,9 +1640,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/reports"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminLiveReports />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
@@ -1649,9 +1650,9 @@ export function AppLayout() {
             path="/admin-dashboard/live-chat/settings"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
+                <LiveChatShell>
                   <AdminLiveSettings />
-                </AdminLayout>
+                </LiveChatShell>
               </PrivateRoute>
             }
           />
