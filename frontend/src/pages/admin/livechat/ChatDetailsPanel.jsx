@@ -1,40 +1,18 @@
 import { useState } from "react";
+import Icon from "./lcIcons";
+import { duration as dur, flag, initials, localTime } from "./visitorUtils";
 
-// Right column: the patient panel (docs/chat-demo.html). Sections are collapsible and remember open/closed in this
+// Right column: the patient panel (docs/live-chat-admin-ui.html). Sections are collapsible and remember open/closed in this
 // browser. Contact details, location and the chat itself come from the server; the page timeline is stored only
 // for visitors who chat.
 const KEY = "hcLiveChatPanelSections";
 const defaultOpen = (key, hasName) => ({ qual: !hasName, ctx: false })[key] ?? true;
-
-const initials = (name) =>
-  String(name || "")
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-function dur(totalSeconds) {
-  const s = Math.max(0, Math.floor(totalSeconds));
-  if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
-  return `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`;
-}
 
 function readSections() {
   try {
     return JSON.parse(localStorage.getItem(KEY)) || {};
   } catch {
     return {};
-  }
-}
-
-function localTime(timeZone, now) {
-  if (!timeZone) return "";
-  try {
-    const date = new Date(now);
-    return `${date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone })}, ${date.toLocaleDateString("en-US", { weekday: "short", timeZone })}`;
-  } catch {
-    return "";
   }
 }
 
@@ -138,6 +116,8 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
   const endMs = closed && p.info.closedAt ? new Date(p.info.closedAt).getTime() : now;
   const sectionProps = { sections, onToggle: toggle, hasName };
 
+  const local = localTime(p.timeZone, now);
+
   return (
     <aside className="wk-profile" aria-label="Patient">
       <div className="wk-phead">
@@ -153,29 +133,41 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
 
       <ul className="wk-facts">
         <li>
-          <span aria-hidden="true">✉</span>
+          <Icon name="mail" size={16} />
           {p.contact.email ? <span className="wk-link">{p.contact.email}</span> : <span className="wk-add">No email yet</span>}
         </li>
         <li>
-          <span aria-hidden="true">☎</span>
-          {p.contact.phone ? <span className="wk-mono">{p.contact.phone}</span> : <span className="wk-add">No phone yet</span>}
+          <Icon name="phone" size={16} />
+          {p.contact.phone ? <span className="wk-mono">{p.contact.phone}</span> : <span className="wk-add">Add phone number</span>}
         </li>
         <li>
-          <span aria-hidden="true">📍</span>
-          {location ? location : <span className="wk-add">Location unknown</span>}
+          <Icon name="pin" size={16} />
+          {location ? (
+            <span>
+              {location} {flag(p.location.countryCode)}
+            </span>
+          ) : (
+            <span className="wk-add">Location unknown</span>
+          )}
         </li>
-        {p.timeZone && (
+        {local && (
           <li>
-            <span aria-hidden="true">🕒</span>
-            {localTime(p.timeZone, now)} (their time)
+            <Icon name={local.night ? "moon" : "sun"} size={16} />
+            {local.text} (their time)
           </li>
         )}
       </ul>
 
       <div className="wk-schips">
-        <span title="Chats">💬 {p.counts.chats}</span>
-        <span title="Support tickets">🎫 {p.counts.tickets}</span>
-        <span title="Visits">👁 {p.counts.visits}</span>
+        <span title="Chats">
+          <Icon name="chat" size={14} /> {p.counts.chats}
+        </span>
+        <span title="Support tickets">
+          <Icon name="ticket" size={14} /> {p.counts.tickets}
+        </span>
+        <span title="Visits">
+          <Icon name="globe" size={14} /> {p.counts.visits}
+        </span>
         <span className={p.returning ? "is-ret" : "is-first"}>{p.returning ? "Returning visitor" : "First visit"}</span>
       </div>
 
@@ -183,7 +175,7 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
         <ContactForm key={`${c.conversationId}:${p.contact.email}:${p.contact.name}`} contact={p.contact} onSave={onSaveContact} />
       </Section>
 
-      <Section id="ctx" title="Customer context" {...sectionProps}>
+      <Section id="ctx" title="Patient context" {...sectionProps}>
         <dl className="wk-kv">
           <dt>Topic</dt>
           <dd>{p.context.topic || "–"}</dd>
@@ -257,7 +249,7 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
         <dl className="wk-kv">
           <dt>Device</dt>
           <dd>
-            {p.visit.device === "Mobile" ? "📱" : "🖥"} {[p.visit.device, p.visit.os, p.visit.browser].filter(Boolean).join(" · ") || "–"}
+            <Icon name={p.visit.device === "Mobile" ? "mobile" : "monitor"} size={14} /> {[p.visit.device, p.visit.os, p.visit.browser].filter(Boolean).join(" · ") || "–"}
           </dd>
           <dt>Referring page</dt>
           <dd>{p.visit.referrer || "Direct"}</dd>

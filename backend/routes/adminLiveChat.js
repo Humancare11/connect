@@ -14,6 +14,7 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET  /visitors, /summary, /settings                   Real-time visitors and settings (read)
 //   GET  /conversations?view=ai|live                      chat lists (AI chats / Live agent chats)
 //   GET  /conversations/:id                               one chat with its patient panel (marks it read)
+//   GET  /conversations/:id/transcript                    plain-text download (no internal notes; access is logged)
 //   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest|translate|translate-reply
 //   PUT  /conversations/:id/view                          English / original view (per admin, per chat)
 //   PUT  /conversations/:id/tags|contact
@@ -115,6 +116,22 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   );
 
   router.get("/conversations/:id", handle((req) => agent.detail(actor(req), idOf(req)).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))));
+  // Plain-text download (no notes). Not cached; the file name carries only the chat ID.
+  router.get("/conversations/:id/transcript", async (req, res, next) => {
+    try {
+      const { filename, text } = await agent.transcript(actor(req), idOf(req));
+      res.set({
+        "Cache-Control": "no-store",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "X-Content-Type-Options": "nosniff",
+      });
+      res.send(text);
+    } catch (err) {
+      if (err instanceof AgentError) return res.status(err.status).set("Cache-Control", "no-store").json({ ok: false, error: err.code });
+      return next(err);
+    }
+  });
   router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text, req.body?.sourceText)));
   // Translation (admin side only): English view of a chat, the reply box, and the per-admin view choice.
   router.post("/conversations/:id/translate", handle((req) => agent.translate(actor(req), idOf(req), req.body?.messageIds)));

@@ -48,6 +48,8 @@ const conversationSchema = new mongoose.Schema(
     patientMessageCount: { type: Number, default: 0 },
     reads: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, count: { type: Number, default: 0 } }],
     aiSummary: ENC_FIELD,
+    // Who downloaded the transcript, newest last (a record of access for PHI, like LcFile.accessLog).
+    transcriptLog: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, at: { type: Date, default: Date.now } }],
     // The patient's language (not PHI): detected from the AI reply, or by one small model call. No badge for "en".
     language: {
       code: { type: String, default: "", maxlength: 8 },

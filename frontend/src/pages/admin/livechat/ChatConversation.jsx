@@ -1,82 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { handoffLabel } from "./liveChatHub";
+import Icon from "./lcIcons";
+import Composer from "./Composer";
+import { CLOSED_LABEL, dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
+import { initials } from "./visitorUtils";
 
-// Middle column: the conversation. Patient on the left, AI and agents on the right, system lines centred,
-// internal notes full width (they never reach the patient). Typing shows "typing…" only, never the draft.
-const timeOf = (iso) => {
-  try {
-    return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  } catch {
-    return "";
-  }
-};
+// Middle column: the conversation (docs/live-chat-admin-ui.html). The patient is on the left; the AI and agents are on
+// the right with their name above a run of messages; system lines sit at the right edge; internal notes are full width
+// and never reach the patient. Typing shows "typing…" only, never the draft.
+const fileKind = (mime) => (mime === "application/pdf" ? "PDF" : mime === "image/png" ? "PNG" : mime === "image/jpeg" ? "JPG" : "File");
 
-const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round((bytes || 0) / 1024))} KB`);
+// Messages from the same sender in a row share one label and avatar.
+const groupKey = (m) => (!m ? "" : m.sender === "patient" ? "p" : m.sender === "ai" ? "ai" : m.sender === "agent" ? `a:${m.agentName || ""}` : "");
 
 // translation: { text, from, fromName } for the English view (or null); shownOriginal: the admin switched this one
 // message back to its original.
-function Message({ m, onOpenFile, translation, language, shownOriginal, onToggleOriginal }) {
-  if (m.sender === "system") {
-    return (
-      <div className="wk-sys">
-        {m.text} · {timeOf(m.at)}
-        {m.internal ? " · team only" : ""}
-      </div>
-    );
-  }
-  if (m.sender === "note") {
-    return (
-      <div className="wk-msg wk-note">
-        <b>Internal note:</b> {m.text}
-        <span className="wk-meta">
-          Only your team sees this · {m.agentName ? `${m.agentName} · ` : ""}
-          {timeOf(m.at)}
-        </span>
-      </div>
-    );
-  }
-  if (m.sender === "patient") {
-    return (
-      <div className="wk-msg wk-left">
-        {m.file ? (
-          <span className="wk-file">
-            <span aria-hidden="true">📄</span>
-            <span className="wk-file-name">
-              {m.file.name}
-              <small>
-                {" "}
-                · {sizeOf(m.file.size)} · {m.file.mime === "application/pdf" ? "PDF" : m.file.mime === "image/png" ? "PNG" : "JPG"}
-              </small>
-            </span>
-            <button type="button" className="wk-btn" onClick={() => onOpenFile(m.file)}>
-              Open
-            </button>
-          </span>
-        ) : (
-          <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} />
-        )}
-        <span className="wk-meta">{timeOf(m.at)}</span>
-      </div>
-    );
-  }
-  const label = m.sender === "ai" ? "AI assistant" : m.agentName || "Agent";
-  return (
-    <div className={`wk-msg wk-right${m.sender === "ai" ? " wk-ai" : ""}`}>
-      <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} />
-      {m.sourceText ? (
-        <span className="wk-source">
-          Your English: {m.sourceText}
-          {language ? ` (sent in ${language.name})` : ""}
-        </span>
-      ) : null}
-      <span className="wk-meta">
-        {label} · {timeOf(m.at)}
-      </span>
-    </div>
-  );
-}
-
-// The English view of one message, with "Translated from German - show original" under it.
 function TranslatedText({ text, translation, shownOriginal, onToggleOriginal }) {
   if (!translation) return text;
   const from = translation.fromName || "the original language";
@@ -106,26 +44,123 @@ function TranslatedText({ text, translation, shownOriginal, onToggleOriginal }) 
   );
 }
 
-function ModeTag({ c, me }) {
-  if (c.mode === "archived") {
-    const label = { patient_left: "Left", blocked: "Blocked" }[c.closedReason] || "Resolved";
-    return <span className="wk-tag wk-tag--done">{label}</span>;
-  }
-  if (c.mode === "queue") {
-    if (c.emailStatus === "failed") return <span className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">Email failed</span>;
-    return <span className="wk-tag wk-tag--wait">{c.emailFollowUp ? "Email follow-up" : "Waiting"}</span>;
-  }
-  if (c.mode === "live") return <span className="wk-tag wk-tag--human">{c.assignee?.id === me ? "You" : c.assignee?.name}</span>;
-  return <span className="wk-tag wk-tag--ai">AI</span>;
+function FileLine({ file, onOpenFile }) {
+  return (
+    <span className="wk-file">
+      <Icon name="file" size={18} />
+      <span className="wk-file-name">
+        {file.name}
+        <small>
+          {" "}
+          · {sizeOf(file.size)} · {fileKind(file.mime)}
+        </small>
+      </span>
+      <button type="button" className="wk-btn" onClick={() => onOpenFile(file)}>
+        Open
+      </button>
+    </span>
+  );
 }
 
-export default function ChatConversation({ detail, me, role, typing, canned, busy, error, onTakeOver, onHandBack, onResolve, onSend, onNote, onSuggest, onTyping, onOpenFile, onBlockIp, onTranslate, onTranslateReply, onSetView }) {
+function Message({ m, first, c, onOpenFile, translation, shownOriginal, onToggleOriginal }) {
+  if (m.sender === "system") {
+    return (
+      <div className="mrow sysrow">
+        <div className="wk-sys">
+          {m.text} · {timeOf(m.at)}
+          {m.internal ? " · team only" : ""}
+        </div>
+      </div>
+    );
+  }
+  if (m.sender === "note") {
+    return (
+      <div className="mrow is-first">
+        <div className="wk-msg wk-note">
+          <span className="wk-txt">
+            <b>Internal note:</b> {m.text}
+          </span>
+          <span className="wk-meta">
+            Team only · {m.agentName ? `${m.agentName} · ` : ""}
+            {timeOf(m.at)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+  const body = m.file ? (
+    <FileLine file={m.file} onOpenFile={onOpenFile} />
+  ) : (
+    <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} />
+  );
+  if (m.sender === "patient") {
+    const name = c.name || c.ip || "Patient";
+    return (
+      <div className={`mrow${first ? " is-first" : ""}`}>
+        {first ? <span className={`wk-av sm${c.name ? "" : " wk-av--anon"}`}>{c.name ? initials(c.name) : "P"}</span> : <span className="mg-sp" />}
+        <div className="mcol">
+          {first && <span className="mlabel">{name}</span>}
+          <div className="wk-msg wk-left">
+            <span className="wk-txt">{body}</span>
+            <span className="wk-meta">{stamp(m.at)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const ai = m.sender === "ai";
+  const label = ai ? "AI assistant" : m.agentName || "Agent";
+  return (
+    <div className={`mrow right${first ? " is-first" : ""}`}>
+      <div className="mcol">
+        {first && <span className="mlabel">{label}</span>}
+        <div className={`wk-msg wk-right${ai ? " wk-ai" : ""}`}>
+          <span className="wk-txt">
+            {body}
+            {m.sourceText ? (
+              <span className="wk-source">
+                Your English: {m.sourceText}
+                {c.language ? ` (sent in ${c.language.name})` : ""}
+              </span>
+            ) : null}
+          </span>
+          <span className="wk-meta">{stamp(m.at)}</span>
+        </div>
+      </div>
+      {first ? <span className={`wk-av sm ${ai ? "ai" : "me"}`}>{ai ? "AI" : initials(m.agentName || "Agent")}</span> : <span className="mg-sp" />}
+    </div>
+  );
+}
+
+export default function ChatConversation({
+  detail,
+  me,
+  role,
+  typing,
+  canned,
+  busy,
+  error,
+  panelOpen,
+  onTogglePanel,
+  onTakeOver,
+  onHandBack,
+  onResolve,
+  onSend,
+  onNote,
+  onSuggest,
+  onTyping,
+  onOpenFile,
+  onBlockIp,
+  onDownload,
+  onTranslate,
+  onTranslateReply,
+  onSetView,
+}) {
   const { conversation: c, messages } = detail;
-  const [noteMode, setNoteMode] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [suggesting, setSuggesting] = useState(false);
   const bodyRef = useRef(null);
-  const inputRef = useRef(null);
+  const composerRef = useRef(null);
+  const [menu, setMenu] = useState(false);
+  const [info, setInfo] = useState("");
 
   // Translation (this admin only; the patient never sees any of it)
   const language = c.language || null; // { code, name } for non-English chats
@@ -136,8 +171,6 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
   const [transError, setTransError] = useState("");
   const asked = useRef(new Set()); // message ids already sent for translation
   const mounted = useRef(true);
-  const [englishSource, setEnglishSource] = useState(""); // the admin's English text while a translation is in the box
-  const [replying, setReplying] = useState(false);
 
   const closed = c.mode === "archived";
   const mine = c.assignee?.id === me;
@@ -148,12 +181,25 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
   const canResolve = !closed && (!heldByOther || superadmin);
   // Only the assignee replies; everyone else (and everyone on a closed chat) can still leave internal notes.
   const notesOnly = closed || heldByOther;
-  const noting = noteMode || notesOnly;
 
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, typing, c.conversationId]);
+
+  // The more menu closes on an outside click or Escape.
+  useEffect(() => {
+    if (!menu) return undefined;
+    const close = (event) => {
+      if (event.type === "keydown" ? event.key === "Escape" : !event.target.closest?.(".pop, [data-more]")) setMenu(false);
+    };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("mousedown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, [menu]);
 
   const englishView = Boolean(language) && view === "en";
   // English view: translate what is not translated yet, and every new patient message as it arrives.
@@ -202,69 +248,47 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
       return next;
     });
 
-  // Reply translation: the admin's English text is replaced by the patient's language, editable; nothing is sent.
-  const translateReply = async () => {
-    const text = draft.trim();
-    if (!text || replying) return;
-    setReplying(true);
-    setTransError("");
-    const res = await onTranslateReply(text);
-    setReplying(false);
-    if (!res.ok) {
-      setTransError(res.status === 429 ? "Too many translations, wait a moment" : "Translation unavailable right now");
-      return;
-    }
-    setEnglishSource(text);
-    setDraft(res.text);
-    inputRef.current?.focus();
-  };
-  const undoTranslation = () => {
-    setDraft(englishSource);
-    setEnglishSource("");
-    inputRef.current?.focus();
-  };
-
-  const submit = async (event) => {
-    event.preventDefault();
-    const text = draft.trim();
-    if (!text || busy) return;
-    const ok = noting ? await onNote(text) : await onSend(text, englishSource || undefined);
-    if (ok) {
-      setDraft("");
-      setEnglishSource("");
+  // The link opens this chat in the Live Chat tab for anyone signed in as an admin.
+  const copyLink = async () => {
+    const url = `${window.location.origin}/admin-dashboard/live-chat/${c.everLive ? "agent-chats" : "ai-chats"}/${c.conversationId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setInfo("Chat link copied");
+    } catch {
+      setInfo(`Chat link: ${url}`);
     }
   };
 
-  const suggest = async () => {
-    setSuggesting(true);
-    const text = await onSuggest();
-    setSuggesting(false);
-    if (text) {
-      setNoteMode(false);
-      setDraft(text);
-      inputRef.current?.focus();
-    }
-  };
-
-  let placeholder = "Typing here takes over the chat…";
-  if (noting) placeholder = heldByOther ? `${c.assignee?.name} is handling this chat. Add a note for your team…` : "Note for your team…";
-  else if (c.mode === "live") placeholder = "Type a reply…";
+  const startedAt = detail.panel?.info?.startedAt || c.startedAt;
+  const heading = c.name || c.ip || "Visitor";
 
   return (
     <div className="wk-chat">
       <div className="wk-head">
         <div className="wk-head-t">
-          <strong>{c.name || c.ip || "Visitor"}</strong>
-          <ModeTag c={c} me={me} />
+          <strong>{heading}</strong>
+          {closed && <span className="wk-tag wk-tag--done">{CLOSED_LABEL[c.closedReason] || "Resolved"}</span>}
+          {c.mode === "queue" && c.emailStatus === "failed" && (
+            <span className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">
+              Email failed
+            </span>
+          )}
+          {c.mode === "queue" && c.emailStatus !== "failed" && c.emailFollowUp && <span className="wk-tag wk-tag--wait">Email follow-up</span>}
           {(c.mode === "queue" || c.mode === "live") && handoffLabel(c.handoffReason) && (
-            <span className="wk-tag wk-tag--lang" title="Why this chat was handed to a person">{handoffLabel(c.handoffReason)}</span>
+            <span className="wk-tag wk-tag--lang" title="Why this chat was handed to a person">
+              {handoffLabel(c.handoffReason)}
+            </span>
           )}
           {language && (
             <span className="wk-tag wk-tag--lang" title={`The patient writes in ${language.name}`}>
               {language.name}
             </span>
           )}
-          {c.invited && <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">Invited</span>}
+          {c.invited && (
+            <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">
+              Invited
+            </span>
+          )}
           {c.rating ? (
             <span className="wk-rating" title={`Patient rating: ${c.rating} of 5`}>
               {"★".repeat(c.rating)}
@@ -288,10 +312,38 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
               Resolve
             </button>
           )}
+          <button type="button" className="hic" onClick={() => composerRef.current?.startNote()} title="Add an internal note" aria-label="Add an internal note">
+            <Icon name="note" />
+          </button>
+          <button type="button" className="hic" onClick={onDownload} title="Download transcript" aria-label="Download transcript">
+            <Icon name="download" />
+          </button>
+          <button type="button" className="hic" onClick={copyLink} title="Copy chat link" aria-label="Copy chat link">
+            <Icon name="link" />
+          </button>
+          <button type="button" className="hic pn" onClick={onTogglePanel} aria-pressed={panelOpen} title="Show or hide patient details" aria-label="Toggle patient details">
+            <Icon name="panel" />
+          </button>
           {c.ip && (
-            <button type="button" className="wk-btn wk-btn--danger" onClick={onBlockIp} disabled={busy} title={`Block IP ${c.ip}`}>
-              Block IP
+            <button type="button" className="hic" data-more onClick={() => setMenu(!menu)} title="More" aria-label="More actions" aria-expanded={menu}>
+              <Icon name="dots" />
             </button>
+          )}
+          {menu && c.ip && (
+            <div className="pop pop--more" role="menu">
+              <button
+                type="button"
+                className="pop-item danger"
+                disabled={busy}
+                onClick={() => {
+                  setMenu(false);
+                  onBlockIp();
+                }}
+              >
+                <b>Block IP {c.ip}</b>
+                <span>Closes its chats</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -311,15 +363,33 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
         </div>
       )}
 
-      {(error || transError) && (
+      {error || transError ? (
         <div className="wk-error" role="alert">
           {error || transError}
         </div>
-      )}
+      ) : info ? (
+        <div className="wk-info" role="status">
+          {info}
+        </div>
+      ) : null}
 
       <div className="wk-body" ref={bodyRef}>
-        {messages.map((m) => (
-          <Message key={m.id} m={m} onOpenFile={onOpenFile} translation={translationOf(m)} language={language} shownOriginal={originals.has(m.id)} onToggleOriginal={() => toggleOriginal(m.id)} />
+        <div className="divider">
+          <span>
+            Started · {dayWord(startedAt)} {timeOf(startedAt)}
+          </span>
+        </div>
+        {messages.map((m, i) => (
+          <Message
+            key={m.id}
+            m={m}
+            first={!groupKey(m) || groupKey(m) !== groupKey(messages[i - 1])}
+            c={c}
+            onOpenFile={onOpenFile}
+            translation={translationOf(m)}
+            shownOriginal={originals.has(m.id)}
+            onToggleOriginal={() => toggleOriginal(m.id)}
+          />
         ))}
         {typing && (
           <div className="wk-typing">
@@ -328,77 +398,28 @@ export default function ChatConversation({ detail, me, role, typing, canned, bus
               <i />
               <i />
             </span>{" "}
-            {c.name || "Visitor"} is typing…
+            {heading} is typing…
           </div>
         )}
       </div>
 
-      <div className={`wk-foot${noting ? " is-note" : ""}`}>
-        <div className="wk-row wk-wrap">
-          <div className="wk-tabs" role="tablist">
-            <button type="button" role="tab" aria-selected={!noting} disabled={notesOnly} onClick={() => setNoteMode(false)}>
-              Reply to patient
-            </button>
-            <button type="button" role="tab" aria-selected={noting} onClick={() => setNoteMode(true)}>
-              Internal note
-            </button>
-          </div>
-          <button type="button" className="wk-btn wk-btn--ai" onClick={suggest} disabled={suggesting || busy || closed}>
-            {suggesting ? "Thinking…" : "✨ Suggest a reply"}
-          </button>
-        </div>
-        <div className="wk-chips">
-          {(canned?.replies || []).map((r) => (
-            <button
-              key={r.id}
-              type="button"
-              className="wk-chip"
-              disabled={notesOnly}
-              onClick={() => {
-                setNoteMode(false);
-                setDraft(r.text.replaceAll("{agentName}", canned.agentName || "Support"));
-                inputRef.current?.focus();
-              }}
-            >
-              {r.title}
-            </button>
-          ))}
-        </div>
-        {!noting && englishSource && (
-          <div className="wk-source wk-source--box">
-            Your English: {englishSource}{" "}
-            <button type="button" className="wk-link" onClick={undoTranslation}>
-              Undo translation
-            </button>
-          </div>
-        )}
-        <form className="wk-composer" onSubmit={submit}>
-          <input
-            ref={inputRef}
-            type="text"
-            value={draft}
-            maxLength={2000}
-            autoComplete="off"
-            placeholder={placeholder}
-            aria-label={noting ? "Internal note" : "Reply to the patient"}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              if (!noting && mine && e.target.value) onTyping();
-            }}
-          />
-          <button type="submit" className="wk-send" disabled={busy || !draft.trim()}>
-            {noting ? "Save note" : "Send"}
-          </button>
-        </form>
-        {language && !noting && !closed && (
-          <div className="wk-row wk-wrap">
-            <button type="button" className="wk-btn" onClick={translateReply} disabled={replying || busy || !draft.trim() || Boolean(englishSource)}>
-              {replying ? "Translating…" : `Translate to ${language.name}`}
-            </button>
-            <span className="wk-small wk-muted">Type in English, translate, check the text, then Send. Nothing is sent automatically.</span>
-          </div>
-        )}
-      </div>
+      <Composer
+        ref={composerRef}
+        conversation={c}
+        notesOnly={notesOnly}
+        heldByOther={heldByOther}
+        mine={mine}
+        closed={closed}
+        busy={busy}
+        canned={canned}
+        language={language}
+        onSend={onSend}
+        onNote={onNote}
+        onSuggest={onSuggest}
+        onTranslateReply={onTranslateReply}
+        onTyping={onTyping}
+        onTransError={setTransError}
+      />
     </div>
   );
 }

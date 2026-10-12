@@ -580,6 +580,39 @@ function createAgentService({
     return { ok: true, contact: values };
   }
 
+  // ── Transcript download ───────────────────────────────────────────────────────
+
+  // The chat as plain text for the admin to keep. Internal notes and team-only lines are NOT included. The file name
+  // is the chat ID only (never a patient name). Every download is recorded on the chat (who, when).
+  async function transcript(actor, conversationId) {
+    const conv = await load(conversationId);
+    const rows = await LcMessage.find({ conversationId, sender: { $ne: "note" }, internal: { $ne: true } })
+      .sort({ createdAt: 1 })
+      .limit(2000)
+      .lean();
+    const files = await chat.filesMeta(rows);
+    const stamp = (d) => new Date(d).toISOString().replace("T", " ").slice(0, 19);
+    const lines = rows.map((m) => {
+      const who = m.sender === "patient" ? "Patient" : m.sender === "ai" ? "AI assistant" : m.sender === "agent" ? m.agentName || "Agent" : "System";
+      const file = m.fileId && files.get(String(m.fileId));
+      const body = file ? `[File: ${file.name}]` : decryptLiveChatText(m.text);
+      return `[${stamp(m.createdAt)} UTC] ${who}: ${body}`;
+    });
+    await LcConversation.updateOne(
+      { _id: conv._id },
+      { $push: { transcriptLog: { $each: [{ userId: oid(actor.id), at: new Date(now()) }], $slice: -50 } } }
+    );
+    const text = [
+      `Humancare live chat ${conv.conversationId}`,
+      `Started: ${stamp(conv.startedAt)} UTC`,
+      conv.closedAt ? `Closed: ${stamp(conv.closedAt)} UTC` : "Status: open",
+      "",
+      ...lines,
+      "",
+    ].join("\n");
+    return { filename: `chat-${conv.conversationId}.txt`, text };
+  }
+
   // ── Canned replies, suggestions ───────────────────────────────────────────────
 
   // Canned replies plus this agent's display name, which replaces {agentName} when a reply is inserted.
@@ -798,6 +831,7 @@ function createAgentService({
     setTags,
     updateContact,
     visitorPanel,
+    transcript,
     updateVisitorContact,
     canned,
     suggest,

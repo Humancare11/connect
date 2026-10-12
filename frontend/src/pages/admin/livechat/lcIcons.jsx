@@ -39,6 +39,7 @@ const PATHS = {
   chart: '<path d="M3 3v18h18"/><path d="M7 14l3-3 3 2 5-6"/>',
   back: '<path d="M15 18l-6-6 6-6"/><path d="M9 12h11"/>',
   dashboard: '<rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/>',
+  download: '<path d="M12 4v11M7 11l5 5 5-5"/><path d="M5 20h14"/>',
   block: '<circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/>',
 };
 

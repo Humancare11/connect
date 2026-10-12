@@ -4,13 +4,11 @@ import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
 import ChatList from "./ChatList";
 import ChatConversation from "./ChatConversation";
-import PatientPanel from "./PatientPanel";
+import ChatDetailsPanel from "./ChatDetailsPanel";
 import { hub } from "./liveChatHub";
 import { useLiveChatAdmin } from "./useLiveChatAdmin";
-import NotificationsBanner from "./NotificationsBanner";
-import "./ChatWorkspace.css";
 
-// AI chats and Live agent chats: chat list | conversation | patient panel (docs/chat-demo.html).
+// AI chats and Live agent chats: chat list | conversation | patient panel (docs/live-chat-admin-ui.html).
 // Data comes from REST (lists, detail, actions); live updates arrive as chat events on the shared admin socket.
 const BASE = "/api/admin/livechat";
 const PAGE = { ai: "ai-chats", live: "agent-chats" };
@@ -47,6 +45,22 @@ export default function ChatWorkspace({ view }) {
   const [canned, setCanned] = useState({ agentName: "", replies: [] });
   const [typing, setTyping] = useState(() => new Set());
   const [now, setNow] = useState(() => Date.now());
+  const [panelOpen, setPanelOpen] = useState(() => {
+    try {
+      return localStorage.getItem("hcLiveChatPanelOpen") !== "0";
+    } catch {
+      return true;
+    }
+  });
+  const togglePanel = () =>
+    setPanelOpen((open) => {
+      try {
+        localStorage.setItem("hcLiveChatPanelOpen", open ? "0" : "1");
+      } catch {
+        /* optional */
+      }
+      return !open;
+    });
 
   const activeId = conversationId || "";
   const activeRef = useRef(activeId);
@@ -294,6 +308,22 @@ export default function ChatWorkspace({ view }) {
         setActionError(err?.response?.status === 502 ? "The file storage is not reachable right now. Try again in a moment." : "Could not open that file.");
       }
     },
+    // The plain-text transcript (no internal notes). Fetched with the session, then saved under the chat ID only.
+    download: async () => {
+      try {
+        const { data } = await api.get(`${BASE}/conversations/${id}/transcript`, { responseType: "blob" });
+        const url = URL.createObjectURL(data);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `chat-${id}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+      } catch {
+        setActionError("Could not download the transcript.");
+      }
+    },
     blockIp: async () => {
       const ip = detail?.conversation.ip;
       if (!ip || !window.confirm(`Block IP ${ip}? Its chats are closed and it cannot connect again until you unblock it (Real-time visitors > Blocked IPs).`)) return;
@@ -348,8 +378,7 @@ export default function ChatWorkspace({ view }) {
 
   return (
     <div className="wk-wrap-page">
-      <NotificationsBanner />
-      <div className="wk-inbox">
+      <div className={`wk-inbox${panelOpen ? "" : " no-panel"}`}>
         <ChatList view={view} rows={rows} me={me} activeId={activeId} typing={typing} query={query} onQuery={setQuery} onSelect={(cid) => go(cid)} loading={loading} />
         {detail ? (
           <ChatConversation
@@ -361,6 +390,8 @@ export default function ChatWorkspace({ view }) {
             canned={canned}
             busy={busy}
             error={actionError}
+            panelOpen={panelOpen}
+            onTogglePanel={togglePanel}
             onTakeOver={handlers.takeover}
             onHandBack={handlers.handback}
             onResolve={handlers.resolve}
@@ -373,13 +404,14 @@ export default function ChatWorkspace({ view }) {
             onTyping={onTyping}
             onOpenFile={handlers.openFile}
             onBlockIp={handlers.blockIp}
+            onDownload={handlers.download}
           />
         ) : (
           <div className="wk-chat">
             <div className="wk-empty">{detailError || (activeId ? "Loading…" : rows.length || loading ? "Pick a chat on the left" : "No chats yet")}</div>
           </div>
         )}
-        {detail && <PatientPanel detail={detail} now={serverNow} onSaveContact={handlers.saveContact} onSaveTags={handlers.saveTags} />}
+        {detail ? <ChatDetailsPanel detail={detail} now={serverNow} onSaveContact={handlers.saveContact} onSaveTags={handlers.saveTags} /> : <aside className="wk-profile" />}
       </div>
     </div>
   );
