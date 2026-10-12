@@ -136,6 +136,53 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     return { ok: true, file: { name, mime: check.mime, size: meta.size } };
   }
 
+  // An agent sends a file TO the patient. Same checks as a patient upload (real type from the bytes, size, count per
+  // chat); the caller adds the chat message. Returns { doc, meta }.
+  const agentLimiter = createWindowLimiter({ windowMs: 10 * 60_000, max: limits.uploadsPer10Min, now });
+  async function storeForAgent({ conv, actor, file }) {
+    if (!agentLimiter.allow(String(actor.id))) throw new FileError(429, "rate_limited");
+    if ((await LcFile.countDocuments({ conversationId: conv.conversationId })) >= limits.maxFilesPerChat) {
+      throw new FileError(409, "too_many_files");
+    }
+    const check = await inspectUpload({ buffer: file?.buffer, originalName: file?.originalname, maxBytes: limits.maxBytes });
+    if (!check.ok) throw new FileError(check.error === "file_too_large" ? 413 : 400, check.error);
+
+    const name = displayName(file.originalname, check.ext);
+    const key = `livechat/${conv.conversationId}/${crypto.randomUUID()}.${check.ext}`;
+    try {
+      await getStore().put(key, file.buffer, check.mime);
+    } catch {
+      throw new FileError(502, "storage_failed");
+    }
+    const doc = await LcFile.create({
+      conversationId: conv.conversationId,
+      visitorId: conv.visitorId,
+      s3Key: key,
+      name: encryptLiveChatText(name),
+      mimeType: check.mime,
+      size: file.buffer.length,
+      sender: "agent",
+      uploadedBy: new mongoose.Types.ObjectId(String(actor.id)),
+    });
+    return { doc, meta: { id: String(doc._id), name, mime: check.mime, size: file.buffer.length } };
+  }
+
+  // A patient opens a file the team sent THEM: only their own chat's agent files, a 5-minute link, every open logged.
+  async function presignForPatient({ visitorId, fileId }) {
+    if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
+    const doc = await LcFile.findOne({ _id: fileId, visitorId, sender: "agent" });
+    if (!doc) throw new FileError(404, "not_found");
+    const name = decryptLiveChatText(doc.name);
+    let url;
+    try {
+      url = await getStore().presign(doc.s3Key, { expiresIn: PRESIGN_SECONDS, contentType: doc.mimeType, filename: name });
+    } catch {
+      throw new FileError(502, "storage_failed");
+    }
+    await LcFile.updateOne({ _id: doc._id }, { $push: { patientAccessLog: { $each: [{ at: new Date(now()) }], $slice: -50 } } });
+    return { ok: true, url, name };
+  }
+
   // Admin: a short-lived link to open the file. The route has already checked the admin role.
   async function presign(actor, fileId) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
@@ -163,7 +210,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     return new Map(rows.map((r) => [String(r._id), { id: String(r._id), name: decryptLiveChatText(r.name), mime: r.mimeType, size: r.size }]));
   }
 
-  return { upload, presign, metaFor, limits };
+  return { upload, presign, storeForAgent, presignForPatient, metaFor, limits };
 }
 
 module.exports = { createFileService, createS3FileStore, inspectUpload, displayName, FileError, TYPES, PRESIGN_SECONDS };

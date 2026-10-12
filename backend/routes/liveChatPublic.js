@@ -11,6 +11,7 @@ const { FileError } = require("../services/liveChat/fileService");
 //
 //   GET  /api/livechat/config   tells the widget the module is on (the widget stays hidden on a 404)
 //   POST /api/livechat/upload   a patient's report (pdf/jpg/png, max 10 MB) into their own open chat; needs the chat token
+//   GET  /api/livechat/files/:id/url  a file the team sent the patient: a short link, own chat only; needs the chat token
 //   POST /api/livechat/contact  the contact form: validates, checks Turnstile + honeypot, registers the visitor and
 //                               returns the chat token that unlocks the chat sockets
 //
@@ -74,6 +75,20 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env =
       }
     }
   );
+
+  // A patient opens a file the team sent them: their own chat's agent files only, a 5-minute link.
+  router.get("/files/:id/url", configLimiter, async (req, res, next) => {
+    try {
+      res.set("Cache-Control", "no-store");
+      const visitorId = verifyChatToken(bearer(req), env);
+      if (!visitorId) return res.status(401).json({ ok: false, error: "unauthorized" });
+      if (await isIpBlocked(getClientIp(req))) return res.status(403).json({ ok: false, error: "blocked" });
+      return res.json(await files.presignForPatient({ visitorId, fileId: req.params.id }));
+    } catch (err) {
+      if (err instanceof FileError) return res.status(err.status).json({ ok: false, error: err.code });
+      return next(err);
+    }
+  });
 
   router.post("/contact", contactLimiter, async (req, res, next) => {
     try {

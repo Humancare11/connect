@@ -183,7 +183,17 @@ function createChatService({
       at: m.createdAt,
       ...(m.sender === "agent" ? { agentName: m.agentName || conv.agentName || "" } : {}),
       ...(m.links?.length ? { links: m.links.map((l) => ({ title: l.title, url: l.url })) } : {}),
-      ...(m.fileId && files.get(String(m.fileId)) ? { file: { name: files.get(String(m.fileId)).name, mime: files.get(String(m.fileId)).mime, size: files.get(String(m.fileId)).size } } : {}),
+      ...(m.fileId && files.get(String(m.fileId))
+        ? {
+            file: {
+              name: files.get(String(m.fileId)).name,
+              mime: files.get(String(m.fileId)).mime,
+              size: files.get(String(m.fileId)).size,
+              // the patient can open only the files the team sent them
+              ...(m.sender === "agent" ? { id: files.get(String(m.fileId)).id } : {}),
+            },
+          }
+        : {}),
     }));
     const canRequestAgent = conv.mode === "ai";
     // A patient with an agent (or waiting for one) can hand the chat back to the AI, unless the AI is switched off.

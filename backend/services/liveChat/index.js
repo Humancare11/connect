@@ -279,6 +279,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     presence,
     agents,
     ipBlock,
+    files,
     agentStore: ctx.agentStore,
     // blocking an IP drops the visitor sockets that come from it
     disconnectIp: (ip) => {

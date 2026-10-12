@@ -1,4 +1,5 @@
 const express = require("express");
+const multer = require("multer");
 const { verifyAdminToken, liveChatAgentOnly, superAdminOnly } = require("../middleware/verifyToken");
 const { toPublicVisitor } = require("../services/liveChat/presence");
 const { AgentError, CONVERSATION_ID_RE } = require("../services/liveChat/agentService");
@@ -15,6 +16,7 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET  /conversations?view=ai|live                      chat lists (AI chats / Live agent chats)
 //   GET  /conversations/:id                               one chat with its patient panel (marks it read)
 //   GET  /conversations/:id/transcript                    plain-text download (no internal notes; access is logged)
+//   POST /conversations/:id/files                         an agent sends a file (pdf/jpg/png) to the patient
 //   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest|translate|translate-reply
 //   PUT  /conversations/:id/view                          English / original view (per admin, per chat)
 //   PUT  /conversations/:id/tags|contact
@@ -132,10 +134,31 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
       return next(err);
     }
   });
+  // An agent sends a file to the patient (pdf/jpg/png). The body is a single multipart "file" field.
+  const uploadOne = multer({ storage: multer.memoryStorage(), limits: { fileSize: files.limits.maxBytes + 1, files: 1, fields: 1 } }).single("file");
+  router.post(
+    "/conversations/:id/files",
+    (req, res, next) => {
+      try {
+        idOf(req);
+      } catch {
+        return res.status(404).json({ ok: false, error: "not_found" });
+      }
+      return uploadOne(req, res, (err) => {
+        if (err?.code === "LIMIT_FILE_SIZE") return res.status(413).json({ ok: false, error: "file_too_large" });
+        if (err) return res.status(400).json({ ok: false, error: "invalid_upload" });
+        return next();
+      });
+    },
+    handle((req) => {
+      if (!req.file) throw new AgentError(400, "no_file");
+      return agent.sendFile(actor(req), idOf(req), req.file);
+    })
+  );
   router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text, req.body?.sourceText)));
   // Translation (admin side only): English view of a chat, the reply box, and the per-admin view choice.
   router.post("/conversations/:id/translate", handle((req) => agent.translate(actor(req), idOf(req), req.body?.messageIds)));
-  router.post("/conversations/:id/translate-reply", handle((req) => agent.translateReply(actor(req), idOf(req), req.body?.text)));
+  router.post("/conversations/:id/translate-reply", handle((req) => agent.translateReply(actor(req), idOf(req), req.body?.text, req.body?.target)));
   router.put("/conversations/:id/view", handle((req) => agent.setTranslateView(actor(req), idOf(req), req.body?.view)));
   router.post("/conversations/:id/notes", handle((req) => agent.addNote(actor(req), idOf(req), req.body?.text)));
   router.post("/conversations/:id/takeover", handle((req) => agent.takeOver(actor(req), idOf(req))));

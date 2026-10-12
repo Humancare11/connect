@@ -49,7 +49,7 @@ function PageLinks({ links, onNavigate }) {
   );
 }
 
-function Message({ message, onNavigate }) {
+function Message({ message, onNavigate, onOpenFile }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
@@ -75,7 +75,19 @@ function Message({ message, onNavigate }) {
       <div className="lcw-bw">
         <span className="lcw-bn">{isAgent ? message.agentName || "Humancare support" : "Humancare AI"}</span>
         <div className="lcw-msg lcw-msg--left">
-          {message.text}
+          {message.file ? (
+            <span className="lcw-file">
+              <span aria-hidden="true">📄</span> {message.file.name}
+              <small> · {sizeOf(message.file.size)}</small>
+              {message.file.id && (
+                <button type="button" className="lcw-file-open" onClick={() => onOpenFile(message.file.id)}>
+                  Open
+                </button>
+              )}
+            </span>
+          ) : (
+            message.text
+          )}
           <span className="lcw-meta">{timeOf(message.at)}</span>
         </div>
         <PageLinks links={message.links} onNavigate={onNavigate} />
@@ -188,7 +200,7 @@ export default function LiveChatWidget() {
             {phase === "chat" && conversation && (
               <>
                 {conversation.messages.map((message) => (
-                  <Message key={message.id} message={message} onNavigate={afterNavigate} />
+                  <Message key={message.id} message={message} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
                 ))}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
                 {ended && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}

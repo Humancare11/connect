@@ -109,6 +109,28 @@ describe("live chat retention (12 months)", () => {
     assert.equal(await m.LcVisitor.findOne({ visitorId: old.visitorId }), null);
   });
 
+  test("files the team sent to the patient are deleted from S3 and the database exactly like the patient's own", async () => {
+    const old = await chatWith({ ageDays: 400, files: 1 }); // one patient file
+    const agentKey = `livechat/${old.conversationId}/3b1f0c52-8c1e-4d0e-9f3a-6c2f1d7a9b44.pdf`;
+    await m.LcFile.create({
+      conversationId: old.conversationId, visitorId: old.visitorId, s3Key: agentKey, name: encryptLiveChatText("Care plan.pdf"),
+      mimeType: "application/pdf", size: 100, sender: "agent", uploadedBy: new mongoose.Types.ObjectId(), patientAccessLog: [{ at: ago(399) }],
+    });
+    const recent = await chatWith({ ageDays: 10, files: 0 });
+    const recentKey = `livechat/${recent.conversationId}/7d2e9a11-1c3b-4f6a-8e0d-5b4c3a2f1e90.pdf`;
+    await m.LcFile.create({
+      conversationId: recent.conversationId, visitorId: recent.visitorId, s3Key: recentKey, name: encryptLiveChatText("Recent plan.pdf"),
+      mimeType: "application/pdf", size: 100, sender: "agent", uploadedBy: new mongoose.Types.ObjectId(),
+    });
+    const s3 = new Set([...old.keys, agentKey, recentKey]);
+
+    const result = await runLiveChatRetention({ cutoff: ago(365), store: fakeStore(s3) });
+    assert.equal(result.files, 2, "both the patient's file and the agent's file");
+    assert.deepEqual([...s3], [recentKey], "only the recent chat's agent file is left in S3");
+    assert.equal(await m.LcFile.countDocuments({ conversationId: old.conversationId }), 0);
+    assert.equal(await m.LcFile.countDocuments({ conversationId: recent.conversationId }), 1);
+  });
+
   test("a contact with no chat left and not seen for the period is deleted; one with a recent chat is kept", async () => {
     await m.LcVisitor.create({ visitorId: "visitor-stale-no-chat-0123456", lastSeenAt: ago(500) });
     await m.LcVisitor.create({ visitorId: "visitor-fresh-no-chat-0123456", lastSeenAt: ago(5) });

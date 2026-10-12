@@ -582,6 +582,16 @@ html.hc-cookie-open .lcw-window {
 .lcw-file small {
   opacity: 0.8;
 }
+.lcw-file-open {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
 
 /* Rating after the team resolved the chat */
 .lcw-rating {

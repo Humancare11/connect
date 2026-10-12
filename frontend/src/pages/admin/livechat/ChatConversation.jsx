@@ -152,6 +152,7 @@ export default function ChatConversation({
   onOpenFile,
   onBlockIp,
   onDownload,
+  onSendFile,
   onTranslate,
   onTranslateReply,
   onSetView,
@@ -417,8 +418,9 @@ export default function ChatConversation({
         onNote={onNote}
         onSuggest={onSuggest}
         onTranslateReply={onTranslateReply}
+        onAttach={onSendFile}
         onTyping={onTyping}
-        onTransError={setTransError}
+        onNotice={setTransError}
       />
     </div>
   );

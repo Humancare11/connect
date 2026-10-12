@@ -15,6 +15,7 @@ const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require(
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { createWindowLimiter } = require("./limits");
 const { createTranslationService, publicLanguage } = require("./translationService");
+const { scrubContact } = require("./languageHints");
 
 class AgentError extends Error {
   constructor(status, code, extra = {}) {
@@ -50,6 +51,7 @@ function createAgentService({
   agentStore,
   agents = { isAvailable: () => true }, // who is online right now (index.js passes the registry)
   ipBlock = null, // block / unblock store
+  files = null, // file service (an agent sending a file to the patient)
   disconnectIp = () => {}, // drops the visitor sockets of an IP
   emitToAgent = () => {},
   now = () => Date.now(),
@@ -406,6 +408,29 @@ function createAgentService({
     });
   }
 
+  // An agent sends a file (pdf, jpg or png) to the patient. Same rules as a reply: only the assignee, and sending takes
+  // over a chat that is with the AI or in the Queue. The chat shows the file name; the patient opens it by a short link.
+  async function sendFile(actor, conversationId, file) {
+    if (!files) throw new AgentError(503, "files_unavailable");
+    await load(conversationId);
+    return chat.withLock(conversationId, async () => {
+      let conv = await load(conversationId);
+      const settings = await loadSettings();
+      if (conv.mode === "archived") throw new AgentError(409, "closed");
+      const me = String(actor.id);
+      if (conv.mode === "live" && !sameId(conv.assigneeId, me)) {
+        throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
+      }
+      const { doc, meta } = await files.storeForAgent({ conv, actor, file });
+      if (conv.mode !== "live") conv = (await takeOverLocked(actor, conv, settings)).conv;
+      const name = conv.agentName || (await displayNameOf(me, settings));
+      const message = await chat.addMessage(conv, "agent", meta.name, { agentId: oid(me), agentName: name, fileId: doc._id, file: meta });
+      await LcConversation.updateOne({ _id: conv._id, firstAgentReplyAt: null }, { $set: { firstAgentReplyAt: new Date(now()) } });
+      const fresh = await updated(conv);
+      return { ok: true, message, conversation: rowOf(fresh, { userId: actor.id }) };
+    });
+  }
+
   async function handBack(actor, conversationId) {
     await load(conversationId);
     return chat.withLock(conversationId, async () => {
@@ -633,9 +658,9 @@ function createAgentService({
     return { ok: true, ...(await translation.translateMessages(actor, conv, clean)) };
   }
 
-  async function translateReply(actor, conversationId, text) {
+  async function translateReply(actor, conversationId, text, target) {
     const conv = await load(conversationId);
-    return { ok: true, ...(await translation.translateReply(actor, conv, text)) };
+    return { ok: true, ...(await translation.translateReply(actor, conv, text, target)) };
   }
 
   async function setTranslateView(actor, conversationId, view) {
@@ -648,7 +673,10 @@ function createAgentService({
     const conv = await load(conversationId);
     const settings = await loadSettings();
     if ((await limits.spendStatus(settings)).capReached) throw new AgentError(503, "ai_unavailable", { kind: "spend_cap" });
-    const history = (await chat.recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
+    // The patient's name, email and phone never go to the model: they are replaced in the chat text first.
+    const visitor = await chat.loadVisitor(conv.visitorId);
+    const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
+    const history = (await chat.recentHistory(conv)).map((m) => ({ role: m.sender, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
     const result = await ai.suggestReply({ settings, history, agentName: conv.agentName || (await displayNameOf(actor.id, settings)) });
     if (result.usage) await chat.recordUsage(conv, settings, result.usage);
     if (!result.ok) throw new AgentError(503, "ai_unavailable", { kind: result.kind });
@@ -825,6 +853,7 @@ function createAgentService({
     unread,
     takeOver,
     sendMessage,
+    sendFile,
     handBack,
     resolve,
     addNote,

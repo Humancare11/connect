@@ -21,6 +21,12 @@ const MESSAGES = {
   empty_message: () => "Type a message first.",
   message_too_long: () => "Messages can be up to 2,000 characters.",
   rate_limited: () => "Too many requests. Wait a moment and try again.",
+  file_too_large: () => "That file is over 10 MB.",
+  unsupported_type: () => "Only PDF, JPG or PNG files can be sent.",
+  extension_mismatch: () => "That file doesn't look like a PDF, JPG or PNG.",
+  empty_file: () => "That file is empty.",
+  too_many_files: () => "This chat has reached its limit of files.",
+  storage_failed: () => "The file storage is not reachable right now. Try again in a moment.",
   ai_unavailable: () => "The AI assistant is unavailable right now.",
 };
 const errorText = (err) => {
@@ -276,13 +282,25 @@ export default function ChatWorkspace({ view }) {
         return { ok: false, status: err?.response?.status };
       }
     },
-    translateReply: async (text) => {
+    translateReply: async (text, target) => {
       try {
-        const { data } = await api.post(`${BASE}/conversations/${id}/translate-reply`, { text });
+        const { data } = await api.post(`${BASE}/conversations/${id}/translate-reply`, target ? { text, target } : { text });
         return { ok: true, text: data.text };
       } catch (err) {
         return { ok: false, status: err?.response?.status };
       }
+    },
+    // The admin sends a file (PDF/JPG/PNG) to the patient; like a reply, it takes over a chat that is with the AI.
+    sendFile: async (file) => {
+      const form = new FormData();
+      form.append("file", file);
+      const r = await act(() => api.post(`${BASE}/conversations/${id}/files`, form));
+      if (r.ok) {
+        const m = r.data.message;
+        setDetail((d) => (d && !d.messages.some((x) => x.id === m.id) ? { ...d, messages: [...d.messages, m] } : d));
+        loadDetail(id);
+      }
+      return r.ok;
     },
     setView: (view) => api.put(`${BASE}/conversations/${id}/view`, { view }).catch(() => {}),
     note: async (text) => {
@@ -405,6 +423,7 @@ export default function ChatWorkspace({ view }) {
             onOpenFile={handlers.openFile}
             onBlockIp={handlers.blockIp}
             onDownload={handlers.download}
+            onSendFile={handlers.sendFile}
           />
         ) : (
           <div className="wk-chat">

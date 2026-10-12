@@ -34,9 +34,55 @@ function normalizeLanguage(raw) {
 // URLs, site paths, prices and email addresses are swapped for tokens before translation and put back after.
 const PROTECT_RE = /(https?:\/\/[^\s)]+|www\.[^\s)]+|\/[a-z0-9][a-z0-9\-/&]*[a-z0-9]|[A-Z]{1,3}\$\s?\d[\d.,]*|\$\s?\d[\d.,]*|\d[\d.,]*\s?(?:USD|EUR|GBP)|[\w.+-]+@[\w-]+\.[\w.-]+)/g;
 
-function protect(text) {
+const escapeRe = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const wholeWord = (text) => new RegExp(`(?<![\\p{L}\\p{N}])${escapeRe(text)}(?![\\p{L}\\p{N}])`, "giu");
+const PHONE_RE = /\+?\d[\d\s().-]{6,}\d/g;
+
+// What identifies a patient in free text: their name (whole and each part), email and phone. Used to keep these out of
+// anything sent to the AI. Returns plain strings, longest first.
+function contactLiterals(contact = {}) {
+  const out = new Set();
+  const name = String(contact.name || "").replace(/\s+/g, " ").trim();
+  if (name) {
+    out.add(name);
+    name.split(" ").forEach((part) => {
+      if ([...part].length >= 3) out.add(part);
+    });
+  }
+  for (const key of ["email", "phone"]) {
+    const value = String(contact[key] || "").trim();
+    if (value) out.add(value);
+  }
+  return [...out].sort((x, y) => y.length - x.length);
+}
+
+// Swaps the patient's identifying details for `replace(kind)` text. Name parts match whole words only.
+function scrubContact(text, contact, replace) {
+  let out = String(text);
+  // Email and phone first, so a name part inside an address is not cut out of it.
+  for (const key of ["email", "phone"]) {
+    const value = String(contact?.[key] || "").trim();
+    if (value) out = out.split(value).join(replace(key));
+  }
+  out = out.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, () => replace("email"));
+  out = out.replace(PHONE_RE, (m) => (/^\d{4}-\d{2}-\d{2}$/.test(m) || (m.match(/\d/g) || []).length < 8 ? m : replace("phone")));
+  const name = String(contact?.name || "").replace(/\s+/g, " ").trim();
+  const parts = name ? [name, ...name.split(" ").filter((p) => [...p].length >= 3)].sort((x, y) => y.length - x.length) : [];
+  for (const part of parts) out = out.replace(wholeWord(part), () => replace("name"));
+  return out;
+}
+
+// `literals`: extra exact strings (the patient's name, email, phone) to protect the same way.
+function protect(text, literals = []) {
   const tokens = [];
-  const out = String(text).replace(PROTECT_RE, (match) => {
+  let out = String(text);
+  for (const literal of literals) {
+    out = out.replace(wholeWord(literal), (match) => {
+      tokens.push(match);
+      return `⟦${tokens.length}⟧`;
+    });
+  }
+  out = out.replace(PROTECT_RE, (match) => {
     tokens.push(match);
     return `⟦${tokens.length}⟧`;
   });
@@ -60,4 +106,11 @@ function restore(text, tokens) {
   return out;
 }
 
-module.exports = { tooShortToTell, looksEnglish, normalizeLanguage, protect, restore };
+// Languages an admin can translate a reply into (code -> name). The name goes to the model; the code is what the
+// browser sends, so a free-text language never reaches the prompt.
+const TARGET_LANGUAGES = {
+  de: "German", es: "Spanish", fr: "French", ar: "Arabic", hi: "Hindi", it: "Italian", pt: "Portuguese", nl: "Dutch",
+  tr: "Turkish", ru: "Russian", zh: "Chinese", ja: "Japanese", ko: "Korean", pl: "Polish", ur: "Urdu", bn: "Bengali",
+};
+
+module.exports = { tooShortToTell, looksEnglish, normalizeLanguage, protect, restore, contactLiterals, scrubContact, TARGET_LANGUAGES };

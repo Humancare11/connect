@@ -357,6 +357,25 @@ export function useLiveChat() {
     }
   }, []);
 
+  // Opens a file the team sent us. The tab is opened on the click itself (browsers block pop-ups opened after a wait)
+  // and pointed at the short link once the server answers; its opener is cleared.
+  const openFile = useCallback(async (fileId) => {
+    const tab = window.open("", "_blank");
+    if (tab) tab.opener = null;
+    try {
+      const res = await fetch(`${API_BASE}/api/livechat/files/${encodeURIComponent(fileId)}/url`, {
+        headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.url) throw new Error("no link");
+      if (tab) tab.location.href = body.url;
+      else setNotice("Your browser blocked the new tab. Please allow pop-ups to open the file.");
+    } catch {
+      tab?.close();
+      setNotice("We couldn't open that file. Please try again in a moment.");
+    }
+  }, []);
+
   const dismissInvite = useCallback(() => {
     setInvite((current) => {
       if (current) store.set(INVITE_KEY, current.conversationId, "session");
@@ -419,6 +438,7 @@ export function useLiveChat() {
     startNew,
     rate,
     uploadFile,
+    openFile,
     dismissInvite,
     notifyTyping,
     dismissNotice: () => setNotice(""),

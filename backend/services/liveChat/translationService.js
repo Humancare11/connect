@@ -11,7 +11,7 @@
 // are never translated.
 const { encryptLiveChatText, decryptLiveChatText } = require("../../utils/liveChat/crypto");
 const { createWindowLimiter } = require("./limits");
-const { looksEnglish, tooShortToTell, protect, restore } = require("./languageHints");
+const { looksEnglish, tooShortToTell, protect, restore, contactLiterals, TARGET_LANGUAGES } = require("./languageHints");
 
 const CHUNK_ITEMS = 20;
 const CHUNK_CHARS = 8000;
@@ -124,16 +124,30 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
   }
 
   // The admin's text (English) -> the patient's language. Never saved, never sent.
-  async function translateReply(actor, conv, rawText) {
+  // The patient's name, email and phone are held back from the model (swapped for tokens and put back after).
+  async function contactOf(conv) {
+    const visitor = await chat.loadVisitor(conv.visitorId);
+    const pick = (field) => decryptLiveChatText(visitor?.[field]?.cipherText ? visitor[field] : conv.contact?.[field]);
+    return { name: pick("name"), email: pick("email"), phone: pick("phone") };
+  }
+
+  // target (optional): a language code from TARGET_LANGUAGES, for a chat with no detected language. Without it the
+  // patient's language is used.
+  async function translateReply(actor, conv, rawText, targetCode) {
     const text = typeof rawText === "string" ? rawText.trim() : "";
     if (!text) throw fail(400, "empty_message");
     if ([...text].length > MAX_REPLY_CHARS) throw fail(400, "message_too_long");
-    const language = conv.language;
-    if (!language?.code || language.code === "en") throw fail(409, "no_language");
+    let language = conv.language?.code && conv.language.code !== "en" ? conv.language : null;
+    if (targetCode) {
+      const code = String(targetCode).toLowerCase();
+      if (!TARGET_LANGUAGES[code]) throw fail(400, "invalid_language");
+      language = { code, name: TARGET_LANGUAGES[code] };
+    }
+    if (!language) throw fail(409, "no_language");
     if (!limiter.allow(String(actor.id))) throw fail(429, "rate_limited");
     const settings = await loadSettings();
     if (!(await spendOk(settings))) throw unavailable("spend_cap");
-    const guarded = protect(text);
+    const guarded = protect(text, contactLiterals(await contactOf(conv)));
     const result = await ai.translateBatch({ items: [{ id: "reply", text: guarded.text }], target: language.name || language.code });
     if (result.usage) await chat.recordUsage(conv, settings, result.usage);
     if (!result.ok) throw unavailable(result.kind);

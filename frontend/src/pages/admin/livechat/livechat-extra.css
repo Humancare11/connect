@@ -24,3 +24,6 @@
 .lcx .wk-notif .lcn-bar{margin-bottom:0;justify-content:flex-start}
 .lcx .wk-notif .lcn-banner{min-width:0;justify-content:flex-start}
 .lcx .wk-search input[type="search"]::-webkit-search-cancel-button{display:none}
+.lcx .pop--lang{max-height:300px;overflow-y:auto}
+.lcx .pop--canned .pop-item.is-sel{background:var(--surface-3)}
+.lcx .pop--canned .pop-item.is-sel b::after{content:none}
