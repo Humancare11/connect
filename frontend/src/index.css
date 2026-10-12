@@ -21,7 +21,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   max-width: 100%;
-  min-width: 300px;
 }
 
 img, video, canvas, svg {
@@ -43,6 +42,10 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
 
 input, button, select, textarea {
   font-family: inherit;
+}
+
+button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"] {
+  touch-action: manipulation;
 }
 
 /* ================================================================

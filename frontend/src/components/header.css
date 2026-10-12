@@ -151,7 +151,7 @@
   display: flex;
   align-items: center;
   gap: 0;
-  width: 280px;
+  width: 350px;
   min-width: 350px;
   height: 42px;
   padding: 0 14px;
@@ -276,14 +276,16 @@
 }
 
 /* ============================================================
-   HELP DROPDOWN — centered under the help slider pill
+   HELP DROPDOWN — anchored to the help slider pill's left edge
+   (the pill sits left of the header centre, so a centred panel
+   wider than ~2x its left offset spills off-screen)
 ============================================================ */
 .help-dropdown {
   position: absolute;
   top: calc(100% + 15px);
-  margin: 0 920px 0;
-  transform: translateX(-50%);
-  width: 1100px;
+  left: 0;
+  width: min(780px, calc(100vw - 32px));
+  box-sizing: border-box;
   z-index: 90;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(28px) saturate(160%);
@@ -296,22 +298,19 @@
     0 4px 12px rgba(11, 40, 100, 0.07),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 
-  animation: dropdownIn 0.22s var(--ease-out-expo);
-  animation-fill-mode: both;
-  will-change: translate, scale, opacity;
+  animation: dropdownIn 0.22s var(--ease-out-expo) both;
+  will-change: transform, opacity;
 }
 
 @keyframes dropdownIn {
   from {
     opacity: 0;
-    translate: -50% -6px;
-    scale: 0.98;
+    transform: translateY(-6px) scale(0.98);
   }
 
   to {
     opacity: 1;
-    translate: -50% 0;
-    scale: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -392,9 +391,6 @@
 .help-dropdown-desc {
   font-size: 11px;
   color: var(--muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .help-dropdown-arrow {
@@ -552,8 +548,12 @@
 .hamburger {
   display: none;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 5px;
-  padding: 6px;
+  padding: 10px;
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   border: none;
   cursor: pointer;
@@ -720,6 +720,15 @@
     width: 200px;
     min-width: 200px;
   }
+
+  .help-dropdown {
+    width: min(580px, calc(100vw - 32px));
+  }
+
+  .help-dropdown-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
 }
 
 /* ── 1024px ── */
@@ -736,12 +745,6 @@
 
   .nav-center {
     gap: 6px;
-  }
-
-  .help-dropdown {
-    width: clamp(560px, 70vw, 700px);
-    left: 50%;
-    transform: translateX(-50%);
   }
 }
 
@@ -926,4 +929,31 @@
   .help-dropdown-desc {
     font-size: 9px;
   }
+}
+
+/* ============================================================
+   SKIP TO CONTENT LINK (ACCESSIBILITY)
+============================================================ */
+.skip-to-content-link {
+  position: fixed;
+  top: -120px;
+  left: 20px;
+  background: #0b1f3a;
+  color: #ffffff;
+  padding: 12px 24px;
+  font-family: var(--font-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  z-index: 99999;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: top 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.skip-to-content-link:focus,
+.skip-to-content-link:focus-visible {
+  top: 20px;
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
 }

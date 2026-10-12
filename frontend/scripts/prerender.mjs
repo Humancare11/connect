@@ -27,7 +27,7 @@ const ssrEntry = path.join(root, "dist-ssr", "entry-server.js");
 const modeArg = process.argv.find((a) => a.startsWith("--mode="));
 const mode = modeArg ? modeArg.slice("--mode=".length) : "production";
 const env = loadEnv(mode, root, "");
-const skipApi = process.env.PRERENDER_SKIP_API === "1";
+const skipApi = process.env.PRERENDER_SKIP_API === "1" || env.PRERENDER_SKIP_API === "1" || process.argv.includes("--skip-api");
 
 const started = Date.now();
 

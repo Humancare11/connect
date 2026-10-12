@@ -1149,6 +1149,7 @@ export function AppLayout() {
       <Suspense
         fallback={<main className="hc-route-loading" aria-hidden="true" />}
       >
+        <div id="main-content" tabIndex={-1} style={{ outline: "none" }}>
         <Routes>
           <Route path="/" element={<Home />} />
           {/* The Medical Q&A feature was removed. Keep old links working. */}
@@ -2998,6 +2999,7 @@ export function AppLayout() {
           <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </div>
 
         {!hideLayout && <Footer />}
       </Suspense>

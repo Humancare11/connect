@@ -153,11 +153,16 @@
 
 .contact-info-row .contact-detail__value {
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 a.contact-detail__value {
   text-decoration: none;
   display: inline-block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
   transition: color 0.2s ease;
 }
 

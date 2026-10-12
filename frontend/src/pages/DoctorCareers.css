@@ -261,6 +261,8 @@
   border-radius: 50%;
   filter: blur(70px);
   opacity: 0.35;
+  will-change: transform; /* promote to compositor layer to avoid costly repaint */
+  pointer-events: none;
 }
 
 .dc-blob--1 {
