@@ -283,7 +283,7 @@ export default function OurDoctors() {
                       <td>
                         {phone ? (
                           <span
-                            style={{ fontFamily: "monospace", fontSize: 13 }}
+                            style={{ fontFamily: "var(--font-secondary)", fontVariantNumeric: "tabular-nums", fontSize: 13 }}
                           >
                             {phone}
                           </span>

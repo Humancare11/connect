@@ -204,7 +204,7 @@
   font-weight: 800;
   color: #0a1f44;
   line-height: 1.2;
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   margin: 0 0 18px;
 }
 .condition-nav-card {
@@ -514,7 +514,7 @@
   font-weight: 800;
   color: #0a1f44;
   margin: 14px 0;
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
 }
 .condition-faq-desc {
   color: #5c7099;
@@ -710,7 +710,9 @@
 }
 @media (max-width: 767px) {
   .condition-hero {
-    padding-top: 80px;
+    /* size to content: the 520px desktop min-height left a huge empty image on phones */
+    min-height: auto;
+    padding-top: 100px;
     padding-bottom: 44px;
     background-position: 70% center;
   }
@@ -800,7 +802,7 @@
 }
 @media (max-width: 479px) {
   .condition-hero {
-    padding-top: 72px;
+    padding-top: 96px;
     padding-bottom: 36px;
   }
   .condition-h1 {

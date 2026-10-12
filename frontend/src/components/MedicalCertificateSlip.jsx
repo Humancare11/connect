@@ -244,7 +244,7 @@ export function MedicalCertificateSlip({
       style={{
         width: 794,
         background: "#fff",
-        fontFamily: "'Arial', 'Helvetica Neue', sans-serif",
+        fontFamily: "var(--font-secondary)",
         boxSizing: "border-box",
         color: "#1a1a2e",
       }}
@@ -734,6 +734,8 @@ export async function downloadCertificatePDF(
     import("html2canvas"),
     import("jspdf"),
   ]);
+
+  await document.fonts.ready;
 
   const canvas = await html2canvas(element, {
     scale: 2,

@@ -64,11 +64,22 @@ function createSearchController({ getCatalog = getSearchCatalog, ai } = {}) {
     const parsed = parseRequest(req.body);
     if (parsed.error) return badRequest(res, parsed);
 
+    // Aborted when the client goes away before the response was sent (tab
+    // closed, request cancelled). It reaches the AI provider call so an
+    // abandoned search stops costing money instead of running to the timeout.
+    const disconnect = new AbortController();
+    res.on("close", () => {
+      if (!res.writableFinished) disconnect.abort();
+    });
+
     try {
       // req.ip only keys the per-client AI minute cap; it is never sent to
       // the AI provider. No user, session or cookie data is read here.
-      return res.json(await executeSearch(parsed, { getCatalog, clientKey: req.ip, ...(ai ? { ai } : {}) }));
+      const result = await executeSearch(parsed, { getCatalog, clientKey: req.ip, signal: disconnect.signal, ...(ai ? { ai } : {}) });
+      if (disconnect.signal.aborted) return undefined; // nobody is listening
+      return res.json(result);
     } catch (err) {
+      if (disconnect.signal.aborted) return undefined;
       if (err instanceof SearchUnavailableError) {
         return res.status(503).json({
           success: false,

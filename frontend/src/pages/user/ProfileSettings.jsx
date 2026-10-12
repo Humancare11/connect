@@ -35,7 +35,7 @@ const inputStyle = {
   borderRadius: "13px",
   outline: "none",
   color: "#0b0443",
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  fontFamily: "var(--font-secondary)",
   fontSize: "14px",
   fontWeight: 400,
   transition: "all 0.2s ease",
@@ -68,7 +68,7 @@ function Field({ label, required, icon, children }) {
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: "#6b7ca3",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: "var(--font-secondary)",
         }}
       >
         {label}
@@ -124,7 +124,7 @@ function MetaRow({ icon, label, value }) {
             letterSpacing: "0.5px",
             textTransform: "uppercase",
             margin: "0 0 2px",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontFamily: "var(--font-secondary)",
           }}
         >
           {label}
@@ -273,7 +273,7 @@ export default function ProfileSettings() {
         .ps-fadein { animation: ps-fadein 0.25s ease; }
         .ps-phone .pif-control { height: 47px; min-height: 47px; border-radius: 13px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(203,213,225,0.80); }
         .ps-phone .pif-control.is-active { border-color: rgba(59,130,246,0.65); background: rgba(255,255,255,0.88); box-shadow: 0 0 0 3px rgba(59,130,246,0.13); }
-        .ps-phone .pif-input { font-family: 'Plus Jakarta Sans', sans-serif; color: #0b0443; }
+        .ps-phone .pif-input { font-family: var(--font-secondary); color: #0b0443; }
         @media (max-width: 860px) {
           .ps-body   { grid-template-columns: 1fr !important; }
           .ps-avatar-card { flex-direction: row !important; flex-wrap: wrap !important; padding: 22px 24px !important; }
@@ -292,7 +292,7 @@ export default function ProfileSettings() {
         }
       `}</style>
 
-      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
+      <div style={{ fontFamily: "var(--font-secondary)", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
 
         {/* ══ TWO-COLUMN BODY ══ */}
         <div
@@ -345,7 +345,7 @@ export default function ProfileSettings() {
                   </div>
                 </div>
 
-                <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: 0, textAlign: "center" }}>
+                <h3 style={{ fontFamily: "var(--font-primary)", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: 0, textAlign: "center" }}>
                   {user?.name}
                 </h3>
                 <p style={{ fontSize: "12px", color: "#6b7ca3", margin: 0, textAlign: "center", wordBreak: "break-all" }}>
@@ -420,7 +420,7 @@ export default function ProfileSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>
+                  <h2 style={{ fontFamily: "var(--font-primary)", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>
                     Personal Information
                   </h2>
                   <p style={{ fontSize: "13px", color: "#6b7ca3", margin: 0 }}>

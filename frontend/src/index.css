@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-primary: "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-secondary: "Inter", "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-primary: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-secondary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Layout containers (values already used across the app) */
   --container-sm: 900px;
@@ -51,8 +51,15 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
+/* Inline text inside headings keeps the heading font. App.css sets span/a to the
+   secondary font, which would otherwise win over inheritance from the heading. */
+h1 span, h2 span, h3 span, h4 span, h5 span, h6 span,
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+  font-family: inherit;
+}
+
 input, button, select, textarea {
-  font-family: var(--font-secondary);
+  font-family: inherit;
 }
 
 /* ================================================================

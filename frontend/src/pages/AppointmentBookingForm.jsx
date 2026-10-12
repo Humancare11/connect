@@ -508,7 +508,16 @@ export function PaymentStage({
         {method === "stripe" && clientSecret && (
           <Elements
             stripe={stripePromise}
-            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+            options={{
+              clientSecret,
+              appearance: ELEMENTS_APPEARANCE,
+              fonts: [
+                {
+                  cssSrc:
+                    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+                },
+              ],
+            }}
           >
             <StripeForm
               clientSecret={clientSecret}

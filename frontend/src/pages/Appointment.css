@@ -20,7 +20,7 @@
   --ap-error-bg: #fef2f2;
   --ap-error-border: #fecaca;
   --ap-error-text: #b91c1c;
-  --ap-font: "Inter", system-ui, -apple-system, sans-serif;
+  --ap-font: var(--font-secondary);
 
   min-height: 100vh;
   background: #f3f6fb;

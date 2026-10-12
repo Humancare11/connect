@@ -35,7 +35,7 @@
 .em-root :where(button) { cursor: pointer; }
 .em-root button:disabled { cursor: not-allowed; opacity: 0.55; }
 .em-root :focus-visible { outline: 2px solid var(--em-accent); outline-offset: 2px; }
-.em-root .mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
+.em-root .mono { font-family: var(--font-secondary); font-variant-numeric: tabular-nums; font-size: 0.9em; }
 .em-ico { flex: none; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .em-sub { color: var(--em-muted); font-size: 13px; }
 .em-spacer { flex: 1; }
@@ -184,7 +184,7 @@
   display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 999px;
   font-size: 12.5px; font-weight: 700; white-space: nowrap; max-width: 100%;
 }
-.em-mbox small { font-weight: 400; opacity: 0.85; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px; }
+.em-mbox small { font-weight: 400; opacity: 0.85; font-family: var(--font-secondary); font-variant-numeric: tabular-nums; font-size: 11.5px; }
 
 .em-tag { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 5px; font-size: 11px; font-weight: 700; white-space: nowrap; flex: none; }
 .em-tag-spam, .em-tag-failed { background: var(--em-bad-soft); color: var(--em-bad); }

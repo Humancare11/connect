@@ -25,8 +25,8 @@
   --radius-sm: 10px;
   --shadow-soft: 0 10px 30px -12px rgba(11, 28, 61, 0.14);
   --shadow-card: 0 6px 20px -8px rgba(11, 28, 61, 0.12);
-  --font-display: "Manrope", sans-serif;
-  --font-serif: "Source Serif 4", serif;
+  --font-display: var(--font-primary);
+  --font-serif: var(--font-secondary);
   --font-body: var(--font-secondary);
   --content-w: 780px;
   --hdr-h: 83px;

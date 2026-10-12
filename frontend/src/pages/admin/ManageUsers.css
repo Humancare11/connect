@@ -473,7 +473,8 @@
   color: #94a3b8;
 }
 .mu-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 13px;
 }
 

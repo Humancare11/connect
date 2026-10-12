@@ -5,7 +5,7 @@ import Button from "./ui/Button";
 
 const DANGER = "#c0392b";
 const DANGER_BG = "#fcedec";
-const FONT = "'Plus Jakarta Sans', sans-serif";
+const FONT = "var(--font-secondary)";
 const REASON_MAX = 500;
 
 // Same wording as the mobile app's Delete Account screen, apart from the last

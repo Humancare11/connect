@@ -37,6 +37,7 @@ import {
   FaCloudArrowUp,
 } from "react-icons/fa6";
 import "./DoctorCareers.css";
+import api from "../api";
 import SEO from "../components/Seo";
 import FAQ from "../components/FAQ/FAQ";
 import NetworkImg from "../assets/Career/Network-Trusted-by-Doctors.webp";
@@ -430,9 +431,29 @@ function BenefitTile({ icon, title, desc }) {
   );
 }
 
+const RESUME_EXTENSIONS = [".pdf", ".doc", ".docx"];
+const MAX_RESUME_SIZE = 5 * 1024 * 1024;
+const EMAIL_RE = /^\S+@\S+\.\S+$/;
+
+function validateApplication(formData, resume) {
+  const required = ["fullName", "email", "phone", "specialty", "license", "experience", "states"];
+  if (required.some((key) => !String(formData[key]).trim())) {
+    return "Please fill in all required fields.";
+  }
+  if (!EMAIL_RE.test(formData.email.trim())) return "Enter a valid email address.";
+  if (!resume) return "Please attach your resume / CV.";
+  const ext = resume.name.slice(resume.name.lastIndexOf(".")).toLowerCase();
+  if (!RESUME_EXTENSIONS.includes(ext)) return "Resume must be a PDF, DOC or DOCX file.";
+  if (resume.size > MAX_RESUME_SIZE) return "Resume is too large. Maximum size is 5 MB.";
+  return "";
+}
+
 function ApplicationForm() {
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
   const [fileName, setFileName] = useState("");
+  const [resume, setResume] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
@@ -443,12 +464,51 @@ function ApplicationForm() {
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     setFileName(file ? file.name : "");
+    setResume(file || null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: wire this up to the recruitment API endpoint
-    setSubmitted(true);
+    if (submitting) return;
+
+    const validationError = validateApplication(formData, resume);
+    if (validationError) {
+      setSubmitError(validationError);
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append("fullName", formData.fullName.trim());
+    payload.append("email", formData.email.trim());
+    payload.append("phone", formData.phone.trim());
+    payload.append("specialty", formData.specialty);
+    payload.append("medicalLicenseNumber", formData.license.trim());
+    payload.append("yearsOfExperience", String(formData.experience).trim());
+    payload.append("statesLicensedIn", formData.states.trim());
+    payload.append("practiceDescription", formData.message.trim());
+    payload.append("resume", resume);
+
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      // No Content-Type header: the browser sets the multipart boundary.
+      const { data } = await api.post("/api/careers/apply", payload);
+      if (data.success) {
+        setFormData(INITIAL_FORM_STATE);
+        setFileName("");
+        setResume(null);
+        setSubmitted(true);
+      } else {
+        setSubmitError(data.message || "We couldn't submit your application. Please try again.");
+      }
+    } catch (error) {
+      setSubmitError(
+        error.response?.data?.message ||
+          "Unable to submit your application right now. Please check your connection and try again.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (submitted) {
@@ -460,12 +520,10 @@ function ApplicationForm() {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <FaCircleCheck aria-hidden="true" />
-        <h3>Application received</h3>
+        <h3>Application Submitted Successfully!</h3>
         <p>
-          Thank you
-          {formData.fullName ? `, ${formData.fullName.split(" ")[0]}` : ""}. Our
-          recruitment team will review your application and follow up within 5–7
-          business days.
+          Thank you for your application. Our team will review your information
+          and get back to you if there is a suitable opportunity.
         </p>
       </motion.div>
     );
@@ -610,11 +668,20 @@ function ApplicationForm() {
         </div>
       </div>
 
+      {submitError && (
+        <p className="dc-form-error" role="alert">
+          {submitError}
+        </p>
+      )}
+
       <button
         type="submit"
         className="dc-btn dc-btn--primary dc-btn--lg dc-form-submit"
+        disabled={submitting}
+        aria-busy={submitting}
       >
-        Submit Application <FaArrowRight aria-hidden="true" />
+        {submitting ? "Submitting…" : "Submit Application"}{" "}
+        <FaArrowRight aria-hidden="true" />
       </button>
       <p className="dc-form-note">
         By submitting, you agree to be contacted by our recruitment team

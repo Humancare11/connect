@@ -228,6 +228,17 @@ const blogImageLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Public careers application (POST /api/careers/apply). 
+const careersStore = new Map();
+const careersLimiter = buildKeyedLimiter({
+  store:    careersStore,
+  windowMs: 15 * 60 * 1000,
+  max:      5,
+  message:  "Too many applications submitted. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 // Public app-version lookup (GET /api/app/version). The app calls it once per
 // launch, so this is far above normal use. Per-IP.
 const appVersionStore = new Map();
@@ -241,6 +252,7 @@ const appVersionLimiter = buildKeyedLimiter({
 });
 
 module.exports = {
+  careersLimiter,
   appVersionLimiter,
   blogPublicLimiter,
   blogImageLimiter,
