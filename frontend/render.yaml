@@ -95,6 +95,24 @@ routes:
     source: /weight-and-nurtrition/weight-management/weight-loss-planning
     destination: /weight-and-nutrition/weight-management/weight-loss-planning
   - type: redirect
+    source: /contact
+    destination: /contact-us
+  - type: redirect
+    source: /specialists
+    destination: /specialties
+  - type: redirect
+    source: /export-medical-opinion
+    destination: /online-second-medical-opinion
+  - type: redirect
+    source: /terms
+    destination: /terms-of-service
+  - type: redirect
+    source: /privacy
+    destination: /privacy-policy
+  - type: redirect
+    source: /patient-informed-consent-form
+    destination: /hipaa-notice-of-privacy-practices
+  - type: redirect
     source: /Blogs
     destination: /blogs
   - type: redirect

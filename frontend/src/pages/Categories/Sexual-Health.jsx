@@ -411,7 +411,7 @@ export default function SexualHealth() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "sexual" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div

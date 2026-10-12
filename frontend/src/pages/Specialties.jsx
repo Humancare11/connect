@@ -306,7 +306,7 @@ const specialties = [
     description:
       "A second specialist review of your diagnosis, records, or treatment plan.",
     tags: ["Second Opinion", "Records Review"],
-    link: "/export-medical-opinion",
+    link: "/online-second-medical-opinion",
   },
   {
     name: "Ophthalmology",

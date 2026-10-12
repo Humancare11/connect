@@ -464,7 +464,7 @@ export default function WeightNutrition() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "weight" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div

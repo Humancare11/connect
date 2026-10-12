@@ -450,7 +450,7 @@ export default function TravelGlobalCare() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "travel" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div

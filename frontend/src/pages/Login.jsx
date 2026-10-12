@@ -814,7 +814,7 @@ export default function AuthPage() {
                   required
                 />
                 <a
-                  href="/patient-informed-consent-form"
+                  href="/hipaa-notice-of-privacy-practices"
                   target="_blank"
                   rel="noreferrer"
                 >

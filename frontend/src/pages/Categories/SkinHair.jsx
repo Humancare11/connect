@@ -454,7 +454,7 @@ export default function SkinHair() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "skin" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div

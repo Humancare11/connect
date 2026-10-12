@@ -1593,10 +1593,10 @@ export default function Telemedicine() {
                     anywhere, in minutes.
                   </p>
                   <div className="cta-buttons">
-                    <a href="/book" className="btn btn-primary">
+                    <a href="/appointment-booking" className="btn btn-primary">
                       Book Online Consultation
                     </a>
-                    <a href="/specialists" className="btn btn-secondary">
+                    <a href="/specialties" className="btn btn-secondary">
                       Talk to a Specialist
                     </a>
                   </div>

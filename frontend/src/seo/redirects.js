@@ -30,6 +30,13 @@ export const REDIRECTS = [
   // UTI (gender-neutral canonical)
   { from: "/mens-health/urology/urinary-tract-infection", to: "/urinary-tract-infection" },
   { from: "/bladder-infection", to: "/urinary-tract-infection" },
+  // Old/mistyped paths that were linked from the UI
+  { from: "/contact", to: "/contact-us" },
+  { from: "/specialists", to: "/specialties" },
+  { from: "/export-medical-opinion", to: "/online-second-medical-opinion" },
+  { from: "/terms", to: "/terms-of-service" },
+  { from: "/privacy", to: "/privacy-policy" },
+  { from: "/patient-informed-consent-form", to: "/hipaa-notice-of-privacy-practices" },
   // Near-duplicate URLs (canonical = the one in the sitemap and internal links)
   { from: "/refund-and-cancellation-policy", to: "/refund-cancellation-policy" },
   { from: "/tele-health-informed-consent", to: "/telehealth-informed-consent" },
