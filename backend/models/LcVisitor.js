@@ -11,6 +11,14 @@ const visitorSchema = new mongoose.Schema(
     email: ENC_FIELD,
     phone: ENC_FIELD,
     emailHash: { type: String, default: "", index: true },
+    // Patient context an agent fills in (follow-up date, preferred language, ...). Free text, so encrypted.
+    context: {
+      followUpDate: ENC_FIELD,
+      preferredLanguage: ENC_FIELD,
+      contactPreference: ENC_FIELD,
+      reasonForContact: ENC_FIELD,
+      custom: [{ _id: false, key: { type: String, maxlength: 24 }, value: ENC_FIELD }],
+    },
     consent: {
       cookies: { type: Boolean, default: false },
       // Kept for records written before 2026-10-10. No longer written: the chat shows no privacy acceptance any more.

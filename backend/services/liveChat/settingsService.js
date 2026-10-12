@@ -22,6 +22,9 @@ class SettingsError extends Error {
 const AI_MODES = ["ai_first", "ai_off"];
 const ICONS = ["stethoscope", "pill", "clipboard", "document", "dots", "agent"];
 const KEY_RE = /^[a-z0-9_]{1,30}$/;
+const MAX_CUSTOM_FIELDS = 10;
+const FIELD_KEY_RE = /^[a-z0-9_]{1,24}$/;
+const RESERVED_FIELD_KEYS = ["followUpDate", "preferredLanguage", "contactPreference", "reasonForContact"].map((k) => k.toLowerCase());
 // eslint-disable-next-line no-control-regex
 const CONTROL_RE = /[\u0000-\u001f\u007f]/g;
 // Single-line text: control characters and runs of whitespace become one space.
@@ -116,6 +119,27 @@ function validateSettings(patch) {
         else out.push({ name, price: Math.round(p.price * 100) / 100 });
       });
       if (!Object.keys(errors).some((k) => k.startsWith("prices"))) values.prices = out;
+    }
+  }
+
+  if (has("customFields")) {
+    const fields = patch.customFields;
+    if (!Array.isArray(fields) || fields.length > MAX_CUSTOM_FIELDS) errors.customFields = `Up to ${MAX_CUSTOM_FIELDS} custom fields.`;
+    else {
+      const keys = new Set();
+      const labels = new Set();
+      const out = [];
+      fields.forEach((f, i) => {
+        const label = clean(f?.label);
+        const key = clean(f?.key);
+        if (label.length < 1 || label.length > 40) errors[`customFields.${i}.label`] = "The field name must be 1-40 characters.";
+        else if (labels.has(label.toLowerCase())) errors[`customFields.${i}.label`] = "Two fields have the same name.";
+        else if (!FIELD_KEY_RE.test(key) || keys.has(key) || RESERVED_FIELD_KEYS.includes(key)) errors[`customFields.${i}.key`] = "Each field needs a short unique key.";
+        else out.push({ key, label });
+        keys.add(key);
+        labels.add(label.toLowerCase());
+      });
+      if (!Object.keys(errors).some((k) => k.startsWith("customFields"))) values.customFields = out;
     }
   }
   return { values, errors };

@@ -58,6 +58,7 @@ function createAgentService({
 }) {
   const { LcVisitor, LcConversation, LcMessage, LcPageVisit, LcCannedReply } = models;
   const suggestLimiter = createWindowLimiter({ windowMs: 60_000, max: 10, now });
+  const summaryLimiter = createWindowLimiter({ windowMs: 60_000, max: 10, now });
   // Translation for admins (English view, reply translation, language detection). Admin side only.
   const translation = createTranslationService({
     models,
@@ -241,6 +242,7 @@ function createAgentService({
       current: i === pages.length - 1 && Boolean(live),
     }));
     const visits = visitor?.visits || 1;
+    const settingsForFields = await loadSettings();
     return {
       conversation: rowOf(conv, { userId: actor.id }),
       view: translation.viewOf(conv, actor.id),
@@ -267,6 +269,8 @@ function createAgentService({
           startedPage: conv.startedPage || { path: "", title: "" },
         },
         tags: conv.tags || [],
+        fields: contextFieldsOf(visitor, settingsForFields),
+        fieldDefs: settingsForFields.customFields || [],
         recent: others.map((o) => ({
           conversationId: o.conversationId,
           topic: o.topic || "",
@@ -531,6 +535,104 @@ function createAgentService({
     }
   }
 
+  // ── Patient context (follow-up date, preferred language, ..., custom fields) ───
+
+  const CONTEXT_TEXT_MAX = 200;
+  const CONTEXT_FIELDS = ["preferredLanguage", "contactPreference", "reasonForContact"];
+
+  // What is stored for a patient, decrypted, with the custom fields keyed by their field key.
+  function contextFieldsOf(visitor, settings) {
+    const ctx = visitor?.context || {};
+    const custom = {};
+    for (const def of settings?.customFields || []) {
+      const entry = (ctx.custom || []).find((c) => c.key === def.key);
+      custom[def.key] = entry ? decryptLiveChatText(entry.value) : "";
+    }
+    return {
+      followUpDate: decryptLiveChatText(ctx.followUpDate),
+      preferredLanguage: decryptLiveChatText(ctx.preferredLanguage),
+      contactPreference: decryptLiveChatText(ctx.contactPreference),
+      reasonForContact: decryptLiveChatText(ctx.reasonForContact),
+      custom,
+    };
+  }
+
+  // eslint-disable-next-line no-control-regex
+  const cleanLine = (value) => String(value ?? "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+
+  // Saves some of a patient's context fields (a partial update). Every value is free text from the team, so it is
+  // length-limited and stored encrypted; custom fields must be ones a Super Admin defined.
+  async function updateContext(actor, visitorId, body) {
+    const id = String(visitorId || "");
+    if (!presence.get(id) && !(await chat.loadVisitor(id))) throw new AgentError(404, "not_found");
+    const input = body && typeof body === "object" ? body : {};
+    const settings = await loadSettings();
+    const set = {};
+    const errors = {};
+    if (Object.prototype.hasOwnProperty.call(input, "followUpDate")) {
+      const date = cleanLine(input.followUpDate);
+      const valid = date === "" || (/^\d{4}-\d{2}-\d{2}$/.test(date) && new Date(`${date}T00:00:00Z`).toISOString().startsWith(date));
+      if (valid) set["context.followUpDate"] = encryptLiveChatText(date);
+      else errors.followUpDate = "Enter a valid date.";
+    }
+    for (const field of CONTEXT_FIELDS) {
+      if (!Object.prototype.hasOwnProperty.call(input, field)) continue;
+      const value = cleanLine(input[field]);
+      if ([...value].length > CONTEXT_TEXT_MAX) errors[field] = `Up to ${CONTEXT_TEXT_MAX} characters.`;
+      else set[`context.${field}`] = encryptLiveChatText(value);
+    }
+    if (input.custom && typeof input.custom === "object") {
+      const defs = new Set((settings.customFields || []).map((d) => d.key));
+      const existing = await chat.loadVisitor(id);
+      const merged = new Map((existing?.context?.custom || []).map((c) => [c.key, decryptLiveChatText(c.value)]));
+      for (const [key, raw] of Object.entries(input.custom)) {
+        if (!defs.has(key)) {
+          errors[`custom.${key}`] = "Unknown field.";
+          continue;
+        }
+        const value = cleanLine(raw);
+        if ([...value].length > CONTEXT_TEXT_MAX) errors[`custom.${key}`] = `Up to ${CONTEXT_TEXT_MAX} characters.`;
+        else if (value) merged.set(key, value);
+        else merged.delete(key);
+      }
+      set["context.custom"] = [...merged].filter(([key]) => defs.has(key)).map(([key, value]) => ({ key, value: encryptLiveChatText(value) }));
+    }
+    if (Object.keys(errors).length) throw new AgentError(400, "invalid_context", { errors });
+    if (Object.keys(set).length) {
+      await LcVisitor.updateOne({ visitorId: id }, { $set: set, $setOnInsert: { firstSeenAt: new Date(now()) } }, { upsert: true });
+    }
+    return { ok: true, fields: contextFieldsOf(await chat.loadVisitor(id), settings) };
+  }
+
+  // ── "Tell me about this patient" ──────────────────────────────────────────────
+
+  // A short AI summary of the chat, made when asked and not saved. Only the chat text goes to the model, with the
+  // patient's name, email and phone replaced first; it counts toward the daily AI cap like every other AI call.
+  async function summarizeConversation(actor, conv) {
+    if (!summaryLimiter.allow(String(actor.id))) throw new AgentError(429, "rate_limited");
+    const settings = await loadSettings();
+    if ((await limits.spendStatus(settings)).capReached) throw new AgentError(503, "ai_unavailable", { kind: "spend_cap" });
+    const visitor = await chat.loadVisitor(conv.visitorId);
+    const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
+    const history = (await chat.recentHistory(conv, 30)).map((m) => ({ role: m.sender, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
+    if (!history.length) throw new AgentError(409, "no_content");
+    const result = await ai.summarizeChat({ history });
+    if (result.usage) await chat.recordUsage(conv, settings, result.usage);
+    if (!result.ok) throw new AgentError(503, "ai_unavailable", { kind: result.kind });
+    return { ok: true, summary: result.summary };
+  }
+
+  async function summarize(actor, conversationId) {
+    return summarizeConversation(actor, await load(conversationId));
+  }
+
+  // From Real-time visitors: the visitor's latest chat. A visitor with no chat has nothing to summarize.
+  async function summarizeVisitor(actor, visitorId) {
+    const conv = await LcConversation.findOne({ visitorId: String(visitorId || "") }).sort({ startedAt: -1 });
+    if (!conv) throw new AgentError(409, "no_chat");
+    return summarizeConversation(actor, conv);
+  }
+
   // The right-hand panel of Real-time visitors: works for a visitor who is only browsing (memory) or who has a record.
   async function visitorPanel(actor, visitorId) {
     const id = String(visitorId || "");
@@ -544,6 +646,7 @@ function createAgentService({
       ticketCount(contact.email),
     ]);
     const visits = visitor?.visits || 1;
+    const panelSettings = await loadSettings();
     const geo = record?.geo || visitor?.geo || {};
     const t = now();
     const pages = (record?.pages || []).map((p, i, all) => ({
@@ -558,6 +661,8 @@ function createAgentService({
       panel: {
         visitorId: id,
         contact,
+        fields: contextFieldsOf(visitor, panelSettings),
+        fieldDefs: panelSettings.customFields || [],
         location: { city: geo.city || "", state: geo.state || "", country: geo.country || "", countryCode: geo.countryCode || "" },
         timeZone: zoneOfCountry(geo.countryCode),
         counts: { chats, tickets, visits },
@@ -860,6 +965,9 @@ function createAgentService({
     setTags,
     updateContact,
     visitorPanel,
+    updateContext,
+    summarize,
+    summarizeVisitor,
     transcript,
     updateVisitorContact,
     canned,

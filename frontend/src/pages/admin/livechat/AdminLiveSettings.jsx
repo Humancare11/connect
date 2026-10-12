@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
 import { hub } from "./liveChatHub";
-import "./LiveChatPages.css";
 
-// Live Chat > AI agent settings (docs/chat-demo.html). Only a Super Admin can save; admins see everything read only.
+// Live Chat > AI agent settings (docs/live-chat-admin-ui.html). Only a Super Admin can save; admins see everything read only.
 // A save is checked by the server as a whole, applies at once (no restart) and is written to the change log below.
 const BASE = "/api/admin/livechat";
 
@@ -24,9 +23,10 @@ const AI_MODES = [
 // the fields the page edits (everything else on the settings document is not sent back)
 const EDITABLE = [
   "aiMode", "followUpMinutes", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
-  "dailySpendCapUsd", "handoffRules", "quickOptions", "prices",
+  "dailySpendCapUsd", "handoffRules", "quickOptions", "prices", "customFields",
 ];
-const pick = (settings) => Object.fromEntries(EDITABLE.map((k) => [k, settings[k]]));
+const MAX_CUSTOM_FIELDS = 10;
+const pick = (settings) => Object.fromEntries(EDITABLE.map((k) => [k, k === "customFields" ? settings[k] || [] : settings[k]]));
 const slug = (label, taken) => {
   const base = String(label).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "option";
   let key = base;
@@ -118,7 +118,7 @@ export default function AdminLiveSettings() {
     }
   };
 
-  // canned replies save on their own (they are separate records)
+  // saved replies save on their own (they are separate records)
   const cannedCall = async (request) => {
     setCannedError("");
     try {
@@ -335,6 +335,47 @@ export default function AdminLiveSettings() {
             </div>
           ))}
         </div>
+
+        <div className="lcp-panel" style={{ marginTop: 14 }}>
+          <div className="lcp-panel-head">
+            <div>
+              <h3>Patient context fields</h3>
+              <span className="lcp-help">
+                Extra text fields your team can fill in about a patient, next to Follow-up date, Preferred language, Contact preference and Reason for
+                contact. Up to {MAX_CUSTOM_FIELDS}. Renaming a field keeps what was already written; removing one hides it.
+              </span>
+            </div>
+            <button
+              type="button"
+              className="lcp-btn lcp-btn--small"
+              disabled={form.customFields.length >= MAX_CUSTOM_FIELDS}
+              onClick={() => set("customFields", [...form.customFields, { key: slug("Field", form.customFields.map((f) => f.key)), label: "" }])}
+            >
+              Add a field
+            </button>
+          </div>
+          <ErrorText errors={errors} name="customFields" />
+          {form.customFields.length === 0 && <span className="lcp-muted">No custom fields yet.</span>}
+          {form.customFields.map((field, i) => (
+            <div key={field.key}>
+              <div className="lcp-row lcp-row--price" style={{ gridTemplateColumns: "1fr auto" }}>
+                <input
+                  type="text"
+                  value={field.label}
+                  maxLength={40}
+                  placeholder="Field name (e.g. Insurer)"
+                  aria-label="Field name"
+                  onChange={(e) => set("customFields", form.customFields.map((f, j) => (j === i ? { ...f, label: e.target.value } : f)))}
+                />
+                <button type="button" className="lcp-btn lcp-btn--small lcp-btn--danger" onClick={() => set("customFields", form.customFields.filter((_, j) => j !== i))}>
+                  Remove
+                </button>
+              </div>
+              <ErrorText errors={errors} name={`customFields.${i}.label`} />
+              <ErrorText errors={errors} name={`customFields.${i}.key`} />
+            </div>
+          ))}
+        </div>
       </fieldset>
 
       <div className="lcp-savebar">
@@ -371,7 +412,7 @@ export default function AdminLiveSettings() {
                     <ul>
                       {entry.changes.map((c, i) => (
                         <li key={i}>
-                          <b>{c.field}</b>: <span className="lcp-muted">{c.before || "(empty)"}</span> → {c.after || "(empty)"}
+                          <b>{c.field.replace(/^cannedReply/, "savedReply")}</b>: <span className="lcp-muted">{c.before || "(empty)"}</span> → {c.after || "(empty)"}
                         </li>
                       ))}
                     </ul>
@@ -393,7 +434,7 @@ export default function AdminLiveSettings() {
   );
 }
 
-// Canned replies agents insert into a chat. Each add / edit / delete is saved at once (and logged).
+// Saved replies agents insert into a chat. Each add / edit / delete is saved at once (and logged).
 function CannedReplies({ canned, canEdit, error, call }) {
   const [editing, setEditing] = useState(null); // id or "new"
   const [draft, setDraft] = useState({ title: "", text: "", active: true });
@@ -405,7 +446,7 @@ function CannedReplies({ canned, canEdit, error, call }) {
     <div className="lcp-panel" style={{ marginTop: 14 }}>
       <div className="lcp-panel-head">
         <div>
-          <h3>Canned replies</h3>
+          <h3>Saved replies</h3>
           <span className="lcp-help">Ready-made replies in the chat. Use {"{agentName}"} for the agent's display name.</span>
         </div>
         {canEdit && (
@@ -454,7 +495,7 @@ function CannedReplies({ canned, canEdit, error, call }) {
                 <button
                   type="button"
                   className="lcp-btn lcp-btn--small lcp-btn--danger"
-                  onClick={() => window.confirm(`Delete the canned reply "${reply.title}"?`) && call(() => api.delete(`${BASE}/canned-replies/${reply.id}`))}
+                  onClick={() => window.confirm(`Delete the saved reply "${reply.title}"?`) && call(() => api.delete(`${BASE}/canned-replies/${reply.id}`))}
                 >
                   Delete
                 </button>
@@ -464,7 +505,7 @@ function CannedReplies({ canned, canEdit, error, call }) {
           <span className="lcp-muted">{reply.text}</span>
         </div>
       ))}
-      {canned.length === 0 && <span className="lcp-muted">No canned replies yet.</span>}
+      {canned.length === 0 && <span className="lcp-muted">No saved replies yet.</span>}
     </div>
   );
 }

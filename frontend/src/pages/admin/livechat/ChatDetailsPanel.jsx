@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "./lcIcons";
+import { PatientContextFields, TellMe } from "./PatientContext";
 import { duration as dur, flag, initials, localTime } from "./visitorUtils";
 
 // Right column: the patient panel (docs/live-chat-admin-ui.html). Sections are collapsible and remember open/closed in this
@@ -171,11 +172,14 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
         <span className={p.returning ? "is-ret" : "is-first"}>{p.returning ? "Returning visitor" : "First visit"}</span>
       </div>
 
+      <TellMe key={c.conversationId} url={`/api/admin/livechat/conversations/${c.conversationId}/summary`} />
+
       <Section id="qual" title="Qualification" badge={hasName ? "Contact saved" : "Add contact"} {...sectionProps}>
         <ContactForm key={`${c.conversationId}:${p.contact.email}:${p.contact.name}`} contact={p.contact} onSave={onSaveContact} />
       </Section>
 
       <Section id="ctx" title="Patient context" {...sectionProps}>
+        <PatientContextFields key={c.visitorId} visitorId={c.visitorId} fields={p.fields} fieldDefs={p.fieldDefs} />
         <dl className="wk-kv">
           <dt>Topic</dt>
           <dd>{p.context.topic || "–"}</dd>

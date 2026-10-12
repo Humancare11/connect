@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../../../api";
 import Icon from "./lcIcons";
+import { PatientContextFields, TellMe } from "./PatientContext";
 import { ACTIVITY, avatarColor, displayName, duration, flag, initials, localTime } from "./visitorUtils";
 
 // Right-hand panel of Real-time visitors: who the visitor is, where they are, and what they did. Live facts (pages,
@@ -197,6 +198,10 @@ export default function VisitorPanel({ visitor, now, serverNow, onHide, onBlock,
         <span className={data?.returning ? "is-ret" : "is-first"}>{data?.returning ? "Returning visit" : "First visit"}</span>
       </div>
 
+      <div key={`tell-${visitorId}`}>
+        <TellMe url={`${BASE}/visitors/${visitorId}/summary`} hasChat={hasChat || Boolean(data?.counts.chats)} />
+      </div>
+
       <Section id="qual" title="Qualification" open={isOpen("qual", false)} onToggle={toggle} badge={hasName ? "Contact saved" : "Add contact"}>
         <form className="wk-dbody-form" onSubmit={save}>
           <input ref={nameRef} placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} aria-label="Name" />
@@ -218,6 +223,10 @@ export default function VisitorPanel({ visitor, now, serverNow, onHide, onBlock,
           </button>
           {saved && <span className="wk-saved">Saved</span>}
         </form>
+      </Section>
+
+      <Section id="ctx" title="Patient context" open={isOpen("ctx", true)} onToggle={toggle}>
+        {data ? <PatientContextFields key={visitorId} visitorId={visitorId} fields={data.fields} fieldDefs={data.fieldDefs} /> : <span className="wk-muted">Loading…</span>}
       </Section>
 
       <Section id="pages" title="Visited pages" open={isOpen("pages", true)} onToggle={toggle} badge={String(pages.length)}>

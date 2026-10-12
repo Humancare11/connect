@@ -15,6 +15,8 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET  /visitors, /summary, /settings                   Real-time visitors and settings (read)
 //   GET  /conversations?view=ai|live                      chat lists (AI chats / Live agent chats)
 //   GET  /conversations/:id                               one chat with its patient panel (marks it read)
+//   PUT  /visitors/:visitorId/context                     patient context fields (encrypted)
+//   POST /visitors/:visitorId/summary, POST /conversations/:id/summary   AI summary of the chat (on demand, not saved)
 //   GET  /conversations/:id/transcript                    plain-text download (no internal notes; access is logged)
 //   POST /conversations/:id/files                         an agent sends a file (pdf/jpg/png) to the patient
 //   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest|translate|translate-reply
@@ -174,6 +176,9 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
     if (!VISITOR_ID_RE.test(String(req.params.visitorId))) throw new AgentError(404, "not_found");
     return req.params.visitorId;
   };
+  router.put("/visitors/:visitorId/context", handle((req) => agent.updateContext(actor(req), visitorIdOf(req), req.body)));
+  router.post("/visitors/:visitorId/summary", handle((req) => agent.summarizeVisitor(actor(req), visitorIdOf(req))));
+  router.post("/conversations/:id/summary", handle((req) => agent.summarize(actor(req), idOf(req))));
   router.get("/visitors/:visitorId/panel", handle((req) => agent.visitorPanel(actor(req), visitorIdOf(req))));
   router.put("/visitors/:visitorId/contact", handle((req) => agent.updateVisitorContact(actor(req), visitorIdOf(req), req.body)));
   router.post(

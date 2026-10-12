@@ -81,6 +81,7 @@ const DEFAULT_SETTINGS = {
   },
   quickOptions: QUICK_OPTIONS,
   prices: PRICES,
+  customFields: [],
   businessFacts: "",
   dailySpendCapUsd: 3,
   unavailableMessage:

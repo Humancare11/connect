@@ -34,6 +34,8 @@ const settingsSchema = new mongoose.Schema(
     ],
     prices: [{ _id: false, name: { type: String, required: true }, price: { type: Number, required: true } }],
     businessFacts: { type: String, default: "", maxlength: 8000 },
+    // Extra text fields an agent can fill in about a patient (Patient context). Defined by a Super Admin; up to 10.
+    customFields: [{ _id: false, key: { type: String, required: true, maxlength: 24 }, label: { type: String, required: true, maxlength: 40 } }],
     dailySpendCapUsd: { type: Number, default: 3, min: 0 },
     unavailableMessage: { type: String, default: "", maxlength: 600 },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

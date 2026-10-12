@@ -11,7 +11,7 @@ import {
 } from "./liveChatNotify";
 import "./LiveChatToasts.css";
 
-// "Never miss a patient chat" (docs/chat-demo.html .banner): asks the admin to allow browser notifications, and
+// "Never miss a patient chat" (docs/live-chat-admin-ui.html .banner): asks the admin to allow browser notifications, and
 // offers a sound on/off switch. Browser notifications are only ever turned on by the admin's own click.
 export default function NotificationsBanner() {
   const [permission, setPermission] = useState(notificationPermission);

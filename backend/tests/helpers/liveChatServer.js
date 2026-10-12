@@ -168,6 +168,14 @@ function scriptedAi(script = []) {
       ai.suggestCalls.push(input);
       return suggestions.shift() || { ok: true, reply: "Thanks for waiting. Let me check that for you.", usage: { inputTokens: 800, cachedInputTokens: 0, outputTokens: 20, costUsd: 0.0001 } };
     },
+    // "Tell me about this patient": every call is recorded (what the model would have been sent).
+    summaryCalls: [],
+    summaryOverride: null, // (input) => result, to force a failure
+    async summarizeChat(input) {
+      ai.summaryCalls.push(input);
+      if (ai.summaryOverride) return ai.summaryOverride(input);
+      return { ok: true, summary: "The patient asks about a booking and is waiting for an answer.", usage: { inputTokens: 700, cachedInputTokens: 0, outputTokens: 40, costUsd: 0.0002 } };
+    },
     // Translation stubs: every call is recorded (what the model would have been sent). Default: German -> "EN: <text>".
     translateCalls: [],
     detectCalls: [],

@@ -3,7 +3,6 @@ import api from "../../../api";
 import { hub } from "./liveChatHub";
 import { useAdmin } from "../../../context/AdminContext";
 import NotificationsBanner from "./NotificationsBanner";
-import "./LiveChatPages.css";
 
 // Live Chat > Reports: chats today, % solved by AI, first reply time, rating, bookings after chat, AI cost, and chats
 // per hour (AI vs agent), for a date range. Days are in the support time zone from the settings.
@@ -27,8 +26,8 @@ const hourShort = (h) => `${h % 12 || 12}${h < 12 ? "a" : "p"}`;
 // between the segments, a 4px rounded top, one baseline, hairline grid. AI is purple and agents are green (the pair was
 // checked with the palette validator; purple/blue was too close). The legend names the series, the tooltip gives the
 // exact numbers, and a table view shows the same data.
-const AI_COLOR = "#6D4AE0";
-const AGENT_COLOR = "#0E9F6E";
+const AI_COLOR = "var(--ai)";
+const AGENT_COLOR = "var(--ok)";
 const W = 720;
 const H = 230;
 const M = { left: 34, right: 8, top: 10, bottom: 26 };
@@ -114,7 +113,7 @@ function HourChart({ perHour }) {
               const v = (niceMax / 4) * i;
               return (
                 <g key={i}>
-                  <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} stroke="#E8EDF5" strokeWidth="1" />
+                  <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className="gl" />
                   <text x={M.left - 6} y={y(v) + 4} textAnchor="end">
                     {v}
                   </text>
@@ -129,8 +128,8 @@ function HourChart({ perHour }) {
               const aiTop = y(h.ai);
               return (
                 <g key={h.hour}>
-                  {h.ai > 0 && <path d={segmentPath(x, aiTop, barW, aiH, h.agent === 0)} fill={AI_COLOR} />}
-                  {h.agent > 0 && <path d={segmentPath(x, y(h.ai + h.agent), barW, Math.max(agentH - (h.ai > 0 ? GAP : 0), 1), true)} fill={AGENT_COLOR} />}
+                  {h.ai > 0 && <path d={segmentPath(x, aiTop, barW, aiH, h.agent === 0)} style={{ fill: AI_COLOR }} />}
+                  {h.agent > 0 && <path d={segmentPath(x, y(h.ai + h.agent), barW, Math.max(agentH - (h.ai > 0 ? GAP : 0), 1), true)} style={{ fill: AGENT_COLOR }} />}
                   {h.hour % 3 === 0 && (
                     <text x={cx} y={H - 8} textAnchor="middle">
                       {hourShort(h.hour)}
@@ -152,7 +151,7 @@ function HourChart({ perHour }) {
                 </g>
               );
             })}
-            <line x1={M.left} x2={W - M.right} y1={M.top + plotH} y2={M.top + plotH} stroke="#C5CEDF" strokeWidth="1" />
+            <line x1={M.left} x2={W - M.right} y1={M.top + plotH} y2={M.top + plotH} className="gx" />
           </svg>
           {tip && (
             <div className="lcp-tip" style={{ left: `${tip.left}%`, top: `calc(${tip.top}% - 6px)` }} role="status">

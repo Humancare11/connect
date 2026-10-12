@@ -667,11 +667,11 @@ function createChatService({
     await limits.recordUsage(settings, usage);
   }
 
-  async function recentHistory(conv) {
+  async function recentHistory(conv, limit = 10) {
     // File messages are left out: their text is the file name, which can reveal health information.
     const rows = await LcMessage.find({ conversationId: conv.conversationId, sender: { $in: ["patient", "ai", "agent"] }, fileId: null })
       .sort({ createdAt: -1 })
-      .limit(10)
+      .limit(limit)
       .lean();
     return rows.reverse().map((m) => ({ sender: m.sender, text: decryptLiveChatText(m.text) }));
   }

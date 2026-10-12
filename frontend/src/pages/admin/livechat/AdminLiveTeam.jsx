@@ -3,10 +3,9 @@ import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
 import { hub } from "./liveChatHub";
 import NotificationsBanner from "./NotificationsBanner";
-import "./LiveChatPages.css";
 
 // Live Chat > Team: every admin and superadmin with their role, the name patients see (editable), status, open
-// chats, chats today and average first reply, plus the AI agent row. Layout follows docs/chat-demo.html.
+// chats, chats today and average first reply, plus the AI agent row. Layout follows docs/live-chat-admin-ui.html.
 const BASE = "/api/admin/livechat";
 
 const initials = (name) =>
