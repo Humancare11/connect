@@ -13,6 +13,10 @@ const {
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
+const {
+  notifyCategoryConsultationBooked,
+  notifyConsultationDoctorChanged,
+} = require("../utils/bookingNotifications");
 
 async function withPresignedMedicalReportUrls(consultation) {
   if (!consultation) return consultation;
@@ -171,6 +175,9 @@ const createCategoryConsultation = async (req, res) => {
       message: "Consultation submitted successfully.",
       data: consultation,
     });
+
+    // Fire-and-forget: admin "new booking" email. Never throws or rejects.
+    notifyCategoryConsultationBooked({ consultation });
 
     // Fire-and-forget: see the matching comment in appointmentController.js —
     // the booking + payment already succeeded, so a ledger/invoice failure
@@ -411,7 +418,7 @@ const assignDoctor = async (req, res) => {
     // the atomic update below. Checked first to preserve the original
     // "Consultation not found" vs "Doctor not found" precedence.
     const existing = await CategoryConsultation.findById(req.params.id)
-      .select("appointmentType")
+      .select("appointmentType assignedDoctorId")
       .lean();
 
     if (!existing) {
@@ -462,6 +469,17 @@ const assignDoctor = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Consultation not found",
+      });
+    }
+
+    // Only when the doctor actually changed — re-assigning the same doctor
+    // must not re-email them. Fire-and-forget; never throws or rejects.
+    const previousEnrollmentId = existing.assignedDoctorId || null;
+    if (!previousEnrollmentId || String(previousEnrollmentId) !== String(doctor._id)) {
+      notifyConsultationDoctorChanged({
+        consultation,
+        newEnrollment: doctor,
+        previousEnrollmentId,
       });
     }
 

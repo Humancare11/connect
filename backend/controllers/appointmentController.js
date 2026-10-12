@@ -20,6 +20,10 @@ const {
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
+const {
+  notifyAppointmentBooked,
+  notifyAppointmentDoctorChanged,
+} = require("../utils/bookingNotifications");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -218,6 +222,7 @@ const createAppointment = async (req, res) => {
     }
 
     let resolvedDoctorId = null;
+    let bookedDoctor = null;
 
     if (doctorId) {
       if (!paymentIntentId && !paypalOrderId) {
@@ -231,6 +236,7 @@ const createAppointment = async (req, res) => {
       if (!doctor) {
         return res.status(404).json({ msg: "Doctor not found." });
       }
+      bookedDoctor = doctor;
 
       // The charged amount must match this doctor's real fee — never trust
       // whatever amount happens to be on the payment reference the client
@@ -308,7 +314,7 @@ const createAppointment = async (req, res) => {
 
     const bookedAt = new Date();
     const patient = await User.findById(patientId)
-      .select("name email mobile dob gender country city")
+      .select("name email mobile dob gender country city patientId")
       .lean();
     const safePatientDetails = {
       ...(patientDetails || {}),
@@ -416,6 +422,10 @@ const createAppointment = async (req, res) => {
       msg: resolvedDoctorId ? "Appointment booked successfully." : "Appointment request submitted successfully.",
       appointment,
     });
+
+    // Fire-and-forget: notify admins (and the booked doctor, if any). Never
+    // throws or rejects, and never delays the response sent above.
+    notifyAppointmentBooked({ appointment, patient, doctor: bookedDoctor });
 
     // Fire-and-forget: ledgering the payment and generating/emailing its
     // invoice must never block or fail the booking response — the booking
@@ -876,6 +886,10 @@ const reassignAppointmentDoctor = async (req, res) => {
       assignedAt: new Date(),
     };
     await appointment.save();
+
+    // Fire-and-forget: email the new doctor (and the previous one, if any).
+    // The same-doctor case returned early above, so this only runs on a real change.
+    notifyAppointmentDoctorChanged({ appointment, newDoctor, previousDoctorId });
 
     const patient = await User.findById(appointment.patientId).select("name email");
     if (patient?.email) {
