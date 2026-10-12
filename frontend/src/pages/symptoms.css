@@ -57,73 +57,14 @@
    HERO
    ================================================================ */
 
-.sy-hero {
-  position: relative;
-  overflow: hidden;
-  padding: 100px 16px 88px;
-  background:
-    radial-gradient(circle at top left, rgba(11, 87, 232, .08), transparent 32%),
-    linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
-}
-
-.sy-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 18% 12%, rgba(30, 107, 255, .10), transparent 36%);
-  z-index: 0;
-}
-
 /* ── Two-column grid ── */
-.sy-hero-inner {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 48px;
-  align-items: center;
-  margin: 0 auto;
-  width: min(1120px, 100%);
-}
 
-@media (min-width: 768px) {
-  .sy-hero-inner {
-    grid-template-columns: 1.05fr 0.95fr;
-  }
-}
 
 /* Badge */
-.sy-hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  padding: 8px 18px;
-  border-radius: 9999px;
-  border: 1px solid rgba(11, 87, 232, .14);
-  background: rgba(255, 255, 255, .72);
-  backdrop-filter: blur(10px);
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: var(--blue);
-}
 
 /* Title */
-.sy-hero-title {
-  font-size: clamp(2.1rem, 4.8vw, 3.75rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  line-height: 1.04;
-  color: var(--ink);
-}
 
 /* Body copy */
-.sy-hero-copy {
-  margin-top: 20px;
-  max-width: 560px;
-  font-size: 1rem;
-  line-height: 1.8;
-  color: var(--muted);
-}
 
 /* CTA row */
 .sy-hero-ctas {
@@ -179,68 +120,8 @@
 }
 
 /* ── Stats row ── */
-.sy-hero__stats {
-  margin-top: 32px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  text-align: center;
-}
-
-.sy-hero__stat {
-  padding: 16px 8px;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(11, 87, 232, .08);
-  background: rgba(255, 255, 255, .72);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(11, 40, 100, .05);
-}
-
-.sy-hero__stat-num {
-  font-size: 1.55rem;
-  font-weight: 900;
-  color: var(--blue);
-}
-
-.sy-hero__stat-label {
-  margin-top: 3px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
 
 /* ── Right panel ── */
-.sy-hero-panel {
-  position: relative;
-}
-
-.sy-hero-panel::before,
-.sy-hero-panel::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(52px);
-  z-index: 0;
-  pointer-events: none;
-}
-
-.sy-hero-panel::before {
-  top: -32px;
-  left: -32px;
-  width: 144px;
-  height: 144px;
-  background: rgba(11, 87, 232, .20);
-}
-
-.sy-hero-panel::after {
-  bottom: -32px;
-  right: -32px;
-  width: 176px;
-  height: 176px;
-  background: rgba(124, 183, 255, .24);
-}
 
 /* Main glass card */
 .sy-hero__card {
@@ -1162,95 +1043,7 @@
    CARE SECTION
 ========================================================= */
 
-.sy-care {
-  padding: 90px 16px;
-  background: linear-gradient(180deg, var(--bg) 0%, #ffffff 100%);
-}
 
-.sy-care__inner {
-  width: min(1120px, 100%);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 0.85fr 1.15fr;
-  gap: 56px;
-  align-items: start;
-}
-
-.sy-care__eyebrow {
-  display: inline-block;
-  margin-bottom: 16px;
-  padding: 6px 16px;
-  border-radius: 9999px;
-  border: 1px solid rgba(11, 87, 232, .14);
-  background: rgba(11, 87, 232, .06);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--blue);
-}
-
-.sy-care__heading {
-  font-size: clamp(1.9rem, 3.6vw, 2.6rem);
-  line-height: 1.12;
-  letter-spacing: -0.03em;
-  font-weight: 900;
-  color: var(--ink);
-}
-
-.sy-care__copy {
-  margin-top: 18px;
-  font-size: 0.95rem;
-  line-height: 1.85;
-  color: var(--muted);
-  max-width: 420px;
-}
-
-.sy-care__grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.sy-care__card {
-  border-radius: 1.5rem;
-  border: 1px solid rgba(11, 87, 232, .08);
-  background: rgba(255, 255, 255, .92);
-  padding: 22px;
-  box-shadow: 0 10px 28px rgba(11, 40, 100, .05);
-  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
-}
-
-.sy-care__card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(11, 87, 232, .20);
-  box-shadow: 0 18px 40px rgba(11, 40, 100, .10);
-}
-
-.sy-care__card-name {
-  font-size: 0.92rem;
-  font-weight: 900;
-  color: var(--ink);
-  margin-bottom: 8px;
-}
-
-.sy-care__card-desc {
-  font-size: 0.8rem;
-  line-height: 1.7;
-  color: var(--muted);
-}
-
-@media (max-width: 900px) {
-  .sy-care__inner {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .sy-care__grid {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* =========================================================
    FAQ SECTION

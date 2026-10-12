@@ -29,13 +29,14 @@ import {
 } from "lucide-react";
 import "./symptoms.css";
 import SEO from "../components/Seo";
-import ServiceSwitcher from "../components/ServiceSwitcher";
+import CatHeroSection from "../components/CatHeroSection";
+import CareHighlightsSection from "../components/CareHighlightsSection";
 import FAQ from "../components/FAQ/FAQ";
 
 const stats = [
-  ["11", "Categories"],
-  ["30", "Specialties"],
-  ["140+", "Conditions"],
+  { value: "11", label: "Categories" },
+  { value: "30", label: "Specialties" },
+  { value: "140+", label: "Conditions" },
 ];
 
 // Each entry pairs a "virtual care request" scenario with the specialty it
@@ -857,42 +858,17 @@ export default function Symptoms() {
     <>
       <SEO />
 
-      <section id="top" className="sy-hero">
-        <div className="sy-hero-inner">
-          <div>
-            <div className="sy-hero-badge">
-              <Globe2 size={14} />
-              US-facing telehealth condition directory
-            </div>
-
-            <h1 className="sy-hero-title">
-              Consult a Doctor Online for Symptoms and Get the Right Care
-            </h1>
-
-            <p className="sy-hero-copy">
-              Find the right care for your symptoms and health concerns with
-              Humancare Connect. Our symptom-based virtual healthcare services
-              make it easy to consult a doctor online for symptoms, understand
-              possible health concerns, and receive personalized medical
-              guidance and treatment support from trusted healthcare
-              professionals.
-            </p>
-
-            <div className="sy-hero__stats">
-              {stats.map(([num, label]) => (
-                <div key={label} className="sy-hero__stat">
-                  <div className="sy-hero__stat-num">{num}</div>
-                  <div className="sy-hero__stat-label">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="sy-hero-panel">
-            <ServiceSwitcher services={HERO_SERVICES} />
-          </div>
-        </div>
-      </section>
+      <CatHeroSection
+        id="top"
+        badge={{
+          icon: <Globe2 size={14} aria-hidden="true" />,
+          label: "US-facing telehealth condition directory",
+        }}
+        title="Consult a Doctor Online for Symptoms and Get the Right Care"
+        description="Find the right care for your symptoms and health concerns with Humancare Connect. Our symptom-based virtual healthcare services make it easy to consult a doctor online for symptoms, understand possible health concerns, and receive personalized medical guidance and treatment support from trusted healthcare professionals."
+        stats={stats}
+        services={HERO_SERVICES}
+      />
 
       {/* --------------------(Conditions / Symptoms directory)--------- */}
 
@@ -1039,33 +1015,13 @@ export default function Symptoms() {
 
       {/* --------------------(Care section)--------- */}
 
-      <section id="sy-care" className="sy-care">
-        <div className="sy-care__inner">
-          <div className="sy-care__left">
-            <span className="sy-care__eyebrow">SYMPTOM-BASED ONLINE CARE</span>
-            <h2 className="sy-care__heading">
-              Consult a Doctor Online for Symptoms with Confidence
-            </h2>
-            <p className="sy-care__copy">
-              Humancare Connect helps you consult a doctor online for symptoms
-              through secure and convenient virtual healthcare services. Whether
-              you are experiencing a new health concern or managing ongoing
-              symptoms, our online consultations provide access to trusted
-              healthcare professionals who can guide you toward appropriate
-              care.
-            </p>
-          </div>
-
-          <div className="sy-care__grid">
-            {careFeatures.map((f) => (
-              <div key={f.title} className="sy-care__card">
-                <div className="sy-care__card-name">{f.title}</div>
-                <div className="sy-care__card-desc">{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CareHighlightsSection
+        id="sy-care"
+        eyebrow="SYMPTOM-BASED ONLINE CARE"
+        title="Consult a Doctor Online for Symptoms with Confidence"
+        description="Humancare Connect helps you consult a doctor online for symptoms through secure and convenient virtual healthcare services. Whether you are experiencing a new health concern or managing ongoing symptoms, our online consultations provide access to trusted healthcare professionals who can guide you toward appropriate care."
+        items={careFeatures}
+      />
 
       {/* --------------------(FAQ section)--------- */}
       <FAQ

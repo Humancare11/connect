@@ -3,20 +3,20 @@
    TOKENS
 ───────────────────────────────────────────── */
 :root {
-  --bg:           #f4f7fb;
-  --section:      #dce6f2;
-  --primary:      #223a5e;
-  --primary-hover:#1b2f4b;
-  --text:         #0b1f3a;
+  --bg: #f4f7fb;
+  --section: #dce6f2;
+  --primary: #223a5e;
+  --primary-hover: #1b2f4b;
+  --text: #0b1f3a;
 
-  --teal-lt:      #e6f5f3;
-  --gold:         #c97b1a;
-  --gold-lt:      #fef3e2;
-  --muted:        #6b7280;
-  --border:       rgba(34, 58, 94, 0.1);
-  --card:         #ffffff;
-  --radius:       16px;
-  --ease:         cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --teal-lt: #e6f5f3;
+  --gold: #c97b1a;
+  --gold-lt: #fef3e2;
+  --muted: #6b7280;
+  --border: rgba(34, 58, 94, 0.1);
+  --card: #ffffff;
+  --radius: 16px;
+  --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* ─────────────────────────────────────────────
@@ -36,7 +36,10 @@ body {
   color: var(--text);
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-primary);
 }
 
@@ -51,14 +54,19 @@ h1, h2, h3, h4 {
    HERO — fixed slideDown, fixed ::after colour
 ───────────────────────────────────────────── */
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-18px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .blog-hero {
-  background:
-    
-    url("../../assets/BlogImages/hero-bg.webp") center / cover no-repeat;
+  background: url("../../assets/BlogImages/hero-bg.webp") center / cover
+    no-repeat;
   padding-top: 120px;
   padding-bottom: 72px;
   position: relative;
@@ -94,7 +102,7 @@ h1, h2, h3, h4 {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--teal);
-  background: #C8DFFF;
+  background: #c8dfff;
   border: 1px solid rgba(12, 139, 122, 0.2);
   padding: 5px 14px;
   border-radius: 100px;
@@ -131,12 +139,16 @@ h1, h2, h3, h4 {
   max-width: 440px;
   margin-bottom: 40px;
   box-shadow: 0 2px 12px rgba(34, 58, 94, 0.07);
-  transition: box-shadow 0.22s var(--ease), border-color 0.22s var(--ease);
+  transition:
+    box-shadow 0.22s var(--ease),
+    border-color 0.22s var(--ease);
 }
 
 .hero-search:focus-within {
   border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(12, 139, 122, 0.12), 0 2px 12px rgba(34, 58, 94, 0.07);
+  box-shadow:
+    0 0 0 3px rgba(12, 139, 122, 0.12),
+    0 2px 12px rgba(34, 58, 94, 0.07);
 }
 
 .search-icon {
@@ -154,7 +166,9 @@ h1, h2, h3, h4 {
   font-family: var(--font-secondary);
 }
 
-.hero-search-input::placeholder { color: var(--muted); }
+.hero-search-input::placeholder {
+  color: var(--muted);
+}
 
 .search-clear {
   background: none;
@@ -167,7 +181,9 @@ h1, h2, h3, h4 {
   border-radius: 4px;
   transition: color 0.2s;
 }
-.search-clear:hover { color: var(--primary); }
+.search-clear:hover {
+  color: var(--primary);
+}
 
 /* Stats */
 .hero-stats {
@@ -204,14 +220,22 @@ h1, h2, h3, h4 {
 .hero-blob--1 {
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle, rgba(12, 139, 122, 0.08) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(12, 139, 122, 0.08) 0%,
+    transparent 70%
+  );
   top: -80px;
   right: -60px;
 }
 .hero-blob--2 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(34, 58, 94, 0.06) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(34, 58, 94, 0.06) 0%,
+    transparent 70%
+  );
   bottom: -40px;
   right: 300px;
 }
@@ -238,7 +262,9 @@ h1, h2, h3, h4 {
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-.filter-bar-inner::-webkit-scrollbar { display: none; }
+.filter-bar-inner::-webkit-scrollbar {
+  display: none;
+}
 
 .filter-btn {
   flex-shrink: 0;
@@ -250,13 +276,17 @@ h1, h2, h3, h4 {
   color: var(--muted);
   cursor: pointer;
   border-bottom: 2.5px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  transition:
+    color 0.2s,
+    border-color 0.2s;
   font-family: var(--font-secondary);
   white-space: nowrap;
   border-radius: 0;
 }
 
-.filter-btn:hover { color: var(--primary); }
+.filter-btn:hover {
+  color: var(--primary);
+}
 
 .filter-btn--active {
   color: var(--primary) !important;
@@ -308,7 +338,9 @@ h1, h2, h3, h4 {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease);
+  transition:
+    transform 0.3s var(--ease),
+    box-shadow 0.3s var(--ease);
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(34, 58, 94, 0.05);
 }
@@ -415,12 +447,14 @@ h1, h2, h3, h4 {
   font-family: var(--font-secondary);
   transition:
     background 0.22s var(--ease),
-    color      0.22s var(--ease),
-    transform  0.18s var(--ease),
+    color 0.22s var(--ease),
+    transform 0.18s var(--ease),
     box-shadow 0.22s var(--ease);
 }
 
-.card-btn svg { transition: transform 0.22s var(--ease); }
+.card-btn svg {
+  transition: transform 0.22s var(--ease);
+}
 
 .card-btn:hover {
   background: var(--primary);
@@ -429,7 +463,9 @@ h1, h2, h3, h4 {
   box-shadow: 0 6px 18px rgba(34, 58, 94, 0.22);
 }
 
-.card-btn:hover svg { transform: translateX(3px); }
+.card-btn:hover svg {
+  transform: translateX(3px);
+}
 
 /* ─────────────────────────────────────────────
    EMPTY STATE
@@ -494,11 +530,11 @@ h1, h2, h3, h4 {
   font-family: var(--font-secondary);
   cursor: pointer;
   transition:
-    background    0.2s var(--ease),
-    color         0.2s var(--ease),
-    border-color  0.2s var(--ease),
-    transform     0.17s var(--ease),
-    box-shadow    0.2s var(--ease);
+    background 0.2s var(--ease),
+    color 0.2s var(--ease),
+    border-color 0.2s var(--ease),
+    transform 0.17s var(--ease),
+    box-shadow 0.2s var(--ease);
 }
 
 .page-btn:hover:not(:disabled):not(.active) {
@@ -573,10 +609,14 @@ h1, h2, h3, h4 {
   font-family: var(--font-secondary);
   outline: none;
   min-width: 240px;
-  transition: border-color 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    background 0.2s;
 }
 
-.newsletter-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+.newsletter-input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
 
 .newsletter-input:focus {
   border-color: rgba(255, 255, 255, 0.5);
@@ -594,7 +634,10 @@ h1, h2, h3, h4 {
   font-weight: 600;
   font-family: var(--font-secondary);
   cursor: pointer;
-  transition: background 0.2s, transform 0.18s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    transform 0.18s,
+    box-shadow 0.2s;
   white-space: nowrap;
 }
 

@@ -927,6 +927,18 @@
   width: 100%;
 }
 
+.dc-form-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dc-form-error {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: #b42318;
+  text-align: center;
+}
+
 .dc-form-note {
   margin: 16px 0 0;
   font-size: 12.5px;

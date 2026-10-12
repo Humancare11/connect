@@ -63,8 +63,9 @@ const safePath = (value) =>
  */
 export function toSuggestions(response) {
   const results = response?.results || {};
-  return SEARCH_GROUPS.flatMap((group) =>
+  const suggestions = SEARCH_GROUPS.flatMap((group) =>
     (results[group] || []).map((item) => ({
+      rank: Number.isFinite(item.rank) ? item.rank : null,
       id: `${item.type}:${item.id}`,
       type: item.type,
       title: item.title,
@@ -74,6 +75,10 @@ export function toSuggestions(response) {
       category: item.metadata?.categoryName,
     })),
   ).filter((item) => item.title && item.route);
+  // The backend orders across result types (e.g. a specific condition before
+  // its parent specialty) and sends each result's final `rank`. Without
+  // ranks (older backend) the group order above is kept. Array.sort is stable.
+  return suggestions.every((item) => item.rank !== null) ? [...suggestions].sort((a, b) => a.rank - b.rank) : suggestions;
 }
 
 const INSTANT_CACHE_MAX = 30;

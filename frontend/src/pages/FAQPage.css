@@ -444,6 +444,14 @@
 }
 
 /* ---------------------- Responsive Layout Adaptation ---------------------- */
+/* Mobile/tablet: start the eyebrow below the fixed navbar (bottom edge ~74–82px).
+   Scoped to .faq-page because home.css also styles .hero. */
+@media (max-width: 1180px) {
+  .faq-page .hero {
+    padding-top: 108px;
+  }
+}
+
 @media (max-width: 900px) {
   .hero__inner {
     grid-template-columns: 1fr;

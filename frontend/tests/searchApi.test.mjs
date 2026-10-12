@@ -41,7 +41,7 @@ test("toSuggestions keeps backend order and only same-site backend paths", () =>
   const items = toSuggestions(body);
   assert.deepEqual(items.map((i) => i.title), ["Cardiology", "Chest Pain", "Dr. A B", "Blog"]);
   assert.deepEqual(items.map((i) => i.route), ["/appointment-booking/cat/0", "/appointment-booking/a/b/chest-pain", "/doctors/12345-a-b", "/what-is-telemedicine"]);
-  assert.deepEqual(Object.keys(items[0]).sort(), ["category", "description", "id", "route", "specialty", "title", "type"]);
+  assert.deepEqual(Object.keys(items[0]).sort(), ["category", "description", "id", "rank", "route", "specialty", "title", "type"]);
   assert.equal(new Set(items.map((i) => i.id)).size, items.length);
   assert.deepEqual(toSuggestions(null), []);
 });
