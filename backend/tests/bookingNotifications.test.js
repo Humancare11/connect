@@ -257,3 +257,42 @@ test("category assign: a failing mailer does not fail the assignment", async () 
   assert.equal(out.status, 200);
   assert.equal(out.body.success, true);
 });
+
+// ── reopen email to the doctor ─────────────────────────────────────────────
+
+test("reopen: the doctor gets one email with minimal details and a dashboard link", async () => {
+  await notify.notifyDoctorAppointmentReopened({ appointment: { ...appointment, doctorId: "d2" }, isCategory: false });
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].to, "new@example.com");
+  assert.equal(sent[0].subject, "Humancare Connect — Appointment reopened by admin");
+  assert.match(sent[0].ctaUrl, /\/doctor-dashboard\/appointments$/);
+  const blob = JSON.stringify(sent);
+  assert.match(blob, /Asha Rao \(ID HC-1001\)/);
+  assert.doesNotMatch(blob, /SECRET CONCERN/);
+});
+
+test("reopen email: category consultation uses the enrollment's email", async () => {
+  const consultation = {
+    _id: "c1",
+    patientId: "p1",
+    date: "2030-01-15",
+    appointmentType: "NEXT_AVAILABLE",
+    assignedSlot: "10:00 AM",
+    categoryName: "General",
+    assignedDoctorId: { firstName: "Nina", surname: "Shah", email: "nina@example.com", doctorId: "d2" },
+  };
+  await notify.notifyDoctorAppointmentReopened({ appointment: consultation, isCategory: true });
+  assert.deepEqual(sent.map((m) => m.to), ["nina@example.com"]);
+  assert.match(sent[0].greeting, /Nina Shah/);
+});
+
+test("reopen email: missing doctor email is skipped and a failing mailer never rejects", async () => {
+  Doctor.findById = () => chain({ name: "No Mail", email: "" });
+  await notify.notifyDoctorAppointmentReopened({ appointment: { ...appointment, doctorId: "d9" }, isCategory: false });
+  assert.equal(sent.length, 0);
+  Doctor.findById = (id) => chain(doctors[id] || null);
+  mailFails = true;
+  await assert.doesNotReject(() =>
+    notify.notifyDoctorAppointmentReopened({ appointment: { ...appointment, doctorId: "d2" }, isCategory: false })
+  );
+});

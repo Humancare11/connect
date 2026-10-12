@@ -342,9 +342,23 @@ const getCategoryConsultationById = async (req, res) => {
 };
 
 // Update Consultation Status
+// Statuses an admin may set directly. Completing and reopening are not
+// among them: they must go through PUT /api/appointments/:id/admin-complete
+// and /reopen, which run the shared lifecycle logic (slot check, socket
+// events, room eviction, notifications).
+const DIRECT_STATUS_VALUES = ["Pending", "Assigned", "Confirmed", "Cancelled"];
+
 const updateCategoryConsultationStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const requested = String(req.body?.status || "").trim().toLowerCase();
+    const status = DIRECT_STATUS_VALUES.find((value) => value.toLowerCase() === requested);
+
+    if (!status) {
+      const message = ["completed", "complete"].includes(requested)
+        ? "Use the Complete action (PUT /api/appointments/:id/admin-complete) to complete a consultation."
+        : `Invalid status. Allowed values: ${DIRECT_STATUS_VALUES.join(", ")}.`;
+      return res.status(400).json({ success: false, message });
+    }
 
     const consultation = await CategoryConsultation.findById(req.params.id);
 
@@ -352,6 +366,13 @@ const updateCategoryConsultationStatus = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Consultation not found",
+      });
+    }
+
+    if (consultation.status === "Completed") {
+      return res.status(409).json({
+        success: false,
+        message: "This consultation is completed. Use the Reopen action (PUT /api/appointments/:id/reopen) first.",
       });
     }
 
@@ -418,13 +439,23 @@ const assignDoctor = async (req, res) => {
     // the atomic update below. Checked first to preserve the original
     // "Consultation not found" vs "Doctor not found" precedence.
     const existing = await CategoryConsultation.findById(req.params.id)
-      .select("appointmentType assignedDoctorId")
+      .select("appointmentType assignedDoctorId status")
       .lean();
 
     if (!existing) {
       return res.status(404).json({
         success: false,
         message: "Consultation not found",
+      });
+    }
+
+    // A completed consultation must be reopened first: that path runs the slot
+    // check and notifies everyone. Assigning here would otherwise silently set
+    // it back to Assigned.
+    if (existing.status === "Completed") {
+      return res.status(409).json({
+        success: false,
+        message: "This consultation is completed. Reopen it before changing the doctor.",
       });
     }
 

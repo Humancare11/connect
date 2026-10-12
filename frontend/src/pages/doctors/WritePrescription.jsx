@@ -12,7 +12,13 @@ import "./DoctorPatients.css";
 import "./WritePrescription.css";
 
 export default function WritePrescription() {
-  const { patientId } = useParams();
+  // Two entry points: from My Patients (/patients/:patientId/prescription, any
+  // completed consultation) and from the Appointments page
+  // (/appointments/:appointmentId/prescription, one assigned/confirmed
+  // appointment). Only the latter completes the appointment on save.
+  const { patientId: routePatientId, appointmentId: routeAppointmentId } = useParams();
+  const fromAppointment = Boolean(routeAppointmentId);
+  const backPath = fromAppointment ? "/doctor-dashboard/appointments" : "/doctor-dashboard/patients";
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -24,13 +30,29 @@ export default function WritePrescription() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [savedNote, setSavedNote] = useState("");
 
   const loadPatientData = useCallback(async () => {
     setLoading(true);
     setLoadError("");
     try {
+      if (routeAppointmentId) {
+        const { data: appt } = await api.get(
+          `/api/appointments/doctor/${routeAppointmentId}`,
+        );
+        const status = String(appt?.status || "").toLowerCase();
+        if (["assigned", "confirmed"].includes(status)) {
+          setPatient(appt.patientId || null);
+          setAppointments([appt]);
+          setForm((prev) => ({ ...prev, appointmentId: appt._id }));
+        } else {
+          setPatient(appt?.patientId || null);
+          setAppointments([]);
+        }
+        return;
+      }
       const { data } = await api.get(
-        `/api/medical/patients/${patientId}/history`,
+        `/api/medical/patients/${routePatientId}/history`,
       );
       const allAppointments = Array.isArray(data?.appointments)
         ? data.appointments
@@ -48,7 +70,7 @@ export default function WritePrescription() {
     } finally {
       setLoading(false);
     }
-  }, [patientId]);
+  }, [routePatientId, routeAppointmentId]);
 
   useEffect(() => {
     loadPatientData();
@@ -80,7 +102,7 @@ export default function WritePrescription() {
       medicines: p.medicines.filter((_, idx) => idx !== i),
     }));
 
-  const goBackToPatients = () => navigate("/doctor-dashboard/patients");
+  const goBack = () => navigate(backPath);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -95,12 +117,21 @@ export default function WritePrescription() {
     setSaving(true);
     setError("");
     try {
-      await api.post("/api/medical/prescriptions", {
+      const { data } = await api.post("/api/medical/prescriptions", {
         ...form,
-        patientId,
+        patientId: patient?._id,
+        // Saving from the Appointments page also completes the appointment.
+        ...(fromAppointment ? { completeOnSave: true } : {}),
       });
+      setSavedNote(
+        data?.appointmentCompleted
+          ? " The appointment was marked as complete."
+          : data?.completionFailed
+            ? " The appointment could not be marked complete — please use Complete on the appointment."
+            : "",
+      );
       setSaved(true);
-      setTimeout(goBackToPatients, 1500);
+      setTimeout(goBack, 1500);
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to save prescription.");
       setSaving(false);
@@ -113,9 +144,9 @@ export default function WritePrescription() {
         <button
           type="button"
           className="wp-back-btn"
-          onClick={goBackToPatients}
+          onClick={goBack}
         >
-          ← Back to My Patients
+          {fromAppointment ? "← Back to Appointments" : "← Back to My Patients"}
         </button>
       </div>
 
@@ -129,10 +160,11 @@ export default function WritePrescription() {
       ) : !patient || appointments.length === 0 ? (
         <div className="dp-empty-state">
           <div className="dp-empty-icon">💊</div>
-          <h3>No completed consultations</h3>
+          <h3>{fromAppointment ? "Prescription unavailable" : "No completed consultations"}</h3>
           <p>
-            A prescription can only be written after a completed video
-            consultation with this patient.
+            {fromAppointment
+              ? "A prescription can only be written here for an assigned or confirmed appointment."
+              : "A prescription can only be written after a completed video consultation with this patient."}
           </p>
         </div>
       ) : (
@@ -146,7 +178,7 @@ export default function WritePrescription() {
 
             {saved && (
               <div className="wp-alert wp-alert--success">
-                Prescription saved! Returning to My Patients…
+                Prescription saved!{savedNote} Returning to {fromAppointment ? "Appointments" : "My Patients"}…
               </div>
             )}
             {error && <div className="dp-modal-error">{error}</div>}
@@ -304,7 +336,7 @@ export default function WritePrescription() {
                 <button
                   type="button"
                   className="dp-btn dp-btn--ghost"
-                  onClick={goBackToPatients}
+                  onClick={goBack}
                   disabled={saving}
                 >
                   Cancel
@@ -327,7 +359,7 @@ export default function WritePrescription() {
                 Reference the doctor's saved consultation notes for{" "}
                 {patient.name} while preparing this prescription.
               </p> */}
-              <ConsultationNotesPanel patientId={patientId} />
+              <ConsultationNotesPanel patientId={patient._id} />
             </div>
           </aside>
         </div>

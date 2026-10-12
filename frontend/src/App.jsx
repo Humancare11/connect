@@ -1319,6 +1319,14 @@ export function AppLayout() {
             }
           />
           <Route
+            path="/doctor-dashboard/appointments/:appointmentId/prescription"
+            element={
+              <DoctorLayout>
+                <WritePrescription />
+              </DoctorLayout>
+            }
+          />
+          <Route
             path="/doctor-dashboard/patients/:patientId/prescriptions/:rxId"
             element={
               <DoctorLayout>

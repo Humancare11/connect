@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
+import AdminAppointmentStatusActions from "../../components/AdminAppointmentStatusActions";
 import "./AdminAppointments.css";
 
 function getCountryName(isoCode) {
@@ -239,12 +240,20 @@ export default function AdminAppointmentDetails() {
           <Link className="adp-back-button" to="/admin-dashboard/appointments">
             Back to Appointments
           </Link>
-          <Link
-            className="adp-alt-btn"
-            to={`/admin-dashboard/appointments/${appointment._id}/assign`}
-          >
-            {assignmentLabel}
-          </Link>
+          {/* A completed appointment must be reopened before its doctor can change. */}
+          {currentStatus !== "complete" && (
+            <Link
+              className="adp-alt-btn"
+              to={`/admin-dashboard/appointments/${appointment._id}/assign`}
+            >
+              {assignmentLabel}
+            </Link>
+          )}
+          <AdminAppointmentStatusActions
+            appointmentId={appointment._id}
+            status={appointment.status}
+            onChanged={(status) => setAppointment((current) => ({ ...current, status }))}
+          />
         </div>
       </div>
 

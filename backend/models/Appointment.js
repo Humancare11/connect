@@ -63,6 +63,19 @@ const appointmentSchema = new mongoose.Schema(
       assignedAt: { type: Date, default: null },
     },
     sessionStarted: { type: Boolean, default: false },
+    // Set when an admin reopens a completed appointment; cleared again on completion.
+    // Lets the doctor's list show a "Reopened by admin" note.
+    reopenedByAdmin: {
+      type: new mongoose.Schema(
+        {
+          id:   { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+          name: { type: String, default: "" },
+          at:   { type: Date, default: null },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
     medicalReports: [
       {
         url:  { type: String },

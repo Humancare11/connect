@@ -281,12 +281,14 @@ export default function AdminCategoryConsultations() {
                     </td>
                     <td>
                       <div className="adp-list-actions">
-                        <Link
-                          className="adp-alt-btn"
-                          to={`/admin-dashboard/category-consultations/assign-doctor/${item._id}`}
-                        >
-                          {canonicalStatus(item.status) === "assigned" ? "Alternate Doctor" : "Assign Doctor"}
-                        </Link>
+                        {canonicalStatus(item.status) !== "complete" && (
+                          <Link
+                            className="adp-alt-btn"
+                            to={`/admin-dashboard/category-consultations/assign-doctor/${item._id}`}
+                          >
+                            {canonicalStatus(item.status) === "assigned" ? "Alternate Doctor" : "Assign Doctor"}
+                          </Link>
+                        )}
                         <button
                           type="button"
                           className="adp-secondary-link"

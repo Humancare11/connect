@@ -130,6 +130,11 @@ const doctorEmailCopy = {
     badge: "Case Assigned",
     intro: "A case has been assigned to you by the Humancare Connect team.",
   },
+  reopened: {
+    subject: "Humancare Connect — Appointment reopened by admin",
+    badge: "Appointment Reopened",
+    intro: "An admin has reopened this appointment. It is active again and appears under Confirmed in your appointments.",
+  },
   reassigned: {
     subject: "Humancare Connect — Case reassigned to you",
     badge: "Case Reassigned",
@@ -344,7 +349,51 @@ async function notifyConsultationDoctorChanged({ consultation, newEnrollment, pr
   });
 }
 
+// An admin reopened a completed appointment. `appointment` is the loaded
+// Appointment (doctorId = Doctor _id) or CategoryConsultation (assignedDoctorId
+// populated with its Enrollment).
+async function notifyDoctorAppointmentReopened({ appointment, isCategory }) {
+  await safely("doctor reopened email", async () => {
+    const patient = await fetchPatient(appointment.patientId);
+
+    if (isCategory) {
+      const enrollment = appointment.assignedDoctorId;
+      await notifyDoctorAssigned({
+        to: await enrollmentEmail(enrollment),
+        doctorName: doctorFullName(enrollment),
+        variant: "reopened",
+        patient,
+        when: consultationWhen(appointment),
+        category: appointment.categoryName,
+        specialty: appointment.specialtyName || appointment.serviceName,
+      });
+      return;
+    }
+
+    const [doctor, enrollment] = await Promise.all([
+      Doctor.findById(appointment.doctorId).select("name email").lean(),
+      Enrollment.findOne({ doctorId: appointment.doctorId }).select("timezone").lean(),
+    ]);
+    await notifyDoctorAssigned({
+      to: doctor?.email,
+      doctorName: doctor?.name,
+      variant: "reopened",
+      patient,
+      when: whenText({
+        date: appointment.date,
+        time: appointment.time,
+        utc: appointment.appointmentDateTimeUtc,
+        patientTimezone: appointment.patientTimezone,
+        targetTimezone: appointment.doctorTimezone || enrollment?.timezone,
+      }),
+      category: appointment.category,
+      specialty: appointment.specialty || appointment.condition || "",
+    });
+  });
+}
+
 module.exports = {
+  notifyDoctorAppointmentReopened,
   notifyAppointmentBooked,
   notifyCategoryConsultationBooked,
   notifyAppointmentDoctorChanged,

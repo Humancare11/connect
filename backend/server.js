@@ -815,6 +815,11 @@ const io = new Server(server, {
 app.set("io", io);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
 app.set("evictAllFromAppointmentRoom", evictAllFromAppointmentRoom);
+// Reopening a completed appointment must lift the "terminated" block set by
+// evictAllFromAppointmentRoom, otherwise nobody can rejoin for up to 5 minutes.
+app.set("allowAppointmentRoomRejoin", (appointmentId) => {
+  terminatedAppointmentRooms.delete(String(appointmentId));
+});
 
 io.engine.on("connection_error", (err) => {
   console.warn("[socket] connection_error", {

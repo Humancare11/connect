@@ -264,9 +264,11 @@ export default function AdminAppointments() {
                                 <strong>{appointment.doctorId?.name || "Assigned doctor"}</strong>
                                 <span>{appointment.category || "-"} - {getCountryName(doctorCountry(appointment))}</span>
                               </div>
-                              <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
-                                Alternate Doctor
-                              </Link>
+                              {!["complete", "completed"].includes(appointment.status) && (
+                                <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
+                                  Alternate Doctor
+                                </Link>
+                              )}
                             </>
                           ) : (
                             <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>

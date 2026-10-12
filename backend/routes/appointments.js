@@ -3,7 +3,8 @@ const router = require("express").Router();
 const { verifyToken, verifyUserToken, verifyDoctorToken, verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const {
   createAppointment, getPatientAppointments, getDoctorAppointments,
-  confirmAppointment, completeAppointment, cancelAppointment, reassignAppointmentDoctor,
+  confirmAppointment, completeAppointment, adminCompleteAppointment, reopenAppointment,
+  cancelAppointment, reassignAppointmentDoctor,
   getAllAppointments, getAppointmentById, getDoctorOwnAppointment, getPatientOwnAppointment, getBookedSlots,
 } = require("../controllers/appointmentController");
 
@@ -15,6 +16,8 @@ router.get("/admin/all", verifyAdminToken, adminOnly, getAllAppointments);
 router.put("/:id/change-doctor", verifyAdminToken, adminOnly, reassignAppointmentDoctor);
 router.put("/:id/confirm", verifyDoctorToken, confirmAppointment);
 router.put("/:id/complete", verifyDoctorToken, completeAppointment);
+router.put("/:id/admin-complete", verifyAdminToken, adminOnly, adminCompleteAppointment);
+router.put("/:id/reopen", verifyAdminToken, adminOnly, reopenAppointment);
 router.put("/:id/cancel", verifyDoctorToken, cancelAppointment);
 // Doctor-specific fetch — DB-level ownership check, must be before /:id
 router.get("/doctor/:id", verifyDoctorToken, getDoctorOwnAppointment);

@@ -7,6 +7,9 @@ const { recordActivity }       = require("../utils/activityLogger");
 const { sendPushToUser }       = require("../utils/pushNotifications");
 const { encryptPHI, decryptPHI } = require("../utils/phiCrypto");
 const { ensureDoctorAppointment } = require("../utils/doctorAppointmentAccess");
+const { loadAppointmentAny, completeLoaded } = require("../utils/appointmentLifecycle");
+
+const isCancelled = (appointment) => String(appointment?.status || "").toLowerCase() === "cancelled";
 
 // Strips the cipher envelope off a lean-queried document and merges in its
 // decrypted PHI fields. Documents created before field-level encryption was
@@ -188,6 +191,9 @@ const createPrescription = async (req, res) => {
     } catch (err) {
       return res.status(err.statusCode || 404).json({ msg: err.message });
     }
+    if (isCancelled(appointment)) {
+      return res.status(400).json({ msg: "A prescription can't be issued for a cancelled appointment." });
+    }
     const patientId = appointment.patientId;
 
     // Each medicine must at least have a name — anything else (missing
@@ -256,9 +262,30 @@ const createPrescription = async (req, res) => {
       details: { appointmentId },
     });
 
+    // Only the appointments page asks for this (completeOnSave). Prescriptions
+    // saved inside a live video call must not end the call, and a certificate
+    // alone never completes an appointment. Already-complete appointments are
+    // left alone. A completion failure never undoes the saved prescription.
+    let appointmentCompleted = false;
+    let completionFailed = false;
+    if (req.body.completeOnSave === true && ["assigned", "confirmed"].includes(String(appointment.status || "").toLowerCase())) {
+      try {
+        const loaded = await loadAppointmentAny(appointmentId);
+        if (loaded) {
+          const result = await completeLoaded(req.app, loaded);
+          appointmentCompleted = !result.alreadyComplete;
+        }
+      } catch (completeErr) {
+        completionFailed = true;
+        console.error("createPrescription: auto-complete failed (prescription was saved):", completeErr.message);
+      }
+    }
+
     res.status(201).json({
       msg: "Prescription created.",
       prescription: withDecryptedFields(prescription.toObject(), PRESCRIPTION_PHI_FIELDS),
+      appointmentCompleted,
+      completionFailed,
     });
   } catch (err) {
     console.error("createPrescription error:", err);
@@ -286,6 +313,9 @@ const createMedicalCertificate = async (req, res) => {
       appointment = await ensureDoctorAppointment(appointmentId, req.user.id);
     } catch (err) {
       return res.status(err.statusCode || 404).json({ msg: err.message });
+    }
+    if (isCancelled(appointment)) {
+      return res.status(400).json({ msg: "A medical certificate can't be issued for a cancelled appointment." });
     }
     const patientId = appointment.patientId;
 
