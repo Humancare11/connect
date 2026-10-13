@@ -25,10 +25,10 @@ WHO CHATS
 - Each agent has an Online/Offline switch and a display name shown to patients (e.g. "Sam").
 
 PATIENT WIDGET (public pages only; not admin, login, payment or video-call pages)
-- Floating "Chat with us" button bottom-right; window ~380x600 on desktop, full screen on mobile. Header: avatar with online dot, "Humancare AI" / "AI Healthcare Coordinator", minimize and close. Once the AI chat has started, the header also shows a "Talk to live agent" button (hidden before the contact form and while waiting for or talking to an agent).
+- Floating "Chat with us" button bottom-right; window ~380x600 on desktop, full screen on mobile. Header: avatar with online dot, "Connect AI" (the AI name setting; no subtitle), minimize and close. Once the AI chat has started, the header also shows a "Talk to live agent" button (hidden before the contact form and while waiting for or talking to an agent).
 - Mount client-side only, after idle, so prerender/SEO/LCP are unaffected.
 - STEP 1 contact form, before ANY chat (AI or live agent): Full name (required), Email (required, validated), Phone (optional; if given, 7-15 digits with country code). Consent line linking the Privacy Policy. The message box stays disabled until the form is submitted. Remember the contact for this visitor so returning visitors skip the form.
-- STEP 2 after submit: greeting "Hi {first name}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?" followed by quick-option cards (icon, label, chevron):
+- STEP 2 after submit: greeting "Hi {first name}! I'm Connect AI. How can I help you today?" followed by quick-option cards (icon, label, chevron):
   1. Online Consultation with Prescription
   2. Prescription & Prescription refill
   3. Medical Advice/Second Opinion
@@ -69,7 +69,7 @@ AI
 
 ABUSE PROTECTION
 - Cloudflare Turnstile (or reCAPTCHA) and a honeypot field on the contact form.
-- Per visitor: max 30 AI replies per chat, max 6 messages per minute. Per IP: max 5 new chats per day. Max 1,000 characters per patient message, max 300 output tokens per AI reply.
+- Per visitor: max 30 AI replies per chat, max 6 messages per minute. Per IP: max 20 new chats per day (`LIVECHAT_CHATS_PER_IP_DAY`). Max 1,000 characters per patient message, max 300 output tokens per AI reply.
 - Daily AI spend cap in code (configurable, default $3) that switches to leave-a-message mode; live chat keeps working.
 - Per-IP socket connection caps and event size limits. Admin alert plus an IP block button for abusive visitors.
 

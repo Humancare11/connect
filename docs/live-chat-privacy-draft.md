@@ -10,7 +10,7 @@ Buttons: Accept / Decline (unchanged).
 
 ## Privacy Policy: new section "Website chat"
 
-> **Website chat.** When you use our chat, we collect your name, email address, optional phone number, the messages you send, any files you upload, and technical information such as your IP address and approximate location. Our first responder is an AI assistant operated for us by OpenAI, and messages are sent to it to produce a reply. Our support staff can read the conversation. Do not share more health information in chat than you need to. The assistant does not diagnose or recommend medication. In an emergency call 911.
+> **Website chat.** When you use our chat, we collect your name, email address, optional phone number, the messages you send, any files you upload, and technical information such as your IP address and approximate location. Our first responder is an AI assistant called "Connect AI" (it is an AI, not a person, doctor or nurse), operated for us by OpenAI, and messages are sent to it to produce a reply. Our support staff can read the conversation. Do not share more health information in chat than you need to. The assistant does not diagnose or recommend medication. In an emergency call 911.
 >
 > If you accepted cookies, we also record the pages you view on our website while the chat is available, and our team can see them in real time while you are chatting.
 >
