@@ -103,6 +103,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [photoOk, setPhotoOk] = useState(true);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
@@ -300,10 +301,29 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
       {!open && chat.invite && <InviteBubble agentName={chat.invite.agentName} onReply={() => setOpen(true)} onLater={chat.dismissInvite} />}
 
       <GreetingBubble open={open} blocked={Boolean(chat.invite)} onOpen={() => setOpen(true)} />
-      <button type="button" className="lcw-launcher" onClick={() => setOpen(!open)} aria-expanded={open}>
-        {open ? "✕ Close" : "💬 Chat with us"}
-        {!open && chat.unread > 0 && <span className="lcw-badge">{chat.unread}</span>}
-      </button>
+
+      {open ? (
+        <button type="button" className="lcw-launcher" onClick={() => setOpen(false)} aria-expanded="true">
+          ✕ Close
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={`lcw-launcher ${photoOk ? "lcw-launcher--logo" : "lcw-launcher--hc"}`}
+          onClick={() => setOpen(true)}
+          aria-label="Open chat"
+          aria-expanded="false"
+        >
+          {photoOk ? (
+            <img src="/livechat/launcher-logo.png" alt="" width="236" height="256" onError={() => setPhotoOk(false)} />
+          ) : (
+            <span className="lcw-launcher-hc" aria-hidden="true">
+              HC
+            </span>
+          )}
+          {chat.unread > 0 && <span className="lcw-badge">{chat.unread}</span>}
+        </button>
+      )}
     </div>
   );
 }

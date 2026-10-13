@@ -112,6 +112,43 @@ describe("live chat: the AI's name comes from one setting", () => {
   });
 });
 
+describe("live chat: launcher logo", () => {
+  const widget = read(FEATURE, "LiveChatWidget.jsx");
+  const css = stripComments(read(FEATURE, "LiveChatWidget.css"));
+  // the declarations of the first `selector { ... }` rule (plain string search, selectors are matched literally)
+  const rule = (selector) => {
+    const at = css.indexOf(`${selector} {`);
+    return at === -1 ? "" : css.slice(css.indexOf("{", at) + 1, css.indexOf("}", at));
+  };
+
+  test("the closed launcher is a real 'Open chat' button holding the logo (alt empty), with an HC fallback", () => {
+    assert.match(widget, /aria-label="Open chat"/);
+    assert.match(widget, /<img src="\/livechat\/launcher-logo\.png" alt=""/);
+    assert.match(widget, /onError=\{\(\) => setPhotoOk\(false\)\}/);
+    assert.match(widget, /lcw-launcher--logo/);
+    assert.match(widget, /lcw-launcher--hc/);
+    assert.doesNotMatch(widget, /agent-avatar/);
+    const file = path.join(ROOT, "frontend", "public", "livechat", "launcher-logo.png");
+    assert.equal(fs.readFileSync(file).subarray(1, 4).toString(), "PNG");
+    assert.equal(fs.existsSync(path.join(ROOT, "docs", "livechat-launcher-logo.png")), false, "the file was moved, not copied");
+  });
+
+  test("bare logo: 72px (60px on phones), no circle / background / border, drop shadow, small hover lift, no other animation", () => {
+    const logo = rule(".lcw-launcher--logo");
+    assert.match(logo, /width:\s*72px/);
+    assert.match(logo, /background:\s*none/);
+    assert.match(logo, /border:\s*0/);
+    assert.match(logo, /border-radius:\s*0/);
+    assert.match(rule(".lcw-launcher--logo img"), /height:\s*auto/);
+    assert.match(rule(".lcw-launcher--logo img"), /drop-shadow\(0 6px 14px rgba\(11, 42, 122, 0\.28\)\)/);
+    assert.match(rule(".lcw-launcher--logo:hover"), /translateY\(-3px\)/);
+    assert.doesNotMatch(css, /\.lcw-launcher--logo[^{]*\{[^}]*(animation|rotate|scaleX|flip)/);
+    assert.match(css, /@media \(max-width: 520px\) \{\s*\.lcw-launcher--logo \{\s*width: 60px;/);
+    assert.match(rule(".lcw-launcher--hc"), /border-radius|width:\s*60px/);
+    assert.match(rule(".lcw-launcher--logo .lcw-badge"), /top:\s*2px/);
+  });
+});
+
 describe("live chat: widget header status", () => {
   const widget = read(FEATURE, "LiveChatWidget.jsx");
   const css = read(FEATURE, "LiveChatWidget.css");

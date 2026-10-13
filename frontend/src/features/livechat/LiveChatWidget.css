@@ -63,6 +63,62 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   box-shadow: 0 18px 40px -16px rgba(11, 31, 92, 0.45);
 }
+/* Closed state: our logo (a transparent speech-bubble PNG) as the button, no circle, background or border. */
+.lcw-launcher--logo {
+  width: 72px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transition: transform 0.15s ease;
+}
+.lcw-launcher--logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 14px rgba(11, 42, 122, 0.28));
+}
+.lcw-launcher--logo:hover {
+  transform: translateY(-3px);
+}
+.lcw-launcher--logo .lcw-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+/* If the logo cannot load: the navy "HC" circle. */
+.lcw-launcher--hc {
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  justify-content: center;
+  background: var(--lcw-brand);
+}
+.lcw-launcher-hc {
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+.lcw-launcher--hc .lcw-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+}
+@media (max-width: 520px) {
+  .lcw-launcher--logo {
+    width: 60px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lcw-launcher--logo {
+    transition: none;
+  }
+  .lcw-launcher--logo:hover {
+    transform: none;
+  }
+}
+
 /* Greeting bubble above the launcher. */
 .lcw-greet {
   position: relative;
