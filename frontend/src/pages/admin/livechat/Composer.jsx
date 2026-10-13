@@ -3,17 +3,12 @@ import Icon from "./lcIcons";
 
 // The message box under a conversation (docs/live-chat-admin-ui.html "Enter message" bar).
 //   Message / Internal note   notes are for the team and never reach the patient
-//   Translate                 type in English, translate into the patient's language (or one you pick), check it, send
+//   To <language>             on a non-English chat: type in English, translate into the patient's language, check it, send
 //   Saved replies (#)         click the # button, or type # in the box and keep typing to filter; Super Admin manages them
 //   Suggest a reply (AI)      puts a draft in the box; nothing is sent until the admin edits and sends it
 //   Emoji, Attach a file      PDF, JPG or PNG up to 10 MB, sent to the patient
 // Enter sends, Shift+Enter starts a new line.
 const EMOJIS = ["👋", "🙂", "😊", "🙏", "👍", "✅", "🎉", "❤️", "😅", "🤝", "📎", "⏳", "💳", "📅", "🩺", "💊", "📞", "✉️", "🔄", "⭐", "👌", "😉", "🙌"];
-// Same codes the server accepts (languageHints.TARGET_LANGUAGES).
-const LANGUAGES = [
-  ["de", "German"], ["es", "Spanish"], ["fr", "French"], ["ar", "Arabic"], ["hi", "Hindi"], ["it", "Italian"], ["pt", "Portuguese"], ["nl", "Dutch"],
-  ["tr", "Turkish"], ["ru", "Russian"], ["zh", "Chinese"], ["ja", "Japanese"], ["ko", "Korean"], ["pl", "Polish"], ["ur", "Urdu"], ["bn", "Bengali"],
-];
 const FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 const FILE_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"];
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -32,7 +27,6 @@ const Composer = forwardRef(function Composer(
   const [caret, setCaret] = useState(0);
   const [noteMode, setNoteMode] = useState(false);
   const [englishSource, setEnglishSource] = useState(""); // the admin's English text while a translation is in the box
-  const [target, setTarget] = useState(null); // { code, name } picked for a chat with no detected language
   const [suggesting, setSuggesting] = useState(false);
   const [replying, setReplying] = useState(false);
   const [attaching, setAttaching] = useState(false);
@@ -42,7 +36,6 @@ const Composer = forwardRef(function Composer(
   const fileRef = useRef(null);
   const noting = noteMode || notesOnly;
   const replies = useMemo(() => canned?.replies || [], [canned]);
-  const translateTo = language ? { code: language.code, name: language.name } : target;
 
   useImperativeHandle(ref, () => ({
     startNote() {
@@ -136,12 +129,12 @@ const Composer = forwardRef(function Composer(
   };
 
   // Reply translation: the admin's English text is replaced by the other language, editable; nothing is sent.
-  const translate = async (to = translateTo) => {
+  const translate = async () => {
     const text = draft.trim();
-    if (!text || replying || !to) return;
+    if (!text || replying || !language) return;
     setReplying(true);
     onNotice("");
-    const res = await onTranslateReply(text, language ? undefined : to.code);
+    const res = await onTranslateReply(text);
     setReplying(false);
     if (!res.ok) {
       onNotice(res.status === 429 ? "Too many translations, wait a moment" : "Translation unavailable right now");
@@ -150,13 +143,6 @@ const Composer = forwardRef(function Composer(
     setEnglishSource(text);
     setDraft(res.text);
     focusAt(res.text.length);
-  };
-
-  const chooseLanguage = (code, name) => {
-    const to = { code, name };
-    setTarget(to);
-    setPop("");
-    if (draft.trim() && !englishSource) translate(to);
   };
 
   const attach = async (event) => {
@@ -229,6 +215,7 @@ const Composer = forwardRef(function Composer(
             value={draft}
             placeholder={placeholder}
             aria-label={noting ? "Internal note" : "Reply to the patient"}
+            data-lenis-prevent
             onChange={(e) => {
               setDraft(e.target.value);
               setCaret(e.target.selectionStart);
@@ -243,26 +230,17 @@ const Composer = forwardRef(function Composer(
               {noting ? "Note" : "Message"} <Icon name="chevD" size={16} />
             </button>
             <span className="cm-sep" aria-hidden="true" />
-            {!noting && !closed && (
-              <>
-                <button
-                  type="button"
-                  className="cm-ic cm-tr"
-                  data-pop
-                  disabled={replying || busy || (translateTo ? !draft.trim() || Boolean(englishSource) : false)}
-                  aria-expanded={pop === "lang"}
-                  title={translateTo ? "Type in English, translate, check, then send" : "Translate your reply"}
-                  onClick={() => (translateTo ? translate() : setPop(pop === "lang" ? "" : "lang"))}
-                >
-                  <Icon name="translate" />
-                  <span>{replying ? "Translating…" : translateTo ? `To ${translateTo.name}` : "Translate"}</span>
-                </button>
-                {!language && translateTo && (
-                  <button type="button" className="cm-ic" data-pop onClick={() => setPop(pop === "lang" ? "" : "lang")} aria-expanded={pop === "lang"} aria-label="Choose another language" title="Choose another language">
-                    <Icon name="chevD" size={14} />
-                  </button>
-                )}
-              </>
+            {language && !noting && !closed && (
+              <button
+                type="button"
+                className="cm-ic cm-tr"
+                disabled={replying || busy || !draft.trim() || Boolean(englishSource)}
+                title="Type in English, translate, check, then send"
+                onClick={translate}
+              >
+                <Icon name="translate" />
+                <span>{replying ? "Translating…" : `To ${language.name}`}</span>
+              </button>
             )}
             <button
               type="button"
@@ -336,7 +314,7 @@ const Composer = forwardRef(function Composer(
             </div>
           )}
           {repliesOpen && (
-            <div className="pop pop--canned" role="menu" aria-label="Saved replies">
+            <div className="pop pop--canned" role="menu" aria-label="Saved replies" data-lenis-prevent>
               {replies.length === 0 && (
                 <div className="pop-item" style={{ pointerEvents: "none" }}>
                   <b>No saved replies yet</b>
@@ -358,18 +336,6 @@ const Composer = forwardRef(function Composer(
                 >
                   <b>{r.title}</b>
                   <span>{r.text.replaceAll("{agentName}", canned.agentName || "Support")}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {pop === "lang" && (
-            <div className="pop pop--lang" role="menu">
-              <div className="pop-item" style={{ pointerEvents: "none" }}>
-                <b>Translate your reply to</b>
-              </div>
-              {LANGUAGES.map(([code, name]) => (
-                <button key={code} type="button" className={`pop-item${target?.code === code ? " is-sel" : ""}`} onClick={() => chooseLanguage(code, name)}>
-                  <b>{name}</b>
                 </button>
               ))}
             </div>

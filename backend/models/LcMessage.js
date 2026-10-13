@@ -18,6 +18,7 @@ const messageSchema = new mongoose.Schema(
       {
         _id: false,
         lang: { type: String, maxlength: 8 },
+        v: { type: Number, default: 1 }, // 2 = made with the romanized-text rules; older "already English" entries are re-checked once
         same: { type: Boolean, default: false },
         from: { type: String, default: "", maxlength: 8 },
         fromName: { type: String, default: "", maxlength: 40 },

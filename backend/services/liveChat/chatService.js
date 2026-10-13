@@ -10,7 +10,7 @@
 const crypto = require("crypto");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
-const { tooShortToTell, looksEnglish } = require("./languageHints");
+const { tooShortToTell, tooShortToDetect, looksEnglish } = require("./languageHints");
 
 // Shown the moment a chat goes to the team, whoever is or is not at their desk.
 const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`;
@@ -575,7 +575,7 @@ function createChatService({
     // the chat is still an AI chat (see `ifStillAi`).
     if (saved.mode === "ai") await withLock(`ai:${saved.conversationId}`, () => aiTurn(saved, loaded.visitor));
     // No language yet (AI off, cap reached, or straight to an agent): one small call on a clearly non-English message.
-    if (detector && !saved.language?.code && !tooShortToTell(text.text) && !looksEnglish(text.text)) {
+    if (detector && !saved.language?.code && !tooShortToDetect(text.text) && !looksEnglish(text.text)) {
       detector(saved, text.text).catch(() => {});
     }
     return { ok: true };

@@ -121,7 +121,7 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
   }, [rows, query]);
 
   return (
-    <nav className="wk-list" aria-label="Chats">
+    <nav className="wk-list" aria-label="Chats" data-lenis-prevent>
       <div className="lhead">{live ? "All chats" : "AI chats"}</div>
       <div className="wk-notif">
         <NotificationsBanner />

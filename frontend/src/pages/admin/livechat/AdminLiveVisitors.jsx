@@ -157,7 +157,7 @@ export default function AdminLiveVisitors() {
       .filter(
         (v) =>
           !q ||
-          [v.name, v.email, v.ip, v.geo?.city, v.geo?.state, v.geo?.country, v.page?.title, v.page?.path]
+          [v.name, v.email, v.ip, v.geo?.city, v.geo?.state, v.geo?.country, v.geo?.countryCode, v.page?.title, v.page?.path]
             .join(" ")
             .toLowerCase()
             .includes(q)
@@ -193,7 +193,7 @@ export default function AdminLiveVisitors() {
             )}
           </div>
         </div>
-        <div className="rt-body">
+        <div className="rt-body" data-lenis-prevent>
           <NotificationsBanner />
           <div className="rt-radar">
             <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
@@ -307,8 +307,9 @@ export default function AdminLiveVisitors() {
                       Time on all pages <Icon name="up" size={14} className="i" />
                     </button>
                   </th>
+                  <th>City</th>
+                  <th>State / region</th>
                   <th>Country</th>
-                  <th>State</th>
                 </tr>
               </thead>
               <tbody>
@@ -360,14 +361,15 @@ export default function AdminLiveVisitors() {
                       </td>
                       <td>{visitor.assignedTo || "-"}</td>
                       <td>{duration(secondsOnSite(visitor))}</td>
-                      <td>{geo.country ? `${flag(geo.countryCode)} ${geo.country}` : "-"}</td>
-                      <td>{geo.state || "-"}</td>
+                      <td>{geo.city || "–"}</td>
+                      <td>{geo.state || "–"}</td>
+                      <td>{geo.country ? `${flag(geo.countryCode)} ${geo.country}`.trim() : "–"}</td>
                     </tr>
                   );
                 })}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="rt-empty">
+                    <td colSpan={9} className="rt-empty">
                       {status === "off"
                         ? "Live chat is switched off. Set LIVECHAT_ENABLED=true on the server to turn it on."
                         : "No patients match this filter"}
@@ -379,9 +381,14 @@ export default function AdminLiveVisitors() {
           </div>
 
           <BlockedIpsPanel refreshKey={blockedVersion} />
+          <p className="rt-credit">
+            <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">
+              IP Geolocation by DB-IP
+            </a>
+          </p>
         </div>
       </section>
-      <aside className="wk-profile rt-panel" aria-label="Patient details">
+      <aside className="wk-profile rt-panel" aria-label="Patient details" data-lenis-prevent>
         <VisitorPanel
           visitor={selectedVisitor}
           now={now}

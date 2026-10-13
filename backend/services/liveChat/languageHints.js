@@ -13,6 +13,14 @@ function tooShortToTell(text) {
   return letterCount(text) < 12 || tokensOf(text).length < 3;
 }
 
+// Worth one detection call: at least 6 letters in 2 or more words that are not all common English words. Short
+// romanized text ("kasa aahes", Marathi in Latin letters) has few letters but is still not English.
+function tooShortToDetect(text) {
+  const tokens = tokensOf(text);
+  if (letterCount(text) < 6 || tokens.length < 2) return true;
+  return tokens.every((t) => EN_WORDS.has(t));
+}
+
 // Clearly English: enough common English words. Used to skip model calls, never to decide it is NOT English.
 function looksEnglish(text) {
   const tokens = tokensOf(text);
@@ -106,11 +114,4 @@ function restore(text, tokens) {
   return out;
 }
 
-// Languages an admin can translate a reply into (code -> name). The name goes to the model; the code is what the
-// browser sends, so a free-text language never reaches the prompt.
-const TARGET_LANGUAGES = {
-  de: "German", es: "Spanish", fr: "French", ar: "Arabic", hi: "Hindi", it: "Italian", pt: "Portuguese", nl: "Dutch",
-  tr: "Turkish", ru: "Russian", zh: "Chinese", ja: "Japanese", ko: "Korean", pl: "Polish", ur: "Urdu", bn: "Bengali",
-};
-
-module.exports = { tooShortToTell, looksEnglish, normalizeLanguage, protect, restore, contactLiterals, scrubContact, TARGET_LANGUAGES };
+module.exports = { tooShortToTell, tooShortToDetect, looksEnglish, normalizeLanguage, protect, restore, contactLiterals, scrubContact };

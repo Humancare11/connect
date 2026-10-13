@@ -61,6 +61,12 @@ export default function LiveChatShell({ children }) {
 
   useGeistFont();
 
+  // The shell is a fixed box: the page itself must not scroll behind it (only the panes inside do).
+  useEffect(() => {
+    document.documentElement.classList.add("lc-shell-open");
+    return () => document.documentElement.classList.remove("lc-shell-open");
+  }, []);
+
   // This is THE Live Chat tab: announce it (so other admin tabs stay quiet) and let other tabs deep-link into it.
   useEffect(() => registerLiveChatTab((path) => navigate(path)), [navigate]);
 
@@ -93,13 +99,19 @@ export default function LiveChatShell({ children }) {
     navigate("/adminauth");
   };
 
-  const current = ITEMS.find((item) => matches(item, pathname)) || ITEMS[0];
   const roleLabel = user?.role === "superadmin" ? "Super Admin" : "Admin";
 
   return (
     <div className="lcx" data-theme={theme}>
       <div className={`lx-root${collapsed ? " collapsed" : ""}${phoneOpen ? " side-open" : ""}`}>
         <div className="lx-scrim" onClick={() => setPhoneOpen(false)} />
+        <button className="lx-fab" type="button" onClick={toggleSide} aria-label="Open the menu" title="Menu">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
         <aside className="lx-sidebar" aria-label="Live Chat menu">
           <div className="lx-profile">
             <div className="lx-profile-avatar">{initialsOf(user?.name) || "A"}</div>
@@ -108,7 +120,7 @@ export default function LiveChatShell({ children }) {
               <div className="lx-profile-role">{roleLabel}</div>
             </div>
           </div>
-          <nav className="lx-nav">
+          <nav className="lx-nav" data-lenis-prevent>
             <Link to="/admin-dashboard" className="lx-nav-item" title="Admin dashboard">
               <span className="lx-nav-icon">
                 <Icon name="back" size={17} />
@@ -148,6 +160,16 @@ export default function LiveChatShell({ children }) {
               </svg>
               <span className="lx-nav-label">Collapse</span>
             </button>
+            <button
+              className="lx-collapse-btn lx-theme-btn"
+              type="button"
+              onClick={toggle}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              <Icon name={theme === "dark" ? "sun" : "moon"} size={16} />
+              <span className="lx-nav-label">{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+            </button>
             <button className="lx-logout-btn" type="button" onClick={logout}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -159,31 +181,9 @@ export default function LiveChatShell({ children }) {
           </div>
         </aside>
         <main className="lx-main">
-          <header className="lx-topbar">
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <button className="lx-burger" type="button" onClick={toggleSide} aria-label="Collapse or expand menu" title="Collapse or expand menu">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              </button>
-              <div className="lx-topbar-title">{current.label}</div>
-            </div>
-            <div className="lx-topbar-right">
-              <button
-                type="button"
-                className="lx-theme"
-                onClick={toggle}
-                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              >
-                <Icon name={theme === "dark" ? "sun" : "moon"} size={15} />
-                <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
-              </button>
-              <span className="lx-topbar-user">{String(user?.name || "Admin").split(" ")[0]}</span>
-            </div>
-          </header>
-          <div className="lx-content">{children}</div>
+          <div className="lx-content" data-lenis-prevent>
+            {children}
+          </div>
         </main>
       </div>
       <LiveChatAdminProvider user={user} />

@@ -120,7 +120,7 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
   const local = localTime(p.timeZone, now);
 
   return (
-    <aside className="wk-profile" aria-label="Patient">
+    <aside className="wk-profile" aria-label="Patient" data-lenis-prevent>
       <div className="wk-phead">
         <span className={`wk-av wk-av--lg${hasName ? "" : " wk-av--anon"}`}>
           {hasName ? initials(p.contact.name) : "V"}

@@ -430,7 +430,7 @@ export default function ChatWorkspace({ view }) {
             <div className="wk-empty">{detailError || (activeId ? "Loading…" : rows.length || loading ? "Pick a chat on the left" : "No chats yet")}</div>
           </div>
         )}
-        {detail ? <ChatDetailsPanel detail={detail} now={serverNow} onSaveContact={handlers.saveContact} onSaveTags={handlers.saveTags} /> : <aside className="wk-profile" />}
+        {detail ? <ChatDetailsPanel detail={detail} now={serverNow} onSaveContact={handlers.saveContact} onSaveTags={handlers.saveTags} /> : <aside className="wk-profile" data-lenis-prevent />}
       </div>
     </div>
   );

@@ -11,7 +11,7 @@
 // are never translated.
 const { encryptLiveChatText, decryptLiveChatText } = require("../../utils/liveChat/crypto");
 const { createWindowLimiter } = require("./limits");
-const { looksEnglish, tooShortToTell, protect, restore, contactLiterals, TARGET_LANGUAGES } = require("./languageHints");
+const { looksEnglish, tooShortToDetect, protect, restore, contactLiterals } = require("./languageHints");
 
 const CHUNK_ITEMS = 20;
 const CHUNK_CHARS = 8000;
@@ -30,35 +30,46 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     return !(await limits.spendStatus(settings)).capReached;
   }
 
+  // Patient, AI and agent messages, and system lines the patient can see (never internal ones).
   const translatable = (m) =>
-    ["patient", "ai", "agent"].includes(m.sender) && !m.internal && !m.fileId && Boolean(m.text?.cipherText);
+    ["patient", "ai", "agent", "system"].includes(m.sender) && !m.internal && !m.fileId && Boolean(m.text?.cipherText);
 
   const cachedEnglish = (m) => (m.translations || []).find((t) => t.lang === "en");
 
   async function saveTranslation(message, entry) {
     await LcMessage.updateOne(
       { _id: message._id, "translations.lang": { $ne: entry.lang } },
-      { $push: { translations: { lang: entry.lang, same: Boolean(entry.same), from: entry.from || "", fromName: entry.fromName || "", text: encryptLiveChatText(entry.text || "") } } }
+      { $push: { translations: { lang: entry.lang, v: 2, same: Boolean(entry.same), from: entry.from || "", fromName: entry.fromName || "", text: encryptLiveChatText(entry.text || "") } } }
     );
   }
 
   // English view. ids optional: only those messages (a new patient message arriving while English is selected).
+  // Every patient, AI and agent message (and patient-visible system line) that is not already English is translated,
+  // whatever the script: text typed in Latin letters can be Marathi or Hindi too. Results are cached encrypted.
   async function translateMessages(actor, conv, ids) {
     if (!limiter.allow(String(actor.id))) throw fail(429, "rate_limited");
-    const filter = { conversationId: conv.conversationId, sender: { $in: ["patient", "ai", "agent"] }, internal: { $ne: true }, fileId: null };
+    const filter = { conversationId: conv.conversationId, sender: { $in: ["patient", "ai", "agent", "system"] }, internal: { $ne: true }, fileId: null };
     if (Array.isArray(ids) && ids.length) filter._id = { $in: ids.slice(0, MAX_MESSAGES) };
     const rows = (await LcMessage.find(filter).sort({ createdAt: 1 }).limit(MAX_MESSAGES)).filter(translatable);
+    // The chat's language (a name only, no patient data) helps the model with text typed in Latin letters.
+    const hint = conv.language?.code && conv.language.code !== "en" ? conv.language.name || conv.language.code : "";
 
     const out = {};
     const failed = [];
     const todo = [];
     for (const m of rows) {
-      const cached = cachedEnglish(m);
+      let cached = cachedEnglish(m);
+      const text = decryptLiveChatText(m.text);
+      // An older "already English" answer on a non-English chat is checked again once (entries made before the
+      // romanized-text rules have no version 2).
+      if (cached?.same && (cached.v || 1) < 2 && hint && text.trim() && !looksEnglish(text)) {
+        await LcMessage.updateOne({ _id: m._id }, { $pull: { translations: { lang: "en" } } });
+        cached = null;
+      }
       if (cached) {
         if (!cached.same) out[String(m._id)] = { text: decryptLiveChatText(cached.text), from: cached.from, fromName: cached.fromName };
         continue;
       }
-      const text = decryptLiveChatText(m.text);
       if (!text.trim()) continue;
       if (looksEnglish(text)) {
         await saveTranslation(m, { lang: "en", same: true }); // clearly English: no model call
@@ -70,6 +81,26 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     if (todo.length) {
       const settings = await loadSettings();
       if (!(await spendOk(settings))) throw unavailable("spend_cap");
+      const literals = contactLiterals(await contactOf(conv));
+      const idOf = (g) => String(g.message._id);
+
+      // One model call for some messages. If the answer is cut off, the messages are split in two and each half is
+      // tried again, so one long message cannot leave the whole chat untranslated.
+      async function run(items, options, depth = 0) {
+        if (!(await spendOk(settings))) throw unavailable("spend_cap");
+        const result = await ai.translateBatch({ items: items.map((g) => ({ id: idOf(g), text: g.safe })), target: "English", hint, ...options });
+        if (result.usage) await chat.recordUsage(conv, settings, result.usage);
+        if (result.ok) return result;
+        if (result.kind === "incomplete" && items.length > 1 && depth < 3) {
+          const mid = Math.ceil(items.length / 2);
+          const first = await run(items.slice(0, mid), options, depth + 1);
+          const second = await run(items.slice(mid), options, depth + 1);
+          if (!first.ok && !second.ok) return first;
+          return { ok: true, items: [...(first.ok ? first.items : []), ...(second.ok ? second.items : [])] };
+        }
+        return result;
+      }
+
       // chunks of up to 20 messages / 8000 characters, one model call each
       const chunks = [];
       let current = [];
@@ -87,17 +118,27 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
 
       let languageSeen = null;
       for (const chunk of chunks) {
-        if (!(await spendOk(settings))) throw unavailable("spend_cap");
-        const guarded = chunk.map((item) => ({ ...item, ...protect(item.text) }));
-        const result = await ai.translateBatch({
-          items: guarded.map((g) => ({ id: String(g.message._id), text: g.text })),
-          target: "English",
+        const guarded = chunk.map((item) => {
+          const p = protect(item.text, literals);
+          return { ...item, safe: p.text, tokens: p.tokens };
         });
-        if (result.usage) await chat.recordUsage(conv, settings, result.usage);
+        const result = await run(guarded, {});
         if (!result.ok) throw unavailable(result.kind);
         const byId = new Map(result.items.map((r) => [r.id, r]));
+
+        // "English" for text that is not clearly English (the model named another language, or this chat has one and
+        // the text is no obvious English) is asked again, telling the model it was not recognised as English.
+        const suspect = guarded.filter((g) => {
+          const r = byId.get(idOf(g));
+          return r?.english && ((r.code && r.code !== "en") || (hint && g.message.sender !== "system" && !looksEnglish(g.text)));
+        });
+        if (suspect.length) {
+          const again = await run(suspect, { force: true });
+          if (again.ok) for (const r of again.items) byId.set(r.id, r);
+        }
+
         for (const g of guarded) {
-          const id = String(g.message._id);
+          const id = idOf(g);
           const r = byId.get(id);
           if (!r) {
             failed.push(id);
@@ -109,7 +150,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
           }
           const text = restore(r.text, g.tokens);
           if (text === null || !text.trim()) {
-            failed.push(id); // the model changed a link / price: do not show or cache it
+            failed.push(id); // the model changed a link / price / name: do not show or cache it
             continue;
           }
           await saveTranslation(g.message, { lang: "en", from: r.code, fromName: r.name, text });
@@ -123,7 +164,6 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     return { translations: out, failed, language: publicLanguage(fresh?.language) };
   }
 
-  // The admin's text (English) -> the patient's language. Never saved, never sent.
   // The patient's name, email and phone are held back from the model (swapped for tokens and put back after).
   async function contactOf(conv) {
     const visitor = await chat.loadVisitor(conv.visitorId);
@@ -131,19 +171,13 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     return { name: pick("name"), email: pick("email"), phone: pick("phone") };
   }
 
-  // target (optional): a language code from TARGET_LANGUAGES, for a chat with no detected language. Without it the
-  // patient's language is used.
-  async function translateReply(actor, conv, rawText, targetCode) {
+  // Always into the patient's language (the chat's detected language); an English chat has nothing to translate to.
+  async function translateReply(actor, conv, rawText) {
     const text = typeof rawText === "string" ? rawText.trim() : "";
     if (!text) throw fail(400, "empty_message");
     if ([...text].length > MAX_REPLY_CHARS) throw fail(400, "message_too_long");
-    let language = conv.language?.code && conv.language.code !== "en" ? conv.language : null;
-    if (targetCode) {
-      const code = String(targetCode).toLowerCase();
-      if (!TARGET_LANGUAGES[code]) throw fail(400, "invalid_language");
-      language = { code, name: TARGET_LANGUAGES[code] };
-    }
-    if (!language) throw fail(409, "no_language");
+    const language = conv.language;
+    if (!language?.code || language.code === "en") throw fail(409, "no_language");
     if (!limiter.allow(String(actor.id))) throw fail(429, "rate_limited");
     const settings = await loadSettings();
     if (!(await spendOk(settings))) throw unavailable("spend_cap");
@@ -162,7 +196,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
   async function detectFor(conv, text) {
     try {
       if (conv.language?.code) return;
-      if (!text || tooShortToTell(text) || looksEnglish(text)) return;
+      if (!text || tooShortToDetect(text) || looksEnglish(text)) return;
       const tries = detectTries.get(conv.conversationId) || 0;
       if (tries >= MAX_DETECT_TRIES) return;
       const settings = await loadSettings();

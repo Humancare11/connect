@@ -158,10 +158,13 @@ function setupVisitorNamespace(ns, ctx) {
     const releaseConnection = ctx.chat.trackConnection(visitorId);
 
     if (tracking) {
-      const isNew = !presence.get(visitorId);
+      // Look the location up for a new visitor, and again on a reconnect while the record still has no country (the
+      // first lookup failed, or the GeoIP file was installed after they arrived).
+      const known = presence.get(visitorId);
+      const needsLocation = !known || !known.geo?.country;
       const { source, referrer } = classifySource(socket.handshake.auth?.referrer);
       presence.attach(visitorId, socket.id, { ip, ...parseUserAgent(userAgent), source, referrer });
-      if (isNew) {
+      if (needsLocation) {
         // Server-side location from the IP. Never throws; an unknown IP simply leaves the location empty.
         Promise.resolve(ctx.lookupLocation(ip))
           .then((geo) => {

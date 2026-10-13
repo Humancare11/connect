@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { handoffLabel } from "./liveChatHub";
 import Icon from "./lcIcons";
 import Composer from "./Composer";
@@ -25,7 +25,7 @@ function TranslatedText({ text, translation, shownOriginal, onToggleOriginal }) 
         <span className="wk-trans">
           Original ({from}) ·{" "}
           <button type="button" className="wk-link" onClick={onToggleOriginal}>
-            show English
+            Show English
           </button>
         </span>
       </>
@@ -37,7 +37,7 @@ function TranslatedText({ text, translation, shownOriginal, onToggleOriginal }) 
       <span className="wk-trans">
         Translated from {from} ·{" "}
         <button type="button" className="wk-link" onClick={onToggleOriginal}>
-          show original
+          Show original
         </button>
       </span>
     </>
@@ -67,7 +67,7 @@ function Message({ m, first, c, onOpenFile, translation, shownOriginal, onToggle
     return (
       <div className="mrow sysrow">
         <div className="wk-sys">
-          {m.text} · {timeOf(m.at)}
+          <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} /> · {timeOf(m.at)}
           {m.internal ? " · team only" : ""}
         </div>
       </div>
@@ -160,7 +160,7 @@ export default function ChatConversation({
   const { conversation: c, messages } = detail;
   const bodyRef = useRef(null);
   const composerRef = useRef(null);
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState(""); // "" or "more"
   const [info, setInfo] = useState("");
 
   // Translation (this admin only; the patient never sees any of it)
@@ -183,16 +183,50 @@ export default function ChatConversation({
   // Only the assignee replies; everyone else (and everyone on a closed chat) can still leave internal notes.
   const notesOnly = closed || heldByOther;
 
-  useEffect(() => {
+  // New messages scroll into view only while the admin is at the bottom (within 80px), after they send something, or
+  // when the chat opens. While they read older messages the view stays put and "New messages" offers a jump.
+  const atBottom = useRef(true);
+  const forceBottom = useRef(true); // true on open: the first render goes to the newest message
+  const seenCount = useRef(0);
+  const [unseen, setUnseen] = useState(0);
+  const onBodyScroll = () => {
     const el = bodyRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length, typing, c.conversationId]);
+    if (!el) return;
+    atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    if (atBottom.current) setUnseen(0);
+  };
+  useLayoutEffect(() => {
+    const el = bodyRef.current;
+    if (!el) return;
+    const added = Math.max(0, messages.length - seenCount.current);
+    seenCount.current = messages.length;
+    if (forceBottom.current || atBottom.current) {
+      el.scrollTop = el.scrollHeight;
+      forceBottom.current = false;
+      atBottom.current = true;
+      if (added) Promise.resolve().then(() => setUnseen(0));
+    } else if (added) {
+      Promise.resolve().then(() => setUnseen((n) => n + added));
+    }
+  }, [messages.length, typing]);
+  const jumpToNewest = () => {
+    const el = bodyRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    setUnseen(0);
+  };
+  // Whatever the admin sends, they want to see.
+  const andScroll = (fn) => async (...args) => {
+    forceBottom.current = true;
+    const ok = await fn(...args);
+    if (!ok) forceBottom.current = false;
+    return ok;
+  };
 
   // The more menu closes on an outside click or Escape.
   useEffect(() => {
     if (!menu) return undefined;
     const close = (event) => {
-      if (event.type === "keydown" ? event.key === "Escape" : !event.target.closest?.(".pop, [data-more]")) setMenu(false);
+      if (event.type === "keydown" ? event.key === "Escape" : !event.target.closest?.(".pop, [data-more]")) setMenu("");
     };
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", close);
@@ -207,7 +241,7 @@ export default function ChatConversation({
   useEffect(() => {
     if (!englishView) return undefined;
     const wanted = messages.filter(
-      (m) => ["patient", "ai", "agent"].includes(m.sender) && !m.internal && !m.file && m.text && !m.translation && !asked.current.has(m.id)
+      (m) => ["patient", "ai", "agent", "system"].includes(m.sender) && !m.internal && !m.file && m.text && !m.translation && !asked.current.has(m.id)
     );
     if (!wanted.length) return undefined;
     wanted.forEach((m) => asked.current.add(m.id));
@@ -222,7 +256,8 @@ export default function ChatConversation({
         setTransError("Translation unavailable right now");
         return;
       }
-      setTransError("");
+      (res.data.failed || []).forEach((id) => asked.current.delete(id)); // asked again the next time
+      setTransError(res.data.failed?.length ? "Some messages could not be translated right now" : "");
       setTranslations((t) => ({ ...t, ...res.data.translations }));
     });
     return undefined;
@@ -280,11 +315,6 @@ export default function ChatConversation({
               {handoffLabel(c.handoffReason)}
             </span>
           )}
-          {language && (
-            <span className="wk-tag wk-tag--lang" title={`The patient writes in ${language.name}`}>
-              {language.name}
-            </span>
-          )}
           {c.invited && (
             <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">
               Invited
@@ -326,18 +356,18 @@ export default function ChatConversation({
             <Icon name="panel" />
           </button>
           {c.ip && (
-            <button type="button" className="hic" data-more onClick={() => setMenu(!menu)} title="More" aria-label="More actions" aria-expanded={menu}>
+            <button type="button" className="hic" data-more onClick={() => setMenu(menu === "more" ? "" : "more")} title="More" aria-label="More actions" aria-expanded={menu === "more"}>
               <Icon name="dots" />
             </button>
           )}
-          {menu && c.ip && (
+          {menu === "more" && c.ip && (
             <div className="pop pop--more" role="menu">
               <button
                 type="button"
                 className="pop-item danger"
                 disabled={busy}
                 onClick={() => {
-                  setMenu(false);
+                  setMenu("");
                   onBlockIp();
                 }}
               >
@@ -349,21 +379,6 @@ export default function ChatConversation({
         </div>
       </div>
 
-      {language && (
-        <div className="wk-viewbar">
-          <div className="wk-seg" role="group" aria-label="Message language">
-            <button type="button" aria-pressed={view === "original"} onClick={() => chooseView("original")}>
-              Original ({language.name})
-            </button>
-            <button type="button" aria-pressed={view === "en"} onClick={() => chooseView("en")}>
-              English
-            </button>
-          </div>
-          {translating && <span className="wk-small wk-muted">Translating…</span>}
-          <span className="wk-small wk-muted">Only your team sees this. The patient always sees the original.</span>
-        </div>
-      )}
-
       {error || transError ? (
         <div className="wk-error" role="alert">
           {error || transError}
@@ -374,12 +389,26 @@ export default function ChatConversation({
         </div>
       ) : null}
 
-      <div className="wk-body" ref={bodyRef}>
+      <div className="wk-bodywrap">
+      <div className="wk-body" ref={bodyRef} onScroll={onBodyScroll} data-lenis-prevent>
         <div className="divider">
           <span>
             Started · {dayWord(startedAt)} {timeOf(startedAt)}
           </span>
         </div>
+        {language && (
+          <div className="wk-viewswitch">
+            <div className="wk-seg" role="group" aria-label="Message language">
+              <button type="button" aria-pressed={view === "original"} onClick={() => chooseView("original")}>
+                Original
+              </button>
+              <button type="button" aria-pressed={view === "en"} onClick={() => chooseView("en")}>
+                English
+              </button>
+            </div>
+            {translating && <span className="wk-small wk-muted">Translating…</span>}
+          </div>
+        )}
         {messages.map((m, i) => (
           <Message
             key={m.id}
@@ -403,6 +432,12 @@ export default function ChatConversation({
           </div>
         )}
       </div>
+      {unseen > 0 && (
+        <button type="button" className="wk-jump" onClick={jumpToNewest}>
+          ↓ New messages
+        </button>
+      )}
+      </div>
 
       <Composer
         ref={composerRef}
@@ -414,11 +449,11 @@ export default function ChatConversation({
         busy={busy}
         canned={canned}
         language={language}
-        onSend={onSend}
-        onNote={onNote}
+        onSend={andScroll(onSend)}
+        onNote={andScroll(onNote)}
         onSuggest={onSuggest}
         onTranslateReply={onTranslateReply}
-        onAttach={onSendFile}
+        onAttach={andScroll(onSendFile)}
         onTyping={onTyping}
         onNotice={setTransError}
       />

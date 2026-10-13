@@ -398,4 +398,142 @@ describe("live chat: translation for admins", () => {
     }
     chat.socket.close();
   });
+  // ── romanized text (Marathi / Hindi typed in Latin letters), the English view of every speaker ─────────────────────
+
+  const MARATHI = { code: "mr", name: "Marathi" };
+  const marathiAnswer = (input, extra = {}) => ({
+    ok: true,
+    usage: { inputTokens: 300, cachedInputTokens: 0, outputTokens: 40, costUsd: 0.0001 },
+    items: input.items.map((i) => ({
+      id: i.id,
+      code: "mr",
+      name: "Marathi",
+      english: false,
+      text: i.text === "kasa aahes" ? "how are you" : `EN: ${i.text}`,
+      ...extra,
+    })),
+  });
+
+  test("short romanized Marathi ('kasa aahes') is detected as Marathi, and an English message of the same length is not sent for detection", async () => {
+    await lc.setSettings({ aiMode: "ai_off" });
+    lc.ai.detectOverride = async () => ({ ok: true, language: MARATHI, usage: { inputTokens: 60, cachedInputTokens: 0, outputTokens: 10, costUsd: 0.00001 } });
+    const english = await openChat({ name: "Emma Wilson", email: "emma.short@example.com" });
+    await say(english, "yes thanks"); // two common English words: no detection call
+    await sleep(120);
+    assert.equal(lc.ai.detectCalls.length, 0);
+
+    const chat = await openChat();
+    await say(chat, "kasa aahes"); // 9 letters: used to be skipped as "too short"
+    assert.ok(await waitFor(async () => (await convOf(chat.id)).language?.code === "mr"), "language detected");
+    assert.equal(lc.ai.detectCalls.length, 1);
+    assert.deepEqual((await detailOf(chat.id)).conversation.language, MARATHI);
+    english.socket.close();
+    chat.socket.close();
+  });
+
+  test("'kasa aahes' is translated to English; the chat's language is passed as a hint (a name only); the result is cached", async () => {
+    await lc.setSettings({ aiMode: "ai_off" });
+    const chat = await openChat();
+    await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { language: MARATHI } });
+    await say(chat, "kasa aahes");
+    lc.ai.translateCalls.length = 0;
+    lc.ai.translateOverride = async (input) => marathiAnswer(input);
+    const res = await rest("POST", `/conversations/${chat.id}/translate`, { user: AGENT_A, body: {} });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const message = (await messageIds(chat.id)).find((m) => m.text === "kasa aahes");
+    assert.equal(res.body.translations[message.id].text, "how are you");
+    assert.equal(res.body.translations[message.id].fromName, "Marathi");
+    assert.equal(lc.ai.translateCalls[0].hint, "Marathi");
+    const sent = JSON.stringify(lc.ai.translateCalls);
+    for (const secret of [NAME, "Hans", "Müller", EMAIL, PHONE, chat.id]) assert.equal(sent.includes(secret), false, `not sent: ${secret}`);
+
+    const stored = await lc.models.LcMessage.findById(message.id).lean();
+    assert.equal(stored.translations[0].v, 2);
+    assert.equal(JSON.stringify(stored).includes("how are you"), false, "cached encrypted");
+    const calls = lc.ai.translateCalls.length;
+    const again = await rest("POST", `/conversations/${chat.id}/translate`, { user: AGENT_A, body: {} });
+    assert.equal(again.body.translations[message.id].text, "how are you");
+    assert.equal(lc.ai.translateCalls.length, calls, "switching back and forth is instant: no new model call");
+    assert.equal((await detailOf(chat.id)).messages.find((m) => m.id === message.id).translation.text, "how are you", "the chat detail carries the cached translation");
+    chat.socket.close();
+  });
+
+  test("when the model says 'English' for Marathi text it is asked again, and only a second 'English' is accepted", async () => {
+    await lc.setSettings({ aiMode: "ai_off" });
+    const chat = await openChat();
+    await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { language: MARATHI } });
+    await say(chat, "kasa aahes");
+    lc.ai.translateCalls.length = 0;
+    lc.ai.translateOverride = async (input) => (input.force ? marathiAnswer(input) : marathiAnswer(input, { english: true, text: "kasa aahes" }));
+    const res = await rest("POST", `/conversations/${chat.id}/translate`, { user: AGENT_A, body: {} });
+    const message = (await messageIds(chat.id)).find((m) => m.text === "kasa aahes");
+    assert.equal(res.body.translations[message.id].text, "how are you");
+    assert.deepEqual(lc.ai.translateCalls.map((c) => Boolean(c.force)), [false, true], "the second call insists");
+
+    // a model that keeps saying English: accepted, cached as English, no endless retries
+    const other = await openChat({ name: "Emma Wilson", email: "emma.romanized@example.com" });
+    await lc.models.LcConversation.updateOne({ conversationId: other.id }, { $set: { language: MARATHI } });
+    await say(other, "kasa aahes");
+    lc.ai.translateCalls.length = 0;
+    lc.ai.translateOverride = async (input) => marathiAnswer(input, { english: true, text: "kasa aahes" });
+    const stubborn = await rest("POST", `/conversations/${other.id}/translate`, { user: AGENT_A, body: {} });
+    assert.deepEqual(stubborn.body.translations, {});
+    assert.equal(lc.ai.translateCalls.length, 2, "one retry, then it stops");
+    chat.socket.close();
+    other.socket.close();
+  });
+
+  test("an old 'already English' answer on a Marathi chat is checked once more", async () => {
+    await lc.setSettings({ aiMode: "ai_off" });
+    const chat = await openChat();
+    await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { language: MARATHI } });
+    await say(chat, "kasa aahes");
+    const message = (await messageIds(chat.id)).find((m) => m.text === "kasa aahes");
+    // what the old code saved: no version, "same"
+    await lc.models.LcMessage.updateOne({ _id: message.id }, { $set: { translations: [{ lang: "en", same: true, from: "en", fromName: "English" }] } });
+    lc.ai.translateCalls.length = 0;
+    lc.ai.translateOverride = async (input) => marathiAnswer(input);
+    const res = await rest("POST", `/conversations/${chat.id}/translate`, { user: AGENT_A, body: {} });
+    assert.equal(res.body.translations[message.id].text, "how are you");
+    assert.equal(lc.ai.translateCalls.length, 1);
+    chat.socket.close();
+  });
+
+  test("English view covers the AI assistant, the agent and patient-visible system lines, and a cut-off answer is retried in halves", async () => {
+    const chat = await germanChat();
+    await rest("POST", `/conversations/${chat.id}/messages`, { user: AGENT_A, body: { text: "Guten Tag, hier ist Sam. Wie kann ich helfen?" } });
+    lc.ai.translateCalls.length = 0;
+    lc.ai.translateOverride = async (input) => {
+      if (input.items.length > 1) return { ok: false, kind: "incomplete", usage: { inputTokens: 200, cachedInputTokens: 0, outputTokens: 600, costUsd: 0.0001 } };
+      return { ok: true, usage: { inputTokens: 100, cachedInputTokens: 0, outputTokens: 30, costUsd: 0.0001 }, items: input.items.map((i) => ({ id: i.id, code: "de", name: "German", english: false, text: `EN: ${i.text}` })) };
+    };
+    const res = await rest("POST", `/conversations/${chat.id}/translate`, { user: AGENT_A, body: {} });
+    assert.equal(res.status, 200, JSON.stringify(res.body));
+    const all = await messageIds(chat.id);
+    const byKind = (sender) => all.filter((m) => m.sender === sender && !m.internal);
+    for (const m of [...byKind("ai"), ...byKind("agent")].filter((m) => !/^Hi |Welcome/.test(m.text))) {
+      assert.ok(res.body.translations[m.id], `${m.sender} message is translated: ${m.text.slice(0, 30)}`);
+    }
+    const agentMessage = byKind("agent").find((m) => m.text.startsWith("Guten Tag"));
+    assert.equal(res.body.translations[agentMessage.id].text, `EN: ${agentMessage.text}`);
+    const joined = byKind("system").find((m) => /joined the chat/.test(m.text));
+    assert.ok(joined, "the 'joined the chat' line is visible to the patient");
+    assert.ok(res.body.translations[joined.id], "patient-visible system lines are part of the English view");
+    assert.ok(lc.ai.translateCalls.length > 1, "the chunk was split after the cut-off");
+    assert.deepEqual(res.body.failed, []);
+    chat.socket.close();
+  });
+
+  test("the conversation header no longer shows the language badge; the chat list still does", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const dir = path.join(__dirname, "..", "..", "frontend", "src", "pages", "admin", "livechat");
+    const conversation = fs.readFileSync(path.join(dir, "ChatConversation.jsx"), "utf8");
+    const list = fs.readFileSync(path.join(dir, "ChatList.jsx"), "utf8");
+    assert.equal(/The patient writes in/.test(conversation), false, "no language tag in the conversation header");
+    assert.match(list, /The patient writes in/);
+    assert.match(conversation, /Original/);
+    assert.match(conversation, /Show original|show original/);
+  });
+
 });

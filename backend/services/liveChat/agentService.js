@@ -763,9 +763,9 @@ function createAgentService({
     return { ok: true, ...(await translation.translateMessages(actor, conv, clean)) };
   }
 
-  async function translateReply(actor, conversationId, text, target) {
+  async function translateReply(actor, conversationId, text) {
     const conv = await load(conversationId);
-    return { ok: true, ...(await translation.translateReply(actor, conv, text, target)) };
+    return { ok: true, ...(await translation.translateReply(actor, conv, text)) };
   }
 
   async function setTranslateView(actor, conversationId, view) {
