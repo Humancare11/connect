@@ -191,18 +191,58 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
 
   describe("AI-unavailable message", () => {
     const OLD = "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.";
-    const NEW = 'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.';
+    const OLDER = 'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.';
+    const NEW = '{aiName} is unavailable right now. Tap "Talk to live agent" and our team will help you.';
     const seed = () => require("../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
+    const raw = (set) => lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: set });
 
-    test("the default is the new text; an older default is upgraded; an edited text is left alone", async () => {
+    test("the default is the new text; both older defaults are upgraded; an edited text is left alone", async () => {
       assert.equal(DEFAULT_SETTINGS.unavailableMessage, NEW);
-      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { unavailableMessage: OLD } });
+      await raw({ unavailableMessage: OLD });
       await seed();
       assert.equal((await current()).unavailableMessage, NEW);
-      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { unavailableMessage: "Custom text from an admin." } });
+      await raw({ unavailableMessage: OLDER });
+      await seed();
+      assert.equal((await current()).unavailableMessage, NEW, "the previous default is upgraded too");
+      await raw({ unavailableMessage: "Custom text from an admin." });
       await seed();
       assert.equal((await current()).unavailableMessage, "Custom text from an admin.");
-      await lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: { unavailableMessage: NEW } });
+      await raw({ unavailableMessage: NEW });
+    });
+  });
+
+  describe("AI name and greeting", () => {
+    const OLD_GREETING = "Hi {firstName}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?";
+    const seed = () => require("../services/liveChat").seedLiveChatDefaults({ LIVECHAT_ENABLED: "true", NODE_ENV: "test" });
+    const raw = (set) => lc.models.LcSettings.collection.updateOne({ key: "default" }, { $set: set });
+
+    test("the AI name defaults to Connect AI, can be changed by a Super Admin only, and the default greeting uses it", async () => {
+      assert.equal(DEFAULT_SETTINGS.aiDisplayName, "Connect AI");
+      assert.equal(DEFAULT_SETTINGS.greeting, "Hi {firstName}! I'm Connect AI. How can I help you today?");
+      assert.equal((await current()).aiDisplayName, "Connect AI");
+      assert.equal((await save({ aiDisplayName: "x" }, A)).status, 403);
+      assert.equal((await save({ aiDisplayName: "  " })).status, 400);
+      assert.equal((await save({ aiDisplayName: "a".repeat(41) })).status, 400);
+      assert.equal((await rest("PUT", "/team/ai/display-name", { ...A, body: { displayName: "Nova" } })).status, 403);
+      assert.equal((await rest("PUT", "/team/ai/display-name", { ...S, body: { displayName: "Nova" } })).status, 200);
+      assert.equal((await current()).aiDisplayName, "Nova");
+      const team = (await rest("GET", "/team", A)).body;
+      assert.equal(team.ai.displayName, "Nova", "the Team page AI row follows the setting");
+      assert.equal(buildSystemPrompt(await current()).split("\n")[0].startsWith("You are Nova,"), true);
+      assert.equal((await save({ aiDisplayName: "Connect AI" })).status, 200);
+    });
+
+    test("only the exact old default greeting moves to the new name; a custom greeting is left alone", async () => {
+      await raw({ greeting: OLD_GREETING });
+      await seed();
+      assert.equal((await current()).greeting, DEFAULT_SETTINGS.greeting);
+      const custom = "Welcome! I'm Humancare AI and I love helping.";
+      await raw({ greeting: custom });
+      await seed();
+      assert.equal((await current()).greeting, custom);
+      await raw({ greeting: DEFAULT_SETTINGS.greeting });
+      await seed();
+      assert.equal((await current()).greeting, DEFAULT_SETTINGS.greeting, "running it again changes nothing");
     });
   });
 

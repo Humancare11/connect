@@ -62,12 +62,27 @@ const CANNED_REPLIES = [
   { title: "Prescription re-sent", text: "I've re-sent your prescription to your pharmacy. It should arrive within 30 minutes." },
 ];
 
+// The AI's display name: one setting (aiDisplayName), used for the patient widget, the system prompt and the admin
+// panel. A settings document saved before the field existed falls back to this default.
+const DEFAULT_AI_NAME = "Connect AI";
+const aiNameOf = (settings) => String(settings?.aiDisplayName || "").trim() || DEFAULT_AI_NAME;
+// Texts an admin can edit may contain {aiName}; it is replaced when the text is used.
+const withAiName = (text, settings) => String(text ?? "").replace(/\{\s*ai\s*name\s*\}/gi, aiNameOf(settings));
+
+// Earlier default texts. migrateSettings replaces a stored text only when it is still exactly one of these.
+const OLD_DEFAULT_GREETING =
+  "Hi {firstName}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?";
+const OLD_DEFAULT_UNAVAILABLE = [
+  "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.",
+  'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.',
+];
+
 const DEFAULT_SETTINGS = {
   key: "default",
   aiMode: "ai_first",
+  aiDisplayName: DEFAULT_AI_NAME,
   agentDisplayName: "Sam",
-  greeting:
-    "Hi {firstName}! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?",
+  greeting: "Hi {firstName}! I'm Connect AI. How can I help you today?",
   followUpMinutes: 1,
   handoffRules: {
     onPatientRequest: true,
@@ -85,7 +100,17 @@ const DEFAULT_SETTINGS = {
   businessFacts: "",
   dailySpendCapUsd: 3,
   unavailableMessage:
-    'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.',
+    '{aiName} is unavailable right now. Tap "Talk to live agent" and our team will help you.',
 };
 
-module.exports = { QUICK_OPTIONS, PRICES, CANNED_REPLIES, DEFAULT_SETTINGS };
+module.exports = {
+  QUICK_OPTIONS,
+  PRICES,
+  CANNED_REPLIES,
+  DEFAULT_SETTINGS,
+  DEFAULT_AI_NAME,
+  OLD_DEFAULT_GREETING,
+  OLD_DEFAULT_UNAVAILABLE,
+  aiNameOf,
+  withAiName,
+};

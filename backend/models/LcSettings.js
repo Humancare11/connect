@@ -7,6 +7,7 @@ const settingsSchema = new mongoose.Schema(
   {
     key: { type: String, default: "default", unique: true },
     aiMode: { type: String, enum: ["ai_first", "ai_off"], default: "ai_first" }, // an older "ai_when_no_agent" reads as ai_first
+    aiDisplayName: { type: String, default: "Connect AI", trim: true, maxlength: 40 }, // what patients and admins see for the AI
     agentDisplayName: { type: String, default: "Sam", trim: true, maxlength: 40 },
     greeting: { type: String, default: "", maxlength: 600 },
     // Minutes in the Queue without an admin reply before the patient is told an email follows (and gets it).

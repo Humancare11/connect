@@ -351,15 +351,17 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
 }
 
 // Small one-time upgrades of an existing settings document (never overwrites anything an admin wrote):
-//   - the old default AI-unavailable text becomes the new one (a text an admin edited is left alone),
+//   - the old default AI-unavailable text and the old default greeting (old AI name) become the new ones (a text an
+//     admin edited is left alone),
 //   - default quick options without a page link get their default link.
 async function migrateSettings(LcSettings) {
-  const { DEFAULT_SETTINGS } = require("./settingsDefaults");
+  const { DEFAULT_SETTINGS, OLD_DEFAULT_GREETING, OLD_DEFAULT_UNAVAILABLE } = require("./settingsDefaults");
   const doc = await LcSettings.findOne({ key: "default" });
   if (!doc) return;
   const set = {};
-  const OLD_UNAVAILABLE = "Our AI assistant is unavailable right now. Talk to a live agent or leave a message and we'll email you.";
-  if (doc.unavailableMessage === OLD_UNAVAILABLE) set.unavailableMessage = DEFAULT_SETTINGS.unavailableMessage;
+  if (OLD_DEFAULT_UNAVAILABLE.includes(doc.unavailableMessage)) set.unavailableMessage = DEFAULT_SETTINGS.unavailableMessage;
+  // Only the exact old default greeting moves to the new name; a greeting an admin wrote stays as it is.
+  if (doc.greeting === OLD_DEFAULT_GREETING) set.greeting = DEFAULT_SETTINGS.greeting;
   const defaults = new Map(DEFAULT_SETTINGS.quickOptions.map((o) => [o.key, o]));
   const options = doc.quickOptions.map((o) => {
     const plain = o.toObject ? o.toObject() : o;

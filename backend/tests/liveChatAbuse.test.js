@@ -162,7 +162,7 @@ describe("abuse limits (live)", () => {
     const state = (await lc.call(socket, "chat:resume")).conversation;
     assert.equal(state.aiUnavailable, true);
     assert.equal(state.mode, "queue");
-    assert.ok(state.messages.some((m) => /AI assistant is unavailable/.test(m.text)));
+    assert.ok(state.messages.some((m) => /Connect AI is unavailable/.test(m.text)));
     lc.livechat.chat.aiBreaker.until = 0;
     lc.livechat.chat.aiBreaker.alerted = false;
     await lc.models.LcAiUsage.deleteMany({});

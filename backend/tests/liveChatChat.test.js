@@ -144,7 +144,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       assert.equal(conversation.messages[0].sender, "ai");
       assert.equal(
         conversation.messages[0].text,
-        "Hi Sophia! Welcome to Humancare Connect. I'm Humancare AI, your healthcare coordinator. How can I help you today?"
+        "Hi Sophia! I'm Connect AI. How can I help you today?"
       );
       assert.deepEqual(conversation.options.map((o) => o.label), [
         "Online Consultation with Prescription",
@@ -154,6 +154,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
         "Others",
         "Talk to a live agent",
       ]);
+      assert.equal(conversation.aiName, "Connect AI");
       assert.equal(conversation.optionsUsed, false);
       socket.close();
     });
@@ -379,7 +380,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
 
       const state = (await lc.call(socket, "chat:resume")).conversation;
       const texts = state.messages.map((m) => m.text);
-      assert.ok(texts.includes('Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.'));
+      assert.ok(texts.includes('Connect AI is unavailable right now. Tap "Talk to live agent" and our team will help you.'));
       assert.equal(state.aiUnavailable, true);
       assert.equal(state.mode, "queue", "live chat still works");
       assert.equal(JSON.stringify(state).toLowerCase().includes("quota"), false);

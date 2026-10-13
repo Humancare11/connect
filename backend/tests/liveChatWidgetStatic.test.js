@@ -66,6 +66,52 @@ describe("live chat: daily chat limit in the widget", () => {
   });
 });
 
+describe("live chat: the AI's name comes from one setting", () => {
+  const OLD_NAME = /Humancare AI|HumanCare AI|Humancare['’]s AI|Humancare Assistant/i;
+  const walk = (dir, out = []) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (["node_modules", "tests", "dist", "dist-ssr", "uploads"].includes(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full, out);
+      else if (/\.(jsx?|css|json)$/.test(entry.name)) out.push(full);
+    }
+    return out;
+  };
+
+  test("no hard-coded old AI name in frontend/src or backend (the one old-default constant for the migration excepted)", () => {
+    const hits = [];
+    for (const file of [...walk(path.join(ROOT, "frontend", "src")), ...walk(path.join(ROOT, "backend"))]) {
+      if (file.endsWith(path.join("services", "liveChat", "settingsDefaults.js"))) continue; // OLD_DEFAULT_GREETING lives here
+      if (OLD_NAME.test(fs.readFileSync(file, "utf8"))) hits.push(path.relative(ROOT, file));
+    }
+    assert.deepEqual(hits, []);
+    const defaults = read("backend", "services", "liveChat", "settingsDefaults.js");
+    assert.equal((defaults.match(/Humancare AI/g) || []).length, 1, "only the old default greeting mentions it");
+  });
+
+  test("the widget shows the server's AI name in the header, the message label and the typing line", () => {
+    const widget = read(FEATURE, "LiveChatWidget.jsx");
+    assert.match(widget, /conversation\?\.aiName \|\| configAiName/);
+    assert.match(widget, /: aiName\}<\/strong>/);
+    assert.match(widget, /: aiName\}<\/span>/);
+    assert.match(widget, /\{aiName\} is typing/);
+    assert.doesNotMatch(widget, /AI Healthcare Coordinator/);
+    assert.match(read("frontend", "src", "pages", "admin", "livechat", "ChatConversation.jsx"), /const label = ai \? aiName :/);
+  });
+
+  test("the system prompt uses the name and says it is an AI, never a person, doctor or nurse", () => {
+    const { buildSystemPrompt } = require("../services/liveChat/aiService");
+    const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
+    for (const [settings, name] of [[DEFAULT_SETTINGS, "Connect AI"], [{ ...DEFAULT_SETTINGS, aiDisplayName: "Nova" }, "Nova"], [{ prices: [] }, "Connect AI"]]) {
+      const prompt = buildSystemPrompt(settings);
+      assert.ok(prompt.startsWith(`You are ${name},`), name);
+      assert.ok(prompt.includes(`Never claim to be a person, a doctor or a nurse. If the patient asks who or what you are, say you are an AI assistant.`));
+      assert.ok(prompt.includes(`I am ${name}, so I can only help`), "the off-topic example uses the name");
+      assert.doesNotMatch(prompt, /\{AI_NAME\}/);
+    }
+  });
+});
+
 describe("live chat: widget header status", () => {
   const widget = read(FEATURE, "LiveChatWidget.jsx");
   const css = read(FEATURE, "LiveChatWidget.css");

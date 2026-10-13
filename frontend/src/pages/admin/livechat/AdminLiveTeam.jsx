@@ -102,11 +102,11 @@ export default function AdminLiveTeam() {
 
   const saveName = async (userId, displayName) => {
     try {
-      await api.put(`${BASE}/team/${userId}/display-name`, { displayName });
+      await api.put(`${BASE}/team/${userId}/display-name`, { displayName }); // userId "ai" saves the AI's name setting
       setVersion((v) => v + 1);
       return { ok: true };
     } catch (err) {
-      return { ok: false, error: err?.response?.data?.errors?.displayName || "Could not save the name." };
+      return { ok: false, error: err?.response?.data?.errors?.displayName || err?.response?.data?.errors?.aiDisplayName || "Could not save the name." };
     }
   };
 
@@ -144,7 +144,9 @@ export default function AdminLiveTeam() {
                   </div>
                 </td>
                 <td className="lcp-muted">{ai.role}</td>
-                <td>{ai.displayName}</td>
+                <td>
+                  <NameCell agent={{ ...ai, userId: "ai", name: ai.name }} canEdit={admin?.role === "superadmin"} onSave={saveName} />
+                </td>
                 <td className="lcp-mono">{ai.openChats}</td>
                 <td className="lcp-mono">{ai.chatsToday}</td>
                 <td className="lcp-mono">{formatSeconds(ai.avgFirstReplySeconds)}</td>

@@ -100,6 +100,8 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.delete("/canned-replies/:id", superAdminOnly, handle((req) => settings.deleteCanned(actor(req), req.params.id)));
 
   router.get("/team", handle(() => stats.team()));
+  // The AI's name is a setting, so it is saved (and audited) like one: Super Admin only. Registered before :userId.
+  router.put("/team/ai/display-name", superAdminOnly, handle((req) => settings.update(actor(req), { aiDisplayName: req.body?.displayName })));
   router.put("/team/:userId/display-name", handle((req) => settings.setDisplayName(actor(req), req.params.userId, req.body?.displayName)));
   router.get("/reports", handle((req) => stats.reports({ from: req.query.from, to: req.query.to })));
 

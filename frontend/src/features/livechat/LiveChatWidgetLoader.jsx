@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { isTrackablePath } from "./useVisitorTracker";
+import { DEFAULT_AI_NAME } from "./aiName";
 
 // Mounts the chat widget on public pages only, client-side, after the browser is idle, and only when the server
 // says the module is on (GET /api/livechat/config answers 404 while LIVECHAT_ENABLED=false). The widget code is a
@@ -21,6 +22,7 @@ const whenIdle = (callback) => {
 export default function LiveChatWidgetLoader() {
   const { pathname } = useLocation();
   const [serverOn, setServerOn] = useState(false);
+  const [aiName, setAiName] = useState(DEFAULT_AI_NAME);
   const publicPage = isTrackablePath(pathname) && pathname !== "/cookies";
 
   useEffect(() => {
@@ -29,7 +31,13 @@ export default function LiveChatWidgetLoader() {
     const cancelIdle = whenIdle(async () => {
       try {
         const res = await fetch(`${API_BASE}/api/livechat/config`, { cache: "no-store" });
-        if (!cancelled && res.ok) setServerOn(true);
+        if (!cancelled && res.ok) {
+          const config = await res.json().catch(() => ({}));
+          if (!cancelled) {
+            if (config.aiName) setAiName(config.aiName);
+            setServerOn(true);
+          }
+        }
       } catch {
         /* server unreachable: no widget */
       }
@@ -43,7 +51,7 @@ export default function LiveChatWidgetLoader() {
   if (!ENABLED || !serverOn || !publicPage) return null;
   return (
     <Suspense fallback={null}>
-      <LiveChatWidget />
+      <LiveChatWidget configAiName={aiName} />
     </Suspense>
   );
 }

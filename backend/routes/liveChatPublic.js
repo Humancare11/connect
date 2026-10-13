@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const { getClientIp: realClientIp } = require("../utils/clientIp");
 const { devFakeIp } = require("../utils/liveChat/config");
+const { aiNameOf } = require("../services/liveChat/settingsDefaults");
 const { liveChatContactLimiter, liveChatConfigLimiter, liveChatUploadLimiter } = require("../middleware/rateLimiters");
 const { signChatToken, verifyChatToken } = require("../services/liveChat/chatToken");
 const { FileError } = require("../services/liveChat/fileService");
@@ -37,7 +38,7 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env =
     try {
       const settings = await loadSettings();
       res.set("Cache-Control", "no-store");
-      res.json({ enabled: true, agentName: settings.agentDisplayName || "Sam", privacyPolicyUrl: "/privacy-policy" });
+      res.json({ enabled: true, agentName: settings.agentDisplayName || "Sam", aiName: aiNameOf(settings), privacyPolicyUrl: "/privacy-policy" });
     } catch (err) {
       next(err);
     }

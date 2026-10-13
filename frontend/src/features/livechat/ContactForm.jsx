@@ -18,7 +18,7 @@ function validate({ name, email, phone }) {
   return errors;
 }
 
-export default function ContactForm({ onSubmit, reply = false }) {
+export default function ContactForm({ onSubmit, aiName, reply = false }) {
   const [values, setValues] = useState({ name: "", email: "", phone: "" });
   const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState({});
@@ -99,7 +99,7 @@ export default function ContactForm({ onSubmit, reply = false }) {
       <p>
         {reply
           ? "Please share a few details so we can pass your reply on. You'll then see the message from our team."
-          : "Please share a few details so we can help you. You'll then chat with Humancare AI, or with a live agent anytime."}
+          : `Please share a few details so we can help you. You'll then chat with ${aiName}, or with a live agent anytime.`}
       </p>
 
       <label>

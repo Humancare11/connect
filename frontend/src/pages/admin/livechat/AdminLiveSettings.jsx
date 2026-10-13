@@ -22,7 +22,7 @@ const AI_MODES = [
 
 // the fields the page edits (everything else on the settings document is not sent back)
 const EDITABLE = [
-  "aiMode", "followUpMinutes", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
+  "aiMode", "followUpMinutes", "aiDisplayName", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
   "dailySpendCapUsd", "handoffRules", "quickOptions", "prices", "customFields",
 ];
 const MAX_CUSTOM_FIELDS = 10;
@@ -258,6 +258,12 @@ export default function AdminLiveSettings() {
 
           <div className="lcp-panel">
             <h3>Agents and limits</h3>
+            <div className="lcp-field">
+              <label htmlFor="aiName">Name patients see for the AI</label>
+              <input id="aiName" type="text" value={form.aiDisplayName} maxLength={40} onChange={(e) => set("aiDisplayName", e.target.value)} />
+              <span className="lcp-help">Shown in the chat window and to your team. Use {"{aiName}"} in the messages below to insert it.</span>
+              <ErrorText errors={errors} name="aiDisplayName" />
+            </div>
             <div className="lcp-field">
               <label htmlFor="agentName">Default agent name shown to patients</label>
               <input id="agentName" type="text" value={form.agentDisplayName} maxLength={40} onChange={(e) => set("agentDisplayName", e.target.value)} />

@@ -10,6 +10,7 @@
 const crypto = require("crypto");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
+const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish } = require("./languageHints");
 
 // Shown the moment a chat goes to the team, whoever is or is not at their desk.
@@ -203,6 +204,7 @@ function createChatService({
       mode: conv.mode,
       canRequestAgent,
       canSwitchToAi,
+      aiName: aiNameOf(settings),
       optionsUsed: Boolean(conv.optionsUsed),
       options:
         conv.mode === "ai" && !conv.optionsUsed
@@ -681,11 +683,11 @@ function createChatService({
     return rows.reverse().map((m) => ({ sender: m.sender, text: decryptLiveChatText(m.text) }));
   }
 
-  // "Our AI assistant is unavailable..." then hand the patient to the team (queue, or saved request if offline).
+  // "{aiName} is unavailable..." then hand the patient to the team (queue, or saved request if offline).
   async function aiFallback(conv, { first, settings }) {
     if (!conv.aiNoticeShown) {
       await LcConversation.updateOne({ _id: conv._id }, { $set: { aiNoticeShown: true } });
-      await addMessage(conv, "system", settings.unavailableMessage);
+      await addMessage(conv, "system", withAiName(settings.unavailableMessage, settings));
     }
     const fresh = await LcConversation.findById(conv._id);
     return requestAgent(fresh, { first, settings, reason: "ai_unavailable" });
@@ -818,7 +820,7 @@ function createChatService({
       );
       if (!switched) return { ok: false, error: "not_available" };
       await addMessage(switched, "system", "Patient switched to the AI assistant", { internal: true });
-      await addMessage(switched, "system", "You're now chatting with Humancare AI. You can ask for a live agent at any time.");
+      await addMessage(switched, "system", `You're now chatting with ${aiNameOf(await loadSettings())}. You can ask for a live agent at any time.`);
       setActivity(switched.visitorId, switched);
       if (previous.assigneeId) emitToAgents("chat:handed-back", { conversationId: switched.conversationId, agentName: previous.agentName || "" });
       announce(switched);

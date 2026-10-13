@@ -12,6 +12,7 @@
 const mongoose = require("mongoose");
 const { decryptLiveChatText } = require("../../utils/liveChat/crypto");
 const { dayKey } = require("./limits");
+const { aiNameOf } = require("./settingsDefaults");
 
 class StatsError extends Error {
   constructor(status, code) {
@@ -142,7 +143,7 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
       ai: {
         name: "AI agent",
         role: "Assistant (24/7)",
-        displayName: "Humancare AI assistant",
+        displayName: aiNameOf(settings),
         openChats: aiOpen,
         chatsToday: aiToday,
         avgFirstReplySeconds: await aiFirstReplySeconds(aiSample.map((c) => c.conversationId)).then((v) => (v === null ? null : Math.round(v))),

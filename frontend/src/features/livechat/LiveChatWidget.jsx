@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import GreetingBubble from "./GreetingBubble";
+import { DEFAULT_AI_NAME } from "./aiName";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -50,7 +51,7 @@ function PageLinks({ links, onNavigate }) {
   );
 }
 
-function Message({ message, onNavigate, onOpenFile }) {
+function Message({ message, aiName, onNavigate, onOpenFile }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
@@ -74,7 +75,7 @@ function Message({ message, onNavigate, onOpenFile }) {
     <div className="lcw-bot">
       <span className="lcw-av lcw-av--sm">{isAgent ? initialsOf(message.agentName) : "HC"}</span>
       <div className="lcw-bw">
-        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare support" : "Humancare AI"}</span>
+        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare support" : aiName}</span>
         <div className="lcw-msg lcw-msg--left">
           {message.file ? (
             <span className="lcw-file">
@@ -97,7 +98,7 @@ function Message({ message, onNavigate, onOpenFile }) {
   );
 }
 
-export default function LiveChatWidget() {
+export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   const chat = useLiveChat();
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
@@ -111,6 +112,7 @@ export default function LiveChatWidget() {
   const withAgent = mode === "live";
   const ended = mode === "archived";
   const agentName = conversation?.agent?.name || "";
+  const aiName = conversation?.aiName || configAiName; // the server setting; the config answer covers the contact form
   const messageCount = conversation?.messages.length ?? 0;
 
   // Keep the newest message in view.
@@ -161,7 +163,7 @@ export default function LiveChatWidget() {
               {withAgent ? initialsOf(agentName) : "HC"}
             </div>
             <div className="lcw-who">
-              <strong>{withAgent ? agentName || "Humancare support" : "Humancare AI"}</strong>
+              <strong>{withAgent ? agentName || "Humancare support" : aiName}</strong>
               <small>
                 <span title={status}>{status}</span>
               </small>
@@ -194,7 +196,7 @@ export default function LiveChatWidget() {
           </header>
 
           <div className="lcw-body" ref={bodyRef} aria-live="polite" data-lenis-prevent>
-            {phase === "form" && <ContactForm onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
+            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
             {phase === "chat" && !conversation && limitReached && (
               <div className="lcw-sys" role="alert">
@@ -205,7 +207,7 @@ export default function LiveChatWidget() {
             {phase === "chat" && conversation && (
               <>
                 {conversation.messages.map((message) => (
-                  <Message key={message.id} message={message} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
+                  <Message key={message.id} message={message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
                 ))}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
                 {ended && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
@@ -236,7 +238,7 @@ export default function LiveChatWidget() {
                       <i />
                       <i />
                     </span>{" "}
-                    Humancare AI is typing
+                    {aiName} is typing
                   </div>
                 )}
               </>

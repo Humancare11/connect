@@ -4,6 +4,7 @@ import Icon from "./lcIcons";
 import Composer from "./Composer";
 import { CLOSED_LABEL, dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
+import { DEFAULT_AI_NAME } from "../../../features/livechat/aiName";
 
 // Middle column: the conversation (docs/live-chat-admin-ui.html). The patient is on the left; the AI and agents are on
 // the right with their name above a run of messages; system lines sit at the right edge; internal notes are full width
@@ -62,7 +63,7 @@ function FileLine({ file, onOpenFile }) {
   );
 }
 
-function Message({ m, first, c, onOpenFile, translation, shownOriginal, onToggleOriginal }) {
+function Message({ m, first, c, aiName, onOpenFile, translation, shownOriginal, onToggleOriginal }) {
   if (m.sender === "system") {
     return (
       <div className="mrow sysrow">
@@ -109,7 +110,7 @@ function Message({ m, first, c, onOpenFile, translation, shownOriginal, onToggle
     );
   }
   const ai = m.sender === "ai";
-  const label = ai ? "AI assistant" : m.agentName || "Agent";
+  const label = ai ? aiName : m.agentName || "Agent";
   return (
     <div className={`mrow right${first ? " is-first" : ""}`}>
       <div className="mcol">
@@ -415,6 +416,7 @@ export default function ChatConversation({
             m={m}
             first={!groupKey(m) || groupKey(m) !== groupKey(messages[i - 1])}
             c={c}
+            aiName={detail.aiName || DEFAULT_AI_NAME}
             onOpenFile={onOpenFile}
             translation={translationOf(m)}
             shownOriginal={originals.has(m.id)}

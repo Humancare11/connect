@@ -13,6 +13,7 @@ const net = require("net");
 const mongoose = require("mongoose");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
+const { aiNameOf } = require("./settingsDefaults");
 const { createWindowLimiter } = require("./limits");
 const { createTranslationService, publicLanguage } = require("./translationService");
 const { scrubContact } = require("./languageHints");
@@ -244,6 +245,7 @@ function createAgentService({
     const visits = visitor?.visits || 1;
     const settingsForFields = await loadSettings();
     return {
+      aiName: aiNameOf(settingsForFields),
       conversation: rowOf(conv, { userId: actor.id }),
       view: translation.viewOf(conv, actor.id),
       messages,
@@ -716,6 +718,7 @@ function createAgentService({
   // is the chat ID only (never a patient name). Every download is recorded on the chat (who, when).
   async function transcript(actor, conversationId) {
     const conv = await load(conversationId);
+    const settings = await loadSettings();
     const rows = await LcMessage.find({ conversationId, sender: { $ne: "note" }, internal: { $ne: true } })
       .sort({ createdAt: 1 })
       .limit(2000)
@@ -723,7 +726,7 @@ function createAgentService({
     const files = await chat.filesMeta(rows);
     const stamp = (d) => new Date(d).toISOString().replace("T", " ").slice(0, 19);
     const lines = rows.map((m) => {
-      const who = m.sender === "patient" ? "Patient" : m.sender === "ai" ? "AI assistant" : m.sender === "agent" ? m.agentName || "Agent" : "System";
+      const who = m.sender === "patient" ? "Patient" : m.sender === "ai" ? aiNameOf(settings) : m.sender === "agent" ? m.agentName || "Agent" : "System";
       const file = m.fileId && files.get(String(m.fileId));
       const body = file ? `[File: ${file.name}]` : decryptLiveChatText(m.text);
       return `[${stamp(m.createdAt)} UTC] ${who}: ${body}`;

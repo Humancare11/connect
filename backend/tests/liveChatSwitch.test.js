@@ -48,7 +48,7 @@ describe("live chat: switching between the AI and a live agent", () => {
     assert.equal(res.ok, true, JSON.stringify(res));
     state = await stateOf(chat.socket);
     assert.deepEqual([state.mode, state.canRequestAgent, state.canSwitchToAi, state.agent], ["ai", true, false, null]);
-    assert.ok(state.messages.some((m) => m.sender === "system" && m.text.includes("chatting with Humancare AI")));
+    assert.ok(state.messages.some((m) => m.sender === "system" && m.text.includes("chatting with Connect AI")));
     assert.equal(state.messages.some((m) => m.text === "Patient switched to the AI assistant"), false, "the team line is not for the patient");
 
     // the agent's side: a team-only system line, the chat is no longer assigned

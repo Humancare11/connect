@@ -56,6 +56,7 @@ function validateSettings(patch) {
     if (number(patch.followUpMinutes, { min: 1, max: 30, integer: true })) values.followUpMinutes = patch.followUpMinutes;
     else errors.followUpMinutes = "Minutes before the email notice: a whole number from 1 to 30.";
   }
+  text("aiDisplayName", { min: 1, max: 40, label: "The AI name" });
   text("agentDisplayName", { min: 1, max: 40, label: "The default agent name" });
   text("greeting", { min: 1, max: 600, label: "The greeting", block: true });
   text("businessFacts", { max: 8000, label: "Business facts", block: true });

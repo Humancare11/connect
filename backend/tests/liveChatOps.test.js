@@ -2,7 +2,7 @@ const { test, describe, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert/strict");
 const { startChatServer, sleep, dayKey, AGENT_A, AGENT_B } = require("./helpers/liveChatServer");
 
-const UNAVAILABLE = 'Our AI assistant is unavailable right now. Tap "Talk to live agent" and our team will help you.';
+const UNAVAILABLE = 'Connect AI is unavailable right now. Tap "Talk to live agent" and our team will help you.';
 
 async function waitFor(fn, ms = 4000, step = 50) {
   const end = Date.now() + ms;
