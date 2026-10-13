@@ -47,21 +47,21 @@ test("plan is a clean, unexecuted dry run", () => {
   assert.equal(hash, plan.operationsSha256);
 });
 
-test("final counts: 204 legacy → 201 records + 3 merges, 0 excluded", () => {
+test("final counts: 200 legacy → 198 records + 2 merges, 0 excluded", () => {
   const c = plan.counts;
-  assert.equal(c.legacyConditionRecords, 204);
-  assert.equal(c.importable, 201);
-  assert.equal(c.importableConditions, 194);
-  assert.equal(c.importableServices, 7);
-  assert.equal(c.aliasMerges, 3);
+  assert.equal(c.legacyConditionRecords, 200);
+  assert.equal(c.importable, 198);
+  assert.equal(c.importableConditions, 192);
+  assert.equal(c.importableServices, 6);
+  assert.equal(c.aliasMerges, 2);
   assert.equal(c.excluded, 0);
   assert.equal(c.importable + c.aliasMerges + c.excluded, c.legacyConditionRecords);
-  assert.equal(ops("CREATE_CONDITION").length, 201);
+  assert.equal(ops("CREATE_CONDITION").length, 198);
   assert.equal(ops("CREATE_SPECIALTY").length, 2);
   assert.equal(ops("CREATE_INDEX").length, 3);
   assert.equal(ops("SET_SPECIALTY_ALIASES").length, 15);
   assert.equal(ops("EXCLUDE").length, 0);
-  assert.equal(new Set(ops("CREATE_CONDITION").map((o) => o.document.legacyId)).size, 201);
+  assert.equal(new Set(ops("CREATE_CONDITION").map((o) => o.document.legacyId)).size, 198);
 });
 
 test("Decision 1: the 3 approved records are imported to their specialties", () => {
