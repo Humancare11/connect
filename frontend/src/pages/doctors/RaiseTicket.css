@@ -455,3 +455,31 @@
   .rt-root { padding: 10px 6px; }
   .rt-page-title { font-size: 16px; }
 }
+
+.rt-root,
+.rt-layout,
+.rt-form-panel,
+.rt-list-panel,
+.rt-list-head,
+.rt-ticket,
+.rt-ticket-left,
+.rt-ticket-info {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rt-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rt-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.rt-ticket-title,
+.rt-body-text {
+  overflow-wrap: anywhere;
+}

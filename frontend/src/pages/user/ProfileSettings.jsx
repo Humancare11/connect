@@ -273,25 +273,67 @@ export default function ProfileSettings() {
         .ps-phone .pif-control { height: 47px; min-height: 47px; border-radius: 13px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(203,213,225,0.80); }
         .ps-phone .pif-control.is-active { border-color: rgba(59,130,246,0.65); background: rgba(255,255,255,0.88); box-shadow: 0 0 0 3px rgba(59,130,246,0.13); }
         .ps-phone .pif-input { font-family: var(--font-secondary); color: #0b0443; }
+        .ps-page { width: 100%; min-width: 0; }
         @media (max-width: 860px) {
           .ps-body   { grid-template-columns: 1fr !important; }
+          .ps-body   { gap: 16px !important; }
           .ps-avatar-card { flex-direction: row !important; flex-wrap: wrap !important; padding: 22px 24px !important; }
           .ps-avatar-card-center { align-items: flex-start !important; text-align: left !important; }
           .ps-avatar-divider { display: none !important; }
           .ps-meta-grid { flex-direction: row !important; flex-wrap: wrap !important; }
+          .ps-meta-grid > div { flex: 1 1 150px; min-width: 0; }
           .ps-sticky { position: static !important; }
         }
         @media (max-width: 580px) {
+          .ps-page { padding: 0 2px; }
+          .ps-body { gap: 14px !important; }
+          .ps-avatar-card { padding: 16px 14px !important; gap: 12px !important; }
+          .ps-avatar-card-center {
+            display: grid !important;
+            grid-template-columns: 64px minmax(0, 1fr);
+            align-items: center !important;
+            column-gap: 12px;
+            row-gap: 3px;
+            min-width: 0;
+            flex: 1 1 100%;
+          }
+          .ps-avatar-card-center > div:first-child {
+            grid-column: 1;
+            grid-row: 1 / span 3;
+            width: 64px !important;
+            height: 64px !important;
+            margin: 0 !important;
+            border-radius: 18px !important;
+          }
+          .ps-avatar-card-center > div:first-child > div {
+            width: 52px !important;
+            height: 52px !important;
+            border-radius: 15px !important;
+            font-size: 24px !important;
+          }
+          .ps-avatar-card-center > p,
+          .ps-avatar-card-center > span {
+            grid-column: 2;
+            text-align: left !important;
+            overflow-wrap: anywhere;
+          }
+          .ps-avatar-card-center > p:first-of-type { grid-row: 1; }
+          .ps-avatar-card-center > p:nth-of-type(2) { grid-row: 2; }
+          .ps-avatar-card-center > span { grid-row: 3; justify-self: start; margin-top: 4px !important; }
+          .ps-meta-grid > div { flex-basis: 135px; }
+          .ps-meta-grid > div > div { min-width: 0; }
+          .ps-meta-grid > div p:last-child { overflow-wrap: anywhere; }
           .ps-form-row { grid-template-columns: 1fr !important; }
           .ps-form-row-half { max-width: 100% !important; }
           .ps-form-body { padding: 20px 18px 24px !important; }
           .ps-card-head { padding: 20px 18px 16px !important; }
+          .ps-fadein { margin-left: 18px !important; margin-right: 18px !important; }
           .ps-actions { flex-direction: column-reverse !important; }
           .ps-actions > button { width: 100% !important; justify-content: center !important; }
         }
       `}</style>
 
-      <div style={{ fontFamily: "var(--font-secondary)", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
+      <div className="ps-page" style={{ fontFamily: "var(--font-secondary)", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
 
         {/* ══ TWO-COLUMN BODY ══ */}
         <div

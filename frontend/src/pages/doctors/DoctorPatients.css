@@ -1129,6 +1129,28 @@ select.dp-input {
   }
 }
 
+.dp-root-mp,
+.dp-header,
+.dp-grid,
+.dp-card,
+.dp-card-info,
+.dp-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dp-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dp-card-name,
+.dp-card-email,
+.dp-panel-email {
+  overflow-wrap: anywhere;
+}
+
 
 .dp-med-card {
   border: 1.5px solid var(--border);

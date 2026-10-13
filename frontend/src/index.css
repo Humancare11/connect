@@ -1,11 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --font-primary: "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-secondary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-primary:
+    "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-secondary:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
@@ -23,28 +27,53 @@ body {
   max-width: 100%;
 }
 
-img, video, canvas, svg {
+img,
+video,
+canvas,
+svg {
   max-width: 100%;
   height: auto;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-primary);
   letter-spacing: -0.02em;
 }
 
 /* Inline text inside headings keeps the heading font. App.css sets span/a to the
    secondary font, which would otherwise win over inheritance from the heading. */
-h1 span, h2 span, h3 span, h4 span, h5 span, h6 span,
-h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+h1 span,
+h2 span,
+h3 span,
+h4 span,
+h5 span,
+h6 span,
+h1 a,
+h2 a,
+h3 a,
+h4 a,
+h5 a,
+h6 a {
   font-family: inherit;
 }
 
-input, button, select, textarea {
+input,
+button,
+select,
+textarea {
   font-family: inherit;
 }
 
-button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"] {
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
   touch-action: manipulation;
 }
 
@@ -54,9 +83,11 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
 
 .corp-hero {
   background:
-    radial-gradient(circle at top right,
+    radial-gradient(
+      circle at top right,
       rgba(124, 183, 255, 0.18),
-      transparent 35%),
+      transparent 35%
+    ),
     linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
   background-size: cover;
   background-position: center;

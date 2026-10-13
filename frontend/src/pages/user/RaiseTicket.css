@@ -732,6 +732,8 @@ select.urt-input {
 @media (max-width: 560px) {
   .urt-root {
     padding: 18px 14px;
+    width: 100%;
+    min-width: 0;
   }
 
   .urt-page-title {
@@ -751,6 +753,33 @@ select.urt-input {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .urt-head-stat {
+    align-items: center;
+    align-self: flex-start;
+    min-width: 172px;
+  }
+
+  .urt-stat-label {
+    text-align: center;
+  }
+
+  .urt-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .urt-form-panel,
+  .urt-list-panel {
+    min-width: 0;
+  }
+
+  .urt-panel-head {
+    padding: 18px;
+  }
+
+  .urt-form {
+    padding: 18px;
   }
 
   .urt-ticket-top {

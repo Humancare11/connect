@@ -639,6 +639,10 @@ body {
     padding: 64px 0 80px;
   }
 
+  .accordion-title {
+    font-size: 36px;
+  }
+
   .corp-accordion-header {
     margin-bottom: 40px;
   }
@@ -769,6 +773,10 @@ body {
 }
 
 @media (max-width: 480px) {
+  .accordion-title {
+    font-size: 30px;
+  }
+
   .corp-accordion-container {
     padding: 0 12px;
     gap: 8px;
