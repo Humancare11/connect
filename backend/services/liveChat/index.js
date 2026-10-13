@@ -3,7 +3,7 @@
 // mountLiveChat() is the only thing server.js calls. It does nothing unless LIVECHAT_ENABLED=true and the config
 // is valid (see utils/liveChat/config.js), so with the kill switch off no route, namespace, timer or model is
 // registered and /livechat, /livechat-admin and /api/admin/livechat do not exist.
-const { checkLiveChatConfig, intFromEnv, readLimits, devFakeIp } = require("../../utils/liveChat/config");
+const { checkLiveChatConfig, intFromEnv, readLimits, devFakeIp, ipLimitExempt, isProduction } = require("../../utils/liveChat/config");
 const { normalizeIp, parseTrustProxy } = require("../../utils/clientIp");
 const { makeSocketLimiter } = require("../../utils/socketRateLimit");
 const { MemoryPresenceStore, DEFAULT_GRACE_MS } = require("./presence");
@@ -174,6 +174,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     if (devFakeIp(env)) console.warn("[livechat] DEV ONLY: LIVECHAT_DEV_FAKE_IP is active, every visitor gets that IP. Never use this in production.");
     else console.warn("[livechat] LIVECHAT_DEV_FAKE_IP is ignored (it only works outside production and needs a valid public IP).");
   }
+  if (!isProduction(env)) console.log("[livechat] DEV: the per-IP daily chat limit is skipped for loopback addresses and LIVECHAT_DEV_FAKE_IP (never in production).");
   const graceMs = options.graceMs ?? intFromEnv("LIVECHAT_PRESENCE_GRACE_MS", DEFAULT_GRACE_MS, env);
   const adminNs = io.of("/livechat-admin");
   const visitorNs = io.of("/livechat");
@@ -236,7 +237,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createLimits } = require("./limits");
   const { createChatService } = require("./chatService");
   const { verifyTurnstile } = require("./turnstile");
-  const limits = createLimits({ models, readLimits: () => readLimits(env) });
+  const limits = createLimits({ models, readLimits: () => readLimits(env), isExemptIp: (ip) => ipLimitExempt(ip, env) });
   const agents = createAgentRegistry({
     onGone: (userId) => agentSvc?.agentGone(userId),
     onBack: (userId) => agentSvc?.agentBack(userId),

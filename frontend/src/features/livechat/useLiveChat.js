@@ -106,6 +106,7 @@ export function useLiveChat() {
   });
   const [connection, setConnection] = useState("connecting"); // connecting | online | offline
   const [notice, setNotice] = useState("");
+  const [limitReached, setLimitReached] = useState(false); // today's chat limit for this IP: shown in the chat body
   const [unread, setUnread] = useState(0);
   const [open, setOpenState] = useState(() => store.get(OPEN_KEY, "session") === "1");
 
@@ -246,6 +247,7 @@ export function useLiveChat() {
     emit("chat:start", startDetails()).then((res) => {
       startedRef.current = false;
       if (res.ok) setConversation(res.conversation);
+      else if (res.error === "chat_limit") setLimitReached(true);
       else setNotice(ERRORS[res.error] || ERRORS.server_error);
     });
   }, [open, phase, conversation, emit]);
@@ -312,7 +314,7 @@ export function useLiveChat() {
     setNotice("");
     const res = await emit("chat:start", startDetails());
     if (res.ok) setConversation(res.conversation);
-    else setNotice(ERRORS[res.error] ?? ERRORS.server_error);
+    else setNotice(ERRORS[res.error] ?? ERRORS.server_error); // the ended chat stays on screen, so the notice banner carries the limit message
   }, [emit]);
 
   // Rates a chat the team has just resolved (1-5, once). The result arrives as a chat:state update.
@@ -427,6 +429,8 @@ export function useLiveChat() {
     invite: conversation ? null : invite,
     connection,
     notice,
+    limitReached,
+    limitMessage: ERRORS.chat_limit,
     unread,
     open,
     setOpen,

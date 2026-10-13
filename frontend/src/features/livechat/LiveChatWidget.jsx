@@ -148,6 +148,7 @@ export default function LiveChatWidget() {
     if (window.matchMedia?.("(max-width: 520px)").matches) setOpen(false);
   };
 
+  const limitReached = chat.limitReached && !conversation;
   const locked = phase !== "chat" || !conversation || ended;
 
   return (
@@ -196,7 +197,12 @@ export default function LiveChatWidget() {
           <div className="lcw-body" ref={bodyRef} aria-live="polite" data-lenis-prevent>
             {phase === "form" && <ContactForm onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
-            {phase === "chat" && !conversation && <div className="lcw-sys">Starting your chat…</div>}
+            {phase === "chat" && !conversation && limitReached && (
+              <div className="lcw-sys" role="alert">
+                {chat.limitMessage}
+              </div>
+            )}
+            {phase === "chat" && !conversation && !limitReached && <div className="lcw-sys">Starting your chat…</div>}
             {phase === "chat" && conversation && (
               <>
                 {conversation.messages.map((message) => (
@@ -277,7 +283,7 @@ export default function LiveChatWidget() {
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={ended ? "This chat has ended" : locked ? "Fill in the form to start" : "Message..."}
+                placeholder={ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"

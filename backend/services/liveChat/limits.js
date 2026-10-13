@@ -2,7 +2,7 @@
 //   - max 1,000 characters per patient message
 //   - max 6 messages per minute per visitor
 //   - max 30 AI replies per chat (settings.handoffRules.maxAiRepliesPerChat)
-//   - max 5 new chats per IP per day
+//   - max 20 new chats per IP per day (LIVECHAT_CHATS_PER_IP_DAY; skipped for loopback outside production)
 //   - max 300 output tokens per AI reply (enforced in aiService / the provider call)
 //   - daily AI spend cap (settings.dailySpendCapUsd, default $3) -> AI unavailable fallback, live chat keeps working
 //
@@ -63,22 +63,23 @@ function dayKey(date = new Date(), timeZone = "America/New_York") {
   }
 }
 
-function createLimits({ models, readLimits, now = () => Date.now() }) {
+function createLimits({ models, readLimits, isExemptIp = () => false, now = () => Date.now() }) {
   const limits = readLimits();
   const messageLimiter = createWindowLimiter({ windowMs: 60_000, max: limits.messagesPerMinute, now });
 
   return {
     limits,
     messageLimiter,
+    isExemptIp, // replaceable in tests
 
     checkMessageText: (value) => checkMessageText(value, limits.maxMessageChars),
 
     // Per visitor: max 6 messages per minute.
     allowMessage: (visitorId) => messageLimiter.allow(visitorId),
 
-    // Per IP: max 5 new chats in the last 24 hours.
+    // Per IP: max N new chats in the last 24 hours (default 20).
     async canStartChat(ip) {
-      if (!ip) return true;
+      if (!ip || this.isExemptIp(ip)) return true;
       const since = new Date(now() - 24 * 60 * 60 * 1000);
       const count = await models.LcConversation.countDocuments({ ip, startedAt: { $gte: since } });
       return count < limits.chatsPerIpPerDay;

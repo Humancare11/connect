@@ -54,6 +54,18 @@ describe("live chat: patient-facing wording", () => {
   });
 });
 
+describe("live chat: daily chat limit in the widget", () => {
+  test("when the limit is hit the chat body shows only the limit message and the input is disabled", () => {
+    const hook = read(FEATURE, "useLiveChat.js");
+    assert.match(hook, /chat_limit: "You've reached today's chat limit\. Please try again tomorrow or email support@humancareconnect\.co\."/);
+    assert.match(hook, /res\.error === "chat_limit"\) setLimitReached\(true\)/);
+    const widget = read(FEATURE, "LiveChatWidget.jsx");
+    assert.match(widget, /!conversation && limitReached && \(/);
+    assert.match(widget, /!conversation && !limitReached && <div className="lcw-sys">Starting your chat/);
+    assert.match(widget, /limitReached \? "Chat is unavailable today" : locked \? "Fill in the form to start"/);
+  });
+});
+
 describe("live chat: widget scrolling rules", () => {
   const css = read(FEATURE, "LiveChatWidget.css");
   const rule = (selector) => {

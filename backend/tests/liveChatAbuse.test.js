@@ -5,7 +5,7 @@ const { createWindowLimiter, checkMessageText } = require("../services/liveChat/
 const { createAiService, buildSystemPrompt, buildMessages, costOf, SCHEMA } = require("../services/liveChat/aiService");
 const { createOpenAiProvider, classify } = require("../services/liveChat/aiProviders/openai");
 const { verifyTurnstile, VERIFY_URL } = require("../services/liveChat/turnstile");
-const { readAiConfig, readTurnstileSecret, TURNSTILE_TEST_SECRET } = require("../utils/liveChat/config");
+const { readAiConfig, readTurnstileSecret, TURNSTILE_TEST_SECRET, ipLimitExempt } = require("../utils/liveChat/config");
 const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
 
 const PRICES = { LIVECHAT_PRICE_INPUT_PER_1M: "0.10", LIVECHAT_PRICE_OUTPUT_PER_1M: "0.50", LIVECHAT_PRICE_CACHED_INPUT_PER_1M: "0.01" };
@@ -95,10 +95,17 @@ describe("abuse limits (live)", () => {
     assert.equal(readAiConfig({}).maxOutputTokens, 300);
   });
 
-  test("max 5 new chats per IP per day: the 6th is refused, existing chats keep working", async () => {
+  test("max N new chats per IP per day (production rules): the 6th is refused, existing chats keep working", async () => {
     const limits = lc.livechat.limits.limits;
-    assert.equal((await require("../utils/liveChat/config").readLimits({})).chatsPerIpPerDay, 5, "the default is 5");
+    const readLimits = require("../utils/liveChat/config").readLimits;
+    assert.equal(readLimits({}).chatsPerIpPerDay, 20, "the default is 20");
+    assert.equal(readLimits({ LIVECHAT_CHATS_PER_IP_DAY: "7" }).chatsPerIpPerDay, 7);
+    assert.equal(readLimits({ LIVECHAT_IP_DAILY_CHAT_LIMIT: "9" }).chatsPerIpPerDay, 9, "the old name still works");
+    assert.equal(readLimits({ LIVECHAT_CHATS_PER_IP_DAY: "7", LIVECHAT_IP_DAILY_CHAT_LIMIT: "9" }).chatsPerIpPerDay, 7, "the new name wins");
     limits.chatsPerIpPerDay = 5;
+    // These chats come from 127.0.0.1: apply the production rule (nothing is exempt) instead of the dev skip.
+    const devSkip = lc.livechat.limits.isExemptIp;
+    lc.livechat.limits.isExemptIp = (ip) => ipLimitExempt(ip, { NODE_ENV: "production" });
     await lc.models.LcConversation.deleteMany({});
     const sockets = [];
     try {
@@ -125,8 +132,22 @@ describe("abuse limits (live)", () => {
       assert.equal(again.ok, true);
     } finally {
       limits.chatsPerIpPerDay = 1000;
+      lc.livechat.limits.isExemptIp = devSkip;
       sockets.forEach((s) => s.close());
     }
+  });
+
+  test("outside production the per-IP chat limit is skipped for loopback and LIVECHAT_DEV_FAKE_IP; never in production", () => {
+    const dev = { NODE_ENV: "development" };
+    for (const ip of ["127.0.0.1", "::1", "::ffff:127.0.0.1", "127.0.0.5"]) assert.equal(ipLimitExempt(ip, dev), true, ip);
+    assert.equal(ipLimitExempt("127.0.0.1", {}), true, "NODE_ENV unset is not production");
+    assert.equal(ipLimitExempt("203.0.113.9", dev), false, "other addresses are limited");
+    assert.equal(ipLimitExempt("8.8.8.8", dev), false);
+    assert.equal(ipLimitExempt("8.8.8.8", { ...dev, LIVECHAT_DEV_FAKE_IP: "8.8.8.8" }), true, "the dev fake IP is skipped");
+    assert.equal(ipLimitExempt("8.8.4.4", { ...dev, LIVECHAT_DEV_FAKE_IP: "8.8.8.8" }), false);
+    const prod = { NODE_ENV: "production", LIVECHAT_DEV_FAKE_IP: "8.8.8.8" };
+    for (const ip of ["127.0.0.1", "::1", "8.8.8.8"]) assert.equal(ipLimitExempt(ip, prod), false, `production: ${ip}`);
+    assert.equal(ipLimitExempt("", dev), false);
   });
 
   test("daily AI spend cap: once reached the AI is not called, the notice shows and live chat still works", async () => {

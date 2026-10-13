@@ -89,7 +89,9 @@ function readLimits(env = process.env) {
   return {
     maxMessageChars: 1000,
     messagesPerMinute: intFromEnv("LIVECHAT_MESSAGES_PER_MINUTE", 6, env),
-    chatsPerIpPerDay: intFromEnv("LIVECHAT_IP_DAILY_CHAT_LIMIT", 5, env),
+    // Shared IPs (offices, hospitals, mobile carriers) are common, so the default is generous; Turnstile stops bots.
+    // LIVECHAT_IP_DAILY_CHAT_LIMIT is the old name and still works.
+    chatsPerIpPerDay: intFromEnv("LIVECHAT_CHATS_PER_IP_DAY", intFromEnv("LIVECHAT_IP_DAILY_CHAT_LIMIT", 20, env), env),
   };
 }
 
@@ -122,7 +124,20 @@ function devFakeIp(env = process.env) {
   return isPublicIp(raw) ? normalizeIp(raw) : "";
 }
 
+// DEVELOPMENT ONLY: outside production the per-IP daily chat limit is skipped for loopback addresses and for
+// LIVECHAT_DEV_FAKE_IP (every local test comes from one IP). Never true in production.
+function ipLimitExempt(ip, env = process.env) {
+  if (isProduction(env)) return false;
+  const { normalizeIp } = require("../clientIp");
+  const clean = normalizeIp(ip);
+  if (!clean) return false;
+  if (clean === "::1" || clean.startsWith("127.")) return true;
+  const fake = devFakeIp(env);
+  return Boolean(fake) && clean === fake;
+}
+
 module.exports = {
+  ipLimitExempt,
   devFakeIp,
   readFileLimits,
   readAbuseLimits,
