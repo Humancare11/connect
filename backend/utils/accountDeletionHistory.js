@@ -84,13 +84,33 @@ async function openRequest(user, { reason = "", requestedAt = new Date(), reques
   }
 }
 
-// The user's pending row. If there isn't one — the request was made before this
-// history existed, or its write failed — it is created now from the user record
-// (marked backfilled: request source unknown). Null only if that fails too.
+// The row for a request that has ALREADY been decided (approved, rejected,
+// cancelled, deleted by an admin), or null. The history row is created with
+// requestedAt === user.deletionRequestedAt (and backfill copies it), so that
+// date identifies "this request". A user who asked, was rejected and asked again
+// has an older row with a different date, which correctly does not match.
+// A user with no deletionRequestedAt cannot be matched by date: if they have any
+// decided row we treat it as this request's (refuse, never backfill a second one);
+// with no rows at all they are a genuine legacy request and this returns null.
+async function findDecidedRecord(user) {
+  const filter = { userId: user._id, status: { $ne: "pending" } };
+  if (user.deletionRequestedAt) filter.requestedAt = user.deletionRequestedAt;
+  return AccountDeletionRequest.findOne(filter).sort({ decidedAt: -1 });
+}
+
+// The history row for the user's current request: the pending row, or — when
+// another admin already decided it a moment ago — that decided row (the caller's
+// decide() then finds nothing pending and answers 409; nothing is created, so
+// the loser of a race adds no second row). If there is no row at all — the
+// request was made before this history existed, or its write failed — a pending
+// one is created from the user record (marked backfilled: request source
+// unknown). Null only if that fails too.
 async function ensurePendingRecord(user) {
   try {
     const existing = await AccountDeletionRequest.findOne({ userId: user._id, status: "pending" });
     if (existing) return existing;
+    const decided = await findDecidedRecord(user);
+    if (decided) return decided;
   } catch (err) {
     console.error("accountDeletionHistory.ensurePendingRecord lookup failed:", err.message);
     return null;
@@ -99,7 +119,11 @@ async function ensurePendingRecord(user) {
     reason: user.deletionReason,
     requestedAt: user.deletionRequestedAt || new Date(),
   });
-  if (created && !created.backfilled) {
+  if (!created) {
+    // Two admins backfilling at once: the other one created the row and may already have decided it.
+    try { return await findDecidedRecord(user); } catch (_) { return null; }
+  }
+  if (!created.backfilled) {
     try {
       await AccountDeletionRequest.updateOne({ _id: created._id }, { $set: { backfilled: true } });
       created.backfilled = true;

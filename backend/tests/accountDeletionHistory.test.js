@@ -27,6 +27,8 @@ const { getDeletionRequests } = require("../controllers/deletionRequestControlle
 
 const originalDelete = User.findByIdAndDelete.bind(User);
 const originalFindOneAndUpdate = AccountDeletionRequest.findOneAndUpdate.bind(AccountDeletionRequest);
+const history = require("../utils/accountDeletionHistory");
+const originalAdminSnapshot = history.adminSnapshot;
 
 const CHROME_WIN =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
@@ -66,6 +68,7 @@ describe("account deletion history", () => {
     mailFails = false;
     User.findByIdAndDelete = originalDelete;
     AccountDeletionRequest.findOneAndUpdate = originalFindOneAndUpdate;
+    history.adminSnapshot = originalAdminSnapshot;
     await AccountDeletionRequest.deleteMany({});
     await User.deleteMany({ role: "user" });
   });
@@ -230,12 +233,141 @@ describe("account deletion history", () => {
       const u = await pendingUser();
       const make = () => call(approveUserDeleteRequest, asAdmin({ params: { id: String(u._id) } }));
       const results = await Promise.all([make(), make()]);
-      assert.deepEqual(results.map((r) => r.status).sort(), [200, results.find((r) => r.status !== 200).status].sort());
-      assert.equal(results.filter((r) => r.status === 200).length, 1);
+      // The loser is 409 (it reached the history after the winner decided) or 404 (it looked the user up after
+      // the winner had already deleted the account). Either way: exactly one 200, never two.
+      const statuses = results.map((r) => r.status).sort();
+      const wins = statuses.filter((s) => s === 200).length;
+      const loser = statuses.find((s) => s !== 200);
+      assert.ok(
+        wins === 1 && [409, 404].includes(loser),
+        `expected one 200 and one 409 or 404, got ${statuses.join(" and ")}`
+      );
       const rows = await rowsFor(u);
       assert.equal(rows.length, 1);
       assert.equal(rows[0].status, "approved");
       assert.equal(await User.findById(u._id), null);
+    });
+
+    // Forces the interleaving that used to let both admins win: the "loser" has already read the user (still
+    // pending) and is paused just before it looks at the history; the "winner" runs its whole request in that gap.
+    const raceLoserAfterWinner = async (u, winnerHandler, loserHandler) => {
+      let armed = true;
+      let winner = null;
+      history.adminSnapshot = async (req) => {
+        if (armed) {
+          armed = false;
+          winner = await call(winnerHandler, asAdmin({ params: { id: String(u._id) } }));
+        }
+        return originalAdminSnapshot(req);
+      };
+      const loser = await call(loserHandler, asAdmin({ params: { id: String(u._id) } }));
+      return { winner, loser };
+    };
+    const countEvents = () => ({
+      mails: events.filter((e) => e.startsWith("mail:")).length,
+      deletes: events.filter((e) => e === "delete").length,
+    });
+    const trackDeletes = () => { User.findByIdAndDelete = async (...args) => { events.push("delete"); return originalDelete(...args); }; };
+
+    test("approve, stale second admin: 409 with no email, no delete and no extra history row", async () => {
+      const u = await pendingUser();
+      trackDeletes();
+      const { winner, loser } = await raceLoserAfterWinner(u, approveUserDeleteRequest, approveUserDeleteRequest);
+      assert.equal(winner.status, 200);
+      assert.equal(loser.status, 409, `expected the stale admin to get 409, got ${loser.status}`);
+      assert.deepEqual(countEvents(), { mails: 1, deletes: 1 }, "only the winner emails and deletes");
+      const rows = await rowsFor(u);
+      assert.equal(rows.length, 1, "the loser must not backfill a second row");
+      assert.equal(rows[0].status, "approved");
+      assert.notEqual(rows[0].backfilled, true);
+    });
+
+    test("reject, stale second admin: 409 with no email, no user change and no extra history row", async () => {
+      const u = await pendingUser();
+      const { winner, loser } = await raceLoserAfterWinner(u, rejectUserDeleteRequest, rejectUserDeleteRequest);
+      assert.equal(winner.status, 200);
+      assert.equal(loser.status, 409, `expected the stale admin to get 409, got ${loser.status}`);
+      assert.equal(countEvents().mails, 1, "only the winner emails");
+      const rows = await rowsFor(u);
+      assert.equal(rows.length, 1);
+      assert.equal(rows[0].status, "rejected");
+      assert.equal((await User.findById(u._id).lean()).deletionRequestStatus, "rejected");
+    });
+
+    test("approve wins, then a stale reject: 409 and the account stays deleted with one row", async () => {
+      const u = await pendingUser();
+      trackDeletes();
+      const { winner, loser } = await raceLoserAfterWinner(u, approveUserDeleteRequest, rejectUserDeleteRequest);
+      assert.equal(winner.status, 200);
+      assert.equal(loser.status, 409, `expected 409, got ${loser.status}`);
+      assert.deepEqual(countEvents(), { mails: 1, deletes: 1 });
+      assert.deepEqual((await rowsFor(u)).map((r) => r.status), ["approved"]);
+      assert.equal(await User.findById(u._id), null);
+    });
+
+    test("reject wins, then a stale approve: 409 and the account is NOT deleted", async () => {
+      const u = await pendingUser();
+      trackDeletes();
+      const { winner, loser } = await raceLoserAfterWinner(u, rejectUserDeleteRequest, approveUserDeleteRequest);
+      assert.equal(winner.status, 200);
+      assert.equal(loser.status, 409, `expected 409, got ${loser.status}`);
+      assert.deepEqual(countEvents(), { mails: 1, deletes: 0 }, "no delete and no approval email");
+      assert.deepEqual((await rowsFor(u)).map((r) => r.status), ["rejected"]);
+      assert.ok(await User.findById(u._id), "the account must still exist");
+    });
+
+    test("approve and reject at the same time: exactly one wins", async () => {
+      const u = await pendingUser();
+      const id = { params: { id: String(u._id) } };
+      const results = await Promise.all([
+        call(approveUserDeleteRequest, asAdmin(id)),
+        call(rejectUserDeleteRequest, asAdmin(id)),
+      ]);
+      const wins = results.filter((r) => r.status === 200).length;
+      assert.equal(wins, 1, `expected exactly one 200, got ${results.map((r) => r.status).join(" and ")}`);
+      const rows = await rowsFor(u);
+      assert.equal(rows.length, 1);
+      assert.ok(["approved", "rejected"].includes(rows[0].status));
+    });
+
+    test("a rejected request that the user makes again is a NEW request: its row is separate and can be decided", async () => {
+      const u = await pendingUser();
+      await call(rejectUserDeleteRequest, asAdmin({ params: { id: String(u._id) } }));
+      await call(requestAccountDeletion, asUser(u, { body: { reason: "second try" } }));
+      const res = await call(approveUserDeleteRequest, asAdmin({ params: { id: String(u._id) } }));
+      assert.equal(res.status, 200);
+      assert.deepEqual((await rowsFor(u)).map((r) => r.status), ["rejected", "approved"]);
+    });
+
+    test("legacy request with no history row at all still backfills and can be approved", async () => {
+      const u = await makeUser({ deletionRequestStatus: "pending", deletionReason: "legacy", deletionRequestedAt: new Date("2026-02-03") });
+      assert.equal((await rowsFor(u)).length, 0);
+      assert.equal((await call(approveUserDeleteRequest, asAdmin({ params: { id: String(u._id) } }))).status, 200);
+      const rows = await rowsFor(u);
+      assert.deepEqual(rows.map((r) => [r.status, r.backfilled]), [["approved", true]]);
+    });
+
+    test("legacy request with only an OLDER decided row (a different request) still backfills", async () => {
+      const u = await makeUser({ deletionRequestStatus: "pending", deletionReason: "again", deletionRequestedAt: new Date("2026-03-01") });
+      await AccountDeletionRequest.create({
+        userId: u._id, name: u.name, email: u.email, status: "rejected", requestedAt: new Date("2026-01-01"), decidedAt: new Date("2026-01-02"),
+      });
+      assert.equal((await call(approveUserDeleteRequest, asAdmin({ params: { id: String(u._id) } }))).status, 200);
+      const rows = await rowsFor(u);
+      assert.deepEqual(rows.map((r) => r.status).sort(), ["approved", "rejected"]);
+    });
+
+    test("legacy request with no requestedAt and no history backfills; with a decided row it is refused, not duplicated", async () => {
+      const fresh = await makeUser({ deletionRequestStatus: "pending", deletionReason: "x", deletionRequestedAt: null });
+      assert.equal((await call(approveUserDeleteRequest, asAdmin({ params: { id: String(fresh._id) } }))).status, 200);
+      assert.equal((await rowsFor(fresh)).length, 1);
+
+      const decided = await makeUser({ deletionRequestStatus: "pending", deletionReason: "x", deletionRequestedAt: null });
+      await AccountDeletionRequest.create({ userId: decided._id, name: decided.name, email: decided.email, status: "rejected", requestedAt: new Date("2026-01-01"), decidedAt: new Date("2026-01-02") });
+      const res = await call(approveUserDeleteRequest, asAdmin({ params: { id: String(decided._id) } }));
+      assert.equal(res.status, 409);
+      assert.equal((await rowsFor(decided)).length, 1);
+      assert.ok(await User.findById(decided._id), "nothing was deleted");
     });
 
     test("reject: the user stays, the row records the decider, and they can ask again", async () => {
