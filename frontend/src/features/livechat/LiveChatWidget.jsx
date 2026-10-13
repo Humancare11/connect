@@ -140,8 +140,8 @@ export default function LiveChatWidget() {
   };
 
   // Nothing here ever says the team is offline.
-  let status = "Humancare AI · Online";
-  if (waiting) status = conversation.emailFollowUp ? "Message received" : "Connecting you with a live agent…";
+  let status = "Online";
+  if (waiting) status = conversation.emailFollowUp ? "Message received" : "Connecting to our team";
   if (withAgent) status = "Live agent · Humancare support";
 
   // On a phone the window covers the page: after a page link it folds away so the patient can read the page.
@@ -159,12 +159,10 @@ export default function LiveChatWidget() {
           <header className="lcw-head">
             <div className="lcw-av lcw-av--lg">
               {withAgent ? initialsOf(agentName) : "HC"}
-              <i className={waiting ? "lcw-dot lcw-dot--wait" : "lcw-dot"} />
             </div>
             <div className="lcw-who">
               <strong>{withAgent ? agentName || "Humancare support" : "Humancare AI"}</strong>
               <small>
-                <i className={waiting ? "lcw-dot-sm lcw-dot-sm--wait" : "lcw-dot-sm"} />
                 <span title={status}>{status}</span>
               </small>
             </div>

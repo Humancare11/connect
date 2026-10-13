@@ -28,7 +28,7 @@ describe("live chat: patient-facing wording", () => {
     const widget = stripComments(read(FEATURE, "LiveChatWidget.jsx"));
     assert.doesNotMatch(widget, /support hours|Team offline/i);
     assert.match(widget, /Message received/);
-    assert.match(widget, /Humancare AI · Online/);
+    assert.match(widget, /let status = "Online"/);
   });
 
   test("backend texts a patient can read never say offline", () => {
@@ -63,6 +63,27 @@ describe("live chat: daily chat limit in the widget", () => {
     assert.match(widget, /!conversation && limitReached && \(/);
     assert.match(widget, /!conversation && !limitReached && <div className="lcw-sys">Starting your chat/);
     assert.match(widget, /limitReached \? "Chat is unavailable today" : locked \? "Fill in the form to start"/);
+  });
+});
+
+describe("live chat: widget header status", () => {
+  const widget = read(FEATURE, "LiveChatWidget.jsx");
+  const css = read(FEATURE, "LiveChatWidget.css");
+
+  test("no status dots at all: not on the avatar, not before the status text, in any state", () => {
+    assert.doesNotMatch(widget, /lcw-dot(?![s-])/, "no dot element in the header");
+    assert.doesNotMatch(widget, /lcw-dot-sm/);
+    assert.doesNotMatch(css, /\.lcw-dot(?![s-])|\.lcw-dot-sm/, "no dot styles left");
+    assert.doesNotMatch(css, /fbbf24|#22c55e|#4ade80|--wait/i, "no green or amber status colours left");
+    assert.match(widget, /<small>\s*<span title=\{status\}>/, "only the status text sits in the status line");
+  });
+
+  test("waiting text is 'Connecting to our team' and the status line wraps instead of truncating", () => {
+    assert.match(widget, /"Connecting to our team"/);
+    assert.doesNotMatch(widget, /Connecting you with a live agent/);
+    const span = css.match(/\.lcw-who small span\s*\{([^}]*)\}/)[1];
+    assert.match(span, /white-space:\s*normal/);
+    assert.doesNotMatch(span, /text-overflow|nowrap/);
   });
 });
 
