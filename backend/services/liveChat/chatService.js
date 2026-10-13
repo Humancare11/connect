@@ -228,8 +228,13 @@ function createChatService({
       ...stored,
     });
     const update = { $set: { lastMessageAt: new Date(now()) } };
-    if (sender === "patient") update.$inc = { patientMessageCount: 1 };
+    // Whatever the patient does first (types, attaches a file, asks for an agent, picks a card), the cards are gone for good.
+    if (sender === "patient") {
+      update.$inc = { patientMessageCount: 1 };
+      update.$set.optionsUsed = true;
+    }
     await LcConversation.updateOne({ _id: conv._id }, update);
+    if (sender === "patient" && !conv.optionsUsed) await pushState(conv); // the patient's cards disappear at once
     const message = {
       id: String(doc._id),
       sender,

@@ -188,6 +188,31 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       socket.close();
     });
 
+    test("typing a first message removes the cards for good, also after a resume", async () => {
+      const { socket, conversation } = await openChat();
+      assert.ok(conversation.options.length > 0);
+      const stateChanged = once(socket, "chat:state");
+      const result = await lc.call(socket, "chat:message", { text: "Hello, I have a question" });
+      assert.equal(result.ok, true);
+      const state = await stateChanged;
+      assert.deepEqual(state.options, []);
+
+      const resumed = await lc.call(socket, "chat:resume");
+      assert.equal(resumed.conversation.optionsUsed, true);
+      assert.deepEqual(resumed.conversation.options, []);
+      socket.close();
+    });
+
+    test("the header 'Talk to live agent' request also removes the cards", async () => {
+      const { socket } = await openChat();
+      const result = await lc.call(socket, "chat:agent");
+      assert.equal(result.ok, true);
+      const resumed = await lc.call(socket, "chat:resume");
+      assert.equal(resumed.conversation.optionsUsed, true);
+      assert.deepEqual(resumed.conversation.options, []);
+      socket.close();
+    });
+
     test("an unknown option is refused", async () => {
       const { socket } = await openChat();
       const res = await lc.call(socket, "chat:option", { key: "free-money" });

@@ -43,9 +43,11 @@ describe("abuse limits (live)", () => {
 
   test("quick-option clicks and the header button count towards the per-minute limit too", async () => {
     const { socket } = await openChat();
-    for (let i = 0; i < 5; i += 1) await lc.call(socket, "chat:message", { text: `q${i}` });
-    assert.equal((await lc.call(socket, "chat:option", { key: "others" })).ok, true); // 6th
-    const seventh = await lc.call(socket, "chat:agent");
+    // The cards disappear with the first message, so the card is clicked first.
+    assert.equal((await lc.call(socket, "chat:option", { key: "others" })).ok, true); // 1st
+    for (let i = 0; i < 4; i += 1) await lc.call(socket, "chat:message", { text: `q${i}` }); // 2nd-5th
+    assert.equal((await lc.call(socket, "chat:agent")).ok, true); // 6th
+    const seventh = await lc.call(socket, "chat:message", { text: "one more" });
     assert.deepEqual([seventh.ok, seventh.error], [false, "rate_limited"]);
     socket.close();
   });
