@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
+import GreetingBubble from "./GreetingBubble";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -298,6 +299,7 @@ export default function LiveChatWidget() {
 
       {!open && chat.invite && <InviteBubble agentName={chat.invite.agentName} onReply={() => setOpen(true)} onLater={chat.dismissInvite} />}
 
+      <GreetingBubble open={open} blocked={Boolean(chat.invite)} onOpen={() => setOpen(true)} />
       <button type="button" className="lcw-launcher" onClick={() => setOpen(!open)} aria-expanded={open}>
         {open ? "✕ Close" : "💬 Chat with us"}
         {!open && chat.unread > 0 && <span className="lcw-badge">{chat.unread}</span>}

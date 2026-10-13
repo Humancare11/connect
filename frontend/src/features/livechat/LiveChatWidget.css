@@ -63,6 +63,44 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   box-shadow: 0 18px 40px -16px rgba(11, 31, 92, 0.45);
 }
+/* Greeting bubble above the launcher. */
+.lcw-greet {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  max-width: 280px;
+  background: var(--lcw-surface);
+  border: 1px solid var(--lcw-line);
+  border-radius: 14px 14px 4px 14px;
+  box-shadow: 0 14px 34px -14px rgba(11, 31, 92, 0.4);
+}
+.lcw-greet-text {
+  flex: 1;
+  border: 0;
+  background: none;
+  color: var(--lcw-ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 4px 12px 14px;
+  cursor: pointer;
+}
+.lcw-greet-x {
+  border: 0;
+  background: none;
+  color: var(--lcw-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+@media (max-width: 520px) {
+  .lcw-greet {
+    max-width: 220px;
+    font-size: 13px;
+  }
+}
+
 .lcw-launcher:focus-visible,
 .lcw-root button:focus-visible,
 .lcw-root input:focus-visible,

@@ -66,6 +66,30 @@ describe("live chat: daily chat limit in the widget", () => {
   });
 });
 
+describe("live chat: greeting bubble", () => {
+  const bubble = stripComments(read(FEATURE, "GreetingBubble.jsx"));
+
+  test("shows on every load and page change after 3 seconds, remembering nothing", () => {
+    assert.doesNotMatch(bubble, /sessionStorage|localStorage|document\.cookie/, "no shown/dismissed flag is stored");
+    assert.match(bubble, /DELAY_MS = 3000/);
+    assert.match(bubble, /useLocation\(\)/, "a client-side page change starts the wait again");
+    assert.match(bubble, /\}, \[pathname\]\)/);
+    assert.match(bubble, /Hello <span aria-hidden="true">👋<\/span>, Are you looking to consult with a doctor\?/);
+  });
+
+  test("hidden while the chat is open and for the rest of that page; X only hides it until the next load", () => {
+    assert.match(bubble, /if \(open \|\| blocked \|\| shownPath !== pathname\) return null/);
+    assert.match(bubble, /openedOnPage\.current/);
+    assert.match(bubble, /onClick=\{\(\) => setShownPath\(null\)\}/);
+  });
+
+  test("the admin invite bubble wins, and the launcher is a real button named 'Open chat'", () => {
+    const widget = read(FEATURE, "LiveChatWidget.jsx");
+    assert.match(widget, /<GreetingBubble open=\{open\} blocked=\{Boolean\(chat\.invite\)\}/);
+    assert.match(widget, /aria-label="Open chat"/);
+  });
+});
+
 describe("live chat: widget scrolling rules", () => {
   const css = read(FEATURE, "LiveChatWidget.css");
   const rule = (selector) => {
