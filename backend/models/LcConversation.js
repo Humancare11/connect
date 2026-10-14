@@ -26,6 +26,10 @@ const conversationSchema = new mongoose.Schema(
     invited: { type: Boolean, default: false }, // an admin started this chat; the visitor has not replied yet
     leftAt: { type: Date, default: null }, // archived as "patient left" at this time
     modeBeforeLeft: { type: String, enum: ["", "ai", "queue", "live"], default: "" }, // lets a returning visitor continue
+    // Persisted "patient left" time: set (now + leave grace) when the visitor's last connection closes, cleared when
+    // they connect again. A job archives the chat as "patient left" once it has passed and nobody is connected, so a
+    // restart that loses the in-memory timer cannot leave an abandoned chat open.
+    leaveDueAt: { type: Date, default: null, index: true },
     // The follow-up step: when the chat entered the Queue, this is when "Our team will connect with you by email" is
     // due (cleared when an admin takes the chat, the patient goes back to the AI, or the notice was given).
     followUpDueAt: { type: Date, default: null, index: true },

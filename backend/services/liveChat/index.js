@@ -331,6 +331,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     // who are reconnecting after the restart are not mistaken for gone.
     if (Date.now() - startedAt >= sweepDelayMs) {
       chat.runDailySweep().catch((err) => console.error("[livechat] daily sweep failed:", err?.message));
+      chat.runAbandonedSweep().catch((err) => console.error("[livechat] abandoned-chat sweep failed:", err?.message));
     }
   };
   const startedAt = Date.now();
