@@ -137,6 +137,15 @@ The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui
 - **Audit log:** `LcChatDeletionAudit` has one row per delete, restore, purge and auto purge: who, when, how many, chat IDs and the filters used (only whether a search was used, not its text). No names, emails, phones or message text.
 - **Abuse counters still count trashed chats:** the per-IP and per-visitor "chats per day" limits include chats in Trash, so deleting chats does not reset a spammer's limit.
 
+## Daily cleanup (India time) and newest-first lists
+
+- **Archive temp** shows only chats archived **today in India time (Asia/Kolkata)**. At midnight IST it empties (open admin tabs drop yesterday's chats on their own); the chats stay on the Archive page.
+- **Midnight sweep:** once per IST day the job that already runs every tick (`runDailySweep`) archives, as "Inactive" (closing line "This chat was closed at the end of the day..."), every chat with no message today that is not active: an AI chat (including "Back with the AI") unless the patient is connected on the site (tracked visit, open chat connection, or inside the reconnect grace); an admin-held chat only when the last visible message is from an admin or the AI. The **Queue** is never swept, and an admin-held chat where the **patient wrote last** stays.
+- **Safe to repeat and to miss:** each chat is claimed with one atomic update; the day is stored in `LcSettings.lastDailySweepDay` when a sweep completes, so a restart (or a server that was down at midnight) catches up once. After a restart the first sweep waits one presence grace period so reconnecting patients are not mistaken for gone.
+- The 24-hour reopen rule is unchanged: if the patient writes within 24 hours of the close, the same chat reopens.
+- **Chat lists:** every group (Queue, My chats, Other agents, Back with the AI, Talking to the AI, Archive temp) is sorted by latest activity, newest on top; there is no Oldest/Newest toggle.
+- **Language detection on open:** opening a chat that has patient text but no language runs one bounded detection (daily AI cap respected, English-looking and too-short text never sent, name/email/phone removed, one call per chat per 20 s). A "Language not detected - Detect language" link in the composer row retries it.
+
 ## Tests
 
 `cd backend && npm test` (or `node --test --test-concurrency=2 "tests/liveChat*.test.js"` for the live chat suites only). The admin UI work added `liveChatVisitorPanel`, `liveChatTranscript`, `liveChatComposer` (Suggest redaction, Translate targets, files sent to patients) and `liveChatContext` (patient context, custom fields, AI summary); the settings, reports and retention suites cover Phase 5 and the retention of agent-sent files.

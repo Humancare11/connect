@@ -154,6 +154,7 @@ export default function ChatConversation({
   onTyping,
   onOpenFile,
   onBlockIp,
+  onDetect, // retry the language detection: async, returns { language, reason }
   onDelete, // Super Admin: delete an archived chat (to Trash); async, returns { ok, error }
   onDownload,
   onSendFile,
@@ -168,7 +169,14 @@ export default function ChatConversation({
   const [info, setInfo] = useState("");
 
   // Translation (this admin only; the patient never sees any of it)
-  const language = c.language || null; // { code, name } for non-English chats
+  const [detected, setDetected] = useState(null); // a language found by the "Detect language" link
+  const language = c.language || detected || null; // { code, name } for non-English chats
+  const canDetect = !language && messages.some((m) => m.sender === "patient" && m.text);
+  const runDetect = async () => {
+    const res = onDetect ? await onDetect() : null;
+    if (res?.language) setDetected(res.language);
+    return res || { language: null, reason: "failed" };
+  };
   const [view, setView] = useState(detail.view === "en" ? "en" : "original");
   const [translations, setTranslations] = useState({}); // messageId -> { text, from, fromName }
   const [originals, setOriginals] = useState(() => new Set()); // messages switched back to the original
@@ -445,6 +453,8 @@ export default function ChatConversation({
         busy={busy}
         canned={canned}
         language={language}
+        canDetect={canDetect}
+        onDetect={onDetect ? runDetect : undefined}
         view={view}
         onChooseView={chooseView}
         translating={translating}

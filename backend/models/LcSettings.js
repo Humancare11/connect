@@ -14,6 +14,9 @@ const settingsSchema = new mongoose.Schema(
     followUpMinutes: { type: Number, default: 1, min: 1, max: 30 },
     // Minutes of patient silence after an AI or admin reply before the chat is archived as "Inactive".
     inactiveMinutes: { type: Number, default: 10, min: 5, max: 60 },
+    // IST day (YYYY-MM-DD) the midnight cleanup last completed for. Not an admin setting: the sweep writes it, so a
+    // restart (or a server that was down at midnight) catches up exactly once per day.
+    lastDailySweepDay: { type: String, default: "" },
     handoffRules: {
       onUnsure: { type: Boolean, default: true }, // "unanswered": hands over after two misses in a row
       onAccountOrPayment: { type: Boolean, default: true }, // ... when the patient asks about their own booking or payment

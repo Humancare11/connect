@@ -20,6 +20,9 @@ const EMAIL_NOTICE_TEXT = (email) => `Our team will connect with you by email at
 const FOLLOW_UP_JOB_MS = 15_000; // how often due follow-ups are looked for
 const INACTIVE_JOB_LIMIT = 25;
 const REOPEN_WINDOW_MS = 24 * 3_600_000; // a chat closed as "patient left" or "inactive" continues within this long
+const { istDayKey, istDayStart } = require("./istDay");
+const DAILY_CLOSE_TEXT = "This chat was closed at the end of the day. Send a message any time to continue.";
+const SWEEP_BATCH = 100;
 const INACTIVE_TEXT = (minutes) => `This chat was closed after ${minutes} minutes of inactivity. Send a message any time to continue.`;
 const inactiveMinutesOf = (settings) => Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10)));
 const followUpMinutesOf = (settings) => Math.min(30, Math.max(1, Math.round(Number(settings?.followUpMinutes) || 1)));
@@ -468,6 +471,8 @@ function createChatService({
   // closes. When the last one has been closed for leaveGraceMs, visitorLeft() runs; a reconnect in time cancels it.
   const connections = new Map();
   const leaveTimers = new Map();
+  // On the site right now: a tracked visit, an open chat connection, or one that dropped less than the grace period ago.
+  const isConnected = (visitorId) => Boolean(presence.get(visitorId)) || connections.has(visitorId) || leaveTimers.has(visitorId);
   function trackConnection(visitorId) {
     clearTimeout(leaveTimers.get(visitorId));
     leaveTimers.delete(visitorId);
@@ -885,6 +890,81 @@ function createChatService({
     return handled;
   }
 
+  // The midnight (India time) cleanup. Archives, as "inactive" (so the patient can continue within 24 h), every chat
+  // with no message today that is not active:
+  //   - mode "ai" (AI chats and "Back with the AI"): archived unless the patient is connected on the site;
+  //   - mode "live" (an admin holds it): archived only when the patient is not waiting, i.e. the last visible message
+  //     is from an admin or the AI. The patient's message last means it stays.
+  // The Queue and any chat whose patient is connected are never touched. Runs from the follow-up job every tick; the
+  // day is recorded once a sweep completes, so a restart (or a server that was down at midnight) catches up, and
+  // running it twice is harmless: every chat is claimed with one atomic update.
+  async function runDailySweep({ at, force = false } = {}) {
+    const atMs = at ? new Date(at).getTime() : now();
+    const today = istDayKey(atMs);
+    const start = istDayStart(today);
+    const { LcSettings } = models;
+    const doc = await LcSettings.getSettings();
+    if (!force && (doc.lastDailySweepDay || "") >= today) return { skipped: true, archived: 0, kept: 0 };
+
+    let archived = 0;
+    const kept = new Set();
+    for (let batch = 0; batch < 200; batch += 1) {
+      const rows = await LcConversation.find({ mode: { $in: ["ai", "live"] }, lastMessageAt: { $lt: start }, _id: { $nin: [...kept] } })
+        .select("_id conversationId")
+        .limit(SWEEP_BATCH)
+        .lean();
+      if (!rows.length) break;
+      for (const row of rows) {
+        try {
+          const done = await withLock(row.conversationId, async () => {
+            const current = await LcConversation.findById(row._id);
+            if (!current || !["ai", "live"].includes(current.mode) || current.lastMessageAt >= start) return false;
+            if (isConnected(current.visitorId)) return false; // the patient is on the site (tracking or chat connection)
+            if (current.mode === "live") {
+              const last = await LcMessage.findOne({
+                conversationId: current.conversationId,
+                sender: { $in: ["patient", "ai", "agent"] },
+                internal: { $ne: true },
+              })
+                .sort({ createdAt: -1 })
+                .select("sender")
+                .lean();
+              if (last?.sender === "patient") return false; // the patient is waiting for an answer
+            }
+            const stamp = new Date(atMs);
+            const closed = await LcConversation.findOneAndUpdate(
+              { _id: current._id, mode: current.mode, lastMessageAt: { $lt: start } },
+              {
+                $set: {
+                  modeBeforeLeft: current.mode,
+                  mode: "archived",
+                  closedReason: "inactive",
+                  closedAt: stamp,
+                  inactiveDueAt: null,
+                  followUpDueAt: null,
+                },
+              },
+              { returnDocument: "after" }
+            );
+            if (!closed) return false;
+            await addMessage(closed, "system", DAILY_CLOSE_TEXT);
+            setActivity(closed.visitorId, closed);
+            announce(closed);
+            await pushState(closed);
+            return true;
+          });
+          if (done) archived += 1;
+          else kept.add(row._id);
+        } catch (err) {
+          kept.add(row._id);
+          log({ event: "daily_sweep_failed", conversationId: row.conversationId, message: err?.message });
+        }
+      }
+    }
+    await LcSettings.updateOne({ key: "default" }, { $set: { lastDailySweepDay: today } });
+    return { skipped: false, archived, kept: kept.size };
+  }
+
   // Header button.
   async function talkToAgent(visitorId) {
     const loaded = await loadOpenForMessage(visitorId);
@@ -976,6 +1056,7 @@ function createChatService({
     switchToAi,
     runFollowUpDue,
     runInactiveDue,
+    runDailySweep,
     followUpDueFor,
     followUpJobMs: FOLLOW_UP_JOB_MS,
     relayTyping,
@@ -985,6 +1066,7 @@ function createChatService({
     findReopenable,
     reopenInactive: findOrReopen,
     trackConnection,
+    isConnected,
     visitorLeft,
     rate,
     pendingInvite,

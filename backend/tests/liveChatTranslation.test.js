@@ -541,4 +541,82 @@ describe("live chat: translation for admins", () => {
     assert.match(conversation, /Show original|show original/);
   });
 
+
+  // ── detect on open ───────────────────────────────────────────────────────────
+
+  // A chat with patient text but no language yet: the first detection failed.
+  async function chatWithoutLanguage(text = "Ich brauche ein Rezept für meine Medikamente, können Sie helfen?") {
+    await lc.setSettings({ aiMode: "ai_off" });
+    lc.ai.detectOverride = async () => ({ ok: false, kind: "unavailable" });
+    const chat = await openChat();
+    await say(chat, text);
+    await sleep(150);
+    lc.ai.detectOverride = null;
+    lc.ai.detectCalls.length = 0;
+    assert.equal(Boolean((await convOf(chat.id)).language?.code), false);
+    return chat;
+  }
+
+  test("opening a chat without a language detects it once (redacted), and the controls data is in the response", async () => {
+    const chat = await chatWithoutLanguage();
+    const body = await detailOf(chat.id);
+    assert.deepEqual(body.conversation.language, GERMAN);
+    assert.equal(lc.ai.detectCalls.length, 1);
+    const sent = JSON.stringify(lc.ai.detectCalls[0]);
+    for (const secret of [NAME, "Hans", "Müller", EMAIL, PHONE, chat.id]) assert.equal(sent.includes(secret), false, `not sent: ${secret}`);
+    assert.deepEqual((await convOf(chat.id)).language.code, "de");
+    await detailOf(chat.id); // language known: no second call
+    assert.equal(lc.ai.detectCalls.length, 1);
+    chat.socket.close();
+  });
+
+  test("an English chat is never sent for detection", async () => {
+    const chat = await chatWithoutLanguage("I would like some help with my prescription please");
+    const body = await detailOf(chat.id);
+    assert.equal(body.conversation.language, null);
+    assert.equal(lc.ai.detectCalls.length, 0);
+    const manual = await rest("POST", `/conversations/${chat.id}/detect-language`, { user: AGENT_A });
+    assert.equal(manual.body.language, null);
+    assert.equal(manual.body.reason, "english");
+    assert.equal(lc.ai.detectCalls.length, 0);
+    chat.socket.close();
+  });
+
+  test("the daily AI cap is respected; the Detect language link reports it and works once the cap allows", async () => {
+    const chat = await chatWithoutLanguage();
+    await lc.models.LcAiUsage.updateOne({ day: dayKey() }, { $set: { costUsd: 99 } }, { upsert: true });
+    assert.equal((await detailOf(chat.id)).conversation.language, null);
+    assert.equal(lc.ai.detectCalls.length, 0, "no model call over the cap");
+    const capped = await rest("POST", `/conversations/${chat.id}/detect-language`, { user: AGENT_A });
+    assert.deepEqual([capped.status, capped.body.language, capped.body.reason], [200, null, "cap"]);
+
+    await lc.models.LcAiUsage.deleteMany({});
+    const ok = await rest("POST", `/conversations/${chat.id}/detect-language`, { user: AGENT_A });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    assert.deepEqual(ok.body.language, GERMAN);
+    assert.equal((await convOf(chat.id)).language.code, "de");
+    chat.socket.close();
+  });
+
+  test("a failed detection shows no language and the link can retry (not blocked by the automatic limit)", async () => {
+    const chat = await chatWithoutLanguage();
+    lc.ai.detectOverride = async () => ({ ok: false, kind: "unavailable" });
+    assert.equal((await detailOf(chat.id)).conversation.language, null);
+    const failed = await rest("POST", `/conversations/${chat.id}/detect-language`, { user: AGENT_A });
+    assert.ok(["failed", "busy"].includes(failed.body.reason), JSON.stringify(failed.body));
+    assert.equal(failed.body.language, null);
+    chat.socket.close();
+  });
+
+  test("language controls: a non-English chat renders the switch and the To <language> button; an English chat renders neither", () => {
+    const fs = require("fs");
+    const path = require("path");
+    const dir = path.join(__dirname, "..", "..", "frontend", "src", "pages", "admin", "livechat");
+    const composer = fs.readFileSync(path.join(dir, "Composer.jsx"), "utf8");
+    // both controls are gated on the chat's language, and the hint offers the retry link
+    assert.match(composer, /\{language && \(\s*<>\s*<LanguageSwitch/);
+    assert.match(composer, /!noting && !closed && \(/);
+    assert.match(composer, /Language not detected/);
+    assert.match(composer, /Detect language/);
+  });
 });

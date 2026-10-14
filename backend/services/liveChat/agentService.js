@@ -29,7 +29,7 @@ class AgentError extends Error {
 
 const CONVERSATION_ID_RE = /^HC[A-Z0-9]{8}$/;
 const LIST_LIMIT = 200;
-const ARCHIVE_TEMP_MS = 24 * 3_600_000;
+const { istTodayStart } = require("./istDay");
 const MAX_AGENT_TEXT = 2000;
 const MAX_TAGS = 10;
 
@@ -148,7 +148,7 @@ function createAgentService({
   async function list(actor, view) {
     // "Archive temp": archived chats stay in the lists for 24 hours (the time a patient can still reopen one); the
     // Archive page has the rest. The newest-closed archived chats come first within their group.
-    const since = new Date(now() - ARCHIVE_TEMP_MS);
+    const since = istTodayStart(now()); // chats archived today (India time); at midnight the group empties
     const filter = {
       everLive: view === "live",
       mode: { $ne: "trashed" },
@@ -217,6 +217,14 @@ function createAgentService({
   async function detail(actor, conversationId, { markRead: markAsRead = true } = {}) {
     const conv = await load(conversationId);
     if (markAsRead) await markReadDoc(conv, actor.id); // the Archive page only looks: it leaves unread counts alone
+    if (!conv.language?.code) {
+      // No language yet: one bounded detection (daily cap respected), waited for at most 4 s so the controls show at once.
+      const found = await Promise.race([
+        translation.detectOnOpen(conv).catch(() => null),
+        new Promise((resolve) => setTimeout(() => resolve(null), 4000).unref?.()),
+      ]);
+      if (found?.language) conv.language = { code: found.language.code, name: found.language.name, detectedAt: new Date(now()) };
+    }
     const [rows, visitor, chats, pages, others] = await Promise.all([
       LcMessage.find({ conversationId }).sort({ createdAt: 1 }).limit(500).lean(),
       chat.loadVisitor(conv.visitorId),
@@ -778,6 +786,14 @@ function createAgentService({
     return { ok: true, ...(await translation.translateMessages(actor, conv, clean)) };
   }
 
+  // The composer's "Detect language" link. Returns the language (or why none was found).
+  async function detectLanguage(actor, conversationId) {
+    const conv = await load(conversationId);
+    if (!translation.limiter.allow(String(actor.id))) throw new AgentError(429, "rate_limited");
+    const found = await translation.detectOnOpen(conv, { manual: true });
+    return { ok: true, language: found.language, reason: found.reason };
+  }
+
   async function translateReply(actor, conversationId, text) {
     const conv = await load(conversationId);
     return { ok: true, ...(await translation.translateReply(actor, conv, text)) };
@@ -994,6 +1010,7 @@ function createAgentService({
     suggest,
     translate,
     translateReply,
+    detectLanguage,
     setTranslateView,
     startChat,
     relayTyping,

@@ -5,6 +5,7 @@ import LanguageSwitch from "./LanguageSwitch";
 // The message box under a conversation (docs/live-chat-admin-ui.html "Enter message" bar).
 //   Message / Internal note   notes are for the team and never reach the patient
 //   Original | English        on a non-English chat: how this admin reads the messages (remembered per chat)
+//   Language not detected     a chat with patient text but no language: a link retries the detection
 //   To <language>             on a non-English chat: type in English, translate into the patient's language, check it, send
 //   Saved replies (#)         click the # button, or type # in the box and keep typing to filter; Super Admin manages them
 //   Suggest a reply (AI)      puts a draft in the box; nothing is sent until the admin edits and sends it
@@ -22,7 +23,7 @@ const hashAt = (text, caret) => {
 };
 
 const Composer = forwardRef(function Composer(
-  { conversation: c, notesOnly, heldByOther, mine, closed, busy, canned, language, view, onChooseView, translating, onSend, onNote, onSuggest, onTranslateReply, onAttach, onTyping, onNotice },
+  { conversation: c, notesOnly, heldByOther, mine, closed, busy, canned, language, canDetect, onDetect, view, onChooseView, translating, onSend, onNote, onSuggest, onTranslateReply, onAttach, onTyping, onNotice },
   ref
 ) {
   const [draft, setDraft] = useState("");
@@ -32,6 +33,8 @@ const Composer = forwardRef(function Composer(
   const [suggesting, setSuggesting] = useState(false);
   const [replying, setReplying] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [detecting, setDetecting] = useState(false);
+  const [detectNote, setDetectNote] = useState(""); // why the last "Detect language" found nothing
   const [pop, setPop] = useState("");
   const [active, setActive] = useState(0); // highlighted saved reply while typing #
   const inputRef = useRef(null);
@@ -147,6 +150,16 @@ const Composer = forwardRef(function Composer(
     focusAt(res.text.length);
   };
 
+  const DETECT_NOTES = { english: "This chat looks English.", cap: "AI daily limit reached.", failed: "Could not detect. Try again.", busy: "Try again in a moment.", no_text: "Not enough text yet." };
+  const detect = async () => {
+    if (detecting) return;
+    setDetecting(true);
+    setDetectNote("");
+    const res = await onDetect();
+    setDetecting(false);
+    if (!res?.language) setDetectNote(DETECT_NOTES[res?.reason] || DETECT_NOTES.failed);
+  };
+
   const attach = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -196,6 +209,7 @@ const Composer = forwardRef(function Composer(
           {!noting && englishSource && (
             <div className="cm-src">
               <span>Your English: {englishSource}</span>
+              <span aria-hidden="true">·</span>
               <button
                 type="button"
                 className="wk-link"
@@ -231,19 +245,35 @@ const Composer = forwardRef(function Composer(
             <button type="button" className="cm-mode" data-pop onClick={() => setPop(pop === "mode" ? "" : "mode")} aria-expanded={pop === "mode"}>
               {noting ? "Note" : "Message"} <Icon name="chevD" size={16} />
             </button>
-            {language && <LanguageSwitch view={view} onChoose={onChooseView} translating={translating} />}
             <span className="cm-sep" aria-hidden="true" />
-            {language && !noting && !closed && (
-              <button
-                type="button"
-                className="cm-ic cm-tr"
-                disabled={replying || busy || !draft.trim() || Boolean(englishSource)}
-                title="Type in English, translate, check, then send"
-                onClick={translate}
-              >
-                <Icon name="translate" />
-                <span>{replying ? "Translating…" : `To ${language.name}`}</span>
-              </button>
+            {language && (
+              <>
+                <LanguageSwitch view={view} onChoose={onChooseView} translating={translating} />
+                {!noting && !closed && (
+                  <button
+                    type="button"
+                    className="cm-ic cm-tr"
+                    disabled={replying || busy || !draft.trim() || Boolean(englishSource)}
+                    title="Type in English, translate, check, then send"
+                    onClick={translate}
+                  >
+                    <Icon name="translate" />
+                    <span>{replying ? "Translating…" : `To ${language.name}`}</span>
+                  </button>
+                )}
+                <span className="cm-sep" aria-hidden="true" />
+              </>
+            )}
+            {!language && canDetect && onDetect && !closed && (
+              <>
+                <span className="cm-nolang" role="status">
+                  <span>{detectNote || "Language not detected"}</span>
+                  <button type="button" className="wk-link" disabled={detecting} onClick={detect}>
+                    {detecting ? "Detecting…" : "Detect language"}
+                  </button>
+                </span>
+                <span className="cm-sep" aria-hidden="true" />
+              </>
             )}
             <button
               type="button"
@@ -281,7 +311,7 @@ const Composer = forwardRef(function Composer(
               <Icon name="plus" />
             </button>
             <input ref={fileRef} type="file" hidden accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" onChange={attach} />
-            <span className="cm-hint">Enter to send · Shift+Enter for new line</span>
+            <span className="cm-hint">Enter to send ·</span>
             <button type="submit" className="cm-send" disabled={busy || !draft.trim()}>
               {noting ? "Save note" : "Send"}
             </button>

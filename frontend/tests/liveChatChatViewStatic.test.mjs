@@ -29,13 +29,13 @@ test("the conversation header shows no tags, only the 'held by' text", () => {
   assert.doesNotMatch(chat, /import \{[^}]*(handoffLabel|CLOSED_LABEL)/);
 });
 
-test("the Original | English switch is in the composer toolbar, right after the Message selector, only for non-English chats", () => {
+test("the Original | English switch is in the composer toolbar: Message selector, divider, switch, To button, divider; only for non-English chats", () => {
   const composer = read("Composer.jsx");
   const mode = composer.indexOf('className="cm-mode"');
   const sw = composer.indexOf("<LanguageSwitch");
   const sep = composer.indexOf('className="cm-sep"');
-  assert.ok(mode > 0 && sw > mode && sw < sep, "switch sits between the Message selector and the separator");
-  assert.match(composer, /\{language && <LanguageSwitch/);
+  assert.ok(mode > 0 && sep > mode && sw > sep, "the divider follows the Message selector, then the switch");
+  assert.match(composer, /\{language && \(\s*<>\s*<LanguageSwitch/);
   const chat = read("ChatConversation.jsx");
   assert.doesNotMatch(chat, /wk-viewswitch/, "the sticky switch is gone from the message area");
   assert.match(chat, /view=\{view\}[\s\S]*onChooseView=\{chooseView\}[\s\S]*translating=\{translating\}/);
@@ -52,4 +52,72 @@ test("the switch component keeps its behaviour: Original / English, pressed stat
   assert.match(sw, /aria-pressed=\{view === "original"\}/);
   assert.match(sw, /aria-pressed=\{view === "en"\}/);
   assert.match(sw, /Translating…/);
+});
+
+// ── Composer language controls (rendered for real with Vite SSR) ──────────────────────────────────────────────────
+
+async function renderChat({ language, readOnly = false, messages }) {
+  const { createServer } = await import("vite");
+  const React = (await import("react")).default;
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const server = await createServer({ root: path.resolve(LC, "..", "..", "..", ".."), server: { middlewareMode: true }, appType: "custom", logLevel: "error" });
+  try {
+    const { default: ChatConversation } = await server.ssrLoadModule("/src/pages/admin/livechat/ChatConversation.jsx");
+    const now = new Date().toISOString();
+    const noop = async () => false;
+    const detail = {
+      conversation: { conversationId: "HC12345678", mode: readOnly ? "archived" : "live", everLive: true, assignee: { id: "u1", name: "Sam" }, name: "Hans", language, startedAt: now, lastMessageAt: now },
+      messages: messages || [{ id: "m1", sender: "patient", text: "Hallo, ich habe Schmerzen", at: now }],
+      view: "original",
+      panel: {},
+    };
+    return renderToStaticMarkup(
+      React.createElement(ChatConversation, {
+        detail, me: "u1", role: "admin", typing: false, canned: { agentName: "", replies: [] }, busy: false, error: "", panelOpen: true, readOnly,
+        onTogglePanel() {}, onTakeOver: noop, onHandBack: noop, onResolve: noop, onSend: noop, onNote: noop, onSuggest: noop, onTyping() {},
+        onBlockIp() {}, onSendFile: noop, onTranslateReply: noop, onTranslate: noop, onSetView() {}, onOpenFile() {}, onDownload() {}, onDetect: noop,
+      })
+    );
+  } finally {
+    await server.close();
+  }
+}
+
+test("a non-English chat renders the Original | English switch and the 'To <language>' button; an English chat renders neither", async () => {
+  const german = await renderChat({ language: { code: "de", name: "German" } });
+  assert.match(german, /aria-label="Message language"/);
+  assert.match(german, />Original</);
+  assert.match(german, />English</);
+  assert.match(german, /To German/);
+  assert.doesNotMatch(german, /Language not detected/);
+  // toolbar order: Message selector, divider, switch, To button, divider, then the # button
+  const at = (needle) => german.indexOf(needle);
+  assert.ok(at("Message ") < at("cm-sep") && at("cm-sep") < at('aria-label="Message language"') && at('aria-label="Message language"') < at("To German"));
+  assert.ok(at("To German") < at("Saved replies"));
+
+  const english = await renderChat({ language: null, messages: [{ id: "m1", sender: "ai", text: "Welcome", at: new Date().toISOString() }] });
+  assert.doesNotMatch(english, /Message language/);
+  assert.doesNotMatch(english, /To German|>Original</);
+  assert.doesNotMatch(english, /Language not detected/, "no patient text: no hint");
+});
+
+test("a chat with patient text but no language shows 'Language not detected' with a Detect language link", async () => {
+  const html = await renderChat({ language: null });
+  assert.match(html, /Language not detected/);
+  assert.match(html, /Detect language/);
+  assert.doesNotMatch(html, /Message language|To German/);
+});
+
+test("the Archive viewer's read-only bar shows only the switch, no 'To <language>'", async () => {
+  const html = await renderChat({ language: { code: "mr", name: "Marathi" }, readOnly: true });
+  assert.match(html, /Read-only/);
+  assert.match(html, /aria-label="Message language"/);
+  assert.doesNotMatch(html, /To Marathi|Language not detected/);
+});
+
+test("the chat list sorts every group newest first with no Oldest / Newest toggle", () => {
+  const list = read("ChatList.jsx");
+  assert.doesNotMatch(list, /Oldest|Change sort order|sortBy/);
+  assert.match(list, /activityAt\(b\) - activityAt\(a\)/);
+  assert.match(list, /Asia|IST_OFFSET_MS/, "Archive temp drops yesterday's chats at midnight India time");
 });
