@@ -215,6 +215,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     LcFile: require("../../models/LcFile"),
     LcBlockedIp: require("../../models/LcBlockedIp"),
     LcSettingsAudit: require("../../models/LcSettingsAudit"),
+    LcChatDeletionAudit: require("../../models/LcChatDeletionAudit"),
     LcAgentProfile: require("../../models/LcAgentProfile"),
   };
   const settingsCacheMs = options.settingsCacheMs ?? 5000;
@@ -294,7 +295,8 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const settingsSvc = createSettingsService({ models, invalidateSettings });
   const statsSvc = createStatsService({ models, loadSettings, agents });
   const archiveSvc = require("./archiveService").createArchiveService({ models });
-  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock });
+  const trashSvc = require("./trashService").createTrashService({ models, archive: archiveSvc, store: options.fileStore });
+  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock, trashSvc });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
   require("./adminNamespace").setupAdminNamespace(adminNs, ctx);
@@ -315,7 +317,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc, trash: trashSvc, trashLimiter: options.trashLimiter })
     );
   }
 

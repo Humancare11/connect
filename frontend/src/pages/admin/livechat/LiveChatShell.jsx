@@ -17,6 +17,7 @@ const ITEMS = [
   { path: `${BASE}/ai-chats`, label: "AI chats", icon: "bot", badge: "ai" },
   { path: `${BASE}/agent-chats`, label: "Live agent chats", icon: "headset", badge: "live" },
   { path: `${BASE}/archive`, label: "Archive", icon: "archive" },
+  { path: `${BASE}/trash`, label: "Trash", icon: "trash", superOnly: true },
   { path: `${BASE}/team`, label: "Team", icon: "users" },
   { path: `${BASE}/reports`, label: "Reports", icon: "chart" },
   { path: `${BASE}/settings`, label: "AI agent settings", icon: "sliders" },
@@ -128,7 +129,7 @@ export default function LiveChatShell({ children }) {
               </span>
               <span className="lx-nav-label">Admin dashboard</span>
             </Link>
-            {ITEMS.map((item) => {
+            {ITEMS.filter((item) => !item.superOnly || user?.role === "superadmin").map((item) => {
               const active = matches(item, pathname);
               const count = item.badge ? unread[item.badge] || 0 : 0;
               return (

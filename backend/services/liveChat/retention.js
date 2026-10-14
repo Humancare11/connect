@@ -12,30 +12,26 @@
 // chat is left for the next run, so nothing is orphaned in the bucket.
 const BATCH = 200;
 
-// store.removeMany(keys) -> array of keys that could NOT be deleted
-async function runLiveChatRetention({ cutoff, models, store, maxBatches = 500 }) {
-  const m = models || {
-    LcConversation: require("../../models/LcConversation"),
-    LcMessage: require("../../models/LcMessage"),
-    LcFile: require("../../models/LcFile"),
-    LcPageVisit: require("../../models/LcPageVisit"),
-    LcVisitor: require("../../models/LcVisitor"),
-  };
-  const result = { chats: 0, messages: 0, files: 0, pageVisits: 0, contacts: 0, skippedChats: 0 };
+const defaultModels = () => ({
+  LcConversation: require("../../models/LcConversation"),
+  LcMessage: require("../../models/LcMessage"),
+  LcFile: require("../../models/LcFile"),
+  LcPageVisit: require("../../models/LcPageVisit"),
+  LcVisitor: require("../../models/LcVisitor"),
+});
+
+// Deletes the given chats completely: S3 objects first, then files, messages (with their translations), page
+// timelines and the conversation rows (contact and context fields live on the conversation). Shared by the
+// retention job and by the Super Admin Trash purge, so both behave identically.
+// Returns { deletedIds, skippedIds, files, messages, pageVisits, chats }.
+async function purgeConversations(ids, { models, store } = {}) {
+  const m = models || defaultModels();
+  const out = { deletedIds: [], skippedIds: [], files: 0, messages: 0, pageVisits: 0, chats: 0 };
   let fileStore = store || null;
   const getStore = () => (fileStore ||= require("./fileService").createS3FileStore());
-  const skipped = new Set();
-
-  for (let i = 0; i < maxBatches; i += 1) {
-    const convs = await m.LcConversation.find({ lastMessageAt: { $lt: cutoff }, conversationId: { $nin: [...skipped] } })
-      .select("conversationId")
-      .limit(BATCH)
-      .lean();
-    if (!convs.length) break;
-    const ids = convs.map((c) => c.conversationId);
-
-    // 1. S3 objects first
-    const files = await m.LcFile.find({ conversationId: { $in: ids } }).select("conversationId s3Key").lean();
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const batch = ids.slice(i, i + BATCH);
+    const files = await m.LcFile.find({ conversationId: { $in: batch } }).select("conversationId s3Key").lean();
     const failedKeys = new Set();
     if (files.length) {
       try {
@@ -45,19 +41,33 @@ async function runLiveChatRetention({ cutoff, models, store, maxBatches = 500 })
       }
     }
     const blocked = new Set(files.filter((f) => failedKeys.has(f.s3Key)).map((f) => f.conversationId));
-    blocked.forEach((id) => skipped.add(id));
-    result.skippedChats += blocked.size;
-
-    // 2. then the database rows of the chats whose files are all gone
-    const doomed = ids.filter((id) => !blocked.has(id));
+    out.skippedIds.push(...blocked);
+    const doomed = batch.filter((id) => !blocked.has(id));
     if (!doomed.length) continue;
-    result.files += (await m.LcFile.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
-    result.messages += (await m.LcMessage.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
-    result.pageVisits += (await m.LcPageVisit.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
-    result.chats += (await m.LcConversation.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
+    out.files += (await m.LcFile.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
+    out.messages += (await m.LcMessage.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
+    out.pageVisits += (await m.LcPageVisit.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
+    out.chats += (await m.LcConversation.deleteMany({ conversationId: { $in: doomed } })).deletedCount || 0;
+    out.deletedIds.push(...doomed);
   }
+  return out;
+}
 
-  // 3. contacts: not seen for the whole period AND no chat left
+// Contacts (LcVisitor) with no chat left. `visitorIds` limits the check to those visitors (Trash purge); without it
+// every contact not seen since `cutoff` is considered (retention).
+async function pruneVisitors({ models, cutoff, visitorIds, maxBatches = 500 } = {}) {
+  const m = models || defaultModels();
+  let deleted = 0;
+  if (visitorIds) {
+    const ids = [...new Set(visitorIds)];
+    for (let i = 0; i < ids.length; i += BATCH) {
+      const batch = ids.slice(i, i + BATCH);
+      const still = new Set((await m.LcConversation.find({ visitorId: { $in: batch } }).select("visitorId").lean()).map((c) => c.visitorId));
+      const doomed = batch.filter((id) => !still.has(id));
+      if (doomed.length) deleted += (await m.LcVisitor.deleteMany({ visitorId: { $in: doomed } })).deletedCount || 0;
+    }
+    return deleted;
+  }
   let lastId = null;
   for (let i = 0; i < maxBatches; i += 1) {
     const stale = await m.LcVisitor.find({ lastSeenAt: { $lt: cutoff }, ...(lastId ? { _id: { $gt: lastId } } : {}) })
@@ -71,9 +81,34 @@ async function runLiveChatRetention({ cutoff, models, store, maxBatches = 500 })
     // a contact whose chat is still here (waiting on a failed S3 delete) stays until that chat is gone
     const stillChatting = new Set((await m.LcConversation.find({ visitorId: { $in: ids } }).select("visitorId").lean()).map((c) => c.visitorId));
     const doomed = ids.filter((id) => !stillChatting.has(id));
-    if (doomed.length) result.contacts += (await m.LcVisitor.deleteMany({ visitorId: { $in: doomed } })).deletedCount || 0;
+    if (doomed.length) deleted += (await m.LcVisitor.deleteMany({ visitorId: { $in: doomed } })).deletedCount || 0;
   }
+  return deleted;
+}
+
+// store.removeMany(keys) -> array of keys that could NOT be deleted
+async function runLiveChatRetention({ cutoff, models, store, maxBatches = 500 }) {
+  const m = models || defaultModels();
+  const result = { chats: 0, messages: 0, files: 0, pageVisits: 0, contacts: 0, skippedChats: 0 };
+  const skipped = new Set();
+
+  for (let i = 0; i < maxBatches; i += 1) {
+    const convs = await m.LcConversation.find({ lastMessageAt: { $lt: cutoff }, conversationId: { $nin: [...skipped] } })
+      .select("conversationId")
+      .limit(BATCH)
+      .lean();
+    if (!convs.length) break;
+    const purged = await purgeConversations(convs.map((c) => c.conversationId), { models: m, store });
+    purged.skippedIds.forEach((id) => skipped.add(id));
+    result.skippedChats += purged.skippedIds.length;
+    result.files += purged.files;
+    result.messages += purged.messages;
+    result.pageVisits += purged.pageVisits;
+    result.chats += purged.chats;
+  }
+
+  result.contacts = await pruneVisitors({ models: m, cutoff, maxBatches });
   return result;
 }
 
-module.exports = { runLiveChatRetention };
+module.exports = { runLiveChatRetention, purgeConversations, pruneVisitors };

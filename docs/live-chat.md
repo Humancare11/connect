@@ -125,6 +125,18 @@ The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui
 
 `RetentionPolicy` key `liveChat`, default 365 days (editable on the existing retention page). The nightly retention job deletes, per old chat: S3 objects first (rows stay if a file could not be deleted and are retried next run), then files, messages, the chat, old page visits and contacts with no remaining chats. AI usage totals (`LcAiUsage`) are kept for cost history. It runs even when `LIVECHAT_ENABLED=false`. The existing `ChatMessage` retention is untouched.
 
+## Deleting chats (Super Admin)
+
+- **Who:** Super Admin only. Every endpoint checks the role on the server (admins get 403) and the controls are hidden for everyone else. Where: Archive page (checkbox per row, "Delete selected", "Delete all matching filters") and "Delete chat" in the "..." menu of an archived chat.
+- **Only archived chats** can be deleted. Open, Queue and with-an-agent chats are refused (the move to Trash is atomic on the chat's mode).
+- **Trash:** a deleted chat gets `mode: "trashed"` and is kept 30 days (`trash.purgeAfter`). It disappears from the lists, Archive, search, reports, the visitor panel, transcript and file links, and the patient cannot reopen it. Live Chat > Trash (Super Admin only) lists them with days left.
+- **Restore:** puts a chat back in the Archive (and into reports). **Delete permanently** purges it now.
+- **Auto purge:** the daily retention job purges Trash items older than 30 days, using the same code as the live-chat retention (S3 objects first, then files, messages with translations, page visits, the chat, and the visitor contact once it has no chats left). If S3 fails, the chat stays in Trash and is retried.
+- **Typed DELETE:** "Delete all matching filters", a selection of more than 50 chats, and emptying Trash require typing `DELETE`. The server enforces this, not only the UI. A filter delete with a search that hit the 5,000-chat scan cap is refused.
+- **Rate limit:** 10 delete / restore / purge requests per minute per Super Admin.
+- **Audit log:** `LcChatDeletionAudit` has one row per delete, restore, purge and auto purge: who, when, how many, chat IDs and the filters used (only whether a search was used, not its text). No names, emails, phones or message text.
+- **Abuse counters still count trashed chats:** the per-IP and per-visitor "chats per day" limits include chats in Trash, so deleting chats does not reset a spammer's limit.
+
 ## Tests
 
 `cd backend && npm test` (or `node --test --test-concurrency=2 "tests/liveChat*.test.js"` for the live chat suites only). The admin UI work added `liveChatVisitorPanel`, `liveChatTranscript`, `liveChatComposer` (Suggest redaction, Translate targets, files sent to patients) and `liveChatContext` (patient context, custom fields, AI summary); the settings, reports and retention suites cover Phase 5 and the retention of agent-sent files.

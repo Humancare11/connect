@@ -104,3 +104,19 @@ html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
 .lcx .cm-view{display:inline-flex;align-items:center;gap:8px;margin-left:6px}
 .lcx .cm-view .wk-seg{background:var(--surface)}
 .lcx .wk-readonly{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.lcx .ar-bulk{display:flex;flex-wrap:wrap;gap:8px}
+.lcx .ar-check{width:36px;text-align:center}
+.lcx .ar-table--narrow{min-width:760px}
+.lcx .ar-table tbody tr.ar-row--static{cursor:default}
+.lcx .wk-btn.dc-danger{background:var(--danger-ink,#b42318);border-color:var(--danger-ink,#b42318);color:#fff}
+.lcx .wk-btn.dc-danger:disabled{opacity:.5;cursor:default}
+.lcx .wk-btn.dc-danger-ghost{color:var(--danger-ink,#b42318);border-color:var(--danger-ink,#b42318)}
+.lcx .wk-btn.dc-danger-ghost:disabled{opacity:.5;cursor:default}
+.lcx .dc-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45)}
+.lcx .dc-dialog{width:100%;max-width:440px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.lcx .dc-dialog h2{margin:0;font-size:17px}
+.lcx .dc-dialog p{margin:0}
+.lcx .dc-count{font-size:15px}
+.lcx .dc-type{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.lcx .dc-type input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit}
+.lcx .dc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
