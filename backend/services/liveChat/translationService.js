@@ -18,11 +18,15 @@ const CHUNK_CHARS = 8000;
 const MAX_MESSAGES = 300;
 const MAX_REPLY_CHARS = 2000;
 const MAX_DETECT_TRIES = 2;
+const OPEN_DETECT_MIN_GAP_MS = 20_000; // one detection per chat at most this often
+const OPEN_DETECT_AUTO_TRIES = 3; // automatic tries per chat (the "Detect language" link is not limited by this)
+const OPEN_DETECT_LOOKBACK = 4; // latest patient messages looked at
 
 function createTranslationService({ models, ai, limits, loadSettings, chat, fail, now = () => Date.now(), perMinute = 30 }) {
   const { LcMessage, LcConversation } = models;
   const limiter = createWindowLimiter({ windowMs: 60_000, max: perMinute, now });
   const detectTries = new Map(); // conversationId -> attempts without a result
+  const openDetect = new Map(); // conversationId -> { at, auto }
 
   const unavailable = (kind) => fail(503, "translation_unavailable", kind ? { kind } : {});
 
@@ -214,6 +218,45 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     }
   }
 
+  // Detection when an admin opens a chat that has patient text but no language (the first detection may have been
+  // skipped by the daily cap, failed, or found nothing). Bounded: the daily cap is respected, English-looking and
+  // too-short text is never sent, one call per chat per 20 s, 3 automatic tries per chat. `manual` is the admin's
+  // "Detect language" link: it skips the automatic try limit only. The patient's name, email and phone are removed
+  // before anything is sent. Returns { ok, language, reason } with reason one of
+  // "", "english", "no_text", "cap", "failed", "busy".
+  async function detectOnOpen(conv, { manual = false } = {}) {
+    if (conv.language?.code && conv.language.code !== "en") return { ok: true, language: publicLanguage(conv.language), reason: "" };
+    const seen = openDetect.get(conv.conversationId) || { at: 0, auto: 0 };
+    if (!manual && seen.auto >= OPEN_DETECT_AUTO_TRIES) return { ok: false, language: null, reason: "busy" };
+    if (now() - seen.at < OPEN_DETECT_MIN_GAP_MS) return { ok: false, language: null, reason: "busy" };
+
+    const rows = await LcMessage.find({ conversationId: conv.conversationId, sender: "patient", internal: { $ne: true }, fileId: null })
+      .sort({ createdAt: -1 })
+      .limit(OPEN_DETECT_LOOKBACK)
+      .select("text")
+      .lean();
+    const texts = rows.map((r) => decryptLiveChatText(r.text)).filter((t) => t.trim());
+    if (!texts.length) return { ok: false, language: null, reason: "no_text" };
+    const candidate = texts.find((t) => !tooShortToDetect(t) && !looksEnglish(t));
+    if (!candidate) return { ok: true, language: null, reason: texts.some((t) => looksEnglish(t)) ? "english" : "no_text" };
+
+    const settings = await loadSettings();
+    if (!(await spendOk(settings))) return { ok: false, language: null, reason: "cap" };
+    openDetect.set(conv.conversationId, { at: now(), auto: seen.auto + (manual ? 0 : 1) });
+    try {
+      const literals = contactLiterals(await contactOf(conv));
+      const result = await ai.detectLanguage({ text: protect(candidate, literals).text });
+      if (result.usage) await chat.recordUsage(conv, settings, result.usage);
+      if (!result.ok || !result.language) return { ok: false, language: null, reason: "failed" };
+      const fresh = await LcConversation.findById(conv._id).select("language").lean();
+      if (!fresh?.language?.code) await chat.setLanguage(conv, result.language, { source: "detect" });
+      const language = publicLanguage(fresh?.language?.code ? fresh.language : result.language);
+      return { ok: true, language, reason: language ? "" : "english" };
+    } catch {
+      return { ok: false, language: null, reason: "failed" };
+    }
+  }
+
   const viewOf = (conv, userId) => (conv.translateViews || []).find((v) => String(v.userId) === String(userId))?.view || "original";
 
   async function setView(actor, conv, view) {
@@ -234,7 +277,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     return { ok: true, view };
   }
 
-  return { translateMessages, translateReply, detectFor, viewOf, setView, limiter };
+  return { translateMessages, translateReply, detectFor, detectOnOpen, viewOf, setView, limiter };
 }
 
 // What the admin lists show: nothing for English or unknown.

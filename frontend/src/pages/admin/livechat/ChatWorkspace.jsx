@@ -351,6 +351,14 @@ export default function ChatWorkspace({ view }) {
         reloadListSoon();
       }
     },
+    detect: async () => {
+      try {
+        const { data } = await api.post(`${BASE}/conversations/${id}/detect-language`);
+        return { language: data.language || null, reason: data.reason || "" };
+      } catch (err) {
+        return { language: null, reason: err?.response?.status === 429 ? "busy" : "failed" };
+      }
+    },
     // Super Admin, archived chats only (the server checks both). The chat leaves the list at once.
     remove: async () => {
       try {
@@ -435,6 +443,7 @@ export default function ChatWorkspace({ view }) {
             onOpenFile={handlers.openFile}
             onBlockIp={handlers.blockIp}
             onDelete={handlers.remove}
+            onDetect={handlers.detect}
             onDownload={handlers.download}
             onSendFile={handlers.sendFile}
           />

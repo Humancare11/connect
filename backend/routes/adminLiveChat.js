@@ -199,6 +199,7 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text, req.body?.sourceText)));
   // Translation (admin side only): English view of a chat, the reply box, and the per-admin view choice.
   router.post("/conversations/:id/translate", handle((req) => agent.translate(actor(req), idOf(req), req.body?.messageIds)));
+  router.post("/conversations/:id/detect-language", handle((req) => agent.detectLanguage(actor(req), idOf(req))));
   router.post("/conversations/:id/translate-reply", handle((req) => agent.translateReply(actor(req), idOf(req), req.body?.text)));
   router.put("/conversations/:id/view", handle((req) => agent.setTranslateView(actor(req), idOf(req), req.body?.view)));
   router.post("/conversations/:id/notes", handle((req) => agent.addNote(actor(req), idOf(req), req.body?.text)));

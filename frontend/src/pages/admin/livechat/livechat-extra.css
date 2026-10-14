@@ -103,6 +103,11 @@ html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
 .lcx .cm-bar{flex-wrap:wrap}
 .lcx .cm-view{display:inline-flex;align-items:center;gap:8px;margin-left:6px}
 .lcx .cm-view .wk-seg{background:var(--surface)}
+.lcx .cm-view .wk-seg button{background:transparent;color:var(--muted)}
+.lcx .cm-view .wk-seg button[aria-pressed="true"]{background:#3b82f6;color:#fff}
+.lcx .cm-view{margin-left:0}
+.lcx .cm-nolang{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:0 4px}
+.lcx .cm-nolang .wk-link:disabled{opacity:.5}
 .lcx .wk-readonly{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 .lcx .ar-bulk{display:flex;flex-wrap:wrap;gap:8px}
 .lcx .ar-check{width:36px;text-align:center}
