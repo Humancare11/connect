@@ -432,6 +432,33 @@ const CSS = `
   .drprofile__hero { padding:18px 16px; gap:14px; }
   .drprofile__hero-name { font-size:18px; }
   .drprofile__hero-meta { font-size:13px; }
+  .drprofile__actions > .drprofile__btn { flex:1 1 100%; }
+}
+
+.drprofile__wrap,
+.drprofile__hero,
+.drprofile__hero-main,
+.drprofile__card,
+.drprofile__edit-card,
+.drprofile__field,
+.drprofile__grid,
+.drprofile__grid-wide {
+  min-width:0;
+  max-width:100%;
+}
+
+.drprofile__field input,
+.drprofile__field select,
+.drprofile__field textarea {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+
+@media (max-width:760px) {
+  .drprofile__wrap { width:100%; }
+  .drprofile__hero-meta,
+  .drprofile__read span { overflow-wrap:anywhere; }
 }
 
 /* MultiSelect */

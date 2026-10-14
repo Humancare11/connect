@@ -296,7 +296,7 @@
    CARD TEXT 
 ══════════════════════════════════════ */
 .aa-name {
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   font-size: 14.5px;
   font-weight: 800;
   color: #ffffff;

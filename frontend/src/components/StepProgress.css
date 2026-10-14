@@ -1,9 +1,10 @@
 .step-progress {
   display: flex;
-  gap: 45px;
+  gap: clamp(6px, 1.8vw, 24px);
   align-items: flex-start;
-  justify-content: center;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  width: 100%;
 }
 
 .step {
@@ -14,6 +15,8 @@
   flex-direction: column;
   align-items: center;
   cursor: pointer;
+  flex: 1;
+  min-width: 0;
 }
 
 .ring {
@@ -24,6 +27,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .progress-ring {
@@ -49,19 +53,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 16px;
 }
 
 .step .ring-icon {
   color: #6b7280; 
 }
 
-
 .step-label {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 11px;
   color: #333;
   text-align: center;
-  max-width: 84px;
+  max-width: 76px;
+  line-height: 1.25;
+  word-break: normal;
 }
 
 .step.completed .ring-icon,
@@ -75,47 +81,83 @@
   border: 2px solid #cbd5e1; 
 }
 
-@media (max-width: 520px) {
+/* ══ RESPONSIVE — Laptop & Tablet (992px–1250px) ══ */
+@media (max-width: 1250px) {
   .step-progress {
-    flex-wrap: nowrap;      /* Prevent wrapping */
-    gap: 6px;
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .step {
-    flex: 1;
-    min-width: 0;
+    gap: 8px;
   }
 
   .ring {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
 
   .progress-ring {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
 
   .ring-icon {
-    font-size: 12px;
+    font-size: 14px;
+  }
+
+  .step-label {
+    font-size: 10px;
+    max-width: 66px;
+  }
+}
+
+@media (max-width: 900px) {
+  .step-label {
+    font-size: 9.5px;
+    max-width: 60px;
+  }
+}
+
+@media (max-width: 640px) {
+  .ring {
+    width: 36px;
+    height: 36px;
+  }
+
+  .progress-ring {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ring-icon {
+    font-size: 13px;
   }
 
   .step-label {
     font-size: 9px;
-    max-width: none;
-    line-height: 1.2;
-    margin-top: 4px;
+    max-width: 56px;
   }
 }
 
-/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
-@media (max-width: 900px) {
-  .step-label { font-size: 10px; }
+@media (max-width: 520px) {
+  .step-progress {
+    gap: 4px;
+  }
+
+  .ring {
+    width: 32px;
+    height: 32px;
+  }
+
+  .progress-ring {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ring-icon {
+    font-size: 11px;
+  }
+
+  .step-label {
+    font-size: 8.5px;
+    max-width: none;
+    line-height: 1.15;
+    margin-top: 4px;
+  }
 }
-@media (max-width: 640px) {
-  .ring-circle { width: 36px; height: 36px; }
-  .step-label { font-size: 9.5px; max-width: 56px; }
-}
-/* (existing 520px breakpoint retained above) */

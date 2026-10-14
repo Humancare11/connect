@@ -414,3 +414,27 @@
     min-height: 200px;
   }
 }
+
+.dn-page,
+.dn-header,
+.dn-filters,
+.dn-workspace,
+.dn-list,
+.dn-editor,
+.dn-editor-head,
+.dn-editor-foot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dn-note-card,
+.dn-meta-grid div,
+.dn-editor-head p {
+  overflow-wrap: anywhere;
+}
+
+.dn-input,
+.dn-textarea {
+  width: 100%;
+  min-width: 0;
+}

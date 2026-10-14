@@ -42,7 +42,6 @@ export default function Footer() {
           </p>
 
           {/* COMPLIANCE BADGES */}
-          
 
           {/* CONTACT DETAILS — blended into footer background */}
           <div className="footer-contact-list">

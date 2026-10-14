@@ -61,10 +61,12 @@ export function SeoTags({ title, description, robots, image, canonical: canonica
       )}
       {!noindex && canonical && <meta property="og:url" content={canonical} />}
       {!noindex && <meta property="og:image" content={finalImage} />}
+      {!noindex && <meta property="og:image:alt" content={finalTitle || SITE_NAME} />}
       {!noindex && usingDefaultImage && <meta property="og:image:width" content="1200" />}
       {!noindex && usingDefaultImage && <meta property="og:image:height" content="630" />}
 
       {!noindex && <meta name="twitter:card" content="summary_large_image" />}
+      {!noindex && <meta name="twitter:site" content="@humancareconnect" />}
       {!noindex && finalTitle && <meta name="twitter:title" content={finalTitle} />}
       {!noindex && finalDescription && (
         <meta name="twitter:description" content={finalDescription} />

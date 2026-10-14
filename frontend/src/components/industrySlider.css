@@ -21,7 +21,7 @@
     --shadow-3: 0 50px 120px -40px rgba(11, 40, 100, .40);
     --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --display: var(--font-primary);
-    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --mono: var(--font-secondary);
     --corp-bg: #F7FAFF;
 }
 
@@ -157,14 +157,19 @@
    NAV — 
 ================================================================ */
 
+/* Centring is done with auto margins on .slider-nav-v2, not justify-content:
+   a centred flex child that overflows spills past the left edge, where a
+   scroll container cannot reach — that is what clipped the first pills.
+   Negative margins cancel .slider-page-wrap's padding so the strip scrolls
+   out to the screen edge instead of being cut 20–30px inside it. */
 .slider-nav-scroll-wrap {
-    width: 100%;
-    max-width: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    margin-bottom: 0;
+    margin: 0 -30px;
+    padding: 0 30px;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
@@ -185,7 +190,7 @@
     flex-wrap: nowrap;
     white-space: nowrap;
     width: max-content;
-    margin-bottom: 100px;
+    margin: 0 auto 100px;
     padding: 6px;
     background: rgba(248, 250, 252, 0.65);
     backdrop-filter: blur(24px) saturate(130%);
@@ -571,19 +576,10 @@
         margin-top: 16px;
     }
 
-    /* NAV WRAPPER: scrollable horizontal container on mobile */
+    /* NAV WRAPPER: bleed matches .slider-page-wrap padding (20px) */
     .slider-nav-scroll-wrap {
-        justify-content: flex-start;
-        padding: 0 16px 16px;
-        overflow-x: auto;
-        scrollbar-width: none;
-        /* Firefox */
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .slider-nav-scroll-wrap::-webkit-scrollbar {
-        display: none;
-        /* Chrome/Safari */
+        margin: 0 -20px;
+        padding: 0 20px 16px;
     }
 
     /* NAV PILL */
@@ -681,16 +677,10 @@
         font-size: 14px;
     }
 
-    /* NAV WRAPPER */
+    /* NAV WRAPPER: bleed matches .slider-page-wrap padding (16px) */
     .slider-nav-scroll-wrap {
-        justify-content: flex-start;
-        padding: 0 12px 12px;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .slider-nav-scroll-wrap::-webkit-scrollbar {
-        display: none;
+        margin: 0 -16px;
+        padding: 0 16px 12px;
     }
 
     /* NAV PILL */

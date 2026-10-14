@@ -1266,6 +1266,33 @@
     overflow: hidden;
   }
 
+  .sp-overview__badge {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: fit-content;
+    max-width: calc(100% - 24px);
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 14px;
+  }
+
+  .sp-overview__badge-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+
+  .sp-overview__badge-title {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .sp-overview__badge-sub {
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
   .sp-hero__badge {
     font-size: 10px;
     padding: 5px 12px;

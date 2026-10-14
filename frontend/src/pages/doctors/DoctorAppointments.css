@@ -894,3 +894,22 @@
   font-weight: 600;
   color: #b45309;
 }
+/* Prevent narrow dashboard columns from forcing the whole page wider. */
+.da-root,
+.da-header,
+.da-panel,
+.da-panel-top {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.da-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.da-patient-name,
+.da-problem {
+  overflow-wrap: anywhere;
+}

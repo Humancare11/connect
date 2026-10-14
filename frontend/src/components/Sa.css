@@ -369,7 +369,7 @@
 
   .services-bento-smal-1 {
     grid-column: span 2;
-    grid-row: span 2;
+    grid-row: span 1;
   }
 
   .services-bento-smal-1 .services-card-inner-link {
@@ -382,6 +382,10 @@
   .services-bento-wide {
     grid-column: span 2;
     grid-row: span 1;
+  }
+
+  .services-bento-wide {
+    grid-column: 1 / -1;
   }
 
   .services-bento-small-weightloss .services-card-inner-link,

@@ -59,23 +59,27 @@ export default function FAQ({
             {title && <h2 className="faq__title">{title}</h2>}
             {description && <p className="faq__description">{description}</p>}
 
-            {/* {stats.length > 0 && (
+            {stats.length > 0 && (
               <ul className="faq__stats">
                 {stats.map((stat, i) => (
                   <FAQStat
-                    key={typeof stat === "string" ? stat : stat.label}
+                    key={
+                      typeof stat === "string"
+                        ? `${stat}-${i}`
+                        : `${stat.label ?? "stat"}-${i}`
+                    }
                     stat={stat}
                     index={i}
                   />
                 ))}
               </ul>
-            )} */}
+            )}
           </aside>
 
           <div className="faq__groups">
-            {sectionsWithGlobalIndices.map((section) => (
+            {sectionsWithGlobalIndices.map((section, index) => (
               <FAQSection
-                key={section.title}
+                key={`${section.title ?? "section"}-${index}`}
                 section={section}
                 initialLimit={initialLimit}
                 isExpanded={isExpanded}

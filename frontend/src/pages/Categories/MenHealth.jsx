@@ -456,7 +456,7 @@ export default function MenHealth() {
   return (
     <div
       style={{
-        fontFamily: "'Satoshi', sans-serif",
+        fontFamily: "var(--font-primary)",
         background: "var(--bg)",
         color: "var(--navy)",
         minHeight: "100vh",
@@ -613,11 +613,11 @@ export default function MenHealth() {
             badge="FAQ"
             title="Frequently Asked Questions"
             description={`Everything you need to know about ${cat.label} care at Humancare Connect. Can't find an answer?`}
-            stats={[
-              "Avg. response in 10 min",
-              "HIPAA secure & private",
-              "Available Globally",
-            ]}
+            // stats={[
+            //   "Avg. response in 10 min",
+            //   "HIPAA secure & private",
+            //   "Available Globally",
+            // ]}
             sections={cat.faqGroups.map((group) => ({
               title: group.label,
               items: group.items.map((faq) => ({

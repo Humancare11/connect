@@ -225,6 +225,9 @@ export default function Header() {
 
   return (
     <>
+      <a href="#main-content" className="skip-to-content-link">
+        Skip to content
+      </a>
       <header
         ref={headerRef}
         className={`glass-header ${isScrolled ? "shrink" : ""}`}

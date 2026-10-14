@@ -21,7 +21,7 @@
   --radius-img: 16px;
   --radius-btn: 50px;
   --transition: 0.38s cubic-bezier(0.4, 0, 0.2, 1);
-  --font: "Poppins", sans-serif;
+  --font: var(--font-secondary);
 }
 
 /* ── Reset ── */

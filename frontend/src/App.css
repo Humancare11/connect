@@ -6,9 +6,6 @@
    ROOT VARIABLES
 ══════════════════════════════════════════════ */
 :root {
-  --font-primary: "Satoshi", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-secondary: "Inter", "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-
   --bg-main: #edf3ff;
   --bg-soft: #f7faff;
   --bg-deep: #dce8ff;

@@ -43,8 +43,7 @@
  
   color: var(--pt-ink-900);
   background: transparent;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-secondary);
 }
  
 /* Higher specificity than a stray bundled `.pt-page` rule, so the page stays

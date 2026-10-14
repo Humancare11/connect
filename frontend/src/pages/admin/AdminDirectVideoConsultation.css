@@ -474,7 +474,8 @@
 }
 
 .dvc-pin-row__value {
-  font-family: "SFMono-Regular", Consolas, monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 0.15em;

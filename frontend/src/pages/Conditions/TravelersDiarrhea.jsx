@@ -894,7 +894,7 @@ function WhyChooseUs() {
               fontSize: 36,
               fontWeight: 800,
               color: "#fff",
-              fontFamily: "'Georgia',serif",
+              fontFamily: "var(--font-primary)",
               marginTop: 8,
             }}
           >
@@ -983,7 +983,7 @@ export default function TravelersDiarrhea() {
 
       <div
         style={{
-          fontFamily: "Satoshi, sans-serif",
+          fontFamily: "var(--font-primary)",
           color: "#0A1F44",
           background: "#fff",
         }}

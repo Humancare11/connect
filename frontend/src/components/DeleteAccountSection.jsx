@@ -5,7 +5,7 @@ import DeleteAccountModal from "./DeleteAccountModal";
 
 const DANGER = "#c0392b";
 const DANGER_BG = "#fcedec";
-const FONT = "'Plus Jakarta Sans', sans-serif";
+const FONT = "var(--font-secondary)";
 
 const formatDate = (value) => {
   if (!value) return "";
