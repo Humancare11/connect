@@ -14,6 +14,7 @@ const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken"
 const { getTrackingState, clearSettingsCache } = require("../services/email/emailSettings");
 
 const ENV_ON = { EMAIL_TRACKING_ENABLED: "true", PUBLIC_TRACKING_BASE_URL: "https://api.uat.example.com" };
+const DISCLOSURE = "This email may include an image that tells us when it was opened.";
 
 describe("superadmin email settings (open tracking switches, opt-outs)", () => {
   let mongod, server, base, root, env;
@@ -74,12 +75,14 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
     assert.equal(body.tracking.active, false);
     assert.equal(body.tracking.envEnabled, false);
     assert.equal(body.tracking.disclosureEnabled, true);
-    assert.match(body.tracking.disclosureText, /image that tells us when it was opened/);
+    assert.equal(body.tracking.disclosureText, "", "no default line: a Super Admin writes one before tracking can be switched on");
     assert.deepEqual(body.optOuts, []);
   });
 
   test("the Super Admin switch alone does not activate tracking: the server gate must be open too", async () => {
     let r = await call("PATCH", "/settings", { trackingEnabled: true });
+    assert.equal(r.status, 400, "refused while the disclosure line is blank");
+    r = await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
     assert.equal(r.status, 200);
     assert.deepEqual([r.body.tracking.switchOn, r.body.tracking.envEnabled, r.body.tracking.active], [true, false, false]);
     env = { ...ENV_ON };
@@ -92,14 +95,14 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
 
   test("switching off takes effect at once (settings cache is cleared)", async () => {
     env = { ...ENV_ON };
-    await call("PATCH", "/settings", { trackingEnabled: true });
+    await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
     assert.equal((await getTrackingState({ env })).active, true);
     await call("PATCH", "/settings", { trackingEnabled: false });
     assert.equal((await getTrackingState({ env })).active, false);
   });
 
   test("records who changed it", async () => {
-    await call("PATCH", "/settings", { trackingEnabled: true });
+    await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
     assert.equal(String((await EmailSettings.findOne({ key: "email" })).updatedBy), String(root._id));
   });
 

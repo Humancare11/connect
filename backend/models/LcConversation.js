@@ -1,0 +1,89 @@
+const mongoose = require("mongoose");
+const { ENC_FIELD } = require("../utils/liveChat/crypto");
+
+// One chat. mode: ai (AI only) | queue (waiting for an agent) | live (agent joined) | archived (closed).
+// everLive stays true once an agent has been involved, so the chat remains under "Live agent chats".
+const conversationSchema = new mongoose.Schema(
+  {
+    conversationId: { type: String, required: true, unique: true }, // public id, e.g. HC7K2M9QX
+    visitorId: { type: String, required: true, index: true },
+    mode: { type: String, enum: ["ai", "queue", "live", "archived"], default: "ai", index: true },
+    everLive: { type: Boolean, default: false, index: true },
+    assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
+    closedReason: {
+      type: String,
+      enum: ["", "resolved", "patient_left", "offline_request", "ai_unavailable", "blocked"],
+      default: "",
+    },
+    topic: { type: String, default: "", maxlength: 80 },
+    // Why the chat went to the Queue: explicit_request | account_issue | technical_issue | emergency | complaint |
+    // unanswered (from the AI), or ai_unavailable | ai_off | ai_limit (server). Older chats may hold the previous
+    // names patient_request | account_or_payment | unsure.
+    handoffReason: { type: String, default: "", maxlength: 40 },
+    offTopicStreak: { type: Number, default: 0 }, // consecutive off-topic patient messages
+    unansweredStreak: { type: Number, default: 0 }, // consecutive questions the AI could not answer
+    invited: { type: Boolean, default: false }, // an admin started this chat; the visitor has not replied yet
+    leftAt: { type: Date, default: null }, // archived as "patient left" at this time
+    modeBeforeLeft: { type: String, enum: ["", "ai", "queue", "live"], default: "" }, // lets a returning visitor continue
+    // The follow-up step: when the chat entered the Queue, this is when "Our team will connect with you by email" is
+    // due (cleared when an admin takes the chat, the patient goes back to the AI, or the notice was given).
+    followUpDueAt: { type: Date, default: null, index: true },
+    followUpNoticeAt: { type: Date, default: null }, // the notice was shown (and the email sent): once per chat
+    followUp: {
+      // the generic follow-up email: sent at most once per chat
+      status: { type: String, enum: ["", "sending", "sent", "failed", "skipped"], default: "" },
+      at: { type: Date, default: null },
+    },
+    optionsUsed: { type: Boolean, default: false }, // quick-option cards are shown until one is picked
+    offlineRequested: { type: Boolean, default: false }, // the email notice was shown (also set on older chats): stays in the Queue
+    aiNoticeShown: { type: Boolean, default: false }, // the "AI unavailable" notice was shown in this chat
+    source: { type: String, default: "", maxlength: 120 },
+    referrer: { type: String, default: "", maxlength: 120 }, // referring host only
+    timeZone: { type: String, default: "", maxlength: 64 }, // reported by the patient's browser, for "their time"
+    cookieChoice: { type: String, enum: ["", "accepted", "declined", "unknown"], default: "" },
+    agentName: { type: String, default: "", maxlength: 40 }, // display name patients see while an agent holds the chat
+    queuedAt: { type: Date, default: null },
+    // Unread tracking per admin: patientMessageCount grows with every patient message; reads holds, per admin, the
+    // count they had seen when they last opened the chat. unread = patientMessageCount - that count.
+    patientMessageCount: { type: Number, default: 0 },
+    reads: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, count: { type: Number, default: 0 } }],
+    aiSummary: ENC_FIELD,
+    // Who downloaded the transcript, newest last (a record of access for PHI, like LcFile.accessLog).
+    transcriptLog: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, at: { type: Date, default: Date.now } }],
+    // The patient's language (not PHI): detected from the AI reply, or by one small model call. No badge for "en".
+    language: {
+      code: { type: String, default: "", maxlength: 8 },
+      name: { type: String, default: "", maxlength: 40 },
+      detectedAt: { type: Date, default: null },
+    },
+    // Admin side only: which view each admin chose for this chat ("original" or "en").
+    translateViews: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, view: { type: String, enum: ["original", "en"], default: "original" } }],
+    tags: [{ type: String, trim: true, maxlength: 40 }],
+    contact: { name: ENC_FIELD, email: ENC_FIELD, phone: ENC_FIELD },
+    ip: { type: String, default: "" },
+    geo: {
+      city: { type: String, default: "" },
+      state: { type: String, default: "" },
+      country: { type: String, default: "" },
+    },
+    device: {
+      type: { type: String, default: "" },
+      os: { type: String, default: "" },
+      browser: { type: String, default: "" },
+    },
+    startedPage: { path: { type: String, default: "" }, title: { type: String, default: "" } },
+    startedAt: { type: Date, default: Date.now },
+    liveStartedAt: { type: Date, default: null },
+    firstAgentReplyAt: { type: Date, default: null },
+    lastMessageAt: { type: Date, default: Date.now, index: true },
+    closedAt: { type: Date, default: null },
+    aiReplyCount: { type: Number, default: 0 },
+    tokens: { input: { type: Number, default: 0 }, output: { type: Number, default: 0 } },
+    rating: { stars: { type: Number, min: 1, max: 5, default: null }, ratedAt: { type: Date, default: null } },
+  },
+  { timestamps: true }
+);
+
+conversationSchema.index({ mode: 1, lastMessageAt: -1 });
+
+module.exports = mongoose.model("LcConversation", conversationSchema);

@@ -257,6 +257,23 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
+// Live Chat agents: admin + superadmin only. employeeadmin, paymentadmin, doctors, patients and partners never
+// see the inbox. Kept separate from adminOnly so the live-chat audience can change without touching other pages.
+const LIVE_CHAT_AGENT_ROLES = ["admin", "superadmin"];
+const liveChatAgentOnly = (req, res, next) => {
+  if (!LIVE_CHAT_AGENT_ROLES.includes(req.user?.role)) {
+    recordSecurityEvent(req, {
+      type: "unauthorized_access",
+      severity: "high",
+      title: "Non-agent attempted live-chat access",
+      resource: req.originalUrl,
+      metadata: { requiredRole: "admin/superadmin", actualRole: req.user?.role || "anonymous" },
+    });
+    return res.status(403).json({ msg: "Access denied. Live chat agents only." });
+  }
+  next();
+};
+
 const paymentAdminOnly = (req, res, next) => {
   if (!["superadmin", "paymentadmin"].includes(req.user?.role)) {
     recordSecurityEvent(req, {
@@ -382,6 +399,8 @@ module.exports = {
   verifyPartnerToken,
   doctorOnly,
   adminOnly,
+  liveChatAgentOnly,
+  LIVE_CHAT_AGENT_ROLES,
   paymentAdminOnly,
   manualInvoiceAccess,
   employeeAdminOnly,

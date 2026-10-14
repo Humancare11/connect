@@ -9,12 +9,16 @@ import {
 } from "react-router-dom";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
+import { TextWidget } from '@livechat/widget-react'
+import LiveChatTracker from "./features/livechat/LiveChatTracker";
+import LiveChatWidgetLoader from "./features/livechat/LiveChatWidgetLoader";
+import { isTrackablePath as isPublicPagePath } from "./features/livechat/useVisitorTracker";
 
 const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
@@ -826,6 +830,13 @@ const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
+const LiveChatShell = lazy(() => import("./pages/admin/livechat/LiveChatShell"));
+const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
+const AdminLiveTeam = lazy(() => import("./pages/admin/livechat/AdminLiveTeam"));
+const AdminLiveReports = lazy(() => import("./pages/admin/livechat/AdminLiveReports"));
+const AdminLiveSettings = lazy(() => import("./pages/admin/livechat/AdminLiveSettings"));
+const AdminAiChats = lazy(() => import("./pages/admin/livechat/AdminAiChats"));
+const AdminLiveAgentChats = lazy(() => import("./pages/admin/livechat/AdminLiveAgentChats"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1121,6 +1132,25 @@ function DoctorEnrollmentsWrapper() {
   );
 }
 
+// Cookie banner on public pages (not admin, login, payment, patient dashboard or video-call pages). Mounted only
+// in the browser after hydration, so prerendered HTML, SEO and layout are unchanged; the banner itself is
+// position:fixed, so it causes no layout shift.
+const subscribeNever = () => () => {};
+
+function SiteCookieBanner() {
+  const { pathname } = useLocation();
+  // false while prerendering and hydrating, true afterwards (no setState-in-effect needed)
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  // Part of the live chat rollout: without VITE_LIVECHAT_ENABLED=true the site behaves as before (banner only at /cookies).
+  if (import.meta.env.VITE_LIVECHAT_ENABLED !== "true") return null;
+  if (!mounted || !isPublicPagePath(pathname) || pathname === "/cookies") return null;
+  return (
+    <Suspense fallback={null}>
+      <CookieBanner />
+    </Suspense>
+  );
+}
+
 export function AppLayout() {
   const location = useLocation();
 
@@ -1129,6 +1159,7 @@ export function AppLayout() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/payment-admin") ||
     location.pathname.startsWith("/superadmin") ||
+    location.pathname.startsWith("/services-prices") ||
     location.pathname.startsWith("/employee") ||
     location.pathname.startsWith("/partner") ||
     location.pathname.startsWith("/user") ||
@@ -1141,6 +1172,13 @@ export function AppLayout() {
       <ScrollToTop />
       <RouteSeo />
       <SessionTimeoutManager />
+      {/* The Text widget is replaced by our own chat when VITE_LIVECHAT_ENABLED=true (removed for good in Phase 5). */}
+      {import.meta.env.VITE_LIVECHAT_ENABLED !== "true" && (
+        <TextWidget organizationId="d29e3595-c3ba-48b3-9229-3a4835984ec7" />
+      )}
+      <LiveChatTracker />
+      <LiveChatWidgetLoader />
+      <SiteCookieBanner />
       {!hideLayout && <Header />}
 
       <Suspense
@@ -1542,6 +1580,87 @@ export function AppLayout() {
                 <AdminLayout>
                   <MailIdsSettings />
                 </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          {/* Live Chat (admin + superadmin; the server module is switched by LIVECHAT_ENABLED). */}
+          <Route
+            path="/admin-dashboard/live-chat"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveVisitors />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/ai-chats"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminAiChats />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/ai-chats/:conversationId"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminAiChats />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/agent-chats"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveAgentChats />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/agent-chats/:conversationId"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveAgentChats />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/team"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveTeam />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/reports"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveReports />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/settings"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveSettings />
+                </LiveChatShell>
               </PrivateRoute>
             }
           />

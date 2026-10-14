@@ -1,0 +1,1212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Chat Module (standalone preview)</title>
+<style>
+/* ── Artifact-only chrome (not part of the original app) ───────────────────────────── */
+html, body { margin: 0; background: #e8eaf0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+*, *::before, *::after { box-sizing: border-box; }
+.art-bar { position: sticky; top: 0; z-index: 300; height: 40px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; padding: 0 16px; background: #fff; border-bottom: 1px solid #dce3ef; font-size: 12.5px; color: #5b6b8c; overflow: hidden; }
+.art-bar b { color: #0f1b3d; }
+.art-bar select, .art-bar button { font: inherit; padding: 3px 8px; border: 1px solid #dce3ef; border-radius: 6px; background: #fff; cursor: pointer; }
+.art-bar .art-pill { background: #fff4e0; color: #8a5300; border: 1px solid #f1d5a1; border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+
+/* ── AdminDashboard.css: page shell, sidebar, topbar (subset used by the Live Chat pages) ── */
+.ad-root{--art-h:40px;display:flex;min-height:calc(100vh - var(--art-h));width:100%;max-width:100vw;background:linear-gradient(145deg,#e8eaf0 0%,#eef0f5 50%,#e4e8ef 100%);background-attachment:fixed;color:#0b0443;position:relative;overflow-x:hidden}
+.ad-root::before,.ad-root::after{content:"";position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.ad-root::before{width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,.10) 0%,transparent 70%);top:-150px;left:-100px}
+.ad-root::after{width:500px;height:500px;background:radial-gradient(circle,rgba(20,184,166,.08) 0%,transparent 70%);bottom:-100px;right:60px}
+.ad-sidebar{position:fixed;top:calc(var(--art-h) + 16px);left:16px;bottom:16px;width:256px;z-index:200;background:#01164a;border:1px solid rgba(255,255,255,.85);border-radius:24px;box-shadow:0 0 0 1px rgba(255,255,255,.7) inset,0 24px 48px rgba(99,102,241,.08),0 4px 16px rgba(0,0,0,.08);display:flex;flex-direction:column;overflow:hidden;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.ad-profile{display:flex;align-items:center;gap:12px;padding:14px 16px;margin:12px 12px 4px;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.8);border-radius:16px}
+.ad-profile-avatar{width:42px;height:42px;background:#01164a;border:2px solid rgba(255,255,255,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(99,102,241,.4)}
+.ad-profile-info{min-width:0}
+.ad-profile-name{font-size:13.5px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ad-profile-role{font-size:10.5px;color:rgba(165,180,252,.9);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.6px}
+.ad-nav{padding:14px 15px;flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+.ad-nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:12px;border:none;background:transparent;color:#c3c3c3;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:background .18s,color .18s,transform .15s;text-align:left;width:100%;text-decoration:none;position:relative}
+.ad-nav-item:hover{background:rgba(255,255,255,.5);color:#fff;transform:translateX(2px)}
+.ad-nav-item.active{background:linear-gradient(90deg,rgba(99,102,241,.12) 0%,rgba(20,184,166,.08) 100%);color:#fff;font-weight:600;border:1px solid rgba(99,102,241,.2);transform:none}
+.ad-nav-icon{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;opacity:.85}
+.ad-nav-item.active .ad-nav-icon{opacity:1}
+.ad-nav-badge{margin-left:auto;font-size:11px;font-weight:700;background:#dc2626;color:#fff;padding:1px 7px;border-radius:20px}
+.ad-nav-group{display:flex;flex-direction:column;gap:2px}
+.ad-nav-parent{font:inherit;font-size:13px;font-weight:500}
+.ad-nav-arrow{margin-left:auto;font-size:17px;line-height:1;opacity:.7;transition:transform .18s ease,opacity .18s ease}
+.ad-nav-parent:hover .ad-nav-arrow,.ad-nav-parent.open .ad-nav-arrow,.ad-nav-parent.active .ad-nav-arrow{opacity:1}
+.ad-nav-parent:focus-visible,.ad-flyout .ad-nav-item:focus-visible{outline:2px solid #60a5fa;outline-offset:-2px}
+.ad-new{margin-left:8px;font-size:10px;font-weight:800;letter-spacing:.06em;background:#22c55e;color:#062814;border-radius:6px;padding:2px 6px}
+.ad-nav-parent .ad-nav-badge{margin-left:8px}
+.ad-flyout{position:fixed;z-index:250;min-width:220px;padding:8px;display:flex;flex-direction:column;gap:2px;background:#01164a;border:1px solid rgba(255,255,255,.2);border-radius:16px;box-shadow:0 18px 44px rgba(1,22,74,.35),0 4px 14px rgba(0,0,0,.12);animation:ad-flyout-in .14s ease}
+.ad-flyout .ad-nav-item{white-space:nowrap}
+@keyframes ad-flyout-in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.ad-subnav{display:flex;flex-direction:column;gap:2px;margin:2px 0 4px 14px;padding-left:8px;border-left:1px solid rgba(255,255,255,.15)}
+.ad-sidebar-footer{padding:8px 15px 14px}
+.ad-logout-btn{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(239,68,68,.2);background:rgba(239,68,68,.05);color:#dc2626;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer}
+.ad-main{margin-left:calc(256px + 32px);flex:1;display:flex;flex-direction:column;min-height:calc(100vh - var(--art-h));position:relative;z-index:1;padding:16px 16px 16px 0;min-width:0}
+.ad-topbar{position:sticky;top:calc(var(--art-h) + 16px);z-index:100;background:#01164a;border:1px solid rgba(255,255,255,.85);border-radius:20px;box-shadow:0 0 0 1px rgba(255,255,255,.7) inset,0 12px 32px rgba(99,102,241,.07),0 2px 8px rgba(0,0,0,.06);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;margin-bottom:20px}
+.ad-topbar-title{font-size:17px;font-weight:600;color:#fff}
+.ad-topbar-right{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.ad-topbar-user{font-size:13px;color:rgba(255,255,255,.85);font-weight:500;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:20px}
+.ad-content{padding:4px 0 24px;flex:1;min-width:0}
+.ad-burger{background:none;border:none;cursor:pointer;display:flex;color:#94a3b8;padding:4px}
+.ad-scrim{display:none}
+@media (max-width:768px){.ad-sidebar{transform:translateX(calc(-100% - 24px))}.side-open .ad-sidebar{transform:none}.side-open .ad-scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199}.ad-main{margin-left:0;padding:16px}}
+
+/* ── AdminLiveVisitors.css (copied) ─────────────────────────────────────────────────── */
+.lcv{--lcv-surface:#fff;--lcv-surface-2:#f2f5fb;--lcv-line:#dce3ef;--lcv-ink:#0f1b3d;--lcv-muted:#5b6b8c;--lcv-accent:#1d4ed8;--lcv-accent-soft:#e3ebfd;--lcv-ai:#6d4ae0;--lcv-ai-soft:#eee9fd;--lcv-warn:#c2570c;--lcv-ok:#0e9f6e;--lcv-urgent:#d23b2a;color:var(--lcv-ink);font-size:14px;line-height:1.45;width:0;min-width:100%}
+.lcv *,.lcv *::before,.lcv *::after{box-sizing:border-box}
+.lcv-title{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.lcv-title h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.lcv-eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--lcv-accent);text-transform:uppercase}
+.lcv-title-side{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lcv-status{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--lcv-muted)}
+.lcv-status i{width:8px;height:8px;border-radius:50%;background:var(--lcv-muted)}
+.lcv-status--live i{background:#22c55e}
+.lcv-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px}
+.lcv-kpi{background:var(--lcv-surface);border-radius:16px;padding:16px 20px;border-top:3px solid var(--lcv-accent);box-shadow:0 6px 18px -12px rgba(11,31,92,.35)}
+.lcv-n{font-size:34px;font-weight:800;line-height:1.1;color:var(--lcv-accent);font-variant-numeric:tabular-nums}
+.lcv-l{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lcv-muted);margin-top:4px}
+.lcv-kpi--g{border-color:var(--lcv-ok)}.lcv-kpi--g .lcv-n{color:var(--lcv-ok)}
+.lcv-kpi--o{border-color:var(--lcv-warn)}.lcv-kpi--o .lcv-n{color:var(--lcv-warn)}
+.lcv-kpi--p{border-color:var(--lcv-ai)}.lcv-kpi--p .lcv-n{color:var(--lcv-ai)}
+.lcv-radar{display:flex;gap:14px;align-items:center;border:1px solid var(--lcv-line);background:var(--lcv-surface);border-radius:14px;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap}
+.lcv-ping{width:30px;height:30px;border-radius:50%;border:2px solid var(--lcv-accent);position:relative;flex:none}
+.lcv-ping::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--lcv-accent);animation:lcv-pulse 1.6s infinite}
+@keyframes lcv-pulse{0%{transform:scale(.6);opacity:1}100%{transform:scale(1.8);opacity:0}}
+@media (prefers-reduced-motion:reduce){.lcv-ping::after{animation:none}}
+.lcv-radar-text{flex:1;min-width:220px;color:var(--lcv-muted);font-size:13.5px}
+.lcv-radar-text b{color:var(--lcv-ink)}
+.lcv-filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.lcv-fbtn,.lcv-chip,.lcv-search{display:flex;align-items:center;gap:6px;border:1px solid var(--lcv-line);background:var(--lcv-surface);border-radius:10px;padding:7px 12px;font-size:13px}
+.lcv-fbtn{font-weight:600}
+.lcv-fbtn select{border:0;background:transparent;font:inherit;font-weight:600;color:inherit;outline:none}
+.lcv-search{min-width:220px;color:var(--lcv-muted)}
+.lcv-search input{border:0;background:transparent;font:inherit;color:var(--lcv-ink);outline:none;flex:1;min-width:0}
+.lcv-count{font-size:17px;font-weight:800;margin:6px 0 10px}
+.lcv-table-wrap{overflow-x:auto;border:1px solid var(--lcv-line);border-radius:14px;background:var(--lcv-surface)}
+.lcv-table{border-collapse:collapse;width:100%;min-width:1080px}
+.lcv-table th{font-size:12px;font-weight:700;color:var(--lcv-muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--lcv-line);white-space:nowrap}
+.lcv-table td{padding:10px 14px;border-bottom:1px solid var(--lcv-line);white-space:nowrap;font-size:13.5px}
+.lcv-table tr:last-child td{border-bottom:0}
+.lcv-table tbody tr:hover{background:var(--lcv-surface-2)}
+.lcv-who{display:flex;align-items:center;gap:10px}
+.lcv-who small{display:block;color:var(--lcv-muted);font-size:11.5px}
+.lcv-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;background:var(--lcv-surface-2);color:var(--lcv-ink)}
+.lcv-av--anon{background:var(--lcv-ai-soft);color:var(--lcv-ai)}
+.lcv-act{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+.lcv-act i{width:8px;height:8px;border-radius:50%;background:var(--lcv-muted)}
+.lcv-act--chatting i{background:#22c55e}.lcv-act--invited i{background:var(--lcv-ai)}.lcv-act--waiting i{background:var(--lcv-warn)}
+.lcv-btn{border:1px solid var(--lcv-line);background:var(--lcv-surface);border-radius:9px;padding:7px 14px;font:inherit;font-weight:700;font-size:13px;min-width:110px;cursor:pointer;color:var(--lcv-ink)}
+.lcv-btn--primary{background:var(--lcv-accent);border-color:var(--lcv-accent);color:#fff}
+.lcv-btn:disabled{opacity:.5;cursor:not-allowed}
+.lcv-mono{font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;font-size:12px;font-variant-numeric:tabular-nums}
+.lcv-muted{color:var(--lcv-muted)}
+.lcv-empty{text-align:center;padding:30px 14px!important;color:var(--lcv-muted)}
+@media (max-width:640px){.lcv-title h2{font-size:19px}.lcv-search{flex:1 1 100%}}
+.lcv-btn--join{background:var(--lcv-warn);border-color:var(--lcv-warn);color:#fff}
+.lcv-start-error{background:#fdeceb;color:var(--lcv-urgent);font-weight:600;font-size:13px;padding:8px 12px;border-radius:10px;margin-bottom:8px}
+.lcv-table td:nth-child(5){max-width:300px;overflow:hidden;text-overflow:ellipsis}
+.lcv-actions{display:flex;gap:6px;align-items:center}
+.lcv-btn--icon{min-width:0;padding:7px 9px}
+.lcv-blocked{margin-top:14px;border:1px solid var(--lcv-line);border-radius:14px;background:var(--lcv-surface)}
+.lcv-blocked-toggle{width:100%;text-align:left;border:0;background:transparent;font:inherit;font-weight:700;padding:12px 16px;cursor:pointer;color:var(--lcv-ink)}
+.lcv-blocked-count{background:var(--lcv-surface-2);border-radius:6px;padding:1px 8px;font-size:12px;margin-left:6px}
+.lcv-blocked-body{padding:0 16px 14px;display:flex;flex-direction:column;gap:8px}
+.lcv-blocked-row{display:grid;grid-template-columns:150px 1fr auto auto;gap:12px;align-items:center;font-size:13px}
+@media (max-width:640px){.lcv-blocked-row{grid-template-columns:1fr auto}}
+
+/* ── LiveChatPages.css: Team, Reports, AI agent settings (copied) ───────────────────── */
+.lcp{--lcp-surface:#fff;--lcp-surface-2:#f2f5fb;--lcp-line:#dce3ef;--lcp-grid:#e8edf5;--lcp-ink:#0f1b3d;--lcp-muted:#5b6b8c;--lcp-accent:#1d4ed8;--lcp-accent-soft:#e3ebfd;--lcp-ai:#6d4ae0;--lcp-agent:#0e9f6e;--lcp-warn:#c2570c;--lcp-urgent:#d23b2a;color:var(--lcp-ink);font-size:14px;line-height:1.45;width:0;min-width:100%}
+.lcp *,.lcp *::before,.lcp *::after{box-sizing:border-box}
+.lcp button,.lcp input,.lcp select,.lcp textarea{font:inherit;color:inherit}
+.lcp :focus-visible{outline:2px solid var(--lcp-accent);outline-offset:2px}
+.lcp-title{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.lcp-title h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.lcp-eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--lcp-accent);text-transform:uppercase}
+.lcp-muted{color:var(--lcp-muted)}
+.lcp-mono{font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;font-size:12.5px;font-variant-numeric:tabular-nums}
+.lcp-note{color:var(--lcp-muted);font-size:12.5px;margin:10px 2px 0}
+.lcp-error{background:#fdeceb;color:var(--lcp-urgent);font-weight:600;font-size:13px;padding:8px 12px;border-radius:10px;margin-bottom:10px}
+.lcp-btn{border:1px solid var(--lcp-line);background:var(--lcp-surface);border-radius:9px;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer}
+.lcp-btn:hover:not(:disabled){border-color:var(--lcp-ink)}
+.lcp-btn:disabled{opacity:.55;cursor:not-allowed}
+.lcp-btn--primary{background:var(--lcp-accent);border-color:var(--lcp-accent);color:#fff}
+.lcp-btn--danger{color:var(--lcp-urgent);border-color:#f0c4be}
+.lcp-btn--small{padding:4px 10px;font-size:12px}
+.lcp-table-wrap{overflow-x:auto;border:1px solid var(--lcp-line);border-radius:14px;background:var(--lcp-surface)}
+.lcp-table{border-collapse:collapse;width:100%;min-width:860px}
+.lcp-table th{font-size:12px;font-weight:700;color:var(--lcp-muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--lcp-line);white-space:nowrap}
+.lcp-table td{padding:11px 14px;border-bottom:1px solid var(--lcp-line);font-size:13.5px;vertical-align:middle}
+.lcp-table tr:last-child td{border-bottom:0}
+.lcp-who{display:flex;align-items:center;gap:10px}
+.lcp-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;background:var(--lcp-surface-2)}
+.lcp-av--ai{background:#eee9fd;color:var(--lcp-ai)}
+.lcp-name-edit{display:flex;gap:6px;align-items:center}
+.lcp-name-edit input{border:1px solid var(--lcp-line);background:var(--lcp-surface-2);border-radius:8px;padding:5px 8px;width:150px}
+.lcp-range{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.lcp-range label{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.lcp-range input[type="date"]{border:1px solid var(--lcp-line);background:var(--lcp-surface);border-radius:9px;padding:6px 8px}
+.lcp-chips{display:flex;gap:6px;flex-wrap:wrap}
+.lcp-chip{border:1px solid var(--lcp-line);background:var(--lcp-surface);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+.lcp-chip[aria-pressed="true"]{background:var(--lcp-accent-soft);border-color:var(--lcp-accent);color:var(--lcp-accent)}
+.lcp-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:16px}
+.lcp-card{background:var(--lcp-surface);border-radius:16px;padding:16px 20px;border-top:3px solid var(--lcp-accent);box-shadow:0 6px 18px -12px rgba(11,31,92,.35)}
+.lcp-card--ai{border-color:var(--lcp-ai)}.lcp-card--ok{border-color:var(--lcp-agent)}.lcp-card--warn{border-color:var(--lcp-warn)}
+.lcp-n{font-size:30px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.lcp-l{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--lcp-muted);margin-top:4px}
+.lcp-sub{font-size:12.5px;color:var(--lcp-muted);margin-top:6px}
+.lcp-panel{background:var(--lcp-surface);border:1px solid var(--lcp-line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.lcp-panel h3{margin:0 0 4px;font-size:15px;font-weight:800}
+.lcp-panel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.lcp-legend{display:flex;gap:16px;font-size:12.5px;font-weight:600;margin:4px 0 8px}
+.lcp-legend span{display:inline-flex;align-items:center;gap:6px}
+.lcp-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.lcp-chart{position:relative}
+.lcp-chart svg{width:100%;height:auto;display:block}
+.lcp-chart text{fill:var(--lcp-muted);font-size:11px}
+.lcp-tip{position:absolute;pointer-events:none;background:var(--lcp-ink);color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.5;white-space:nowrap;transform:translate(-50%,-100%);z-index:2}
+.lcp-tip b{font-weight:700}
+.lcp-bars{display:grid;gap:6px;margin-top:8px}
+.lcp-bar-row{display:grid;grid-template-columns:38px 1fr 34px;gap:10px;align-items:center;font-size:12.5px}
+.lcp-bar-track{height:10px;background:var(--lcp-surface-2);border-radius:4px;overflow:hidden}
+.lcp-bar-fill{height:100%;background:#d4930a;border-radius:0 4px 4px 0}
+.lcp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;align-items:start}
+@media (max-width:520px){.lcp-grid{grid-template-columns:1fr}}
+.lcp-field{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.lcp-field>label{font-size:12.5px;font-weight:700}
+.lcp-field input[type="text"],.lcp-field input[type="number"],.lcp-field select,.lcp-field textarea,.lcp-row input[type="text"],.lcp-row input[type="number"],.lcp-row select,.lcp-row textarea{border:1px solid var(--lcp-line);background:var(--lcp-surface-2);border-radius:8px;padding:7px 9px;width:100%}
+.lcp textarea{min-height:84px;resize:vertical}
+.lcp-help{font-size:12px;color:var(--lcp-muted)}
+.lcp-radio,.lcp-check{display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:13.5px}
+.lcp-radio small{display:block;color:var(--lcp-muted);font-size:12px}
+.lcp-radio input,.lcp-check input{margin-top:3px}
+.lcp-row{display:grid;gap:8px;align-items:center;margin-top:8px}
+.lcp-row--price{grid-template-columns:1fr 110px auto}
+.lcp-option{border:1px solid var(--lcp-line);border-radius:12px;padding:10px;margin-top:10px;display:grid;gap:8px}
+.lcp-option-top{display:grid;grid-template-columns:1fr 130px auto;gap:8px;align-items:center}
+.lcp-option-actions{display:flex;gap:4px}
+.lcp-field-error{color:var(--lcp-urgent);font-size:12px;font-weight:600}
+.lcp-savebar{position:sticky;bottom:0;z-index:3;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--lcp-surface);border:1px solid var(--lcp-line);border-radius:14px;padding:10px 14px;margin-top:6px;box-shadow:0 -8px 20px -16px rgba(11,31,92,.4)}
+.lcp-saved{color:#0e9f6e;font-weight:700}
+.lcp-viewonly{background:var(--lcp-accent-soft);color:var(--lcp-accent);font-weight:700;font-size:13px;padding:8px 14px;border-radius:12px;margin-bottom:12px}
+.lcp fieldset{border:0;margin:0;padding:0;min-width:0}
+.lcp-log td{vertical-align:top}
+.lcp-log ul{margin:0;padding-left:16px}
+.lcp-log li{margin:2px 0;overflow-wrap:anywhere}
+@media (max-width:640px){.lcp-option-top{grid-template-columns:1fr}}
+
+/* ── ChatWorkspace.css (copied verbatim from the original) ───────────────────────────── */
+.wk-wrap-page{--wk-surface:#fff;--wk-surface-2:#f2f5fb;--wk-bg:#eef3fa;--wk-line:#dce3ef;--wk-ink:#0f1b3d;--wk-muted:#5b6b8c;--wk-accent:#1d4ed8;--wk-accent-soft:#e3ebfd;--wk-ai:#6d4ae0;--wk-ai-soft:#eee9fd;--wk-warn:#c2570c;--wk-warn-soft:#fdeedf;--wk-ok:#0e9f6e;--wk-urgent:#d23b2a;color:var(--wk-ink);font-size:14px;line-height:1.45;width:0;min-width:100%}
+.wk-wrap-page *,.wk-wrap-page *::before,.wk-wrap-page *::after{box-sizing:border-box}
+.wk-wrap-page button,.wk-wrap-page input{font:inherit;color:inherit}
+.wk-wrap-page button{cursor:pointer}
+.wk-wrap-page :focus-visible{outline:2px solid var(--wk-accent);outline-offset:2px}
+.wk-inbox{display:grid;grid-template-columns:270px minmax(0,1fr) 310px;height:calc(100vh - 150px);min-height:520px;border:1px solid var(--wk-line);border-radius:14px;background:var(--wk-surface);overflow:hidden}
+.wk-mono{font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;font-size:12px;font-variant-numeric:tabular-nums}
+.wk-small{font-size:11px}
+.wk-muted{color:var(--wk-muted)}
+.wk-row{display:flex;justify-content:space-between;gap:6px;align-items:center}
+.wk-wrap{flex-wrap:wrap}
+.wk-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none;background:var(--wk-surface-2);position:relative}
+.wk-av--anon{background:var(--wk-ai-soft);color:var(--wk-ai)}
+.wk-av--lg{width:40px;height:40px}
+.wk-av i{position:absolute;right:-1px;top:-1px;width:11px;height:11px;border-radius:50%;background:#22c55e;border:2px solid var(--wk-surface)}
+.wk-av i.is-gone{background:#9aa3b8}
+.wk-list{border-right:1px solid var(--wk-line);overflow-y:auto;min-height:0}
+.wk-intro{display:flex;flex-direction:column;gap:3px;padding:12px 14px;border-bottom:1px solid var(--wk-line);background:var(--wk-accent-soft)}
+.wk-intro b{font-size:14px;color:var(--wk-accent)}
+.wk-intro span{font-size:12px;color:var(--wk-muted)}
+.wk-intro--ai{background:var(--wk-ai-soft)}
+.wk-intro--ai b{color:var(--wk-ai)}
+.wk-search{padding:8px 10px;border-bottom:1px solid var(--wk-line)}
+.wk-search input{width:100%;border:1px solid var(--wk-line);background:var(--wk-surface-2);border-radius:8px;padding:7px 10px;font-size:13px}
+.wk-list-head{padding:12px 14px 6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--wk-muted)}
+.wk-conv{display:flex;gap:10px;padding:10px 14px;border:0;border-left:3px solid transparent;width:100%;text-align:left;background:transparent;border-bottom:1px solid var(--wk-line)}
+.wk-conv:hover{background:var(--wk-surface-2)}
+.wk-conv.is-active{background:var(--wk-accent-soft);border-left-color:var(--wk-accent)}
+.wk-conv.is-closed{opacity:.65}
+.wk-conv-main{flex:1;min-width:0;display:flex;flex-direction:column}
+.wk-conv-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-prev{font-size:12px;color:var(--wk-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:2px 0 4px}
+.wk-prev--typing{color:var(--wk-accent);font-style:italic}
+.wk-badge{background:var(--wk-urgent);color:#fff;border-radius:999px;font-size:10.5px;font-weight:700;min-width:18px;height:18px;display:grid;place-items:center;padding:0 5px}
+.wk-tag{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px}
+.wk-tag--ai{background:var(--wk-ai-soft);color:var(--wk-ai)}
+.wk-tag--human{background:var(--wk-accent-soft);color:var(--wk-accent)}
+.wk-tag--wait{background:var(--wk-warn-soft);color:var(--wk-warn)}
+.wk-tag--done{background:var(--wk-surface-2);color:var(--wk-muted)}
+.wk-empty{margin:auto;color:var(--wk-muted);text-align:center;font-size:13px;max-width:32ch;padding:20px}
+.wk-list .wk-empty{margin:0;max-width:none}
+.wk-chat{display:flex;flex-direction:column;min-height:0;min-width:0}
+.wk-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--wk-line)}
+.wk-head-t{display:flex;gap:8px;align-items:center;min-width:0}
+.wk-actions{display:flex;gap:6px;flex-wrap:wrap}
+.wk-btn{border:1px solid var(--wk-line);background:var(--wk-surface);border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600}
+.wk-btn:hover:not(:disabled){border-color:var(--wk-ink)}
+.wk-btn:disabled{opacity:.55;cursor:not-allowed}
+.wk-btn--go{background:var(--wk-accent);color:#fff;border-color:var(--wk-accent)}
+.wk-btn--ai{color:var(--wk-ai);border-color:var(--wk-ai)}
+.wk-error{background:#fdeceb;color:var(--wk-urgent);font-size:12.5px;font-weight:600;padding:8px 14px;border-bottom:1px solid var(--wk-line)}
+.wk-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--wk-bg);min-height:0}
+.wk-msg{max-width:80%;padding:8px 11px;border-radius:14px;font-size:13.5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.wk-meta{display:block;font-size:10.5px;margin-top:3px;opacity:.72}
+.wk-right{align-self:flex-end;background:var(--wk-accent);color:#fff;border-bottom-right-radius:4px}
+.wk-left{align-self:flex-start;background:var(--wk-surface);border:1px solid var(--wk-line);border-bottom-left-radius:4px}
+.wk-right.wk-ai{background:var(--wk-ai)}
+.wk-note{align-self:stretch;max-width:none;background:var(--wk-warn-soft);border-radius:8px;font-size:12.5px}
+.wk-sys{align-self:center;font-size:11.5px;color:var(--wk-muted);background:var(--wk-surface-2);padding:3px 10px;border-radius:999px;text-align:center}
+.wk-typing{align-self:flex-start;font-size:12px;color:var(--wk-muted);display:flex;gap:6px;align-items:center}
+.wk-dots{display:inline-flex;gap:3px}
+.wk-dots i{width:5px;height:5px;border-radius:50%;background:var(--wk-muted);animation:wk-b 1s infinite}
+.wk-dots i:nth-child(2){animation-delay:.15s}
+.wk-dots i:nth-child(3){animation-delay:.3s}
+@keyframes wk-b{0%,80%,100%{transform:translateY(0);opacity:.5}40%{transform:translateY(-3px);opacity:1}}
+.wk-foot{border-top:1px solid var(--wk-line);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.wk-foot.is-note .wk-composer input{background:var(--wk-warn-soft)}
+.wk-tabs{display:flex;gap:4px}
+.wk-tabs button{border:0;background:transparent;font-size:12px;font-weight:600;color:var(--wk-muted);padding:3px 8px;border-radius:6px}
+.wk-tabs button[aria-selected="true"]{background:var(--wk-surface-2);color:var(--wk-ink)}
+.wk-tabs button:disabled{opacity:.45;cursor:not-allowed}
+.wk-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.wk-chip{flex:none;border:1px solid var(--wk-line);background:var(--wk-surface);border-radius:999px;padding:5px 10px;font-size:12px;white-space:nowrap}
+.wk-chip:hover:not(:disabled){border-color:var(--wk-accent);color:var(--wk-accent)}
+.wk-chip:disabled{opacity:.45;cursor:not-allowed}
+.wk-composer{display:flex;gap:6px;align-items:center}
+.wk-composer input{flex:1;min-width:0;border:1px solid var(--wk-line);background:var(--wk-surface-2);border-radius:10px;padding:9px 11px}
+.wk-send{border:0;background:var(--wk-accent);color:#fff;border-radius:10px;padding:0 14px;height:38px;font-weight:700}
+.wk-send:disabled{opacity:.5;cursor:not-allowed}
+.wk-profile{border-left:1px solid var(--wk-line);overflow-y:auto;min-height:0}
+.wk-phead{display:flex;gap:10px;align-items:center;padding:16px 16px 10px}
+.wk-phead b{display:block;font-size:15px}
+.wk-phead small{color:var(--wk-muted);font-size:12.5px}
+.wk-facts{list-style:none;margin:0;padding:4px 16px 10px;display:flex;flex-direction:column;gap:9px;font-size:13px}
+.wk-facts li{display:flex;gap:10px;align-items:center;min-width:0;overflow-wrap:anywhere}
+.wk-facts li>span:first-child{width:18px;text-align:center;flex:none;opacity:.8}
+.wk-add{color:var(--wk-muted)}
+.wk-link{color:var(--wk-accent);overflow-wrap:anywhere}
+.wk-schips{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 14px;border-bottom:1px solid var(--wk-line)}
+.wk-schips span{background:var(--wk-surface-2);border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600}
+.wk-schips .is-first{background:var(--wk-ai-soft);color:var(--wk-ai)}
+.wk-schips .is-ret{background:var(--wk-accent-soft);color:var(--wk-accent)}
+.wk-profile details{border-bottom:1px solid var(--wk-line)}
+.wk-profile summary{list-style:none;cursor:pointer;padding:13px 16px;font-weight:700;font-size:13.5px;display:flex;justify-content:space-between;align-items:center}
+.wk-profile summary::-webkit-details-marker{display:none}
+.wk-profile summary::after{content:"›";font-size:18px;color:var(--wk-muted);transition:transform .15s}
+.wk-profile details[open] summary::after{transform:rotate(90deg)}
+.wk-profile summary small{font-weight:600;font-size:11px;background:var(--wk-surface-2);padding:2px 8px;border-radius:6px;margin-left:8px;color:var(--wk-muted)}
+.wk-dbody,.wk-dbody-form{padding:0 16px 14px;font-size:12.5px;display:flex;flex-direction:column;gap:8px}
+.wk-dbody-form{padding:0}
+.wk-dbody input{border:1px solid var(--wk-line);background:var(--wk-surface-2);border-radius:8px;padding:7px 9px;width:100%}
+.wk-kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;margin:0}
+.wk-kv dt{color:var(--wk-muted)}
+.wk-kv dd{margin:0;font-weight:500;overflow-wrap:anywhere}
+.wk-aisum{background:var(--wk-ai-soft);border-radius:10px;padding:10px;font-size:12.5px}
+.wk-tags{display:flex;gap:6px;flex-wrap:wrap}
+.wk-ctag{display:inline-flex;align-items:center;gap:4px;background:var(--wk-accent-soft);color:var(--wk-accent);border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;font-weight:700}
+.wk-ctag button{border:0;background:transparent;color:inherit;font-size:14px;line-height:1;padding:0 4px}
+.wk-pages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wk-pages li{display:flex;justify-content:space-between;gap:8px}
+.wk-tl{list-style:none;margin:0;padding:0 0 0 14px;border-left:2px solid var(--wk-line);display:flex;flex-direction:column;gap:10px}
+.wk-tl li{position:relative;display:flex;flex-direction:column;min-width:0;font-size:12px}
+.wk-tl li::before{content:"";position:absolute;left:-20px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--wk-line);border:2px solid var(--wk-surface)}
+.wk-tl li.is-cur::before{background:var(--wk-ok)}
+.wk-tl b{font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-tl .wk-mono{color:var(--wk-muted);font-size:11px}
+.wk-note-line{color:var(--wk-muted);font-size:12.5px}
+.wk-field-error{color:var(--wk-urgent);font-size:12px;font-weight:600}
+.wk-saved{color:var(--wk-ok);font-size:12px;font-weight:600}
+.wk-off{background:var(--wk-surface,#fff);border:1px dashed #c2570c;border-radius:12px;padding:16px;max-width:560px}
+@media (max-width:1280px){.wk-inbox{grid-template-columns:240px minmax(0,1fr) 280px}}
+@media (max-width:1120px){.wk-inbox{grid-template-columns:240px minmax(0,1fr)}.wk-profile{display:none}}
+@media (max-width:760px){.wk-inbox{grid-template-columns:1fr;height:auto}.wk-list{max-height:240px;border-right:0;border-bottom:1px solid var(--wk-line)}.wk-chat{height:70vh}.wk-profile{display:block;border-left:0;border-top:1px solid var(--wk-line)}}
+@media (prefers-reduced-motion:reduce){.wk-dots i{animation:none}}
+.wk-file{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wk-file-name{overflow-wrap:anywhere}
+.wk-file-name small{color:var(--wk-muted)}
+.wk-rating{color:#e0a100;letter-spacing:1px;font-size:12px;white-space:nowrap}
+.wk-btn--danger{color:var(--wk-urgent);border-color:#f0c4be}
+.wk-btn--danger:hover:not(:disabled){border-color:var(--wk-urgent)}
+.wk-tag--lang{background:#fff4e0;color:#8a5300;border:1px solid #f1d5a1}
+.wk-viewbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid #e3e8f2;background:#fafbff}
+.wk-seg{display:inline-flex;border:1px solid #d5dcec;border-radius:999px;overflow:hidden;background:#fff}
+.wk-seg button{border:0;background:transparent;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:#3a4663}
+.wk-seg button[aria-pressed="true"]{background:#1d4ed8;color:#fff}
+.wk-trans,.wk-source{display:block;margin-top:4px;font-size:11.5px;opacity:.85}
+.wk-source--box{padding:6px 8px;border-radius:8px;background:#eef3ff;margin:0 0 6px}
+.wk-link{border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline;cursor:pointer}
+
+/* ── LiveChatToasts.css: notifications banner + sound switch (copied verbatim) ───────── */
+.lcn-bar{display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.lcn-banner{flex:1;min-width:260px;background:#e3ebfd;color:#1d4ed8;display:flex;gap:12px;align-items:center;justify-content:center;padding:8px 16px;font-size:13.5px;font-weight:700;flex-wrap:wrap;border-radius:14px}
+.lcn-banner button{border:1px solid #1d4ed8;background:#fff;color:#1d4ed8;border-radius:8px;padding:4px 12px;font:inherit;font-weight:700;cursor:pointer}
+.lcn-banner .lcn-x{border:0;background:transparent;margin-left:auto;padding:4px 8px}
+.lcn-sound{border:1px solid #dce3ef;background:#fff;color:#0f1b3d;border-radius:10px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="art-bar">
+  <b>Artifact controls</b>
+  <span class="art-pill">Mock data · no API · not the real app</span>
+  <label>Signed in as
+    <select id="art-role"><option value="admin">Admin (Priya Nair)</option><option value="superadmin">Super admin (Priya Nair)</option></select>
+  </label>
+  <button id="art-reset" type="button">Reset mock data</button>
+</div>
+<div class="ad-root" id="adroot">
+  <div class="ad-scrim" id="scrim"></div>
+  <aside class="ad-sidebar" id="sidebar">
+    <div class="ad-profile">
+      <div class="ad-profile-avatar">PN</div>
+      <div class="ad-profile-info"><div class="ad-profile-name">Priya Nair</div><div class="ad-profile-role" id="prole">Admin</div></div>
+    </div>
+    <nav class="ad-nav" id="nav"></nav>
+    <div class="ad-sidebar-footer"><button class="ad-logout-btn" type="button" id="signout"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out</button></div>
+  </aside>
+  <main class="ad-main">
+    <header class="ad-topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button class="ad-burger" type="button" id="burger" aria-label="Menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+        <div class="ad-topbar-title" id="title">Real-time visitors</div>
+      </div>
+      <div class="ad-topbar-right"><span class="ad-topbar-user">👋 Priya</span></div>
+    </header>
+    <div class="ad-content" id="content"></div>
+  </main>
+</div>
+
+<script>
+"use strict";
+/* Standalone replica of frontend/src/pages/admin/livechat (ChatWorkspace, ChatList, ChatConversation, PatientPanel,
+   NotificationsBanner). All data is local mock data; nothing is sent anywhere. */
+
+const ME = "a-me";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const initials = (n) => String(n || "").split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+const timeOf = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+const sizeOf = (b) => (b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round((b || 0) / 1024)) + " KB");
+const dur = (t) => { const s = Math.max(0, Math.floor(t)); return s >= 3600 ? `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`; };
+const HANDOFF = { explicit_request: "Asked for a person", patient_request: "Asked for a person", account_issue: "Account issue", account_or_payment: "Account issue", technical_issue: "Technical issue", emergency: "Emergency", complaint: "Complaint", unanswered: "AI couldn't answer", unsure: "AI couldn't answer", ai_unavailable: "AI unavailable", ai_off: "AI off", ai_limit: "AI reply limit" };
+const handoffLabel = (r) => HANDOFF[r] || "";
+const CANNED = { agentName: "Priya", replies: [
+  { id: "c1", title: "Greeting", text: "Hi, I'm {agentName} from Humancare support. How can I help?" },
+  { id: "c2", title: "Slot booked", text: "I've booked a General consultation for you today at 6:00 PM. You'll get the video link by email." },
+  { id: "c3", title: "Payment confirmed", text: "Your payment went through. A confirmation email will reach you within 5 minutes." },
+  { id: "c4", title: "Prescription re-sent", text: "I've re-sent your prescription to your pharmacy. It should arrive within 30 minutes." } ] };
+// Mock "translation service": a tiny fixed phrase book (the real one calls the server).
+const DE_EN = { "Hallo, ich kann meinen Termin morgen nicht finden.": "Hello, I can't find my appointment for tomorrow.", "Ich habe die Bestätigung per E-Mail nicht erhalten.": "I did not receive the confirmation by email.", "Guten Tag! Ich schaue gleich in Ihrem Konto nach.": "Good day! I'll check your account right away." };
+const EN_DE = { "Please check your spam folder.": "Bitte prüfen Sie Ihren Spam-Ordner." };
+
+// ── Mock data ────────────────────────────────────────────────────────────────────────
+const T0 = Date.now();
+const ago = (min) => new Date(T0 - min * 60000).toISOString();
+const mkPanel = (o) => ({
+    contact: { name: o.name || "", phone: o.phone || "", email: o.email || "" },
+    location: { city: o.city || "", state: o.state || "", country: o.country || "" },
+    timeZone: o.tz || "", counts: { chats: o.chats ?? 1, tickets: o.tickets ?? 0, visits: o.visits ?? 1 }, returning: !!o.returning,
+    context: { topic: o.topic || "", source: o.source || "Website chat widget", cookieChoice: o.cookie || "accepted", summary: o.summary || "Visitor is asking a general question." },
+    info: { assignee: o.assignee || null, chatId: o.id, startedAt: ago(o.dur || 12), liveStartedAt: o.live ? ago(o.live) : null, closedAt: o.closedAt || null, rating: o.rating ? { stars: o.rating } : null, startedPage: { path: o.page || "/" } },
+    tags: o.tags || [], recent: o.recent || [],
+    pages: o.pages === undefined ? [{ path: "/", title: "Home", enteredAt: ago(15), seconds: 120 }, { path: "/pricing", title: "Pricing", enteredAt: ago(12), seconds: 240, current: true }] : o.pages,
+    visit: { online: o.online !== false, device: o.device || "Desktop", os: o.os || "Windows", browser: o.browser || "Chrome", referrer: o.referrer || "", joinedAt: ago(o.dur || 12), ip: o.ip, },
+  });
+function mockData() {
+  const panel = mkPanel;
+  const C = []; const M = {};
+  const add = (c, msgs, p) => { c.panel = panel({ ...p, id: c.conversationId, ip: c.ip, name: c.name, email: c.email, city: c.city, state: c.state, country: c.country, assignee: c.assignee, rating: c.rating, topic: c.topic }); C.push(c); M[c.conversationId] = msgs; };
+  const msg = (id, sender, text, min, x = {}) => ({ id, sender, text, at: ago(min), ...x });
+
+  // Queue
+  add({ conversationId: "HC-1042", visitorId: "v1", name: "Maria Gonzalez", email: "maria.g@example.com", ip: "203.0.113.24", city: "Madrid", country: "Spain", mode: "queue", handoffReason: "explicit_request", everLive: true, unread: 2, lastMessageAt: ago(1), topic: "Booking", preview: { sender: "patient", text: "Can someone book me with a cardiologist today?", at: ago(1) } },
+    [msg("m1", "patient", "Hi, I need to see a cardiologist as soon as possible.", 6), msg("m2", "ai", "I can help with that. Do you prefer a video or phone consultation?", 5), msg("m3", "patient", "Video please. Can someone book me with a cardiologist today?", 1), msg("m4", "system", "Chat handed to a person · Asked for a person", 1)],
+    { phone: "+34 600 123 456", tz: "Europe/Madrid", chats: 3, tickets: 1, visits: 5, returning: true, summary: "Patient wants a same-day cardiology video consult.", tags: ["booking"], page: "/specialists/cardiology", recent: [{ conversationId: "HC-0977", topic: "Refund", status: "Resolved", startedAt: ago(60 * 24 * 9) }], dur: 8 });
+  add({ conversationId: "HC-1043", visitorId: "v2", name: "", email: "", ip: "198.51.100.77", city: "Leeds", country: "United Kingdom", mode: "queue", emailFollowUp: true, handoffReason: "unanswered", everLive: true, unread: 0, lastMessageAt: ago(22), preview: { sender: "patient", text: "Please email me when someone is available.", at: ago(22) } },
+    [msg("m1", "patient", "Is anyone there? I have a billing question.", 25), msg("m2", "ai", "Our team is offline right now. I can pass your question on by email.", 24), msg("m3", "patient", "Please email me when someone is available.", 22), msg("m4", "system", "Email follow-up requested", 22, { internal: true })],
+    { cookie: "declined", pages: [], tz: "Europe/London", online: false, device: "Mobile", os: "iOS", browser: "Safari", summary: "Billing question. Left the site, wants an email reply.", dur: 26 });
+  add({ conversationId: "HC-1044", visitorId: "v3", name: "Jonas Weber", email: "jonas.w@example.de", ip: "192.0.2.8", city: "Berlin", country: "Germany", mode: "queue", handoffReason: "technical_issue", everLive: true, unread: 1, lastMessageAt: ago(3), language: { code: "de", name: "German" }, topic: "Appointment", preview: { sender: "patient", text: "Ich habe die Bestätigung per E-Mail nicht erhalten.", at: ago(3) } },
+    [msg("m1", "patient", "Hallo, ich kann meinen Termin morgen nicht finden.", 6), msg("m2", "patient", "Ich habe die Bestätigung per E-Mail nicht erhalten.", 3), msg("m3", "system", "Chat handed to a person · Technical issue", 3)],
+    { phone: "+49 30 1234567", tz: "Europe/Berlin", chats: 1, summary: "German-speaking patient cannot find tomorrow's appointment.", page: "/account/appointments", dur: 7 });
+  // My chats
+  add({ conversationId: "HC-1038", visitorId: "v4", name: "Aisha Khan", email: "aisha.k@example.com", ip: "203.0.113.90", city: "Dubai", country: "UAE", mode: "live", assignee: { id: ME, name: "Priya Nair" }, everLive: true, unread: 0, lastMessageAt: ago(2), rating: 0, topic: "Payment", preview: { sender: "agent", text: "I'll check that for you now.", at: ago(2) } },
+    [msg("m1", "patient", "My payment shows pending but money left my account.", 14), msg("m2", "ai", "I'm sorry about that. Let me bring in a teammate.", 13), msg("m3", "system", "Priya Nair joined the chat", 12), msg("m4", "agent", "Hi Aisha, I'm Priya from Humancare support. Can you share the payment reference?", 11, { agentName: "Priya Nair" }), msg("m5", "patient", "Sure, it's PAY-88213.", 9), msg("m6", "note", "Reference PAY-88213 is in the gateway queue. Check with finance if still pending.", 8, { agentName: "Priya Nair", internal: true }), msg("m7", "patient", "📎 payment-receipt.pdf", 6, { file: { id: "f1", name: "payment-receipt.pdf", size: 184320, mime: "application/pdf" } }), msg("m8", "agent", "I'll check that for you now.", 2, { agentName: "Priya Nair" })],
+    { phone: "+971 50 555 0100", tz: "Asia/Dubai", chats: 4, tickets: 2, visits: 9, returning: true, summary: "Payment pending after debit. Receipt attached.", tags: ["payment", "refund"], page: "/checkout", live: 12, recent: [{ conversationId: "HC-0911", topic: "Prescription", status: "Resolved", startedAt: ago(60 * 24 * 21) }, { conversationId: "HC-0850", topic: "Booking", status: "Resolved", startedAt: ago(60 * 24 * 40) }], dur: 15 });
+  // Other agent
+  add({ conversationId: "HC-1035", visitorId: "v5", name: "Tom Becker", email: "tom.b@example.com", ip: "198.51.100.5", city: "Austin", state: "TX", country: "USA", mode: "live", assignee: { id: "a-other", name: "Daniel Ortiz" }, everLive: true, unread: 0, lastMessageAt: ago(5), topic: "Prescription", preview: { sender: "agent", text: "Your prescription is on its way.", at: ago(5) } },
+    [msg("m1", "patient", "Where is my prescription?", 20), msg("m2", "agent", "Your prescription is on its way.", 5, { agentName: "Daniel Ortiz" })],
+    { tz: "America/Chicago", chats: 2, summary: "Asking about a prescription delivery.", live: 18, assignee: { name: "Daniel Ortiz" }, dur: 21 });
+  // Back with AI
+  add({ conversationId: "HC-1030", visitorId: "v6", name: "Lena Fischer", email: "", ip: "192.0.2.61", city: "Vienna", country: "Austria", mode: "ai", everLive: true, unread: 0, lastMessageAt: ago(40), preview: { sender: "ai", text: "Glad I could help. Anything else?", at: ago(40) } },
+    [msg("m1", "patient", "What are your opening hours?", 50), msg("m2", "agent", "We're available 24/7 for urgent care. I'll hand you back to our assistant.", 46, { agentName: "Daniel Ortiz" }), msg("m3", "system", "Handed back to the AI assistant", 45), msg("m4", "ai", "Glad I could help. Anything else?", 40)],
+    { tz: "Europe/Vienna", summary: "Opening hours question; answered.", dur: 55 });
+  // Archived
+  add({ conversationId: "HC-1011", visitorId: "v7", name: "Carlos Mendes", email: "carlos.m@example.com", ip: "203.0.113.200", city: "Lisbon", country: "Portugal", mode: "archived", closedReason: "resolved", everLive: true, unread: 0, lastMessageAt: ago(300), rating: 5, preview: { sender: "agent", text: "Happy to help, Carlos. Take care!", at: ago(300) } },
+    [msg("m1", "patient", "Can I reschedule my consult?", 320), msg("m2", "agent", "Done, moved to Friday 10:00.", 310, { agentName: "Priya Nair" }), msg("m3", "patient", "Perfect, thanks!", 305), msg("m4", "agent", "Happy to help, Carlos. Take care!", 300, { agentName: "Priya Nair" }), msg("m5", "system", "Chat resolved", 300)],
+    { tz: "Europe/Lisbon", online: false, rating: 5, closedAt: ago(300), live: 20, summary: "Rescheduled a consultation.", dur: 25 });
+  add({ conversationId: "HC-1009", visitorId: "v8", name: "", email: "", ip: "198.51.100.140", city: "Toronto", country: "Canada", mode: "archived", closedReason: "patient_left", everLive: true, unread: 0, lastMessageAt: ago(500), preview: { sender: "patient", text: "hello?", at: ago(500) } },
+    [msg("m1", "patient", "hello?", 500), msg("m2", "system", "Visitor left the website", 495)], { online: false, pages: [], cookie: "declined", closedAt: ago(495), dur: 6 });
+  // AI-only chats (view = ai): everLive false
+  add({ conversationId: "HC-2001", visitorId: "v9", name: "", email: "", ip: "203.0.113.31", city: "Mumbai", country: "India", mode: "ai", everLive: false, unread: 1, lastMessageAt: ago(1), preview: { sender: "patient", text: "Do you accept travel insurance?", at: ago(1) } },
+    [msg("m1", "patient", "Hi, how much is a consultation?", 4), msg("m2", "ai", "A general consultation starts at $29. Would you like me to show specialists?", 3), msg("m3", "patient", "Do you accept travel insurance?", 1)],
+    { tz: "Asia/Kolkata", summary: "Asking about price and insurance.", page: "/pricing", dur: 5 });
+  add({ conversationId: "HC-2002", visitorId: "v10", name: "Sofia Rossi", email: "sofia.r@example.com", ip: "192.0.2.77", city: "Milan", country: "Italy", mode: "ai", everLive: false, unread: 0, lastMessageAt: ago(9), invited: false, topic: "Booking", preview: { sender: "ai", text: "You can book from the Specialists page.", at: ago(9) } },
+    [msg("m1", "patient", "How do I book a dermatologist?", 11), msg("m2", "ai", "You can book from the Specialists page.", 9)], { tz: "Europe/Rome", chats: 2, summary: "Wants to book a dermatologist.", page: "/specialists", dur: 12, returning: true });
+  add({ conversationId: "HC-2003", visitorId: "v11", name: "", email: "", ip: "198.51.100.19", city: "Cape Town", country: "South Africa", mode: "archived", closedReason: "patient_left", everLive: false, unread: 0, lastMessageAt: ago(200), preview: { sender: "ai", text: "Thanks for stopping by.", at: ago(200) } },
+    [msg("m1", "patient", "just browsing", 205), msg("m2", "ai", "Thanks for stopping by.", 200)], { online: false, closedAt: ago(200), pages: [], dur: 5 });
+  add({ conversationId: "HC-2004", visitorId: "v12", name: "Hiro Tanaka", email: "", ip: "203.0.113.150", city: "Osaka", country: "Japan", mode: "ai", everLive: false, unread: 0, lastMessageAt: ago(70), invited: true, preview: null },
+    [msg("m1", "system", "Priya Nair invited this visitor to chat", 70)], { tz: "Asia/Tokyo", summary: "Invited by the team; no reply yet.", dur: 70 });
+  return { C, M };
+}
+
+// ── State ────────────────────────────────────────────────────────────────────────────
+const S = {
+  view: "live", role: "admin", query: "", activeId: "", rows: [], msgs: {}, detailBusy: false, error: "", typing: new Set(),
+  noteMode: false, draft: "", englishSource: "", suggesting: false, lang: {}, transView: {}, originals: new Set(), replying: false, transError: "",
+  sections: {}, contactSaved: false, contactErrors: {}, sound: true, bannerDismissed: false, now: Date.now(), nextId: 100,
+};
+function reset() {
+  const d = mockData(); S.rows = d.C; S.msgs = d.M; S.activeId = ""; S.error = ""; S.draft = ""; S.englishSource = ""; S.noteMode = false;
+  S.typing = new Set(["v10"]); S.transView = {}; S.originals = new Set(); S.transError = "";
+}
+const rowsForView = () => S.rows.filter((r) => (r.everLive ? "live" : "ai") === S.view);
+const active = () => S.rows.find((r) => r.conversationId === S.activeId);
+const $ = (id) => document.getElementById(id);
+
+// ── Render: shell ────────────────────────────────────────────────────────────────────
+function renderAll() {
+  const rows = rowsForView();
+  if (!S.activeId || !rows.some((r) => r.conversationId === S.activeId)) S.activeId = rows[0]?.conversationId || "";
+  const c = active();
+  if (c) c.unread = 0;
+  $("root").innerHTML = `
+    <div class="lcn-bar" id="banner"></div>
+    <div class="wk-inbox">
+      <nav class="wk-list" aria-label="Chats" id="list"></nav>
+      <div class="wk-chat" id="chat"></div>
+      <aside class="wk-profile" aria-label="Patient" id="panel"></aside>
+    </div>`;
+  const hf = hashFor(S.view, S.activeId); if (location.hash !== hf) history.replaceState(null, "", hf);
+  renderBanner(); renderNav(); renderList(true); renderChat(); renderPanel();
+}
+function renderBanner() {
+  if (!$("banner")) return;
+  const supported = typeof Notification !== "undefined";
+  const showAsk = supported && Notification.permission === "default" && !S.bannerDismissed;
+  $("banner").innerHTML = `${showAsk ? `<div class="lcn-banner" role="region" aria-label="Notifications"><span>🔔 Never miss a patient chat.</span><button type="button" data-a="notif">Turn on notifications</button><button type="button" class="lcn-x" aria-label="Dismiss" data-a="dismiss">✕</button></div>` : ""}
+    <button type="button" class="lcn-sound" aria-pressed="${S.sound}" title="${S.sound ? "Sound is on for new chats and messages" : "Sound is off"}" data-a="sound">${S.sound ? "🔔 Sound on" : "🔕 Sound off"}</button>`;
+}
+
+// ── Render: chat list ────────────────────────────────────────────────────────────────
+const groupsFor = () => S.view === "live"
+  ? [["Queue · waiting for an agent", (c) => c.mode === "queue"], ["My chats", (c) => c.mode === "live" && c.assignee?.id === ME], ["Other agents' chats", (c) => c.mode === "live" && c.assignee?.id !== ME], ["Back with the AI", (c) => c.mode === "ai"], ["Archived", (c) => c.mode === "archived"]]
+  : [["Talking to the AI", (c) => c.mode !== "archived"], ["Archived", (c) => c.mode === "archived"]];
+function modeTag(r) {
+  if (r.mode === "archived") return `<span class="wk-tag wk-tag--done">${{ patient_left: "Left", blocked: "Blocked" }[r.closedReason] || "Resolved"}</span>`;
+  if (r.mode === "queue") {
+    if (r.emailStatus === "failed") return `<span class="wk-tag wk-tag--wait" title="The follow-up email could not be sent">Email failed</span>`;
+    return `<span class="wk-tag wk-tag--wait">${r.emailFollowUp ? "Email follow-up" : "Waiting"}</span>`;
+  }
+  if (r.mode === "live") return `<span class="wk-tag wk-tag--human">${esc(r.assignee?.id === ME ? "You" : r.assignee?.name || "Agent")}</span>`;
+  return `<span class="wk-tag wk-tag--ai">AI</span>`;
+}
+function itemHtml(r) {
+  const typing = S.typing.has(r.visitorId), last = r.preview;
+  let preview = "";
+  if (r.mode === "archived" && r.closedReason === "patient_left") preview = "Archived · patient left the website";
+  else if (r.invited) preview = "Invited · no reply yet";
+  else if (last) preview = (last.sender === "ai" ? "AI: " : last.sender === "agent" ? (r.assignee?.id === ME ? "You: " : "Agent: ") : "") + last.text;
+  return `<button type="button" class="wk-conv${r.conversationId === S.activeId ? " is-active" : ""}${r.mode === "archived" ? " is-closed" : ""}" data-a="select" data-id="${r.conversationId}">
+    <span class="wk-av${r.name ? "" : " wk-av--anon"}">${r.name ? esc(initials(r.name)) : "V"}</span>
+    <span class="wk-conv-main">
+      <span class="wk-row"><span class="wk-conv-name">${esc(r.name || r.ip || "Visitor")}</span><span class="wk-mono wk-small">${timeOf(r.preview?.at || r.lastMessageAt)}</span></span>
+      ${typing ? `<span class="wk-prev wk-prev--typing">typing…</span>` : `<span class="wk-prev">${esc(preview)}</span>`}
+      <span class="wk-row">${modeTag(r)}
+        ${r.mode === "queue" && handoffLabel(r.handoffReason) ? `<span class="wk-tag wk-tag--lang" title="Why this chat needs a person">${esc(handoffLabel(r.handoffReason))}</span>` : ""}
+        ${r.language?.name ? `<span class="wk-tag wk-tag--lang" title="The patient writes in ${esc(r.language.name)}">${esc(r.language.name)}</span>` : ""}
+        ${r.rating ? `<span class="wk-rating">${"★".repeat(r.rating)}</span>` : ""}
+        ${r.unread > 0 ? `<span class="wk-badge">${r.unread}</span>` : ""}
+      </span>
+    </span></button>`;
+}
+function filteredRows() {
+  const q = S.query.trim().toLowerCase(), rows = rowsForView();
+  return q ? rows.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q)) : rows;
+}
+function renderList(full) {
+  const live = S.view === "live";
+  if (full) {
+    $("list").innerHTML = `<div class="wk-intro${live ? "" : " wk-intro--ai"}"><b>${live ? "Live agent chats" : "AI chats"}</b><span>${live ? "Patients who shared their contact details to talk to a person, and chats your team started." : "Patients talking only to the AI assistant. Reply or take over and the chat moves to Live agent chats."}</span></div>
+      <div class="wk-search"><input type="search" id="q" value="${esc(S.query)}" placeholder="Search name, email, IP or city…" aria-label="Search chats"></div><div id="groups"></div>`;
+    $("q").addEventListener("input", (e) => { S.query = e.target.value; renderList(false); });
+  }
+  const f = filteredRows();
+  $("groups").innerHTML = (f.length === 0 ? `<div class="wk-empty">${S.query ? "No chats match" : live ? "No live agent chats yet" : "No AI chats right now"}</div>` : "") +
+    groupsFor().map(([title, test]) => { const items = f.filter(test); return items.length ? `<div><div class="wk-list-head">${title} · ${items.length}</div>${items.map(itemHtml).join("")}</div>` : ""; }).join("");
+}
+
+// ── Render: conversation ─────────────────────────────────────────────────────────────
+const tagFor = (c) => modeTag(c);
+function transOf(c, m) {
+  if (!(c.language && S.transView[c.conversationId] === "en") || !["patient", "ai", "agent"].includes(m.sender) || m.file) return null;
+  const t = DE_EN[m.text]; return { text: t || `[English] ${m.text}`, fromName: c.language.name };
+}
+function textHtml(c, m) {
+  const tr = transOf(c, m);
+  if (!tr) return esc(m.text);
+  if (S.originals.has(m.id)) return `${esc(m.text)}<span class="wk-trans">Original (${esc(tr.fromName)}) · <button type="button" class="wk-link" data-a="orig" data-id="${m.id}">show English</button></span>`;
+  return `${esc(tr.text)}<span class="wk-trans">Translated from ${esc(tr.fromName)} · <button type="button" class="wk-link" data-a="orig" data-id="${m.id}">show original</button></span>`;
+}
+function messageHtml(c, m) {
+  if (m.sender === "system") return `<div class="wk-sys">${esc(m.text)} · ${timeOf(m.at)}${m.internal ? " · team only" : ""}</div>`;
+  if (m.sender === "note") return `<div class="wk-msg wk-note"><b>Internal note:</b> ${esc(m.text)}<span class="wk-meta">Only your team sees this · ${m.agentName ? esc(m.agentName) + " · " : ""}${timeOf(m.at)}</span></div>`;
+  if (m.sender === "patient") {
+    const body = m.file ? `<span class="wk-file"><span aria-hidden="true">📄</span><span class="wk-file-name">${esc(m.file.name)}<small> · ${sizeOf(m.file.size)} · ${m.file.mime === "application/pdf" ? "PDF" : m.file.mime === "image/png" ? "PNG" : "JPG"}</small></span><button type="button" class="wk-btn" data-a="file">Open</button></span>` : textHtml(c, m);
+    return `<div class="wk-msg wk-left">${body}<span class="wk-meta">${timeOf(m.at)}</span></div>`;
+  }
+  const label = m.sender === "ai" ? "AI assistant" : m.agentName || "Agent";
+  return `<div class="wk-msg wk-right${m.sender === "ai" ? " wk-ai" : ""}">${textHtml(c, m)}${m.sourceText ? `<span class="wk-source">Your English: ${esc(m.sourceText)}${c.language ? ` (sent in ${esc(c.language.name)})` : ""}</span>` : ""}<span class="wk-meta">${label} · ${timeOf(m.at)}</span></div>`;
+}
+function renderChat() {
+  const c = active(), el = $("chat");
+  if (!c) { el.innerHTML = `<div class="wk-empty">${rowsForView().length ? "Pick a chat on the left" : "No chats yet"}</div>`; return; }
+  const messages = S.msgs[c.conversationId] || [];
+  const language = c.language || null, view = S.transView[c.conversationId] || "original";
+  const closed = c.mode === "archived", mine = c.assignee?.id === ME, heldByOther = c.mode === "live" && !mine, superadmin = S.role === "superadmin";
+  const canTakeOver = !closed && (c.mode === "ai" || c.mode === "queue" || (heldByOther && superadmin));
+  const canHandBack = c.mode === "live" && (mine || superadmin);
+  const canResolve = !closed && (!heldByOther || superadmin);
+  const notesOnly = closed || heldByOther, noting = S.noteMode || notesOnly, busy = S.detailBusy;
+  let placeholder = "Typing here takes over the chat…";
+  if (noting) placeholder = heldByOther ? `${c.assignee?.name} is handling this chat. Add a note for your team…` : "Note for your team…";
+  else if (c.mode === "live") placeholder = "Type a reply…";
+  const hadFocus = document.activeElement?.id === "draft";
+  const prevScroll = $("body")?.scrollTop, wasConv = el.dataset.cid === c.conversationId;
+
+  el.dataset.cid = c.conversationId;
+  el.innerHTML = `
+    <div class="wk-head">
+      <div class="wk-head-t"><strong>${esc(c.name || c.ip || "Visitor")}</strong>${tagFor(c)}
+        ${(c.mode === "queue" || c.mode === "live") && handoffLabel(c.handoffReason) ? `<span class="wk-tag wk-tag--lang" title="Why this chat was handed to a person">${esc(handoffLabel(c.handoffReason))}</span>` : ""}
+        ${language ? `<span class="wk-tag wk-tag--lang" title="The patient writes in ${esc(language.name)}">${esc(language.name)}</span>` : ""}
+        ${c.invited ? `<span class="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">Invited</span>` : ""}
+        ${c.rating ? `<span class="wk-rating" title="Patient rating: ${c.rating} of 5">${"★".repeat(c.rating)}</span>` : ""}
+        ${heldByOther ? `<span class="wk-small wk-muted">held by ${esc(c.assignee?.name)}</span>` : ""}
+      </div>
+      <div class="wk-actions">
+        ${canTakeOver ? `<button type="button" class="wk-btn wk-btn--go" data-a="takeover" ${busy ? "disabled" : ""}>${heldByOther ? `Take over from ${esc(c.assignee?.name)}` : "Take over chat"}</button>` : ""}
+        ${canHandBack ? `<button type="button" class="wk-btn wk-btn--ai" data-a="handback" ${busy ? "disabled" : ""}>Hand back to AI</button>` : ""}
+        ${canResolve ? `<button type="button" class="wk-btn" data-a="resolve" ${busy ? "disabled" : ""}>Resolve</button>` : ""}
+        ${c.ip ? `<button type="button" class="wk-btn wk-btn--danger" data-a="block" ${busy ? "disabled" : ""} title="Block IP ${esc(c.ip)}">Block IP</button>` : ""}
+      </div>
+    </div>
+    ${language ? `<div class="wk-viewbar"><div class="wk-seg" role="group" aria-label="Message language"><button type="button" aria-pressed="${view === "original"}" data-a="view" data-v="original">Original (${esc(language.name)})</button><button type="button" aria-pressed="${view === "en"}" data-a="view" data-v="en">English</button></div><span class="wk-small wk-muted">Only your team sees this. The patient always sees the original.</span></div>` : ""}
+    ${S.error || S.transError ? `<div class="wk-error" role="alert">${esc(S.error || S.transError)}</div>` : ""}
+    <div class="wk-body" id="body">${messages.map((m) => messageHtml(c, m)).join("")}${S.typing.has(c.visitorId) ? `<div class="wk-typing"><span class="wk-dots"><i></i><i></i><i></i></span> ${esc(c.name || "Visitor")} is typing…</div>` : ""}</div>
+    <div class="wk-foot${noting ? " is-note" : ""}">
+      <div class="wk-row wk-wrap">
+        <div class="wk-tabs" role="tablist"><button type="button" role="tab" aria-selected="${!noting}" ${notesOnly ? "disabled" : ""} data-a="mode" data-n="0">Reply to patient</button><button type="button" role="tab" aria-selected="${noting}" data-a="mode" data-n="1">Internal note</button></div>
+        <button type="button" class="wk-btn wk-btn--ai" data-a="suggest" ${S.suggesting || busy || closed ? "disabled" : ""}>${S.suggesting ? "Thinking…" : "✨ Suggest a reply"}</button>
+      </div>
+      <div class="wk-chips">${CANNED.replies.map((r) => `<button type="button" class="wk-chip" ${notesOnly ? "disabled" : ""} data-a="canned" data-id="${r.id}">${esc(r.title)}</button>`).join("")}</div>
+      ${!noting && S.englishSource ? `<div class="wk-source wk-source--box">Your English: ${esc(S.englishSource)} <button type="button" class="wk-link" data-a="undo">Undo translation</button></div>` : ""}
+      <form class="wk-composer" id="composer"><input id="draft" type="text" maxlength="2000" autocomplete="off" placeholder="${esc(placeholder)}" aria-label="${noting ? "Internal note" : "Reply to the patient"}"><button type="submit" class="wk-send" id="send" disabled>${noting ? "Save note" : "Send"}</button></form>
+      ${language && !noting && !closed ? `<div class="wk-row wk-wrap"><button type="button" class="wk-btn" id="trbtn" data-a="trreply" disabled>${S.replying ? "Translating…" : `Translate to ${esc(language.name)}`}</button><span class="wk-small wk-muted">Type in English, translate, check the text, then Send. Nothing is sent automatically.</span></div>` : ""}
+    </div>`;
+  const input = $("draft"); input.value = S.draft; syncComposer();
+  input.addEventListener("input", (e) => { S.draft = e.target.value; syncComposer(); });
+  $("composer").addEventListener("submit", submit);
+  const b = $("body"); b.scrollTop = wasConv && prevScroll !== undefined && !atBottomHint ? prevScroll : b.scrollHeight; atBottomHint = false;
+  if (hadFocus) input.focus();
+}
+let atBottomHint = true;
+function syncComposer() {
+  const has = S.draft.trim().length > 0;
+  const send = $("send"); if (send) send.disabled = S.detailBusy || !has;
+  const tb = $("trbtn"); if (tb) tb.disabled = S.replying || S.detailBusy || !has || Boolean(S.englishSource);
+}
+
+// ── Render: patient panel ────────────────────────────────────────────────────────────
+function localTime(tz, now) { try { const d = new Date(now); return `${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz })}, ${d.toLocaleDateString("en-US", { weekday: "short", timeZone: tz })}`; } catch { return ""; } }
+function section(id, title, hasName, body, badge) {
+  const open = S.sections[id] ?? ({ qual: !hasName, ctx: false }[id] ?? true);
+  return `<details data-sec="${id}" ${open ? "open" : ""}><summary><span>${title}${badge !== undefined ? `<small>${badge}</small>` : ""}</span></summary><div class="wk-dbody">${body}</div></details>`;
+}
+function renderPanel() {
+  const c = active(), el = $("panel");
+  if (!c) { el.innerHTML = ""; return; }
+  const p = c.panel, hasName = Boolean(p.contact.name), closed = c.mode === "archived", now = S.now;
+  const location = [p.location.city, p.location.state, p.location.country].filter(Boolean).join(", ");
+  const activity = !p.visit.online ? "Left the website" : c.mode === "queue" ? "Waiting for agent" : closed ? "Chat ended" : "Chatting";
+  const startMs = new Date(p.info.liveStartedAt || p.info.startedAt).getTime(), endMs = closed && p.info.closedAt ? new Date(p.info.closedAt).getTime() : now;
+  const tracked = p.pages.length > 0;
+  const errs = Object.values(S.contactErrors).map((m) => `<span class="wk-field-error">${esc(m)}</span>`).join("");
+  el.innerHTML = `
+    <div class="wk-phead"><span class="wk-av wk-av--lg${hasName ? "" : " wk-av--anon"}">${hasName ? esc(initials(p.contact.name)) : "V"}<i class="${p.visit.online ? "" : "is-gone"}"></i></span><div><b>${esc(p.contact.name || c.ip || "Visitor")}</b><small>${activity}</small></div></div>
+    <ul class="wk-facts">
+      <li><span aria-hidden="true">✉</span>${p.contact.email ? `<span class="wk-link">${esc(p.contact.email)}</span>` : `<span class="wk-add">No email yet</span>`}</li>
+      <li><span aria-hidden="true">☎</span>${p.contact.phone ? `<span class="wk-mono">${esc(p.contact.phone)}</span>` : `<span class="wk-add">No phone yet</span>`}</li>
+      <li><span aria-hidden="true">📍</span>${location ? esc(location) : `<span class="wk-add">Location unknown</span>`}</li>
+      ${p.timeZone ? `<li><span aria-hidden="true">🕒</span>${esc(localTime(p.timeZone, now))} (their time)</li>` : ""}
+    </ul>
+    <div class="wk-schips"><span title="Chats">💬 ${p.counts.chats}</span><span title="Support tickets">🎫 ${p.counts.tickets}</span><span title="Visits">👁 ${p.counts.visits}</span><span class="${p.returning ? "is-ret" : "is-first"}">${p.returning ? "Returning visitor" : "First visit"}</span></div>
+    ${section("qual", "Qualification", hasName, `<form class="wk-dbody-form" id="contact"><input placeholder="Name" name="name" value="${esc(p.contact.name)}" aria-label="Name"><input placeholder="Phone" name="phone" value="${esc(p.contact.phone)}" aria-label="Phone"><input placeholder="Email" type="email" name="email" value="${esc(p.contact.email)}" aria-label="Email">${errs}<button type="submit" class="wk-btn wk-btn--go">Save contact</button>${S.contactSaved ? `<span class="wk-saved">Saved</span>` : ""}</form>`, hasName ? "Contact saved" : "Add contact")}
+    ${section("ctx", "Customer context", hasName, `<dl class="wk-kv"><dt>Topic</dt><dd>${esc(p.context.topic || "–")}</dd><dt>Source</dt><dd>${esc(p.context.source || "–")}</dd><dt>Cookies</dt><dd>${{ accepted: "Accepted", declined: "Declined" }[p.context.cookieChoice] || "Not answered"}</dd></dl><div class="wk-aisum">${esc(p.context.summary)}</div>`)}
+    ${section("info", "Chat info", hasName, `<dl class="wk-kv"><dt>Assignee</dt><dd>${esc(p.info.assignee ? p.info.assignee.name : c.mode === "ai" ? "AI agent" : "Nobody yet (queue)")}</dd><dt>Chat ID</dt><dd class="wk-mono">${esc(p.info.chatId)}</dd><dt>${p.info.liveStartedAt ? "Live duration" : "Duration"}</dt><dd class="wk-mono">${dur((endMs - startMs) / 1000)}</dd>${closed || p.info.rating ? `<dt>Rating</dt><dd>${p.info.rating ? `<span class="wk-rating">${"★".repeat(p.info.rating.stars)}${"☆".repeat(5 - p.info.rating.stars)}</span>` : "Not rated"}</dd>` : ""}<dt>Started on</dt><dd class="wk-link">${p.info.startedPage.path ? "…humancareconnect.co" + esc(p.info.startedPage.path) : "–"}</dd></dl>`)}
+    ${section("tags", "Chat tags", hasName, `<div class="wk-tags">${p.tags.map((t) => `<span class="wk-ctag">${esc(t)}<button type="button" aria-label="Remove tag ${esc(t)}" data-a="rmtag" data-t="${esc(t)}">×</button></span>`).join("")}</div><form id="tagform"><input id="tagin" placeholder="+ Add a tag (e.g. booking, refund)" maxlength="40" aria-label="Add a tag"></form>`)}
+    ${section("recent", "Recent conversations", hasName, p.recent.length ? `<ul class="wk-pages">${p.recent.map((r) => `<li><span>${esc(r.topic || "Chat")}<br><small class="wk-muted">${esc(r.status)}</small></span><span class="wk-mono">${new Date(r.startedAt).toLocaleDateString([], { month: "short", day: "numeric" })}</span></li>`).join("")}</ul>` : `<span class="wk-muted">No earlier conversations</span>`)}
+    ${section("pages", "Visited pages", hasName, tracked ? `<ol class="wk-tl">${[...p.pages].reverse().map((pg, i) => `<li class="${pg.current ? "is-cur" : ""}"><b title="${esc(pg.title)}">${esc(pg.title || pg.path)}</b><span class="wk-link">humancareconnect.co${pg.path === "/" ? "" : esc(pg.path)}</span><span class="wk-mono">${dur(pg.seconds)}</span></li>`).join("")}</ol>` : `<div class="wk-note-line">Not tracked. This visitor has not accepted cookies, so only the chat is recorded.</div>`, p.pages.length)}
+    ${section("visit", "Visit info", hasName, `<dl class="wk-kv"><dt>Device</dt><dd>${p.visit.device === "Mobile" ? "📱" : "🖥"} ${esc([p.visit.device, p.visit.os, p.visit.browser].filter(Boolean).join(" · ") || "–")}</dd><dt>Referring page</dt><dd>${esc(p.visit.referrer || "Direct")}</dd><dt>Visit duration</dt><dd class="wk-mono">${p.visit.online ? dur((now - new Date(p.visit.joinedAt).getTime()) / 1000) : "–"}</dd><dt>IP</dt><dd class="wk-mono">${esc(p.visit.ip || "–")}</dd><dt>Location</dt><dd>${esc(location || "–")}</dd></dl>`)}`;
+  el.querySelectorAll("details").forEach((d) => d.addEventListener("toggle", () => { S.sections[d.dataset.sec] = d.open; }));
+  $("contact").addEventListener("submit", saveContact);
+  $("tagform").addEventListener("submit", (e) => { e.preventDefault(); const t = $("tagin").value.trim(); if (t) { c.panel.tags = [...c.panel.tags, t]; } renderPanel(); });
+}
+
+// ── Actions (mock; the real ones are REST calls) ─────────────────────────────────────
+const addMsg = (c, m) => { (S.msgs[c.conversationId] ||= []).push({ id: "n" + ++S.nextId, at: new Date().toISOString(), ...m }); };
+function setMode(c, mode, extra = {}) { Object.assign(c, { mode }, extra); c.panel.info.assignee = c.assignee || null; }
+function flash(msg) { S.error = msg; renderChat(); }
+function submit(e) {
+  e.preventDefault();
+  const c = active(), text = S.draft.trim(); if (!c || !text) return;
+  const notesOnly = c.mode === "archived" || (c.mode === "live" && c.assignee?.id !== ME);
+  const noting = S.noteMode || notesOnly;
+  S.error = "";
+  if (noting) addMsg(c, { sender: "note", text, agentName: "Priya Nair", internal: true });
+  else {
+    if (c.mode === "live" && c.assignee?.id !== ME) return flash(`${c.assignee?.name} is handling this chat. You can add internal notes.`);
+    if (c.mode !== "live") { setMode(c, "live", { assignee: { id: ME, name: "Priya Nair" }, everLive: true }); addMsg(c, { sender: "system", text: "Priya Nair joined the chat" }); c.panel.info.liveStartedAt = new Date().toISOString(); }
+    addMsg(c, { sender: "agent", text, agentName: "Priya Nair", ...(S.englishSource ? { sourceText: S.englishSource } : {}) });
+    c.preview = { sender: "agent", text: text.slice(0, 120), at: new Date().toISOString() }; c.lastMessageAt = c.preview.at;
+    if ((S.view === "ai") && c.everLive) { S.view = "live"; S.route = "live"; syncShell(); }
+  }
+  S.draft = ""; S.englishSource = ""; atBottomHint = true; renderAll();
+  $("draft")?.focus();
+}
+function saveContact(e) {
+  e.preventDefault();
+  const c = active(), f = new FormData(e.target), v = { name: f.get("name").trim(), phone: f.get("phone").trim(), email: f.get("email").trim() };
+  S.contactErrors = {};
+  if (v.email && !/^\S+@\S+\.\S+$/.test(v.email)) { S.contactErrors = { email: "Enter a valid email address." }; S.contactSaved = false; return renderPanel(); }
+  c.panel.contact = v; c.name = v.name; c.email = v.email; S.contactSaved = true; renderList(false); renderChat(); renderPanel();
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-a]"); if (!t) return;
+  const a = t.dataset.a, c = active();
+  if (!CHAT_A.has(a)) return;
+  if (a === "select") { S.activeId = t.dataset.id; S.error = ""; S.transError = ""; S.draft = ""; S.englishSource = ""; S.noteMode = false; S.contactSaved = false; S.contactErrors = {}; atBottomHint = true; const r = active(); r.unread = 0; history.replaceState(null, "", hashFor(S.view, S.activeId)); renderNav(); renderList(false); renderChat(); renderPanel(); return; }
+  if (a === "sound") { S.sound = !S.sound; return renderBanner(); }
+  if (a === "dismiss") { S.bannerDismissed = true; return renderBanner(); }
+  if (a === "notif") { try { Notification.requestPermission().then(renderBanner); } catch { S.bannerDismissed = true; renderBanner(); } return; }
+  if (!c) return;
+  S.error = "";
+  if (a === "takeover") { const was = c.assignee?.name; setMode(c, "live", { assignee: { id: ME, name: "Priya Nair" }, everLive: true }); c.panel.info.liveStartedAt ||= new Date().toISOString(); addMsg(c, { sender: "system", text: was ? `Priya Nair took over from ${was}` : "Priya Nair joined the chat" }); }
+  else if (a === "handback") { setMode(c, "ai", { assignee: null }); addMsg(c, { sender: "system", text: "Handed back to the AI assistant" }); }
+  else if (a === "resolve") { setMode(c, "archived", { closedReason: "resolved" }); c.panel.info.closedAt = new Date().toISOString(); addMsg(c, { sender: "system", text: "Chat resolved" }); }
+  else if (a === "block") { if (!window.confirm(`Block IP ${c.ip}? Its chats are closed and it cannot connect again until you unblock it (Real-time visitors > Blocked IPs).`)) return; setMode(c, "archived", { closedReason: "blocked" }); addMsg(c, { sender: "system", text: "IP blocked · chat closed", internal: true }); }
+  else if (a === "file") { return flash("Mock data: in the real app this opens the patient's file in a new tab via a short-lived link."); }
+  else if (a === "view") { S.transView[c.conversationId] = t.dataset.v; S.transError = ""; atBottomHint = false; }
+  else if (a === "orig") { S.originals.has(t.dataset.id) ? S.originals.delete(t.dataset.id) : S.originals.add(t.dataset.id); atBottomHint = false; }
+  else if (a === "mode") { S.noteMode = t.dataset.n === "1"; atBottomHint = false; }
+  else if (a === "canned") { const r = CANNED.replies.find((x) => x.id === t.dataset.id); S.noteMode = false; S.draft = r.text.replaceAll("{agentName}", CANNED.agentName); atBottomHint = false; renderChat(); $("draft").focus(); return; }
+  else if (a === "undo") { S.draft = S.englishSource; S.englishSource = ""; atBottomHint = false; renderChat(); $("draft").focus(); return; }
+  else if (a === "suggest") { S.suggesting = true; renderChat(); setTimeout(() => { S.suggesting = false; S.noteMode = false; S.draft = "Thanks for waiting. I've looked into this and can sort it out for you right now. Could you confirm the email on your account?"; atBottomHint = false; renderChat(); $("draft").focus(); }, 700); return; }
+  else if (a === "trreply") { const text = S.draft.trim(); S.replying = true; renderChat(); setTimeout(() => { S.replying = false; S.englishSource = text; S.draft = EN_DE[text] || `[${c.language.name}] ${text}`; atBottomHint = false; renderChat(); $("draft").focus(); }, 600); return; }
+  else if (a === "rmtag") { c.panel.tags = c.panel.tags.filter((x) => x !== t.dataset.t); return renderPanel(); }
+  atBottomHint = a !== "view" && a !== "orig" && a !== "mode";
+  renderAll();
+});
+
+// ══ Admin shell: sidebar, router and the other Live Chat pages ════════════════════════════════
+// Mirrors AdminLayout.jsx (Live Chat group: Real-time visitors, AI chats, Live agent chats, Team, Reports, AI agent settings).
+const CHAT_A = new Set(["select", "sound", "dismiss", "notif", "takeover", "handback", "resolve", "block", "file", "view", "orig", "mode", "canned", "undo", "suggest", "trreply", "rmtag"]);
+const BASEP = "/admin-dashboard/live-chat";
+const ROUTES = {
+  visitors: { path: "", label: "Real-time visitors", icon: "users" },
+  ai: { path: "ai-chats", label: "AI chats", icon: "chat", badge: "ai" },
+  live: { path: "agent-chats", label: "Live agent chats", icon: "chat", badge: "live" },
+  team: { path: "team", label: "Team", icon: "users" },
+  reports: { path: "reports", label: "Reports", icon: "chart" },
+  settings: { path: "settings", label: "AI agent settings", icon: "shield" },
+};
+const svgI = (c) => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${c}</svg>`;
+const ICON = {
+  users: svgI(`<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`),
+  chat: svgI(`<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>`),
+  chart: svgI(`<path d="M3 3v18h18"/><path d="M7 14l3-3 3 2 5-6"/>`),
+  shield: svgI(`<path d="M20 13c0 5-3.5 7.5-7.35 8.95a1 1 0 0 1-1.3 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.79 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>`),
+};
+const TZ = "America/New_York";
+Object.assign(S, { route: "visitors", navOpen: false, pinned: false, tick: null });
+const phone = () => window.matchMedia("(max-width: 768px)").matches;
+const unread = () => { const u = { ai: 0, live: 0 }; S.rows.forEach((r) => { u[r.everLive ? "live" : "ai"] += r.unread || 0; }); return u; };
+const hashFor = (key, param) => "#" + BASEP + (ROUTES[key].path ? "/" + ROUTES[key].path : "") + (param ? "/" + param : "");
+function parseHash() {
+  const h = location.hash.replace(/^#/, "");
+  const rest = h.startsWith(BASEP) ? h.slice(BASEP.length).replace(/^\//, "") : "";
+  const [seg, param] = rest.split("/");
+  return { key: Object.keys(ROUTES).find((k) => ROUTES[k].path === (seg || "")) || "visitors", param: param || "" };
+}
+function go(key, param) { const h = hashFor(key, param); if (location.hash === h) enter({ key, param }); else location.hash = h; }
+window.addEventListener("hashchange", () => enter(parseHash()));
+
+function renderNav() {
+  const u = unread(), total = u.ai + u.live, ph = phone();
+  const badge = (n) => (n > 0 ? `<span class="ad-nav-badge">${n > 99 ? "99+" : n}</span>` : "");
+  const links = Object.entries(ROUTES).map(([k, r]) => `<a href="${hashFor(k)}" role="menuitem" class="ad-nav-item${ph ? "" : " ad-flyout-item"}${S.route === k ? " active" : ""}" data-a="nav" data-r="${k}"><span class="ad-nav-icon">${ICON[r.icon]}</span>${r.label}${r.badge ? badge(u[r.badge]) : ""}</a>`).join("");
+  $("nav").innerHTML = `<div class="ad-nav-group"><button type="button" id="navparent" class="ad-nav-item ad-nav-parent active${S.navOpen ? " open" : ""}" aria-haspopup="true" aria-expanded="${S.navOpen}" data-a="navgroup"><span class="ad-nav-icon">${ICON.chat}</span>Live Chat<span class="ad-new">NEW</span>${badge(total)}<span class="ad-nav-arrow" aria-hidden="true">›</span></button>${S.navOpen && ph ? `<div class="ad-subnav">${links}</div>` : ""}</div>`;
+  $("flyout")?.remove();
+  if (S.navOpen && !ph) {
+    const b = $("navparent").getBoundingClientRect(), sb = $("sidebar").getBoundingClientRect();
+    const fly = document.createElement("div");
+    fly.id = "flyout"; fly.className = "ad-flyout"; fly.setAttribute("role", "menu"); fly.setAttribute("aria-label", "Live Chat");
+    fly.style.top = b.top + "px"; fly.style.left = sb.right + 4 + "px"; fly.innerHTML = links;
+    document.body.appendChild(fly);
+  }
+}
+function syncShell() {
+  $("title").textContent = ROUTES[S.route].label;
+  $("prole").textContent = S.role === "superadmin" ? "Super Admin" : "Admin";
+  renderNav();
+}
+function enter({ key, param }) {
+  clearInterval(S.tick);
+  S.route = key; S.navOpen = false; S.pinned = false; $("adroot").classList.remove("side-open");
+  if (key === "ai" || key === "live") {
+    // a chat that belongs to the other page opens there (a visitor's "View chat" link)
+    const r = S.rows.find((x) => x.conversationId === param);
+    if (r && (r.everLive ? "live" : "ai") !== key) { const other = r.everLive ? "live" : "ai"; history.replaceState(null, "", hashFor(other, param)); return enter({ key: other, param }); }
+    Object.assign(S, { view: key, activeId: param, query: "", draft: "", englishSource: "", noteMode: false, error: "", transError: "", contactSaved: false, contactErrors: {} });
+    atBottomHint = true;
+  }
+  syncShell();
+  scrollTo(0, 0);
+  if (key === "visitors") renderVisitors();
+  else if (key === "team") renderTeam();
+  else if (key === "reports") renderReports();
+  else if (key === "settings") renderSettings();
+  else { $("content").innerHTML = `<div class="wk-wrap-page" id="root"></div>`; renderAll(); }
+}
+
+// ── Mock data for the other pages ─────────────────────────────────────────────────────
+const CANNED0 = JSON.parse(JSON.stringify(CANNED.replies));
+function defaultSettings() {
+  return {
+    aiMode: "ai_first", followUpMinutes: 2, agentDisplayName: "Support",
+    greeting: "Hi {firstName}! I'm the Humancare assistant. Ask me about booking, payments, prescriptions or documents, or tap \"Talk to live agent\" any time.",
+    unavailableMessage: "Our assistant is unavailable right now. Tap \"Talk to live agent\" and a person will help you.",
+    businessFacts: "Consultations run 24/7 by video.\nPrescriptions are sent to your pharmacy within 30 minutes of a consultation.\nPayments are by card; a confirmation email follows within 5 minutes.",
+    dailySpendCapUsd: 10,
+    handoffRules: { onPatientRequest: true, onAccountOrPayment: true, onTechnicalIssue: true, onComplaint: true, onUnsure: true, maxAiRepliesPerChat: 30, agentOfflineGraceSeconds: 120 },
+    quickOptions: [
+      { key: "book", label: "Book a consultation", icon: "stethoscope", reply: "You can book a video consultation in a minute. Pick a specialty and a time that suits you.", link: "/book-appointment" },
+      { key: "prescription", label: "Prescriptions", icon: "pill", reply: "After a consultation your doctor can send a prescription to your pharmacy. It usually arrives within 30 minutes.", link: "" },
+      { key: "payments", label: "Payments and invoices", icon: "clipboard", reply: "Payments are by card. A confirmation email reaches you within 5 minutes and invoices are in your account.", link: "" },
+      { key: "documents", label: "Documents", icon: "document", reply: "You can upload and download your documents from your account under Documents.", link: "/account/documents" },
+      { key: "other", label: "Something else", icon: "dots", reply: "Tell me what you need and I'll do my best to help.", link: "" },
+      { key: "live", label: "Talk to live agent", icon: "agent", reply: "", link: "" },
+    ],
+    prices: [{ name: "General consultation", price: 29 }, { name: "Specialist consultation", price: 59 }, { name: "Follow-up", price: 19 }],
+  };
+}
+const LINK_PAGES = [{ url: "/book-appointment", title: "Book an appointment" }, { url: "/account/documents", title: "My documents" }, { url: "/pricing", title: "Pricing" }, { url: "/contact", title: "Contact us" }];
+function resetPages() {
+  const J = (sec) => T0 - sec * 1000;
+  const v = (o) => ({ name: "", assignedTo: "", conversationId: "", device: "Desktop", source: "Direct", ...o });
+  S.visitors = [
+    v({ visitorId: "v1", name: "Maria Gonzalez", ip: "203.0.113.24", activity: "waiting", conversationId: "HC-1042", page: { title: "Cardiology specialists | Humancare", path: "/specialists/cardiology", enteredAt: J(200) }, joinedAt: J(480), geo: { city: "Madrid", state: "Community of Madrid", country: "Spain", countryCode: "ES" }, source: "Google" }),
+    v({ visitorId: "v3", name: "Jonas Weber", ip: "192.0.2.8", activity: "waiting", conversationId: "HC-1044", page: { title: "My appointments | Humancare", path: "/account/appointments", enteredAt: J(420) }, joinedAt: J(600), geo: { city: "Berlin", state: "Berlin", country: "Germany", countryCode: "DE" } }),
+    v({ visitorId: "v4", name: "Aisha Khan", ip: "203.0.113.90", activity: "chatting", conversationId: "HC-1038", assignedTo: "Priya Nair", page: { title: "Checkout | Humancare", path: "/checkout", enteredAt: J(300) }, joinedAt: J(1500), geo: { city: "Dubai", state: "Dubai", country: "UAE", countryCode: "AE" } }),
+    v({ visitorId: "v5", name: "Tom Becker", ip: "198.51.100.5", activity: "chatting", conversationId: "HC-1035", assignedTo: "Daniel Ortiz", page: { title: "Prescriptions | Humancare", path: "/account/prescriptions", enteredAt: J(900) }, joinedAt: J(1500), geo: { city: "Austin", state: "Texas", country: "USA", countryCode: "US" }, source: "Google" }),
+    v({ visitorId: "v9", ip: "203.0.113.31", activity: "ai", conversationId: "HC-2001", page: { title: "Pricing | Humancare", path: "/pricing", enteredAt: J(130) }, joinedAt: J(300), geo: { city: "Mumbai", state: "Maharashtra", country: "India", countryCode: "IN" }, source: "Bing", device: "Mobile" }),
+    v({ visitorId: "v10", name: "Sofia Rossi", ip: "192.0.2.77", activity: "ai", conversationId: "HC-2002", page: { title: "Specialists | Humancare", path: "/specialists", enteredAt: J(540) }, joinedAt: J(720), geo: { city: "Milan", state: "Lombardy", country: "Italy", countryCode: "IT" } }),
+    v({ visitorId: "v12", name: "Hiro Tanaka", ip: "203.0.113.150", activity: "invited", conversationId: "HC-2004", assignedTo: "Priya Nair", page: { title: "Home | Humancare", path: "/", enteredAt: J(4200) }, joinedAt: J(4200), geo: { city: "Osaka", state: "Osaka", country: "Japan", countryCode: "JP" } }),
+    v({ visitorId: "v13", ip: "198.51.100.230", activity: "browsing", device: "Mobile", page: { title: "Book an appointment | Humancare", path: "/book-appointment", enteredAt: J(330) }, joinedAt: J(650), geo: { city: "Chicago", state: "Illinois", country: "USA", countryCode: "US" }, source: "Facebook" }),
+    v({ visitorId: "v14", ip: "192.0.2.140", activity: "browsing", page: { title: "How it works | Humancare", path: "/how-it-works", enteredAt: J(75) }, joinedAt: J(160), geo: { city: "Lisbon", state: "Lisbon", country: "Portugal", countryCode: "PT" }, source: "Google" }),
+    v({ visitorId: "v15", ip: "203.0.113.77", activity: "browsing", page: { title: "Home | Humancare", path: "/", enteredAt: J(40) }, joinedAt: J(40), geo: { city: "Sydney", state: "New South Wales", country: "Australia", countryCode: "AU" }, device: "Mobile" }),
+    v({ visitorId: "v16", ip: "198.51.100.12", activity: "browsing", page: { title: "Blog | Humancare", path: "/blog", enteredAt: J(260) }, joinedAt: J(900), geo: { city: "", state: "", country: "", countryCode: "" }, source: "Direct" }),
+  ];
+  S.vf = { activity: "all", q: "" }; S.vstart = ""; S.blocked = [{ id: "b1", ip: "198.51.100.250", reason: "Abusive messages", createdAt: ago(60 * 24 * 3) }]; S.blockedOpen = false; S.starting = "";
+  S.team = [
+    { userId: ME, name: "Priya Nair", role: "Admin", displayName: "Priya", chatsToday: 7, avg: 38 },
+    { userId: "a-other", name: "Daniel Ortiz", role: "Admin", displayName: "Daniel", chatsToday: 5, avg: 74 },
+    { userId: "a-3", name: "Meera Joshi", role: "Super Admin", displayName: "Meera", chatsToday: 3, avg: 52 },
+    { userId: "a-4", name: "Sam Carter", role: "Admin", displayName: "Sam", chatsToday: 0, avg: null },
+  ];
+  S.teamEdit = null;
+  S.range = { from: todayStr(), to: todayStr() }; S.asTable = false;
+  S.saved = defaultSettings(); S.form = JSON.parse(JSON.stringify(S.saved)); S.errors = {}; S.message = "";
+  S.audit = [
+    { id: "l1", at: ago(60 * 26), actor: { name: "Meera Joshi", role: "Super Admin" }, changes: [{ field: "dailySpendCapUsd", before: "5", after: "10" }] },
+    { id: "l2", at: ago(60 * 24 * 4), actor: { name: "Meera Joshi", role: "Super Admin" }, changes: [{ field: "handoffRules.onUnsure", before: "false", after: "true" }, { field: "followUpMinutes", before: "5", after: "2" }] },
+    { id: "l3", at: ago(60 * 24 * 9), actor: { name: "Meera Joshi", role: "Super Admin" }, changes: [{ field: "cannedReply.added", before: "", after: "Prescription re-sent" }] },
+  ];
+  S.canned = CANNED0.map((r) => ({ ...r, active: true })); S.cannedEditing = null; S.cannedDraft = { title: "", text: "", active: true }; S.cannedError = "";
+  CANNED.replies = JSON.parse(JSON.stringify(CANNED0));
+}
+function todayStr() { return new Date().toLocaleDateString("en-CA"); }
+
+// ── Real-time visitors (AdminLiveVisitors.jsx) ─────────────────────────────────────────
+const STUCK_SECONDS = 4 * 60, BOOKING_PREFIXES = ["/book-appointment", "/appointment-booking"];
+const ACT = { browsing: "Browsing", chatting: "Chatting", waiting: "Waiting for agent", invited: "Invited", ai: "Chatting" };
+const ACT_CLASS = { ai: "chatting" }, ACT_ORDER = { waiting: 0, chatting: 1, ai: 1, invited: 2, browsing: 3 };
+const flag = (code) => (/^[A-Z]{2}$/.test(code || "") ? String.fromCodePoint(...[...code].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65)) : "");
+const pageLabel = (v) => v.page?.title || v.page?.path || "–";
+const dispName = (v) => v.name || v.ip || "Visitor";
+const secOnSite = (v) => (Date.now() - v.joinedAt) / 1000;
+function vActionBtn(v) {
+  if (v.conversationId) { const w = v.activity === "waiting"; return `<button type="button" class="lcv-btn${w ? " lcv-btn--join" : ""}" data-a="v-open" data-id="${v.visitorId}">${w ? "Join" : "View chat"}</button>`; }
+  return `<button type="button" class="lcv-btn lcv-btn--primary" data-a="v-start" data-id="${v.visitorId}" ${S.starting === v.visitorId ? "disabled" : ""} title="${v.name ? "" : "They have not shared contact details yet: they will see a bubble and fill in the form before replying."}">${S.starting === v.visitorId ? "Starting…" : "Start chat"}</button>`;
+}
+function renderVisitors() {
+  $("content").innerHTML = `<div class="lcv">
+    <div class="lcv-title"><div><div class="lcv-eyebrow">Humancare Admin · Live Chat</div><h2>Real-time visitors</h2></div><div class="lcv-title-side"><span class="lcv-status lcv-status--live" role="status"><i></i> Live</span></div></div>
+    <div class="lcn-bar" id="banner"></div>
+    <div class="lcv-kpis" id="vkpis"></div>
+    <div class="lcv-radar" id="vradar"></div>
+    <div class="lcv-filters">
+      <label class="lcv-fbtn">Activity<select id="vact"><option value="all">All</option><option value="chatting">Chatting</option><option value="waiting">Waiting for agent</option><option value="invited">Invited</option><option value="browsing">Browsing</option></select></label>
+      <label class="lcv-search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input type="search" id="vq" placeholder="Search name, IP or city…" aria-label="Search visitors"></label>
+      <span class="lcv-chip">🌐 Website is <b>humancareconnect.co</b></span><span class="lcv-chip">🍪 Only visitors who accepted cookies</span>
+    </div>
+    <div id="vstart"></div><div class="lcv-count" id="vcount"></div>
+    <div class="lcv-table-wrap"><table class="lcv-table"><thead><tr><th>Name</th><th>Activity</th><th>Action</th><th>Assigned to</th><th>Current page</th><th>Time on site</th><th>City</th><th>State / region</th><th>Country</th><th>Source</th></tr></thead><tbody id="vbody"></tbody></table></div>
+    <div id="vblocked"></div></div>`;
+  $("vact").value = S.vf.activity; $("vq").value = S.vf.q;
+  renderBanner(); updateVisitors(); renderBlocked();
+  S.tick = setInterval(() => { document.querySelectorAll("[data-j]").forEach((el) => { el.textContent = dur(secOnSite({ joinedAt: Number(el.dataset.j) })); }); }, 1000);
+}
+function updateVisitors() {
+  const all = S.visitors, q = S.vf.q.trim().toLowerCase();
+  const n = { website: all.length, chatting: all.filter((v) => v.activity === "chatting" || v.activity === "invited").length, waiting: all.filter((v) => v.activity === "waiting").length, ai: all.filter((v) => v.activity === "ai").length };
+  $("vkpis").innerHTML = `<div class="lcv-kpi"><div class="lcv-n">${n.website}</div><div class="lcv-l">On website now</div></div><div class="lcv-kpi lcv-kpi--g"><div class="lcv-n">${n.chatting}</div><div class="lcv-l">Chatting</div></div><div class="lcv-kpi lcv-kpi--o"><div class="lcv-n">${n.waiting}</div><div class="lcv-l">Waiting for agent</div></div><div class="lcv-kpi lcv-kpi--p"><div class="lcv-n">${n.ai}</div><div class="lcv-l">With AI agent</div></div>`;
+  const stuck = all.find((v) => !v.conversationId && v.activity === "browsing" && v.page && BOOKING_PREFIXES.some((p) => v.page.path.startsWith(p)) && (Date.now() - v.page.enteredAt) / 1000 > STUCK_SECONDS);
+  $("vradar").innerHTML = `<div class="lcv-ping"></div><strong>Care radar</strong>` + (stuck
+    ? `<span class="lcv-radar-text"><b>${esc(dispName(stuck))}</b>${stuck.geo?.city ? ` (${esc(stuck.geo.city)}${stuck.geo.countryCode ? ", " + stuck.geo.countryCode : ""})` : ""} has been on <b>${esc(pageLabel(stuck))}</b> for ${Math.floor((Date.now() - stuck.page.enteredAt) / 60000)} minutes without booking. They may need help.</span>${vActionBtn(stuck)}`
+    : `<span class="lcv-radar-text">Watching live traffic. Visitors who seem stuck on booking will show up here.</span>`);
+  const rows = all.filter((v) => S.vf.activity === "all" || (ACT_CLASS[v.activity] || v.activity) === S.vf.activity)
+    .filter((v) => !q || [v.name, v.ip, v.geo?.city, v.geo?.state, v.geo?.country, v.page?.title, v.page?.path].join(" ").toLowerCase().includes(q))
+    .sort((a, b) => (ACT_ORDER[a.activity] ?? 9) - (ACT_ORDER[b.activity] ?? 9) || a.joinedAt - b.joinedAt);
+  $("vcount").textContent = `${rows.length} ${rows.length === 1 ? "visitor" : "visitors"} on the website`;
+  const dash = `<span class="lcv-muted">–</span>`;
+  $("vbody").innerHTML = rows.map((v) => {
+    const a = ACT_CLASS[v.activity] || v.activity;
+    return `<tr><td><div class="lcv-who"><span class="lcv-av${v.name ? "" : " lcv-av--anon"}">${v.name ? esc(initials(v.name)) : "V"}</span><span>${esc(dispName(v))}<small>${v.name ? `IP ${esc(v.ip)} · ` : ""}${esc(v.device)}</small></span></div></td>
+      <td><span class="lcv-act lcv-act--${a}"><i></i>${ACT[v.activity] || "Browsing"}</span></td>
+      <td><div class="lcv-actions">${vActionBtn(v)}<button type="button" class="lcv-btn lcv-btn--icon" aria-label="Block IP ${esc(v.ip)}" title="Block IP ${esc(v.ip)}" data-a="v-block" data-id="${v.visitorId}">⛔</button></div></td>
+      <td>${v.assignedTo ? esc(v.assignedTo) : dash}</td><td>${esc(pageLabel(v))}</td><td class="lcv-mono" data-j="${v.joinedAt}">${dur(secOnSite(v))}</td>
+      <td>${v.geo?.city ? esc(v.geo.city) : dash}</td><td>${v.geo?.state ? esc(v.geo.state) : dash}</td><td>${v.geo?.country ? `${flag(v.geo.countryCode)} ${esc(v.geo.country)}` : dash}</td><td class="lcv-muted">${esc(v.source)}</td></tr>`;
+  }).join("") + (rows.length === 0 ? `<tr><td colspan="10" class="lcv-empty">No visitors match this filter</td></tr>` : "");
+  $("vstart").innerHTML = S.vstart ? `<div class="lcv-start-error" role="alert">${esc(S.vstart)}</div>` : "";
+}
+function renderBlocked() {
+  $("vblocked").innerHTML = `<div class="lcv-blocked"><button type="button" class="lcv-blocked-toggle" aria-expanded="${S.blockedOpen}" data-a="v-btoggle">⛔ Blocked IPs <span class="lcv-blocked-count">${S.blocked.length}</span></button>` +
+    (S.blockedOpen ? `<div class="lcv-blocked-body">${S.blocked.length === 0 ? `<span class="lcv-muted">No IP is blocked.</span>` : ""}${S.blocked.map((b) => `<div class="lcv-blocked-row"><span class="lcv-mono">${esc(b.ip)}</span><span class="lcv-muted">${esc(b.reason || "No reason given")}</span><span class="lcv-muted">${new Date(b.createdAt).toLocaleDateString()}</span><button type="button" class="lcv-btn" data-a="v-unblock" data-id="${b.id}">Unblock</button></div>`).join("")}</div>` : "") + `</div>`;
+}
+
+// ── Team (AdminLiveTeam.jsx) ─────────────────────────────────────────────────────────
+const fmtSec = (s) => { if (s === null || s === undefined) return "–"; s = Math.round(s); return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`; };
+function renderTeam() {
+  const open = (name) => S.rows.filter((r) => r.mode === "live" && r.assignee?.name === name).length;
+  const aiOpen = S.rows.filter((r) => r.mode === "ai" && !r.everLive).length;
+  const canEditAny = S.role === "superadmin";
+  const rowsHtml = S.team.map((a) => {
+    const role = a.userId === ME ? (S.role === "superadmin" ? "Super Admin" : "Admin") : a.role;
+    const canEdit = a.userId === ME || canEditAny;
+    const e = S.teamEdit && S.teamEdit.userId === a.userId ? S.teamEdit : null;
+    const name = e
+      ? `<form class="lcp-name-edit" id="tform"><input id="tn" value="${esc(e.value)}" maxlength="40" aria-label="Name patients see"><button type="submit" class="lcp-btn lcp-btn--primary lcp-btn--small">Save</button><button type="button" class="lcp-btn lcp-btn--small" data-a="t-cancel">Cancel</button>${e.error ? `<span class="lcp-field-error">${esc(e.error)}</span>` : ""}</form>`
+      : `<span class="lcp-name-edit">${esc(a.displayName)}${canEdit ? `<button type="button" class="lcp-btn lcp-btn--small" data-a="t-edit" data-id="${a.userId}" aria-label="Edit the name patients see for ${esc(a.name)}">Edit</button>` : ""}</span>`;
+    return `<tr><td><div class="lcp-who"><span class="lcp-av">${esc(initials(a.name))}</span>${esc(a.name)}${a.userId === ME ? `<span class="lcp-muted"> (you)</span>` : ""}</div></td><td class="lcp-muted">${role}</td><td>${name}</td><td class="lcp-mono">${open(a.name)}</td><td class="lcp-mono">${a.chatsToday}</td><td class="lcp-mono">${fmtSec(a.avg)}</td></tr>`;
+  }).join("");
+  $("content").innerHTML = `<div class="lcp">
+    <div class="lcp-title"><div><div class="lcp-eyebrow">Humancare Admin · Live Chat</div><h2>Team</h2></div></div>
+    <div class="lcn-bar" id="banner"></div>
+    <div class="lcp-table-wrap"><table class="lcp-table"><thead><tr><th>Name</th><th>Role</th><th>Name patients see</th><th>Open chats</th><th>Chats today</th><th>Avg first reply</th></tr></thead><tbody>
+      <tr><td><div class="lcp-who"><span class="lcp-av lcp-av--ai">AI</span>AI assistant</div></td><td class="lcp-muted">AI agent</td><td>Humancare Assistant</td><td class="lcp-mono">${aiOpen}</td><td class="lcp-mono">42</td><td class="lcp-mono">${fmtSec(2)}</td></tr>${rowsHtml}</tbody></table></div>
+    <p class="lcp-note">"Chats today" counts the chats an agent took today (${TZ}). "Avg first reply" is the time from a chat entering the Queue to the agent's first message. A new name applies the next time that agent takes a chat. You can change your own name; a Super Admin can change anyone's.</p></div>`;
+  renderBanner();
+  if (S.teamEdit) { const i = $("tn"); i?.focus(); i?.setSelectionRange(i.value.length, i.value.length); }
+}
+
+// ── Reports (AdminLiveReports.jsx) ───────────────────────────────────────────────────
+const secR = (v) => { if (v === null || v === undefined) return "–"; const s = Math.round(v); return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, "0")}s`; };
+const usd = (value) => `$${Number(value || 0).toFixed(value >= 10 ? 2 : 4).replace(/0+$/, "").replace(/\.$/, ".00")}`;
+const addDays = (day, n) => { const [y, m, d] = day.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+const hourLabel = (h) => `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`, hourShort = (h) => `${h % 12 || 12}${h < 12 ? "a" : "p"}`;
+const AI_COLOR = "#6D4AE0", AGENT_COLOR = "#0E9F6E";
+function rng(seed) { let s = 0; for (const ch of seed) s = (s * 31 + ch.charCodeAt(0)) >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+// Mock report generator: deterministic per date range, so the same range always shows the same numbers.
+function mockReport(from, to) {
+  const today = todayStr(), r = rng(from + to);
+  const days = Math.round((Date.UTC(...to.split("-").map((x, i) => (i === 1 ? x - 1 : +x))) - Date.UTC(...from.split("-").map((x, i) => (i === 1 ? x - 1 : +x)))) / 864e5) + 1;
+  const curve = [1, 1, 1, 1, 1, 2, 3, 5, 8, 11, 13, 14, 13, 12, 12, 11, 10, 9, 8, 6, 5, 3, 2, 1];
+  const perHour = curve.map((w, hour) => { const total = Math.round((w * days * (0.6 + r() * 0.8)) / 2.5); const ai = Math.round(total * (0.55 + r() * 0.25)); return { hour, ai, agent: total - ai }; });
+  const ai = perHour.reduce((n, h) => n + h.ai, 0), total = ai + perHour.reduce((n, h) => n + h.agent, 0);
+  const ratings = Math.round(total * 0.3), dist = [1, 2, 3, 4, 5].map((stars) => ({ stars, count: 0 }));
+  const wts = [0.04, 0.05, 0.12, 0.29, 0.5];
+  for (let i = 0; i < ratings; i++) { let x = r(), k = 0; while (k < 4 && x > wts[k]) { x -= wts[k]; k++; } dist[k].count++; }
+  const avg = ratings ? Math.round((dist.reduce((n, d) => n + d.stars * d.count, 0) / ratings) * 10) / 10 : null;
+  const contact = Math.round(total * 0.5);
+  return {
+    range: { from, to, today, timeZone: TZ },
+    chats: { today: 18 + Math.round(r() * 14), total, solvedByAi: ai, solvedByAiPercent: total ? Math.round((ai / total) * 100) : null },
+    firstReply: { agentAvgSeconds: total - ai ? 40 + Math.round(r() * 90) : null, agentChats: total - ai, aiAvgSeconds: 2 },
+    rating: { average: avg, count: ratings, distribution: dist },
+    bookings: { chatsWithBooking: Math.round(contact * 0.18), chatsWithContact: contact, windowDays: 7, truncated: false },
+    aiCost: { todayUsd: 1.2345, dailyCapUsd: S.saved.dailySpendCapUsd, monthUsd: 21.4871, rangeUsd: Math.round(ai * 0.0123 * 10000) / 10000, rangeRequests: ai * 3, rangeInputTokens: ai * 3 * 900, rangeOutputTokens: ai * 3 * 160 },
+    perHour,
+  };
+}
+function segmentPath(x, y, w, h, roundTop) { const r = roundTop ? Math.min(4, h, w / 2) : 0; if (r <= 0) return `M${x},${y}h${w}v${h}h${-w}z`; return `M${x},${y + r}a${r},${r} 0 0 1 ${r},${-r}h${w - 2 * r}a${r},${r} 0 0 1 ${r},${r}v${h - r}h${-w}z`; }
+function hourChartHtml(perHour) {
+  const W = 720, H = 230, M = { left: 34, right: 8, top: 10, bottom: 26 };
+  const peak = Math.max(0, ...perHour.map((h) => h.ai + h.agent)), niceMax = Math.max(4, Math.ceil(peak / 4) * 4);
+  const plotW = W - M.left - M.right, plotH = H - M.top - M.bottom, slot = plotW / 24, barW = Math.min(24, slot * 0.62);
+  const y = (n) => M.top + plotH - (n / niceMax) * plotH, GAP = 2;
+  const busiest = peak ? perHour.reduce((a, b) => (b.ai + b.agent > a.ai + a.agent ? b : a)) : null;
+  const total = perHour.reduce((n, h) => n + h.ai + h.agent, 0);
+  let body;
+  if (S.asTable) {
+    body = `<div class="lcp-table-wrap"><table class="lcp-table" style="min-width:0"><thead><tr><th>Hour</th><th>AI</th><th>Agent</th><th>Total</th></tr></thead><tbody>${perHour.filter((h) => h.ai + h.agent > 0).map((h) => `<tr><td>${hourLabel(h.hour)}–${hourLabel((h.hour + 1) % 24)}</td><td class="lcp-mono">${h.ai}</td><td class="lcp-mono">${h.agent}</td><td class="lcp-mono">${h.ai + h.agent}</td></tr>`).join("")}${total === 0 ? `<tr><td colspan="4" class="lcp-muted">No chats in this range</td></tr>` : ""}</tbody></table></div>`;
+  } else {
+    const grid = [0, 1, 2, 3, 4].map((i) => { const v = (niceMax / 4) * i; return `<g><line x1="${M.left}" x2="${W - M.right}" y1="${y(v)}" y2="${y(v)}" stroke="#E8EDF5" stroke-width="1"/><text x="${M.left - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text></g>`; }).join("");
+    const bars = perHour.map((h) => {
+      const cx = M.left + slot * h.hour + slot / 2, x = cx - barW / 2, aiH = (h.ai / niceMax) * plotH, agentH = (h.agent / niceMax) * plotH;
+      return `<g>${h.ai > 0 ? `<path d="${segmentPath(x, y(h.ai), barW, aiH, h.agent === 0)}" fill="${AI_COLOR}"/>` : ""}${h.agent > 0 ? `<path d="${segmentPath(x, y(h.ai + h.agent), barW, Math.max(agentH - (h.ai > 0 ? GAP : 0), 1), true)}" fill="${AGENT_COLOR}"/>` : ""}${h.hour % 3 === 0 ? `<text x="${cx}" y="${H - 8}" text-anchor="middle">${hourShort(h.hour)}</text>` : ""}<rect x="${M.left + slot * h.hour}" y="${M.top}" width="${slot}" height="${plotH}" fill="transparent" tabindex="0" data-h="${h.hour}" data-ai="${h.ai}" data-ag="${h.agent}" data-left="${(cx / W) * 100}" data-top="${(y(h.ai + h.agent) / H) * 100}" aria-label="${hourLabel(h.hour)}: ${h.ai} solved by AI, ${h.agent} with an agent"/></g>`;
+    }).join("");
+    body = `<div class="lcp-chart" id="rchart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chats per hour, solved by AI and with an agent">${grid}${bars}<line x1="${M.left}" x2="${W - M.right}" y1="${M.top + plotH}" y2="${M.top + plotH}" stroke="#C5CEDF" stroke-width="1"/></svg><div class="lcp-tip" id="rtip" role="status" style="display:none"></div></div>`;
+  }
+  return `<div class="lcp-panel"><div class="lcp-panel-head"><div><h3>Chats per hour</h3><span class="lcp-help">${total ? `${total} chats in the range${busiest ? `. Busiest hour: ${hourLabel(busiest.hour)} (${busiest.ai + busiest.agent})` : ""}.` : "No chats in this range."}</span></div><button type="button" class="lcp-btn lcp-btn--small" data-a="r-table" aria-pressed="${S.asTable}">${S.asTable ? "Show chart" : "Show as table"}</button></div>
+    <div class="lcp-legend" aria-label="Legend"><span><i style="background:${AI_COLOR}"></i> Solved by AI</span><span><i style="background:${AGENT_COLOR}"></i> With an agent</span></div>${body}</div>`;
+}
+function renderReports() {
+  const { from, to } = S.range, d = mockReport(from, to), today = d.range.today;
+  const presets = [["Today", today, today], ["Yesterday", addDays(today, -1), addDays(today, -1)], ["Last 7 days", addDays(today, -6), today], ["Last 30 days", addDays(today, -29), today], ["This month", `${today.slice(0, 7)}-01`, today]];
+  const c = d.chats, reply = d.firstReply, rating = d.rating, bookings = d.bookings, cost = d.aiCost, maxStars = Math.max(1, ...rating.distribution.map((x) => x.count));
+  $("content").innerHTML = `<div class="lcp">
+    <div class="lcp-title"><div><div class="lcp-eyebrow">Humancare Admin · Live Chat</div><h2>Reports</h2></div><span class="lcp-mono lcp-muted">Time zone: ${d.range.timeZone}</span></div>
+    <div class="lcn-bar" id="banner"></div>
+    <div class="lcp-range"><div class="lcp-chips" role="group" aria-label="Date range">${presets.map(([l, f, t]) => `<button type="button" class="lcp-chip" aria-pressed="${from === f && to === t}" data-a="r-preset" data-f="${f}" data-t="${t}">${l}</button>`).join("")}</div>
+      <label>From <input type="date" id="rfrom" value="${from}" max="${to || today}"></label><label>To <input type="date" id="rto" value="${to}" min="${from}" max="${today}"></label></div>
+    <div class="lcp-cards">
+      <div class="lcp-card"><div class="lcp-n">${c.today}</div><div class="lcp-l">Chats today</div><div class="lcp-sub">${c.total} in the selected range</div></div>
+      <div class="lcp-card lcp-card--ai"><div class="lcp-n">${c.solvedByAiPercent === null ? "–" : c.solvedByAiPercent + "%"}</div><div class="lcp-l">Solved by AI</div><div class="lcp-sub">${c.solvedByAi} of ${c.total} chats never needed an agent</div></div>
+      <div class="lcp-card lcp-card--ok"><div class="lcp-n">${secR(reply.agentAvgSeconds)}</div><div class="lcp-l">Agent first reply</div><div class="lcp-sub">From the Queue to the first message${reply.agentChats ? ` · ${reply.agentChats} chats` : ""}. AI: ${secR(reply.aiAvgSeconds)}</div></div>
+      <div class="lcp-card lcp-card--warn"><div class="lcp-n">${rating.average === null ? "–" : rating.average + " ★"}</div><div class="lcp-l">Rating</div><div class="lcp-sub">${rating.count} rating${rating.count === 1 ? "" : "s"}</div></div>
+      <div class="lcp-card"><div class="lcp-n">${bookings.chatsWithBooking}</div><div class="lcp-l">Bookings after chat</div><div class="lcp-sub">of ${bookings.chatsWithContact} chats with contact details booked within ${bookings.windowDays} days</div></div>
+      <div class="lcp-card lcp-card--ai"><div class="lcp-n">${usd(cost.todayUsd)}</div><div class="lcp-l">AI cost today</div><div class="lcp-sub">Cap ${usd(cost.dailyCapUsd)} a day · this month ${usd(cost.monthUsd)}</div></div>
+    </div>
+    <div id="rhour">${hourChartHtml(d.perHour)}</div>
+    <div class="lcp-panel"><h3>Rating</h3><span class="lcp-help">${rating.count ? `${rating.count} rating${rating.count === 1 ? "" : "s"} in the range` : "No ratings in this range."}</span>
+      <div class="lcp-bars" role="list">${[...rating.distribution].reverse().map((x) => `<div class="lcp-bar-row" role="listitem"><span>${x.stars} ★</span><span class="lcp-bar-track"><span class="lcp-bar-fill" style="width:${(x.count / maxStars) * 100}%;display:block"></span></span><span class="lcp-mono">${x.count}</span></div>`).join("")}</div></div>
+    <div class="lcp-panel"><h3>AI cost in the range</h3><span class="lcp-help">${usd(cost.rangeUsd)} · ${cost.rangeRequests} requests · ${cost.rangeInputTokens.toLocaleString()} input and ${cost.rangeOutputTokens.toLocaleString()} output tokens. Kept even after chats are deleted.</span></div>
+    <p class="lcp-note">"Solved by AI" counts chats that never needed an agent (including chats where the patient left), as a share of all chats started in the range. "Bookings after chat" counts a chat when its contact's email belongs to a registered user who booked an appointment within ${bookings.windowDays} days after the chat started. Chats started by an admin count as agent chats.</p></div>`;
+  renderBanner();
+  S.report = d;
+}
+
+// ── AI agent settings (AdminLiveSettings.jsx) ────────────────────────────────────────
+const ICONS = [["stethoscope", "Doctor"], ["pill", "Prescription"], ["clipboard", "Clipboard"], ["document", "Document"], ["dots", "Question mark"], ["agent", "Headset"]];
+const AI_MODES = [["ai_first", "AI first, agents can take over", "The AI answers every chat right away. Any agent can step in."], ["ai_off", "AI off (agents only)", "Every chat goes to the Queue. The AI only helps agents with suggested replies."]];
+const getP = (o, p) => p.split(".").reduce((x, k) => x?.[k], o);
+function setP(o, p, v) { const ks = p.split("."); const last = ks.pop(); const t = ks.reduce((x, k) => x[k], o); t[last] = v; }
+const fe = (p) => (S.errors[p] ? `<span class="lcp-field-error" data-err="${p}">${esc(S.errors[p])}</span>` : "");
+const slug = (label, taken) => { const base = String(label).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 24) || "option"; let key = base; for (let i = 2; taken.includes(key); i += 1) key = `${base}_${i}`; return key; };
+function renderSettings() {
+  const f = S.form, canEdit = S.role === "superadmin", y = scrollY;
+  const chk = (p, label, dis, def) => `<label class="lcp-check"><input type="checkbox" data-s="${p}" ${dis ? "checked disabled" : (def ? getP(f, p) !== false : getP(f, p)) ? "checked" : ""}> ${label}</label>`;
+  const R = f.handoffRules;
+  const cannedForm = S.cannedEditing && canEdit ? `<form class="lcp-option" id="cform"><input type="text" data-cd="title" value="${esc(S.cannedDraft.title)}" maxlength="80" placeholder="Title (shown on the button)" aria-label="Title"><textarea data-cd="text" maxlength="1000" placeholder="The reply" aria-label="Reply text">${esc(S.cannedDraft.text)}</textarea><label class="lcp-check" style="margin:0"><input type="checkbox" data-cd="active" ${S.cannedDraft.active ? "checked" : ""}> Show in chats</label><div class="lcp-option-actions"><button type="submit" class="lcp-btn lcp-btn--primary lcp-btn--small">Save reply</button><button type="button" class="lcp-btn lcp-btn--small" data-a="s-ccancel">Cancel</button></div></form>` : "";
+  $("content").innerHTML = `<div class="lcp">
+    <div class="lcp-title"><div><div class="lcp-eyebrow">Live Chat</div><h2>AI agent settings</h2></div><span class="lcp-muted">Changes apply to new chats straight away. No restart.</span></div>
+    ${canEdit ? "" : `<div class="lcp-viewonly">View only. Ask a Super Admin to change these settings. You can change your own display name on the Team page.</div>`}
+    <fieldset ${canEdit ? "" : "disabled"}><div class="lcp-grid">
+      <div class="lcp-panel"><h3>When should the AI answer?</h3>${AI_MODES.map(([v, l, h]) => `<label class="lcp-radio"><input type="radio" name="aiMode" value="${v}" data-s="aiMode" ${f.aiMode === v ? "checked" : ""}><span><b>${l}</b><small>${h}</small></span></label>`).join("")}${fe("aiMode")}</div>
+      <div class="lcp-panel"><h3>Handing a chat to a live agent</h3>
+        <label class="lcp-check"><input type="checkbox" checked disabled> Contact form before any chat: name and email required, phone optional (always on)</label>
+        ${chk("handoffRules.onPatientRequest", "The patient asks for a person")}
+        ${chk("handoffRules.onAccountOrPayment", "Account issue: a specific booking, payment, refund, prescription or account problem", false, true)}
+        ${chk("handoffRules.onTechnicalIssue", "Technical issue: the site, login, video call or an upload is not working", false, true)}
+        <label class="lcp-check"><input type="checkbox" checked disabled> Emergency: the patient describes an emergency (always on)</label>
+        ${chk("handoffRules.onComplaint", "Complaint: the patient is upset or asks for a manager", false, true)}
+        ${chk("handoffRules.onUnsure", "Unanswered after two tries: a Humancare question the AI could not answer twice in a row")}
+        <span class="lcp-help">Off-topic or personal questions never go to an agent; after three in a row the patient is reminded they can tap "Talk to live agent".</span>
+        <div class="lcp-field"><label for="maxAi">AI replies per chat (1-200)</label><input id="maxAi" type="number" min="1" max="200" data-s="handoffRules.maxAiRepliesPerChat" value="${R.maxAiRepliesPerChat}">${fe("handoffRules.maxAiRepliesPerChat")}</div>
+        <div class="lcp-field"><label for="grace">If the agent holding a chat goes offline, return it to the Queue after (seconds)</label><input id="grace" type="number" min="0" max="3600" data-s="handoffRules.agentOfflineGraceSeconds" value="${R.agentOfflineGraceSeconds}">${fe("handoffRules.agentOfflineGraceSeconds")}</div>
+        <div class="lcp-field"><label for="followUpMinutes">Email notice after (minutes, 1-30)</label><input id="followUpMinutes" type="number" min="1" max="30" data-s="followUpMinutes" value="${f.followUpMinutes ?? 1}"><span class="lcp-help">A patient waiting in the Queue with no admin reply after this long is told "Our team will connect with you by email" and gets one generic follow-up email. The chat stays in the Queue.</span>${fe("followUpMinutes")}</div></div>
+      <div class="lcp-panel"><h3>What the AI says</h3><label class="lcp-check"><input type="checkbox" checked disabled> Never diagnose or suggest medication (always on)</label>
+        <div class="lcp-field"><label for="greeting">Greeting</label><textarea id="greeting" maxlength="600" data-s="greeting">${esc(f.greeting)}</textarea><span class="lcp-help">Use {firstName} for the patient's first name.</span>${fe("greeting")}</div>
+        <div class="lcp-field"><label for="unavail">Message when the AI is unavailable</label><textarea id="unavail" maxlength="600" data-s="unavailableMessage">${esc(f.unavailableMessage)}</textarea>${fe("unavailableMessage")}</div>
+        <div class="lcp-field"><label for="facts">Business facts the AI may use</label><textarea id="facts" style="min-height:120px" maxlength="8000" data-s="businessFacts">${esc(f.businessFacts)}</textarea><span class="lcp-help">Plain facts only (holidays, how booking works). Never put patient information here.</span>${fe("businessFacts")}</div></div>
+      <div class="lcp-panel"><h3>Prices the AI may quote</h3>${f.prices.map((p, i) => `<div><div class="lcp-row lcp-row--price"><input type="text" value="${esc(p.name)}" maxlength="60" aria-label="Service" data-s="prices.${i}.name"><input type="number" min="0" step="0.01" value="${p.price}" aria-label="Price in USD" data-s="prices.${i}.price"><button type="button" class="lcp-btn lcp-btn--small lcp-btn--danger" data-a="s-rmprice" data-i="${i}">Remove</button></div>${fe(`prices.${i}.name`)}${fe(`prices.${i}.price`)}</div>`).join("")}
+        <button type="button" class="lcp-btn lcp-btn--small" style="margin-top:10px" data-a="s-addprice" ${f.prices.length >= 30 ? "disabled" : ""}>Add a price</button>${fe("prices")}</div>
+      <div class="lcp-panel"><h3>Agents and limits</h3>
+        <div class="lcp-field"><label for="agentName">Default agent name shown to patients</label><input id="agentName" type="text" maxlength="40" data-s="agentDisplayName" value="${esc(f.agentDisplayName)}"><span class="lcp-help">Used when an agent has not set their own name. Agents set theirs on the Team page.</span>${fe("agentDisplayName")}</div>
+        <div class="lcp-field"><label for="cap">Daily AI spend cap (USD)</label><input id="cap" type="number" min="0" max="1000" step="0.5" data-s="dailySpendCapUsd" value="${f.dailySpendCapUsd}"><span class="lcp-help">When the day's AI cost reaches this, patients see the "AI unavailable" message and live chat keeps working.</span>${fe("dailySpendCapUsd")}</div></div>
+    </div>
+    <div class="lcp-panel"><div class="lcp-panel-head"><div><h3>Quick options shown after the greeting</h3><span class="lcp-help">Clicking one sends its label as the patient's message and shows its reply. The "live" option sends the patient to an agent.</span></div><button type="button" class="lcp-btn lcp-btn--small" data-a="s-addopt" ${f.quickOptions.length >= 8 ? "disabled" : ""}>Add an option</button></div>${fe("quickOptions")}
+      ${f.quickOptions.map((o, i) => `<div class="lcp-option"><div class="lcp-option-top"><input type="text" value="${esc(o.label)}" maxlength="80" aria-label="Label" data-s="quickOptions.${i}.label"><select aria-label="Icon" data-s="quickOptions.${i}.icon">${ICONS.map(([id, l]) => `<option value="${id}" ${o.icon === id ? "selected" : ""}>${l}</option>`).join("")}</select><div class="lcp-option-actions"><button type="button" class="lcp-btn lcp-btn--small" data-a="s-up" data-i="${i}" ${i === 0 ? "disabled" : ""} aria-label="Move up">↑</button><button type="button" class="lcp-btn lcp-btn--small" data-a="s-down" data-i="${i}" ${i === f.quickOptions.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button><button type="button" class="lcp-btn lcp-btn--small lcp-btn--danger" data-a="s-rmopt" data-i="${i}">Remove</button></div></div>
+        ${o.key === "live" ? `<span class="lcp-help">This option sends the patient to a live agent, so it has no reply text.</span>` : `<textarea maxlength="1200" aria-label="Reply" placeholder="What the AI answers when this option is picked" data-s="quickOptions.${i}.reply">${esc(o.reply)}</textarea><select aria-label="Page button" data-s="quickOptions.${i}.link"><option value="">No page button</option>${LINK_PAGES.map((p) => `<option value="${p.url}" ${o.link === p.url ? "selected" : ""}>Page button: ${p.title}</option>`).join("")}</select>`}
+        ${["key", "label", "icon", "reply", "link"].map((k) => fe(`quickOptions.${i}.${k}`)).join("")}</div>`).join("")}</div>
+    </fieldset>
+    <div class="lcp-savebar"><button type="button" class="lcp-btn lcp-btn--primary" data-a="s-save" ${canEdit ? "" : "disabled"}>Save changes</button><span id="savemsg" role="status" class="${S.message.startsWith("Saved") ? "lcp-saved" : S.message.startsWith("Nothing") ? "lcp-muted" : "lcp-field-error"}">${esc(S.message)}</span>${canEdit ? "" : `<span class="lcp-muted">Only a Super Admin can save.</span>`}</div>
+    <div class="lcp-panel" style="margin-top:14px"><div class="lcp-panel-head"><div><h3>Canned replies</h3><span class="lcp-help">Ready-made replies in the chat. Use {agentName} for the agent's display name.</span></div>${canEdit ? `<button type="button" class="lcp-btn lcp-btn--small" data-a="s-cadd">Add a reply</button>` : ""}</div>
+      ${S.cannedError ? `<div class="lcp-error">${esc(S.cannedError)}</div>` : ""}${cannedForm}
+      ${S.canned.map((r) => `<div class="lcp-option" style="opacity:${r.active ? 1 : 0.6}"><div class="lcp-option-top" style="grid-template-columns:1fr auto"><b>${esc(r.title)}${r.active ? "" : `<span class="lcp-muted"> (hidden)</span>`}</b>${canEdit ? `<div class="lcp-option-actions"><button type="button" class="lcp-btn lcp-btn--small" data-a="s-cedit" data-id="${r.id}">Edit</button><button type="button" class="lcp-btn lcp-btn--small lcp-btn--danger" data-a="s-cdel" data-id="${r.id}">Delete</button></div>` : ""}</div><span class="lcp-muted">${esc(r.text)}</span></div>`).join("")}${S.canned.length === 0 ? `<span class="lcp-muted">No canned replies yet.</span>` : ""}</div>
+    <div class="lcp-panel" style="margin-top:14px"><h3>Change log</h3><span class="lcp-help">Who changed what and when (the last 50 saves).</span>
+      <div class="lcp-table-wrap lcp-log" style="margin-top:10px"><table class="lcp-table" style="min-width:640px"><thead><tr><th>When</th><th>Who</th><th>What changed</th></tr></thead><tbody>
+      ${S.audit.map((e) => `<tr><td class="lcp-mono">${new Date(e.at).toLocaleString()}</td><td>${esc(e.actor.name || "Unknown")}<div class="lcp-muted">${esc(e.actor.role)}</div></td><td><ul>${e.changes.map((c) => `<li><b>${esc(c.field)}</b>: <span class="lcp-muted">${esc(c.before || "(empty)")}</span> → ${esc(c.after || "(empty)")}</li>`).join("")}</ul></td></tr>`).join("")}${S.audit.length === 0 ? `<tr><td colspan="3" class="lcp-muted">No changes yet</td></tr>` : ""}</tbody></table></div></div></div>`;
+  scrollTo(0, y);
+}
+// Mock validation (the real server validates; these messages are illustrative).
+function validateSettings(f) {
+  const e = {}, R = f.handoffRules, within = (v, a, b) => Number.isFinite(v) && v >= a && v <= b;
+  if (!f.greeting.trim()) e.greeting = "Enter a greeting.";
+  if (!f.unavailableMessage.trim()) e.unavailableMessage = "Enter a message.";
+  if (!f.agentDisplayName.trim()) e.agentDisplayName = "Enter a name.";
+  if (!within(f.dailySpendCapUsd, 0, 1000)) e.dailySpendCapUsd = "Enter an amount from 0 to 1000.";
+  if (!within(f.followUpMinutes, 1, 30)) e.followUpMinutes = "Enter a number from 1 to 30.";
+  if (!within(R.maxAiRepliesPerChat, 1, 200)) e["handoffRules.maxAiRepliesPerChat"] = "Enter a number from 1 to 200.";
+  if (!within(R.agentOfflineGraceSeconds, 0, 3600)) e["handoffRules.agentOfflineGraceSeconds"] = "Enter a number from 0 to 3600.";
+  f.prices.forEach((p, i) => { if (!p.name.trim()) e[`prices.${i}.name`] = "Enter a service name."; if (!(p.price >= 0)) e[`prices.${i}.price`] = "Enter a price."; });
+  f.quickOptions.forEach((o, i) => { if (!o.label.trim()) e[`quickOptions.${i}.label`] = "Enter a label."; if (o.key !== "live" && !o.reply.trim()) e[`quickOptions.${i}.reply`] = "Enter the reply text."; });
+  return e;
+}
+function diffSettings(a, b) {
+  const out = [], sum = (k, v) => (k === "prices" ? v.map((p) => `${p.name} $${p.price}`).join("; ") : v.map((o) => o.label).join("; "));
+  const short = (s) => (String(s).length > 60 ? String(s).slice(0, 57) + "…" : String(s));
+  const walk = (o, p) => Object.entries(o).forEach(([k, v]) => {
+    const key = p + k, w = getP(b, key);
+    if (Array.isArray(v)) { if (JSON.stringify(v) !== JSON.stringify(w)) out.push({ field: key, before: short(sum(key, v)), after: short(sum(key, w)) }); }
+    else if (v && typeof v === "object") walk(v, key + ".");
+    else if (v !== w) out.push({ field: key, before: short(v), after: short(w) });
+  });
+  walk(a, ""); return out;
+}
+function saveSettings() {
+  S.errors = validateSettings(S.form);
+  if (Object.keys(S.errors).length) { S.message = "Please fix the highlighted fields. Nothing was saved."; return renderSettings(); }
+  const changes = diffSettings(S.saved, S.form);
+  if (changes.length) { S.audit.unshift({ id: "l" + ++S.nextId, at: new Date().toISOString(), actor: { name: "Priya Nair", role: "Super Admin" }, changes }); S.saved = JSON.parse(JSON.stringify(S.form)); }
+  S.message = changes.length ? `Saved. ${changes.length} change${changes.length === 1 ? "" : "s"} applied now.` : "Nothing changed.";
+  renderSettings();
+}
+function syncCanned() { CANNED.replies = S.canned.filter((r) => r.active).map(({ id, title, text }) => ({ id, title, text })); }
+function logCanned(field, before, after) { S.audit.unshift({ id: "l" + ++S.nextId, at: new Date().toISOString(), actor: { name: "Priya Nair", role: "Super Admin" }, changes: [{ field, before, after }] }); }
+
+// ── Events for the new pages ─────────────────────────────────────────────────────────
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-a]"); if (!t) return;
+  const a = t.dataset.a, id = t.dataset.id, i = Number(t.dataset.i);
+  if (a === "nav") { e.preventDefault(); go(t.dataset.r); return; }
+  if (a === "navgroup") {
+    if (!S.navOpen) { S.pinned = true; S.navOpen = true; } else if (!phone() && !S.pinned) S.pinned = true; else { S.navOpen = false; S.pinned = false; }
+    return renderNav();
+  }
+  // Visitors
+  if (a === "v-open") { const v = S.visitors.find((x) => x.visitorId === id); return go(v.activity === "ai" ? "ai" : "live", v.conversationId); }
+  if (a === "v-start") {
+    const v = S.visitors.find((x) => x.visitorId === id); S.vstart = "";
+    const cid = "HC-" + ++S.nextId + "0";
+    const c = { conversationId: cid, visitorId: v.visitorId, name: v.name, email: "", ip: v.ip, city: v.geo?.city || "", state: v.geo?.state || "", country: v.geo?.country || "", mode: "live", assignee: { id: ME, name: "Priya Nair" }, everLive: true, invited: true, unread: 0, lastMessageAt: new Date().toISOString(), preview: null };
+    c.panel = mkPanel({ id: cid, ip: v.ip, name: v.name, city: c.city, state: c.state, country: c.country, assignee: c.assignee, summary: "Started by the team; the visitor has not replied yet.", live: 0, dur: Math.round(secOnSite(v) / 60) });
+    S.rows.unshift(c); S.msgs[cid] = [{ id: "m1", sender: "system", text: "Priya Nair started this chat", at: new Date().toISOString() }];
+    v.conversationId = cid; v.activity = "invited"; v.assignedTo = "Priya Nair";
+    return go("live", cid);
+  }
+  if (a === "v-block") {
+    const v = S.visitors.find((x) => x.visitorId === id);
+    if (!window.confirm(`Block IP ${v.ip}? They cannot use the website chat until you unblock it (Blocked IPs, below).`)) return;
+    S.blocked.unshift({ id: "b" + ++S.nextId, ip: v.ip, reason: "Blocked from the visitor list", createdAt: new Date().toISOString() });
+    const row = S.rows.find((r) => r.visitorId === v.visitorId); if (row && row.mode !== "archived") { row.mode = "archived"; row.closedReason = "blocked"; }
+    S.visitors = S.visitors.filter((x) => x.visitorId !== id); updateVisitors(); return renderBlocked();
+  }
+  if (a === "v-btoggle") { S.blockedOpen = !S.blockedOpen; return renderBlocked(); }
+  if (a === "v-unblock") { S.blocked = S.blocked.filter((b) => b.id !== id); return renderBlocked(); }
+  // Team
+  if (a === "t-edit") { const m = S.team.find((x) => x.userId === id); S.teamEdit = { userId: id, value: m.displayName, error: "" }; return renderTeam(); }
+  if (a === "t-cancel") { S.teamEdit = null; return renderTeam(); }
+  // Reports
+  if (a === "r-preset") { S.range = { from: t.dataset.f, to: t.dataset.t }; return renderReports(); }
+  if (a === "r-table") { S.asTable = !S.asTable; $("rhour").innerHTML = hourChartHtml(S.report.perHour); return; }
+  // Settings
+  if (a === "s-addprice") { S.form.prices.push({ name: "", price: 0 }); S.message = ""; return renderSettings(); }
+  if (a === "s-rmprice") { S.form.prices.splice(i, 1); S.message = ""; return renderSettings(); }
+  if (a === "s-addopt") { const q = S.form.quickOptions; q.push({ key: slug("New option", q.map((o) => o.key)), label: "New option", icon: "dots", reply: "", link: "" }); S.message = ""; return renderSettings(); }
+  if (a === "s-rmopt") { S.form.quickOptions.splice(i, 1); S.message = ""; return renderSettings(); }
+  if (a === "s-up" || a === "s-down") { const q = S.form.quickOptions, j = i + (a === "s-up" ? -1 : 1); if (j < 0 || j >= q.length) return; [q[i], q[j]] = [q[j], q[i]]; S.message = ""; return renderSettings(); }
+  if (a === "s-save") return saveSettings();
+  if (a === "s-cadd") { S.cannedEditing = "new"; S.cannedDraft = { title: "", text: "", active: true }; S.cannedError = ""; return renderSettings(); }
+  if (a === "s-cedit") { const r = S.canned.find((x) => x.id === id); S.cannedEditing = id; S.cannedDraft = { title: r.title, text: r.text, active: r.active }; S.cannedError = ""; return renderSettings(); }
+  if (a === "s-ccancel") { S.cannedEditing = null; S.cannedError = ""; return renderSettings(); }
+  if (a === "s-cdel") { const r = S.canned.find((x) => x.id === id); if (!window.confirm(`Delete the canned reply "${r.title}"?`)) return; S.canned = S.canned.filter((x) => x.id !== id); logCanned("cannedReply.deleted", r.title, ""); syncCanned(); S.cannedError = ""; return renderSettings(); }
+});
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.id === "vq") { S.vf.q = t.value; return updateVisitors(); }
+  if (t.id === "vact") { S.vf.activity = t.value; return updateVisitors(); }
+  if (t.id === "tn" && S.teamEdit) { S.teamEdit.value = t.value; return; }
+  if (t.dataset.s && S.route === "settings") {
+    const v = t.type === "checkbox" ? t.checked : t.type === "number" ? Number(t.value) : t.value;
+    setP(S.form, t.dataset.s, v); S.message = ""; const m = $("savemsg"); if (m) m.textContent = "";
+    delete S.errors[t.dataset.s]; document.querySelectorAll(`[data-err="${t.dataset.s}"]`).forEach((n) => n.remove());
+    return;
+  }
+  if (t.dataset.cd) S.cannedDraft[t.dataset.cd] = t.type === "checkbox" ? t.checked : t.value;
+});
+document.addEventListener("change", (e) => {
+  const t = e.target;
+  if (t.id === "rfrom" && t.value) { const to = S.range.to && t.value <= S.range.to ? S.range.to : t.value; S.range = { from: t.value, to }; renderReports(); }
+  else if (t.id === "rto" && t.value) { S.range = { from: S.range.from || t.value, to: t.value }; renderReports(); }
+});
+document.addEventListener("submit", (e) => {
+  if (e.target.id === "tform") {
+    e.preventDefault();
+    const ed = S.teamEdit, v = ed.value.trim();
+    if (!v) { ed.error = "Enter a name patients will see."; return renderTeam(); }
+    S.team.find((x) => x.userId === ed.userId).displayName = v; S.teamEdit = null; renderTeam();
+  } else if (e.target.id === "cform") {
+    e.preventDefault();
+    const d = S.cannedDraft;
+    if (!d.title.trim() || !d.text.trim()) { S.cannedError = "Enter a title and the reply."; return renderSettings(); }
+    if (S.cannedEditing === "new") { S.canned.push({ id: "c" + ++S.nextId, title: d.title.trim(), text: d.text.trim(), active: d.active }); logCanned("cannedReply.added", "", d.title.trim()); }
+    else { const r = S.canned.find((x) => x.id === S.cannedEditing); Object.assign(r, { title: d.title.trim(), text: d.text.trim(), active: d.active }); logCanned(`cannedReply.${r.title}`, "edited", "saved"); }
+    S.cannedEditing = null; S.cannedError = ""; syncCanned(); renderSettings();
+  }
+});
+// Reports chart tooltip
+document.addEventListener("mouseover", (e) => {
+  const r = e.target.closest?.("rect[data-h]");
+  if (r) showTip(r);
+  else if (e.target.closest?.("#navparent, #flyout") && !phone()) { clearTimeout(closeT); if (!S.navOpen) { S.navOpen = true; renderNav(); } }
+});
+document.addEventListener("focusin", (e) => { const r = e.target.closest?.("rect[data-h]"); if (r) showTip(r); });
+document.addEventListener("focusout", (e) => { if (e.target.closest?.("rect[data-h]")) $("rtip") && ($("rtip").style.display = "none"); });
+function showTip(r) {
+  const tip = $("rtip"); if (!tip) return; const h = Number(r.dataset.h), ai = Number(r.dataset.ai), ag = Number(r.dataset.ag);
+  tip.style.display = "block"; tip.style.left = r.dataset.left + "%"; tip.style.top = `calc(${r.dataset.top}% - 6px)`;
+  tip.innerHTML = `<b>${hourLabel(h)}–${hourLabel((h + 1) % 24)}</b><br>AI ${ai} · Agent ${ag} · Total ${ai + ag}`;
+}
+let closeT;
+document.addEventListener("mouseout", (e) => {
+  if (e.target.closest?.("#rchart") && !e.relatedTarget?.closest?.("#rchart")) $("rtip") && ($("rtip").style.display = "none");
+  if (S.pinned || phone() || !S.navOpen) return;
+  if (e.target.closest?.("#navparent, #flyout") && !e.relatedTarget?.closest?.("#navparent, #flyout")) { clearTimeout(closeT); closeT = setTimeout(() => { S.navOpen = false; renderNav(); }, 200); }
+});
+document.addEventListener("mousedown", (e) => { if (S.navOpen && !phone() && !e.target.closest("#navparent, #flyout")) { S.navOpen = false; S.pinned = false; renderNav(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.navOpen) { S.navOpen = false; S.pinned = false; renderNav(); $("navparent")?.focus(); } });
+$("burger").addEventListener("click", () => $("adroot").classList.toggle("side-open"));
+$("scrim").addEventListener("click", () => $("adroot").classList.remove("side-open"));
+$("signout").addEventListener("click", () => window.alert("Mock: Sign Out is disabled in this standalone preview."));
+
+// Artifact-only controls
+$("art-role").addEventListener("change", (e) => { S.role = e.target.value; enter({ key: S.route, param: S.route === "ai" || S.route === "live" ? S.activeId : "" }); });
+$("art-reset").addEventListener("click", () => { reset(); resetPages(); S.query = ""; S.draft = ""; enter({ key: S.route, param: "" }); });
+// One timer ticks the chat panel's clocks, as in the original.
+setInterval(() => { S.now = Date.now(); const c = active(); if ((S.route === "ai" || S.route === "live") && c && document.activeElement?.closest("#panel") == null) renderPanel(); }, 30000);
+
+reset(); resetPages(); enter(parseHash());
+</script>
+</body>
+</html>

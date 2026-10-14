@@ -68,9 +68,9 @@ test("clean snapshot target: preflight passes with the full action list", () => 
   assert.deepEqual(a.errors, []);
   assert.equal(a.actions.indexes.filter((x) => x.action === "create").length, 3);
   assert.equal(a.actions.specialties.filter((x) => x.action === "insert").length, 2);
-  assert.equal(a.actions.conditions.filter((x) => x.action === "insert").length, 201);
+  assert.equal(a.actions.conditions.filter((x) => x.action === "insert").length, 219);
   assert.equal(a.actions.specialtyAliases.filter((x) => x.action === "update").length, 15);
-  assert.deepEqual(a.expectedCounts.after, { categories: 11, specialties: 32, conditions: 204 });
+  assert.deepEqual(a.expectedCounts.after, { categories: 11, specialties: 32, conditions: 222 });
 });
 
 test("re-run on a migrated target is a no-op (idempotent)", () => {

@@ -173,7 +173,6 @@ const SERVICES = Object.freeze({
   "doctors-note": { legacyTitle: "Doctor's Note", specialty: "General Physician" },
   "follow-up-consultation": { legacyTitle: "Follow-Up Consultation", specialty: "General Physician" },
   "lab-results-review": { legacyTitle: "Lab Results Review", specialty: "General Physician" },
-  "medical-certificate": { legacyTitle: "Medical Certificate", specialty: "General Physician" },
   "prescription-refill": { legacyTitle: "Prescription Refill", specialty: "General Physician" },
   "return-to-work-clearance": { legacyTitle: "Return-to-Work Clearance", specialty: "General Physician" },
   "specialist-referral": { legacyTitle: "Specialist Referral", specialty: "General Physician" },
@@ -181,7 +180,6 @@ const SERVICES = Object.freeze({
 
 // Merges (PR 4 spec §7): the legacy record becomes an alias of the canonical.
 const MERGES = Object.freeze({
-  "bladder-infection": { legacyTitle: "Bladder Infection", into: "urinary-tract-infection" },
   "seasonal-allergies": { legacyTitle: "Seasonal Allergies", into: "allergic-rhinitis" },
   wheezing: { legacyTitle: "Wheezing", into: "asthma" },
 });
@@ -190,7 +188,8 @@ const MERGES = Object.freeze({
 const APPROVED_EXTRA_CONDITION_ALIASES = Object.freeze({
   "asthma-flare-up": ["asthma attack", "asthma flare", "worsening asthma"],
   asthma: ["wheezing"],
-  "chronic-migraine": ["migraine", "severe headache"],
+  // "chronic-migraine" was folded into "migraines" (7ec9ae5 / d56c1e9f); its search terms now live on that record.
+  migraines: ["migraine", "severe headache"],
 });
 
 // Aliases the PR 4 spec names as examples; the planner asserts each one ends
@@ -201,7 +200,7 @@ const EXPECTED_CONDITION_ALIASES = Object.freeze({
   palpitations: ["heart racing", "irregular heartbeat"],
   "high-blood-pressure": ["bp", "hypertension"],
   "chest-pain": ["chest tightness"],
-  "chronic-migraine": ["migraine", "severe headache"],
+  migraines: ["severe headache", "chronic migraine"],
   "urinary-tract-infection": ["bladder infection"],
   "allergic-rhinitis": ["seasonal allergies"],
   asthma: ["wheezing"],
@@ -243,7 +242,6 @@ const SPECIALTY_ALIAS_APPROVAL = Object.freeze({
 // Overlapping records that stay separate. `status` says where that was decided.
 const KEEP_SEPARATE = Object.freeze([
   { a: "asthma", b: "asthma-flare-up", status: "APPROVED_PR4_SPEC" },
-  { a: "migraines", b: "chronic-migraine", status: "APPROVED_PR4_SPEC" },
   { a: "acne", b: "live:Teen acne", status: "APPROVED_PR4_SPEC" },
   { a: "ear-infection", b: "ear-pain", status: "PR4_SPEC_SAFEST_DEFAULT" },
   { a: "vertigo", b: "dizziness", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
@@ -251,7 +249,6 @@ const KEEP_SEPARATE = Object.freeze([
   { a: "cold-and-flu", b: "fever", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
   { a: "cancer-second-opinion", b: "second-medical-opinion", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
   { a: "vomiting", b: "nausea-and-vomiting", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
-  { a: "doctors-note", b: "medical-certificate", status: "AUDIT_S14_DEFAULT_KEEP_BOTH" },
   // PR 8: overlapping pages that stay separate (different specialties or pages).
   { a: "hair-loss", b: "hair-loss-mens-health", status: "PR8_DIFFERENT_SPECIALTY_PAGES" },
   { a: "menopause-symptoms", b: "hot-flashes", status: "PR8_SEPARATE_PAGES" },
@@ -310,7 +307,7 @@ const ROUTE_OVERRIDES = Object.freeze({
   "heart-disease": "/chronic-care/cardiology/heart-disease-follow-up",
   "binge-eating": "/weight-and-nurtrition/weight-management/binge-eating",
   "diet-exercise-planning": "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
-  "birth-control-consultation": "/women-health/obstetrics-and-gynaecology/birth-control",
+  "birth-control-consultation": "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
   // App.jsx declares this path twice; the FIRST declaration renders the
   // MenopauseSymptoms page, so that is the page a user reaches. The second
   // (HrtGuidance) is unreachable until the duplicate is fixed in App.jsx.

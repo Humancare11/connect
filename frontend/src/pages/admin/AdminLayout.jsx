@@ -4,6 +4,9 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
+import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
+import { useLiveChatAdmin } from "./livechat/useLiveChatAdmin";
+import { openLiveChat } from "./livechat/liveChatTabs";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -77,6 +80,11 @@ const ICONS = {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </>
+  ),
+  chat: svg(
+    <>
+      <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
     </>
   ),
   email: svg(
@@ -164,6 +172,17 @@ const NAV_ITEMS = [
   // Shared company mailboxes (support@, tech@). Same visibility rule as the
   // other admin pages: admin + superadmin, never the payment admin.
   { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
+  // Live Chat (admin + superadmin only; employeeadmin is not a live agent). It has its own menu and opens in its own
+  // browser tab (see liveChatTabs.js). The module itself is switched on and off by LIVECHAT_ENABLED on the server.
+  {
+    key: "live-chat",
+    label: "Live Chat",
+    badge: "NEW",
+    path: "/admin-dashboard/live-chat",
+    external: true,
+    roles: ["admin", "superadmin"],
+    icon: ICONS.chat,
+  },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 
@@ -196,6 +215,54 @@ function useMediaQuery(query) {
 
 // A parent entry with a submenu: a flyout to the right of the sidebar on
 // desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
+// Unread count chip (live chat pages); nothing when there is nothing unread.
+const UnreadBadge = ({ count, style }) =>
+  count > 0 ? (
+    <span className="ad-nav-badge" style={style}>
+      {count > 99 ? "99+" : count}
+    </span>
+  ) : null;
+
+// "Live Chat": a link that opens (or re-uses) the one Live Chat browser tab. A plain click goes through
+// openLiveChat; middle-click and Ctrl/Cmd-click keep the normal new-tab behaviour of the anchor.
+function LiveChatNavLink({ item, onNavigate }) {
+  const { unread } = useLiveChatAdmin();
+  const total = (unread.ai || 0) + (unread.live || 0);
+  return (
+    <a
+      href={item.path}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="ad-nav-item"
+      title="Opens in a new tab"
+      onClick={(event) => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        openLiveChat(item.path);
+        onNavigate();
+      }}
+    >
+      <span className="ad-nav-icon">{item.icon}</span>
+      {item.label}
+      <span
+        style={{
+          marginLeft: 8,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.06em",
+          background: "#22c55e",
+          color: "#062814",
+          borderRadius: 6,
+          padding: "2px 6px",
+        }}
+      >
+        {item.badge}
+      </span>
+      <UnreadBadge count={total} style={{ marginLeft: 8 }} />
+    </a>
+  );
+}
+
 function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChange, onNavigate }) {
   const buttonRef = useRef(null);
   const flyoutRef = useRef(null);
@@ -350,6 +417,22 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
       >
         <span className="ad-nav-icon">{item.icon}</span>
         {item.label}
+        {item.badge && (
+          <span
+            style={{
+              marginLeft: 8,
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: "0.06em",
+              background: "#22c55e",
+              color: "#062814",
+              borderRadius: 6,
+              padding: "2px 6px",
+            }}
+          >
+            {item.badge}
+          </span>
+        )}
         <span className="ad-nav-arrow" aria-hidden="true">›</span>
       </button>
 
@@ -454,7 +537,8 @@ export default function AdminLayout({ children }) {
   const pageTitle = (titleLeaf && (titleLeaf.title || titleLeaf.label)) || EXTRA_TITLES[pathname] || "Admin";
 
   // Menu entries this role can see. Parents need at least one visible child.
-  const visibleItems = NAV_ITEMS.map((item) =>
+  // The Live Chat group exists only in builds with VITE_LIVECHAT_ENABLED=true (otherwise the panel is as before).
+  const visibleItems = NAV_ITEMS.filter((item) => item.key !== "live-chat" || import.meta.env.VITE_LIVECHAT_ENABLED === "true").map((item) =>
     item.children
       ? { ...item, links: item.children.filter((c) => isVisibleTo(c, user.role)).map(withTarget) }
       : item
@@ -474,6 +558,8 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="ad-root">
+      {/* Live chat: one shared connection for every admin page (unread badges, toasts). Admin + superadmin only. */}
+      <LiveChatAdminProvider user={user} />
       {sideOpen && (
         <div
           style={{
@@ -526,6 +612,7 @@ export default function AdminLayout({ children }) {
                 />
               );
             }
+            if (item.external) return <LiveChatNavLink key={item.key} item={item} onNavigate={closeDrawer} />;
             const link = withTarget(item);
             return (
               <Link

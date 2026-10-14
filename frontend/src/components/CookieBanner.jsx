@@ -35,20 +35,32 @@ export default function CookieBanner() {
 
     if (consent === "accepted") {
       loadGTM();
-      loadLiveChat();
     }
   }, []);
+
+  // Tells the rest of the app (e.g. the live-chat visitor tracker) about the choice without polling.
+  const announce = (value) => {
+    window.dispatchEvent(new CustomEvent("hc:cookie-consent", { detail: { value } }));
+  };
 
   const handleAccept = () => {
     localStorage.setItem("cookieConsent", "accepted");
     loadGTM();
     setShow(false);
+    announce("accepted");
   };
 
   const handleReject = () => {
     localStorage.setItem("cookieConsent", "rejected");
     setShow(false);
+    announce("rejected");
   };
+
+  // Lets the live-chat launcher move out of the banner's way while the banner is on screen.
+  useEffect(() => {
+    document.documentElement.classList.toggle("hc-cookie-open", show);
+    return () => document.documentElement.classList.remove("hc-cookie-open");
+  }, [show]);
 
   if (!show) return null;
 

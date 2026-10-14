@@ -2,41 +2,22 @@
   "planVersion": 1,
   "dryRun": true,
   "executed": false,
-  "generatedAt": "2026-10-06T09:23:59.396Z",
+  "generatedAt": "2026-10-13T12:13:04.493Z",
   "generator": "backend/scripts/searchTaxonomy/prepareSearchTaxonomyMigration.js",
   "sources": {
     "searchIndex": {
       "path": "frontend/src/data/searchIndex.js",
-      "sha256": "b8730727ad392dce0fcecbd4d68dd86b55725c6cefe1996d4a441b3543ac7659"
+      "sha256": "bacb6f30fdb79f3fcaec9bfcf90bd39fd6a6e603735bfbdf3295ff2c08ccd02f"
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "1d108fcafdd953a673a7059890122072077e99b6ae53e610972a3f7916ea7832",
+      "sha256": "e8b9dc42bb8f7a7f22aba91cca10d6c4a59061dd74e4ae247971aa998d8a1467",
       "staticRoutes": 383,
-      "duplicateDeclarations": [
-        "/child-and-family-care/pediatrics",
-        "/chronic-care/gastroenterology",
-        "/chronic-care/neurology",
-        "/chronic-care/pulmonology",
-        "/doctors-note",
-        "/eye-ear-bone/ophthalmology",
-        "/eye-ear-bone/orthopedics",
-        "/mens-health/urology",
-        "/mental-health/behavioral-health",
-        "/mental-health/psychiatry",
-        "/mental-health/psychology-counseling",
-        "/skin-and-hair-care/dermatology",
-        "/travel-and-global-care/global-cross-border-care",
-        "/travel-and-global-care/travel-medicine",
-        "/weight-and-nurtrition/lifestyle-medicine",
-        "/weight-and-nurtrition/nutrition-and-dietetics",
-        "/weight-and-nurtrition/weight-management",
-        "/women-health/menopause-care/hrt-guidance"
-      ]
+      "duplicateDeclarations": []
     },
     "decisions": {
       "path": "backend/scripts/searchTaxonomy/searchTaxonomyDecisions.js",
-      "sha256": "e3230a29389785e7987d0c54ae92f8008253cdd22dddeaece3174c400065472d"
+      "sha256": "7868d93be180c815531160b6aed5090293c9d598c8a2070e8275c14b129bdf14"
     }
   },
   "liveSnapshot": {
@@ -497,43 +478,43 @@
     "recordsModified": 0
   },
   "counts": {
-    "legacyRecordsInspected": 266,
+    "legacyRecordsInspected": 262,
     "legacyCategoryRecords": 11,
     "legacySpecialtyRecords": 30,
-    "legacyConditionRecords": 225,
+    "legacyConditionRecords": 221,
     "classification": {
-      "EXACT": 132,
+      "EXACT": 129,
       "NAME_VARIATION": 54,
       "CLEAR_SEMANTIC_MATCH": 3,
       "NEEDS_REVIEW": 22,
-      "INSUFFICIENT_DATA": 14
+      "INSUFFICIENT_DATA": 13
     },
-    "importable": 222,
-    "importableConditions": 215,
-    "importableServices": 7,
+    "importable": 219,
+    "importableConditions": 213,
+    "importableServices": 6,
     "excluded": 0,
-    "canonicalRecords": 222,
-    "aliasMerges": 3,
-    "serviceRecords": 7,
+    "canonicalRecords": 219,
+    "aliasMerges": 2,
+    "serviceRecords": 6,
     "newSpecialties": 2,
     "specialtyAliasUpdates": 15,
     "indexesToCreate": 3,
-    "totalConditionAliases": 310,
-    "aliasesDroppedAsDuplicateOfName": 147,
+    "totalConditionAliases": 309,
+    "aliasesDroppedAsDuplicateOfName": 146,
     "collisionCount": 0,
-    "warningCount": 15,
+    "warningCount": 12,
     "parentMissingCount": 0,
     "pr8AdditionalPages": 21,
-    "plannedSearchable": 222,
+    "plannedSearchable": 219,
     "plannedBookingActive": 0,
     "unmappedAppPages": 2,
     "routeResolution": {
-      "FOUND_IN_APP": 173,
+      "FOUND_IN_APP": 169,
       "OVERRIDE_VERIFIED": 5,
-      "DERIVED_VERIFIED": 44
+      "DERIVED_VERIFIED": 45
     },
     "routeConflicts": {
-      "legacyRouteNotFoundInApp": 49,
+      "legacyRouteNotFoundInApp": 50,
       "routeSpecialtyDiffersFromTarget": 2,
       "withoutDedicatedPage": 0,
       "duplicateStoredRoutes": 0
@@ -542,12 +523,12 @@
     "legacyIdConflicts": 0,
     "decisionBasis": {
       "approved-hierarchy": 9,
-      "exact": 129,
+      "exact": 127,
       "approved-unresolved": 7,
       "approved-clear-semantic-match": 3,
       "approved-page-structure": 1,
       "name_variation": 53,
-      "approved-service": 7,
+      "approved-service": 6,
       "approved-specialty-route": 13
     },
     "importableBySpecialty": {
@@ -555,17 +536,17 @@
       "Expert Medical Opinion": 5,
       "Cardiology": 6,
       "Internal Medicine": 5,
-      "Neurology": 7,
       "Gastroenterology": 9,
       "Endocrinology": 5,
+      "Neurology": 6,
       "Weight Management": 4,
       "Pulmonology": 10,
       "Nutrition & Dietetics": 5,
-      "General Physician": 26,
+      "General Physician": 25,
       "Lifestyle Medicine": 3,
       "Ophthalmology": 6,
       "ENT": 7,
-      "Pediatrics": 12,
+      "Pediatrics": 11,
       "Adolescent Care": 3,
       "Sexual Health": 9,
       "Dermatology": 18,
@@ -582,7 +563,7 @@
       "Psychology / Counselling": 5,
       "Behavioral Health": 4
     },
-    "schemaValidatedDocuments": 239
+    "schemaValidatedDocuments": 236
   },
   "collisions": [
     {
@@ -592,33 +573,6 @@
       "legacyIds": [
         "cancer-second-opinion",
         "second-medical-opinion"
-      ]
-    },
-    {
-      "check": "B_ALIAS_EQUALS_SIBLING_NAME",
-      "blocking": false,
-      "detail": "Neurology: alias \"migraine\" on \"chronic-migraine\" = name of \"migraines\" (APPROVED_PR4_SPEC)",
-      "legacyIds": [
-        "chronic-migraine",
-        "migraines"
-      ]
-    },
-    {
-      "check": "B_DUPLICATE_ALIAS_IN_SPECIALTY",
-      "blocking": false,
-      "detail": "Neurology: \"severe headache\" shared (APPROVED_PR4_SPEC)",
-      "legacyIds": [
-        "chronic-migraine",
-        "migraines"
-      ]
-    },
-    {
-      "check": "B_ALIAS_EQUALS_SIBLING_NAME",
-      "blocking": false,
-      "detail": "General Physician: alias \"medical certificate\" on \"doctors-note\" = name of \"medical-certificate\" (AUDIT_S14_DEFAULT_KEEP_BOTH)",
-      "legacyIds": [
-        "doctors-note",
-        "medical-certificate"
       ]
     },
     {
@@ -742,7 +696,7 @@
       "collectionDeletions": 0
     }
   },
-  "operationsSha256": "c7bbd5b77a6b589f6a2d3a0a79aef94aacdd648efcae05aeec17fb153b4b275c",
+  "operationsSha256": "b205ffbff571aaa4e45dd65c9b300dbfa5ab87ac09fd989ec1710af04717aab2",
   "operations": [
     {
       "op": "CREATE_INDEX",
@@ -1027,34 +981,6 @@
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/growth-development",
-      "routeStatus": "FOUND_IN_APP"
-    },
-    {
-      "op": "CREATE_CONDITION",
-      "phase": 3,
-      "collection": "healthcareconditions",
-      "idempotencyKey": {
-        "legacyId": "mild-asthma-symptoms"
-      },
-      "document": {
-        "specialtyId": "6a4f8b63c08910eba9bf83ac",
-        "name": "Mild Asthma Symptoms",
-        "aliases": [
-          "child asthma",
-          "kids wheezing"
-        ],
-        "kind": "condition",
-        "legacyId": "mild-asthma-symptoms",
-        "slug": "mild-asthma-symptoms",
-        "route": "/mild-asthma-symptoms",
-        "isActive": false,
-        "isSearchable": true
-      },
-      "specialtyName": "Pediatrics",
-      "categoryName": "Children & Family",
-      "classification": "EXACT",
-      "basis": "exact",
-      "legacyRoute": "/mild-asthma-symptoms",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -1633,7 +1559,7 @@
         "kind": "condition",
         "legacyId": "second-medical-opinion",
         "slug": "second-medical-opinion",
-        "route": "/second-medical-opinion",
+        "route": "/online-second-medical-opinion",
         "isActive": false,
         "isSearchable": true
       },
@@ -1641,7 +1567,7 @@
       "categoryName": "Chronic Care & Expert Opinion",
       "classification": "NEEDS_REVIEW",
       "basis": "approved-hierarchy",
-      "legacyRoute": "/second-medical-opinion",
+      "legacyRoute": "/online-second-medical-opinion",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -1947,34 +1873,6 @@
       "phase": 3,
       "collection": "healthcareconditions",
       "idempotencyKey": {
-        "legacyId": "chronic-migraine"
-      },
-      "document": {
-        "specialtyId": "6a4f8bd8c08910eba9bf83b2",
-        "name": "Chronic Migraine",
-        "aliases": [
-          "migraine",
-          "severe headache"
-        ],
-        "kind": "condition",
-        "legacyId": "chronic-migraine",
-        "slug": "chronic-migraine",
-        "route": "/chronic-care/neurology/chronic-migraine",
-        "isActive": false,
-        "isSearchable": true
-      },
-      "specialtyName": "Neurology",
-      "categoryName": "Chronic Care & Expert Opinion",
-      "classification": "EXACT",
-      "basis": "exact",
-      "legacyRoute": "/chronic-care/neurology/chronic-migraine",
-      "routeStatus": "FOUND_IN_APP"
-    },
-    {
-      "op": "CREATE_CONDITION",
-      "phase": 3,
-      "collection": "healthcareconditions",
-      "idempotencyKey": {
         "legacyId": "dizziness"
       },
       "document": {
@@ -2036,7 +1934,8 @@
         "specialtyId": "6a4f8bd8c08910eba9bf83b2",
         "name": "Migraine",
         "aliases": [
-          "severe headache"
+          "severe headache",
+          "chronic migraine"
         ],
         "kind": "condition",
         "legacyId": "migraines",
@@ -2178,7 +2077,9 @@
         "name": "Asthma",
         "aliases": [
           "wheezing",
-          "inhaler"
+          "inhaler",
+          "child asthma",
+          "kids wheezing"
         ],
         "kind": "condition",
         "legacyId": "asthma",
@@ -3513,31 +3414,6 @@
       "phase": 3,
       "collection": "healthcareconditions",
       "idempotencyKey": {
-        "legacyId": "medical-certificate"
-      },
-      "document": {
-        "specialtyId": "6a4f7ad7c08910eba9bf828e",
-        "name": "Medical Certificate",
-        "aliases": [],
-        "kind": "service",
-        "legacyId": "medical-certificate",
-        "slug": "medical-certificate",
-        "route": "/medical-certificate",
-        "isActive": false,
-        "isSearchable": true
-      },
-      "specialtyName": "General Physician",
-      "categoryName": "General & Everyday Care",
-      "classification": "INSUFFICIENT_DATA",
-      "basis": "approved-service",
-      "legacyRoute": "/medical-certificate",
-      "routeStatus": "FOUND_IN_APP"
-    },
-    {
-      "op": "CREATE_CONDITION",
-      "phase": 3,
-      "collection": "healthcareconditions",
-      "idempotencyKey": {
         "legacyId": "minor-burns"
       },
       "document": {
@@ -3655,7 +3531,7 @@
         "kind": "service",
         "legacyId": "prescription-refill",
         "slug": "prescription-refill",
-        "route": "/prescription-refill",
+        "route": "/online-prescription-refills",
         "isActive": false,
         "isSearchable": true
       },
@@ -3663,7 +3539,7 @@
       "categoryName": "General & Everyday Care",
       "classification": "INSUFFICIENT_DATA",
       "basis": "approved-service",
-      "legacyRoute": "/prescription-refill",
+      "legacyRoute": "/online-prescription-refills",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -4324,7 +4200,7 @@
         "kind": "condition",
         "legacyId": "urinary-tract-infection",
         "slug": "urinary-tract-infection-uti",
-        "route": "/mens-health/urology/urinary-tract-infection",
+        "route": "/urinary-tract-infection",
         "isActive": false,
         "isSearchable": true
       },
@@ -4332,7 +4208,7 @@
       "categoryName": "Men's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
-      "legacyRoute": "/mens-health/urology/urinary-tract-infection",
+      "legacyRoute": "/urinary-tract-infection",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -4599,7 +4475,7 @@
         "kind": "condition",
         "legacyId": "ocd",
         "slug": "ocd",
-        "route": "/mental-health/psychiatry/Ocd",
+        "route": "/mental-health/psychiatry/ocd",
         "isActive": false,
         "isSearchable": true
       },
@@ -4608,7 +4484,7 @@
       "classification": "EXACT",
       "basis": "exact",
       "legacyRoute": "/mental-health/psychiatry/Ocd",
-      "routeStatus": "FOUND_IN_APP"
+      "routeStatus": "DERIVED_VERIFIED"
     },
     {
       "op": "CREATE_CONDITION",
@@ -6497,7 +6373,7 @@
         "kind": "condition",
         "legacyId": "birth-control-consultation",
         "slug": "birth-control-consultation",
-        "route": "/women-health/obstetrics-and-gynaecology/birth-control",
+        "route": "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
         "isActive": false,
         "isSearchable": true
       },
@@ -6882,16 +6758,6 @@
       "basis": "exact",
       "legacyRoute": "/postnatal-depression",
       "routeStatus": "DERIVED_VERIFIED"
-    },
-    {
-      "op": "MERGE_ALIAS",
-      "phase": 3,
-      "canonical": "Urinary Tract Infection (UTI)",
-      "canonicalLegacyId": "urinary-tract-infection",
-      "alias": "bladder infection",
-      "mergedLegacyId": "bladder-infection",
-      "mergedLegacyRoute": "/bladder-infection",
-      "write": "none separately: the alias is already inside the canonical CREATE_CONDITION document"
     },
     {
       "op": "MERGE_ALIAS",
@@ -7865,33 +7731,6 @@
         }
       },
       {
-        "legacyId": "chronic-migraine",
-        "legacyTitle": "Chronic Migraine",
-        "classification": "EXACT",
-        "reasons": [],
-        "decision": "IMPORT",
-        "basis": "exact",
-        "name": "Chronic Migraine",
-        "kind": "condition",
-        "specialty": "Neurology",
-        "category": "Chronic Care & Expert Opinion",
-        "mergeInto": null,
-        "legacyRoute": "/chronic-care/neurology/chronic-migraine",
-        "routeStatus": "FOUND_IN_APP",
-        "route": "/chronic-care/neurology/chronic-migraine",
-        "routeSpecialtyMismatch": false,
-        "aliasSources": {
-          "migraine": [
-            "legacy-keyword",
-            "pr4-approved"
-          ],
-          "severe headache": [
-            "legacy-keyword",
-            "pr4-approved"
-          ]
-        }
-      },
-      {
         "legacyId": "complex-diagnosis",
         "legacyTitle": "Complex Diagnosis Review",
         "classification": "EXACT",
@@ -8461,6 +8300,12 @@
             "merge:wheezing"
           ],
           "inhaler": [
+            "legacy-keyword"
+          ],
+          "child asthma": [
+            "legacy-keyword"
+          ],
+          "kids wheezing": [
             "legacy-keyword"
           ]
         }
@@ -9624,31 +9469,6 @@
         }
       },
       {
-        "legacyId": "mild-asthma-symptoms",
-        "legacyTitle": "Mild Asthma Symptoms",
-        "classification": "EXACT",
-        "reasons": [],
-        "decision": "IMPORT",
-        "basis": "exact",
-        "name": "Mild Asthma Symptoms",
-        "kind": "condition",
-        "specialty": "Pediatrics",
-        "category": "Children & Family",
-        "mergeInto": null,
-        "legacyRoute": "/mild-asthma-symptoms",
-        "routeStatus": "FOUND_IN_APP",
-        "route": "/mild-asthma-symptoms",
-        "routeSpecialtyMismatch": false,
-        "aliasSources": {
-          "child asthma": [
-            "legacy-keyword"
-          ],
-          "kids wheezing": [
-            "legacy-keyword"
-          ]
-        }
-      },
-      {
         "legacyId": "mood-anxiety-teens",
         "legacyTitle": "Mood & Anxiety in Teens",
         "classification": "NAME_VARIATION",
@@ -10017,26 +9837,6 @@
         }
       },
       {
-        "legacyId": "medical-certificate",
-        "legacyTitle": "Medical Certificate",
-        "classification": "INSUFFICIENT_DATA",
-        "reasons": [
-          "no specialty field and no specialty in route"
-        ],
-        "decision": "IMPORT",
-        "basis": "approved-service",
-        "name": "Medical Certificate",
-        "kind": "service",
-        "specialty": "General Physician",
-        "category": "General & Everyday Care",
-        "mergeInto": null,
-        "legacyRoute": "/medical-certificate",
-        "routeStatus": "FOUND_IN_APP",
-        "route": "/medical-certificate",
-        "routeSpecialtyMismatch": false,
-        "aliasSources": {}
-      },
-      {
         "legacyId": "medication-review",
         "legacyTitle": "Medication Review",
         "classification": "CLEAR_SEMANTIC_MATCH",
@@ -10074,9 +9874,9 @@
         "specialty": "General Physician",
         "category": "General & Everyday Care",
         "mergeInto": null,
-        "legacyRoute": "/prescription-refill",
+        "legacyRoute": "/online-prescription-refills",
         "routeStatus": "FOUND_IN_APP",
-        "route": "/prescription-refill",
+        "route": "/online-prescription-refills",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "refill medication": [
@@ -10128,9 +9928,9 @@
         "specialty": "Expert Medical Opinion",
         "category": "Chronic Care & Expert Opinion",
         "mergeInto": null,
-        "legacyRoute": "/second-medical-opinion",
+        "legacyRoute": "/online-second-medical-opinion",
         "routeStatus": "FOUND_IN_APP",
-        "route": "/second-medical-opinion",
+        "route": "/online-second-medical-opinion",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "second opinion": [
@@ -11470,6 +11270,10 @@
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "severe headache": [
+            "legacy-keyword",
+            "pr4-approved"
+          ],
+          "chronic migraine": [
             "legacy-keyword"
           ]
         }
@@ -11796,24 +11600,6 @@
         }
       },
       {
-        "legacyId": "bladder-infection",
-        "legacyTitle": "Bladder Infection",
-        "classification": "EXACT",
-        "reasons": [],
-        "decision": "MERGE",
-        "basis": "approved-merge",
-        "name": "Bladder Infection",
-        "kind": "condition",
-        "specialty": null,
-        "category": null,
-        "mergeInto": "urinary-tract-infection",
-        "legacyRoute": "/bladder-infection",
-        "routeStatus": null,
-        "route": null,
-        "routeSpecialtyMismatch": false,
-        "aliasSources": null
-      },
-      {
         "legacyId": "blood-in-urine",
         "legacyTitle": "Blood in Urine",
         "classification": "EXACT",
@@ -11925,9 +11711,9 @@
         "specialty": "Urology",
         "category": "Men's Health",
         "mergeInto": null,
-        "legacyRoute": "/mens-health/urology/urinary-tract-infection",
+        "legacyRoute": "/urinary-tract-infection",
         "routeStatus": "FOUND_IN_APP",
-        "route": "/mens-health/urology/urinary-tract-infection",
+        "route": "/urinary-tract-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "uti": [
@@ -11937,9 +11723,7 @@
             "legacy-keyword"
           ],
           "bladder infection": [
-            "legacy-keyword",
-            "merge:bladder-infection",
-            "merge:bladder-infection"
+            "legacy-keyword"
           ]
         }
       },
@@ -11983,7 +11767,7 @@
         "mergeInto": null,
         "legacyRoute": "/birth-control-consultation",
         "routeStatus": "OVERRIDE_VERIFIED",
-        "route": "/women-health/obstetrics-and-gynaecology/birth-control",
+        "route": "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "birth control": [
@@ -12753,8 +12537,8 @@
         "category": "Mental Health",
         "mergeInto": null,
         "legacyRoute": "/mental-health/psychiatry/Ocd",
-        "routeStatus": "FOUND_IN_APP",
-        "route": "/mental-health/psychiatry/Ocd",
+        "routeStatus": "DERIVED_VERIFIED",
+        "route": "/mental-health/psychiatry/ocd",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "obsessive compulsive disorder": [
@@ -13145,11 +12929,6 @@
         "reason": "DUPLICATES_CANONICAL_NAME"
       },
       {
-        "legacyId": "chronic-migraine",
-        "alias": "chronic migraine",
-        "reason": "DUPLICATES_CANONICAL_NAME"
-      },
-      {
         "legacyId": "fatty-liver",
         "alias": "fatty liver",
         "reason": "DUPLICATES_CANONICAL_NAME"
@@ -13455,11 +13234,6 @@
         "reason": "DUPLICATES_CANONICAL_NAME"
       },
       {
-        "legacyId": "medical-certificate",
-        "alias": "medical certificate",
-        "reason": "DUPLICATES_CANONICAL_NAME"
-      },
-      {
         "legacyId": "medication-review",
         "alias": "medication review",
         "reason": "DUPLICATES_CANONICAL_NAME"
@@ -13682,6 +13456,11 @@
       {
         "legacyId": "insect-bite",
         "alias": "insect bites",
+        "reason": "DUPLICATES_CANONICAL_NAME"
+      },
+      {
+        "legacyId": "migraines",
+        "alias": "migraine",
         "reason": "DUPLICATES_CANONICAL_NAME"
       },
       {
