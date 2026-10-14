@@ -10,6 +10,7 @@ import { openLiveChat } from "./liveChatTabs";
 
 const SOUND_KEY = "hcLiveChatSound";
 const VISITOR_SOUND_KEY = "hcLiveChatVisitorSound";
+const VOICE_KEY = "hcLiveChatVoice";
 const DISMISS_KEY = "hcLiveChatNotifyDismissed";
 
 let audio = null;
@@ -40,6 +41,16 @@ export const visitorSoundEnabled = () => read(VISITOR_SOUND_KEY) === "on";
 export function setVisitorSoundEnabled(on) {
   write(VISITOR_SOUND_KEY, on ? "on" : "off");
 }
+
+// "Voice alerts" (spoken "New visitor" / "Patient wants a live agent"): ON unless the admin turned it off. They also
+// need the main Sound on (and the Visitor sound for the visitor alert), and only play in the Live Chat tab.
+export const voiceEnabled = () => read(VOICE_KEY) !== "off";
+export function setVoiceEnabled(on) {
+  write(VOICE_KEY, on ? "on" : "off");
+}
+
+// True once the admin has clicked or typed on the page (the same unlock the chime needs).
+export const audioUnlocked = () => Boolean(audio && audio.state === "running");
 
 // Creates the audio context on the first real user gesture (autoplay rules).
 export function installAudioUnlock() {
