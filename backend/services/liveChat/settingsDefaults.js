@@ -84,6 +84,7 @@ const DEFAULT_SETTINGS = {
   agentDisplayName: "Sam",
   greeting: "Hi {firstName}! I'm Connect AI. How can I help you today?",
   followUpMinutes: 1,
+  inactiveMinutes: 10,
   handoffRules: {
     onPatientRequest: true,
     onTechnicalIssue: true,

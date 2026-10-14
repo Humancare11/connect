@@ -325,6 +325,9 @@ function createAgentService({
     return fresh;
   }
 
+  const inactiveDueFor = (settings) =>
+    new Date(now() + Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10))) * 60_000);
+
   // Must run inside chat.withLock(conversationId).
   async function takeOverLocked(actor, conv, settings) {
     if (conv.mode === "archived") throw new AgentError(409, "closed");
@@ -340,7 +343,7 @@ function createAgentService({
       const previous = { id: String(conv.assigneeId), name: conv.agentName || "another agent" };
       const taken = await LcConversation.findOneAndUpdate(
         { _id: conv._id, mode: "live", assigneeId: conv.assigneeId },
-        { $set: { assigneeId: oid(me), agentName: name } },
+        { $set: { assigneeId: oid(me), agentName: name, inactiveDueAt: inactiveDueFor(settings) } },
         { returnDocument: "after" }
       );
       if (!taken) throw new AgentError(409, "assigned", { assignee: { name: "another agent" } });
@@ -361,6 +364,7 @@ function createAgentService({
           everLive: true,
           offlineRequested: false,
           followUpDueAt: null,
+          inactiveDueAt: inactiveDueFor(settings), // joining counts like an admin message for the inactivity timer
           liveStartedAt: conv.liveStartedAt || new Date(now()),
         },
       },
@@ -919,7 +923,7 @@ function createAgentService({
         // Back in the Queue: the follow-up step applies again, unless the email notice was already given for this chat.
         const queued = await LcConversation.findOneAndUpdate(
           { _id: current._id, mode: "live", assigneeId: current.assigneeId },
-          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings) } },
+          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings), inactiveDueAt: null } },
           { returnDocument: "after" }
         );
         if (!queued) return;

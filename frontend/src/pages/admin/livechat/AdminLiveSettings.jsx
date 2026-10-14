@@ -22,7 +22,7 @@ const AI_MODES = [
 
 // the fields the page edits (everything else on the settings document is not sent back)
 const EDITABLE = [
-  "aiMode", "followUpMinutes", "aiDisplayName", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
+  "aiMode", "followUpMinutes", "inactiveMinutes", "aiDisplayName", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
   "dailySpendCapUsd", "handoffRules", "quickOptions", "prices", "customFields",
 ];
 const MAX_CUSTOM_FIELDS = 10;
@@ -208,6 +208,22 @@ export default function AdminLiveSettings() {
                 generic follow-up email. The chat stays in the Queue.
               </span>
               <ErrorText errors={errors} name="followUpMinutes" />
+            </div>
+            <div className="lcp-field">
+              <label htmlFor="inactiveMinutes">Archive an inactive chat after (minutes, 5-60)</label>
+              <input
+                id="inactiveMinutes"
+                type="number"
+                min="5"
+                max="60"
+                value={form.inactiveMinutes ?? 10}
+                onChange={(e) => set("inactiveMinutes", Number(e.target.value))}
+              />
+              <span className="lcp-help">
+                When the last message is from the AI or an admin and the patient writes nothing for this long, the chat moves to Archived as
+                "Inactive" and the patient is told they can write again to continue. Chats in the Queue are never archived this way.
+              </span>
+              <ErrorText errors={errors} name="inactiveMinutes" />
             </div>
           </div>
 

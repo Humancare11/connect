@@ -320,7 +320,11 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
 
   // The follow-up step ("Our team will connect with you by email"): due times live on the conversations, so this job
   // only has to look. One sweep right now picks up whatever came due while the server was down.
-  const runFollowUp = () => chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+  // The same sweep closes chats that went quiet after an AI or admin reply ("Inactive").
+  const runFollowUp = () => {
+    chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+    chat.runInactiveDue().catch((err) => console.error("[livechat] inactivity job failed:", err?.message));
+  };
   const followUpTimer = setInterval(runFollowUp, options.followUpJobMs || chat.followUpJobMs);
   followUpTimer.unref?.();
   setTimeout(runFollowUp, 2000).unref?.();

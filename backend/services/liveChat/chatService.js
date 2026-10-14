@@ -18,6 +18,10 @@ const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team n
 // Shown when no admin has replied after followUpMinutes; the generic follow-up email goes with it.
 const EMAIL_NOTICE_TEXT = (email) => `Our team will connect with you by email at ${email || "your email address"} shortly.`;
 const FOLLOW_UP_JOB_MS = 15_000; // how often due follow-ups are looked for
+const INACTIVE_JOB_LIMIT = 25;
+const REOPEN_WINDOW_MS = 24 * 3_600_000; // a chat closed as "patient left" or "inactive" continues within this long
+const INACTIVE_TEXT = (minutes) => `This chat was closed after ${minutes} minutes of inactivity. Send a message any time to continue.`;
+const inactiveMinutesOf = (settings) => Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10)));
 const followUpMinutesOf = (settings) => Math.min(30, Math.max(1, Math.round(Number(settings?.followUpMinutes) || 1)));
 
 const ID_ALPHABET = "ABCDEFGHJKMNPQRSTVWXYZ23456789";
@@ -215,6 +219,11 @@ function createChatService({
       agent: conv.mode === "live" && conv.agentName ? { name: conv.agentName } : null,
       rating: conv.rating?.stars ? { stars: conv.rating.stars } : null,
       canRate: conv.mode === "archived" && conv.closedReason === "resolved" && !conv.rating?.stars,
+      // Closed for inactivity: the patient can just write again and the same chat continues.
+      canContinue: Boolean(
+        conv.mode === "archived" && conv.closedReason === "inactive" && conv.closedAt && now() - new Date(conv.closedAt).getTime() < REOPEN_WINDOW_MS
+      ),
+      closedReason: conv.mode === "archived" ? conv.closedReason || "" : "",
       messages,
     };
   }
@@ -234,8 +243,18 @@ function createChatService({
     if (sender === "patient") {
       update.$inc = { patientMessageCount: 1 };
       update.$set.optionsUsed = true;
+      update.$set.inactiveDueAt = null; // the patient wrote: the inactivity timer is cancelled
     }
     await LcConversation.updateOne({ _id: conv._id }, update);
+    // A visible AI or admin message (re)starts the inactivity timer, but only while the chat is with the AI or an
+    // agent: a chat in the Queue (the patient is waiting for us) is never auto-archived.
+    if ((sender === "ai" || sender === "agent") && !extra.internal) {
+      const minutes = inactiveMinutesOf(await loadSettings());
+      await LcConversation.updateOne(
+        { _id: conv._id, mode: { $in: ["ai", "live"] } },
+        { $set: { inactiveDueAt: new Date(now() + minutes * 60_000) } }
+      );
+    }
     if (sender === "patient" && !conv.optionsUsed) await pushState(conv); // the patient's cards disappear at once
     const message = {
       id: String(doc._id),
@@ -369,27 +388,41 @@ function createChatService({
       }).sort({ closedAt: -1 });
       if (rateable) conversation = await serialize(rateable.toObject(), settings);
     }
+    if (!conversation) {
+      // A chat closed for inactivity stays on screen (with the closing line) so the patient can write and continue it.
+      const inactive = await LcConversation.findOne({
+        visitorId,
+        mode: "archived",
+        closedReason: "inactive",
+        closedAt: { $gte: new Date(now() - REOPEN_WINDOW_MS) },
+      }).sort({ closedAt: -1 });
+      if (inactive) conversation = await serialize(inactive.toObject(), settings);
+    }
     return { ok: true, needContact: false, firstName: firstNameOf(decryptLiveChatText(visitor.name)), conversation };
   }
 
   // A visitor who left (tab closed, 30 s) and comes back within 24 hours continues the same chat: an AI chat goes
   // back to the AI; a chat that had an agent goes back to the Queue (the agent may have moved on).
-  async function reopenIfLeft(visitorId, visitor) {
+  async function reopenIfLeft(visitorId, visitor, reasons = ["patient_left"]) {
+    const since = new Date(now() - REOPEN_WINDOW_MS);
+    const windows = {
+      patient_left: { closedReason: "patient_left", leftAt: { $gte: since } },
+      inactive: { closedReason: "inactive", closedAt: { $gte: since } },
+    };
     const doc = await LcConversation.findOne({
       visitorId,
       mode: "archived",
-      closedReason: "patient_left",
-      leftAt: { $gte: new Date(now() - 24 * 3_600_000) },
-    }).sort({ leftAt: -1 });
+      $or: reasons.map((r) => windows[r]),
+    }).sort({ closedAt: -1 });
     if (!doc) return null;
     const settings = await loadSettings();
     const target = doc.modeBeforeLeft === "ai" ? "ai" : "queue";
-    const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "" };
+    const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "", inactiveDueAt: null };
     if (target === "queue") {
       Object.assign(set, { assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: followUpDueFor(doc, settings) });
     }
     const won = await LcConversation.findOneAndUpdate(
-      { _id: doc._id, mode: "archived", closedReason: "patient_left" },
+      { _id: doc._id, mode: "archived", closedReason: { $in: reasons } },
       { $set: set },
       { returnDocument: "after" }
     );
@@ -495,6 +528,15 @@ function createChatService({
   }
 
   const findOpenConversation = (visitorId) => findOpen(visitorId);
+  // The patient's file upload: an Inactive chat they could continue (found without reopening it), and the reopen
+  // itself, which the upload asks for only after the file passed validation.
+  const findReopenable = (visitorId) =>
+    LcConversation.findOne({
+      visitorId,
+      mode: "archived",
+      closedReason: "inactive",
+      closedAt: { $gte: new Date(now() - REOPEN_WINDOW_MS) },
+    }).sort({ closedAt: -1 });
 
   async function startConversation(visitorId, context = {}) {
     const visitor = await loadVisitor(visitorId);
@@ -547,10 +589,21 @@ function createChatService({
 
   // ── Patient messages ─────────────────────────────────────────────────────────
 
-  async function loadOpenForMessage(visitorId) {
+  // The patient writes (or sends a file) to a chat that was closed for inactivity: the same conversation reopens.
+  async function findOrReopen(visitorId) {
+    const open = await findOpen(visitorId);
+    if (open) return open;
+    const visitor = await loadVisitor(visitorId);
+    if (!hasContact(visitor)) return null;
+    const reopened = await reopenIfLeft(visitorId, visitor, ["inactive"]);
+    if (reopened) await pushState(reopened); // the widget leaves its "closed" view at once
+    return reopened;
+  }
+
+  async function loadOpenForMessage(visitorId, { reopen = false } = {}) {
     const visitor = await loadVisitor(visitorId);
     if (!hasContact(visitor)) return { error: "contact_required" };
-    const conv = await findOpen(visitorId);
+    const conv = reopen ? await findOrReopen(visitorId) : await findOpen(visitorId);
     if (!conv) return { error: "no_conversation" };
     return { visitor, conv };
   }
@@ -558,7 +611,7 @@ function createChatService({
   async function sendMessage(visitorId, rawText) {
     const text = limits.checkMessageText(rawText);
     if (!text.ok) return { ok: false, error: text.error };
-    const loaded = await loadOpenForMessage(visitorId);
+    const loaded = await loadOpenForMessage(visitorId, { reopen: true });
     if (loaded.error) return { ok: false, error: loaded.error };
     if (!limits.allowMessage(visitorId)) return { ok: false, error: "rate_limited" };
 
@@ -728,6 +781,7 @@ function createChatService({
           everLive: true,
           queuedAt: new Date(now()),
           followUpDueAt: followUpDueFor(conv, cfg),
+          inactiveDueAt: null, // a chat in the Queue is never auto-archived
           handoffReason: reason || "explicit_request", // shown to admins; the header button counts as a request
           offTopicStreak: 0,
           unansweredStreak: 0,
@@ -778,6 +832,53 @@ function createChatService({
         handled += 1;
       } catch (err) {
         log({ event: "follow_up_failed", conversationId: claimed.conversationId, message: err?.message });
+      }
+    }
+    return handled;
+  }
+
+  // The inactivity step. For every AI or live chat whose due time has passed, with the patient silent since the
+  // last AI or admin message: archive it as "Inactive" and tell the patient. Never touches the Queue. Each chat is
+  // claimed with one atomic update, so running from several places at once is safe.
+  async function runInactiveDue({ limit = INACTIVE_JOB_LIMIT } = {}) {
+    const stamp = new Date(now());
+    const due = await LcConversation.find({ mode: { $in: ["ai", "live"] }, inactiveDueAt: { $ne: null, $lte: stamp } })
+      .select("_id conversationId")
+      .limit(limit)
+      .lean();
+    let handled = 0;
+    for (const row of due) {
+      try {
+        const done = await withLock(row.conversationId, async () => {
+          const current = await LcConversation.findById(row._id);
+          if (!current || !["ai", "live"].includes(current.mode) || !current.inactiveDueAt || current.inactiveDueAt > stamp) return false;
+          const last = await LcMessage.findOne({
+            conversationId: current.conversationId,
+            sender: { $in: ["patient", "ai", "agent"] },
+            internal: { $ne: true },
+          })
+            .sort({ createdAt: -1 })
+            .select("sender")
+            .lean();
+          if (!last || last.sender === "patient") {
+            await LcConversation.updateOne({ _id: current._id }, { $set: { inactiveDueAt: null } }); // we owe a reply
+            return false;
+          }
+          const archived = await LcConversation.findOneAndUpdate(
+            { _id: current._id, mode: { $in: ["ai", "live"] }, inactiveDueAt: { $ne: null, $lte: stamp } },
+            { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "inactive", closedAt: stamp, inactiveDueAt: null } },
+            { returnDocument: "after" }
+          );
+          if (!archived) return false;
+          await addMessage(archived, "system", INACTIVE_TEXT(inactiveMinutesOf(await loadSettings())));
+          setActivity(archived.visitorId, archived);
+          announce(archived);
+          await pushState(archived);
+          return true;
+        });
+        if (done) handled += 1;
+      } catch (err) {
+        log({ event: "inactive_close_failed", conversationId: row.conversationId, message: err?.message });
       }
     }
     return handled;
@@ -873,12 +974,15 @@ function createChatService({
     talkToAgent,
     switchToAi,
     runFollowUpDue,
+    runInactiveDue,
     followUpDueFor,
     followUpJobMs: FOLLOW_UP_JOB_MS,
     relayTyping,
     // used by the agent side (agentService) and the socket layer
     withLock,
     findOpenConversation,
+    findReopenable,
+    reopenInactive: findOrReopen,
     trackConnection,
     visitorLeft,
     rate,

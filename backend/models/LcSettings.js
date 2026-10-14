@@ -12,6 +12,8 @@ const settingsSchema = new mongoose.Schema(
     greeting: { type: String, default: "", maxlength: 600 },
     // Minutes in the Queue without an admin reply before the patient is told an email follows (and gets it).
     followUpMinutes: { type: Number, default: 1, min: 1, max: 30 },
+    // Minutes of patient silence after an AI or admin reply before the chat is archived as "Inactive".
+    inactiveMinutes: { type: Number, default: 10, min: 5, max: 60 },
     handoffRules: {
       onUnsure: { type: Boolean, default: true }, // "unanswered": hands over after two misses in a row
       onAccountOrPayment: { type: Boolean, default: true }, // ... when the patient asks about their own booking or payment

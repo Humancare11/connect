@@ -74,6 +74,7 @@ function Item({ row, me, active, typing, onSelect }) {
   let preview = "";
   let withReply = false;
   if (row.mode === "archived" && row.closedReason === "patient_left") preview = "Archived · patient left the website";
+  else if (row.mode === "archived" && row.closedReason === "inactive") preview = "Archived · closed after inactivity";
   else if (row.invited) preview = "Invited · no reply yet";
   else if (last) {
     withReply = last.sender === "ai" || last.sender === "agent";
