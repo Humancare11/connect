@@ -16,7 +16,7 @@ const { validateContact, newConversationId, firstNameOf } = require("./chatServi
 const { aiNameOf } = require("./settingsDefaults");
 const { createWindowLimiter } = require("./limits");
 const { createTranslationService, publicLanguage } = require("./translationService");
-const { scrubContact } = require("./languageHints");
+const { scrubContact, tooShortToDetect, looksEnglish } = require("./languageHints");
 
 class AgentError extends Error {
   constructor(status, code, extra = {}) {
@@ -236,6 +236,17 @@ function createAgentService({
         .lean(),
     ]);
     const files = await chat.filesMeta(rows);
+    // Whether the composer should offer "Detect language": no language stored at all (an English chat stores "en"),
+    // and a recent patient message that is clearly not English and long enough to tell.
+    const languageUnknown =
+      !conv.language?.code &&
+      rows
+        .filter((m) => m.sender === "patient" && !m.internal && !m.fileId)
+        .slice(-4)
+        .some((m) => {
+          const text = decryptLiveChatText(m.text);
+          return text.trim() && !tooShortToDetect(text) && !looksEnglish(text);
+        });
     const messages = rows.map((m) => ({
       id: String(m._id),
       sender: m.sender,
@@ -262,7 +273,7 @@ function createAgentService({
     const settingsForFields = await loadSettings();
     return {
       aiName: aiNameOf(settingsForFields),
-      conversation: rowOf(conv, { userId: actor.id }),
+      conversation: { ...rowOf(conv, { userId: actor.id }), languageUnknown },
       view: translation.viewOf(conv, actor.id),
       messages,
       panel: {

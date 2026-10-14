@@ -458,7 +458,7 @@ function createChatService({
       const stamp = new Date(now());
       const archived = await LcConversation.findOneAndUpdate(
         { _id: current._id, mode: { $ne: "archived" } },
-        { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_left", leftAt: stamp, closedAt: stamp } },
+        { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_left", leftAt: stamp, closedAt: stamp, leaveDueAt: null } },
         { returnDocument: "after" }
       );
       if (!archived) return;
@@ -476,6 +476,10 @@ function createChatService({
   function trackConnection(visitorId) {
     clearTimeout(leaveTimers.get(visitorId));
     leaveTimers.delete(visitorId);
+    if (!connections.has(visitorId)) {
+      // back on the site: the persisted "left" time no longer applies
+      LcConversation.updateMany({ visitorId, leaveDueAt: { $ne: null } }, { $set: { leaveDueAt: null } }).catch(() => {});
+    }
     connections.set(visitorId, (connections.get(visitorId) || 0) + 1);
     let released = false;
     return () => {
@@ -487,6 +491,11 @@ function createChatService({
         return;
       }
       connections.delete(visitorId);
+      // Persist when this visitor counts as gone, so a restart that loses the timer below does not strand the chat.
+      LcConversation.updateMany(
+        { visitorId, mode: { $in: ["ai", "live", "queue"] } },
+        { $set: { leaveDueAt: new Date(now() + leaveGraceMs) } }
+      ).catch(() => {});
       const timer = setTimeout(() => {
         leaveTimers.delete(visitorId);
         if (!connections.has(visitorId)) visitorLeft(visitorId).catch(() => {});
@@ -890,6 +899,98 @@ function createChatService({
     return handled;
   }
 
+  // Catch-up for chats whose in-memory timers were lost (a restart or deploy) or that predate the inactivity timer.
+  // Idempotent: each chat is claimed with one atomic update. Never touches the Queue, a chat whose patient is
+  // connected, or an admin-held chat where the patient wrote last (they are waiting for an answer).
+  //   1. "Inactive": no inactivity due time, the last visible message is from the AI or an admin and is older than
+  //      the inactivity minutes.
+  //   2. "Patient left": nobody connected and the persisted leave time has passed. A chat with no leave time and no
+  //      connection gets one now (it is archived one grace period later), so nothing stays open forever.
+  async function runAbandonedSweep({ limit = 100 } = {}) {
+    const stamp = new Date(now());
+    const minutes = inactiveMinutesOf(await loadSettings());
+    const cutoff = new Date(now() - minutes * 60_000);
+    let archivedInactive = 0;
+    let archivedLeft = 0;
+
+    const lastVisible = (conversationId) =>
+      LcMessage.findOne({ conversationId, sender: { $in: ["patient", "ai", "agent"] }, internal: { $ne: true } })
+        .sort({ createdAt: -1 })
+        .select("sender")
+        .lean();
+
+    // 1. inactive
+    const stale = await LcConversation.find({ mode: { $in: ["ai", "live"] }, inactiveDueAt: null, lastMessageAt: { $lt: cutoff } })
+      .select("_id conversationId visitorId")
+      .limit(limit)
+      .lean();
+    for (const row of stale) {
+      if (isConnected(row.visitorId)) continue;
+      try {
+        const done = await withLock(row.conversationId, async () => {
+          const current = await LcConversation.findById(row._id);
+          if (!current || !["ai", "live"].includes(current.mode) || current.inactiveDueAt || current.lastMessageAt >= cutoff) return false;
+          if (isConnected(current.visitorId)) return false;
+          const last = await lastVisible(current.conversationId);
+          if (!last || last.sender === "patient") return false; // the patient is waiting, or nothing was said
+          const archived = await LcConversation.findOneAndUpdate(
+            { _id: current._id, mode: { $in: ["ai", "live"] }, lastMessageAt: { $lt: cutoff } },
+            { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "inactive", closedAt: stamp, inactiveDueAt: null, leaveDueAt: null } },
+            { returnDocument: "after" }
+          );
+          if (!archived) return false;
+          await addMessage(archived, "system", INACTIVE_TEXT(minutes));
+          setActivity(archived.visitorId, archived);
+          announce(archived);
+          await pushState(archived);
+          return true;
+        });
+        if (done) archivedInactive += 1;
+      } catch (err) {
+        log({ event: "abandoned_inactive_failed", conversationId: row.conversationId, message: err?.message });
+      }
+    }
+
+    // 2. patient left
+    const open = await LcConversation.find({ mode: { $in: ["ai", "live"] }, $or: [{ leaveDueAt: null }, { leaveDueAt: { $lte: stamp } }] })
+      .select("_id conversationId visitorId leaveDueAt")
+      .limit(limit)
+      .lean();
+    for (const row of open) {
+      if (isConnected(row.visitorId)) continue;
+      try {
+        if (!row.leaveDueAt) {
+          // nobody is connected and no leave time was kept (restart): start the grace period now
+          await LcConversation.updateOne({ _id: row._id, leaveDueAt: null }, { $set: { leaveDueAt: new Date(now() + leaveGraceMs) } });
+          continue;
+        }
+        const done = await withLock(row.conversationId, async () => {
+          const current = await LcConversation.findById(row._id);
+          if (!current || !["ai", "live"].includes(current.mode) || !current.leaveDueAt || current.leaveDueAt > stamp) return false;
+          if (isConnected(current.visitorId)) return false;
+          if (current.mode === "live") {
+            const last = await lastVisible(current.conversationId);
+            if (last?.sender === "patient") return false; // an admin holds it and the patient is waiting
+          }
+          const leftAt = new Date(Math.min(stamp.getTime(), current.leaveDueAt.getTime() - leaveGraceMs));
+          const archived = await LcConversation.findOneAndUpdate(
+            { _id: current._id, mode: { $in: ["ai", "live"] }, leaveDueAt: { $ne: null, $lte: stamp } },
+            { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_left", leftAt, closedAt: leftAt, inactiveDueAt: null, leaveDueAt: null } },
+            { returnDocument: "after" }
+          );
+          if (!archived) return false;
+          await addMessage(archived, "system", "Patient left the website", { internal: true });
+          announce(archived);
+          return true;
+        });
+        if (done) archivedLeft += 1;
+      } catch (err) {
+        log({ event: "abandoned_left_failed", conversationId: row.conversationId, message: err?.message });
+      }
+    }
+    return { inactive: archivedInactive, left: archivedLeft };
+  }
+
   // The midnight (India time) cleanup. Archives, as "inactive" (so the patient can continue within 24 h), every chat
   // with no message today that is not active:
   //   - mode "ai" (AI chats and "Back with the AI"): archived unless the patient is connected on the site;
@@ -1057,6 +1158,7 @@ function createChatService({
     runFollowUpDue,
     runInactiveDue,
     runDailySweep,
+    runAbandonedSweep,
     followUpDueFor,
     followUpJobMs: FOLLOW_UP_JOB_MS,
     relayTyping,

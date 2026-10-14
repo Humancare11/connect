@@ -25,8 +25,8 @@ export function LiveChatAdminProvider({ user }) {
       toasts={toasts}
       onOpen={(toast, event) => {
         hub.dismissToast(toast.id);
-        // In the Live Chat tab the chat is followed in place (no reload); anywhere else the anchor itself opens
-        // the named Live Chat tab.
+        // In the Live Chat tab the chat is followed in place (no reload); anywhere else the anchor itself opens a
+        // new tab.
         if (toast.path && inLiveChatTab()) {
           event?.preventDefault();
           openLiveChat(toast.path);
