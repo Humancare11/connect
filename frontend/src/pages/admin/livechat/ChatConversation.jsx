@@ -134,6 +134,7 @@ function Message({ m, first, c, aiName, onOpenFile, translation, shownOriginal, 
 }
 
 export default function ChatConversation({
+  readOnly = false, // the Archive page: no reply, note, take over, hand back, resolve or block
   detail,
   me,
   role,
@@ -178,9 +179,9 @@ export default function ChatConversation({
   const mine = c.assignee?.id === me;
   const heldByOther = c.mode === "live" && !mine;
   const superadmin = role === "superadmin";
-  const canTakeOver = !closed && (c.mode === "ai" || c.mode === "queue" || (heldByOther && superadmin));
-  const canHandBack = c.mode === "live" && (mine || superadmin);
-  const canResolve = !closed && (!heldByOther || superadmin);
+  const canTakeOver = !readOnly && !closed && (c.mode === "ai" || c.mode === "queue" || (heldByOther && superadmin));
+  const canHandBack = !readOnly && c.mode === "live" && (mine || superadmin);
+  const canResolve = !readOnly && !closed && (!heldByOther || superadmin);
   // Only the assignee replies; everyone else (and everyone on a closed chat) can still leave internal notes.
   const notesOnly = closed || heldByOther;
 
@@ -344,9 +345,11 @@ export default function ChatConversation({
               Resolve
             </button>
           )}
-          <button type="button" className="hic" onClick={() => composerRef.current?.startNote()} title="Add an internal note" aria-label="Add an internal note">
-            <Icon name="note" />
-          </button>
+          {!readOnly && (
+            <button type="button" className="hic" onClick={() => composerRef.current?.startNote()} title="Add an internal note" aria-label="Add an internal note">
+              <Icon name="note" />
+            </button>
+          )}
           <button type="button" className="hic" onClick={onDownload} title="Download transcript" aria-label="Download transcript">
             <Icon name="download" />
           </button>
@@ -356,12 +359,12 @@ export default function ChatConversation({
           <button type="button" className="hic pn" onClick={onTogglePanel} aria-pressed={panelOpen} title="Show or hide patient details" aria-label="Toggle patient details">
             <Icon name="panel" />
           </button>
-          {c.ip && (
+          {c.ip && !readOnly && (
             <button type="button" className="hic" data-more onClick={() => setMenu(menu === "more" ? "" : "more")} title="More" aria-label="More actions" aria-expanded={menu === "more"}>
               <Icon name="dots" />
             </button>
           )}
-          {menu === "more" && c.ip && (
+          {menu === "more" && c.ip && !readOnly && (
             <div className="pop pop--more" role="menu">
               <button
                 type="button"
@@ -441,6 +444,9 @@ export default function ChatConversation({
       )}
       </div>
 
+      {readOnly ? (
+        <div className="wk-readonly">Read-only: this chat is in the Archive.</div>
+      ) : (
       <Composer
         ref={composerRef}
         conversation={c}
@@ -459,6 +465,7 @@ export default function ChatConversation({
         onTyping={onTyping}
         onNotice={setTransError}
       />
+      )}
     </div>
   );
 }

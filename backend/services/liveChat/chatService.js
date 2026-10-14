@@ -8,7 +8,7 @@
 //   - any AI failure (quota, cap, bad output, outage) shows the "AI unavailable" fallback and keeps live chat usable,
 //   - notes (sender "note") never reach the patient.
 const crypto = require("crypto");
-const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
 const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish } = require("./languageHints");
@@ -155,7 +155,7 @@ function createChatService({
     // A chat an admin started (invite) has no contact yet: the visitor's details now belong to it.
     await LcConversation.updateMany(
       { visitorId: id, mode: { $ne: "archived" }, "contact.email.cipherText": "" },
-      { $set: { contact: enc } }
+      { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } }
     );
     const record = presence.get(id);
     if (record) presence.update(id, { name: values.name, email: values.email });
@@ -572,6 +572,7 @@ function createChatService({
       cookieChoice: ["accepted", "declined", "unknown"].includes(context.cookieChoice) ? context.cookieChoice : "unknown",
       startedPage: { path: record?.page?.path || context.page?.path || "", title: record?.page?.title || context.page?.title || "" },
       contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
+      searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
     });
     await LcVisitor.updateOne({ visitorId }, { $inc: { chatCount: 1 } });
     await touchVisitor(visitorId);

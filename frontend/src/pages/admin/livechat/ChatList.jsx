@@ -6,7 +6,7 @@ import { CLOSED_LABEL, timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 
 // Left column: the chat list (docs/live-chat-admin-ui.html). Live agent chats: Queue, My chats, Other agents, Back with
-// the AI and Archived. AI chats: Talking to the AI and Archived. Each group shows its count, can be collapsed, and
+// the AI and Archive temp (archived in the last 24 hours; the Archive page has the rest). AI chats: Talking to the AI and Archive temp. Each group shows its count, can be collapsed, and
 // sorts Oldest / Newest first.
 const groupsFor = (view, me) =>
   view === "live"
@@ -15,11 +15,11 @@ const groupsFor = (view, me) =>
         ["My chats", (c) => c.mode === "live" && c.assignee?.id === me, "Oldest"],
         ["Other agents", (c) => c.mode === "live" && c.assignee?.id !== me, "Newest"],
         ["Back with the AI", (c) => c.mode === "ai", "Newest"],
-        ["Archived", (c) => c.mode === "archived", "Newest"],
+        ["Archive temp", (c) => c.mode === "archived", "Newest"],
       ]
     : [
         ["Talking to the AI", (c) => c.mode !== "archived", "Newest"],
-        ["Archived", (c) => c.mode === "archived", "Newest"],
+        ["Archive temp", (c) => c.mode === "archived", "Newest"],
       ];
 
 // Small labels under the preview: why a chat is in the Queue, what happened to its follow-up email, who holds it.

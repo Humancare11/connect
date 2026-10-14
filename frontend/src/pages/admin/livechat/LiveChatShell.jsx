@@ -16,6 +16,7 @@ const ITEMS = [
   { path: BASE, label: "Real-time visitors", icon: "eye", exact: true },
   { path: `${BASE}/ai-chats`, label: "AI chats", icon: "bot", badge: "ai" },
   { path: `${BASE}/agent-chats`, label: "Live agent chats", icon: "headset", badge: "live" },
+  { path: `${BASE}/archive`, label: "Archive", icon: "archive" },
   { path: `${BASE}/team`, label: "Team", icon: "users" },
   { path: `${BASE}/reports`, label: "Reports", icon: "chart" },
   { path: `${BASE}/settings`, label: "AI agent settings", icon: "sliders" },

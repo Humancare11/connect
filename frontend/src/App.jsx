@@ -837,6 +837,7 @@ const AdminLiveReports = lazy(() => import("./pages/admin/livechat/AdminLiveRepo
 const AdminLiveSettings = lazy(() => import("./pages/admin/livechat/AdminLiveSettings"));
 const AdminAiChats = lazy(() => import("./pages/admin/livechat/AdminAiChats"));
 const AdminLiveAgentChats = lazy(() => import("./pages/admin/livechat/AdminLiveAgentChats"));
+const AdminLiveArchive = lazy(() => import("./pages/admin/livechat/AdminLiveArchive"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -1622,6 +1623,16 @@ export function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <LiveChatShell>
                   <AdminLiveAgentChats />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/archive/:conversationId?"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveArchive />
                 </LiveChatShell>
               </PrivateRoute>
             }

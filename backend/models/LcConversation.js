@@ -63,6 +63,11 @@ const conversationSchema = new mongoose.Schema(
     translateViews: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, view: { type: String, enum: ["original", "en"], default: "original" } }],
     tags: [{ type: String, trim: true, maxlength: 40 }],
     contact: { name: ENC_FIELD, email: ENC_FIELD, phone: ENC_FIELD },
+    // Blind indexes of the contact (keyed hashes, never the values) for the Archive search. See utils/liveChat/crypto.js.
+    searchKeys: {
+      emailHash: { type: String, default: "", index: true },
+      phoneHash: { type: String, default: "", index: true },
+    },
     ip: { type: String, default: "" },
     geo: {
       city: { type: String, default: "" },
@@ -88,5 +93,6 @@ const conversationSchema = new mongoose.Schema(
 );
 
 conversationSchema.index({ mode: 1, lastMessageAt: -1 });
+conversationSchema.index({ mode: 1, closedAt: -1 }); // Archive list and Archive temp
 
 module.exports = mongoose.model("LcConversation", conversationSchema);

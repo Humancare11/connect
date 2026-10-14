@@ -293,6 +293,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createStatsService } = require("./statsService");
   const settingsSvc = createSettingsService({ models, invalidateSettings });
   const statsSvc = createStatsService({ models, loadSettings, agents });
+  const archiveSvc = require("./archiveService").createArchiveService({ models });
   Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
@@ -314,7 +315,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc })
     );
   }
 
@@ -339,6 +340,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     agentSvc,
     settingsSvc,
     statsSvc,
+    archiveSvc,
     files,
     followUp,
     ipBlock,

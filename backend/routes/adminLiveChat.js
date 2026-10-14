@@ -41,7 +41,7 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   getSettings  () => settings document
 const DEFAULT_GUARD = [verifyAdminToken, liveChatAgentOnly];
 
-function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats } = {}) {
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive } = {}) {
   const router = express.Router();
   router.use(guard);
   router.use(express.json({ limit: "32kb" }));
@@ -121,7 +121,15 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
     handle((req) => agent.startChat(actor(req), req.body?.visitorId))
   );
 
-  router.get("/conversations/:id", handle((req) => agent.detail(actor(req), idOf(req)).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))));
+  // The Archive page: every archived chat with filters and search (admin + superadmin, like the chat lists).
+  router.get("/archive", handle((req) => archive.list(req.query)));
+
+  router.get(
+    "/conversations/:id",
+    handle((req) =>
+      agent.detail(actor(req), idOf(req), { markRead: req.query.archive !== "1" }).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))
+    )
+  );
   // Plain-text download (no notes). Not cached; the file name carries only the chat ID.
   router.get("/conversations/:id/transcript", async (req, res, next) => {
     try {
