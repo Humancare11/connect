@@ -596,21 +596,25 @@ export default function ManualInvoices() {
         </div>
 
         {/* Meta strip — the four printed columns above the item table. */}
-        <div className="mi-meta">
+        <div className={`mi-meta${isPaid ? " mi-meta--3" : ""}`}>
           <div className="mi-meta__cell">
             <span className="mi-meta__key">Issue Date</span>
             {/* Stamped server-side at generation time, so it is shown, not typed. */}
             <span className="mi-meta__value">{issueDateLabel}</span>
           </div>
-          <div className="mi-meta__cell">
-            <span className="mi-meta__key">Due Date</span>
-            <input
-              type="date"
-              className="mi-input mi-input--flush mi-input--accent"
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-            />
-          </div>
+          {/* A receipt prints no Due Date; the value stays in state so
+              switching back to "Bill" restores it, and it is still saved. */}
+          {!isPaid && (
+            <div className="mi-meta__cell">
+              <span className="mi-meta__key">Due Date</span>
+              <input
+                type="date"
+                className="mi-input mi-input--flush mi-input--accent"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+              />
+            </div>
+          )}
           <div className="mi-meta__cell">
             <span className="mi-meta__key">Payment Terms</span>
             <select
@@ -753,10 +757,12 @@ export default function ManualInvoices() {
 
         <section className="mi-doc__block">
           <p className="mi-doc__caption">Terms</p>
-          <p className="mi-doc__terms">{termsLine}</p>
-          <p className="mi-doc__terms-pair">
-            <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
-          </p>
+          {!isPaid && <p className="mi-doc__terms">{termsLine}</p>}
+          {!isPaid && (
+            <p className="mi-doc__terms-pair">
+              <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
+            </p>
+          )}
           <p className="mi-doc__terms-pair">
             <strong>Payment Terms:</strong> {paymentTerms}
           </p>

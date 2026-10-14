@@ -344,6 +344,11 @@
   margin-bottom: 28px;
 }
 
+/* Paid invoices print no Due Date, leaving three cells. */
+.mi-meta--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .mi-meta__cell {
   display: flex;
   flex-direction: column;
@@ -1293,6 +1298,15 @@
   /* Meta strip stacks two-up rather than squeezing four columns. */
   .mi-meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* With three cells, let the last one span the row instead of leaving a gap. */
+  .mi-meta--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mi-meta--3 .mi-meta__cell:last-child {
+    grid-column: 1 / -1;
   }
 
   .mi-meta__cell {
