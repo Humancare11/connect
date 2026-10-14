@@ -62,8 +62,6 @@ html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
 .lcx .rt-credit a{color:inherit;text-decoration:underline}
 
 /* Original | English switch: sticky at the top of the message area, under the "Started" line */
-.lcx .wk-viewswitch{position:sticky;top:0;z-index:3;display:flex;justify-content:center;align-items:center;gap:10px;width:100%;max-width:820px;margin:0 auto;padding:6px 0 8px;background:linear-gradient(var(--bg) 75%,transparent)}
-.lcx .wk-viewswitch .wk-seg{background:var(--surface)}
 
 /* Archive page: filters, table, pager and the read-only viewer */
 .lcx .ar{display:flex;flex-direction:column;gap:14px;min-height:0;padding:4px 4px 24px}
@@ -100,3 +98,9 @@ html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
 .lcx .wk-inbox.ar-two{grid-template-columns:minmax(0,1fr) 340px}
 .lcx .wk-readonly{border-top:1px solid var(--line);padding:12px 18px;font-size:12.5px;color:var(--muted);background:var(--surface)}
 @media (max-width:760px){.lcx .wk-inbox.ar-two{grid-template-columns:1fr}.lcx .ar-tablewrap{max-height:none}}
+
+/* Original | English switch in the composer toolbar and the read-only bar */
+.lcx .cm-bar{flex-wrap:wrap}
+.lcx .cm-view{display:inline-flex;align-items:center;gap:8px;margin-left:6px}
+.lcx .cm-view .wk-seg{background:var(--surface)}
+.lcx .wk-readonly{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}

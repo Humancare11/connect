@@ -524,15 +524,20 @@ describe("live chat: translation for admins", () => {
     chat.socket.close();
   });
 
-  test("the conversation header no longer shows the language badge; the chat list still does", () => {
+  test("no language tag in the chat list or the conversation header; the Original | English switch is in the composer toolbar", () => {
     const fs = require("fs");
     const path = require("path");
     const dir = path.join(__dirname, "..", "..", "frontend", "src", "pages", "admin", "livechat");
-    const conversation = fs.readFileSync(path.join(dir, "ChatConversation.jsx"), "utf8");
-    const list = fs.readFileSync(path.join(dir, "ChatList.jsx"), "utf8");
+    const read = (name) => fs.readFileSync(path.join(dir, name), "utf8");
+    const conversation = read("ChatConversation.jsx");
+    const list = read("ChatList.jsx");
+    const composer = read("Composer.jsx");
+    const sw = read("LanguageSwitch.jsx");
     assert.equal(/The patient writes in/.test(conversation), false, "no language tag in the conversation header");
-    assert.match(list, /The patient writes in/);
-    assert.match(conversation, /Original/);
+    assert.equal(/The patient writes in/.test(list), false, "no language tag in the chat list");
+    assert.match(composer, /<LanguageSwitch/);
+    assert.match(sw, /Original/);
+    assert.match(sw, /English/);
     assert.match(conversation, /Show original|show original/);
   });
 

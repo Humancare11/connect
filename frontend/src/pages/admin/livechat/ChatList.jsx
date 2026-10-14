@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
-import { handoffLabel } from "./liveChatHub";
 import Icon from "./lcIcons";
 import NotificationsBanner from "./NotificationsBanner";
-import { CLOSED_LABEL, timeOf } from "./chatUtils";
+import { timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 
 // Left column: the chat list (docs/live-chat-admin-ui.html). Live agent chats: Queue, My chats, Other agents, Back with
@@ -22,61 +21,11 @@ const groupsFor = (view, me) =>
         ["Archive temp", (c) => c.mode === "archived", "Newest"],
       ];
 
-// Small labels under the preview: why a chat is in the Queue, what happened to its follow-up email, who holds it.
-function Labels({ row, me }) {
-  const tags = [];
-  if (row.mode === "queue") {
-    if (row.emailStatus === "failed") {
-      tags.push(
-        <span key="mail" className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">
-          Email failed
-        </span>
-      );
-    } else if (row.emailFollowUp) {
-      tags.push(
-        <span key="mail" className="wk-tag wk-tag--wait">
-          Email follow-up
-        </span>
-      );
-    }
-    if (handoffLabel(row.handoffReason)) {
-      tags.push(
-        <span key="why" className="wk-tag wk-tag--lang" title="Why this chat needs a person">
-          {handoffLabel(row.handoffReason)}
-        </span>
-      );
-    }
-  } else if (row.mode === "live" && row.assignee?.id !== me) {
-    tags.push(
-      <span key="who" className="wk-tag wk-tag--human">
-        {row.assignee?.name || "Agent"}
-      </span>
-    );
-  } else if (row.mode === "archived") {
-    tags.push(
-      <span key="done" className="wk-tag wk-tag--done">
-        {CLOSED_LABEL[row.closedReason] || "Resolved"}
-      </span>
-    );
-  }
-  if (row.rating) {
-    tags.push(
-      <span key="stars" className="wk-rating">
-        {"★".repeat(row.rating)}
-      </span>
-    );
-  }
-  return tags.length ? <span className="wk-tags-row">{tags}</span> : null;
-}
-
-function Item({ row, me, active, typing, onSelect }) {
+function Item({ row, active, typing, onSelect }) {
   const last = row.preview;
   let preview = "";
   let withReply = false;
-  if (row.mode === "archived" && row.closedReason === "patient_left") preview = "Archived · patient left the website";
-  else if (row.mode === "archived" && row.closedReason === "inactive") preview = "Archived · closed after inactivity";
-  else if (row.invited) preview = "Invited · no reply yet";
-  else if (last) {
+  if (last) {
     withReply = last.sender === "ai" || last.sender === "agent";
     preview = last.text;
   }
@@ -97,14 +46,8 @@ function Item({ row, me, active, typing, onSelect }) {
               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{preview}</span>
             </span>
           )}
-          {row.language?.name ? (
-            <span className="wk-tag wk-tag--lang" title={`The patient writes in ${row.language.name}`}>
-              {row.language.name}
-            </span>
-          ) : null}
           {row.unread > 0 && <span className="wk-badge">{row.unread}</span>}
         </span>
-        <Labels row={row} me={me} />
       </span>
     </button>
   );
@@ -157,7 +100,7 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
               </div>
               {!closed &&
                 items.map((row) => (
-                  <Item key={row.conversationId} row={row} me={me} active={row.conversationId === activeId} typing={typing.has(row.visitorId)} onSelect={onSelect} />
+                  <Item key={row.conversationId} row={row} active={row.conversationId === activeId} typing={typing.has(row.visitorId)} onSelect={onSelect} />
                 ))}
             </div>
           );

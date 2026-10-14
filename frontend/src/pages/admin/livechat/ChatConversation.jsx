@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { handoffLabel } from "./liveChatHub";
 import Icon from "./lcIcons";
 import Composer from "./Composer";
-import { CLOSED_LABEL, dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
+import LanguageSwitch from "./LanguageSwitch";
+import { dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 import { DEFAULT_AI_NAME } from "../../../features/livechat/aiName";
 
@@ -305,28 +305,6 @@ export default function ChatConversation({
       <div className="wk-head">
         <div className="wk-head-t">
           <strong>{heading}</strong>
-          {closed && <span className="wk-tag wk-tag--done">{CLOSED_LABEL[c.closedReason] || "Resolved"}</span>}
-          {c.mode === "queue" && c.emailStatus === "failed" && (
-            <span className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">
-              Email failed
-            </span>
-          )}
-          {c.mode === "queue" && c.emailStatus !== "failed" && c.emailFollowUp && <span className="wk-tag wk-tag--wait">Email follow-up</span>}
-          {(c.mode === "queue" || c.mode === "live") && handoffLabel(c.handoffReason) && (
-            <span className="wk-tag wk-tag--lang" title="Why this chat was handed to a person">
-              {handoffLabel(c.handoffReason)}
-            </span>
-          )}
-          {c.invited && (
-            <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">
-              Invited
-            </span>
-          )}
-          {c.rating ? (
-            <span className="wk-rating" title={`Patient rating: ${c.rating} of 5`}>
-              {"★".repeat(c.rating)}
-            </span>
-          ) : null}
           {heldByOther && <span className="wk-small wk-muted">held by {c.assignee?.name}</span>}
         </div>
         <div className="wk-actions">
@@ -400,19 +378,6 @@ export default function ChatConversation({
             Started · {dayWord(startedAt)} {timeOf(startedAt)}
           </span>
         </div>
-        {language && (
-          <div className="wk-viewswitch">
-            <div className="wk-seg" role="group" aria-label="Message language">
-              <button type="button" aria-pressed={view === "original"} onClick={() => chooseView("original")}>
-                Original
-              </button>
-              <button type="button" aria-pressed={view === "en"} onClick={() => chooseView("en")}>
-                English
-              </button>
-            </div>
-            {translating && <span className="wk-small wk-muted">Translating…</span>}
-          </div>
-        )}
         {messages.map((m, i) => (
           <Message
             key={m.id}
@@ -445,7 +410,10 @@ export default function ChatConversation({
       </div>
 
       {readOnly ? (
-        <div className="wk-readonly">Read-only: this chat is in the Archive.</div>
+        <div className="wk-readonly">
+          <span>Read-only: this chat is in the Archive.</span>
+          {language && <LanguageSwitch view={view} onChoose={chooseView} translating={translating} />}
+        </div>
       ) : (
       <Composer
         ref={composerRef}
@@ -457,6 +425,9 @@ export default function ChatConversation({
         busy={busy}
         canned={canned}
         language={language}
+        view={view}
+        onChooseView={chooseView}
+        translating={translating}
         onSend={andScroll(onSend)}
         onNote={andScroll(onNote)}
         onSuggest={onSuggest}
