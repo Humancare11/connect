@@ -80,7 +80,7 @@ describe("live chat: IST midnight cleanup", () => {
   });
 
   describe("the sweep", () => {
-    test("archives non-active AI and admin-held chats as inactive; keeps Queue, connected-patient and patient-waiting chats", async () => {
+    test("archives non-active AI, admin-held and Queue chats as inactive; keeps connected-patient and patient-waiting chats", async () => {
       const aiChat = await seed({ mode: "ai", last: "ai" });
       const backWithAi = await seed({ mode: "ai", last: "agent", everLive: true });
       const liveAnswered = await seed({ mode: "live", last: "agent", assigned: true });
@@ -110,8 +110,13 @@ describe("live chat: IST midnight cleanup", () => {
         assert.equal(lines.length, 1);
       }
       assert.equal((await convOf(livePatientWaiting)).mode, "live", "the patient wrote last: stays");
-      assert.equal((await convOf(queued)).mode, "queue");
-      assert.equal((await convOf(queuedAnswered)).mode, "queue", "the Queue is never swept");
+      for (const id of [queued, queuedAnswered]) {
+        const q = await convOf(id);
+        assert.equal(q.mode, "archived", "Queue chats are swept too");
+        assert.equal(q.closedReason, "inactive");
+        assert.equal(q.modeBeforeLeft, "queue");
+        assert.equal((await lc.models.LcMessage.find({ conversationId: id, sender: "system" }).lean()).length, 0, "quietly: no closing line");
+      }
       assert.equal((await convOf(activeToday)).mode, "ai", "a message today keeps it");
       assert.equal((await convOf(connected)).mode, "ai", "the patient is connected: kept");
       socket.close();

@@ -96,6 +96,17 @@ function createAgentService({
     phone: decryptLiveChatText(source?.phone),
   });
 
+  // Archived by inactivity from the Queue, today (India time): can be joined or replied to from Archive temp.
+  function isJoinable(conv) {
+    return Boolean(
+      conv.mode === "archived" &&
+        conv.closedReason === "inactive" &&
+        conv.modeBeforeLeft === "queue" &&
+        conv.closedAt &&
+        new Date(conv.closedAt).getTime() >= istTodayStart(now()).getTime()
+    );
+  }
+
   // One row of a chat list (also pushed as chat:updated). `last` is the latest visible message, if known.
   function rowOf(conv, { userId, last } = {}) {
     const contact = contactOf(conv.contact);
@@ -118,6 +129,9 @@ function createAgentService({
       emailFollowUp: Boolean(conv.offlineRequested || conv.followUpNoticeAt),
       emailStatus: conv.followUp?.status || "", // "", sending, sent, failed, skipped
       closedReason: conv.closedReason || "",
+      closedAt: conv.closedAt || null,
+      // A Queue chat archived by inactivity today (IST): an admin can still join or reply from Archive temp.
+      joinable: isJoinable(conv),
       startedAt: conv.startedAt,
       lastMessageAt: conv.lastMessageAt,
       queuedAt: conv.queuedAt,
@@ -357,8 +371,36 @@ function createAgentService({
 
   // Must run inside chat.withLock(conversationId).
   async function takeOverLocked(actor, conv, settings) {
-    if (conv.mode === "archived") throw new AgentError(409, "closed");
     const me = String(actor.id);
+    if (conv.mode === "archived") {
+      if (!isJoinable(conv)) throw new AgentError(409, "closed");
+      // Joining reopens the chat as a live chat assigned to this admin.
+      const name = await displayNameOf(me, settings);
+      const joined = await LcConversation.findOneAndUpdate(
+        { _id: conv._id, mode: "archived", closedReason: "inactive", modeBeforeLeft: "queue" },
+        {
+          $set: {
+            mode: "live",
+            assigneeId: oid(me),
+            agentName: name,
+            everLive: true,
+            closedReason: "",
+            closedAt: null,
+            leftAt: null,
+            modeBeforeLeft: "",
+            offlineRequested: false,
+            followUpDueAt: null,
+            leaveDueAt: null,
+            inactiveDueAt: inactiveDueFor(settings),
+            liveStartedAt: conv.liveStartedAt || new Date(now()),
+          },
+        },
+        { returnDocument: "after" }
+      );
+      if (!joined) throw new AgentError(409, "closed");
+      await chat.addMessage(joined, "system", `${name} joined the chat`);
+      return { conv: joined };
+    }
     const name = await displayNameOf(me, settings);
 
     if (conv.mode === "live") {
@@ -426,7 +468,7 @@ function createAgentService({
     return chat.withLock(conversationId, async () => {
       let conv = await load(conversationId);
       const settings = await loadSettings();
-      if (conv.mode === "archived") throw new AgentError(409, "closed");
+      if (conv.mode === "archived" && !isJoinable(conv)) throw new AgentError(409, "closed");
       const me = String(actor.id);
       if (conv.mode === "live" && !sameId(conv.assigneeId, me)) {
         throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
@@ -453,7 +495,7 @@ function createAgentService({
     return chat.withLock(conversationId, async () => {
       let conv = await load(conversationId);
       const settings = await loadSettings();
-      if (conv.mode === "archived") throw new AgentError(409, "closed");
+      if (conv.mode === "archived" && !isJoinable(conv)) throw new AgentError(409, "closed");
       const me = String(actor.id);
       if (conv.mode === "live" && !sameId(conv.assigneeId, me)) {
         throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
