@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Icon from "./lcIcons";
 import Composer from "./Composer";
 import LanguageSwitch from "./LanguageSwitch";
+import DeleteChatsDialog from "./DeleteChatsDialog";
 import { dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 import { DEFAULT_AI_NAME } from "../../../features/livechat/aiName";
@@ -153,6 +154,7 @@ export default function ChatConversation({
   onTyping,
   onOpenFile,
   onBlockIp,
+  onDelete, // Super Admin: delete an archived chat (to Trash); async, returns { ok, error }
   onDownload,
   onSendFile,
   onTranslate,
@@ -179,6 +181,9 @@ export default function ChatConversation({
   const mine = c.assignee?.id === me;
   const heldByOther = c.mode === "live" && !mine;
   const superadmin = role === "superadmin";
+  const canDelete = superadmin && closed && typeof onDelete === "function";
+  const showMore = (Boolean(c.ip) && !readOnly) || canDelete;
+  const [deleting, setDeleting] = useState(null); // null, or { busy, error }
   const canTakeOver = !readOnly && !closed && (c.mode === "ai" || c.mode === "queue" || (heldByOther && superadmin));
   const canHandBack = !readOnly && c.mode === "live" && (mine || superadmin);
   const canResolve = !readOnly && !closed && (!heldByOther || superadmin);
@@ -337,25 +342,40 @@ export default function ChatConversation({
           <button type="button" className="hic pn" onClick={onTogglePanel} aria-pressed={panelOpen} title="Show or hide patient details" aria-label="Toggle patient details">
             <Icon name="panel" />
           </button>
-          {c.ip && !readOnly && (
+          {showMore && (
             <button type="button" className="hic" data-more onClick={() => setMenu(menu === "more" ? "" : "more")} title="More" aria-label="More actions" aria-expanded={menu === "more"}>
               <Icon name="dots" />
             </button>
           )}
-          {menu === "more" && c.ip && !readOnly && (
+          {menu === "more" && showMore && (
             <div className="pop pop--more" role="menu">
-              <button
-                type="button"
-                className="pop-item danger"
-                disabled={busy}
-                onClick={() => {
-                  setMenu("");
-                  onBlockIp();
-                }}
-              >
-                <b>Block IP {c.ip}</b>
-                <span>Closes its chats</span>
-              </button>
+              {c.ip && !readOnly && (
+                <button
+                  type="button"
+                  className="pop-item danger"
+                  disabled={busy}
+                  onClick={() => {
+                    setMenu("");
+                    onBlockIp();
+                  }}
+                >
+                  <b>Block IP {c.ip}</b>
+                  <span>Closes its chats</span>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  type="button"
+                  className="pop-item danger"
+                  onClick={() => {
+                    setMenu("");
+                    setDeleting({ busy: false, error: "" });
+                  }}
+                >
+                  <b>Delete chat</b>
+                  <span>Moves it to Trash for 30 days</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -436,6 +456,23 @@ export default function ChatConversation({
         onTyping={onTyping}
         onNotice={setTransError}
       />
+      )}
+      {deleting && (
+        <DeleteChatsDialog
+          title="Delete chat"
+          count={1}
+          countLabel="will be moved to Trash"
+          description="It disappears from the lists, Archive and reports, and the patient cannot reopen it. You can restore it from Trash for 30 days."
+          confirmLabel="Move to Trash"
+          busy={deleting.busy}
+          error={deleting.error}
+          onCancel={() => setDeleting(null)}
+          onConfirm={async () => {
+            setDeleting({ busy: true, error: "" });
+            const r = await onDelete();
+            if (mounted.current && r && r.ok === false) setDeleting({ busy: false, error: r.error || "Could not delete this chat." });
+          }}
+        />
       )}
     </div>
   );

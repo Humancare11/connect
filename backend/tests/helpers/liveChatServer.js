@@ -77,6 +77,14 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
         return `https://files.test/${key}?sig=fake`;
       },
       remove: async (key) => void store.delete(key),
+      removeMany: async (keys) => {
+        const failed = [];
+        for (const key of keys) {
+          if (failures.removeKeys?.has(key)) failed.push(key);
+          else store.delete(key);
+        }
+        return failed;
+      },
     },
     sessionCheckMs: 100,
     guard: [fakeAuth, liveChatAgentOnly],
@@ -234,6 +242,7 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     LcFile: require("../../models/LcFile"),
     LcBlockedIp: require("../../models/LcBlockedIp"),
     LcSettingsAudit: require("../../models/LcSettingsAudit"),
+    LcChatDeletionAudit: require("../../models/LcChatDeletionAudit"),
     LcAgentProfile: require("../../models/LcAgentProfile"),
   };
   await Promise.all(Object.values(models).map((m) => m.init()));

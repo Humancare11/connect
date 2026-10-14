@@ -166,7 +166,20 @@ function createArchiveService({ models, now = () => Date.now() }) {
     };
   }
 
-  return { list, PAGE_SIZE, SCAN_CAP };
+  // Every archived chat the same filters show (used by "delete all matching filters"): the SAME filter code as the
+  // list, so what is deleted is exactly what the Archive page lists. `capped` means the search hit its scan cap.
+  async function matchingIds(query = {}) {
+    const { filter, from, to } = baseFilter(query);
+    const q = String(query.q || "").trim().slice(0, 100);
+    if (q) {
+      const found = await searchIds(filter, q, { from, to });
+      return { ids: found.ids, capped: found.capped, filters: { from, to, type: query.type || "", reason: query.reason || "", hasSearch: true } };
+    }
+    const rows = await LcConversation.find(filter).select("conversationId").lean();
+    return { ids: rows.map((r) => r.conversationId), capped: false, filters: { from, to, type: query.type || "", reason: query.reason || "", hasSearch: false } };
+  }
+
+  return { list, matchingIds, PAGE_SIZE, SCAN_CAP };
 }
 
 module.exports = { createArchiveService };

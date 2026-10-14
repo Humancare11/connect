@@ -98,11 +98,12 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
     const [profiles, open, today, replies, aiOpen, aiToday, aiSample] = await Promise.all([
       LcAgentProfile.find({ userId: { $in: ids } }).lean(),
       LcConversation.aggregate([{ $match: { mode: "live", assigneeId: { $in: ids } } }, { $group: { _id: "$assigneeId", n: { $sum: 1 } } }]),
-      LcConversation.aggregate([{ $match: { assigneeId: { $in: ids }, liveStartedAt: { $gte: todayStart } } }, { $group: { _id: "$assigneeId", n: { $sum: 1 } } }]),
+      LcConversation.aggregate([{ $match: { assigneeId: { $in: ids }, mode: { $ne: "trashed" }, liveStartedAt: { $gte: todayStart } } }, { $group: { _id: "$assigneeId", n: { $sum: 1 } } }]),
       LcConversation.aggregate([
         {
           $match: {
             assigneeId: { $in: ids },
+            mode: { $ne: "trashed" },
             liveStartedAt: { $gte: todayStart },
             queuedAt: { $ne: null },
             firstAgentReplyAt: { $ne: null },
@@ -112,8 +113,8 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
         { $group: { _id: "$assigneeId", avgMs: { $avg: { $subtract: ["$firstAgentReplyAt", "$queuedAt"] } } } },
       ]),
       LcConversation.countDocuments({ mode: "ai" }),
-      LcConversation.countDocuments({ everLive: false, startedAt: { $gte: todayStart } }),
-      LcConversation.find({ everLive: false, startedAt: { $gte: todayStart } }).select("conversationId").limit(500).lean(),
+      LcConversation.countDocuments({ everLive: false, mode: { $ne: "trashed" }, startedAt: { $gte: todayStart } }),
+      LcConversation.find({ everLive: false, mode: { $ne: "trashed" }, startedAt: { $gte: todayStart } }).select("conversationId").limit(500).lean(),
     ]);
 
     const by = (rows, field) => new Map(rows.map((r) => [String(r._id), r[field]]));
@@ -217,22 +218,22 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
 
     const [totals, ratings, replies, perHour, chats, usageToday, usageMonth, usageRange] = await Promise.all([
       LcConversation.aggregate([
-        { $match: inRange },
+        { $match: { ...inRange, mode: { $ne: "trashed" } } },
         { $group: { _id: null, total: { $sum: 1 }, solvedByAi: { $sum: { $cond: [{ $eq: ["$everLive", false] }, 1, 0] } }, withAgent: { $sum: { $cond: ["$everLive", 1, 0] } }, patientLeft: { $sum: { $cond: [{ $eq: ["$closedReason", "patient_left"] }, 1, 0] } } } },
       ]),
       LcConversation.aggregate([
-        { $match: { ...inRange, "rating.stars": { $ne: null } } },
+        { $match: { ...inRange, mode: { $ne: "trashed" }, "rating.stars": { $ne: null } } },
         { $group: { _id: "$rating.stars", n: { $sum: 1 } } },
       ]),
       LcConversation.aggregate([
-        { $match: { ...inRange, queuedAt: { $ne: null }, firstAgentReplyAt: { $ne: null }, $expr: { $gte: ["$firstAgentReplyAt", "$queuedAt"] } } },
+        { $match: { ...inRange, mode: { $ne: "trashed" }, queuedAt: { $ne: null }, firstAgentReplyAt: { $ne: null }, $expr: { $gte: ["$firstAgentReplyAt", "$queuedAt"] } } },
         { $group: { _id: null, avgMs: { $avg: { $subtract: ["$firstAgentReplyAt", "$queuedAt"] } }, n: { $sum: 1 } } },
       ]),
       LcConversation.aggregate([
-        { $match: inRange },
+        { $match: { ...inRange, mode: { $ne: "trashed" } } },
         { $group: { _id: { $hour: { date: "$startedAt", timezone: range.zone } }, ai: { $sum: { $cond: [{ $eq: ["$everLive", false] }, 1, 0] } }, agent: { $sum: { $cond: ["$everLive", 1, 0] } } } },
       ]),
-      LcConversation.find(inRange).select("conversationId startedAt everLive contact.email").sort({ startedAt: -1 }).limit(CHAT_SAMPLE_LIMIT).lean(),
+      LcConversation.find({ ...inRange, mode: { $ne: "trashed" } }).select("conversationId startedAt everLive contact.email").sort({ startedAt: -1 }).limit(CHAT_SAMPLE_LIMIT).lean(),
       LcAiUsage.findOne({ day: range.today }).lean(),
       LcAiUsage.aggregate([{ $match: { day: { $gte: monthStart, $lte: range.today } } }, { $group: { _id: null, cost: { $sum: "$costUsd" }, requests: { $sum: "$requests" } } }]),
       LcAiUsage.aggregate([
@@ -250,7 +251,7 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
       return { hour, ai: found?.ai || 0, agent: found?.agent || 0 };
     });
     const todayStart = zonedDayStart(range.today, range.zone);
-    const chatsToday = await LcConversation.countDocuments({ startedAt: { $gte: todayStart } });
+    const chatsToday = await LcConversation.countDocuments({ startedAt: { $gte: todayStart }, mode: { $ne: "trashed" } });
     const aiAvg = await aiFirstReplySeconds(chats.filter((c) => !c.everLive).slice(0, 500).map((c) => c.conversationId));
 
     return {

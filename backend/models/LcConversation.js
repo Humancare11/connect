@@ -2,12 +2,13 @@ const mongoose = require("mongoose");
 const { ENC_FIELD } = require("../utils/liveChat/crypto");
 
 // One chat. mode: ai (AI only) | queue (waiting for an agent) | live (agent joined) | archived (closed).
+// "trashed" = deleted by a Super Admin, kept 30 days in Trash (restorable), then purged; invisible everywhere else.
 // everLive stays true once an agent has been involved, so the chat remains under "Live agent chats".
 const conversationSchema = new mongoose.Schema(
   {
     conversationId: { type: String, required: true, unique: true }, // public id, e.g. HC7K2M9QX
     visitorId: { type: String, required: true, index: true },
-    mode: { type: String, enum: ["ai", "queue", "live", "archived"], default: "ai", index: true },
+    mode: { type: String, enum: ["ai", "queue", "live", "archived", "trashed"], default: "ai", index: true },
     everLive: { type: Boolean, default: false, index: true },
     assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     closedReason: {
@@ -85,6 +86,12 @@ const conversationSchema = new mongoose.Schema(
     firstAgentReplyAt: { type: Date, default: null },
     lastMessageAt: { type: Date, default: Date.now, index: true },
     closedAt: { type: Date, default: null },
+    // Set only while mode is "trashed": when, by whom (user id), and when the daily job purges it.
+    trash: {
+      at: { type: Date, default: null },
+      byId: { type: mongoose.Schema.Types.ObjectId, default: null },
+      purgeAfter: { type: Date, default: null },
+    },
     aiReplyCount: { type: Number, default: 0 },
     tokens: { input: { type: Number, default: 0 }, output: { type: Number, default: 0 } },
     rating: { stars: { type: Number, min: 1, max: 5, default: null }, ratedAt: { type: Date, default: null } },
@@ -93,6 +100,7 @@ const conversationSchema = new mongoose.Schema(
 );
 
 conversationSchema.index({ mode: 1, lastMessageAt: -1 });
+conversationSchema.index({ "trash.purgeAfter": 1 }, { partialFilterExpression: { mode: "trashed" } });
 conversationSchema.index({ mode: 1, closedAt: -1 }); // Archive list and Archive temp
 
 module.exports = mongoose.model("LcConversation", conversationSchema);

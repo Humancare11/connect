@@ -154,7 +154,7 @@ function createChatService({
     );
     // A chat an admin started (invite) has no contact yet: the visitor's details now belong to it.
     await LcConversation.updateMany(
-      { visitorId: id, mode: { $ne: "archived" }, "contact.email.cipherText": "" },
+      { visitorId: id, mode: { $nin: ["archived", "trashed"] }, "contact.email.cipherText": "" },
       { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } }
     );
     const record = presence.get(id);
@@ -367,7 +367,7 @@ function createChatService({
   // ── Resume / start ───────────────────────────────────────────────────────────
 
   const findOpen = (visitorId) =>
-    LcConversation.findOne({ visitorId, mode: { $ne: "archived" } }).sort({ startedAt: -1 });
+    LcConversation.findOne({ visitorId, mode: { $nin: ["archived", "trashed"] } }).sort({ startedAt: -1 });
 
   async function resume(visitorId) {
     const visitor = await loadVisitor(visitorId);

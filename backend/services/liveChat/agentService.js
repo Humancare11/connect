@@ -81,7 +81,7 @@ function createAgentService({
   async function load(conversationId) {
     if (!CONVERSATION_ID_RE.test(String(conversationId))) throw new AgentError(404, "not_found");
     const conv = await LcConversation.findOne({ conversationId });
-    if (!conv) throw new AgentError(404, "not_found");
+    if (!conv || conv.mode === "trashed") throw new AgentError(404, "not_found"); // Trash is reached only through the trash service
     return conv;
   }
 
@@ -151,6 +151,7 @@ function createAgentService({
     const since = new Date(now() - ARCHIVE_TEMP_MS);
     const filter = {
       everLive: view === "live",
+      mode: { $ne: "trashed" },
       $or: [{ mode: { $ne: "archived" } }, { closedAt: { $gte: since } }],
     };
     const convs = await LcConversation.find(filter).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
@@ -219,9 +220,9 @@ function createAgentService({
     const [rows, visitor, chats, pages, others] = await Promise.all([
       LcMessage.find({ conversationId }).sort({ createdAt: 1 }).limit(500).lean(),
       chat.loadVisitor(conv.visitorId),
-      LcConversation.countDocuments({ visitorId: conv.visitorId }),
+      LcConversation.countDocuments({ visitorId: conv.visitorId, mode: { $ne: "trashed" } }),
       LcPageVisit.find({ conversationId }).sort({ enteredAt: 1 }).lean(),
-      LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId } })
+      LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId }, mode: { $ne: "trashed" } })
         .sort({ startedAt: -1 })
         .limit(5)
         .lean(),
@@ -309,7 +310,7 @@ function createAgentService({
   // Unread messages for this admin: AI chats, and live agent chats that concern them (queue, their own chats,
   // chats handed back to the AI). Chats another agent is holding do not count.
   async function unread(actor) {
-    const convs = await LcConversation.find({ mode: { $ne: "archived" }, patientMessageCount: { $gt: 0 } })
+    const convs = await LcConversation.find({ mode: { $nin: ["archived", "trashed"] }, patientMessageCount: { $gt: 0 } })
       .select("everLive mode assigneeId patientMessageCount reads")
       .lean();
     const out = { ai: 0, live: 0 };
@@ -477,7 +478,7 @@ function createAgentService({
         throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
       }
       const closed = await LcConversation.findOneAndUpdate(
-        { _id: conv._id, mode: { $ne: "archived" } },
+        { _id: conv._id, mode: { $nin: ["archived", "trashed"] } },
         { $set: { mode: "archived", closedReason: "resolved", closedAt: new Date(now()) } },
         { returnDocument: "after" }
       );
@@ -530,7 +531,7 @@ function createAgentService({
       { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
       { upsert: true }
     );
-    await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $ne: "archived" } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
+    await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $nin: ["archived", "trashed"] } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
     if (presence.get(conv.visitorId)) presence.update(conv.visitorId, { name: values.name, email: values.email });
     const fresh = await LcConversation.findById(conv._id);
     chat.toAgents("chat:updated", { conversationId, row: rowOf(fresh) });
@@ -641,7 +642,7 @@ function createAgentService({
 
   // From Real-time visitors: the visitor's latest chat. A visitor with no chat has nothing to summarize.
   async function summarizeVisitor(actor, visitorId) {
-    const conv = await LcConversation.findOne({ visitorId: String(visitorId || "") }).sort({ startedAt: -1 });
+    const conv = await LcConversation.findOne({ visitorId: String(visitorId || ""), mode: { $ne: "trashed" } }).sort({ startedAt: -1 });
     if (!conv) throw new AgentError(409, "no_chat");
     return summarizeConversation(actor, conv);
   }
@@ -654,8 +655,8 @@ function createAgentService({
     if (!record && !visitor) throw new AgentError(404, "not_found");
     const contact = contactOf(visitor);
     const [chats, recent, tickets] = await Promise.all([
-      LcConversation.countDocuments({ visitorId: id }),
-      LcConversation.find({ visitorId: id }).sort({ startedAt: -1 }).limit(5).lean(),
+      LcConversation.countDocuments({ visitorId: id, mode: { $ne: "trashed" } }),
+      LcConversation.find({ visitorId: id, mode: { $ne: "trashed" } }).sort({ startedAt: -1 }).limit(5).lean(),
       ticketCount(contact.email),
     ]);
     const visits = visitor?.visits || 1;
@@ -718,7 +719,7 @@ function createAgentService({
       { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
       { upsert: true }
     );
-    await LcConversation.updateMany({ visitorId: id, mode: { $ne: "archived" } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
+    await LcConversation.updateMany({ visitorId: id, mode: { $nin: ["archived", "trashed"] } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
     if (presence.get(id)) presence.update(id, { name: values.name, email: values.email });
     return { ok: true, contact: values };
   }
@@ -811,7 +812,7 @@ function createAgentService({
     const record = presence.get(id);
     // Someone who is not on the website (or not tracked) cannot be invited: there is no way to reach them.
     if (!known && !record) throw new AgentError(409, "contact_required");
-    const open = await LcConversation.findOne({ visitorId: id, mode: { $ne: "archived" } });
+    const open = await LcConversation.findOne({ visitorId: id, mode: { $nin: ["archived", "trashed"] } });
     if (open) return { ok: true, existing: true, conversationId: open.conversationId };
 
     const settings = await loadSettings();
@@ -862,11 +863,11 @@ function createAgentService({
     await ipBlock.block({ ip, reason, by: oid(actor.id) });
 
     let closed = 0;
-    const open = await LcConversation.find({ ip, mode: { $ne: "archived" } });
+    const open = await LcConversation.find({ ip, mode: { $nin: ["archived", "trashed"] } });
     for (const conv of open) {
       await chat.withLock(conv.conversationId, async () => {
         const archived = await LcConversation.findOneAndUpdate(
-          { _id: conv._id, mode: { $ne: "archived" } },
+          { _id: conv._id, mode: { $nin: ["archived", "trashed"] } },
           { $set: { mode: "archived", closedReason: "blocked", closedAt: new Date(now()) } },
           { returnDocument: "after" }
         );

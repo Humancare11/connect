@@ -99,7 +99,10 @@ function createS3FileStore() {
 }
 
 function createFileService({ models, chat, store, env = process.env, now = () => Date.now() }) {
-  const { LcFile } = models;
+  const { LcFile, LcConversation } = models;
+  // A file of a chat in Trash can no longer be opened (tests may omit LcConversation).
+  const inTrash = async (conversationId) =>
+    Boolean(LcConversation && (await LcConversation.exists({ conversationId, mode: "trashed" })));
   const limits = readFileLimits(env);
   const uploadLimiter = createWindowLimiter({ windowMs: 10 * 60_000, max: limits.uploadsPer10Min, now });
   let fileStore = store || null;
@@ -177,7 +180,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
   async function presignForPatient({ visitorId, fileId }) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
     const doc = await LcFile.findOne({ _id: fileId, visitorId, sender: "agent" });
-    if (!doc) throw new FileError(404, "not_found");
+    if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
     const name = decryptLiveChatText(doc.name);
     let url;
     try {
@@ -193,7 +196,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
   async function presign(actor, fileId) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
     const doc = await LcFile.findById(fileId);
-    if (!doc) throw new FileError(404, "not_found");
+    if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
     const name = decryptLiveChatText(doc.name);
     let url;
     try {

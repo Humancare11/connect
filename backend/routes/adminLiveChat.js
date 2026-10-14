@@ -41,7 +41,22 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   getSettings  () => settings document
 const DEFAULT_GUARD = [verifyAdminToken, liveChatAgentOnly];
 
-function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive } = {}) {
+// 10 requests a minute per user on the delete endpoints (in memory, like the socket limiter).
+function makeUserLimiter({ windowMs = 60_000, max = 10, now = () => Date.now() } = {}) {
+  const hits = new Map();
+  return (key) => {
+    const t = now();
+    const entry = hits.get(key);
+    if (!entry || t > entry.resetAt) {
+      hits.set(key, { count: 1, resetAt: t + windowMs });
+      return true;
+    }
+    entry.count += 1;
+    return entry.count <= max;
+  };
+}
+
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, trashLimiter } = {}) {
   const router = express.Router();
   router.use(guard);
   router.use(express.json({ limit: "32kb" }));
@@ -123,6 +138,20 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
 
   // The Archive page: every archived chat with filters and search (admin + superadmin, like the chat lists).
   router.get("/archive", handle((req) => archive.list(req.query)));
+
+  // Delete / Trash: Super Admin only (403 for admins), rate limited, audited in the service.
+  if (trash) {
+    const allow = trashLimiter || makeUserLimiter();
+    const limited = (req, res, next) => {
+      if (allow(String(req.user.id))) return next();
+      return res.status(429).set("Retry-After", "60").json({ ok: false, error: "rate_limited" });
+    };
+    router.post("/archive/delete-preview", superAdminOnly, handle((req) => trash.preview(req.body?.filters || {})));
+    router.post("/archive/delete", superAdminOnly, limited, handle((req) => trash.remove(actor(req), req.body)));
+    router.get("/trash", superAdminOnly, handle((req) => trash.list(req.query)));
+    router.post("/trash/restore", superAdminOnly, limited, handle((req) => trash.restore(actor(req), req.body)));
+    router.post("/trash/purge", superAdminOnly, limited, handle((req) => trash.purge(actor(req), req.body)));
+  }
 
   router.get(
     "/conversations/:id",
@@ -216,4 +245,4 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   return router;
 }
 
-module.exports = { create, DEFAULT_GUARD };
+module.exports = { create, DEFAULT_GUARD, makeUserLimiter };

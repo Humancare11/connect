@@ -4,6 +4,7 @@ import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
 import ChatConversation from "./ChatConversation";
 import ChatDetailsPanel from "./ChatDetailsPanel";
+import DeleteChatsDialog from "./DeleteChatsDialog";
 import Icon from "./lcIcons";
 import { CLOSED_LABEL, timeOf } from "./chatUtils";
 
@@ -55,11 +56,20 @@ const dateTime = (iso) =>
     : "–";
 
 const ERRORS = { invalid_range: "That date range is not valid.", server_error: "Could not load the archive." };
+const DELETE_ERRORS = {
+  confirm_required: "Type DELETE to confirm.",
+  rate_limited: "Too many delete requests. Wait a minute and try again.",
+  search_too_broad: "This search covers too many chats to delete safely. Narrow the date range and try again.",
+  nothing_selected: "No chats match.",
+  server_error: "Something went wrong. Nothing was deleted.",
+};
+const CONFIRM_ABOVE = 50; // more than this many chats: DELETE must be typed (the server checks too)
 
 // A chat opened from the list: the normal conversation view and patient panel, with every action that changes the
 // chat removed. Looking does not mark the chat read.
 function ArchiveViewer({ id }) {
   const { admin } = useAdmin();
+  const navigate = useNavigate();
   const me = String(admin?._id || admin?.id || "");
   const [detail, setDetail] = useState(null);
   const [error, setError] = useState("");
@@ -78,6 +88,16 @@ function ArchiveViewer({ id }) {
   }, [id]);
 
   const handlers = {
+    // Super Admin only (the menu item is hidden for everyone else; the server answers 403 anyway).
+    remove: async () => {
+      try {
+        await api.post(`${BASE}/archive/delete`, { ids: [id] });
+        navigate(ARCHIVE, { replace: true });
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: DELETE_ERRORS[err?.response?.data?.error] || DELETE_ERRORS.server_error };
+      }
+    },
     translate: async (messageIds) => {
       try {
         const { data } = await api.post(`${BASE}/conversations/${id}/translate`, { messageIds });
@@ -153,6 +173,7 @@ function ArchiveViewer({ id }) {
             onSetView={handlers.setView}
             onOpenFile={handlers.openFile}
             onDownload={handlers.download}
+            onDelete={handlers.remove}
           />
         ) : (
           <div className="wk-chat">
@@ -173,7 +194,13 @@ export default function AdminLiveArchive() {
 }
 
 function ArchiveList({ navigate }) {
+  const { admin } = useAdmin();
+  const isSuper = admin?.role === "superadmin"; // delete controls exist only for a Super Admin
   const [filters, setFilters] = useState(readFilters);
+  const [selected, setSelected] = useState(() => new Set());
+  const [reloadTick, setReloadTick] = useState(0);
+  const [notice, setNotice] = useState("");
+  const [dialog, setDialog] = useState(null); // { mode: "selected" | "matching", count, error, busy }
   const [draft, setDraft] = useState(filters.q);
   // The answer to one set of filters: `key` says which, so "loading" is simply "the answer is not for these filters".
   const [answer, setAnswer] = useState({ key: "", result: null, error: "" });
@@ -204,6 +231,11 @@ function ArchiveList({ navigate }) {
   }, [filters]);
   const key = JSON.stringify(params);
 
+  // A selection belongs to the list it was made on.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [key]);
+
   useEffect(() => {
     let current = true; // a slower, older request never replaces a newer answer
     api
@@ -213,7 +245,7 @@ function ArchiveList({ navigate }) {
     return () => {
       current = false;
     };
-  }, [key, params]);
+  }, [key, params, reloadTick]);
 
   const { result, error } = answer;
   const loading = answer.key !== key;
@@ -221,6 +253,58 @@ function ArchiveList({ navigate }) {
   const pickPreset = (preset) => update({ preset, ...presetRange(preset) });
   const rows = result?.rows || [];
   const open = (id) => navigate(`${ARCHIVE}/${id}`);
+
+  const allOnPage = rows.length > 0 && rows.every((r) => selected.has(r.conversationId));
+  const toggleRow = (id) =>
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const togglePage = () =>
+    setSelected((s) => {
+      const next = new Set(s);
+      rows.forEach((r) => (allOnPage ? next.delete(r.conversationId) : next.add(r.conversationId)));
+      return next;
+    });
+  const filterBody = () => {
+    const f = { type: filters.type, reason: filters.reason };
+    if (filters.from) f.from = filters.from;
+    if (filters.to) f.to = filters.to;
+    if (filters.q) f.q = filters.q;
+    return f;
+  };
+  const startDeleteSelected = () => {
+    setNotice("");
+    setDialog({ mode: "selected", count: selected.size, error: "", busy: false });
+  };
+  const startDeleteMatching = async () => {
+    setNotice("");
+    setDialog({ mode: "matching", count: null, error: "", busy: false });
+    try {
+      const { data } = await api.post(`${BASE}/archive/delete-preview`, { filters: filterBody() });
+      setDialog((d) => d && { ...d, count: data.count, error: data.capped ? DELETE_ERRORS.search_too_broad : "" });
+    } catch (err) {
+      setDialog((d) => d && { ...d, count: 0, error: DELETE_ERRORS[err?.response?.data?.error] || DELETE_ERRORS.server_error });
+    }
+  };
+  const confirmDelete = async (typed) => {
+    setDialog((d) => ({ ...d, busy: true, error: "" }));
+    try {
+      const body = dialog.mode === "matching" ? { matching: true, filters: filterBody() } : { ids: [...selected] };
+      const { data } = await api.post(`${BASE}/archive/delete`, { ...body, ...(typed ? { confirm: typed } : {}) });
+      setNotice(
+        `${data.deleted} chat${data.deleted === 1 ? "" : "s"} moved to Trash.` +
+          (data.refused ? ` ${data.refused} could not be deleted because they are no longer archived.` : "")
+      );
+      setDialog(null);
+      setSelected(new Set());
+      setReloadTick((n) => n + 1);
+    } catch (err) {
+      setDialog((d) => d && { ...d, busy: false, error: DELETE_ERRORS[err?.response?.data?.error] || DELETE_ERRORS.server_error });
+    }
+  };
 
   return (
     <div className="ar">
@@ -292,6 +376,22 @@ function ArchiveList({ navigate }) {
         )}
       </div>
 
+      {isSuper && (
+        <div className="ar-bulk">
+          <button type="button" className="wk-btn dc-danger" disabled={!selected.size} onClick={startDeleteSelected}>
+            Delete selected{selected.size ? ` (${selected.size})` : ""}
+          </button>
+          <button type="button" className="wk-btn dc-danger-ghost" disabled={!result?.total || loading} onClick={startDeleteMatching}>
+            Delete all matching filters{result?.total ? ` (${result.total})` : ""}
+          </button>
+        </div>
+      )}
+      {notice && (
+        <div className="ar-note" role="status">
+          {notice}
+        </div>
+      )}
+
       {result?.appliedRange && (
         <div className="ar-note" role="status">
           Partial name, email and phone search looked at {result.appliedRange.from} to {result.appliedRange.to}. Choose a date range to look further back.
@@ -312,6 +412,11 @@ function ArchiveList({ navigate }) {
         <table className="ar-table">
           <thead>
             <tr>
+              {isSuper && (
+                <th className="ar-check">
+                  <input type="checkbox" checked={allOnPage} onChange={togglePage} aria-label="Select all chats on this page" />
+                </th>
+              )}
               <th>Patient</th>
               <th>Email</th>
               <th>Type</th>
@@ -335,6 +440,11 @@ function ArchiveList({ navigate }) {
                   }
                 }}
               >
+                {isSuper && (
+                  <td className="ar-check" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <input type="checkbox" checked={selected.has(row.conversationId)} onChange={() => toggleRow(row.conversationId)} aria-label={`Select chat ${row.conversationId}`} />
+                  </td>
+                )}
                 <td>
                   <b>{row.name || "Visitor"}</b>
                   <small className="wk-mono wk-muted">{row.conversationId}</small>
@@ -354,7 +464,7 @@ function ArchiveList({ navigate }) {
             ))}
             {!rows.length && (
               <tr className="ar-empty">
-                <td colSpan={8}>{loading ? "Loading…" : "No archived chats match these filters."}</td>
+                <td colSpan={isSuper ? 9 : 8}>{loading ? "Loading…" : "No archived chats match these filters."}</td>
               </tr>
             )}
           </tbody>
@@ -374,6 +484,21 @@ function ArchiveList({ navigate }) {
           </button>
         </div>
       </div>
+
+      {dialog && (
+        <DeleteChatsDialog
+          title={dialog.mode === "matching" ? "Delete all matching chats" : "Delete selected chats"}
+          count={dialog.count}
+          countLabel="will be moved to Trash"
+          description="They disappear from the lists, Archive and reports, and patients cannot reopen them. You can restore them from Trash for 30 days, then they are removed for good."
+          confirmLabel="Move to Trash"
+          requireTyping={dialog.mode === "matching" || (dialog.count || 0) > CONFIRM_ABOVE}
+          busy={dialog.busy}
+          error={dialog.error}
+          onConfirm={confirmDelete}
+          onCancel={() => setDialog(null)}
+        />
+      )}
     </div>
   );
 }
