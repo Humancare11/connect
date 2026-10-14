@@ -25,6 +25,7 @@ import LiveChatTracker from "./features/livechat/LiveChatTracker";
 import LiveChatWidgetLoader from "./features/livechat/LiveChatWidgetLoader";
 import { isTrackablePath as isPublicPagePath } from "./features/livechat/useVisitorTracker";
 
+const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
 const NotFound = lazy(() => import("./components/NotFound")); // 404 Page
 const Home = lazy(() => import("./pages/Home"));
