@@ -245,7 +245,6 @@ const HOME_FAQS = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-
   // ── Search state ──────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
@@ -309,7 +308,7 @@ export default function HomePage() {
   useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) {
-      searchSession.cancel();
+      searchSession.reset(); // cancels any request and ends the analytics episode
       autoFull.cancel();
       setFilteredSuggestions([]);
       setNoResults(false);
@@ -344,10 +343,10 @@ export default function HomePage() {
     };
   }, [searchQuery, searchSession, autoFull]);
 
-  // Cancel any in-flight search when the page unmounts.
+  // Cancel any in-flight search (and pending idle timer) when the page unmounts.
   useEffect(
     () => () => {
-      searchSession.cancel();
+      searchSession.reset();
       autoFull.cancel();
     },
     [searchSession, autoFull],
@@ -431,6 +430,7 @@ export default function HomePage() {
             activeIndex >= 0 &&
             activeIndex < filteredSuggestions.length
           ) {
+            searchSession.select(); // analytics only: never throws, changes nothing visible
             handleSearch(filteredSuggestions[activeIndex]);
           } else {
             submitSearch();
@@ -443,7 +443,14 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, isSearching, handleSearch, submitSearch],
+    [
+      filteredSuggestions,
+      activeIndex,
+      isSearching,
+      handleSearch,
+      submitSearch,
+      searchSession,
+    ],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -928,7 +935,10 @@ export default function HomePage() {
                         key={item.id}
                         ref={(el) => (itemRefs.current[index] = el)}
                         className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                        onClick={() => handleSearch(item)}
+                        onClick={() => {
+                          searchSession.select(); // analytics only: never throws, changes nothing visible
+                          handleSearch(item);
+                        }}
                       >
                         <div className="suggestion-left">
                           <span className="suggestion-title">{item.title}</span>

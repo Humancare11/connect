@@ -183,6 +183,7 @@ const NAV_ITEMS = [
     roles: ["admin", "superadmin"],
     icon: ICONS.chat,
   },
+  { key: "search-analytics", label: "Search Analytics", path: "/admin-dashboard/search-analytics", roles: ["admin", "superadmin"], icon: ICONS.chart },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 

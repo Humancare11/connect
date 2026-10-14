@@ -1,11 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const { search } = require("../controllers/searchController");
-const { searchLimiter } = require("../middleware/rateLimiters");
+const { search, settle } = require("../controllers/searchController");
+const { searchLimiter, searchSettleLimiter } = require("../middleware/rateLimiters");
 
 // Public Healthcare Discovery Search. Replaces the legacy handler removed
 // in PR 1 (backend/searchRoutes.js is not used).
 router.post("/", searchLimiter, search);
+
+// Search analytics: a search settled by an idle pause or a clicked suggestion.
+// 30 requests/min/IP on its own budget; answers 204 and records nothing unless
+// SEARCH_ANALYTICS_ENABLED=true.
+router.post("/settle", searchSettleLimiter, settle);
 
 // Mounted in server.js right after this router, ahead of the global error
 // handler: rejects malformed / oversized JSON bodies for this path without

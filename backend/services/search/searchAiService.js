@@ -15,13 +15,13 @@
 
 const crypto = require("crypto");
 const { normalizeForMatch } = require("./queryNormalizer");
+const { redactQuery } = require("./queryRedaction");
 const { validateIntent, resolveConditionTerms, SearchAiError, INTENTS, LIMITS, OUTPUT_KEYS } = require("./searchAiValidator");
 
 // Vocabulary bounds: the prompt never grows with the database.
 const VOCAB_MAX_ENTRIES = 400;
 const VOCAB_MAX_ALIASES = 5;
 const VOCAB_MAX_CHARS = 24000;
-const MAX_QUERY_CHARS = 100;
 const MAX_OUTPUT_TOKENS = 400;
 const MIN_CONFIDENCE = 0.3;
 const PER_CLIENT_PER_MINUTE = 10;
@@ -72,16 +72,7 @@ function readConfig(env = process.env) {
 
 // ── Privacy ─────────────────────────────────────────────────────────────────
 
-// Strips contact details and long numbers a user might type into the box.
-function redactQuery(query) {
-  return String(query || "")
-    .replace(/[^\s@]+@[^\s@]+\.[^\s@]+/g, "[email]")
-    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[number]")
-    .replace(/\d{5,}/g, "[number]")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, MAX_QUERY_CHARS);
-}
+// redactQuery lives in the shared pure module (also used by search analytics).
 
 // ── Vocabulary (from the public catalog only) ───────────────────────────────
 
