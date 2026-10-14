@@ -51,6 +51,14 @@ Admin side only: the patient never sees a badge, toggle or translation, and sees
 - Superadmin edits AI settings, saved replies, patient context fields and anyone's display name. Admin views settings and edits only their own display name.
 - Socket namespaces `/livechat` (patients) and `/livechat-admin` (agents, role checked on connect and on every event, session re-checked periodically).
 
+## Auto-archive after inactivity
+
+- When the last message of a chat is from the AI or an admin and the patient sends nothing for the set time, the chat moves to Archived with the label "Inactive" (not "Resolved" or "Left"). This covers AI chats and Live agent chats (My chats, Other agents, Back with the AI), including a chat where the patient never wrote after the greeting and an admin-invited chat nobody answered. Chats in the Queue are never closed this way, and neither is a chat where the patient sent the last message (we owe them a reply).
+- The patient sees "This chat was closed after N minutes of inactivity. Send a message any time to continue." The chat stays on their screen, and writing (or sending a file that passes validation) reopens the same conversation within 24 hours: AI chats go back to the AI, chats that had an agent go back to the Queue. Reloading the page alone does not reopen it. A file that is rejected (type, size, per-chat limit) does not.
+- The time is the setting **Archive an inactive chat after (minutes)** in AI agent settings: default 10, whole numbers 5 to 60, Super Admin only. A change applies to timers set afterwards, not to chats already counting down.
+- The timer is the stored `LcConversation.inactiveDueAt`, set by an AI or admin message and by an admin joining or taking over a chat; cleared by a patient message, by the chat entering the Queue and by archiving. The same 15-second job as the follow-up (plus the startup sweep) closes what is due, so it survives a restart. Internal notes and team-only lines do not touch it.
+- Reports count an Inactive chat like "patient left" (AI chats as solved by AI).
+
 ## Admin UI (its own browser tab)
 
 The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui.html`, that opens in its own browser tab. All other admin pages keep `AdminLayout` unchanged.
