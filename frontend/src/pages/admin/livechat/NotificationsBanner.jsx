@@ -7,7 +7,9 @@ import {
   notificationsSupported,
   requestNotificationPermission,
   setSoundEnabled,
+  setVisitorSoundEnabled,
   soundEnabled,
+  visitorSoundEnabled,
 } from "./liveChatNotify";
 import "./LiveChatToasts.css";
 
@@ -17,6 +19,7 @@ export default function NotificationsBanner() {
   const [permission, setPermission] = useState(notificationPermission);
   const [dismissed, setDismissed] = useState(bannerDismissed);
   const [sound, setSound] = useState(soundEnabled);
+  const [visitorSound, setVisitorSound] = useState(visitorSoundEnabled);
 
   useEffect(() => {
     installAudioUnlock();
@@ -56,6 +59,24 @@ export default function NotificationsBanner() {
         }}
       >
         {sound ? "🔔 Sound on" : "🔕 Sound off"}
+      </button>
+      <button
+        type="button"
+        className="lcn-sound"
+        aria-pressed={visitorSound}
+        title={
+          visitorSound
+            ? sound
+              ? "A soft sound plays when a new visitor arrives (Live Chat tab only)"
+              : "On, but silent while Sound is off"
+            : "No sound for new website visitors"
+        }
+        onClick={() => {
+          setVisitorSoundEnabled(!visitorSound);
+          setVisitorSound(!visitorSound);
+        }}
+      >
+        {visitorSound ? "👤 Visitor sound on" : "👤 Visitor sound off"}
       </button>
     </div>
   );
