@@ -1,8 +1,10 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import Icon from "./lcIcons";
+import LanguageSwitch from "./LanguageSwitch";
 
 // The message box under a conversation (docs/live-chat-admin-ui.html "Enter message" bar).
 //   Message / Internal note   notes are for the team and never reach the patient
+//   Original | English        on a non-English chat: how this admin reads the messages (remembered per chat)
 //   To <language>             on a non-English chat: type in English, translate into the patient's language, check it, send
 //   Saved replies (#)         click the # button, or type # in the box and keep typing to filter; Super Admin manages them
 //   Suggest a reply (AI)      puts a draft in the box; nothing is sent until the admin edits and sends it
@@ -20,7 +22,7 @@ const hashAt = (text, caret) => {
 };
 
 const Composer = forwardRef(function Composer(
-  { conversation: c, notesOnly, heldByOther, mine, closed, busy, canned, language, onSend, onNote, onSuggest, onTranslateReply, onAttach, onTyping, onNotice },
+  { conversation: c, notesOnly, heldByOther, mine, closed, busy, canned, language, view, onChooseView, translating, onSend, onNote, onSuggest, onTranslateReply, onAttach, onTyping, onNotice },
   ref
 ) {
   const [draft, setDraft] = useState("");
@@ -229,6 +231,7 @@ const Composer = forwardRef(function Composer(
             <button type="button" className="cm-mode" data-pop onClick={() => setPop(pop === "mode" ? "" : "mode")} aria-expanded={pop === "mode"}>
               {noting ? "Note" : "Message"} <Icon name="chevD" size={16} />
             </button>
+            {language && <LanguageSwitch view={view} onChoose={onChooseView} translating={translating} />}
             <span className="cm-sep" aria-hidden="true" />
             {language && !noting && !closed && (
               <button
