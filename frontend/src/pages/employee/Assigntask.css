@@ -1112,8 +1112,8 @@
   margin-top: 24px;
   padding: 14px 20px;
   background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
+  backdrop-filter: saturate(180%) blur(12px);
   border: 1px solid var(--at-line);
   border-radius: var(--at-r-lg);
   box-shadow: var(--at-shadow-lg);

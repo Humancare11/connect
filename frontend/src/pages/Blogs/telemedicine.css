@@ -162,8 +162,8 @@ body:has(.blog-page) {
   margin-right: auto;
   /* Glass background — blends with body gradient, no opaque white block */
   background: rgba(245, 249, 255, 0.88);
-  backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
   border-bottom: 1px solid var(--line);
   font-size: 12.5px;
   color: var(--navy-500);
@@ -466,8 +466,8 @@ h1.article-title {
 
 .toc-card {
   background: rgba(245, 249, 255, 0.82);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -1311,8 +1311,8 @@ table.compare td.good::before {
   padding: clamp(28px, 4vw, 44px) clamp(20px, 4vw, 44px);
   text-align: center;
   border: 1px solid var(--line);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .newsletter h2 {

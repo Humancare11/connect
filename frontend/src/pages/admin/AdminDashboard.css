@@ -57,8 +57,8 @@
   width: 256px;
   z-index: 200;
   background: #01164a;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 24px;
   box-shadow:
@@ -369,8 +369,8 @@
   top: 16px;
   z-index: 100;
   background: #01164a;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 20px;
   box-shadow:
@@ -449,8 +449,8 @@
 
 .adp-stat {
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 16px;
   padding: 18px 20px;
@@ -540,8 +540,8 @@
 /* ── Card / section ───────────────────────────────────────────── */
 .adp-card {
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 16px;
   overflow: hidden;
@@ -848,8 +848,8 @@
 
 .adp-modal {
   background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 18px;
   width: 100%;

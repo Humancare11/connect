@@ -13,8 +13,8 @@
   color: #dc2626;
 }
 .hc-field__control {
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   display: block;
   width: 100%;
   padding: 12px;

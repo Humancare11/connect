@@ -60,8 +60,8 @@
   position: fixed;
   inset: 0;
   background: rgba(2, 6, 23, 0.6);
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   z-index: 40;
 }
 
@@ -77,8 +77,8 @@
   z-index: 50;
 
   background: #01164a !important;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 24px;
   box-shadow:
@@ -311,8 +311,8 @@
   z-index: 30;
 
   background: #01164a !important;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 20px;
   box-shadow:

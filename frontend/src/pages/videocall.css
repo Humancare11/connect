@@ -106,8 +106,8 @@
   padding: 10px 18px;
   background: rgba(8, 20, 34, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   z-index: 20;
   gap: 12px;
 }
@@ -533,8 +533,8 @@
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .hc-vc__playback-unblock:hover {
@@ -1043,8 +1043,8 @@
   padding: 12px 20px 16px;
   background: rgba(0, 0, 0, 0.97);
   border-top: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 }
 
 .hc-vc__ctrlbar-inner {

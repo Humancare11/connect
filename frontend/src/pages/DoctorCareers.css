@@ -170,8 +170,8 @@
 
 .dc-card {
   background: var(--dc-glass-bg);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--dc-glass-border);
   border-radius: var(--dc-radius-md);
   box-shadow: var(--dc-shadow-sm);
@@ -360,8 +360,8 @@
   align-items: center;
   gap: 14px;
   background: var(--dc-glass-bg);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border: 1px solid var(--dc-glass-border);
   padding: 16px 22px;
   border-radius: var(--dc-radius-md);
@@ -448,8 +448,8 @@
 
 .dc-checklist--card {
   background: var(--dc-glass-bg);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--dc-glass-border);
   border-radius: var(--dc-radius-md);
   box-shadow: var(--dc-shadow-sm);
@@ -620,8 +620,8 @@
 
 .dc-testimonial-card {
   background: var(--dc-glass-bg);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--dc-glass-border);
   border-radius: var(--dc-radius-lg);
   box-shadow: var(--dc-shadow-md);
@@ -845,8 +845,8 @@
 
 .dc-application-form-wrap {
   background: var(--dc-glass-bg);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid var(--dc-glass-border);
   border-radius: var(--dc-radius-lg);
   box-shadow: var(--dc-shadow-md);

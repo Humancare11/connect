@@ -179,8 +179,8 @@ body::after {
       rgba(255, 255, 255, 0.10),
       rgba(255, 255, 255, 0.03));
 
-  backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
 
   opacity: .8;
 }
@@ -236,8 +236,8 @@ section {
   background:
     rgba(255, 255, 255, 0.72);
 
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
 
   border-bottom:
     1px solid rgba(255, 255, 255, 0.4);
