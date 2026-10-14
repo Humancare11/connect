@@ -305,8 +305,8 @@ const PR8_ADDITIONAL_CONDITIONS = Object.freeze([
 // App.jsx path. Each is checked against App.jsx by the planner.
 const ROUTE_OVERRIDES = Object.freeze({
   "heart-disease": "/chronic-care/cardiology/heart-disease-follow-up",
-  "binge-eating": "/weight-and-nurtrition/weight-management/binge-eating",
-  "diet-exercise-planning": "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+  "binge-eating": "/weight-and-nutrition/weight-management/binge-eating",
+  "diet-exercise-planning": "/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning",
   "birth-control-consultation": "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
   // App.jsx declares this path twice; the FIRST declaration renders the
   // MenopauseSymptoms page, so that is the page a user reaches. The second

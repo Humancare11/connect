@@ -201,7 +201,7 @@ export default function Register() {
               hipaaConsent: e.target.checked,
             }))}
           />
-          I agree to the <Link to="/terms" target="_blank">Terms</Link>, <Link to="/privacy" target="_blank">Privacy Policy</Link>, and HIPAA consent requirements.
+          I agree to the <Link to="/terms-of-service" target="_blank">Terms</Link>, <Link to="/privacy-policy" target="_blank">Privacy Policy</Link>, and HIPAA consent requirements.
         </label>
 
         <button type="submit" disabled={loading}>

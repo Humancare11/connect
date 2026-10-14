@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ad-brand {
@@ -196,7 +196,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, transform 0.15s;
+  transition: background 0.18s, color 0.18s, transform var(--duration-fast);
   text-align: left;
   width: 100%;
   text-decoration: none;
@@ -206,7 +206,11 @@
 .ad-nav-item:hover {
   background: rgba(255, 255, 255, 0.5);
   color: #ffffff;
-  transform: translateX(2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ad-nav-item:hover {
+    transform: translateX(2px);
+  }
 }
 
 .ad-nav-item.active {
@@ -471,9 +475,13 @@
 }
 
 .adp-stat:hover {
-  transform: translateY(-4px);
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 18px 44px rgba(8, 58, 176, 0.18), 0 3px 10px rgba(8, 58, 176, 0.10);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-stat:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(8, 58, 176, 0.18), 0 3px 10px rgba(8, 58, 176, 0.10);
+  }
 }
 
 .adp-stat-value {
@@ -590,6 +598,10 @@
   font-size: 13px;
   color: #0b0443;
   width: 100%;
+}
+.adp-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .adp-search svg {
@@ -714,14 +726,18 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
+  transition: opacity var(--duration-base), transform var(--duration-fast);
   white-space: nowrap;
   text-decoration: none;
 }
 
 .adp-btn:hover {
   opacity: 0.85;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .adp-btn:active {
@@ -820,7 +836,7 @@
 .adp-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-modal);
   background: rgba(11, 4, 67, 0.5);
   backdrop-filter: blur(4px);
   display: flex;
@@ -977,7 +993,7 @@
   font-weight: 500;
   color: #475076;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--duration-fast);
 }
 
 .adp-tab:hover {
@@ -1020,7 +1036,7 @@
   border-radius: 14px;
   padding: 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background var(--duration-base), border-color var(--duration-base), box-shadow var(--duration-base), transform var(--duration-base);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1029,9 +1045,13 @@
 
 .ado-action-card:hover {
   border-color: rgba(14, 108, 235, 0.4);
-  box-shadow: 0 12px 36px rgba(8, 58, 176, 0.18);
-  transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.72);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ado-action-card:hover {
+    box-shadow: 0 12px 36px rgba(8, 58, 176, 0.18);
+    transform: translateY(-3px);
+  }
 }
 
 .ado-action-icon {

@@ -291,8 +291,8 @@
   background: var(--at-surface);
   border: 1px solid var(--at-line-strong);
   border-radius: var(--at-r-sm);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease,
-    background 0.15s ease;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease,
+    background var(--duration-fast) ease;
 }
 
 .at-input::placeholder,
@@ -435,7 +435,7 @@
   padding: 4px 8px;
   margin: -4px -8px -4px 0;
   border-radius: var(--at-r-sm);
-  transition: background 0.15s ease;
+  transition: background var(--duration-fast) ease;
 }
 
 .at-section__action:hover {
@@ -450,7 +450,7 @@
   border-radius: var(--at-r);
   overflow: hidden;
   background: var(--at-surface);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 
 .at-editor:focus-within {
@@ -861,7 +861,7 @@
   background: var(--at-surface);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 .at-assignee__trigger:hover {
   border-color: var(--at-accent);
@@ -963,6 +963,10 @@
 }
 .at-assignee__search:focus {
   outline: none;
+}
+.at-assignee__search:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 .at-assignee__search::placeholder {
   color: var(--at-faint);

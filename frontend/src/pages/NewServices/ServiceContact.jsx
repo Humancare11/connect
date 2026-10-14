@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { FiCheckCircle, FiMessageSquare, FiLock } from "react-icons/fi";
 import api from "../../api";
 import "./newservices.css";
+import { useToast } from "../../components/ui/Toast";
 
 const ConsultationForm = ({ s }) => {
+  const toast = useToast();
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -29,11 +31,11 @@ const ConsultationForm = ({ s }) => {
           message: "",
         });
       } else {
-        alert(data.message || "Failed to submit request.");
+        toast.error(data.message || "Failed to submit request.");
       }
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Unable to submit request.");
+      toast.error(error.response?.data?.message || "Unable to submit request.");
     }
   };
 

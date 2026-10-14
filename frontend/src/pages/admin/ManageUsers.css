@@ -6,7 +6,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-modal);
   padding: 20px;
 }
 
@@ -69,14 +69,18 @@
   color: #fff;
   font-size: 18px;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: var(--duration-slow) ease;
   z-index: 1;
 }
 
 .adp-modal-close:hover {
   background: #fff;
   color: #0a43c7;
-  transform: rotate(90deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-modal-close:hover {
+    transform: rotate(90deg);
+  }
 }
 
 .adp-modal-body {
@@ -224,7 +228,11 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: var(--duration-slow) ease;
+}
+.adp-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .adp-btn--ghost {
@@ -242,9 +250,11 @@
   box-shadow: 0 10px 20px rgba(13, 92, 255, 0.25);
 }
 
-.adp-btn--reject:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(13, 92, 255, 0.35);
+@media (hover: hover) and (pointer: fine) {
+  .adp-btn--reject:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(13, 92, 255, 0.35);
+  }
 }
 
 @media (max-width: 600px) {

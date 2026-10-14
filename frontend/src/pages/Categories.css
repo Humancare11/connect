@@ -159,16 +159,17 @@
   text-align: left;
   font-family: inherit;
   cursor: pointer;
-  transition:
-    transform 0.22s var(--ease-out),
-    box-shadow 0.22s ease,
-    border-color 0.2s ease;
+  transition: transform 0.22s var(--ease-out), box-shadow 0.22s ease, border-color var(--duration-base) ease;
 }
 
 .cat-carousel__tab:hover:not(.cat-carousel__tab--active) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(11, 40, 100, 0.08);
-  border-color: rgba(11, 87, 232, 0.2);
+  border-color: rgba(11, 87, 232, 0.20);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-carousel__tab:hover:not(.cat-carousel__tab--active) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(11, 40, 100, 0.08);
+  }
 }
 
 .cat-carousel__tab--active {
@@ -230,16 +231,17 @@
   background: var(--white);
   color: var(--blue);
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: background var(--duration-base) ease, color var(--duration-base) ease, transform var(--duration-base) ease;
 }
 
 .cat-carousel__btn:hover {
   background: var(--blue);
   color: var(--white);
-  transform: scale(1.08);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-carousel__btn:hover {
+    transform: scale(1.08);
+  }
 }
 
 .cat-carousel__dots {
@@ -487,9 +489,7 @@
   font-weight: 500;
   color: var(--ink);
   box-shadow: 0 2px 10px rgba(11, 40, 100, 0.05);
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color var(--duration-base) ease, box-shadow var(--duration-base) ease;
   outline: none;
 }
 
@@ -515,7 +515,7 @@
   color: var(--muted);
   font-size: 13px;
   padding: 4px;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-search__clear:hover {
@@ -551,16 +551,16 @@
   background: var(--white);
   padding: 22px 22px 18px;
   box-shadow: var(--shadow-card);
-  transition:
-    transform 0.3s var(--ease-out),
-    box-shadow 0.3s ease;
+  transition: transform var(--duration-slow) var(--ease-out), box-shadow var(--duration-slow) ease;
   animation: catCardIn 0.42s var(--ease-std) both;
   gap: 0;
 }
 
-.cat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-hover);
+@media (hover: hover) and (pointer: fine) {
+  .cat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+  }
 }
 
 /* ── ROW 1: Icon + Title ── */
@@ -579,11 +579,13 @@
   min-width: 44px;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
-  transition: transform 0.3s var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-out);
 }
 
-.cat-card:hover .cat-card__icon {
-  transform: scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+  .cat-card:hover .cat-card__icon {
+    transform: scale(1.08);
+  }
 }
 
 .cat-card__name {
@@ -591,7 +593,7 @@
   font-weight: 900;
   color: var(--navy);
   line-height: 1.3;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-card:hover .cat-card__name {
@@ -632,11 +634,13 @@
   height: 28px;
   border-radius: 50%;
   flex-shrink: 0;
-  transition: transform 0.3s var(--ease-out);
+  transition: transform var(--duration-slow) var(--ease-out);
 }
 
-.cat-card:hover .cat-card__arrow {
-  transform: scale(1.1) translateX(2px);
+@media (hover: hover) and (pointer: fine) {
+  .cat-card:hover .cat-card__arrow {
+    transform: scale(1.1) translateX(2px);
+  }
 }
 
 .cat-empty {
@@ -687,9 +691,11 @@
     box-shadow 0.22s ease;
 }
 
-.cat-spec-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(11, 40, 100, 0.1);
+@media (hover: hover) and (pointer: fine) {
+  .cat-spec-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(11, 40, 100, 0.10);
+  }
 }
 
 .cat-spec-item__icon {
@@ -727,7 +733,7 @@
   font-weight: 900;
   color: var(--navy);
   line-height: 1.25;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-spec-item:hover .cat-spec-item__name {
@@ -754,7 +760,7 @@
 .cat-spec-item__chevron {
   color: var(--muted);
   flex-shrink: 0;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-spec-item:hover .cat-spec-item__chevron {
@@ -846,14 +852,14 @@
   text-decoration: none;
   border: none;
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform var(--duration-base) ease, box-shadow var(--duration-base) ease;
 }
 
-.cat-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(46, 74, 122, 0.32);
+@media (hover: hover) and (pointer: fine) {
+  .cat-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(46, 74, 122, 0.32);
+  }
 }
 
 .cat-btn-outline {
@@ -871,9 +877,7 @@
   text-decoration: none;
   background: transparent;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+  transition: background var(--duration-base) ease, border-color var(--duration-base) ease;
 }
 
 .cat-btn-outline:hover {
@@ -898,7 +902,7 @@
 .cat-footer__text a {
   color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-footer__text a:hover {
@@ -925,9 +929,7 @@
   color: var(--blue);
   text-decoration: none;
   border-bottom: 1.5px solid transparent;
-  transition:
-    border-color 0.2s ease,
-    gap 0.2s ease;
+  transition: border-color var(--duration-base) ease, gap var(--duration-base) ease;
 }
 
 .cat-link-more svg {
@@ -939,8 +941,10 @@
   gap: 10px;
 }
 
-.cat-link-more:hover svg {
-  transform: translateX(2px);
+@media (hover: hover) and (pointer: fine) {
+  .cat-link-more:hover svg {
+    transform: translateX(2px);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1149,16 +1153,17 @@
   font-weight: 900;
   cursor: pointer;
   margin-bottom: 28px;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: background var(--duration-base) ease, color var(--duration-base) ease, transform var(--duration-base) ease;
 }
 
 .cat-faq__chat-btn:hover {
   background: var(--blue);
   color: var(--white);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-faq__chat-btn:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .cat-faq__info-list {
@@ -1258,10 +1263,7 @@
   background: var(--bg-2);
   color: var(--muted);
   flex-shrink: 0;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: background var(--duration-base) ease, color var(--duration-base) ease, transform var(--duration-base) ease;
 }
 
 .cat-faq__item-head:hover .cat-faq__item-icon {
@@ -1326,14 +1328,14 @@
   font-weight: 900;
   text-decoration: none;
   flex-shrink: 0;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform var(--duration-base) ease, box-shadow var(--duration-base) ease;
 }
 
-.cat-faq__cta-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+@media (hover: hover) and (pointer: fine) {
+  .cat-faq__cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════

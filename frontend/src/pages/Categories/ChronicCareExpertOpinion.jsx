@@ -114,7 +114,7 @@ const cat = {
     {
       name: "Hormone imbalance",
       // desc: "Red, itchy, irritated skin in kids",
-      path: "/chronic-care/endocrinology/chronic-care/endocrinology/hormone-imbalance",
+      path: "/chronic-care/endocrinology/hormone-imbalance",
     },
     {
       name: "Osteoporosis",
@@ -139,7 +139,7 @@ const cat = {
     {
       name: "Abdominal pain",
       // desc: "Fever and illness in children",
-      path: "/chronic-care/gastroenterology/chronic-care/gastroenterology/abdominal-pain",
+      path: "/chronic-care/gastroenterology/abdominal-pain",
     },
     {
       name: "Bloating",

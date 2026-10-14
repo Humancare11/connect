@@ -74,7 +74,7 @@ export default function LocationSelects({
   const countryStateRow = (
       <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
         <Field label="Country" icon="🌍">
-          <select
+          <select autoComplete="country-name"
             style={selectStyle}
             id="country"
             name="country"
@@ -102,7 +102,7 @@ export default function LocationSelects({
         </Field>
 
         <Field label="State / Province" icon="📍">
-          <select
+          <select autoComplete="address-level1"
             style={selectStyle}
             id="state"
             name="state"
@@ -155,7 +155,7 @@ export default function LocationSelects({
 
   const cityField = (
     <Field label="City" icon="🏙️">
-      <input
+      <input autoComplete="address-level2"
         style={inputStyle}
         type="text"
         id="city"

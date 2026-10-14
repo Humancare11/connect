@@ -600,47 +600,47 @@ const conditionCategories = [
     conditions: [
       {
         name: "Healthy-Habit Coaching",
-        path: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
+        path: "/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching",
       },
       {
         name: "Diet & Exercise Planning",
-        path: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+        path: "/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning",
       },
       {
         name: "Sleep Hygiene",
-        path: "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
+        path: "/weight-and-nutrition/lifestyle-medicine/sleep-hygiene",
       },
       {
         name: "Diabetic Diet",
-        path: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
+        path: "/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet",
       },
       {
         name: "Cholesterol-Lowering Diet",
-        path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
+        path: "/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet",
       },
       {
         name: "Food-Intolerance Planning",
-        path: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
+        path: "/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning",
       },
       {
         name: "Pregnancy Nutrition",
-        path: "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
+        path: "/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition",
       },
       {
         name: "Sports Nutrition",
-        path: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
+        path: "/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition",
       },
       {
         name: "Obesity",
-        path: "/weight-and-nurtrition/weight-management/obesity",
+        path: "/weight-and-nutrition/weight-management/obesity",
       },
       {
         name: "Weight-Loss Planning",
-        path: "/weight-and-nurtrition/weight-management/weight-loss-planning",
+        path: "/weight-and-nutrition/weight-management/weight-loss-planning",
       },
       {
         name: "Binge Eating",
-        path: "/weight-and-nurtrition/weight-management/binge-eating",
+        path: "/weight-and-nutrition/weight-management/binge-eating",
       },
     ],
   },
@@ -682,7 +682,7 @@ const conditionCategories = [
       },
       {
         name: "Birth Control",
-        path: "/women-health/obstetrics-and-gynaecology/birth-control",
+        path: "/women-health/obstetrics-and-gynaecology/birth-control-consultation",
       },
       { name: "PCOS", path: "/women-health/obstetrics-and-gynaecology/pcos" },
       {

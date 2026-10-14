@@ -49,9 +49,9 @@ export default function PaymentAdminLogin() {
           <h1>Payment Admin Login</h1>
           <span>Generate and manage payment links</span>
 
-          {error && <p className="login-error">{error}</p>}
+          {error && <p className="login-error" id="pa-login-error" role="alert">{error}</p>}
 
-          <input
+          <input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "pa-login-error" : undefined} autoComplete="email"
             type="email"
             name="email"
             placeholder="paymentadmin@example.com"
@@ -61,7 +61,7 @@ export default function PaymentAdminLogin() {
           />
 
           <div className="password-wrapper">
-            <input
+            <input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "pa-login-error" : undefined} autoComplete="current-password"
               type={showPassword ? "text" : "password"}
               name="password"
               placeholder="Enter your password"

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import "./GOP.css";
+import { useToast } from "../../components/ui/Toast";
 
 // Replace this with the real asset path (or an imported file) later — same
 // asset the Manual Invoice page uses.
@@ -89,6 +90,7 @@ function formatDob(value) {
 }
 
 export default function GOP() {
+  const toast = useToast();
   const { admin } = useAdmin();
 
   const [caseType, setCaseType] = useState(DEFAULT_CASE_TYPE);
@@ -254,7 +256,7 @@ export default function GOP() {
       if (res.data?.url)
         window.open(res.data.url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      window.alert(
+      toast.error(
         err.response?.data?.msg || "Failed to generate download link.",
       );
     } finally {
@@ -295,7 +297,7 @@ export default function GOP() {
           sections, and signature block, matching backend/utils/gopPdf.js. */}
       <form onSubmit={submit} className="gop-doc">
         <header className="gop-doc__masthead">
-          <img
+          <img decoding="async"
             className="gop-doc__logo"
             src={LOGO_SRC}
             alt="Humancare Connect"

@@ -5573,7 +5573,7 @@ export default function VideoCall() {
       <div className="hc-vc__ctrlbar-meta">
         <div className="hc-vc__meta-left">
           <div className="hc-vc__logo-mark">
-            <img
+            <img decoding="async"
               src={HumancareLogo}
               alt="Humancare Connect"
               className="hc-vc__logo-img"
@@ -6041,7 +6041,7 @@ export default function VideoCall() {
                             rel="noreferrer"
                             className="hc-vc__msg-img-link"
                           >
-                            <img
+                            <img decoding="async"
                               src={msg.fileUrl}
                               alt={msg.fileName}
                               className="hc-vc__msg-img"

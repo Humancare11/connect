@@ -71,7 +71,7 @@
 }
 
 .ms-hero-inner {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
@@ -148,7 +148,7 @@
 
 /* Inner container */
 .ha-service-inner {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -203,8 +203,10 @@
   transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.ha-img-wrap:hover img {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .ha-img-wrap:hover img {
+    transform: scale(1.06);
+  }
 }
 
 /* Number badge on image */
@@ -363,9 +365,11 @@
   transition: opacity var(--transition);
 }
 
-.ha-cta-btn:hover {
-  box-shadow: var(--shadow-btn);
-  transform: translateY(-3px);
+@media (hover: hover) and (pointer: fine) {
+  .ha-cta-btn:hover {
+    box-shadow: var(--shadow-btn);
+    transform: translateY(-3px);
+  }
 }
 
 .ha-cta-btn:hover::after {
@@ -389,8 +393,10 @@
   transition: transform var(--transition);
 }
 
-.ha-cta-btn:hover .ha-cta-btn-icon {
-  transform: translateX(4px);
+@media (hover: hover) and (pointer: fine) {
+  .ha-cta-btn:hover .ha-cta-btn-icon {
+    transform: translateX(4px);
+  }
 }
 
 .ha-cta-btn-icon svg {
@@ -475,9 +481,11 @@
     transform var(--transition);
 }
 
-.ha-footer-strip-btn:hover {
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
-  transform: translateY(-3px);
+@media (hover: hover) and (pointer: fine) {
+  .ha-footer-strip-btn:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+  }
 }
 
 /* ============================================

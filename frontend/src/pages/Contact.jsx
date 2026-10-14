@@ -251,7 +251,7 @@ export default function Contact() {
                       <label className="contact-field__label" htmlFor="name">
                         Full Name <span className="contact-field__req">*</span>
                       </label>
-                      <input
+                      <input aria-invalid={errors.name ? "true" : undefined} aria-describedby={errors.name ? "name-error" : undefined} autoComplete="name"
                         className={`contact-field__input${errors.name ? " contact-field__input--error" : ""}`}
                         id="name"
                         name="name"
@@ -261,7 +261,7 @@ export default function Contact() {
                         onChange={handleChange}
                       />
                       {errors.name && (
-                        <span className="contact-field__error">
+                        <span className="contact-field__error" id="name-error" role="alert">
                           {errors.name}
                         </span>
                       )}
@@ -271,7 +271,7 @@ export default function Contact() {
                         Email Address{" "}
                         <span className="contact-field__req">*</span>
                       </label>
-                      <input
+                      <input aria-invalid={errors.email ? "true" : undefined} aria-describedby={errors.email ? "email-error" : undefined} autoComplete="email"
                         className={`contact-field__input${errors.email ? " contact-field__input--error" : ""}`}
                         id="email"
                         name="email"
@@ -281,7 +281,7 @@ export default function Contact() {
                         onChange={handleChange}
                       />
                       {errors.email && (
-                        <span className="contact-field__error">
+                        <span className="contact-field__error" id="email-error" role="alert">
                           {errors.email}
                         </span>
                       )}
@@ -293,7 +293,7 @@ export default function Contact() {
                       <label className="contact-field__label" htmlFor="phone">
                         Phone Number
                       </label>
-                      <input
+                      <input autoComplete="tel"
                         className="contact-field__input"
                         id="phone"
                         name="phone"
@@ -323,7 +323,7 @@ export default function Contact() {
                     <label className="contact-field__label" htmlFor="message">
                       Message <span className="contact-field__req">*</span>
                     </label>
-                    <textarea
+                    <textarea aria-invalid={errors.message ? "true" : undefined} aria-describedby={errors.message ? "message-error" : undefined}
                       className={`contact-field__input contact-field__textarea${
                         errors.message ? " contact-field__input--error" : ""
                       }`}
@@ -334,7 +334,7 @@ export default function Contact() {
                       onChange={handleChange}
                     />
                     {errors.message && (
-                      <span className="contact-field__error">
+                      <span className="contact-field__error" id="message-error" role="alert">
                         {errors.message}
                       </span>
                     )}

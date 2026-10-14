@@ -91,7 +91,20 @@ export function prepareBlogHtml(rawHtml) {
     toc.push({ id: h2.id, label });
   });
 
+  wrapTables(doc);
   return { html: doc.body.innerHTML, toc };
+}
+
+// Tables from the editor can be wider than a phone; give each one a horizontal scroller.
+// (The prerender path below does the same with a regex so server and client HTML match.)
+function wrapTables(doc) {
+  doc.body.querySelectorAll("table").forEach((table) => {
+    if (table.parentElement?.classList.contains("hc-table-scroll")) return;
+    const wrap = doc.createElement("div");
+    wrap.className = "hc-table-scroll";
+    table.replaceWith(wrap);
+    wrap.appendChild(table);
+  });
 }
 
 // Prerender-only path. The backend sanitizes blog HTML against the same allow-list when a post is
@@ -122,6 +135,7 @@ function prepareBlogHtmlWithoutDom(rawHtml) {
     }
     toc.push({ id, label: h.label });
   }
+  out = out.replace(/<table[\s\S]*?<\/table>/gi, (table) => `<div class="hc-table-scroll">${table}</div>`);
   return { html: out, toc };
 }
 

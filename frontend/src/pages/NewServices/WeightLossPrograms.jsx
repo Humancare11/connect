@@ -274,7 +274,7 @@ export default function WeightLossPrograms() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--weight-loss"
         style={{
           "--service-accent": s.accentColor,
@@ -728,7 +728,7 @@ export default function WeightLossPrograms() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

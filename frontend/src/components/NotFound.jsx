@@ -1,4 +1,6 @@
+import { useContext } from "react";
 import { Helmet } from "react-helmet-async";
+import { HasMainContext } from "./ui/HasMainContext";
 import "./NotFound.css";
 import notFoundIllustration from "../assets/404-hero.webp";
 
@@ -6,7 +8,7 @@ export default function NotFound() {
   return (
     <>
       <Helmet>
-        <title>Page Not Found | Humancare Connect</title>
+        <title>Page not found | Humancare Connect</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <NotFoundContent />
@@ -15,8 +17,11 @@ export default function NotFound() {
 }
 
 function NotFoundContent() {
+  const hasMain = useContext(HasMainContext);
+  const Page = hasMain ? "div" : "main";
+  const pageProps = hasMain ? {} : { id: "main-content", tabIndex: -1 };
   return (
-    <main className="nf-page">
+    <Page className="nf-page" {...pageProps}>
       {/* ---------- HERO ---------- */}
       <section className="nf-hero">
         <div className="nf-hero-left">
@@ -35,7 +40,7 @@ function NotFoundContent() {
 
         <div className="nf-hero-right">
           <div className="nf-illustration-card">
-            <img
+            <img decoding="async"
               src={notFoundIllustration}
               alt="Illustration of a person looking at a signpost with two directional signs: 'We're here to support you' and 'Let's get you back on track'"
               className="nf-illustration"
@@ -68,6 +73,6 @@ function NotFoundContent() {
           </a>
         </div>
       </section>
-    </main>
+    </Page>
   );
 }

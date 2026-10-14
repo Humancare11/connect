@@ -4,6 +4,7 @@ import api, { normalizeFileUrl } from "../../api";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 
 import { Country, State } from "country-state-city";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
 } from "../../components/PhoneInputField";
@@ -805,7 +806,7 @@ function SignedImage({ enrollmentId, field, alt, style, fallback }) {
   if (failed) return fallback || null;
   if (!src) return fallback || null;
   return (
-    <img src={src} alt={alt} style={style} onError={() => setFailed(true)} />
+    <img decoding="async" src={src} alt={alt} style={style} onError={() => setFailed(true)} />
   );
 }
 
@@ -1006,7 +1007,7 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
         flexWrap: "wrap",
       }}
     >
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => !uploading && ref.current?.click())(e); } }}
         style={{
           width: 90,
           height: 90,
@@ -1024,7 +1025,7 @@ function AdminPhotoUpload({ currentUrl, onChange, enrollmentId }) {
         onClick={() => !uploading && ref.current?.click()}
       >
         {imgSrc ? (
-          <img
+          <img decoding="async"
             src={imgSrc}
             alt="Profile"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
@@ -1276,7 +1277,7 @@ function AdminDocUpload({
             lineHeight: 0,
           }}
         >
-          <img
+          <img decoding="async"
             src={fileUrl}
             alt={label}
             crossOrigin="use-credentials"
@@ -1478,7 +1479,7 @@ function AdminMultiSelect({ items, selected, onChange, placeholder }) {
 
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(!open))(e); } }}
         onClick={() => setOpen(!open)}
         style={{
           display: "flex",
@@ -1556,7 +1557,7 @@ function AdminMultiSelect({ items, selected, onChange, placeholder }) {
           {items.map((item) => {
             const isSelected = selected.includes(item);
             return (
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => toggle(item))(e); } }}
                 key={item}
                 onClick={() => toggle(item)}
                 style={{
@@ -2509,7 +2510,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
                   >
                     {day_data.enabled ? "Available" : "Off"}
                   </span>
-                  <div
+                  <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => toggleDay(day))(e); } }}
                     style={{
                       position: "relative",
                       width: 40,
@@ -2772,6 +2773,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
 // MAIN PAGE COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function AdminDoctorProfile() {
+  const confirm = useConfirm();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -2847,12 +2849,13 @@ export default function AdminDoctorProfile() {
   };
   const handleApproveDelete = async () => {
     if (!enrollment) return;
-    if (
-      !window.confirm(
-        "This will permanently delete the doctor's profile. Proceed?",
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Delete doctor profile",
+      message: "This will permanently delete the doctor's profile. Proceed?",
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await api.put(`/api/admin/doctors/${enrollment._id}/delete/approve`, {});

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import "./ServiceSwitcher.css";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 
 /**
  * Default row configuration for the featured card's detail list.
@@ -78,13 +79,15 @@ export default function ServiceSwitcher({
     [count],
   );
 
+  const reducedMotion = usePrefersReducedMotion();
+
   const restartTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (!autoRotateMs || count <= 1) return;
+    if (!autoRotateMs || count <= 1 || reducedMotion) return;
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % count);
     }, autoRotateMs);
-  }, [autoRotateMs, count]);
+  }, [autoRotateMs, count, reducedMotion]);
 
   useEffect(() => {
     restartTimer();

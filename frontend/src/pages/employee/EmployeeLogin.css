@@ -95,7 +95,7 @@
   font-size: 14px;
   color: #0f172a;
   background: #f8fafc;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
   box-sizing: border-box;
   outline: none;
 }
@@ -131,7 +131,7 @@
   padding: 4px;
   display: flex;
   align-items: center;
-  transition: color 0.2s;
+  transition: color var(--duration-base);
 }
 
 .eal-login-eye:hover {
@@ -148,13 +148,17 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
+  transition: opacity var(--duration-base), transform var(--duration-fast);
   letter-spacing: 0.1px;
 }
 
 .eal-login-btn:hover:not(:disabled) {
   opacity: 0.92;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .eal-login-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
 }
 
 .eal-login-btn:disabled {
@@ -222,4 +226,14 @@
   .eal-title {
     font-size: 20px;
   }
+}
+
+/* Touch targets: larger invisible hit area, layout unchanged */
+.eal-login-eye {
+  position: relative;
+}
+.eal-login-eye::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
 }

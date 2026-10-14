@@ -545,7 +545,7 @@ function FAQContent() {
   };
 
   return (
-    <main className="faq-content">
+    <div className="faq-content">
       <nav className="quick-nav" aria-label="Jump to category">
         {CATEGORIES.map((cat) => (
           <button
@@ -585,7 +585,7 @@ function FAQContent() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   );
 }
 

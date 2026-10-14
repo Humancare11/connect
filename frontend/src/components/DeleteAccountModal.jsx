@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../api";
+import Button from "./ui/Button";
 
 const DANGER = "#c0392b";
 const DANGER_BG = "#fcedec";
@@ -248,14 +249,13 @@ export default function DeleteAccountModal({ onClose, onSubmitted }) {
             <p style={{ fontSize: 13.5, color: "#6b7ca3", lineHeight: 1.6, margin: "0 0 20px" }}>
               Your account stays active until then, and you can cancel the request from Profile Settings at any time.
             </p>
-            <button
+            <Button variant="secondary"
               ref={doneRef}
               type="button"
               onClick={onClose}
-              style={{ padding: "11px 30px", borderRadius: 12, border: "1.5px solid #083ab0", background: "#fff", color: "#083ab0", fontFamily: FONT, fontSize: 14, fontWeight: 700, cursor: "pointer" }}
             >
               Done
-            </button>
+            </Button>
           </div>
         ) : (
           <form className="dam-form" onSubmit={submit} noValidate>
@@ -321,21 +321,19 @@ export default function DeleteAccountModal({ onClose, onSubmitted }) {
 
             <div className="dam-foot">
               <div className="dam-actions">
-                <button
+                <Button variant="secondary"
                   type="button"
                   onClick={requestClose}
                   disabled={submitting}
-                  style={{ padding: "11px 22px", borderRadius: 12, border: "1.5px solid rgba(203,213,225,0.9)", background: "#fff", color: "#6b7ca3", fontFamily: FONT, fontSize: 14, fontWeight: 600, cursor: submitting ? "not-allowed" : "pointer" }}
                 >
                   Keep my account
-                </button>
-                <button
+                </Button>
+                <Button variant="danger" loading={submitting}
                   type="submit"
                   disabled={!acknowledged || submitting}
-                  style={{ padding: "11px 24px", borderRadius: 12, border: "none", background: DANGER, color: "#fff", fontFamily: FONT, fontSize: 14, fontWeight: 700, cursor: !acknowledged || submitting ? "not-allowed" : "pointer", opacity: !acknowledged || submitting ? 0.45 : 1 }}
                 >
                   {submitting ? "Submitting…" : "Submit deletion request"}
-                </button>
+                </Button>
               </div>
             </div>
           </form>

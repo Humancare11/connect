@@ -126,6 +126,12 @@
   font: inherit;
   font-weight: 600;
 }
+.pl-amount-input input:focus-visible,
+.pl-field textarea:focus-visible,
+.pl-select:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .pl-amount-input input {
   height: 46px;

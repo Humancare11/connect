@@ -3,12 +3,14 @@ import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
 import { AttachmentList, Icon, TrackOpensToggle } from "./EmailParts";
 import { ACCEPT_ATTR, EMAIL_RE, addFiles, newRequestId } from "./emailUtils";
+import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
 // Gmail-style compose window: docked bottom-right, with a full-view toggle.
 // Mounted by EmailLayout so a half-written mail survives moving between folders.
 // "Sent by <admin>" is shown for information only — the server always records
 // the logged-in admin, never anything sent from here.
 export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, adminName, onClose, onSent }) {
+  const confirm = useConfirm();
   const [from, setFrom] = useState(defaultMailboxId || mailboxes[0]?.id || "");
   // "Track opens" starts as the chosen mailbox's default until the admin touches the box.
   const [trackChoice, setTrackChoice] = useState(null);
@@ -31,8 +33,16 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
 
   const dirty = Boolean(to || cc || subject || body || files.length);
 
-  const close = () => {
-    if (dirty && !window.confirm("Discard this message?")) return;
+  const askDiscard = () =>
+    confirm({
+      title: "Discard message",
+      message: "Discard this message?",
+      confirmText: "Discard",
+      tone: "danger",
+    });
+
+  const close = async () => {
+    if (dirty && !(await askDiscard())) return;
     onClose();
   };
 
@@ -41,10 +51,12 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
     const onKey = (e) => {
       if (e.key !== "Escape") return;
       if (full) setFull(false);
-      else if (!dirty || window.confirm("Discard this message?")) onClose();
+      else if (!dirty) onClose();
+      else askDiscard().then((ok) => ok && onClose());
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [full, dirty, onClose]);
 
   const send = useMutation({

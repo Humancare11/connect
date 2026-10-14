@@ -19,7 +19,7 @@ import "./PrivacyPolicies.css";
 const DeleteAccountPolicyPage = () => {
   return (
     <div className="rcp-page">
-      <main className="rcp-content">
+      <div className="rcp-content">
         <header className="rcp-hero">
           <h1 className="rcp-title">Delete Your Account</h1>
           <p className="rcp-intro">
@@ -201,7 +201,7 @@ const DeleteAccountPolicyPage = () => {
             </a>
           </p>
         </section>
-      </main>
+      </div>
     </div>
   );
 };

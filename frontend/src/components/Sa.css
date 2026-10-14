@@ -114,19 +114,21 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition:
-    border-color 0.3s ease,
-    box-shadow 0.3s ease,
+    border-color var(--duration-slow) ease,
+    box-shadow var(--duration-slow) ease,
     transform 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    background 0.3s ease;
+    background var(--duration-slow) ease;
 }
 
 .services-card-inner-link:hover {
   border-color: rgba(255, 255, 255, 0.22);
-  box-shadow:
-    0 24px 56px rgba(0, 0, 0, 0.36),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  transform: translateY(-6px);
   background: rgba(255, 255, 255, 0.08);
+}
+@media (hover: hover) and (pointer: fine) {
+  .services-card-inner-link:hover {
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    transform: translateY(-6px);
+  }
 }
 
 .services-card-inner-link:focus-visible {
@@ -135,8 +137,10 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.services-card-inner-link:hover .cta-arrow {
-  transform: translateX(5px);
+@media (hover: hover) and (pointer: fine) {
+  .services-card-inner-link:hover .cta-arrow {
+    transform: translateX(5px);
+  }
 }
 
 .services-card-item {}
@@ -178,7 +182,7 @@
   border: 1px solid rgba(255, 255, 255, 0.13);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.85);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  transition: background var(--duration-slow) ease, border-color var(--duration-slow) ease;
 }
 
 .services-card-inner-link:hover .services-icon-box {
@@ -531,14 +535,22 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
     gap: clamp(8px, 2vw, 14px) !important;
     text-decoration: none !important;
-    transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease !important;
+    transition: background 0.25s ease, border-color 0.25s ease, transform var(--duration-base) ease !important;
   }
 
-  .services-card-inner-link:hover,
   .services-card-inner-link:active {
     background: rgba(255, 255, 255, 0.09) !important;
     border-color: rgba(255, 255, 255, 0.25) !important;
     transform: translateY(-2px) !important;
+  }
+  .services-card-inner-link:hover {
+    background: rgba(255, 255, 255, 0.09) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .services-card-inner-link:hover {
+      transform: translateY(-2px) !important;
+    }
   }
 
   /* Icon and Title together on left */
@@ -603,13 +615,20 @@
     color: #60a5fa !important;
     flex-shrink: 0 !important;
     margin-left: auto !important;
-    transition: transform 0.2s ease, color 0.2s ease !important;
+    transition: transform var(--duration-base) ease, color var(--duration-base) ease !important;
   }
 
-  .services-card-inner-link:hover .services-card-row-arrow,
   .services-card-inner-link:active .services-card-row-arrow {
     transform: translateX(4px) !important;
     color: #93c5fd !important;
+  }
+  .services-card-inner-link:hover .services-card-row-arrow {
+    color: #93c5fd !important;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .services-card-inner-link:hover .services-card-row-arrow {
+      transform: translateX(4px) !important;
+    }
   }
 }
 
@@ -646,10 +665,16 @@
 
 @media (prefers-reduced-motion: reduce) {
 
-  .services-card-inner-link,
-  .services-card-inner-link:hover,
-  .cta-arrow {
+  .services-card-inner-link, .cta-arrow {
     transition: none;
     transform: none;
+  }
+  .services-card-inner-link:hover {
+    transition: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .services-card-inner-link:hover {
+      transform: none;
+    }
   }
 }

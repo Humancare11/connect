@@ -171,13 +171,17 @@
   position: relative;
   overflow: hidden;
   cursor: default;
-  transition: transform 0.2s var(--ease), border-color 0.2s;
+  transition: transform var(--duration-base) var(--ease), border-color var(--duration-base);
   animation: dd-up 0.45s var(--ease) both;
 }
 
 .dd-stat:hover {
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.14);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dd-stat:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .dd-stat-icon {
@@ -279,7 +283,7 @@
   text-decoration: none;
   font-weight: 500;
   white-space: nowrap;
-  transition: opacity 0.15s;
+  transition: opacity var(--duration-fast);
 }
 
 .dd-view-all:hover {
@@ -655,13 +659,17 @@
   border: 1px solid var(--border);
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.18s, border-color 0.18s, transform 0.15s;
+  transition: background 0.18s, border-color 0.18s, transform var(--duration-fast);
 }
 
 .dd-quick-item:hover {
   background: color-mix(in srgb, var(--qa) 12%, var(--navy-card));
   border-color: color-mix(in srgb, var(--qa) 30%, transparent);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dd-quick-item:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .dd-quick-icon {

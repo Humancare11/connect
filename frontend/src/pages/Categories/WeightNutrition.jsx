@@ -41,12 +41,12 @@ const cat = {
     {
       name: "Lifestyle Medicine",
       desc: "Personalized support for healthy habit coaching, nutrition planning, exercise guidance, sleep improvement, stress management, weight management, preventive wellness, and long-term health optimization.",
-      path: "/weight-and-nurtrition/lifestyle-medicine",
+      path: "/weight-and-nutrition/lifestyle-medicine",
     },
     {
       name: "Nutrition & Dietetics ",
       desc: "Personalized nutrition support for diabetic diets, cholesterol management, weight loss, pregnancy nutrition, sports nutrition, food intolerance planning, healthy eating habits, and long-term wellness goals.",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics ",
+      path: "/weight-and-nutrition/nutrition-and-dietetics ",
     },
     // {
     //   name: "Weight and Nutrition ",
@@ -56,7 +56,7 @@ const cat = {
     {
       name: " Weight Management",
       desc: " Personalized support for weight loss, obesity management, binge eating concerns, GLP-1 eligibility assessments, nutrition planning, appetite control, and sustainable long-term weight management.",
-      path: "/weight-and-nurtrition/weight-management",
+      path: "/weight-and-nutrition/weight-management",
     },
   ],
 
@@ -64,57 +64,57 @@ const cat = {
     {
       name: "Healthy-Habit Coaching",
       // desc: "Lifestyle guidance for healthier living",
-      path: "/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching",
+      path: "/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching",
     },
     {
       name: "Diet & Exercise Planning",
       // desc: "Personalized nutrition and fitness plans",
-      path: "/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning",
+      path: "/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning",
     },
     {
       name: "Sleep Hygiene",
       // desc: "Guidance for better sleep habits",
-      path: "/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene",
+      path: "/weight-and-nutrition/lifestyle-medicine/sleep-hygiene",
     },
     {
       name: "Diabetic Diet",
       // desc: "Nutrition plans for diabetes management",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet",
+      path: "/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet",
     },
     {
       name: "Cholesterol-Lowering Diet",
       // desc: "Heart-healthy meal planning",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet",
+      path: "/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet",
     },
     {
       name: "Food-Intolerance Planning",
       // desc: "Diet guidance for food sensitivities",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning",
+      path: "/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning",
     },
     {
       name: "Pregnancy Nutrition",
       // desc: "Healthy eating during pregnancy",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition",
+      path: "/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition",
     },
     {
       name: "Sports Nutrition",
       // desc: "Nutrition plans for active lifestyles",
-      path: "/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition",
+      path: "/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition",
     },
     {
       name: "Obesity",
       // desc: "Weight management and obesity care",
-      path: "/weight-and-nurtrition/weight-management/obesity",
+      path: "/weight-and-nutrition/weight-management/obesity",
     },
     {
       name: "Weight-Loss Planning",
       // desc: "Personalized weight loss strategies",
-      path: "/weight-and-nurtrition/weight-management/weight-loss-planning",
+      path: "/weight-and-nutrition/weight-management/weight-loss-planning",
     },
     {
       name: "Binge Eating",
       // desc: "Support for binge eating management",
-      path: "/weight-and-nurtrition/weight-management/binge-eating",
+      path: "/weight-and-nutrition/weight-management/binge-eating",
     },
   ],
 
@@ -464,7 +464,7 @@ export default function WeightNutrition() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "weight" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div

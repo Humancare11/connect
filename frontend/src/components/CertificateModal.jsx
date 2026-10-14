@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import api from "../api";
+import useModalA11y from "../hooks/useModalA11y";
 import { formatShortDate as formatDate } from "../utils/prescriptionForm";
 // Uses the shared doctor-dashboard modal styles (dp-modal*, dp-input, ...).
 import "../pages/doctors/DoctorPatients.css";
@@ -16,6 +17,8 @@ const EMPTY_CERT = {
 // My Patients and from the doctor's Appointments page. A certificate never
 // changes the appointment's status.
 export default function CertificateModal({ patient, appointments, onClose, onSaved }) {
+  const certDialogRef = useRef(null);
+  useModalA11y(certDialogRef, true, onClose);
   const [form, setForm] = useState({
     ...EMPTY_CERT,
     appointmentId: appointments[0]?._id || "",
@@ -51,7 +54,7 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
 
   return (
     <div className="dp-modal-overlay" onClick={onClose}>
-      <div className="dp-modal" onClick={(e) => e.stopPropagation()}>
+      <div ref={certDialogRef} role="dialog" aria-modal="true" aria-label="Medical certificate" className="dp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="dp-modal-header">
           <h2>Medical Certificate</h2>
           <span className="dp-modal-patient">for {patient.name}</span>

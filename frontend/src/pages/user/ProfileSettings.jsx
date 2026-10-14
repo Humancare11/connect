@@ -6,6 +6,7 @@ import PhoneInputField, { parseValue as parsePhoneValue } from "../../components
 import LocationSelects from "../../components/LocationSelects";
 import { getMobileError } from "../../utils/phone";
 import DeleteAccountSection from "../../components/DeleteAccountSection";
+import Button from "../../components/ui/Button";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -478,7 +479,7 @@ export default function ProfileSettings() {
               </div>
             )}
             {error && (
-              <div className="ps-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
+              <div role="alert" className="ps-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
                 ⚠️ {error}
               </div>
             )}
@@ -493,7 +494,7 @@ export default function ProfileSettings() {
               {/* Row 1: Name + Email */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Full Name" required icon="👤">
-                  <input
+                  <input autoComplete="name"
                     style={inputStyle} type="text" id="name" name="name"
                     value={formData.name} onChange={handleChange}
                     placeholder="Your full name" required
@@ -501,7 +502,7 @@ export default function ProfileSettings() {
                   />
                 </Field>
                 <Field label="Email Address" required icon="✉️">
-                  <input
+                  <input autoComplete="email"
                     style={inputStyle} type="email" id="email" name="email"
                     value={formData.email} onChange={handleChange}
                     placeholder="you@email.com" required
@@ -534,7 +535,7 @@ export default function ProfileSettings() {
                   </div>
                 </Field>
                 <Field label="Gender (optional)" icon="⚧">
-                  <select
+                  <select autoComplete="sex"
                     style={selectStyle}
                     id="gender" name="gender"
                     value={formData.gender} onChange={handleChange}
@@ -551,7 +552,7 @@ export default function ProfileSettings() {
               {/* Row 3: DOB (optional) */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Date of Birth (optional)" icon="🎂">
-                  <input
+                  <input autoComplete="bday"
                     style={inputStyle} type="date" id="dob" name="dob"
                     value={formData.dob} onChange={handleChange}
                     min="1900-01-01" max={todayISO()}
@@ -588,33 +589,21 @@ export default function ProfileSettings() {
                 style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "12px", paddingTop: "14px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.65)" }}
               >
                 {/* Ghost reset */}
-                <button
+                <Button variant="secondary"
                   type="button"
                   onClick={handleReset}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "11px 22px", borderRadius: "12px", background: "rgba(255,255,255,0.58)", backdropFilter: "blur(8px)", border: "1.5px solid rgba(203,213,225,0.82)", color: "#6b7ca3", fontFamily: "var(--font-secondary)", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.90)"; e.currentTarget.style.color = "#0b0443"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.90)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.58)"; e.currentTarget.style.color = "#6b7ca3"; e.currentTarget.style.borderColor = "rgba(203,213,225,0.82)"; }}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
                   </svg>
                   Reset
-                </button>
+                </Button>
 
                 {/* Primary save */}
-                <button
+                <Button variant="primary" loading={saving}
                   type="submit"
-                  disabled={saving}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px", padding: "11px 28px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #3b82f6, #083ab0)", color: "#fff", fontFamily: "var(--font-secondary)", fontSize: "13.5px", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", minWidth: "150px", opacity: saving ? 0.75 : 1, boxShadow: "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)", transition: "all 0.2s ease" }}
-                  onMouseEnter={e => { if (!saving) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 26px rgba(59,130,246,0.46), 0 2px 8px rgba(8,58,176,0.28)"; } }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)"; }}
                 >
-                  {saving ? (
-                    <>
-                      <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", display: "inline-block", animation: "ps-spin 0.7s linear infinite", flexShrink: 0 }} />
-                      Saving…
-                    </>
-                  ) : saved ? "✅ Saved!" : (
+                  {saving ? "Saving…" : saved ? "✅ Saved!" : (
                     <>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -623,7 +612,7 @@ export default function ProfileSettings() {
                       Save Changes
                     </>
                   )}
-                </button>
+                </Button>
               </div>
 
             </form>

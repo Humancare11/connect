@@ -43,7 +43,7 @@ export const categories = [
     keywords: ["travel", "global", "international", "expat", "abroad"]
   },
   {
-    id: "weight-and-nurtrition", title: "Weight & Nutrition", type: "category", route: "/weight-and-nurtrition",
+    id: "weight-and-nurtrition", title: "Weight & Nutrition", type: "category", route: "/weight-and-nutrition",
     keywords: ["weight", "nutrition", "diet", "obesity", "weight loss"]
   },
   {

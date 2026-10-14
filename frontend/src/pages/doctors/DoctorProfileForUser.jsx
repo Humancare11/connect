@@ -270,6 +270,7 @@ export default function DoctorProfileForUser({
   const [doctor, setDoctor] = useState(prerendered);
   const [loading, setLoading] = useState(!prerendered);
   const [error, setError] = useState(null);
+  const [attempt, setAttempt] = useState(0);
   const { formatPrice } = useCurrency();
   const [expanded, setExpanded] = useState(false);
 
@@ -324,7 +325,7 @@ export default function DoctorProfileForUser({
         )
         .finally(() => setLoading(false));
     }
-  }, [id, slug, legacyId]);
+  }, [id, slug, legacyId, attempt]);
 
   const handleBook = () => {
     if (!user) {
@@ -354,6 +355,17 @@ export default function DoctorProfileForUser({
           <p className="dpfu-error-emoji">⚠️</p>
           <h2>Profile not found</h2>
           <p>{error || "This doctor profile could not be loaded."}</p>
+          {error && error !== "Invalid profile URL." && (
+            <button
+              onClick={() => {
+                setError(null);
+                setAttempt((n) => n + 1);
+              }}
+              className="dpfu-error-btn"
+            >
+              Try again
+            </button>
+          )}
           <button
             onClick={() => navigate("/find-a-doctor")}
             className="dpfu-error-btn"

@@ -46,7 +46,8 @@
 }
 
 /* ── Typography ──────────────────────────────────────────── */
-.auth-wrapper h1 {
+.auth-wrapper h1,
+.auth-wrapper h2 {
   font-family: var(--font-primary);
   font-weight: 700;
   font-size: 28px;
@@ -88,7 +89,7 @@
   font-size: 13px;
   text-decoration: none;
   margin: 10px 0;
-  transition: color 0.2s;
+  transition: color var(--duration-base);
   font-weight: 500;
 }
 
@@ -143,9 +144,11 @@
   margin-top: 8px;
 }
 
-.auth-wrapper button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
+@media (hover: hover) and (pointer: fine) {
+  .auth-wrapper button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
+  }
 }
 
 .auth-wrapper button:active {
@@ -154,6 +157,10 @@
 
 .auth-wrapper button:focus {
   outline: none;
+}
+.auth-wrapper button:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 /* Transparent / ghost button on the panel */
@@ -168,8 +175,12 @@
 .auth-wrapper button.transparent-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: #fff;
-  box-shadow: none;
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .auth-wrapper button.transparent-btn:hover {
+    box-shadow: none;
+    transform: translateY(-2px);
+  }
 }
 
 /* ── Google Sign-In button ───────────────────────────────── */
@@ -190,14 +201,18 @@
   text-transform: none !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
   margin: 0 !important;
-  transition: all 0.2s ease !important;
+  transition: all var(--duration-base) ease !important;
   cursor: pointer;
 }
 
 .google-btn:hover {
   border-color: #10b981 !important;
-  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.14) !important;
-  transform: translateY(-1px) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .google-btn:hover {
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.14) !important;
+    transform: translateY(-1px) !important;
+  }
 }
 
 .google-btn svg {
@@ -354,7 +369,8 @@
   transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1);
 }
 
-.panel-content h1 {
+.panel-content h1,
+.panel-content h2 {
   font-family: var(--font-primary);
   color: #fff;
   font-size: 30px;
@@ -606,7 +622,8 @@
     height: auto;
   }
 
-  .auth-wrapper h1 {
+  .auth-wrapper h1,
+  .auth-wrapper h2 {
     font-size: 22px;
   }
 
@@ -655,7 +672,11 @@
 
   .mobile-switch button:hover {
     background: #f0fdf4 !important;
-    transform: none !important;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .mobile-switch button:hover {
+      transform: none !important;
+    }
   }
 
   .row {
@@ -685,14 +706,18 @@
   text-transform: none !important;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
   margin: 8px 0 0 !important;
-  transition: all 0.2s ease !important;
+  transition: all var(--duration-base) ease !important;
   cursor: pointer;
 }
 
 .apple-btn:hover {
   background: #000 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
-  transform: translateY(-1px) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .apple-btn:hover {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25) !important;
+    transform: translateY(-1px) !important;
+  }
 }
 
 .apple-btn svg {
@@ -718,8 +743,12 @@
 
 .forgot-link:hover {
   color: #047857 !important;
-  transform: none !important;
-  box-shadow: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .forgot-link:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* ── OTP boxes container ────────────────────────────────── */
@@ -743,7 +772,7 @@
   font-weight: 700 !important;
   font-family: var(--font-primary);
   color: #064e3b !important;
-  transition: all 0.2s !important;
+  transition: all var(--duration-base) !important;
   padding: 0 !important;
   margin: 0 !important;
   box-shadow: none !important;
@@ -787,8 +816,12 @@
 
 .otp-resend button:hover {
   color: #047857 !important;
-  transform: none !important;
-  box-shadow: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .otp-resend button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
 }
 
 /* ── Flow card (OTP / Forgot PW screens) ────────────────── */
@@ -874,7 +907,8 @@
 /* ─────────────────────────────────────────────
    HEADINGS
 ───────────────────────────────────────────── */
-.auth-wrapper h1 {
+.auth-wrapper h1,
+.auth-wrapper h2 {
   color: #0b1f66;
 }
 
@@ -924,9 +958,11 @@
   margin-top: 10px;
 }
 
-.auth-wrapper button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.42);
+@media (hover: hover) and (pointer: fine) {
+  .auth-wrapper button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.42);
+  }
 }
 
 /* ─────────────────────────────────────────────
@@ -1067,6 +1103,10 @@
   background: #fff;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
+.auth-wrapper .pif-control.is-active:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .auth-wrapper .pif-country-trigger {
   width: auto !important;
@@ -1093,8 +1133,12 @@
 
 .auth-wrapper .pif-country-trigger:hover {
   background: rgba(37, 99, 235, 0.06) !important;
-  box-shadow: none !important;
-  transform: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .auth-wrapper .pif-country-trigger:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
 }
 
 .auth-wrapper .pif-flag,
@@ -1157,6 +1201,10 @@
   font-size: 14px !important;
   line-height: 46px;
   outline: none !important;
+}
+.auth-wrapper .pif-input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .auth-wrapper .pif-input::placeholder {
@@ -1275,6 +1323,10 @@
   cursor: pointer !important;
   user-select: none;
 }
+.country-trigger:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .country-dropdown-menu {
   position: absolute;
@@ -1304,6 +1356,10 @@
   color: #334155 !important;
   cursor: pointer !important;
   transition: background 0.1s;
+}
+.country-option:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .country-option:hover {
@@ -1342,8 +1398,12 @@
 
 .password-toggle:hover {
   color: #2563eb !important;
-  transform: translateY(-50%) !important;
-  box-shadow: none !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .password-toggle:hover {
+    transform: translateY(-50%) !important;
+    box-shadow: none !important;
+  }
 }
 .custom-country-dropdown {
   position: relative;
@@ -1367,4 +1427,11 @@
 @media (max-width: 420px) {
   .log-card { padding: 16px 12px; border-radius: 12px; }
   .log-title { font-size: 16px; }
+}
+
+/* Touch targets: larger invisible hit area, layout unchanged */
+.password-toggle::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
 }

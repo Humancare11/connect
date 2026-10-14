@@ -309,7 +309,7 @@ h4 {
   align-items: center;
   cursor: pointer;
   gap: 8px;
-  transition: all 0.3s;
+  transition: all var(--duration-slow);
   /* FIX: prevent dots from growing and pushing each other off-screen */
   flex: 1 1 0;
   min-width: 0;
@@ -368,7 +368,7 @@ h4 {
 .step-dot .ring .ring-icon svg {
   width: 16px;
   height: 16px;
-  transition: all 0.3s;
+  transition: all var(--duration-slow);
 }
 
 .step-dot.active .ring {
@@ -399,7 +399,7 @@ h4 {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  transition: all 0.3s;
+  transition: all var(--duration-slow);
   max-width: 65px;
   text-align: center;
   line-height: 1.2;
@@ -703,7 +703,7 @@ h4 {
   font-size: 12px;
   color: #374151;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background var(--duration-base), border-color var(--duration-base), color var(--duration-base);
 }
 
 .search-pill:hover {
@@ -729,7 +729,7 @@ h4 {
   box-shadow: 0 10px 36px rgba(34, 58, 94, 0.1);
   width: 100%;
   border: 1px solid var(--border);
-  transition: all 0.3s var(--ease);
+  transition: all var(--duration-slow) var(--ease);
   position: relative;
   overflow: hidden;
 }
@@ -769,6 +769,10 @@ h4 {
   background: transparent;
   min-width: 0;
 }
+.search-bar input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .search-bar input::placeholder {
   color: #9ca3af;
@@ -787,14 +791,18 @@ h4 {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: background var(--duration-slow), transform var(--duration-slow);
   white-space: nowrap;
   flex-shrink: 0;
 }
 
 .search-bar button:hover {
-  transform: scale(1.03);
   background: #1e3457;
+}
+@media (hover: hover) and (pointer: fine) {
+  .search-bar button:hover {
+    transform: scale(1.03);
+  }
 }
 
 .search-suggestions {
@@ -837,7 +845,7 @@ h4 {
 .search-suggestions::-webkit-scrollbar-thumb {
   background-color: rgba(34, 58, 94, 0.25);
   border-radius: 10px;
-  transition: background-color 0.2s ease;
+  transition: background-color var(--duration-base) ease;
 }
 
 .search-suggestions::-webkit-scrollbar-thumb:hover {
@@ -892,14 +900,18 @@ h4 {
   font-size: 16px;
   color: var(--primary);
   opacity: 0.5;
-  transition: all 0.25s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
   flex-shrink: 0;
   margin-left: 8px;
 }
 
 .suggestion-item:hover .suggestion-arrow {
   opacity: 1;
-  transform: translateX(4px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .suggestion-item:hover .suggestion-arrow {
+    transform: translateX(4px);
+  }
 }
 
 @keyframes searchDropdown {
@@ -1450,7 +1462,7 @@ h4 {
   font-size: 16px;
   color: var(--muted);
   line-height: 1.7;
-  max-width: 1200px;
+  max-width: var(--container-md);
 }
 
 .reveal {
@@ -1638,9 +1650,13 @@ h4 {
 }
 
 .marquee-left .testi-card-v2:hover {
-  transform: translateY(-10px);
   background: #ffffff;
-  box-shadow: 0 18px 50px rgba(15, 31, 61, 0.1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .marquee-left .testi-card-v2:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 18px 50px rgba(15, 31, 61, 0.1);
+  }
 }
 
 .marquee-right .testi-card-v2 {
@@ -1649,9 +1665,13 @@ h4 {
 }
 
 .marquee-right .testi-card-v2:hover {
-  transform: translateY(-10px);
   background: linear-gradient(135deg, #1d3564 0%, #23447e 100%);
-  box-shadow: 0 24px 60px rgba(15, 31, 61, 0.24);
+}
+@media (hover: hover) and (pointer: fine) {
+  .marquee-right .testi-card-v2:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 24px 60px rgba(15, 31, 61, 0.24);
+  }
 }
 
 .marquee-left .testi-quote {
@@ -1871,8 +1891,10 @@ h4 {
     box-shadow 0.25s ease;
 }
 
-.cta-btn-w:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .cta-btn-w:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .cta-btn-g {
@@ -2135,3 +2157,11 @@ h4 {
    END OF STYLESHEET
    
  ═══════════════════════════════════════════════ */
+
+/* Readable minimum on phones (12px) */
+@media (max-width: 480px) {
+  div.testi-author-simple,
+  .scene-desc > span {
+    font-size: 12px;
+  }
+}

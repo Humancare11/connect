@@ -411,3 +411,10 @@
     font-size: 10.5px;
   }
 }
+
+/* Readable minimum on phones (12px) */
+@media (max-width: 480px) {
+  p.hc-header-desc {
+    font-size: 12px;
+  }
+}

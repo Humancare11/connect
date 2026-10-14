@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import api from "../../api";
 import { approveUserDeletion, rejectUserDeletion } from "./userAdminActions";
 import "./AdminDeletionRequests.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 // The account-deletion HISTORY list (every request and every direct "Delete
 // User", kept even after the account is gone), with its status / source filters,
@@ -103,6 +104,7 @@ function ReasonCell({ text }) {
  * @param {Function} onToast    (msg, ok) — if omitted the panel shows its own toast
  */
 export default function DeletionRequestsPanel({ syncUrl = false, search: externalSearch, onDecided, onToast }) {
+  const confirm = useConfirm();
   const hasExternalSearch = externalSearch !== undefined;
   const [searchParams, setSearchParams] = useSearchParams();
   const [local, setLocal] = useState({ status: "all", source: "all", q: "", page: 1 });
@@ -197,7 +199,7 @@ export default function DeletionRequestsPanel({ syncUrl = false, search: externa
   const decide = async (row, action) => {
     if (busyId) return;
     setBusyId(row._id);
-    const result = await (action === "approve" ? approveUserDeletion : rejectUserDeletion)(row.userId, row.name);
+    const result = await (action === "approve" ? approveUserDeletion : rejectUserDeletion)(row.userId, row.name, confirm);
     setBusyId("");
     if (!result.done) return;
     notify(result.message, result.ok);

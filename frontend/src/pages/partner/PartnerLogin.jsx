@@ -49,18 +49,18 @@ export default function PartnerLogin() {
         <div className="ptl-login-brand">
 
 <div className="ptl-login-logo">
-<img src={logo} alt="Logo" />
+<img decoding="async" src={logo} alt="Logo" width="225" height="90" />
   </div>        </div>
 
         <h1 className="ptl-login-title">Partner Portal</h1>
         <p className="ptl-login-subtitle">Sign in to submit and track care cases</p>
 
-        {error && <p className="ptl-login-error">{error}</p>}
+        {error && <p className="ptl-login-error" id="ptl-login-error" role="alert">{error}</p>}
 
         <form onSubmit={submit} className="ptl-login-form">
           <div className="ptl-login-field">
             <label htmlFor="ptl-email">Email Address</label>
-            <input
+            <input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "ptl-login-error" : undefined}
               id="ptl-email"
               type="email"
               placeholder="partner@company.com"
@@ -75,7 +75,7 @@ export default function PartnerLogin() {
           <div className="ptl-login-field">
             <label htmlFor="ptl-password">Password</label>
             <div className="ptl-login-password-wrap">
-              <input
+              <input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "ptl-login-error" : undefined}
                 id="ptl-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
