@@ -203,6 +203,10 @@ function createChatService({
           }
         : {}),
     }));
+    // Archived quietly from the Queue (no admin replied in time): the patient is never shown a closed chat. They still
+    // see the normal Queue view, and writing puts the chat back in the Queue.
+    const quiet = conv.mode === "archived" && conv.closedReason === "inactive" && conv.modeBeforeLeft === "queue";
+    if (quiet) conv = { ...conv, mode: "queue", closedReason: "" };
     const canRequestAgent = conv.mode === "ai";
     // A patient with an agent (or waiting for one) can hand the chat back to the AI, unless the AI is switched off.
     const canSwitchToAi = (conv.mode === "live" || conv.mode === "queue") && settings.aiMode !== "ai_off";
@@ -246,7 +250,7 @@ function createChatService({
     if (sender === "patient") {
       update.$inc = { patientMessageCount: 1 };
       update.$set.optionsUsed = true;
-      update.$set.inactiveDueAt = null; // the patient wrote: the inactivity timer is cancelled
+      if (conv.mode !== "queue") update.$set.inactiveDueAt = null; // the patient wrote: the timer is cancelled (not in the Queue)
     }
     await LcConversation.updateOne({ _id: conv._id }, update);
     // A visible AI or admin message (re)starts the inactivity timer, but only while the chat is with the AI or an
@@ -420,9 +424,17 @@ function createChatService({
     if (!doc) return null;
     const settings = await loadSettings();
     const target = doc.modeBeforeLeft === "ai" ? "ai" : "queue";
-    const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "", inactiveDueAt: null };
+    // A Queue chat that was archived quietly (the patient was never told it closed): no "welcome back" line.
+    const quiet = doc.modeBeforeLeft === "queue" && doc.closedReason === "inactive";
+    const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "", inactiveDueAt: null, leaveDueAt: null };
     if (target === "queue") {
-      Object.assign(set, { assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: followUpDueFor(doc, settings) });
+      Object.assign(set, {
+        assigneeId: null,
+        agentName: "",
+        queuedAt: new Date(now()),
+        followUpDueAt: followUpDueFor(doc, settings),
+        inactiveDueAt: new Date(now() + inactiveMinutesOf(settings) * 60_000),
+      });
     }
     const won = await LcConversation.findOneAndUpdate(
       { _id: doc._id, mode: "archived", closedReason: { $in: reasons } },
@@ -433,7 +445,7 @@ function createChatService({
     const first = firstNameOf(decryptLiveChatText(visitor.name));
     const welcome =
       target === "ai" ? `Welcome back, ${first}!` : `Welcome back, ${first}! We're reconnecting you with our team.`;
-    await addMessage(won, "system", welcome);
+    if (!quiet) await addMessage(won, "system", welcome);
     setActivity(visitorId, won);
     emitToAgents("chat:reopened", { conversationId: won.conversationId, visitorId, everLive: Boolean(won.everLive), name: first, mode: target });
     if (target === "queue") {
@@ -796,7 +808,9 @@ function createChatService({
           everLive: true,
           queuedAt: new Date(now()),
           followUpDueAt: followUpDueFor(conv, cfg),
-          inactiveDueAt: null, // a chat in the Queue is never auto-archived
+          // The Queue timer: no admin reply within the inactivity minutes moves the chat to Archive temp. Patient
+          // messages do not extend it; only an admin reply or joining ends it.
+          inactiveDueAt: new Date(now() + inactiveMinutesOf(cfg) * 60_000),
           handoffReason: reason || "explicit_request", // shown to admins; the header button counts as a request
           offTopicStreak: 0,
           unansweredStreak: 0,
@@ -852,12 +866,17 @@ function createChatService({
     return handled;
   }
 
-  // The inactivity step. For every AI or live chat whose due time has passed, with the patient silent since the
-  // last AI or admin message: archive it as "Inactive" and tell the patient. Never touches the Queue. Each chat is
-  // claimed with one atomic update, so running from several places at once is safe.
+  // The inactivity step. For every AI, live or Queue chat whose due time has passed:
+  //   - AI / live: the patient has been silent since the last AI or admin message. Archived as "Inactive" and the
+  //     patient is told ("closed after N minutes").
+  //   - Queue: no admin has replied for the inactivity minutes (patient messages do not count). Archived as "Inactive"
+  //     with modeBeforeLeft "queue", QUIETLY: no closing line and the patient's widget stays as it is (they were told
+  //     an email follows). A patient message later puts the chat back in the Queue. The email follow-up fires first
+  //     as before (a chat whose follow-up is still pending waits for it).
+  // Each chat is claimed with one atomic update, so running from several places at once is safe.
   async function runInactiveDue({ limit = INACTIVE_JOB_LIMIT } = {}) {
     const stamp = new Date(now());
-    const due = await LcConversation.find({ mode: { $in: ["ai", "live"] }, inactiveDueAt: { $ne: null, $lte: stamp } })
+    const due = await LcConversation.find({ mode: { $in: ["ai", "live", "queue"] }, inactiveDueAt: { $ne: null, $lte: stamp } })
       .select("_id conversationId")
       .limit(limit)
       .lean();
@@ -866,7 +885,12 @@ function createChatService({
       try {
         const done = await withLock(row.conversationId, async () => {
           const current = await LcConversation.findById(row._id);
-          if (!current || !["ai", "live"].includes(current.mode) || !current.inactiveDueAt || current.inactiveDueAt > stamp) return false;
+          if (!current || !["ai", "live", "queue"].includes(current.mode) || !current.inactiveDueAt || current.inactiveDueAt > stamp) return false;
+          if (current.mode === "queue") {
+            if (current.followUpDueAt && !current.followUpNoticeAt) return false; // the email follow-up goes first
+            const archived = await archiveQuietly(current, stamp, { filter: { inactiveDueAt: { $ne: null, $lte: stamp } } });
+            return Boolean(archived);
+          }
           const last = await LcMessage.findOne({
             conversationId: current.conversationId,
             sender: { $in: ["patient", "ai", "agent"] },
@@ -897,6 +921,21 @@ function createChatService({
       }
     }
     return handled;
+  }
+
+  // A Queue chat that goes to Archive temp without telling the patient: no closing line, no widget change (the
+  // patient's view keeps the normal composer; see `serialize`). Used by the inactivity job, the catch-up and the
+  // midnight sweep. Must run inside withLock. `filter` adds conditions to the atomic claim.
+  async function archiveQuietly(current, stamp, { filter = {} } = {}) {
+    const archived = await LcConversation.findOneAndUpdate(
+      { _id: current._id, mode: "queue", ...filter },
+      { $set: { modeBeforeLeft: "queue", mode: "archived", closedReason: "inactive", closedAt: stamp, inactiveDueAt: null, leaveDueAt: null } },
+      { returnDocument: "after" }
+    );
+    if (!archived) return null;
+    setActivity(archived.visitorId, archived);
+    announce(archived); // admins: the chat moves from the Queue to Archive temp
+    return archived;
   }
 
   // Catch-up for chats whose in-memory timers were lost (a restart or deploy) or that predate the inactivity timer.
@@ -948,6 +987,27 @@ function createChatService({
         if (done) archivedInactive += 1;
       } catch (err) {
         log({ event: "abandoned_inactive_failed", conversationId: row.conversationId, message: err?.message });
+      }
+    }
+
+    // 1b. Queue chats with no admin reply for the inactivity minutes and no timer (queued before the Queue timer
+    // existed): archived quietly, like the timer would have. A connected patient does not matter here.
+    const waiting = await LcConversation.find({ mode: "queue", inactiveDueAt: null, queuedAt: { $lt: cutoff } })
+      .select("_id conversationId followUpDueAt followUpNoticeAt")
+      .limit(limit)
+      .lean();
+    for (const row of waiting) {
+      if (row.followUpDueAt && !row.followUpNoticeAt) continue; // the email follow-up goes first
+      try {
+        const done = await withLock(row.conversationId, async () => {
+          const current = await LcConversation.findById(row._id);
+          if (!current || current.mode !== "queue" || current.inactiveDueAt || !current.queuedAt || current.queuedAt >= cutoff) return false;
+          if (current.followUpDueAt && !current.followUpNoticeAt) return false;
+          return Boolean(await archiveQuietly(current, stamp, { filter: { inactiveDueAt: null, queuedAt: { $lt: cutoff } } }));
+        });
+        if (done) archivedInactive += 1;
+      } catch (err) {
+        log({ event: "abandoned_queue_failed", conversationId: row.conversationId, message: err?.message });
       }
     }
 
@@ -1010,7 +1070,7 @@ function createChatService({
     let archived = 0;
     const kept = new Set();
     for (let batch = 0; batch < 200; batch += 1) {
-      const rows = await LcConversation.find({ mode: { $in: ["ai", "live"] }, lastMessageAt: { $lt: start }, _id: { $nin: [...kept] } })
+      const rows = await LcConversation.find({ mode: { $in: ["ai", "live", "queue"] }, lastMessageAt: { $lt: start }, _id: { $nin: [...kept] } })
         .select("_id conversationId")
         .limit(SWEEP_BATCH)
         .lean();
@@ -1019,8 +1079,12 @@ function createChatService({
         try {
           const done = await withLock(row.conversationId, async () => {
             const current = await LcConversation.findById(row._id);
-            if (!current || !["ai", "live"].includes(current.mode) || current.lastMessageAt >= start) return false;
+            if (!current || !["ai", "live", "queue"].includes(current.mode) || current.lastMessageAt >= start) return false;
             if (isConnected(current.visitorId)) return false; // the patient is on the site (tracking or chat connection)
+            if (current.mode === "queue") {
+              if (current.followUpDueAt && !current.followUpNoticeAt) return false; // the email follow-up goes first
+              return Boolean(await archiveQuietly(current, new Date(atMs), { filter: { lastMessageAt: { $lt: start } } }));
+            }
             if (current.mode === "live") {
               const last = await LcMessage.findOne({
                 conversationId: current.conversationId,
@@ -1087,7 +1151,7 @@ function createChatService({
   // Header button "Switch to AI": the chat goes back to the AI at once. A chat that was ever live stays in Live agent
   // chats (group "Back with the AI"); the agent holding it sees a team-only line and the AI carries on.
   async function switchToAi(visitorId) {
-    const loaded = await loadOpenForMessage(visitorId);
+    const loaded = await loadOpenForMessage(visitorId, { reopen: true });
     if (loaded.error) return { ok: false, error: loaded.error };
     return withLock(loaded.conv.conversationId, async () => {
       const conv = await LcConversation.findById(loaded.conv._id);

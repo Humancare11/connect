@@ -124,21 +124,6 @@ describe("live chat: inactive chats are archived", () => {
   });
 
   describe("never archived", () => {
-    test("a chat in the Queue (the patient is waiting for us)", async () => {
-      const chat = await openChat();
-      await lc.call(chat.socket, "chat:agent");
-      const c = await convOf(chat.id);
-      assert.equal(c.mode, "queue");
-      assert.equal(c.inactiveDueAt, null, "entering the Queue cancels the timer");
-
-      // even a leftover due time cannot close a Queue chat
-      await makeDue(chat.id);
-      await lc.livechat.chat.runInactiveDue();
-      await sleep(400);
-      assert.deepEqual([(await convOf(chat.id)).mode, (await convOf(chat.id)).closedReason], ["queue", ""]);
-      chat.socket.close();
-    });
-
     test("a chat where the patient sent the last message", async () => {
       const chat = await openChat();
       await aiAnswered(chat);
@@ -241,7 +226,8 @@ describe("live chat: inactive chats are archived", () => {
       assert.ok(await waitFor(async () => (await convOf(chat.id)).closedReason === "inactive"));
       assert.equal((await lc.call(chat.socket, "chat:message", { text: "are you there?" })).ok, true);
       const c = await convOf(chat.id);
-      assert.deepEqual([c.mode, c.assigneeId, c.inactiveDueAt], ["queue", null, null]);
+      assert.deepEqual([c.mode, c.assigneeId], ["queue", null]);
+      assert.ok(c.inactiveDueAt, "a chat back in the Queue gets a fresh Queue timer");
       chat.socket.close();
     });
 

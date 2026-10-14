@@ -56,7 +56,7 @@ test("the switch component keeps its behaviour: Original / English, pressed stat
 
 // ── Composer language controls (rendered for real with Vite SSR) ──────────────────────────────────────────────────
 
-async function renderChat({ language, languageUnknown = false, readOnly = false, messages }) {
+async function renderChat({ language, languageUnknown = false, readOnly = false, archivedJoinable, closedArchived, messages }) {
   const { createServer } = await import("vite");
   const React = (await import("react")).default;
   const { renderToStaticMarkup } = await import("react-dom/server");
@@ -66,7 +66,7 @@ async function renderChat({ language, languageUnknown = false, readOnly = false,
     const now = new Date().toISOString();
     const noop = async () => false;
     const detail = {
-      conversation: { conversationId: "HC12345678", mode: readOnly ? "archived" : "live", everLive: true, assignee: { id: "u1", name: "Sam" }, name: "Hans", language, languageUnknown, startedAt: now, lastMessageAt: now },
+      conversation: { conversationId: "HC12345678", mode: readOnly || archivedJoinable || closedArchived ? "archived" : "live", joinable: Boolean(archivedJoinable), closedReason: archivedJoinable || closedArchived ? "inactive" : "", everLive: true, assignee: archivedJoinable ? null : { id: "u1", name: "Sam" }, name: "Hans", language, languageUnknown, startedAt: now, lastMessageAt: now },
       messages: messages || [{ id: "m1", sender: "patient", text: "Hallo, ich habe Schmerzen", at: now }],
       view: "original",
       panel: {},
@@ -123,4 +123,13 @@ test("the chat list sorts every group newest first with no Oldest / Newest toggl
   assert.doesNotMatch(list, /Oldest|Change sort order|sortBy/);
   assert.match(list, /activityAt\(b\) - activityAt\(a\)/);
   assert.match(list, /Asia|IST_OFFSET_MS/, "Archive temp drops yesterday's chats at midnight India time");
+});
+
+test("an archived chat that came from the Queue today can be joined from Archive temp; other archived chats stay closed", async () => {
+  const joinable = await renderChat({ language: null, archivedJoinable: true });
+  assert.match(joinable, /Take over chat/);
+  assert.match(joinable, /Enter message/, "the composer is open for a reply");
+  assert.doesNotMatch(joinable, /Read-only/);
+  const closed = await renderChat({ language: null, closedArchived: true });
+  assert.doesNotMatch(closed, /Take over chat/);
 });

@@ -186,16 +186,18 @@ export default function ChatConversation({
   const asked = useRef(new Set()); // message ids already sent for translation
   const mounted = useRef(true);
 
-  const closed = c.mode === "archived";
+  const archived = c.mode === "archived";
+  // An archived chat that went there from the Queue today can still be joined or replied to from Archive temp.
+  const closed = archived && !c.joinable;
   const mine = c.assignee?.id === me;
   const heldByOther = c.mode === "live" && !mine;
   const superadmin = role === "superadmin";
-  const canDelete = superadmin && closed && typeof onDelete === "function";
+  const canDelete = superadmin && archived && typeof onDelete === "function";
   const showMore = (Boolean(c.ip) && !readOnly) || canDelete;
   const [deleting, setDeleting] = useState(null); // null, or { busy, error }
-  const canTakeOver = !readOnly && !closed && (c.mode === "ai" || c.mode === "queue" || (heldByOther && superadmin));
+  const canTakeOver = !readOnly && !closed && (c.mode === "ai" || c.mode === "queue" || archived || (heldByOther && superadmin));
   const canHandBack = !readOnly && c.mode === "live" && (mine || superadmin);
-  const canResolve = !readOnly && !closed && (!heldByOther || superadmin);
+  const canResolve = !readOnly && !closed && !archived && (!heldByOther || superadmin);
   // Only the assignee replies; everyone else (and everyone on a closed chat) can still leave internal notes.
   const notesOnly = closed || heldByOther;
 
