@@ -20,7 +20,9 @@ test("old sidebar: Live Chat is a plain named-target anchor, with no NEW tag, no
   const layout = read("pages/admin/AdminLayout.jsx");
   const start = layout.indexOf("function LiveChatNavLink");
   assert.ok(start > 0);
-  const link = layout.slice(start, layout.indexOf("\n}\n", start));
+  const end = layout.slice(start).search(/\r?\n\}\r?\n/); // line-ending safe (CRLF or LF checkouts)
+  assert.ok(end > 0);
+  const link = layout.slice(start, start + end);
   assert.match(link, /<a\s+href=\{item\.path\}\s+target=\{LIVECHAT_TAB_NAME\}/);
   assert.doesNotMatch(link, /_blank/);
   assert.doesNotMatch(link, /rel=/, "no noopener: it would put the tab in its own browsing-context group");
