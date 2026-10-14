@@ -315,7 +315,7 @@ export default function SecondOpinion() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--second-opinion"
         style={{
           "--service-accent": s.accentColor,
@@ -849,7 +849,7 @@ export default function SecondOpinion() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

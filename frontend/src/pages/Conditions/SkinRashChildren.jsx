@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Skin-Rash-in-Children.webp";
+import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
   badge: "Pediatric Care",
@@ -45,6 +46,7 @@ export default function SkinRashChildren({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>
@@ -71,7 +73,7 @@ export default function SkinRashChildren({ categoryId } = {}) {
 
         <div className="condition-mid-section">
           <div className="condition-page-layout">
-            <main>
+            <div className="condition-page-main">
               <div className="condition-glass-card">
                 <div className="condition-glass-shine" />
                 <div className="condition-about-grid">
@@ -157,7 +159,7 @@ export default function SkinRashChildren({ categoryId } = {}) {
                   </div>
                 </div>
               </div>
-            </main>
+            </div>
 
             <aside>
               <div className="condition-sbc">

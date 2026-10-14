@@ -227,13 +227,13 @@ export default function GeneralConsultation() {
     <>
       <SEO />
 
-      <main className="service-page service-page--general" style={{ "--service-accent": s.accentColor }}>
+      <div className="service-page service-page--general" style={{ "--service-accent": s.accentColor }}>
         <AnimatePresence mode="wait">
           <motion.div key={slug} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }}>
 
             {/* HERO */}
             <section ref={heroRef} className="service-hero service-hero--with-image">
-              <img src={HERO_IMAGE.src} alt={HERO_IMAGE.alt} width={HERO_IMAGE.width} height={HERO_IMAGE.height} loading="eager" className="service-hero__bg-img" />
+              <img decoding="async" src={HERO_IMAGE.src} alt={HERO_IMAGE.alt} width={HERO_IMAGE.width} height={HERO_IMAGE.height} loading="eager" className="service-hero__bg-img" />
               <div className="service-hero__overlay" />
               <motion.div style={{ opacity: heroOpacity }} className="service-hero__content-grid">
                 <div>
@@ -409,7 +409,7 @@ export default function GeneralConsultation() {
 
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

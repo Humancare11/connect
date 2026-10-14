@@ -117,17 +117,21 @@
   position: relative;
   overflow: hidden;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    transform 0.15s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    transform var(--duration-fast);
   box-shadow: var(--shadow-sm);
   animation: da-up 0.45s var(--ease) both;
 }
 
 .da-stat:hover {
-  transform: translateY(-2px);
   border-color: var(--blue-border);
-  box-shadow: var(--shadow-md);
+}
+@media (hover: hover) and (pointer: fine) {
+  .da-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
 }
 
 .da-stat--active {
@@ -299,7 +303,7 @@
 .da-row {
   border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
   animation: da-up 0.3s var(--ease) both;
 }
 
@@ -590,8 +594,8 @@
   text-decoration: none;
   max-width: 240px;
   transition:
-    background 0.15s,
-    box-shadow 0.15s;
+    background var(--duration-fast),
+    box-shadow var(--duration-fast);
 }
 
 .da-report-chip:hover {

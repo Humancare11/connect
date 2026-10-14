@@ -79,6 +79,7 @@ import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -194,7 +195,7 @@ const SPECIALTY_DATA = {
       Icon: FiZap,
       name: "HIV Prevention / PrEP Guidance",
       desc: "Preventive care for HIV protection",
-      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention",
+      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
     },
     {
       Icon: FiShield,
@@ -564,7 +565,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <main className="sp-page">
+      <div className="sp-page">
         <SEO />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
@@ -587,6 +588,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
                 className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
                   }`}
               >
+                <Breadcrumb tone="light" />
                 <span className="sp-hero__badge">Sexual health</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
@@ -610,7 +612,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
               {/* Image column */}
               <Reveal>
                 <div className="sp-overview__img-wrap">
-                  <img
+                  <img decoding="async"
                     src={data.overviewImage}
                     width="562"
                     height="430"
@@ -701,7 +703,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}
@@ -843,7 +845,7 @@ export default function SexualHealth({ data = SPECIALTY_DATA }) {
             },
           ]}
         />
-      </main>
+      </div>
     </>
   );
 }

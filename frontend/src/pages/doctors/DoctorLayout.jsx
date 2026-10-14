@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import socket from "../../socket";
 import "./DoctorLayout.css";
 import api, { getUserAuthToken } from "../../api";
@@ -469,7 +470,7 @@ export default function DoctorLayout({ children }) {
           </div>
         </header>
 
-        <main className="dl-content">{children}</main>
+        <main className="dl-content" id="main-content" tabIndex={-1}><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></main>
       </div>
     </div>
   );

@@ -80,6 +80,7 @@ import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -176,19 +177,19 @@ const SPECIALTY_DATA = {
       Icon: FiActivity,
       name: "Obesity",
       desc: "Weight management and obesity care",
-      path: "/weight-and-nurtrition/weight-management/obesity",
+      path: "/weight-and-nutrition/weight-management/obesity",
     },
     {
       Icon: FiShield,
       name: "Weight-Loss Planning",
       desc: "Personalized weight loss strategies",
-      path: "/weight-and-nurtrition/weight-management/weight-loss-planning",
+      path: "/weight-and-nutrition/weight-management/weight-loss-planning",
     },
     {
       Icon: FiTrendingUp,
       name: "Binge Eating",
       desc: "Support for binge eating management",
-      path: "/weight-and-nurtrition/weight-management/binge-eating",
+      path: "/weight-and-nutrition/weight-management/binge-eating",
     },
   ],
 
@@ -548,7 +549,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
   return (
     <>
       <SEO />
-      <main className="sp-page">
+      <div className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
@@ -570,6 +571,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
                 className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
                   }`}
               >
+                <Breadcrumb tone="light" />
                 <span className="sp-hero__badge">Weight & nutrition</span>
                 <h1 className="sp-hero__title">{data.name}</h1>
                 <p className="sp-hero__tagline">{data.tagline}</p>
@@ -593,7 +595,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
               {/* Image column */}
               <Reveal>
                 <div className="sp-overview__img-wrap">
-                  <img
+                  <img decoding="async"
                     src={data.overviewImage}
                     width="562"
                     height="430"
@@ -684,7 +686,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}
@@ -825,7 +827,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
             },
           ]}
         />
-      </main>
+      </div>
     </>
   );
 }

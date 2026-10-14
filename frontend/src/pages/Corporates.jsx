@@ -14,6 +14,7 @@ import HrDashboardImg from "../assets/CorporateSolutions/health-analytics-report
 import SickLeaveImg from "../assets/CorporateSolutions/employee-absence-management-solution.webp";
 import SEO from "../components/Seo";
 import FAQ from "../components/FAQ/FAQ";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 
 const SERVICES = [
   {
@@ -393,15 +394,16 @@ export default function CorporateDemo() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const activeSvc = SERVICES[activeIdx];
+  const reducedMotion = usePrefersReducedMotion();
 
   // Auto cycle through services (pauses when user clicks or hovers)
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || reducedMotion) return;
     const interval = setInterval(() => {
       setActiveIdx((prev) => (prev + 1) % SERVICES.length);
     }, 6000);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, reducedMotion]);
 
   return (
     <>
@@ -464,7 +466,10 @@ export default function CorporateDemo() {
           {SERVICES.map((svc, i) => {
             const isActive = i === activeIdx;
             return (
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => {
+                  setActiveIdx(i);
+                  setIsPaused(true);
+                })(e); } }}
                 key={svc.label}
                 className={`accordion-panel ${isActive ? "active" : ""}`}
                 onMouseEnter={() => {

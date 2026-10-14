@@ -5,6 +5,23 @@
     "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-secondary:
     "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Layout containers (values already used across the app) */
+  --container-sm: 900px;
+  --container-md: 1200px;
+  --container-lg: 1280px;
+
+  /* Stacking scale: the values the app actually uses today */
+  --z-sticky: 80; /* fixed site header */
+  --z-dropdown: 100;
+  --z-overlay: 9998;
+  --z-modal: 9999;
+  --z-toast: 10000; /* above modals; in-call screens (10001) stay above toasts */
+
+  /* Transition durations */
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
 }
 
 *,
@@ -137,4 +154,59 @@ input[type="reset"] {
   .corp-hero p {
     font-size: 14px;
   }
+}
+/* Skip link: first focusable element on every page; visible only while focused. */
+.hc-skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100000;
+  padding: 10px 16px;
+  background: #0f172a;
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 8px;
+  transform: translateY(-200%);
+}
+.hc-skip-link:focus,
+.hc-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
+/* The skip link moves focus here programmatically; no ring needed on the container. */
+#main-content:focus {
+  outline: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visitors who asked for reduced motion: effectively no animation or smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Horizontal scroller for wide tables (CMS blog content). */
+.hc-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }

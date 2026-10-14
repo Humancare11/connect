@@ -496,7 +496,7 @@ color: #212121;
   text-transform: none !important;
   letter-spacing: normal !important;
   line-height: 1.4;
-  z-index: 9999;
+  z-index: var(--z-modal);
   white-space: normal;
 }
 

@@ -243,7 +243,7 @@ const specialties = [
     description:
       "Personalized plans and medical guidance for sustainable weight goals.",
     tags: ["Nutrition", "Metabolism", "Coaching"],
-    link: "/weight-and-nurtrition/weight-management",
+    link: "/weight-and-nutrition/weight-management",
   },
   {
     name: "Nutrition & Dietetics",
@@ -251,7 +251,7 @@ const specialties = [
     description:
       "Dietary guidance from licensed professionals for health and recovery goals.",
     tags: ["Meal Plans", "Allergies", "Wellness"],
-    link: "/weight-and-nurtrition/nutrition-and-dietetics",
+    link: "/weight-and-nutrition/nutrition-and-dietetics",
   },
   {
     name: "Lifestyle Medicine",
@@ -259,7 +259,7 @@ const specialties = [
     description:
       "Evidence-based habit changes to prevent and manage chronic disease.",
     tags: ["Sleep", "Stress", "Exercise"],
-    link: "/weight-and-nurtrition/lifestyle-medicine",
+    link: "/weight-and-nutrition/lifestyle-medicine",
   },
   {
     name: "Cardiology",
@@ -307,7 +307,7 @@ const specialties = [
     description:
       "A second specialist review of your diagnosis, records, or treatment plan.",
     tags: ["Second Opinion", "Records Review"],
-    link: "/export-medical-opinion",
+    link: "/online-second-medical-opinion",
   },
   {
     name: "Ophthalmology",

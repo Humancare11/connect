@@ -42,7 +42,7 @@ export default function AdminOverview() {
 
       <div className="adp-stats">
         {statCards.map(c => (
-          <div
+          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate(c.path))(e); } }}
             key={c.label}
             className={`adp-stat ${c.cls}`}
             style={{ cursor: "pointer" }}
@@ -62,7 +62,7 @@ export default function AdminOverview() {
         <div style={{ padding: "20px 22px" }}>
           <div className="ado-grid">
             {actions.map(a => (
-              <div key={a.path} className="ado-action-card" onClick={() => navigate(a.path)}>
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate(a.path))(e); } }} key={a.path} className="ado-action-card" onClick={() => navigate(a.path)}>
                 <div className="ado-action-icon">{a.icon}</div>
                 <div className="ado-action-label">{a.label}</div>
                 <div className="ado-action-sub">{a.sub}</div>

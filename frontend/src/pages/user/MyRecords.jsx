@@ -48,7 +48,7 @@ function PrescriptionCard({ rx, patient }) {
   return (
     <div className="mr-card mr-card--rx">
       {/* ── Collapsed header ── */}
-      <div className="mr-card-top" onClick={() => setOpen((p) => !p)}>
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen((p) => !p))(e); } }} className="mr-card-top" onClick={() => setOpen((p) => !p)}>
         <div className="mr-card-icon">💊</div>
         <div className="mr-card-meta">
           <h3 className="mr-card-title">{rx.diagnosis}</h3>
@@ -102,7 +102,7 @@ function CertificateCard({ cert, patient }) {
   return (
     <div className="mr-card mr-card--cert">
       {/* ── Collapsed header ── */}
-      <div className="mr-card-top" onClick={() => setOpen((p) => !p)}>
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen((p) => !p))(e); } }} className="mr-card-top" onClick={() => setOpen((p) => !p)}>
         <div className="mr-card-icon">📄</div>
         <div className="mr-card-meta">
           <h3 className="mr-card-title">{cert.diagnosis}</h3>

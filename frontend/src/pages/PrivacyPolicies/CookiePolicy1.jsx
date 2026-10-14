@@ -4,7 +4,7 @@ import "./PrivacyPolicies.css";
 const CookiePolicy1 = () => {
     return (
         <div className="rcp-page">
-            <main className="rcp-content">
+            <div className="rcp-content">
                 <header className="rcp-hero">
                     <h1 className="rcp-title">Cookie Policy</h1>
                     <p className="rcp-intro">
@@ -72,7 +72,7 @@ const CookiePolicy1 = () => {
                         Email: <a href="mailto:support@humancareconnect.co " className="rcp-link">support@humancareconnect.co </a>
                     </p>
                 </section>
-            </main>
+            </div>
         </div>
     );
 };

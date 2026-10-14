@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"; // useState still used for sideOpen
 import { createPortal } from "react-dom";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
@@ -183,6 +184,7 @@ const NAV_ITEMS = [
     roles: ["admin", "superadmin"],
     icon: ICONS.chat,
   },
+  { key: "search-analytics", label: "Search Analytics", path: "/admin-dashboard/search-analytics", roles: ["admin", "superadmin"], icon: ICONS.chart },
   { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
 ];
 
@@ -641,7 +643,7 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* ── Main ── */}
-      <main className="ad-main">
+      <main className="ad-main" id="main-content" tabIndex={-1}>
         <header className="ad-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button
@@ -671,7 +673,7 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        <div className="ad-content">{children}</div>
+        <div className="ad-content"><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></div>
       </main>
     </div>
   );

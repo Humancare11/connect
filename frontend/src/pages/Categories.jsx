@@ -314,7 +314,7 @@ const CATEGORIES = [
   },
 
   {
-    path: "/weight-and-nurtrition",
+    path: "/weight-and-nutrition",
     icon: "pill",
     name: "Weight & Nutrition",
     tagline:

@@ -245,7 +245,6 @@ const HOME_FAQS = [
 
 export default function HomePage() {
   const navigate = useNavigate();
-
   // ── Search state ──────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
@@ -309,7 +308,7 @@ export default function HomePage() {
   useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) {
-      searchSession.cancel();
+      searchSession.reset(); // cancels any request and ends the analytics episode
       autoFull.cancel();
       setFilteredSuggestions([]);
       setNoResults(false);
@@ -344,10 +343,10 @@ export default function HomePage() {
     };
   }, [searchQuery, searchSession, autoFull]);
 
-  // Cancel any in-flight search when the page unmounts.
+  // Cancel any in-flight search (and pending idle timer) when the page unmounts.
   useEffect(
     () => () => {
-      searchSession.cancel();
+      searchSession.reset();
       autoFull.cancel();
     },
     [searchSession, autoFull],
@@ -402,6 +401,14 @@ export default function HomePage() {
     } // "show": several results stay in the dropdown for the user to pick
   }, [searchQuery, searchSession, autoFull, handleSearch]);
 
+  // True while a list of results is on screen (drives the combobox ARIA state).
+  const resultsListed =
+    showSuggestions &&
+    searchQuery.trim().length >= SEARCH_MIN_LENGTH &&
+    !isSearching &&
+    !noResults &&
+    filteredSuggestions.length > 0;
+
   // ── Keyboard navigation ───────────────────────────────────────────────────
   const handleKeyDown = useCallback(
     (e) => {
@@ -431,6 +438,7 @@ export default function HomePage() {
             activeIndex >= 0 &&
             activeIndex < filteredSuggestions.length
           ) {
+            searchSession.select(); // analytics only: never throws, changes nothing visible
             handleSearch(filteredSuggestions[activeIndex]);
           } else {
             submitSearch();
@@ -443,7 +451,14 @@ export default function HomePage() {
           break;
       }
     },
-    [filteredSuggestions, activeIndex, isSearching, handleSearch, submitSearch],
+    [
+      filteredSuggestions,
+      activeIndex,
+      isSearching,
+      handleSearch,
+      submitSearch,
+      searchSession,
+    ],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -697,6 +712,8 @@ export default function HomePage() {
             { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" },
             "+=0.3",
           );
+          // Reduced motion: jump straight to the end state (content stays visible, nothing animates).
+          if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) tl.progress(1);
         }, wrapperRef);
       });
     });
@@ -711,6 +728,8 @@ export default function HomePage() {
   const testimonialsRef = useRef(null);
 
   useEffect(() => {
+    // Parallax is motion: skip it when the visitor prefers reduced motion.
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return undefined;
     let ticking = false;
 
     const handleScroll = () => {
@@ -842,102 +861,119 @@ export default function HomePage() {
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
+                role="combobox"
+                aria-label="Search doctors, specialties, conditions"
+                aria-autocomplete="list"
+                aria-haspopup="listbox"
+                aria-expanded={resultsListed}
+                aria-controls="home-search-listbox"
+                aria-activedescendant={resultsListed && activeIndex >= 0 ? `home-search-option-${activeIndex}` : undefined}
               />
               <button onClick={() => submitSearch()}>Search</button>
             </div>
 
-            {showSuggestions &&
-              searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
-                <div className="search-suggestions">
-                  {/* Loading state */}
-                  {isSearching && (
-                    <div className="search-state">
-                      <div className="search-state-icon searching-pulse">
-                        <svg
-                          width="20"
-                          height="20"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="M21 21l-4.35-4.35" />
-                        </svg>
-                      </div>
-                      <span className="search-state-text">
-                        Searching treatments...
+            {showSuggestions && searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
+              <div
+                className="search-suggestions"
+                id="home-search-listbox"
+                role={resultsListed ? "listbox" : undefined}
+                aria-label={resultsListed ? "Search suggestions" : undefined}
+              >
+                {/* Loading state */}
+                {isSearching && (
+                  <div className="search-state">
+                    <div className="search-state-icon searching-pulse">
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                      </svg>
+                    </div>
+                    <span className="search-state-text">
+                      Searching treatments...
+                    </span>
+                  </div>
+                )}
+
+                {/* No results state */}
+                {!isSearching && noResults && (
+                  <div className="search-state no-results">
+                    <div className="search-state-icon">
+                      <svg
+                        width="22"
+                        height="22"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
+                        <path d="M8 11h6M11 8v6" strokeOpacity="0.3" />
+                      </svg>
+                    </div>
+                    <div className="search-state-content">
+                      <span className="search-state-title">
+                        No treatments found for "{searchQuery}"
+                      </span>
+                      <span className="search-state-subtitle">
+                        Try searching by symptom, condition, or specialty
                       </span>
                     </div>
-                  )}
-
-                  {/* No results state */}
-                  {!isSearching && noResults && (
-                    <div className="search-state no-results">
-                      <div className="search-state-icon">
-                        <svg
-                          width="22"
-                          height="22"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <path d="M21 21l-4.35-4.35" />
-                          <path d="M8 11h6M11 8v6" strokeOpacity="0.3" />
-                        </svg>
-                      </div>
-                      <div className="search-state-content">
-                        <span className="search-state-title">
-                          No treatments found for "{searchQuery}"
-                        </span>
-                        <span className="search-state-subtitle">
-                          Try searching by symptom, condition, or specialty
-                        </span>
-                      </div>
-                      <div className="search-state-suggestions">
-                        <span>Try:</span>
-                        {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
-                          (s) => (
-                            <button
-                              key={s}
-                              className="search-pill"
-                              onClick={() => {
-                                setSearchQuery(s);
-                                setShowSuggestions(true);
-                              }}
-                            >
-                              {s}
-                            </button>
-                          ),
-                        )}
-                      </div>
+                    <div className="search-state-suggestions">
+                      <span>Try:</span>
+                      {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
+                        (s) => (
+                          <button
+                            key={s}
+                            className="search-pill"
+                            onClick={() => {
+                              setSearchQuery(s);
+                              setShowSuggestions(true);
+                            }}
+                          >
+                            {s}
+                          </button>
+                        ),
+                      )}
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Results */}
-                  {!isSearching &&
-                    !noResults &&
-                    (itemRefs.current = itemRefs.current.slice(
-                      0,
-                      filteredSuggestions.length,
-                    )) &&
-                    filteredSuggestions.map((item, index) => (
-                      <div
-                        key={item.id}
-                        ref={(el) => (itemRefs.current[index] = el)}
-                        className={`suggestion-item${activeIndex === index ? " active" : ""}`}
-                        onClick={() => handleSearch(item)}
-                      >
-                        <div className="suggestion-left">
-                          <span className="suggestion-title">{item.title}</span>
-                        </div>
-                        <span className="suggestion-arrow">→</span>
+                {/* Results */}
+                {!isSearching &&
+                  !noResults &&
+                  (itemRefs.current = itemRefs.current.slice(
+                    0,
+                    filteredSuggestions.length,
+                  )) &&
+                  filteredSuggestions.map((item, index) => (
+                    <div
+                      key={item.id}
+                      ref={(el) => (itemRefs.current[index] = el)}
+                      id={`home-search-option-${index}`}
+                      role="option"
+                      aria-selected={activeIndex === index}
+                      className={`suggestion-item${activeIndex === index ? " active" : ""}`}
+                      onClick={() => {
+                        searchSession.select(); // analytics only: never throws, changes nothing visible
+                        handleSearch(item);
+                      }}
+                    >
+                      <div className="suggestion-left">
+                        <span className="suggestion-title">{item.title}</span>
                       </div>
-                    ))}
-                </div>
-              )}
+                      <span className="suggestion-arrow">→</span>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
         </div>
 

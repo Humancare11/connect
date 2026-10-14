@@ -3,6 +3,7 @@ import api from "../../api";
 import HealthcareIcon, { HEALTHCARE_ICON_OPTIONS } from "../../components/HealthcareIcon";
 import "./Dashboard.css";
 import "./HealthcareManagement.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 const SECTIONS = [
   { id: "categories", label: "Categories", singular: "Category" },
@@ -67,6 +68,7 @@ function formatUsd(value) {
 }
 
 export default function HealthcareManagement() {
+  const confirm = useConfirm();
   const [active, setActive] = useState("categories");
   const [categories, setCategories] = useState([]);
   const [specialties, setSpecialties] = useState([]);
@@ -222,7 +224,12 @@ export default function HealthcareManagement() {
   };
 
   const removeItem = async (item) => {
-    const ok = window.confirm(`Delete "${item.name}"? This cannot be undone.`);
+    const ok = await confirm({
+      title: "Delete item",
+      message: `Delete "${item.name}"? This cannot be undone.`,
+      confirmText: "Delete",
+      tone: "danger",
+    });
     if (!ok) return;
     setSaving(true);
     setMessage({ type: "", text: "" });

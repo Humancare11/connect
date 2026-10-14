@@ -38,7 +38,7 @@ function PhotoSlot({ label, image, icon, className = "", variant = "blue" }) {
       <div className="photo-slot__texture" />
       <div className="photo-slot__sheen" />
       {image ? (
-        <img
+        <img decoding="async"
           src={image}
           alt={label}
           className="photo-slot__image"
@@ -280,7 +280,7 @@ export default function AboutPage() {
                     Started
                   </h2>
                   <div className="why__img-wrap">
-                    <img
+                    <img decoding="async"
                       src={WhyHumancareImg}
                       width="1790"
                       height="1860"
@@ -414,7 +414,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="network__img-wrap">
-                <img
+                <img decoding="async"
                   src={NetworkDoctorsImg}
                   width="1790"
                   height="1860"

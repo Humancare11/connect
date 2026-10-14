@@ -82,7 +82,7 @@ body {
 }
 
 .corp-hero-inner {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
@@ -245,9 +245,11 @@ body {
   /* hide the faint thumbnail once the full image takes over */
 }
 
-.accordion-panel:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06);
+@media (hover: hover) and (pointer: fine) {
+  .accordion-panel:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.06);
+  }
 }
 
 .accordion-panel.active {
@@ -401,7 +403,7 @@ body {
   align-items: center;
   justify-content: center;
   margin-bottom: auto;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
   flex-shrink: 0;
 }
 
@@ -419,7 +421,7 @@ body {
   text-transform: uppercase;
   color: #0a1f44;
   white-space: nowrap;
-  transition: all 0.3s ease;
+  transition: color var(--duration-slow) ease, opacity var(--duration-slow) ease;
 }
 
 .accordion-panel:hover .spine-label {
@@ -429,7 +431,11 @@ body {
 .accordion-panel:hover .spine-icon {
   background: #0a1f44;
   color: #ffffff;
-  transform: scale(1.05);
+}
+@media (hover: hover) and (pointer: fine) {
+  .accordion-panel:hover .spine-icon {
+    transform: scale(1.05);
+  }
 }
 
 /* ── Expanded content ── */
@@ -560,7 +566,7 @@ body {
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: background 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1), color 0.4s cubic-bezier(0.23, 1, 0.32, 1), transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -570,18 +576,24 @@ body {
 .ac-btn::after {
   content: "→";
   font-size: 18px;
-  transition: transform 0.3s ease;
+  transition: transform var(--duration-slow) ease;
 }
 
 .ac-btn:hover {
   background: var(--navy);
   color: #ffffff;
-  transform: translateY(-3px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ac-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  }
 }
 
-.ac-btn:hover::after {
-  transform: translateX(4px);
+@media (hover: hover) and (pointer: fine) {
+  .ac-btn:hover::after {
+    transform: translateX(4px);
+  }
 }
 
 /* ================================================================
@@ -669,8 +681,10 @@ body {
     overflow: hidden;
   }
 
-  .accordion-panel:hover {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .accordion-panel:hover {
+      transform: none;
+    }
   }
 
   /* Active panel = tall card */

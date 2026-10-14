@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
 import api from "../../api";
@@ -9,6 +9,7 @@ import PaymentLinks from "./PaymentLinks";
 import PaymentLinkHistory from "./PaymentLinkHistory";
 import PartnerCompaniesTab from "./PartnerCompaniesTab";
 import BlogsManager from "./BlogsManager";
+import useModalA11y from "../../hooks/useModalA11y";
 
 function EyeIcon({ open }) {
   return open ? (
@@ -265,6 +266,8 @@ function EmployeeAdminsTab() {
   const [creating, setCreating] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
+  const editDialogRef = useRef(null);
+  useModalA11y(editDialogRef, !!editTarget, () => setEditTarget(null));
   const [editForm, setEditForm] = useState({ name: "", email: "" });
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
@@ -390,7 +393,7 @@ function EmployeeAdminsTab() {
           }}
           onClick={() => setEditTarget(null)}
         >
-          <div
+          <div ref={editDialogRef} role="dialog" aria-modal="true" aria-label="Edit Employee Admin"
             style={{
               background: "#fff",
               borderRadius: 16,
@@ -654,6 +657,8 @@ function EmployeeAdminsTab() {
 
 // ── Shared confirm dialog ─────────────────────────────────────────────────────
 function DeleteConfirmDialog({ name, onCancel, onConfirm }) {
+  const removeDialogRef = useRef(null);
+  useModalA11y(removeDialogRef, true, onCancel);
   return (
     <div
       style={{
@@ -668,7 +673,7 @@ function DeleteConfirmDialog({ name, onCancel, onConfirm }) {
       }}
       onClick={onCancel}
     >
-      <div
+      <div ref={removeDialogRef} role="alertdialog" aria-modal="true" aria-label="Remove account"
         style={{
           background: "#fff",
           borderRadius: 14,
@@ -830,7 +835,7 @@ export default function SuperAdminDashboard() {
         </button>
       </aside>
 
-      <main className="dash-main">
+      <main className="dash-main" id="main-content" tabIndex={-1}>
         <header
           className="dash-topbar"
           style={{ borderBottom: "1px solid #ede9fe" }}

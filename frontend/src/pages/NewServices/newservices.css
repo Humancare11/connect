@@ -44,7 +44,7 @@
    CONTAINER
    --------------------------------------------------------- */
 .service-container {
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: clamp(40px, 6vw, 88px) clamp(16px, 4vw, 24px);
   width: 100%;
@@ -183,7 +183,7 @@
   cursor: pointer;
   border: none;
   text-decoration: none;
-  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, border-color 0.2s;
+  transition: transform var(--duration-base), box-shadow var(--duration-base), background-color var(--duration-base), border-color var(--duration-base);
 }
 
 .service-btn a {
@@ -203,9 +203,11 @@
   box-shadow: 0 4px 14px color-mix(in srgb, var(--service-accent) 35%, transparent);
 }
 
-.service-btn--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--service-accent) 45%, transparent);
+@media (hover: hover) and (pointer: fine) {
+  .service-btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--service-accent) 45%, transparent);
+  }
 }
 
 .service-btn--ghost,
@@ -288,7 +290,7 @@
 .service-hero__content-standalone {
   position: relative;
   z-index: 10;
-  max-width: 1200px;
+  max-width: var(--container-md);
   margin: 0 auto;
   padding: 100px clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px);
   width: 100%;
@@ -493,7 +495,7 @@
   font-size: 14px;
   outline: none;
   font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--duration-base), box-shadow var(--duration-base);
   box-sizing: border-box;
 }
 
@@ -860,7 +862,7 @@
   justify-content: center;
   background: var(--service-surface);
   color: var(--service-text-dim);
-  transition: background-color 0.2s, transform 0.2s, color 0.2s;
+  transition: background-color var(--duration-base), transform var(--duration-base), color var(--duration-base);
 }
 
 .service-faq-toggle-icon--open {
@@ -893,7 +895,7 @@
   border-radius: 18px;
   background: #ffffff;
   border: 1px solid var(--service-border);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  transition: border-color var(--duration-base), box-shadow var(--duration-base), transform var(--duration-base);
   text-decoration: none;
   color: inherit;
   cursor: pointer;
@@ -901,8 +903,12 @@
 
 .service-related-card:hover {
   border-color: color-mix(in srgb, var(--service-accent) 35%, transparent);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--service-accent) 12%, transparent);
-  transform: translateY(-3px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .service-related-card:hover {
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--service-accent) 12%, transparent);
+    transform: translateY(-3px);
+  }
 }
 
 .service-related-card__icon-wrap {
@@ -1067,5 +1073,13 @@
 
   .service-trust-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Readable minimum on phones (12px) */
+@media (max-width: 480px) {
+  span.service-label__text,
+  div.service-why-matters__label {
+    font-size: 12px;
   }
 }

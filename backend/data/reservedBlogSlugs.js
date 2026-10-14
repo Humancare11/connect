@@ -180,6 +180,7 @@ module.exports = new Set([
   "vomiting",
   "vomiting-diarrhea-children",
   "weight-and-nurtrition",
+  "weight-and-nutrition",
   "weight-loss-programs",
   "what-is-telemedicine",
   "wheezing",

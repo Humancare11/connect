@@ -153,7 +153,7 @@
   font-weight: 700;
   flex-shrink: 0;
   color: var(--ap-muted);
-  transition: all 0.2s;
+  transition: all var(--duration-base);
 }
 
 .ap-progress-step--active .ap-progress-dot {
@@ -174,7 +174,7 @@
   background: var(--ap-border);
   margin: 0 8px;
   min-width: 16px;
-  transition: background 0.3s;
+  transition: background var(--duration-slow);
 }
 
 .ap-progress-line--done {
@@ -237,9 +237,9 @@
   background: var(--ap-bg-input);
   outline: none;
   transition:
-    border-color 0.15s,
-    box-shadow 0.15s,
-    background 0.15s;
+    border-color var(--duration-fast),
+    box-shadow var(--duration-fast),
+    background var(--duration-fast);
   box-sizing: border-box;
   -webkit-appearance: none;
   appearance: none;
@@ -367,7 +367,11 @@
   border-color: var(--ap-primary);
   background: var(--ap-primary-soft);
   color: var(--ap-primary);
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ap-slot:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
 }
 
 .ap-slot--selected {
@@ -442,8 +446,8 @@
   text-align: center;
   cursor: pointer;
   transition:
-    border-color 0.15s,
-    background 0.15s;
+    border-color var(--duration-fast),
+    background var(--duration-fast);
   background: var(--ap-bg-input);
 }
 
@@ -661,9 +665,9 @@
   font-weight: 700;
   cursor: pointer;
   transition:
-    background 0.15s,
+    background var(--duration-fast),
     transform 0.1s,
-    box-shadow 0.15s;
+    box-shadow var(--duration-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -674,8 +678,12 @@
 
 .ap-submit:hover:not(:disabled) {
   background: var(--ap-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(26, 58, 92, 0.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ap-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(26, 58, 92, 0.2);
+  }
 }
 
 .ap-submit:active:not(:disabled) {
@@ -861,9 +869,9 @@
   text-align: center;
   text-decoration: none;
   transition:
-    border-color 0.15s,
-    background 0.15s,
-    color 0.15s;
+    border-color var(--duration-fast),
+    background var(--duration-fast),
+    color var(--duration-fast);
   cursor: pointer;
 }
 
@@ -1030,9 +1038,9 @@
   font-weight: 600;
   color: #374151;
   transition:
-    border-color 0.15s,
-    background 0.15s,
-    box-shadow 0.15s,
+    border-color var(--duration-fast),
+    background var(--duration-fast),
+    box-shadow var(--duration-fast),
     transform 0.1s;
   min-height: 80px;
   position: relative;
@@ -1041,8 +1049,12 @@
 .ap-pay-method-btn:hover:not(:disabled) {
   border-color: var(--ap-primary);
   background: var(--ap-primary-soft);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 10px rgba(26, 58, 92, 0.1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ap-pay-method-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 10px rgba(26, 58, 92, 0.1);
+  }
 }
 
 .ap-pay-method-btn--active {
@@ -1277,7 +1289,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: var(--z-modal);
   padding: 20px;
   backdrop-filter: blur(2px);
   animation: ap-fade-in 0.18s ease;

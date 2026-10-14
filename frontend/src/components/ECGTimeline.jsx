@@ -4,7 +4,7 @@ import "./ECGTimeline.css";
 const STEPS = [
   {
     num: "01",
-    name: "Register",
+    name: "Create Account",
     desc: "Sign up with your company code in under 2 minutes",
     accent: "#0B57E8",
     icon: (

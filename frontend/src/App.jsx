@@ -7,20 +7,24 @@ import {
   Navigate,
   useNavigate,
 } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import "./App.css";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import CallErrorBoundary from "./components/CallErrorBoundary";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
+import PageH1 from "./components/ui/PageH1";
+import RouteFallback from "./components/ui/RouteFallback";
+import { HasMainContext } from "./components/ui/HasMainContext";
 import { TextWidget } from '@livechat/widget-react'
 import LiveChatTracker from "./features/livechat/LiveChatTracker";
 import LiveChatWidgetLoader from "./features/livechat/LiveChatWidgetLoader";
 import { isTrackablePath as isPublicPagePath } from "./features/livechat/useVisitorTracker";
 
-const CookieBanner = lazy(() => import("./components/CookieBanner"));
 
 const NotFound = lazy(() => import("./components/NotFound")); // 404 Page
 const Home = lazy(() => import("./pages/Home"));
@@ -74,7 +78,6 @@ const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
 // privacy concerns
-const Images = lazy(() => import("./components/Images"));
 // category pages
 const ChildFamilyCare = lazy(
   () => import("./pages/Categories/ChildFamilyCare"),
@@ -735,6 +738,7 @@ const DoctorEnrollments = lazy(
   () => import("./pages/doctors/DoctorEnrollments"),
 );
 import { useDoctorAuth } from "./context/DoctorAuthContext";
+import useModalA11y from "./hooks/useModalA11y";
 // const NoticePrivacy = lazy(
 //   () => import("./pages/PrivacyPolicies/NoticePrivacy"),
 // );
@@ -768,6 +772,7 @@ const PaymentAdminLogin = lazy(() => import("./pages/admin/PaymentAdminLogin"));
 // const PricingManagement = lazy(() => import("./pages/admin/PricingManagement"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const SearchAnalytics = lazy(() => import("./pages/admin/SearchAnalytics"));
 const OurDoctors = lazy(() => import("./pages/admin/OurDoctors"));
 const ManageDoctors = lazy(() => import("./pages/admin/ManageDoctors"));
 const AdminDoctorProfile = lazy(
@@ -849,7 +854,6 @@ const MyRecords = lazy(() => import("./pages/user/MyRecords"));
 const PaymentHistory = lazy(() => import("./pages/user/PaymentHistory"));
 const UserRaiseTicket = lazy(() => import("./pages/user/RaiseTicket"));
 
-const Test = lazy(() => import("./pages/Test"));
 const PaymentLinkCheckout = lazy(() => import("./pages/PaymentLinkCheckout"));
 
 //Main pages of categories, specialties and conditions
@@ -908,6 +912,26 @@ function ScrollToTop() {
   return null;
 }
 
+// First focusable element on every page. Moves focus to the page's <main id="main-content">.
+function SkipLink() {
+  const onClick = (e) => {
+    const target = document.getElementById("main-content");
+    if (!target) return;
+    e.preventDefault();
+    target.focus({ preventScroll: true });
+    target.scrollIntoView();
+  };
+  return (
+    <a className="hc-skip-link" href="#main-content" onClick={onClick}>
+      Skip to content
+    </a>
+  );
+}
+
+// Dashboards render their own <main id="main-content"> inside their layout component.
+const LAYOUT_OWNS_MAIN =
+  /^\/(?!doctor-dashboard\/enrollments)(doctor-dashboard|admin-dashboard|superadmin-dashboard|employee-dashboard|partner-dashboard|payment-admin)(\/|$)|^\/user\//;
+
 function PrivateRoute({ children, allowedRoles, loginPath = "/adminauth" }) {
   const { admin, loading } = useAdmin();
 
@@ -934,6 +958,7 @@ function PartnerPrivateRoute({ children }) {
 }
 
 function SessionTimeoutManager() {
+  const warningPanelRef = useRef(null);
   const { user, logout: logoutUser } = useAuth();
   const { doctor, logout: logoutDoctor } = useDoctorAuth();
   const { admin, logout: logoutAdmin } = useAdmin();
@@ -1068,12 +1093,18 @@ function SessionTimeoutManager() {
     return undefined;
   }, [location.pathname, isAuthenticated]);
 
+  // Escape keeps the session (same as "Stay signed in"): the safe choice.
+  useModalA11y(warningPanelRef, warningOpen, () => {
+    window.dispatchEvent(new Event(SESSION_ACTIVITY_EVENT));
+    setWarningOpen(false);
+  });
+
   if (!warningOpen) return null;
 
   return (
-    <div className="hc-session-warning" role="dialog" aria-modal="true">
-      <div className="hc-session-warning__panel">
-        <h2>Session expiring</h2>
+    <div className="hc-session-warning" role="dialog" aria-modal="true" aria-labelledby="hc-session-title">
+      <div className="hc-session-warning__panel" ref={warningPanelRef}>
+        <h2 id="hc-session-title">Session expiring</h2>
         <p>
           You will be logged out in {Math.ceil(remaining / 60)} minute(s) due to
           inactivity.
@@ -1167,8 +1198,12 @@ export function AppLayout() {
     location.pathname.startsWith("/video-call") ||
     location.pathname.startsWith("/direct-video-call");
 
+  const MainWrap = LAYOUT_OWNS_MAIN.test(location.pathname) ? Fragment : "main";
+  const mainProps = MainWrap === Fragment ? {} : { id: "main-content", tabIndex: -1 };
+
   return (
-    <>
+    <MotionConfig reducedMotion="user">
+      <SkipLink />
       <ScrollToTop />
       <RouteSeo />
       <SessionTimeoutManager />
@@ -1182,9 +1217,11 @@ export function AppLayout() {
       {!hideLayout && <Header />}
 
       <Suspense
-        fallback={<main className="hc-route-loading" aria-hidden="true" />}
+        fallback={<RouteFallback />}
       >
-        <div id="main-content" tabIndex={-1} style={{ outline: "none" }}>
+        <MainWrap {...mainProps}>
+        <HasMainContext.Provider value={MainWrap !== Fragment}>
+        <ErrorBoundary resetKey={location.pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
           {/* The Medical Q&A feature was removed. Keep old links working. */}
@@ -1211,12 +1248,9 @@ export function AppLayout() {
           />
           {/* <Route path="/register" element={<Register />} /> */}
           <Route path="/book-appointment" element={<BookAppointment />} />
-          <Route path="/test" element={<Test />} />
           <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
           {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
-          <Route path="/cookies" element={<CookieBanner />} />
           <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          <Route path="/images" element={<Images />} />
           {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
           <Route
             path="/doctor/:id"
@@ -1262,7 +1296,10 @@ export function AppLayout() {
             path="/user/profile-settings"
             element={
               <UserLayout>
-                <ProfileSettings />
+                <>
+                  <PageH1>Profile settings</PageH1>
+                  <ProfileSettings />
+                </>
               </UserLayout>
             }
           />
@@ -1369,7 +1406,10 @@ export function AppLayout() {
             path="/doctor-dashboard/patients/:patientId/prescriptions/:rxId"
             element={
               <DoctorLayout>
-                <PrescriptionPreview />
+                <>
+                  <PageH1>Prescription preview</PageH1>
+                  <PrescriptionPreview />
+                </>
               </DoctorLayout>
             }
           />
@@ -1377,7 +1417,10 @@ export function AppLayout() {
             path="/doctor-dashboard/patients/:patientId/certificates/:certId"
             element={
               <DoctorLayout>
-                <CertificatePreview />
+                <>
+                  <PageH1>Medical certificate preview</PageH1>
+                  <CertificatePreview />
+                </>
               </DoctorLayout>
             }
           />
@@ -1385,7 +1428,10 @@ export function AppLayout() {
             path="/doctor-dashboard/messages"
             element={
               <DoctorLayout>
-                <DoctorMessages />
+                <>
+                  <PageH1>Messages</PageH1>
+                  <DoctorMessages />
+                </>
               </DoctorLayout>
             }
           />
@@ -1393,7 +1439,10 @@ export function AppLayout() {
             path="/doctor-dashboard/notes"
             element={
               <DoctorLayout>
-                <DoctorNotes />
+                <>
+                  <PageH1>Consultation notes</PageH1>
+                  <DoctorNotes />
+                </>
               </DoctorLayout>
             }
           />
@@ -1413,7 +1462,10 @@ export function AppLayout() {
             path="/doctor-dashboard/analytics"
             element={
               <DoctorLayout>
-                <DoctorAnalytics />
+                <>
+                  <PageH1>Analytics</PageH1>
+                  <DoctorAnalytics />
+                </>
               </DoctorLayout>
             }
           />
@@ -1421,7 +1473,10 @@ export function AppLayout() {
             path="/doctor-dashboard/settings"
             element={
               <DoctorLayout>
-                <DoctorSettings />
+                <>
+                  <PageH1>Settings</PageH1>
+                  <DoctorSettings />
+                </>
               </DoctorLayout>
             }
           />
@@ -1437,7 +1492,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Assign doctor to category consultation</PageH1>
                   <AdminAssignCategoryDoctor />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1569,7 +1627,10 @@ export function AppLayout() {
             }
           >
             <Route index element={<Navigate to="inbox" replace />} />
-            <Route path="mail/:messageId" element={<EmailThread />} />
+            <Route path="mail/:messageId" element={<>
+                  <PageH1>Email message</PageH1>
+                  <EmailThread />
+                </>} />
             <Route path="box/:mailboxId/:folder" element={<EmailList />} />
             <Route path=":folder" element={<EmailList />} />
           </Route>
@@ -1815,7 +1876,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>User profile</PageH1>
                   <AdminUserProfile />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1825,7 +1889,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Appointments</PageH1>
                   <AdminAppointments />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1835,7 +1902,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Category consultations</PageH1>
                   <AdminCategoryConsultations />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1875,7 +1945,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Category consultation details</PageH1>
                   <AdminCategoryConsultationDetails />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1885,7 +1958,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Appointment details</PageH1>
                   <AdminAppointmentDetails />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1895,7 +1971,10 @@ export function AppLayout() {
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
+                  <>
+                  <PageH1>Assign doctor</PageH1>
                   <AdminAssignDoctor />
+                </>
                 </AdminLayout>
               </PrivateRoute>
             }
@@ -1903,6 +1982,16 @@ export function AppLayout() {
           <Route
             path="/admin-dashboard/qna"
             element={<Navigate to="/admin-dashboard" replace />}
+          />
+          <Route
+            path="/admin-dashboard/search-analytics"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <SearchAnalytics />
+                </AdminLayout>
+              </PrivateRoute>
+            }
           />
           <Route
             path="/admin-dashboard/tickets"
@@ -1925,17 +2014,23 @@ export function AppLayout() {
           <Route
             path="/video-call/:appointmentId"
             element={
-              <CallErrorBoundary>
-                <VideoCall />
-              </CallErrorBoundary>
+              <>
+                <h1 className="sr-only">Video consultation</h1>
+                <CallErrorBoundary>
+                  <VideoCall />
+                </CallErrorBoundary>
+              </>
             }
           />
           <Route
             path="/direct-video-call/:roomId"
             element={
-              <CallErrorBoundary>
-                <DirectVideoCall />
-              </CallErrorBoundary>
+              <>
+                <h1 className="sr-only">Video consultation</h1>
+                <CallErrorBoundary>
+                  <DirectVideoCall />
+                </CallErrorBoundary>
+              </>
             }
           />
           {/* ALL*/}
@@ -1958,7 +2053,7 @@ export function AppLayout() {
             path="/travel-and-global-care"
             element={<TravelGlobalCare />}
           />
-          <Route path="/weight-and-nurtrition" element={<WeightNurtrition />} />
+          <Route path="/weight-and-nutrition" element={<WeightNurtrition />} />
           <Route path="/women-health" element={<WomenHealth />} />
           {/* specialties */}
           {/* <Route path="/sd" element={<SD />} /> */}
@@ -2043,15 +2138,15 @@ export function AppLayout() {
             element={<TravelMedicine />}
           />
           <Route
-            path="/weight-and-nurtrition/weight-management"
+            path="/weight-and-nutrition/weight-management"
             element={<WeightManagement />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine"
+            path="/weight-and-nutrition/lifestyle-medicine"
             element={<LifestyleMedicine />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics"
+            path="/weight-and-nutrition/nutrition-and-dietetics"
             element={<NutritionAndDietetics />}
           />
           {/* condition pages */}
@@ -2100,7 +2195,7 @@ export function AppLayout() {
             element={<MemoryConcerns categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/weight-management/obesity"
+            path="/weight-and-nutrition/weight-management/obesity"
             element={<Obesity categoryId="weight" />}
           />
           <Route
@@ -2160,7 +2255,7 @@ export function AppLayout() {
             element={<AbdominalPain categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/weight-management/binge-eating"
+            path="/weight-and-nutrition/weight-management/binge-eating"
             element={<BingeEating categoryId="weight" />}
           />
           <Route
@@ -2168,7 +2263,7 @@ export function AppLayout() {
             element={<Bloating categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet"
+            path="/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet"
             element={<CholesterolLoweringDiet categoryId="weight" />}
           />
           <Route
@@ -2176,15 +2271,15 @@ export function AppLayout() {
             element={<Dehydration categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet"
+            path="/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet"
             element={<DiabeticDiet categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning"
+            path="/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning"
             element={<DietExercisePlanning categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning"
+            path="/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning"
             element={<FoodIntolerancePlanning categoryId="weight" />}
           />
           <Route
@@ -2196,7 +2291,7 @@ export function AppLayout() {
             element={<GlpProgramEligibility categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching"
+            path="/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching"
             element={<HealthyHabitCoaching categoryId="weight" />}
           />
           <Route
@@ -2212,15 +2307,15 @@ export function AppLayout() {
             element={<IrritableBowelSyndrome categoryId="chronic" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition"
+            path="/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition"
             element={<PregnancyNutrition categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/lifestyle-medicine/sleep-hygiene"
+            path="/weight-and-nutrition/lifestyle-medicine/sleep-hygiene"
             element={<SleepHygiene categoryId="weight" />}
           />
           <Route
-            path="/weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition"
+            path="/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition"
             element={<SportNutrition categoryId="weight" />}
           />
           <Route
@@ -2229,7 +2324,7 @@ export function AppLayout() {
           />
           <Route path="/vomiting" element={<Vomiting categoryId="chronic" />} />
           <Route
-            path="/weight-and-nurtrition/weight-management/weight-loss-planning"
+            path="/weight-and-nutrition/weight-management/weight-loss-planning"
             element={<WeightLossPlanning categoryId="weight" />}
           />
           <Route
@@ -3123,11 +3218,13 @@ export function AppLayout() {
           <Route path="/:slug" element={<BlogPost />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        </div>
+        </ErrorBoundary>
+        </HasMainContext.Provider>
+        </MainWrap>
 
         {!hideLayout && <Footer />}
       </Suspense>
-    </>
+    </MotionConfig>
   );
 }
 

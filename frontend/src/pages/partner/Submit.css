@@ -249,7 +249,7 @@
   color: var(--pt-ink-900);
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
 }
 .pt-submit-page .pt-field input::placeholder,
 .pt-submit-page .pt-field textarea::placeholder {
@@ -345,11 +345,15 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, transform 0.1s ease;
 }
 .pt-submit-page .pt-urgency-card:hover {
   border-color: var(--u-color);
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pt-submit-page .pt-urgency-card:hover {
+    transform: translateY(-1px);
+  }
 }
 .pt-submit-page .pt-urgency-card:focus-visible,
 .pt-submit-page .pt-service-card:focus-visible,
@@ -418,7 +422,7 @@
   text-align: left;
   width: 100%;
   font-family: inherit;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
 }
 .pt-submit-page .pt-service-card:hover {
   border-color: var(--pt-accent);
@@ -507,7 +511,7 @@
   color: #fff;
   box-shadow: 0 1px 2px rgba(17, 0, 114, 0.15);
   white-space: nowrap;
-  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  transition: background var(--duration-fast) ease, box-shadow var(--duration-fast) ease, transform 0.1s ease;
 }
 .pt-submit-page .pt-btn:hover:not(:disabled) {
   background: var(--pt-accent-dark);

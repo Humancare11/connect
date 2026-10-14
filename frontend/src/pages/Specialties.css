@@ -212,6 +212,10 @@
   text-align: left;
   width: 100%;
 }
+.sp-hero__mini-card--btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .sp-hero__mini-card {
   border-radius: 1rem;
@@ -221,13 +225,15 @@
   transition:
     transform 0.25s var(--ease),
     box-shadow 0.25s var(--ease),
-    border-color 0.2s,
-    background 0.2s;
+    border-color var(--duration-base),
+    background var(--duration-base);
 }
 
-.sp-hero__mini-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 34px rgba(11, 40, 100, 0.08);
+@media (hover: hover) and (pointer: fine) {
+  .sp-hero__mini-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 34px rgba(11, 40, 100, 0.08);
+  }
 }
 
 .sp-hero__mini-card--active {
@@ -248,7 +254,7 @@
   font-size: 0.85rem;
   font-weight: 800;
   color: var(--navy);
-  transition: color 0.2s;
+  transition: color var(--duration-base);
 }
 
 .sp-hero__mini-tags {
@@ -256,7 +262,7 @@
   font-size: 0.72rem;
   color: var(--muted);
   line-height: 1.5;
-  transition: color 0.2s;
+  transition: color var(--duration-base);
 }
 
 /* ── Active tab preview strip ── */
@@ -315,15 +321,19 @@
   color: var(--blue);
   cursor: pointer;
   transition:
-    background 0.2s,
-    transform 0.2s,
-    box-shadow 0.2s;
+    background var(--duration-base),
+    transform var(--duration-base),
+    box-shadow var(--duration-base);
 }
 .sp-carousel__btn:hover {
   background: var(--blue);
   color: var(--white);
-  transform: scale(1.08);
-  box-shadow: 0 6px 16px rgba(11, 87, 232, 0.22);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-carousel__btn:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(11, 87, 232, 0.22);
+  }
 }
 
 .sp-carousel__dots {
@@ -340,9 +350,9 @@
   background: rgba(11, 87, 232, 0.2);
   cursor: pointer;
   transition:
-    background 0.2s,
+    background var(--duration-base),
     width 0.25s var(--ease),
-    transform 0.2s;
+    transform var(--duration-base);
   padding: 0;
 }
 
@@ -353,7 +363,11 @@
 
 .sp-carousel__dot:hover:not(.sp-carousel__dot--active) {
   background: rgba(11, 87, 232, 0.45);
-  transform: scale(1.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-carousel__dot:hover:not(.sp-carousel__dot--active) {
+    transform: scale(1.2);
+  }
 }
 
 /* ================================================================
@@ -368,7 +382,7 @@
 .specialties__container {
   margin: 0 auto;
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--container-lg);
   padding-inline: 12px;
 }
 
@@ -430,9 +444,9 @@
   color: var(--navy);
   outline: none;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    background var(--duration-base);
 }
 
 .specialties__search input::placeholder {
@@ -496,14 +510,18 @@
   transition:
     transform 0.25s ease,
     box-shadow 0.25s ease,
-    border-color 0.2s;
+    border-color var(--duration-base);
   outline-offset: 3px;
 }
 
 .specialties__card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.11);
   border-color: rgba(11, 87, 232, 0.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .specialties__card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.11);
+  }
 }
 
 .specialties__card:focus-visible {
@@ -550,7 +568,7 @@
   font-weight: 800;
   line-height: 1.25;
   color: var(--navy);
-  transition: color 0.2s;
+  transition: color var(--duration-base);
 }
 
 .specialties__card:hover .specialties__card-name {
@@ -583,8 +601,8 @@
   color: var(--slate6);
   width: fit-content;
   transition:
-    background 0.2s,
-    color 0.2s;
+    background var(--duration-base),
+    color var(--duration-base);
 }
 
 .specialties__card:hover .specialties__card-conditions {
@@ -628,7 +646,7 @@
 .sp-conditions__inner {
   margin: 0 auto;
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--container-md);
   padding-inline: 12px;
 }
 
@@ -691,9 +709,9 @@
   animation: fadeUp 0.4s ease both;
   animation-delay: var(--delay, 0ms);
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    border-color 0.2s;
+    transform var(--duration-base) ease,
+    box-shadow var(--duration-base) ease,
+    border-color var(--duration-base);
 }
 
 @media (max-width: 480px) {
@@ -703,9 +721,13 @@
 }
 
 .sp-conditions__card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
   border-color: rgba(11, 87, 232, 0.16);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-conditions__card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  }
 }
 
 .sp-conditions__card-icon {
@@ -736,13 +758,17 @@
   color: var(--slate5);
   flex-shrink: 0;
   transition:
-    transform 0.2s ease,
-    color 0.2s ease;
+    transform var(--duration-base) ease,
+    color var(--duration-base) ease;
 }
 
 .sp-conditions__card:hover .sp-conditions__card-arrow {
-  transform: translateX(2px);
   color: var(--blue);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-conditions__card:hover .sp-conditions__card-arrow {
+    transform: translateX(2px);
+  }
 }
 
 .sp-conditions__more {
@@ -774,7 +800,7 @@
 .sp-faq__inner {
   margin: 0 auto;
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--container-md);
   padding-inline: 12px;
   display: grid;
   gap: 56px;
@@ -842,15 +868,19 @@
   cursor: pointer;
   margin-bottom: 28px;
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+    background var(--duration-base) ease,
+    color var(--duration-base) ease,
+    transform var(--duration-base) ease;
 }
 
 .sp-faq__chat-btn:hover {
   background: var(--blue);
   color: var(--white);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-faq__chat-btn:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .sp-faq__trust {
@@ -949,9 +979,9 @@
   color: var(--slate6);
   flex-shrink: 0;
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease;
+    background var(--duration-base) ease,
+    color var(--duration-base) ease,
+    transform var(--duration-base) ease;
 }
 
 .sp-faq__item-head:hover .sp-faq__item-icon {
@@ -1064,16 +1094,18 @@
   border: none;
   cursor: pointer;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform var(--duration-base) ease,
+    box-shadow var(--duration-base) ease;
 }
 
 .sp-cta__btn--primary {
   transform: translateY(-2px);
 }
-.sp-cta__btn--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(46, 74, 122, 0.28);
+@media (hover: hover) and (pointer: fine) {
+  .sp-cta__btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(46, 74, 122, 0.28);
+  }
 }
 
 .sp-cta__btn--secondary {
@@ -1092,15 +1124,19 @@
   background: transparent;
   cursor: pointer;
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
+    background var(--duration-base) ease,
+    border-color var(--duration-base) ease,
+    transform var(--duration-base) ease;
 }
 
 .sp-cta__btn--secondary:hover {
-  transform: translateY(-2px);
   border-color: var(--blue);
   background: rgba(11, 87, 232, 0.04);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-cta__btn--secondary:hover {
+    transform: translateY(-2px);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1147,9 +1183,11 @@
   }
 }
 
-.cat-spec-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(11, 40, 100, 0.1);
+@media (hover: hover) and (pointer: fine) {
+  .cat-spec-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(11, 40, 100, 0.1);
+  }
 }
 
 .cat-spec-item__icon {
@@ -1187,7 +1225,7 @@
   font-weight: 900;
   color: var(--navy);
   line-height: 1.25;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-spec-item:hover .cat-spec-item__name {
@@ -1214,7 +1252,7 @@
 .cat-spec-item__chevron {
   color: var(--muted);
   flex-shrink: 0;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .cat-spec-item:hover .cat-spec-item__chevron {

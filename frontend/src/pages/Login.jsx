@@ -237,7 +237,7 @@ function OTPInput({
   return (
     <div className="hc-otp-boxes">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <input
+        <input autoComplete="one-time-code"
           id={`${idPrefix}-${i + 1}`}
           name={`${namePrefix}${i + 1}`}
           aria-label={`OTP digit ${i + 1}`}
@@ -274,7 +274,7 @@ function FlowCard({ icon, title, subtitle, formError, onBack, children }) {
           >
             {subtitle}
           </p>
-          {formError && <p className="hc-form-error">{formError}</p>}
+          {formError && <p className="hc-form-error" id="hc-flow-error" role="alert">{formError}</p>}
           {children}
           <button type="button" onClick={onBack} className="hc-back-btn">
             ← Back
@@ -676,11 +676,11 @@ export default function AuthPage() {
               <strong style={{ color: "#2563eb" }}>{googlePending.name}</strong>
               ! Just add your mobile number to finish.
             </p>
-            {formError && <p className="hc-form-error">{formError}</p>}
+            {formError && <p className="hc-form-error" id="hc-google-error" role="alert">{formError}</p>}
             <label htmlFor="google-profile-name" style={VISUALLY_HIDDEN}>
               Full Name
             </label>
-            <input
+            <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "hc-google-error" : undefined} autoComplete="name"
               id="google-profile-name"
               name="googleProfileName"
               className="hc-input"
@@ -692,7 +692,7 @@ export default function AuthPage() {
             <label htmlFor="google-profile-email" style={VISUALLY_HIDDEN}>
               Email Address
             </label>
-            <input
+            <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "hc-google-error" : undefined} autoComplete="email"
               id="google-profile-email"
               name="googleProfileEmail"
               className="hc-input"
@@ -814,7 +814,7 @@ export default function AuthPage() {
                   required
                 />
                 <a
-                  href="/patient-informed-consent-form"
+                  href="/hipaa-notice-of-privacy-practices"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -919,7 +919,7 @@ export default function AuthPage() {
           <label htmlFor="patient-forgot-email" style={VISUALLY_HIDDEN}>
             Registered Email
           </label>
-          <input
+          <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "hc-flow-error" : undefined} autoComplete="email"
             id="patient-forgot-email"
             name="patientForgotEmail"
             className="hc-input"
@@ -1015,7 +1015,7 @@ export default function AuthPage() {
             <label htmlFor="patient-new-password" style={VISUALLY_HIDDEN}>
               New Password
             </label>
-            <input
+            <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "hc-flow-error" : undefined} autoComplete="new-password"
               id="patient-new-password"
               name="patientNewPassword"
               className="hc-input"
@@ -1046,7 +1046,7 @@ export default function AuthPage() {
             >
               Confirm New Password
             </label>
-            <input
+            <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "hc-flow-error" : undefined} autoComplete="new-password"
               id="patient-confirm-new-password"
               name="patientConfirmNewPassword"
               className="hc-input"
@@ -1083,6 +1083,9 @@ export default function AuthPage() {
     );
 
   /* ── Main auth UI ────────────────────────────────────────── */
+  // Both forms stay mounted (they slide); only the visible one carries the page's single <h1>.
+  const RegisterHeading = isRegister ? "h1" : "h2";
+  const LoginHeading = isRegister ? "h2" : "h1";
   return (
     <div className="hc-page-bg">
       <div
@@ -1094,7 +1097,7 @@ export default function AuthPage() {
             onSubmit={handleRegisterSubmit}
             className="hc-form hc-register-form"
           >
-            <h1 className="hc-heading">Create Account</h1>
+            <RegisterHeading className="hc-heading">Create Account</RegisterHeading>
             <p className="hc-form-subtitle">
               Join Humancare Connect and take charge of your health
             </p>
@@ -1109,12 +1112,12 @@ export default function AuthPage() {
               </button>
             </div>
 
-            {formError && <p className="hc-form-error">{formError}</p>}
+            {formError && <p className="hc-form-error" id="hc-register-error" role={isRegister ? "alert" : undefined}>{formError}</p>}
 
             <label htmlFor="patient-register-name" style={VISUALLY_HIDDEN}>
               Full Name
             </label>
-            <input
+            <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "hc-register-error" : undefined} autoComplete="name"
               id="patient-register-name"
               name="patientRegisterName"
               className="hc-input"
@@ -1131,7 +1134,7 @@ export default function AuthPage() {
             <label htmlFor="patient-register-email" style={VISUALLY_HIDDEN}>
               Email Address
             </label>
-            <input
+            <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "hc-register-error" : undefined} autoComplete="email"
               id="patient-register-email"
               name="patientRegisterEmail"
               className="hc-input"
@@ -1206,7 +1209,7 @@ export default function AuthPage() {
               >
                 Password
               </label>
-              <input
+              <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "hc-register-error" : undefined} autoComplete="new-password"
                 id="patient-register-password"
                 name="patientRegisterPassword"
                 className="hc-input"
@@ -1310,7 +1313,7 @@ export default function AuthPage() {
               className="hc-btn hc-btn--primary hc-btn--full"
               disabled={loading}
             >
-              {loading ? "Sending OTP…" : "Sign Up"}
+              {loading ? "Sending OTP…" : "Create Account"}
             </button>
 
             <div className="hc-mobile-switch">
@@ -1332,7 +1335,7 @@ export default function AuthPage() {
         {/* ── LOGIN FORM ───────────────────────────────────────── */}
         <div className="hc-form-box hc-form-box--login">
           <form onSubmit={handleLoginSubmit} className="hc-form hc-login-form">
-            <h1 className="hc-heading">Welcome Back</h1>
+            <LoginHeading className="hc-heading">Welcome Back</LoginHeading>
             <p className="hc-form-subtitle">
               Sign in to continue your healthcare journey
             </p>
@@ -1352,13 +1355,13 @@ export default function AuthPage() {
                 <span>&#10003;</span> {formSuccess}
               </div>
             )}
-            {formError && <p className="hc-form-error">{formError}</p>}
+            {formError && <p className="hc-form-error" id="hc-login-error" role={isRegister ? undefined : "alert"}>{formError}</p>}
             <span className="hc-divider-text">or use your email</span>
 
             <label htmlFor="patient-login-email" style={VISUALLY_HIDDEN}>
               Email Address
             </label>
-            <input
+            <input aria-invalid={formError && !isRegister ? "true" : undefined} aria-describedby={formError && !isRegister ? "hc-login-error" : undefined} autoComplete="email"
               id="patient-login-email"
               name="patientLoginEmail"
               className="hc-input"
@@ -1374,7 +1377,7 @@ export default function AuthPage() {
               <label htmlFor="patient-login-password" style={VISUALLY_HIDDEN}>
                 Password
               </label>
-              <input
+              <input aria-invalid={formError && !isRegister ? "true" : undefined} aria-describedby={formError && !isRegister ? "hc-login-error" : undefined} autoComplete="current-password"
                 id="patient-login-password"
                 name="patientLoginPassword"
                 className="hc-input"
@@ -1438,7 +1441,7 @@ export default function AuthPage() {
           <div className="hc-panel">
             <div className="hc-panel-content hc-panel-content--left">
               <div className="hc-panel-badge">👋</div>
-              <h1 className="hc-panel-heading">Welcome Back!</h1>
+              <h2 className="hc-panel-heading">Welcome Back!</h2>
               <p className="hc-panel-text">
                 Stay connected — log in with your credentials and continue your
                 healthcare experience.
@@ -1452,7 +1455,7 @@ export default function AuthPage() {
             </div>
             <div className="hc-panel-content hc-panel-content--right">
               <div className="hc-panel-badge">🩺</div>
-              <h1 className="hc-panel-heading">Join Humancare Connect</h1>
+              <h2 className="hc-panel-heading">Join Humancare Connect</h2>
               <p className="hc-panel-text">
                 Connect with top doctors, manage appointments, and take control
                 of your health today.

@@ -701,7 +701,7 @@ export default function DoctorCareers() {
   return (
     <>
       <SEO />
-      <main className="doctor-careers-page">
+      <div className="doctor-careers-page">
         {/* ---------------------------------------------------------- */}
         {/* 1. Hero                                                     */}
         {/* ---------------------------------------------------------- */}
@@ -772,9 +772,9 @@ export default function DoctorCareers() {
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <img
+              <img decoding="async"
                 src={NetworkImg}
-                alt="Network Trusted by Doctors"
+                alt="Network Trusted by Doctors" width="1226" height="968"
                 loading="lazy"
               />
             </motion.div>
@@ -1034,7 +1034,7 @@ export default function DoctorCareers() {
             </motion.div>
           </div>
         </section>
-      </main>
+      </div>
     </>
   );
 }

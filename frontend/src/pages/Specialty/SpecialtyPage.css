@@ -43,7 +43,7 @@
 
 /* ── Container ─────────────────────────────────────────────────────────────── */
 .sp-container {
-  max-width: 1280px;
+  max-width: var(--container-lg);
   margin: 60px auto;
   padding: 0 clamp(16px, 4vw, 48px);
   box-sizing: border-box;
@@ -96,7 +96,7 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 1280px;
+  max-width: var(--container-lg);
   margin: 0 auto;
   padding: 96px clamp(16px, 4vw, 48px) 48px;
   box-sizing: border-box;
@@ -178,14 +178,16 @@
   border-radius: 100px;
   text-decoration: none;
   transition:
-    background 0.2s ease,
-    transform 0.2s ease;
+    background var(--duration-base) ease,
+    transform var(--duration-base) ease;
   cursor: pointer;
   border: none;
 }
 
-.sp-btn:hover {
-  transform: translateY(-2px);
+@media (hover: hover) and (pointer: fine) {
+  .sp-btn:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .sp-btn--primary {
@@ -396,7 +398,7 @@
   box-sizing: border-box;
   transform: translateY(0);
   box-shadow: none;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
   cursor: default;
 }
 
@@ -404,8 +406,12 @@
   background: #eff5ff;
   border-color: #0b57e8;
   border-width: 1.5px;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(11, 87, 232, 0.1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-service-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(11, 87, 232, 0.1);
+  }
 }
 
 .sp-service-card__icon {
@@ -449,6 +455,11 @@
 .sp-card-link:hover {
   outline: none;
 }
+.sp-card-link:focus-visible,
+.sp-card-link:hover:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .sp-card-link .sp-service-card,
 .sp-card-link .sp-condition-card {
   cursor: pointer;
@@ -474,15 +485,19 @@
   align-items: center;
   transform: translateY(0);
   box-shadow: none;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
 }
 
 .sp-benefit-card:hover {
   background: #fff;
   border-color: #0b57e8;
   border-width: 1.5px;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(11, 87, 232, 0.12);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(11, 87, 232, 0.12);
+  }
 }
 
 .sp-benefit-card__icon {
@@ -495,7 +510,7 @@
   justify-content: center;
   color: #083ebd;
   margin-bottom: 14px;
-  transition: all 0.3s ease;
+  transition: background var(--duration-slow) ease, color var(--duration-slow) ease;
 }
 
 .sp-benefit-card:hover .sp-benefit-card__icon {
@@ -566,15 +581,19 @@
   box-sizing: border-box;
   transform: translateY(0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
   cursor: default;
 }
 
 .sp-condition-card:hover {
   border-color: #0b57e8;
   border-width: 1.5px;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(11, 87, 232, 0.12);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-condition-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(11, 87, 232, 0.12);
+  }
 }
 
 .sp-condition-card__icon {
@@ -621,7 +640,7 @@
   gap: 4px;
   cursor: pointer;
   margin-top: auto;
-  transition: gap 0.15s ease;
+  transition: gap var(--duration-fast) ease;
 }
 
 .sp-condition-card__link:hover {
@@ -725,14 +744,18 @@
   flex-direction: column;
   transform: translateY(0);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
 }
 
 .sp-trust-card:hover {
   border-color: #0b57e8;
   border-width: 1.5px;
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(11, 87, 232, 0.12);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-trust-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(11, 87, 232, 0.12);
+  }
 }
 
 .sp-trust-card__icon {
@@ -829,6 +852,10 @@
   cursor: pointer;
   outline: none;
 }
+.sp-faq-item__btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .sp-faq-item__question {
   font-weight: 600;
@@ -850,7 +877,7 @@
   transition:
     background 0.25s ease,
     color 0.25s ease,
-    transform 0.3s ease;
+    transform var(--duration-slow) ease;
 }
 
 .sp-faq-item__icon--open {
@@ -1033,7 +1060,7 @@
   color: #94a3b8;
   font-size: 13px;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--duration-base);
 }
 
 .sp-cta__contact-link:hover {
@@ -1741,5 +1768,15 @@
   .sp-faq__head h2,
   .sp-cta__heading {
     font-size: 19px;
+  }
+}
+
+/* Readable minimum on phones (12px) */
+@media (max-width: 480px) {
+  .hcc-booking-price-sub > span,
+  a.hcc-booking-link,
+  p.hcc-booking-terms,
+  span.sp-condition-card__link {
+    font-size: 12px;
   }
 }

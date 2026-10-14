@@ -4169,7 +4169,7 @@ export default function DirectVideoCall() {
       <div className="hc-vc__ctrlbar-meta">
         <div className="hc-vc__meta-left">
           <div className="hc-vc__logo-mark">
-            <img src={HumancareLogo} alt="Humancare Connect" className="hc-vc__logo-img" />
+            <img decoding="async" src={HumancareLogo} alt="Humancare Connect" className="hc-vc__logo-img" />
           </div>
         </div>
 

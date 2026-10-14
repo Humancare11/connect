@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
 import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
 import { formatShortDate as formatDate } from "../../utils/prescriptionForm";
 import CertificateModal from "../../components/CertificateModal";
+import useModalA11y from "../../hooks/useModalA11y";
 
 // ── Small reusable components ─────────────────────────────────────────────────
 
@@ -33,6 +34,8 @@ function Avatar({ name, size = 40 }) {
 // preparing an accurate prescription, without leaving the current flow.
 
 function ConsultationNotesModal({ patient, onClose }) {
+  const notesDialogRef = useRef(null);
+  useModalA11y(notesDialogRef, true, onClose);
   return (
     <div
       className="dp-modal-overlay"
@@ -41,7 +44,7 @@ function ConsultationNotesModal({ patient, onClose }) {
       aria-modal="true"
       aria-label={`Consultation notes for ${patient.name}`}
     >
-      <div
+      <div ref={notesDialogRef}
         className="dp-modal dp-notes-modal"
         onClick={(e) => e.stopPropagation()}
       >
@@ -64,6 +67,8 @@ function ConsultationNotesModal({ patient, onClose }) {
 // ── Patient Detail Panel ──────────────────────────────────────────────────────
 
 function PatientPanel({ entry, onClose }) {
+  const panelDialogRef = useRef(null);
+  useModalA11y(panelDialogRef, true, onClose);
   const { patient } = entry;
   const navigate = useNavigate();
   const [history, setHistory] = useState(null);
@@ -102,7 +107,7 @@ function PatientPanel({ entry, onClose }) {
 
   return (
     <div className="dp-panel-overlay" onClick={onClose}>
-      <div className="dp-panel" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelDialogRef} role="dialog" aria-modal="true" aria-label={`Patient details for ${patient.name}`} className="dp-panel" onClick={(e) => e.stopPropagation()}>
         {toast && <div className="dp-toast">{toast}</div>}
 
         <div className="dp-panel-header">
