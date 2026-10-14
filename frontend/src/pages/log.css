@@ -497,8 +497,8 @@
 }
 
 .reg-gender-wrap .reg-gender-select {
-  appearance: none !important;
   -webkit-appearance: none !important;
+  appearance: none !important;
   padding-right: 36px !important;
   margin: 0 !important;
   cursor: pointer;
@@ -1233,8 +1233,8 @@
 }
 
 .auth-wrapper .date-input {
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   padding: 0 44px 0 16px;
   line-height: 46px;
 }

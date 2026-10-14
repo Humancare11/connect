@@ -900,8 +900,8 @@
   /* Match home page glassmorphism card style */
   background: rgba(255, 255, 255, 0.045);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border-radius: 18px;
   padding: 22px;
   min-height: 165px;

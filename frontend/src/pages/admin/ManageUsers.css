@@ -598,8 +598,8 @@
   padding: 0 34px 0 14px;
   border: 1px solid #d9e3f7;
   border-radius: 10px;
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7ca3' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;
   font: inherit;
   font-size: 14px;

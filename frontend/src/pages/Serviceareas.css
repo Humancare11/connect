@@ -153,8 +153,8 @@
 }
 .sa-checker select {
   width: 100%;
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   font: inherit;
   font-size: 14px;
   color: var(--sa-navy);

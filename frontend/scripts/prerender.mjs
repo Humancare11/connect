@@ -107,7 +107,12 @@ function splitHead(html) {
 // (src/seo/PrerenderCleanup.jsx); React 19 does not adopt head tags it did not create.
 const mark = (tags) => tags.map((t) => t.replace(/^<(link|meta|title|base)\b/, "<$1 data-prerendered-head"));
 
-function assemble({ head, body, data, assets = [] }) {
+// The route is written into the root element (data-prerendered-path) so the browser only hydrates this HTML on the
+// URL it was rendered for. Hosts that fall back to index.html for unknown paths would otherwise serve the home page
+// to /admin-dashboard and React would hydrate it there (see src/main.jsx).
+const attr = (value) => String(value).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+
+function assemble({ route, head, body, data, assets = [] }) {
   let page = template.replace(/<title\b[^>]*>[\s\S]*?<\/title>\s*/, "");
   page = page.replace("</head>", `    ${[...mark(head), ...assets].join("\n    ")}\n  </head>`);
   const dataScript = data
@@ -116,7 +121,7 @@ function assemble({ head, body, data, assets = [] }) {
         .replace(/\u2028/g, "\\u2028")
         .replace(/\u2029/g, "\\u2029")}</script>`
     : "";
-  return page.replace('<div id="root"></div>', `<div id="root" data-prerendered>${body}</div>${dataScript}`);
+  return page.replace('<div id="root"></div>', `<div id="root" data-prerendered data-prerendered-path="${attr(route)}">${body}</div>${dataScript}`);
 }
 
 function outputFiles(route) {
@@ -186,7 +191,7 @@ for (const page of pages) {
       failures.push(`${page.route}: unresolved Suspense boundary in the output`);
       continue;
     }
-    write(page.route, assemble({ head, body, data: page.data, assets: assetLinks(lazyModules) }));
+    write(page.route, assemble({ route: page.route, head, body, data: page.data, assets: assetLinks(lazyModules) }));
     rendered += 1;
   } catch (error) {
     failures.push(`${page.route}: ${error.message}`);

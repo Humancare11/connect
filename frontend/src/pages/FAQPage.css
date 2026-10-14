@@ -287,8 +287,8 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   background: rgba(248, 246, 241, 0.94);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   padding: 8px;
   border-radius: 14px;
   border: 1px solid var(--line);
