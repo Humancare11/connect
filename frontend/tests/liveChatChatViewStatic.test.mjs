@@ -56,7 +56,7 @@ test("the switch component keeps its behaviour: Original / English, pressed stat
 
 // ── Composer language controls (rendered for real with Vite SSR) ──────────────────────────────────────────────────
 
-async function renderChat({ language, readOnly = false, messages }) {
+async function renderChat({ language, languageUnknown = false, readOnly = false, messages }) {
   const { createServer } = await import("vite");
   const React = (await import("react")).default;
   const { renderToStaticMarkup } = await import("react-dom/server");
@@ -66,7 +66,7 @@ async function renderChat({ language, readOnly = false, messages }) {
     const now = new Date().toISOString();
     const noop = async () => false;
     const detail = {
-      conversation: { conversationId: "HC12345678", mode: readOnly ? "archived" : "live", everLive: true, assignee: { id: "u1", name: "Sam" }, name: "Hans", language, startedAt: now, lastMessageAt: now },
+      conversation: { conversationId: "HC12345678", mode: readOnly ? "archived" : "live", everLive: true, assignee: { id: "u1", name: "Sam" }, name: "Hans", language, languageUnknown, startedAt: now, lastMessageAt: now },
       messages: messages || [{ id: "m1", sender: "patient", text: "Hallo, ich habe Schmerzen", at: now }],
       view: "original",
       panel: {},
@@ -101,11 +101,14 @@ test("a non-English chat renders the Original | English switch and the 'To <lang
   assert.doesNotMatch(english, /Language not detected/, "no patient text: no hint");
 });
 
-test("a chat with patient text but no language shows 'Language not detected' with a Detect language link", async () => {
-  const html = await renderChat({ language: null });
+test("'Language not detected' shows only when the server says the language is unknown; never for an English chat", async () => {
+  const html = await renderChat({ language: null, languageUnknown: true });
   assert.match(html, /Language not detected/);
   assert.match(html, /Detect language/);
   assert.doesNotMatch(html, /Message language|To German/);
+  // an English chat with patient text (language null, not unknown) gets no hint
+  const english = await renderChat({ language: null, languageUnknown: false });
+  assert.doesNotMatch(english, /Language not detected|Detect language/);
 });
 
 test("the Archive viewer's read-only bar shows only the switch, no 'To <language>'", async () => {

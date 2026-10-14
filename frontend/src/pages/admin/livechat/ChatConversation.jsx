@@ -171,7 +171,8 @@ export default function ChatConversation({
   // Translation (this admin only; the patient never sees any of it)
   const [detected, setDetected] = useState(null); // a language found by the "Detect language" link
   const language = c.language || detected || null; // { code, name } for non-English chats
-  const canDetect = !language && messages.some((m) => m.sender === "patient" && m.text);
+  // Only for a chat whose language is really unknown (the server says so: nothing stored, and non-English-looking text).
+  const canDetect = !language && c.languageUnknown === true;
   const runDetect = async () => {
     const res = onDetect ? await onDetect() : null;
     if (res?.language) setDetected(res.language);

@@ -162,4 +162,42 @@ describe("live chat: catch-up for abandoned chats", () => {
       again.close();
     });
   });
+
+  describe("the Language not detected hint", () => {
+    const AGENT = { user: AGENT_A };
+    async function chatWith(text, language) {
+      const contact = await lc.submitContact({ name: "Lang Test" });
+      const socket = await lc.chatSocket(contact.token);
+      const started = await lc.call(socket, "chat:start", {});
+      const id = started.conversation.conversationId;
+      await lc.models.LcMessage.create({ conversationId: id, sender: "patient", text: encryptLiveChatText(text) });
+      if (language) await lc.models.LcConversation.updateOne({ conversationId: id }, { $set: { language: { code: language, name: language } } });
+      socket.close();
+      return id;
+    }
+    const detail = async (id) => (await lc.rest("GET", `/conversations/${id}?archive=1`, AGENT)).body.conversation;
+
+    test("never for English text, short greetings, or an English chat that stored 'en'", async () => {
+      lc.ai.detectOverride = async () => ({ ok: false, kind: "unavailable" }); // a detection that cannot help
+      try {
+        assert.equal((await detail(await chatWith("hi"))).languageUnknown, false);
+        assert.equal((await detail(await chatWith("I need documents signed for a trip"))).languageUnknown, false);
+        assert.equal((await detail(await chatWith("Ich brauche ein Rezept für meine Medikamente", "en"))).languageUnknown, false, "a stored language, even English, means known");
+      } finally {
+        lc.ai.detectOverride = null;
+      }
+    });
+
+    test("only for non-English-looking text whose language is still unknown", async () => {
+      lc.ai.detectOverride = async () => ({ ok: false, kind: "unavailable" });
+      try {
+        const id = await chatWith("Ich brauche ein Rezept für meine Medikamente, können Sie helfen?");
+        const c = await detail(id);
+        assert.equal(c.language, null);
+        assert.equal(c.languageUnknown, true);
+      } finally {
+        lc.ai.detectOverride = null;
+      }
+    });
+  });
 });
