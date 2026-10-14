@@ -56,6 +56,10 @@ function validateSettings(patch) {
     if (number(patch.followUpMinutes, { min: 1, max: 30, integer: true })) values.followUpMinutes = patch.followUpMinutes;
     else errors.followUpMinutes = "Minutes before the email notice: a whole number from 1 to 30.";
   }
+  if (has("inactiveMinutes")) {
+    if (number(patch.inactiveMinutes, { min: 5, max: 60, integer: true })) values.inactiveMinutes = patch.inactiveMinutes;
+    else errors.inactiveMinutes = "Minutes of inactivity before a chat is archived: a whole number from 5 to 60.";
+  }
   text("aiDisplayName", { min: 1, max: 40, label: "The AI name" });
   text("agentDisplayName", { min: 1, max: 40, label: "The default agent name" });
   text("greeting", { min: 1, max: 600, label: "The greeting", block: true });

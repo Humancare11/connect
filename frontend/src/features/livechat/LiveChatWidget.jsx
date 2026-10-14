@@ -112,6 +112,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   const waiting = mode === "queue";
   const withAgent = mode === "live";
   const ended = mode === "archived";
+  const canContinue = ended && Boolean(conversation?.canContinue); // closed for inactivity: writing again continues it
   const agentName = conversation?.agent?.name || "";
   const aiName = conversation?.aiName || configAiName; // the server setting; the config answer covers the contact form
   const messageCount = conversation?.messages.length ?? 0;
@@ -153,7 +154,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   };
 
   const limitReached = chat.limitReached && !conversation;
-  const locked = phase !== "chat" || !conversation || ended;
+  const locked = phase !== "chat" || !conversation || (ended && !canContinue);
 
   return (
     <div className="lcw-root">
@@ -211,7 +212,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
                   <Message key={message.id} message={message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
                 ))}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
-                {ended && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
+                {ended && !canContinue && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
                 {ended && (
                   <div className="lcw-opts">
                     <button type="button" className="lcw-opt" onClick={chat.startNew}>
@@ -285,7 +286,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
+                placeholder={canContinue ? "Send a message to continue" : ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"

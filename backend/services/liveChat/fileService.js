@@ -107,7 +107,9 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
 
   // A patient uploads into their OWN open chat.
   async function upload({ visitorId, file }) {
-    const conv = await chat.findOpenConversation(visitorId);
+    let conv = await chat.findOpenConversation(visitorId);
+    const reopening = !conv;
+    if (!conv) conv = await chat.findReopenable(visitorId); // closed for inactivity: reopened once the file is accepted
     if (!conv) throw new FileError(409, "no_conversation");
     if (!uploadLimiter.allow(visitorId)) throw new FileError(429, "rate_limited");
     if ((await LcFile.countDocuments({ conversationId: conv.conversationId })) >= limits.maxFilesPerChat) {
@@ -115,6 +117,10 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     }
     const check = await inspectUpload({ buffer: file?.buffer, originalName: file?.originalname, maxBytes: limits.maxBytes });
     if (!check.ok) throw new FileError(check.error === "file_too_large" ? 413 : 400, check.error);
+    if (reopening) {
+      conv = await chat.reopenInactive(visitorId);
+      if (!conv) throw new FileError(409, "no_conversation");
+    }
 
     const name = displayName(file.originalname, check.ext);
     const key = `livechat/${conv.conversationId}/${crypto.randomUUID()}.${check.ext}`;

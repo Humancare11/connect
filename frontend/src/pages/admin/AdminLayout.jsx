@@ -6,8 +6,7 @@ import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
-import { useLiveChatAdmin } from "./livechat/useLiveChatAdmin";
-import { openLiveChat } from "./livechat/liveChatTabs";
+import { LIVECHAT_TAB_NAME } from "./livechat/liveChatTabs";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -178,7 +177,6 @@ const NAV_ITEMS = [
   {
     key: "live-chat",
     label: "Live Chat",
-    badge: "NEW",
     path: "/admin-dashboard/live-chat",
     external: true,
     roles: ["admin", "superadmin"],
@@ -217,50 +215,15 @@ function useMediaQuery(query) {
 
 // A parent entry with a submenu: a flyout to the right of the sidebar on
 // desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
-// Unread count chip (live chat pages); nothing when there is nothing unread.
-const UnreadBadge = ({ count, style }) =>
-  count > 0 ? (
-    <span className="ad-nav-badge" style={style}>
-      {count > 99 ? "99+" : count}
-    </span>
-  ) : null;
-
-// "Live Chat": a link that opens (or re-uses) the one Live Chat browser tab. A plain click goes through
-// openLiveChat; middle-click and Ctrl/Cmd-click keep the normal new-tab behaviour of the anchor.
+// "Live Chat": a plain anchor to the one named Live Chat browser tab. A named target is always a tab (never a
+// window) and re-uses the same tab on every click; there is no script and no call to open a window. It deliberately has no
+// rel="noopener": that would put the tab in its own browsing-context group, the name could not be found again and
+// every click would open another tab (the page is our own origin, so nothing is exposed). No badge, no unread count.
 function LiveChatNavLink({ item, onNavigate }) {
-  const { unread } = useLiveChatAdmin();
-  const total = (unread.ai || 0) + (unread.live || 0);
   return (
-    <a
-      href={item.path}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="ad-nav-item"
-      title="Opens in a new tab"
-      onClick={(event) => {
-        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-        openLiveChat(item.path);
-        onNavigate();
-      }}
-    >
+    <a href={item.path} target={LIVECHAT_TAB_NAME} className="ad-nav-item" title="Opens in the Live Chat tab" onClick={onNavigate}>
       <span className="ad-nav-icon">{item.icon}</span>
       {item.label}
-      <span
-        style={{
-          marginLeft: 8,
-          fontSize: 10,
-          fontWeight: 800,
-          letterSpacing: "0.06em",
-          background: "#22c55e",
-          color: "#062814",
-          borderRadius: 6,
-          padding: "2px 6px",
-        }}
-      >
-        {item.badge}
-      </span>
-      <UnreadBadge count={total} style={{ marginLeft: 8 }} />
     </a>
   );
 }

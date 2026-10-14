@@ -293,6 +293,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createStatsService } = require("./statsService");
   const settingsSvc = createSettingsService({ models, invalidateSettings });
   const statsSvc = createStatsService({ models, loadSettings, agents });
+  const archiveSvc = require("./archiveService").createArchiveService({ models });
   Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
@@ -314,13 +315,17 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc })
     );
   }
 
   // The follow-up step ("Our team will connect with you by email"): due times live on the conversations, so this job
   // only has to look. One sweep right now picks up whatever came due while the server was down.
-  const runFollowUp = () => chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+  // The same sweep closes chats that went quiet after an AI or admin reply ("Inactive").
+  const runFollowUp = () => {
+    chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+    chat.runInactiveDue().catch((err) => console.error("[livechat] inactivity job failed:", err?.message));
+  };
   const followUpTimer = setInterval(runFollowUp, options.followUpJobMs || chat.followUpJobMs);
   followUpTimer.unref?.();
   setTimeout(runFollowUp, 2000).unref?.();
@@ -335,6 +340,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     agentSvc,
     settingsSvc,
     statsSvc,
+    archiveSvc,
     files,
     followUp,
     ipBlock,

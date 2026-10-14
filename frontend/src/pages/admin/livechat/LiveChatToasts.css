@@ -23,6 +23,7 @@
   width: 100%;
   font: inherit;
   color: #0f1b3d;
+  text-decoration: none;
 }
 .lcx-toast b {
   display: block;

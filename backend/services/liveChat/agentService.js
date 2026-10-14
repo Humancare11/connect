@@ -11,7 +11,7 @@
 // Errors are thrown as AgentError (status + code) and mapped to JSON by routes/adminLiveChat.js.
 const net = require("net");
 const mongoose = require("mongoose");
-const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { aiNameOf } = require("./settingsDefaults");
 const { createWindowLimiter } = require("./limits");
@@ -29,6 +29,7 @@ class AgentError extends Error {
 
 const CONVERSATION_ID_RE = /^HC[A-Z0-9]{8}$/;
 const LIST_LIMIT = 200;
+const ARCHIVE_TEMP_MS = 24 * 3_600_000;
 const MAX_AGENT_TEXT = 2000;
 const MAX_TAGS = 10;
 
@@ -145,7 +146,13 @@ function createAgentService({
 
   // "ai": chats that were never live. "live": chats that were ever live (queue, mine, others, handed back, archived).
   async function list(actor, view) {
-    const filter = view === "live" ? { everLive: true } : { everLive: false };
+    // "Archive temp": archived chats stay in the lists for 24 hours (the time a patient can still reopen one); the
+    // Archive page has the rest. The newest-closed archived chats come first within their group.
+    const since = new Date(now() - ARCHIVE_TEMP_MS);
+    const filter = {
+      everLive: view === "live",
+      $or: [{ mode: { $ne: "archived" } }, { closedAt: { $gte: since } }],
+    };
     const convs = await LcConversation.find(filter).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
     const lasts = await lastMessages(convs.map((c) => c.conversationId));
     return convs.map((c) => rowOf(c, { userId: actor.id, last: lasts.get(c.conversationId) }));
@@ -206,9 +213,9 @@ function createAgentService({
   }
 
   // The conversation plus everything the patient panel shows. Opening a chat marks it read for this admin.
-  async function detail(actor, conversationId) {
+  async function detail(actor, conversationId, { markRead: markAsRead = true } = {}) {
     const conv = await load(conversationId);
-    await markReadDoc(conv, actor.id);
+    if (markAsRead) await markReadDoc(conv, actor.id); // the Archive page only looks: it leaves unread counts alone
     const [rows, visitor, chats, pages, others] = await Promise.all([
       LcMessage.find({ conversationId }).sort({ createdAt: 1 }).limit(500).lean(),
       chat.loadVisitor(conv.visitorId),
@@ -325,6 +332,9 @@ function createAgentService({
     return fresh;
   }
 
+  const inactiveDueFor = (settings) =>
+    new Date(now() + Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10))) * 60_000);
+
   // Must run inside chat.withLock(conversationId).
   async function takeOverLocked(actor, conv, settings) {
     if (conv.mode === "archived") throw new AgentError(409, "closed");
@@ -340,7 +350,7 @@ function createAgentService({
       const previous = { id: String(conv.assigneeId), name: conv.agentName || "another agent" };
       const taken = await LcConversation.findOneAndUpdate(
         { _id: conv._id, mode: "live", assigneeId: conv.assigneeId },
-        { $set: { assigneeId: oid(me), agentName: name } },
+        { $set: { assigneeId: oid(me), agentName: name, inactiveDueAt: inactiveDueFor(settings) } },
         { returnDocument: "after" }
       );
       if (!taken) throw new AgentError(409, "assigned", { assignee: { name: "another agent" } });
@@ -361,6 +371,7 @@ function createAgentService({
           everLive: true,
           offlineRequested: false,
           followUpDueAt: null,
+          inactiveDueAt: inactiveDueFor(settings), // joining counts like an admin message for the inactivity timer
           liveStartedAt: conv.liveStartedAt || new Date(now()),
         },
       },
@@ -519,7 +530,7 @@ function createAgentService({
       { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
       { upsert: true }
     );
-    await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $ne: "archived" } }, { $set: { contact: enc } });
+    await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $ne: "archived" } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
     if (presence.get(conv.visitorId)) presence.update(conv.visitorId, { name: values.name, email: values.email });
     const fresh = await LcConversation.findById(conv._id);
     chat.toAgents("chat:updated", { conversationId, row: rowOf(fresh) });
@@ -707,7 +718,7 @@ function createAgentService({
       { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
       { upsert: true }
     );
-    await LcConversation.updateMany({ visitorId: id, mode: { $ne: "archived" } }, { $set: { contact: enc } });
+    await LcConversation.updateMany({ visitorId: id, mode: { $ne: "archived" } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
     if (presence.get(id)) presence.update(id, { name: values.name, email: values.email });
     return { ok: true, contact: values };
   }
@@ -820,7 +831,12 @@ function createAgentService({
       source: record?.source || "",
       referrer: record?.referrer || "",
       startedPage: { path: record?.page?.path || "", title: record?.page?.title || "" },
-      ...(known ? { contact: { name: visitor.name, email: visitor.email, phone: visitor.phone } } : {}),
+      ...(known
+        ? {
+            contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
+            searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
+          }
+        : {}),
     });
     if (known) await LcVisitor.updateOne({ visitorId: id }, { $inc: { chatCount: 1 } });
     await chat.backfillPages(conv, record?.pages);
@@ -919,7 +935,7 @@ function createAgentService({
         // Back in the Queue: the follow-up step applies again, unless the email notice was already given for this chat.
         const queued = await LcConversation.findOneAndUpdate(
           { _id: current._id, mode: "live", assigneeId: current.assigneeId },
-          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings) } },
+          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings), inactiveDueAt: null } },
           { returnDocument: "after" }
         );
         if (!queued) return;

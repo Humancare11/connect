@@ -53,4 +53,15 @@ function hashLiveChatEmail(email) {
   return crypto.createHmac("sha256", activeKey()).update(`email:${value}`).digest("hex");
 }
 
-module.exports = { ENC_FIELD, encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail };
+// Blind indexes for the Archive search: keyed hashes (HMAC-SHA256 under the live-chat key, one prefix per kind) so an
+// exact email or phone can be found without a plaintext copy. They depend on LIVECHAT_ENCRYPTION_KEY: if the key
+// changes they must be rebuilt (scripts/backfillLiveChatSearchKeys.js).
+const normalizePhone = (phone) => String(phone || "").replace(/\D/g, ""); // digits only: "+1 302-303-9993" = "13023039993"
+function hashLiveChatPhone(phone) {
+  const value = normalizePhone(phone);
+  if (!value) return "";
+  return crypto.createHmac("sha256", activeKey()).update(`phone:${value}`).digest("hex");
+}
+const searchKeysOf = (email, phone) => ({ emailHash: hashLiveChatEmail(email), phoneHash: hashLiveChatPhone(phone) });
+
+module.exports = { ENC_FIELD, encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, hashLiveChatPhone, normalizePhone, searchKeysOf };

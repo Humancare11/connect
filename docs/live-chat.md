@@ -51,6 +51,27 @@ Admin side only: the patient never sees a badge, toggle or translation, and sees
 - Superadmin edits AI settings, saved replies, patient context fields and anyone's display name. Admin views settings and edits only their own display name.
 - Socket namespaces `/livechat` (patients) and `/livechat-admin` (agents, role checked on connect and on every event, session re-checked periodically).
 
+## Auto-archive after inactivity
+
+- When the last message of a chat is from the AI or an admin and the patient sends nothing for the set time, the chat moves to Archived with the label "Inactive" (not "Resolved" or "Left"). This covers AI chats and Live agent chats (My chats, Other agents, Back with the AI), including a chat where the patient never wrote after the greeting and an admin-invited chat nobody answered. Chats in the Queue are never closed this way, and neither is a chat where the patient sent the last message (we owe them a reply).
+- The patient sees "This chat was closed after N minutes of inactivity. Send a message any time to continue." The chat stays on their screen, and writing (or sending a file that passes validation) reopens the same conversation within 24 hours: AI chats go back to the AI, chats that had an agent go back to the Queue. Reloading the page alone does not reopen it. A file that is rejected (type, size, per-chat limit) does not.
+- The time is the setting **Archive an inactive chat after (minutes)** in AI agent settings: default 10, whole numbers 5 to 60, Super Admin only. A change applies to timers set afterwards, not to chats already counting down.
+- The timer is the stored `LcConversation.inactiveDueAt`, set by an AI or admin message and by an admin joining or taking over a chat; cleared by a patient message, by the chat entering the Queue and by archiving. The same 15-second job as the follow-up (plus the startup sweep) closes what is due, so it survives a restart. Internal notes and team-only lines do not touch it.
+- Reports count an Inactive chat like "patient left" (AI chats as solved by AI).
+
+## Archive page
+
+- **Where:** Live Chat menu, directly under "Live agent chats": `/admin-dashboard/live-chat/archive`. Admin and Super Admin only (same guard as the chat lists). It lists every archived chat, AI and Live agent, of any age until retention deletes it, newest archived first, 50 per page.
+- **Filters:** archived date range (From / To, presets Today, Last 7 days, Last 30 days; days are New York time like Reports), type (AI / Live agent / All) and reason (Inactive, Left, Resolved, Blocked, All).
+- **Columns:** patient, email, type, reason, assignee, started, archived, messages. A row opens the chat read-only (no reply, note, take over, resolve or block), with the transcript download. Looking at a chat from the Archive does not mark it read.
+- **Search** over name, email, phone, IP, city and chat ID. Name, email and phone are encrypted at rest, and nothing readable is stored for the search:
+  - an exact email or phone uses a keyed hash (blind index) kept on the conversation, `LcConversation.searchKeys.emailHash` / `phoneHash` (HMAC-SHA256; phone as digits only, so `+1 302-303-9993` and `13023039993` match);
+  - a partial name, email or phone decrypts the contact of the chats inside the chosen filters, in memory, for that request only, and is capped at 5,000 chats (the page says when the cap was hit). Without a date range it looks at the last 30 days;
+  - chat ID (full or prefix), IP and city are plain indexed prefix queries.
+- **Backfill:** chats started before the Archive page have no search hashes. Run `node scripts/backfillLiveChatSearchKeys.js` from `backend/` (dry run, prints counts only) and then with `--apply`. With `NODE_ENV=production` it refuses to run unless `--confirm-production` is also given. It is safe to re-run.
+- **If LIVECHAT_ENCRYPTION_KEY ever changes, the search hashes are derived from it, so the backfill must be re-run** (after the stored data is re-encrypted under the new key) or exact email and phone search stops finding old chats.
+- **Old admin sidebar:** the "Live Chat" item is a plain link to the named browser tab `humancare-livechat` (a tab, never a window; no badge, no unread count). Clicking it while that tab is open reloads it at Real-time visitors. Toasts open chats the same way (followed in place when you are already in the Live Chat tab).
+
 ## Admin UI (its own browser tab)
 
 The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui.html`, that opens in its own browser tab. All other admin pages keep `AdminLayout` unchanged.
@@ -65,7 +86,7 @@ The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui
 
 **Real-time visitors**: the table (name, email, activity, Start chat / View chat / Join, edit pencil, teammate, time on all pages, country, state). Visitors waiting for an agent are pinned to the top. The Care radar flags a patient who has been on the booking page for 4 minutes without booking. The right panel shows contact details, location, their local time, chat / ticket / visit counts, First or Returning visit, Qualification (Save contact), Patient context, Visited pages, Recent conversations and Visit info (with Block IP). Blocked IPs are listed at the bottom.
 
-**AI chats and Live agent chats**: a chat list with groups (Queue, My chats, Other agents, Back with the AI, Archived; Talking to the AI on the AI page), counts, collapse and an Oldest/Newest sort per group; a conversation with AI, agent and patient bubbles, system lines and internal notes; a details panel (Qualification, Patient context, Chat info, Chat tags, Recent conversations, Visited pages, Visit info). Queue chats keep their handoff reason and the "Email follow-up" / "Email failed" labels. Header actions: Take over chat, Hand back to AI, Resolve, add an internal note, download the transcript, copy the chat link, show/hide the details panel and a "…" menu with Block IP.
+**AI chats and Live agent chats**: a chat list with groups (Queue, My chats, Other agents, Back with the AI, Archive temp; Talking to the AI and Archive temp on the AI page. Archive temp holds chats archived in the last 24 hours, the time a patient can still reopen one; everything older is on the Archive page), counts, collapse and an Oldest/Newest sort per group; a conversation with AI, agent and patient bubbles, system lines and internal notes; a details panel (Qualification, Patient context, Chat info, Chat tags, Recent conversations, Visited pages, Visit info). Queue chats keep their handoff reason and the "Email follow-up" / "Email failed" labels. Header actions: Take over chat, Hand back to AI, Resolve, add an internal note, download the transcript, copy the chat link, show/hide the details panel and a "…" menu with Block IP.
 
 **Composer**: Message / Internal note (notes are for the team and never reach the patient); Translate (see above); Saved replies (click `#`, or type `#` and keep typing to filter; arrow keys and Enter pick one; one shared list that a Super Admin manages in AI agent settings, `{agentName}` is filled in); "Suggest a reply with AI" (puts a draft in the box, nothing is sent until the admin edits and sends it); emoji; attach a file; Enter sends, Shift+Enter starts a new line.
 

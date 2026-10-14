@@ -12,7 +12,7 @@ const conversationSchema = new mongoose.Schema(
     assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     closedReason: {
       type: String,
-      enum: ["", "resolved", "patient_left", "offline_request", "ai_unavailable", "blocked"],
+      enum: ["", "resolved", "patient_left", "offline_request", "ai_unavailable", "blocked", "inactive"],
       default: "",
     },
     topic: { type: String, default: "", maxlength: 80 },
@@ -28,6 +28,9 @@ const conversationSchema = new mongoose.Schema(
     // The follow-up step: when the chat entered the Queue, this is when "Our team will connect with you by email" is
     // due (cleared when an admin takes the chat, the patient goes back to the AI, or the notice was given).
     followUpDueAt: { type: Date, default: null, index: true },
+    // Auto-archive: when the last message is from the AI or an admin, this is when the chat is closed as "Inactive"
+    // if the patient sent nothing (cleared by a patient message, a move to the Queue, or archiving).
+    inactiveDueAt: { type: Date, default: null, index: true },
     followUpNoticeAt: { type: Date, default: null }, // the notice was shown (and the email sent): once per chat
     followUp: {
       // the generic follow-up email: sent at most once per chat
@@ -60,6 +63,11 @@ const conversationSchema = new mongoose.Schema(
     translateViews: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, view: { type: String, enum: ["original", "en"], default: "original" } }],
     tags: [{ type: String, trim: true, maxlength: 40 }],
     contact: { name: ENC_FIELD, email: ENC_FIELD, phone: ENC_FIELD },
+    // Blind indexes of the contact (keyed hashes, never the values) for the Archive search. See utils/liveChat/crypto.js.
+    searchKeys: {
+      emailHash: { type: String, default: "", index: true },
+      phoneHash: { type: String, default: "", index: true },
+    },
     ip: { type: String, default: "" },
     geo: {
       city: { type: String, default: "" },
@@ -85,5 +93,6 @@ const conversationSchema = new mongoose.Schema(
 );
 
 conversationSchema.index({ mode: 1, lastMessageAt: -1 });
+conversationSchema.index({ mode: 1, closedAt: -1 }); // Archive list and Archive temp
 
 module.exports = mongoose.model("LcConversation", conversationSchema);
