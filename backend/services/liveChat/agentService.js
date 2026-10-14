@@ -148,7 +148,7 @@ function createAgentService({
   async function list(actor, view) {
     // "Archive temp": archived chats stay in the lists for 24 hours (the time a patient can still reopen one); the
     // Archive page has the rest. The newest-closed archived chats come first within their group.
-    const since = new Date(now() - ARCHIVE_TEMP_MS);
+    const since = istTodayStart(now()); // chats archived today (India time); at midnight the group empties
     const filter = {
       everLive: view === "live",
       mode: { $ne: "trashed" },

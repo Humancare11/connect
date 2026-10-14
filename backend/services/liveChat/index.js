@@ -327,7 +327,14 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const runFollowUp = () => {
     chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
     chat.runInactiveDue().catch((err) => console.error("[livechat] inactivity job failed:", err?.message));
+    // The midnight (India time) cleanup. A freshly started server waits one presence grace period first, so patients
+    // who are reconnecting after the restart are not mistaken for gone.
+    if (Date.now() - startedAt >= sweepDelayMs) {
+      chat.runDailySweep().catch((err) => console.error("[livechat] daily sweep failed:", err?.message));
+    }
   };
+  const startedAt = Date.now();
+  const sweepDelayMs = options.dailySweepStartDelayMs ?? Math.max(graceMs, 60_000);
   const followUpTimer = setInterval(runFollowUp, options.followUpJobMs || chat.followUpJobMs);
   followUpTimer.unref?.();
   setTimeout(runFollowUp, 2000).unref?.();

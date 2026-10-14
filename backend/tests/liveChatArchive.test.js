@@ -1,4 +1,4 @@
-// Archive temp (the chat lists keep archived chats for 24 hours) and the Archive page: every archived chat with
+// Archive temp (the chat lists keep chats archived today, India time) and the Archive page: every archived chat with
 // date / type / reason filters, search over encrypted contact data (blind indexes + in-memory decrypt) and paging.
 const { test, describe, before, after } = require("node:test");
 const assert = require("node:assert/strict");
@@ -56,17 +56,19 @@ describe("live chat: Archive temp and the Archive page", () => {
   const idsOf = (body) => body.rows.map((r) => r.conversationId);
 
   describe("Archive temp: the chat lists", () => {
-    test("archived chats stay in the lists for 24 hours only, newest closed first, in both views", async () => {
-      const fresh = await archived({ closedAt: new Date(Date.now() - 2 * HOUR) });
-      const fresher = await archived({ closedAt: new Date(Date.now() - 1 * HOUR) });
-      const old = await archived({ closedAt: new Date(Date.now() - 30 * HOUR) });
-      const freshLive = await archived({ closedAt: new Date(Date.now() - 3 * HOUR), live: true });
-      const oldLive = await archived({ closedAt: new Date(Date.now() - 49 * HOUR), live: true });
+    test("archived chats stay in the lists for the rest of the IST day only, newest closed first, in both views", async () => {
+      const { istTodayStart } = require("../services/liveChat/istDay");
+      const start = istTodayStart(Date.now()).getTime(); // midnight India time
+      const fresh = await archived({ closedAt: new Date(start + 1_000) });
+      const fresher = await archived({ closedAt: new Date(start + 2_000) });
+      const old = await archived({ closedAt: new Date(start - 1_000) }); // a second before IST midnight
+      const freshLive = await archived({ closedAt: new Date(start + 3_000), live: true });
+      const oldLive = await archived({ closedAt: new Date(start - 30 * HOUR), live: true });
 
       const ai = (await rest("GET", "/conversations?view=ai", A)).body.conversations;
       const aiIds = ai.map((c) => c.conversationId);
       assert.ok(aiIds.includes(fresh) && aiIds.includes(fresher));
-      assert.ok(!aiIds.includes(old), "older than 24 h: only on the Archive page");
+      assert.ok(!aiIds.includes(old), "archived before IST midnight: only on the Archive page");
       assert.ok(!aiIds.includes(freshLive), "live chats are not in the AI list");
       const archivedAi = ai.filter((c) => c.mode === "archived");
       const times = archivedAi.map((c) => new Date(c.closedAt || c.lastMessageAt).getTime());
