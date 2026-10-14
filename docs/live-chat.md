@@ -106,6 +106,12 @@ The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui
 
 **AI agent settings**: AI mode (AI first / AI off), the AI's name, handoff rules, the follow-up time, greeting and messages, quick options, business facts, prices, default agent name, daily AI cap, grace seconds, saved replies, patient context fields, and a change log (who, what, when). Only a Super Admin saves; admins see it read only. A save is validated as a whole, applies without a restart and is written to `LcSettingsAudit`. (Saved replies were called canned replies before; their API paths and change-log field names keep the old name.)
 
+## Alerts (sound, toasts, notifications)
+
+- **Chime plus toast** (and a browser notification while the tab is hidden, if the admin allowed them): a chat started, a patient asked for a live agent (Queue), a patient message (not for the chat on screen, and not for a chat another admin holds), AI unavailable, abuse alert. "Chat taken over" gives a toast and chime only. Nothing is shown or played for chat updates, reopened chats, the email follow-up, page changes or visitors leaving.
+- **Only one tab alerts:** the Live Chat tab while it is open; any admin tab when it is not.
+- **Sound on new website visitor** (off by default, per admin, remembered in this browser, next to the Sound toggle): one soft note when a visitor you have not seen in the last 30 minutes arrives. Not for page changes, not for visitors already on the site when the page connected or reconnected, not outside the Live Chat tab, never more than once every 10 seconds, and never while the main Sound is off. No toast and no notification.
+
 ## Data and privacy
 
 - Chat content, names, emails, phones and file names are encrypted (AES-256-GCM) with `LIVECHAT_ENCRYPTION_KEY`, a key separate from the existing chat key. Lose the key and the data is unreadable: back it up.

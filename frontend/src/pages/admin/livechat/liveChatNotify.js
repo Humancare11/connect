@@ -9,6 +9,7 @@
 import { openLiveChat } from "./liveChatTabs";
 
 const SOUND_KEY = "hcLiveChatSound";
+const VISITOR_SOUND_KEY = "hcLiveChatVisitorSound";
 const DISMISS_KEY = "hcLiveChatNotifyDismissed";
 
 let audio = null;
@@ -32,6 +33,12 @@ const write = (key, value) => {
 export const soundEnabled = () => read(SOUND_KEY) !== "off";
 export function setSoundEnabled(on) {
   write(SOUND_KEY, on ? "on" : "off");
+}
+
+// "Sound on new website visitor": per admin, OFF unless the admin turned it on. It also needs the main Sound on.
+export const visitorSoundEnabled = () => read(VISITOR_SOUND_KEY) === "on";
+export function setVisitorSoundEnabled(on) {
+  write(VISITOR_SOUND_KEY, on ? "on" : "off");
 }
 
 // Creates the audio context on the first real user gesture (autoplay rules).
@@ -70,6 +77,26 @@ export function playChime() {
       osc.start(now + i * 0.14);
       osc.stop(now + i * 0.14 + 0.35);
     });
+  } catch {
+    /* ignore */
+  }
+}
+
+// One low, quiet note: clearly not the two-note chime of a chat or a message.
+export function playVisitorSound() {
+  if (!soundEnabled() || !audio || audio.state !== "running") return;
+  try {
+    const now = audio.currentTime;
+    const osc = audio.createOscillator();
+    const gain = audio.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 523;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.045, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+    osc.connect(gain).connect(audio.destination);
+    osc.start(now);
+    osc.stop(now + 0.5);
   } catch {
     /* ignore */
   }
