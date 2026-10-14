@@ -1,25 +1,32 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "./lcIcons";
 import NotificationsBanner from "./NotificationsBanner";
 import { timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 
 // Left column: the chat list (docs/live-chat-admin-ui.html). Live agent chats: Queue, My chats, Other agents, Back with
-// the AI and Archive temp (archived in the last 24 hours; the Archive page has the rest). AI chats: Talking to the AI and Archive temp. Each group shows its count, can be collapsed, and
-// sorts Oldest / Newest first.
+// the AI and Archive temp (chats archived today, India time; at midnight it empties and the Archive page has them).
+// AI chats: Talking to the AI and Archive temp. Each group shows its count, can be collapsed, and is always sorted by
+// latest activity, newest on top (a chat with a new message moves to the top).
 const groupsFor = (view, me) =>
   view === "live"
     ? [
-        ["Queue", (c) => c.mode === "queue", "Oldest"],
-        ["My chats", (c) => c.mode === "live" && c.assignee?.id === me, "Oldest"],
-        ["Other agents", (c) => c.mode === "live" && c.assignee?.id !== me, "Newest"],
-        ["Back with the AI", (c) => c.mode === "ai", "Newest"],
-        ["Archive temp", (c) => c.mode === "archived", "Newest"],
+        ["Queue", (c) => c.mode === "queue"],
+        ["My chats", (c) => c.mode === "live" && c.assignee?.id === me],
+        ["Other agents", (c) => c.mode === "live" && c.assignee?.id !== me],
+        ["Back with the AI", (c) => c.mode === "ai"],
+        ["Archive temp", (c) => c.mode === "archived"],
       ]
     : [
-        ["Talking to the AI", (c) => c.mode !== "archived", "Newest"],
-        ["Archive temp", (c) => c.mode === "archived", "Newest"],
+        ["Talking to the AI", (c) => c.mode !== "archived"],
+        ["Archive temp", (c) => c.mode === "archived"],
       ];
+
+// Midnight in India (a fixed +05:30 offset, no daylight saving) that started the day containing `ms`.
+const IST_OFFSET_MS = 5.5 * 3_600_000;
+const DAY_MS = 86_400_000;
+const istDayStart = (ms) => Math.floor((ms + IST_OFFSET_MS) / DAY_MS) * DAY_MS - IST_OFFSET_MS;
+const activityAt = (row) => new Date(row.lastMessageAt || row.startedAt || 0).getTime();
 
 function Item({ row, active, typing, onSelect }) {
   const last = row.preview;
@@ -55,14 +62,20 @@ function Item({ row, active, typing, onSelect }) {
 
 export default function ChatList({ view, rows, me, activeId, typing, query, onQuery, onSelect, loading }) {
   const [collapsed, setCollapsed] = useState({});
-  const [sortBy, setSortBy] = useState({});
+  // Archive temp holds only chats archived today (India time): a minute timer drops yesterday's at midnight, without a reload.
+  const [dayStart, setDayStart] = useState(() => istDayStart(Date.now()));
+  useEffect(() => {
+    const timer = window.setInterval(() => setDayStart(istDayStart(Date.now())), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const live = view === "live";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q));
-  }, [rows, query]);
+    const current = rows.filter((r) => r.mode !== "archived" || new Date(r.closedAt || r.lastMessageAt).getTime() >= dayStart);
+    if (!q) return current;
+    return current.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q));
+  }, [rows, query, dayStart]);
 
   return (
     <nav className="wk-list" aria-label="Chats" data-lenis-prevent>
@@ -76,11 +89,8 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
       </div>
       <div>
         {!loading && filtered.length === 0 && <div className="wk-empty">{query ? "No chats match" : live ? "No live agent chats yet" : "No AI chats right now"}</div>}
-        {groupsFor(view, me).map(([title, test, defaultSort]) => {
-          const sort = sortBy[title] || defaultSort;
-          const items = filtered
-            .filter(test)
-            .sort((a, b) => (sort === "Oldest" ? 1 : -1) * (new Date(a.lastMessageAt) - new Date(b.lastMessageAt)));
+        {groupsFor(view, me).map(([title, test]) => {
+          const items = filtered.filter(test).sort((a, b) => activityAt(b) - activityAt(a));
           if (!items.length) return null;
           const closed = collapsed[title];
           return (
@@ -88,14 +98,6 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
               <div className="lh">
                 <button type="button" className="lh-t" aria-expanded={!closed} onClick={() => setCollapsed({ ...collapsed, [title]: !closed })}>
                   {title} {items.length} <Icon name="chevD" size={15} />
-                </button>
-                <button
-                  type="button"
-                  className="lh-s"
-                  title="Change sort order"
-                  onClick={() => setSortBy({ ...sortBy, [title]: sort === "Oldest" ? "Newest" : "Oldest" })}
-                >
-                  {sort}
                 </button>
               </div>
               {!closed &&

@@ -114,3 +114,10 @@ test("the Archive viewer's read-only bar shows only the switch, no 'To <language
   assert.match(html, /aria-label="Message language"/);
   assert.doesNotMatch(html, /To Marathi|Language not detected/);
 });
+
+test("the chat list sorts every group newest first with no Oldest / Newest toggle", () => {
+  const list = read("ChatList.jsx");
+  assert.doesNotMatch(list, /Oldest|Change sort order|sortBy/);
+  assert.match(list, /activityAt\(b\) - activityAt\(a\)/);
+  assert.match(list, /Asia|IST_OFFSET_MS/, "Archive temp drops yesterday's chats at midnight India time");
+});
