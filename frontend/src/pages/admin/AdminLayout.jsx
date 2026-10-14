@@ -5,7 +5,6 @@ import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
-import { LIVECHAT_TAB_NAME } from "./livechat/liveChatTabs";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -213,13 +212,11 @@ function useMediaQuery(query) {
 
 // A parent entry with a submenu: a flyout to the right of the sidebar on
 // desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
-// "Live Chat": a plain anchor to the one named Live Chat browser tab. A named target is always a tab (never a
-// window) and re-uses the same tab on every click; there is no script and no call to open a window. It deliberately has no
-// rel="noopener": that would put the tab in its own browsing-context group, the name could not be found again and
-// every click would open another tab (the page is our own origin, so nothing is exposed). No badge, no unread count.
-function LiveChatNavLink({ item, onNavigate }) {
+// "Live Chat": a plain anchor that opens the Live Chat dashboard in a new tab on every click. No onClick, no script, no
+// window features, no badge, no unread count.
+function LiveChatNavLink({ item }) {
   return (
-    <a href={item.path} target={LIVECHAT_TAB_NAME} className="ad-nav-item" title="Opens in the Live Chat tab" onClick={onNavigate}>
+    <a href={item.path} target="_blank" rel="noopener" className="ad-nav-item" title="Opens in a new tab">
       <span className="ad-nav-icon">{item.icon}</span>
       {item.label}
     </a>
@@ -575,7 +572,7 @@ export default function AdminLayout({ children }) {
                 />
               );
             }
-            if (item.external) return <LiveChatNavLink key={item.key} item={item} onNavigate={closeDrawer} />;
+            if (item.external) return <LiveChatNavLink key={item.key} item={item} />;
             const link = withTarget(item);
             return (
               <Link

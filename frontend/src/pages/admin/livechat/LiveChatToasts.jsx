@@ -1,17 +1,17 @@
 import "./LiveChatToasts.css";
-import { LIVECHAT_TAB_NAME } from "./liveChatTabs";
 
 // In-app toasts for new chats, new messages and queue entries (demo: top-right, click to open the chat).
 export default function LiveChatToasts({ toasts, onOpen }) {
   return (
     <div className="lcx-toasts" aria-live="polite">
       {toasts.map((toast) => (
-        // A chat link is a plain anchor to the named Live Chat tab (always a tab, never a window). onOpen only
-        // dismisses the toast, and follows the link itself when this already is the Live Chat tab.
+        // A chat link is a plain anchor that opens a new tab. onOpen dismisses the toast, and follows the link in
+        // place when this already is the Live Chat tab.
         <a
           key={toast.id}
           href={toast.path || undefined}
-          target={toast.path ? LIVECHAT_TAB_NAME : undefined}
+          target={toast.path ? "_blank" : undefined}
+          rel={toast.path ? "noopener" : undefined}
           className="lcx-toast"
           onClick={(event) => onOpen(toast, event)}
         >
