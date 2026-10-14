@@ -591,12 +591,6 @@
   color: var(--gop-ink-soft);
 }
 
-.gop-banner__warn {
-  color: var(--gop-danger);
-  font-style: normal;
-  font-weight: 600;
-}
-
 .gop-banner__actions {
   display: flex;
   align-items: center;
@@ -865,6 +859,14 @@
   color: var(--gop-danger);
   text-align: right;
   cursor: help;
+}
+
+.gop-email-flag--sent {
+  color: #1a7f4b;
+}
+
+.gop-email-flag--muted {
+  color: var(--gop-muted);
 }
 
 .gop-actions {
