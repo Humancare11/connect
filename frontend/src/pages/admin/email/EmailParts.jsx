@@ -1,5 +1,4 @@
-import { MailEnding, SignatureImage } from "./SignatureView";
-import { splitCompose } from "./signatureUtils";
+import { SignatureImage } from "./SignatureView";
 import { READ_STATUS_HELP, extClass, firstName, fmtFull, fmtSize, hashColor, initials, trackingInfo } from "./emailUtils";
 
 const PATHS = {
@@ -18,6 +17,8 @@ const PATHS = {
   mailbox: (<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>),
   expand: (<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />),
   refresh: (<><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></>),
+  upload: (<><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></>),
+  lock: (<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>),
 };
 
 export function Icon({ name, size = 20 }) {
@@ -111,55 +112,34 @@ export function TrackingBadge({ tracking }) {
   );
 }
 
-// Signature dropdown under the message box of the compose and reply forms.
-export function SignaturePicker({ field, mailboxName, body = "" }) {
-  const { signatures, signatureId, choose, removedByHand, loading } = field;
-  const selected = signatures.find((s) => s.id === signatureId) || null;
-  const showsImage = Boolean(selected?.image) && selected.layout !== "text";
+// The signature strip under the message box of the compose and reply forms: my image, an
+// "Add my signature" box and a link to change it. Nothing is written into the message.
+export function SignatureStrip({ field }) {
+  const { signature, loading, use, setUse } = field;
   if (loading) return null;
-  if (!signatures.length) {
+  const href = "/admin-dashboard/email/settings/my-signature";
+  if (!signature?.image) {
     return (
-      <div className="em-sigpick">
-        <a className="em-sub" href="/admin-dashboard/email/settings/my-signature" target="_blank" rel="noreferrer">
-          Add a signature
+      <div className="em-sigstrip">
+        <span className="em-sub">No signature yet.</span>
+        <a className="em-sig-link" href={href} target="_blank" rel="noreferrer">
+          Upload one
         </a>
       </div>
     );
   }
   return (
-    <div className="em-sigpick">
-      <label className="em-trkopt">
-        Signature
-        <select aria-label="Signature" value={signatureId} onChange={(e) => choose(e.target.value)}>
-          <option value="none">No signature</option>
-          {signatures.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}{s.image && s.layout !== "text" ? " (image)" : ""}
-            </option>
-          ))}
-        </select>
-      </label>
-      {showsImage && (
-        <div className="em-sigprev">
-          <small className="em-sub">
-            {selected.layout === "image"
-              ? "Recipients see this image below your message. The text above is what plain-text mail shows. The image cannot be changed for one mail."
-              : "Recipients see this image, then the text lines (as you edited them above), below your message. The image cannot be changed for one mail."}
-          </small>
-          <MailEnding
-            layout={selected.layout}
-            image={<SignatureImage signature={selected} className="sg-img" maxWidth={360} />}
-            lines={splitCompose(body).signature}
-            company=""
-          />
-        </div>
-      )}
-      {removedByHand && (
-        <small className="em-trkwarn">
-          The signature text was removed from this mail. Choose &ldquo;No signature&rdquo; if you want the company footer
-          {mailboxName ? ` of ${mailboxName}` : ""} as usual.
-        </small>
-      )}
+    <div className={`em-sigstrip has-image${use ? "" : " off"}`}>
+      <div className="em-sigstrip-top">
+        <label className="em-trkopt">
+          <input type="checkbox" checked={use} onChange={(e) => setUse(e.target.checked)} />
+          Add my signature
+        </label>
+        <a className="em-sig-link" href={href} target="_blank" rel="noreferrer">
+          Change
+        </a>
+      </div>
+      <SignatureImage signature={signature} className="sg-img sg-thumb" maxWidth={420} />
     </div>
   );
 }

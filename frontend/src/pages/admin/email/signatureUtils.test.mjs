@@ -1,125 +1,35 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  DIVIDER,
-  dividerIndex,
-  forceSwap,
-  joinCompose,
-  messageOf,
-  pickSignature,
-  previewMail,
-  splitCompose,
-  splitSentText,
-  swapSignature,
-} from "./signatureUtils.js";
+import { IMAGE_TYPES, MAX_UPLOAD_BYTES, SIGNATURES_KEY, imageFileProblem, messageOf, startsTicked } from "./signatureUtils.js";
 
-const SIG = "Anita Rao\nCare Coordinator";
-
-test("the divider is the standard '-- ' line", () => {
-  assert.equal(DIVIDER, "-- ");
+test("the query key is shared by the page and the compose boxes", () => {
+  assert.deepEqual(SIGNATURES_KEY, ["email", "signatures"]);
 });
 
-test("join and split are inverses", () => {
-  const text = joinCompose("Dear client,\nThank you.", SIG);
-  assert.equal(text, "Dear client,\nThank you.\n\n-- \nAnita Rao\nCare Coordinator");
-  assert.deepEqual(splitCompose(text), { message: "Dear client,\nThank you.", signature: SIG, hasDivider: true });
+test("the message is the whole box, trimmed: nothing is ever inserted into it", () => {
+  assert.equal(messageOf("  Dear client,\nThank you. \n"), "Dear client,\nThank you.");
+  assert.equal(messageOf(""), "");
+  assert.equal(messageOf(null), "");
+  assert.equal(messageOf("-- \nAnita"), "-- \nAnita");
 });
 
-test("an empty message leaves room above the signature", () => {
-  assert.equal(joinCompose("", SIG), "\n\n-- \nAnita Rao\nCare Coordinator");
-  assert.equal(messageOf(joinCompose("", SIG)), "");
+test("'Add my signature' starts ticked only with an image and the automatic switch on", () => {
+  const image = { width: 600, height: 150, bytes: 1000 };
+  assert.equal(startsTicked({ image, autoAdd: true }), true);
+  assert.equal(startsTicked({ image }), true);
+  assert.equal(startsTicked({ image, autoAdd: false }), false);
+  assert.equal(startsTicked({ image: null, autoAdd: true }), false);
+  assert.equal(startsTicked(null), false);
+  assert.equal(startsTicked(undefined), false);
 });
 
-test("an inserted signature alone is not a message", () => {
-  assert.equal(messageOf(joinCompose("   ", SIG)), "");
-  assert.equal(messageOf(joinCompose("Hi", SIG)), "Hi");
-});
-
-test("text without a divider has no signature", () => {
-  assert.deepEqual(splitCompose("Hello"), { message: "Hello", signature: "", hasDivider: false });
-  assert.equal(messageOf("Hello"), "Hello");
-  assert.equal(dividerIndex("Hello -- world\n--- x"), -1);
-});
-
-test("the divider may have lost its trailing space; the last one counts", () => {
-  assert.equal(splitCompose("Hi\n--\nAnita").signature, "Anita");
-  assert.deepEqual(splitCompose("Hi\n-- \nquoted\n\n-- \nAnita"), { message: "Hi\n-- \nquoted", signature: "Anita", hasDivider: true });
-});
-
-test("switching signature replaces an untouched one and keeps the message", () => {
-  const text = joinCompose("Dear client,", SIG);
-  const r = swapSignature(text, SIG, "Short\n+91 1");
-  assert.deepEqual(r, { text: "Dear client,\n\n-- \nShort\n+91 1", needsConfirm: false });
-});
-
-test("choosing No signature removes it and the divider", () => {
-  const r = swapSignature(joinCompose("Dear client,", SIG), SIG, "");
-  assert.deepEqual(r, { text: "Dear client,", needsConfirm: false });
-});
-
-test("adding a signature to a mail that has none", () => {
-  const r = swapSignature("Dear client,", "", SIG);
-  assert.deepEqual(r, { text: "Dear client,\n\n-- \nAnita Rao\nCare Coordinator", needsConfirm: false });
-});
-
-test("an edited signature is not replaced without asking", () => {
-  const edited = joinCompose("Dear client,", "Anita Rao\nOut until Monday");
-  const r = swapSignature(edited, SIG, "Short");
-  assert.deepEqual(r, { text: edited, needsConfirm: true });
-  assert.equal(forceSwap(edited, "Short"), "Dear client,\n\n-- \nShort");
-});
-
-test("an emptied signature area is replaced without asking", () => {
-  const r = swapSignature("Dear client,\n\n-- \n", SIG, "Short");
-  assert.equal(r.needsConfirm, false);
-  assert.equal(r.text, "Dear client,\n\n-- \nShort");
-});
-
-test("the message typed by the admin is never touched by a swap", () => {
-  const msg = "Line one\n\nLine three -- with dashes\n";
-  const r = swapSignature(joinCompose(msg, SIG), SIG, "New");
-  assert.equal(splitCompose(r.text).message, "Line one\n\nLine three -- with dashes");
-});
-
-test("pickSignature: the mailbox's own choice, else the default, else none", () => {
-  const data = {
-    signatures: [
-      { id: "a", name: "Formal", content: "A", isDefault: true },
-      { id: "b", name: "Short", content: "B", isDefault: false },
-    ],
-    mailboxDefaults: { m2: "b" },
-  };
-  assert.equal(pickSignature(data, "m1").id, "a");
-  assert.equal(pickSignature(data, "m2").id, "b");
-  assert.equal(pickSignature({ signatures: [{ id: "b", isDefault: false }], mailboxDefaults: {} }, "m1"), null, "no default, nothing inserted");
-  assert.equal(pickSignature({ signatures: [], mailboxDefaults: {} }, "m1"), null);
-  assert.equal(pickSignature(undefined, "m1"), null);
-  assert.equal(pickSignature({ signatures: data.signatures, mailboxDefaults: { m3: "gone" } }, "m3").id, "a", "a stale mailbox default falls back");
-});
-
-test("preview: message, signature, company footer; one divider", () => {
-  assert.equal(
-    previewMail({ message: "Hello", signature: SIG, companyFooter: "Human Care Connect", withCompanyFooter: true }),
-    "Hello\n\n-- \nAnita Rao\nCare Coordinator\n\nHuman Care Connect"
-  );
-  assert.equal(
-    previewMail({ message: "Hello", signature: SIG, companyFooter: "Human Care Connect", withCompanyFooter: false }),
-    "Hello\n\n-- \nAnita Rao\nCare Coordinator"
-  );
-  assert.equal(previewMail({ message: "Hello", signature: "", companyFooter: "Human Care Connect", withCompanyFooter: false }), "Hello\n\n-- \nHuman Care Connect");
-});
-
-test("sent text is cut around the signature so the image can take its place", () => {
-  const sent = "Dear client,\nThank you.\n\n-- \nAnita Rao\n+91 98765\n\nHuman Care Connect\n";
-  assert.deepEqual(splitSentText(sent, "Anita Rao\n+91 98765"), { before: "Dear client,\nThank you.", after: "Human Care Connect" });
-});
-
-test("sent text: a mail whose divider has lost its space, and one without a footer", () => {
-  assert.deepEqual(splitSentText("Hi\n\n--\nAnita\n", "Anita"), { before: "Hi", after: "" });
-});
-
-test("sent text: signature not found as sent → null (the page shows the text and the image below)", () => {
-  assert.equal(splitSentText("Hi\n\n-- \nSomeone else\n", "Anita"), null);
-  assert.equal(splitSentText("Hi", ""), null);
-  assert.equal(splitSentText(undefined, "Anita"), null);
+test("a chosen file is checked before upload: PNG or JPG, up to 5 MB", () => {
+  assert.deepEqual(IMAGE_TYPES, ["image/png", "image/jpeg"]);
+  assert.equal(imageFileProblem({ type: "image/png", size: 1000 }), "");
+  assert.equal(imageFileProblem({ type: "image/jpeg", size: MAX_UPLOAD_BYTES }), "");
+  assert.match(imageFileProblem({ type: "image/svg+xml", size: 10 }), /PNG or JPG/);
+  assert.match(imageFileProblem({ type: "image/gif", size: 10 }), /PNG or JPG/);
+  assert.match(imageFileProblem({ type: "application/pdf", size: 10 }), /PNG or JPG/);
+  assert.match(imageFileProblem({ type: "image/png", size: MAX_UPLOAD_BYTES + 1 }), /5 MB/);
+  assert.match(imageFileProblem(null), /Choose/);
 });

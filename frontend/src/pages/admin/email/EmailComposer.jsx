@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Icon, ReceiptToggle, SecureLinksToggle, SignaturePicker, TrackOpensToggle } from "./EmailParts";
+import { AttachmentList, Icon, ReceiptToggle, SecureLinksToggle, SignatureStrip, TrackOpensToggle } from "./EmailParts";
 import { messageOf } from "./signatureUtils";
-import { useSignatureField } from "./useSignatureField";
+import { useSignatureChoice } from "./useSignatureChoice";
 import { ACCEPT_ATTR, EMAIL_RE, addFiles, internalCaveat, newRequestId } from "./emailUtils";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
@@ -25,8 +25,8 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const bodyRef = useRef(null);
-  // The signature sits inside the text (below a "-- " line) and can be edited for this one mail.
-  const signature = useSignatureField({ mailboxId: from, body, setBody, textRef: bodyRef, ask: confirm });
+  // My signature image is added by the server when the box under the message is ticked.
+  const signature = useSignatureChoice();
   const [files, setFiles] = useState([]);
   const [full, setFull] = useState(false);
   const [error, setError] = useState("");
@@ -38,7 +38,6 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
     toRef.current?.focus();
   }, []);
 
-  // An inserted signature alone is not something the admin wrote.
   const dirty = Boolean(to || cc || subject || messageOf(body) || files.length);
 
   const askDiscard = () =>
@@ -75,8 +74,8 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
       fd.append("cc", cc.trim());
       fd.append("subject", subject.trim());
       fd.append("body", body.trim());
-      // "none" or one of MY signatures; the server checks it is mine and never trusts it for content.
-      fd.append("signatureId", signature.signatureId);
+      // Only "add mine": the server finds my image from the session, never from the request.
+      if (signature.use) fd.append("signature", "1");
       fd.append("clientRequestId", requestId.current);
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
       if (tracking?.available && receipt) fd.append("requestReceipt", "1");
@@ -146,7 +145,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
             <input type="text" placeholder="Subject" aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
           <textarea ref={bodyRef} aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
-          <SignaturePicker field={signature} body={body} mailboxName={mailboxes.find((m) => m.id === from)?.displayName} />
+          <SignatureStrip field={signature} />
           <div className="em-c-foot">
             <AttachmentList items={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
             <button type="submit" className="em-btn em-btn-primary" disabled={send.isPending || !mailboxes.length}>

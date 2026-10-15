@@ -131,9 +131,6 @@ function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsByI
           width: doc.signatureImage.width,
           height: doc.signatureImage.height,
           alt: doc.signatureImage.alt || "",
-          link: doc.signatureImage.link || "",
-          layout: doc.signatureImage.layout,
-          signatureText: doc.signatureImage.signatureText || "",
         }
       : null,
     // Which tracked link was clicked: only on the mail page, never in lists.

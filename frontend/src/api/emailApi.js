@@ -37,25 +37,23 @@ export const emailApi = {
   },
 };
 
-// My signatures (every admin and Super Admin, each only their own: the server decides
-// who owns what from the session, nothing here says whose they are).
+// My signature: ONE image per admin (every admin and Super Admin, each only their own: the
+// server decides whose it is from the session, nothing here says whose it is).
 const SIGNATURE_BASE = "/api/admin/email/signatures";
 
 export const signaturesApi = {
+  // → { signature: { image: { mime, width, height, bytes } | null, autoAdd, updatedAt }, limits }
   get: () => api.get(SIGNATURE_BASE, RAW).then((r) => r.data),
-  create: (payload) => api.post(SIGNATURE_BASE, payload, RAW).then((r) => r.data),
-  update: (id, patch) => api.patch(`${SIGNATURE_BASE}/${id}`, patch, RAW).then((r) => r.data),
-  remove: (id) => api.delete(`${SIGNATURE_BASE}/${id}`, RAW).then((r) => r.data),
-  // The image of a signature (png/jpg). The file is decoded and re-encoded on the server.
-  uploadImage: (id, file) => {
+  setAutoAdd: (autoAdd) => api.patch(SIGNATURE_BASE, { autoAdd }, RAW).then((r) => r.data),
+  // PNG or JPG. The file is decoded, resized and re-encoded on the server.
+  uploadImage: (file) => {
     const fd = new FormData();
     fd.append("image", file);
-    return api.put(`${SIGNATURE_BASE}/${id}/image`, fd, RAW).then((r) => r.data);
+    return api.put(`${SIGNATURE_BASE}/image`, fd, RAW).then((r) => r.data);
   },
-  removeImage: (id) => api.delete(`${SIGNATURE_BASE}/${id}/image`, RAW).then((r) => r.data),
+  removeImage: () => api.delete(`${SIGNATURE_BASE}/image`, RAW).then((r) => r.data),
   // Needs the session header, so it is fetched as a blob (see useAuthImage).
-  imageBlob: (id) => api.get(`${SIGNATURE_BASE}/${id}/image`, { responseType: "blob", ...RAW }).then((r) => r.data),
-  setMailboxDefault: (mailbox, signatureId) => api.put(`${SIGNATURE_BASE}/mailbox-defaults`, { mailbox, signatureId }, RAW).then((r) => r.data),
+  imageBlob: () => api.get(`${SIGNATURE_BASE}/image`, { responseType: "blob", ...RAW }).then((r) => r.data),
 };
 
 // Super Admin only (the server refuses everyone else): manage the company mail IDs.

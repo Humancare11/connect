@@ -29,8 +29,8 @@ look unread.
   The screen says "by at least one recipient".
 - **Company addresses:** mail with an `@humancareconnect.co` recipient is tracked, but an open may be a
   colleague. The screen says "may include our own staff".
-- **Signature links:** a link in an admin's signature is tracked like any other link, so a click on it
-  (for example the website) also shows **Clicked**. The mail page lists each link with its count.
+- **Signature:** the signature is an image and is not a link, so it adds nothing to click tracking. Links
+  written in the message are tracked, and the mail page lists each link with its count.
 - **Time:** the first load within about a minute of sending is treated as a scanner. A scanner-looking load
   counts as an open only if another follows two or more minutes later.
 - **Read receipts** are asked for per mail and are the recipient's choice. "Requested, none received" is the

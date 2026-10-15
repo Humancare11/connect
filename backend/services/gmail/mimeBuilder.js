@@ -20,57 +20,20 @@ const FROM_NAME = process.env.EMAIL_FROM_NAME || "Human Care Connect";
 // on tracked mail). The admin's name is deliberately never added — attribution
 // lives only in our database. Without a disclosure the result is exactly what
 // it always was.
-function composeText(body, signature, disclosure = "", attachmentBlock = "", { adminSignature = false, companyFooter = true } = {}) {
+//
+// companyFooter false = the mail carries the sender's IMAGE signature, which takes the place of
+// the footer: the plain text is then just the message (+ attachment lines + notice). The image
+// itself exists only in the HTML part.
+function composeText(body, signature, disclosure = "", attachmentBlock = "", { companyFooter = true } = {}) {
   const text = String(body ?? "").replace(/\r\n/g, "\n").trimEnd();
   const block = String(attachmentBlock || "").trim();
-  const company = String(signature || "").trim();
   const notice = String(disclosure || "").trim();
 
-  if (adminSignature) {
-    // The admin's signature is already at the end of `text` (the composer put it there, below
-    // a "-- " line, and the admin could edit it). Order: message, attachments, signature,
-    // company footer, notice. The attachment lines go ABOVE the signature, not after it.
-    const cut = block ? lastDividerIndex(text) : -1;
-    const main = !block
-      ? text
-      : cut >= 0
-        ? `${text.slice(0, cut).trimEnd()}\n\n${block}\n\n${text.slice(cut)}`
-        : `${text}\n\n${block}`;
-    // One divider only: the company footer follows the signature without a second "-- ".
-    return `${[main, companyFooter ? company : "", notice].filter(Boolean).join("\n\n")}\n`;
-  }
-
   const withBlock = [text, block].filter(Boolean).join("\n\n");
-  const footer = [company, notice].filter(Boolean).join("\n\n");
+  if (!companyFooter) return `${[withBlock, notice].filter(Boolean).join("\n\n")}\n`;
+
+  const footer = [String(signature || "").trim(), notice].filter(Boolean).join("\n\n");
   return footer ? `${withBlock}\n\n-- \n${footer}\n` : `${withBlock}\n`;
-}
-
-// The pieces of a mail, for the HTML twin of a mail with an image signature. The plain text is
-// still made by composeText; this only splits the same material.
-//   message  the text above the signature divider, with attachment lines
-//   sig      the signature's text lines (below the last "-- " line), "" if none
-//   company  the company footer, or "" when an admin signature replaces it
-function composeParts(body, signature, disclosure = "", attachmentBlock = "", { companyFooter = true } = {}) {
-  const text = String(body ?? "").replace(/\r\n/g, "\n").trimEnd();
-  const cut = lastDividerIndex(text);
-  const message = cut >= 0 ? text.slice(0, cut).trimEnd() : text;
-  const afterLine = cut >= 0 ? text.indexOf("\n", cut) : -1;
-  const sig = cut >= 0 && afterLine >= 0 ? text.slice(afterLine + 1).trim() : "";
-  return {
-    message: [message, String(attachmentBlock || "").trim()].filter(Boolean).join("\n\n"),
-    sig,
-    company: companyFooter ? String(signature || "").trim() : "",
-    notice: String(disclosure || "").trim(),
-  };
-}
-
-// Index of the start of the LAST signature divider line ("-- " or "--"), or -1.
-function lastDividerIndex(text) {
-  let at = -1;
-  const re = /^-- ?$/gm;
-  let m;
-  while ((m = re.exec(text)) !== null) at = m.index;
-  return at;
 }
 
 // Builds the RFC 822 message for Gmail's messages.send.
@@ -89,16 +52,14 @@ function lastDividerIndex(text) {
 //                (the files are still validated like attachments)
 //   disclosure   the footer notice for mail that has no `tracking` (secure links, read receipt
 //                only); mail with `tracking` carries tracking.disclosure
-//   signatureImage  { content: Buffer, mime, alt, link, layout, width, height } → the image is
-//                embedded (CID, inline, no file name) and shown in the HTML part; the plain
-//                text is unchanged (the signature's text version). Needs adminSignature.
-//   adminSignature  true → the admin's signature is already at the end of `body`; the company
-//                footer then follows it without a second divider (and is left out when
-//                companyFooter is false); attachment lines go above the signature
+//   signatureImage  { content: Buffer, mime, alt, width, height } → the sender's image signature:
+//                embedded (CID, inline, no file name) and shown in the HTML part after the
+//                message. It replaces the company footer, and the plain-text part has no
+//                signature text at all.
 //   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
 //                the recipient's mail app may confirm the mail was displayed
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "", adminSignature = false, companyFooter = true, signatureImage = null }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "", companyFooter = true, signatureImage = null }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -124,10 +85,11 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
 
   // We choose the Message-ID so it is stored before Gmail ever sees the mail.
   const rfcMessageId = `<${crypto.randomUUID()}@${EMAIL_DOMAIN}>`;
-  const text = composeText(body, mailbox.signature, tracking ? tracking.disclosure : disclosure, secureLinks ? secureLinksBlock(secureLinks) : "", {
-    adminSignature,
-    companyFooter,
-  });
+  const notice = tracking ? tracking.disclosure : disclosure;
+  const attachmentBlock = secureLinks ? secureLinksBlock(secureLinks) : "";
+  // An image signature takes the place of the company footer.
+  const footer = companyFooter && !signatureImage;
+  const text = composeText(body, mailbox.signature, notice, attachmentBlock, { companyFooter: footer });
   const cleanRef = (id) => stripLineBreaks(id);
 
   // The HTML twin exists when the mail carries the tracking image, or an image signature.
@@ -135,10 +97,10 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
   // and it has no file name so mail apps are less likely to list it as an attachment.
   const cid = signatureImage ? `sig-${crypto.randomUUID()}@${EMAIL_DOMAIN}` : "";
   let html = "";
-  if (signatureImage && adminSignature) {
-    const parts = composeParts(body, mailbox.signature, tracking ? tracking.disclosure : disclosure, secureLinks ? secureLinksBlock(secureLinks) : "", { companyFooter });
-    html = buildSignatureImageHtml(parts, {
-      image: { cid, alt: signatureImage.alt, width: signatureImage.width, height: signatureImage.height, link: signatureImage.link, layout: signatureImage.layout },
+  if (signatureImage) {
+    const message = [String(body).replace(/\r\n/g, "\n").trimEnd(), attachmentBlock.trim()].filter(Boolean).join("\n\n");
+    html = buildSignatureImageHtml({ message, notice: String(notice || "").trim() }, {
+      image: { cid, alt: signatureImage.alt, width: signatureImage.width, height: signatureImage.height },
       imageUrl: tracking?.imageUrl || "",
       linkTracker: tracking?.linkTracker || null,
     });
@@ -164,7 +126,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
         contentType: file.contentType || "application/octet-stream",
         content: file.content,
       })),
-      ...(signatureImage && adminSignature
+      ...(signatureImage
         // filename: false => no file name at all, so mail apps are less likely to list it as an attachment
         ? [{ cid, filename: false, content: signatureImage.content, contentType: signatureImage.mime, contentDisposition: "inline", contentTransferEncoding: "base64" }]
         : []),
@@ -188,4 +150,4 @@ function secureLinksBlock({ items, expiresAt }) {
   return [`Attachments (available until ${until}, UTC):`, ...lines].join("\n");
 }
 
-module.exports = { buildRawMessage, composeText, composeParts, secureLinksBlock };
+module.exports = { buildRawMessage, composeText, secureLinksBlock };

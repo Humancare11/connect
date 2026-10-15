@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, SignaturePicker, TrackOpensToggle, TrackingNote } from "./EmailParts";
-import { messageOf, splitSentText } from "./signatureUtils";
+import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, SignatureStrip, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { messageOf } from "./signatureUtils";
 import { SentSignatureImage } from "./SignatureView";
-import { useSignatureField } from "./useSignatureField";
-import { useConfirm as useConfirmDialog } from "../../../components/ui/ConfirmDialog";
+import { useSignatureChoice } from "./useSignatureChoice";
 import {
   ACCEPT_ATTR,
   EMAIL_BASE,
@@ -24,31 +23,19 @@ import {
   useEmailShell,
 } from "./emailUtils";
 
-// The text of a mail. A mail that went out with an IMAGE signature shows that image (its own
-// stored copy) where the signature was; the plain-text version lines are hidden for the
-// image-only layout, as the recipient's HTML mail does not show them.
+// The text of a mail. A mail that went out with the sender's signature shows that image (its
+// own stored copy) below the message, as the recipient sees it.
 export function MessageText({ m }) {
   const si = m.signatureImage;
-  const parts = si ? splitSentText(m.text, si.signatureText) : null;
-  if (!si) return <div className="em-msg-body">{m.text || "(no text)"}</div>;
-  if (!parts) {
-    return (
-      <>
-        <div className="em-msg-body">{m.text || "(no text)"}</div>
-        <div className="sg-sent"><SentSignatureImage messageId={m.id} image={si} /></div>
-      </>
-    );
-  }
+  const text = <div className="em-msg-body">{m.text || "(no text)"}</div>;
+  if (!si) return text;
   return (
-    <div className="em-msg-body">
-      {parts.before}
+    <>
+      {text}
       <div className="sg-sent">
         <SentSignatureImage messageId={m.id} image={si} />
       </div>
-      {si.layout === "image_text" && si.signatureText ? <div>{si.signatureText}</div> : null}
-      {parts.after ? <div style={{ marginTop: 12 }}>{parts.after}</div> : null}
-      {si.layout === "image" && <small className="em-sub" style={{ display: "block", marginTop: 8 }}>Image signature. Plain-text mail apps showed the text version.</small>}
-    </div>
+    </>
   );
 }
 
@@ -163,9 +150,8 @@ function InfoBoxes({ m, views }) {
 function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const [body, setBody] = useState("");
   const bodyRef = useRef(null);
-  const ask = useConfirmDialog();
-  // The signature is inserted below the reply, inside the editable text.
-  const signature = useSignatureField({ mailboxId: message.mailbox?.id, body, setBody, textRef: bodyRef, ask });
+  // My signature image is added by the server when the box under the reply is ticked.
+  const signature = useSignatureChoice();
   const [trackChoice, setTrackChoice] = useState(null);
   const trackOpens = trackChoice ?? message.mailbox?.trackOpensDefault !== false;
   const [receipt, setReceipt] = useState(false);
@@ -181,7 +167,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
     mutationFn: ({ confirm }) => {
       const fd = new FormData();
       fd.append("body", body.trim());
-      fd.append("signatureId", signature.signatureId);
+      if (signature.use) fd.append("signature", "1");
       fd.append("clientRequestId", requestId.current);
       if (confirm) fd.append("confirm", "1");
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
@@ -234,7 +220,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
         </span>
       </div>
       <textarea ref={bodyRef} aria-label="Reply message" placeholder="Write your reply…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
-      <SignaturePicker field={signature} body={body} mailboxName={message.mailbox?.displayName} />
+      <SignatureStrip field={signature} />
       {conflict && (
         <div className="em-banner warn" role="alert">
           <span>

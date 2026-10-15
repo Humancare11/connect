@@ -9,15 +9,16 @@ const { planTracking, planReceipt, planSecureLinks } = require("./emailTracking"
 const { getTrackingState } = require("./emailSettings");
 const { composeDisclosure } = require("./disclosure");
 const EmailSignature = require("../../models/EmailSignature");
-const { getSignatureSettings } = require("./emailSettings");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
-const { composeParts } = require("../gmail/mimeBuilder");
 const { countTrackableLinks } = require("./emailHtml");
 const { newToken, linkUrl, downloadUrl } = require("./trackingToken");
 
 // Max tracked links per mail; links beyond this stay as they were written.
 const MAX_TRACKED_LINKS = 50;
+
+// Alt text of the signature image in every mail (fixed on purpose: there is no field for it).
+const SIGNATURE_ALT = "Signature";
 
 // An error the API shows to the admin as-is (status + message + optional extra JSON).
 class EmailHttpError extends Error {
@@ -29,19 +30,17 @@ class EmailHttpError extends Error {
   }
 }
 
-// Is an admin signature in use for this mail? → true | false. Throws a 400 when the id is
-// not one of THIS admin's signatures (a foreign or invented id is never silently accepted).
-// → null (no signature) or the signature document (lean). Throws 400 for anyone else's.
-async function resolveSignatureUse(actor, signatureId) {
-  const id = typeof signatureId === "string" ? signatureId.trim() : "";
-  if (!id || id === "none") return null;
-  const mine = mongoose.isValidObjectId(id) ? await EmailSignature.findOne({ _id: id, owner: actor.id }).lean() : null;
-  if (!mine) throw new EmailHttpError(400, "That signature is not available. Choose another one or No signature.", { code: "SIGNATURE_NOT_FOUND" });
+// The admin's signature for this mail. `requested` is the compose form's "Add my signature" box.
+// → null (not requested) or the admin's OWN signature document (lean): the owner is always the
+// verified session. Asking for a signature that has no image is refused, never silently skipped.
+async function resolveSignatureUse(actor, requested) {
+  if (!requested) return null;
+  const mine = await EmailSignature.findOne({ owner: actor.id }).lean();
+  if (!mine?.image) {
+    throw new EmailHttpError(400, 'You have no signature image. Untick "Add my signature", or upload one in My signature.', { code: "SIGNATURE_NOT_FOUND" });
+  }
   return mine;
 }
-
-// The signature's text lines in a body: whatever follows the last "-- " line.
-const splitSignatureText = (body) => composeParts(body, "", "", "", { companyFooter: false }).sig;
 
 // A repeat of a request we already processed (double-click / network retry).
 const DUPLICATE_WINDOW_MS = 30_000;
@@ -63,7 +62,7 @@ function friendlySendError(err) {
 //  - a double-click is caught by the unique (sentByAdmin, clientRequestId) index,
 //  - a failure is visible in Sent as "Failed" with the reason.
 // → { message, duplicate }
-async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = [], clientRequestId, thread = null, gmail, store, trackOpens, requestReceipt = false, secureLinks = false, signatureId = "", trackingState }) {
+async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = [], clientRequestId, thread = null, gmail, store, trackOpens, requestReceipt = false, secureLinks = false, useSignature = false, trackingState }) {
   const requestId = cleanRequestId(clientRequestId);
 
   if (requestId) {
@@ -71,21 +70,12 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     if (existing) return { message: existing, duplicate: true };
   }
 
-  // Open tracking is decided per mail (global switches, the "Track opens" box,
-  // recipients). The token is made now so the stored row can already be found by
-  // a very fast open.
-  // "Signature used" = the compose form's dropdown was not "No signature". The signature text is
-  // already in `body` (the admin could edit it); the id is only checked here, and only to decide
-  // whether the company footer follows. It must be one of THIS admin's own signatures.
-  const signature = await resolveSignatureUse(actor, signatureId);
-  const signatureUsed = Boolean(signature);
-  const companyFooter = signatureUsed ? (await getSignatureSettings()).companyFooterWithSignature : true;
-
-  // An image signature: the bytes come from OUR storage by the validated id, never from the
-  // request. If they cannot be loaded the mail is refused (it is not sent without the image
+  // An image signature: the bytes come from OUR storage by the admin's own record, never from
+  // the request. If they cannot be loaded the mail is refused (it is not sent without the image
   // the admin chose); a claimed reply is given back by the caller.
+  const signature = await resolveSignatureUse(actor, useSignature);
   let signatureImage = null;
-  if (signature?.image && signature.layout && signature.layout !== "text") {
+  if (signature) {
     let content;
     try {
       content = await store.get(signature.image.key);
@@ -93,21 +83,18 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
       console.error("[email-send] signature image could not be loaded:", err?.message || err);
       throw new EmailHttpError(
         503,
-        "Your signature image could not be loaded, so the mail was not sent. Try again, or choose another signature or No signature.",
+        "Your signature image could not be loaded, so the mail was not sent. Try again, or untick \"Add my signature\".",
         { code: "SIGNATURE_IMAGE_UNAVAILABLE" }
       );
     }
-    signatureImage = {
-      content,
-      mime: signature.image.mime,
-      width: signature.image.width,
-      height: signature.image.height,
-      layout: signature.layout,
-      alt: signature.imageAlt || String(signature.content || "").split("\n")[0].trim().slice(0, 120),
-      link: signature.imageLink || "",
-    };
+    signatureImage = { content, mime: signature.image.mime, width: signature.image.width, height: signature.image.height, alt: SIGNATURE_ALT };
   }
+  // The image takes the place of the Mail ID's text footer.
+  const companyFooter = !signatureImage;
 
+  // Open tracking is decided per mail (global switches, the "Track opens" box,
+  // recipients). The token is made now so the stored row can already be found by
+  // a very fast open.
   const state = trackingState || (await getTrackingState());
   const plan = await planTracking({ mailbox, to, cc, requested: trackOpens, state });
   // A read receipt is its own box and works without the image.
@@ -148,11 +135,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   const disclosure = composeDisclosure(
     {
       opens: plan.enabled,
-      // Whatever will really be in the mail: the body (signature included) and the company
-      // footer, unless an admin signature replaces it.
-      links:
-        Boolean(linkTracker) &&
-        (countTrackableLinks(`${body}\n${companyFooter ? mailbox.signature || "" : ""}`) > 0 || Boolean(signatureImage?.link)),
+      // Whatever will really be in the mail: the body and the company footer (none with an image signature).
+      links: Boolean(linkTracker) && countTrackableLinks(`${body}\n${companyFooter ? mailbox.signature || "" : ""}`) > 0,
       downloads: secure.enabled,
       receipt: receipt.enabled,
     },
@@ -173,7 +157,6 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure, linkTracker } : null,
     disclosure,
     requestReceipt: receipt.enabled,
-    adminSignature: signatureUsed,
     companyFooter,
     signatureImage,
     secureLinks: secure.enabled
@@ -193,9 +176,6 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
         width: signatureImage.width,
         height: signatureImage.height,
         alt: signatureImage.alt,
-        link: signatureImage.link,
-        layout: signatureImage.layout,
-        signatureText: splitSignatureText(body),
       }
     : undefined;
 
@@ -322,8 +302,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   return { message: await EmailMessage.findById(doc._id), duplicate: false };
 }
 
-function sendNewMail({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, requestReceipt, secureLinks, signatureId, trackingState }) {
-  return dispatch({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, requestReceipt, secureLinks, signatureId, trackingState });
+function sendNewMail({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, requestReceipt, secureLinks, useSignature, trackingState }) {
+  return dispatch({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, requestReceipt, secureLinks, useSignature, trackingState });
 }
 
 // Decides what a reply to `opened` answers, from stored data only (never the request):
@@ -347,9 +327,9 @@ function pickReplyTarget(opened, thread) {
 // Claim-then-send: the received mail is atomically marked "replied by <admin>"
 // first, so two admins answering at once can't both go through; a failed send
 // restores whatever was there before.
-async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject, body, files, clientRequestId, confirm = false, gmail, store, trackOpens, requestReceipt = false, secureLinks = false, signatureId = "", trackingState }) {
-  // Refuse a signature that is not this admin's BEFORE anything is claimed or looked up.
-  await resolveSignatureUse(actor, signatureId);
+async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject, body, files, clientRequestId, confirm = false, gmail, store, trackOpens, requestReceipt = false, secureLinks = false, useSignature = false, trackingState }) {
+  // Refuse a signature the admin does not have BEFORE anything is claimed or looked up.
+  await resolveSignatureUse(actor, useSignature);
 
   // A repeat of a request we already handled must not claim or send again.
   const requestId = cleanRequestId(clientRequestId);
@@ -402,7 +382,7 @@ async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject
       trackOpens,
       requestReceipt,
       secureLinks,
-      signatureId,
+      useSignature,
       trackingState,
     });
   } catch (err) {

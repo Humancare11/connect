@@ -143,9 +143,10 @@ const emailMessageSchema = new mongoose.Schema(
           width: { type: Number, required: true },
           height: { type: Number, required: true },
           alt: { type: String, default: "" },
+          // link, layout and signatureText exist only on mail sent before signatures became
+          // image-only; they are no longer written or shown.
           link: { type: String, default: "" },
-          layout: { type: String, enum: ["image", "image_text"], required: true },
-          // The text lines below the "-- " divider, exactly as sent.
+          layout: { type: String, enum: ["image", "image_text"] },
           signatureText: { type: String, default: "" },
         },
         { _id: false }
