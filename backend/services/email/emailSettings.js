@@ -94,4 +94,12 @@ async function getTrackingState({ env = process.env, now, full = false } = {}) {
   };
 }
 
-module.exports = { normalizeBaseUrl, trackingEnv, loadSettings, clearSettingsCache, getTrackingState };
+// Signature rules (not tracking). → { companyFooterWithSignature }
+// The company footer follows an admin signature unless a Super Admin switched that off.
+// A settings document from before the field existed has no value and counts as ON.
+async function getSignatureSettings({ now } = {}) {
+  const s = await loadSettings({ now });
+  return { companyFooterWithSignature: s.companyFooterWithSignature !== false };
+}
+
+module.exports = { normalizeBaseUrl, trackingEnv, loadSettings, clearSettingsCache, getTrackingState, getSignatureSettings };

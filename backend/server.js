@@ -598,6 +598,8 @@ app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
+// Registered first: signatures are private to each admin and have their own guard.
+app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
