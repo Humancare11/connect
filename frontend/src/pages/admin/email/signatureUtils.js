@@ -15,6 +15,10 @@
 // react-query key for GET /signatures (the compose boxes share it with the My signature page).
 export const SIGNATURES_KEY = ["email", "signatures"];
 
+// The tip shown next to the image upload (exact wording).
+export const IMAGE_TIP =
+  "Best result: a simple 600px-wide banner (logo, name, title). Put phone, email, website and address as text lines below — they stay readable and clickable.";
+
 export const NO_SIGNATURE = "none";
 export const DIVIDER = "-- ";
 

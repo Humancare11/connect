@@ -17,6 +17,8 @@ export const emailApi = {
   recordView: (id) => api.post(`${BASE}/messages/${id}/view`, null, RAW).then((r) => r.data),
   send: (formData) => api.post(`${BASE}/send`, formData, RAW).then((r) => r.data),
   reply: (id, formData) => api.post(`${BASE}/messages/${id}/reply`, formData, RAW).then((r) => r.data),
+  // The image signature a sent mail went out with (blob; see useAuthImage).
+  signatureImageBlob: (id) => api.get(`${BASE}/messages/${id}/signature-image`, { responseType: "blob", ...RAW }).then((r) => r.data),
   markSpam: (id) => api.post(`${BASE}/messages/${id}/spam`, null, RAW).then((r) => r.data),
   notSpam: (id) => api.post(`${BASE}/messages/${id}/not-spam`, null, RAW).then((r) => r.data),
 
@@ -44,6 +46,15 @@ export const signaturesApi = {
   create: (payload) => api.post(SIGNATURE_BASE, payload, RAW).then((r) => r.data),
   update: (id, patch) => api.patch(`${SIGNATURE_BASE}/${id}`, patch, RAW).then((r) => r.data),
   remove: (id) => api.delete(`${SIGNATURE_BASE}/${id}`, RAW).then((r) => r.data),
+  // The image of a signature (png/jpg). The file is decoded and re-encoded on the server.
+  uploadImage: (id, file) => {
+    const fd = new FormData();
+    fd.append("image", file);
+    return api.put(`${SIGNATURE_BASE}/${id}/image`, fd, RAW).then((r) => r.data);
+  },
+  removeImage: (id) => api.delete(`${SIGNATURE_BASE}/${id}/image`, RAW).then((r) => r.data),
+  // Needs the session header, so it is fetched as a blob (see useAuthImage).
+  imageBlob: (id) => api.get(`${SIGNATURE_BASE}/${id}/image`, { responseType: "blob", ...RAW }).then((r) => r.data),
   setMailboxDefault: (mailbox, signatureId) => api.put(`${SIGNATURE_BASE}/mailbox-defaults`, { mailbox, signatureId }, RAW).then((r) => r.data),
 };
 

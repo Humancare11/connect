@@ -457,6 +457,17 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .sg-text { width: 100%; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
 .sg-counter { text-align: right; }
 .sg-counter.over { color: #b3261e; font-weight: 600; }
+.sg-tip { margin: 6px 0 0; padding: 8px 10px; border: 1px dashed var(--em-line); border-radius: 8px; font-size: 12px; line-height: 1.45; color: var(--em-muted); }
+.sg-layout { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 4px 0 2px; }
+.sg-layout label { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.sg-layout label.off { color: var(--em-faint); font-weight: 500; }
+.sg-img { display: block; max-width: 100%; height: auto; border: 1px solid var(--em-line); border-radius: 6px; background: #fff; }
+.sg-img-box { margin: 6px 0; }
+.sg-upload { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 6px; }
+.sg-upload input[type="file"] { max-width: 100%; }
+.sg-thumb { max-width: 300px; margin-bottom: 8px; }
+.sg-mail { padding: 10px 12px; border: 1px solid var(--em-line); border-radius: 8px; background: #fff; font: 14px/1.5 Arial, Helvetica, sans-serif; }
+.sg-mail .sg-mail-gap { margin-top: 14px; }
 .sg-boxes { list-style: none; margin: 0; padding: 0; }
 .sg-boxes li { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--em-line); }
 .sg-boxes li:last-child { border-bottom: 0; }
