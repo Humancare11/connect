@@ -90,19 +90,21 @@ export function FirstViewed({ firstViewed, readInGmail = false }) {
   );
 }
 
-// Status column, line 1: open tracking. Nothing at all when tracking was not on for the mail.
+// Status column, line 1: the combined read status. Nothing at all when the mail was not tracked.
+const STRONG = new Set(["replied", "downloaded", "clicked", "receipt", "opened"]);
 export function TrackingBadge({ tracking }) {
   const info = trackingInfo(tracking);
   if (!info || info.kind === "na") return null;
-  const label = {
-    opened: `Likely opened${tracking.openCount > 1 ? ` · ${tracking.openCount}×` : ""}`,
-    pending: "No signal",
+  const short = {
+    opened_apple: "Opened (Apple)",
+    pending: "Not opened yet",
     automated: "Auto load only",
-  }[info.kind];
+  };
+  const n = info.kind === "opened" && tracking.openCount > 1 ? ` · ${tracking.openCount}×` : "";
   return (
-    <span className={`em-m ${info.kind === "opened" ? "open" : "none"}`} title={info.detail}>
+    <span className={`em-m ${STRONG.has(info.kind) ? "open" : "none"}`} title={`${info.text}. ${info.detail}`}>
       <Icon name="open" size={14} />
-      {label}
+      {(short[info.kind] || info.text) + n}
     </span>
   );
 }
@@ -119,18 +121,24 @@ export function TrackOpensToggle({ checked, onChange, disclosure }) {
   );
 }
 
-// Open tracking on a thread message: status, first/last load, count, and the caveat.
+// Read status on a thread message: the combined status, then every signal behind it.
 export function TrackingNote({ tracking }) {
   const info = trackingInfo(tracking);
   if (!info) return null;
   return (
-    <div className="em-trkbox" aria-label="Open tracking">
-      <span className="em-views-h">Open tracking</span>
+    <div className="em-trkbox" aria-label="Read status">
+      <span className="em-views-h">Read status</span>
       <span className={`em-tag em-trk em-trk-${info.kind}`}>{info.text}</span>
-      <small className="em-sub">
-        {info.kind === "opened" && tracking.multiRecipient ? "We cannot tell which recipient loaded it. " : ""}
-        {info.detail}
-      </small>
+      <small className="em-sub">{info.detail}</small>
+      {info.rows.length > 0 && (
+        <ul className="em-trk-rows">
+          {info.rows.map((r) => (
+            <li key={r.label}>
+              <b>{r.label}</b> <span>{r.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

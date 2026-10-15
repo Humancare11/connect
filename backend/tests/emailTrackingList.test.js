@@ -70,7 +70,13 @@ describe("Sent list and mail page show open tracking", () => {
   test("each Sent row carries a tracking summary", async () => {
     const list = await get("/messages?folder=sent");
     const by = (s) => list.items.find((i) => i.subject === s).tracking;
-    assert.deepEqual(by("Opened mail"), { status: "opened", reason: "", firstOpenedAt: "2026-10-05T10:05:00.000Z", lastOpenedAt: "2026-10-05T12:00:00.000Z", openCount: 3, multiRecipient: false });
+    const o = by("Opened mail");
+    assert.deepEqual(
+      [o.status, o.reason, o.firstOpenedAt, o.lastOpenedAt, o.openCount, o.multiRecipient, o.readStatus, o.readStatusAt],
+      ["opened", "", "2026-10-05T10:05:00.000Z", "2026-10-05T12:00:00.000Z", 3, false, "opened", "2026-10-05T12:00:00.000Z"]
+    );
+    assert.deepEqual(o.signals.opened, { count: 3, first: "2026-10-05T10:05:00.000Z", last: "2026-10-05T12:00:00.000Z" });
+    assert.deepEqual([o.signals.replied, o.signals.clicked, o.signals.downloaded, o.signals.receipt, o.signals.openedApple], [null, null, null, null, null]);
     assert.deepEqual([by("Pending mail").status, by("Pending mail").openCount], ["pending", 0]);
     assert.deepEqual([by("Automated only").status, by("Automated only").reason], ["unavailable", "automated_only"]);
     assert.deepEqual([by("Mail off").status, by("Mail off").reason], ["unavailable", "mail_off"]);
@@ -94,30 +100,36 @@ describe("Sent list and mail page show open tracking", () => {
     assert.equal((await get("/messages?folder=inbox")).items[0].tracking, null);
   });
 
+  // "Replied mail" is also opened, but its strongest signal is the reply, so it sits under Replied.
+  test("filter: Replied", async () => {
+    assert.deepEqual(subjects(await get("/messages?folder=sent&readStatus=replied")), ["Replied mail"]);
+  });
   test("filter: Opened", async () => {
-    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=opened")), ["Opened mail", "Replied mail", "To and Cc"]);
+    assert.deepEqual(subjects(await get("/messages?folder=sent&readStatus=opened")), ["Opened mail", "To and Cc"]);
   });
   test("filter: Not opened yet", async () => {
-    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=pending")), ["Pending mail"]);
+    assert.deepEqual(subjects(await get("/messages?folder=sent&readStatus=pending")), ["Pending mail"]);
   });
-  test("filter: Automatic loads only", async () => {
-    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=automated")), ["Automated only"]);
+  test("filter: Only automatic loads seen", async () => {
+    assert.deepEqual(subjects(await get("/messages?folder=sent&readStatus=automated")), ["Automated only"]);
   });
-  test("filter: Not tracked includes old mail without a tracking block, but not automated-only, failed or sending mail", async () => {
-    assert.deepEqual(subjects(await get("/messages?folder=sent&openStatus=unavailable")), ["Legacy mail (no tracking block)", "Mail off", "Sent from Gmail"]);
+  test("filter: Tracking unavailable includes old mail without a tracking block, but not automated-only, failed or sending mail", async () => {
+    assert.deepEqual(subjects(await get("/messages?folder=sent&readStatus=unavailable")), ["Legacy mail (no tracking block)", "Mail off", "Sent from Gmail"]);
   });
   test("the filter combines with other filters and is ignored outside Sent", async () => {
-    assert.deepEqual(subjects(await get(`/messages?folder=sent&openStatus=opened&status=replied`)), ["Replied mail"]);
-    const all = await get("/messages?folder=all&openStatus=opened");
+    assert.deepEqual(subjects(await get(`/messages?folder=sent&readStatus=replied&status=replied`)), ["Replied mail"]);
+    assert.deepEqual(subjects(await get(`/messages?folder=sent&readStatus=opened&status=replied`)), []);
+    const all = await get("/messages?folder=all&readStatus=opened");
     assert.ok(all.items.length >= 10, "not applied to All mail");
   });
-  test("an invalid filter value is rejected", async () => {
-    const res = await fetch(`${base}/messages?folder=sent&openStatus=seen`, { headers: { "x-test-admin": String(priya._id) } });
+  test("an invalid filter value is rejected, and the old openStatus parameter is gone", async () => {
+    const res = await fetch(`${base}/messages?folder=sent&readStatus=seen`, { headers: { "x-test-admin": String(priya._id) } });
     assert.equal(res.status, 400);
     // an object value (query-string operator injection) is refused by the parser itself
     const { parseListQuery } = require("../services/email/emailQueries");
-    assert.throws(() => parseListQuery({ folder: "sent", openStatus: { $ne: "x" } }), /Invalid/);
-    assert.throws(() => parseListQuery({ folder: "sent", openStatus: ["opened"] }), /Invalid/);
+    assert.throws(() => parseListQuery({ folder: "sent", readStatus: { $ne: "x" } }), /Invalid/);
+    assert.throws(() => parseListQuery({ folder: "sent", readStatus: ["opened"] }), /Invalid/);
+    assert.equal(parseListQuery({ folder: "sent", openStatus: "opened" }).readStatus, "");
   });
 
   test("the mail page carries tracking for every sent mail in the thread, without any token", async () => {

@@ -32,6 +32,20 @@ const trackingSchema = new mongoose.Schema(
     // Last counted open: opens within the dedupe window of it are not counted again.
     lastCountedAt: { type: Date, default: null },
     openCount: { type: Number, default: 0 },
+
+    // Other signals feeding the combined "Read status" (see services/email/readStatus.js).
+    // Written by the steps that introduce them; absent/0 until then.
+    // Hits from Apple's Mail Privacy Protection proxy: kept apart from real opens.
+    appleOpenCount: { type: Number, default: 0 },
+    firstAppleOpenedAt: { type: Date, default: null },
+    lastAppleOpenedAt: { type: Date, default: null },
+    clickCount: { type: Number, default: 0 },
+    firstClickedAt: { type: Date, default: null },
+    lastClickedAt: { type: Date, default: null },
+    downloadCount: { type: Number, default: 0 },
+    firstDownloadedAt: { type: Date, default: null },
+    lastDownloadedAt: { type: Date, default: null },
+    receiptAt: { type: Date, default: null },
   },
   { _id: false }
 );

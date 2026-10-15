@@ -88,8 +88,8 @@ function InfoBoxes({ m, views }) {
       )}
 
       {outbound && info && (
-        <InfoBox icon={<Icon name="open" size={20} />} label="Open tracking">
-          <b className={info.kind === "opened" ? "em-ok" : undefined}>{info.text}</b>
+        <InfoBox icon={<Icon name="open" size={20} />} label="Read status">
+          <b className={info.kind !== "na" && info.kind !== "pending" && info.kind !== "automated" ? "em-ok" : undefined}>{info.text}</b>
           <small>{info.detail}</small>
         </InfoBox>
       )}

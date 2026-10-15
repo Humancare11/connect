@@ -122,16 +122,25 @@ export const EMAIL_RE = /^[^\s@<>(),;:"[\]\\]+@[^\s@<>(),;:"[\]\\]+\.[^\s@<>(),;
 export const newRequestId = () =>
   (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
-// ── open tracking ──
-// A tracking image can only show that a mail app (or a scanner) loaded it, never that
-// a person read the mail. So the wording is hedged: "Likely opened", "No signal yet",
-// "Only automatic loads seen". Deliberately NOT "Seen" or "Read".
-export const TRACKING_FILTER_OPTIONS = [
-  ["opened", "Likely opened"],
-  ["pending", "No signal yet"],
-  ["automated", "Automatic loads only"],
-  ["unavailable", "Not tracked"],
-];
+// ── read status ──
+// One combined status per sent mail, the strongest signal wins (the server decides, see
+// backend readStatus.js): Replied > Downloaded > Clicked > Read receipt > Opened.
+// A tracking image only shows that a mail app (or a scanner) loaded it, never that a
+// person read the mail, so "Opened" is explained in the detail text, and the last three
+// states stay separate so a mail we cannot track never reads as "Not opened".
+const READ_LABELS = {
+  replied: "Replied",
+  downloaded: "Downloaded",
+  clicked: "Clicked",
+  receipt: "Read receipt",
+  opened: "Opened",
+  opened_apple: "Opened (Apple — may be automatic)",
+  pending: "Not opened yet",
+  automated: "Only automatic loads seen",
+  unavailable: "Tracking unavailable",
+};
+
+export const TRACKING_FILTER_OPTIONS = Object.entries(READ_LABELS);
 
 const TRACKING_REASONS = {
   tracking_off: "Open tracking was not switched on when this mail was sent.",
@@ -142,30 +151,52 @@ const TRACKING_REASONS = {
   outside_dashboard: "Sent from Gmail, outside the dashboard.",
 };
 
-// → { kind: "opened" | "pending" | "automated" | "na", text, detail } or null (nothing to show: failed / received mail).
+const times = (s) => {
+  const n = s.count > 1 ? `${s.count}× · ` : "";
+  const last = s.last && s.last !== s.first ? `, last ${fmtFull(s.last)}` : "";
+  return `${n}${s.first ? `first ${fmtFull(s.first)}` : "recorded"}${last}`;
+};
+
+// Every signal that was seen, strongest first: [{ label, text }]. Empty when there is none.
+function signalRows(sig = {}) {
+  const rows = [];
+  if (sig.replied) rows.push({ label: "Replied", text: sig.replied.at ? fmtFull(sig.replied.at) : "The recipient replied" });
+  if (sig.downloaded) rows.push({ label: "Downloaded", text: times(sig.downloaded) });
+  if (sig.clicked) rows.push({ label: "Clicked", text: times(sig.clicked) });
+  if (sig.receipt) rows.push({ label: "Read receipt", text: sig.receipt.at ? fmtFull(sig.receipt.at) : "Received" });
+  if (sig.opened) rows.push({ label: "Opened", text: times(sig.opened) });
+  if (sig.openedApple) rows.push({ label: "Opened (Apple)", text: times(sig.openedApple) });
+  return rows;
+}
+
+// → { kind, text, detail, rows } or null (nothing to show: failed / received mail).
+//   kind  = the combined read status (replied | downloaded | clicked | receipt | opened |
+//           opened_apple | pending | automated), or "na" when mail was not tracked.
 export function trackingInfo(t) {
   if (!t) return null;
-  if (t.status === "opened") {
-    const first = t.firstOpenedAt ? `First loaded ${fmtFull(t.firstOpenedAt)}` : "Loaded";
-    const last = t.lastOpenedAt && t.lastOpenedAt !== t.firstOpenedAt ? `, last ${fmtFull(t.lastOpenedAt)}` : "";
-    return {
-      kind: "opened",
-      text: t.multiRecipient ? "Likely opened (by at least one recipient)" : "Likely opened",
-      detail: `${first}${last}. ${t.openCount} load${t.openCount === 1 ? "" : "s"}. Based on the recipient's mail app loading an image, so it isn't proof the mail was read.`,
-    };
+  const rows = signalRows(t.signals);
+  const status = t.readStatus || "unavailable";
+  const who = t.multiRecipient ? " We cannot tell which recipient did it." : "";
+
+  const DETAIL = {
+    replied: "The recipient replied to this mail.",
+    downloaded: `A recipient used a download link.${who}`,
+    clicked: `A recipient used a link in the mail.${who}`,
+    receipt: "The recipient's mail app confirmed the mail was displayed.",
+    opened: `The recipient's mail app loaded the tracking image, so it isn't proof the mail was read.${who}`,
+    opened_apple:
+      "Apple Mail loads images automatically on the recipient's behalf (Mail Privacy Protection), so this may not mean the mail was opened.",
+    pending: "Nothing has loaded the image. The mail may be unopened, or their mail app blocks images.",
+    automated: "A security scanner, preview or mail-app prefetch loaded the image. The recipient may or may not have opened it.",
+  };
+
+  if (status === "unavailable") {
+    return { kind: "na", text: READ_LABELS.unavailable, detail: TRACKING_REASONS[t.reason] || "Tracking is not available for this mail.", rows };
   }
-  if (t.status === "pending") {
-    return { kind: "pending", text: "No signal yet", detail: "Nothing has loaded the image. The mail may be unopened, or their mail app blocks images." };
-  }
-  if (t.reason === "automated_only") {
-    return {
-      kind: "automated",
-      text: "Only automatic loads seen",
-      detail: "A security scanner, preview or mail-app prefetch loaded the image. The recipient may or may not have opened it.",
-    };
-  }
-  return { kind: "na", text: "Not tracked", detail: TRACKING_REASONS[t.reason] || "Open tracking is not available for this mail." };
+  const text = status === "opened" && t.multiRecipient ? "Opened (by at least one recipient)" : READ_LABELS[status];
+  return { kind: status, text, detail: DETAIL[status], rows };
 }
+
 
 // Refresh interval for counts/lists: new mail is synced every 30–60 s on the server.
 export const POLL_MS = 45_000;
