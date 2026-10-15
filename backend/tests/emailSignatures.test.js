@@ -100,7 +100,15 @@ describe("my signatures: API", () => {
     // The first mailbox this admin may use (by sort order, then address) supplies the footer text.
     assert.equal(body.template, "Anita Rao\nHuman Care Connect");
     assert.equal(body.companyFooterWithSignature, true);
-    assert.deepEqual(body.limits, { maxSignatures: 10, maxNameLength: 40, maxContentLength: 1000, maxLines: 20 });
+    assert.deepEqual(body.limits, {
+      maxSignatures: 10,
+      maxNameLength: 40,
+      maxContentLength: 1000,
+      maxLines: 20,
+      maxImageBytes: 200 * 1024,
+      maxImageWidth: 600,
+      maxImageHeight: 400,
+    });
   });
 
   test("create, list, edit and delete", async () => {

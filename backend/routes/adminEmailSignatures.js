@@ -1,11 +1,15 @@
+const crypto = require("crypto");
 const express = require("express");
 const mongoose = require("mongoose");
+const multer = require("multer");
 const EmailSignature = require("../models/EmailSignature");
 const EmailSignatureDefault = require("../models/EmailSignatureDefault");
 const Mailbox = require("../models/Mailbox");
 const User = require("../models/User");
 const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { getSignatureSettings } = require("../services/email/emailSettings");
+const { createS3AttachmentStore } = require("../utils/emailAttachments");
+const { processSignatureImage, SignatureImageError, MAX_RAW_BYTES, MAX_OUTPUT_BYTES, MAX_WIDTH, MAX_HEIGHT } = require("../utils/signatureImage");
 const {
   MAX_SIGNATURES,
   MAX_NAME_LENGTH,
@@ -14,7 +18,13 @@ const {
   SignatureValidationError,
   cleanSignatureName,
   cleanSignatureContent,
+  LAYOUTS,
+  cleanImageAlt,
+  cleanImageLink,
 } = require("../utils/emailSignature");
+
+const IMAGE_PREFIX = "email-signature-images";
+const UPLOADS_PER_HOUR = 20;
 
 // My signatures (Email module). Admin and Super Admin, each strictly their OWN.
 //
@@ -27,15 +37,46 @@ const {
 // Who owns a signature is decided ONLY by the verified session (req.user.id). It is never
 // read from the body or the URL, every query below includes it, and someone else's id is
 // answered exactly like an id that does not exist. There is no override for a Super Admin.
-function createRouter({ guard = [verifyAdminToken, adminOnly], getSettings = () => getSignatureSettings() } = {}) {
+function createRouter({
+  guard = [verifyAdminToken, adminOnly],
+  getSettings = () => getSignatureSettings(),
+  store = createS3AttachmentStore(),
+  uploadsPerHour = UPLOADS_PER_HOUR,
+  now = () => Date.now(),
+} = {}) {
   const router = express.Router();
   router.use(...guard);
+
+  // Per-admin upload throttle: decoding images is the one expensive thing here.
+  const uploads = new Map();
+  const allowUpload = (ownerId) => {
+    const key = String(ownerId);
+    const t = now();
+    const recent = (uploads.get(key) || []).filter((at) => t - at < 3_600_000);
+    if (recent.length >= uploadsPerHour) {
+      uploads.set(key, recent);
+      return false;
+    }
+    recent.push(t);
+    uploads.set(key, recent);
+    return true;
+  };
+
+  const uploader = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_RAW_BYTES, files: 1, fields: 2, parts: 4 } }).single("image");
+  const imageUpload = (req, res, next) =>
+    uploader(req, res, (err) => {
+      if (!err) return next();
+      const msg = err.code === "LIMIT_FILE_SIZE" ? "The image is larger than 5 MB. Choose a smaller file." : "The upload could not be read.";
+      return res.status(400).json({ msg });
+    });
+
+  const removeObject = (key) => (key ? store.remove(key).catch((err) => console.error("[email-signatures] could not remove image:", err?.message || err)) : null);
 
   const handle = (fn) => async (req, res) => {
     try {
       await fn(req, res);
     } catch (err) {
-      if (err instanceof SignatureValidationError) return res.status(err.status).json({ msg: err.message });
+      if (err instanceof SignatureValidationError || err instanceof SignatureImageError) return res.status(err.status).json({ msg: err.message });
       if (err?.code === 11000) return res.status(409).json({ msg: "You already have a signature with that name." });
       console.error("[email-signatures]", req.method, req.path, err?.message || err);
       res.status(500).json({ msg: "Something went wrong. Please try again." });
@@ -58,7 +99,19 @@ function createRouter({ guard = [verifyAdminToken, adminOnly], getSettings = () 
       .sort({ sortOrder: 1, address: 1 })
       .lean();
 
-  const toView = (s) => ({ id: String(s._id), name: s.name, content: s.content, isDefault: Boolean(s.isDefault), updatedAt: s.updatedAt });
+  // Never includes the storage key. `imageAltEffective` is what the mail uses.
+  const toView = (s) => ({
+    id: String(s._id),
+    name: s.name,
+    content: s.content,
+    isDefault: Boolean(s.isDefault),
+    layout: s.image ? s.layout || "text" : "text",
+    image: s.image ? { mime: s.image.mime, width: s.image.width, height: s.image.height, bytes: s.image.bytes } : null,
+    imageAlt: s.imageAlt || "",
+    imageAltEffective: s.imageAlt || String(s.content || "").split("\n")[0].trim().slice(0, 120),
+    imageLink: s.imageLink || "",
+    updatedAt: s.updatedAt,
+  });
   const validId = (id) => mongoose.isValidObjectId(id) && String(new mongoose.Types.ObjectId(id)) === String(id);
   const notFound = (res) => res.status(404).json({ msg: "Signature not found." });
 
@@ -97,7 +150,15 @@ function createRouter({ guard = [verifyAdminToken, adminOnly], getSettings = () 
       // What a new signature starts with: my name and the company footer, both editable.
       template: [actor.name, first?.signature || ""].map((s) => String(s).trim()).filter(Boolean).join("\n"),
       companyFooterWithSignature: settings.companyFooterWithSignature,
-      limits: { maxSignatures: MAX_SIGNATURES, maxNameLength: MAX_NAME_LENGTH, maxContentLength: MAX_CONTENT_LENGTH, maxLines: MAX_LINES },
+      limits: {
+        maxSignatures: MAX_SIGNATURES,
+        maxNameLength: MAX_NAME_LENGTH,
+        maxContentLength: MAX_CONTENT_LENGTH,
+        maxLines: MAX_LINES,
+        maxImageBytes: MAX_OUTPUT_BYTES,
+        maxImageWidth: MAX_WIDTH,
+        maxImageHeight: MAX_HEIGHT,
+      },
     });
   }));
 
@@ -123,7 +184,7 @@ function createRouter({ guard = [verifyAdminToken, adminOnly], getSettings = () 
     if (!actor) return;
     if (!validId(req.params.id)) return notFound(res);
     const body = req.body && typeof req.body === "object" && !Array.isArray(req.body) ? req.body : {};
-    const unknown = Object.keys(body).filter((k) => !["name", "content", "isDefault"].includes(k));
+    const unknown = Object.keys(body).filter((k) => !["name", "content", "isDefault", "layout", "imageAlt", "imageLink"].includes(k));
     if (unknown.length) throw new SignatureValidationError(`Cannot edit: ${unknown.join(", ")}.`);
 
     // Includes `owner`: someone else's id is simply "not found".
@@ -136,6 +197,13 @@ function createRouter({ guard = [verifyAdminToken, adminOnly], getSettings = () 
       set.nameKey = set.name.toLowerCase();
     }
     if (body.content !== undefined) set.content = cleanSignatureContent(body.content);
+    if (body.imageAlt !== undefined) set.imageAlt = cleanImageAlt(body.imageAlt);
+    if (body.imageLink !== undefined) set.imageLink = cleanImageLink(body.imageLink);
+    if (body.layout !== undefined) {
+      if (!LAYOUTS.includes(body.layout)) throw new SignatureValidationError("Choose text only, image only, or image with text.");
+      if (body.layout !== "text" && !current.image) throw new SignatureValidationError("Upload an image first.");
+      set.layout = body.layout;
+    }
     if (body.isDefault !== undefined && typeof body.isDefault !== "boolean") throw new SignatureValidationError("isDefault must be true or false.");
     if (!Object.keys(set).length && body.isDefault === undefined) throw new SignatureValidationError("Nothing to update.");
 
@@ -152,9 +220,80 @@ function createRouter({ guard = [verifyAdminToken, adminOnly], getSettings = () 
     if (!validId(req.params.id)) return notFound(res);
     const removed = await EmailSignature.findOneAndDelete({ _id: req.params.id, owner: actor.id });
     if (!removed) return notFound(res);
+    // Mail already sent keeps its own copy of the image, so this cannot change it.
+    await removeObject(removed.image?.key);
     // A mailbox default that pointed at it goes too. Deleting the default leaves no default.
     await EmailSignatureDefault.deleteMany({ owner: actor.id, signature: removed._id });
     res.json({ ok: true });
+  }));
+
+  // ── the image ──
+  // The owner is the session user and is part of every query. Another admin's id is "not found".
+  router.put("/:id/image", imageUpload, handle(async (req, res) => {
+    const actor = await loadActor(req, res);
+    if (!actor) return;
+    if (!validId(req.params.id)) return notFound(res);
+    const current = await EmailSignature.findOne({ _id: req.params.id, owner: actor.id });
+    if (!current) return notFound(res);
+    if (!allowUpload(actor.id)) {
+      return res.status(429).json({ msg: "You have uploaded a lot of images in the last hour. Please try again later." });
+    }
+
+    // Decoded and re-encoded: what is stored is our file, never the uploaded bytes.
+    const processed = await processSignatureImage(req.file?.buffer);
+    const key = `${IMAGE_PREFIX}/${actor.id}/${crypto.randomBytes(12).toString("hex")}.${processed.ext}`;
+    await store.put(key, processed.content, processed.mime);
+
+    const previousKey = current.image?.key;
+    try {
+      const set = { image: { key, mime: processed.mime, width: processed.width, height: processed.height, bytes: processed.bytes } };
+      // A first image switches a text-only signature to "image with text lines".
+      if (!current.image && current.layout === "text") set.layout = "image_text";
+      await EmailSignature.updateOne({ _id: current._id, owner: actor.id }, { $set: set });
+    } catch (err) {
+      await removeObject(key);
+      throw err;
+    }
+    await removeObject(previousKey);
+    res.json({ signature: toView(await EmailSignature.findOne({ _id: current._id, owner: actor.id }).lean()) });
+  }));
+
+  router.delete("/:id/image", handle(async (req, res) => {
+    const actor = await loadActor(req, res);
+    if (!actor) return;
+    if (!validId(req.params.id)) return notFound(res);
+    const current = await EmailSignature.findOne({ _id: req.params.id, owner: actor.id });
+    if (!current) return notFound(res);
+    const key = current.image?.key;
+    await EmailSignature.updateOne(
+      { _id: current._id, owner: actor.id },
+      { $set: { image: null, layout: "text", imageAlt: "", imageLink: "" } }
+    );
+    await removeObject(key);
+    res.json({ signature: toView(await EmailSignature.findOne({ _id: current._id, owner: actor.id }).lean()) });
+  }));
+
+  router.get("/:id/image", handle(async (req, res) => {
+    const actor = await loadActor(req, res);
+    if (!actor) return;
+    if (!validId(req.params.id)) return notFound(res);
+    const current = await EmailSignature.findOne({ _id: req.params.id, owner: actor.id }).lean();
+    if (!current?.image) return notFound(res);
+    let bytes;
+    try {
+      bytes = await store.get(current.image.key);
+    } catch (err) {
+      console.error("[email-signatures] image could not be read:", err?.message || err);
+      return res.status(503).json({ msg: "The image could not be loaded. Please try again." });
+    }
+    res.set({
+      "Content-Type": current.image.mime,
+      "Content-Length": String(bytes.length),
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      "Cache-Control": "private, no-store",
+    });
+    res.end(bytes);
   }));
 
   router.put("/mailbox-defaults", handle(async (req, res) => {

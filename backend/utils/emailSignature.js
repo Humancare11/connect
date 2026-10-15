@@ -52,7 +52,47 @@ function cleanSignatureContent(value) {
   return text;
 }
 
+const LAYOUTS = ["text", "image", "image_text"];
+const MAX_ALT_LENGTH = 120;
+const MAX_LINK_LENGTH = 500;
+
+// "" (use the first text line) or a cleaned single line of at most 120 characters.
+function cleanImageAlt(value) {
+  if (typeof value !== "string") throw new SignatureValidationError("The image description must be text.");
+  const alt = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  if (alt.length > MAX_ALT_LENGTH) throw new SignatureValidationError(`The image description can be up to ${MAX_ALT_LENGTH} characters.`);
+  return alt;
+}
+
+// "" (no link) or a normalised http(s) address of at most 500 characters.
+function cleanImageLink(value) {
+  if (typeof value !== "string") throw new SignatureValidationError("The link must be text.");
+  const raw = value.trim();
+  if (!raw) return "";
+  if (raw.length > MAX_LINK_LENGTH || /[\u0000-\u0020\u007F]/.test(raw)) throw new SignatureValidationError("That link is not valid.");
+  // A bare "www." address is common to type: it becomes https://
+  const candidate = /^www\./i.test(raw) ? `https://${raw}` : raw;
+  let url;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw new SignatureValidationError("That link is not valid. Use an address like https://humancareconnect.co");
+  }
+  if (!["http:", "https:"].includes(url.protocol) || !url.hostname.includes(".")) {
+    throw new SignatureValidationError("The link must start with https:// or http://");
+  }
+  if (url.username || url.password) throw new SignatureValidationError("The link must not contain a user name or password.");
+  const out = url.toString();
+  if (out.length > MAX_LINK_LENGTH) throw new SignatureValidationError("That link is too long.");
+  return out;
+}
+
 module.exports = {
+  LAYOUTS,
+  MAX_ALT_LENGTH,
+  MAX_LINK_LENGTH,
+  cleanImageAlt,
+  cleanImageLink,
   MAX_SIGNATURES,
   MAX_NAME_LENGTH,
   MAX_CONTENT_LENGTH,
