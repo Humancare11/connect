@@ -43,16 +43,13 @@ const intFromEnv = (name, fallback, env = process.env) => {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
-// ── Phase 2: AI, Turnstile and abuse limits ───────────────────────────────────
+// ── Phase 2: AI and abuse limits ───────────────────────────────────
 
 const numberOrNull = (value) => {
   if (value === undefined || value === null || String(value).trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : null;
 };
-
-// Cloudflare's published test secret key ("always passes"). Used only outside production when no secret is set.
-const TURNSTILE_TEST_SECRET = "1x0000000000000000000000000000000AA";
 
 // AI provider settings. Prices are USD per 1M tokens and are required: the daily spend cap cannot work without
 // them, so the AI refuses to run (and the widget shows the unavailable fallback) when they are missing.
@@ -78,20 +75,14 @@ function readAiConfig(env = process.env) {
   };
 }
 
-function readTurnstileSecret(env = process.env) {
-  const secret = String(env.TURNSTILE_SECRET_KEY || "").trim();
-  if (secret) return secret;
-  return isProduction(env) ? "" : TURNSTILE_TEST_SECRET;
-}
-
 // Abuse limits. Message length and per-minute rate are fixed by the brief; the others can be tuned by env.
 function readLimits(env = process.env) {
   return {
     maxMessageChars: 1000,
     messagesPerMinute: intFromEnv("LIVECHAT_MESSAGES_PER_MINUTE", 6, env),
-    // Shared IPs (offices, hospitals, mobile carriers) are common, so the default is generous; Turnstile stops bots.
+    // Shared IPs (offices, hospitals, mobile carriers) are common, so the default allows a few chats per IP; the honeypot and message limits cover bots.
     // LIVECHAT_IP_DAILY_CHAT_LIMIT is the old name and still works.
-    chatsPerIpPerDay: intFromEnv("LIVECHAT_CHATS_PER_IP_DAY", intFromEnv("LIVECHAT_IP_DAILY_CHAT_LIMIT", 20, env), env),
+    chatsPerIpPerDay: intFromEnv("LIVECHAT_CHATS_PER_IP_DAY", intFromEnv("LIVECHAT_IP_DAILY_CHAT_LIMIT", 10, env), env),
   };
 }
 
@@ -148,7 +139,5 @@ module.exports = {
   checkLiveChatConfig,
   intFromEnv,
   readAiConfig,
-  readTurnstileSecret,
   readLimits,
-  TURNSTILE_TEST_SECRET,
 };

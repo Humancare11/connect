@@ -253,7 +253,7 @@ export function useLiveChat() {
   }, [open, phase, conversation, emit]);
 
   const submitContact = useCallback(
-    async ({ name, email, phone, turnstileToken, companyUrl }) => {
+    async ({ name, email, phone, companyUrl }) => {
       let body;
       try {
         const res = await fetch(`${API_BASE}/api/livechat/contact`, {
@@ -263,7 +263,6 @@ export function useLiveChat() {
             name,
             email,
             phone,
-            turnstileToken,
             companyUrl,
             visitorId: store.get(ID_KEY) || undefined,
           }),

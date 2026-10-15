@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
 
-// What can be checked without a browser: patient-facing wording, scroll rules and Turnstile settings.
-// (The real wheel / touch / Turnstile behaviour is checked in a browser run, see docs/live-chat.md.)
+// What can be checked without a browser: patient-facing wording and scroll rules.
+// (The real wheel / touch behaviour is checked in a browser run, see docs/live-chat.md.)
 const ROOT = path.join(__dirname, "..", "..");
 const read = (...p) => fs.readFileSync(path.join(ROOT, ...p), "utf8");
 const FEATURE = path.join("frontend", "src", "features", "livechat");
@@ -224,24 +224,19 @@ describe("live chat: widget scrolling rules", () => {
   });
 });
 
-describe("live chat: Turnstile stays invisible unless Cloudflare needs the person", () => {
-  test("interaction-only appearance, and the container is collapsed until a challenge is shown", () => {
-    const ts = read(FEATURE, "turnstile.js");
-    assert.match(ts, /appearance:\s*"interaction-only"/);
-    assert.match(ts, /before-interactive-callback/);
-    assert.match(read(FEATURE, "ContactForm.jsx"), /lcw-captcha\$\{challenge \? " is-active" : ""\}/);
-    const css = read(FEATURE, "LiveChatWidget.css");
-    const hidden = css.match(/\.lcw-captcha\s*\{([^}]*)\}/)[1];
-    assert.match(hidden, /width:\s*1px/);
-    assert.match(hidden, /opacity:\s*0/);
-    assert.match(css, /\.lcw-captcha\.is-active\s*\{[^}]*min-height:\s*65px/);
+describe("live chat: no Turnstile / Cloudflare captcha", () => {
+  test("the widget, server and build no longer load or check Turnstile", () => {
+    for (const file of ["ContactForm.jsx", "useLiveChat.js", "LiveChatWidget.css"]) {
+      assert.doesNotMatch(read(FEATURE, file), /turnstile|captcha|challenges\.cloudflare/i, file);
+    }
+    for (const gone of [[FEATURE, "turnstile.js"], ["backend", "services", "liveChat", "turnstile.js"]]) {
+      assert.equal(fs.existsSync(path.join(ROOT, ...gone)), false, gone.join("/"));
+    }
+    assert.doesNotMatch(read("backend", "routes", "liveChatPublic.js"), /verifyTurnstile|captcha/i);
+    assert.doesNotMatch(read("backend", ".env.example"), /TURNSTILE/i);
   });
 
-  test("the 'for testing only' widget can only come from Cloudflare's dev test keys; a real key needs the env var", () => {
-    const ts = read(FEATURE, "turnstile.js");
-    assert.match(ts, /TEST_SITE_KEY = "1x00000000000000000000AA"/);
-    assert.match(ts, /VITE_TURNSTILE_SITE_KEY \|\| \(import\.meta\.env\.DEV \? TEST_SITE_KEY : ""\)/, "the test key is DEV-only");
-    const server = read("backend", "services", "liveChat", "turnstile.js");
-    assert.match(server, /secret/i, "the server check is kept");
+  test("the honeypot stays in the form", () => {
+    assert.match(read(FEATURE, "ContactForm.jsx"), /name="companyUrl"/);
   });
 });

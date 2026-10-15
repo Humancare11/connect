@@ -155,7 +155,7 @@ const once = (socket, event, timeoutMs = 2000) =>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// ── Chat tests: real in-memory MongoDB, scripted AI, fake Turnstile ───────────────────────────────────────────
+// ── Chat tests: real in-memory MongoDB, scripted AI ───────────────────────────────────────────
 
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
@@ -257,7 +257,6 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
       settingsCacheMs: 0,
       getSettings: undefined, // the real settings reader (the Phase 1 stub only suits the socket tests)
       publicLimiters: { contact: PASS, config: PASS, upload: PASS }, // the per-IP route limiters are not under test
-      verifyTurnstile: async ({ token }) => (token === "good-token" ? { ok: true } : { ok: false, reason: "failed" }),
       ...mount,
     },
   });
@@ -302,7 +301,6 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
           name: "Emma Wilson",
           email: `emma${seq}@example.com`,
           phone: "",
-          turnstileToken: "good-token",
           ...extra,
         },
         headers
