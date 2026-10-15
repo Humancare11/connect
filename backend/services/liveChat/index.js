@@ -174,6 +174,11 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     if (devFakeIp(env)) console.warn("[livechat] DEV ONLY: LIVECHAT_DEV_FAKE_IP is active, every visitor gets that IP. Never use this in production.");
     else console.warn("[livechat] LIVECHAT_DEV_FAKE_IP is ignored (it only works outside production and needs a valid public IP).");
   }
+  if (isProduction(env)) {
+    // Names only, never values.
+    const missing = ["LIVECHAT_OPENAI_ORG_ID", "LIVECHAT_OPENAI_PROJECT_ID"].filter((name) => !String(env[name] || "").trim());
+    if (missing.length) console.warn(`[livechat] ${missing.join(" and ")} not set: AI requests are not pinned to the organisation/project that holds the data-handling agreement.`);
+  }
   if (!isProduction(env)) console.log("[livechat] DEV: the per-IP daily chat limit is skipped for loopback addresses and LIVECHAT_DEV_FAKE_IP (never in production).");
   const graceMs = options.graceMs ?? intFromEnv("LIVECHAT_PRESENCE_GRACE_MS", DEFAULT_GRACE_MS, env);
   const adminNs = io.of("/livechat-admin");
@@ -217,6 +222,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     LcSettingsAudit: require("../../models/LcSettingsAudit"),
     LcChatDeletionAudit: require("../../models/LcChatDeletionAudit"),
     LcAgentProfile: require("../../models/LcAgentProfile"),
+    LcReviewLog: require("../../models/LcReviewLog"),
   };
   const settingsCacheMs = options.settingsCacheMs ?? 5000;
   let cached = { at: 0, value: null };
@@ -295,6 +301,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const statsSvc = createStatsService({ models, loadSettings, agents });
   const archiveSvc = require("./archiveService").createArchiveService({ models });
   const trashSvc = require("./trashService").createTrashService({ models, archive: archiveSvc, store: options.fileStore });
+  const reviewSvc = require("./reviewService").createReviewService({ models });
   Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock, trashSvc });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
@@ -315,7 +322,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc, trash: trashSvc, trashLimiter: options.trashLimiter })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc, trash: trashSvc, review: reviewSvc, trashLimiter: options.trashLimiter })
     );
   }
 

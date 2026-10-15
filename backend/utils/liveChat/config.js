@@ -65,6 +65,9 @@ function readAiConfig(env = process.env) {
     provider: String(env.LIVECHAT_AI_PROVIDER || "openai").trim().toLowerCase(),
     model: String(env.LIVECHAT_MODEL || "").trim(),
     apiKey: String(env.LIVECHAT_OPENAI_API_KEY || "").trim(),
+    // Optional OpenAI organisation / project ids (never logged).
+    organization: String(env.LIVECHAT_OPENAI_ORG_ID || "").trim(),
+    project: String(env.LIVECHAT_OPENAI_PROJECT_ID || "").trim(),
     reasoningEffort,
     maxOutputTokens: intFromEnv("LIVECHAT_MAX_OUTPUT_TOKENS", 300, env),
     timeoutMs: intFromEnv("LIVECHAT_AI_TIMEOUT_MS", 20_000, env),

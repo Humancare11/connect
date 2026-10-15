@@ -54,7 +54,9 @@ function createSitePages(pages = require("../../data/liveChatSitePages.json")) {
     return page ? { title: page.title, url: page.url } : null;
   };
 
-  return { pages, has: (url) => byUrl.has(String(url || "").trim()), candidatesFor, filterLinks, linkFor };
+  const typeOf = (url) => byUrl.get(String(url || "").trim())?.type || "";
+
+  return { pages, typeOf, has: (url) => byUrl.has(String(url || "").trim()), candidatesFor, filterLinks, linkFor };
 }
 
 module.exports = { createSitePages, MAX_LINKS, BOOKING_URL };

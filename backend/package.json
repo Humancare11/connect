@@ -10,6 +10,7 @@
     "start:uat": "NODE_ENV=uat node server.js",
     "backfill:uploads": "node scripts/backfillUploadsToS3.js",
     "backfill:patient-ids": "node scripts/backfillPatientIds.js",
+    "livechat:eval": "node scripts/liveChatEval.js",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "keywords": [],

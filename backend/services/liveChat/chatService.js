@@ -11,7 +11,9 @@ const crypto = require("crypto");
 const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
 const { aiNameOf, withAiName } = require("./settingsDefaults");
-const { tooShortToTell, tooShortToDetect, looksEnglish } = require("./languageHints");
+const { tooShortToTell, tooShortToDetect, looksEnglish, scrubContact } = require("./languageHints");
+const safety = require("./safety");
+const { BOOKING_URL } = require("./sitePages");
 
 // Shown the moment a chat goes to the team, whoever is or is not at their desk.
 const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`;
@@ -131,7 +133,7 @@ function createChatService({
 
   // ── Contact ──────────────────────────────────────────────────────────────────
 
-  async function registerContact({ visitorId, name, email, phone, ip }) {
+  async function registerContact({ visitorId, name, email, phone, ip, consent = null }) {
     const check = validateContact({ name, email, phone });
     if (!check.ok) return { ok: false, errors: check.errors };
     const id = VISITOR_ID_RE.test(String(visitorId || "")) ? visitorId : newVisitorId();
@@ -150,6 +152,8 @@ function createChatService({
           emailHash: hashLiveChatEmail(values.email),
           lastSeenAt: stamp,
           lastIp: ip || "",
+          // The AI notice shown above "Start chat" (only passed while the Super Admin setting is on).
+          ...(consent ? { "consent.aiNoticeAcceptedAt": stamp, "consent.policyVersion": consent.policyVersion } : {}),
         },
         $setOnInsert: { firstSeenAt: stamp },
       },
@@ -160,6 +164,13 @@ function createChatService({
       { visitorId: id, mode: { $nin: ["archived", "trashed"] }, "contact.email.cipherText": "" },
       { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } }
     );
+    // Accepting the notice again (e.g. after a new policy version) is recorded on the chat that is still open.
+    if (consent) {
+      await LcConversation.updateMany(
+        { visitorId: id, mode: { $nin: ["archived", "trashed"] } },
+        { $set: { "consent.aiNoticeAcceptedAt": stamp, "consent.policyVersion": consent.policyVersion } }
+      );
+    }
     const record = presence.get(id);
     if (record) presence.update(id, { name: values.name, email: values.email });
     return { ok: true, visitorId: id, firstName: firstNameOf(values.name) };
@@ -167,6 +178,12 @@ function createChatService({
 
   const loadVisitor = (visitorId) => LcVisitor.findOne({ visitorId }).lean();
   const hasContact = (visitor) => Boolean(visitor?.email?.cipherText && visitor?.name?.cipherText);
+  // While "Show AI notice" is on, a visitor must have accepted the current policy version before chatting. One who has
+  // not (new visitor, or a new policy version) is sent back to the contact form, whose Start chat records the acceptance.
+  const policyVersionOf = (settings) => String(settings?.policyVersion || "v1");
+  const noticeAccepted = (visitor, settings) =>
+    !settings?.showAiNotice ||
+    Boolean(visitor?.consent?.aiNoticeAcceptedAt && visitor.consent.policyVersion === policyVersionOf(settings));
 
   // ── Serialisation (what the widget may see) ──────────────────────────────────
 
@@ -379,8 +396,9 @@ function createChatService({
   async function resume(visitorId) {
     const visitor = await loadVisitor(visitorId);
     if (!hasContact(visitor)) return { ok: true, needContact: true };
-    await touchVisitor(visitorId);
     const settings = await loadSettings();
+    if (!noticeAccepted(visitor, settings)) return { ok: true, needContact: true };
+    await touchVisitor(visitorId);
     let conv = await findOpen(visitorId);
     if (!conv) conv = await reopenIfLeft(visitorId, visitor); // back within 24 h of leaving: the chat continues
     let conversation = conv ? await serialize(conv.toObject(), settings) : null;
@@ -568,6 +586,7 @@ function createChatService({
     const visitor = await loadVisitor(visitorId);
     if (!hasContact(visitor)) return { ok: false, error: "contact_required" };
     const settings = await loadSettings();
+    if (!noticeAccepted(visitor, settings)) return { ok: false, error: "contact_required" };
     const existing = await findOpen(visitorId);
     if (existing) return { ok: true, conversation: await serialize(existing.toObject(), settings) };
 
@@ -599,6 +618,10 @@ function createChatService({
       startedPage: { path: record?.page?.path || context.page?.path || "", title: record?.page?.title || context.page?.title || "" },
       contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
       searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
+      // The AI-notice acceptance recorded when the visitor pressed Start chat.
+      ...(visitor.consent?.aiNoticeAcceptedAt
+        ? { consent: { aiNoticeAcceptedAt: visitor.consent.aiNoticeAcceptedAt, policyVersion: visitor.consent.policyVersion || "" } }
+        : {}),
     });
     await LcVisitor.updateOne({ visitorId }, { $inc: { chatCount: 1 } });
     await touchVisitor(visitorId);
@@ -660,7 +683,7 @@ function createChatService({
     // ...the AI turn is NOT: the model can take seconds, and an admin's "Take over" must never wait for it. AI
     // turns of one chat run one after another (their own lock key); every change an AI turn makes re-checks that
     // the chat is still an AI chat (see `ifStillAi`).
-    if (saved.mode === "ai") await withLock(`ai:${saved.conversationId}`, () => aiTurn(saved, loaded.visitor));
+    if (saved.mode === "ai") await withLock(`ai:${saved.conversationId}`, () => aiTurn(saved, loaded.visitor, text.text));
     // No language yet (AI off, cap reached, or straight to an agent): one small call on a clearly non-English message.
     if (detector && !saved.language?.code && !tooShortToDetect(text.text) && !looksEnglish(text.text)) {
       detector(saved, text.text).catch(() => {});
@@ -668,7 +691,35 @@ function createChatService({
     return { ok: true };
   }
 
-  async function aiTurn(conv, visitor) {
+  // The language a fixed safety string is sent in: the model's own answer when it gave one, else a guess from the text.
+  const safetyLanguage = (language, patientText) => {
+    const code = language?.code;
+    return !code || code === "und" ? safety.guessLanguage(patientText) : safety.langKey(code);
+  };
+
+  // Marks a chat for the AI Review page and makes it unreviewed again. reasons: reply_blocked | emergency_keyword |
+  // model_emergency | model_medical.
+  async function markMedical(conv, reasons) {
+    const list = [...new Set(reasons)].filter(Boolean);
+    if (!list.length) return;
+    const stamp = new Date(now());
+    await LcConversation.updateOne(
+      { _id: conv._id },
+      { $set: { "flags.medical": true, "flags.lastAt": stamp, "review.status": "unreviewed" }, $addToSet: { "flags.reasons": { $each: list } } }
+    );
+    await LcConversation.updateOne({ _id: conv._id, "flags.firstAt": null }, { $set: { "flags.firstAt": stamp } });
+  }
+
+  // A fixed, model-free reply: the safe "can't give medical advice" text with the booking page button. Used when the
+  // reply filter blocks a model reply, or the model stayed over the length limit.
+  async function sendSafeReply(current, { patientText, blockedReply = "", language, blocked = false }) {
+    const medication = safety.isMedicationText(patientText) || safety.isMedicationText(blockedReply);
+    const text = safety.fixedText(medication ? "fallbackMedication" : "fallback", safetyLanguage(language, patientText));
+    const booking = sitePages.linkFor(BOOKING_URL);
+    await addMessage(current, "ai", text, { ...(booking ? { links: [booking] } : {}), ...(blocked ? { safetyBlocked: true } : {}) });
+  }
+
+  async function aiTurn(conv, visitor, patientText = "") {
     const settings = await loadSettings();
     const first = firstNameOf(decryptLiveChatText(visitor.name));
     closeBreakerIfRecovered();
@@ -680,6 +731,17 @@ function createChatService({
         if (!current || current.mode !== "ai") return undefined;
         return fn(current);
       });
+
+    // The patient describes an emergency: the server itself sends the fixed 911 message and hands over to the Queue.
+    // The model is not asked, so this holds whatever it would have said.
+    const emergency = safety.detectEmergency(patientText);
+    if (emergency) {
+      return ifStillAi(async (current) => {
+        await markMedical(current, ["emergency_keyword"]); // also when it is a false alarm: the AI Review page shows those
+        await addMessage(current, "ai", safety.fixedText("emergency", emergency.language));
+        return requestAgent(await LcConversation.findById(current._id), { first, settings, reason: "emergency", language: emergency.language });
+      });
+    }
 
     // Admin chose "AI off": new chats go straight to the Queue.
     if (settings.aiMode === "ai_off") {
@@ -700,17 +762,24 @@ function createChatService({
     emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: true });
     let result;
     let lastPatientText = "";
+    const linkConditions = settings.aiMayLinkConditionPages !== false;
     try {
-      const history = (await recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
+      const rawHistory = (await recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
+      // The model never sees the patient's name, email or phone (the stored chat and what the patient sees are unchanged).
+      const contact = { name: decryptLiveChatText(visitor.name), email: decryptLiveChatText(visitor.email), phone: decryptLiveChatText(visitor.phone) };
+      const history = rawHistory.map((m) => ({ ...m, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
       // Pages that fit what the patient just wrote; the model may only point at these.
-      const lastPatient = history.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
-      lastPatientText = history.filter((m) => m.role === "patient").at(-1)?.text || "";
+      const lastPatient = rawHistory.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
+      lastPatientText = rawHistory.filter((m) => m.role === "patient").at(-1)?.text || "";
       // How many questions in a row the AI already missed: the prompt differs between the first and the second miss.
       const streakRow = await LcConversation.findById(conv._id).select("unansweredStreak").lean();
       result = await ai.generateReply({
         settings,
         history,
-        pages: sitePages.candidatesFor(lastPatient).map((p) => ({ title: p.title, url: p.url })),
+        pages: sitePages
+          .candidatesFor(lastPatient)
+          .filter((p) => linkConditions || p.type !== "condition")
+          .map((p) => ({ title: p.title, url: p.url })),
         unansweredStreak: streakRow?.unansweredStreak || 0,
       });
     } catch {
@@ -719,10 +788,15 @@ function createChatService({
     emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: false });
 
     if (result.usage) await recordUsage(conv, settings, result.usage); // the tokens were spent either way
-    if (!result.ok) openBreaker(result.kind);
+    if (!result.ok && result.kind !== "too_long") openBreaker(result.kind); // too long is the model's habit, not an outage
 
     // An admin may have taken the chat over while the model was thinking: such a reply is never posted.
     return ifStillAi(async (current) => {
+      if (!result.ok && result.kind === "too_long") {
+        // Still over 200 characters after the retry: the safe reply goes out instead.
+        await LcConversation.updateOne({ _id: current._id }, { $inc: { aiReplyCount: 1 } });
+        return sendSafeReply(current, { patientText: lastPatientText });
+      }
       if (!result.ok) return aiFallback(current, { first, settings });
       // Streaks of consecutive off-topic messages and consecutive "could not answer" replies.
       const offTopicStreak = result.offTopic ? (current.offTopicStreak || 0) + 1 : 0;
@@ -732,15 +806,35 @@ function createChatService({
       await LcConversation.updateOne({ _id: current._id }, update);
       await noteLanguage(current, result.language, lastPatientText);
       // Only pages on the server's own list reach the patient (an invented url is dropped).
-      const links = sitePages.filterLinks(result.links);
-      // Off-topic never hands over; from the third in a row the patient is reminded of the button.
-      const reply =
-        result.offTopic && offTopicStreak >= OFF_TOPIC_REMINDER_AT ? `${result.reply} ${OFF_TOPIC_REMINDER}` : result.reply;
-      await addMessage(current, "ai", reply, links.length ? { links } : {});
+      const links = sitePages.filterLinks(result.links).filter((l) => linkConditions || sitePages.typeOf(l.url) !== "condition");
+      // The reply check: advice-like wording never reaches the patient, whatever the model was told.
+      const verdict = safety.checkReply(result.reply);
+      await markMedical(current, [
+        verdict.blocked && "reply_blocked",
+        result.handoffReason === "emergency" && "model_emergency",
+        result.topic === "medical" && "model_medical",
+      ]);
+      if (verdict.blocked) {
+        if (result.handoffReason === "emergency") {
+          await addMessage(current, "ai", safety.fixedText("emergency", safetyLanguage(result.language, lastPatientText)), { safetyBlocked: true });
+        } else {
+          await sendSafeReply(current, { patientText: lastPatientText, blockedReply: result.reply, language: result.language, blocked: true });
+        }
+      } else {
+        // Off-topic never hands over; from the third in a row the patient is reminded of the button.
+        const reply =
+          result.offTopic && offTopicStreak >= OFF_TOPIC_REMINDER_AT ? `${result.reply} ${OFF_TOPIC_REMINDER}` : result.reply;
+        await addMessage(current, "ai", reply, links.length ? { links } : {});
+      }
       // One "not sure" is not enough: "unanswered" hands over on the second miss in a row.
       const due = result.handoffReason === "unanswered" ? unansweredStreak >= UNANSWERED_HANDOFF_AT : true;
       if (result.handoff && !result.offTopic && due && handoffAllowed(settings, result.handoffReason)) {
-        await requestAgent(await LcConversation.findById(current._id), { first, settings, reason: result.handoffReason });
+        await requestAgent(await LcConversation.findById(current._id), {
+          first,
+          settings,
+          reason: result.handoffReason,
+          language: safetyLanguage(result.language, lastPatientText),
+        });
       }
       return undefined;
     });
@@ -796,7 +890,7 @@ function createChatService({
 
   // Every hand-over ends here: the chat goes to the Queue and the patient is told it is being connected. There is no
   // availability check. If nobody replies within followUpMinutes, runFollowUpDue() tells the patient an email follows.
-  async function requestAgent(conv, { first, settings, reason } = {}) {
+  async function requestAgent(conv, { first, settings, reason, language } = {}) {
     if (conv.mode === "queue" || conv.mode === "live") return { ok: true };
     const cfg = settings || (await loadSettings());
     const name = first || "there";
@@ -818,7 +912,8 @@ function createChatService({
       }
     );
     const fresh = await LcConversation.findById(conv._id);
-    await addMessage(fresh, "ai", CONNECTING_TEXT(name));
+    // After the 911 message the patient gets a short fixed line, not the "keep typing your question" one.
+    await addMessage(fresh, "ai", reason === "emergency" ? safety.fixedText("teamNotified", language) : CONNECTING_TEXT(name));
     setActivity(conv.visitorId, fresh);
     emitToAgents("queue:new", {
       conversationId: conv.conversationId,

@@ -15,6 +15,22 @@
  },
  {
   "type": "service",
+  "url": "/telemedicine-cost-usa",
+  "title": "Pricing",
+  "keywords": [
+   "price",
+   "prices",
+   "pricing",
+   "cost",
+   "how much",
+   "fee",
+   "fees",
+   "charge",
+   "flat price"
+  ]
+ },
+ {
+  "type": "service",
   "url": "/medical-services",
   "title": "All medical services",
   "keywords": [

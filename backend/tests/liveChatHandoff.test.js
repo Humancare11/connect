@@ -48,30 +48,32 @@ describe("prompt: first and second 'could not answer'", () => {
     assert.doesNotMatch(line, /first miss/);
   });
 
-  test("the safety rules tell the AI to give the medical-information disclaimer and suggest a consultation", () => {
+  test("the safety rule: no medical information at all, a refusal with the booking link instead", () => {
     const safety = buildSystemPrompt(DEFAULT_SETTINGS).split("\n").find((l) => l.startsWith("SAFETY"));
-    assert.ok(
-      safety.includes("When a patient asks a medical question, say briefly that this is general information, not medical advice, and suggest booking a consultation.")
-    );
+    assert.match(safety, /give NO medical information or advice/);
+    assert.match(safety, /Never diagnose; never suggest or discuss treatment; never name, recommend or discuss medications, doses or interactions; never interpret symptoms or test results; never give "general information"/);
+    assert.match(safety, /can't give medical advice and that a licensed Humancare doctor can help/);
+    assert.doesNotMatch(safety, /general information, not medical advice/);
   });
 
-  test("general health questions are on-topic; jokes and the like stay off-topic; the disclaimer stays", () => {
+  test("medical questions are on-topic but get the refusal; jokes and the like stay off-topic", () => {
     const lines = buildSystemPrompt(DEFAULT_SETTINGS).split("\n");
     const offTopic = lines.find((l) => l.startsWith("OFF-TOPIC"));
     // still off-topic: the original categories and examples are intact
     assert.match(offTopic, /personal, joke, trivia, maths, chit-chat/);
     assert.ok(lines.some((l) => l.includes('"tell me a joke" -> true, none')));
     assert.ok(lines.some((l) => l.includes('"who is your father?" -> true, none')));
-    // health and medical questions are on-topic and follow the SAFETY rule
-    assert.match(offTopic, /General health and medical questions .* are ON-TOPIC .*offTopic false/);
-    assert.match(offTopic, /general information, not medical advice, and suggest booking a consultation/);
-    assert.ok(lines.some((l) => l.includes('"what causes migraines?" -> false, none')));
-    assert.ok(lines.some((l) => l.includes("is it safe to take ibuprofen") && l.includes("-> false, none")));
-    assert.ok(lines.some((l) => l.includes("sore throat") && l.includes("-> false, none")));
-    // the SAFETY rule itself is unchanged
-    const safety = lines.find((l) => l.startsWith("SAFETY"));
-    assert.match(safety, /Never diagnose\. Never recommend, name or discuss medications or doses\./);
-    assert.match(safety, /When a patient asks a medical question, say briefly that this is general information, not medical advice, and suggest booking a consultation\./);
+    // medical questions are on-topic (never handed over) and answered only with the refusal
+    assert.match(offTopic, /Medical questions .* are ON-TOPIC .*offTopic false/);
+    assert.doesNotMatch(offTopic, /general information/);
+    const examples = lines.find((l) => l.startsWith("Medical questions -> false, none"));
+    assert.ok(examples);
+    for (const q of ["what causes migraines?", "can I take ibuprofen", "what dose of amoxicillin", "do I have diabetes?", "what does my blood test result mean?", "sore throat"]) {
+      assert.ok(examples.includes(q), q);
+    }
+    assert.ok(examples.includes("I can't give medical advice. A licensed Humancare doctor can help you."));
+    // the old "answer it as general information" examples are gone
+    assert.ok(!lines.some((l) => l.includes('"what causes migraines?" -> false, none')));
   });
 
   test("handover replies never talk about hours or availability", () => {

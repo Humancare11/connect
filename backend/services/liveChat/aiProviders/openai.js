@@ -26,7 +26,14 @@ function createOpenAiProvider(config, { clientFactory } = {}) {
     if (!client) {
       client = clientFactory
         ? clientFactory(config)
-        : new (require("openai").OpenAI)({ apiKey: config.apiKey, maxRetries: 0, timeout: config.timeoutMs });
+        : new (require("openai").OpenAI)({
+            apiKey: config.apiKey,
+            maxRetries: 0,
+            timeout: config.timeoutMs,
+            // Optional: pin requests to the organisation / project that holds the data-handling agreement.
+            ...(config.organization ? { organization: config.organization } : {}),
+            ...(config.project ? { project: config.project } : {}),
+          });
     }
     return client;
   };
@@ -38,6 +45,9 @@ function createOpenAiProvider(config, { clientFactory } = {}) {
       const request = {
         model: config.model,
         messages: [{ role: "system", content: system }, ...messages],
+        // Patient messages must not be kept by the provider for stored completions. Every live-chat model call
+        // (reply, suggestion, summary, translation, language detection) goes through this one request.
+        store: false,
         max_completion_tokens: maxOutputTokens,
         response_format: { type: "json_schema", json_schema: { name: schemaName, strict: true, schema } },
       };

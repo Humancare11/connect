@@ -99,6 +99,9 @@ const DEFAULT_SETTINGS = {
   prices: PRICES,
   customFields: [],
   businessFacts: "",
+  aiMayLinkConditionPages: true,
+  showAiNotice: false,
+  policyVersion: "v1",
   dailySpendCapUsd: 3,
   unavailableMessage:
     '{aiName} is unavailable right now. Tap "Talk to live agent" and our team will help you.',
