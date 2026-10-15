@@ -11,6 +11,8 @@ const { composeDisclosure } = require("./disclosure");
 const EmailSignature = require("../../models/EmailSignature");
 const { getSignatureSettings } = require("./emailSettings");
 const mongoose = require("mongoose");
+const crypto = require("crypto");
+const { composeParts } = require("../gmail/mimeBuilder");
 const { countTrackableLinks } = require("./emailHtml");
 const { newToken, linkUrl, downloadUrl } = require("./trackingToken");
 
@@ -29,13 +31,17 @@ class EmailHttpError extends Error {
 
 // Is an admin signature in use for this mail? → true | false. Throws a 400 when the id is
 // not one of THIS admin's signatures (a foreign or invented id is never silently accepted).
+// → null (no signature) or the signature document (lean). Throws 400 for anyone else's.
 async function resolveSignatureUse(actor, signatureId) {
   const id = typeof signatureId === "string" ? signatureId.trim() : "";
-  if (!id || id === "none") return false;
-  const mine = mongoose.isValidObjectId(id) && (await EmailSignature.exists({ _id: id, owner: actor.id }));
+  if (!id || id === "none") return null;
+  const mine = mongoose.isValidObjectId(id) ? await EmailSignature.findOne({ _id: id, owner: actor.id }).lean() : null;
   if (!mine) throw new EmailHttpError(400, "That signature is not available. Choose another one or No signature.", { code: "SIGNATURE_NOT_FOUND" });
-  return true;
+  return mine;
 }
+
+// The signature's text lines in a body: whatever follows the last "-- " line.
+const splitSignatureText = (body) => composeParts(body, "", "", "", { companyFooter: false }).sig;
 
 // A repeat of a request we already processed (double-click / network retry).
 const DUPLICATE_WINDOW_MS = 30_000;
@@ -71,8 +77,36 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   // "Signature used" = the compose form's dropdown was not "No signature". The signature text is
   // already in `body` (the admin could edit it); the id is only checked here, and only to decide
   // whether the company footer follows. It must be one of THIS admin's own signatures.
-  const signatureUsed = await resolveSignatureUse(actor, signatureId);
+  const signature = await resolveSignatureUse(actor, signatureId);
+  const signatureUsed = Boolean(signature);
   const companyFooter = signatureUsed ? (await getSignatureSettings()).companyFooterWithSignature : true;
+
+  // An image signature: the bytes come from OUR storage by the validated id, never from the
+  // request. If they cannot be loaded the mail is refused (it is not sent without the image
+  // the admin chose); a claimed reply is given back by the caller.
+  let signatureImage = null;
+  if (signature?.image && signature.layout && signature.layout !== "text") {
+    let content;
+    try {
+      content = await store.get(signature.image.key);
+    } catch (err) {
+      console.error("[email-send] signature image could not be loaded:", err?.message || err);
+      throw new EmailHttpError(
+        503,
+        "Your signature image could not be loaded, so the mail was not sent. Try again, or choose another signature or No signature.",
+        { code: "SIGNATURE_IMAGE_UNAVAILABLE" }
+      );
+    }
+    signatureImage = {
+      content,
+      mime: signature.image.mime,
+      width: signature.image.width,
+      height: signature.image.height,
+      layout: signature.layout,
+      alt: signature.imageAlt || String(signature.content || "").split("\n")[0].trim().slice(0, 120),
+      link: signature.imageLink || "",
+    };
+  }
 
   const state = trackingState || (await getTrackingState());
   const plan = await planTracking({ mailbox, to, cc, requested: trackOpens, state });
@@ -116,7 +150,9 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
       opens: plan.enabled,
       // Whatever will really be in the mail: the body (signature included) and the company
       // footer, unless an admin signature replaces it.
-      links: Boolean(linkTracker) && countTrackableLinks(`${body}\n${companyFooter ? mailbox.signature || "" : ""}`) > 0,
+      links:
+        Boolean(linkTracker) &&
+        (countTrackableLinks(`${body}\n${companyFooter ? mailbox.signature || "" : ""}`) > 0 || Boolean(signatureImage?.link)),
       downloads: secure.enabled,
       receipt: receipt.enabled,
     },
@@ -139,6 +175,7 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     requestReceipt: receipt.enabled,
     adminSignature: signatureUsed,
     companyFooter,
+    signatureImage,
     secureLinks: secure.enabled
       ? {
           items: secureFiles.map((s) => ({ filename: s.file.filename, size: s.file.content.length, url: downloadUrl(secure.baseUrl, s.token) })),
@@ -147,7 +184,24 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
       : null,
   });
 
+  // This mail keeps its own copy of the signature image (key known before the row is saved).
+  const messageId = new mongoose.Types.ObjectId();
+  const sentImage = signatureImage
+    ? {
+        key: `email-sent-signatures/${mailbox._id}/${messageId}/${crypto.randomBytes(8).toString("hex")}.${signatureImage.mime === "image/jpeg" ? "jpg" : "png"}`,
+        mime: signatureImage.mime,
+        width: signatureImage.width,
+        height: signatureImage.height,
+        alt: signatureImage.alt,
+        link: signatureImage.link,
+        layout: signatureImage.layout,
+        signatureText: splitSignatureText(body),
+      }
+    : undefined;
+
   const doc = new EmailMessage({
+    _id: messageId,
+    ...(sentImage ? { signatureImage: sentImage } : {}),
     mailbox: mailbox._id,
     direction: "out",
     gmailMessageId: null,
@@ -183,6 +237,18 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
       if (existing) return { message: existing, duplicate: true };
     }
     throw err;
+  }
+
+  // The image copy is written before the mail leaves: the mail page needs it, and a mail that
+  // cannot keep its record is not sent.
+  if (sentImage) {
+    try {
+      await store.put(sentImage.key, signatureImage.content, signatureImage.mime);
+    } catch (err) {
+      console.error("[email-send] signature image copy failed:", err?.message || err);
+      await EmailMessage.updateOne({ _id: doc._id }, { $set: { status: "failed", failureReason: "The signature image could not be stored." } });
+      throw new EmailHttpError(502, "The mail could not be prepared, so it was not sent. Please try again.", { messageId: String(doc._id) });
+    }
   }
 
   // The links must exist before the mail leaves, or a very fast click would find nothing.

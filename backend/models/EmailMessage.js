@@ -132,6 +132,27 @@ const emailMessageSchema = new mongoose.Schema(
     // (not in Received, counts, threads or search) and never treated as a client reply.
     isReceipt: { type: Boolean, default: false },
 
+    // Outbound, when an IMAGE signature was used: this mail's OWN copy of the image (so replacing
+    // or deleting the signature later cannot change what was sent) and how it was used.
+    // `key` is a private S3 key and is never returned by the API.
+    signatureImage: {
+      type: new mongoose.Schema(
+        {
+          key: { type: String, required: true },
+          mime: { type: String, required: true },
+          width: { type: Number, required: true },
+          height: { type: Number, required: true },
+          alt: { type: String, default: "" },
+          link: { type: String, default: "" },
+          layout: { type: String, enum: ["image", "image_text"], required: true },
+          // The text lines below the "-- " divider, exactly as sent.
+          signatureText: { type: String, default: "" },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
+
     // Idempotency key from the compose form so a double-click can't send twice.
     clientRequestId: { type: String, default: null, maxlength: 100 },
 

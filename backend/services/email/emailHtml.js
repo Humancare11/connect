@@ -68,6 +68,44 @@ function buildHtml(text, { imageUrl = "", linkTracker = null } = {}) {
   );
 }
 
+// HTML twin of a mail that carries an IMAGE signature. Built from the parts of the mail, not from
+// the final text, because the image takes the place of the "-- " line:
+//
+//   message (+ attachment lines)
+//   [image, optionally inside a link]
+//   [the signature's text lines, only for the image + text layout]
+//   company footer
+//   [notice]
+//   [the 1x1 tracking image, always last]
+//
+// parts: { message, sig, company, notice }
+// image: { cid, alt, width, height, link, layout }  (link is already the address to put in href)
+function buildSignatureImageHtml(parts, { image, imageUrl = "", linkTracker = null } = {}) {
+  const font = "font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#1f1f1f";
+  const block = (text, top = 0) => (text ? `<div style="${font}${top ? `;margin-top:${top}px` : ""}">${textToHtml(text, { linkTracker })}</div>` : "");
+
+  const picture =
+    `<img src="cid:${escapeHtml(image.cid)}" alt="${escapeHtml(image.alt || "")}" width="${Number(image.width) || 0}"` +
+    ` height="${Number(image.height) || 0}" border="0" style="display:block;border:0;max-width:100%;height:auto">`;
+  let href = image.link || "";
+  if (href && linkTracker) href = linkTracker(href) || href;
+  const linked = href ? `<a href="${escapeHtml(href)}">${picture}</a>` : picture;
+
+  const pixel = imageUrl
+    ? `<img src="${escapeHtml(imageUrl)}" width="1" height="1" alt="" border="0" style="border:0;width:1px;height:1px">`
+    : "";
+
+  return (
+    `<!DOCTYPE html>\n<html><head><meta charset="utf-8"></head><body>` +
+    block(parts.message) +
+    `<div style="margin-top:16px">${linked}</div>` +
+    (image.layout === "image_text" ? block(parts.sig, 8) : "") +
+    block(parts.company, 16) +
+    block(parts.notice, 16) +
+    `${pixel}</body></html>`
+  );
+}
+
 // How many links of this text would be offered to a link tracker (http/https/www., within the
 // length limit). Used to word the footer notice: "links" is only mentioned when there are some.
 function countTrackableLinks(text) {
@@ -79,4 +117,4 @@ function countTrackableLinks(text) {
   return n;
 }
 
-module.exports = { buildHtml, textToHtml, escapeHtml, countTrackableLinks };
+module.exports = { buildHtml, buildSignatureImageHtml, textToHtml, escapeHtml, countTrackableLinks };

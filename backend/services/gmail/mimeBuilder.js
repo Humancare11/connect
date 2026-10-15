@@ -11,7 +11,7 @@ const {
   stripLineBreaks,
 } = require("../../utils/emailValidation");
 const { EMAIL_DOMAIN } = require("../../models/Mailbox");
-const { buildHtml } = require("../email/emailHtml");
+const { buildHtml, buildSignatureImageHtml } = require("../email/emailHtml");
 
 // Visible sender name. Clients only ever see the company, never the admin.
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "Human Care Connect";
@@ -45,6 +45,25 @@ function composeText(body, signature, disclosure = "", attachmentBlock = "", { a
   return footer ? `${withBlock}\n\n-- \n${footer}\n` : `${withBlock}\n`;
 }
 
+// The pieces of a mail, for the HTML twin of a mail with an image signature. The plain text is
+// still made by composeText; this only splits the same material.
+//   message  the text above the signature divider, with attachment lines
+//   sig      the signature's text lines (below the last "-- " line), "" if none
+//   company  the company footer, or "" when an admin signature replaces it
+function composeParts(body, signature, disclosure = "", attachmentBlock = "", { companyFooter = true } = {}) {
+  const text = String(body ?? "").replace(/\r\n/g, "\n").trimEnd();
+  const cut = lastDividerIndex(text);
+  const message = cut >= 0 ? text.slice(0, cut).trimEnd() : text;
+  const afterLine = cut >= 0 ? text.indexOf("\n", cut) : -1;
+  const sig = cut >= 0 && afterLine >= 0 ? text.slice(afterLine + 1).trim() : "";
+  return {
+    message: [message, String(attachmentBlock || "").trim()].filter(Boolean).join("\n\n"),
+    sig,
+    company: companyFooter ? String(signature || "").trim() : "",
+    notice: String(disclosure || "").trim(),
+  };
+}
+
 // Index of the start of the LAST signature divider line ("-- " or "--"), or -1.
 function lastDividerIndex(text) {
   let at = -1;
@@ -70,13 +89,16 @@ function lastDividerIndex(text) {
 //                (the files are still validated like attachments)
 //   disclosure   the footer notice for mail that has no `tracking` (secure links, read receipt
 //                only); mail with `tracking` carries tracking.disclosure
+//   signatureImage  { content: Buffer, mime, alt, link, layout, width, height } → the image is
+//                embedded (CID, inline, no file name) and shown in the HTML part; the plain
+//                text is unchanged (the signature's text version). Needs adminSignature.
 //   adminSignature  true → the admin's signature is already at the end of `body`; the company
 //                footer then follows it without a second divider (and is left out when
 //                companyFooter is false); attachment lines go above the signature
 //   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
 //                the recipient's mail app may confirm the mail was displayed
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "", adminSignature = false, companyFooter = true }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "", adminSignature = false, companyFooter = true, signatureImage = null }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -108,23 +130,45 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
   });
   const cleanRef = (id) => stripLineBreaks(id);
 
+  // The HTML twin exists when the mail carries the tracking image, or an image signature.
+  // The image is a CID part (multipart/related): it shows even when remote images are blocked,
+  // and it has no file name so mail apps are less likely to list it as an attachment.
+  const cid = signatureImage ? `sig-${crypto.randomUUID()}@${EMAIL_DOMAIN}` : "";
+  let html = "";
+  if (signatureImage && adminSignature) {
+    const parts = composeParts(body, mailbox.signature, tracking ? tracking.disclosure : disclosure, secureLinks ? secureLinksBlock(secureLinks) : "", { companyFooter });
+    html = buildSignatureImageHtml(parts, {
+      image: { cid, alt: signatureImage.alt, width: signatureImage.width, height: signatureImage.height, link: signatureImage.link, layout: signatureImage.layout },
+      imageUrl: tracking?.imageUrl || "",
+      linkTracker: tracking?.linkTracker || null,
+    });
+  } else if (tracking?.imageUrl) {
+    html = buildHtml(text, { imageUrl: tracking.imageUrl, linkTracker: tracking.linkTracker || null });
+  }
+
   const composer = new MailComposer({
     from: { name: FROM_NAME, address: mailbox.address },
     to: to.map((a) => ({ name: a.name, address: a.address })),
     cc: cc.map((a) => ({ name: a.name, address: a.address })),
     subject: cleanedSubject,
     text,
-    ...(tracking?.imageUrl ? { html: buildHtml(text, { imageUrl: tracking.imageUrl, linkTracker: tracking.linkTracker || null }) } : {}),
+    ...(html ? { html } : {}),
     messageId: rfcMessageId,
     // The address comes from our own mailbox record, never from the request.
     ...(requestReceipt ? { headers: { "Disposition-Notification-To": mailbox.address } } : {}),
     ...(inReplyTo ? { inReplyTo: cleanRef(inReplyTo) } : {}),
     ...(references.length ? { references: references.map(cleanRef).filter(Boolean) } : {}),
-    attachments: (secureLinks ? [] : attachments).map((file) => ({
-      filename: stripLineBreaks(file.filename).slice(0, 255) || "attachment",
-      contentType: file.contentType || "application/octet-stream",
-      content: file.content,
-    })),
+    attachments: [
+      ...(secureLinks ? [] : attachments).map((file) => ({
+        filename: stripLineBreaks(file.filename).slice(0, 255) || "attachment",
+        contentType: file.contentType || "application/octet-stream",
+        content: file.content,
+      })),
+      ...(signatureImage && adminSignature
+        // filename: false => no file name at all, so mail apps are less likely to list it as an attachment
+        ? [{ cid, filename: false, content: signatureImage.content, contentType: signatureImage.mime, contentDisposition: "inline", contentTransferEncoding: "base64" }]
+        : []),
+    ],
   });
 
   const raw = await new Promise((resolve, reject) => {
@@ -144,4 +188,4 @@ function secureLinksBlock({ items, expiresAt }) {
   return [`Attachments (available until ${until}, UTC):`, ...lines].join("\n");
 }
 
-module.exports = { buildRawMessage, composeText, secureLinksBlock };
+module.exports = { buildRawMessage, composeText, composeParts, secureLinksBlock };

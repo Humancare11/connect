@@ -124,6 +124,18 @@ function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsByI
   return {
     ...base,
     sentBy: base.sentBy ? { ...base.sentBy, role: sender?.role || "" } : null,
+    // The image signature this mail went out with (never the storage key).
+    signatureImage: doc.signatureImage
+      ? {
+          mime: doc.signatureImage.mime,
+          width: doc.signatureImage.width,
+          height: doc.signatureImage.height,
+          alt: doc.signatureImage.alt || "",
+          link: doc.signatureImage.link || "",
+          layout: doc.signatureImage.layout,
+          signatureText: doc.signatureImage.signatureText || "",
+        }
+      : null,
     // Which tracked link was clicked: only on the mail page, never in lists.
     tracking: base.tracking
       ? { ...base.tracking, links: linksByMessage.get(idOf(doc._id)) || [], files: filesByMessage.get(idOf(doc._id)) || [] }

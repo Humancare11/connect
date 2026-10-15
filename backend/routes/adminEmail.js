@@ -399,6 +399,35 @@ function createAdminEmailRouter({
     res.end(bytes);
   }));
 
+  // GET /messages/:id/signature-image — the image signature this mail went out with. Same
+  // access as the mail itself: an admin who may open the mail may see its signature image.
+  router.get("/messages/:id/signature-image", handle(async (req, res) => {
+    const actor = await loadActor(req, res);
+    if (!actor) return;
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ msg: "File not found." });
+    const mailboxes = await accessibleMailboxes(actor.id);
+    const message = await EmailMessage.findOne({ _id: req.params.id, direction: "out", mailbox: { $in: mailboxes.map((m) => m._id) } })
+      .select("signatureImage")
+      .lean();
+    if (!message?.signatureImage?.key) return res.status(404).json({ msg: "File not found." });
+
+    let bytes;
+    try {
+      bytes = await store.get(message.signatureImage.key);
+    } catch (err) {
+      console.error("[email-signature-image] could not read:", err?.message || err);
+      return res.status(503).json({ msg: "The image could not be loaded. Please try again." });
+    }
+    res.set({
+      "Content-Type": message.signatureImage.mime,
+      "Content-Length": String(bytes.length),
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      "Cache-Control": "private, no-store",
+    });
+    res.end(bytes);
+  }));
+
   return router;
 }
 
