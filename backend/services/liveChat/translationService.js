@@ -11,7 +11,7 @@
 // are never translated.
 const { encryptLiveChatText, decryptLiveChatText } = require("../../utils/liveChat/crypto");
 const { createWindowLimiter } = require("./limits");
-const { looksEnglish, tooShortToDetect, protect, restore, contactLiterals } = require("./languageHints");
+const { looksEnglish, tooShortToDetect, protect, restore, contactLiterals, scrubContact } = require("./languageHints");
 
 const CHUNK_ITEMS = 20;
 const CHUNK_CHARS = 8000;
@@ -175,6 +175,13 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     return { name: pick("name"), email: pick("email"), phone: pick("phone") };
   }
 
+  // What a language-detection call may carry: the patient's name (whole and parts), email and phone are swapped for
+  // [name] / [email] / [phone] first, then links and prices become placeholders. No OpenAI call gets contact details.
+  async function guardForDetect(conv, text) {
+    const contact = await contactOf(conv);
+    return protect(scrubContact(text, contact, (kind) => `[${kind}]`), contactLiterals(contact)).text;
+  }
+
   // Always into the patient's language (the chat's detected language); an English chat has nothing to translate to.
   async function translateReply(actor, conv, rawText) {
     const text = typeof rawText === "string" ? rawText.trim() : "";
@@ -206,7 +213,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
       const settings = await loadSettings();
       if (!(await spendOk(settings))) return;
       detectTries.set(conv.conversationId, tries + 1);
-      const result = await ai.detectLanguage({ text: protect(text).text });
+      const result = await ai.detectLanguage({ text: await guardForDetect(conv, text) });
       if (result.usage) await chat.recordUsage(conv, settings, result.usage);
       if (result.ok && result.language) {
         detectTries.delete(conv.conversationId);
@@ -244,8 +251,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     if (!(await spendOk(settings))) return { ok: false, language: null, reason: "cap" };
     openDetect.set(conv.conversationId, { at: now(), auto: seen.auto + (manual ? 0 : 1) });
     try {
-      const literals = contactLiterals(await contactOf(conv));
-      const result = await ai.detectLanguage({ text: protect(candidate, literals).text });
+      const result = await ai.detectLanguage({ text: await guardForDetect(conv, candidate) });
       if (result.usage) await chat.recordUsage(conv, settings, result.usage);
       if (!result.ok || !result.language) return { ok: false, language: null, reason: "failed" };
       const fresh = await LcConversation.findById(conv._id).select("language").lean();
