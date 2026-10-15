@@ -57,6 +57,9 @@ export default function MySignature() {
   });
   const autoAdd = useMutation({
     mutationFn: (value) => signaturesApi.setAutoAdd(value),
+    // The box changes at once; a failure puts it back (see onError).
+    onMutate: (value) =>
+      qc.setQueryData(SIGNATURES_KEY, (old) => (old?.signature ? { ...old, signature: { ...old.signature, autoAdd: value } } : old)),
     onSuccess: (res) => {
       setError("");
       store(res);
@@ -176,7 +179,6 @@ export default function MySignature() {
             <input
               type="checkbox"
               checked={signature?.autoAdd !== false}
-              disabled={autoAdd.isPending}
               onChange={(e) => autoAdd.mutate(e.target.checked)}
             />
             <span>
