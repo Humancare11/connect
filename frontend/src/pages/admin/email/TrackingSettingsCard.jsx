@@ -18,7 +18,7 @@ export default function TrackingSettingsCard() {
   // Unsaved edits of the footer notice; null = showing what the server has.
   const [draft, setDraft] = useState(null);
   const disclosureText = draft?.text ?? t?.disclosureText ?? "";
-  const disclosureEnabled = draft?.enabled ?? t?.disclosureEnabled ?? true;
+  const disclosureEnabled = draft?.enabled ?? t?.disclosureEnabled ?? false;
   const setDisclosureText = (text) => setDraft({ text, enabled: disclosureEnabled });
   const setDisclosureEnabled = (enabled) => setDraft({ text: disclosureText, enabled });
   // Unsaved edit of the secure-link expiry; null = showing what the server has.
@@ -209,14 +209,15 @@ export default function TrackingSettingsCard() {
             </div>
 
             <div className="mi-sep">
-              <h3>Notice in the footer</h3>
+              <h3>Tracking notice in the footer</h3>
               <label className="mi-check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={disclosureEnabled} onChange={(e) => setDisclosureEnabled(e.target.checked)} />
-                Add a notice to the footer of every mail that is tracked in any way
+                Add a tracking notice to the footer
               </label>
               <p className="em-sub">
-                By default the notice is written for you and names exactly what that mail does: opens, links, download links, read
-                receipt. Mail that is not tracked gets none.
+                {disclosureEnabled
+                  ? "Every mail that is tracked in any way carries a notice. It is written for you and names exactly what that mail does: opens, links, download links, read receipt. Mail that is not tracked gets none."
+                  : "Off: mail carries no notice and recipients are not told in the mail itself. Make sure your Privacy Policy covers email tracking. The wording below is what would be added if you switch this on."}
               </p>
               <label className="em-sub" htmlFor="mi-notice-custom">Your own wording (optional)</label>
               <textarea
@@ -310,9 +311,11 @@ export default function TrackingSettingsCard() {
         <Modal title="Turn on open tracking?" onClose={() => (update.isPending ? undefined : setConfirmOn(false))}>
           <div className="mi-form">
             <p>
-              Mail sent from the dashboard will carry a tiny tracking image, and a notice line is added to the footer
-              {t?.disclosureEnabled ? "" : " (the notice is currently switched off)"}. Please make sure your privacy and compliance review is complete before
-              using this with real recipients.
+              Mail sent from the dashboard will carry a tiny tracking image.
+              {t?.disclosureEnabled
+                ? " A notice line is added to the footer."
+                : " No notice is added to the mail (the footer notice is switched off), so recipients are not told in the mail itself."}{" "}
+              Please make sure your Privacy Policy and compliance review are complete before using this with real recipients.
             </p>
             <div className="mi-actions">
               <button type="button" className="em-btn em-btn-ghost" onClick={() => setConfirmOn(false)} disabled={update.isPending}>

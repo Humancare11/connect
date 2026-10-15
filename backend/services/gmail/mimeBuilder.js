@@ -38,7 +38,8 @@ function composeText(body, signature, disclosure = "", attachmentBlock = "") {
 //                linkTracker the HTML links go through it, the text part is unchanged);
 //                null/absent → plain text only, exactly as before
 //   secureLinks  { items: [{ filename, size, url }], expiresAt } → the files are NOT attached;
-//                the text lists one download link per file and says when they expire
+//                the text lists one link per file and says when they stop being available
+//                (no wording about tracking)
 //                (the files are still validated like attachments)
 //   disclosure   the footer notice for mail that has no `tracking` (secure links, read receipt
 //                only); mail with `tracking` carries tracking.disclosure
@@ -106,7 +107,8 @@ const fmtSize = (n) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` 
 function secureLinksBlock({ items, expiresAt }) {
   const until = new Date(expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
   const lines = items.map((i) => `- ${stripLineBreaks(i.filename)} (${fmtSize(i.size || 0)})\n  ${i.url}`);
-  return [`Attachments - secure download links, valid until ${until} (UTC):`, ...lines].join("\n");
+  // Only what the recipient needs: the files, their sizes and when they stop being available.
+  return [`Attachments (available until ${until}, UTC):`, ...lines].join("\n");
 }
 
 module.exports = { buildRawMessage, composeText, secureLinksBlock };

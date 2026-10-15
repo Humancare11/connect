@@ -153,7 +153,7 @@ describe("the notice on real outgoing mail", () => {
   test("opens + downloads (secure links)", async () => {
     const { text } = await sendAndRead({ secureLinks: "1", files: [["r.pdf", PDF]] });
     assert.ok(text.includes(phrase({ opens: true, downloads: true })), text);
-    assert.ok(text.includes("valid until"), "the expiry stays in the mail itself");
+    assert.ok(text.includes("available until"), "the expiry stays in the mail itself");
   });
 
   test("downloads only: secure links with 'Track opens' unticked still carry a notice", async () => {

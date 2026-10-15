@@ -40,7 +40,8 @@ describe("the text that replaces the attachments", () => {
       ],
       expiresAt: new Date("2026-10-22T09:00:00Z"),
     });
-    assert.match(block, /valid until 22 October 2026 \(UTC\)/);
+    assert.match(block, /^Attachments \(available until 22 October 2026, UTC\):/);
+    assert.ok(!/secure|track|record|download/i.test(block.replace(/https:\/\/\S+/g, "")), "only files, sizes and expiry");
     assert.match(block, /- report\.pdf \(1\.5 MB\)\n  https:\/\/uat\.example\.com\/api\/d\/a{32}/);
     assert.match(block, /- note\.txt \(1 KB\)\n  https:\/\/uat\.example\.com\/api\/d\/b{32}/);
   });
@@ -155,7 +156,7 @@ describe("secure attachment links: sending, downloading, recording", () => {
     const text = decodeQP(mime);
     assert.match(text, /report\.pdf/);
     assert.match(text, /labs\.pdf/);
-    assert.match(text, /secure download links, valid until/);
+    assert.match(text, /Attachments \(available until/);
     // each address appears in the text part and in the HTML part (href and visible text)
     const tokens = [...new Set(tokensIn(mime))];
     assert.equal(tokens.length, 2);
@@ -193,7 +194,7 @@ describe("secure attachment links: sending, downloading, recording", () => {
   test("ticked without any file is just a normal mail", async () => {
     const { status } = await send({ secureLinks: "1", files: [] });
     assert.equal(status, 201);
-    assert.ok(!/secure download links/.test(decodeQP(gmail.sent[0])));
+    assert.ok(!/available until/.test(decodeQP(gmail.sent[0])));
   });
 
   test("anything other than '1' does not ask", async () => {

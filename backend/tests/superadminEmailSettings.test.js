@@ -74,7 +74,7 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
     assert.equal(body.tracking.switchOn, false);
     assert.equal(body.tracking.active, false);
     assert.equal(body.tracking.envEnabled, false);
-    assert.equal(body.tracking.disclosureEnabled, true);
+    assert.equal(body.tracking.disclosureEnabled, false, "no notice unless a Super Admin switches it on");
     assert.equal(body.tracking.disclosureText, "", "no custom line by default: the automatic wording is used");
     assert.equal(body.tracking.disclosureCustom, false);
     assert.deepEqual(body.optOuts, []);

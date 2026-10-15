@@ -35,19 +35,19 @@ look unread.
   normal outcome.
 - **Secure links** are for non-sensitive files. Anyone with the link can download until it expires (7 days by
   default). Do not use them for medical reports, prescriptions or ID documents.
-- **"Do not track":** if a recipient replies this, add them to *Never track these recipients* in the
-  tracking settings. From then on nothing is recorded for them, including on mail already sent, and links in
+- **Asking us to stop:** recipients are told in the Privacy Policy and can write to the privacy contact. Add
+  them to *Never track these recipients* in the tracking settings. From then on nothing is recorded for them, including on mail already sent, and links in
   old mail keep working.
 - **What is stored:** counts, times and the link or file involved. No IP address and no browser details
   beyond a short family name (for example "Chrome"). Detail rows expire after 180 days; the summary stays.
 
 ## Footer notice
 
-Mail that is tracked in any way carries a notice that names exactly what that mail does:
+**No notice is added to mail by default.** Recipients are informed through the website Privacy Policy. A Super
+Admin can switch "Add a tracking notice to the footer" on; then every mail that is tracked in any way carries
+a notice that names exactly what that mail does (opens, links if it has some, download links, read receipt)
+and ends with how to stop. The settings page shows the wording for every combination. Mail that is not
+tracked never carries one.
 
-- opens, links (only if the mail has links), download links, read receipt, in any combination;
-- it always ends with how to stop: reply with "Do not track";
-- mail that is not tracked carries no notice.
-
-A Super Admin can switch the notice off or replace the automatic wording with their own. The settings page
-shows the automatic wording for every combination.
+Two things a recipient does see even without a notice: a read-receipt request makes their mail app ask
+permission (the compose form says so), and hovering over a link shows our address instead of the destination.

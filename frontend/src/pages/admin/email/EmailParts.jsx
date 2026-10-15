@@ -128,13 +128,17 @@ export function SecureLinksToggle({ checked, onChange, days }) {
 }
 
 // "Request read receipt" box. Its own box, off by default, shown only while tracking is on.
+export const RECEIPT_WARNING = "The recipient will see a prompt asking to send a receipt \u2014 they will know you asked.";
+
 export function ReceiptToggle({ checked, onChange }) {
   return (
-    <label className="em-trkopt" title="Asks the recipient's mail app to confirm the mail was displayed. Most mail apps never send one, and the recipient can always decline.">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      Request read receipt
-      <small className="em-sub"> · most mail apps never send one</small>
-    </label>
+    <div className="em-receiptbox">
+      <label className="em-trkopt" title="Most mail apps never send a receipt, and the recipient can always decline.">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        Request read receipt
+      </label>
+      <small className="em-trkwarn">{RECEIPT_WARNING}</small>
+    </div>
   );
 }
 

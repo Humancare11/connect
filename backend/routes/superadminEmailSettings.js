@@ -101,7 +101,8 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks", "secureLinksEnabled"]) {
       if (body[key] === undefined) continue;
       if (typeof body[key] !== "boolean") throw new ValidationError(`${key} must be true or false.`);
-      patch[key] = body[key];
+      // The footer notice switch is stored under its own new name (see models/EmailSettings.js).
+      patch[key === "disclosureEnabled" ? "footerNoticeEnabled" : key] = body[key];
     }
     if (body.secureLinkDays !== undefined) {
       const max = getState && (await getState({ full: true })).secureLinkDaysMax;

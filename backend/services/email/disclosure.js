@@ -6,6 +6,8 @@
 //   downloads   attachments are sent as secure download links
 //   receipt     the mail asks for a read receipt (the recipient's app decides)
 //
+// Nothing is added unless a Super Admin switched the footer notice on (default: off).
+//
 // A Super Admin may write one custom line instead (EmailSettings.disclosureText). It then
 // replaces the automatic wording for EVERY mail, so it has to cover all four. Left empty,
 // the automatic wording is used. The Super Admin can also switch the notice off.

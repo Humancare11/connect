@@ -21,7 +21,9 @@ What changes for existing users once deployed (all behind switches that are off 
 - the Sent filter "Open status" becomes **Read status** (the `openStatus` URL parameter is gone);
 - company and Apple recipients are now tracked (before: never);
 - a recipient on the opt-out list stops being recorded even for mail already sent;
-- the footer notice is written automatically; an empty custom line is now allowed;
+- **no footer notice is added to any mail** unless a Super Admin switches "Add a tracking notice to the footer"
+  on (default off, also for a settings document that already existed). Recipients are told through the
+  website Privacy Policy instead, so publish that wording before real recipients get tracked mail;
 - new collections are created on first use: `emaillinks`, `emailclickevents`, `emaildownloadlinks`,
   `emaildownloadevents`. No migration. Existing mail keeps working (every new field has a default).
 
@@ -77,7 +79,8 @@ log off rather than changing `NODE_ENV`: it changes other behaviour.
 2. **Track mail to company addresses**: On (default).
 3. **Record which links are clicked**: On.
 4. **Let admins send attachments as secure links**: On; "Links expire after" `7` days.
-5. **Notice in the footer**: leave the automatic wording; open "See the automatic wording" to read it.
+5. **Add a tracking notice to the footer**: leave **off** (default). Recipients then see nothing in the mail.
+   Open "See the automatic wording for each case" to read what would be added if it were switched on.
 6. Each Mail ID's "Track opens by default": as you like. The test script ticks the box per mail.
 
 The card shows each gate as Active / Not active and says which one is missing.
@@ -98,8 +101,16 @@ Link C: https://example.net/uat-c
 Boxes: **Track opens** on; **Request read receipt** on for the receipt tests; **Send attachments as secure
 links** only for the download tests (attach a small PDF with no personal data).
 
-Check once first, on the compose form: the footer notice appears in the sent mail and says "opened" and
-"which links ... clicked". Mail with no tracking has none.
+Check once first: the sent mail (in Gmail, "Show original") has **no** footer notice and no tracking wording in
+the text or the HTML. With "Request read receipt" ticked the form shows: "The recipient will see a prompt asking
+to send a receipt - they will know you asked." With "Send attachments as secure links" ticked the form shows
+the medical reports / prescriptions / ID documents warning.
+
+What a recipient can see in a tracked mail: nothing of the tracking itself. The image is 1x1 with no text and no
+border. The text of a link is exactly what was typed (hovering shows our address instead of the destination,
+and some mail apps show that as a difference). The secure-link lines say only file name, size and the date the
+file is available until. The only visible sign is the read-receipt prompt, because the recipient's mail app
+asks.
 
 ### A. Gmail (personal account, browser)
 
@@ -169,7 +180,7 @@ range to `EMAIL_SCANNER_IPS`.
 |---|---|---|
 | H1 | Send a mail to the Gmail test address. | Works as in A. |
 | H2 | Add that address to "Never track these recipients". Open the old mail again and click a link. | Link opens normally. Nothing new is recorded. |
-| H3 | Send a new mail to the same address. | No tracking image or tracked links, no notice. **Tracking unavailable**. |
+| H3 | Send a new mail to the same address. | No tracking image or tracked links. **Tracking unavailable**. |
 | H4 | Remove the address from the list. | Tracking works again on new mail. |
 
 ### I. Scanner behaviour (from a phone on mobile data, not your office network)
@@ -222,7 +233,23 @@ log off (or let it expire). Nothing is written to the database.
 
 - every step above shows what is expected, or the difference is understood and written down;
 - no scanner shows as Clicked, Downloaded or a plain Opened;
-- the footer notice reads correctly in the sent mail for opens, links, downloads and receipt;
+- no mail carries a footer notice (switch it on once, send one test, read the wording, switch it off again);
+- the Privacy Policy line is published (section 7);
 - the debug log is off.
 
 Only then decide about production. Production needs its own approval: the same switches, off by default.
+
+## 7. Privacy Policy wording (replaces the footer notice)
+
+Suggested text for the website Privacy Policy. Counsel should check it against the laws that apply to you
+(for example DPDP Act 2023, and GDPR / UK rules where recipients are there) and add your legal basis.
+
+> **Emails we send you.** The emails we send may contain a small image and web links that let us know whether
+> an email was opened, whether links in it were used, and whether files we shared through a download link
+> were downloaded. We keep the time and the number of these events with the email, not your IP address. We
+> use this only to understand whether our messages reached you and to follow up on your request. If you
+> would rather we did not, write to [privacy contact email] and we will stop recording it for your address.
+> Blocking images in your email app also prevents opens from being recorded.
+
+Keep the contact address monitored: with no notice in the mail, that address is how a recipient asks to stop.
+When someone writes, add them to *Never track these recipients* (it applies to mail already sent).

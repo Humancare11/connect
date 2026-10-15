@@ -246,7 +246,7 @@ describe("planTracking decides per mail", () => {
     assert.equal((await getTrackingState({ env: { ...env, EMAIL_TRACKING_ENABLED: "false" } })).active, false);
     assert.equal((await getTrackingState({ env: { ...env, PUBLIC_TRACKING_BASE_URL: "http://insecure.example.com" } })).active, false);
     const s = await getTrackingState({ env });
-    assert.equal(s.disclosureEnabled, true, "disclosure is ON by default");
+    assert.equal(s.disclosureEnabled, false, "the footer notice is OFF by default");
     assert.equal(s.disclosureText, "", "the stored default line is blank");
   });
 });
