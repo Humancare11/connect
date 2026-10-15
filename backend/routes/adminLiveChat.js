@@ -33,6 +33,10 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET/POST/PUT/DELETE /canned-replies                   canned replies (writes: superadmin only)
 //   GET  /team, PUT /team/:userId/display-name            Team page; an agent renames themselves, a superadmin anyone
 //   GET  /reports?from=YYYY-MM-DD&to=YYYY-MM-DD           Reports page
+//   GET  /review/access                                   whether this user may open AI Review (any agent)
+//   GET  /review?status=&from=&to=, /review/log, /review/:id, POST /review/:id   AI Review (Super Admin or reviewer);
+//                                                         the review log is append-only: there is no edit or delete
+//   PUT  /team/:userId/reviewer                           allow / stop an admin from using AI Review (Super Admin)
 //
 // Options exist so tests can run without real sessions:
 //   guard     auth middleware chain (default: verified admin session, then agent role)
@@ -56,7 +60,20 @@ function makeUserLimiter({ windowMs = 60_000, max = 10, now = () => Date.now() }
   };
 }
 
-function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, trashLimiter } = {}) {
+// AI Review: Super Admin, or an admin the Super Admin has given the reviewer permission (a flag on the user record,
+// read here because the session token does not carry it).
+async function canReview(user) {
+  if (user?.role === "superadmin") return true;
+  if (user?.role !== "admin") return false;
+  try {
+    const row = await require("../models/User").findById(user.id).select("liveChatReviewer accountDisabled").lean();
+    return Boolean(row?.liveChatReviewer) && row.accountDisabled !== true;
+  } catch {
+    return false;
+  }
+}
+
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, review, trashLimiter } = {}) {
   const router = express.Router();
   router.use(guard);
   router.use(express.json({ limit: "32kb" }));
@@ -114,7 +131,29 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.put("/canned-replies/:id", superAdminOnly, handle((req) => settings.updateCanned(actor(req), req.params.id, req.body)));
   router.delete("/canned-replies/:id", superAdminOnly, handle((req) => settings.deleteCanned(actor(req), req.params.id)));
 
+  // ── AI Review (flagged medical chats) ─────────────────────────────────────────
+
+  const reviewerOnly = async (req, res, next) => {
+    try {
+      if (await canReview(req.user)) return next();
+      return res.status(403).json({ ok: false, error: "reviewer_only" });
+    } catch (err) {
+      return next(err);
+    }
+  };
+  // Lets the Live Chat menu know whether to show the AI Review page. Open to every agent.
+  router.get("/review/access", handle(async (req) => ({ ok: true, canReview: await canReview(req.user) })));
+  if (review) {
+    router.get("/review", reviewerOnly, handle((req) => review.list({ status: req.query.status, from: req.query.from, to: req.query.to })));
+    router.get("/review/log", reviewerOnly, handle((req) => review.log({ before: req.query.before })));
+    router.get("/review/:id", reviewerOnly, handle((req) => review.detail(idOf(req))));
+    router.post("/review/:id", reviewerOnly, handle((req) => review.review(actor(req), idOf(req), req.body)));
+    // No PUT / PATCH / DELETE on purpose: the review log is append-only.
+  }
+
   router.get("/team", handle(() => stats.team()));
+  // Who may open AI Review. Super Admin only; audited in the settings change log.
+  router.put("/team/:userId/reviewer", superAdminOnly, handle((req) => settings.setReviewer(actor(req), req.params.userId, req.body?.enabled)));
   // The AI's name is a setting, so it is saved (and audited) like one: Super Admin only. Registered before :userId.
   router.put("/team/ai/display-name", superAdminOnly, handle((req) => settings.update(actor(req), { aiDisplayName: req.body?.displayName })));
   router.put("/team/:userId/display-name", handle((req) => settings.setDisplayName(actor(req), req.params.userId, req.body?.displayName)));

@@ -56,6 +56,29 @@ const conversationSchema = new mongoose.Schema(
     patientMessageCount: { type: Number, default: 0 },
     reads: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, count: { type: Number, default: 0 } }],
     aiSummary: ENC_FIELD,
+    // The AI-notice acceptance of the visitor who started this chat (copied from the visitor when the chat starts, and
+    // refreshed when they accept again). Only written while the Super Admin setting "Show AI notice" is on.
+    consent: {
+      aiNoticeAcceptedAt: { type: Date, default: null },
+      policyVersion: { type: String, default: "", maxlength: 20 },
+    },
+    // Safety flags for the AI Review page. medical: the reply filter blocked a reply, the emergency detector fired, or the
+    // model's topic / handoff reason was medical or emergency. reasons: reply_blocked | emergency_keyword |
+    // model_emergency | model_medical (each at most once). lastAt: the latest time one of them happened.
+    flags: {
+      medical: { type: Boolean, default: false, index: true },
+      reasons: [{ type: String, maxlength: 40 }],
+      firstAt: { type: Date, default: null },
+      lastAt: { type: Date, default: null },
+    },
+    // Summary of the append-only review log (LcReviewLog) for fast filtering: a new flag after a review makes the chat
+    // unreviewed again. The log itself is the record.
+    review: {
+      status: { type: String, enum: ["", "unreviewed", "reviewed"], default: "" },
+      lastOutcome: { type: String, enum: ["", "ok", "issue"], default: "" },
+      lastAt: { type: Date, default: null },
+      count: { type: Number, default: 0 },
+    },
     // Who downloaded the transcript, newest last (a record of access for PHI, like LcFile.accessLog).
     transcriptLog: [{ _id: false, userId: { type: mongoose.Schema.Types.ObjectId }, at: { type: Date, default: Date.now } }],
     // The patient's language (not PHI): detected from the AI reply, or by one small model call. No badge for "en".
@@ -105,6 +128,7 @@ const conversationSchema = new mongoose.Schema(
 
 conversationSchema.index({ mode: 1, lastMessageAt: -1 });
 conversationSchema.index({ "trash.purgeAfter": 1 }, { partialFilterExpression: { mode: "trashed" } });
+conversationSchema.index({ "flags.medical": 1, "flags.lastAt": -1 }); // AI Review list
 conversationSchema.index({ mode: 1, closedAt: -1 }); // Archive list and Archive temp
 
 module.exports = mongoose.model("LcConversation", conversationSchema);

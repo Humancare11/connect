@@ -125,3 +125,30 @@ html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
 .lcx .dc-type{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .lcx .dc-type input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit}
 .lcx .dc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+
+/* AI Review page */
+.lcx .rv-tabs{display:flex;gap:8px;margin:0 0 14px}
+.lcx .rv-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:0 0 14px}
+.lcx .rv-filters label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.lcx .rv-filters select,.lcx .rv-filters input{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
+.lcx .rv-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.lcx .rv-split{grid-template-columns:minmax(0,1fr)}}
+.lcx .rv-split .lcp-table{min-width:0}
+.lcx .rv-link{background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline;cursor:pointer}
+.lcx .rv-row--open td{background:var(--accent-soft)}
+.lcx .rv-issue{color:var(--danger-ink);font-weight:600}
+.lcx .rv-empty{border:1px dashed var(--line-2);border-radius:14px;padding:32px;text-align:center}
+.lcx .rv-detail{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:14px}
+.lcx .rv-detail-head{display:flex;justify-content:space-between;gap:12px}
+.lcx .rv-transcript{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.lcx .rv-msg{border-radius:10px;padding:8px 10px;font-size:13.5px;overflow-wrap:anywhere;background:var(--surface-2)}
+.lcx .rv-msg--patient{background:var(--bubble);color:var(--bubble-ink)}
+.lcx .rv-msg--ai{background:var(--ai-soft);color:var(--ai-ink)}
+.lcx .rv-msg-meta{font-size:11px;color:var(--muted);margin-bottom:2px}
+.lcx .rv-badge{margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-weight:600}
+.lcx .rv-history ul{margin:6px 0 0;padding-left:18px}
+.lcx .rv-note{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);font-size:12.5px}
+.lcx .rv-form{display:flex;flex-direction:column;gap:8px}
+.lcx .rv-outcomes{display:flex;gap:18px}
+.lcx .rv-outcomes label{display:flex;gap:6px;align-items:center}
+.lcx .rv-form textarea{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical}

@@ -310,6 +310,17 @@ function createAgentService({
           liveStartedAt: conv.liveStartedAt,
           closedAt: conv.closedAt,
           startedPage: conv.startedPage || { path: "", title: "" },
+          // The AI notice the patient accepted when they started the chat (only while "Show AI notice" is on).
+          aiNotice: conv.consent?.aiNoticeAcceptedAt ? { acceptedAt: conv.consent.aiNoticeAcceptedAt, policyVersion: conv.consent.policyVersion || "" } : null,
+          // Flagged for the AI Review page, and where the review stands.
+          safety: conv.flags?.medical
+            ? {
+                reasons: conv.flags.reasons || [],
+                reviewStatus: conv.review?.status || "unreviewed",
+                reviewOutcome: conv.review?.lastOutcome || "",
+                reviewedAt: conv.review?.lastAt || null,
+              }
+            : null,
         },
         tags: conv.tags || [],
         fields: contextFieldsOf(visitor, settingsForFields),

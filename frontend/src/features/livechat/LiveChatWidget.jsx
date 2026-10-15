@@ -98,7 +98,7 @@ function Message({ message, aiName, onNavigate, onOpenFile }) {
   );
 }
 
-export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
+export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiNotice = false }) {
   const chat = useLiveChat();
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
@@ -198,7 +198,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
           </header>
 
           <div className="lcw-body" ref={bodyRef} aria-live="polite" data-lenis-prevent>
-            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
+            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} showNotice={showAiNotice} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
             {phase === "chat" && !conversation && limitReached && (
               <div className="lcw-sys" role="alert">
