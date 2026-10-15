@@ -17,7 +17,10 @@ function validate({ name, email, phone }) {
   return errors;
 }
 
-export default function ContactForm({ onSubmit, aiName, reply = false }) {
+// Where "Privacy Policy" points: the website-chat section of the policy.
+const PRIVACY_URL = "/privacy-policy#website-chat";
+
+export default function ContactForm({ onSubmit, aiName, reply = false, showNotice = false }) {
   const [values, setValues] = useState({ name: "", email: "", phone: "" });
   const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState({});
@@ -41,6 +44,7 @@ export default function ContactForm({ onSubmit, aiName, reply = false }) {
       email: values.email.trim(),
       phone: values.phone.trim(),
       companyUrl: honeypot,
+      aiNoticeAccepted: showNotice, // pressing Start chat is the acceptance: no checkbox
     });
     setBusy(false);
     if (!result.ok) {
@@ -86,9 +90,31 @@ export default function ContactForm({ onSubmit, aiName, reply = false }) {
         </span>
       )}
 
+      {showNotice && (
+        <div className="lcw-notice">
+          <p>
+            {aiName} is an automated assistant, not a doctor. It can't diagnose or give medical advice. Your messages may be processed by our service providers
+            under HIPAA agreements. See our{" "}
+            <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+              Privacy Policy
+            </a>
+            .
+          </p>
+        </div>
+      )}
+
       <button type="submit" disabled={busy}>
         {busy ? "Starting…" : "Start chat"}
       </button>
+      {showNotice && (
+        <p className="lcw-notice-agree">
+          By starting the chat, you agree to this notice and our{" "}
+          <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+            Privacy Policy
+          </a>
+          .
+        </p>
+      )}
     </form>
   );
 }

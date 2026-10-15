@@ -110,6 +110,17 @@ export default function AdminLiveTeam() {
     }
   };
 
+  // Super Admin only: allow an admin to open the AI Review page.
+  const setReviewer = async (userId, enabled) => {
+    try {
+      await api.put(`${BASE}/team/${userId}/reviewer`, { enabled });
+      setError("");
+    } catch {
+      setError("Could not change AI Review access.");
+    }
+    setVersion((v) => v + 1);
+  };
+
   const rows = data?.agents || [];
   const ai = data?.ai;
   return (
@@ -132,6 +143,7 @@ export default function AdminLiveTeam() {
               <th>Open chats</th>
               <th>Chats today</th>
               <th>Avg first reply</th>
+              <th>AI Review</th>
             </tr>
           </thead>
           <tbody>
@@ -150,6 +162,7 @@ export default function AdminLiveTeam() {
                 <td className="lcp-mono">{ai.openChats}</td>
                 <td className="lcp-mono">{ai.chatsToday}</td>
                 <td className="lcp-mono">{formatSeconds(ai.avgFirstReplySeconds)}</td>
+                <td className="lcp-muted">–</td>
               </tr>
             )}
             {rows.map((agent) => (
@@ -168,6 +181,22 @@ export default function AdminLiveTeam() {
                 <td className="lcp-mono">{agent.openChats}</td>
                 <td className="lcp-mono">{agent.chatsToday}</td>
                 <td className="lcp-mono">{formatSeconds(agent.avgFirstReplySeconds)}</td>
+                <td>
+                  {agent.role === "Super admin" ? (
+                    <span className="lcp-muted">Always</span>
+                  ) : (
+                    <label className="lcp-check">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(agent.reviewer)}
+                        disabled={admin?.role !== "superadmin"}
+                        onChange={(e) => setReviewer(agent.userId, e.target.checked)}
+                        aria-label={`Allow ${agent.name} to use AI Review`}
+                      />{" "}
+                      Allowed
+                    </label>
+                  )}
+                </td>
               </tr>
             ))}
             {data && rows.length === 0 && (

@@ -509,6 +509,24 @@ html.hc-cookie-open .lcw-window {
   opacity: 0.6;
   cursor: not-allowed;
 }
+.lcw-notice {
+  background: var(--lcw-surface-2);
+  border: 1px solid var(--lcw-line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.lcw-notice p,
+.lcw-notice-agree {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--lcw-muted);
+}
+.lcw-notice a,
+.lcw-notice-agree a {
+  color: var(--lcw-accent);
+  text-decoration: underline;
+}
 .lcw-err {
   color: var(--lcw-urgent);
   font-size: 12.5px;

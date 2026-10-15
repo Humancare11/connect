@@ -23,6 +23,9 @@ const visitorSchema = new mongoose.Schema(
       cookies: { type: Boolean, default: false },
       // Kept for records written before 2026-10-10. No longer written: the chat shows no privacy acceptance any more.
       privacyAcceptedAt: { type: Date, default: null },
+      // The AI notice shown above "Start chat" (no checkbox). Written only while the Super Admin setting "Show AI notice" is on.
+      aiNoticeAcceptedAt: { type: Date, default: null },
+      policyVersion: { type: String, default: "", maxlength: 20 },
     },
     firstSeenAt: { type: Date, default: Date.now },
     lastSeenAt: { type: Date, default: Date.now },

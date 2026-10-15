@@ -92,7 +92,7 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
     const zone = zoneOf(settings);
     const todayStart = zonedDayStart(dayKey(new Date(now()), zone), zone);
     const User = require("../../models/User");
-    const users = await User.find({ role: { $in: ["admin", "superadmin"] }, accountDisabled: { $ne: true } }).select("name role").sort({ name: 1 }).lean();
+    const users = await User.find({ role: { $in: ["admin", "superadmin"] }, accountDisabled: { $ne: true } }).select("name role liveChatReviewer").sort({ name: 1 }).lean();
     const ids = users.map((u) => u._id);
 
     const [profiles, open, today, replies, aiOpen, aiToday, aiSample] = await Promise.all([
@@ -131,6 +131,7 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
         userId: id,
         name: u.name || "",
         role: u.role === "superadmin" ? "Super admin" : "Admin",
+        reviewer: u.role === "superadmin" || Boolean(u.liveChatReviewer), // may open AI Review (a Super Admin always can)
         displayName: profile?.displayName || first,
         openChats: openBy.get(id) || 0,
         chatsToday: todayBy.get(id) || 0,

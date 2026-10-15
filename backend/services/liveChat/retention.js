@@ -5,8 +5,9 @@
 // It only ever touches the Lc* collections and the livechat/ S3 prefix. The existing clinical ChatMessage
 // retention, the medical-record retention and the uploads/ cleanup are separate and unaffected.
 //
-// Kept on purpose: the daily AI usage totals (cost and token counts, no patient data), the blocked IP list and the
-// settings change log.
+// Kept on purpose: the daily AI usage totals (cost and token counts, no patient data), the blocked IP list, the
+// settings change log and the AI review log (LcReviewLog: append-only, with the chat id and date copied into every
+// row, so it still names a chat after the chat is deleted).
 //
 // Safety: a chat's database rows are deleted only after ALL of its S3 objects are gone. If S3 fails for a chat, that
 // chat is left for the next run, so nothing is orphaned in the bucket.

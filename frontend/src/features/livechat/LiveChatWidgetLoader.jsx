@@ -23,6 +23,7 @@ export default function LiveChatWidgetLoader() {
   const { pathname } = useLocation();
   const [serverOn, setServerOn] = useState(false);
   const [aiName, setAiName] = useState(DEFAULT_AI_NAME);
+  const [showAiNotice, setShowAiNotice] = useState(false); // Super Admin setting: the AI notice above "Start chat"
   const publicPage = isTrackablePath(pathname) && pathname !== "/cookies";
 
   useEffect(() => {
@@ -35,6 +36,7 @@ export default function LiveChatWidgetLoader() {
           const config = await res.json().catch(() => ({}));
           if (!cancelled) {
             if (config.aiName) setAiName(config.aiName);
+            setShowAiNotice(config.showAiNotice === true);
             setServerOn(true);
           }
         }
@@ -51,7 +53,7 @@ export default function LiveChatWidgetLoader() {
   if (!ENABLED || !serverOn || !publicPage) return null;
   return (
     <Suspense fallback={null}>
-      <LiveChatWidget configAiName={aiName} />
+      <LiveChatWidget configAiName={aiName} showAiNotice={showAiNotice} />
     </Suspense>
   );
 }

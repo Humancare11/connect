@@ -42,6 +42,12 @@ const settingsSchema = new mongoose.Schema(
     businessFacts: { type: String, default: "", maxlength: 8000 },
     // Extra text fields an agent can fill in about a patient (Patient context). Defined by a Super Admin; up to 10.
     customFields: [{ _id: false, key: { type: String, required: true, maxlength: 24 }, label: { type: String, required: true, maxlength: 40 } }],
+    // Medical questions: may the AI also show a matching condition page next to the booking link? OFF = booking link only.
+    aiMayLinkConditionPages: { type: Boolean, default: true },
+    // The AI notice above "Start chat" in the widget, and the record that the visitor accepted it. OFF until the policy
+    // section is published. policyVersion is stored with every acceptance; changing it asks returning visitors again.
+    showAiNotice: { type: Boolean, default: false },
+    policyVersion: { type: String, default: "v1", trim: true, maxlength: 20 },
     dailySpendCapUsd: { type: Number, default: 3, min: 0 },
     unavailableMessage: { type: String, default: "", maxlength: 600 },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

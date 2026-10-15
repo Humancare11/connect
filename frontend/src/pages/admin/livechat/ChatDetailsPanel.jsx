@@ -218,6 +218,24 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags, r
           )}
           <dt>Started on</dt>
           <dd className="wk-link">{p.info.startedPage.path ? `…humancareconnect.co${p.info.startedPage.path}` : "–"}</dd>
+          {p.info.aiNotice && (
+            <>
+              <dt>AI notice</dt>
+              <dd>
+                AI notice accepted: {new Date(p.info.aiNotice.acceptedAt).toLocaleString()} · policy {p.info.aiNotice.policyVersion || "–"}
+              </dd>
+            </>
+          )}
+          {p.info.safety && (
+            <>
+              <dt>AI Review</dt>
+              <dd>
+                {p.info.safety.reviewStatus === "reviewed"
+                  ? `Reviewed: ${p.info.safety.reviewOutcome === "issue" ? "Issue" : "OK"}${p.info.safety.reviewedAt ? ` · ${new Date(p.info.safety.reviewedAt).toLocaleString()}` : ""}`
+                  : "Flagged as medical · not reviewed yet"}
+              </dd>
+            </>
+          )}
         </dl>
       </Section>
 

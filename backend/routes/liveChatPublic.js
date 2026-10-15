@@ -13,7 +13,7 @@ const { FileError } = require("../services/liveChat/fileService");
 //   GET  /api/livechat/config   tells the widget the module is on (the widget stays hidden on a 404)
 //   POST /api/livechat/upload   a patient's report (pdf/jpg/png, max 10 MB) into their own open chat; needs the chat token
 //   GET  /api/livechat/files/:id/url  a file the team sent the patient: a short link, own chat only; needs the chat token
-//   POST /api/livechat/contact  the contact form: validates, checks the honeypot, registers the visitor and
+//   POST /api/livechat/contact  the contact form: validates, checks the honeypot (and the AI-notice flag when the notice is on), registers the visitor and
 //                               returns the chat token that unlocks the chat sockets
 //
 // Options exist so tests run without the real limiters:
@@ -38,7 +38,15 @@ function create({ chat, loadSettings, isIpBlocked, files, env = process.env, lim
     try {
       const settings = await loadSettings();
       res.set("Cache-Control", "no-store");
-      res.json({ enabled: true, agentName: settings.agentDisplayName || "Sam", aiName: aiNameOf(settings), privacyPolicyUrl: "/privacy-policy" });
+      res.json({
+        enabled: true,
+        agentName: settings.agentDisplayName || "Sam",
+        aiName: aiNameOf(settings),
+        privacyPolicyUrl: "/privacy-policy",
+        // The AI notice above "Start chat" (Super Admin setting, off until the policy section is published).
+        showAiNotice: settings.showAiNotice === true,
+        policyVersion: String(settings.policyVersion || "v1"),
+      });
     } catch (err) {
       next(err);
     }
@@ -105,12 +113,24 @@ function create({ chat, loadSettings, isIpBlocked, files, env = process.env, lim
 
       // A cached older widget may still send turnstileToken; it is ignored (never read, never an error).
 
+      // While "Show AI notice" is on, the form must come from a widget that shows the notice. An old cached widget
+      // does not send the flag and gets a clear "refresh the page" error (its form shows errors.form), not a crash.
+      const settings = await loadSettings();
+      let consent = null;
+      if (settings.showAiNotice === true) {
+        if (body.aiNoticeAccepted !== true) {
+          return res.status(400).json({ ok: false, error: "refresh_required", errors: { form: "Please refresh the page to continue." } });
+        }
+        consent = { policyVersion: String(settings.policyVersion || "v1") };
+      }
+
       const result = await chat.registerContact({
         visitorId: body.visitorId,
         name: body.name,
         email: body.email,
         phone: body.phone,
         ip,
+        consent,
       });
       if (!result.ok) return res.status(400).json({ ok: false, errors: result.errors });
 

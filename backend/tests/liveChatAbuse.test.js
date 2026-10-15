@@ -276,7 +276,7 @@ describe("AI service", () => {
 
   test("the system prompt carries the brief's rules and the prices from settings", () => {
     const prompt = buildSystemPrompt(DEFAULT_SETTINGS);
-    for (const needle of ["Never diagnose", "medications or doses", "call 911", "language", "General consultation: $49", "Fit to fly: $69", "Prescription refills: $60", "short"]) {
+    for (const needle of ["Never diagnose", "medications, doses or interactions", "call 911", "language", "General consultation: $49", "Fit to fly: $69", "Prescription refills: $60", "200 characters"]) {
       assert.ok(prompt.includes(needle), needle);
     }
     const custom = buildSystemPrompt({ ...DEFAULT_SETTINGS, businessFacts: "We are closed on Christmas Day." });

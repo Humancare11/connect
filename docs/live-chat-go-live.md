@@ -7,6 +7,7 @@ Tick each item on staging first, then production.
 
 ## Environment
 - [ ] Backend: `LIVECHAT_ENABLED=true`, `LIVECHAT_ENCRYPTION_KEY` (64 hex), `LIVECHAT_OPENAI_API_KEY`, `LIVECHAT_MODEL`, `LIVECHAT_FOLLOWUP_MAILBOX`, S3 vars (`AWS_S3_BUCKET` etc.). See `backend/.env.example`.
+- [ ] OpenAI data handling: `LIVECHAT_OPENAI_ORG_ID` and `LIVECHAT_OPENAI_PROJECT_ID` set to the organisation and project that hold the data-handling (HIPAA) agreement. Optional in code, but in production the backend logs a startup warning (variable names only, never values) when either is missing. Every live-chat model call is sent with `store: false`.
 - [ ] Frontend build: `VITE_LIVECHAT_ENABLED=true`.
 - [ ] `LIVECHAT_ENCRYPTION_KEY` backed up in two safe places. Losing it makes every chat unreadable.
 - [ ] Per-IP daily chat limit: `LIVECHAT_CHATS_PER_IP_DAY` (default 10 new chats per IP per rolling 24 h; the old name `LIVECHAT_IP_DAILY_CHAT_LIMIT` still works). Outside production it is skipped for loopback IPs and `LIVECHAT_DEV_FAKE_IP` (logged once at startup); in production it always applies. Patients who hit it see a message in the chat and can email support@humancareconnect.co. **Note:** if `LIVECHAT_CHATS_PER_IP_DAY` (or the old `LIVECHAT_IP_DAILY_CHAT_LIMIT`) is already set on Render, that value wins over the new default of 10. Check it and change or remove it if you want 10.

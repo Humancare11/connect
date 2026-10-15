@@ -66,6 +66,21 @@ function validateSettings(patch) {
   text("businessFacts", { max: 8000, label: "Business facts", block: true });
   text("unavailableMessage", { min: 1, max: 600, label: "The AI-unavailable message", block: true });
 
+  if (has("aiMayLinkConditionPages")) {
+    if (typeof patch.aiMayLinkConditionPages === "boolean") values.aiMayLinkConditionPages = patch.aiMayLinkConditionPages;
+    else errors.aiMayLinkConditionPages = "Must be on or off.";
+  }
+
+  if (has("showAiNotice")) {
+    if (typeof patch.showAiNotice === "boolean") values.showAiNotice = patch.showAiNotice;
+    else errors.showAiNotice = "Must be on or off.";
+  }
+  if (has("policyVersion")) {
+    const version = clean(patch.policyVersion);
+    if (/^[A-Za-z0-9._-]{1,20}$/.test(version)) values.policyVersion = version;
+    else errors.policyVersion = "The policy version is 1-20 letters, digits, dots, dashes or underscores, e.g. v1.";
+  }
+
   if (has("dailySpendCapUsd")) {
     if (number(patch.dailySpendCapUsd, { min: 0, max: 1000 })) values.dailySpendCapUsd = Math.round(patch.dailySpendCapUsd * 100) / 100;
     else errors.dailySpendCapUsd = "The daily AI cap must be a number from 0 to 1000 (USD).";
@@ -150,6 +165,10 @@ function validateSettings(patch) {
   return { values, errors };
 }
 
+// What the AI is told about prices and facts is recorded in full (before and after), not shortened.
+const FULL_FIELDS = new Set(["prices", "businessFacts"]);
+const full = (value) => (typeof value === "string" ? value : JSON.stringify(value ?? ""));
+
 const short = (value) => {
   const text = typeof value === "string" ? value : JSON.stringify(value ?? "");
   return text.length > 400 ? `${text.slice(0, 400)}…(${text.length} characters)` : text;
@@ -159,7 +178,9 @@ const short = (value) => {
 function diffSettings(current, values) {
   const changes = [];
   const push = (field, before, after) => {
-    if (JSON.stringify(before ?? null) !== JSON.stringify(after ?? null)) changes.push({ field, before: short(before ?? ""), after: short(after ?? "") });
+    if (JSON.stringify(before ?? null) === JSON.stringify(after ?? null)) return;
+    const render = FULL_FIELDS.has(field) ? full : short;
+    changes.push({ field, before: render(before ?? ""), after: render(after ?? "") });
   };
   for (const [key, next] of Object.entries(values)) {
     const prev = current[key];
@@ -314,7 +335,21 @@ function createSettingsService({ models, invalidateSettings = () => {}, now = ()
     return { ok: true, displayName: name };
   }
 
-  return { get, update, audit, listCanned, createCanned, updateCanned, deleteCanned, setDisplayName, now };
+  // Allows (or stops) an admin from opening the AI Review page. Super Admin only (the route); logged like a setting.
+  async function setReviewer(actor, userId, enabled) {
+    if (!mongoose.isValidObjectId(userId)) throw new SettingsError(404, "not_found");
+    if (typeof enabled !== "boolean") throw new SettingsError(400, "invalid_reviewer", { errors: { enabled: "Must be on or off." } });
+    const User = require("../../models/User");
+    const user = await User.findById(userId).select("name role liveChatReviewer").lean();
+    if (!user || user.role !== "admin") throw new SettingsError(404, "not_found"); // a Super Admin can always review
+    if (Boolean(user.liveChatReviewer) !== enabled) {
+      await User.updateOne({ _id: userId }, { $set: { liveChatReviewer: enabled } });
+      await logChange(actor, [{ field: `aiReviewer.${user.name || userId}`, before: user.liveChatReviewer ? "allowed" : "not allowed", after: enabled ? "allowed" : "not allowed" }]);
+    }
+    return { ok: true, reviewer: enabled };
+  }
+
+  return { get, update, audit, setReviewer, listCanned, createCanned, updateCanned, deleteCanned, setDisplayName, now };
 }
 
 module.exports = { createSettingsService, SettingsError, validateSettings, diffSettings, AI_MODES, ICONS };
