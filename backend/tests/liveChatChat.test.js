@@ -38,7 +38,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
         { name: "Emma Wilson", email: "a@b.co", phone: "1234567890123456" }, // too long
         { name: "Emma Wilson", email: "a@b.co", phone: "call me maybe" },
       ]) {
-        const res = await lc.post("/contact", { consent: true, turnstileToken: "good-token", ...bad });
+        const res = await lc.post("/contact", { consent: true, ...bad });
         assert.equal(res.status, 400, JSON.stringify(bad));
         assert.equal(res.body.token, undefined);
       }
@@ -55,17 +55,21 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       assert.equal(decryptLiveChatText(visitor.phone), "+13023039993");
     });
 
-    test("Turnstile is required; the honeypot silently drops bots", async () => {
+    test("the honeypot silently drops bots", async () => {
       const count = await lc.models.LcVisitor.countDocuments();
-      const noCaptcha = await lc.post("/contact", { name: "Emma Wilson", email: "e@x.co", turnstileToken: "bad" });
-      assert.equal(noCaptcha.status, 400);
-      assert.ok(noCaptcha.body.errors.captcha);
-      const bot = await lc.post("/contact", {
-        name: "Bot Botson", email: "bot@x.co", turnstileToken: "good-token", companyUrl: "http://spam.example",
-      });
+      const bot = await lc.post("/contact", { name: "Bot Botson", email: "bot@x.co", companyUrl: "http://spam.example" });
       assert.equal(bot.status, 200);
       assert.equal(bot.body.token, "");
       assert.equal(await lc.models.LcVisitor.countDocuments(), count);
+    });
+
+    test("a turnstileToken from an old cached widget is silently ignored: no error, the chat starts", async () => {
+      for (const turnstileToken of ["bad", "", "good-token", null, 123]) {
+        const res = await lc.post("/contact", { name: "Emma Wilson", email: "oldwidget@example.com", turnstileToken });
+        assert.equal(res.status, 200, JSON.stringify(res.body));
+        assert.ok(res.body.token && res.body.visitorId);
+        assert.equal(res.body.errors, undefined);
+      }
     });
 
     test("contact details are stored encrypted", async () => {
@@ -77,7 +81,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
 
     test("no privacy acceptance is asked for or recorded; records from before are left as they are", async () => {
       // The contact form no longer shows a privacy notice, so the request needs no consent flag and stores none.
-      const res = await lc.post("/contact", { name: "Emma Wilson", email: "noconsent@example.com", turnstileToken: "good-token" });
+      const res = await lc.post("/contact", { name: "Emma Wilson", email: "noconsent@example.com" });
       assert.equal(res.status, 200, JSON.stringify(res.body));
       assert.ok(res.body.token && res.body.visitorId);
       const fresh = await lc.models.LcVisitor.findOne({ visitorId: res.body.visitorId }).lean();
@@ -87,7 +91,7 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       const old = new Date("2026-09-01T10:00:00Z");
       await lc.models.LcVisitor.updateOne({ visitorId: res.body.visitorId }, { $set: { "consent.privacyAcceptedAt": old } });
       const again = await lc.post("/contact", {
-        name: "Emma Wilson", email: "noconsent@example.com", turnstileToken: "good-token", visitorId: res.body.visitorId,
+        name: "Emma Wilson", email: "noconsent@example.com", visitorId: res.body.visitorId,
       });
       assert.equal(again.status, 200);
       const kept = await lc.models.LcVisitor.findOne({ visitorId: res.body.visitorId }).lean();

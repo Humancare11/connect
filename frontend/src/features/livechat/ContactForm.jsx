@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
-import { removeTurnstile, renderTurnstile, resetTurnstile, turnstileSiteKey } from "./turnstile";
+import { useState } from "react";
 
 // Step 1, shown before ANY chat (AI or live agent): name and email are required, phone is optional.
-// Protected by Cloudflare Turnstile and a honeypot field that real people never see.
+// Protected by a honeypot field that real people never see.
 const EMAIL_RE = /^\S+@\S+\.\S{2,}$/;
 
 function validate({ name, email, phone }) {
@@ -23,44 +22,6 @@ export default function ContactForm({ onSubmit, aiName, reply = false }) {
   const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
-  const [token, setToken] = useState("");
-  const [challenge, setChallenge] = useState(false); // true only while Cloudflare needs the person to act
-  const widgetRef = useRef(null);
-  const widgetId = useRef(null);
-  const siteKey = turnstileSiteKey();
-
-  useEffect(() => {
-    const container = widgetRef.current;
-    if (!container) return undefined;
-    // Each mount renders into its own holder, so a quick remount (React StrictMode in development, a re-render
-    // while the Turnstile script is still loading) never hits "already rendered in this container".
-    const holder = document.createElement("div");
-    container.appendChild(holder);
-    let cancelled = false;
-    let id = null;
-    renderTurnstile(holder, {
-      onToken: (value) => {
-        setToken(value);
-        setErrors((e) => (e.captcha ? { ...e, captcha: undefined } : e));
-      },
-      onExpire: () => setToken(""),
-      onInteractive: setChallenge,
-      onError: () => setErrors((e) => ({ ...e, captcha: "Verification failed to load. Please reload the page." })),
-    })
-      .then((renderedId) => {
-        id = renderedId;
-        widgetId.current = renderedId;
-        if (cancelled) removeTurnstile(renderedId);
-      })
-      .catch(() => {
-        if (!cancelled) setErrors((e) => ({ ...e, captcha: "Verification could not be loaded. Please check your connection." }));
-      });
-    return () => {
-      cancelled = true;
-      removeTurnstile(id);
-      holder.remove();
-    };
-  }, []);
 
   // Typing in a field clears that field's old error.
   const change = (field) => (event) => {
@@ -71,7 +32,6 @@ export default function ContactForm({ onSubmit, aiName, reply = false }) {
   const submit = async (event) => {
     event.preventDefault();
     const found = validate(values);
-    if (!token) found.captcha = "Please complete the verification.";
     setErrors(found);
     if (Object.keys(found).length) return;
 
@@ -80,18 +40,15 @@ export default function ContactForm({ onSubmit, aiName, reply = false }) {
       name: values.name.trim(),
       email: values.email.trim(),
       phone: values.phone.trim(),
-      turnstileToken: token,
       companyUrl: honeypot,
     });
     setBusy(false);
     if (!result.ok) {
       setErrors(result.errors || {});
-      setToken("");
-      resetTurnstile(widgetId.current); // a token can only be used once
     }
   };
 
-  const firstError = errors.form || errors.captcha || errors.name || errors.email || errors.phone;
+  const firstError = errors.form || errors.name || errors.email || errors.phone;
 
   return (
     <form className="lcw-cform" onSubmit={submit} noValidate>
@@ -123,15 +80,13 @@ export default function ContactForm({ onSubmit, aiName, reply = false }) {
         </label>
       </div>
 
-      {siteKey ? <div ref={widgetRef} className={`lcw-captcha${challenge ? " is-active" : ""}`} /> : <span className="lcw-err">Chat is not available right now. Please try again later.</span>}
-
       {firstError && (
         <span className="lcw-err" role="alert">
           {firstError}
         </span>
       )}
 
-      <button type="submit" disabled={busy || !siteKey}>
+      <button type="submit" disabled={busy}>
         {busy ? "Starting…" : "Start chat"}
       </button>
     </form>

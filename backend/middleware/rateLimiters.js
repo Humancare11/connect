@@ -207,7 +207,7 @@ const searchLimiter = buildKeyedLimiter({
 });
 
 // Live chat: public contact form and widget config. Per IP. The contact form is the gate to every chat, so it is
-// limited tightly; Turnstile and the honeypot sit in front of the real work.
+// limited tightly; the honeypot sits in front of the real work.
 const liveChatContactStore = new Map();
 const liveChatContactLimiter = buildKeyedLimiter({
   store:    liveChatContactStore,

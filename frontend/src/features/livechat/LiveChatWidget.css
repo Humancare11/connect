@@ -514,24 +514,6 @@ html.hc-cookie-open .lcw-window {
   font-size: 12.5px;
   font-weight: 600;
 }
-/* Turnstile shows nothing unless Cloudflare needs the person to act (then .is-active makes room for it). */
-.lcw-captcha {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-.lcw-captcha.is-active {
-  position: static;
-  width: auto;
-  height: auto;
-  min-height: 65px;
-  overflow: visible;
-  opacity: 1;
-  pointer-events: auto;
-}
 /* Page links under an AI reply */
 .lcw-links {
   display: flex;

@@ -237,7 +237,6 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createAiService } = require("./aiService");
   const { createLimits } = require("./limits");
   const { createChatService } = require("./chatService");
-  const { verifyTurnstile } = require("./turnstile");
   const limits = createLimits({ models, readLimits: () => readLimits(env), isExemptIp: (ip) => ipLimitExempt(ip, env) });
   const agents = createAgentRegistry({
     onGone: (userId) => agentSvc?.agentGone(userId),
@@ -307,7 +306,6 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
       require("../../routes/liveChatPublic").create({
         chat,
         loadSettings,
-        verifyTurnstile: options.verifyTurnstile || verifyTurnstile,
         isIpBlocked: (ip) => ctx.isIpBlocked(ip),
         files,
         env,

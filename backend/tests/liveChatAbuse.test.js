@@ -4,8 +4,7 @@ const { startChatServer, scriptedAi, sleep, dayKey } = require("./helpers/liveCh
 const { createWindowLimiter, checkMessageText } = require("../services/liveChat/limits");
 const { createAiService, buildSystemPrompt, buildMessages, costOf, SCHEMA } = require("../services/liveChat/aiService");
 const { createOpenAiProvider, classify } = require("../services/liveChat/aiProviders/openai");
-const { verifyTurnstile, VERIFY_URL } = require("../services/liveChat/turnstile");
-const { readAiConfig, readTurnstileSecret, TURNSTILE_TEST_SECRET, ipLimitExempt } = require("../utils/liveChat/config");
+const { readAiConfig, ipLimitExempt } = require("../utils/liveChat/config");
 const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
 
 const PRICES = { LIVECHAT_PRICE_INPUT_PER_1M: "0.10", LIVECHAT_PRICE_OUTPUT_PER_1M: "0.50", LIVECHAT_PRICE_CACHED_INPUT_PER_1M: "0.01" };
@@ -100,7 +99,7 @@ describe("abuse limits (live)", () => {
   test("max N new chats per IP per day (production rules): the 6th is refused, existing chats keep working", async () => {
     const limits = lc.livechat.limits.limits;
     const readLimits = require("../utils/liveChat/config").readLimits;
-    assert.equal(readLimits({}).chatsPerIpPerDay, 20, "the default is 20");
+    assert.equal(readLimits({}).chatsPerIpPerDay, 10, "the default is 10");
     assert.equal(readLimits({ LIVECHAT_CHATS_PER_IP_DAY: "7" }).chatsPerIpPerDay, 7);
     assert.equal(readLimits({ LIVECHAT_IP_DAILY_CHAT_LIMIT: "9" }).chatsPerIpPerDay, 9, "the old name still works");
     assert.equal(readLimits({ LIVECHAT_CHATS_PER_IP_DAY: "7", LIVECHAT_IP_DAILY_CHAT_LIMIT: "9" }).chatsPerIpPerDay, 7, "the new name wins");
@@ -349,38 +348,5 @@ describe("OpenAI provider", () => {
     assert.equal(await kindFor(Object.assign(new Error("x"), { status: 400 })), "config");
     assert.equal(await kindFor(Object.assign(new Error("x"), { status: 503 })), "unavailable");
     assert.equal(classify(new Error("weird")), "api_error");
-  });
-});
-
-describe("Turnstile", () => {
-  const respond = (data, ok = true) => async () => ({ ok, json: async () => data });
-
-  test("passes only when Cloudflare says success", async () => {
-    assert.deepEqual(await verifyTurnstile({ token: "t", env: {}, fetchImpl: respond({ success: true }) }), { ok: true });
-    assert.equal((await verifyTurnstile({ token: "t", env: {}, fetchImpl: respond({ success: false }) })).ok, false);
-  });
-
-  test("posts the secret, token and IP to the Cloudflare siteverify URL", async () => {
-    let call;
-    await verifyTurnstile({ token: "tok", ip: "1.2.3.4", env: { TURNSTILE_SECRET_KEY: "real-secret" }, fetchImpl: async (url, init) => ((call = { url, body: init.body.toString() }), { ok: true, json: async () => ({ success: true }) }) });
-    assert.equal(call.url, VERIFY_URL);
-    assert.match(call.body, /secret=real-secret/);
-    assert.match(call.body, /response=tok/);
-    assert.match(call.body, /remoteip=1.2.3.4/);
-  });
-
-  test("fails closed: no token, network error, Cloudflare outage", async () => {
-    assert.equal((await verifyTurnstile({ token: "", env: {}, fetchImpl: respond({ success: true }) })).reason, "missing_token");
-    assert.equal((await verifyTurnstile({ token: "t", env: {}, fetchImpl: async () => { throw new Error("down"); } })).ok, false);
-    assert.equal((await verifyTurnstile({ token: "t", env: {}, fetchImpl: respond({}, false) })).ok, false);
-  });
-
-  test("outside production the Cloudflare test secret is used; in production a missing secret refuses", async () => {
-    assert.equal(readTurnstileSecret({ NODE_ENV: "development" }), TURNSTILE_TEST_SECRET);
-    assert.equal(TURNSTILE_TEST_SECRET, "1x0000000000000000000000000000000AA");
-    assert.equal(readTurnstileSecret({ NODE_ENV: "production" }), "");
-    const out = await verifyTurnstile({ token: "t", env: { NODE_ENV: "production" }, fetchImpl: respond({ success: true }) });
-    assert.deepEqual([out.ok, out.reason], [false, "not_configured"]);
-    assert.equal(readTurnstileSecret({ NODE_ENV: "production", TURNSTILE_SECRET_KEY: "abc" }), "abc");
   });
 });

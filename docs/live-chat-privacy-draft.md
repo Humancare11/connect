@@ -21,7 +21,6 @@ Buttons: Accept / Decline (unchanged).
 ## Cookie Policy: additions
 
 - Storage used by chat: a first-party visitor identifier and a chat session token, kept in the browser so a chat can continue within 24 hours. The page-view tracker runs only after you accept cookies.
-- Cloudflare Turnstile runs on the contact form to block bots and may set its own cookies.
 
 ## Items for counsel
 
