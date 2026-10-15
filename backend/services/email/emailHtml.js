@@ -1,7 +1,7 @@
 // HTML twin of a plain-text mail. Built FROM the final plain text, so the two
 // parts of a tracked mail always say exactly the same thing. Text is escaped,
-// line breaks and runs of spaces are kept, bare http(s) links stay clickable
-// (as they are in a plain-text mail). When a `linkTracker` is given the href of each
+// line breaks and runs of spaces are kept, bare http(s) and www. links become clickable
+// (as they usually are in a plain-text mail). When a `linkTracker` is given the href of each
 // http(s) link goes through it (click tracking); the visible text stays the original
 // address, so the two parts of the mail still say the same thing.
 
@@ -13,13 +13,30 @@ const unescapeHtml = (s) =>
 
 const MAX_LINK_LENGTH = 2048;
 
+// What counts as a link in the body, in the HTML part only:
+//   http:// and https:// addresses, and bare "www.example.com" (made https://).
+// Email addresses are never linked, and neither is anything else ("example.com",
+// "ftp://", "mailto:", "javascript:"): a www. address must start a word, so
+// "name@www.example.com" and "xwww.example.com" are left as plain text.
+// A www. address needs a real host with a top-level domain: www.example.com,
+// www.example.co.uk/path?a=1, www.example.com:8080.
+const LINK_RE = new RegExp(
+  "https?:\\/\\/[^\\s<]+" +
+    "|(?<![\\w@./:-])www\\.(?:[a-z0-9-]+\\.)+[a-z]{2,}(?::\\d+)?(?:[/?#][^\\s<]*)?",
+  "gi"
+);
+
 // Runs on already-escaped text. Trailing punctuation is not part of the link.
 // linkTracker(originalUrl) → the address to put in href, or null to leave the link alone.
+// The visible text is always what was typed.
 function linkify(escaped, linkTracker = null) {
-  return escaped.replace(/https?:\/\/[^\s<]+/g, (match) => {
+  return escaped.replace(LINK_RE, (match) => {
     const trail = (match.match(/(?:[.,;:!?)\]]|&quot;|&#39;|&amp;)+$/) || [""])[0];
-    const url = trail ? match.slice(0, -trail.length) : match;
-    if (!/^https?:\/\/[^\s<"]+$/.test(url) || url.length < 9) return match;
+    const typed = trail ? match.slice(0, -trail.length) : match;
+    const isWww = /^www\./i.test(typed);
+    // The address that is really visited: www. gets https://.
+    const url = isWww ? `https://${typed}` : typed;
+    if (!/^https?:\/\/[^\s<"]+$/i.test(url) || typed.length < 9) return match;
     let href = url;
     if (linkTracker) {
       const original = unescapeHtml(url);
@@ -27,7 +44,7 @@ function linkify(escaped, linkTracker = null) {
       const tracked = original.length <= MAX_LINK_LENGTH && /^https?:\/\//i.test(original) ? linkTracker(original) : null;
       if (tracked) href = escapeHtml(tracked);
     }
-    return `<a href="${href}">${url}</a>${trail}`;
+    return `<a href="${href}">${typed}</a>${trail}`;
   });
 }
 

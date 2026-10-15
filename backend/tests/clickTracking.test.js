@@ -70,6 +70,51 @@ describe("rewriting links in the HTML part", () => {
     assert.deepEqual(seen, []);
   });
 
+  test("a bare www. address is linked (as https://) and tracked; the visible text is what was typed", () => {
+    const seen = [];
+    const html = textToHtml("visit www.example.com/care?a=1&b=2, thanks", { linkTracker: (u) => (seen.push(u), `${BASE}/api/l/${"c".repeat(32)}`) });
+    assert.deepEqual(seen, ["https://www.example.com/care?a=1&b=2"]);
+    assert.match(html, /<a href="https:\/\/uat\.example\.com\/api\/l\/c{32}">www\.example\.com\/care\?a=1&amp;b=2<\/a>, thanks/);
+  });
+
+  test("without a tracker a www. address still becomes a plain https link", () => {
+    assert.match(textToHtml("www.example.com."), /<a href="https:\/\/www\.example\.com">www\.example\.com<\/a>\./);
+  });
+
+  test("WWW. in capitals, a port and a country domain are linked; wrapping brackets and the final dot are not part of it", () => {
+    assert.match(textToHtml("(WWW.Example.co.uk:8080/p)."), /\(<a href="https:\/\/WWW\.Example\.co\.uk:8080\/p">WWW\.Example\.co\.uk:8080\/p<\/a>\)\./);
+  });
+
+  test("email addresses are never linked, even with www. in the domain", () => {
+    for (const text of ["write to anita@example.com", "john@www.example.com", "a.b@mail.example.co.uk"]) {
+      assert.ok(!/<a /.test(textToHtml(text, { linkTracker: () => "x" })), text);
+    }
+  });
+
+  test("things that only look like links are left as text", () => {
+    for (const text of ["example.com", "xwww.example.com", "wwwexample.com", "www.localhost", "www.", "www.example", "see.www.example.com"]) {
+      assert.ok(!/<a /.test(textToHtml(text, { linkTracker: () => "x" })), text);
+    }
+  });
+
+  test("a www. address inside an https link is one link, not two", () => {
+    const html = textToHtml("https://www.example.com/a", { linkTracker: (u) => u });
+    assert.equal((html.match(/<a /g) || []).length, 1);
+  });
+
+  test("everything around the links is escaped", () => {
+    const html = textToHtml(`<script>alert(1)</script> "www.example.com" & 'x'`, { linkTracker: () => null });
+    assert.ok(!/<script/i.test(html));
+    assert.match(html, /&lt;script&gt;/);
+    assert.match(html, /&quot;<a href="https:\/\/www\.example\.com">www\.example\.com<\/a>&quot; &amp; &#39;x&#39;/);
+  });
+
+  test("a hostile address cannot break out of the href", () => {
+    const html = textToHtml('www.example.com/"><img src=x onerror=alert(1)>', { linkTracker: () => null });
+    assert.ok(!/<img/i.test(html));
+    assert.ok(!/href="[^"]*"[^>]*onerror/i.test(html));
+  });
+
   test("buildHtml passes the tracker through and still ends with the image", () => {
     const html = buildHtml("hi https://example.com/z", { imageUrl: `${BASE}/api/e/${"a".repeat(32)}.gif`, linkTracker: tracker });
     assert.match(html, /\/api\/l\//);
@@ -90,6 +135,18 @@ describe("the sent MIME", () => {
     assert.match(text, /https:\/\/example\.com\/form/);
     assert.ok(!/api\/l\//.test(text), "text part untouched");
     assert.match(s, /api\/l\/b{32}/);
+  });
+
+  test("a typed www. address: tracked in the HTML part, untouched in the plain-text part", async () => {
+    const { raw } = await buildRawMessage({
+      mailbox, to: [{ address: "a@gmail.com" }], subject: "Hi", body: "Our site: www.humancareconnect.co",
+      tracking: { imageUrl: `${BASE}/api/e/${"a".repeat(32)}.gif`, linkTracker: tracker },
+    });
+    const s = raw.toString().replace(/=\r?\n/g, "").replace(/=([0-9A-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+    const [text, html] = s.split(/Content-Type: text\/html/i);
+    assert.match(text, /Our site: www\.humancareconnect\.co/);
+    assert.ok(!/api\/l\//.test(text) && !/https:\/\/www\.humancareconnect/.test(text));
+    assert.match(html, /<a href="https:\/\/uat\.example\.com\/api\/l\/b{32}">www\.humancareconnect\.co<\/a>/);
   });
 });
 
