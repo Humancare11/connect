@@ -758,6 +758,12 @@ h4 {
     0 0 0 4px rgba(34, 58, 94, 0.05);
 }
 
+/* Visible keyboard focus. The bar clips its children, so the ring is drawn on the bar itself. */
+.search-bar:has(input:focus-visible) {
+  outline: 2px solid #1e3457;
+  outline-offset: 3px;
+}
+
 .search-bar input {
   border: none;
   outline: none;

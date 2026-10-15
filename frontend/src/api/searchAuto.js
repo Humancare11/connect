@@ -3,6 +3,11 @@ import { runSubmitSearch } from "./searchSubmit.js";
 
 // Automatic semantic enhancement for the hero search.
 //
+// NOT WIRED (Phase 5): Home.jsx no longer calls consider(), so a typing pause
+// never sends text to the AI provider. Kept for reference and its own tests
+// only; if it is ever re-enabled, its requests are marked automatic and are
+// never recorded as deliberate submissions.
+//
 // While the user types, the page shows "instant" (deterministic, no AI)
 // results. When those results do not clearly answer the query, ONE "full"
 // search is scheduled after the user pauses, and its results replace the
@@ -104,7 +109,7 @@ export function createAutoFullSearch({
     const mine = token;
     timer = setTimer(async () => {
       timer = null;
-      const promise = run(session, query);
+      const promise = run(session, query, { automatic: true });
       inflight = { key, promise };
       const outcome = await promise;
       if (inflight?.promise === promise) inflight = null;

@@ -246,6 +246,67 @@ async function loadSummary({ window }, { Interaction = SearchInteraction } = {})
   };
 }
 
+// ── Daily terms (raw-backed) ────────────────────────────────────────────────
+// One row per (UTC day, normalised term): the number of interactions, after the
+// optional outcome / aiStatus filter. A row's text is shown only when
+//   - the term key is in `approvedKeys` (exact catalog name or alias, see
+//     approvedTerms.js), or
+//   - it has at least MIN_TERM_INTERACTIONS interactions that day.
+// The count that decides visibility is the SAME number the row displays (the
+// filtered count), so a filter can only hide a row, never reveal one: whatever
+// text is listed is backed by that many matching interactions. Every other
+// interaction of the day is folded, inside MongoDB, into one count per day
+// ("other"): its term text never leaves the pipeline. Both lists come from one
+// grouped read, so rows + other always add up to the day's filtered total.
+// Order: newest day first, then largest count, then term key.
+// Resolves to { rows: [{ day, termKey, term, interactions }], other: [{ day, interactions }], total }.
+async function loadDailyTerms({ window, outcome = null, aiStatus = null, approvedKeys = [], limit, offset }, { Interaction = SearchInteraction } = {}) {
+  const range = { createdAt: { $gte: window.start, $lt: window.end } };
+  const scope = scopeCondition({ outcome, aiStatus });
+
+  const [result] = await Interaction.aggregate(
+    [
+      { $match: range },
+      // One interaction is one document (a later submit upgrades the idle one), so nothing is double counted.
+      // `term` (the smallest stored spelling) is used only for a row that is shown because it
+      // reached the minimum; approved terms are labelled from the catalog instead.
+      { $group: { _id: { termKey: "$termKey", day: DAY_OF }, n: tally(scope, null), term: { $min: scope ? { $cond: [scope, "$term", null] } : "$term" } } },
+      { $match: { n: { $gt: 0 } } },
+      {
+        $addFields: {
+          shown: { $or: [{ $in: ["$_id.termKey", { $literal: approvedKeys }] }, { $gte: ["$n", MIN_TERM_INTERACTIONS] }] },
+        },
+      },
+      {
+        $facet: {
+          rows: [
+            { $match: { shown: true } },
+            { $sort: { "_id.day": -1, n: -1, "_id.termKey": 1 } },
+            { $skip: offset },
+            { $limit: limit },
+            { $project: { _id: 0, day: "$_id.day", termKey: "$_id.termKey", term: 1, n: 1 } },
+          ],
+          total: [{ $match: { shown: true } }, { $count: "n" }],
+          other: [
+            { $match: { shown: false } },
+            { $group: { _id: "$_id.day", n: { $sum: "$n" } } }, // the term key is dropped here
+            { $sort: { _id: -1 } },
+            { $project: { _id: 0, day: "$_id", n: 1 } },
+          ],
+        },
+      },
+    ],
+    AGGREGATE_OPTIONS,
+  );
+
+  const facets = result || { rows: [], total: [], other: [] };
+  return {
+    rows: facets.rows.map((row) => ({ day: row.day, termKey: row.termKey, term: typeof row.term === "string" ? row.term : row.termKey, interactions: Number(row.n) || 0 })),
+    other: facets.other.map((row) => ({ day: row.day, interactions: Number(row.n) || 0 })),
+    total: facets.total[0] ? Number(facets.total[0].n) || 0 : 0,
+  };
+}
+
 // ── Trend (rollup-backed) ───────────────────────────────────────────────────
 const DAY_MS = 24 * 60 * 60 * 1000;
 const EMPTY_POINT = { interactions: 0, dedicatedPageFound: 0, fallbackOnly: 0, noResults: 0, aiUnavailable: 0 };
@@ -369,6 +430,7 @@ async function loadTrend(
 module.exports = {
   loadWindowTerms,
   loadSummary,
+  loadDailyTerms,
   loadTrend,
   MAX_TERMS_SCANNED,
   trendGate,

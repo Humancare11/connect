@@ -32,10 +32,11 @@ import {
 
 import {
   createSearchSession,
+  describeEmptyState,
   toSuggestions,
   SEARCH_MIN_LENGTH,
 } from "../api/searchApi";
-import { runSubmitSearch } from "../api/searchSubmit";
+import { chooseExplicitAction, runSubmitSearch } from "../api/searchSubmit";
 import { createAutoFullSearch } from "../api/searchAuto";
 
 import { useNavigate, Link } from "react-router-dom";
@@ -251,7 +252,10 @@ export default function HomePage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const searchRef = useRef(null);
-  const [noResults, setNoResults] = useState(false);
+  // null, or { kind, reason } when the dropdown has nothing to list (see describeEmptyState).
+  const [emptyState, setEmptyState] = useState(null);
+  const noResults = emptyState !== null;
+  const emptyCopy = describeEmptyState(emptyState ?? {}, searchQuery);
   const [isSearching, setIsSearching] = useState(false);
   // Backend search (POST /api/search). One session per search box: each new
   // request cancels the previous one, so stale responses never show.
@@ -260,15 +264,38 @@ export default function HomePage() {
   const searchDebounceRef = useRef(null);
 
   const itemRefs = useRef([]);
+  const suggestionsRef = useRef(null);
 
+  // Keep the highlighted option visible by scrolling the dropdown itself, never the page,
+  // and only when the option is cut off.
   useEffect(() => {
-    if (activeIndex >= 0 && itemRefs.current[activeIndex]) {
-      itemRefs.current[activeIndex].scrollIntoView({
-        block: "nearest",
-        behavior: "smooth",
-      });
-    }
+    const box = suggestionsRef.current;
+    const item = itemRefs.current[activeIndex];
+    if (activeIndex < 0 || !box || !item) return;
+    const top = item.offsetTop;
+    const bottom = top + item.offsetHeight;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
   }, [activeIndex]);
+
+  // Keep the open dropdown (results or a status message) on screen. The hero puts the search
+  // bar near the fold, so on laptop-height screens the dropdown opens below it. Scroll the page
+  // only as far as needed to show it, and never so far that the bar slides under the fixed header.
+  useEffect(() => {
+    const box = suggestionsRef.current;
+    if (!box || isSearching) return;
+    const margin = 12;
+    const headerBottom = document.querySelector(".glass-header")?.getBoundingClientRect().bottom ?? 0;
+    // The dropdown fades in with a transform, so its bottom is taken from layout, not from its rect.
+    const wrapperTop = searchRef.current.getBoundingClientRect().top;
+    const needed = wrapperTop + box.offsetTop + box.offsetHeight - (window.innerHeight - margin);
+    const room = wrapperTop - (headerBottom + margin);
+    const delta = Math.min(needed, room);
+    if (delta > 1) {
+      const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      window.scrollBy({ top: delta, behavior: reduced ? "auto" : "smooth" });
+    }
+  }, [isSearching, filteredSuggestions, emptyState, showSuggestions, searchQuery]);
 
   // Video lazy loading with Intersection Observer
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
@@ -306,17 +333,17 @@ export default function HomePage() {
   useEffect(() => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) {
-      searchSession.cancel();
+      searchSession.reset(); // cancels any request and ends the analytics episode
       autoFull.cancel();
       setFilteredSuggestions([]);
-      setNoResults(false);
+      setEmptyState(null);
       setIsSearching(false);
       setActiveIndex(-1);
       return;
     }
 
     setIsSearching(true);
-    setNoResults(false);
+    setEmptyState(null);
     setActiveIndex(-1);
 
     // Debounce keeps typing smooth and request volume under the API limit.
@@ -325,14 +352,13 @@ export default function HomePage() {
       if (!response) return; // superseded by a newer query
       const suggestions = toSuggestions(response);
       setFilteredSuggestions(suggestions);
-      setNoResults(suggestions.length === 0);
+      if (response.success === false) setEmptyState({ kind: "error", reason: response.error });
+      else if (suggestions.length === 0) setEmptyState({ kind: query.split(/\s+/).length >= 3 ? "broad" : "none" });
+      else setEmptyState(null);
       setIsSearching(false);
-      // Weak instant results: after a pause ONE full search may replace them.
-      autoFull.consider(query, response, (fullSuggestions) => {
-        setFilteredSuggestions(fullSuggestions);
-        setNoResults(false);
-        setActiveIndex(-1);
-      });
+      // No automatic AI ("full") search here: text typed so far is never sent
+      // to the AI provider because of a typing pause. A full search runs only
+      // on an explicit submit (Enter / the search button).
     }, 250);
 
     return () => {
@@ -341,10 +367,10 @@ export default function HomePage() {
     };
   }, [searchQuery, searchSession, autoFull]);
 
-  // Cancel any in-flight search when the page unmounts.
+  // Cancel any in-flight search and end the analytics episode on unmount.
   useEffect(
     () => () => {
-      searchSession.cancel();
+      searchSession.reset();
       autoFull.cancel();
     },
     [searchSession, autoFull],
@@ -375,28 +401,47 @@ export default function HomePage() {
 
   // ── Submit (Search button / Enter): backend "full" mode ───────────────────
   // Full mode lets the backend apply its query understanding; the page only
-  // receives catalog results. A single result opens directly; several are
-  // shown so the user can choose.
+  // receives catalog results. A single result, or a query that exactly matches
+  // the top result's name, opens directly; otherwise the results are shown so
+  // the user can choose (see runSubmitSearch).
   const submitSearch = useCallback(async () => {
     const query = searchQuery.trim();
     if (query.length < SEARCH_MIN_LENGTH) return;
     clearTimeout(searchDebounceRef.current); // no instant run after submit
     setShowSuggestions(true);
     setIsSearching(true);
-    setNoResults(false);
+    setEmptyState(null);
     setActiveIndex(-1);
 
     // Reuse an automatic full search for this query instead of sending a second.
-    const { action, suggestions } = await (autoFull.join(query) ?? runSubmitSearch(searchSession, query));
+    const { action, suggestions, reason, degraded } = await (autoFull.join(query) ?? runSubmitSearch(searchSession, query));
     if (action === "superseded") return; // the user kept typing or cleared
     setFilteredSuggestions(suggestions);
     setIsSearching(false);
     if (action === "navigate") {
       handleSearch(suggestions[0]); // a single result opens directly
+    } else if (action === "error") {
+      setEmptyState({ kind: "error", reason });
     } else if (action === "empty") {
-      setNoResults(true);
-    } // "show": several results stay in the dropdown for the user to pick
+      setEmptyState({ kind: degraded ? "degraded" : "none" });
+    } else {
+      // "show": several results stay in the dropdown for the user to pick. The
+      // top-ranked one is highlighted so a second Enter opens it.
+      setActiveIndex(0);
+    }
   }, [searchQuery, searchSession, autoFull, handleSearch]);
+
+  // One handler for the Search button and Enter: a highlighted result that is on
+  // screen is opened (no new search); otherwise a full search runs.
+  const handleExplicitSubmit = useCallback(() => {
+    const choice = chooseExplicitAction({ isSearching, suggestions: filteredSuggestions, activeIndex });
+    if (choice.action === "open") {
+      searchSession.select(); // analytics only: never throws, changes nothing visible
+      handleSearch(choice.item);
+    } else {
+      submitSearch();
+    }
+  }, [isSearching, filteredSuggestions, activeIndex, searchSession, handleSearch, submitSearch]);
 
   // ── Keyboard navigation ───────────────────────────────────────────────────
   const handleKeyDown = useCallback(
@@ -420,18 +465,7 @@ export default function HomePage() {
           break;
         case "Enter":
           e.preventDefault();
-          // A highlighted result is only used while it is actually shown for
-          // the current query; otherwise run a full search for what was typed.
-          if (
-            hasVisibleResults &&
-            activeIndex >= 0 &&
-            activeIndex < filteredSuggestions.length
-          ) {
-            searchSession.select(); // analytics only: never throws, changes nothing visible
-            handleSearch(filteredSuggestions[activeIndex]);
-          } else {
-            submitSearch();
-          }
+          handleExplicitSubmit();
           break;
         case "Escape":
           setShowSuggestions(false);
@@ -440,14 +474,7 @@ export default function HomePage() {
           break;
       }
     },
-    [
-      filteredSuggestions,
-      activeIndex,
-      isSearching,
-      handleSearch,
-      submitSearch,
-      searchSession,
-    ],
+    [filteredSuggestions, isSearching, handleExplicitSubmit],
   );
 
   // ── Testimonials data ─────────────────────────────────────────────────────
@@ -838,6 +865,12 @@ export default function HomePage() {
             <div className="search-bar">
               <input
                 type="text"
+                role="combobox"
+                aria-label="Search conditions, specialties and treatments"
+                aria-autocomplete="list"
+                aria-expanded={showSuggestions && searchQuery.trim().length >= SEARCH_MIN_LENGTH}
+                aria-controls="search-suggestions"
+                aria-activedescendant={!isSearching && activeIndex >= 0 && activeIndex < filteredSuggestions.length ? `search-option-${activeIndex}` : undefined}
                 value={searchQuery}
                 placeholder="Search doctors, specialties, conditions..."
                 onChange={(e) => {
@@ -847,15 +880,20 @@ export default function HomePage() {
                 onFocus={() => setShowSuggestions(true)}
                 onKeyDown={handleKeyDown}
               />
-              <button onClick={() => submitSearch()}>Search</button>
+              <button onClick={handleExplicitSubmit}>Search</button>
             </div>
 
             {showSuggestions &&
               searchQuery.trim().length >= SEARCH_MIN_LENGTH && (
-                <div className="search-suggestions">
+                <div
+                  className="search-suggestions"
+                  id="search-suggestions"
+                  ref={suggestionsRef}
+                  role={!isSearching && !noResults && filteredSuggestions.length > 0 ? "listbox" : undefined}
+                >
                   {/* Loading state */}
                   {isSearching && (
-                    <div className="search-state">
+                    <div className="search-state" role="status">
                       <div className="search-state-icon searching-pulse">
                         <svg
                           width="20"
@@ -877,7 +915,7 @@ export default function HomePage() {
 
                   {/* No results state */}
                   {!isSearching && noResults && (
-                    <div className="search-state no-results">
+                    <div className="search-state no-results" role="status">
                       <div className="search-state-icon">
                         <svg
                           width="22"
@@ -894,29 +932,31 @@ export default function HomePage() {
                       </div>
                       <div className="search-state-content">
                         <span className="search-state-title">
-                          No treatments found for "{searchQuery}"
+                          {emptyCopy.title}
                         </span>
                         <span className="search-state-subtitle">
-                          Try searching by symptom, condition, or specialty
+                          {emptyCopy.subtitle}
                         </span>
                       </div>
-                      <div className="search-state-suggestions">
-                        <span>Try:</span>
-                        {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
-                          (s) => (
-                            <button
-                              key={s}
-                              className="search-pill"
-                              onClick={() => {
-                                setSearchQuery(s);
-                                setShowSuggestions(true);
-                              }}
-                            >
-                              {s}
-                            </button>
-                          ),
-                        )}
-                      </div>
+                      {emptyCopy.hint && (
+                        <div className="search-state-suggestions">
+                          <span>Try:</span>
+                          {["Anxiety", "Knee Pain", "Diabetes", "Skin Rash"].map(
+                            (s) => (
+                              <button
+                                key={s}
+                                className="search-pill"
+                                onClick={() => {
+                                  setSearchQuery(s);
+                                  setShowSuggestions(true);
+                                }}
+                              >
+                                {s}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -930,6 +970,9 @@ export default function HomePage() {
                     filteredSuggestions.map((item, index) => (
                       <div
                         key={item.id}
+                        id={`search-option-${index}`}
+                        role="option"
+                        aria-selected={activeIndex === index}
                         ref={(el) => (itemRefs.current[index] = el)}
                         className={`suggestion-item${activeIndex === index ? " active" : ""}`}
                         onClick={() => {

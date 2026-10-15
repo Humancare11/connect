@@ -1,4 +1,4 @@
-// Admin Search Analytics read APIs (GET /summary, /terms, /gaps, /trend).
+// Admin Search Analytics read APIs (GET /summary, /terms, /daily-terms, /gaps, /trend).
 // See routes/adminSearchAnalytics.js for the auth guard.
 //
 // Read-only and aggregate-only. Every response is built here, field by field,
@@ -12,12 +12,15 @@
 // database detail). Failures are logged as an endpoint name and an
 // error NAME only - never a query, parameter, document or message.
 
-const { loadWindowTerms, loadSummary, loadTrend } = require("../services/searchAnalytics/adminQueries");
+const { loadWindowTerms, loadSummary, loadDailyTerms, loadTrend } = require("../services/searchAnalytics/adminQueries");
+const { loadApprovedTerms } = require("../services/searchAnalytics/approvedTerms");
+const { getSearchCatalog } = require("../services/search/searchCatalog");
 const {
   AdminParamError,
   parseSummaryQuery,
   parseTermsQuery,
   parseGapsQuery,
+  parseDailyTermsQuery,
   parseTrendQuery,
   dayKey,
 } = require("../services/searchAnalytics/adminParams");
@@ -108,7 +111,8 @@ const paginate = (rows, { limit, offset }) => ({
 
 // ── Controller ──────────────────────────────────────────────────────────────
 function createSearchAnalyticsAdminController({
-  queries = { loadWindowTerms, loadSummary, loadTrend },
+  queries = { loadWindowTerms, loadSummary, loadDailyTerms, loadTrend },
+  getCatalog = getSearchCatalog,
   now = () => new Date(),
   logger = console.error,
   isEnabled = isSearchAnalyticsEnabled,
@@ -217,6 +221,39 @@ function createSearchAnalyticsAdminController({
     };
   });
 
+  // Daily terms: date, normalised term, count. A term is listed when it equals a
+  // catalog name/alias exactly, or has >= kThreshold matching interactions that
+  // UTC day; everything else is only counted, per day, as "other".
+  const dailyTerms = endpoint("daily-terms", async (query) => {
+    const params = parseDailyTermsQuery(query, { now: now() });
+    const approved = await loadApprovedTerms(getCatalog);
+    const loaded = await queries.loadDailyTerms({
+      window: params.window,
+      outcome: params.outcome,
+      aiStatus: params.aiStatus,
+      approvedKeys: approved.keys,
+      limit: params.limit,
+      offset: params.offset,
+    });
+    return {
+      success: true,
+      window: windowOf(params.window),
+      data: {
+        // An approved term is labelled with the catalog's wording; any other listed term reached the minimum.
+        items: loaded.rows.map((row) => ({
+          day: safeText(row.day, 10),
+          term: safeText(approved.labels.get(row.termKey) ?? row.term ?? row.termKey),
+          interactions: int(row.interactions),
+        })),
+        other: loaded.other.map((row) => ({ day: safeText(row.day, 10), interactions: int(row.interactions) })),
+        pagination: { limit: params.limit, offset: params.offset, total: int(loaded.total), hasMore: params.offset + params.limit < loaded.total },
+        filters: { outcome: params.outcome, aiStatus: params.aiStatus },
+      },
+      // catalogTermsAvailable false: the catalog could not be read, so every term needed the full minimum.
+      meta: meta({ catalogTermsAvailable: approved.keys.length > 0 }),
+    };
+  });
+
   const gaps = endpoint("gaps", async (query) => {
     const params = parseGapsQuery(query, { now: now() });
     const loaded = await queries.loadWindowTerms({ window: params.window, minConfirmed: params.minCount });
@@ -243,7 +280,7 @@ function createSearchAnalyticsAdminController({
     };
   });
 
-  return { summary, terms, gaps, trend };
+  return { summary, terms, dailyTerms, gaps, trend };
 }
 
 module.exports = { createSearchAnalyticsAdminController, safeText, safePath };

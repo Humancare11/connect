@@ -112,8 +112,8 @@ function createSearchController({ getCatalog = getSearchCatalog, ai, analytics =
     try {
       // req.ip only keys the per-client AI minute cap; it is never sent to
       // the AI provider. No user, session or cookie data is read here.
-<<<<<<< HEAD
-      const { body, facts } = await executeSearchDetailed(parsed, { getCatalog, clientKey: req.ip, ...(ai ? { ai } : {}) });
+      const { body, facts } = await executeSearchDetailed(parsed, { getCatalog, clientKey: req.ip, signal: disconnect.signal, ...(ai ? { ai } : {}) });
+      if (disconnect.signal.aborted) return undefined; // nobody is listening
       res.json(body);
       // After the response is on its way: hand a plain copy to analytics. It
       // is off by default, never throws and never touches the response.
@@ -129,11 +129,6 @@ function createSearchController({ getCatalog = getSearchCatalog, ai, analytics =
         // Nothing analytics does may reach the client.
       }
       return undefined;
-=======
-      const result = await executeSearch(parsed, { getCatalog, clientKey: req.ip, signal: disconnect.signal, ...(ai ? { ai } : {}) });
-      if (disconnect.signal.aborted) return undefined; // nobody is listening
-      return res.json(result);
->>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
     } catch (err) {
       if (disconnect.signal.aborted) return undefined;
       if (err instanceof SearchUnavailableError) {

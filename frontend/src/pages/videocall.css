@@ -1253,61 +1253,6 @@
   text-align: center;
 }
 
-.hc-vc__live-pill {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 9px 18px;
-  border-radius: 14px;
-  background: rgba(34, 197, 94, 0.07);
-  border: 1px solid rgba(34, 197, 94, 0.22);
-  color: #22c55e;
-  font-family: var(--font-primary);
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.hc-vc__live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #22c55e;
-  animation: vc-blink 1.2s ease infinite;
-}
-
-/* Connection-quality indicator — derived from getStats() polling, see
-   deriveConnectionQuality() in VideoCall.jsx */
-.hc-vc__quality-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  font-size: 16px;
-  cursor: default;
-}
-
-.hc-vc__quality-pill--good {
-  background: rgba(34, 197, 94, 0.07);
-  border: 1px solid rgba(34, 197, 94, 0.22);
-  color: #22c55e;
-}
-
-.hc-vc__quality-pill--weak {
-  background: rgba(234, 179, 8, 0.1);
-  border: 1px solid rgba(234, 179, 8, 0.3);
-  color: #eab308;
-}
-
-.hc-vc__quality-pill--poor {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
-}
-
 /* Complete button */
 .hc-vc__btn--complete {
   width: 82px;
@@ -1884,11 +1829,6 @@
     font-size: 9px;
   }
 
-  .hc-vc__live-pill {
-    padding: 7px 12px;
-    font-size: 10px;
-  }
-
   .hc-vc__error-bar {
     white-space: normal;
     text-align: center;
@@ -2243,11 +2183,6 @@
   width: 96px;
 }
 
-.hc-vc__live-pill {
-  height: 40px;
-  border-radius: 12px;
-}
-
 .hc-vc__pip {
   width: clamp(220px, 26vw, 340px);
   border-color: rgba(98, 156, 219, 0.35);
@@ -2527,12 +2462,6 @@
 
   .hc-vc__btn-label {
     font-size: 8px;
-  }
-
-  .hc-vc__live-pill {
-    height: 34px;
-    padding: 0 10px;
-    font-size: 10px;
   }
 
   .hc-vc__pip-restore-btn {
@@ -2824,5 +2753,144 @@
 @media (max-width: 425px) {
   .hc-vc__btn--share {
     display: none;
+  }
+}
+/* ══════════════════════════════════════════════════════════════
+   MOBILE CALL CONTROLS (≤480px)
+   Primary bar = Mute, Camera, Chat, Leave + More. Share / Fullscreen /
+   Hide Me / Notes are rendered inside .hc-vc__more-menu (see
+   components/CallMoreMenu.jsx). Above 480px nothing here applies.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .hc-vc__ctrlbar-inner {
+    gap: 6px;
+  }
+
+  .hc-vc__ctrlbar-inner > .hc-vc__btn,
+  .hc-vc__ctrlbar-inner > .hc-vc__more {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 84px;
+  }
+
+  .hc-vc__ctrlbar-inner > .hc-vc__btn {
+    width: auto;
+  }
+
+  .hc-vc__more {
+    display: flex;
+  }
+
+  .hc-vc__more > .hc-vc__btn {
+    width: 100%;
+  }
+
+  .hc-vc__ctrlbar-inner .hc-vc__btn-label {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+    font-size: 9px;
+  }
+
+  /* Call duration: its own centred row above the buttons */
+  .hc-vc__ctrlbar-inner > .hc-vc__timer {
+    order: -1;
+    flex: 0 0 100%;
+    justify-content: center;
+    height: auto;
+    padding: 0 0 2px;
+    background: transparent;
+    border: 0;
+  }
+
+  /* More Options bottom drawer (rendered via portal into .hc-vc__page) */
+  .hc-vc__drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(0, 0, 0, 0.55);
+    animation: vc-fade-in 0.2s ease;
+  }
+
+  .hc-vc__drawer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 91;
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 16px calc(16px + env(safe-area-inset-bottom));
+    background: #07192d;
+    border-top: 1px solid rgba(122, 173, 230, 0.25);
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.6);
+    outline: none;
+    animation: vc-drawer-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hc-vc__drawer-handle {
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .hc-vc__drawer-title {
+    margin: 0 0 12px;
+    font-family: var(--font-primary);
+    font-size: 17px;
+    font-weight: 700;
+    color: #f0f8ff;
+  }
+
+  .hc-vc__drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .hc-vc__drawer-list .hc-vc__btn {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 16px;
+    border-radius: 14px;
+  }
+
+  .hc-vc__drawer-list .hc-vc__btn-icon {
+    font-size: 22px;
+  }
+
+  .hc-vc__drawer-list .hc-vc__btn-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0;
+    text-align: left;
+  }
+}
+
+@keyframes vc-drawer-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-vc__drawer,
+  .hc-vc__drawer-backdrop {
+    animation: none;
   }
 }

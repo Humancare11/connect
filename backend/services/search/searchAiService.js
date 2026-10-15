@@ -8,29 +8,21 @@
 //
 // What is sent to OpenAI: a static system prompt, the controlled vocabulary
 // (active category/specialty/condition/service names and their aliases) and
-// the normalised, redacted query. Nothing else. Requests use store:false, a
+// the normalised query, only when it passes the privacy gate (analyzeForAi);
+// queries that look personal are never sent. Nothing else. Requests use store:false, a
 // timeout, no retries, a server-side daily cap, a per-client minute cap and a
 // small circuit breaker. Queries, prompts, responses and the key are never
 // logged: only outcome, latency and model name.
 
 const crypto = require("crypto");
-<<<<<<< HEAD
-const { normalizeForMatch, singularForm, compactForm } = require("./queryNormalizer");
-const { redactQuery } = require("./queryRedaction");
-=======
 const { normalizeForMatch } = require("./queryNormalizer");
+const { redactQuery, analyzeForAi } = require("./queryRedaction");
 const { validateIntent, resolveConditionTerms, SearchAiError, INTENTS, LIMITS, OUTPUT_KEYS } = require("./searchAiValidator");
->>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
 
 // Vocabulary bounds: the prompt never grows with the database.
 const VOCAB_MAX_ENTRIES = 400;
 const VOCAB_MAX_ALIASES = 5;
-<<<<<<< HEAD
-const VOCAB_MAX_CHARS = 20000;
-=======
 const VOCAB_MAX_CHARS = 24000;
-const MAX_QUERY_CHARS = 100;
->>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
 const MAX_OUTPUT_TOKENS = 400;
 const MIN_CONFIDENCE = 0.3;
 const PER_CLIENT_PER_MINUTE = 10;
@@ -256,6 +248,14 @@ function createSearchAiService({
     // The client already left: do not call the provider or spend any budget.
     if (signal?.aborted) return { status: "cancelled" };
 
+    // Privacy gate: text that looks personal (names, contact details, ids,
+    // addresses, dates of birth, ...) is never sent to the provider, masked or
+    // not. The search stays deterministic. This runs before the cache and
+    // before any budget is counted, and nothing about the query is logged.
+    if (!analyzeForAi(query).safe) return { status: "skipped", reason: "privacy" };
+
+    // Defence in depth: the gate above should already have removed anything
+    // redactQuery would mask.
     const safeQuery = redactQuery(query);
     if (normalizeForMatch(safeQuery).length < 2) return { status: "skipped", reason: "empty_query" };
 

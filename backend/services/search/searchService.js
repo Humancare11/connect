@@ -42,7 +42,7 @@ function hasExactLiteralHit(matches) {
   return Object.values(matches).some((list) => list.some((m) => m.score >= EXACT_LITERAL_SCORE && !m.viaCore));
 }
 
-const intentMatch = (type, record, score) => ({ type, record, score, matchedOn: "intent", viaCore: false });
+const intentMatch = (type, record, score) => ({ type, record, score, matchedOn: "intent", viaCore: false, recognized: true });
 
 // Runs the deterministic matcher on a short model-provided text, restricted
 // to one result type. Invalid texts are ignored.
@@ -101,16 +101,12 @@ function matchesFromIntent(catalog, intent, types) {
 // request: { q (validated, normalised), mode, types } from parseRequest.
 // options.clientKey: opaque per-client key for the AI minute cap (never sent
 // to the AI provider).
-<<<<<<< HEAD
 //
 // Resolves to { body, facts }. `body` is the public response, byte-for-byte
 // what executeSearch returns. `facts` is INTERNAL (matches with scores, the
 // catalog index and what the AI layer did) for search analytics; it must never
 // be sent to a client.
-async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey } = {}) {
-=======
-async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey, signal } = {}) {
->>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
+async function executeSearchDetailed(request, { getCatalog = getSearchCatalog, ai = defaultAi, clientKey, signal } = {}) {
   let catalog;
   try {
     catalog = await getCatalog();
@@ -150,14 +146,10 @@ async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defa
       } catch {
         outcome = { status: "failed" };
       }
-<<<<<<< HEAD
       aiFacts.status = outcome.status;
-      if (outcome.status === "failed") {
-=======
       if (outcome.status === "cancelled") {
         // The client went away: neither an AI result nor a provider fallback.
       } else if (outcome.status === "failed") {
->>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
         aiMeta.fallback = true;
       } else if (outcome.status === "ok") {
         aiMeta.cached = Boolean(outcome.cached);
@@ -183,12 +175,8 @@ async function executeSearch(request, { getCatalog = getSearchCatalog, ai = defa
   const { results, total } = buildResults(matches, catalog);
   const meta = { total, mode: request.mode, limits: { perType: MAX_RESULTS_PER_TYPE, total: MAX_RESULTS_TOTAL } };
   if (aiMeta) meta.ai = aiMeta;
-<<<<<<< HEAD
-  const body = { success: true, query: { normalized: request.q }, results, meta };
+  const body = { success: true, query: { normalized: request.q, ...(corrected ? { corrected } : {}) }, results, meta };
   return { body, facts: { matches, index: catalog.index, ai: aiFacts } };
-=======
-  return { success: true, query: { normalized: request.q, ...(corrected ? { corrected } : {}) }, results, meta };
->>>>>>> 0668226c6b98cdc6539c7d09f7470f9e127f832d
 }
 
 // The public entry point: only the response body.
