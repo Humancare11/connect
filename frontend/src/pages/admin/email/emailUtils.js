@@ -145,11 +145,22 @@ export const TRACKING_FILTER_OPTIONS = Object.entries(READ_LABELS);
 const TRACKING_REASONS = {
   tracking_off: "Open tracking was not switched on when this mail was sent.",
   mail_off: "Tracking was switched off for this mail.",
-  internal_recipients: "Sent to a company address, so opens by our own team could not be told apart from the recipient's.",
-  apple_recipient: "Apple Mail hides real opens (Mail Privacy Protection), so tracking is not reliable for this recipient.",
+  internal_recipients: "Sent to a company address while “Track mail to company addresses” was switched off.",
   opted_out: "A recipient has opted out of tracking.",
   outside_dashboard: "Sent from Gmail, outside the dashboard.",
 };
+
+export const INTERNAL_NOTE = "Includes our own staff. An open may be a colleague, not the client.";
+
+// Shown in the compose and reply forms: company addresses are tracked, but cannot be
+// told apart from the client. "" when there is nothing to say.
+export function internalCaveat(addresses, tracking) {
+  if (!tracking?.available || tracking.trackInternal === false) return "";
+  const domain = `@${String(tracking.companyDomain || "").toLowerCase()}`;
+  if (domain === "@") return "";
+  const found = addresses.some((a) => String(a || "").trim().toLowerCase().replace(/>$/, "").endsWith(domain));
+  return found ? INTERNAL_NOTE : "";
+}
 
 const times = (s) => {
   const n = s.count > 1 ? `${s.count}× · ` : "";
@@ -177,13 +188,14 @@ export function trackingInfo(t) {
   const rows = signalRows(t.signals);
   const status = t.readStatus || "unavailable";
   const who = t.multiRecipient ? " We cannot tell which recipient did it." : "";
+  const staff = t.includesInternal ? " One recipient is a company address, so this may be a colleague rather than the client." : "";
 
   const DETAIL = {
     replied: "The recipient replied to this mail.",
     downloaded: `A recipient used a download link.${who}`,
     clicked: `A recipient used a link in the mail.${who}`,
     receipt: "The recipient's mail app confirmed the mail was displayed.",
-    opened: `The recipient's mail app loaded the tracking image, so it isn't proof the mail was read.${who}`,
+    opened: `The recipient's mail app loaded the tracking image, so it isn't proof the mail was read.${who}${staff}`,
     opened_apple:
       "Apple Mail loads images automatically on the recipient's behalf (Mail Privacy Protection), so this may not mean the mail was opened.",
     pending: "Nothing has loaded the image. The mail may be unopened, or their mail app blocks images.",
@@ -193,7 +205,11 @@ export function trackingInfo(t) {
   if (status === "unavailable") {
     return { kind: "na", text: READ_LABELS.unavailable, detail: TRACKING_REASONS[t.reason] || "Tracking is not available for this mail.", rows };
   }
-  const text = status === "opened" && t.multiRecipient ? "Opened (by at least one recipient)" : READ_LABELS[status];
+  let text = READ_LABELS[status];
+  if (status === "opened") {
+    if (t.multiRecipient) text = "Opened (by at least one recipient)";
+    if (t.includesInternal) text = "Opened (may include our own staff)";
+  }
   return { kind: status, text, detail: DETAIL[status], rows };
 }
 

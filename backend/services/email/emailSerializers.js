@@ -47,7 +47,15 @@ function trackingView(doc) {
     opened: signal(t?.status === "opened" ? t.openCount || 0 : 0, t?.firstOpenedAt, t?.lastOpenedAt),
     openedApple: signal(t?.appleOpenCount || 0, t?.firstAppleOpenedAt, t?.lastAppleOpenedAt),
   };
-  const summary = { readStatus: combined.status, readStatusAt: combined.at, signals, multiRecipient };
+  // includesInternal: an open may be one of our own colleagues. Both are facts fixed at send time.
+  const summary = {
+    readStatus: combined.status,
+    readStatusAt: combined.at,
+    signals,
+    multiRecipient,
+    includesInternal: Boolean(t?.includesInternal),
+    allRecipientsApple: Boolean(t?.allRecipientsApple),
+  };
   if (!t) {
     return {
       status: "unavailable",

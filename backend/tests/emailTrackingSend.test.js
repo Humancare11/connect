@@ -203,14 +203,27 @@ describe("planTracking decides per mail", () => {
   test("disclosure line is empty when the Super Admin turned it off", async () => {
     assert.equal((await plan({ state: { ...ACTIVE, disclosureEnabled: false } })).disclosure, "");
   });
-  test("any company-domain recipient (To or Cc) → internal_recipients", async () => {
-    assert.equal((await plan({ to: [{ address: "x@humancareconnect.co" }] })).reason, "internal_recipients");
-    assert.equal((await plan({ cc: [{ address: "Boss@HumanCareConnect.co" }] })).reason, "internal_recipients");
+  test("company-domain recipients are tracked by default and flagged, To or Cc", async () => {
+    const a = await plan({ to: [{ address: "x@humancareconnect.co" }] });
+    assert.deepEqual([a.enabled, a.includesInternal], [true, true]);
+    const b = await plan({ cc: [{ address: "Boss@HumanCareConnect.co" }] });
+    assert.deepEqual([b.enabled, b.includesInternal], [true, true]);
+    assert.equal((await plan()).includesInternal, false);
   });
-  test("Apple recipients → apple_recipient", async () => {
-    for (const d of ["icloud.com", "me.com", "mac.com", "ICLOUD.COM"]) assert.equal((await plan({ to: [{ address: `a@${d}` }] })).reason, "apple_recipient", d);
-    assert.equal((await plan({ cc: [{ address: "a@icloud.com" }] })).reason, "apple_recipient");
-    assert.equal((await plan({ to: [{ address: "a@notapple-icloud.com" }] })).enabled, true);
+  test("with 'Track mail to company addresses' off, any company-domain recipient → internal_recipients", async () => {
+    const off = { ...ACTIVE, trackInternalRecipients: false };
+    assert.equal((await plan({ state: off, to: [{ address: "x@humancareconnect.co" }] })).reason, "internal_recipients");
+    assert.equal((await plan({ state: off, cc: [{ address: "Boss@HumanCareConnect.co" }] })).reason, "internal_recipients");
+    assert.equal((await plan({ state: off })).enabled, true, "outside recipients are unaffected");
+  });
+  test("Apple recipients are tracked; allRecipientsApple only when every address is Apple's", async () => {
+    for (const d of ["icloud.com", "me.com", "mac.com", "ICLOUD.COM"]) {
+      const p = await plan({ to: [{ address: `a@${d}` }] });
+      assert.deepEqual([p.enabled, p.allRecipientsApple], [true, true], d);
+    }
+    assert.equal((await plan({ to: [{ address: "a@icloud.com" }, { address: "b@me.com" }] })).allRecipientsApple, true);
+    assert.equal((await plan({ to: [{ address: "a@icloud.com" }], cc: [{ address: "b@gmail.com" }] })).allRecipientsApple, false);
+    assert.equal((await plan({ to: [{ address: "a@notapple-icloud.com" }] })).allRecipientsApple, false);
   });
   test("an opted-out address anywhere in To/Cc → opted_out", async () => {
     await EmailTrackingOptOut.create({ address: "optout@gmail.com" });
@@ -325,18 +338,27 @@ describe("sending: tracked and untracked mail", () => {
     assert.equal((await EmailMessage.findById((await send({ trackOpens: "1" })).body.message.id)).tracking.enabled, true);
   });
 
-  test("recipient rules: company, Apple and opted-out recipients get no image", async () => {
+  test("an opted-out recipient gets no image", async () => {
     await EmailTrackingOptOut.create({ address: "optout@gmail.com" });
-    for (const [rcpt, reason] of [["colleague@humancareconnect.co", "internal_recipients"], ["a@icloud.com", "apple_recipient"], ["optout@gmail.com", "opted_out"]]) {
-      const { body } = await send({ to: rcpt });
-      assert.equal((await EmailMessage.findById(body.message.id)).tracking.unavailableReason, reason, rcpt);
-    }
+    const { body } = await send({ to: "optout@gmail.com" });
+    assert.equal((await EmailMessage.findById(body.message.id)).tracking.unavailableReason, "opted_out");
     assert.ok(gmail.sent.every((m) => !/\/api\/e\//.test(m)));
   });
 
-  test("Cc is checked as well", async () => {
-    const { body } = await send({ cc: "friend@icloud.com" });
-    assert.equal((await EmailMessage.findById(body.message.id)).tracking.unavailableReason, "apple_recipient");
+  test("company and Apple recipients carry the image, and the row remembers why their opens need a caveat", async () => {
+    const internal = await EmailMessage.findById((await send({ to: "colleague@humancareconnect.co" })).body.message.id);
+    assert.deepEqual([internal.tracking.enabled, internal.tracking.includesInternal, internal.tracking.allRecipientsApple], [true, true, false]);
+    const apple = await EmailMessage.findById((await send({ to: "a@icloud.com" })).body.message.id);
+    assert.deepEqual([apple.tracking.enabled, apple.tracking.includesInternal, apple.tracking.allRecipientsApple], [true, false, true]);
+    const mixed = await EmailMessage.findById((await send({ to: "friend@gmail.com", cc: "b@icloud.com" })).body.message.id);
+    assert.deepEqual([mixed.tracking.enabled, mixed.tracking.allRecipientsApple], [true, false]);
+    assert.ok(gmail.sent.slice(-3).every((m) => /\/api\/e\//.test(m)));
+  });
+
+  test("with the company-address toggle off, a company recipient gets no image", async () => {
+    state = { ...ACTIVE, trackInternalRecipients: false };
+    const { body } = await send({ to: "colleague@humancareconnect.co" });
+    assert.equal((await EmailMessage.findById(body.message.id)).tracking.unavailableReason, "internal_recipients");
   });
 
   test("a failed send keeps its row as failed", async () => {
@@ -349,11 +371,11 @@ describe("sending: tracked and untracked mail", () => {
   test("/mailboxes tells the compose form whether tracking is available, and each mailbox's default", async () => {
     const get = async () => (await fetch(`${base}/mailboxes`, { headers: { "x-test-admin": String(priya._id) } })).json();
     let r = await get();
-    assert.deepEqual(r.tracking, { available: true, disclosure: true });
+    assert.deepEqual(r.tracking, { available: true, disclosure: true, trackInternal: true, companyDomain: "humancareconnect.co" });
     assert.equal(r.mailboxes[0].trackOpensDefault, true);
     state = { ...ACTIVE, active: false };
     r = await get();
-    assert.deepEqual(r.tracking, { available: false, disclosure: false });
+    assert.deepEqual(r.tracking, { available: false, disclosure: false, trackInternal: true, companyDomain: "humancareconnect.co" });
   });
 
   test("replying follows the same rules (the reply goes to ONE recipient)", async () => {

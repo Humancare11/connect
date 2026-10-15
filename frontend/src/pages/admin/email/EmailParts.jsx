@@ -111,13 +111,16 @@ export function TrackingBadge({ tracking }) {
 
 // "Track opens" box of the compose and reply forms. Only rendered while open
 // tracking is switched on; the server decides whether the mail really carries it.
-export function TrackOpensToggle({ checked, onChange, disclosure }) {
+export function TrackOpensToggle({ checked, onChange, disclosure, caveat = "" }) {
   return (
-    <label className="em-trkopt" title="Adds a tiny image so you can see whether the mail was opened. Not exact: some mail apps block images or load them automatically.">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      Track opens
-      {checked && disclosure ? <small className="em-sub"> · a short notice is added to the footer</small> : null}
-    </label>
+    <>
+      <label className="em-trkopt" title="Adds a tiny image so you can see whether the mail was opened. Not exact: some mail apps block images or load them automatically.">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        Track opens
+        {checked && disclosure ? <small className="em-sub"> · a short notice is added to the footer</small> : null}
+      </label>
+      {checked && caveat ? <small className="em-trkwarn">{caveat}</small> : null}
+    </>
   );
 }
 

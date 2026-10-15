@@ -46,6 +46,11 @@ const trackingSchema = new mongoose.Schema(
     firstDownloadedAt: { type: Date, default: null },
     lastDownloadedAt: { type: Date, default: null },
     receiptAt: { type: Date, default: null },
+    // Facts about the recipients at send time, used to word and classify the opens.
+    //   includesInternal      a To/Cc address is a company address (an open may be a colleague)
+    //   allRecipientsApple    every To/Cc address is iCloud/me/mac, so loads went through Apple's proxy
+    includesInternal: { type: Boolean, default: false },
+    allRecipientsApple: { type: Boolean, default: false },
   },
   { _id: false }
 );

@@ -13,6 +13,9 @@ const emailSettingsSchema = new mongoose.Schema(
     trackingEnabled: { type: Boolean, default: false },
     // Disclosure line in the footer of tracked mail. ON by default whenever tracking is enabled.
     disclosureEnabled: { type: Boolean, default: true },
+    // Track mail that has @humancareconnect.co recipients. One pixel is shared by all
+    // recipients, so an open by our own staff can look like the client's: the screens say so.
+    trackInternalRecipients: { type: Boolean, default: true },
     disclosureText: { type: String, default: DEFAULT_DISCLOSURE, trim: true, maxlength: 300 },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },

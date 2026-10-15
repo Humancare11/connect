@@ -16,7 +16,7 @@ class ValidationError extends Error {
 }
 
 const MAX_OPT_OUTS = 5000;
-const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText"];
+const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients"];
 
 // Single line, no control characters (the line is added to the footer of outgoing mail).
 const cleanLine = (v) => String(v).replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -27,7 +27,7 @@ const serializeOptOut = (o) => ({ id: String(o._id), address: o.address, note: o
 // recipients who must never be tracked.
 //
 //   GET    /                   current state: the three gates + disclosure + opt-outs
-//   PATCH  /                   { trackingEnabled?, disclosureEnabled?, disclosureText? }
+//   PATCH  /                   { trackingEnabled?, disclosureEnabled?, disclosureText?, trackInternalRecipients? }
 //   POST   /opt-outs           { address, note? }
 //   DELETE /opt-outs/:id
 //
@@ -64,6 +64,7 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
         switchOn: s.switchOn,
         active: s.active,
         disclosureEnabled: s.disclosureEnabled,
+        trackInternalRecipients: s.trackInternalRecipients,
         disclosureText: s.disclosureText,
         defaultDisclosure: DEFAULT_DISCLOSURE,
         graceSeconds: s.graceSeconds,
@@ -81,7 +82,7 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (unknown.length) throw new ValidationError(`Cannot edit: ${unknown.join(", ")}.`);
 
     const patch = {};
-    for (const key of ["trackingEnabled", "disclosureEnabled"]) {
+    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients"]) {
       if (body[key] === undefined) continue;
       if (typeof body[key] !== "boolean") throw new ValidationError(`${key} must be true or false.`);
       patch[key] = body[key];
@@ -97,7 +98,9 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     const current = await EmailSettings.findOneAndUpdate({ key: "email" }, { $setOnInsert: { key: "email" } }, { upsert: true, returnDocument: "after", setDefaultsOnInsert: true });
     const next = { ...current.toObject(), ...patch };
     // The line is added to the footer of tracked mail, so it may not be empty while it is on.
-    if (next.disclosureEnabled && !next.disclosureText) throw new ValidationError("Write the disclosure line, or switch it off.");
+    // (Only when the patch touches tracking or the line itself: an unrelated toggle must not fail on it.)
+    const touchesLine = ["trackingEnabled", "disclosureEnabled", "disclosureText"].some((k) => k in patch);
+    if (touchesLine && next.disclosureEnabled && !next.disclosureText) throw new ValidationError("Write the disclosure line, or switch it off.");
 
     Object.assign(current, patch, { updatedBy: req.user.id });
     await current.save();

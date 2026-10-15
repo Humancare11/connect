@@ -83,7 +83,7 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     status: "sending",
     clientRequestId: requestId,
     tracking: plan.enabled
-      ? { enabled: true, tokenHash: plan.hash, status: "pending" }
+      ? { enabled: true, tokenHash: plan.hash, status: "pending", includesInternal: plan.includesInternal, allRecipientsApple: plan.allRecipientsApple }
       : { enabled: false, status: "unavailable", unavailableReason: plan.reason },
   });
   // Only the plain text is stored: the dashboard never renders the tracking image,

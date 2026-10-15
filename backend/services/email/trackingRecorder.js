@@ -13,6 +13,12 @@ const DAY_MS = 24 * 3600 * 1000;
 // bad input; returns what happened (useful in tests, never shown to anyone).
 //   { token, ip, userAgent }
 // → { recorded: false, why } | { recorded: true, counted, reason }
+//
+// A hit ends up as one of:
+//   counted       a likely human open            → tracking.status "opened"
+//   apple         Apple Mail Privacy Protection  → tracking.appleOpenCount, shown as "Opened (Apple)"
+//   scanner       a mail-security scanner        → ignored, unless a later hit follows (second hit)
+//   other ignored grace window, own IP, no user agent, duplicate
 async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date(), state, env = process.env } = {}) {
   if (!isTokenShape(token)) return { recorded: false, why: "bad_token" };
 
@@ -22,7 +28,7 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
   const cfg = trackingEnv(env);
 
   const message = await EmailMessage.findOne({ "tracking.tokenHash": hashToken(token), direction: "out" })
-    .select("_id status messageDate")
+    .select("_id status messageDate tracking.allRecipientsApple")
     .lean();
   if (!message || message.status === "failed") return { recorded: false, why: "unknown_token" };
 
@@ -36,9 +42,31 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
     userAgent,
     graceSeconds: cfg.graceSeconds,
     ignoreIps: cfg.ignoreIps,
+    scannerIps: cfg.scannerIps,
+    appleIps: cfg.appleIps,
+    allRecipientsApple: Boolean(message.tracking?.allRecipientsApple),
   });
 
-  if (verdict.counted) {
+  // Second-hit rule: a scanner usually loads the image once, at delivery. A later hit
+  // from a scanner-looking client, long after the first, is more likely a person's
+  // mail app than the same scanner, so it counts. The first scanner hit stays ignored.
+  if (verdict.scanner) {
+    const earlier = await EmailOpenEvent.exists({
+      message: message._id,
+      ignoreReason: /^scanner_/,
+      at: { $lte: new Date(now.getTime() - cfg.secondHitMinutes * 60_000) },
+    });
+    if (earlier) verdict = { counted: true, reason: "", automated: false, secondHit: true };
+  }
+
+  if (verdict.apple) {
+    // Kept apart from real opens: it can never turn the mail into a plain "Opened".
+    await EmailMessage.updateOne(
+      { _id: message._id },
+      { $inc: { "tracking.appleOpenCount": 1 }, $set: { "tracking.lastAppleOpenedAt": now } }
+    );
+    await EmailMessage.updateOne({ _id: message._id, "tracking.firstAppleOpenedAt": null }, { $set: { "tracking.firstAppleOpenedAt": now } });
+  } else if (verdict.counted) {
     // Atomic: only one of several simultaneous hits can win, and a repeat inside
     // the dedupe window (same client re-rendering the mail) is not counted again.
     const threshold = new Date(now.getTime() - cfg.dedupeMinutes * 60_000);
@@ -67,10 +95,11 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
     message: message._id,
     at: now,
     counted: verdict.counted,
-    ignoreReason: verdict.reason,
-    uaFamily: uaFamily(userAgent),
+    // A counted hit has no ignore reason, except one counted by the second-hit rule.
+    ignoreReason: verdict.secondHit ? "second_hit" : verdict.reason,
+    uaFamily: verdict.apple ? "ApplePrivacyProxy" : uaFamily(userAgent),
   });
-  return { recorded: true, counted: verdict.counted, reason: verdict.reason };
+  return { recorded: true, counted: verdict.counted, reason: verdict.secondHit ? "second_hit" : verdict.reason };
 }
 
 module.exports = { recordOpen, MAX_EVENTS_PER_DAY };

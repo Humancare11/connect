@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
 import { AttachmentList, Icon, TrackOpensToggle } from "./EmailParts";
-import { ACCEPT_ATTR, EMAIL_RE, addFiles, newRequestId } from "./emailUtils";
+import { ACCEPT_ATTR, EMAIL_RE, addFiles, internalCaveat, newRequestId } from "./emailUtils";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
 // Gmail-style compose window: docked bottom-right, with a full-view toggle.
@@ -146,7 +146,14 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
             <span className="em-hint">
               Sent by <b>{adminName}</b>
             </span>
-            {tracking?.available && <TrackOpensToggle checked={trackOpens} onChange={setTrackChoice} disclosure={tracking.disclosure} />}
+            {tracking?.available && (
+              <TrackOpensToggle
+                checked={trackOpens}
+                onChange={setTrackChoice}
+                disclosure={tracking.disclosure}
+                caveat={internalCaveat(`${to},${cc}`.split(/[,;\s]+/), tracking)}
+              />
+            )}
             {error && <div className="em-errtext" role="alert">{error}</div>}
           </div>
         </form>

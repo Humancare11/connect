@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
 const Mailbox = require("../models/Mailbox");
+const { EMAIL_DOMAIN } = Mailbox;
 const EmailMessage = require("../models/EmailMessage");
 const EmailAttachment = require("../models/EmailAttachment");
 const User = require("../models/User");
@@ -152,7 +153,7 @@ function createAdminEmailRouter({
     res.json({
       mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
-      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled) },
+      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled), trackInternal: tracking.trackInternalRecipients !== false, companyDomain: EMAIL_DOMAIN },
     });
   }));
 

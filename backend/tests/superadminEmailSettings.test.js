@@ -117,6 +117,18 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
     assert.equal(r.body.tracking.disclosureEnabled, false);
   });
 
+  test("'Track mail to company addresses' defaults ON, can be switched off, and is honoured by the sender state", async () => {
+    let r = await call("GET", "/settings");
+    assert.equal(r.body.tracking.trackInternalRecipients, true);
+    r = await call("PATCH", "/settings", { trackInternalRecipients: false });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.tracking.trackInternalRecipients, false);
+    assert.equal((await getTrackingState({ env, full: true })).trackInternalRecipients, false);
+    r = await call("PATCH", "/settings", { trackInternalRecipients: true });
+    assert.equal(r.body.tracking.trackInternalRecipients, true);
+    assert.equal((await call("PATCH", "/settings", { trackInternalRecipients: "no" })).status, 400);
+  });
+
   test("validation: types, unknown fields, empty body", async () => {
     assert.equal((await call("PATCH", "/settings", { trackingEnabled: "yes" })).status, 400);
     assert.equal((await call("PATCH", "/settings", { disclosureEnabled: 1 })).status, 400);

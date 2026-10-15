@@ -106,6 +106,24 @@ export default function TrackingSettingsCard() {
             </dl>
 
             <div className="mi-sep">
+              <h3>Company addresses</h3>
+              <label className="mi-check" style={{ margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={t.trackInternalRecipients}
+                  disabled={update.isPending}
+                  onChange={(e) => update.mutate({ trackInternalRecipients: e.target.checked })}
+                />
+                Track mail to company addresses
+              </label>
+              <p className="em-sub">
+                {t.trackInternalRecipients
+                  ? "Mail with an @humancareconnect.co recipient is tracked too. One image is shared by every recipient, so an open may be a colleague rather than the client. The screens say so."
+                  : "Mail with an @humancareconnect.co recipient is sent without the tracking image."}
+              </p>
+            </div>
+
+            <div className="mi-sep">
               <h3>Notice in the footer</h3>
               <label className="mi-check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={disclosureEnabled} onChange={(e) => setDisclosureEnabled(e.target.checked)} />
@@ -130,8 +148,7 @@ export default function TrackingSettingsCard() {
             <div className="mi-sep">
               <h3>Never track these recipients</h3>
               <p className="em-sub">
-                If any To or Cc address is on this list, that mail is sent without the tracking image. Mail to company addresses and to
-                iCloud / me.com / mac.com addresses is never tracked either.
+                If any To or Cc address is on this list, that mail is sent without the tracking image.
               </p>
               <form
                 className="mi-optadd"

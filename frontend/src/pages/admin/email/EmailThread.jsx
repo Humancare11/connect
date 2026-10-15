@@ -16,6 +16,7 @@ import {
   personLabel,
   roleLabel,
   trackingInfo,
+  internalCaveat,
   useEmailShell,
 } from "./emailUtils";
 
@@ -217,7 +218,14 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
           <input type="file" multiple accept={ACCEPT_ATTR} onChange={onFiles} aria-label="Attach files to reply" />
           <Icon name="clip" />
         </label>
-        {tracking?.available && <TrackOpensToggle checked={trackOpens} onChange={setTrackChoice} disclosure={tracking.disclosure} />}
+        {tracking?.available && (
+          <TrackOpensToggle
+            checked={trackOpens}
+            onChange={setTrackChoice}
+            disclosure={tracking.disclosure}
+            caveat={internalCaveat([message.from?.address], tracking)}
+          />
+        )}
         {error && <span className="em-errtext" role="alert">{error}</span>}
         <span style={{ flex: 1 }} />
         <button type="button" className="em-btn em-btn-ghost" onClick={onCancel}>
