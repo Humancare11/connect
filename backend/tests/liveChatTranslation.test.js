@@ -557,6 +557,35 @@ describe("live chat: translation for admins", () => {
     return chat;
   }
 
+  describe("language detection never sends the patient's name, email or phone", () => {
+    const WITH_SECRETS = `Ich bin Hans Müller, meine E-Mail ist ${EMAIL} und meine Nummer +49 151 1234 5678 oder 0151 2345 6789, ich brauche ein Rezept für meine Medikamente`;
+    const assertClean = (call) => {
+      const sent = JSON.stringify(call);
+      for (const secret of ["Hans", "Müller", "Hans Müller", EMAIL, "hans.mueller", "151 1234 5678", "1234 5678", "2345 6789", PHONE]) {
+        assert.equal(sent.includes(secret), false, `not sent: ${secret}`);
+      }
+      assert.ok(sent.includes("brauche ein Rezept"), "the rest of the text is still sent so the language can be told");
+    };
+
+    test("on the first non-English message (AI off)", async () => {
+      await lc.setSettings({ aiMode: "ai_off" });
+      const chat = await openChat();
+      await say(chat, WITH_SECRETS);
+      assert.ok(await waitFor(async () => (await convOf(chat.id)).language?.code === "de"), "badge set");
+      assert.equal(lc.ai.detectCalls.length, 1);
+      assertClean(lc.ai.detectCalls[0]);
+      chat.socket.close();
+    });
+
+    test("when an admin opens the chat", async () => {
+      const chat = await chatWithoutLanguage(WITH_SECRETS);
+      await detailOf(chat.id);
+      assert.equal(lc.ai.detectCalls.length, 1);
+      assertClean(lc.ai.detectCalls[0]);
+      chat.socket.close();
+    });
+  });
+
   test("opening a chat without a language detects it once (redacted), and the controls data is in the response", async () => {
     const chat = await chatWithoutLanguage();
     const body = await detailOf(chat.id);
