@@ -55,6 +55,8 @@ function trackingView(doc) {
     multiRecipient,
     includesInternal: Boolean(t?.includesInternal),
     receiptRequested: Boolean(t?.receiptRequested),
+    secureLinks: Boolean(t?.secureLinks),
+    secureLinksExpireAt: t?.secureLinksExpireAt || null,
     receiptBy: t?.receiptBy || "",
     allRecipientsApple: Boolean(t?.allRecipientsApple),
   };
@@ -115,7 +117,7 @@ function serializeListItem(doc, mailboxMap) {
 
 // attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role });
 // linksByMessage: Map(messageId → [{ index, url, count, first, last }]) (see clickSummary.js).
-function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById, linksByMessage = new Map()) {
+function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById, linksByMessage = new Map(), filesByMessage = new Map()) {
   const content = safeContent(doc);
   const base = baseFields(doc, mailboxMap);
   const sender = doc.sentByAdmin ? adminsById.get(idOf(doc.sentByAdmin)) : null;
@@ -123,7 +125,9 @@ function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsByI
     ...base,
     sentBy: base.sentBy ? { ...base.sentBy, role: sender?.role || "" } : null,
     // Which tracked link was clicked: only on the mail page, never in lists.
-    tracking: base.tracking ? { ...base.tracking, links: linksByMessage.get(idOf(doc._id)) || [] } : null,
+    tracking: base.tracking
+      ? { ...base.tracking, links: linksByMessage.get(idOf(doc._id)) || [], files: filesByMessage.get(idOf(doc._id)) || [] }
+      : null,
     text: content.text,
     html: content.html,
     attachments: (attachmentsByMessage.get(idOf(doc._id)) || []).map((a) => ({

@@ -371,11 +371,11 @@ describe("sending: tracked and untracked mail", () => {
   test("/mailboxes tells the compose form whether tracking is available, and each mailbox's default", async () => {
     const get = async () => (await fetch(`${base}/mailboxes`, { headers: { "x-test-admin": String(priya._id) } })).json();
     let r = await get();
-    assert.deepEqual(r.tracking, { available: true, disclosure: true, trackInternal: true, companyDomain: "humancareconnect.co" });
+    assert.deepEqual(r.tracking, { available: true, disclosure: true, trackInternal: true, companyDomain: "humancareconnect.co", secureLinks: false });
     assert.equal(r.mailboxes[0].trackOpensDefault, true);
     state = { ...ACTIVE, active: false };
     r = await get();
-    assert.deepEqual(r.tracking, { available: false, disclosure: false, trackInternal: true, companyDomain: "humancareconnect.co" });
+    assert.deepEqual(r.tracking, { available: false, disclosure: false, trackInternal: true, companyDomain: "humancareconnect.co", secureLinks: false });
   });
 
   describe("read receipt request", () => {

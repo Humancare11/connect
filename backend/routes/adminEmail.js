@@ -9,7 +9,7 @@ const User = require("../models/User");
 const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { parseListQuery, buildMessageFilter, EmailQueryError } = require("../services/email/emailQueries");
 const { serializeMailbox, serializeListItem, serializeThreadMessage, idOf } = require("../services/email/emailSerializers");
-const { summarizeLinks } = require("../services/email/clickSummary");
+const { summarizeLinks, summarizeDownloads } = require("../services/email/clickSummary");
 const { recordView, summarizeViews } = require("../services/email/emailViews");
 const { EmailHttpError, pickReplyTarget, sendNewMail, sendReply, setSpamState } = require("../services/email/emailSender");
 const { getAttachmentBytes } = require("../services/email/attachmentFiles");
@@ -109,6 +109,8 @@ function createAdminEmailRouter({
   };
   // The "Request read receipt" box: "1" asks for one; anything else does not (default off).
   const requestReceiptField = (req) => textField(req, "requestReceipt") === "1";
+  // The "Send attachments as secure links" box: "1" asks for it; anything else does not (default off).
+  const secureLinksField = (req) => textField(req, "secureLinks") === "1";
   const validatedFiles = async (req) => Promise.all((req.files || []).map(validateAttachment));
 
   const handle = (fn) => async (req, res) => {
@@ -156,7 +158,7 @@ function createAdminEmailRouter({
     res.json({
       mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
-      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled), trackInternal: tracking.trackInternalRecipients !== false, companyDomain: EMAIL_DOMAIN },
+      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled), trackInternal: tracking.trackInternalRecipients !== false, companyDomain: EMAIL_DOMAIN, secureLinks: Boolean(tracking.secureLinksActive), secureLinkDays: tracking.secureLinkDays },
     });
   }));
 
@@ -213,10 +215,12 @@ function createAdminEmailRouter({
       ? await EmailMessage.find({ mailbox: opened.mailbox, gmailThreadId: opened.gmailThreadId, isSpam: false, isReceipt: { $ne: true } }).sort({ messageDate: 1, _id: 1 })
       : [opened];
 
-    const [attachments, views, linksByMessage] = await Promise.all([
+    const outIds = thread.filter((m) => m.direction === "out").map((m) => m._id);
+    const [attachments, views, linksByMessage, filesByMessage] = await Promise.all([
       EmailAttachment.find({ message: { $in: thread.map((m) => m._id) } }).sort({ _id: 1 }).lean(),
       summarizeViews(opened._id),
-      summarizeLinks(thread.filter((m) => m.direction === "out").map((m) => m._id)),
+      summarizeLinks(outIds),
+      summarizeDownloads(outIds),
     ]);
     const attachmentsByMessage = new Map();
     for (const a of attachments) {
@@ -231,8 +235,8 @@ function createAdminEmailRouter({
     const { replyTo } = pickReplyTarget(opened, thread);
 
     res.json({
-      message: serializeThreadMessage(opened, mailboxMap, attachmentsByMessage, adminsById, linksByMessage),
-      thread: thread.map((m) => serializeThreadMessage(m, mailboxMap, attachmentsByMessage, adminsById, linksByMessage)),
+      message: serializeThreadMessage(opened, mailboxMap, attachmentsByMessage, adminsById, linksByMessage, filesByMessage),
+      thread: thread.map((m) => serializeThreadMessage(m, mailboxMap, attachmentsByMessage, adminsById, linksByMessage, filesByMessage)),
       views,
       reply: {
         allowed: !opened.isSpam,
@@ -296,6 +300,7 @@ function createAdminEmailRouter({
       store,
       trackOpens: trackOpensField(req),
       requestReceipt: requestReceiptField(req),
+      secureLinks: secureLinksField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
@@ -334,6 +339,7 @@ function createAdminEmailRouter({
       store,
       trackOpens: trackOpensField(req),
       requestReceipt: requestReceiptField(req),
+      secureLinks: secureLinksField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));

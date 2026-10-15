@@ -21,6 +21,8 @@ export default function TrackingSettingsCard() {
   const disclosureEnabled = draft?.enabled ?? t?.disclosureEnabled ?? true;
   const setDisclosureText = (text) => setDraft({ text, enabled: disclosureEnabled });
   const setDisclosureEnabled = (enabled) => setDraft({ text: disclosureText, enabled });
+  // Unsaved edit of the secure-link expiry; null = showing what the server has.
+  const [daysDraft, setDaysDraft] = useState(null);
   const [optAddress, setOptAddress] = useState("");
   const [optNote, setOptNote] = useState("");
 
@@ -145,6 +147,60 @@ export default function TrackingSettingsCard() {
                     ? "New tracked mail has its links recorded."
                     : !t.linksEnvEnabled
                       ? "The server setting EMAIL_TRACKING_LINKS_ENABLED is off (a developer changes it)."
+                      : !t.active
+                        ? "Open tracking must be active first."
+                        : "Switched off above."}
+                </span>
+              </div>
+            </div>
+
+            <div className="mi-sep">
+              <h3>Secure attachment links</h3>
+              <label className="mi-check" style={{ margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={t.secureLinksEnabled}
+                  disabled={update.isPending}
+                  onChange={(e) => update.mutate({ secureLinksEnabled: e.target.checked })}
+                />
+                Let admins send attachments as secure links
+              </label>
+              <p className="em-sub">
+                An admin can tick this for one mail. The files are not attached; the mail holds a link per file, and each link stops working
+                after the number of days below. Anyone who has the link can download until then, so it is not for medical reports,
+                prescriptions or ID documents. Normal attachments stay the default.
+              </p>
+              <div className="mi-actions" style={{ justifyContent: "flex-start", marginTop: 0, alignItems: "center" }}>
+                <label className="em-sub" htmlFor="mi-secure-days">Links expire after</label>
+                <input
+                  id="mi-secure-days"
+                  type="number"
+                  min={1}
+                  max={t.secureLinkDaysMax}
+                  style={{ width: 80 }}
+                  value={daysDraft ?? t.secureLinkDays}
+                  onChange={(e) => setDaysDraft(e.target.value)}
+                />
+                <span className="em-sub">days (at most {t.secureLinkDaysMax}, set by the server)</span>
+                <button
+                  type="button"
+                  className="em-btn em-btn-primary"
+                  disabled={daysDraft === null || Number(daysDraft) === t.secureLinkDays || update.isPending}
+                  onClick={() => update.mutate({ secureLinkDays: Number(daysDraft) }, { onSuccess: () => setDaysDraft(null) })}
+                >
+                  Save
+                </button>
+              </div>
+              {t.secureLinkDaysEffective !== t.secureLinkDays && (
+                <p className="em-sub">New links currently last {t.secureLinkDaysEffective} days, because the server limit is lower than this setting.</p>
+              )}
+              <div className="mi-state">
+                <span className={`em-tag ${t.secureLinksActive ? "mi-on" : "mi-off"}`}>{t.secureLinksActive ? "Active" : "Not active"}</span>
+                <span className="em-sub">
+                  {t.secureLinksActive
+                    ? "Admins see the box when they attach files."
+                    : !t.secureLinksEnvEnabled
+                      ? "The server setting EMAIL_SECURE_LINKS_ENABLED is off (a developer changes it)."
                       : !t.active
                         ? "Open tracking must be active first."
                         : "Switched off above."}

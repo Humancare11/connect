@@ -27,6 +27,9 @@ function trackingEnv(env = process.env) {
     envEnabled: env.EMAIL_TRACKING_ENABLED === "true",
     // Second deploy-time gate: link click tracking (rewriting links through /api/l).
     linksEnvEnabled: env.EMAIL_TRACKING_LINKS_ENABLED === "true",
+    // Third deploy-time gate: secure attachment links (/api/d). The expiry can never exceed the cap.
+    secureLinksEnvEnabled: env.EMAIL_SECURE_LINKS_ENABLED === "true",
+    secureLinkDaysMax: Math.floor(positive(env.EMAIL_SECURE_LINK_DAYS_MAX, 30)),
     // Several different links of one mail hit within a few seconds is a scanner, not a person.
     clickBurstLinks: positive(env.EMAIL_CLICK_BURST_LINKS, 3),
     clickBurstSeconds: positive(env.EMAIL_CLICK_BURST_SECONDS, 5),
@@ -67,7 +70,7 @@ const clearSettingsCache = () => {
 async function getTrackingState({ env = process.env, now, full = false } = {}) {
   const e = trackingEnv(env);
   const gated = e.envEnabled && Boolean(e.baseUrl);
-  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, disclosureEnabled: true, disclosureText: "", trackInternalRecipients: true, trackClicks: false };
+  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, disclosureEnabled: true, disclosureText: "", trackInternalRecipients: true, trackClicks: false, secureLinksEnabled: false, secureLinkDays: 7 };
   return {
     ...e,
     baseUrlOk: Boolean(e.baseUrl),
@@ -77,9 +80,16 @@ async function getTrackingState({ env = process.env, now, full = false } = {}) {
     // Default ON: mail to company addresses is tracked too, with a caveat (see emailTracking.js).
     trackInternalRecipients: s.trackInternalRecipients !== false,
     trackClicks: Boolean(s.trackClicks),
+    secureLinksEnabled: Boolean(s.secureLinksEnabled),
+    // What a new mail gets: the stored setting (default 7 days), never above the server cap.
+    secureLinkDays: Math.max(1, Math.min(Math.floor(Number(s.secureLinkDays) || 7), e.secureLinkDaysMax)),
+    secureLinkDaysStored: Number(s.secureLinkDays) || 7,
     active: e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled),
     // Link tracking needs open tracking to be active AND its own env gate AND its own switch.
     linksActive: e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled) && e.linksEnvEnabled && Boolean(s.trackClicks),
+    // Secure links need tracking active (downloads are recorded), their own env gate and their own switch.
+    secureLinksActive:
+      e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled) && e.secureLinksEnvEnabled && Boolean(s.secureLinksEnabled),
   };
 }
 

@@ -70,4 +70,18 @@ async function planReceipt({ to = [], cc = [], requested, state } = {}) {
   return { enabled: true };
 }
 
-module.exports = { planTracking, planReceipt, APPLE_DOMAINS };
+// Decides whether ONE outgoing mail sends its attachments as secure download links.
+//   requested  true only when the compose form's box was ticked (default off)
+//   fileCount  attachments on the mail; nothing to do without any
+// → { enabled: true, days } | { enabled: false, reason }   reason ∈ not_requested | no_files | off
+// "off" is a request the server cannot honour (switched off after the form loaded): the
+// caller refuses to send rather than quietly attaching the files after all.
+async function planSecureLinks({ requested, fileCount = 0, state } = {}) {
+  if (!requested) return { enabled: false, reason: "not_requested" };
+  if (!fileCount) return { enabled: false, reason: "no_files" };
+  const s = state || (await getTrackingState());
+  if (!s.secureLinksActive) return { enabled: false, reason: "off" };
+  return { enabled: true, days: s.secureLinkDays, baseUrl: s.baseUrl };
+}
+
+module.exports = { planTracking, planReceipt, planSecureLinks, APPLE_DOMAINS };

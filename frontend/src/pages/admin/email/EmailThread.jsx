@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, TrackOpensToggle, TrackingNote } from "./EmailParts";
 import {
   ACCEPT_ATTR,
   EMAIL_BASE,
@@ -133,6 +133,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const [trackChoice, setTrackChoice] = useState(null);
   const trackOpens = trackChoice ?? message.mailbox?.trackOpensDefault !== false;
   const [receipt, setReceipt] = useState(false);
+  const [secure, setSecure] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(null);
@@ -148,6 +149,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
       if (confirm) fd.append("confirm", "1");
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
       if (tracking?.available && receipt) fd.append("requestReceipt", "1");
+      if (tracking?.secureLinks && secure && files.length) fd.append("secureLinks", "1");
       files.forEach((f) => fd.append("files", f));
       return emailApi.reply(message.id, fd);
     },
@@ -229,6 +231,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
           />
         )}
         {tracking?.available && <ReceiptToggle checked={receipt} onChange={setReceipt} />}
+        {tracking?.secureLinks && files.length > 0 && <SecureLinksToggle checked={secure} onChange={setSecure} days={tracking.secureLinkDays} />}
         {error && <span className="em-errtext" role="alert">{error}</span>}
         <span style={{ flex: 1 }} />
         <button type="button" className="em-btn em-btn-ghost" onClick={onCancel}>

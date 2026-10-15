@@ -407,6 +407,8 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .em-trk-links span { overflow-wrap: anywhere; }
 .em-trkopt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
 .em-trkwarn { flex-basis: 100%; color: #7a5200; font-size: 12px; }
+.em-securebox { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; border: 1px solid #e6c97a; border-radius: 8px; background: #fff8e6; }
+.em-securewarn { font-weight: 600; }
 .em-trkopt input { width: 16px; height: 16px; accent-color: var(--em-accent); }
 
 /* ── open tracking settings card (Mail IDs page) ── */

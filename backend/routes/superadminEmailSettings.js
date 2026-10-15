@@ -16,7 +16,7 @@ class ValidationError extends Error {
 }
 
 const MAX_OPT_OUTS = 5000;
-const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients", "trackClicks"];
+const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients", "trackClicks", "secureLinksEnabled", "secureLinkDays"];
 
 // Single line, no control characters (the line is added to the footer of outgoing mail).
 const cleanLine = (v) => String(v).replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -69,6 +69,13 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
         linksEnvEnabled: s.linksEnvEnabled,
         trackClicks: s.trackClicks,
         linksActive: s.linksActive,
+        // Secure attachment links: own server gate, own switch, and a cap on the expiry.
+        secureLinksEnvEnabled: s.secureLinksEnvEnabled,
+        secureLinksEnabled: s.secureLinksEnabled,
+        secureLinksActive: s.secureLinksActive,
+        secureLinkDays: s.secureLinkDaysStored,
+        secureLinkDaysEffective: s.secureLinkDays,
+        secureLinkDaysMax: s.secureLinkDaysMax,
         disclosureText: s.disclosureText,
         defaultDisclosure: DEFAULT_DISCLOSURE,
         graceSeconds: s.graceSeconds,
@@ -86,10 +93,18 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (unknown.length) throw new ValidationError(`Cannot edit: ${unknown.join(", ")}.`);
 
     const patch = {};
-    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks"]) {
+    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks", "secureLinksEnabled"]) {
       if (body[key] === undefined) continue;
       if (typeof body[key] !== "boolean") throw new ValidationError(`${key} must be true or false.`);
       patch[key] = body[key];
+    }
+    if (body.secureLinkDays !== undefined) {
+      const max = getState && (await getState({ full: true })).secureLinkDaysMax;
+      const days = body.secureLinkDays;
+      if (!Number.isInteger(days) || days < 1 || days > max) {
+        throw new ValidationError(`Secure links can last between 1 and ${max} days.`);
+      }
+      patch.secureLinkDays = days;
     }
     if (body.disclosureText !== undefined) {
       if (typeof body.disclosureText !== "string") throw new ValidationError("The disclosure line must be text.");

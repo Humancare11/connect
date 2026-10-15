@@ -51,6 +51,9 @@ const trackingSchema = new mongoose.Schema(
     //   allRecipientsApple    every To/Cc address is iCloud/me/mac, so loads went through Apple's proxy
     // Read receipt (Disposition-Notification-To): asked for on this mail, and who confirmed it.
     receiptRequested: { type: Boolean, default: false },
+    // Attachments were sent as secure download links instead of being attached.
+    secureLinks: { type: Boolean, default: false },
+    secureLinksExpireAt: { type: Date, default: null },
     receiptBy: { type: String, default: "", maxlength: 254 },
     includesInternal: { type: Boolean, default: false },
     allRecipientsApple: { type: Boolean, default: false },

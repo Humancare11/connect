@@ -19,6 +19,11 @@ const emailSettingsSchema = new mongoose.Schema(
     // Rewrite links of tracked mail through our redirect to record clicks. OFF until a
     // Super Admin switches it on AND EMAIL_TRACKING_LINKS_ENABLED is set on the server.
     trackClicks: { type: Boolean, default: false },
+    // "Send attachments as secure links" may be offered at all. OFF until a Super Admin
+    // switches it on AND EMAIL_SECURE_LINKS_ENABLED is set on the server.
+    secureLinksEnabled: { type: Boolean, default: false },
+    // How long a secure link works. Capped by EMAIL_SECURE_LINK_DAYS_MAX at use time.
+    secureLinkDays: { type: Number, default: 7, min: 1, max: 365 },
     disclosureText: { type: String, default: DEFAULT_DISCLOSURE, trim: true, maxlength: 300 },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },

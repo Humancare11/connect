@@ -20,8 +20,9 @@ const FROM_NAME = process.env.EMAIL_FROM_NAME || "Human Care Connect";
 // on tracked mail). The admin's name is deliberately never added — attribution
 // lives only in our database. Without a disclosure the result is exactly what
 // it always was.
-function composeText(body, signature, disclosure = "") {
-  const text = String(body ?? "").replace(/\r\n/g, "\n").trimEnd();
+function composeText(body, signature, disclosure = "", attachmentBlock = "") {
+  const block = String(attachmentBlock || "").trim();
+  const text = [String(body ?? "").replace(/\r\n/g, "\n").trimEnd(), block].filter(Boolean).join("\n\n");
   const footer = [String(signature || "").trim(), String(disclosure || "").trim()].filter(Boolean).join("\n\n");
   return footer ? `${text}\n\n-- \n${footer}\n` : `${text}\n`;
 }
@@ -36,10 +37,13 @@ function composeText(body, signature, disclosure = "") {
 //                (the same plain text + an HTML twin ending in a 1x1 image; with a
 //                linkTracker the HTML links go through it, the text part is unchanged);
 //                null/absent → plain text only, exactly as before
+//   secureLinks  { items: [{ filename, size, url }], expiresAt } → the files are NOT attached;
+//                the text lists one download link per file and says when they expire
+//                (the files are still validated like attachments)
 //   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
 //                the recipient's mail app may confirm the mail was displayed
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -65,7 +69,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
 
   // We choose the Message-ID so it is stored before Gmail ever sees the mail.
   const rfcMessageId = `<${crypto.randomUUID()}@${EMAIL_DOMAIN}>`;
-  const text = composeText(body, mailbox.signature, tracking?.disclosure);
+  const text = composeText(body, mailbox.signature, tracking?.disclosure, secureLinks ? secureLinksBlock(secureLinks) : "");
   const cleanRef = (id) => stripLineBreaks(id);
 
   const composer = new MailComposer({
@@ -80,7 +84,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
     ...(requestReceipt ? { headers: { "Disposition-Notification-To": mailbox.address } } : {}),
     ...(inReplyTo ? { inReplyTo: cleanRef(inReplyTo) } : {}),
     ...(references.length ? { references: references.map(cleanRef).filter(Boolean) } : {}),
-    attachments: attachments.map((file) => ({
+    attachments: (secureLinks ? [] : attachments).map((file) => ({
       filename: stripLineBreaks(file.filename).slice(0, 255) || "attachment",
       contentType: file.contentType || "application/octet-stream",
       content: file.content,
@@ -93,4 +97,14 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
   return { raw, rfcMessageId, text };
 }
 
-module.exports = { buildRawMessage, composeText };
+const fmtSize = (n) => (n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
+
+// The lines that stand where the attachments would be. Plain text, so they read the same
+// in the text part and the HTML part, and a mail app can make the addresses clickable.
+function secureLinksBlock({ items, expiresAt }) {
+  const until = new Date(expiresAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  const lines = items.map((i) => `- ${stripLineBreaks(i.filename)} (${fmtSize(i.size || 0)})\n  ${i.url}`);
+  return [`Attachments - secure download links, valid until ${until} (UTC):`, ...lines].join("\n");
+}
+
+module.exports = { buildRawMessage, composeText, secureLinksBlock };

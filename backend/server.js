@@ -81,6 +81,7 @@ app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 // must answer every request identically. Inert unless open tracking is switched on.
 app.use("/api/e", require("./routes/publicTracking"));
 app.use("/api/l", require("./routes/publicLinks"));
+app.use("/api/d", require("./routes/publicDownloads"));
 
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside

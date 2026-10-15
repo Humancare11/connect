@@ -109,6 +109,24 @@ export function TrackingBadge({ tracking }) {
   );
 }
 
+// "Send attachments as secure links" box. Own box, off by default, shown only when files are
+// attached and the feature is on. The warning is always visible next to it, not in a tooltip.
+export const SECURE_LINKS_WARNING =
+  "Don't use for medical reports, prescriptions or ID documents \u2014 anyone with the link can download until it expires.";
+
+export function SecureLinksToggle({ checked, onChange, days }) {
+  return (
+    <div className="em-securebox">
+      <label className="em-trkopt">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        Send attachments as secure links
+        {days ? <small className="em-sub"> · expire after {days} day{days === 1 ? "" : "s"}</small> : null}
+      </label>
+      <small className="em-trkwarn em-securewarn">{SECURE_LINKS_WARNING}</small>
+    </div>
+  );
+}
+
 // "Request read receipt" box. Its own box, off by default, shown only while tracking is on.
 export function ReceiptToggle({ checked, onChange }) {
   return (
@@ -156,6 +174,21 @@ export function TrackingNote({ tracking }) {
       <span className="em-views-h">Read status</span>
       <span className={`em-tag em-trk em-trk-${info.kind}`}>{info.text}</span>
       <small className="em-sub">{info.detail}</small>
+      {tracking.files?.length > 0 && (
+        <ul className="em-trk-rows em-trk-links" aria-label="Secure download links">
+          {tracking.files.map((f) => (
+            <li key={f.index}>
+              <b>{f.count > 0 ? `${f.count}× downloaded` : "Not downloaded"}</b>
+              <span title={f.filename}>{f.filename}</span>
+              <small className="em-sub">
+                {f.expired ? " · link expired " : " · link valid until "}
+                {fmtFull(f.expiresAt)}
+                {f.last ? ` · last download ${fmtFull(f.last)}` : ""}
+              </small>
+            </li>
+          ))}
+        </ul>
+      )}
       {tracking.links?.length > 0 && (
         <ul className="em-trk-rows em-trk-links" aria-label="Tracked links">
           {tracking.links.map((l) => (
