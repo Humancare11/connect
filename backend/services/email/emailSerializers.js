@@ -43,7 +43,7 @@ function trackingView(doc) {
     replied: doc.status === "replied" ? { at: doc.repliedAt || null } : null,
     downloaded: signal(t?.downloadCount || 0, t?.firstDownloadedAt, t?.lastDownloadedAt),
     clicked: signal(t?.clickCount || 0, t?.firstClickedAt, t?.lastClickedAt),
-    receipt: t?.receiptAt ? { at: t.receiptAt } : null,
+    receipt: t?.receiptAt ? { at: t.receiptAt, by: t.receiptBy || "" } : null,
     opened: signal(t?.status === "opened" ? t.openCount || 0 : 0, t?.firstOpenedAt, t?.lastOpenedAt),
     openedApple: signal(t?.appleOpenCount || 0, t?.firstAppleOpenedAt, t?.lastAppleOpenedAt),
   };
@@ -54,6 +54,8 @@ function trackingView(doc) {
     signals,
     multiRecipient,
     includesInternal: Boolean(t?.includesInternal),
+    receiptRequested: Boolean(t?.receiptRequested),
+    receiptBy: t?.receiptBy || "",
     allRecipientsApple: Boolean(t?.allRecipientsApple),
   };
   if (!t) {

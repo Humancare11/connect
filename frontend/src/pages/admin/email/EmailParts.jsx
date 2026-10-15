@@ -109,6 +109,17 @@ export function TrackingBadge({ tracking }) {
   );
 }
 
+// "Request read receipt" box. Its own box, off by default, shown only while tracking is on.
+export function ReceiptToggle({ checked, onChange }) {
+  return (
+    <label className="em-trkopt" title="Asks the recipient's mail app to confirm the mail was displayed. Most mail apps never send one, and the recipient can always decline.">
+      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      Request read receipt
+      <small className="em-sub"> · most mail apps never send one</small>
+    </label>
+  );
+}
+
 // "Track opens" box of the compose and reply forms. Only rendered while open
 // tracking is switched on; the server decides whether the mail really carries it.
 export function TrackOpensToggle({ checked, onChange, disclosure, caveat = "" }) {

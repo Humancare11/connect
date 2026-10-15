@@ -174,7 +174,10 @@ function signalRows(sig = {}) {
   if (sig.replied) rows.push({ label: "Replied", text: sig.replied.at ? fmtFull(sig.replied.at) : "The recipient replied" });
   if (sig.downloaded) rows.push({ label: "Downloaded", text: times(sig.downloaded) });
   if (sig.clicked) rows.push({ label: "Clicked", text: times(sig.clicked) });
-  if (sig.receipt) rows.push({ label: "Read receipt", text: sig.receipt.at ? fmtFull(sig.receipt.at) : "Received" });
+  if (sig.receipt) {
+    const when = sig.receipt.at ? fmtFull(sig.receipt.at) : "Received";
+    rows.push({ label: "Read receipt", text: sig.receipt.by ? `${when} · ${sig.receipt.by}` : when });
+  }
   if (sig.opened) rows.push({ label: "Opened", text: times(sig.opened) });
   if (sig.openedApple) rows.push({ label: "Opened (Apple)", text: times(sig.openedApple) });
   return rows;
@@ -186,6 +189,10 @@ function signalRows(sig = {}) {
 export function trackingInfo(t) {
   if (!t) return null;
   const rows = signalRows(t.signals);
+  // Asked for, nothing came back: say so, because most mail apps never send one.
+  if (t.receiptRequested && !t.signals?.receipt) {
+    rows.push({ label: "Read receipt", text: "Requested, none received (most mail apps never send one)" });
+  }
   const status = t.readStatus || "unavailable";
   const who = t.multiRecipient ? " We cannot tell which recipient did it." : "";
   const staff = t.includesInternal ? " One recipient is a company address, so this may be a colleague rather than the client." : "";

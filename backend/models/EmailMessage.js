@@ -49,6 +49,9 @@ const trackingSchema = new mongoose.Schema(
     // Facts about the recipients at send time, used to word and classify the opens.
     //   includesInternal      a To/Cc address is a company address (an open may be a colleague)
     //   allRecipientsApple    every To/Cc address is iCloud/me/mac, so loads went through Apple's proxy
+    // Read receipt (Disposition-Notification-To): asked for on this mail, and who confirmed it.
+    receiptRequested: { type: Boolean, default: false },
+    receiptBy: { type: String, default: "", maxlength: 254 },
     includesInternal: { type: Boolean, default: false },
     allRecipientsApple: { type: Boolean, default: false },
   },
@@ -120,6 +123,11 @@ const emailMessageSchema = new mongoose.Schema(
     // it per mailbox, so it says "someone on the team read it", never who. It is a separate
     // signal from firstViewed* (who opened it in the dashboard) and is never written back to Gmail.
     gmailRead: { type: Boolean, default: false },
+
+    // Inbound only: a read receipt (multipart/report, disposition-notification) for a mail we
+    // sent. It is machine mail: kept so the sync does not import it twice, shown nowhere
+    // (not in Received, counts, threads or search) and never treated as a client reply.
+    isReceipt: { type: Boolean, default: false },
 
     // Idempotency key from the compose form so a double-click can't send twice.
     clientRequestId: { type: String, default: null, maxlength: 100 },

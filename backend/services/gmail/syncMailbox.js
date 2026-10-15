@@ -6,6 +6,7 @@ const EmailAttachment = require("../../models/EmailAttachment");
 const { getGmailApi } = require("./gmailAuth");
 const { createGmailClient, HistoryExpiredError } = require("./gmailClient");
 const { parseGmailMessage } = require("./mimeParser");
+const { anyOptedOut } = require("../email/optOuts");
 
 const LEASE_MS = 5 * 60 * 1000;
 const BACKFILL_DAYS = Number(process.env.EMAIL_BACKFILL_DAYS) || 30;
@@ -56,6 +57,29 @@ async function linkReplies(doc) {
   }
 }
 
+// A read receipt confirms the mail it answers. Only "displayed" counts; "deleted",
+// "denied" and the like say nothing about a read. The original must be one of OUR mails
+// that asked for a receipt, and a recipient who has opted out since is not recorded.
+async function applyReceipt(mailbox, doc, receipt) {
+  if (!receipt || receipt.disposition !== "displayed") return;
+  // MDNs carry the original Message-ID in the body; In-Reply-To is the fallback.
+  const originalId = receipt.originalMessageId || doc.inReplyTo;
+  if (!originalId) return;
+  const original = await EmailMessage.findOne({
+    mailbox: mailbox._id,
+    direction: "out",
+    rfcMessageId: originalId,
+    "tracking.receiptRequested": true,
+    "tracking.receiptAt": null,
+  }).select("_id to cc");
+  if (!original) return;
+  if (await anyOptedOut([...(original.to || []), ...(original.cc || [])])) return;
+  await EmailMessage.updateOne(
+    { _id: original._id, "tracking.receiptAt": null },
+    { $set: { "tracking.receiptAt": doc.messageDate, "tracking.receiptBy": receipt.finalRecipient || "" } }
+  );
+}
+
 // Stores one parsed Gmail message. Idempotent. → "created" | "updated" | "skipped"
 async function ingestParsed(mailbox, p) {
   if (p.isDraft) return "skipped"; // Drafts/Trash are not part of this module.
@@ -70,7 +94,7 @@ async function ingestParsed(mailbox, p) {
     if (Boolean(existing.gmailRead) === p.isUnread) set.gmailRead = !p.isUnread;
     if (!Object.keys(set).length) return "skipped";
     await EmailMessage.updateOne({ _id: existing._id }, { $set: set });
-    if ("isSpam" in set && !p.isSpam) {
+    if ("isSpam" in set && !p.isSpam && !p.receipt) {
       const doc = await EmailMessage.findById(existing._id);
       if (doc) await linkReplies(doc);
     }
@@ -110,6 +134,7 @@ async function ingestParsed(mailbox, p) {
     messageDate: p.messageDate,
     isSpam: direction === "in" && p.isSpam,
     gmailRead: direction === "in" && !p.isUnread,
+    isReceipt: direction === "in" && Boolean(p.receipt),
     hasAttachments: p.hasAttachments,
     attachmentCount: p.attachmentCount,
     status: direction === "in" ? "received" : "sent",
@@ -139,6 +164,12 @@ async function ingestParsed(mailbox, p) {
         isInline: a.isInline,
       }))
     );
+  }
+
+  if (doc.isReceipt) {
+    // Never a reply, never "unread mail": it only confirms the mail it answers.
+    await applyReceipt(mailbox, doc, p.receipt);
+    return "created";
   }
 
   await linkReplies(doc);

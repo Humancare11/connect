@@ -4,7 +4,7 @@ const { buildRawMessage } = require("../gmail/mimeBuilder");
 const { makeSnippet } = require("../gmail/mimeParser");
 const { attachmentKey } = require("../../utils/emailAttachments");
 const EmailLink = require("../../models/EmailLink");
-const { planTracking } = require("./emailTracking");
+const { planTracking, planReceipt } = require("./emailTracking");
 const { newToken, linkUrl } = require("./trackingToken");
 
 // Max tracked links per mail; links beyond this stay as they were written.
@@ -40,7 +40,7 @@ function friendlySendError(err) {
 //  - a double-click is caught by the unique (sentByAdmin, clientRequestId) index,
 //  - a failure is visible in Sent as "Failed" with the reason.
 // → { message, duplicate }
-async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = [], clientRequestId, thread = null, gmail, store, trackOpens, trackingState }) {
+async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = [], clientRequestId, thread = null, gmail, store, trackOpens, requestReceipt = false, trackingState }) {
   const requestId = cleanRequestId(clientRequestId);
 
   if (requestId) {
@@ -52,6 +52,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   // recipients). The token is made now so the stored row can already be found by
   // a very fast open.
   const plan = await planTracking({ mailbox, to, cc, requested: trackOpens, state: trackingState });
+  // A read receipt is its own box and works without the image.
+  const receipt = await planReceipt({ to, cc, requested: requestReceipt, state: trackingState });
 
   // Click tracking: every http(s) link of the HTML part gets its own token. The same
   // address twice in one mail is one link, so "which link" stays meaningful.
@@ -81,6 +83,7 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     references: thread?.references || [],
     attachments: files,
     tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure: plan.disclosure, linkTracker } : null,
+    requestReceipt: receipt.enabled,
   });
 
   const doc = new EmailMessage({
@@ -104,8 +107,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     status: "sending",
     clientRequestId: requestId,
     tracking: plan.enabled
-      ? { enabled: true, tokenHash: plan.hash, status: "pending", includesInternal: plan.includesInternal, allRecipientsApple: plan.allRecipientsApple }
-      : { enabled: false, status: "unavailable", unavailableReason: plan.reason },
+      ? { enabled: true, tokenHash: plan.hash, status: "pending", includesInternal: plan.includesInternal, allRecipientsApple: plan.allRecipientsApple, receiptRequested: receipt.enabled }
+      : { enabled: false, status: "unavailable", unavailableReason: plan.reason, receiptRequested: receipt.enabled },
   });
   // Only the plain text is stored: the dashboard never renders the tracking image,
   // so our own admins opening a mail here can never count as the recipient.
@@ -185,8 +188,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   return { message: await EmailMessage.findById(doc._id), duplicate: false };
 }
 
-function sendNewMail({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, trackingState }) {
-  return dispatch({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, trackingState });
+function sendNewMail({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, requestReceipt, trackingState }) {
+  return dispatch({ mailbox, actor, to, cc, subject, body, files, clientRequestId, gmail, store, trackOpens, requestReceipt, trackingState });
 }
 
 // Decides what a reply to `opened` answers, from stored data only (never the request):
@@ -210,7 +213,7 @@ function pickReplyTarget(opened, thread) {
 // Claim-then-send: the received mail is atomically marked "replied by <admin>"
 // first, so two admins answering at once can't both go through; a failed send
 // restores whatever was there before.
-async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject, body, files, clientRequestId, confirm = false, gmail, store, trackOpens, trackingState }) {
+async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject, body, files, clientRequestId, confirm = false, gmail, store, trackOpens, requestReceipt = false, trackingState }) {
   // A repeat of a request we already handled must not claim or send again.
   const requestId = cleanRequestId(clientRequestId);
   if (requestId) {
@@ -260,6 +263,7 @@ async function sendReply({ mailbox, actor, anchor, claimTarget, replyTo, subject
       gmail,
       store,
       trackOpens,
+      requestReceipt,
       trackingState,
     });
   } catch (err) {

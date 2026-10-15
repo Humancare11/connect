@@ -36,8 +36,10 @@ function composeText(body, signature, disclosure = "") {
 //                (the same plain text + an HTML twin ending in a 1x1 image; with a
 //                linkTracker the HTML links go through it, the text part is unchanged);
 //                null/absent → plain text only, exactly as before
+//   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
+//                the recipient's mail app may confirm the mail was displayed
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -74,6 +76,8 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
     text,
     ...(tracking?.imageUrl ? { html: buildHtml(text, { imageUrl: tracking.imageUrl, linkTracker: tracking.linkTracker || null }) } : {}),
     messageId: rfcMessageId,
+    // The address comes from our own mailbox record, never from the request.
+    ...(requestReceipt ? { headers: { "Disposition-Notification-To": mailbox.address } } : {}),
     ...(inReplyTo ? { inReplyTo: cleanRef(inReplyTo) } : {}),
     ...(references.length ? { references: references.map(cleanRef).filter(Boolean) } : {}),
     attachments: attachments.map((file) => ({

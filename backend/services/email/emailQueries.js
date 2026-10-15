@@ -84,11 +84,12 @@ function parseListQuery(query = {}) {
 }
 
 const FOLDER_FILTERS = {
-  inbox: { direction: "in", isSpam: false },
-  spam: { direction: "in", isSpam: true },
+  // Read receipts are machine mail and never listed (isReceipt is absent on older rows).
+  inbox: { direction: "in", isSpam: false, isReceipt: { $ne: true } },
+  spam: { direction: "in", isSpam: true, isReceipt: { $ne: true } },
   sent: { direction: "out" },
   // "All mail" = received (not spam) + sent, as in the approved demo.
-  all: { $or: [{ direction: "in", isSpam: false }, { direction: "out" }] },
+  all: { $or: [{ direction: "in", isSpam: false, isReceipt: { $ne: true } }, { direction: "out" }] },
 };
 
 const STATUS_CLAUSES = {

@@ -49,4 +49,25 @@ async function planTracking({ mailbox, to = [], cc = [], requested, state } = {}
   };
 }
 
-module.exports = { planTracking, APPLE_DOMAINS };
+// Decides whether ONE outgoing mail asks for a read receipt (Disposition-Notification-To).
+//   requested  true only when the compose form's "Request read receipt" box was ticked
+// → { enabled: true } | { enabled: false, reason }
+//   reason ∈ not_requested | tracking_off | internal_recipients | opted_out
+// It follows the same switches and recipient rules as open tracking, but is its own box:
+// a receipt needs no image, so it works for mail sent with "Track opens" unticked.
+async function planReceipt({ to = [], cc = [], requested, state } = {}) {
+  if (!requested) return { enabled: false, reason: "not_requested" };
+  const s = state || (await getTrackingState());
+  if (!s.active) return { enabled: false, reason: "tracking_off" };
+
+  const addresses = [...to, ...cc].map((a) => String(a.address || "").toLowerCase()).filter(Boolean);
+  if (addresses.some((a) => domainOf(a) === EMAIL_DOMAIN) && s.trackInternalRecipients === false) {
+    return { enabled: false, reason: "internal_recipients" };
+  }
+  if (addresses.length && (await EmailTrackingOptOut.exists({ address: { $in: addresses } }))) {
+    return { enabled: false, reason: "opted_out" };
+  }
+  return { enabled: true };
+}
+
+module.exports = { planTracking, planReceipt, APPLE_DOMAINS };

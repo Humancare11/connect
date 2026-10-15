@@ -107,6 +107,8 @@ function createAdminEmailRouter({
     const v = textField(req, "trackOpens");
     return v === "1" ? true : v === "0" ? false : undefined;
   };
+  // The "Request read receipt" box: "1" asks for one; anything else does not (default off).
+  const requestReceiptField = (req) => textField(req, "requestReceipt") === "1";
   const validatedFiles = async (req) => Promise.all((req.files || []).map(validateAttachment));
 
   const handle = (fn) => async (req, res) => {
@@ -132,7 +134,7 @@ function createAdminEmailRouter({
     const ids = mailboxes.map((m) => m._id);
 
     const rows = await EmailMessage.aggregate([
-      { $match: { mailbox: { $in: ids }, direction: "in", firstViewedAt: null, gmailRead: { $ne: true } } },
+      { $match: { mailbox: { $in: ids }, direction: "in", isReceipt: { $ne: true }, firstViewedAt: null, gmailRead: { $ne: true } } },
       { $group: { _id: { mailbox: "$mailbox", isSpam: "$isSpam" }, n: { $sum: 1 } } },
     ]);
     const unread = new Map();
@@ -203,12 +205,12 @@ function createAdminEmailRouter({
 
     const mailboxes = await accessibleMailboxes(actor.id);
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
-    const opened = await EmailMessage.findOne({ _id: req.params.id, mailbox: { $in: mailboxes.map((m) => m._id) } });
+    const opened = await EmailMessage.findOne({ _id: req.params.id, isReceipt: { $ne: true }, mailbox: { $in: mailboxes.map((m) => m._id) } });
     if (!opened) return res.status(404).json({ msg: "Mail not found." });
 
     // A spam mail stands alone; otherwise the thread hides any spam in it.
     const thread = opened.gmailThreadId && !opened.isSpam
-      ? await EmailMessage.find({ mailbox: opened.mailbox, gmailThreadId: opened.gmailThreadId, isSpam: false }).sort({ messageDate: 1, _id: 1 })
+      ? await EmailMessage.find({ mailbox: opened.mailbox, gmailThreadId: opened.gmailThreadId, isSpam: false, isReceipt: { $ne: true } }).sort({ messageDate: 1, _id: 1 })
       : [opened];
 
     const [attachments, views, linksByMessage] = await Promise.all([
@@ -293,6 +295,7 @@ function createAdminEmailRouter({
       gmail: lazyGmail(mailbox),
       store,
       trackOpens: trackOpensField(req),
+      requestReceipt: requestReceiptField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
@@ -330,6 +333,7 @@ function createAdminEmailRouter({
       gmail: lazyGmail(mailbox),
       store,
       trackOpens: trackOpensField(req),
+      requestReceipt: requestReceiptField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));

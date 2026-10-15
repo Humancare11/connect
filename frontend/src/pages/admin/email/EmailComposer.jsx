@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Icon, TrackOpensToggle } from "./EmailParts";
+import { AttachmentList, Icon, ReceiptToggle, TrackOpensToggle } from "./EmailParts";
 import { ACCEPT_ATTR, EMAIL_RE, addFiles, internalCaveat, newRequestId } from "./emailUtils";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
@@ -16,6 +16,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
   const [trackChoice, setTrackChoice] = useState(null);
   const mailboxDefault = mailboxes.find((m) => m.id === from)?.trackOpensDefault !== false;
   const trackOpens = trackChoice ?? mailboxDefault;
+  const [receipt, setReceipt] = useState(false);
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState("");
@@ -69,6 +70,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
       fd.append("body", body.trim());
       fd.append("clientRequestId", requestId.current);
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
+      if (tracking?.available && receipt) fd.append("requestReceipt", "1");
       files.forEach((f) => fd.append("files", f));
       return emailApi.send(fd);
     },
@@ -154,6 +156,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
                 caveat={internalCaveat(`${to},${cc}`.split(/[,;\s]+/), tracking)}
               />
             )}
+            {tracking?.available && <ReceiptToggle checked={receipt} onChange={setReceipt} />}
             {error && <div className="em-errtext" role="alert">{error}</div>}
           </div>
         </form>

@@ -378,6 +378,61 @@ describe("sending: tracked and untracked mail", () => {
     assert.deepEqual(r.tracking, { available: false, disclosure: false, trackInternal: true, companyDomain: "humancareconnect.co" });
   });
 
+  describe("read receipt request", () => {
+    const header = /^Disposition-Notification-To: support@humancareconnect\.co\r?$/m;
+
+    test("off by default: no header, nothing recorded", async () => {
+      const { body } = await send();
+      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[0]));
+      assert.equal((await EmailMessage.findById(body.message.id)).tracking.receiptRequested, false);
+    });
+
+    test("ticked: the header is added and the mail remembers it asked", async () => {
+      const { body } = await send({ requestReceipt: "1" });
+      assert.match(gmail.sent[0], header);
+      assert.equal((await EmailMessage.findById(body.message.id)).tracking.receiptRequested, true);
+    });
+
+    test("it is its own box: works with 'Track opens' unticked, and then no image or link is added", async () => {
+      const { body } = await send({ requestReceipt: "1", trackOpens: "0" });
+      assert.match(gmail.sent[0], header);
+      assert.ok(!/\/api\/(e|l)\//.test(gmail.sent[0]));
+      const row = await EmailMessage.findById(body.message.id);
+      assert.deepEqual([row.tracking.enabled, row.tracking.receiptRequested], [false, true]);
+    });
+
+    test("no request when tracking is off, or for an opted-out recipient", async () => {
+      state = { ...ACTIVE, active: false };
+      let r = await send({ requestReceipt: "1" });
+      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[0]));
+      assert.equal((await EmailMessage.findById(r.body.message.id)).tracking.receiptRequested, false);
+
+      state = { ...ACTIVE };
+      await EmailTrackingOptOut.create({ address: "optout@gmail.com" });
+      r = await send({ requestReceipt: "1", to: "optout@gmail.com" });
+      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[1]));
+      assert.equal((await EmailMessage.findById(r.body.message.id)).tracking.receiptRequested, false);
+    });
+
+    test("anything other than '1' does not ask", async () => {
+      await send({ requestReceipt: "true" });
+      assert.ok(!/Disposition-Notification-To/i.test(gmail.sent[0]));
+    });
+
+    test("a reply can ask too", async () => {
+      const inbound = new EmailMessage({ mailbox: support._id, direction: "in", status: "received", gmailMessageId: "gr", gmailThreadId: "tr", rfcMessageId: "<r@x>", from: { address: "client@gmail.com" }, to: [{ address: support.address }], subject: "Q", messageDate: new Date() });
+      inbound.setContent({ text: "hi", html: "", snippet: "hi" });
+      await inbound.save();
+      const fd = new FormData();
+      fd.set("body", "answer");
+      fd.set("clientRequestId", "rep-rc");
+      fd.set("requestReceipt", "1");
+      const res = await fetch(`${base}/messages/${inbound._id}/reply`, { method: "POST", headers: { "x-test-admin": String(priya._id) }, body: fd });
+      assert.equal(res.status, 201);
+      assert.match(gmail.sent[0], header);
+    });
+  });
+
   test("replying follows the same rules (the reply goes to ONE recipient)", async () => {
     const inbound = new EmailMessage({ mailbox: support._id, direction: "in", status: "received", gmailMessageId: "gi", gmailThreadId: "ti", rfcMessageId: "<i@x>", from: { address: "client@gmail.com" }, to: [{ address: support.address }], subject: "Q", messageDate: new Date() });
     inbound.setContent({ text: "hi", html: "", snippet: "hi" });
