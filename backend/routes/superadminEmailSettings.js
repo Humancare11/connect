@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const EmailSettings = require("../models/EmailSettings");
 const EmailTrackingOptOut = require("../models/EmailTrackingOptOut");
 const { DEFAULT_DISCLOSURE } = EmailSettings;
+const { disclosureExamples } = require("../services/email/disclosure");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { getTrackingState, clearSettingsCache } = require("../services/email/emailSettings");
 const { normalizeAddressList, EmailValidationError } = require("../utils/emailValidation");
@@ -76,8 +77,12 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
         secureLinkDays: s.secureLinkDaysStored,
         secureLinkDaysEffective: s.secureLinkDays,
         secureLinkDaysMax: s.secureLinkDaysMax,
+        // Custom line (replaces the automatic wording for every mail); empty = automatic.
         disclosureText: s.disclosureText,
+        disclosureCustom: Boolean(String(s.disclosureText || "").trim()),
         defaultDisclosure: DEFAULT_DISCLOSURE,
+        // What goes out for each combination while no custom line is set.
+        disclosureExamples: disclosureExamples(),
         graceSeconds: s.graceSeconds,
       },
       optOuts: optOuts.map(serializeOptOut),
@@ -115,11 +120,7 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (!Object.keys(patch).length) throw new ValidationError("Nothing to update.");
 
     const current = await EmailSettings.findOneAndUpdate({ key: "email" }, { $setOnInsert: { key: "email" } }, { upsert: true, returnDocument: "after", setDefaultsOnInsert: true });
-    const next = { ...current.toObject(), ...patch };
-    // The line is added to the footer of tracked mail, so it may not be empty while it is on.
-    // (Only when the patch touches tracking or the line itself: an unrelated toggle must not fail on it.)
-    const touchesLine = ["trackingEnabled", "disclosureEnabled", "disclosureText"].some((k) => k in patch);
-    if (touchesLine && next.disclosureEnabled && !next.disclosureText) throw new ValidationError("Write the disclosure line, or switch it off.");
+    // An empty custom line is fine: the automatic wording (see services/email/disclosure.js) is used.
 
     Object.assign(current, patch, { updatedBy: req.user.id });
     await current.save();

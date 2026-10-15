@@ -212,9 +212,29 @@ export default function TrackingSettingsCard() {
               <h3>Notice in the footer</h3>
               <label className="mi-check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={disclosureEnabled} onChange={(e) => setDisclosureEnabled(e.target.checked)} />
-                Add this line to the footer of every tracked mail
+                Add a notice to the footer of every mail that is tracked in any way
               </label>
-              <textarea aria-label="Footer notice" rows={2} maxLength={300} value={disclosureText} disabled={!disclosureEnabled} onChange={(e) => setDisclosureText(e.target.value)} />
+              <p className="em-sub">
+                By default the notice is written for you and names exactly what that mail does: opens, links, download links, read
+                receipt. Mail that is not tracked gets none.
+              </p>
+              <label className="em-sub" htmlFor="mi-notice-custom">Your own wording (optional)</label>
+              <textarea
+                id="mi-notice-custom"
+                aria-label="Custom footer notice"
+                rows={2}
+                maxLength={300}
+                placeholder="Leave empty to use the automatic wording."
+                value={disclosureText}
+                disabled={!disclosureEnabled}
+                onChange={(e) => setDisclosureText(e.target.value)}
+              />
+              {disclosureText.trim() && (
+                <p className="em-sub">
+                  Your wording replaces the automatic notice on every tracked mail, so it must cover opens, links, download links and
+                  read receipts.
+                </p>
+              )}
               <div className="mi-actions" style={{ justifyContent: "flex-start", marginTop: 0 }}>
                 <button
                   type="button"
@@ -225,9 +245,22 @@ export default function TrackingSettingsCard() {
                   Save notice
                 </button>
                 <button type="button" className="em-btn em-btn-ghost" disabled={disclosureText === t.defaultDisclosure} onClick={() => setDisclosureText(t.defaultDisclosure)}>
-                  Use the suggested wording
+                  Use the automatic wording
                 </button>
               </div>
+              <details>
+                <summary className="em-sub" style={{ cursor: "pointer" }}>See the automatic wording for each case</summary>
+                <ul className="mi-optlist">
+                  {(t.disclosureExamples || []).map((e) => (
+                    <li key={e.label}>
+                      <span className="mi-opt-main">
+                        <b>{e.label}</b>
+                        <small>{e.text}</small>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </div>
 
             <div className="mi-sep">

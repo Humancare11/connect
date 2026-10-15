@@ -40,10 +40,12 @@ function composeText(body, signature, disclosure = "", attachmentBlock = "") {
 //   secureLinks  { items: [{ filename, size, url }], expiresAt } → the files are NOT attached;
 //                the text lists one download link per file and says when they expire
 //                (the files are still validated like attachments)
+//   disclosure   the footer notice for mail that has no `tracking` (secure links, read receipt
+//                only); mail with `tracking` carries tracking.disclosure
 //   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
 //                the recipient's mail app may confirm the mail was displayed
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "" }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -69,7 +71,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
 
   // We choose the Message-ID so it is stored before Gmail ever sees the mail.
   const rfcMessageId = `<${crypto.randomUUID()}@${EMAIL_DOMAIN}>`;
-  const text = composeText(body, mailbox.signature, tracking?.disclosure, secureLinks ? secureLinksBlock(secureLinks) : "");
+  const text = composeText(body, mailbox.signature, tracking ? tracking.disclosure : disclosure, secureLinks ? secureLinksBlock(secureLinks) : "");
   const cleanRef = (id) => stripLineBreaks(id);
 
   const composer = new MailComposer({

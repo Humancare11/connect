@@ -1,4 +1,4 @@
-import { extClass, firstName, fmtFull, fmtSize, hashColor, initials, trackingInfo } from "./emailUtils";
+import { READ_STATUS_HELP, extClass, firstName, fmtFull, fmtSize, hashColor, initials, trackingInfo } from "./emailUtils";
 
 const PATHS = {
   inbox: (<><path d="M3 13h5l2 3h4l2-3h5" /><path d="M5.5 5h13L21 13v6H3v-6z" /></>),
@@ -200,6 +200,17 @@ export function TrackingNote({ tracking }) {
           ))}
         </ul>
       )}
+      <details className="em-trkhelp">
+        <summary>What do these statuses mean?</summary>
+        <ul>
+          {READ_STATUS_HELP.map((h) => (
+            <li key={h.key}>
+              <b>{h.label}</b> — {h.text}
+            </li>
+          ))}
+        </ul>
+        <p className="em-sub">The strongest signal wins. None of them proves a person read the mail.</p>
+      </details>
       {info.rows.length > 0 && (
         <ul className="em-trk-rows">
           {info.rows.map((r) => (

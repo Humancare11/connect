@@ -7,6 +7,8 @@ const EmailLink = require("../../models/EmailLink");
 const EmailDownloadLink = require("../../models/EmailDownloadLink");
 const { planTracking, planReceipt, planSecureLinks } = require("./emailTracking");
 const { getTrackingState } = require("./emailSettings");
+const { composeDisclosure } = require("./disclosure");
+const { countTrackableLinks } = require("./emailHtml");
 const { newToken, linkUrl, downloadUrl } = require("./trackingToken");
 
 // Max tracked links per mail; links beyond this stay as they were written.
@@ -88,6 +90,18 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
       }
     : null;
 
+  // The footer notice names exactly what this mail does: opens, links (only if it has some),
+  // downloads, read receipt. Mail that is not tracked in any way carries none.
+  const disclosure = composeDisclosure(
+    {
+      opens: plan.enabled,
+      links: Boolean(linkTracker) && countTrackableLinks(`${body}\n${mailbox.signature || ""}`) > 0,
+      downloads: secure.enabled,
+      receipt: receipt.enabled,
+    },
+    state
+  );
+
   // Validates addresses/subject/body/size and builds the MIME mail. Throws
   // EmailValidationError before anything is stored or sent.
   const built = await buildRawMessage({
@@ -99,7 +113,8 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     inReplyTo: thread?.inReplyTo || "",
     references: thread?.references || [],
     attachments: files,
-    tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure: plan.disclosure, linkTracker } : null,
+    tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure, linkTracker } : null,
+    disclosure,
     requestReceipt: receipt.enabled,
     secureLinks: secure.enabled
       ? {

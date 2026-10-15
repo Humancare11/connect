@@ -142,6 +142,20 @@ const READ_LABELS = {
 
 export const TRACKING_FILTER_OPTIONS = Object.entries(READ_LABELS);
 
+// What each status means and where it can be wrong. Shown on the mail page; the same text
+// is in docs/email-read-status.md. Strongest signal first.
+export const READ_STATUS_HELP = [
+  ["replied", "The client answered in the same conversation. The strongest sign. It says nothing about whether other recipients read it."],
+  ["downloaded", "Someone used a secure download link. A security scanner is ignored, but one that looks like a normal browser from an unknown address can still count."],
+  ["clicked", "Someone used a link in the mail. Scanners that open every link at delivery are filtered, but a scanner we do not know can still count."],
+  ["receipt", "The recipient's mail app confirmed the mail was displayed. Very few mail apps ever send this, and the recipient can decline."],
+  ["opened", "The recipient's mail app loaded the tracking image. Not proof the mail was read: a preview, a scanner or an image-loading setting can do it."],
+  ["opened_apple", "Apple Mail loads images by itself on the recipient's behalf. It may not mean the mail was opened. Never shown as a plain Opened."],
+  ["pending", "Nothing has loaded the image. The mail may be unopened, or the recipient's mail app blocks images (common in Outlook and many company mailboxes)."],
+  ["automated", "Only security scanners, previews or prefetch loaded the image. The recipient may or may not have opened it."],
+  ["unavailable", "Tracking was not on for this mail (switched off, opted out, sent from Gmail, or older mail), so nothing can be said."],
+].map(([key, text]) => ({ key, label: READ_LABELS[key], text }));
+
 const TRACKING_REASONS = {
   tracking_off: "Open tracking was not switched on when this mail was sent.",
   mail_off: "Tracking was switched off for this mail.",

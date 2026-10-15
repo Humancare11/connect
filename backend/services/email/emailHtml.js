@@ -68,4 +68,15 @@ function buildHtml(text, { imageUrl = "", linkTracker = null } = {}) {
   );
 }
 
-module.exports = { buildHtml, textToHtml, escapeHtml };
+// How many links of this text would be offered to a link tracker (http/https/www., within the
+// length limit). Used to word the footer notice: "links" is only mentioned when there are some.
+function countTrackableLinks(text) {
+  let n = 0;
+  linkify(escapeHtml(String(text || "").replace(/\r\n/g, "\n")), () => {
+    n += 1;
+    return null;
+  });
+  return n;
+}
+
+module.exports = { buildHtml, textToHtml, escapeHtml, countTrackableLinks };

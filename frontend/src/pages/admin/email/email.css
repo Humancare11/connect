@@ -404,6 +404,9 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .em-trk-rows b { display: inline-block; min-width: 110px; font-weight: 600; }
 .em-trk-rows span { color: var(--em-muted); }
 .em-trk-links b { min-width: 80px; }
+.em-trkhelp { flex-basis: 100%; font-size: 12px; }
+.em-trkhelp summary { cursor: pointer; color: var(--em-muted); }
+.em-trkhelp ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
 .em-trk-links span { overflow-wrap: anywhere; }
 .em-trkopt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
 .em-trkwarn { flex-basis: 100%; color: #7a5200; font-size: 12px; }
