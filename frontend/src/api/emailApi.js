@@ -35,6 +35,18 @@ export const emailApi = {
   },
 };
 
+// My signatures (every admin and Super Admin, each only their own: the server decides
+// who owns what from the session, nothing here says whose they are).
+const SIGNATURE_BASE = "/api/admin/email/signatures";
+
+export const signaturesApi = {
+  get: () => api.get(SIGNATURE_BASE, RAW).then((r) => r.data),
+  create: (payload) => api.post(SIGNATURE_BASE, payload, RAW).then((r) => r.data),
+  update: (id, patch) => api.patch(`${SIGNATURE_BASE}/${id}`, patch, RAW).then((r) => r.data),
+  remove: (id) => api.delete(`${SIGNATURE_BASE}/${id}`, RAW).then((r) => r.data),
+  setMailboxDefault: (mailbox, signatureId) => api.put(`${SIGNATURE_BASE}/mailbox-defaults`, { mailbox, signatureId }, RAW).then((r) => r.data),
+};
+
 // Super Admin only (the server refuses everyone else): manage the company mail IDs.
 const MAILBOX_BASE = "/api/superadmin/email/mailboxes";
 

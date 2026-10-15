@@ -56,6 +56,20 @@ describe("composeText with an admin signature", () => {
     assert.equal(composeText("Hello", "F", "", "Att", { adminSignature: true }), "Hello\n\nAtt\n\nF\n");
   });
 
+  test("the My signature page preview is the same text the server builds", async () => {
+    const path = require("node:path");
+    const { pathToFileURL } = require("node:url");
+    const utils = await import(pathToFileURL(path.join(__dirname, "../../frontend/src/pages/admin/email/signatureUtils.js")).href);
+    const sig = "Anita Rao\nCare Coordinator";
+    for (const withCompanyFooter of [true, false]) {
+      const preview = utils.previewMail({ message: "Dear client,", signature: sig, companyFooter: FOOTER, withCompanyFooter });
+      const server = composeText(utils.joinCompose("Dear client,", sig), FOOTER, "", "", { adminSignature: true, companyFooter: withCompanyFooter });
+      assert.equal(server, `${preview}\n`, String(withCompanyFooter));
+    }
+    // and without a signature
+    assert.equal(composeText("Dear client,", FOOTER), `${utils.previewMail({ message: "Dear client,", signature: "", companyFooter: FOOTER, withCompanyFooter: true })}\n`);
+  });
+
   test("a company footer that is empty adds nothing", () => {
     assert.equal(composeText("Hi\n\n-- \nA", "", "", "", { adminSignature: true }), "Hi\n\n-- \nA\n");
   });

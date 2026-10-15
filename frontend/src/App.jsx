@@ -836,6 +836,7 @@ const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
+const MySignature = lazy(() => import("./pages/admin/email/MySignature"));
 const LiveChatShell = lazy(() => import("./pages/admin/livechat/LiveChatShell"));
 const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
 const AdminLiveTeam = lazy(() => import("./pages/admin/livechat/AdminLiveTeam"));
@@ -1644,6 +1645,17 @@ export function AppLayout() {
               <PrivateRoute allowedRoles={["superadmin"]}>
                 <AdminLayout>
                   <MailIdsSettings />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          {/* Every admin: their own email signatures (the server only ever returns the caller's own). */}
+          <Route
+            path="/admin-dashboard/email/settings/my-signature"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <MySignature />
                 </AdminLayout>
               </PrivateRoute>
             }

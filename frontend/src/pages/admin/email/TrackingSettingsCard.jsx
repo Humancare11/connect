@@ -108,6 +108,23 @@ export default function TrackingSettingsCard() {
             </dl>
 
             <div className="mi-sep">
+              <h3>Signatures</h3>
+              <label className="mi-check" style={{ margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={t.companyFooterWithSignature !== false}
+                  disabled={update.isPending}
+                  onChange={(e) => update.mutate({ companyFooterWithSignature: e.target.checked })}
+                />
+                Also add the company footer when an admin signature is used
+              </label>
+              <p className="em-sub">
+                Order in the mail: message, the admin&rsquo;s signature, the company footer (set per Mail ID). Mail sent with
+                &ldquo;No signature&rdquo; always carries the company footer.
+              </p>
+            </div>
+
+            <div className="mi-sep">
               <h3>Company addresses</h3>
               <label className="mi-check" style={{ margin: 0 }}>
                 <input
