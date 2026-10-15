@@ -88,8 +88,7 @@ If the box is ticked but there is no image (or it cannot be loaded), the mail is
 3. **Content-Security-Policy:** the admin pages show the image from a `blob:` address, so `img-src` in
    `frontend/index.html` must include `blob:`. It was missing, which is why the preview showed only the alt text on UAT.
    This needs a **frontend deploy**.
-4. The Super Admin setting "Also add the company footer when an admin signature is used" is gone from the screen. It no
-   longer has any effect (the image never has the text footer).
+4. The Super Admin setting "Also add the company footer when an admin signature is used" has been removed (screen, API and database field). Old values left in the database are ignored.
 
 ## UAT script
 

@@ -11,10 +11,6 @@ const emailSettingsSchema = new mongoose.Schema(
   {
     key: { type: String, default: "email", unique: true, immutable: true },
     trackingEnabled: { type: Boolean, default: false },
-    // "Also add the company footer when an admin signature is used". ON unless explicitly
-    // switched off. Documents written before this field existed do not have it, so it is
-    // always read as `!== false` (see getSignatureSettings).
-    companyFooterWithSignature: { type: Boolean, default: true },
     // A tracking notice in the footer of tracked mail. OFF by default: recipients see no
     // notice unless a Super Admin explicitly switches this on (the Privacy Policy is what
     // informs them). It is a new field on purpose: an older document that still carries the

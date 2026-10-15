@@ -371,10 +371,8 @@ describe("image-only signatures", () => {
       }
     });
 
-    test("the Super Admin 'company footer with signature' setting no longer matters: the image never has the footer", async () => {
+    test("the image never has the company footer, in either part", async () => {
       await giveSignature();
-      await EmailSettings.create({ key: "email", companyFooterWithSignature: true });
-      clearSettingsCache();
       const r = await send();
       assert.ok(!r.html.includes(FOOTER));
       assert.ok(!r.text.includes(FOOTER));

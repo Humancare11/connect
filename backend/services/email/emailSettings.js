@@ -81,8 +81,6 @@ async function getTrackingState({ env = process.env, now, full = false } = {}) {
     // Default ON: mail to company addresses is tracked too, with a caveat (see emailTracking.js).
     trackInternalRecipients: s.trackInternalRecipients !== false,
     trackClicks: Boolean(s.trackClicks),
-    // Not a tracking switch: an admin signature is followed by the company footer unless this is false.
-    companyFooterWithSignature: s.companyFooterWithSignature !== false,
     secureLinksEnabled: Boolean(s.secureLinksEnabled),
     // What a new mail gets: the stored setting (default 7 days), never above the server cap.
     secureLinkDays: Math.max(1, Math.min(Math.floor(Number(s.secureLinkDays) || 7), e.secureLinkDaysMax)),
@@ -96,12 +94,4 @@ async function getTrackingState({ env = process.env, now, full = false } = {}) {
   };
 }
 
-// Signature rules (not tracking). → { companyFooterWithSignature }
-// The company footer follows an admin signature unless a Super Admin switched that off.
-// A settings document from before the field existed has no value and counts as ON.
-async function getSignatureSettings({ now } = {}) {
-  const s = await loadSettings({ now });
-  return { companyFooterWithSignature: s.companyFooterWithSignature !== false };
-}
-
-module.exports = { normalizeBaseUrl, trackingEnv, loadSettings, clearSettingsCache, getTrackingState, getSignatureSettings };
+module.exports = { normalizeBaseUrl, trackingEnv, loadSettings, clearSettingsCache, getTrackingState };
