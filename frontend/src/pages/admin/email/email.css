@@ -462,3 +462,5 @@ button.em-att-main:hover .em-att-nm { text-decoration: underline; }
 .sg-boxes li:last-child { border-bottom: 0; }
 .sg-box-name { display: flex; flex-direction: column; min-width: 0; }
 .sg-box-name small { overflow-wrap: anywhere; }
+.em-sigpick { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 6px 12px 0; }
+.em-sigpick select { margin-left: 6px; max-width: 220px; }

@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, SignaturePicker, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { messageOf } from "./signatureUtils";
+import { useSignatureField } from "./useSignatureField";
+import { useConfirm as useConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import {
   ACCEPT_ATTR,
   EMAIL_BASE,
@@ -130,6 +133,10 @@ function InfoBoxes({ m, views }) {
 
 function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const [body, setBody] = useState("");
+  const bodyRef = useRef(null);
+  const ask = useConfirmDialog();
+  // The signature is inserted below the reply, inside the editable text.
+  const signature = useSignatureField({ mailboxId: message.mailbox?.id, body, setBody, textRef: bodyRef, ask });
   const [trackChoice, setTrackChoice] = useState(null);
   const trackOpens = trackChoice ?? message.mailbox?.trackOpensDefault !== false;
   const [receipt, setReceipt] = useState(false);
@@ -145,6 +152,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
     mutationFn: ({ confirm }) => {
       const fd = new FormData();
       fd.append("body", body.trim());
+      fd.append("signatureId", signature.signatureId);
       fd.append("clientRequestId", requestId.current);
       if (confirm) fd.append("confirm", "1");
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
@@ -169,7 +177,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const submit = (e, confirm = false) => {
     e?.preventDefault();
     if (send.isPending) return;
-    if (!body.trim()) {
+    if (!messageOf(body)) {
       setError("The reply is empty.");
       return;
     }
@@ -196,7 +204,8 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
           · as <b>{adminName}</b>
         </span>
       </div>
-      <textarea aria-label="Reply message" placeholder="Write your reply…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
+      <textarea ref={bodyRef} aria-label="Reply message" placeholder="Write your reply…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
+      <SignaturePicker field={signature} mailboxName={message.mailbox?.displayName} />
       {conflict && (
         <div className="em-banner warn" role="alert">
           <span>

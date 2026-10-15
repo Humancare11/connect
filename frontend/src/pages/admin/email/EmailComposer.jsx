@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Icon, ReceiptToggle, SecureLinksToggle, TrackOpensToggle } from "./EmailParts";
+import { AttachmentList, Icon, ReceiptToggle, SecureLinksToggle, SignaturePicker, TrackOpensToggle } from "./EmailParts";
+import { messageOf } from "./signatureUtils";
+import { useSignatureField } from "./useSignatureField";
 import { ACCEPT_ATTR, EMAIL_RE, addFiles, internalCaveat, newRequestId } from "./emailUtils";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
@@ -22,6 +24,9 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const bodyRef = useRef(null);
+  // The signature sits inside the text (below a "-- " line) and can be edited for this one mail.
+  const signature = useSignatureField({ mailboxId: from, body, setBody, textRef: bodyRef, ask: confirm });
   const [files, setFiles] = useState([]);
   const [full, setFull] = useState(false);
   const [error, setError] = useState("");
@@ -33,7 +38,8 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
     toRef.current?.focus();
   }, []);
 
-  const dirty = Boolean(to || cc || subject || body || files.length);
+  // An inserted signature alone is not something the admin wrote.
+  const dirty = Boolean(to || cc || subject || messageOf(body) || files.length);
 
   const askDiscard = () =>
     confirm({
@@ -69,6 +75,8 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
       fd.append("cc", cc.trim());
       fd.append("subject", subject.trim());
       fd.append("body", body.trim());
+      // "none" or one of MY signatures; the server checks it is mine and never trusts it for content.
+      fd.append("signatureId", signature.signatureId);
       fd.append("clientRequestId", requestId.current);
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
       if (tracking?.available && receipt) fd.append("requestReceipt", "1");
@@ -88,7 +96,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
     if (cc.trim() && !cc.split(/[,;]/).map((s) => s.trim()).filter(Boolean).every((r) => EMAIL_RE.test(r))) {
       return setError("One of the Cc addresses is not valid.");
     }
-    if (!subject.trim() || !body.trim()) return setError("Subject and message are both required.");
+    if (!subject.trim() || !messageOf(body)) return setError("Subject and message are both required.");
     setError("");
     send.mutate();
   };
@@ -137,7 +145,8 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
           <div className="em-c-row">
             <input type="text" placeholder="Subject" aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
-          <textarea aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
+          <textarea ref={bodyRef} aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
+          <SignaturePicker field={signature} mailboxName={mailboxes.find((m) => m.id === from)?.displayName} />
           <div className="em-c-foot">
             <AttachmentList items={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
             <button type="submit" className="em-btn em-btn-primary" disabled={send.isPending || !mailboxes.length}>

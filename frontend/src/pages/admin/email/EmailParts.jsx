@@ -109,6 +109,40 @@ export function TrackingBadge({ tracking }) {
   );
 }
 
+// Signature dropdown under the message box of the compose and reply forms.
+export function SignaturePicker({ field, mailboxName }) {
+  const { signatures, signatureId, choose, removedByHand, loading } = field;
+  if (loading) return null;
+  if (!signatures.length) {
+    return (
+      <div className="em-sigpick">
+        <a className="em-sub" href="/admin-dashboard/email/settings/my-signature" target="_blank" rel="noreferrer">
+          Add a signature
+        </a>
+      </div>
+    );
+  }
+  return (
+    <div className="em-sigpick">
+      <label className="em-trkopt">
+        Signature
+        <select aria-label="Signature" value={signatureId} onChange={(e) => choose(e.target.value)}>
+          <option value="none">No signature</option>
+          {signatures.map((s) => (
+            <option key={s.id} value={s.id}>{s.name}</option>
+          ))}
+        </select>
+      </label>
+      {removedByHand && (
+        <small className="em-trkwarn">
+          The signature text was removed from this mail. Choose &ldquo;No signature&rdquo; if you want the company footer
+          {mailboxName ? ` of ${mailboxName}` : ""} as usual.
+        </small>
+      )}
+    </div>
+  );
+}
+
 // "Send attachments as secure links" box. Own box, off by default, shown only when files are
 // attached and the feature is on. The warning is always visible next to it, not in a tooltip.
 export const SECURE_LINKS_WARNING =
