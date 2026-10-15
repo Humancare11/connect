@@ -3,6 +3,8 @@ const EmailOpenEvent = require("../../models/EmailOpenEvent");
 const { getTrackingState, trackingEnv } = require("./emailSettings");
 const { hashToken, isTokenShape } = require("./trackingToken");
 const { classifyOpen, uaFamily } = require("./openClassifier");
+const { anyOptedOut } = require("./optOuts");
+const { logUnmatched } = require("./trackingDebug");
 
 // More stored events than this per mail per day is a script, not a person.
 const MAX_EVENTS_PER_DAY = 200;
@@ -28,9 +30,12 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
   const cfg = trackingEnv(env);
 
   const message = await EmailMessage.findOne({ "tracking.tokenHash": hashToken(token), direction: "out" })
-    .select("_id status messageDate tracking.allRecipientsApple")
+    .select("_id status messageDate to cc tracking.allRecipientsApple")
     .lean();
   if (!message || message.status === "failed") return { recorded: false, why: "unknown_token" };
+
+  // A recipient added to the opt-out list after the mail went out stops being recorded at once.
+  if (await anyOptedOut([...(message.to || []), ...(message.cc || [])])) return { recorded: false, why: "opted_out" };
 
   const recent = await EmailOpenEvent.countDocuments({ message: message._id, at: { $gte: new Date(now.getTime() - DAY_MS) } });
   if (recent >= MAX_EVENTS_PER_DAY) return { recorded: false, why: "flood" };
@@ -91,14 +96,17 @@ async function recordOpen({ token, ip = "", userAgent = "" }, { now = new Date()
     );
   }
 
+  const family = verdict.apple ? "ApplePrivacyProxy" : uaFamily(userAgent);
   await EmailOpenEvent.create({
     message: message._id,
     at: now,
     counted: verdict.counted,
     // A counted hit has no ignore reason, except one counted by the second-hit rule.
     ignoreReason: verdict.secondHit ? "second_hit" : verdict.reason,
-    uaFamily: verdict.apple ? "ApplePrivacyProxy" : uaFamily(userAgent),
+    uaFamily: family,
   });
+  // UAT-only tuning aid, off unless explicitly enabled (see trackingDebug.js): server log only.
+  logUnmatched({ kind: "open", ip, family, verdict }, { env, now: now.getTime() });
   return { recorded: true, counted: verdict.counted, reason: verdict.secondHit ? "second_hit" : verdict.reason };
 }
 

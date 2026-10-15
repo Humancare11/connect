@@ -124,6 +124,35 @@ export default function TrackingSettingsCard() {
             </div>
 
             <div className="mi-sep">
+              <h3>Link clicks</h3>
+              <label className="mi-check" style={{ margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={t.trackClicks}
+                  disabled={update.isPending}
+                  onChange={(e) => update.mutate({ trackClicks: e.target.checked })}
+                />
+                Record which links are clicked
+              </label>
+              <p className="em-sub">
+                Web links in tracked mail go through our own address and straight on to the real page, so a click can be recorded. The
+                plain-text part of the mail keeps the original links. Links that were already sent keep working whatever this is set to.
+              </p>
+              <div className="mi-state">
+                <span className={`em-tag ${t.linksActive ? "mi-on" : "mi-off"}`}>{t.linksActive ? "Active" : "Not active"}</span>
+                <span className="em-sub">
+                  {t.linksActive
+                    ? "New tracked mail has its links recorded."
+                    : !t.linksEnvEnabled
+                      ? "The server setting EMAIL_TRACKING_LINKS_ENABLED is off (a developer changes it)."
+                      : !t.active
+                        ? "Open tracking must be active first."
+                        : "Switched off above."}
+                </span>
+              </div>
+            </div>
+
+            <div className="mi-sep">
               <h3>Notice in the footer</h3>
               <label className="mi-check" style={{ margin: 0 }}>
                 <input type="checkbox" checked={disclosureEnabled} onChange={(e) => setDisclosureEnabled(e.target.checked)} />

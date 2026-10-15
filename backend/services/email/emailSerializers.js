@@ -111,14 +111,17 @@ function serializeListItem(doc, mailboxMap) {
   return { ...baseFields(doc, mailboxMap), snippet: safeContent(doc).snippet };
 }
 
-// attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role }).
-function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById) {
+// attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role });
+// linksByMessage: Map(messageId → [{ index, url, count, first, last }]) (see clickSummary.js).
+function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById, linksByMessage = new Map()) {
   const content = safeContent(doc);
   const base = baseFields(doc, mailboxMap);
   const sender = doc.sentByAdmin ? adminsById.get(idOf(doc.sentByAdmin)) : null;
   return {
     ...base,
     sentBy: base.sentBy ? { ...base.sentBy, role: sender?.role || "" } : null,
+    // Which tracked link was clicked: only on the mail page, never in lists.
+    tracking: base.tracking ? { ...base.tracking, links: linksByMessage.get(idOf(doc._id)) || [] } : null,
     text: content.text,
     html: content.html,
     attachments: (attachmentsByMessage.get(idOf(doc._id)) || []).map((a) => ({

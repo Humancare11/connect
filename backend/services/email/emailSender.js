@@ -3,7 +3,12 @@ const EmailAttachment = require("../../models/EmailAttachment");
 const { buildRawMessage } = require("../gmail/mimeBuilder");
 const { makeSnippet } = require("../gmail/mimeParser");
 const { attachmentKey } = require("../../utils/emailAttachments");
+const EmailLink = require("../../models/EmailLink");
 const { planTracking } = require("./emailTracking");
+const { newToken, linkUrl } = require("./trackingToken");
+
+// Max tracked links per mail; links beyond this stay as they were written.
+const MAX_TRACKED_LINKS = 50;
 
 // An error the API shows to the admin as-is (status + message + optional extra JSON).
 class EmailHttpError extends Error {
@@ -48,6 +53,22 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
   // a very fast open.
   const plan = await planTracking({ mailbox, to, cc, requested: trackOpens, state: trackingState });
 
+  // Click tracking: every http(s) link of the HTML part gets its own token. The same
+  // address twice in one mail is one link, so "which link" stays meaningful.
+  const trackedLinks = [];
+  const linkTracker = plan.enabled && plan.links
+    ? (url) => {
+        let entry = trackedLinks.find((l) => l.url === url);
+        if (!entry) {
+          if (trackedLinks.length >= MAX_TRACKED_LINKS) return null;
+          const { token, hash } = newToken();
+          entry = { url, token, hash, index: trackedLinks.length };
+          trackedLinks.push(entry);
+        }
+        return linkUrl(plan.baseUrl, entry.token);
+      }
+    : null;
+
   // Validates addresses/subject/body/size and builds the MIME mail. Throws
   // EmailValidationError before anything is stored or sent.
   const built = await buildRawMessage({
@@ -59,7 +80,7 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
     inReplyTo: thread?.inReplyTo || "",
     references: thread?.references || [],
     attachments: files,
-    tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure: plan.disclosure } : null,
+    tracking: plan.enabled ? { imageUrl: plan.imageUrl, disclosure: plan.disclosure, linkTracker } : null,
   });
 
   const doc = new EmailMessage({
@@ -98,6 +119,17 @@ async function dispatch({ mailbox, actor, to, cc = [], subject, body, files = []
       if (existing) return { message: existing, duplicate: true };
     }
     throw err;
+  }
+
+  // The links must exist before the mail leaves, or a very fast click would find nothing.
+  if (trackedLinks.length) {
+    try {
+      await EmailLink.insertMany(trackedLinks.map((l) => ({ message: doc._id, index: l.index, url: l.url, tokenHash: l.hash })));
+    } catch (err) {
+      console.error("[email-send] could not store tracked links:", err?.message || err);
+      await EmailMessage.updateOne({ _id: doc._id }, { $set: { status: "failed", failureReason: "Tracked links could not be stored." } });
+      throw new EmailHttpError(502, "The mail could not be prepared, so it was not sent. Please try again.", { messageId: String(doc._id) });
+    }
   }
 
   const fail = async (reason) => {

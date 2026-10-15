@@ -43,6 +43,9 @@ async function planTracking({ mailbox, to = [], cc = [], requested, state } = {}
     disclosure: s.disclosureEnabled ? s.disclosureText : "",
     includesInternal,
     allRecipientsApple,
+    // Click tracking is decided here too, so opt-outs and the per-mail box cover it as well.
+    links: Boolean(s.linksActive),
+    baseUrl: s.baseUrl,
   };
 }
 

@@ -16,6 +16,9 @@ const emailSettingsSchema = new mongoose.Schema(
     // Track mail that has @humancareconnect.co recipients. One pixel is shared by all
     // recipients, so an open by our own staff can look like the client's: the screens say so.
     trackInternalRecipients: { type: Boolean, default: true },
+    // Rewrite links of tracked mail through our redirect to record clicks. OFF until a
+    // Super Admin switches it on AND EMAIL_TRACKING_LINKS_ENABLED is set on the server.
+    trackClicks: { type: Boolean, default: false },
     disclosureText: { type: String, default: DEFAULT_DISCLOSURE, trim: true, maxlength: 300 },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },

@@ -124,6 +124,18 @@ export function TrackOpensToggle({ checked, onChange, disclosure, caveat = "" })
   );
 }
 
+// Link as shown in the list of tracked links: host and path, no query string (it can hold personal data).
+function shortUrl(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname === "/" ? "" : u.pathname;
+    const text = `${u.host}${path}${u.search ? "?…" : ""}`;
+    return text.length > 70 ? `${text.slice(0, 69)}…` : text;
+  } catch {
+    return String(url).slice(0, 70);
+  }
+}
+
 // Read status on a thread message: the combined status, then every signal behind it.
 export function TrackingNote({ tracking }) {
   const info = trackingInfo(tracking);
@@ -133,6 +145,17 @@ export function TrackingNote({ tracking }) {
       <span className="em-views-h">Read status</span>
       <span className={`em-tag em-trk em-trk-${info.kind}`}>{info.text}</span>
       <small className="em-sub">{info.detail}</small>
+      {tracking.links?.length > 0 && (
+        <ul className="em-trk-rows em-trk-links" aria-label="Tracked links">
+          {tracking.links.map((l) => (
+            <li key={l.index}>
+              <b title={l.url}>{l.count > 0 ? `${l.count}×` : "Not clicked"}</b>
+              <span title={l.url}>{shortUrl(l.url)}</span>
+              {l.last ? <small className="em-sub"> · last {fmtFull(l.last)}</small> : null}
+            </li>
+          ))}
+        </ul>
+      )}
       {info.rows.length > 0 && (
         <ul className="em-trk-rows">
           {info.rows.map((r) => (

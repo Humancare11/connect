@@ -16,7 +16,7 @@ class ValidationError extends Error {
 }
 
 const MAX_OPT_OUTS = 5000;
-const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients"];
+const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients", "trackClicks"];
 
 // Single line, no control characters (the line is added to the footer of outgoing mail).
 const cleanLine = (v) => String(v).replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -65,6 +65,10 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
         active: s.active,
         disclosureEnabled: s.disclosureEnabled,
         trackInternalRecipients: s.trackInternalRecipients,
+        // Link click tracking: its own server gate and its own switch (needs open tracking active too).
+        linksEnvEnabled: s.linksEnvEnabled,
+        trackClicks: s.trackClicks,
+        linksActive: s.linksActive,
         disclosureText: s.disclosureText,
         defaultDisclosure: DEFAULT_DISCLOSURE,
         graceSeconds: s.graceSeconds,
@@ -82,7 +86,7 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (unknown.length) throw new ValidationError(`Cannot edit: ${unknown.join(", ")}.`);
 
     const patch = {};
-    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients"]) {
+    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks"]) {
       if (body[key] === undefined) continue;
       if (typeof body[key] !== "boolean") throw new ValidationError(`${key} must be true or false.`);
       patch[key] = body[key];

@@ -32,8 +32,9 @@ function composeText(body, signature, disclosure = "") {
 //   inReplyTo    RFC Message-ID of the mail being answered (from OUR database)
 //   references   RFC Message-IDs of the thread so far (from OUR database)
 //   attachments  [{ filename, contentType, content: Buffer }]
-//   tracking     { imageUrl, disclosure } → the mail becomes multipart/alternative
-//                (the same plain text + an HTML twin ending in a 1x1 image);
+//   tracking     { imageUrl, disclosure, linkTracker? } → the mail becomes multipart/alternative
+//                (the same plain text + an HTML twin ending in a 1x1 image; with a
+//                linkTracker the HTML links go through it, the text part is unchanged);
 //                null/absent → plain text only, exactly as before
 // → { raw: Buffer, rfcMessageId, text }
 async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null }) {
@@ -71,7 +72,7 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
     cc: cc.map((a) => ({ name: a.name, address: a.address })),
     subject: cleanedSubject,
     text,
-    ...(tracking?.imageUrl ? { html: buildHtml(text, { imageUrl: tracking.imageUrl }) } : {}),
+    ...(tracking?.imageUrl ? { html: buildHtml(text, { imageUrl: tracking.imageUrl, linkTracker: tracking.linkTracker || null }) } : {}),
     messageId: rfcMessageId,
     ...(inReplyTo ? { inReplyTo: cleanRef(inReplyTo) } : {}),
     ...(references.length ? { references: references.map(cleanRef).filter(Boolean) } : {}),

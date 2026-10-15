@@ -25,6 +25,11 @@ const positive = (value, fallback) => (Number(value) > 0 ? Number(value) : fallb
 function trackingEnv(env = process.env) {
   return {
     envEnabled: env.EMAIL_TRACKING_ENABLED === "true",
+    // Second deploy-time gate: link click tracking (rewriting links through /api/l).
+    linksEnvEnabled: env.EMAIL_TRACKING_LINKS_ENABLED === "true",
+    // Several different links of one mail hit within a few seconds is a scanner, not a person.
+    clickBurstLinks: positive(env.EMAIL_CLICK_BURST_LINKS, 3),
+    clickBurstSeconds: positive(env.EMAIL_CLICK_BURST_SECONDS, 5),
     baseUrl: normalizeBaseUrl(env.PUBLIC_TRACKING_BASE_URL),
     baseUrlSet: Boolean(String(env.PUBLIC_TRACKING_BASE_URL || "").trim()),
     graceSeconds: Number.isFinite(Number(env.EMAIL_TRACKING_GRACE_SECONDS)) && env.EMAIL_TRACKING_GRACE_SECONDS !== undefined && env.EMAIL_TRACKING_GRACE_SECONDS !== ""
@@ -62,7 +67,7 @@ const clearSettingsCache = () => {
 async function getTrackingState({ env = process.env, now, full = false } = {}) {
   const e = trackingEnv(env);
   const gated = e.envEnabled && Boolean(e.baseUrl);
-  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, disclosureEnabled: true, disclosureText: "", trackInternalRecipients: true };
+  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, disclosureEnabled: true, disclosureText: "", trackInternalRecipients: true, trackClicks: false };
   return {
     ...e,
     baseUrlOk: Boolean(e.baseUrl),
@@ -71,7 +76,10 @@ async function getTrackingState({ env = process.env, now, full = false } = {}) {
     disclosureText: s.disclosureText || "",
     // Default ON: mail to company addresses is tracked too, with a caveat (see emailTracking.js).
     trackInternalRecipients: s.trackInternalRecipients !== false,
+    trackClicks: Boolean(s.trackClicks),
     active: e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled),
+    // Link tracking needs open tracking to be active AND its own env gate AND its own switch.
+    linksActive: e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled) && e.linksEnvEnabled && Boolean(s.trackClicks),
   };
 }
 

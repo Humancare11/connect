@@ -9,6 +9,7 @@ const User = require("../models/User");
 const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { parseListQuery, buildMessageFilter, EmailQueryError } = require("../services/email/emailQueries");
 const { serializeMailbox, serializeListItem, serializeThreadMessage, idOf } = require("../services/email/emailSerializers");
+const { summarizeLinks } = require("../services/email/clickSummary");
 const { recordView, summarizeViews } = require("../services/email/emailViews");
 const { EmailHttpError, pickReplyTarget, sendNewMail, sendReply, setSpamState } = require("../services/email/emailSender");
 const { getAttachmentBytes } = require("../services/email/attachmentFiles");
@@ -210,9 +211,10 @@ function createAdminEmailRouter({
       ? await EmailMessage.find({ mailbox: opened.mailbox, gmailThreadId: opened.gmailThreadId, isSpam: false }).sort({ messageDate: 1, _id: 1 })
       : [opened];
 
-    const [attachments, views] = await Promise.all([
+    const [attachments, views, linksByMessage] = await Promise.all([
       EmailAttachment.find({ message: { $in: thread.map((m) => m._id) } }).sort({ _id: 1 }).lean(),
       summarizeViews(opened._id),
+      summarizeLinks(thread.filter((m) => m.direction === "out").map((m) => m._id)),
     ]);
     const attachmentsByMessage = new Map();
     for (const a of attachments) {
@@ -227,8 +229,8 @@ function createAdminEmailRouter({
     const { replyTo } = pickReplyTarget(opened, thread);
 
     res.json({
-      message: serializeThreadMessage(opened, mailboxMap, attachmentsByMessage, adminsById),
-      thread: thread.map((m) => serializeThreadMessage(m, mailboxMap, attachmentsByMessage, adminsById)),
+      message: serializeThreadMessage(opened, mailboxMap, attachmentsByMessage, adminsById, linksByMessage),
+      thread: thread.map((m) => serializeThreadMessage(m, mailboxMap, attachmentsByMessage, adminsById, linksByMessage)),
       views,
       reply: {
         allowed: !opened.isSpam,

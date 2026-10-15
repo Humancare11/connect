@@ -18,4 +18,7 @@ const isTokenShape = (value) => typeof value === "string" && TOKEN_RE.test(value
 // "open") that tracker blocklists match on.
 const trackingUrl = (baseUrl, token) => `${baseUrl}/api/e/${token}.gif`;
 
-module.exports = { TOKEN_RE, hashToken, newToken, isTokenShape, trackingUrl };
+// Tracked links live next to the image under /api, so a shared frontend host proxies both.
+const linkUrl = (baseUrl, token) => `${baseUrl}/api/l/${token}`;
+
+module.exports = { TOKEN_RE, hashToken, newToken, isTokenShape, trackingUrl, linkUrl };
