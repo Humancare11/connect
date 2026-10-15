@@ -96,3 +96,111 @@ Two admin accounts (A, B) and the Super Admin (S).
 | 16 | As A: Per mailbox, choose Short for strategicalliance@. Compose from it. | Short is inserted; from support@ it is Formal again. |
 | 17 | Send with a secure link attachment. | Attachment lines above the signature. |
 | 18 | As A: delete the default. | No default; a new compose opens without a signature. |
+
+---
+
+# Image signatures
+
+Branch: `feature/email-signature-images` (from `uat`). UAT first.
+
+## What it is
+
+A signature can be **text only**, **image only**, or **image with text lines below**. The image is a business-card
+style banner you upload on **My signature**.
+
+- **PNG or JPG only.** SVG, GIF, WebP and anything else is refused, whatever the file is called.
+- **Resized and cleaned on the server:** at most 600 px wide, at most 400 px high, under 200 KB, metadata
+  (EXIF, location, colour profile) removed, transparency put on white. What is stored and sent is our
+  re-encoded copy, never the uploaded file.
+- **Private:** only you can see, replace or use it. Stored in a private place, shown to you through your login.
+- **Tip:** a simple 600px-wide banner (logo, name, title). Put phone, email, website and address as text
+  lines below: they stay readable and clickable.
+- Optional: **alt text** (empty uses the first text line) and **one link for the whole image**.
+
+### The text box
+
+| Layout | The text box is | Used for |
+|---|---|---|
+| Text only | the signature | plain text and HTML |
+| Image only | the **text version** | the plain-text part only (and mail apps that cannot show images) |
+| Image + text | the **text lines** | shown below the image, and in the plain-text part |
+
+The text is always required, so plain-text mail always has a signature.
+
+## In the compose and reply boxes
+
+- The composer is still plain text. The text lines sit under the `-- ` line and can be edited for one mail.
+- Under the box a **preview** shows the chosen signature: the image and the text lines as you edited them.
+- The image cannot be changed for one mail; the dropdown switches the whole signature.
+- Image signatures are marked "(image)" in the dropdown.
+
+## In the mail itself
+
+- The image is **embedded** in the mail (not a web address), so it shows even when the recipient's mail app
+  blocks remote images.
+- It is an **inline** part with no file name, to make mail apps less likely to list it as an attachment.
+- The **plain-text** part is unchanged: message, `-- `, the text version, company footer.
+- The HTML part shows: message, image (inside a link if you set one), text lines (image + text only),
+  company footer. The `-- ` line is replaced by the image.
+- With "No signature" the mail is exactly as before.
+
+### Which mail apps may still show it as an attachment
+
+Not fully avoidable with an embedded image. Expect, to be confirmed on UAT with your inboxes:
+
+- **Usually inline only:** Gmail on the web, Apple Mail on a Mac, Outlook.com / Outlook on the web.
+- **May show a paperclip or an attachment entry:** Thunderbird (lists inline images in its attachment pane),
+  Yahoo Mail, Zoho Mail, Outlook desktop (message list), the Gmail and Outlook phone apps, older Android
+  mail apps.
+- **When the recipient replies or forwards,** the image often becomes an `image001.png` attachment. That is
+  how embedded signatures behave; it is the price of an image that does not depend on remote loading.
+
+## Sent mail and the dashboard
+
+Each mail keeps **its own copy** of the image. Replacing or deleting your signature later never changes mail
+already sent. The mail page shows the image where the signature was.
+
+If your image cannot be loaded when you send, the mail is **not sent** and you are told so; choose another
+signature or No signature, or try again. A reply you were sending is not marked as replied.
+
+## Effects
+
+- **Spam score:** an HTML mail with a small banner and real text is normal (Outlook signatures do the same). We
+  always send the text version and keep the image small, with alt text. A mail that was plain text becomes
+  HTML as soon as it carries an image signature, even with tracking off.
+- **Size:** at most about 270 KB added per mail. The attachment limits are unchanged and the image does not
+  count against them.
+- **Open tracking:** the tracking image is separate, 1x1, invisible and last. The signature image is part of
+  the mail, never requested from our server, so it cannot count as an open.
+- **Click tracking:** a link on the image is tracked like any link (on a tracked mail). A click on it makes the
+  mail show **Clicked**.
+- **Secure links:** files stay out of the mail as before; only the small signature image travels with it.
+  Attachment lines stay above the signature.
+
+## Deployment note
+
+The backend gains one dependency: **`sharp`** (image processing, with prebuilt binaries). Deploy with
+`npm ci` on the UAT host so the right binary is installed. Nothing else changes: no new environment
+variables, no migration.
+
+## UAT script (image signatures)
+
+| Step | Do | Expect |
+|---|---|---|
+| 1 | My signature, New. Choose a PNG banner. | Preview of your file; "What to show" appears; the tip is next to the upload. |
+| 2 | Choose "Image with text lines below", fill the text lines, Save. | Card shows the image and the text. |
+| 3 | Upload an SVG, then a GIF, then a renamed text file. | Each is refused with a plain message. |
+| 4 | Upload a 1800 px wide image. | Saved at 600 px wide. |
+| 5 | Upload a phone photo (with location). | Accepted; the stored copy has no metadata. |
+| 6 | As another admin and as the Super Admin, open My signature. | Neither sees your signature or image. |
+| 7 | Compose to your Gmail with the image signature. | Preview under the box; image shows in Gmail; plain text shows the text lines. |
+| 8 | Switch the layout to Image only, send again. | Gmail shows the image only; "Show original" plain part holds the text version. |
+| 9 | Add a link to the image, send with "Track opens" on, click the image. | Opens the site; the mail shows **Clicked**. |
+| 10 | Send with "Track opens" off. | Image still shows; no tracking image in the mail. |
+| 11 | Open the mail in each inbox (Gmail, Outlook.com, Yahoo, Zoho, iPhone, Outlook desktop, Thunderbird). | Note where the image appears as an attachment (see the list above). |
+| 12 | Block remote images in your mail app and open the mail. | The signature image still shows. |
+| 13 | Open the mail in the dashboard (Sent). | Image where the signature was. |
+| 14 | Replace the signature's image, then open the old mail again. | The old mail still shows the old image. |
+| 15 | Delete the signature, open the old mail. | Still shows its image. |
+| 16 | Send with a secure-link attachment. | Attachment lines above the signature; no PDF part; only the image is inline. |
+| 17 | Reply to a client mail with the image signature. | Same, below the reply. |
