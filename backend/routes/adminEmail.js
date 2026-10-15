@@ -111,6 +111,8 @@ function createAdminEmailRouter({
   const requestReceiptField = (req) => textField(req, "requestReceipt") === "1";
   // The "Send attachments as secure links" box: "1" asks for it; anything else does not (default off).
   const secureLinksField = (req) => textField(req, "secureLinks") === "1";
+  // The compose form's signature dropdown: "" / "none" = no signature, else the id of one of MY signatures.
+  const signatureIdField = (req) => textField(req, "signatureId").slice(0, 40);
   const validatedFiles = async (req) => Promise.all((req.files || []).map(validateAttachment));
 
   const handle = (fn) => async (req, res) => {
@@ -301,6 +303,7 @@ function createAdminEmailRouter({
       trackOpens: trackOpensField(req),
       requestReceipt: requestReceiptField(req),
       secureLinks: secureLinksField(req),
+      signatureId: signatureIdField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
@@ -340,6 +343,7 @@ function createAdminEmailRouter({
       trackOpens: trackOpensField(req),
       requestReceipt: requestReceiptField(req),
       secureLinks: secureLinksField(req),
+      signatureId: signatureIdField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));

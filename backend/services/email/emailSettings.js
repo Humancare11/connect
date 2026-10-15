@@ -81,6 +81,8 @@ async function getTrackingState({ env = process.env, now, full = false } = {}) {
     // Default ON: mail to company addresses is tracked too, with a caveat (see emailTracking.js).
     trackInternalRecipients: s.trackInternalRecipients !== false,
     trackClicks: Boolean(s.trackClicks),
+    // Not a tracking switch: an admin signature is followed by the company footer unless this is false.
+    companyFooterWithSignature: s.companyFooterWithSignature !== false,
     secureLinksEnabled: Boolean(s.secureLinksEnabled),
     // What a new mail gets: the stored setting (default 7 days), never above the server cap.
     secureLinkDays: Math.max(1, Math.min(Math.floor(Number(s.secureLinkDays) || 7), e.secureLinkDaysMax)),

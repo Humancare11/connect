@@ -17,7 +17,7 @@ class ValidationError extends Error {
 }
 
 const MAX_OPT_OUTS = 5000;
-const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients", "trackClicks", "secureLinksEnabled", "secureLinkDays"];
+const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients", "trackClicks", "secureLinksEnabled", "secureLinkDays", "companyFooterWithSignature"];
 
 // Single line, no control characters (the line is added to the footer of outgoing mail).
 const cleanLine = (v) => String(v).replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -66,6 +66,8 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
         active: s.active,
         disclosureEnabled: s.disclosureEnabled,
         trackInternalRecipients: s.trackInternalRecipients,
+        // "Also add the company footer when an admin signature is used" (default on).
+        companyFooterWithSignature: s.companyFooterWithSignature,
         // Link click tracking: its own server gate and its own switch (needs open tracking active too).
         linksEnvEnabled: s.linksEnvEnabled,
         trackClicks: s.trackClicks,
@@ -98,7 +100,7 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (unknown.length) throw new ValidationError(`Cannot edit: ${unknown.join(", ")}.`);
 
     const patch = {};
-    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks", "secureLinksEnabled"]) {
+    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks", "secureLinksEnabled", "companyFooterWithSignature"]) {
       if (body[key] === undefined) continue;
       if (typeof body[key] !== "boolean") throw new ValidationError(`${key} must be true or false.`);
       // The footer notice switch is stored under its own new name (see models/EmailSettings.js).

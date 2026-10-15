@@ -20,11 +20,38 @@ const FROM_NAME = process.env.EMAIL_FROM_NAME || "Human Care Connect";
 // on tracked mail). The admin's name is deliberately never added — attribution
 // lives only in our database. Without a disclosure the result is exactly what
 // it always was.
-function composeText(body, signature, disclosure = "", attachmentBlock = "") {
+function composeText(body, signature, disclosure = "", attachmentBlock = "", { adminSignature = false, companyFooter = true } = {}) {
+  const text = String(body ?? "").replace(/\r\n/g, "\n").trimEnd();
   const block = String(attachmentBlock || "").trim();
-  const text = [String(body ?? "").replace(/\r\n/g, "\n").trimEnd(), block].filter(Boolean).join("\n\n");
-  const footer = [String(signature || "").trim(), String(disclosure || "").trim()].filter(Boolean).join("\n\n");
-  return footer ? `${text}\n\n-- \n${footer}\n` : `${text}\n`;
+  const company = String(signature || "").trim();
+  const notice = String(disclosure || "").trim();
+
+  if (adminSignature) {
+    // The admin's signature is already at the end of `text` (the composer put it there, below
+    // a "-- " line, and the admin could edit it). Order: message, attachments, signature,
+    // company footer, notice. The attachment lines go ABOVE the signature, not after it.
+    const cut = block ? lastDividerIndex(text) : -1;
+    const main = !block
+      ? text
+      : cut >= 0
+        ? `${text.slice(0, cut).trimEnd()}\n\n${block}\n\n${text.slice(cut)}`
+        : `${text}\n\n${block}`;
+    // One divider only: the company footer follows the signature without a second "-- ".
+    return `${[main, companyFooter ? company : "", notice].filter(Boolean).join("\n\n")}\n`;
+  }
+
+  const withBlock = [text, block].filter(Boolean).join("\n\n");
+  const footer = [company, notice].filter(Boolean).join("\n\n");
+  return footer ? `${withBlock}\n\n-- \n${footer}\n` : `${withBlock}\n`;
+}
+
+// Index of the start of the LAST signature divider line ("-- " or "--"), or -1.
+function lastDividerIndex(text) {
+  let at = -1;
+  const re = /^-- ?$/gm;
+  let m;
+  while ((m = re.exec(text)) !== null) at = m.index;
+  return at;
 }
 
 // Builds the RFC 822 message for Gmail's messages.send.
@@ -43,10 +70,13 @@ function composeText(body, signature, disclosure = "", attachmentBlock = "") {
 //                (the files are still validated like attachments)
 //   disclosure   the footer notice for mail that has no `tracking` (secure links, read receipt
 //                only); mail with `tracking` carries tracking.disclosure
+//   adminSignature  true → the admin's signature is already at the end of `body`; the company
+//                footer then follows it without a second divider (and is left out when
+//                companyFooter is false); attachment lines go above the signature
 //   requestReceipt  true → adds Disposition-Notification-To: <the mailbox address>, so
 //                the recipient's mail app may confirm the mail was displayed
 // → { raw: Buffer, rfcMessageId, text }
-async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "" }) {
+async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo = "", references = [], attachments = [], tracking = null, requestReceipt = false, secureLinks = null, disclosure = "", adminSignature = false, companyFooter = true }) {
   if (!to?.length) throw new EmailValidationError("At least one recipient is required.");
   assertRecipientCount(to, cc);
 
@@ -72,7 +102,10 @@ async function buildRawMessage({ mailbox, to, cc = [], subject, body, inReplyTo 
 
   // We choose the Message-ID so it is stored before Gmail ever sees the mail.
   const rfcMessageId = `<${crypto.randomUUID()}@${EMAIL_DOMAIN}>`;
-  const text = composeText(body, mailbox.signature, tracking ? tracking.disclosure : disclosure, secureLinks ? secureLinksBlock(secureLinks) : "");
+  const text = composeText(body, mailbox.signature, tracking ? tracking.disclosure : disclosure, secureLinks ? secureLinksBlock(secureLinks) : "", {
+    adminSignature,
+    companyFooter,
+  });
   const cleanRef = (id) => stripLineBreaks(id);
 
   const composer = new MailComposer({
