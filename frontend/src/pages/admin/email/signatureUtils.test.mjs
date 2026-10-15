@@ -9,6 +9,7 @@ import {
   pickSignature,
   previewMail,
   splitCompose,
+  splitSentText,
   swapSignature,
 } from "./signatureUtils.js";
 
@@ -106,4 +107,19 @@ test("preview: message, signature, company footer; one divider", () => {
     "Hello\n\n-- \nAnita Rao\nCare Coordinator"
   );
   assert.equal(previewMail({ message: "Hello", signature: "", companyFooter: "Human Care Connect", withCompanyFooter: false }), "Hello\n\n-- \nHuman Care Connect");
+});
+
+test("sent text is cut around the signature so the image can take its place", () => {
+  const sent = "Dear client,\nThank you.\n\n-- \nAnita Rao\n+91 98765\n\nHuman Care Connect\n";
+  assert.deepEqual(splitSentText(sent, "Anita Rao\n+91 98765"), { before: "Dear client,\nThank you.", after: "Human Care Connect" });
+});
+
+test("sent text: a mail whose divider has lost its space, and one without a footer", () => {
+  assert.deepEqual(splitSentText("Hi\n\n--\nAnita\n", "Anita"), { before: "Hi", after: "" });
+});
+
+test("sent text: signature not found as sent → null (the page shows the text and the image below)", () => {
+  assert.equal(splitSentText("Hi\n\n-- \nSomeone else\n", "Anita"), null);
+  assert.equal(splitSentText("Hi", ""), null);
+  assert.equal(splitSentText(undefined, "Anita"), null);
 });

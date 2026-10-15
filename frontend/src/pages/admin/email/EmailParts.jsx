@@ -1,3 +1,5 @@
+import { MailEnding, SignatureImage } from "./SignatureView";
+import { splitCompose } from "./signatureUtils";
 import { READ_STATUS_HELP, extClass, firstName, fmtFull, fmtSize, hashColor, initials, trackingInfo } from "./emailUtils";
 
 const PATHS = {
@@ -110,8 +112,10 @@ export function TrackingBadge({ tracking }) {
 }
 
 // Signature dropdown under the message box of the compose and reply forms.
-export function SignaturePicker({ field, mailboxName }) {
+export function SignaturePicker({ field, mailboxName, body = "" }) {
   const { signatures, signatureId, choose, removedByHand, loading } = field;
+  const selected = signatures.find((s) => s.id === signatureId) || null;
+  const showsImage = Boolean(selected?.image) && selected.layout !== "text";
   if (loading) return null;
   if (!signatures.length) {
     return (
@@ -129,10 +133,27 @@ export function SignaturePicker({ field, mailboxName }) {
         <select aria-label="Signature" value={signatureId} onChange={(e) => choose(e.target.value)}>
           <option value="none">No signature</option>
           {signatures.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
+            <option key={s.id} value={s.id}>
+              {s.name}{s.image && s.layout !== "text" ? " (image)" : ""}
+            </option>
           ))}
         </select>
       </label>
+      {showsImage && (
+        <div className="em-sigprev">
+          <small className="em-sub">
+            {selected.layout === "image"
+              ? "Recipients see this image below your message. The text above is what plain-text mail shows. The image cannot be changed for one mail."
+              : "Recipients see this image, then the text lines (as you edited them above), below your message. The image cannot be changed for one mail."}
+          </small>
+          <MailEnding
+            layout={selected.layout}
+            image={<SignatureImage signature={selected} className="sg-img" maxWidth={360} />}
+            lines={splitCompose(body).signature}
+            company=""
+          />
+        </div>
+      )}
       {removedByHand && (
         <small className="em-trkwarn">
           The signature text was removed from this mail. Choose &ldquo;No signature&rdquo; if you want the company footer

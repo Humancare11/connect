@@ -83,6 +83,26 @@ export function pickSignature(data, mailboxId) {
   return list.find((s) => s.id === forMailbox) || list.find((s) => s.isDefault) || null;
 }
 
+// A sent mail's stored text, cut around its signature so the image can take that place on the
+// mail page. `signatureText` is the lines below the divider, exactly as sent.
+// → { before, after } or null when the divider and lines are not found as sent.
+export function splitSentText(text, signatureText) {
+  const value = String(text || "").replace(/\r\n/g, "\n");
+  const sig = String(signatureText || "").trim();
+  if (!sig) return null;
+  for (const divider of ["-- \n", "--\n"]) {
+    const needle = divider + sig;
+    const at = value.lastIndexOf(needle);
+    if (at >= 0) {
+      return {
+        before: value.slice(0, at).replace(/\s+$/, ""),
+        after: value.slice(at + needle.length).replace(/^\s+/, "").trimEnd(),
+      };
+    }
+  }
+  return null;
+}
+
 // How a mail will end, for the "My signature" page. Mirrors the server (composeText):
 // message, admin signature, company footer, one divider.
 export function previewMail({ message, signature, companyFooter, withCompanyFooter }) {

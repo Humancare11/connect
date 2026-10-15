@@ -146,7 +146,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
             <input type="text" placeholder="Subject" aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
           <textarea ref={bodyRef} aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
-          <SignaturePicker field={signature} mailboxName={mailboxes.find((m) => m.id === from)?.displayName} />
+          <SignaturePicker field={signature} body={body} mailboxName={mailboxes.find((m) => m.id === from)?.displayName} />
           <div className="em-c-foot">
             <AttachmentList items={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
             <button type="submit" className="em-btn em-btn-primary" disabled={send.isPending || !mailboxes.length}>

@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
 import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, SignaturePicker, TrackOpensToggle, TrackingNote } from "./EmailParts";
-import { messageOf } from "./signatureUtils";
+import { messageOf, splitSentText } from "./signatureUtils";
+import { SentSignatureImage } from "./SignatureView";
 import { useSignatureField } from "./useSignatureField";
 import { useConfirm as useConfirmDialog } from "../../../components/ui/ConfirmDialog";
 import {
@@ -22,6 +23,34 @@ import {
   internalCaveat,
   useEmailShell,
 } from "./emailUtils";
+
+// The text of a mail. A mail that went out with an IMAGE signature shows that image (its own
+// stored copy) where the signature was; the plain-text version lines are hidden for the
+// image-only layout, as the recipient's HTML mail does not show them.
+export function MessageText({ m }) {
+  const si = m.signatureImage;
+  const parts = si ? splitSentText(m.text, si.signatureText) : null;
+  if (!si) return <div className="em-msg-body">{m.text || "(no text)"}</div>;
+  if (!parts) {
+    return (
+      <>
+        <div className="em-msg-body">{m.text || "(no text)"}</div>
+        <div className="sg-sent"><SentSignatureImage messageId={m.id} image={si} /></div>
+      </>
+    );
+  }
+  return (
+    <div className="em-msg-body">
+      {parts.before}
+      <div className="sg-sent">
+        <SentSignatureImage messageId={m.id} image={si} />
+      </div>
+      {si.layout === "image_text" && si.signatureText ? <div>{si.signatureText}</div> : null}
+      {parts.after ? <div style={{ marginTop: 12 }}>{parts.after}</div> : null}
+      {si.layout === "image" && <small className="em-sub" style={{ display: "block", marginTop: 8 }}>Image signature. Plain-text mail apps showed the text version.</small>}
+    </div>
+  );
+}
 
 function MessageBlock({ m, onDownload, showTracking }) {
   const outbound = m.direction === "out";
@@ -45,7 +74,7 @@ function MessageBlock({ m, onDownload, showTracking }) {
           </div>
           <span className="em-time">{fmtFull(m.messageDate)}</span>
         </div>
-        <div className="em-msg-body">{m.text || "(no text)"}</div>
+        <MessageText m={m} />
         <AttachmentList items={m.attachments.filter((a) => !a.isInline)} onOpen={onDownload} />
         {outbound && showTracking && <TrackingNote tracking={m.tracking} />}
       </div>
@@ -205,7 +234,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
         </span>
       </div>
       <textarea ref={bodyRef} aria-label="Reply message" placeholder="Write your reply…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
-      <SignaturePicker field={signature} mailboxName={message.mailbox?.displayName} />
+      <SignaturePicker field={signature} body={body} mailboxName={message.mailbox?.displayName} />
       {conflict && (
         <div className="em-banner warn" role="alert">
           <span>
