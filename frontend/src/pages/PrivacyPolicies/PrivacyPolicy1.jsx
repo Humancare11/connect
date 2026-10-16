@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./PrivacyPolicies.css";
 
 const PrivacyPolicy1 = () => {
+    // /privacy-policy#website-chat (the chat widget's AI notice links here): scroll to the section once the page has
+    // mounted. The page is a lazy chunk and the app scrolls to the top on a route change, so this runs after both.
+    useEffect(() => {
+        const hash = typeof window !== "undefined" ? window.location.hash : "";
+        if (!hash || hash.length < 2) return;
+        let id = hash.slice(1);
+        try { id = decodeURIComponent(id); } catch { /* keep the raw id */ }
+        document.getElementById(id)?.scrollIntoView();
+    }, []);
+
     return (
         <div className="rcp-page">
             <div className="rcp-content">
@@ -21,8 +31,7 @@ const PrivacyPolicy1 = () => {
                         We also collect information automatically when you use the Platform, including your device identifiers, IP address, browser type, operating system, pages visited, and session activity. When you create an account, we also use your IP address to estimate your approximate location (country, state or province, and city) so we can pre-fill your profile; you can review and change it at any time from your profile settings. We use cookies and similar technologies for this purpose — see our Cookie Policy for full details. Where you connect to us through a referring provider, insurer, or identity verification service, we may receive information from those third parties as well.
                     </p>
                     <p>
-                        This product includes GeoLite2 data created by MaxMind, available from{" "}
-                        <a href="https://www.maxmind.com" target="_blank" rel="noopener noreferrer">https://www.maxmind.com</a>.
+                        IP geolocation by DB-IP (<a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">https://db-ip.com</a>).
                     </p>
                 </section>
 
@@ -37,6 +46,41 @@ const PrivacyPolicy1 = () => {
                     <h2 className="rcp-heading">How We Share Your Information</h2>
                     <p>
                         We do not sell your personal information. We share your information with licensed healthcare providers on our platform for the purpose of delivering care, and with business associates who perform services on our behalf under signed Business Associate Agreements. We may share information with pharmacies and laboratories to fulfill prescriptions or diagnostic orders, and with insurance companies and payers for billing and claims processing. We may disclose information to law enforcement or government agencies when required by law, and to successor entities in the event of a merger, acquisition, or sale of assets.
+                    </p>
+                </section>
+
+                <section className="rcp-section" id="website-chat">
+                    <h2 className="rcp-heading">Website Chat and AI Assistant</h2>
+                    <p>
+                        Our website has a chat window. When you open it, you first chat with Connect AI, an automated assistant. You can ask for a live member of our team at any time.
+                    </p>
+                    <p>
+                        <strong>Connect AI is not a doctor.</strong> It does not diagnose conditions, recommend treatments or medications, or interpret symptoms or test results. It can answer questions about our services, prices and booking, and help you book a visit with a licensed Humancare clinician. The chat is not for emergencies. If you have a medical emergency, call 911 or your local emergency number.
+                    </p>
+                    <p>
+                        <strong>What we collect in chat.</strong> Your name and email address (required), your phone number (optional), the messages and files you send, the language you write in, and technical details such as your device, browser, the pages you visit on our site and your approximate location (city, state and country) based on your IP address.
+                    </p>
+                    <p>
+                        <strong>How we use it.</strong> To answer your questions, connect you with our team, translate messages between you and our staff, email you if we could not reply in the chat, keep a record of the conversation, and protect the chat from abuse.
+                    </p>
+                    <p>
+                        <strong>How the AI assistant processes your messages.</strong> Your messages are processed by our AI service provider, OpenAI, under a Business Associate Agreement as required by HIPAA. Before your messages are sent, we remove your name, email address and phone number. We instruct OpenAI not to store the requests, and OpenAI does not use them to train its models. The same provider helps our staff with translations, reply suggestions and conversation summaries.
+                    </p>
+                    <p>
+                        <strong>Human review.</strong> Members of our support and clinical team can read chat conversations, including those handled only by Connect AI. Conversations about medical topics are flagged and reviewed by our team to check the assistant's answers.
+                    </p>
+                    <p>
+                        <strong>Who else receives your information.</strong> Our hosting, database and email providers, each under an agreement that protects your information. We do not sell your chat information or use it for advertising.
+                    </p>
+                    <p>
+                        <strong>Security and retention.</strong> Chat messages and contact details are encrypted when stored. Conversations are kept for 365 days and then deleted, unless the law requires us to keep them longer.
+                    </p>
+                    <p>
+                        <strong>Your choices and rights.</strong> You can ask to chat with a person instead of Connect AI at any time. You can request a copy of your chat or ask us to delete it by emailing{" "}
+                        <a href="mailto:support@humancareconnect.co" className="rcp-link">support@humancareconnect.co</a>. You may have other rights under the laws of your state, as described elsewhere in this policy.
+                    </p>
+                    <p>
+                        <em>Last updated: October 16, 2026</em>
                     </p>
                 </section>
 

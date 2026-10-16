@@ -15,6 +15,14 @@ const FILLER_WORDS = new Set([
   "with", "about", "to", "in", "on", "near", "need", "want", "find", "help",
   "dr", "doctor", "doctors", "specialist", "specialists",
   "article", "articles", "blog", "blogs", "treatment",
+  // Conversational wording ("I have been feeling dizzy lately. Which specialist
+  // should I consult?"). Limited to words that name no condition and are rarely
+  // the start of one, so typing a name letter by letter still works.
+  "am", "is", "are", "was", "were", "be", "been", "being", "do", "does", "did",
+  "could", "should", "would", "will", "you", "your", "we", "it", "this", "that",
+  "these", "those", "which", "what", "who", "whom", "when", "where", "how", "why",
+  "please", "feel", "feels", "felt", "feeling", "getting", "very", "really",
+  "quite", "lately", "recently", "often", "always", "treat", "treats", "treating",
 ]);
 
 class QueryValidationError extends Error {
@@ -88,6 +96,18 @@ function singularize(token) {
   return token.endsWith("s") ? token.slice(0, -1) : token;
 }
 
+// Derivational stem of one normalised token, used ONLY by the search matcher to
+// relate word forms of one symptom ("dizzy" ~ "dizziness", "obese" ~ "obesity").
+// It builds on singularize, strips -ness / -ity, folds a final -y to -i and drops
+// a final -e. Never stored: analytics termKey keeps using singularForm.
+function stemToken(token) {
+  let t = singularize(token);
+  if (/\d/.test(t)) return t;
+  if (t.length > 6 && (t.endsWith("ness") || t.endsWith("ity"))) t = t.slice(0, t.endsWith("ness") ? -4 : -3);
+  if (t.length >= 3 && t.endsWith("y")) return `${t.slice(0, -1)}i`;
+  return t.length >= 5 && t.endsWith("e") ? t.slice(0, -1) : t;
+}
+
 // Singular form of a whole normalised string.
 function singularForm(normalizedForMatch) {
   return tokenize(normalizedForMatch).map(singularize).join(" ");
@@ -107,6 +127,7 @@ module.exports = {
   tokenize,
   coreQuery,
   singularize,
+  stemToken,
   singularForm,
   compactForm,
 };

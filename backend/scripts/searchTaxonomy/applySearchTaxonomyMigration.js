@@ -579,7 +579,7 @@ function currentSourceHashes(plan) {
   const hashes = {};
   for (const [key, source] of Object.entries(plan.sources || {})) {
     const file = path.join(REPO_DIR, source.path);
-    hashes[key] = fs.existsSync(file) ? sha256(fs.readFileSync(file, "utf8")) : "(missing)";
+    hashes[key] = fs.existsSync(file) ? sha256(fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n")) : "(missing)";
   }
   return hashes;
 }

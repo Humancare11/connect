@@ -9,6 +9,8 @@ import {
   validateIceServers,
   hasTurnServer,
 } from "../utils/rtcIceConfig";
+import CallMoreMenu from "../components/CallMoreMenu";
+import useMobileCallControls from "../hooks/useMobileCallControls";
 import "./videocall.css";
 import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
@@ -22,6 +24,7 @@ import {
   isAndroidUserAgent,
 } from "../utils/inAppBrowser";
 import { createMicLevelMeter } from "../utils/micLevelMeter";
+import { apiBaseOf } from "../features/livechat/apiBase";
 import {
   FiMic,
   FiMicOff,
@@ -34,7 +37,6 @@ import {
   FiAlertTriangle,
   FiUser,
   FiClock,
-  FiWifi,
   FiMaximize,
   FiMaximize2,
   FiMinimize,
@@ -609,8 +611,8 @@ export default function DirectVideoCall() {
   const [isMainVideoPortrait, setIsMainVideoPortrait] = useState(false);
   const [isPipVideoPortrait, setIsPipVideoPortrait] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const mobileControls = useMobileCallControls();
   const [playbackBlocked, setPlaybackBlocked] = useState(false);
-  const [connectionQuality, setConnectionQuality] = useState("unknown");
   const [pipPos, setPipPos] = useState({ x: null, y: null });
   // True when the call has no local audio track to publish (mic denied, in
   // use by another app, or no mic on the device) — surfaced so the guest
@@ -923,7 +925,7 @@ export default function DirectVideoCall() {
   useEffect(() => {
     const handlePageHide = () => {
       if (stageRef.current !== "call" || !navigator.sendBeacon) return;
-      const base = import.meta.env.VITE_API_URL || "";
+      const base = apiBaseOf(import.meta.env.VITE_API_URL); // production URL ends in "/"
       const url = `${base}/api/direct-video-room/${roomId}/leaving?guestId=${encodeURIComponent(guestIdRef.current)}`;
       navigator.sendBeacon(url);
     };
@@ -1205,7 +1207,6 @@ export default function DirectVideoCall() {
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
     lastStatsSampleRef.current = null;
-    setConnectionQuality("unknown");
   }, []);
 
   // Media-stall watchdog, run from the same 5s tick as the existing quality
@@ -1354,7 +1355,6 @@ export default function DirectVideoCall() {
           lastRttRef.current = diagnostics.rtt;
           lastJitterRef.current = jitterStreams > 0 ? Math.round((jitterSum / jitterStreams) * 1000) : null;
           lastQualityRef.current = quality;
-          setConnectionQuality(quality);
           evaluateMediaStallWatchdog(pc, stats);
         } catch (err) {
           console.warn("[direct-video-call] getStats failed:", err.message);
@@ -4164,6 +4164,30 @@ export default function DirectVideoCall() {
         }
       : {};
 
+  const fullBtn = (
+    <button
+      className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
+      onClick={toggleFullscreen}
+      title={isFullscreen ? "Exit full screen" : "Full screen"}
+    >
+      <span className="hc-vc__btn-icon">{isFullscreen ? <FiMinimize /> : <FiMaximize />}</span>
+      <span className="hc-vc__btn-label">{isFullscreen ? "Exit" : "Full"}</span>
+    </button>
+  );
+
+  const hideBtn = (
+    <button
+      className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
+      onClick={toggleSelfView}
+      title={isSelfViewMinimized ? "Show self view" : "Minimize self view"}
+    >
+      <span className="hc-vc__btn-icon">
+        {isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}
+      </span>
+      <span className="hc-vc__btn-label">{isSelfViewMinimized ? "Show Me" : "Hide Me"}</span>
+    </button>
+  );
+
   return (
     <div className="hc-vc__page" ref={pageRef}>
       <div className="hc-vc__ctrlbar-meta">
@@ -4492,46 +4516,9 @@ export default function DirectVideoCall() {
               <span>{fmtDuration(duration)}</span>
             </div>
           )}
-          {connected && (
-            <div className="hc-vc__live-pill">
-              <span className="hc-vc__live-dot" />
-              Live
-            </div>
-          )}
-          {connected && connectionQuality !== "unknown" && (
-            <div
-              className={`hc-vc__quality-pill hc-vc__quality-pill--${connectionQuality}`}
-              title={
-                connectionQuality === "poor"
-                  ? "Poor connection — the call may drop"
-                  : connectionQuality === "weak"
-                    ? "Unstable connection — video quality may drop"
-                    : "Good connection"
-              }
-            >
-              <FiWifi />
-            </div>
-          )}
+          {!mobileControls && fullBtn}
 
-          <button
-            className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit full screen" : "Full screen"}
-          >
-            <span className="hc-vc__btn-icon">{isFullscreen ? <FiMinimize /> : <FiMaximize />}</span>
-            <span className="hc-vc__btn-label">{isFullscreen ? "Exit" : "Full"}</span>
-          </button>
-
-          <button
-            className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
-            onClick={toggleSelfView}
-            title={isSelfViewMinimized ? "Show self view" : "Minimize self view"}
-          >
-            <span className="hc-vc__btn-icon">
-              {isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}
-            </span>
-            <span className="hc-vc__btn-label">{isSelfViewMinimized ? "Show Me" : "Hide Me"}</span>
-          </button>
+          {!mobileControls && hideBtn}
 
           <button
             className={`hc-vc__btn ${chatOpen ? "hc-vc__btn--chat-on" : ""}`}
@@ -4554,6 +4541,13 @@ export default function DirectVideoCall() {
             </span>
             <span className="hc-vc__btn-label">Leave Call</span>
           </button>
+
+          {mobileControls && (
+            <CallMoreMenu>
+              {fullBtn}
+              {hideBtn}
+            </CallMoreMenu>
+          )}
         </div>
       </div>
 

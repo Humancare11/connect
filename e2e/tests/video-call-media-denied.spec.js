@@ -52,9 +52,9 @@ test.describe("appointment call — camera/mic denied", () => {
       // "Waiting for patient…". DOM-based (not log-based): a captured
       // console message can occasionally hang CDP argument serialization
       // indefinitely, and a UI check is the more direct proof anyway. The
-      // "Live" pill only renders once inCall is true, which requires the
+      // doctor call timer (formerly the "Live" pill) only renders once inCall is true, which requires the
       // doctor to have actually connected to the patient's pc.
-      await expect(doctor.page.locator(".hc-vc__live-pill")).toBeVisible({ timeout: 15_000 });
+      await expect(doctor.page.locator(".hc-vc__timer")).toBeVisible({ timeout: 15_000 });
 
       // Patient grants permission and taps Retry — the doctor must start
       // receiving the patient's audio/video without a full rebuild.

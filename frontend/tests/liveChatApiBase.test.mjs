@@ -33,3 +33,9 @@ test("the widget loader and the chat hook both use apiBaseOf for VITE_API_URL", 
     assert.doesNotMatch(src, /VITE_API_URL \|\| ""/, file);
   }
 });
+
+test("the guest video call's leave beacon also strips the trailing slash", () => {
+  const src = fs.readFileSync(path.resolve(LC, "..", "..", "pages", "DirectVideoCall.jsx"), "utf8");
+  assert.ok(src.includes("apiBaseOf(import.meta.env.VITE_API_URL)"));
+  assert.ok(!src.includes('VITE_API_URL || ""'));
+});

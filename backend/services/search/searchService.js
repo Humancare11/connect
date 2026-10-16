@@ -42,7 +42,7 @@ function hasExactLiteralHit(matches) {
   return Object.values(matches).some((list) => list.some((m) => m.score >= EXACT_LITERAL_SCORE && !m.viaCore));
 }
 
-const intentMatch = (type, record, score) => ({ type, record, score, matchedOn: "intent", viaCore: false });
+const intentMatch = (type, record, score) => ({ type, record, score, matchedOn: "intent", viaCore: false, recognized: true });
 
 // Runs the deterministic matcher on a short model-provided text, restricted
 // to one result type. Invalid texts are ignored.
