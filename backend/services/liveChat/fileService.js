@@ -11,7 +11,7 @@
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 const { readFileLimits } = require("../../utils/liveChat/config");
-const { encryptLiveChatText, decryptLiveChatText } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, isUnreadable } = require("../../utils/liveChat/crypto");
 const { createWindowLimiter } = require("./limits");
 
 const TYPES = {
@@ -98,6 +98,12 @@ function createS3FileStore() {
   };
 }
 
+// A stored file name that no key can decrypt downloads as a neutral name instead of the placeholder text.
+const safeFileName = (record) => {
+  const name = decryptLiveChatText(record);
+  return isUnreadable(name) || !name ? "attachment" : name;
+};
+
 function createFileService({ models, chat, store, env = process.env, now = () => Date.now() }) {
   const { LcFile, LcConversation } = models;
   // A file of a chat in Trash can no longer be opened (tests may omit LcConversation).
@@ -181,7 +187,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
     const doc = await LcFile.findOne({ _id: fileId, visitorId, sender: "agent" });
     if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
-    const name = decryptLiveChatText(doc.name);
+    const name = safeFileName(doc.name);
     let url;
     try {
       url = await getStore().presign(doc.s3Key, { expiresIn: PRESIGN_SECONDS, contentType: doc.mimeType, filename: name });
@@ -197,7 +203,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
     const doc = await LcFile.findById(fileId);
     if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
-    const name = decryptLiveChatText(doc.name);
+    const name = safeFileName(doc.name);
     let url;
     try {
       url = await getStore().presign(doc.s3Key, { expiresIn: PRESIGN_SECONDS, contentType: doc.mimeType, filename: name });

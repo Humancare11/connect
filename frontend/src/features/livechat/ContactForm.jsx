@@ -37,17 +37,25 @@ export default function ContactForm({ onSubmit, aiName, reply = false, showNotic
     const found = validate(values);
     setErrors(found);
     if (Object.keys(found).length) return;
+    // The hidden field was filled (browser autofill or a bot): clear it and ask to try again. A second submit goes
+    // through, because the field is empty now.
+    if (honeypot.trim() !== "") {
+      setHoneypot("");
+      setErrors({ form: "Please try again." });
+      return;
+    }
 
     setBusy(true);
     const result = await onSubmit({
       name: values.name.trim(),
       email: values.email.trim(),
       phone: values.phone.trim(),
-      companyUrl: honeypot,
+      hcRefNote: honeypot,
       aiNoticeAccepted: showNotice, // pressing Start chat is the acceptance: no checkbox
     });
     setBusy(false);
     if (!result.ok) {
+      setHoneypot(""); // whatever happened, the next attempt starts with the hidden field empty
       setErrors(result.errors || {});
     }
   };
@@ -76,11 +84,23 @@ export default function ContactForm({ onSubmit, aiName, reply = false, showNotic
         <input type="tel" inputMode="tel" value={values.phone} onChange={change("phone")} autoComplete="tel" placeholder="+1 302 303 9993" maxLength={24} aria-invalid={Boolean(errors.phone)} />
       </label>
 
-      {/* Honeypot: hidden from people and from assistive tech; bots fill it in and are dropped by the server. */}
+      {/* Honeypot: off-screen, hidden from assistive tech and out of the tab order. The name, id, label and autocomplete
+          token are deliberately neutral so browsers and password managers have nothing to autofill. */}
       <div className="lcw-hp" aria-hidden="true">
-        <label>
-          Company website
-          <input tabIndex={-1} autoComplete="off" name="companyUrl" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
+        <label htmlFor="hc-ref-note">
+          Leave this empty
+          <input
+            id="hc-ref-note"
+            name="hc_ref_note"
+            type="text"
+            tabIndex={-1}
+            autoComplete="hc-no-fill"
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
         </label>
       </div>
 

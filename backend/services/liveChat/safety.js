@@ -19,6 +19,18 @@ const FIXED_TEXT = {
     hi: "कृपया अभी 911 पर कॉल करें या नज़दीकी इमरजेंसी रूम में जाएं। अगर आप अमेरिका से बाहर हैं, तो अपने देश के आपातकालीन नंबर पर कॉल करें। अमेरिका में आत्महत्या या संकट में सहायता के लिए 988 पर कॉल या टेक्स्ट भी कर सकते हैं।",
     es: "Llame al 911 ahora mismo o vaya a la sala de emergencias más cercana. Si está fuera de EE. UU., llame a su número local de emergencias. En EE. UU. también puede llamar o enviar un mensaje de texto al 988 para apoyo en crisis o por pensamientos suicidas.",
   },
+  // The quiet-chat lines (inactivity job, midnight sweep). The chat is NOT closed: the patient can keep writing, so these
+  // never say "closed" or "ended". Picked by the chat's language.
+  inactive: {
+    en: "No new messages for a while. You can keep writing here any time and we'll continue.",
+    hi: "कुछ समय से कोई नया संदेश नहीं आया है। आप कभी भी यहीं लिख सकते हैं, हम बातचीत आगे बढ़ाएंगे।",
+    es: "Hace un rato que no hay mensajes nuevos. Puede seguir escribiendo aquí en cualquier momento y continuaremos.",
+  },
+  quietSinceYesterday: {
+    en: "No new messages since yesterday. You can keep writing here any time and we'll continue.",
+    hi: "कल से कोई नया संदेश नहीं आया है। आप कभी भी यहीं लिख सकते हैं, हम बातचीत आगे बढ़ाएंगे।",
+    es: "No hay mensajes nuevos desde ayer. Puede seguir escribiendo aquí en cualquier momento y continuaremos.",
+  },
   // Sent after the 911 message, when the chat has been handed to the team (replaces the usual "Connecting you" line).
   teamNotified: {
     en: "Our team has been notified.",

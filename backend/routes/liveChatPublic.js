@@ -18,7 +18,10 @@ const { FileError } = require("../services/liveChat/fileService");
 //
 // Options exist so tests run without the real limiters:
 //   chat, loadSettings, isIpBlocked, env, limiters
-const HONEYPOT_FIELD = "companyUrl"; // hidden in the form; real people never fill it in
+// Hidden in the form; real people never fill it in. The neutral name avoids browser / password-manager autofill (the old
+// "companyUrl" was autofilled on real patients). A cached older widget may still send the old name.
+const HONEYPOT_FIELD = "hcRefNote";
+const OLD_HONEYPOT_FIELD = "companyUrl";
 
 function create({ chat, loadSettings, isIpBlocked, files, env = process.env, limiters = {} }) {
   // Real client IP (same proxy rules as everywhere); LIVECHAT_DEV_FAKE_IP replaces it outside production only.
@@ -105,9 +108,13 @@ function create({ chat, loadSettings, isIpBlocked, files, env = process.env, lim
       const ip = getClientIp(req);
       res.set("Cache-Control", "no-store");
 
-      // Honeypot: bots fill every field. Answer like a success but create nothing and issue no token.
-      if (typeof body[HONEYPOT_FIELD] === "string" && body[HONEYPOT_FIELD].trim() !== "") {
-        return res.json({ ok: true, visitorId: "", token: "" });
+      // Honeypot: bots fill every field, and an autofill can fill it for a real person. Nothing is created and no token is
+      // issued, but the answer is an ordinary, recoverable error (a second submit with the field empty goes through).
+      // One line in the log, with no personal data, so it shows up in pm2.
+      const filled = (name) => typeof body[name] === "string" && body[name].trim() !== "";
+      if (filled(HONEYPOT_FIELD) || filled(OLD_HONEYPOT_FIELD)) {
+        console.warn("[livechat] contact form: hidden field was filled, request refused (autofill or bot)");
+        return res.status(400).json({ ok: false, error: "try_again", errors: { form: "Please try again." } });
       }
       if (await isIpBlocked(ip)) return res.status(403).json({ ok: false, errors: { form: "Chat is not available right now." } });
 

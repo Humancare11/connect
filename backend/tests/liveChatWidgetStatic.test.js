@@ -236,7 +236,17 @@ describe("live chat: no Turnstile / Cloudflare captcha", () => {
     assert.doesNotMatch(read("backend", ".env.example"), /TURNSTILE/i);
   });
 
-  test("the honeypot stays in the form", () => {
-    assert.match(read(FEATURE, "ContactForm.jsx"), /name="companyUrl"/);
+  test("the honeypot stays in the form, with nothing a browser would autofill", () => {
+    const form = read(FEATURE, "ContactForm.jsx");
+    assert.match(form, /name="hc_ref_note"/);
+    const block = form.slice(form.indexOf('className="lcw-hp"'), form.indexOf("</div>", form.indexOf('className="lcw-hp"')));
+    assert.match(block, /aria-hidden="true"/);
+    assert.match(block, /tabIndex={-1}/);
+    assert.match(block, /autoComplete="hc-no-fill"/);
+    assert.doesNotMatch(block, /company|website|url|autoComplete="(?:name|email|tel|url|organization|off)"/i);
+    assert.match(read(FEATURE, "LiveChatWidget.css"), /.lcw-hp {[^}]*left: -9999px/);
+    const hook = read(FEATURE, "useLiveChat.js");
+    assert.match(hook, /hcRefNote/);
+    assert.doesNotMatch(hook, /companyUrl/);
   });
 });

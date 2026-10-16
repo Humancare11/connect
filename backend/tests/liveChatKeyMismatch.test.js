@@ -123,6 +123,62 @@ describe("live chat: text that cannot be decrypted never breaks a request", () =
     }
   });
 
+  test("a returning visitor whose stored contact cannot be decrypted can still Start chat, write and reconnect", async () => {
+    const contact = await lc.submitContact({ name: "Locked Out" });
+    const bad = foreign();
+    await lc.models.LcVisitor.updateOne({ visitorId: contact.visitorId }, { $set: { name: bad, email: bad, phone: bad } });
+    const socket = await lc.chatSocket(contact.token);
+    const resumed = await lc.call(socket, "chat:resume");
+    assert.equal(resumed.ok, true);
+    assert.equal(resumed.needContact, false, "recognised: no form");
+    const started = await lc.call(socket, "chat:start", {});
+    assert.equal(started.ok, true, JSON.stringify(started));
+    const id = started.conversation.conversationId;
+    assert.ok(!JSON.stringify(started).includes("encryption key mismatch"), "the placeholder is not used as the patient's name");
+    assert.equal((await lc.call(socket, "chat:message", { text: "hello again" })).ok, true);
+    socket.close();
+
+    const back = await lc.chatSocket(contact.token); // reconnect
+    const again = await lc.call(back, "chat:resume");
+    assert.equal(again.ok, true);
+    assert.equal(again.conversation.conversationId, id);
+    assert.ok(again.conversation.messages.some((m) => m.text === "hello again"));
+    // and the contact form itself still works for this visitor (the details are saved again under the current key)
+    const resubmitted = await lc.submitContact({ name: "Locked Out", visitorId: contact.visitorId });
+    assert.ok(resubmitted.token);
+    back.close();
+  });
+
+  test("the search-key backfill skips undecryptable contacts: nothing is hashed or written for them", async () => {
+    const { backfillSearchKeys } = require("../scripts/backfillLiveChatSearchKeys");
+    const contact = await lc.submitContact({ name: "Skip Me" });
+    const socket = await lc.chatSocket(contact.token);
+    const started = await lc.call(socket, "chat:start", {});
+    const id = started.conversation.conversationId;
+    const bad = foreign();
+    const marker = { emailHash: "unchanged-email-hash", phoneHash: "unchanged-phone-hash" };
+    await lc.models.LcConversation.updateOne({ conversationId: id }, { $set: { "contact.email": bad, "contact.phone": bad, searchKeys: marker } });
+    const counts = await backfillSearchKeys({ LcConversation: lc.models.LcConversation, decryptLiveChatText: c.decryptLiveChatText, searchKeysOf: c.searchKeysOf, apply: true });
+    assert.ok(counts.unreadable >= 1, JSON.stringify(counts));
+    const after = await lc.models.LcConversation.findOne({ conversationId: id }).lean();
+    assert.deepEqual({ emailHash: after.searchKeys.emailHash, phoneHash: after.searchKeys.phoneHash }, marker, "left exactly as it was");
+    socket.close();
+  });
+
+  test("a file whose stored name cannot be decrypted downloads as 'attachment'", async () => {
+    const { createFileService } = require("../services/liveChat/fileService");
+    const seen = [];
+    const files = createFileService({
+      models: lc.models,
+      chat: {},
+      store: { presign: async (key, options) => (seen.push(options.filename), "https://example.invalid/file") },
+    });
+    const doc = await lc.models.LcFile.create({ conversationId: "HCKEYTEST1", visitorId: "v-key-test-0000001", s3Key: "livechat/HCKEYTEST1/x.pdf", mimeType: "application/pdf", size: 10, name: foreign(), sender: "agent" });
+    await files.presign({ id: String(new (require("mongoose").Types.ObjectId)()), role: "admin" }, String(doc._id));
+    await files.presignForPatient({ visitorId: "v-key-test-0000001", fileId: String(doc._id) });
+    assert.deepEqual(seen, ["attachment", "attachment"]);
+  });
+
   test("both chat pages together cover every chat (a chat with no everLive flag is not hidden from both)", async () => {
     const chat = await chatWithBadMessage();
     await lc.models.LcConversation.collection.updateOne({ conversationId: chat.id }, { $unset: { everLive: "" } });

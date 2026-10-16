@@ -158,6 +158,20 @@ describe("live chat: brand name and reply style", () => {
     for (const canned of CANNED_REPLIES) assert.doesNotMatch(canned.text, FORBIDDEN, canned.title);
   });
 
+  test("the quiet-chat lines never say 'closed' or 'ended', exist in en / hi / es, and follow the chat's language", () => {
+    for (const kind of ["inactive", "quietSinceYesterday"]) {
+      assert.deepEqual(Object.keys(safety.FIXED_TEXT[kind]).sort(), ["en", "es", "hi"]);
+      for (const [lang, text] of Object.entries(safety.FIXED_TEXT[kind])) {
+        assert.ok(text.length > 20, lang);
+        assert.doesNotMatch(text, /closed|ended|end of the day|cerrad|finaliz|बंद|समाप्त/i, `${kind}.${lang}`);
+      }
+    }
+    assert.equal(safety.FIXED_TEXT.inactive.en, "No new messages for a while. You can keep writing here any time and we'll continue.");
+    assert.equal(safety.fixedText("inactive", "hi-IN"), safety.FIXED_TEXT.inactive.hi);
+    assert.equal(safety.fixedText("quietSinceYesterday", "es"), safety.FIXED_TEXT.quietSinceYesterday.es);
+    assert.equal(safety.fixedText("inactive", "und"), safety.FIXED_TEXT.inactive.en);
+  });
+
   test("tidyReply: straight quotes, no dashes, full brand", () => {
     assert.equal(tidyReply("Sorry for the confusion—I’m Connect AI for Humancare Connect."), "Sorry for the confusion, I'm Connect AI for Humancare Connect.");
     assert.equal(tidyReply("We’re here – book below."), "We're here, book below.");

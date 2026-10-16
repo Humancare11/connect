@@ -11,7 +11,7 @@
 // Errors are thrown as AgentError (status + code) and mapped to JSON by routes/adminLiveChat.js.
 const net = require("net");
 const mongoose = require("mongoose");
-const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, decryptLiveChatOrEmpty, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { aiNameOf } = require("./settingsDefaults");
 const { createWindowLimiter } = require("./limits");
@@ -95,6 +95,13 @@ function createAgentService({
     name: decryptLiveChatText(source?.name),
     email: decryptLiveChatText(source?.email),
     phone: decryptLiveChatText(source?.phone),
+  });
+
+  // For scrubbing text before it goes to the AI: a value no key can decrypt is dropped (the placeholder is never used).
+  const scrubContactOf = (source) => ({
+    name: decryptLiveChatOrEmpty(source?.name),
+    email: decryptLiveChatOrEmpty(source?.email),
+    phone: decryptLiveChatOrEmpty(source?.phone),
   });
 
   // Archived by inactivity from the Queue, today (India time): can be joined or replied to from Archive temp.
@@ -721,7 +728,7 @@ function createAgentService({
     const settings = await loadSettings();
     if ((await limits.spendStatus(settings)).capReached) throw new AgentError(503, "ai_unavailable", { kind: "spend_cap" });
     const visitor = await chat.loadVisitor(conv.visitorId);
-    const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
+    const contact = scrubContactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
     const history = (await chat.recentHistory(conv, 30)).map((m) => ({ role: m.sender, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
     if (!history.length) throw new AgentError(409, "no_content");
     const result = await ai.summarizeChat({ history });
@@ -897,7 +904,7 @@ function createAgentService({
     if ((await limits.spendStatus(settings)).capReached) throw new AgentError(503, "ai_unavailable", { kind: "spend_cap" });
     // The patient's name, email and phone never go to the model: they are replaced in the chat text first.
     const visitor = await chat.loadVisitor(conv.visitorId);
-    const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
+    const contact = scrubContactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
     const history = (await chat.recentHistory(conv)).map((m) => ({ role: m.sender, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
     const result = await ai.suggestReply({ settings, history, agentName: conv.agentName || (await displayNameOf(actor.id, settings)) });
     if (result.usage) await chat.recordUsage(conv, settings, result.usage);
@@ -937,7 +944,7 @@ function createAgentService({
       ...(known
         ? {
             contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
-            searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
+            searchKeys: searchKeysOf(decryptLiveChatOrEmpty(visitor.email), decryptLiveChatOrEmpty(visitor.phone)),
           }
         : {}),
     });

@@ -24,9 +24,9 @@ const INACTIVE_JOB_LIMIT = 25;
 // kept for the retention period regardless; this only limits what a returning browser is shown.
 const DEVICE_WINDOW_MS = 30 * 24 * 3_600_000;
 const { istDayKey, istDayStart } = require("./istDay");
-const DAILY_CLOSE_TEXT = "This chat was closed at the end of the day. Send a message any time to continue.";
 const SWEEP_BATCH = 100;
-const INACTIVE_TEXT = (minutes) => `This chat was closed after ${minutes} minutes of inactivity. Send a message any time to continue.`;
+// Quiet-chat lines (no "closed"): safety.fixedText("inactive" | "quietSinceYesterday", language).
+const quietLine = (kind, conv) => safety.fixedText(kind, conv?.language?.code);
 const inactiveMinutesOf = (settings) => Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10)));
 const followUpMinutesOf = (settings) => Math.min(30, Math.max(1, Math.round(Number(settings?.followUpMinutes) || 1)));
 
@@ -1091,7 +1091,7 @@ function createChatService({
             { returnDocument: "after" }
           );
           if (!archived) return false;
-          await addMessage(archived, "system", INACTIVE_TEXT(inactiveMinutesOf(await loadSettings())));
+          await addMessage(archived, "system", quietLine("inactive", archived));
           setActivity(archived.visitorId, archived);
           announce(archived);
           await pushState(archived);
@@ -1158,7 +1158,7 @@ function createChatService({
             { returnDocument: "after" }
           );
           if (!archived) return false;
-          await addMessage(archived, "system", INACTIVE_TEXT(minutes));
+          await addMessage(archived, "system", quietLine("inactive", archived));
           setActivity(archived.visitorId, archived);
           announce(archived);
           await pushState(archived);
@@ -1255,7 +1255,7 @@ function createChatService({
               { returnDocument: "after" }
             );
             if (!closed) return false;
-            await addMessage(closed, "system", DAILY_CLOSE_TEXT);
+            await addMessage(closed, "system", quietLine("quietSinceYesterday", closed));
             setActivity(closed.visitorId, closed);
             announce(closed);
             await pushState(closed);

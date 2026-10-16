@@ -16,6 +16,8 @@
 const BATCH = 500;
 
 // Core: scans chats with a contact and (when apply) updates the ones whose hashes are missing or different.
+const { isUnreadable } = require("../utils/liveChat/crypto");
+
 async function backfillSearchKeys({ LcConversation, decryptLiveChatText, searchKeysOf, apply = false }) {
   const counts = { scanned: 0, withContact: 0, upToDate: 0, toUpdate: 0, updated: 0, unreadable: 0 };
   let ops = [];
@@ -34,11 +36,16 @@ async function backfillSearchKeys({ LcConversation, decryptLiveChatText, searchK
   for await (const row of cursor) {
     counts.scanned += 1;
     counts.withContact += 1;
+    // decryptLiveChatText never throws: text no key can read comes back as the placeholder. That must never be hashed
+    // (it would write search keys of the placeholder), so such a chat is skipped and counted.
     let keys;
     try {
-      keys = searchKeysOf(decryptLiveChatText(row.contact.email), decryptLiveChatText(row.contact.phone));
+      const email = decryptLiveChatText(row.contact.email);
+      const phone = decryptLiveChatText(row.contact.phone);
+      if (isUnreadable(email) || isUnreadable(phone)) throw new Error("unreadable");
+      keys = searchKeysOf(email, phone);
     } catch {
-      counts.unreadable += 1; // cannot be decrypted with the current key: left as it is
+      counts.unreadable += 1; // cannot be decrypted with the configured keys: left exactly as it is
       continue;
     }
     if (row.searchKeys?.emailHash === keys.emailHash && row.searchKeys?.phoneHash === keys.phoneHash) {
@@ -70,7 +77,7 @@ async function main(argv = process.argv.slice(2), env = process.env) {
   try {
     const counts = await backfillSearchKeys({ LcConversation, decryptLiveChatText, searchKeysOf, apply });
     console.log(`[live-chat search keys] ${apply ? "APPLY" : "DRY RUN"}`);
-    for (const [key, value] of Object.entries(counts)) console.log(`  ${key}: ${value}`);
+    for (const [key, value] of Object.entries(counts)) console.log(`  ${key === "unreadable" ? "skipped (undecryptable, left untouched)" : key}: ${value}`);
     if (!apply) console.log("  (nothing written; pass --apply to write)");
     return 0;
   } finally {

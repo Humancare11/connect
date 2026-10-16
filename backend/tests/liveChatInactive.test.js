@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
 const { startChatServer, sleep, FILES, AGENT_A, SUPER_S } = require("./helpers/liveChatServer");
 const { decryptLiveChatText } = require("../utils/liveChat/crypto");
 
-const CLOSED_LINE = "This chat was closed after 10 minutes of inactivity. Send a message any time to continue.";
+const CLOSED_LINE = "No new messages for a while. You can keep writing here any time and we'll continue.";
 
 async function waitFor(fn, ms = 4000, step = 50) {
   const end = Date.now() + ms;
@@ -307,7 +307,7 @@ describe("live chat: inactive chats are archived", () => {
       assert.ok(Math.abs(minutesAhead((await convOf(chat.id)).inactiveDueAt) - 15) < 0.5);
       await makeDue(chat.id);
       assert.ok(await waitFor(async () => (await convOf(chat.id)).closedReason === "inactive"));
-      assert.equal(texts(await stateOf(chat.socket)).at(-1), "This chat was closed after 15 minutes of inactivity. Send a message any time to continue.");
+      assert.equal(texts(await stateOf(chat.socket)).at(-1), "No new messages for a while. You can keep writing here any time and we'll continue.");
       chat.socket.close();
     });
   });
