@@ -271,6 +271,7 @@ describe("live chat: inactive chats are archived", () => {
       await aiAnswered(chat);
       await makeDue(chat.id);
       assert.ok(await waitFor(async () => (await convOf(chat.id)).closedReason === "inactive"));
+      await new Promise((r) => setTimeout(r, 400)); // let any late AI line land first, so it cannot undo the back-dating
       await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 31 * 86_400_000), lastMessageAt: new Date(Date.now() - 31 * 86_400_000) } });
       assert.equal(await stateOf(chat.socket), null, "an old Inactive chat is no longer shown to the patient");
       const res = await lc.call(chat.socket, "chat:message", { text: "hi" });
