@@ -764,6 +764,14 @@ h4 {
   outline-offset: 3px;
 }
 
+/* Browsers without :has() (Firefox < 121, Safari < 15.4) keep a visible ring while the bar has focus. */
+@supports not selector(:has(*)) {
+  .search-bar:focus-within {
+    outline: 2px solid #1e3457;
+    outline-offset: 3px;
+  }
+}
+
 .search-bar input {
   border: none;
   outline: none;
@@ -776,8 +784,8 @@ h4 {
   min-width: 0;
 }
 .search-bar input:focus-visible {
-  outline: 2px solid var(--primary, #2563eb);
-  outline-offset: 2px;
+  /* Focus is shown on the rounded container (.search-bar:has(input:focus-visible)), not as a box around the input. */
+  outline: none;
 }
 
 .search-bar input::placeholder {

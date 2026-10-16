@@ -4,7 +4,7 @@ const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const mongoose = require("mongoose");
-const { sendEmail } = require("../utils/sendEmail");
+const { sendEmail, buildBookingNotificationHTML } = require("../utils/sendEmail");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { getS3ObjectUrl } = require("../config/s3");
@@ -827,6 +827,28 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
+// Appointment date/time as the patient booked it. Returns "" (row omitted)
+// unless there is a usable value: the UTC instant shown in the patient's own
+// timezone when both are valid, otherwise the stored date/time strings.
+const patientAppointmentWhen = ({ date, time, appointmentDateTimeUtc, patientTimezone }) => {
+  const instant = appointmentDateTimeUtc ? new Date(appointmentDateTimeUtc) : null;
+  if (instant && !Number.isNaN(instant.getTime()) && patientTimezone) {
+    try {
+      const formatted = new Intl.DateTimeFormat("en-US", {
+        timeZone: patientTimezone,
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(instant);
+      return `${formatted} (${patientTimezone})`;
+    } catch {
+      // invalid timezone: fall through to the stored strings
+    }
+  }
+  const base = [date, time].filter(Boolean).join(" ").trim();
+  if (!base) return "";
+  return patientTimezone ? `${base} (${patientTimezone})` : base;
+};
+
 const reassignAppointmentDoctor = async (req, res) => {
   try {
     const { doctorId } = req.body;
@@ -920,44 +942,19 @@ const reassignAppointmentDoctor = async (req, res) => {
         ? "Your appointment has been confirmed — Humancare Connect"
         : "Appointment update — Doctor reassigned";
       const bodyText = isNew
-        ? "Great news! Your appointment request has been reviewed and a doctor has been assigned. You will be contacted shortly with further details."
-        : "We wanted to let you know that your assigned doctor has changed due to unavailability. Your appointment time remains the same and a new doctor has been assigned to ensure you receive the best care.";
-      const html = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"/>
-<style>
-  body{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#eef4ff;}
-  .wrap{max-width:520px;margin:40px auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 6px 24px rgba(11,4,67,.12);}
-  .hdr{background:linear-gradient(135deg,#0b0443 0%,#1a0b73 100%);padding:34px 40px;text-align:center;}
-  .hdr h1{color:#fff;margin:0;font-size:22px;font-weight:800;}
-  .hdr p{color:rgba(255,255,255,.82);margin:8px 0 0;font-size:13px;}
-  .body{padding:36px 40px;}
-  .body p{color:#374151;font-size:15px;line-height:1.7;margin:0 0 14px;}
-  .badge{display:inline-block;background:#f0fdf4;color:#15803d;border:1px solid #86efac;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;margin-bottom:18px;}
-  .footer{background:#f8f9ff;padding:18px 40px;text-align:center;color:#9ca3af;font-size:11px;border-top:1px solid #e5e7eb;}
-  .footer a{color:#0b0443;text-decoration:none;font-weight:600;}
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="hdr">
-      <h1>Humancare Connect</h1>
-      <p>${isNew ? "Appointment Confirmed" : "Appointment Update"}</p>
-    </div>
-    <div class="body">
-      <span class="badge">${isNew ? "✓ Doctor Assigned" : "ℹ Doctor Reassigned"}</span>
-      <p>Hello ${patientName},</p>
-      <p>${bodyText}</p>
-      <p>If you have any questions, please don't hesitate to reach out to our support team.</p>
-      <p>Thank you for choosing Humancare Connect.</p>
-    </div>
-    <div class="footer">
-      &copy; ${new Date().getFullYear()} Humancare Connect &nbsp;·&nbsp;
-      <a href="https://humancareconnect.co">humancareconnect.co</a>
-    </div>
-  </div>
-</body>
-</html>`;
+        ? "Your appointment request has been reviewed and a doctor has been assigned to your appointment."
+        : "Your assigned doctor has changed due to unavailability. Your appointment time remains the same, and a new doctor has been assigned to ensure you receive the best care.";
+      const html = buildBookingNotificationHTML({
+        badge: isNew ? "Doctor Assigned" : "Doctor Reassigned",
+        greeting: `Hello ${patientName},`,
+        intro: bodyText,
+        rows: [
+          ["Doctor", newDoctor.name ? `Dr. ${newDoctor.name}` : ""],
+          ["Date / time", patientAppointmentWhen(appointment)],
+        ],
+        footnote:
+          "If you have any questions, please contact our support team at support@humancareconnect.co. Thank you for choosing Humancare Connect.",
+      });
       try {
         await sendEmail({ to: patient.email, subject, html, text: bodyText });
       } catch (mailErr) {

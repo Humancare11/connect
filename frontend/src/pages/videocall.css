@@ -1872,7 +1872,6 @@
 }
 
 .hc-vc__page {
-  min-height: 100vh;
   background: radial-gradient(circle at top,
       #000000 0%,
       #000000 45%,
