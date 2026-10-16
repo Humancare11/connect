@@ -118,6 +118,8 @@ function createAdminDoctorExportRouter({ guard = [verifyAdminToken, superAdminOn
       res.setHeader("Content-Type", XLSX_TYPE);
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.setHeader("Cache-Control", "no-store");
+      // Cross-origin deployments (UAT frontend on another origin than the API): lets the browser read the filename.
+      res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
 
       const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({ stream: res, useStyles: true });
       const sheet = workbook.addWorksheet("Doctors", { views: [{ state: "frozen", ySplit: 1 }] });
