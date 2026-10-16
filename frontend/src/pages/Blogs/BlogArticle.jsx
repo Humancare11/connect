@@ -154,7 +154,7 @@ export default function BlogArticle({ blog, preview = false }) {
         </div>
       </div>
 
-      <main id="main-content">
+      <div>
         <div className="wrap">
           <section className="hero blog-hero">
             <div className="hero-top">
@@ -169,7 +169,7 @@ export default function BlogArticle({ blog, preview = false }) {
 
             {blog.coverImage ? (
               <figure className="hero-media">
-                <img src={blogImageSrc(blog.coverImage)} alt={blog.title} loading="eager" />
+                <img decoding="async" src={blogImageSrc(blog.coverImage)} alt={blog.title} loading="eager" />
               </figure>
             ) : null}
           </section>
@@ -252,7 +252,7 @@ export default function BlogArticle({ blog, preview = false }) {
             </article>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

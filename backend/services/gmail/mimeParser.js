@@ -81,6 +81,26 @@ function headerMap(headers = []) {
   return map;
 }
 
+// RFC 3798 message/disposition-notification → { originalMessageId, disposition, finalRecipient }.
+// disposition is the type after the semicolon, lower-case ("displayed", "deleted", "denied", …).
+function parseDispositionNotification(text) {
+  const fields = {};
+  // Header-style lines; a folded line continues on the next one.
+  for (const line of String(text || "").replace(/\r?\n[ \t]+/g, " ").split(/\r?\n/)) {
+    const i = line.indexOf(":");
+    if (i > 0) fields[line.slice(0, i).trim().toLowerCase()] = line.slice(i + 1).trim();
+  }
+  const dispositionRaw = String(fields.disposition || "");
+  const type = (dispositionRaw.split(";").pop() || "").split("/")[0].trim().toLowerCase();
+  const recipientRaw = String(fields["final-recipient"] || "");
+  const recipient = (recipientRaw.includes(";") ? recipientRaw.split(";").slice(1).join(";") : recipientRaw).trim().toLowerCase();
+  return {
+    originalMessageId: String(fields["original-message-id"] || "").trim().slice(0, 998),
+    disposition: type,
+    finalRecipient: /^[^\s<>]+@[^\s<>]+$/.test(recipient) ? recipient.slice(0, 254) : "",
+  };
+}
+
 function walk(part, out) {
   if (!part) return;
   const mimeType = String(part.mimeType || "").toLowerCase();
@@ -90,6 +110,13 @@ function walk(part, out) {
 
   if (part.parts?.length) {
     for (const child of part.parts) walk(child, out);
+    return;
+  }
+
+  // The machine part of a read receipt: read it, never list it as an attachment.
+  if (mimeType === "message/disposition-notification") {
+    out.dispositionPart = true;
+    if (body.data) out.dsn = decodeCharset(Buffer.from(body.data, "base64url"), "utf-8");
     return;
   }
 
@@ -127,6 +154,13 @@ function parseGmailMessage(msg) {
   const out = { texts: [], htmls: [], attachments: [] };
   walk(payload, out);
 
+  // A read receipt: multipart/report of type disposition-notification (not a delivery failure,
+  // which is report-type=delivery-status and stays ordinary mail).
+  const isReceipt =
+    out.dispositionPart ||
+    (/^multipart\/report/i.test(String(payload.mimeType || "")) && /report-type="?disposition-notification/i.test(String(h["content-type"] || "")));
+  const receipt = isReceipt ? parseDispositionNotification(out.dsn || "") : null;
+
   const html = out.htmls.length ? sanitizeEmailHtml(out.htmls.join("\n")) : "";
   const text = (out.texts.join("\n").trim() || htmlToText(html)).trim();
   const visible = out.attachments.filter((a) => !a.isInline);
@@ -153,10 +187,12 @@ function parseGmailMessage(msg) {
     text,
     html,
     snippet: makeSnippet(text),
+    // null for ordinary mail
+    receipt,
     attachments: out.attachments,
     hasAttachments: visible.length > 0,
     attachmentCount: visible.length,
   };
 }
 
-module.exports = { parseGmailMessage, decodeMimeWords, sanitizeEmailHtml, makeSnippet };
+module.exports = { parseGmailMessage, parseDispositionNotification, decodeMimeWords, sanitizeEmailHtml, makeSnippet };

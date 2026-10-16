@@ -58,6 +58,7 @@ function serializeGop(doc) {
     currency: doc.currency,
     authorizedByName: doc.authorizedByName,
     emailed: Boolean(doc.emailedAt),
+    emailedAt: doc.emailedAt || undefined,
     emailError: doc.emailError || undefined,
     createdBy: creator ? { name: creator.name, email: creator.email } : undefined,
     createdAt: doc.createdAt,
@@ -65,9 +66,10 @@ function serializeGop(doc) {
 }
 
 /* POST /api/admin/gop
-   Creates, PDFs, stores, and emails a Guarantee of Payment to the service
-   provider. Admin + superadmin only. Runs synchronously: the admin is
-   waiting on the result of an explicit "Generate & Send" action. */
+   Creates, PDFs, and stores a Guarantee of Payment. Does NOT email the
+   provider — that is a separate, explicit per-GOP action (POST
+   :id/resend-email). Admin + superadmin only. Runs synchronously: the admin
+   is waiting on the result of "Generate GOP". */
 router.post("/", verifyAdminToken, adminOnly, async (req, res) => {
   try {
     const caseType = String(req.body.caseType || "").trim();
@@ -211,22 +213,27 @@ router.get("/:id/download", verifyAdminToken, adminOnly, async (req, res) => {
 });
 
 /* POST /api/admin/gop/:id/resend-email
-   Re-sends the GOP's email as-is — no new GOP number, no PDF
-   regeneration. For one whose original send failed or was never
-   attempted. */
+   Emails the stored GOP PDF to the provider as-is — no new GOP number, no
+   PDF regeneration. Used for the first send and any later resend. */
 router.post("/:id/resend-email", verifyAdminToken, adminOnly, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(400).json({ msg: "Invalid GOP id." });
     }
 
-    const existing = await Gop.findById(req.params.id).select("_id").lean();
+    const existing = await Gop.findById(req.params.id).select("_id providerEmail").lean();
     if (!existing) return res.status(404).json({ msg: "GOP not found." });
+    if (!String(existing.providerEmail || "").trim()) {
+      return res.status(400).json({ msg: "This GOP has no provider email address, so it cannot be sent." });
+    }
 
     const gop = await resendGopEmail({ gopId: existing._id });
     res.json({ gop: serializeGop(gop) });
   } catch (err) {
     console.error("resend GOP email error:", err.message);
+    if (err.code === "NO_PROVIDER_EMAIL") {
+      return res.status(400).json({ msg: err.message });
+    }
     res.status(502).json({ msg: err.message || "Failed to send the email. Please try again." });
   }
 });

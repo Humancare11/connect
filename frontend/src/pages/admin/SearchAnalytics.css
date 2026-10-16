@@ -1,0 +1,102 @@
+/* Search Analytics: reuses the Admin design tokens (adp-* header/stat cards from
+   AdminDashboard.css); only the table/filter pieces are namespaced here. */
+
+.sa-page { color: #0b0443; }
+
+.sa-banner {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.sa-window,
+.sa-filters,
+.sa-pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sa-window { margin-bottom: 18px; }
+.sa-filters { margin-bottom: 14px; }
+.sa-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: #6b7ca3; }
+.sa-filters select {
+  padding: 7px 10px;
+  border: 1px solid #d5dcef;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  color: #0b0443;
+}
+
+.sa-btn {
+  padding: 7px 14px;
+  border: 1px solid #d5dcef;
+  border-radius: 10px;
+  background: #fff;
+  color: #0b0443;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sa-btn:disabled { opacity: 0.5; cursor: default; }
+.sa-btn--active { background: #01164a; border-color: #01164a; color: #fff; }
+
+.sa-tabs { display: flex; gap: 4px; border-bottom: 1px solid #d5dcef; margin-bottom: 16px; }
+.sa-tab {
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7ca3;
+  cursor: pointer;
+}
+.sa-tab--active { color: #0e6ceb; border-bottom-color: #0e6ceb; }
+
+.sa-panel {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 8px 32px rgba(8, 58, 176, 0.08);
+}
+
+.sa-note { margin: 0 0 12px; font-size: 13px; color: #6b7ca3; }
+.sa-note--error { color: #b91c1c; font-weight: 600; }
+
+.sa-table-wrap { overflow-x: auto; }
+.sa-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.sa-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7ca3;
+  border-bottom: 1px solid #d5dcef;
+  white-space: nowrap;
+}
+.sa-table td { padding: 9px 10px; border-bottom: 1px solid #eef1f9; vertical-align: middle; }
+.sa-term { font-weight: 600; word-break: break-word; }
+.sa-path { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+.sa-empty { text-align: center; color: #6b7ca3; padding: 24px 10px; }
+
+.sa-link { border: 0; background: none; padding: 0; color: #0e6ceb; font-weight: 600; font-size: 13px; cursor: pointer; }
+.sa-link:hover { text-decoration: underline; }
+
+.sa-chip { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #eef1f9; }
+.sa-chip--page_missing { background: #fef3c7; color: #92400e; }
+.sa-chip--no_catalog_match { background: #fee2e2; color: #991b1b; }
+.sa-chip--alias_opportunity { background: #dbeafe; color: #1e40af; }
+
+.sa-bar-cell { width: 35%; min-width: 120px; }
+.sa-bar { display: block; height: 10px; border-radius: 5px; background: #1d4ed8; }
+
+.sa-pager { justify-content: flex-end; margin-top: 12px; font-size: 13px; color: #6b7ca3; }

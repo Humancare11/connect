@@ -17,6 +17,8 @@ router.get("/stats", verifyAdminToken, adminOnly, getAdminStats);
 
 router.get("/doctors",                verifyAdminToken, adminOnly, getAllDoctors);
 router.get("/approved-doctors",       verifyAdminToken, adminOnly, getApprovedDoctors);
+// Super Admin download of doctor data (.xlsx). Must stay above /doctors/:id.
+router.use("/doctors", require("./adminDoctorExport"));
 router.get("/doctors/:id/documents/:field/access-url", verifyAdminToken, adminOnly, getDoctorDocumentAccessUrl);
 router.get("/doctors/:id",            verifyAdminToken, adminOnly, getDoctorById);
 router.put("/doctors/:id",            verifyAdminToken, adminOnly, updateDoctorByAdmin);

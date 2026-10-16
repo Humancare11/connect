@@ -1,5 +1,5 @@
 import DOMPurify from "dompurify";
-import { resolveBlogImages } from "../api/blogApi";
+import { resolveBlogImages } from "../api/blogApi.js";
 
 // Mirrors the backend allow-list (backend/utils/blogSanitizer.js). Content is
 // already sanitized on save; this second pass also covers admin previews of
@@ -35,7 +35,87 @@ function cleanPastedArtifacts(root) {
   });
 }
 
+// Build-time prerender (Node, no DOM): DOMPurify and DOMParser do not exist there. The backend already
+// sanitizes FAQ answers on save (sanitizeFaqAnswer in backend/utils/blogSanitizer.js), so this path only
+// rebuilds the markup from the same allow-list as a second guard. The output is made only of allowed tags and
+// escaped text, so nothing else can pass through, and it matches what the browser serializes for normal
+// FAQ HTML (no hydration mismatch).
+const FAQ_SERVER_TAGS = new Set(["p", "br", "strong", "b", "em", "i", "ul", "ol", "li", "a"]);
+// Other tags are dropped and their text kept; these are dropped together with their content.
+const FAQ_SERVER_DROP_RE = /<(script|style|iframe|frame|frameset|object|embed|noscript|template|svg|math|textarea|title|head)\b[^>]*>[\s\S]*?<\/\1\s*>/gi;
+const FAQ_SERVER_TOKEN_RE = /<(\/?)([a-zA-Z][a-zA-Z0-9]*)((?:\s+[^\s"'<>/=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*)\s*\/?>/g;
+const FAQ_SERVER_ATTR_RE = /([^\s"'<>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
+const HIDDEN_CHARS_RE = /[\p{Cc}\p{Cf}\s]/gu;
+
+function safeCodePoint(code, fallback) {
+  return Number.isInteger(code) && code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff) ? String.fromCodePoint(code) : fallback;
+}
+
+function decodeHtmlText(text) {
+  return String(text)
+    .replace(/&#x([0-9a-f]+);/gi, (m, h) => safeCodePoint(parseInt(h, 16), m))
+    .replace(/&#(\d+);/g, (m, d) => safeCodePoint(parseInt(d, 10), m))
+    .replace(/&nbsp;/gi, "\xa0")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&amp;/gi, "&");
+}
+
+// Same escaping as the browser's innerHTML serializer.
+const escapeText = (t) => t.replace(/&/g, "&amp;").replace(/\xa0/g, "&nbsp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeAttr = (t) => t.replace(/&/g, "&amp;").replace(/\xa0/g, "&nbsp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Same schemes the backend allows (http, https, mailto, tel), plus relative and #anchor links; never "//host".
+function isSafeFaqHref(value) {
+  const href = value.replace(HIDDEN_CHARS_RE, "");
+  if (!href || href.startsWith("//")) return false;
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(href);
+  return scheme ? ["http", "https", "mailto", "tel"].includes(scheme[1].toLowerCase()) : !href.includes(":") || /^[/?#.]/.test(href);
+}
+
+function faqAnchorAttrs(rawAttrs) {
+  let out = "";
+  for (const m of rawAttrs.matchAll(FAQ_SERVER_ATTR_RE)) {
+    const name = m[1].toLowerCase();
+    const value = decodeHtmlText(m[2] ?? m[3] ?? m[4] ?? "");
+    if (name === "href" && isSafeFaqHref(value)) out += ` href="${escapeAttr(value)}"`;
+    else if (name === "target" && value === "_blank") out += ' target="_blank"';
+    else if (name === "rel" && /^[\w\s-]+$/.test(value)) out += ` rel="${escapeAttr(value)}"`;
+  }
+  return out;
+}
+
+function prepareFaqAnswerWithoutDom(html) {
+  const source = String(html || "").replace(/<!--[\s\S]*?-->/g, "").replace(FAQ_SERVER_DROP_RE, "");
+  const open = [];
+  let out = "";
+  let last = 0;
+  for (const m of source.matchAll(FAQ_SERVER_TOKEN_RE)) {
+    out += escapeText(decodeHtmlText(source.slice(last, m.index)));
+    last = m.index + m[0].length;
+    const closing = m[1] === "/";
+    const tag = m[2].toLowerCase();
+    if (!FAQ_SERVER_TAGS.has(tag)) continue;
+    if (tag === "br") {
+      if (!closing) out += "<br>";
+    } else if (closing) {
+      const at = open.lastIndexOf(tag);
+      if (at === -1) continue;
+      while (open.length > at) out += `</${open.pop()}>`;
+    } else {
+      open.push(tag);
+      out += `<${tag}${tag === "a" ? faqAnchorAttrs(m[3]) : ""}>`;
+    }
+  }
+  out += escapeText(decodeHtmlText(source.slice(last)));
+  while (open.length) out += `</${open.pop()}>`;
+  return out;
+}
+
 export function prepareFaqAnswer(html) {
+  if (typeof DOMParser === "undefined") return prepareFaqAnswerWithoutDom(html);
   const clean = DOMPurify.sanitize(html || "", FAQ_PURIFY_CONFIG);
   const doc = new DOMParser().parseFromString(`<body>${clean}</body>`, "text/html");
   cleanPastedArtifacts(doc.body);
@@ -52,6 +132,10 @@ export function usableFaqs(faqs) {
 
 // Plain-text answer for the FAQPage structured data.
 export function faqAnswerText(html) {
+  if (typeof DOMParser === "undefined") {
+    const spaced = prepareFaqAnswer(html).replace(/<(\/(p|li)|br\s*\/?)>/gi, " $&");
+    return decodeHtmlText(spaced.replace(/<[^>]*>/g, "")).replace(/\s+/g, " ").trim();
+  }
   const doc = new DOMParser().parseFromString(`<body>${prepareFaqAnswer(html).replace(/<(\/(p|li)|br\s*\/?)>/gi, " $&")}</body>`, "text/html");
   return doc.body.textContent.replace(/\s+/g, " ").trim();
 }
@@ -91,7 +175,20 @@ export function prepareBlogHtml(rawHtml) {
     toc.push({ id: h2.id, label });
   });
 
+  wrapTables(doc);
   return { html: doc.body.innerHTML, toc };
+}
+
+// Tables from the editor can be wider than a phone; give each one a horizontal scroller.
+// (The prerender path below does the same with a regex so server and client HTML match.)
+function wrapTables(doc) {
+  doc.body.querySelectorAll("table").forEach((table) => {
+    if (table.parentElement?.classList.contains("hc-table-scroll")) return;
+    const wrap = doc.createElement("div");
+    wrap.className = "hc-table-scroll";
+    table.replaceWith(wrap);
+    wrap.appendChild(table);
+  });
 }
 
 // Prerender-only path. The backend sanitizes blog HTML against the same allow-list when a post is
@@ -122,6 +219,7 @@ function prepareBlogHtmlWithoutDom(rawHtml) {
     }
     toc.push({ id, label: h.label });
   }
+  out = out.replace(/<table[\s\S]*?<\/table>/gi, (table) => `<div class="hc-table-scroll">${table}</div>`);
   return { html: out, toc };
 }
 

@@ -238,6 +238,7 @@ async function resendManualInvoiceEmail({ invoiceId }) {
 }
 
 module.exports = {
+  generateManualInvoicePdfAndUpload,
   createManualInvoice,
   markManualInvoicePaid,
   resendManualInvoiceEmail,

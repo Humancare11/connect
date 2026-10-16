@@ -91,6 +91,9 @@ export default function AdminAuthPage() {
     setLoading(false);
   };
 
+  // Both forms stay mounted (they slide); only the visible one carries the page's single <h1>.
+  const SuperHeading = isSuperAdmin ? "h1" : "h2";
+  const AdminHeading = isSuperAdmin ? "h2" : "h1";
   return (
     <div
       className={`auth-wrapper ${isSuperAdmin ? "panel-active" : ""
@@ -99,7 +102,7 @@ export default function AdminAuthPage() {
       {/* SUPER ADMIN LOGIN */}
       <div className="auth-form-box register-form-box">
         <form onSubmit={handleSuperAdminSubmit}>
-          <h1>Super Admin Login</h1>
+          <SuperHeading>Super Admin Login</SuperHeading>
 
           {/* <div className="social-links">
             <a href="#"><FaFacebookF /></a>
@@ -109,9 +112,9 @@ export default function AdminAuthPage() {
 
           <span>Restricted access — Super Admin only</span>
 
-          {error && <p className="login-error">{error}</p>}
+          {error && <p className="login-error" id="admin-super-error" role={isSuperAdmin ? "alert" : undefined}>{error}</p>}
 
-          <input
+          <input aria-invalid={error && isSuperAdmin ? "true" : undefined} aria-describedby={error && isSuperAdmin ? "admin-super-error" : undefined} autoComplete="email"
             type="email"
             name="email"
             placeholder="superadmin@example.com"
@@ -121,7 +124,7 @@ export default function AdminAuthPage() {
           />
 
           <div className="password-wrapper">
-            <input
+            <input aria-invalid={error && isSuperAdmin ? "true" : undefined} aria-describedby={error && isSuperAdmin ? "admin-super-error" : undefined} autoComplete="current-password"
               type={showPasswords.super ? "text" : "password"}
               name="password"
               placeholder="Enter your password"
@@ -156,7 +159,7 @@ export default function AdminAuthPage() {
       {/* ADMIN LOGIN */}
       <div className="auth-form-box login-form-box">
         <form onSubmit={handleAdminSubmit}>
-          <h1>Admin Login</h1>
+          <AdminHeading>Admin Login</AdminHeading>
 
           {/* <div className="social-links">
             <a href="#"><FaFacebookF /></a>
@@ -166,9 +169,9 @@ export default function AdminAuthPage() {
 
           <span>Manage doctors, users and content</span>
 
-          {error && <p className="login-error">{error}</p>}
+          {error && <p className="login-error" id="admin-admin-error" role={isSuperAdmin ? undefined : "alert"}>{error}</p>}
 
-          <input
+          <input aria-invalid={error && !isSuperAdmin ? "true" : undefined} aria-describedby={error && !isSuperAdmin ? "admin-admin-error" : undefined} autoComplete="email"
             type="email"
             name="email"
             placeholder="admin@example.com"
@@ -178,7 +181,7 @@ export default function AdminAuthPage() {
           />
 
           <div className="password-wrapper">
-            <input
+            <input aria-invalid={error && !isSuperAdmin ? "true" : undefined} aria-describedby={error && !isSuperAdmin ? "admin-admin-error" : undefined} autoComplete="current-password"
               type={showPasswords.admin ? "text" : "password"}
               name="password"
               placeholder="Enter your password"
@@ -215,7 +218,7 @@ export default function AdminAuthPage() {
         <div className="slide-panel">
           {/* Left Panel */}
           <div className="panel-content panel-content-left">
-            <h1>Admin Portal</h1>
+            <h2>Admin Portal</h2>
             <p>
               Manage doctors, users, and platform securely.
             </p>
@@ -232,7 +235,7 @@ export default function AdminAuthPage() {
 
           {/* Right Panel */}
           <div className="panel-content panel-content-right">
-            <h1>Super Admin Portal</h1>
+            <h2>Super Admin Portal</h2>
             <p>
               Full platform control. Create and manage admin
               accounts.

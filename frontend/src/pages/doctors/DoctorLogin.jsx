@@ -127,7 +127,7 @@ function OTPInput({
   return (
     <div className="otp-boxes">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <input
+        <input autoComplete="one-time-code"
           id={`${idPrefix}-${i + 1}`}
           name={`${namePrefix}${i + 1}`}
           aria-label={`OTP digit ${i + 1}`}
@@ -164,7 +164,7 @@ function FlowCard({ icon, title, subtitle, formError, onBack, children }) {
           <p style={{ marginTop: 8, marginBottom: formError ? 4 : 16 }}>
             {subtitle}
           </p>
-          {formError && <p className="form-error">{formError}</p>}
+          {formError && <p className="form-error" id="doctor-flow-error" role="alert">{formError}</p>}
           {children}
           <button
             type="button"
@@ -531,7 +531,7 @@ export default function DoctorAuthPage() {
             disabled={loading || otpValue.length < 6}
             style={{ width: "100%", marginTop: 16 }}
           >
-            {loading ? "Verifying..." : "Verify & Register"}
+            {loading ? "Verifying..." : "Verify & Create Account"}
           </button>
         </form>
       </FlowCard>
@@ -551,7 +551,7 @@ export default function DoctorAuthPage() {
           <label htmlFor="doctor-forgot-email" style={VISUALLY_HIDDEN}>
             Registered Email
           </label>
-          <input
+          <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "doctor-flow-error" : undefined} autoComplete="email"
             id="doctor-forgot-email"
             name="doctorForgotEmail"
             type="email"
@@ -636,7 +636,7 @@ export default function DoctorAuthPage() {
             <label htmlFor="doctor-new-password" style={VISUALLY_HIDDEN}>
               New Password
             </label>
-            <input
+            <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "doctor-flow-error" : undefined} autoComplete="new-password"
               id="doctor-new-password"
               name="doctorNewPassword"
               type={showPasswords.newPass ? "text" : "password"}
@@ -663,7 +663,7 @@ export default function DoctorAuthPage() {
             <label htmlFor="doctor-confirm-new-password" style={VISUALLY_HIDDEN}>
               Confirm New Password
             </label>
-            <input
+            <input aria-invalid={formError ? "true" : undefined} aria-describedby={formError ? "doctor-flow-error" : undefined} autoComplete="new-password"
               id="doctor-confirm-new-password"
               name="doctorConfirmNewPassword"
               type={showPasswords.confirmPass ? "text" : "password"}
@@ -698,13 +698,16 @@ export default function DoctorAuthPage() {
     );
 
   /* ── Main auth UI ────────────────────────────────────────── */
+  // Both forms stay mounted (they slide); only the visible one carries the page's single <h1>.
+  const RegisterHeading = isRegister ? "h1" : "h2";
+  const LoginHeading = isRegister ? "h2" : "h1";
   return (
     <div className="main-log">
       <div className={`auth-wrapper ${isRegister ? "panel-active" : ""}`}>
         {/* ── REGISTER FORM ─────────────────────────────────── */}
         <div className="auth-form-box register-form-box">
           <form onSubmit={handleRegisterSubmit} className="register-form">
-            <h1>Doctor Registration </h1>
+            <RegisterHeading>Doctor Registration </RegisterHeading>
             <p className="form-subtitle">
               Join Humancare Connect as a healthcare professional
             </p>
@@ -719,7 +722,7 @@ export default function DoctorAuthPage() {
               </button>
             </div>
 
-            {formError && <p className="form-error">{formError}</p>}
+            {formError && <p className="form-error" id="doctor-register-error" role={isRegister ? "alert" : undefined}>{formError}</p>}
             <span>or use your email</span>
 
             {/* <input
@@ -735,7 +738,7 @@ export default function DoctorAuthPage() {
             <label htmlFor="doctor-register-name" style={VISUALLY_HIDDEN}>
               Doctor Full Name
             </label>
-            <input
+            <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "doctor-register-error" : undefined} autoComplete="name"
               id="doctor-register-name"
               name="doctorRegisterName"
               type="text"
@@ -752,7 +755,7 @@ export default function DoctorAuthPage() {
             <label htmlFor="doctor-register-email" style={VISUALLY_HIDDEN}>
               Email Address
             </label>
-            <input
+            <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "doctor-register-error" : undefined} autoComplete="email"
               id="doctor-register-email"
               name="doctorRegisterEmail"
               type="email"
@@ -769,7 +772,7 @@ export default function DoctorAuthPage() {
               <label htmlFor="doctor-register-password" style={VISUALLY_HIDDEN}>
                 Password
               </label>
-              <input
+              <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "doctor-register-error" : undefined} autoComplete="new-password"
                 id="doctor-register-password"
                 name="doctorRegisterPassword"
                 type={showPasswords.register ? "text" : "password"}
@@ -801,7 +804,7 @@ export default function DoctorAuthPage() {
               >
                 Confirm Password
               </label>
-              <input
+              <input aria-invalid={formError && isRegister ? "true" : undefined} aria-describedby={formError && isRegister ? "doctor-register-error" : undefined} autoComplete="new-password"
                 id="doctor-register-confirm-password"
                 name="doctorRegisterConfirmPassword"
                 type={showPasswords.confirm ? "text" : "password"}
@@ -829,7 +832,7 @@ export default function DoctorAuthPage() {
             </div>
 
             <button type="submit" disabled={loading}>
-              {loading ? "Sending OTP…" : "Register"}
+              {loading ? "Sending OTP…" : "Create Account"}
             </button>
 
             <div className="mobile-switch">
@@ -850,7 +853,7 @@ export default function DoctorAuthPage() {
         {/* ── LOGIN FORM ─────────────────────────────────────── */}
         <div className="auth-form-box login-form-box">
           <form onSubmit={handleLoginSubmit}>
-            <h1>Doctor Login</h1>
+            <LoginHeading>Doctor Login</LoginHeading>
             <p className="form-subtitle">
               Sign in to continue managing your patients
             </p>
@@ -883,13 +886,13 @@ export default function DoctorAuthPage() {
                 ✓ Password reset successfully! Please sign in.
               </div>
             )}
-            {formError && <p className="form-error">{formError}</p>}
+            {formError && <p className="form-error" id="doctor-login-error" role={isRegister ? undefined : "alert"}>{formError}</p>}
             <span>or use your email</span>
 
             <label htmlFor="doctor-login-email" style={VISUALLY_HIDDEN}>
               Email Address
             </label>
-            <input
+            <input aria-invalid={formError && !isRegister ? "true" : undefined} aria-describedby={formError && !isRegister ? "doctor-login-error" : undefined} autoComplete="email"
               id="doctor-login-email"
               name="doctorLoginEmail"
               type="email"
@@ -906,7 +909,7 @@ export default function DoctorAuthPage() {
               <label htmlFor="doctor-login-password" style={VISUALLY_HIDDEN}>
                 Password
               </label>
-              <input
+              <input aria-invalid={formError && !isRegister ? "true" : undefined} aria-describedby={formError && !isRegister ? "doctor-login-error" : undefined} autoComplete="current-password"
                 id="doctor-login-password"
                 name="doctorLoginPassword"
                 type={showPasswords.login ? "text" : "password"}
@@ -965,7 +968,7 @@ export default function DoctorAuthPage() {
           <div className="slide-panel">
             <div className="panel-content panel-content-left">
               <div className="panel-badge">👨‍⚕️</div>
-              <h1>Welcome Back, Doctor!</h1>
+              <h2>Welcome Back, Doctor!</h2>
               <p>
                 Sign in to continue managing patients and appointments on
                 Humancare Connect.
@@ -982,7 +985,7 @@ export default function DoctorAuthPage() {
             </div>
             <div className="panel-content panel-content-right">
               <div className="panel-badge">🩺</div>
-              <h1>Join Our Network</h1>
+              <h2>Join Our Network</h2>
               <p>
                 Register now and become part of our trusted network of
                 healthcare professionals.

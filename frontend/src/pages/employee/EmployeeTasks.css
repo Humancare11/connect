@@ -55,9 +55,7 @@
   --et-shadow: 0 4px 16px -6px rgba(20, 24, 40, 0.12);
   --et-shadow-lg: 0 18px 48px -18px rgba(20, 24, 40, 0.28);
 
-  --et-font:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+  --et-font: var(--font-secondary);
 
   max-width: 1240px;
   margin: 0 auto;
@@ -136,9 +134,11 @@
     box-shadow 0.16s ease,
     transform 0.16s ease;
 }
-.et-stat:hover {
-  box-shadow: var(--et-shadow);
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .et-stat:hover {
+    box-shadow: var(--et-shadow);
+    transform: translateY(-1px);
+  }
 }
 
 .et-stat__icon {
@@ -278,9 +278,9 @@
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 .et-tab:hover {
   color: var(--et-ink);
@@ -310,8 +310,8 @@
   background-repeat: no-repeat;
   background-position: right 11px center;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 .et-select:focus {
   outline: none;
@@ -393,8 +393,12 @@
 }
 .et-summary-card:hover {
   border-color: var(--et-line-strong);
-  box-shadow: var(--et-shadow);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .et-summary-card:hover {
+    box-shadow: var(--et-shadow);
+    transform: translateY(-2px);
+  }
 }
 .et-summary-card:focus-visible {
   outline: none;
@@ -441,8 +445,10 @@
   content: "→";
   transition: transform 0.16s ease;
 }
-.et-summary-card:hover .et-summary-card__open::after {
-  transform: translateX(3px);
+@media (hover: hover) and (pointer: fine) {
+  .et-summary-card:hover .et-summary-card__open::after {
+    transform: translateX(3px);
+  }
 }
 
 /* ============================================================
@@ -523,9 +529,9 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
 }
 .et-back-link:hover {
   background: var(--et-accent-soft);
@@ -636,9 +642,9 @@
   cursor: pointer;
   white-space: nowrap;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 .et-status-opt:hover {
   color: var(--et-ink);
@@ -834,9 +840,9 @@
   text-decoration: none;
   color: inherit;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 
 .et-attachment--link {
@@ -912,8 +918,8 @@
   background: var(--et-surface);
   overflow: hidden;
   transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
 }
 .et-subtask:hover {
   border-color: var(--et-line-strong);
@@ -1239,7 +1245,7 @@
 
 /* ========================================================================================== */
 #d3 {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   background: #ffffff;
   border-radius: 8px;
   border: 1px solid #dde1e7;
@@ -1267,7 +1273,8 @@
   background: #d4d8de;
 }
 #d3 .bar .path {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: #8a8f99;
   margin-left: 6px;
@@ -1282,7 +1289,8 @@
 }
 
 #d3 .tagline {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: #185fa5;
   text-transform: uppercase;
@@ -1318,7 +1326,8 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: #9198a3;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
 }
 #d3 .stat .v {
   font-size: 12.5px;
@@ -1330,7 +1339,8 @@
 }
 
 #d3 .flag {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 3px;
@@ -1358,7 +1368,8 @@
 }
 
 #d3 .sec-title {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: #9198a3;
   text-transform: uppercase;
@@ -1388,7 +1399,8 @@
   border: 1px solid #e2e5ea;
   border-radius: 5px;
   margin-bottom: 7px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
 }
 #d3 .file-row .ficon {
@@ -1420,7 +1432,8 @@
   border-top: none;
 }
 #d3 .log-head {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 11.5px;
   color: #185fa5;
   margin-bottom: 4px;
@@ -1442,7 +1455,8 @@
   margin-top: 20px;
 }
 #d3 .tag3 {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 11px;
   color: #185fa5;
   background: #e6f1fb;
@@ -1458,7 +1472,7 @@
   flex-wrap: wrap;
 }
 #d3 .status-opt {
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-secondary);
   font-size: 12.5px;
   font-weight: 600;
   padding: 7px 14px;
@@ -1468,9 +1482,9 @@
   color: #4a4e57;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease;
 }
 #d3 .status-opt:hover:not(:disabled) {
   border-color: #d4d8de;
@@ -1541,7 +1555,8 @@
 #d3 .subtask-row__assignee {
   font-size: 11px;
   color: #9198a3;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
 }
 #d3 .subtask-add {
   display: flex;

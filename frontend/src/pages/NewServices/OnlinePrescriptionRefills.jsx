@@ -291,7 +291,7 @@ export default function OnlinePrescriptionRefills() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--prescription-refills"
         style={{
           "--service-accent": s.accentColor,
@@ -755,7 +755,7 @@ export default function OnlinePrescriptionRefills() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

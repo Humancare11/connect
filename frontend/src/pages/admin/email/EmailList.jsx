@@ -135,7 +135,7 @@ export default function EmailList() {
         sentBy: folder === "sent" ? filters.by || undefined : undefined,
         status: filters.st || undefined,
         // Sent only; the server ignores it elsewhere.
-        openStatus: folder === "sent" ? filters.open || undefined : undefined,
+        readStatus: folder === "sent" ? filters.open || undefined : undefined,
         viewedBy: filters.view || undefined,
         dateFrom: dateFromPreset(filters.date),
         hasAttachment: filters.att || undefined,

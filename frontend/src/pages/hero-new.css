@@ -89,8 +89,8 @@ body {
   padding: 10px 22px;
   border-radius: 50px;
   background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border: 1px solid rgba(34, 58, 94, 0.08);
   box-shadow:
     0 8px 32px rgba(34, 58, 94, 0.08),
@@ -145,9 +145,11 @@ body {
     transform 0.25s var(--ease),
     box-shadow 0.25s var(--ease);
 }
-.hce-nav-cta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(12, 139, 122, 0.32);
+@media (hover: hover) and (pointer: fine) {
+  .hce-nav-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(12, 139, 122, 0.32);
+  }
 }
 
 /* ─── Hero ───────────────────────────────────────────────── */
@@ -246,6 +248,10 @@ body {
   color: var(--ink);
   background: transparent;
 }
+.hce-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 .hce-search input::placeholder {
   color: #9ca3af;
 }
@@ -261,9 +267,11 @@ body {
     transform 0.22s var(--ease),
     box-shadow 0.22s var(--ease);
 }
-.hce-search button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(12, 139, 122, 0.28);
+@media (hover: hover) and (pointer: fine) {
+  .hce-search button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(12, 139, 122, 0.28);
+  }
 }
 
 /* Trust chips */
@@ -279,8 +287,8 @@ body {
   gap: 8px;
   padding: 8px 16px;
   background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 1);
   border-radius: 50px;
   font-size: 11.5px;
@@ -328,8 +336,8 @@ body {
     rgba(255, 255, 255, 0.7) 0%,
     rgba(220, 230, 242, 0.4) 100%
   );
-  backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
   border: 2px solid rgba(255, 255, 255, 0.85);
   box-shadow:
     0 24px 50px rgba(34, 58, 94, 0.1),
@@ -459,9 +467,9 @@ body {
   background: transparent;
   border: none;
   transition:
-    background 0.2s,
-    color 0.2s,
-    box-shadow 0.2s;
+    background var(--duration-base),
+    color var(--duration-base),
+    box-shadow var(--duration-base);
 }
 .hce-card-tab.active {
   background: white;
@@ -510,8 +518,12 @@ body {
 }
 .hce-card-btn:hover {
   background: var(--navy);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(34, 58, 94, 0.2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hce-card-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(34, 58, 94, 0.2);
+  }
 }
 .hce-pedestal {
   position: absolute;
@@ -529,7 +541,7 @@ body {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 1200px;
+  width: min(1200px, 100vw);
   height: 360px;
   border-radius: 50%;
   background: radial-gradient(
@@ -560,8 +572,8 @@ body {
     0 12px 0 rgba(255, 255, 255, 0.85),
     0 22px 35px rgba(34, 58, 94, 0.12),
     0 0 35px rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 .hce-ped-ring-inner {
   position: absolute;
@@ -606,7 +618,7 @@ body {
   border: 1px solid rgba(34, 58, 94, 0.1);
   box-shadow: 0 2px 4px rgba(34, 58, 94, 0.1);
   padding: 0;
-  transition: all 0.3s var(--ease);
+  transition: all var(--duration-slow) var(--ease);
 }
 .hce-dot.active {
   background: #0f1827;

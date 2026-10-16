@@ -25,6 +25,8 @@ const { pathToFileURL } = require("url");
 const { slugify } = require("../../utils/slugify");
 const { normalizeForMatch } = require("../../services/search/queryNormalizer");
 const { DOCTOR_SPECIALIZATION_MAP } = require("../../services/search/searchConstants");
+const { SPECIALTY_DISCOVERY_ROUTES, CONDITION_DISCOVERY_ROUTES } = require("../../services/search/discoveryRoutes");
+const { isConditionSearchable } = require("../../services/search/searchVisibility");
 const decisions = require("./searchTaxonomyDecisions");
 const { installWriteGuard, DatabaseWriteBlockedError } = require("./dbWriteGuard");
 
@@ -48,22 +50,32 @@ const byText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 async function loadLegacyIndex() {
   const text = fs.readFileSync(LEGACY_INDEX_FILE, "utf8");
   const mod = await import(pathToFileURL(LEGACY_INDEX_FILE).href);
+  // PR 8: dedicated pages that exist in App.jsx but were never in the legacy
+  // index are planned through the same pipeline as the legacy records.
+  const additional = decisions.PR8_ADDITIONAL_CONDITIONS.map((rec) => ({ type: "condition", keywordSource: "pr8-page", ...rec }));
   return {
     categories: mod.categories,
     specialties: mod.specialties,
-    conditions: mod.conditions,
+    conditions: [...mod.conditions, ...additional],
     source: { path: rel(LEGACY_INDEX_FILE), sha256: sha256(text) },
   };
 }
 
 // Static, absolute route paths declared in App.jsx (all routes there are flat).
+// Commented-out routes ({/* ... */} and // lines) are not routes and are ignored.
 function loadAppRoutes() {
   const text = fs.readFileSync(APP_ROUTES_FILE, "utf8");
+  const live = text.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/^\s*\/\/.*$/gm, "");
   const paths = new Set();
-  for (const match of text.matchAll(/path="([^"]+)"/g)) {
-    if (match[1].startsWith("/") && !/[:*]/.test(match[1])) paths.add(match[1]);
+  const declarations = new Map();
+  for (const match of live.matchAll(/path="([^"]+)"/g)) {
+    if (match[1].startsWith("/") && !/[:*]/.test(match[1])) {
+      paths.add(match[1]);
+      declarations.set(match[1], (declarations.get(match[1]) || 0) + 1);
+    }
   }
-  return { paths, source: { path: rel(APP_ROUTES_FILE), sha256: sha256(text), staticRoutes: paths.size } };
+  const duplicates = [...declarations].filter(([, n]) => n > 1).map(([p]) => p).sort();
+  return { paths, duplicates, source: { path: rel(APP_ROUTES_FILE), sha256: sha256(text), staticRoutes: paths.size, duplicateDeclarations: duplicates } };
 }
 
 async function readLiveState(db, models) {
@@ -77,7 +89,7 @@ async function readLiveState(db, models) {
       .find({}, { projection: { name: 1, isActive: 1, categoryId: 1, aliases: 1 } })
       .toArray(),
     collection(HealthcareCondition)
-      .find({}, { projection: { name: 1, isActive: 1, specialtyId: 1, legacyId: 1, slug: 1, kind: 1, aliases: 1, route: 1 } })
+      .find({}, { projection: { name: 1, isActive: 1, specialtyId: 1, legacyId: 1, slug: 1, kind: 1, aliases: 1, route: 1, isSearchable: 1 } })
       .toArray(),
     collection(HealthcareCondition).listIndexes().toArray(),
     collection(HealthcareSpecialty).listIndexes().toArray(),
@@ -131,6 +143,9 @@ async function readLiveState(db, models) {
       legacyId: c.legacyId || null,
       slug: c.slug || "",
       kind: c.kind || null,
+      route: c.route || "",
+      // null = the field was never set (record predates PR 8.1).
+      isSearchable: typeof c.isSearchable === "boolean" ? c.isSearchable : null,
     })),
     indexes: {
       healthcareconditions: conditionIndexes.map((i) => i.name),
@@ -150,6 +165,27 @@ function specialtyFromRoute(route) {
   if (segments.length >= 3) return decisions.ROUTE_SPECIALTY_SEGMENT_TO_LIVE[segments[1]] || null;
   return null;
 }
+
+// The specialty whose page a route nests under ("/<category>/<specialty>/<page>"
+// or "/online-second-medical-opinion/<page>"), or null for a top-level page.
+function parentSpecialtyOfRoute(route) {
+  const segments = String(route || "").split("/").filter(Boolean);
+  if (segments.length >= 2 && decisions.ROUTE_SECTION_TO_SPECIALTY[segments[0]]) {
+    return decisions.ROUTE_SECTION_TO_SPECIALTY[segments[0]];
+  }
+  if (segments.length < 3) return null;
+  const prefix = `/${segments[0]}/${segments[1]}`;
+  for (const bySpecialty of Object.values(SPECIALTY_DISCOVERY_ROUTES)) {
+    for (const [specialty, page] of Object.entries(bySpecialty)) if (page === prefix) return specialty;
+  }
+  return null;
+}
+
+// Detects test-looking live condition names (no vowels, or 1-2 characters).
+const looksLikeTestName = (name) => {
+  const n = String(name || "").trim().toLowerCase();
+  return n.length <= 2 || !/[aeiou]/.test(n);
+};
 
 const defaultIndexName = (fields) => Object.entries(fields).map(([k, v]) => `${k}_${v}`).join("_");
 
@@ -333,6 +369,7 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
       legacySpecialty: rec.specialty || null,
       legacyRoute: rec.route || "",
       keywords: rec.keywords || [],
+      keywordSource: rec.keywordSource || null,
       classification,
       classificationReasons: reasons,
       decision,
@@ -351,7 +388,7 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
   const aliasDrops = [];
   const buildAliases = (rec) => {
     const candidates = [];
-    for (const k of rec.keywords) candidates.push({ text: k, source: "legacy-keyword" });
+    for (const k of rec.keywords) candidates.push({ text: k, source: rec.keywordSource || "legacy-keyword" });
     for (const k of decisions.APPROVED_EXTRA_CONDITION_ALIASES[rec.legacyId] || []) {
       candidates.push({ text: k, source: "pr4-approved" });
     }
@@ -382,11 +419,38 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
     rec.aliasDetails = buildAliases(rec);
     rec.aliases = rec.aliasDetails.map((a) => a.alias);
     rec.slug = slugify(rec.name);
-    rec.routeStatus = appRoutes.has(rec.legacyRoute) ? "FOUND_IN_APP" : "NOT_FOUND_IN_APP";
-    rec.route = rec.routeStatus === "FOUND_IN_APP" ? rec.legacyRoute : "";
-    rec.routeSpecialtyMismatch = Boolean(rec.routeSpecialty && rec.routeSpecialty !== rec.targetSpecialty);
     rec.targetCategory = categoryNameOfSpecialty(rec.targetSpecialty);
     rec.targetSpecialtyId = liveSpecialty(rec.targetSpecialty)?._id || null;
+
+    // The stored route is always an exact, existing App.jsx path that is also
+    // a known discovery page; a slug is never trusted on its own. In order:
+    // reviewed override > legacy route > route derived from the specialty page
+    // or top level, accepted only if App.jsx really declares it.
+    const isPage = (p) => appRoutes.has(p) && CONDITION_DISCOVERY_ROUTES.has(p);
+    const specialtyPage = SPECIALTY_DISCOVERY_ROUTES[rec.targetCategory]?.[rec.targetSpecialty];
+    const override = decisions.ROUTE_OVERRIDES[rec.legacyId];
+    if (override && !isPage(override)) fatal.push(`ROUTE_OVERRIDES: "${rec.legacyId}" → "${override}" is not a page in App.jsx.`);
+    const derived = [
+      ...(specialtyPage ? [`${specialtyPage}/${rec.legacyId}`, `${specialtyPage}/${rec.slug}`] : []),
+      `/${rec.legacyId}`,
+      `/${rec.slug}`,
+    ].find(isPage);
+    if (override && isPage(override)) {
+      rec.route = override;
+      rec.routeStatus = "OVERRIDE_VERIFIED";
+    } else if (isPage(rec.legacyRoute)) {
+      rec.route = rec.legacyRoute;
+      rec.routeStatus = "FOUND_IN_APP";
+    } else if (derived) {
+      rec.route = derived;
+      rec.routeStatus = "DERIVED_VERIFIED";
+    } else {
+      rec.route = "";
+      rec.routeStatus = "NO_DEDICATED_PAGE";
+    }
+    // The page a route sits under must be the record's own specialty.
+    rec.routeParentSpecialty = parentSpecialtyOfRoute(rec.route);
+    rec.routeSpecialtyMismatch = Boolean(rec.routeParentSpecialty && rec.routeParentSpecialty !== rec.targetSpecialty);
   }
   for (const rec of records.filter((r) => r.decision === "MERGE")) {
     const canonical = recordById.get(rec.mergeInto);
@@ -510,6 +574,46 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
     if (recordById.get(id)?.decision !== "IMPORT") collide("J_SERVICE_NOT_IMPORTED", true, `"${id}"`, [id]);
   }
 
+  // L. a stored route should sit under the record's own specialty page. A
+  // previously APPROVED specialty decision that differs from the page
+  // location (prostate-health, medication-refills-traveling) is kept as the
+  // decision says and reported as a warning; anything else is blocking.
+  for (const r of importing().filter((x) => x.routeSpecialtyMismatch)) {
+    const approved = Boolean(decisions.APPROVED_SPECIALTY_DECISIONS[r.legacyId]);
+    collide(
+      "L_ROUTE_PARENT_SPECIALTY_MISMATCH",
+      !approved,
+      `"${r.legacyId}" → ${r.targetSpecialty}, but ${r.route} sits under ${r.routeParentSpecialty}${approved ? ` (approved decision kept: ${decisions.APPROVED_SPECIALTY_DECISIONS[r.legacyId].basis})` : ""}`,
+      [r.legacyId],
+    );
+  }
+  // M. two records may not claim the same page.
+  for (const [route, group] of groupBy(importing().filter((x) => x.route), (r) => r.route)) {
+    if (group.length > 1) collide("M_DUPLICATE_ROUTE", true, route, group.map((r) => r.legacyId));
+  }
+  // P. a planned record without a verified route is planned NOT searchable
+  // (search never exposes a record that cannot resolve to a real page).
+  for (const r of importing().filter((x) => !x.route)) {
+    collide("P_PLANNED_RECORD_NOT_SEARCHABLE_NO_ROUTE", false, `"${r.legacyId}" has no verified route; planned isSearchable:false`, [r.legacyId]);
+  }
+  // N. every dedicated condition/service page in App.jsx must be represented:
+  // by a planned record, by an approved alias merge, or by an explicit
+  // UNMAPPED_APP_PAGES entry (with its reason).
+  const coveredRoutes = new Set([
+    ...importing().map((r) => r.route).filter(Boolean),
+    ...records.filter((r) => r.decision === "MERGE").map((r) => r.legacyRoute),
+  ]);
+  for (const route of [...CONDITION_DISCOVERY_ROUTES].sort()) {
+    if (!appRoutes.has(route)) collide("N_DISCOVERY_ROUTE_NOT_IN_APP", true, route);
+    else if (!coveredRoutes.has(route) && !decisions.UNMAPPED_APP_PAGES[route]) {
+      collide("N_PAGE_WITHOUT_TAXONOMY_RECORD", true, route);
+    }
+  }
+  for (const route of Object.keys(decisions.UNMAPPED_APP_PAGES)) {
+    if (coveredRoutes.has(route)) collide("N_UNMAPPED_PAGE_IS_COVERED", true, route);
+    if (!CONDITION_DISCOVERY_ROUTES.has(route)) collide("N_UNMAPPED_PAGE_UNKNOWN", true, route);
+  }
+
   // Blocking collisions pull the affected records out of the executable plan.
   for (const c of collisions.filter((x) => x.blocking)) {
     for (const id of c.legacyIds) {
@@ -560,21 +664,40 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
   const liveConditionStatus = live.conditions.map((c) => {
     const spec = live.specialties.find((s) => s._id === c.specialtyId);
     const cat = spec && categoryById.get(spec.categoryId);
-    const inHierarchy = Boolean(c.isActive && spec?.isActive && cat?.isActive);
+    // Same rule the search catalog applies (services/search/searchVisibility.js)
+    // plus its hierarchy requirement (active specialty and category).
+    const hierarchyValid = Boolean(spec?.isActive && cat?.isActive);
+    const inHierarchy = hierarchyValid && isConditionSearchable({ isActive: c.isActive, isSearchable: c.isSearchable ?? undefined, route: c.route });
     return {
       _id: c._id,
       name: c.name,
       specialtyId: c.specialtyId,
       isActive: c.isActive,
+      isSearchable: c.isSearchable ?? null,
       legacyId: c.legacyId,
       slug: c.slug,
       kind: c.kind,
       specialty: spec?.name || null,
       category: cat?.name || null,
       parentExists: liveSpecialtyIds.has(c.specialtyId),
-      globalSearch: inHierarchy ? "INCLUDED (active hierarchy)" : "EXCLUDED FROM GLOBAL SEARCH",
+      globalSearch: inHierarchy
+        ? c.isSearchable === true ? "INCLUDED (isSearchable, valid hierarchy)" : "INCLUDED (legacy: isSearchable unset, active, valid hierarchy)"
+        : "EXCLUDED FROM GLOBAL SEARCH",
       migrationAction: "NO_CHANGE",
       note: decisions.KNOWN_LIVE_CONDITION_NOTES[c.name] || null,
+      // PR 8 review: never an operation, only a recommendation for a person.
+      review: (() => {
+        const reviewed = decisions.LIVE_RECORD_REVIEW[c.name];
+        const orphan = !liveSpecialtyIds.has(c.specialtyId);
+        const testName = looksLikeTestName(c.name);
+        return {
+          assessment: reviewed?.assessment || (orphan ? "ORPHAN" : testName ? "TEST_SUSPECT" : "UNREVIEWED"),
+          orphan,
+          testNameSuspect: testName,
+          action: reviewed?.action || "NO_CHANGE",
+          reason: reviewed?.reason || null,
+        };
+      })(),
     };
   });
   const liveDuplicateNamePairs = [...groupBy(live.conditions, (c) => `${c.specialtyId}|${lower(c.name)}`)]
@@ -625,7 +748,10 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
         legacyId: r.legacyId,
         slug: r.slug,
         route: r.route,
+        // Booking stays off (PR 4 rule); search is on for every record that
+        // has a verified route (every planned record does, see collision P).
         isActive: false,
+        isSearchable: Boolean(r.route),
       },
       specialtyName: r.targetSpecialty,
       categoryName: r.targetCategory,
@@ -724,9 +850,17 @@ function buildPlan({ legacy, appRoutes, live, conditionSchemaIndexes }) {
     collisionCount: collisions.filter((c) => c.blocking).length,
     warningCount: collisions.filter((c) => !c.blocking).length,
     parentMissingCount: collisions.filter((c) => /^[GH]_/.test(c.check)).length,
+    pr8AdditionalPages: decisions.PR8_ADDITIONAL_CONDITIONS.length,
+    // PR 8.1: search and booking visibility are separate flags.
+    plannedSearchable: importable.filter((r) => Boolean(r.route)).length,
+    plannedBookingActive: 0,
+    unmappedAppPages: Object.keys(decisions.UNMAPPED_APP_PAGES).length,
+    routeResolution: countBy(importable, (r) => r.routeStatus),
     routeConflicts: {
-      legacyRouteNotFoundInApp: importable.filter((r) => r.routeStatus === "NOT_FOUND_IN_APP").length,
+      // Stored legacy route was stale (not an App.jsx page); the planner resolved or dropped it.
+      legacyRouteNotFoundInApp: importable.filter((r) => r.routeStatus !== "FOUND_IN_APP" && !appRoutes.has(r.legacyRoute)).length,
       routeSpecialtyDiffersFromTarget: importable.filter((r) => r.routeSpecialtyMismatch).length,
+      withoutDedicatedPage: importable.filter((r) => !r.route).length,
       duplicateStoredRoutes: [...groupBy(importable.filter((r) => r.route), (r) => r.route)].filter(([, g]) => g.length > 1).length,
     },
     slugConflicts: collisions.filter((c) => /SLUG/.test(c.check)).length,
@@ -861,6 +995,7 @@ function toPlanJson(plan, meta) {
         mergeInto: r.mergeInto,
         legacyRoute: r.legacyRoute,
         routeStatus: r.routeStatus || null,
+        route: r.route || null,
         routeSpecialtyMismatch: r.routeSpecialtyMismatch || false,
         aliasSources: r.aliasDetails ? Object.fromEntries(r.aliasDetails.map((a) => [a.alias, a.sources])) : null,
       })),
@@ -951,4 +1086,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { buildPlan, validatePlannedDocuments, specialtyFromRoute, loadLegacyIndex, loadAppRoutes };
+module.exports = { buildPlan, validatePlannedDocuments, specialtyFromRoute, parentSpecialtyOfRoute, looksLikeTestName, loadLegacyIndex, loadAppRoutes };

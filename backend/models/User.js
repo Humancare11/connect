@@ -29,6 +29,10 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+    // Live Chat: an admin the Super Admin has allowed to open the AI Review page (flagged medical chats). Super Admin
+    // always can. Only ever set through the Live Chat Team page; never accepted from a request body elsewhere.
+    liveChatReviewer: { type: Boolean, default: false },
+
     // Set only when role === "partner": the Partner Company this login belongs
     // to. Never accepted from a request body — assigned server-side by the
     // Super Admin partner-creation flow.

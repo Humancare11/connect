@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { useAuth } from "../../context/AuthContext";
 import { getUserAuthToken } from "../../api";
 import socket from "../../socket";
@@ -201,10 +202,10 @@ export default function UserLayout({ children }) {
 
           <div className="hc-ul__topbar-left">
             <p className="hc-ul__topbar-eyebrow">Humancare Connect</p>
-            <h1 className="hc-ul__topbar-title">
+            <div className="hc-ul__topbar-title">
               {currentPage?.icon}
               {currentPage?.label || "Dashboard"}
-            </h1>
+            </div>
           </div>
 
           <div className="hc-ul__topbar-right">
@@ -217,7 +218,7 @@ export default function UserLayout({ children }) {
           </div>
         </header>
 
-        <main className="hc-ul__content">{children}</main>
+        <main className="hc-ul__content" id="main-content" tabIndex={-1}><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></main>
       </div>
     </div>
   );

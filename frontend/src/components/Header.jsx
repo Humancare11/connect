@@ -5,6 +5,7 @@ import { FaUserCircle } from "react-icons/fa";
 import logo from "../assets/NewLogo.webp";
 import miniLogo from "../assets/logo-2.webp";
 import { useAuth } from "../context/AuthContext";
+import useModalA11y from "../hooks/useModalA11y";
 import {
   Baby,
   Activity,
@@ -45,7 +46,7 @@ const helpRoutes = {
   "Sexual Health": "/sexual-health",
   "Skin & Hair": "/skin-and-hair-care",
   // "Travel & Global Care": "/travel-and-global-care",
-  "Weight & Nutrition": "/weight-and-nurtrition",
+  "Weight & Nutrition": "/weight-and-nutrition",
   "Women's Health": "/women-health",
 };
 
@@ -81,6 +82,8 @@ export default function Header() {
   const navMenuRef = useRef(null);
   const helpWrapRef = useRef(null);
   const headerRef = useRef(null);
+  // Mobile menu: Escape closes, Tab stays in the header, focus returns to the hamburger.
+  useModalA11y(headerRef, mobileOpen, () => setMobileOpen(false), { initialFocus: ".mobile-menu a" });
 
   const location = useLocation();
 
@@ -225,6 +228,9 @@ export default function Header() {
 
   return (
     <>
+      <a href="#main-content" className="skip-to-content-link">
+        Skip to content
+      </a>
       <header
         ref={headerRef}
         className={`glass-header ${isScrolled ? "shrink" : ""}`}
@@ -404,7 +410,12 @@ export default function Header() {
         </div>
 
         {/* MOBILE MENU */}
-        <div className={`mobile-menu ${mobileOpen ? "open" : ""}`}>
+        <div
+          className={`mobile-menu ${mobileOpen ? "open" : ""}`}
+          role={mobileOpen ? "dialog" : undefined}
+          aria-modal={mobileOpen ? "true" : undefined}
+          aria-label={mobileOpen ? "Main menu" : undefined}
+        >
           {navItems.map((item, i) => (
             <Link
               key={i}

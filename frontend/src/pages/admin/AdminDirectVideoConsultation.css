@@ -115,6 +115,11 @@
   outline: 0;
   box-sizing: border-box;
 }
+.dvc-field textarea:focus-visible,
+.dvc-field select:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .dvc-field textarea {
   resize: vertical;
@@ -474,7 +479,8 @@
 }
 
 .dvc-pin-row__value {
-  font-family: "SFMono-Regular", Consolas, monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 20px;
   font-weight: 800;
   letter-spacing: 0.15em;

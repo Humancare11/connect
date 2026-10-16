@@ -277,7 +277,7 @@ export default function SexualHealth() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--sexual-health"
         style={{
           "--service-accent": s.accentColor,
@@ -734,7 +734,7 @@ export default function SexualHealth() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

@@ -113,7 +113,7 @@ export default function PartnerBilling() {
               <tr key={inv._id}>
                 <td style={{ fontWeight: 600, color: "#0369a1" }}>{inv.invoiceNumber}</td>
                 <td style={{ color: "#64748b" }}>{formatDate(inv.createdAt)}</td>
-                <td style={{ color: "#64748b" }}>{formatDate(inv.dueDate)}</td>
+                <td style={{ color: "#64748b" }}>{inv.status === "paid" ? "—" : formatDate(inv.dueDate)}</td>
                 <td style={{ color: "#475569", maxWidth: 260 }}>{inv.description || "—"}</td>
                 <td style={{ fontWeight: 600 }}>{formatMoney(inv.amountCents, inv.currency)}</td>
                 <td>

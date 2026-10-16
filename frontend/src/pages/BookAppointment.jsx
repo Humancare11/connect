@@ -46,7 +46,7 @@ const ELEMENTS_APPEARANCE = {
     colorBackground: "#ffffff",
     colorText: "#0f172a",
     colorDanger: "#dc2626",
-    fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif",
+    fontFamily: "'Inter', system-ui, sans-serif",
     borderRadius: "10px",
     fontSizeBase: "15px",
     spacingUnit: "4px",
@@ -202,7 +202,7 @@ function StripeForm({
         </div>
       )}
 
-      {payError && <p className="ap-error">{payError}</p>}
+      {payError && <p role="alert" className="ap-error">{payError}</p>}
 
       <div className="ap-pay-security">
         <svg
@@ -406,7 +406,7 @@ export function PaymentStage({
             </button>
           </div>
           {stripeError && (
-            <p className="ap-error" style={{ marginTop: 10 }}>
+            <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
               {stripeError}
             </p>
           )}
@@ -421,7 +421,16 @@ export function PaymentStage({
         {method === "stripe" && clientSecret && (
           <Elements
             stripe={stripePromise}
-            options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}
+            options={{
+              clientSecret,
+              appearance: ELEMENTS_APPEARANCE,
+              fonts: [
+                {
+                  cssSrc:
+                    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+                },
+              ],
+            }}
           >
             <StripeForm
               clientSecret={clientSecret}
@@ -463,7 +472,7 @@ export function PaymentStage({
               />
             )}
             {paypalError && (
-              <p className="ap-error" style={{ marginTop: 10 }}>
+              <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
                 {paypalError}
               </p>
             )}
@@ -912,7 +921,7 @@ export default function BookAppointment() {
                   </div>
                 </div>
               </div>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => !uploading && fileInputRef.current?.click())(e); } }}
                 className={`ap-upload-zone ${dragOver ? "ap-upload-zone--over" : ""} ${uploading ? "ap-upload-zone--busy" : ""}`}
                 onClick={() => !uploading && fileInputRef.current?.click()}
                 onDragOver={(e) => {
@@ -969,7 +978,7 @@ export default function BookAppointment() {
               )}
             </div>
 
-            {error && <p className="ap-error">{error}</p>}
+            {error && <p role="alert" className="ap-error">{error}</p>}
 
             <button
               className="ap-submit"

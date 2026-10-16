@@ -242,7 +242,7 @@ export default function FitToFly() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--fit-to-fly"
         style={{ "--service-accent": s.accentColor }}
       >
@@ -636,7 +636,7 @@ export default function FitToFly() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

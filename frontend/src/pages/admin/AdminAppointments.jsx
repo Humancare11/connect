@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
 import "./AdminAppointments.css";
+import RetryButton from "../../components/ui/RetryButton";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -78,6 +79,7 @@ export default function AdminAppointments() {
   const [search, setSearch] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const [attempt, setAttempt] = useState(0);
   const initialFilter = canonicalStatus(searchParams.get("tab"));
   const [filter, setFilter] = useState(STATUS_ORDER.includes(initialFilter) ? initialFilter : "upcoming");
 
@@ -102,7 +104,7 @@ export default function AdminAppointments() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [attempt]);
 
   const counts = useMemo(() => {
     const base = { all: appointments.length, upcoming: 0, assigned: 0, pending: 0, confirmed: 0, complete: 0, cancelled: 0 };
@@ -207,6 +209,7 @@ export default function AdminAppointments() {
           <div className="adp-empty">
             <h3>Could not load appointments</h3>
             <p>{error}</p>
+            <RetryButton onRetry={() => setAttempt((n) => n + 1)} />
           </div>
         ) : displayed.length === 0 ? (
           <div className="adp-empty">
@@ -264,9 +267,11 @@ export default function AdminAppointments() {
                                 <strong>{appointment.doctorId?.name || "Assigned doctor"}</strong>
                                 <span>{appointment.category || "-"} - {getCountryName(doctorCountry(appointment))}</span>
                               </div>
-                              <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
-                                Alternate Doctor
-                              </Link>
+                              {!["complete", "completed"].includes(appointment.status) && (
+                                <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
+                                  Alternate Doctor
+                                </Link>
+                              )}
                             </>
                           ) : (
                             <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>

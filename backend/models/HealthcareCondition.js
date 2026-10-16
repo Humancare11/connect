@@ -28,9 +28,18 @@ const healthcareConditionSchema = new mongoose.Schema(
       default: "",
       maxlength: 1000,
     },
+    // Booking visibility: only active conditions appear in /api/appointment-tree.
     isActive: {
       type: Boolean,
       default: true,
+    },
+    // Global discovery search visibility (PR 8.1), independent of isActive.
+    // Safe default: a new record is not searchable unless set. Records created
+    // before this field existed have no value and keep their old behaviour
+    // (searchable while active); see services/search/searchVisibility.js.
+    isSearchable: {
+      type: Boolean,
+      default: false,
     },
 
     // ── Search taxonomy fields (internal) ────────────────────────────────

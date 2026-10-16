@@ -21,7 +21,7 @@
     --shadow-3: 0 50px 120px -40px rgba(11, 40, 100, .40);
     --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --display: var(--font-primary);
-    --mono: "JetBrains Mono", ui-monospace, monospace;
+    --mono: var(--font-secondary);
     --corp-bg: #F7FAFF;
 }
 
@@ -146,7 +146,7 @@
     font-size: 20px;
     color: var(--muted);
     margin-top: 24px;
-    max-width: 900px;
+    max-width: var(--container-sm);
     margin-left: auto;
     margin-right: auto;
     font-weight: 400;
@@ -157,14 +157,19 @@
    NAV — 
 ================================================================ */
 
+/* Centring is done with auto margins on .slider-nav-v2, not justify-content:
+   a centred flex child that overflows spills past the left edge, where a
+   scroll container cannot reach — that is what clipped the first pills.
+   Negative margins cancel .slider-page-wrap's padding so the strip scrolls
+   out to the screen edge instead of being cut 20–30px inside it. */
 .slider-nav-scroll-wrap {
-    width: 100%;
-    max-width: 100%;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    margin-bottom: 0;
+    margin: 0 -30px;
+    padding: 0 30px;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
@@ -185,11 +190,11 @@
     flex-wrap: nowrap;
     white-space: nowrap;
     width: max-content;
-    margin-bottom: 100px;
+    margin: 0 auto 100px;
     padding: 6px;
     background: rgba(248, 250, 252, 0.65);
-    backdrop-filter: blur(24px) saturate(130%);
     -webkit-backdrop-filter: blur(24px) saturate(130%);
+    backdrop-filter: blur(24px) saturate(130%);
     border-radius: 100px;
     border: 1px solid rgba(0, 0, 0, 0.08);
     box-shadow: 0 16px 40px -12px rgba(11, 40, 100, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -208,7 +213,7 @@
     color: var(--ink-2);
     padding: 10px 24px;
     cursor: pointer;
-    transition: color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: color var(--duration-slow) cubic-bezier(0.25, 0.46, 0.45, 0.94);
     border-radius: 100px;
     position: relative;
     display: flex;
@@ -233,7 +238,7 @@
     align-items: center;
     justify-content: center;
     font-size: 17px;
-    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transition: transform var(--duration-slow) cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .nav-v2-item.active .nav-v2-icon {
@@ -285,8 +290,10 @@
     transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.industry-card-v3:hover {
+@media (hover: hover) and (pointer: fine) {
+  .industry-card-v3:hover {
     transform: translateY(-10px);
+  }
 }
 
 .v3-image-area {
@@ -304,8 +311,10 @@
     image-rendering: -webkit-optimize-contrast;
 }
 
-.industry-card-v3:hover .v3-image-area img {
+@media (hover: hover) and (pointer: fine) {
+  .industry-card-v3:hover .v3-image-area img {
     transform: scale(1.08);
+  }
 }
 
 .v3-overlay {
@@ -400,15 +409,19 @@
     padding: 12px 20px;
     background: #f8fafc;
     border-radius: 16px;
-    transition: all 0.3s ease;
+    transition: all var(--duration-slow) ease;
     border: 1px solid transparent;
 }
 
 .v3-feat:hover {
-    background: #ffffff;
-    border-color: rgba(0, 0, 0, 0.05);
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.05);
+}
+@media (hover: hover) and (pointer: fine) {
+  .v3-feat:hover {
     transform: translateX(5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+  }
 }
 
 .v3-feat svg {
@@ -432,7 +445,7 @@
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.4s var(--ease);
+    transition: background 0.4s var(--ease), box-shadow 0.4s var(--ease), transform 0.4s var(--ease);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -440,19 +453,25 @@
 }
 
 .v3-cta:hover {
-    background: var(--accent);
+  background: var(--accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .v3-cta:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  }
 }
 
 .v3-cta::after {
     content: "→";
     font-size: 20px;
-    transition: transform 0.3s ease;
+    transition: transform var(--duration-slow) ease;
 }
 
-.v3-cta:hover::after {
+@media (hover: hover) and (pointer: fine) {
+  .v3-cta:hover::after {
     transform: translateX(5px);
+  }
 }
 
 /* ================================================================
@@ -465,7 +484,7 @@
     margin: 0 10px !important;
     background: #cbd5e1;
     opacity: 1;
-    transition: width 0.3s ease, background 0.3s ease;
+    transition: width var(--duration-slow) ease, background var(--duration-slow) ease;
 }
 
 .industry-panoramic-swiper .swiper-pagination-bullet-active {
@@ -571,19 +590,10 @@
         margin-top: 16px;
     }
 
-    /* NAV WRAPPER: scrollable horizontal container on mobile */
+    /* NAV WRAPPER: bleed matches .slider-page-wrap padding (20px) */
     .slider-nav-scroll-wrap {
-        justify-content: flex-start;
-        padding: 0 16px 16px;
-        overflow-x: auto;
-        scrollbar-width: none;
-        /* Firefox */
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .slider-nav-scroll-wrap::-webkit-scrollbar {
-        display: none;
-        /* Chrome/Safari */
+        margin: 0 -20px;
+        padding: 0 20px 16px;
     }
 
     /* NAV PILL */
@@ -681,16 +691,10 @@
         font-size: 14px;
     }
 
-    /* NAV WRAPPER */
+    /* NAV WRAPPER: bleed matches .slider-page-wrap padding (16px) */
     .slider-nav-scroll-wrap {
-        justify-content: flex-start;
-        padding: 0 12px 12px;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .slider-nav-scroll-wrap::-webkit-scrollbar {
-        display: none;
+        margin: 0 -16px;
+        padding: 0 16px 12px;
     }
 
     /* NAV PILL */

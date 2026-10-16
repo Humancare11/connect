@@ -23,7 +23,7 @@
   --accent-lt: rgba(11, 87, 232, 0.08);
 
   /* Typography */
-  --font: "Satoshi", "Inter", sans-serif;
+  --font: var(--font-secondary);
 
   /* Shape */
   --r-xs: 8px;
@@ -94,8 +94,8 @@
   padding: 7px 16px;
   border-radius: var(--pill);
   border: 1px solid var(--border-md);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .hcc-sx .eyebrow-dot {
@@ -105,6 +105,7 @@
   border-radius: 50%;
 }
 
+.hcc-sx h1,
 .hcc-sx h2 {
   font-size: clamp(32px, 5.5vw, 62px);
   line-height: 1.05;
@@ -112,7 +113,7 @@
   font-weight: 900;
   margin: 0 0 20px;
   color: var(--navy-deep);
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   max-width: 700px;
   overflow-wrap: break-word;
 }
@@ -161,8 +162,8 @@
   align-items: center;
   background: rgba(255, 255, 255, 0.8);
 
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--pill);
   padding: 4px 4px;
@@ -261,8 +262,8 @@
   /* [CHANGED] new color treatment: white frosted glass with navy border
      (was blue-tinted rgba(11,87,232,0.10) bg / rgba(11,87,232,0.22) border) */
   background: rgba(255, 255, 255, 0.68);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   border: 1px solid rgba(30, 45, 69, 0.14);
   border-radius: var(--pill);
   /* [CHANGED] taller padding for a bigger bar, was 4px 8px 4px 18px */
@@ -299,9 +300,13 @@
   color: var(--navy-deep);
   font-family: var(--font-secondary);
   /* [CHANGED] bigger input text + padding, was 14px / 10px 4px */
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   padding: 14px 6px;
+}
+.hcc-sx .search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .hcc-sx .search input::placeholder {
@@ -383,6 +388,10 @@
   background: rgba(11, 87, 232, 0.08);
   outline: none;
 }
+.hcc-sx .search-result:hover:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
 
 .hcc-sx .search-result-ico {
   flex-shrink: 0;
@@ -448,8 +457,8 @@
    ═══════════════════════════════════════════════════════════════ */
 .hcc-sx .content-card {
   background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border-radius: var(--r-card);
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow:
@@ -553,8 +562,8 @@
 
 .hcc-sx .catcard {
   background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: var(--r-lg);
   padding: 26px 24px 24px;
@@ -573,10 +582,14 @@
 }
 
 .hcc-sx .catcard:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(11, 87, 232, 0.16);
   border-color: rgba(11, 87, 232, 0.32);
   background: rgba(255, 255, 255, 0.85);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .catcard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(11, 87, 232, 0.16);
+  }
 }
 
 /* [NEW] Row 1 — icon + title side by side */
@@ -599,8 +612,10 @@
   transition: transform var(--t);
 }
 
-.hcc-sx .catcard:hover .ic {
-  transform: scale(1.08);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .catcard:hover .ic {
+    transform: scale(1.08);
+  }
 }
 
 .hcc-sx .catcard h3 {
@@ -609,7 +624,7 @@
   color: var(--navy-deep);
   margin: 10px 0 0;
   letter-spacing: -0.25px;
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   line-height: 1.25;
 }
 
@@ -690,8 +705,8 @@
 
 .hcc-sx .spec {
   background: rgba(255, 255, 255, 0.52);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: var(--r-md);
   padding: 19px 17px 17px;
@@ -709,10 +724,14 @@
 }
 
 .hcc-sx .spec:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(11, 87, 232, 0.14);
   border-color: rgba(11, 87, 232, 0.25);
   background: rgba(255, 255, 255, 0.8);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .spec:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(11, 87, 232, 0.14);
+  }
 }
 
 /* [NEW] Row 1 — icon + title side by side */
@@ -735,8 +754,10 @@
   transition: transform var(--t);
 }
 
-.hcc-sx .spec:hover .ic {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .spec:hover .ic {
+    transform: scale(1.06);
+  }
 }
 
 .hcc-sx .spec h3 {
@@ -745,7 +766,7 @@
   color: var(--navy-deep);
   margin: 0;
   letter-spacing: -0.15px;
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   line-height: 1.3;
 }
 
@@ -792,9 +813,11 @@
     background var(--t);
 }
 
-.hcc-sx .spec-book-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(11, 87, 232, 0.18);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .spec-book-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(11, 87, 232, 0.18);
+  }
 }
 
 .hcc-sx .spec--price-missing .count {
@@ -875,8 +898,8 @@
      treatment used by .catcard / .spec so it matches the rest of
      the design system instead of reading as a different component */
   background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: var(--r-lg);
 
@@ -895,21 +918,33 @@
 }
 
 .hcc-sx .condcard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(11, 87, 232, 0.12);
   border-color: rgba(11, 87, 232, 0.22);
-  /* [FIX] was hard-coded #ffffff, identical to the resting state,
-     so hovering produced no visible background change */
   background: rgba(255, 255, 255, 0.85);
 }
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .condcard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(11, 87, 232, 0.12);
+  }
+}
 
-.hcc-sx .condcard--disabled,
-.hcc-sx .condcard--disabled:hover {
+.hcc-sx .condcard--disabled {
   cursor: not-allowed;
   opacity: 0.62;
   transform: none;
   box-shadow: 0 1px 3px rgba(17, 28, 46, 0.04);
   border-color: rgba(225, 29, 72, 0.18);
+}
+.hcc-sx .condcard--disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.62;
+  border-color: rgba(225, 29, 72, 0.18);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .condcard--disabled:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(17, 28, 46, 0.04);
+  }
 }
 
 .hcc-sx .condcard-ico {
@@ -925,8 +960,10 @@
   transition: transform var(--t);
 }
 
-.hcc-sx .condcard:hover .condcard-ico {
-  transform: scale(1.06);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-sx .condcard:hover .condcard-ico {
+    transform: scale(1.06);
+  }
 }
 
 /* [NEW] Text stack — title above description, vertically centered with icon */
@@ -1060,6 +1097,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .hcc-sx h1,
   .hcc-sx h2 {
     font-size: 44px;
   }
@@ -1105,6 +1143,7 @@
     font-size: 16px;
   }
 
+  .hcc-sx h1,
   .hcc-sx h2 {
     font-size: 34px;
     letter-spacing: -1px;

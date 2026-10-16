@@ -11,6 +11,7 @@ import {
   formatMoney,
 } from "./caseConstants";
 import "./PartnerCaseDetail.css";
+import useModalA11y from "../../hooks/useModalA11y";
 
 // System notices that just echo the status pipeline — hidden from the chat
 // thread so it reads as a conversation, not an audit log.
@@ -35,6 +36,8 @@ export default function PartnerCaseDetail() {
   const [actionError, setActionError] = useState("");
   const [linkCopied, setLinkCopied] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const chatDrawerRef = useRef(null);
+  useModalA11y(chatDrawerRef, chatOpen, () => setChatOpen(false));
   const chatEndRef = useRef(null);
 
   const caseQ = useQuery({
@@ -264,7 +267,7 @@ export default function PartnerCaseDetail() {
       {chatOpen && (
         <>
           <div className="pt-chat-overlay" onClick={() => setChatOpen(false)} />
-          <aside className="pt-chat-drawer" role="dialog" aria-label="Case messages">
+          <aside className="pt-chat-drawer" ref={chatDrawerRef} role="dialog" aria-modal="true" aria-label="Case messages">
             <div className="pt-chat-drawer__head">
               <p className="pt-chat-drawer__title">Case messages</p>
               <button

@@ -4,7 +4,7 @@ import "./PrivacyPolicies.css";
 const ProviderTermsofService1 = () => {
     return (
         <div className="rcp-page">
-            <main className="rcp-content">
+            <div className="rcp-content">
                 <header className="rcp-hero">
                     <h1 className="rcp-title">Provider Terms of Service</h1>
                     <p className="rcp-intro">
@@ -103,7 +103,7 @@ const ProviderTermsofService1 = () => {
                         Email: <a href="mailto:support@humancareconnect.co " className="rcp-link">support@humancareconnect.co </a>
                     </p>
                 </section>
-            </main>
+            </div>
         </div>
     );
 };

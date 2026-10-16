@@ -16,6 +16,7 @@ import HIPAAGDPRCompliantInfrastructure from "../assets/MedicalPartnerOrganizati
 import FastImplementationUnder2Weeks from "../assets/MedicalPartnerOrganizationsTrust/healthcare-platform-fast-onboarding.webp";
 
 import IncreaseEmployeeRetentionProductivity from "../assets/MedicalPartnerOrganizationsTrust/employee-productivity-healthcare-benefits.webp";
+import useModalA11y from "../hooks/useModalA11y";
 
 const CARDS = [
   {
@@ -119,7 +120,7 @@ function Card({ card, onOpen }) {
 
   return (
     <div className="wcu-card-wrap">
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (handleClick)(e); } }}
         ref={ref}
         className={`wcu-card wcu-card--${card.size}`}
         style={{ "--delay": card.delay }}
@@ -176,6 +177,9 @@ export default function WhyChooseUs() {
       setActiveId(null);
     }, 420);
   }, []);
+
+  const popupRef = useRef(null);
+  useModalA11y(popupRef, Boolean(activeId && activeCard), closeCard);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -350,9 +354,16 @@ export default function WhyChooseUs() {
 
       {activeId && activeCard && (
         <div className={overlayClass} onClick={closeCard}>
-          <div className={popupClass} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={popupClass}
+            ref={popupRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeCard.title}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="wcu-popup__photo">
-              <img
+              <img decoding="async" loading="lazy"
                 src={activeCard.photo}
                 alt={activeCard.alt}
                 title={activeCard.title}

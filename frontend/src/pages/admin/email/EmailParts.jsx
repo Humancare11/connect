@@ -1,4 +1,5 @@
-import { extClass, firstName, fmtFull, fmtSize, hashColor, initials, trackingInfo } from "./emailUtils";
+import { SignatureImage } from "./SignatureView";
+import { READ_STATUS_HELP, extClass, firstName, fmtFull, fmtSize, hashColor, initials, trackingInfo } from "./emailUtils";
 
 const PATHS = {
   inbox: (<><path d="M3 13h5l2 3h4l2-3h5" /><path d="M5.5 5h13L21 13v6H3v-6z" /></>),
@@ -16,6 +17,8 @@ const PATHS = {
   mailbox: (<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>),
   expand: (<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />),
   refresh: (<><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></>),
+  upload: (<><path d="M12 16V4M7 9l5-5 5 5" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" /></>),
+  lock: (<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>),
 };
 
 export function Icon({ name, size = 20 }) {
@@ -90,47 +93,172 @@ export function FirstViewed({ firstViewed, readInGmail = false }) {
   );
 }
 
-// Status column, line 1: open tracking. Nothing at all when tracking was not on for the mail.
+// Status column, line 1: the combined read status. Nothing at all when the mail was not tracked.
+const STRONG = new Set(["replied", "downloaded", "clicked", "receipt", "opened"]);
 export function TrackingBadge({ tracking }) {
   const info = trackingInfo(tracking);
   if (!info || info.kind === "na") return null;
-  const label = {
-    opened: `Likely opened${tracking.openCount > 1 ? ` · ${tracking.openCount}×` : ""}`,
-    pending: "No signal",
+  const short = {
+    opened_apple: "Opened (Apple)",
+    pending: "Not opened yet",
     automated: "Auto load only",
-  }[info.kind];
+  };
+  const n = info.kind === "opened" && tracking.openCount > 1 ? ` · ${tracking.openCount}×` : "";
   return (
-    <span className={`em-m ${info.kind === "opened" ? "open" : "none"}`} title={info.detail}>
+    <span className={`em-m ${STRONG.has(info.kind) ? "open" : "none"}`} title={`${info.text}. ${info.detail}`}>
       <Icon name="open" size={14} />
-      {label}
+      {(short[info.kind] || info.text) + n}
     </span>
+  );
+}
+
+// The signature strip under the message box of the compose and reply forms: my image, an
+// "Add my signature" box and a link to change it. Nothing is written into the message.
+export function SignatureStrip({ field }) {
+  const { signature, loading, use, setUse } = field;
+  if (loading) return null;
+  const href = "/admin-dashboard/email/settings/my-signature";
+  if (!signature?.image) {
+    return (
+      <div className="em-sigstrip">
+        <span className="em-sub">No signature yet.</span>
+        <a className="em-sig-link" href={href} target="_blank" rel="noreferrer">
+          Upload one
+        </a>
+      </div>
+    );
+  }
+  return (
+    <div className={`em-sigstrip has-image${use ? "" : " off"}`}>
+      <div className="em-sigstrip-top">
+        <label className="em-trkopt">
+          <input type="checkbox" checked={use} onChange={(e) => setUse(e.target.checked)} />
+          Add my signature
+        </label>
+        <a className="em-sig-link" href={href} target="_blank" rel="noreferrer">
+          Change
+        </a>
+      </div>
+      <SignatureImage signature={signature} className="sg-img sg-thumb" maxWidth={420} />
+    </div>
+  );
+}
+
+// "Send attachments as secure links" box. Own box, off by default, shown only when files are
+// attached and the feature is on. The warning is always visible next to it, not in a tooltip.
+export const SECURE_LINKS_WARNING =
+  "Don't use for medical reports, prescriptions or ID documents \u2014 anyone with the link can download until it expires.";
+
+export function SecureLinksToggle({ checked, onChange, days }) {
+  return (
+    <div className="em-securebox">
+      <label className="em-trkopt">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        Send attachments as secure links
+        {days ? <small className="em-sub"> · expire after {days} day{days === 1 ? "" : "s"}</small> : null}
+      </label>
+      <small className="em-trkwarn em-securewarn">{SECURE_LINKS_WARNING}</small>
+    </div>
+  );
+}
+
+// "Request read receipt" box. Its own box, off by default, shown only while tracking is on.
+export const RECEIPT_WARNING = "The recipient will see a prompt asking to send a receipt \u2014 they will know you asked.";
+
+export function ReceiptToggle({ checked, onChange }) {
+  return (
+    <div className="em-receiptbox">
+      <label className="em-trkopt" title="Most mail apps never send a receipt, and the recipient can always decline.">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        Request read receipt
+      </label>
+      <small className="em-trkwarn">{RECEIPT_WARNING}</small>
+    </div>
   );
 }
 
 // "Track opens" box of the compose and reply forms. Only rendered while open
 // tracking is switched on; the server decides whether the mail really carries it.
-export function TrackOpensToggle({ checked, onChange, disclosure }) {
+export function TrackOpensToggle({ checked, onChange, disclosure, caveat = "" }) {
   return (
-    <label className="em-trkopt" title="Adds a tiny image so you can see whether the mail was opened. Not exact: some mail apps block images or load them automatically.">
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      Track opens
-      {checked && disclosure ? <small className="em-sub"> · a short notice is added to the footer</small> : null}
-    </label>
+    <>
+      <label className="em-trkopt" title="Adds a tiny image so you can see whether the mail was opened. Not exact: some mail apps block images or load them automatically.">
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+        Track opens
+        {checked && disclosure ? <small className="em-sub"> · a short notice is added to the footer</small> : null}
+      </label>
+      {checked && caveat ? <small className="em-trkwarn">{caveat}</small> : null}
+    </>
   );
 }
 
-// Open tracking on a thread message: status, first/last load, count, and the caveat.
+// Link as shown in the list of tracked links: host and path, no query string (it can hold personal data).
+function shortUrl(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname === "/" ? "" : u.pathname;
+    const text = `${u.host}${path}${u.search ? "?…" : ""}`;
+    return text.length > 70 ? `${text.slice(0, 69)}…` : text;
+  } catch {
+    return String(url).slice(0, 70);
+  }
+}
+
+// Read status on a thread message: the combined status, then every signal behind it.
 export function TrackingNote({ tracking }) {
   const info = trackingInfo(tracking);
   if (!info) return null;
   return (
-    <div className="em-trkbox" aria-label="Open tracking">
-      <span className="em-views-h">Open tracking</span>
+    <div className="em-trkbox" aria-label="Read status">
+      <span className="em-views-h">Read status</span>
       <span className={`em-tag em-trk em-trk-${info.kind}`}>{info.text}</span>
-      <small className="em-sub">
-        {info.kind === "opened" && tracking.multiRecipient ? "We cannot tell which recipient loaded it. " : ""}
-        {info.detail}
-      </small>
+      <small className="em-sub">{info.detail}</small>
+      {tracking.files?.length > 0 && (
+        <ul className="em-trk-rows em-trk-links" aria-label="Secure download links">
+          {tracking.files.map((f) => (
+            <li key={f.index}>
+              <b>{f.count > 0 ? `${f.count}× downloaded` : "Not downloaded"}</b>
+              <span title={f.filename}>{f.filename}</span>
+              <small className="em-sub">
+                {f.expired ? " · link expired " : " · link valid until "}
+                {fmtFull(f.expiresAt)}
+                {f.last ? ` · last download ${fmtFull(f.last)}` : ""}
+              </small>
+            </li>
+          ))}
+        </ul>
+      )}
+      {tracking.links?.length > 0 && (
+        <ul className="em-trk-rows em-trk-links" aria-label="Tracked links">
+          {tracking.links.map((l) => (
+            <li key={l.index}>
+              <b title={l.url}>{l.count > 0 ? `${l.count}×` : "Not clicked"}</b>
+              <span title={l.url}>{shortUrl(l.url)}</span>
+              {l.last ? <small className="em-sub"> · last {fmtFull(l.last)}</small> : null}
+            </li>
+          ))}
+        </ul>
+      )}
+      <details className="em-trkhelp">
+        <summary>What do these statuses mean?</summary>
+        <ul>
+          {READ_STATUS_HELP.map((h) => (
+            <li key={h.key}>
+              <b>{h.label}</b> — {h.text}
+            </li>
+          ))}
+        </ul>
+        <p className="em-sub">The strongest signal wins. None of them proves a person read the mail.</p>
+      </details>
+      {info.rows.length > 0 && (
+        <ul className="em-trk-rows">
+          {info.rows.map((r) => (
+            <li key={r.label}>
+              <b>{r.label}</b> <span>{r.text}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

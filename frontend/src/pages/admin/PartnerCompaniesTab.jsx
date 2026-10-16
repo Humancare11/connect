@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../../api";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
+import useModalA11y from "../../hooks/useModalA11y";
 
 const EMPTY_CREATE = {
   companyName: "",
@@ -14,6 +16,7 @@ const EMPTY_CREATE = {
 };
 
 export default function PartnerCompaniesTab() {
+  const confirm = useConfirm();
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [createForm, setCreateForm] = useState(EMPTY_CREATE);
@@ -67,7 +70,13 @@ export default function PartnerCompaniesTab() {
   };
 
   const removePartner = async (p) => {
-    if (!window.confirm(`Remove "${p.companyName}"? This cannot be undone.`)) return;
+    const ok = await confirm({
+      title: "Remove partner company",
+      message: `Remove "${p.companyName}"? This cannot be undone.`,
+      confirmText: "Remove",
+      tone: "danger",
+    });
+    if (!ok) return;
     setBusyId(p._id);
     try {
       await api.delete(`/api/superadmin/partners/${p._id}`);
@@ -292,6 +301,8 @@ function Field({ label, children }) {
 }
 
 function EditDialog({ partner, onClose, onSaved }) {
+  const editDialogRef = useRef(null);
+  useModalA11y(editDialogRef, true, onClose);
   const [profile, setProfile] = useState({
     companyName: partner.companyName || "",
     contactPersonName: partner.contactPersonName || "",
@@ -343,7 +354,7 @@ function EditDialog({ partner, onClose, onSaved }) {
       }}
       onClick={onClose}
     >
-      <div
+      <div ref={editDialogRef} role="dialog" aria-modal="true" aria-label="Edit partner company"
         style={{
           background: "#fff",
           borderRadius: 16,

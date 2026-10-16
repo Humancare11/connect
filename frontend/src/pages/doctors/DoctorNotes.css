@@ -75,8 +75,10 @@
   transition: transform 0.16s ease, opacity 0.16s ease, background 0.16s ease;
 }
 
-.dn-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
+@media (hover: hover) and (pointer: fine) {
+  .dn-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
 }
 
 .dn-btn:disabled {
@@ -413,4 +415,28 @@
   .dn-textarea {
     min-height: 200px;
   }
+}
+
+.dn-page,
+.dn-header,
+.dn-filters,
+.dn-workspace,
+.dn-list,
+.dn-editor,
+.dn-editor-head,
+.dn-editor-foot {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dn-note-card,
+.dn-meta-grid div,
+.dn-editor-head p {
+  overflow-wrap: anywhere;
+}
+
+.dn-input,
+.dn-textarea {
+  width: 100%;
+  min-width: 0;
 }

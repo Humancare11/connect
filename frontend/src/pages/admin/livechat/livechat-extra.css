@@ -1,0 +1,154 @@
+/* Additions to livechat-ui.css (which is generated from the design file): what the real app needs on top of the
+   design (theme button, connection status, blocked IPs). Still scoped under .lcx. */
+.lcx .lx-nav a{text-decoration:none}
+.lcx .lx-theme{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);border-radius:20px;padding:5px 12px;font-size:12.5px;font-weight:600}
+.lcx .lx-theme:hover{background:var(--surface-3)}
+.lcx .lx-status{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.lcx .lx-status i{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.lcx .lx-status--live i{background:var(--ok)}
+.lcx .lx-status--reconnecting i,.lcx .lx-status--connecting i{background:var(--warn)}
+.lcx .lx-status--denied i,.lcx .lx-status--off i{background:var(--urgent)}
+.lcx .rt-error{margin:0 0 12px;background:var(--err-bg);color:var(--danger-ink);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+.lcx .rt-radar .rt-btn{min-width:0}
+.lcx .rt-blocked{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.lcx .rt-blocked-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:transparent;border-radius:10px;padding:7px 12px;font-weight:600;font-size:13px}
+.lcx .rt-blocked-toggle:hover{background:var(--surface-2)}
+.lcx .rt-blocked-body{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.lcx .rt-blocked-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}
+.lcx .rt-blocked-row .wk-btn{margin-left:auto}
+.lcx .rt-danger{color:var(--danger-ink);border-color:var(--danger-line)}
+.lcx .rt-search{border:1px solid var(--line-2);background:transparent;border-radius:10px;padding:8px 14px;font-size:13px;min-width:240px;outline:none}
+.lcx .rt-search:focus{border-color:var(--accent)}
+.lcx .wk-off{border:1px dashed var(--warn);border-radius:12px;padding:16px;max-width:560px;margin:16px}
+.lcx .wk-notif{padding:6px 12px 0}
+.lcx .wk-notif .lcn-bar{margin-bottom:0;justify-content:flex-start}
+.lcx .wk-notif .lcn-banner{min-width:0;justify-content:flex-start}
+.lcx .wk-search input[type="search"]::-webkit-search-cancel-button{display:none}
+.lcx .pop--lang{max-height:300px;overflow-y:auto}
+.lcx .pop--canned .pop-item.is-sel{background:var(--surface-3)}
+.lcx .pop--canned .pop-item.is-sel b::after{content:none}
+
+/* ── Shell: one fixed box, only the panes inside scroll ─────────────────────────────────────────────────────── */
+html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
+.lcx{position:fixed;inset:0;height:100dvh;min-height:0;overflow:hidden}
+.lcx .lx-root{height:100dvh;min-height:0;overflow:hidden}
+.lcx .lx-main{height:100dvh;min-height:0;padding:12px 12px 12px 0;overflow:hidden}
+.lcx .lx-content{flex:1 1 0;min-height:0;min-width:0;padding:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
+.lcx .lx-content>.wk-wrap-page{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
+.lcx .lx-content .wk-inbox{flex:1 1 0;height:auto;min-height:0}
+.lcx .lx-content .rt{flex:1 1 0;height:auto;min-height:0}
+.lcx .lx-content>.lcp{flex:none;padding:4px 4px 24px}
+.lcx .lx-nav{min-height:0}
+.lcx .wk-list,.lcx .wk-profile,.lcx .rt-panel,.lcx .rt-body,.lcx .wk-body{min-height:0}
+.lcx .wk-chat,.lcx .rt-main,.lcx .wk-inbox>*,.lcx .rt>*{min-width:0}
+.lcx .wk-bodywrap{flex:1 1 0;min-height:0;position:relative;display:flex;flex-direction:column}
+.lcx .wk-bodywrap .wk-body{flex:1 1 0}
+.lcx .wk-jump{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);border:0;border-radius:999px;padding:7px 14px;font-weight:600;font-size:12.5px;background:var(--accent);color:#fff;box-shadow:0 6px 18px var(--shadow-c2);z-index:5}
+.lcx .wk-jump:hover{background:var(--accent-hover)}
+.lcx .lx-theme-btn{margin-bottom:8px}
+.lcx .collapsed .lx-theme-btn{justify-content:center;padding-left:0;padding-right:0}
+.lcx .lx-fab{display:none}
+@media (max-width:768px){
+  .lcx .lx-main{padding:56px 12px 12px}
+  .lcx .lx-fab{display:flex;position:fixed;top:12px;left:12px;z-index:150;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+  .lcx .side-open .lx-fab{display:none}
+  .lcx .lx-content .wk-inbox,.lcx .lx-content .rt{flex:none;height:auto}
+  .lcx .lx-content>.wk-wrap-page{flex:none}
+}
+.lcx .wk-inbox,.lcx .rt{grid-template-rows:minmax(0,1fr)}
+@media (max-width:760px){.lcx .wk-inbox,.lcx .rt{grid-template-rows:none}}
+.lcx .rt-table{min-width:1180px}
+.lcx .rt-credit{margin:18px 0 4px;font-size:11.5px;color:var(--faint)}
+.lcx .rt-credit a{color:inherit;text-decoration:underline}
+
+/* Original | English switch: sticky at the top of the message area, under the "Started" line */
+
+/* Archive page: filters, table, pager and the read-only viewer */
+.lcx .ar{display:flex;flex-direction:column;gap:14px;min-height:0;padding:4px 4px 24px}
+.lcx .ar-head h1{margin:0;font-size:20px;font-weight:700}
+.lcx .ar-head p{margin:4px 0 0;font-size:13px}
+.lcx .ar-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.lcx .ar-presets{display:flex;gap:6px;align-items:center}
+.lcx .ar-chip{border:1px solid var(--line-2);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+.lcx .ar-chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.lcx .ar-field{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted)}
+.lcx .ar-field input,.lcx .ar-field select{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:7px 10px;font-size:13px;font-family:inherit;min-height:34px}
+.lcx .ar-field input:focus,.lcx .ar-field select:focus{border-color:var(--accent);outline:none}
+.lcx .ar-search{flex:1 1 260px;min-width:220px}
+.lcx .ar-searchbox{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:0 10px;color:var(--muted)}
+.lcx .ar-searchbox:focus-within{border-color:var(--accent)}
+.lcx .ar-searchbox input{border:0;background:transparent;padding:7px 0;min-width:0;flex:1}
+.lcx .ar-link{border:0;background:transparent;color:var(--accent-ink);font-size:12.5px;font-weight:600;cursor:pointer;padding:8px 4px}
+.lcx .ar-note{border:1px solid var(--warn-line);background:var(--lang-bg);color:var(--lang-ink);border-radius:10px;padding:8px 12px;font-size:12.5px}
+.lcx .ar-tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);max-height:calc(100vh - 360px);min-height:160px}
+.lcx .ar-table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}
+.lcx .ar-table th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.lcx .ar-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.lcx .ar-table td small{display:block;font-size:11px;margin-top:2px}
+.lcx .ar-table tbody tr{cursor:pointer}
+.lcx .ar-table tbody tr:hover,.lcx .ar-table tbody tr:focus-visible{background:var(--surface-2)}
+.lcx .ar-table tr.ar-empty{cursor:default}.lcx .ar-table tr.ar-empty td{text-align:center;color:var(--muted);padding:28px}
+.lcx .ar-num{text-align:right;font-variant-numeric:tabular-nums}
+.lcx .ar-pager{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lcx .ar-pager .wk-btn{margin-left:8px}
+.lcx .ar-pager .wk-btn:disabled{opacity:.5;cursor:default}
+.lcx .ar-viewer{display:flex;flex-direction:column;flex:1 1 0;min-height:0;gap:10px}
+.lcx .ar-back{display:flex;align-items:center;gap:12px}
+.lcx .ar-back .wk-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.lcx .wk-inbox.ar-two{grid-template-columns:minmax(0,1fr) 340px}
+.lcx .wk-readonly{border-top:1px solid var(--line);padding:12px 18px;font-size:12.5px;color:var(--muted);background:var(--surface)}
+@media (max-width:760px){.lcx .wk-inbox.ar-two{grid-template-columns:1fr}.lcx .ar-tablewrap{max-height:none}}
+
+/* Original | English switch in the composer toolbar and the read-only bar */
+.lcx .cm-bar{flex-wrap:wrap}
+.lcx .cm-view{display:inline-flex;align-items:center;gap:8px;margin-left:6px}
+.lcx .cm-view .wk-seg{background:var(--surface)}
+.lcx .cm-view .wk-seg button{background:transparent;color:var(--muted)}
+.lcx .cm-view .wk-seg button[aria-pressed="true"]{background:#3b82f6;color:#fff}
+.lcx .cm-view{margin-left:0}
+.lcx .cm-nolang{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:0 4px}
+.lcx .cm-nolang .wk-link:disabled{opacity:.5}
+.lcx .wk-readonly{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.lcx .ar-bulk{display:flex;flex-wrap:wrap;gap:8px}
+.lcx .ar-check{width:36px;text-align:center}
+.lcx .ar-table--narrow{min-width:760px}
+.lcx .ar-table tbody tr.ar-row--static{cursor:default}
+.lcx .wk-btn.dc-danger{background:var(--danger-ink,#b42318);border-color:var(--danger-ink,#b42318);color:#fff}
+.lcx .wk-btn.dc-danger:disabled{opacity:.5;cursor:default}
+.lcx .wk-btn.dc-danger-ghost{color:var(--danger-ink,#b42318);border-color:var(--danger-ink,#b42318)}
+.lcx .wk-btn.dc-danger-ghost:disabled{opacity:.5;cursor:default}
+.lcx .dc-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45)}
+.lcx .dc-dialog{width:100%;max-width:440px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.lcx .dc-dialog h2{margin:0;font-size:17px}
+.lcx .dc-dialog p{margin:0}
+.lcx .dc-count{font-size:15px}
+.lcx .dc-type{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.lcx .dc-type input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit}
+.lcx .dc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+
+/* AI Review page */
+.lcx .rv-tabs{display:flex;gap:8px;margin:0 0 14px}
+.lcx .rv-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:0 0 14px}
+.lcx .rv-filters label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.lcx .rv-filters select,.lcx .rv-filters input{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
+.lcx .rv-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.lcx .rv-split{grid-template-columns:minmax(0,1fr)}}
+.lcx .rv-split .lcp-table{min-width:0}
+.lcx .rv-link{background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline;cursor:pointer}
+.lcx .rv-row--open td{background:var(--accent-soft)}
+.lcx .rv-issue{color:var(--danger-ink);font-weight:600}
+.lcx .rv-empty{border:1px dashed var(--line-2);border-radius:14px;padding:32px;text-align:center}
+.lcx .rv-detail{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:14px}
+.lcx .rv-detail-head{display:flex;justify-content:space-between;gap:12px}
+.lcx .rv-transcript{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.lcx .rv-msg{border-radius:10px;padding:8px 10px;font-size:13.5px;overflow-wrap:anywhere;background:var(--surface-2)}
+.lcx .rv-msg--patient{background:var(--bubble);color:var(--bubble-ink)}
+.lcx .rv-msg--ai{background:var(--ai-soft);color:var(--ai-ink)}
+.lcx .rv-msg-meta{font-size:11px;color:var(--muted);margin-bottom:2px}
+.lcx .rv-badge{margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-weight:600}
+.lcx .rv-history ul{margin:6px 0 0;padding-left:18px}
+.lcx .rv-note{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);font-size:12.5px}
+.lcx .rv-form{display:flex;flex-direction:column;gap:8px}
+.lcx .rv-outcomes{display:flex;gap:18px}
+.lcx .rv-outcomes label{display:flex;gap:6px;align-items:center}
+.lcx .rv-form textarea{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical}

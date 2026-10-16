@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
+import AdminAppointmentStatusActions from "../../components/AdminAppointmentStatusActions";
 // Reusing the same stylesheet as the Appointment details page so the two
 // layouts stay visually identical. Adjust the path if you move this file.
 import "./AdminAppointments.css";
@@ -169,17 +170,30 @@ export default function AdminCategoryConsultationDetails() {
           >
             Back to Category Consultations
           </Link>
-          <button
-            type="button"
-            className="adp-alt-btn"
-            onClick={() =>
-              navigate(
-                `/admin-dashboard/category-consultations/assign-doctor/${consultation._id}`,
-              )
+          {/* A completed consultation must be reopened before its doctor can change. */}
+          {String(consultation.status || "").toLowerCase() !== "completed" && (
+            <button
+              type="button"
+              className="adp-alt-btn"
+              onClick={() =>
+                navigate(
+                  `/admin-dashboard/category-consultations/assign-doctor/${consultation._id}`,
+                )
+              }
+            >
+              {assignmentLabel}
+            </button>
+          )}
+          <AdminAppointmentStatusActions
+            appointmentId={consultation._id}
+            status={consultation.status}
+            onChanged={(status) =>
+              setConsultation((current) => ({
+                ...current,
+                status: status === "complete" ? "Completed" : "Confirmed",
+              }))
             }
-          >
-            {assignmentLabel}
-          </button>
+          />
         </div>
       </div>
 

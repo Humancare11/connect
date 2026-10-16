@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api";
 import "./AdminDirectVideoConsultation.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 function formatDate(value) {
   if (!value) return "-";
@@ -31,6 +32,7 @@ function buildPinMessage(joinLink, roleLabel, pin) {
 // (an "end current session too?" checkbox) that shouldn't leak between the
 // two roles or between rooms.
 function PinRow({ roleLabel, pin, joinLink, onCopyNotice, onRegenerate, regenerating }) {
+  const confirm = useConfirm();
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [showRegenerate, setShowRegenerate] = useState(false);
 
@@ -85,8 +87,16 @@ function PinRow({ roleLabel, pin, joinLink, onCopyNotice, onRegenerate, regenera
               type="button"
               className="dvc-secondary"
               disabled={regenerating}
-              onClick={() => {
-                if (confirmEnd && !window.confirm(`End ${roleLabel}'s current session and require the new PIN? This disconnects them immediately if they're on the call.`))
+              onClick={async () => {
+                if (
+                  confirmEnd &&
+                  !(await confirm({
+                    title: "End current session",
+                    message: `End ${roleLabel}'s current session and require the new PIN? This disconnects them immediately if they're on the call.`,
+                    confirmText: "End session",
+                    tone: "danger",
+                  }))
+                )
                   return;
                 onRegenerate(confirmEnd);
                 setShowRegenerate(false);
@@ -111,6 +121,7 @@ function PinRow({ roleLabel, pin, joinLink, onCopyNotice, onRegenerate, regenera
 }
 
 export default function AdminDirectVideoConsultation() {
+  const confirm = useConfirm();
   const [note, setNote] = useState("");
   const [expiresInHours, setExpiresInHours] = useState(24);
   const [doctorId, setDoctorId] = useState("");
@@ -178,8 +189,13 @@ export default function AdminDirectVideoConsultation() {
   };
 
   const closeRoom = async (roomId) => {
-    if (!window.confirm("End this video consultation room? Anyone currently on the call will be disconnected."))
-      return;
+    const ok = await confirm({
+      title: "End video consultation room",
+      message: "End this video consultation room? Anyone currently on the call will be disconnected.",
+      confirmText: "End room",
+      tone: "danger",
+    });
+    if (!ok) return;
     setClosingRoomId(roomId);
     setHistoryNotice("");
     try {

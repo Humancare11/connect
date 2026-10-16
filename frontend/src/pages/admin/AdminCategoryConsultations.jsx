@@ -5,6 +5,9 @@ import { Link, useNavigate } from "react-router-dom";
 // AdminCategoryConsultationDetails.jsx already use, so this list picks up
 // the same cards / pills / table look automatically.
 import "./AdminAppointments.css";
+import { useToast } from "../../components/ui/Toast";
+import RetryButton from "../../components/ui/RetryButton";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 const STATUS_META = {
   pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
@@ -95,6 +98,8 @@ function StatusPill({ status }) {
 }
 
 export default function AdminCategoryConsultations() {
+  const confirm = useConfirm();
+  const toast = useToast();
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -120,9 +125,12 @@ export default function AdminCategoryConsultations() {
   };
 
   const deleteConsultation = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this consultation?",
-    );
+    const confirmed = await confirm({
+      title: "Delete consultation",
+      message: "Are you sure you want to delete this consultation?",
+      confirmText: "Delete",
+      tone: "danger",
+    });
     if (!confirmed) return;
 
     try {
@@ -132,7 +140,7 @@ export default function AdminCategoryConsultations() {
       fetchConsultations();
     } catch (err) {
       console.error(err);
-      alert("Failed to delete consultation");
+      toast.error("Failed to delete consultation");
     }
   };
 
@@ -219,6 +227,7 @@ export default function AdminCategoryConsultations() {
           <div className="adp-empty">
             <h3>Could not load consultations</h3>
             <p>{error}</p>
+            <RetryButton onRetry={fetchConsultations} />
           </div>
         ) : displayed.length === 0 ? (
           <div className="adp-empty">
@@ -281,12 +290,14 @@ export default function AdminCategoryConsultations() {
                     </td>
                     <td>
                       <div className="adp-list-actions">
-                        <Link
-                          className="adp-alt-btn"
-                          to={`/admin-dashboard/category-consultations/assign-doctor/${item._id}`}
-                        >
-                          {canonicalStatus(item.status) === "assigned" ? "Alternate Doctor" : "Assign Doctor"}
-                        </Link>
+                        {canonicalStatus(item.status) !== "complete" && (
+                          <Link
+                            className="adp-alt-btn"
+                            to={`/admin-dashboard/category-consultations/assign-doctor/${item._id}`}
+                          >
+                            {canonicalStatus(item.status) === "assigned" ? "Alternate Doctor" : "Assign Doctor"}
+                          </Link>
+                        )}
                         <button
                           type="button"
                           className="adp-secondary-link"

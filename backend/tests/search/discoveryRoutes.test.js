@@ -41,8 +41,8 @@ test("specialty pages sit under their category page", () => {
   for (const [category, specialties] of Object.entries(SPECIALTY_DISCOVERY_ROUTES)) {
     assert.ok(CATEGORY_LANDING_ROUTES[category], `unknown category ${category}`);
     for (const route of Object.values(specialties)) {
-      // The only exception is the flat Expert Medical Opinion page.
-      if (route === "/expert-medical-opinion") continue;
+      // The only exception is the flat second-opinion page (formerly /expert-medical-opinion).
+      if (route === "/online-second-medical-opinion") continue;
       assert.ok(route.startsWith(`${CATEGORY_LANDING_ROUTES[category]}/`), route);
     }
   }

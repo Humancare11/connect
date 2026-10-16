@@ -5,6 +5,7 @@
 
 const { slugify } = require("../../utils/slugify");
 const { RESULT_TYPES, RESULT_GROUPS, CATEGORY_LANDING_ROUTES } = require("./searchConstants");
+const { orderAcrossTypes } = require("./crossTypeOrdering");
 const {
   SPECIALTY_DISCOVERY_ROUTES,
   CONDITION_DISCOVERY_ROUTES,
@@ -44,7 +45,9 @@ const specialtyPath = (specialty, category) =>
 // Candidates, in order: the stored legacy route, then the page slug (legacyId
 // or slugified name) under the specialty page or at the top level. Only paths
 // that are known condition pages are accepted.
-function conditionPath(condition, specialty, category) {
+// `dedicated` is true only when a known condition page was found, not when
+// the result fell back to its specialty / category / listing page.
+function resolveConditionNavigation(condition, specialty, category) {
   const base = specialtyPath(specialty, category);
   const slugs = [condition.legacyId, slugify(condition.name)].filter(Boolean);
   const candidates = [
@@ -52,7 +55,38 @@ function conditionPath(condition, specialty, category) {
     ...(base ? slugs.map((slug) => `${base}/${slug}`) : []),
     ...slugs.map((slug) => `/${slug}`),
   ];
-  return candidates.find((path) => CONDITION_DISCOVERY_ROUTES.has(path)) || base || DISCOVERY_FALLBACK_ROUTES.condition;
+  const page = candidates.find((path) => CONDITION_DISCOVERY_ROUTES.has(path));
+  return { path: page || base || DISCOVERY_FALLBACK_ROUTES.condition, dedicated: Boolean(page) };
+}
+
+const conditionPath = (condition, specialty, category) => resolveConditionNavigation(condition, specialty, category).path;
+
+const hasOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+
+// Trusted route-resolution metadata for one catalog record: the path search
+// navigates to, and whether it is the item's OWN page (not a parent fallback).
+// Used by search analytics; the public response is built from the same helpers
+// below, so the two can never disagree. Blogs and doctors are never
+// "dedicated" for this purpose.
+function resolveNavigation(type, record, index) {
+  if (type === "category") {
+    return { path: categoryPath(record), dedicated: hasOwn(CATEGORY_LANDING_ROUTES, record.name) };
+  }
+  if (type === "specialty") {
+    const category = index.categoryById[record.categoryId];
+    const own = hasOwn(SPECIALTY_DISCOVERY_ROUTES, category.name)
+      && hasOwn(SPECIALTY_DISCOVERY_ROUTES[category.name], record.name);
+    return { path: specialtyPath(record, category) || DISCOVERY_FALLBACK_ROUTES.specialty, dedicated: own };
+  }
+  if (type === "condition" || type === "service") {
+    const specialty = index.specialtyById[record.specialtyId];
+    return resolveConditionNavigation(record, specialty, index.categoryById[specialty.categoryId]);
+  }
+  if (type === "blog") return { path: record.path, dedicated: false };
+  if (type === "doctor") {
+    return { path: `/doctors/${record.doctorId}-${slugifyDoctorName(record.displayName)}`, dedicated: false };
+  }
+  throw new TypeError("Unknown result type.");
 }
 
 const BUILDERS = {
@@ -156,14 +190,20 @@ const BUILDERS = {
 };
 
 // matches: output of matchCatalog. Returns { results, total }.
+// Each item also carries `rank` (1-based) - its position in the final
+// cross-type order (see crossTypeOrdering.js). It is additive: grouping and the
+// order inside each group are unchanged, and clients that ignore it keep the
+// old group order.
 function buildResults(matches, catalog) {
   const results = Object.fromEntries(RESULT_TYPES.map((type) => [RESULT_GROUPS[type], []]));
+  const rankOf = new Map(orderAcrossTypes(matches, catalog).map((match, index) => [match, index + 1]));
   let total = 0;
   for (const type of RESULT_TYPES) {
     for (const match of matches[type] || []) {
       results[RESULT_GROUPS[type]].push({
         ...BUILDERS[type](match.record, catalog.index),
         matchedOn: match.matchedOn,
+        rank: rankOf.get(match),
       });
       total += 1;
     }
@@ -171,4 +211,4 @@ function buildResults(matches, catalog) {
   return { results, total };
 }
 
-module.exports = { buildResults, slugifyDoctorName, safeLegacyRoute };
+module.exports = { buildResults, resolveNavigation, slugifyDoctorName, safeLegacyRoute };

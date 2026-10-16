@@ -331,7 +331,9 @@ function drawInvoiceDocument(doc, ctx) {
   // manual (B2B, may be "due") invoice shows those two columns.
   const metaCols = [{ label: "ISSUE DATE", value: formatDateShort(issuedAt), bold: false }];
   if (isManual) {
-    metaCols.push({ label: "DUE DATE", value: dueDate ? formatDateShort(dueDate) : "—", bold: true });
+    // A paid invoice is a receipt: no due date is shown (display-only; the
+    // stored dueDate is untouched).
+    if (!isPaid) metaCols.push({ label: "DUE DATE", value: dueDate ? formatDateShort(dueDate) : "—", bold: true });
     metaCols.push({ label: "PAYMENT TERMS", value: paymentTerms || "—", bold: false });
   }
   metaCols.push({ label: "CURRENCY", value: currencyLabel(currency), bold: false });
@@ -470,19 +472,23 @@ function drawInvoiceDocument(doc, ctx) {
       !paymentTerms || paymentTerms === "Due on Receipt"
         ? "Payment is due immediately on receipt of this invoice. Please remit payment for the amount above without delay."
         : `Payment is due within ${String(paymentTerms).replace(/\D/g, "")} days from the invoice date (${String(paymentTerms).replace(" Days", "")}). Please remit payment for the amount above by the due date indicated.`;
-    doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(termsLine, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
-    y = doc.y + 10;
+    // Paid: the "payment is due…" sentence and "Payment Due Date" line are
+    // dropped; only "Payment Terms" remains.
+    if (!isPaid) {
+      doc.font("Times-Roman").fontSize(9.5).fillColor(MAN_INK).text(termsLine, left, y, { width: CONTENT_WIDTH, lineGap: 1.5 });
+      y = doc.y + 10;
 
-    drawSegmentsAt(
-      doc,
-      [
-        { text: "Payment Due Date: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
-        { text: dueDate ? formatDateShort(dueDate) : "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
-      ],
-      left,
-      y
-    );
-    y += 15;
+      drawSegmentsAt(
+        doc,
+        [
+          { text: "Payment Due Date: ", font: "Times-Bold", size: 9.5, color: MAN_INK },
+          { text: dueDate ? formatDateShort(dueDate) : "—", font: "Times-Roman", size: 9.5, color: MAN_INK },
+        ],
+        left,
+        y
+      );
+      y += 15;
+    }
     drawSegmentsAt(
       doc,
       [

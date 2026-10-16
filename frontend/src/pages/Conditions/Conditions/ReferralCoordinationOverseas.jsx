@@ -44,6 +44,7 @@ import ConditionBannerImage from "../../../assets/ConditionImages/TravelHealth/R
 
 import SEO from "../../../components/Seo";
 import PreloadImage from "../../../components/PreloadImage";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -85,6 +86,7 @@ export default function ReferralCoordinationOverseas({ categoryId } = {}) {
         >
           <div className="condition-hero-wrap">
             <div className="condition-hero-inner">
+              <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
                 ✦ Trusted {pageData.badge}
               </span>
@@ -112,7 +114,7 @@ export default function ReferralCoordinationOverseas({ categoryId } = {}) {
         {/* ══════════════════════ ABOUT + STICKY BOOKING ══════════════════════ */}
         <div className="condition-mid-section">
           <div className="condition-page-layout">
-            <main>
+            <div className="condition-page-main">
               {/* ---- About Specialty ---- */}
               <div className="condition-glass-card">
                 <div className="condition-glass-shine" />
@@ -207,7 +209,7 @@ export default function ReferralCoordinationOverseas({ categoryId } = {}) {
                   </div>
                 </div>
               </div>
-            </main>
+            </div>
 
             <aside>
               {/* ---- Sticky Booking Card ---- */}

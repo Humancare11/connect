@@ -1,8 +1,10 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, Fragment, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./DoctorAppointments.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import CertificateModal from "../../components/CertificateModal";
+import useModalA11y from "../../hooks/useModalA11y";
 
 const STATUS_META = {
   assigned: { label: "Assigned", icon: "A", color: "teal" },
@@ -46,6 +48,9 @@ export default function DoctorAppointments() {
   const [completingId, setCompletingId] = useState(null);
   const [toast, setToast] = useState(null);
   const [completeConfirmId, setCompleteConfirmId] = useState(null);
+  const [certAppt, setCertAppt] = useState(null);
+  const completeDialogRef = useRef(null);
+  useModalA11y(completeDialogRef, !!completeConfirmId, () => setCompleteConfirmId(null));
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok });
@@ -162,6 +167,18 @@ export default function DoctorAppointments() {
         </div>
       )}
 
+      {certAppt && (
+        <CertificateModal
+          patient={certAppt.patientId}
+          appointments={[certAppt]}
+          onClose={() => setCertAppt(null)}
+          onSaved={() => {
+            setCertAppt(null);
+            showToast("Medical certificate issued.");
+          }}
+        />
+      )}
+
       {completeConfirmId && (
         <div
           style={{
@@ -176,7 +193,7 @@ export default function DoctorAppointments() {
           }}
           onClick={() => setCompleteConfirmId(null)}
         >
-          <div
+          <div ref={completeDialogRef} role="alertdialog" aria-modal="true" aria-label="Mark as completed"
             style={{
               background: "#fff",
               borderRadius: 14,
@@ -252,7 +269,7 @@ export default function DoctorAppointments() {
           { key: "complete", label: "Complete", dot: "green" },
           { key: "all", label: "Total", dot: "purple" },
         ].map(({ key, label, dot }, i) => (
-          <div
+          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setFilter(key))(e); } }}
             key={key}
             className={`da-stat ${filter === key ? "da-stat--active" : ""}`}
             style={{ animationDelay: `${i * 0.07}s` }}
@@ -332,6 +349,9 @@ export default function DoctorAppointments() {
                           <span className={`da-badge da-badge--${meta.color}`}>
                             {meta.icon} {meta.label}
                           </span>
+                          {appt.status === "confirmed" && appt.reopenedByAdmin && (
+                            <span className="da-reopened-note">Reopened by admin</span>
+                          )}
                         </td>
 
                         <td onClick={(e) => e.stopPropagation()}>
@@ -382,6 +402,30 @@ export default function DoctorAppointments() {
                                   "Complete"
                                 )}
                               </button>
+                            )}
+
+                            {/* PRESCRIPTION / CERTIFICATE — only while the
+                                appointment is still active (assigned/confirmed) */}
+                            {["assigned", "confirmed"].includes(appt.status) && (
+                              <>
+                                <Link
+                                  className="da-btn da-btn--rx"
+                                  to={`/doctor-dashboard/appointments/${appt._id}/prescription`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Prescription
+                                </Link>
+                                <button
+                                  type="button"
+                                  className="da-btn da-btn--rx"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCertAppt(appt);
+                                  }}
+                                >
+                                  Certificate
+                                </button>
+                              </>
                             )}
 
                             {/* 🔽 ONLY THIS OPENS DATA */}

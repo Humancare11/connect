@@ -206,6 +206,62 @@ const searchLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Live chat: public contact form and widget config. Per IP. The contact form is the gate to every chat, so it is
+// limited tightly; the honeypot sits in front of the real work.
+const liveChatContactStore = new Map();
+const liveChatContactLimiter = buildKeyedLimiter({
+  store:    liveChatContactStore,
+  windowMs: 10 * 60 * 1000,
+  max:      12,
+  message:  "Too many attempts. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+// Patient file uploads: per IP (the per-visitor limit lives in the file service).
+const liveChatUploadStore = new Map();
+const liveChatUploadLimiter = buildKeyedLimiter({
+  store:    liveChatUploadStore,
+  windowMs: 10 * 60 * 1000,
+  max:      30,
+  message:  "Too many uploads. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+const liveChatConfigStore = new Map();
+const liveChatConfigLimiter = buildKeyedLimiter({
+  store:    liveChatConfigStore,
+  windowMs: 60 * 1000,
+  max:      60,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
+// POST /api/search/settle (search analytics). Its own store, so it never
+// shares a budget with search itself. Keyed by IP only; the text is never part
+// of the key or of the logged security event.
+const searchSettleStore = new Map();
+const searchSettleLimiter = buildKeyedLimiter({
+  store:    searchSettleStore,
+  windowMs: 60 * 1000,
+  max:      30,
+  message:  "Too many requests. Please wait a moment and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
+// Admin Search Analytics read APIs (admin + superadmin). Keyed by the authenticated admin's id
+// (falls back to IP), so it runs AFTER the auth guard. A dashboard page makes a
+// handful of requests per view; 60/min is generous for a person and bounds a
+// runaway script or a stolen session. Own store: never shared with other limiters.
+const searchAnalyticsAdminStore = new Map();
+const searchAnalyticsAdminLimiter = buildUserLimiter({
+  store:    searchAnalyticsAdminStore,
+  windowMs: 60 * 1000,
+  max:      60,
+  message:  "Too many requests. Please wait a moment and try again.",
+});
+
 // Public blog list/detail and the blog image proxy. Per-IP; the image limit is
 // high because a list page loads up to ~10 images and pages are revisited.
 const blogPublicStore = new Map();
@@ -228,6 +284,17 @@ const blogImageLimiter = buildKeyedLimiter({
   describeKey: (req, key) => `ip:${key}`,
 });
 
+// Public careers application (POST /api/careers/apply). 
+const careersStore = new Map();
+const careersLimiter = buildKeyedLimiter({
+  store:    careersStore,
+  windowMs: 15 * 60 * 1000,
+  max:      5,
+  message:  "Too many applications submitted. Please wait {min} minutes and try again.",
+  keyFn:    () => "",
+  describeKey: (req, key) => `ip:${key}`,
+});
+
 // Public app-version lookup (GET /api/app/version). The app calls it once per
 // launch, so this is far above normal use. Per-IP.
 const appVersionStore = new Map();
@@ -241,7 +308,11 @@ const appVersionLimiter = buildKeyedLimiter({
 });
 
 module.exports = {
+  liveChatUploadLimiter,
+  liveChatContactLimiter,
+  liveChatConfigLimiter,
   appVersionLimiter,
+  careersLimiter,
   blogPublicLimiter,
   blogImageLimiter,
   registrationLimiter,
@@ -253,6 +324,8 @@ module.exports = {
   uploadLimiter,
   directVideoRoomPublicLimiter,
   searchLimiter,
+  searchSettleLimiter,
+  searchAnalyticsAdminLimiter,
   emailSendLimiter,
   mailboxCheckLimiter,
 };

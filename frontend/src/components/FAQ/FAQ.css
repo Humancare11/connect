@@ -18,8 +18,8 @@
   --faq-shadow: 0 4px 24px rgba(10, 31, 68, 0.06);
   --faq-shadow-lg: 0 20px 45px -18px rgba(10, 31, 68, 0.32);
   --faq-sticky-offset: 110px;
-  --faq-font-heading: var(--font-primary, "Satoshi", sans-serif);
-  --faq-font-body: var(--font-secondary, "Inter", sans-serif);
+  --faq-font-heading: var(--font-primary);
+  --faq-font-body: var(--font-secondary);
 
   background: var(--faq-blue-pale);
   padding: 96px 32px;
@@ -141,11 +141,14 @@ button.faq__stat-link {
   cursor: pointer;
 }
 
-a.faq__stat-link:hover,
-button.faq__stat-link:hover {
-  box-shadow: var(--faq-shadow);
+a.faq__stat-link:hover, button.faq__stat-link:hover {
   border-color: var(--faq-blue-light);
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  a.faq__stat-link:hover, button.faq__stat-link:hover {
+    box-shadow: var(--faq-shadow);
+    transform: translateY(-1px);
+  }
 }
 
 .faq__stat-link:focus-visible {
@@ -243,7 +246,7 @@ button.faq__stat-link:hover {
   font-weight: 600;
   color: var(--faq-ink);
   cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
 }
 
 .faq__trigger:hover {
@@ -271,10 +274,10 @@ button.faq__stat-link:hover {
   display: grid;
   place-items: center;
   transition:
-    transform 0.3s ease,
-    background 0.3s ease,
-    color 0.3s ease,
-    border-color 0.3s ease;
+    transform var(--duration-slow) ease,
+    background var(--duration-slow) ease,
+    color var(--duration-slow) ease,
+    border-color var(--duration-slow) ease;
 }
 
 .faq__icon--open {
@@ -306,8 +309,8 @@ button.faq__stat-link:hover {
   opacity: 0;
   transform: translateY(-4px);
   transition:
-    opacity 0.3s ease 0.05s,
-    transform 0.3s ease 0.05s;
+    opacity var(--duration-slow) ease 0.05s,
+    transform var(--duration-slow) ease 0.05s;
 }
 
 .faq__panel--open .faq__answer {
@@ -366,13 +369,15 @@ button.faq__stat-link:hover {
   cursor: pointer;
   text-decoration: none;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform var(--duration-base) ease,
+    box-shadow var(--duration-base) ease;
 }
 
-.faq__cta-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  .faq__cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px -10px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .faq__cta-button:focus-visible {
@@ -460,8 +465,12 @@ button.faq__stat-link:hover {
 .faq__view-more-btn:hover {
   border-color: var(--faq-blue);
   background: var(--faq-blue-light);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(30, 107, 255, 0.08);
+}
+@media (hover: hover) and (pointer: fine) {
+  .faq__view-more-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(30, 107, 255, 0.08);
+  }
 }
 
 .faq__view-more-btn:focus-visible {
@@ -486,4 +495,11 @@ button.faq__stat-link:hover {
   box-shadow: none !important;
   margin-top: -18px !important;
   pointer-events: none;
+}
+
+/* Readable minimum on phones (12px) */
+@media (max-width: 480px) {
+  p.faq__group-title {
+    font-size: 12px;
+  }
 }

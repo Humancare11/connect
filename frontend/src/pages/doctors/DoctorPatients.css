@@ -84,8 +84,8 @@
   min-width: 240px;
   color: var(--text);
   transition:
-    border-color 0.2s,
-    background 0.2s;
+    border-color var(--duration-base),
+    background var(--duration-base);
 }
 
 .dp-search:focus {
@@ -183,17 +183,21 @@
   text-align: left;
   cursor: pointer;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    transform 0.15s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    transform var(--duration-fast);
   width: 100%;
   box-shadow: var(--shadow-sm);
 }
 
 .dp-card:hover {
   border-color: var(--blue-border);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dp-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
 }
 
 .dp-avatar {
@@ -288,7 +292,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.4);
-  z-index: 9998;
+  z-index: var(--z-overlay);
   display: flex;
   justify-content: flex-end;
 }
@@ -297,8 +301,8 @@
   content: "";
   position: fixed;
   inset: 0;
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   z-index: -1;
   pointer-events: none;
 }
@@ -531,8 +535,8 @@
   cursor: pointer;
   flex-shrink: 0;
   transition:
-    background 0.15s,
-    color 0.15s;
+    background var(--duration-fast),
+    color var(--duration-fast);
 }
 
 .dp-slip-btn:hover {
@@ -594,7 +598,7 @@
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
-  z-index: 9999; /* must beat the app's sidebar/nav z-index */
+  z-index: var(--z-modal); /* must beat the app's sidebar/nav z-index */
 
   display: block;
   overflow-y: auto;
@@ -607,8 +611,8 @@
   content: "";
   position: fixed;
   inset: 0;
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   z-index: -1;
   pointer-events: none;
 }
@@ -805,8 +809,8 @@
   outline: none;
   color: var(--text);
   transition:
-    border-color 0.2s,
-    background 0.2s;
+    border-color var(--duration-base),
+    background var(--duration-base);
   box-sizing: border-box;
 }
 
@@ -866,8 +870,8 @@ select.dp-input {
   cursor: pointer;
   margin-top: 4px;
   transition:
-    border-color 0.2s,
-    color 0.2s;
+    border-color var(--duration-base),
+    color var(--duration-base);
 }
 
 .dp-add-med-btn:hover {
@@ -889,7 +893,7 @@ select.dp-input {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.2s;
+  transition: all var(--duration-base);
 }
 
 .dp-btn--primary {
@@ -1127,6 +1131,28 @@ select.dp-input {
   .dp-title {
     font-size: 16px;
   }
+}
+
+.dp-root-mp,
+.dp-header,
+.dp-grid,
+.dp-card,
+.dp-card-info,
+.dp-panel {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dp-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dp-card-name,
+.dp-card-email,
+.dp-panel-email {
+  overflow-wrap: anywhere;
 }
 
 

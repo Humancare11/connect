@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import "./Dashboard.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 function ServicesPrices() {
+  const confirm = useConfirm();
   const emptyForm = { name: "", price: "", icon: "", description: "", slug: "" };
   const [services, setServices] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -86,7 +88,13 @@ function ServicesPrices() {
   };
 
   const handleDelete = async (service) => {
-    if (!window.confirm(`Delete ${service.name}?`)) return;
+    const ok = await confirm({
+      title: "Delete service",
+      message: `Delete ${service.name}?`,
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
 
     setError("");
     setMessage("");
@@ -103,7 +111,7 @@ function ServicesPrices() {
   const renderIcon = (icon) => {
     const value = String(icon || "").trim();
     if (/^(https?:)?\/\//.test(value) || value.startsWith("/") || value.startsWith("data:image/")) {
-      return <img className="sp-icon-img" src={value} alt="" />;
+      return <img decoding="async" className="sp-icon-img" src={value} alt="" />;
     }
     return <span className="sp-icon-text">{value}</span>;
   };

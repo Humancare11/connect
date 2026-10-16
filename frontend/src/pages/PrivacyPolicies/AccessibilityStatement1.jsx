@@ -4,7 +4,7 @@ import "./PrivacyPolicies.css";
 const AccessibilityStatement1 = () => {
     return (
         <div className="rcp-page">
-            <main className="rcp-content">
+            <div className="rcp-content">
                 <header className="rcp-hero">
                     <h1 className="rcp-title">Accessibility Statement</h1>
                     <p className="rcp-intro">
@@ -72,7 +72,7 @@ const AccessibilityStatement1 = () => {
                         Email: <a href="mailto:support@humancareconnect.co " className="rcp-link">support@humancareconnect.co </a>
                     </p>
                 </section>
-            </main>
+            </div>
         </div>
     );
 };

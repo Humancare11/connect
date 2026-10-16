@@ -231,7 +231,7 @@ export default function DatePickerField({
 
       <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
         {/* Trigger */}
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (handleToggle)(e); } }}
           id={id}
           onClick={handleToggle}
           style={{

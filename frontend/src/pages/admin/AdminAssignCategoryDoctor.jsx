@@ -278,7 +278,7 @@ export default function AdminAssignCategoryDoctor() {
       setNotice(res.data?.message || res.data?.msg || "Doctor assigned successfully.");
       setTimeout(() => navigate(`/admin-dashboard/category-consultations`), 900);
     } catch (err) {
-      setError(err.response?.data?.msg || "Could not assign doctor.");
+      setError(err.response?.data?.message || err.response?.data?.msg || "Could not assign doctor.");
     } finally {
       setAssigningDoctorId("");
     }

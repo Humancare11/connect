@@ -69,6 +69,7 @@ import BookingCard from "../../../components/SpecialityBookingCard";
 import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
+import Breadcrumb from "../../../components/ui/Breadcrumb";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -534,7 +535,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
   return (
     <>
       <SEO />
-      <main className="sp-page">
+      <div className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">
@@ -555,6 +556,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
               <div
                 className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""}`}
               >
+                <Breadcrumb tone="light" />
                 <span className="sp-hero__badge">
                   General and Everyday Care
                 </span>
@@ -596,7 +598,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
               {/* Image column */}
               <Reveal>
                 <div className="sp-overview__img-wrap">
-                  <img
+                  <img decoding="async"
                     src={data.overviewImage}
                     width="562"
                     height="430"
@@ -687,7 +689,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}
@@ -829,7 +831,7 @@ export default function InternalMedicine({ data = SPECIALTY_DATA }) {
             },
           ]}
         />
-      </main>
+      </div>
     </>
   );
 }

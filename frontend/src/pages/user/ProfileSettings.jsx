@@ -6,6 +6,7 @@ import PhoneInputField, { parseValue as parsePhoneValue } from "../../components
 import LocationSelects from "../../components/LocationSelects";
 import { getMobileError } from "../../utils/phone";
 import DeleteAccountSection from "../../components/DeleteAccountSection";
+import Button from "../../components/ui/Button";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -34,7 +35,7 @@ const inputStyle = {
   borderRadius: "13px",
   outline: "none",
   color: "#0b0443",
-  fontFamily: "'Plus Jakarta Sans', sans-serif",
+  fontFamily: "var(--font-secondary)",
   fontSize: "14px",
   fontWeight: 400,
   transition: "all 0.2s ease",
@@ -67,7 +68,7 @@ function Field({ label, required, icon, children }) {
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           color: "#6b7ca3",
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: "var(--font-secondary)",
         }}
       >
         {label}
@@ -123,7 +124,7 @@ function MetaRow({ icon, label, value }) {
             letterSpacing: "0.5px",
             textTransform: "uppercase",
             margin: "0 0 2px",
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontFamily: "var(--font-secondary)",
           }}
         >
           {label}
@@ -272,26 +273,68 @@ export default function ProfileSettings() {
         .ps-fadein { animation: ps-fadein 0.25s ease; }
         .ps-phone .pif-control { height: 47px; min-height: 47px; border-radius: 13px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(203,213,225,0.80); }
         .ps-phone .pif-control.is-active { border-color: rgba(59,130,246,0.65); background: rgba(255,255,255,0.88); box-shadow: 0 0 0 3px rgba(59,130,246,0.13); }
-        .ps-phone .pif-input { font-family: 'Plus Jakarta Sans', sans-serif; color: #0b0443; }
+        .ps-phone .pif-input { font-family: var(--font-secondary); color: #0b0443; }
+        .ps-page { width: 100%; min-width: 0; }
         @media (max-width: 860px) {
           .ps-body   { grid-template-columns: 1fr !important; }
+          .ps-body   { gap: 16px !important; }
           .ps-avatar-card { flex-direction: row !important; flex-wrap: wrap !important; padding: 22px 24px !important; }
           .ps-avatar-card-center { align-items: flex-start !important; text-align: left !important; }
           .ps-avatar-divider { display: none !important; }
           .ps-meta-grid { flex-direction: row !important; flex-wrap: wrap !important; }
+          .ps-meta-grid > div { flex: 1 1 150px; min-width: 0; }
           .ps-sticky { position: static !important; }
         }
         @media (max-width: 580px) {
+          .ps-page { padding: 0 2px; }
+          .ps-body { gap: 14px !important; }
+          .ps-avatar-card { padding: 16px 14px !important; gap: 12px !important; }
+          .ps-avatar-card-center {
+            display: grid !important;
+            grid-template-columns: 64px minmax(0, 1fr);
+            align-items: center !important;
+            column-gap: 12px;
+            row-gap: 3px;
+            min-width: 0;
+            flex: 1 1 100%;
+          }
+          .ps-avatar-card-center > div:first-child {
+            grid-column: 1;
+            grid-row: 1 / span 3;
+            width: 64px !important;
+            height: 64px !important;
+            margin: 0 !important;
+            border-radius: 18px !important;
+          }
+          .ps-avatar-card-center > div:first-child > div {
+            width: 52px !important;
+            height: 52px !important;
+            border-radius: 15px !important;
+            font-size: 24px !important;
+          }
+          .ps-avatar-card-center > p,
+          .ps-avatar-card-center > span {
+            grid-column: 2;
+            text-align: left !important;
+            overflow-wrap: anywhere;
+          }
+          .ps-avatar-card-center > p:first-of-type { grid-row: 1; }
+          .ps-avatar-card-center > p:nth-of-type(2) { grid-row: 2; }
+          .ps-avatar-card-center > span { grid-row: 3; justify-self: start; margin-top: 4px !important; }
+          .ps-meta-grid > div { flex-basis: 135px; }
+          .ps-meta-grid > div > div { min-width: 0; }
+          .ps-meta-grid > div p:last-child { overflow-wrap: anywhere; }
           .ps-form-row { grid-template-columns: 1fr !important; }
           .ps-form-row-half { max-width: 100% !important; }
           .ps-form-body { padding: 20px 18px 24px !important; }
           .ps-card-head { padding: 20px 18px 16px !important; }
+          .ps-fadein { margin-left: 18px !important; margin-right: 18px !important; }
           .ps-actions { flex-direction: column-reverse !important; }
           .ps-actions > button { width: 100% !important; justify-content: center !important; }
         }
       `}</style>
 
-      <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
+      <div className="ps-page" style={{ fontFamily: "var(--font-secondary)", color: "#0b0443", maxWidth: "980px", margin: "0 auto" }}>
 
         {/* ══ TWO-COLUMN BODY ══ */}
         <div
@@ -344,7 +387,7 @@ export default function ProfileSettings() {
                   </div>
                 </div>
 
-                <h3 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: 0, textAlign: "center" }}>
+                <h3 style={{ fontFamily: "var(--font-primary)", fontSize: "15px", fontWeight: 700, color: "#0b0443", margin: 0, textAlign: "center" }}>
                   {user?.name}
                 </h3>
                 <p style={{ fontSize: "12px", color: "#6b7ca3", margin: 0, textAlign: "center", wordBreak: "break-all" }}>
@@ -419,7 +462,7 @@ export default function ProfileSettings() {
                   </svg>
                 </div>
                 <div>
-                  <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>
+                  <h2 style={{ fontFamily: "var(--font-primary)", fontSize: "17px", fontWeight: 700, color: "#0b0443", margin: "0 0 3px" }}>
                     Personal Information
                   </h2>
                   <p style={{ fontSize: "13px", color: "#6b7ca3", margin: 0 }}>
@@ -436,7 +479,7 @@ export default function ProfileSettings() {
               </div>
             )}
             {error && (
-              <div className="ps-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
+              <div role="alert" className="ps-fadein" style={{ margin: "20px 28px 0", padding: "13px 18px", borderRadius: "12px", background: "rgba(254,242,242,0.92)", border: "1px solid rgba(252,165,165,0.70)", color: "#dc2626", fontSize: "13px", fontWeight: 600, backdropFilter: "blur(8px)" }}>
                 ⚠️ {error}
               </div>
             )}
@@ -451,7 +494,7 @@ export default function ProfileSettings() {
               {/* Row 1: Name + Email */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Full Name" required icon="👤">
-                  <input
+                  <input autoComplete="name"
                     style={inputStyle} type="text" id="name" name="name"
                     value={formData.name} onChange={handleChange}
                     placeholder="Your full name" required
@@ -459,7 +502,7 @@ export default function ProfileSettings() {
                   />
                 </Field>
                 <Field label="Email Address" required icon="✉️">
-                  <input
+                  <input autoComplete="email"
                     style={inputStyle} type="email" id="email" name="email"
                     value={formData.email} onChange={handleChange}
                     placeholder="you@email.com" required
@@ -492,7 +535,7 @@ export default function ProfileSettings() {
                   </div>
                 </Field>
                 <Field label="Gender (optional)" icon="⚧">
-                  <select
+                  <select autoComplete="sex"
                     style={selectStyle}
                     id="gender" name="gender"
                     value={formData.gender} onChange={handleChange}
@@ -509,7 +552,7 @@ export default function ProfileSettings() {
               {/* Row 3: DOB (optional) */}
               <div className="ps-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "18px" }}>
                 <Field label="Date of Birth (optional)" icon="🎂">
-                  <input
+                  <input autoComplete="bday"
                     style={inputStyle} type="date" id="dob" name="dob"
                     value={formData.dob} onChange={handleChange}
                     min="1900-01-01" max={todayISO()}
@@ -546,33 +589,21 @@ export default function ProfileSettings() {
                 style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "12px", paddingTop: "14px", marginTop: "4px", borderTop: "1px solid rgba(255,255,255,0.65)" }}
               >
                 {/* Ghost reset */}
-                <button
+                <Button variant="secondary"
                   type="button"
                   onClick={handleReset}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "7px", padding: "11px 22px", borderRadius: "12px", background: "rgba(255,255,255,0.58)", backdropFilter: "blur(8px)", border: "1.5px solid rgba(203,213,225,0.82)", color: "#6b7ca3", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "13.5px", fontWeight: 600, cursor: "pointer", transition: "all 0.18s ease" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.90)"; e.currentTarget.style.color = "#0b0443"; e.currentTarget.style.borderColor = "rgba(148,163,184,0.90)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.58)"; e.currentTarget.style.color = "#6b7ca3"; e.currentTarget.style.borderColor = "rgba(203,213,225,0.82)"; }}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
                   </svg>
                   Reset
-                </button>
+                </Button>
 
                 {/* Primary save */}
-                <button
+                <Button variant="primary" loading={saving}
                   type="submit"
-                  disabled={saving}
-                  style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "9px", padding: "11px 28px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg, #3b82f6, #083ab0)", color: "#fff", fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "13.5px", fontWeight: 700, cursor: saving ? "not-allowed" : "pointer", minWidth: "150px", opacity: saving ? 0.75 : 1, boxShadow: "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)", transition: "all 0.2s ease" }}
-                  onMouseEnter={e => { if (!saving) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 10px 26px rgba(59,130,246,0.46), 0 2px 8px rgba(8,58,176,0.28)"; } }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 18px rgba(59,130,246,0.36), 0 1px 4px rgba(8,58,176,0.22)"; }}
                 >
-                  {saving ? (
-                    <>
-                      <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", display: "inline-block", animation: "ps-spin 0.7s linear infinite", flexShrink: 0 }} />
-                      Saving…
-                    </>
-                  ) : saved ? "✅ Saved!" : (
+                  {saving ? "Saving…" : saved ? "✅ Saved!" : (
                     <>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
@@ -581,7 +612,7 @@ export default function ProfileSettings() {
                       Save Changes
                     </>
                   )}
-                </button>
+                </Button>
               </div>
 
             </form>

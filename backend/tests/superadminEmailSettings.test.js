@@ -14,6 +14,7 @@ const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken"
 const { getTrackingState, clearSettingsCache } = require("../services/email/emailSettings");
 
 const ENV_ON = { EMAIL_TRACKING_ENABLED: "true", PUBLIC_TRACKING_BASE_URL: "https://api.uat.example.com" };
+const DISCLOSURE = "This email may include an image that tells us when it was opened.";
 
 describe("superadmin email settings (open tracking switches, opt-outs)", () => {
   let mongod, server, base, root, env;
@@ -73,12 +74,14 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
     assert.equal(body.tracking.switchOn, false);
     assert.equal(body.tracking.active, false);
     assert.equal(body.tracking.envEnabled, false);
-    assert.equal(body.tracking.disclosureEnabled, true);
-    assert.match(body.tracking.disclosureText, /image that tells us when it was opened/);
+    assert.equal(body.tracking.disclosureEnabled, false, "no notice unless a Super Admin switches it on");
+    assert.equal(body.tracking.disclosureText, "", "no custom line by default: the automatic wording is used");
+    assert.equal(body.tracking.disclosureCustom, false);
     assert.deepEqual(body.optOuts, []);
   });
 
   test("the Super Admin switch alone does not activate tracking: the server gate must be open too", async () => {
+    // No custom line is needed: the automatic wording is used.
     let r = await call("PATCH", "/settings", { trackingEnabled: true });
     assert.equal(r.status, 200);
     assert.deepEqual([r.body.tracking.switchOn, r.body.tracking.envEnabled, r.body.tracking.active], [true, false, false]);
@@ -92,26 +95,49 @@ describe("superadmin email settings (open tracking switches, opt-outs)", () => {
 
   test("switching off takes effect at once (settings cache is cleared)", async () => {
     env = { ...ENV_ON };
-    await call("PATCH", "/settings", { trackingEnabled: true });
+    await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
     assert.equal((await getTrackingState({ env })).active, true);
     await call("PATCH", "/settings", { trackingEnabled: false });
     assert.equal((await getTrackingState({ env })).active, false);
   });
 
   test("records who changed it", async () => {
-    await call("PATCH", "/settings", { trackingEnabled: true });
+    await call("PATCH", "/settings", { trackingEnabled: true, disclosureText: DISCLOSURE });
     assert.equal(String((await EmailSettings.findOne({ key: "email" })).updatedBy), String(root._id));
   });
 
-  test("disclosure line: editable, single line, length-limited, cannot be empty while on", async () => {
+  test("custom notice: optional, single line, length-limited; empty means the automatic wording", async () => {
     let r = await call("PATCH", "/settings", { disclosureText: "  Line one\nline two\t\u0000  " });
     assert.equal(r.status, 200);
     assert.equal(r.body.tracking.disclosureText, "Line one line two");
+    assert.equal(r.body.tracking.disclosureCustom, true);
     assert.equal((await call("PATCH", "/settings", { disclosureText: "x".repeat(301) })).status, 400);
-    assert.equal((await call("PATCH", "/settings", { disclosureText: "" })).status, 400, "empty while enabled");
-    r = await call("PATCH", "/settings", { disclosureEnabled: false, disclosureText: "" });
-    assert.equal(r.status, 200, "empty is fine once the line is off");
+    r = await call("PATCH", "/settings", { disclosureText: "" });
+    assert.equal(r.status, 200, "empty is fine: automatic wording");
+    assert.equal(r.body.tracking.disclosureCustom, false);
+    r = await call("PATCH", "/settings", { disclosureEnabled: false });
+    assert.equal(r.status, 200);
     assert.equal(r.body.tracking.disclosureEnabled, false);
+  });
+
+  test("the page gets every automatic notice, one per combination", async () => {
+    const { body } = await call("GET", "/settings");
+    const ex = body.tracking.disclosureExamples;
+    assert.equal(ex.length, 15);
+    assert.ok(ex.every((e) => /Do not track/.test(e.text)));
+    assert.equal(new Set(ex.map((e) => e.text)).size, 15, "all different");
+  });
+
+  test("'Track mail to company addresses' defaults ON, can be switched off, and is honoured by the sender state", async () => {
+    let r = await call("GET", "/settings");
+    assert.equal(r.body.tracking.trackInternalRecipients, true);
+    r = await call("PATCH", "/settings", { trackInternalRecipients: false });
+    assert.equal(r.status, 200);
+    assert.equal(r.body.tracking.trackInternalRecipients, false);
+    assert.equal((await getTrackingState({ env, full: true })).trackInternalRecipients, false);
+    r = await call("PATCH", "/settings", { trackInternalRecipients: true });
+    assert.equal(r.body.tracking.trackInternalRecipients, true);
+    assert.equal((await call("PATCH", "/settings", { trackInternalRecipients: "no" })).status, 400);
   });
 
   test("validation: types, unknown fields, empty body", async () => {

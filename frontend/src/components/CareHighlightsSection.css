@@ -1,0 +1,119 @@
+/* ============================================================
+   CareHighlightsSection — styling taken from the Categories page
+   "Care Made Simple" section, shared by Categories / Specialties /
+   Symptoms. Margins are set explicitly because only the Categories
+   page has a margin reset.
+   ============================================================ */
+
+.care-highlights {
+  padding: 20px;
+  background: #f5f7fb;
+}
+
+.care-highlights *,
+.care-highlights *::before,
+.care-highlights *::after {
+  box-sizing: border-box;
+}
+
+.care-highlights__wrap {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.care-highlights__grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.care-highlights__left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.care-highlights__eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #f59e0b;
+  margin-bottom: 20px;
+}
+
+.care-highlights__title {
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  line-height: 1.05;
+  font-weight: 800;
+  color: #07153b;
+  margin: 0 0 24px;
+}
+
+.care-highlights__copy {
+  color: #64748b;
+  line-height: 1.9;
+  max-width: 500px;
+  margin: 0 0 32px;
+}
+
+.care-highlights__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.care-highlights__card {
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 28px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+  transition: 0.3s ease;
+}
+
+.care-highlights__card:hover {
+  transform: translateY(-4px);
+}
+
+.care-highlights__card h3 {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+
+.care-highlights__card p {
+  color: #64748b;
+  line-height: 1.8;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Tablet & mobile: copy on top, cards stacked below */
+@media (max-width: 900px) {
+  .care-highlights__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .care-highlights__copy {
+    max-width: 100%;
+  }
+
+  .care-highlights__cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .care-highlights__card {
+    transition: none;
+  }
+
+  .care-highlights__card:hover {
+    transform: none;
+  }
+}

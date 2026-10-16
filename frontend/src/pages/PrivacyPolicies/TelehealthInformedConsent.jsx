@@ -4,7 +4,7 @@ import "./PrivacyPolicies.css";
 const TeleHealthInformedConsent = () => {
   return (
     <div className="rcp-page">
-      <main className="rcp-content">
+      <div className="rcp-content">
         <header className="rcp-hero">
           <h1 className="rcp-title">Telehealth Informed Consent</h1>
           <p className="rcp-intro">
@@ -174,7 +174,7 @@ const TeleHealthInformedConsent = () => {
             </a>
           </p>
         </section>
-      </main>
+      </div>
     </div>
   );
 };

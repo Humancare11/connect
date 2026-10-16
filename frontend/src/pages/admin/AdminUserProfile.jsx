@@ -11,6 +11,7 @@ import {
 } from "./userAdminActions";
 import "./ManageUsers.css";
 import "./AdminUserProfile.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 const LIST_PATH = "/admin-dashboard/manage-users";
 const NOT_PROVIDED = "Not provided";
@@ -113,6 +114,7 @@ function ProfileMessage({ title, text, onRetry }) {
 }
 
 function UserProfile({ id }) {
+  const confirm = useConfirm();
   const location = useLocation();
   const navigate = useNavigate();
   // The list's query string (search / filter), passed along when opening this
@@ -191,21 +193,21 @@ function UserProfile({ id }) {
     navigate({ pathname: LIST_PATH, search: listSearch }, { state: { toast: message, restoreScroll: true } });
 
   const handleDelete = async () => {
-    const result = await deleteUserAccount(user._id, user.name);
+    const result = await deleteUserAccount(user._id, user.name, confirm);
     if (!result.done) return;
     if (result.ok) backToListWithToast(result.message);
     else showToast(result.message, false);
   };
 
   const handleApprove = async () => {
-    const result = await approveUserDeletion(user._id, user.name);
+    const result = await approveUserDeletion(user._id, user.name, confirm);
     if (!result.done) return;
     if (result.ok) backToListWithToast(result.message);
     else showToast(result.message, false);
   };
 
   const handleReject = async () => {
-    const result = await rejectUserDeletion(user._id, user.name);
+    const result = await rejectUserDeletion(user._id, user.name, confirm);
     if (!result.done) return;
     if (result.ok) setLoad((prev) => ({ ...prev, user: mergeUpdatedUser(prev.user, result.user) }));
     showToast(result.message, result.ok);

@@ -57,8 +57,8 @@
   width: 256px;
   z-index: 200;
   background: #01164a;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 24px;
   box-shadow:
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ad-brand {
@@ -196,7 +196,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.18s, color 0.18s, transform 0.15s;
+  transition: background 0.18s, color 0.18s, transform var(--duration-fast);
   text-align: left;
   width: 100%;
   text-decoration: none;
@@ -206,7 +206,11 @@
 .ad-nav-item:hover {
   background: rgba(255, 255, 255, 0.5);
   color: #ffffff;
-  transform: translateX(2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ad-nav-item:hover {
+    transform: translateX(2px);
+  }
 }
 
 .ad-nav-item.active {
@@ -365,8 +369,8 @@
   top: 16px;
   z-index: 100;
   background: #01164a;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 20px;
   box-shadow:
@@ -435,6 +439,23 @@
   margin: 0;
 }
 
+/* Shown above the stat cards when /api/admin/stats fails (the cards then show a dash, never 0). */
+.adp-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 /* ── Stat cards ───────────────────────────────────────────────── */
 .adp-stats {
   display: grid;
@@ -445,8 +466,8 @@
 
 .adp-stat {
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 16px;
   padding: 18px 20px;
@@ -471,9 +492,13 @@
 }
 
 .adp-stat:hover {
-  transform: translateY(-4px);
   background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 18px 44px rgba(8, 58, 176, 0.18), 0 3px 10px rgba(8, 58, 176, 0.10);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-stat:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(8, 58, 176, 0.18), 0 3px 10px rgba(8, 58, 176, 0.10);
+  }
 }
 
 .adp-stat-value {
@@ -532,8 +557,8 @@
 /* ── Card / section ───────────────────────────────────────────── */
 .adp-card {
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.75);
   border-radius: 16px;
   overflow: hidden;
@@ -590,6 +615,10 @@
   font-size: 13px;
   color: #0b0443;
   width: 100%;
+}
+.adp-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .adp-search svg {
@@ -714,14 +743,18 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.15s;
+  transition: opacity var(--duration-base), transform var(--duration-fast);
   white-space: nowrap;
   text-decoration: none;
 }
 
 .adp-btn:hover {
   opacity: 0.85;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .adp-btn:active {
@@ -820,7 +853,7 @@
 .adp-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9999;
+  z-index: var(--z-modal);
   background: rgba(11, 4, 67, 0.5);
   backdrop-filter: blur(4px);
   display: flex;
@@ -832,8 +865,8 @@
 
 .adp-modal {
   background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 18px;
   width: 100%;
@@ -977,7 +1010,7 @@
   font-weight: 500;
   color: #475076;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all var(--duration-fast);
 }
 
 .adp-tab:hover {
@@ -1020,7 +1053,7 @@
   border-radius: 14px;
   padding: 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background var(--duration-base), border-color var(--duration-base), box-shadow var(--duration-base), transform var(--duration-base);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1029,9 +1062,13 @@
 
 .ado-action-card:hover {
   border-color: rgba(14, 108, 235, 0.4);
-  box-shadow: 0 12px 36px rgba(8, 58, 176, 0.18);
-  transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.72);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ado-action-card:hover {
+    box-shadow: 0 12px 36px rgba(8, 58, 176, 0.18);
+    transform: translateY(-3px);
+  }
 }
 
 .ado-action-icon {

@@ -32,6 +32,31 @@ const trackingSchema = new mongoose.Schema(
     // Last counted open: opens within the dedupe window of it are not counted again.
     lastCountedAt: { type: Date, default: null },
     openCount: { type: Number, default: 0 },
+
+    // Other signals feeding the combined "Read status" (see services/email/readStatus.js).
+    // Written by the steps that introduce them; absent/0 until then.
+    // Hits from Apple's Mail Privacy Protection proxy: kept apart from real opens.
+    appleOpenCount: { type: Number, default: 0 },
+    firstAppleOpenedAt: { type: Date, default: null },
+    lastAppleOpenedAt: { type: Date, default: null },
+    clickCount: { type: Number, default: 0 },
+    firstClickedAt: { type: Date, default: null },
+    lastClickedAt: { type: Date, default: null },
+    downloadCount: { type: Number, default: 0 },
+    firstDownloadedAt: { type: Date, default: null },
+    lastDownloadedAt: { type: Date, default: null },
+    receiptAt: { type: Date, default: null },
+    // Facts about the recipients at send time, used to word and classify the opens.
+    //   includesInternal      a To/Cc address is a company address (an open may be a colleague)
+    //   allRecipientsApple    every To/Cc address is iCloud/me/mac, so loads went through Apple's proxy
+    // Read receipt (Disposition-Notification-To): asked for on this mail, and who confirmed it.
+    receiptRequested: { type: Boolean, default: false },
+    // Attachments were sent as secure download links instead of being attached.
+    secureLinks: { type: Boolean, default: false },
+    secureLinksExpireAt: { type: Date, default: null },
+    receiptBy: { type: String, default: "", maxlength: 254 },
+    includesInternal: { type: Boolean, default: false },
+    allRecipientsApple: { type: Boolean, default: false },
   },
   { _id: false }
 );
@@ -101,6 +126,33 @@ const emailMessageSchema = new mongoose.Schema(
     // it per mailbox, so it says "someone on the team read it", never who. It is a separate
     // signal from firstViewed* (who opened it in the dashboard) and is never written back to Gmail.
     gmailRead: { type: Boolean, default: false },
+
+    // Inbound only: a read receipt (multipart/report, disposition-notification) for a mail we
+    // sent. It is machine mail: kept so the sync does not import it twice, shown nowhere
+    // (not in Received, counts, threads or search) and never treated as a client reply.
+    isReceipt: { type: Boolean, default: false },
+
+    // Outbound, when an IMAGE signature was used: this mail's OWN copy of the image (so replacing
+    // or deleting the signature later cannot change what was sent) and how it was used.
+    // `key` is a private S3 key and is never returned by the API.
+    signatureImage: {
+      type: new mongoose.Schema(
+        {
+          key: { type: String, required: true },
+          mime: { type: String, required: true },
+          width: { type: Number, required: true },
+          height: { type: Number, required: true },
+          alt: { type: String, default: "" },
+          // link, layout and signatureText exist only on mail sent before signatures became
+          // image-only; they are no longer written or shown.
+          link: { type: String, default: "" },
+          layout: { type: String, enum: ["image", "image_text"] },
+          signatureText: { type: String, default: "" },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+    },
 
     // Idempotency key from the compose form so a double-click can't send twice.
     clientRequestId: { type: String, default: null, maxlength: 100 },

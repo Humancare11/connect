@@ -20,6 +20,18 @@ const {
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
+const {
+  LifecycleError,
+  isCompleteStatus,
+  loadAppointmentAny,
+  doctorUserIdOf,
+  completeLoaded,
+  reopenLoaded,
+} = require("../utils/appointmentLifecycle");
+const {
+  notifyAppointmentBooked,
+  notifyAppointmentDoctorChanged,
+} = require("../utils/bookingNotifications");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -218,6 +230,7 @@ const createAppointment = async (req, res) => {
     }
 
     let resolvedDoctorId = null;
+    let bookedDoctor = null;
 
     if (doctorId) {
       if (!paymentIntentId && !paypalOrderId) {
@@ -231,6 +244,7 @@ const createAppointment = async (req, res) => {
       if (!doctor) {
         return res.status(404).json({ msg: "Doctor not found." });
       }
+      bookedDoctor = doctor;
 
       // The charged amount must match this doctor's real fee — never trust
       // whatever amount happens to be on the payment reference the client
@@ -308,7 +322,7 @@ const createAppointment = async (req, res) => {
 
     const bookedAt = new Date();
     const patient = await User.findById(patientId)
-      .select("name email mobile dob gender country city")
+      .select("name email mobile dob gender country city patientId")
       .lean();
     const safePatientDetails = {
       ...(patientDetails || {}),
@@ -416,6 +430,10 @@ const createAppointment = async (req, res) => {
       msg: resolvedDoctorId ? "Appointment booked successfully." : "Appointment request submitted successfully.",
       appointment,
     });
+
+    // Fire-and-forget: notify admins (and the booked doctor, if any). Never
+    // throws or rejects, and never delays the response sent above.
+    notifyAppointmentBooked({ appointment, patient, doctor: bookedDoctor });
 
     // Fire-and-forget: ledgering the payment and generating/emailing its
     // invoice must never block or fail the booking response — the booking
@@ -595,6 +613,7 @@ const getDoctorAppointments = async (req, res) => {
         createdAt: cc.createdAt,
         updatedAt: cc.updatedAt,
         isCategoryConsultation: true,
+        reopenedByAdmin: cc.reopenedByAdmin || null,
       };
     });
 
@@ -677,66 +696,70 @@ const confirmAppointment = async (req, res) => {
   }
 };
 
+const sendLifecycleError = (res, error, fallbackMsg, label) => {
+  if (error instanceof LifecycleError) {
+    return res.status(error.statusCode).json({ msg: error.message });
+  }
+  console.error(`${label} error:`, error);
+  return res.status(500).json({ msg: fallbackMsg });
+};
+
 const completeAppointment = async (req, res) => {
   try {
-    let appointment = await Appointment.findById(req.params.id);
-    let isCategory = false;
-
-    if (!appointment) {
-      appointment = await CategoryConsultation.findById(req.params.id).populate("assignedDoctorId");
-      if (appointment) {
-        isCategory = true;
-      }
-    }
-
-    if (!appointment) {
+    const loaded = await loadAppointmentAny(req.params.id);
+    if (!loaded) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
 
-    if (isCategory) {
-      if (!appointment.assignedDoctorId || appointment.assignedDoctorId.doctorId.toString() !== req.user.id) {
-        return res.status(403).json({ msg: "You can only complete your own appointments." });
-      }
-    } else {
-      if (appointment.doctorId.toString() !== req.user.id) {
-        return res.status(403).json({ msg: "You can only complete your own appointments." });
-      }
+    const ownerId = doctorUserIdOf(loaded);
+    if (!ownerId || ownerId !== String(req.user.id)) {
+      return res.status(403).json({ msg: "You can only complete your own appointments." });
     }
 
-    if (!["assigned", "confirmed"].includes(appointment.status.toLowerCase())) {
-      return res.status(400).json({ msg: "Only assigned or confirmed appointments can be marked complete." });
-    }
-
-    if (isCategory) {
-      appointment.status = "Completed";
-    } else {
-      appointment.status = "complete";
-    }
-    await appointment.save();
-
-    const io = req.app.get("io");
-    if (io) {
-      const patientId = appointment.patientId;
-      const payload = {
-        appointmentId: appointment._id,
-        status: isCategory ? "complete" : appointment.status
-      };
-      io.to(`patient_${patientId}`).emit("appointment-updated", payload);
-      io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
-      io.to("admin_room").emit("appointment-updated", payload);
-    }
-    req.app.get("evictAllFromAppointmentRoom")?.(appointment._id, { reason: "completed" });
-
-    sendPushToUser(appointment.patientId, {
-      title: "Appointment completed",
-      body: "Your appointment has been marked as complete.",
-      data: { type: "appointment", appointmentId: String(appointment._id) },
+    const { appointment, alreadyComplete } = await completeLoaded(req.app, loaded);
+    res.status(200).json({
+      msg: alreadyComplete ? "Appointment is already completed." : "Appointment marked as completed.",
+      appointment,
     });
-
-    res.status(200).json({ msg: "Appointment marked as completed.", appointment });
   } catch (error) {
-    console.error("completeAppointment error:", error);
-    res.status(500).json({ msg: "Failed to complete appointment." });
+    sendLifecycleError(res, error, "Failed to complete appointment.", "completeAppointment");
+  }
+};
+
+// Admin/superadmin: same completion as the doctor's, without the ownership check.
+const adminCompleteAppointment = async (req, res) => {
+  try {
+    const loaded = await loadAppointmentAny(req.params.id);
+    if (!loaded) {
+      return res.status(404).json({ msg: "Appointment not found." });
+    }
+
+    const { appointment, alreadyComplete } = await completeLoaded(req.app, loaded);
+    res.status(200).json({
+      msg: alreadyComplete ? "Appointment is already completed." : "Appointment marked as completed.",
+      appointment,
+    });
+  } catch (error) {
+    sendLifecycleError(res, error, "Failed to complete appointment.", "adminCompleteAppointment");
+  }
+};
+
+// Admin/superadmin: completed -> confirmed again. Existing prescriptions and
+// certificates are left untouched.
+const reopenAppointment = async (req, res) => {
+  try {
+    const loaded = await loadAppointmentAny(req.params.id);
+    if (!loaded) {
+      return res.status(404).json({ msg: "Appointment not found." });
+    }
+
+    const admin = req.user?.id ? await User.findById(req.user.id).select("name email").lean() : null;
+    const actor = { id: req.user?.id || null, name: admin?.name || req.user?.name || req.user?.email || "Admin" };
+
+    const { appointment } = await reopenLoaded(req.app, loaded, actor);
+    res.status(200).json({ msg: "Appointment reopened.", appointment });
+  } catch (error) {
+    sendLifecycleError(res, error, "Failed to reopen appointment.", "reopenAppointment");
   }
 };
 
@@ -815,6 +838,14 @@ const reassignAppointmentDoctor = async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ msg: "Appointment not found." });
     }
+    // A completed appointment must be reopened first: that path runs the slot
+    // check and notifies everyone. Changing the doctor here would otherwise
+    // silently set it back to confirmed (including the same-doctor branch below).
+    if (isCompleteStatus(appointment.status)) {
+      return res.status(409).json({
+        msg: "This appointment is completed. Reopen it before changing the doctor.",
+      });
+    }
     const previousDoctorId = appointment.doctorId ? String(appointment.doctorId) : null;
 
     // Find the new doctor by numeric doctorId
@@ -876,6 +907,10 @@ const reassignAppointmentDoctor = async (req, res) => {
       assignedAt: new Date(),
     };
     await appointment.save();
+
+    // Fire-and-forget: email the new doctor (and the previous one, if any).
+    // The same-doctor case returned early above, so this only runs on a real change.
+    notifyAppointmentDoctorChanged({ appointment, newDoctor, previousDoctorId });
 
     const patient = await User.findById(appointment.patientId).select("name email");
     if (patient?.email) {
@@ -1192,6 +1227,8 @@ module.exports = {
   getDoctorAppointments,
   confirmAppointment,
   completeAppointment,
+  adminCompleteAppointment,
+  reopenAppointment,
   cancelAppointment,
   reassignAppointmentDoctor,
   getAllAppointments,

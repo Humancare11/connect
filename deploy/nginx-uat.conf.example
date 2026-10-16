@@ -1,0 +1,175 @@
+# nginx configuration for the Humancare Connect FRONTEND (static files from `npm run build`).
+#
+# Equivalent of frontend/render.yaml, for hosts that are not Render static sites. It is an EXAMPLE: copy the parts
+# you need, adjust server_name / root / certificates, then run `nginx -t` before reloading. Nothing in the repo
+# applies it.
+#
+# Why this file exists
+# --------------------
+# `npm run build` writes, into dist/:
+#   index.html            prerendered HOME page
+#   <route>.html and <route>/index.html   one prerendered page per public route (SEO)
+#   200.html              the empty app shell: no prerendered content, the browser renders everything
+#   404.html              prerendered "not found" page, to be served with a real 404 status
+# Dashboards, login, booking, payment and call pages are NOT prerendered. They must be served the EMPTY shell
+# (200.html). A common nginx setting, `try_files $uri /index.html;`, serves the prerendered HOME page instead:
+# on /admin-dashboard the visitor then briefly sees (or keeps) the public website header on top of the admin app.
+# (The app now also protects itself against this, see src/main.jsx, but serve the right file anyway: it is faster
+# and keeps crawlers and the 404 status correct.)
+#
+# Order of decisions, same as render.yaml
+#   1. 301 redirects (retired / mistyped URLs)           -> `map` + `return 301` below
+#   2. a real file for the URL (prerendered pages, assets)
+#   3. app-only routes (dashboards, login, ...)          -> 200.html
+#   4. anything else                                     -> 404.html with status 404
+#
+# Keep in sync with: frontend/render.yaml (routes and redirects) and frontend/src/seo/redirects.js (the source of
+# truth for redirects; scripts/check-seo.mjs verifies render.yaml against it).
+
+# ---- http {} context ---------------------------------------------------------------------------------------------
+# (e.g. put this file's `map` into /etc/nginx/conf.d/ and the `server` block into sites-available/)
+
+# 301 redirects. Matching is exact and case-sensitive ("/Blogs" is not "/blogs"), like Render.
+# BEGIN GENERATED FROM render.yaml (36 redirects)
+map $uri $hc_redirect {
+    default "";
+    /doctor-note-or-sick-notes                                                /doctors-note;
+    /medical-certificate                                                      /doctors-note;
+    /prescription-refill                                                      /online-prescription-refills;
+    /second-medical-opinion                                                   /online-second-medical-opinion;
+    /expert-medical-opinion                                                   /online-second-medical-opinion;
+    /chronic-care-and-expert-opinion/cardiology                               /chronic-care/cardiology;
+    /mental-health-support                                                    /mental-health;
+    /ent                                                                      /eye-ear-bone/ear-nose-throat;
+    /mild-asthma-symptoms                                                     /chronic-care/pulmonology/asthma;
+    /chronic-care/neurology/chronic-migraine                                  /chronic-care/neurology/migraine;
+    /mens-health/urology/urinary-tract-infection                              /urinary-tract-infection;
+    /bladder-infection                                                        /urinary-tract-infection;
+    /mens-health-men-health                                                   /mens-health/men-health;
+    /weight-and-nurtrition                                                    /weight-and-nutrition;
+    /weight-and-nurtrition/lifestyle-medicine                                 /weight-and-nutrition/lifestyle-medicine;
+    /weight-and-nurtrition/lifestyle-medicine/diet-and-exercise-planning      /weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning;
+    /weight-and-nurtrition/lifestyle-medicine/healthy-habit-coaching          /weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching;
+    /weight-and-nurtrition/lifestyle-medicine/sleep-hygiene                   /weight-and-nutrition/lifestyle-medicine/sleep-hygiene;
+    /weight-and-nurtrition/nutrition-and-dietetics                            /weight-and-nutrition/nutrition-and-dietetics;
+    /weight-and-nurtrition/nutrition-and-dietetics/cholesterol-lowering-diet  /weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet;
+    /weight-and-nurtrition/nutrition-and-dietetics/diabetic-diet              /weight-and-nutrition/nutrition-and-dietetics/diabetic-diet;
+    /weight-and-nurtrition/nutrition-and-dietetics/food-intolerance-planning  /weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning;
+    /weight-and-nurtrition/nutrition-and-dietetics/pregnancy-nutrition        /weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition;
+    /weight-and-nurtrition/nutrition-and-dietetics/sports-nutrition           /weight-and-nutrition/nutrition-and-dietetics/sports-nutrition;
+    /weight-and-nurtrition/weight-management                                  /weight-and-nutrition/weight-management;
+    /weight-and-nurtrition/weight-management/binge-eating                     /weight-and-nutrition/weight-management/binge-eating;
+    /weight-and-nurtrition/weight-management/obesity                          /weight-and-nutrition/weight-management/obesity;
+    /weight-and-nurtrition/weight-management/weight-loss-planning             /weight-and-nutrition/weight-management/weight-loss-planning;
+    /contact                                                                  /contact-us;
+    /specialists                                                              /specialties;
+    /export-medical-opinion                                                   /online-second-medical-opinion;
+    /terms                                                                    /terms-of-service;
+    /privacy                                                                  /privacy-policy;
+    /Blogs                                                                    /blogs;
+    /Specialties                                                              /specialties;
+    /mental-health/psychiatry/Ocd                                             /mental-health/psychiatry/ocd;
+}
+# END GENERATED
+
+# ---- server {} ---------------------------------------------------------------------------------------------------
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name uat.humancareconnect.co;          # adjust
+
+    # ssl_certificate     /etc/letsencrypt/live/uat.humancareconnect.co/fullchain.pem;   # adjust
+    # ssl_certificate_key /etc/letsencrypt/live/uat.humancareconnect.co/privkey.pem;     # adjust
+
+    root /var/www/humancare-uat/dist;             # adjust: the folder that holds index.html, 200.html, assets/
+    index index.html;
+    charset utf-8;
+
+    gzip on;
+    gzip_vary on;
+    gzip_types text/plain text/css application/javascript application/json application/xml image/svg+xml;
+
+    # Security headers (render.yaml `headers:`). The CSP is a <meta> tag in index.html, nothing to add here.
+    # NOTE: nginx drops these server-level headers inside any location that has its own add_header. That is why
+    # only /assets/ (below) repeats them. Everything else uses `expires`, which does not touch add_header.
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(self), microphone=(self), geolocation=()" always;
+
+    # HTML must always revalidate: pages carry the links to the hashed files. (`expires -1` sends no-cache.)
+    expires -1;
+
+    # 1) Retired URLs -> 301 (query string kept).
+    if ($hc_redirect) {
+        return 301 $hc_redirect$is_args$args;
+    }
+
+    # ---- Existing backend locations: KEEP what you already have --------------------------------------------------
+    # This host also answers /api/ and /socket.io/ today (the site calls them on its own origin). Leave those
+    # blocks exactly as they are. Typical shape, only as a reminder:
+    #
+    # location /api/ {
+    #     proxy_pass http://127.0.0.1:5000;
+    #     proxy_set_header Host $host;
+    #     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #     proxy_set_header X-Forwarded-Proto $scheme;
+    # }
+    # location /socket.io/ {
+    #     proxy_pass http://127.0.0.1:5000;
+    #     proxy_http_version 1.1;
+    #     proxy_set_header Upgrade $http_upgrade;
+    #     proxy_set_header Connection "upgrade";
+    #     proxy_set_header Host $host;
+    # }
+    # (Live chat also uses the /livechat and /livechat-admin socket namespaces, they travel over /socket.io/.)
+    # --------------------------------------------------------------------------------------------------------------
+
+    # Hashed build output: cache for a year.
+    location /assets/ {
+        expires off;                                   # cancel the server-level `expires -1` for hashed files
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        # repeated because this location has its own add_header (see note above)
+        add_header X-Frame-Options "DENY" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "camera=(self), microphone=(self), geolocation=()" always;
+        try_files $uri =404;
+    }
+
+    # 2+3) App-only routes: serve the EMPTY shell. (A real file wins first, e.g. a prerendered doctor profile.)
+
+    # prefix routes, with or without sub-paths: /user, /user/anything, ...
+    location ~ ^/(user|doctor-dashboard|admin-dashboard|superadmin-dashboard|employee-dashboard|payment-admin|partner-dashboard|appointment-booking|pay|video-call|direct-video-call)(/.*)?$ {
+        try_files $uri $uri.html $uri/index.html /200.html;
+    }
+
+    # sub-paths only: /doctors/<slug>, /doctor/<id>  (prerendered doctor profiles are real files; new ones are
+    # rendered in the browser until the next build). /doctors itself is a prerendered page.
+    location ~ ^/(doctors|doctor)/.+$ {
+        try_files $uri $uri.html $uri/index.html /200.html;
+    }
+
+    # single pages that only exist in the app
+    location ~ ^/(login|book-appointment|test|cookies|images|doctor-login|adminauth|admin-auth|payment-admin-login|employee-login|partner-login|services-prices|category-consultant|service-consultant|profile|ask-a-question)/?$ {
+        try_files $uri $uri.html $uri/index.html /200.html;
+    }
+
+    # 4) Everything else: a prerendered page if there is one, otherwise the prerendered 404 page with a real 404
+    # status. (404.html is rendered from scratch in the browser, so a blog post published after this build can
+    # still resolve client-side while crawlers get a 404.)
+    location / {
+        try_files $uri $uri.html $uri/index.html =404;
+    }
+
+    error_page 404 /404.html;
+    location = /404.html { internal; }
+    location = /200.html { internal; }
+}
+
+# Quick checks after `nginx -t && systemctl reload nginx` (replace the host):
+#   curl -s https://uat.humancareconnect.co/admin-dashboard | grep -c 'data-prerendered'   # expect 0  (empty shell)
+#   curl -s https://uat.humancareconnect.co/ | grep -c 'data-prerendered'                   # expect 1  (prerendered home)
+#   curl -sI https://uat.humancareconnect.co/no-such-page-xyz | head -1                     # expect HTTP/... 404
+#   curl -sI https://uat.humancareconnect.co/contact | grep -i location                     # expect /contact-us
+#   curl -sI https://uat.humancareconnect.co/assets/<any hashed file> | grep -i cache-control # expect immutable

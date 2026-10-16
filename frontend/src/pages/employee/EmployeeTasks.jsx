@@ -1042,7 +1042,7 @@ function AttachmentRow({ attachment, taskId }) {
   const content = (
     <>
       {isImage && url ? (
-        <img className="et-attachment__thumb" src={url} alt={attachment.name} />
+        <img decoding="async" className="et-attachment__thumb" src={url} alt={attachment.name} />
       ) : (
         <span className="et-attachment__icon">{extOf(attachment.name)}</span>
       )}

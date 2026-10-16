@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import "./PaymentHistory.css";
 import api from "../../api";
+import { useToast } from "../../components/ui/Toast";
+import RetryButton from "../../components/ui/RetryButton";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -26,6 +28,7 @@ function gatewayLabel(gateway) {
 }
 
 export default function PaymentHistory() {
+  const toast = useToast();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -79,7 +82,7 @@ export default function PaymentHistory() {
       }
     } catch (err) {
       console.error("Failed to fetch invoice URL", err);
-      window.alert(
+      toast.error(
         err?.response?.data?.msg || "Invoice isn't ready yet. Please try again in a moment."
       );
     } finally {
@@ -101,7 +104,10 @@ export default function PaymentHistory() {
         {loading ? (
           <div className="ph-state">Loading payment history…</div>
         ) : error ? (
-          <div className="ph-state ph-state--error">{error}</div>
+          <div className="ph-state ph-state--error">
+            {error}
+            <div><RetryButton onRetry={() => loadPayments(1)} /></div>
+          </div>
         ) : payments.length === 0 ? (
           <div className="ph-state">No payments yet. Your payment history will appear here after your first booking.</div>
         ) : (

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import "./GOP.css";
+import { useToast } from "../../components/ui/Toast";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 // Replace this with the real asset path (or an imported file) later — same
 // asset the Manual Invoice page uses.
@@ -89,6 +91,8 @@ function formatDob(value) {
 }
 
 export default function GOP() {
+  const toast = useToast();
+  const confirm = useConfirm();
   const { admin } = useAdmin();
 
   const [caseType, setCaseType] = useState(DEFAULT_CASE_TYPE);
@@ -109,6 +113,9 @@ export default function GOP() {
   const [authorizedByName, setAuthorizedByName] = useState(admin?.name || "");
 
   const [submitting, setSubmitting] = useState(false);
+  // Synchronous guard: `submitting` state only updates on the next render, so
+  // a fast double-click could otherwise fire two requests (two GOP numbers).
+  const submitLock = useRef(false);
   const [error, setError] = useState("");
   const [created, setCreated] = useState(null);
 
@@ -215,6 +222,8 @@ export default function GOP() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (submitLock.current) return;
+    submitLock.current = true;
     setError("");
     setCreated(null);
     setSubmitting(true);
@@ -243,6 +252,7 @@ export default function GOP() {
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to generate the Guarantee of Payment.");
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -254,7 +264,7 @@ export default function GOP() {
       if (res.data?.url)
         window.open(res.data.url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      window.alert(
+      toast.error(
         err.response?.data?.msg || "Failed to generate download link.",
       );
     } finally {
@@ -262,14 +272,37 @@ export default function GOP() {
     }
   };
 
-  const resendEmail = async (id) => {
-    setResendingId(id);
+  // Emails the stored GOP PDF as-is — no new GOP, no PDF regeneration. GOPs
+  // are never emailed automatically at generation, so this is both the first
+  // send and any later resend. Asks for confirmation first because an email
+  // to an external provider can't be recalled. Returns true on success.
+  const sendEmail = async (gop) => {
+    if (resendingId) return false;
     setResendError("");
+
+    if (!String(gop.providerEmail || "").trim()) {
+      setResendError(
+        `GOP ${gop.gopNumber} has no provider email address, so it cannot be sent.`,
+      );
+      return false;
+    }
+
+    const ok = await confirm({
+      title: gop.emailed ? "Resend GOP email?" : "Send GOP email?",
+      message: `GOP ${gop.gopNumber} will be emailed to ${gop.providerEmail}.`,
+      confirmText: gop.emailed ? "Resend Email" : "Send Email",
+    });
+    if (!ok) return false;
+
+    setResendingId(gop._id);
     try {
-      await api.post(`/api/admin/gop/${id}/resend-email`);
+      await api.post(`/api/admin/gop/${gop._id}/resend-email`);
+      toast.success(`GOP ${gop.gopNumber} emailed to ${gop.providerEmail}.`);
       fetchHistory();
+      return true;
     } catch (err) {
-      setResendError(err.response?.data?.msg || "Failed to resend the email.");
+      setResendError(err.response?.data?.msg || "Failed to send the email.");
+      return false;
     } finally {
       setResendingId("");
     }
@@ -295,7 +328,7 @@ export default function GOP() {
           sections, and signature block, matching backend/utils/gopPdf.js. */}
       <form onSubmit={submit} className="gop-doc">
         <header className="gop-doc__masthead">
-          <img
+          <img decoding="async"
             className="gop-doc__logo"
             src={LOGO_SRC}
             alt="Humancare Connect"
@@ -565,11 +598,17 @@ export default function GOP() {
 
         <div className="gop-doc__actions">
           <small className="gop-hint">
-            The GOP is emailed to the service provider as soon as it is generated.
+            The GOP is generated only — it is not emailed automatically. Use
+            “Send Email” on the generated GOP to email it to the provider.
           </small>
-          <button className="gop-btn gop-btn--primary" type="submit" disabled={!canSubmit}>
+          <button
+            className="gop-btn gop-btn--primary"
+            type="submit"
+            disabled={!canSubmit}
+            aria-busy={submitting}
+          >
             {submitting && <span className="gop-spinner" aria-hidden="true" />}
-            {submitting ? "Generating…" : "Generate & Send GOP"}
+            {submitting ? "Generating…" : "Generate GOP"}
           </button>
         </div>
 
@@ -588,16 +627,37 @@ export default function GOP() {
             <strong className="gop-banner__title">GOP {created.gopNumber} created</strong>
             <span className="gop-banner__meta">
               {formatMoney(created.amountCents, created.currency)} ·{" "}
-              {created.emailed ? (
-                "emailed to the provider"
-              ) : (
-                <em className="gop-banner__warn">
-                  email failed — retry from the history below
-                </em>
-              )}
+              {created.emailed
+                ? "emailed to the provider"
+                : "not emailed — send it when you're ready"}
             </span>
           </div>
           <div className="gop-banner__actions">
+            {created._id && (
+              <button
+                className="gop-btn gop-btn--ghost gop-btn--sm gop-btn--accent"
+                type="button"
+                disabled={Boolean(resendingId)}
+                onClick={async () => {
+                  const ok = await sendEmail(created);
+                  if (ok)
+                    setCreated((prev) =>
+                      prev && prev._id === created._id
+                        ? { ...prev, emailed: true }
+                        : prev,
+                    );
+                }}
+              >
+                {resendingId === created._id && (
+                  <span className="gop-spinner gop-spinner--dark" aria-hidden="true" />
+                )}
+                {resendingId === created._id
+                  ? "Sending…"
+                  : created.emailed
+                    ? "Resend Email"
+                    : "Send Email"}
+              </button>
+            )}
             {created._id && (
               <button
                 className="gop-btn gop-btn--ghost gop-btn--sm"
@@ -752,26 +812,35 @@ export default function GOP() {
                           )}
                           Download
                         </button>
-                        {!gop.emailed && (
-                          <button
-                            className="gop-btn gop-btn--link gop-btn--accent"
-                            type="button"
-                            disabled={resendingId === gop._id}
-                            onClick={() => resendEmail(gop._id)}
-                          >
-                            {resendingId === gop._id && (
-                              <span className="gop-spinner" aria-hidden="true" />
-                            )}
-                            Resend Email
-                          </button>
-                        )}
-                      </div>
-                      {!gop.emailed && (
-                        <span
-                          className="gop-email-flag"
-                          title={gop.emailError || "Email not yet sent"}
+                        <button
+                          className="gop-btn gop-btn--link gop-btn--accent"
+                          type="button"
+                          disabled={Boolean(resendingId)}
+                          onClick={() => sendEmail(gop)}
                         >
-                          ⚠ not emailed
+                          {resendingId === gop._id && (
+                            <span className="gop-spinner" aria-hidden="true" />
+                          )}
+                          {gop.emailed ? "Resend Email" : "Send Email"}
+                        </button>
+                      </div>
+                      {gop.emailed ? (
+                        <span
+                          className="gop-email-flag gop-email-flag--sent"
+                          title={`Emailed to ${gop.providerEmail}`}
+                        >
+                          ✓ emailed {formatDate(gop.emailedAt)}
+                        </span>
+                      ) : gop.emailError ? (
+                        <span className="gop-email-flag" title={gop.emailError}>
+                          ⚠ email failed
+                        </span>
+                      ) : (
+                        <span
+                          className="gop-email-flag gop-email-flag--muted"
+                          title="Not emailed to the provider yet"
+                        >
+                          not emailed
                         </span>
                       )}
                     </td>

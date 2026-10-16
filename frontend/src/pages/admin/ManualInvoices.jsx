@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../api";
 import "./ManualInvoices.css";
+import { useToast } from "../../components/ui/Toast";
 
 // Replace this with the real asset path (or an imported file) later.
 const LOGO_SRC = "/humancare-logo.png";
@@ -112,6 +113,7 @@ function statusLabel(status) {
 }
 
 export default function ManualInvoices() {
+  const toast = useToast();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -394,7 +396,7 @@ export default function ManualInvoices() {
       if (res.data?.url)
         window.open(res.data.url, "_blank", "noopener,noreferrer");
     } catch (err) {
-      window.alert(
+      toast.error(
         err.response?.data?.msg || "Failed to generate download link.",
       );
     } finally {
@@ -486,7 +488,7 @@ export default function ManualInvoices() {
       <form onSubmit={submit} className="mi-doc">
         <header className="mi-doc__masthead">
           <div className="mi-doc__brand">
-            <img
+            <img decoding="async"
               className="mi-doc__logo"
               src={LOGO_SRC}
               alt="Humancare Connect"
@@ -594,21 +596,25 @@ export default function ManualInvoices() {
         </div>
 
         {/* Meta strip — the four printed columns above the item table. */}
-        <div className="mi-meta">
+        <div className={`mi-meta${isPaid ? " mi-meta--3" : ""}`}>
           <div className="mi-meta__cell">
             <span className="mi-meta__key">Issue Date</span>
             {/* Stamped server-side at generation time, so it is shown, not typed. */}
             <span className="mi-meta__value">{issueDateLabel}</span>
           </div>
-          <div className="mi-meta__cell">
-            <span className="mi-meta__key">Due Date</span>
-            <input
-              type="date"
-              className="mi-input mi-input--flush mi-input--accent"
-              value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-            />
-          </div>
+          {/* A receipt prints no Due Date; the value stays in state so
+              switching back to "Bill" restores it, and it is still saved. */}
+          {!isPaid && (
+            <div className="mi-meta__cell">
+              <span className="mi-meta__key">Due Date</span>
+              <input
+                type="date"
+                className="mi-input mi-input--flush mi-input--accent"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+              />
+            </div>
+          )}
           <div className="mi-meta__cell">
             <span className="mi-meta__key">Payment Terms</span>
             <select
@@ -751,10 +757,12 @@ export default function ManualInvoices() {
 
         <section className="mi-doc__block">
           <p className="mi-doc__caption">Terms</p>
-          <p className="mi-doc__terms">{termsLine}</p>
-          <p className="mi-doc__terms-pair">
-            <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
-          </p>
+          {!isPaid && <p className="mi-doc__terms">{termsLine}</p>}
+          {!isPaid && (
+            <p className="mi-doc__terms-pair">
+              <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
+            </p>
+          )}
           <p className="mi-doc__terms-pair">
             <strong>Payment Terms:</strong> {paymentTerms}
           </p>

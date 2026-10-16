@@ -68,12 +68,16 @@
   padding: 13px 24px;
   border-radius: 8px;
   text-decoration: none;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background var(--duration-fast) ease, transform var(--duration-fast) ease;
 }
 
 .nf-home-btn:hover {
   background: #1f3fb0;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .nf-home-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .nf-home-btn:focus-visible {
@@ -166,7 +170,7 @@
   padding: 12px 26px;
   border-radius: 8px;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: background var(--duration-fast) ease;
 }
 
 .nf-support-btn:hover {

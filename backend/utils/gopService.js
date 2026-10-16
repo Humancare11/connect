@@ -21,10 +21,10 @@ async function nextGopNumber() {
   return `${GOP_PREFIX}${seq}-${period}`;
 }
 
-// Creates a Guarantee of Payment, generates its PDF, stores it, and emails
-// it to the service provider. Runs synchronously as part of the admin's
-// explicit "Generate & Send" action, so failures here surface directly to
-// the request instead of being swallowed.
+// Creates a Guarantee of Payment, generates its PDF, and stores it. The
+// provider email is NOT sent here — sending is a separate, explicit action
+// (resendGopEmail). Runs synchronously as part of the admin's "Generate GOP"
+// action, so failures here surface directly to the request.
 async function createGop({
   createdBy,
   caseType,
@@ -100,34 +100,25 @@ async function createGop({
     createdBy,
   });
 
-  // The GOP record and its PDF already exist and are downloadable even if
-  // the email fails — record the failure rather than losing the GOP.
-  try {
-    await sendGopEmail(providerEmail, {
-      providerName,
-      gopNumber,
-      patientName,
-      caseType,
-      amountDisplay: formatAmount(amountCents, currency),
-      pdfBuffer,
-    });
-    gop.emailedAt = new Date();
-  } catch (err) {
-    console.error(`[gop] Failed to email GOP ${gopNumber} to ${providerEmail}:`, err.message);
-    gop.emailError = String(err.message || "Unknown error").slice(0, 500);
-  }
-  await gop.save();
-
+  // No email is sent automatically. The GOP and its PDF exist and are
+  // downloadable immediately; an admin emails it to the provider on demand
+  // via resendGopEmail ("Send Email" in the UI).
   return gop;
 }
 
 // Re-sends the GOP's email without touching the record itself — no new GOP
 // number, no PDF regeneration, no S3 write. Fetches the exact bytes already
-// stored at pdfKey (the same file the download endpoint serves). Used for a
-// GOP whose original send failed (see its emailError) or was never sent.
+// stored at pdfKey (the same file the download endpoint serves). This is both
+// the first send and any later resend.
 async function resendGopEmail({ gopId }) {
   const gop = await Gop.findById(gopId);
   if (!gop) return null;
+
+  if (!String(gop.providerEmail || "").trim()) {
+    const err = new Error("This GOP has no provider email address, so it cannot be sent.");
+    err.code = "NO_PROVIDER_EMAIL";
+    throw err;
+  }
 
   try {
     const pdfBuffer = await getUploadBuffer(gop.pdfKey);

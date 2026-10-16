@@ -12,8 +12,8 @@
   /* Clean glass — low-opacity tint, no heavy blur overriding the bg images */
   background: rgba(255, 255, 255, 0.9);
   ;
-  backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
   border-top: 1px solid rgba(255, 255, 255, 0.28);
 
   /* Single bright border on top, dim on sides */
@@ -94,8 +94,8 @@
 ══════════════════════════════════════ */
 .aa-tabs {
   background: rgba(200, 223, 255, 0.25);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(11, 87, 232, 0.15);
   border-radius: 50px;
   display: flex;
@@ -202,11 +202,11 @@
     box-shadow 0.32s ease;
 }
 
-.aa-card:hover {
-  transform: translateY(-4px);
-  box-shadow:
-    0 16px 40px rgba(8, 48, 142, 0.22),
-    0 2px 8px rgba(8, 48, 142, 0.10);
+@media (hover: hover) and (pointer: fine) {
+  .aa-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(8, 48, 142, 0.22), 0 2px 8px rgba(8, 48, 142, 0.10);
+  }
 }
 
 /* ── Background image ── */
@@ -224,8 +224,10 @@
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.aa-card:hover .aa-card-img img {
-  transform: scale(1.07);
+@media (hover: hover) and (pointer: fine) {
+  .aa-card:hover .aa-card-img img {
+    transform: scale(1.07);
+  }
 }
 
 .aa-card-gradient {
@@ -259,7 +261,11 @@
 
 .aa-card:hover .aa-card-body {
   opacity: 0;
-  transform: translateY(6px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .aa-card:hover .aa-card-body {
+    transform: translateY(6px);
+  }
 }
 
 .aa-card-glass {
@@ -275,8 +281,8 @@
 
   /* Frosted glass */
   background: rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
   border-top: 1px solid rgba(255, 255, 255, 0.28);
 
   /* Start hidden below the card */
@@ -288,15 +294,19 @@
 }
 
 .aa-card:hover .aa-card-glass {
-  transform: translateY(0);
   opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .aa-card:hover .aa-card-glass {
+    transform: translateY(0);
+  }
 }
 
 /* ══════════════════════════════════════
    CARD TEXT 
 ══════════════════════════════════════ */
 .aa-name {
-  font-family: var(--font-secondary);
+  font-family: var(--font-primary);
   font-size: 14.5px;
   font-weight: 800;
   color: #ffffff;
@@ -373,13 +383,19 @@ a.aa-card {
 }
 
 .aa-bottom-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(11, 87, 232, 0.32);
   gap: 14px;
 }
+@media (hover: hover) and (pointer: fine) {
+  .aa-bottom-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(11, 87, 232, 0.32);
+  }
+}
 
-.aa-bottom-btn:hover .aa-btn-arrow {
-  transform: translateX(3px);
+@media (hover: hover) and (pointer: fine) {
+  .aa-bottom-btn:hover .aa-btn-arrow {
+    transform: translateX(3px);
+  }
 }
 /* =========================
    TABLET (<=768px)
