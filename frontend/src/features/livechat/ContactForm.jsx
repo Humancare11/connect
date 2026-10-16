@@ -56,7 +56,7 @@ export default function ContactForm({ onSubmit, aiName, reply = false, showNotic
 
   return (
     <form className="lcw-cform" onSubmit={submit} noValidate>
-      <h3>{reply ? "Reply to Humancare" : "Welcome to Humancare 👋"}</h3>
+      <h3>{reply ? "Reply to Humancare Connect" : "Welcome to Humancare Connect 👋"}</h3>
       <p>
         {reply
           ? "Please share a few details so we can pass your reply on. You'll then see the message from our team."

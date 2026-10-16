@@ -52,7 +52,7 @@ describe("prompt: first and second 'could not answer'", () => {
     const safety = buildSystemPrompt(DEFAULT_SETTINGS).split("\n").find((l) => l.startsWith("SAFETY"));
     assert.match(safety, /give NO medical information or advice/);
     assert.match(safety, /Never diagnose; never suggest or discuss treatment; never name, recommend or discuss medications, doses or interactions; never interpret symptoms or test results; never give "general information"/);
-    assert.match(safety, /can't give medical advice and that a licensed Humancare doctor can help/);
+    assert.match(safety, /can't give medical advice and that a licensed Humancare Connect doctor can help/);
     assert.doesNotMatch(safety, /general information, not medical advice/);
   });
 
@@ -71,7 +71,7 @@ describe("prompt: first and second 'could not answer'", () => {
     for (const q of ["what causes migraines?", "can I take ibuprofen", "what dose of amoxicillin", "do I have diabetes?", "what does my blood test result mean?", "sore throat"]) {
       assert.ok(examples.includes(q), q);
     }
-    assert.ok(examples.includes("Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare doctor can help you."));
+    assert.ok(examples.includes("Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
     // the old "answer it as general information" examples are gone
     assert.ok(!lines.some((l) => l.includes('"what causes migraines?" -> false, none')));
   });
@@ -163,7 +163,7 @@ describe("live chat: handoff reasons end to end (scripted AI)", () => {
     });
   }
 
-  test("an unanswered Humancare question hands over only on the second miss in a row", async () => {
+  test("an unanswered Humancare Connect question hands over only on the second miss in a row", async () => {
     const chat = await openChat();
     await say(chat, "Do you cover X?", ai({ reply: "I am not sure.", handoff: true, handoffReason: "unanswered" }));
     assert.equal((await conv(chat)).mode, "ai", "one 'not sure' is not enough");

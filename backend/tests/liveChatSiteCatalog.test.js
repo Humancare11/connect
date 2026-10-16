@@ -167,9 +167,9 @@ describe("live chat: the links of a reply (arrange)", () => {
     assert.equal(sp.pagesForPrompt({ allowContent: true }).some((p) => sp.isContent(p.url)), true);
   });
 
-  test("invented urls are dropped; a non-medical reply keeps the model's order and gets no extra booking card", () => {
-    assert.deepEqual(urls(sp.arrange([{ url: "https://evil.example" }, { url: "/telemedicine-cost-usa" }, { url: "/made-up" }], { medical: false })), ["/telemedicine-cost-usa"]);
-    assert.deepEqual(urls(sp.arrange([{ url: "/doctors-note" }, { url: "/appointment-booking" }], { medical: false })), ["/doctors-note", "/appointment-booking"]);
+  test("invented urls are dropped; a service reply is ordered page, Pricing, then Book", () => {
+    assert.deepEqual(urls(sp.arrange([{ url: "https://evil.example" }, { url: "/telemedicine-cost-usa" }, { url: "/made-up" }], { medical: false })), ["/telemedicine-cost-usa", "/appointment-booking"]);
+    assert.deepEqual(urls(sp.arrange([{ url: "/appointment-booking" }, { url: "/doctors-note" }], { medical: false })), ["/doctors-note", "/appointment-booking"]);
   });
 
   test("at most 3 cards, and the booking card is never the one dropped", () => {
@@ -202,10 +202,10 @@ describe("live chat: warmer fixed strings and replies still pass the reply filte
 
   test("the opener, the refusal and the page name are not blocked; advice still is", () => {
     for (const reply of [
-      "Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare doctor can help you. Our Joint Pain page is below.",
-      "Sorry you're worried about this. I can't give medical advice, but a licensed Humancare doctor can help you.",
-      "Lamento que tenga dolor de cabeza. No puedo dar consejo médico, pero un médico de Humancare puede ayudarle.",
-      "सिर दर्द के बारे में सुनकर दुख हुआ। मैं चिकित्सीय सलाह नहीं दे सकता, लेकिन Humancare के डॉक्टर मदद कर सकते हैं।",
+      "Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you. Our Joint Pain page is below.",
+      "Sorry you're worried about this. I can't give medical advice, but a licensed Humancare Connect doctor can help you.",
+      "Lamento que tenga dolor de cabeza. No puedo dar consejo médico, pero un médico de Humancare Connect puede ayudarle.",
+      "सिर दर्द के बारे में सुनकर दुख हुआ। मैं चिकित्सीय सलाह नहीं दे सकता, लेकिन Humancare Connect के डॉक्टर मदद कर सकते हैं।",
       "Sorry you're dealing with this. Our Type 2 Diabetes page is below.",
     ]) {
       assert.equal(safety.checkReply(reply).blocked, false, reply);
@@ -242,20 +242,20 @@ describe("live chat: end to end, a medical message gets the matching page card a
   const lastAi = async (socket) => (await lc.call(socket, "chat:resume")).conversation.messages.filter((m) => m.sender === "ai").at(-1);
 
   test("leg pain: the model named no page, the server adds the best match above the booking card", async () => {
-    lc.ai.queue.push(reply("Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare doctor can help you."));
+    lc.ai.queue.push(reply("Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "hi ai please suggest me something i have pain in my legs" });
     const ai = await lastAi(socket);
     assert.equal(ai.text.startsWith("Sorry you're dealing with leg pain."), true);
     assert.deepEqual(ai.links.map((l) => l.url), ["/joint-pain", "/appointment-booking"]);
-    assert.deepEqual(lc.ai.calls[0].pageHint, ["Joint Pain", "Knee Pain", "Orthopedics"]);
+    assert.deepEqual(lc.ai.calls[0].pageHint, ["Joint Pain"], "one clearly matching page");
     assert.ok(lc.ai.calls[0].pages.length > 100);
     socket.close();
   });
 
   test("setting OFF: Book only, and the model is not shown health-topic pages", async () => {
     await lc.setSettings({ aiMayLinkConditionPages: false });
-    lc.ai.queue.push(reply("Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare doctor can help you.", { links: [{ title: "Joint Pain", url: "/joint-pain" }] }));
+    lc.ai.queue.push(reply("Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you.", { links: [{ title: "Joint Pain", url: "/joint-pain" }] }));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "pain in my legs" });
     assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/appointment-booking"]);
@@ -264,11 +264,11 @@ describe("live chat: end to end, a medical message gets the matching page card a
     socket.close();
   });
 
-  test("a price question gets no health-topic page and no forced booking card", async () => {
+  test("a price question gets no health-topic page, and Pricing then Book", async () => {
     lc.ai.queue.push(reply("A general consultation is $49.", { topic: "pricing", links: [{ title: "Pricing", url: "/telemedicine-cost-usa" }] }));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "how much is a consultation?" });
-    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/telemedicine-cost-usa"]);
+    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/telemedicine-cost-usa", "/appointment-booking"]);
     socket.close();
   });
 
@@ -298,9 +298,9 @@ describe("live chat: the refusal wording never says 'video'", () => {
     for (const kind of ["fallback", "fallbackMedication"]) {
       for (const lang of ["en", "hi", "es"]) assert.doesNotMatch(safety.FIXED_TEXT[kind][lang], VIDEO, `${kind}.${lang}`);
     }
-    assert.ok(safety.FIXED_TEXT.fallback.en.includes("I can't give medical advice, but a licensed Humancare doctor can help you."));
-    assert.ok(safety.FIXED_TEXT.fallback.es.includes("No puedo dar consejo médico, pero un médico con licencia de Humancare puede ayudarle."));
-    assert.ok(safety.FIXED_TEXT.fallback.hi.includes("चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं।"));
+    assert.ok(safety.FIXED_TEXT.fallback.en.includes("I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
+    assert.ok(safety.FIXED_TEXT.fallback.es.includes("No puedo dar consejo médico, pero un médico con licencia de Humancare Connect puede ayudarle."));
+    assert.ok(safety.FIXED_TEXT.fallback.hi.includes("चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare Connect के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं।"));
   });
 
   test("the prompt's refusal lines (SAFETY, MEDICAL REPLY SHAPE, the medical examples) never say video; the service facts may", () => {
@@ -310,8 +310,8 @@ describe("live chat: the refusal wording never says 'video'", () => {
       assert.equal(refusal.length, 4);
       for (const line of refusal) assert.doesNotMatch(line, VIDEO, line.slice(0, 40));
       const shape = lines.find((l) => l.startsWith("MEDICAL REPLY SHAPE"));
-      assert.ok(shape.includes("I can't give medical advice, but a licensed Humancare doctor can help you."));
-      assert.ok(shape.includes("medical salah dena mere liye sambhav nahi hai, lekin Humancare ke licensed doctor madad kar sakte hain"));
+      assert.ok(shape.includes("I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
+      assert.ok(shape.includes("medical salah dena mere liye sambhav nahi hai, lekin Humancare Connect ke licensed doctor madad kar sakte hain"));
     }
   });
 });

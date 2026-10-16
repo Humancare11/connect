@@ -15,8 +15,8 @@
 //
 // Prompts are synthetic. No patient data is used and nothing is stored.
 //
-//   npm run livechat:eval -- --show   prints the reply and the button cards (title + path) the patient would get for six
-//                                     sample messages, using the live page list from the site's database when it is safe
+//   npm run livechat:eval -- --show   prints the reply and the button cards (title + path) the patient would get for sample
+//                                     messages, using the live page list from the site's database when it is safe
 //                                     to read it (see loadPageList), else the static list. Read-only: it never writes.
 const path = require("path");
 require("dotenv").config({ path: path.resolve(__dirname, "..", ".env") });
@@ -77,12 +77,15 @@ const PROMPTS = [
 
 // --show: messages whose reply and buttons are printed in full.
 const SHOW_PROMPTS = [
-  "hi ai please suggest me something i have pain in my legs",
-  "sar dard ki dawai",
-  "what dose of paracetamol",
-  "do I have diabetes",
-  "sugar badh gayi hai",
-  "how much is a consultation?",
+  "leg pain",
+  "back pain",
+  "hair fall",
+  "sleep problems",
+  "stress",
+  "I need a sick note",
+  "price?",
+  "who are you?",
+  "what is the capital of France?",
 ];
 
 // The page list the chat would use. Reads the appointment-tree collections ONLY (find, no writes, no index or collection

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import GreetingBubble from "./GreetingBubble";
 import { DEFAULT_AI_NAME } from "./aiName";
+import { buildTimeline } from "./timeline";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -75,7 +76,7 @@ function Message({ message, aiName, onNavigate, onOpenFile }) {
     <div className="lcw-bot">
       <span className="lcw-av lcw-av--sm">{isAgent ? initialsOf(message.agentName) : "HC"}</span>
       <div className="lcw-bw">
-        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare support" : aiName}</span>
+        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare Connect support" : aiName}</span>
         <div className="lcw-msg lcw-msg--left">
           {message.file ? (
             <span className="lcw-file">
@@ -144,7 +145,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   // Nothing here ever says the team is offline.
   let status = "Online";
   if (waiting) status = conversation.emailFollowUp ? "Message received" : "Connecting to our team";
-  if (withAgent) status = "Live agent · Humancare support";
+  if (withAgent) status = "Live agent · Humancare Connect support";
 
   // On a phone the window covers the page: after a page link it folds away so the patient can read the page.
   const afterNavigate = () => {
@@ -157,13 +158,13 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   return (
     <div className="lcw-root">
       {open && (
-        <section className="lcw-window" role="dialog" aria-label="Humancare chat" data-lenis-prevent>
+        <section className="lcw-window" role="dialog" aria-label="Humancare Connect chat" data-lenis-prevent>
           <header className="lcw-head">
             <div className="lcw-av lcw-av--lg">
               {withAgent ? initialsOf(agentName) : "HC"}
             </div>
             <div className="lcw-who">
-              <strong>{withAgent ? agentName || "Humancare support" : aiName}</strong>
+              <strong>{withAgent ? agentName || "Humancare Connect support" : aiName}</strong>
               <small>
                 <span title={status}>{status}</span>
               </small>
@@ -206,22 +207,23 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
             {phase === "chat" && !conversation && !limitReached && <div className="lcw-sys">Starting your chat…</div>}
             {phase === "chat" && conversation && (
               <>
-                {conversation.messages.map((message) => (
-                  <Message key={message.id} message={message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
-                ))}
-                {chat.outbox.map((m) =>
-                  m.status === "failed" ? (
-                    <button key={m.id} type="button" className="lcw-msg lcw-msg--right lcw-msg--failed" onClick={() => chat.retrySend(m.id)}>
+                {buildTimeline(conversation.messages, chat.outbox).map((item) => {
+                  if (item.kind === "message") {
+                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />;
+                  }
+                  const m = item.entry;
+                  return m.status === "failed" ? (
+                    <button key={item.key} type="button" className="lcw-msg lcw-msg--right lcw-msg--failed" onClick={() => chat.retrySend(m.id)}>
                       {m.text}
                       <span className="lcw-meta">Not sent – tap to retry</span>
                     </button>
                   ) : (
-                    <div key={m.id} className="lcw-msg lcw-msg--right lcw-msg--sending">
+                    <div key={item.key} className="lcw-msg lcw-msg--right lcw-msg--sending">
                       {m.text}
                       <span className="lcw-meta">Sending…</span>
                     </div>
-                  )
-                )}
+                  );
+                })}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
                 {ended && !canContinue && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
                 {ended && (

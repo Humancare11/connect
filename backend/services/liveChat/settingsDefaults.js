@@ -56,7 +56,7 @@ const PRICES = [
 
 // Canned replies for agents (seeded once; {agentName} is replaced with the agent's display name when inserted).
 const CANNED_REPLIES = [
-  { title: "Greeting", text: "Hi, I'm {agentName} from Humancare support. How can I help?" },
+  { title: "Greeting", text: "Hi, I'm {agentName} from Humancare Connect support. How can I help?" },
   { title: "Slot booked", text: "I've booked a General consultation for you today at 6:00 PM. You'll get the video link by email." },
   { title: "Payment confirmed", text: "Your payment went through. A confirmation email will reach you within 5 minutes." },
   { title: "Prescription re-sent", text: "I've re-sent your prescription to your pharmacy. It should arrive within 30 minutes." },
