@@ -910,8 +910,15 @@ const DeleteAccount = lazy(
 // New Privcay Policy Pages End
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useLayoutEffect(() => {
+    // A link to an anchor that is already on the page (for example /privacy-policy#website-chat in the prerendered
+    // HTML) keeps the browser's position; pages that mount the anchor later scroll to it themselves.
+    if (hash.length > 1) {
+      let id = hash.slice(1);
+      try { id = decodeURIComponent(id); } catch { /* keep the raw id */ }
+      if (document.getElementById(id)) return;
+    }
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
