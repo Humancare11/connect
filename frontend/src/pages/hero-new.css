@@ -249,8 +249,12 @@ body {
   background: transparent;
 }
 .hce-search input:focus-visible {
-  outline: 2px solid var(--primary, #2563eb);
-  outline-offset: 2px;
+  /* Focus is shown on the rounded container (.hce-search:has(input:focus-visible)), not as a box around the input. */
+  outline: none;
+}
+.hce-search:has(input:focus-visible) {
+  outline: 2px solid #1e3457;
+  outline-offset: 3px;
 }
 .hce-search input::placeholder {
   color: #9ca3af;

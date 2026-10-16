@@ -100,7 +100,7 @@
 /* ── Stats Row ── */
 .da-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 24px;
 }
@@ -282,7 +282,28 @@
 
 .da-table {
   width: 100%;
+  min-width: 960px;
+  table-layout: fixed;
   border-collapse: collapse;
+}
+
+/* Fixed column shares (the table only renders from 1280px, beside the 248px sidebar):
+   long names / problems wrap inside their column instead of widening the table. */
+.da-table th:nth-child(1) { width: 16%; }
+.da-table th:nth-child(2) { width: 12%; }
+.da-table th:nth-child(3) { width: 9%; }
+.da-table th:nth-child(4) { width: 17%; }
+.da-table th:nth-child(5) { width: 12%; }
+.da-table th:nth-child(6) { width: 34%; }
+
+.da-patient-name,
+.da-problem {
+  overflow-wrap: anywhere;
+}
+
+/* Appointment time shown inside the Date cell on phones only. */
+.da-time-inline {
+  display: none;
 }
 
 .da-table thead tr {
@@ -291,7 +312,7 @@
 }
 
 .da-table th {
-  padding: 12px 20px;
+  padding: 12px 12px;
   text-align: left;
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -322,13 +343,14 @@
 }
 
 .da-table td {
-  padding: 14px 20px;
+  padding: 14px 12px;
   font-size: 13.5px;
   color: var(--text);
   vertical-align: middle;
 }
 
 .da-mono {
+  white-space: nowrap;
   font-size: 13px !important;
   color: var(--text-2) !important;
 }
@@ -336,10 +358,12 @@
 .da-problem {
   color: var(--text-2) !important;
   font-style: italic;
-  max-width: 180px;
+  max-width: 200px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* ── Patient cell ── */
@@ -416,6 +440,27 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Two equal columns: Join + Complete on the first row, Prescription + Certificate below. */
+.da-action-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 300px;
+}
+
+.da-action-buttons .da-btn {
+  justify-content: center;
+  min-height: 36px;
+}
+
+.da-btn svg {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
 }
 
 /* ── Buttons ── */
@@ -495,6 +540,15 @@
   padding: 7px 10px;
 }
 
+.da-expand-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 50%;
+}
+
 .da-btn--ghost:hover,
 .da-btn--ghost-on {
   background: var(--blue-soft);
@@ -556,6 +610,7 @@
   font-size: 13.5px;
   font-weight: 500;
   color: var(--text);
+  overflow-wrap: anywhere;
 }
 
 /* ── Medical Reports ── */
@@ -737,28 +792,6 @@
     display: none;
   }
 
-  /* Make table horizontally scrollable */
-  .da-table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .da-table {
-    min-width: 600px;
-  }
-
-  .da-table th,
-  .da-table td {
-    padding: 12px 12px;
-  }
-
-  .da-mono {
-    white-space: nowrap;
-  }
-
-  .da-problem {
-    max-width: 120px;
-  }
 }
 
 /* Mobile large (640px) */
@@ -784,13 +817,6 @@
   .da-panel-top {
     padding: 14px 16px;
   }
-
-  .da-table th:nth-child(3),
-  .da-table td:nth-child(3),
-  .da-table th:nth-child(4),
-  .da-table td:nth-child(4) {
-    display: none;
-  }
 }
 
 /* Mobile portrait (480px) */
@@ -808,20 +834,8 @@
     font-size: 11px;
   }
 
-  .da-table th,
-  .da-table td {
-    padding: 10px 8px;
-    font-size: 12.5px;
-  }
-
   .da-greeting {
     font-size: 18px;
-  }
-
-  /* Stack action buttons vertically */
-  .da-action-group {
-    flex-direction: column;
-    gap: 4px;
   }
 
   .da-header {
@@ -857,15 +871,6 @@
     padding: 12px;
   }
 
-  .da-table {
-    min-width: 480px;
-  }
-
-  .da-table th,
-  .da-table td {
-    padding: 8px 6px;
-    font-size: 11.5px;
-  }
 }
 
 /* Extra small (320px) */
@@ -874,16 +879,13 @@
     grid-template-columns: 1fr;
   }
 
-  .da-table {
-    min-width: 420px;
-  }
 }
 
 /* Prescription / Certificate shortcuts and the "reopened" note */
 .da-btn--rx {
   background: #eef6ff;
   border: 1px solid #b6d4f5;
-  color: #0a3a6b;
+  color: #1d5fb8;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
@@ -915,5 +917,177 @@
 
 .da-patient-name,
 .da-problem {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.da-patient-name {
+  min-width: 0;
+  max-width: 220px;
+}
+
+/* Narrow desktop / landscape tablet: 3 + 2 cards so the five stats stay balanced. */
+@media (min-width: 901px) and (max-width: 1100px) {
+  .da-stats {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .da-stat {
+    grid-column: span 2;
+  }
+
+  .da-stat:nth-child(n + 4) {
+    grid-column: span 3;
+  }
+}
+
+/* ── Below 1280px the 6-column table no longer fits beside the sidebar:
+   each appointment row becomes a card (time folds into the date line). ── */
+@media (max-width: 1279px) {
+  .da-table th:nth-child(3),
+  .da-table .da-row > td:nth-child(3) {
+    display: none;
+  }
+
+  /* Positioned + clipped so the visually-hidden thead can't add page-level overflow. */
+  .da-table-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .da-table {
+    display: block;
+    min-width: 0;
+  }
+
+  /* Headers stay available to assistive tech but are not drawn. */
+  .da-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .da-table tbody {
+    display: block;
+  }
+
+  .da-table .da-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 14px 16px;
+  }
+
+  .da-table .da-row > td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+  }
+
+  .da-table .da-row > td:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .da-table .da-row > td:nth-child(5) {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .da-table .da-row > td:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .da-table .da-row > td:nth-child(4) {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    max-width: none;
+    display: block;
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    overflow: visible;
+    font-style: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* The actions cell dissolves so its children join the card grid:
+     expand control beside the date, buttons in a full-width 2-column grid. */
+  .da-table .da-row > td:nth-child(6) {
+    display: contents;
+  }
+
+  .da-action-group {
+    display: contents;
+  }
+
+  .da-expand-btn {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    align-self: center;
+  }
+
+  .da-action-buttons {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 640px;
+  }
+
+  .da-action-buttons .da-btn {
+    min-height: 44px;
+    padding: 8px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .da-patient,
+  .da-patient > * {
+    min-width: 0;
+  }
+
+  .da-patient-name {
+    max-width: none;
+  }
+
+  .da-time-inline {
+    display: inline;
+  }
+
+  .da-time-inline::before {
+    content: " \00b7  ";
+  }
+
+  .da-table .da-expand-row,
+  .da-table .da-expand-row > td {
+    display: block;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .da-action-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .da-table .da-row {
+    padding: 12px 10px;
+  }
+
+  .da-action-buttons {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .da-action-buttons .da-btn {
+    font-size: 12.5px;
+    gap: 4px;
+  }
 }
