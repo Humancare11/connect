@@ -36,3 +36,12 @@ test("AI and agent lists show Active groups plus 'Recent (temp archive)' from th
   assert.ok(list.includes('filter((r) => r.bucket !== "archive")'));
   assert.ok(!/\.online\b/.test(list.slice(list.indexOf("const groupsFor"), list.indexOf("function Item"))), "online is not a filter");
 });
+
+test("a bad date never hides a chat, and the list uses the server's clock", () => {
+  assert.equal(bucketOf({ mode: "ai", lastMessageAt: "not a date" }, NOW), "active");
+  assert.equal(bucketOf(row(MIN), Number.NaN), "active");
+  const list = fs.readFileSync(path.join(src, "pages/admin/livechat/ChatList.jsx"), "utf8");
+  assert.ok(list.includes("Date.now() + clockOffset"));
+  const ws = fs.readFileSync(path.join(src, "pages/admin/livechat/ChatWorkspace.jsx"), "utf8");
+  assert.ok(ws.includes("clockOffset={clockOffset}"));
+});

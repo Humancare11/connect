@@ -12,6 +12,7 @@ export const activityAt = (row) => new Date(row.lastMessageAt || row.startedAt |
 // "active" | "recent" | "archive". A chat waiting in the Queue is always active.
 export function bucketOf(row, nowMs) {
   const at = activityAt(row);
+  if (!Number.isFinite(at) || !Number.isFinite(nowMs)) return "active"; // never hide a chat because of a bad date
   if (nowMs - at < ACTIVE_WINDOW_MS) return "active";
   if (row.mode === "queue") return "active";
   return at >= istDayStart(nowMs) ? "recent" : "archive";
