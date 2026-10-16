@@ -50,8 +50,8 @@
 }
 .em-search input { border: 0; background: transparent; outline: 0; flex: 1; min-width: 0; }
 .em-search input:focus-visible {
-  outline: 2px solid var(--primary, #2563eb);
-  outline-offset: 2px;
+  /* Focus is shown on the rounded container (.em-search:focus-within), not as a box around the input. */
+  outline: none;
 }
 .em-search:focus-within { box-shadow: 0 0 0 2px var(--em-accent-soft); border-color: var(--em-accent); }
 .em-mbsw { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
