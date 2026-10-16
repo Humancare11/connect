@@ -12,6 +12,10 @@ const modelReply = (reply, over = {}) => ({
   ok: true, reply, handoff: false, handoffReason: "none", offTopic: false, topic: "other", links: [],
   language: { code: "en", name: "English" }, usage: USAGE, ...over,
 });
+// Waits (up to 3 s) until the condition holds: the background turn starts a moment after the ack.
+const until = async (condition) => {
+  for (let i = 0; i < 60 && !condition(); i += 1) await sleep(50);
+};
 const held = () => {
   let release;
   const promise = new Promise((resolve) => (release = resolve));
@@ -23,7 +27,7 @@ describe("live chat: the AI turn runs in the background and always ends with a r
   before(async () => {
     lc = await startChatServer({
       env: { LIVECHAT_IP_DAILY_CHAT_LIMIT: "1000", LIVECHAT_MESSAGES_PER_MINUTE: "100" },
-      mount: { aiDeadlineMs: 300 },
+      mount: { aiDeadlineMs: 1500 }, // long enough that a busy machine does not trip it in the tests that hold the model back
     });
   });
   after(async () => {
@@ -57,7 +61,7 @@ describe("live chat: the AI turn runs in the background and always ends with a r
 
     const ack = await lc.raw(chat.socket, "chat:message", { text: "How much is a consultation?" });
     assert.deepEqual(ack, { ok: true }, "the ack carries no AI data");
-    await sleep(50);
+    await until(() => lc.ai.calls.length === 1);
     assert.equal(lc.ai.calls.length, 1, "the AI turn is running");
     assert.deepEqual(seen, ["patient:How much is a consultation?"], "no AI reply yet, the patient's message is already shown");
 
@@ -78,6 +82,7 @@ describe("live chat: the AI turn runs in the background and always ends with a r
     await lc.raw(chat.socket, "chat:message", { text: "first question" });
     await lc.raw(chat.socket, "chat:message", { text: "second question" });
     await lc.raw(chat.socket, "chat:message", { text: "third question" });
+    await until(() => lc.ai.calls.length === 1);
     await sleep(100);
     assert.equal(lc.ai.calls.length, 1, "no second turn while the first one runs");
 
