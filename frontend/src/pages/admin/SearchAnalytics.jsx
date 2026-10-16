@@ -9,16 +9,19 @@ import {
   EMPTY_RESULT,
   OUTCOME_FILTERS,
   OUTCOME_HELP,
+  PRIVACY_CHECK_INCOMPLETE_HELP,
   buildTermsParams,
   buildDailyTermsParams,
   deriveAnalyticsState,
   failed,
+  privacyCheckIncomplete,
   succeeded,
+  trendActionFor,
 } from "./analyticsState";
 import "./SearchAnalytics.css";
 
 // Read-only view over /api/admin/search-analytics. The API returns aggregates
-// only (terms with at least the minimum interaction count); every value below is
+// only (privacy-filtered search terms and counts); every value below is
 // rendered as plain text by React, never as HTML.
 
 const WINDOWS = [7, 30, 90];
@@ -94,6 +97,11 @@ function Notice({ loading, error }) {
   return null;
 }
 
+// Shown when the API could not finish its read-time privacy check: term-level results are hidden for now.
+export function PrivacyCheckNotice({ meta }) {
+  return privacyCheckIncomplete(meta) ? <p className="sa-hint" role="status">{PRIVACY_CHECK_INCOMPLETE_HELP}</p> : null;
+}
+
 function Pager({ pagination, onPage }) {
   if (!pagination || pagination.total <= pagination.limit) return null;
   const { limit, offset, total, hasMore } = pagination;
@@ -149,6 +157,7 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
       {aiStatus === "unavailable" && <p className="sa-hint" role="status">{AI_UNAVAILABLE_HELP}</p>}
       <p className="sa-hint"><strong>Privacy protection:</strong> {TOP_TERMS_PRIVACY_HELP}</p>
       <Notice loading={loading} error={error} />
+      <PrivacyCheckNotice meta={body?.meta} />
       {!loading && (!error || body) && (
         <>
           <div className="sa-table-wrap">
@@ -168,10 +177,17 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
                     <td>{fmt(row.outcomes.noResults)}</td>
                     <td>{row.lastSeen || "-"}</td>
                     <td>{GAP_LABELS[row.coverage] || (row.coverage ? row.coverage.replace(/_/g, " ") : "-")}</td>
-                    <td><button type="button" className="sa-link" onClick={() => onSelectTerm(row.termKey, row.term)}>Trend</button></td>
+                    <td>
+                      {(() => {
+                        const trend = trendActionFor(row);
+                        return trend.available
+                          ? <button type="button" className="sa-link" onClick={() => onSelectTerm(row.termKey, row.term)}>{trend.label}</button>
+                          : <span className="sa-trend-none" title={trend.title}>{trend.label}</span>;
+                      })()}
+                    </td>
                   </tr>
                 ))}
-                {items.length === 0 && <tr><td colSpan={8} className="sa-empty">No terms meet the minimum count for this period.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr><td colSpan={8} className="sa-empty">No search terms for this period yet. A term can appear after a single search.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -192,7 +208,6 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
   useReportBusy(refreshing, onBusy);
   const items = body?.data?.items || [];
   const other = body?.data?.other || [];
-  const catalogDown = body?.meta?.catalogTermsAvailable === false;
 
   return (
     <>
@@ -216,8 +231,8 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
         {day && <button type="button" className="sa-link" onClick={() => { setDay(""); setOffset(0); }}>All days in window</button>}
       </div>
       <p className="sa-hint"><strong>Privacy protection:</strong> {DAILY_TERMS_PRIVACY_HELP}</p>
-      {catalogDown && <p className="sa-hint" role="status">The medical catalog could not be read, so every term currently needs at least 3 searches in a UTC day to be listed.</p>}
       <Notice loading={loading} error={error} />
+      <PrivacyCheckNotice meta={body?.meta} />
       {!loading && (!error || body) && (
         <>
           <div className="sa-table-wrap">
@@ -234,7 +249,7 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
                     <td>{fmt(row.interactions)}</td>
                   </tr>
                 ))}
-                {items.length === 0 && <tr><td colSpan={3} className="sa-empty">No listed terms for this period.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr><td colSpan={3} className="sa-empty">No listed terms for this period.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -244,7 +259,7 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
               <table className="sa-table">
                 <caption className="sa-sr">Searches not listed individually, by UTC date</caption>
                 <thead>
-                  <tr><th scope="col">Date (UTC)</th><th scope="col">Other (not listed individually)</th></tr>
+                  <tr><th scope="col">Date (UTC)</th><th scope="col">Other (not shown as terms)</th></tr>
                 </thead>
                 <tbody>
                   {other.map((row) => (
@@ -269,6 +284,7 @@ function GapsTab({ range, onSelectTerm, refreshKey, onBusy }) {
   return (
     <>
       <Notice loading={loading} error={error} />
+      <PrivacyCheckNotice meta={body?.meta} />
       {!loading && (!error || body) && (
         <>
           <div className="sa-table-wrap">
@@ -291,7 +307,7 @@ function GapsTab({ range, onSelectTerm, refreshKey, onBusy }) {
                     <td><button type="button" className="sa-link" onClick={() => onSelectTerm(row.termKey, row.term)}>Trend</button></td>
                   </tr>
                 ))}
-                {items.length === 0 && <tr><td colSpan={8} className="sa-empty">No content opportunities found for this period.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr><td colSpan={8} className="sa-empty">No content opportunities found for this period.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -376,7 +392,7 @@ export default function SearchAnalytics() {
         <span className="adp-eyebrow">Content opportunities</span>
         <h1 className="adp-title">Search Analytics</h1>
         <p className="adp-sub">
-          Aggregated, privacy-filtered patient search activity. Terms with fewer than {summary.body?.meta?.kThreshold ?? 3} searches in a UTC day are never listed.
+          Aggregated, privacy-filtered patient search activity. A search term can appear after a single search; searches the privacy filters reject are never recorded or shown.
         </p>
       </div>
 
@@ -404,6 +420,7 @@ export default function SearchAnalytics() {
       </div>
 
       <Notice loading={summary.loading} error={summary.error} />
+      <PrivacyCheckNotice meta={summary.body?.meta} />
       {totals && (
         <div className="adp-stats">
           <div className="adp-stat adp-stat--blue"><span className="adp-stat-value">{fmt(totals.interactions)}</span><span className="adp-stat-label">Searches</span></div>

@@ -120,3 +120,5 @@
   white-space: nowrap;
   border: 0;
 }
+
+.sa-trend-none { color: #6b7ca3; font-size: 13px; cursor: help; }

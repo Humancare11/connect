@@ -25,9 +25,19 @@ export const AI_STATUS_FILTERS = Object.freeze([
 export const OUTCOME_HELP =
   "Shows searches where no relevant dedicated page was found. This does not mean the AI service failed.";
 export const TOP_TERMS_PRIVACY_HELP =
-  "Search terms appear here only after at least 3 searches within a single UTC day; searches on different days are not combined. A lower-volume term is still recorded and counted in the Searches total above, but is left out of this table.";
+  "A search term can appear here after a single search, once it has passed the privacy filters. Searches the filters reject (for example ones containing contact details or personal identifiers) are never recorded, and a stored term is checked again before it is shown. Equivalent spellings (such as singular and plural) are counted together. A term's Trend needs at least 3 searches on a single UTC day.";
 export const DAILY_TERMS_PRIVACY_HELP =
-  "Dates are UTC days. A term is listed when it exactly matches a medical catalog name or alias (even if searched once), or when it was searched at least 3 times that UTC day. Other free-text searches are never listed individually; they are only counted as \"Other\" for the day.";
+  "Dates are UTC days. A search term can be listed from its first search on a day, once it has passed the privacy filters. Searches the filters reject are never recorded, and a stored term that no longer passes them is only counted under \"Other\" for that day, never shown.";
+export const TREND_UNAVAILABLE_HELP =
+  "Not enough data for a trend: this term has not been searched 3 times on any single UTC day, and trends only cover such days.";
+
+// What the Trend column shows for a Top terms row. The API sets trendAvailable=false for a catalog term that is
+// listed from its first search but has no day with enough searches; an absent flag means "available".
+export function trendActionFor(row) {
+  if (row && row.trendAvailable === false) return { available: false, label: "Not enough data", title: TREND_UNAVAILABLE_HELP };
+  return { available: true, label: "Trend", title: "" };
+}
+
 export const AI_UNAVAILABLE_HELP ="Combines AI failures and skipped AI requests; it does not distinguish between them.";
 
 // Query for GET /terms. outcome / aiStatus are sent only when a specific value
@@ -76,3 +86,9 @@ export const failed = (prev, id, message, refreshKey) => ({
   body: prev.id === id ? prev.body : null,
   key: refreshKey,
 });
+
+export const PRIVACY_CHECK_INCOMPLETE_HELP =
+  "Some term-level results are temporarily hidden because the privacy checks could not be completed. This does not mean there were no searches: totals are still counted. Please try Refresh again in a few minutes.";
+
+// True when the API says it could not finish the read-time privacy check (meta.termsCheckComplete === false).
+export const privacyCheckIncomplete = (meta) => meta?.termsCheckComplete === false;

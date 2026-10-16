@@ -12,9 +12,7 @@
 // database detail). Failures are logged as an endpoint name and an
 // error NAME only - never a query, parameter, document or message.
 
-const { loadWindowTerms, loadSummary, loadDailyTerms, loadTrend } = require("../services/searchAnalytics/adminQueries");
-const { loadApprovedTerms } = require("../services/searchAnalytics/approvedTerms");
-const { getSearchCatalog } = require("../services/search/searchCatalog");
+const { loadWindowTerms, loadSummary, loadDailyTerms, loadTrend, findRefusedTerms } = require("../services/searchAnalytics/adminQueries");
 const {
   AdminParamError,
   parseSummaryQuery,
@@ -72,6 +70,9 @@ const termItem = (row) => ({
   dedicatedPageAvailable: int(row.counts.available),
   topResultPath: topResultPath(row.topResultPath),
   coverage: row.coverage || null,
+  // Trend (and the rollup behind it) only has days on which the term reached the ordinary minimum.
+  // A catalog term listed from its first search may have none; an absent count means "unknown", i.e. available.
+  trendAvailable: Number.isFinite(row.thresholdCells) ? row.thresholdCells > 0 : true,
 });
 
 const gapItem = (row) => ({
@@ -111,8 +112,7 @@ const paginate = (rows, { limit, offset }) => ({
 
 // ── Controller ──────────────────────────────────────────────────────────────
 function createSearchAnalyticsAdminController({
-  queries = { loadWindowTerms, loadSummary, loadDailyTerms, loadTrend },
-  getCatalog = getSearchCatalog,
+  queries = { loadWindowTerms, loadSummary, loadDailyTerms, loadTrend, findRefusedTerms },
   now = () => new Date(),
   logger = console.error,
   isEnabled = isSearchAnalyticsEnabled,
@@ -166,9 +166,35 @@ function createSearchAnalyticsAdminController({
     }
   };
 
+  // Which terms may be listed: every term from its first interaction, except those with a stored spelling the
+  // CURRENT privacy rules refuse (all spellings in the window are checked, see findRefusedTerms). /gaps keeps its own
+  // minimum but gets the same exclusions. If the check cannot be completed, no term-level row is returned by any
+  // endpoint (hideTerms): the count of three is not a privacy safeguard for text. The incomplete check is logged
+  // with a fixed message (endpoint, reason, error name) and never any search text.
+  async function termVisibility(window, endpointName) {
+    const check = await queries.findRefusedTerms({ window });
+    if (check.complete === true) {
+      return {
+        complete: true,
+        listOptions: { visibleFrom: 1, excludeTermKeys: check.keys },
+        gapOptions: { excludeTermKeys: check.keys },
+      };
+    }
+    try {
+      const reason = check.reason === "limit" ? "limit" : "error";
+      const name = reason === "error" && typeof check.errorName === "string" ? ` ${check.errorName.slice(0, 60)}` : "";
+      logger(`[search-analytics] term privacy check incomplete (${reason}${name}): ${endpointName}`);
+    } catch {
+      // Logging must never throw either.
+    }
+    return { complete: false, listOptions: { hideTerms: true }, gapOptions: { hideTerms: true } };
+  }
+
   const summary = endpoint("summary", async (query) => {
     const { window } = parseSummaryQuery(query, { now: now() });
-    const result = await queries.loadSummary({ window });
+    // The same visibility as /terms and /daily-terms.
+    const visibility = await termVisibility(window, "summary");
+    const result = await queries.loadSummary({ window, ...visibility.listOptions });
     const t = result.totals;
     return {
       success: true,
@@ -193,14 +219,18 @@ function createSearchAnalyticsAdminController({
           unconfirmedInteractions: int(result.gaps.unconfirmedInteractions),
         },
       },
-      meta: meta({ truncated: result.truncated === true }),
+      // termsCheckComplete false: the read-time privacy check could not be completed, so term-level results are
+      // hidden: no term is counted as shown and the gaps counts are 0.
+      meta: meta({ truncated: result.truncated === true, termsCheckComplete: visibility.complete }),
     };
   });
 
   const terms = endpoint("terms", async (query) => {
     const params = parseTermsQuery(query, { now: now() });
-    const loaded = await queries.loadWindowTerms({ window: params.window, outcome: params.outcome, aiStatus: params.aiStatus });
-    // The caller may raise the 3-interaction minimum, never lower it.
+    // Every eligible term is listed from its first interaction (see termVisibility). The caller may raise the
+    // minimum (minCount, default 1).
+    const visibility = await termVisibility(params.window, "terms");
+    const loaded = await queries.loadWindowTerms({ window: params.window, outcome: params.outcome, aiStatus: params.aiStatus, ...visibility.listOptions });
     const rows = loaded.rows.filter((row) => row.counts.n >= params.minCount);
     if (params.sort === "recent") {
       // Ordered by exactly what is exposed (the day), never by the hidden time of day.
@@ -217,21 +247,21 @@ function createSearchAnalyticsAdminController({
         sort: params.sort,
         filters: { outcome: params.outcome, aiStatus: params.aiStatus, minCount: params.minCount },
       },
-      meta: meta({ truncated: loaded.truncated === true }),
+      meta: meta({ truncated: loaded.truncated === true, termsCheckComplete: visibility.complete }),
     };
   });
 
-  // Daily terms: date, normalised term, count. A term is listed when it equals a
-  // catalog name/alias exactly, or has >= kThreshold matching interactions that
-  // UTC day; everything else is only counted, per day, as "other".
+  // Daily terms: date, normalised term, count. Every eligible term is listed from its first interaction on a day
+  // (see termVisibility); everything else, including terms the current privacy rules refuse, is only counted, per
+  // day, as "other". Filtering happens inside MongoDB, so rows, total and hasMore are exact.
   const dailyTerms = endpoint("daily-terms", async (query) => {
     const params = parseDailyTermsQuery(query, { now: now() });
-    const approved = await loadApprovedTerms(getCatalog);
+    const visibility = await termVisibility(params.window, "daily-terms");
     const loaded = await queries.loadDailyTerms({
       window: params.window,
       outcome: params.outcome,
       aiStatus: params.aiStatus,
-      approvedKeys: approved.keys,
+      ...visibility.listOptions,
       limit: params.limit,
       offset: params.offset,
     });
@@ -239,31 +269,31 @@ function createSearchAnalyticsAdminController({
       success: true,
       window: windowOf(params.window),
       data: {
-        // An approved term is labelled with the catalog's wording; any other listed term reached the minimum.
         items: loaded.rows.map((row) => ({
           day: safeText(row.day, 10),
-          term: safeText(approved.labels.get(row.termKey) ?? row.term ?? row.termKey),
+          term: safeText(row.term ?? row.termKey),
           interactions: int(row.interactions),
         })),
         other: loaded.other.map((row) => ({ day: safeText(row.day, 10), interactions: int(row.interactions) })),
         pagination: { limit: params.limit, offset: params.offset, total: int(loaded.total), hasMore: params.offset + params.limit < loaded.total },
         filters: { outcome: params.outcome, aiStatus: params.aiStatus },
       },
-      // catalogTermsAvailable false: the catalog could not be read, so every term needed the full minimum.
-      meta: meta({ catalogTermsAvailable: approved.keys.length > 0 }),
+      meta: meta({ termsCheckComplete: visibility.complete }),
     };
   });
 
   const gaps = endpoint("gaps", async (query) => {
     const params = parseGapsQuery(query, { now: now() });
-    const loaded = await queries.loadWindowTerms({ window: params.window, minConfirmed: params.minCount });
+    // Same exclusions as /terms (see termVisibility); the minimums of /gaps are unchanged.
+    const visibility = await termVisibility(params.window, "gaps");
+    const loaded = await queries.loadWindowTerms({ window: params.window, minConfirmed: params.minCount, ...visibility.gapOptions });
     const rows = loaded.rows.filter((row) => row.counts.n >= params.minCount && GAP_VALUES.includes(row.coverage));
     const page = paginate(rows, params);
     return {
       success: true,
       window: windowOf(params.window),
       data: { items: page.items.map(gapItem), pagination: page.pagination, filters: { minCount: params.minCount } },
-      meta: meta({ truncated: loaded.truncated === true }),
+      meta: meta({ truncated: loaded.truncated === true, termsCheckComplete: visibility.complete }),
     };
   });
 

@@ -21,7 +21,9 @@ const MAX_LIMIT = 100;
 const MAX_OFFSET = 1000;
 const MIN_COUNT_FLOOR = 3; // k: a term is never shown with fewer interactions
 const MAX_MIN_COUNT = 1000;
-const DEFAULT_TERMS_MIN_COUNT = MIN_COUNT_FLOOR;
+// /terms lists every term from its first interaction; a caller may only raise this.
+const TERMS_MIN_COUNT_FLOOR = 1;
+const DEFAULT_TERMS_MIN_COUNT = TERMS_MIN_COUNT_FLOOR;
 const DEFAULT_GAPS_MIN_COUNT = 5;
 const SORTS = Object.freeze(["count", "recent"]);
 const MAX_TERM_KEY_LENGTH = 100;
@@ -111,7 +113,7 @@ function parseTermsQuery(query, options = {}) {
     outcome: parseEnum(query.outcome, "outcome", OUTCOMES),
     aiStatus: parseEnum(query.aiStatus, "aiStatus", AI_STATUSES),
     sort: parseEnum(query.sort, "sort", SORTS) || "count",
-    minCount: parseMinCount(query, DEFAULT_TERMS_MIN_COUNT),
+    minCount: parseInteger(query.minCount, "minCount", { min: TERMS_MIN_COUNT_FLOOR, max: MAX_MIN_COUNT, fallback: DEFAULT_TERMS_MIN_COUNT }),
     ...parsePagination(query),
   };
 }
