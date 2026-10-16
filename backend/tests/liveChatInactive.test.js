@@ -266,12 +266,12 @@ describe("live chat: inactive chats are archived", () => {
       chat.socket.close();
     });
 
-    test("after 24 hours it stays closed and the message is refused", async () => {
+    test("after 30 days (the device window) it is no longer shown and the message is refused", async () => {
       const chat = await openChat();
       await aiAnswered(chat);
       await makeDue(chat.id);
       assert.ok(await waitFor(async () => (await convOf(chat.id)).closedReason === "inactive"));
-      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 25 * 3_600_000) } });
+      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 31 * 86_400_000), lastMessageAt: new Date(Date.now() - 31 * 86_400_000) } });
       assert.equal(await stateOf(chat.socket), null, "an old Inactive chat is no longer shown to the patient");
       const res = await lc.call(chat.socket, "chat:message", { text: "hi" });
       assert.deepEqual([res.ok, res.error], [false, "no_conversation"]);

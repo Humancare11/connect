@@ -15,7 +15,7 @@ export default function RatingCard({ rating, canRate, onRate }) {
   if (!canRate) return null;
   return (
     <div className="lcw-rating">
-      This chat has ended. How did we do?
+      How did we do?
       <div className="lcw-stars" onMouseLeave={() => setHover(0)}>
         {[1, 2, 3, 4, 5].map((n) => (
           <button
