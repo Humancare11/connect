@@ -303,7 +303,7 @@ describe("live chat: the refusal wording never says 'video'", () => {
     assert.ok(safety.FIXED_TEXT.fallback.hi.includes("चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare Connect के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं।"));
   });
 
-  test("the prompt's refusal lines (SAFETY, MEDICAL REPLY SHAPE, the medical examples) never say video; the service facts may", () => {
+  test("the prompt's refusal lines (SAFETY, MEDICAL REPLY SHAPE, the medical examples) never say video", () => {
     for (const settings of [DEFAULT_SETTINGS, { ...DEFAULT_SETTINGS, aiMayLinkConditionPages: false }]) {
       const lines = buildSystemPrompt(settings, [{ title: "Book an appointment", url: "/appointment-booking" }]).split("\n");
       const refusal = lines.filter((l) => /^(SAFETY|MEDICAL REPLY SHAPE|Medical questions ->|LINKS)/.test(l));
