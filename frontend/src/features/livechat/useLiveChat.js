@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { apiBaseOf } from "./apiBase";
 
 // Patient-side chat state. Talks to the server over Socket.IO (/livechat) with the chat token that the contact form
 // returns; without that token the server refuses every chat event.
@@ -6,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // Stored in this browser (first-party, functional): the visitor id, the chat token (so a returning visitor skips
 // the form) and whether the window was open (so a chat survives page changes).
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = apiBaseOf(import.meta.env.VITE_API_URL);
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (typeof window !== "undefined" ? window.location.origin : "");
 const TOKEN_KEY = "hcLiveChatToken";
 const ID_KEY = "hcLiveChatVisitorId"; // shared with the visitor tracker so chats and presence line up
