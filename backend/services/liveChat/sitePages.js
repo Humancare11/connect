@@ -2,7 +2,7 @@
 // (backend/scripts/buildLiveChatSitePages.js -> backend/data/liveChatSitePages.json). The model never writes a URL
 // that reaches the patient: it can only point at an entry of this list, and filterLinks() drops everything else
 // (and takes the title from the list, never from the model).
-const { titlesFor } = require("./pageSynonyms");
+const { titlesFor, serviceTitleFor, isServiceTopic } = require("./pageSynonyms");
 const MAX_LINKS = 3;
 const MAX_CANDIDATES = 14;
 const BOOKING_URL = "/appointment-booking";
@@ -94,8 +94,9 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
   const pagesForPrompt = ({ allowContent = true } = {}) =>
     pages.filter((p) => allowContent || !CONTENT_TYPES.has(p.type)).map((p) => ({ title: p.title, url: p.url }));
 
-  // Pages the patient's words point at through the lay-word map (English, Hindi/Hinglish, Spanish), best first.
-  function hintFor(text, limit = 3) {
+  // The one page (at most) that the patient's words clearly point at through the phrase map (English, Hindi/Hinglish,
+  // Spanish). Pass the latest patient message only. No clear match: an empty list, and the chat shows just Book.
+  function hintFor(text, limit = 1) {
     const out = [];
     for (const wanted of titlesFor(text, limit + 3)) {
       const key = fold(wanted);
@@ -105,6 +106,14 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
       if (page && !out.includes(page)) out.push(page);
     }
     return out.slice(0, limit);
+  }
+
+  // The service page a message asks for by name ("sick note" -> Doctor's note, "price?" -> Pricing), or null.
+  function serviceFor(text) {
+    const wanted = fold(serviceTitleFor(text));
+    if (!wanted) return null;
+    const page = pages.find((p) => p.type === "service" && p.url !== BOOKING_URL && fold(p.title) === wanted);
+    return page ? { title: page.title, url: page.url } : null;
   }
 
   // "Book an appointment", opened on the matched page's category / specialty when we know them (the booking page has
@@ -124,25 +133,28 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
   function arrange(raw, { allowContent = true, medical = false, hintText = "" } = {}) {
     let links = filterLinks(raw);
     if (!allowContent) links = links.filter((l) => !isContent(l.url));
+    // A sick-note or price question always gets its service page, even when the model named none.
+    if (!links.some((l) => typeOf(l.url) === "service" && l.url !== BOOKING_URL)) {
+      const service = serviceFor(hintText);
+      if (service) links = [...links, service].slice(0, MAX_LINKS);
+    }
     let content = links.find((l) => isContent(l.url)) || null;
-    if (!content && allowContent && medical) {
+    if (allowContent && (medical || content)) {
+      // The curated phrase map is exact: when it names a page it wins over the model's pick (a model can wander, e.g.
+      // hair fall -> Men's Health), and it fills in when the model named none.
       const hinted = hintFor(hintText, 1)[0];
-      if (hinted) content = { title: hinted.title, url: hinted.url };
+      if (hinted && (!content || content.url !== hinted.url)) content = { title: hinted.title, url: hinted.url };
     }
-    const hadBooking = links.some((l) => l.url === BOOKING_URL);
-    const addBooking = medical || hadBooking;
-    if (!content) {
-      const out = links.filter((l) => !isContent(l.url));
-      if (addBooking && !hadBooking) {
-        const booking = bookingFor(BOOKING_URL);
-        if (booking) out.push(booking);
-      }
-      return out.slice(0, MAX_LINKS);
-    }
-    const booking = addBooking ? bookingFor(content.url) : null;
-    const others = links.filter((l) => !isContent(l.url) && l.url !== BOOKING_URL);
-    const room = MAX_LINKS - 1 - (booking ? 1 : 0);
-    return [content, ...others.slice(0, Math.max(0, room)), ...(booking ? [booking] : [])];
+    const isBookingPage = (url) => url === BOOKING_URL || url.startsWith(`${BOOKING_URL}/`);
+    const services = links.filter((l) => !isContent(l.url) && !isBookingPage(l.url));
+    // A reply about a health issue or a service (sick note, price, refills ...) always ends with Book, unless the matched
+    // page already is a booking page. A reply that links nothing (who are you, off-topic) gets no Book either.
+    const wantsBooking = medical || Boolean(content) || isServiceTopic(hintText) || services.length > 0 || links.some((l) => l.url === BOOKING_URL);
+    const booking = wantsBooking && !(content && isBookingPage(content.url)) ? bookingFor(content ? content.url : BOOKING_URL) : null;
+    if (booking && booking.url === content?.url) return [content, ...services.slice(0, MAX_LINKS - 1)];
+    // Order: the matched health-topic page, then service pages (Pricing ...), then Book. At most MAX_LINKS.
+    const room = MAX_LINKS - (content ? 1 : 0) - (booking ? 1 : 0);
+    return [...(content ? [content] : []), ...services.slice(0, Math.max(0, room)), ...(booking ? [booking] : [])];
   }
 
   return {
@@ -156,6 +168,7 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
     candidatesFor,
     pagesForPrompt,
     hintFor,
+    serviceFor,
     bookingFor,
     arrange,
     filterLinks,

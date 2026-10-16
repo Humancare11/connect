@@ -157,7 +157,7 @@ describe("live chat: AI notice record, medical flags, AI Review", () => {
       await say(a, "my head hurts");
       assert.deepEqual((await flagsOf(a)).reasons.sort(), ["model_medical", "reply_blocked"]);
 
-      lc.ai.queue.push(modelReply("I can't give medical advice. A licensed Humancare doctor can help you.", { topic: "medical" }));
+      lc.ai.queue.push(modelReply("I can't give medical advice. A licensed Humancare Connect doctor can help you.", { topic: "medical" }));
       const b = await openChat();
       await say(b, "what causes migraines");
       assert.deepEqual((await flagsOf(b)).reasons, ["model_medical"]);

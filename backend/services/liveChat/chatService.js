@@ -848,9 +848,8 @@ function createChatService({
       const contact = { name: decryptLiveChatText(visitor.name), email: decryptLiveChatText(visitor.email), phone: decryptLiveChatText(visitor.phone) };
       const history = rawHistory.map((m) => ({ ...m, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
       // Pages that fit what the patient just wrote; the model may only point at these.
-      const lastPatient = rawHistory.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
       lastPatientText = rawHistory.filter((m) => m.role === "patient").at(-1)?.text || "";
-      hintText = lastPatient;
+      hintText = lastPatientText; // the latest patient message only: an older topic must not add a page
       // How many questions in a row the AI already missed: the prompt differs between the first and the second miss.
       const streakRow = await LcConversation.findById(conv._id).select("unansweredStreak").lean();
       let timer;
@@ -865,7 +864,7 @@ function createChatService({
             history,
             // Every page title (no content), so the model can pick the best match; the lay-word map adds a hint.
             pages: sitePages.pagesForPrompt({ allowContent: linkConditions }),
-            pageHint: linkConditions ? sitePages.hintFor(lastPatient).map((p) => p.title) : [],
+            pageHint: linkConditions ? sitePages.hintFor(lastPatientText).map((p) => p.title) : [],
             unansweredStreak: streakRow?.unansweredStreak || 0,
           }),
           deadline,

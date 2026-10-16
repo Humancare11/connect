@@ -106,7 +106,7 @@ describe("live chat: the AI's name comes from one setting", () => {
       const prompt = buildSystemPrompt(settings);
       assert.ok(prompt.startsWith(`You are ${name},`), name);
       assert.ok(prompt.includes(`Never claim to be a person, a doctor or a nurse. If the patient asks who or what you are, say you are an AI assistant.`));
-      assert.ok(prompt.includes(`I am ${name}, so I can only help`), "the off-topic example uses the name");
+      assert.ok(prompt.includes(`I'm ${name}, an AI assistant for Humancare Connect`), "the off-topic example uses the name");
       assert.doesNotMatch(prompt, /\{AI_NAME\}/);
     }
   });

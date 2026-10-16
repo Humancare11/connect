@@ -820,7 +820,7 @@ function createAgentService({
       { $push: { transcriptLog: { $each: [{ userId: oid(actor.id), at: new Date(now()) }], $slice: -50 } } }
     );
     const text = [
-      `Humancare live chat ${conv.conversationId}`,
+      `Humancare Connect live chat ${conv.conversationId}`,
       `Started: ${stamp(conv.startedAt)} UTC`,
       conv.closedAt ? `Closed: ${stamp(conv.closedAt)} UTC` : "Status: open",
       "",

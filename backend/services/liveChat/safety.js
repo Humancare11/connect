@@ -28,9 +28,9 @@ const FIXED_TEXT = {
   // Sent instead of a model reply that gave (or looked like) medical advice, or that stayed over the length limit.
   // The booking page button is shown directly under it.
   fallback: {
-    en: "Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare doctor can help you. Book here:",
-    hi: "आपकी तबीयत ठीक नहीं है, यह जानकर दुख हुआ। चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं। यहां बुक करें:",
-    es: "Lamento que no se sienta bien. No puedo dar consejo médico, pero un médico con licencia de Humancare puede ayudarle. Reserve aquí:",
+    en: "Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare Connect doctor can help you. Book here:",
+    hi: "आपकी तबीयत ठीक नहीं है, यह जानकर दुख हुआ। चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare Connect के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं। यहां बुक करें:",
+    es: "Lamento que no se sienta bien. No puedo dar consejo médico, pero un médico con licencia de Humancare Connect puede ayudarle. Reserve aquí:",
   },
   // The same, when the patient's message or the blocked reply is about a medication or a refill.
   fallbackMedication: {
@@ -190,6 +190,7 @@ const EMERGENCY_PATTERNS = {
   en: [
     /\bchest (?:pain|pains|pressure|tightness|discomfort)\b/,
     /\b(?:pain|pressure|tight(?:ness)?|squeezing|crushing|heavy|heaviness|discomfort)\b[^.!?\n]{0,30}\b(?:in|across|on) (?:my |the |your )?chest\b/,
+    /\b(?:tight(?:ness)?|tightening|squeezing|pressure|heavy|heaviness) (?:in|around|across|on) (?:my |the |your )?chest\b|\b(?:tight|heavy|squeezing) chest\b|\bchest (?:is |feels? |feeling )?(?:tight|heavy|squeezing|squeezed|pressure)\b/,
     /\bheart attack\b/,
     /\b(?:can'?t|cannot|can not|unable to|not able to|hard to|difficult to|trouble|difficulty|struggling to|struggling with|problems?) (?:breathe|breathing|get (?:any )?air|catch my breath)\b/,
     /\b(?:short(?:ness)? of breath|gasping for (?:air|breath)|stopped breathing|not breathing|choking)\b/,
