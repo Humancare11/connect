@@ -1,5 +1,6 @@
 import { useState, useEffect, Fragment, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { FiAward, FiCheck, FiChevronDown, FiFileText, FiVideo } from "react-icons/fi";
 import "./DoctorAppointments.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
@@ -304,7 +305,7 @@ export default function DoctorAppointments() {
                   <th>Time</th>
                   <th>Problem</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
 
@@ -317,6 +318,88 @@ export default function DoctorAppointments() {
                   };
 
                   const isOpen = selectedId === appt._id;
+
+                  // Actions available for this appointment (same conditions as before).
+                  // Always rendered directly in the Actions column / card.
+                  const actionNodes = [
+                            ["assigned", "pending"].includes(appt.status) && (
+                              <button
+                                key="confirm"
+                                className="da-btn da-btn--confirm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  confirmAppointment(appt._id);
+                                }}
+                                disabled={confirmingId === appt._id}
+                              >
+                                {confirmingId === appt._id ? (
+                                  <span className="da-spinner" />
+                                ) : (
+                                  "Confirm"
+                                )}
+                              </button>
+                            ),
+
+                            appt.status === "confirmed" && (
+                              <Link
+                                key="join"
+                                className="da-btn da-btn--join"
+                                to={`/video-call/${appt._id}`}
+                                state={{ role: "doctor" }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <FiVideo aria-hidden="true" />
+                                Join
+                              </Link>
+                            ),
+
+                            appt.status === "confirmed" && (
+                              <button
+                                key="complete"
+                                className="da-btn da-btn--complete"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCompleteConfirmId(appt._id);
+                                }}
+                                disabled={completingId === appt._id}
+                              >
+                                {completingId === appt._id ? (
+                                  <span className="da-spinner" />
+                                ) : (
+                                  <>
+                                    <FiCheck aria-hidden="true" />
+                                    Complete
+                                  </>
+                                )}
+                              </button>
+                            ),
+                            ["assigned", "confirmed"].includes(appt.status) && (
+                              <Link
+                                  key="rx"
+                                  className="da-btn da-btn--rx"
+                                  to={`/doctor-dashboard/appointments/${appt._id}/prescription`}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <FiFileText aria-hidden="true" />
+                                  Prescription
+                                </Link>
+                            ),
+                            ["assigned", "confirmed"].includes(appt.status) && (
+                                <button
+                                  key="cert"
+                                  type="button"
+                                  className="da-btn da-btn--rx"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCertAppt(appt);
+                                  }}
+                                >
+                                  <FiAward aria-hidden="true" />
+                                  Certificate
+                                </button>
+                            ),
+
+                  ].filter(Boolean);
 
                   return (
                     <Fragment key={appt._id}>
@@ -339,7 +422,12 @@ export default function DoctorAppointments() {
                           </div>
                         </td>
 
-                        <td className="da-mono">{formatDate(appt.date)}</td>
+                        <td className="da-mono">
+                          {formatDate(appt.date)}
+                          {appt.time && (
+                            <span className="da-time-inline">{appt.time}</span>
+                          )}
+                        </td>
 
                         <td className="da-mono">{appt.time || "—"}</td>
 
@@ -356,102 +444,31 @@ export default function DoctorAppointments() {
 
                         <td onClick={(e) => e.stopPropagation()}>
                           <div className="da-action-group">
-                            {/* CONFIRM */}
-                            {["assigned", "pending"].includes(appt.status) && (
-                              <button
-                                className="da-btn da-btn--confirm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  confirmAppointment(appt._id);
-                                }}
-                                disabled={confirmingId === appt._id}
-                              >
-                                {confirmingId === appt._id ? (
-                                  <span className="da-spinner" />
-                                ) : (
-                                  "Confirm"
-                                )}
-                              </button>
-                            )}
-
-                            {/* JOIN */}
-                            {appt.status === "confirmed" && (
-                              <Link
-                                className="da-btn da-btn--join"
-                                to={`/video-call/${appt._id}`}
-                                state={{ role: "doctor" }}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Join
-                              </Link>
-                            )}
-
-                            {/* COMPLETE CONSULTATION */}
-                            {appt.status === "confirmed" && (
-                              <button
-                                className="da-btn da-btn--complete"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setCompleteConfirmId(appt._id);
-                                }}
-                                disabled={completingId === appt._id}
-                              >
-                                {completingId === appt._id ? (
-                                  <span className="da-spinner" />
-                                ) : (
-                                  "Complete"
-                                )}
-                              </button>
-                            )}
-
-                            {/* PRESCRIPTION / CERTIFICATE — only while the
-                                appointment is still active (assigned/confirmed) */}
-                            {["assigned", "confirmed"].includes(appt.status) && (
-                              <>
-                                <Link
-                                  className="da-btn da-btn--rx"
-                                  to={`/doctor-dashboard/appointments/${appt._id}/prescription`}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Prescription
-                                </Link>
-                                <button
-                                  type="button"
-                                  className="da-btn da-btn--rx"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setCertAppt(appt);
-                                  }}
-                                >
-                                  Certificate
-                                </button>
-                              </>
+                            {actionNodes.length > 0 && (
+                              <div className="da-action-buttons">{actionNodes}</div>
                             )}
 
                             {/* 🔽 ONLY THIS OPENS DATA */}
                             <button
-                              className={`da-btn da-btn--ghost ${
+                              type="button"
+                              className={`da-btn da-btn--ghost da-expand-btn ${
                                 isOpen ? "da-btn--ghost-on" : ""
                               }`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setSelectedId(isOpen ? null : appt._id);
                               }}
+                              aria-label={isOpen ? "Hide appointment details" : "Show appointment details"}
+                              aria-expanded={isOpen}
                             >
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.5"
+                              <FiChevronDown
+                                size={14}
+                                aria-hidden="true"
                                 style={{
                                   transform: isOpen ? "rotate(180deg)" : "none",
                                   transition: "transform 0.22s",
                                 }}
-                              >
-                                <polyline points="6 9 12 15 18 9" />
-                              </svg>
+                              />
                             </button>
                           </div>
                         </td>
