@@ -64,20 +64,19 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
   const [collapsed, setCollapsed] = useState({});
   // Chats move Active -> Recent (10 minutes) -> Archive page (after India midnight) on their own: re-sort every 15 s.
   // Time is the server's (clockOffset = server minus this computer), so a wrong clock on this computer cannot hide chats.
-  const [tick, setTick] = useState(() => Date.now() + clockOffset);
+  const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
-    setTick(Date.now() + clockOffset);
-    const timer = window.setInterval(() => setTick(Date.now() + clockOffset), 15_000);
+    const timer = window.setInterval(() => setTick(Date.now()), 15_000);
     return () => window.clearInterval(timer);
-  }, [clockOffset]);
+  }, []);
   const live = view === "live";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const current = rows.map((r) => ({ ...r, bucket: bucketOf(r, tick) })).filter((r) => r.bucket !== "archive");
+    const current = rows.map((r) => ({ ...r, bucket: bucketOf(r, tick + clockOffset) })).filter((r) => r.bucket !== "archive");
     if (!q) return current;
     return current.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q));
-  }, [rows, query, tick]);
+  }, [rows, query, tick, clockOffset]);
 
   return (
     <nav className="wk-list" aria-label="Chats" data-lenis-prevent>
