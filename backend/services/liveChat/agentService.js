@@ -160,18 +160,19 @@ function createAgentService({
     return new Map(rows.map((r) => [r._id, { sender: r.sender, text: decryptLiveChatText(r.text).slice(0, 120), at: r.at }]));
   }
 
+  // The chats a chat page lists (Active + Recent). The unread badge uses the SAME filter, so the two always agree.
+  const listFilter = (view) => ({
+    ...(view ? { everLive: view === "live" } : {}),
+    mode: { $ne: "trashed" },
+    $and: [{ $or: [activityGte(istTodayStart(now())), { mode: "queue" }] }],
+  });
+
   // "ai": chats that were never live. "live": chats that were ever live (queue, mine, others, handed back, archived).
   async function list(actor, view) {
     // Active (activity in the last 10 minutes, online or not) and Recent (quiet, but today in India time) come from the
     // time of the last message, whatever the chat's mode. Older chats are on the Archive page. Queue chats stay listed.
     // No status is written for this, so a chat can never be lost between lists (see buckets.js).
-    const since = istTodayStart(now());
-    const filter = {
-      everLive: view === "live",
-      mode: { $ne: "trashed" },
-      $and: [{ $or: [activityGte(since), { mode: "queue" }] }],
-    };
-    const convs = await LcConversation.find(filter).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
+    const convs = await LcConversation.find(listFilter(view)).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
     const lasts = await lastMessages(convs.map((c) => c.conversationId));
     return convs.map((c) => rowOf(c, { userId: actor.id, last: lasts.get(c.conversationId) }));
   }
@@ -372,7 +373,8 @@ function createAgentService({
   // Unread messages for this admin: AI chats, and live agent chats that concern them (queue, their own chats,
   // chats handed back to the AI). Chats another agent is holding do not count.
   async function unread(actor) {
-    const convs = await LcConversation.find({ mode: { $nin: ["archived", "trashed"] }, patientMessageCount: { $gt: 0 } })
+    // Only chats a chat page lists count (not yesterday's leftovers): the badge and the list agree.
+    const convs = await LcConversation.find({ ...listFilter(), mode: { $nin: ["archived", "trashed"] }, patientMessageCount: { $gt: 0 } })
       .select("everLive mode assigneeId patientMessageCount reads")
       .lean();
     const out = { ai: 0, live: 0 };

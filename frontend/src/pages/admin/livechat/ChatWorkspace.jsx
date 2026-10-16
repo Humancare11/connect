@@ -417,7 +417,7 @@ export default function ChatWorkspace({ view }) {
   return (
     <div className="wk-wrap-page">
       <div className={`wk-inbox${panelOpen ? "" : " no-panel"}`}>
-        <ChatList view={view} rows={rows} me={me} activeId={activeId} typing={typing} query={query} onQuery={setQuery} onSelect={(cid) => go(cid)} loading={loading} />
+        <ChatList view={view} rows={rows} me={me} activeId={activeId} typing={typing} query={query} onQuery={setQuery} onSelect={(cid) => go(cid)} loading={loading} clockOffset={clockOffset} />
         {detail ? (
           <ChatConversation
             key={detail.conversation.conversationId}

@@ -60,14 +60,16 @@ function Item({ row, active, typing, onSelect }) {
   );
 }
 
-export default function ChatList({ view, rows, me, activeId, typing, query, onQuery, onSelect, loading }) {
+export default function ChatList({ view, rows, me, activeId, typing, query, onQuery, onSelect, loading, clockOffset = 0 }) {
   const [collapsed, setCollapsed] = useState({});
   // Chats move Active -> Recent (10 minutes) -> Archive page (after India midnight) on their own: re-sort every 15 s.
-  const [tick, setTick] = useState(() => Date.now());
+  // Time is the server's (clockOffset = server minus this computer), so a wrong clock on this computer cannot hide chats.
+  const [tick, setTick] = useState(() => Date.now() + clockOffset);
   useEffect(() => {
-    const timer = window.setInterval(() => setTick(Date.now()), 15_000);
+    setTick(Date.now() + clockOffset);
+    const timer = window.setInterval(() => setTick(Date.now() + clockOffset), 15_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [clockOffset]);
   const live = view === "live";
 
   const filtered = useMemo(() => {
