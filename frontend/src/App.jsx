@@ -836,6 +836,7 @@ const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
 const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
+const MySignature = lazy(() => import("./pages/admin/email/MySignature"));
 const LiveChatShell = lazy(() => import("./pages/admin/livechat/LiveChatShell"));
 const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
 const AdminLiveTeam = lazy(() => import("./pages/admin/livechat/AdminLiveTeam"));
@@ -843,6 +844,9 @@ const AdminLiveReports = lazy(() => import("./pages/admin/livechat/AdminLiveRepo
 const AdminLiveSettings = lazy(() => import("./pages/admin/livechat/AdminLiveSettings"));
 const AdminAiChats = lazy(() => import("./pages/admin/livechat/AdminAiChats"));
 const AdminLiveAgentChats = lazy(() => import("./pages/admin/livechat/AdminLiveAgentChats"));
+const AdminLiveArchive = lazy(() => import("./pages/admin/livechat/AdminLiveArchive"));
+const AdminLiveTrash = lazy(() => import("./pages/admin/livechat/AdminLiveTrash"));
+const AdminLiveReview = lazy(() => import("./pages/admin/livechat/AdminLiveReview"));
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -906,8 +910,15 @@ const DeleteAccount = lazy(
 // New Privcay Policy Pages End
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useLayoutEffect(() => {
+    // A link to an anchor that is already on the page (for example /privacy-policy#website-chat in the prerendered
+    // HTML) keeps the browser's position; pages that mount the anchor later scroll to it themselves.
+    if (hash.length > 1) {
+      let id = hash.slice(1);
+      try { id = decodeURIComponent(id); } catch { /* keep the raw id */ }
+      if (document.getElementById(id)) return;
+    }
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;
@@ -1646,6 +1657,17 @@ export function AppLayout() {
               </PrivateRoute>
             }
           />
+          {/* Every admin: their own email signatures (the server only ever returns the caller's own). */}
+          <Route
+            path="/admin-dashboard/email/settings/my-signature"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <MySignature />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
           {/* Live Chat (admin + superadmin; the server module is switched by LIVECHAT_ENABLED). */}
           <Route
             path="/admin-dashboard/live-chat"
@@ -1693,6 +1715,36 @@ export function AppLayout() {
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <LiveChatShell>
                   <AdminLiveAgentChats />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/archive/:conversationId?"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveArchive />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/ai-review"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveReview />
+                </LiveChatShell>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/live-chat/trash"
+            element={
+              <PrivateRoute allowedRoles={["superadmin"]}>
+                <LiveChatShell>
+                  <AdminLiveTrash />
                 </LiveChatShell>
               </PrivateRoute>
             }

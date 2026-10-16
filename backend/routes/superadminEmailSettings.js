@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const EmailSettings = require("../models/EmailSettings");
 const EmailTrackingOptOut = require("../models/EmailTrackingOptOut");
 const { DEFAULT_DISCLOSURE } = EmailSettings;
+const { disclosureExamples } = require("../services/email/disclosure");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { getTrackingState, clearSettingsCache } = require("../services/email/emailSettings");
 const { normalizeAddressList, EmailValidationError } = require("../utils/emailValidation");
@@ -16,7 +17,7 @@ class ValidationError extends Error {
 }
 
 const MAX_OPT_OUTS = 5000;
-const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText"];
+const EDITABLE = ["trackingEnabled", "disclosureEnabled", "disclosureText", "trackInternalRecipients", "trackClicks", "secureLinksEnabled", "secureLinkDays"];
 
 // Single line, no control characters (the line is added to the footer of outgoing mail).
 const cleanLine = (v) => String(v).replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
@@ -27,7 +28,7 @@ const serializeOptOut = (o) => ({ id: String(o._id), address: o.address, note: o
 // recipients who must never be tracked.
 //
 //   GET    /                   current state: the three gates + disclosure + opt-outs
-//   PATCH  /                   { trackingEnabled?, disclosureEnabled?, disclosureText? }
+//   PATCH  /                   { trackingEnabled?, disclosureEnabled?, disclosureText?, trackInternalRecipients? }
 //   POST   /opt-outs           { address, note? }
 //   DELETE /opt-outs/:id
 //
@@ -64,8 +65,24 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
         switchOn: s.switchOn,
         active: s.active,
         disclosureEnabled: s.disclosureEnabled,
+        trackInternalRecipients: s.trackInternalRecipients,
+        // Link click tracking: its own server gate and its own switch (needs open tracking active too).
+        linksEnvEnabled: s.linksEnvEnabled,
+        trackClicks: s.trackClicks,
+        linksActive: s.linksActive,
+        // Secure attachment links: own server gate, own switch, and a cap on the expiry.
+        secureLinksEnvEnabled: s.secureLinksEnvEnabled,
+        secureLinksEnabled: s.secureLinksEnabled,
+        secureLinksActive: s.secureLinksActive,
+        secureLinkDays: s.secureLinkDaysStored,
+        secureLinkDaysEffective: s.secureLinkDays,
+        secureLinkDaysMax: s.secureLinkDaysMax,
+        // Custom line (replaces the automatic wording for every mail); empty = automatic.
         disclosureText: s.disclosureText,
+        disclosureCustom: Boolean(String(s.disclosureText || "").trim()),
         defaultDisclosure: DEFAULT_DISCLOSURE,
+        // What goes out for each combination while no custom line is set.
+        disclosureExamples: disclosureExamples(),
         graceSeconds: s.graceSeconds,
       },
       optOuts: optOuts.map(serializeOptOut),
@@ -81,10 +98,19 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (unknown.length) throw new ValidationError(`Cannot edit: ${unknown.join(", ")}.`);
 
     const patch = {};
-    for (const key of ["trackingEnabled", "disclosureEnabled"]) {
+    for (const key of ["trackingEnabled", "disclosureEnabled", "trackInternalRecipients", "trackClicks", "secureLinksEnabled"]) {
       if (body[key] === undefined) continue;
       if (typeof body[key] !== "boolean") throw new ValidationError(`${key} must be true or false.`);
-      patch[key] = body[key];
+      // The footer notice switch is stored under its own new name (see models/EmailSettings.js).
+      patch[key === "disclosureEnabled" ? "footerNoticeEnabled" : key] = body[key];
+    }
+    if (body.secureLinkDays !== undefined) {
+      const max = getState && (await getState({ full: true })).secureLinkDaysMax;
+      const days = body.secureLinkDays;
+      if (!Number.isInteger(days) || days < 1 || days > max) {
+        throw new ValidationError(`Secure links can last between 1 and ${max} days.`);
+      }
+      patch.secureLinkDays = days;
     }
     if (body.disclosureText !== undefined) {
       if (typeof body.disclosureText !== "string") throw new ValidationError("The disclosure line must be text.");
@@ -95,9 +121,7 @@ function createRouter({ guard = [verifyAdminToken, superAdminOnly], getState = (
     if (!Object.keys(patch).length) throw new ValidationError("Nothing to update.");
 
     const current = await EmailSettings.findOneAndUpdate({ key: "email" }, { $setOnInsert: { key: "email" } }, { upsert: true, returnDocument: "after", setDefaultsOnInsert: true });
-    const next = { ...current.toObject(), ...patch };
-    // The line is added to the footer of tracked mail, so it may not be empty while it is on.
-    if (next.disclosureEnabled && !next.disclosureText) throw new ValidationError("Write the disclosure line, or switch it off.");
+    // An empty custom line is fine: the automatic wording (see services/email/disclosure.js) is used.
 
     Object.assign(current, patch, { updatedBy: req.user.id });
     await current.save();

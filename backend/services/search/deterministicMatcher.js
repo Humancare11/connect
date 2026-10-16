@@ -12,6 +12,7 @@ const {
   tokenize,
   coreQuery,
   singularize,
+  stemToken,
   singularForm,
   compactForm,
 } = require("./queryNormalizer");
@@ -21,6 +22,7 @@ const { RESULT_TYPES, MAX_RESULTS_PER_TYPE, MAX_RESULTS_TOTAL } = require("./sea
 const SCORE = Object.freeze({
   EXACT: 100, // value equals the query
   EQUIVALENT: 98, // equal after singular/plural or separator folding
+  STEM_EQUIVALENT: 96, // equal after the derivational stem ("dizzy" ~ "dizziness")
   PREFIX: 85, // value starts with the query
   WORD_PREFIX: 70, // every query word starts a word of the value
   NAMED_IN_QUERY: 65, // the whole value appears inside a longer query
@@ -35,6 +37,10 @@ const SCORE = Object.freeze({
 // Anything below MIN_SCORE (40) is dropped.
 const WEIGHT = Object.freeze({ NAME: 1, ALIAS: 0.95, DESCRIPTION: 0.6, BLOG_PATH: 0.7 });
 
+// Base scores meaning the query names the whole catalog value (as opposed to
+// starting it or sharing a word with it). Only these may open a page on their own.
+const RECOGNIZED = new Set([SCORE.EXACT, SCORE.EQUIVALENT, SCORE.STEM_EQUIVALENT, SCORE.NAMED_IN_QUERY]);
+
 const MIN_SCORE = 40;
 const MIN_MATCH_LENGTH = 2;
 // Mid-word substring matching ("heatrash" for "rash") is only trusted for
@@ -44,6 +50,12 @@ const MIN_MATCH_LENGTH = 2;
 const MIN_SUBSTRING_LENGTH = 4;
 // The filler-stripped "core" query ranks slightly below the literal query.
 const CORE_QUERY_PENALTY = 5;
+// Last resort when a longer query matched nothing: each meaningful word on its
+// own, ranked below every whole-query tier (score <= 60, under the 65 "relevant"
+// line used by analytics) and never "recognized".
+const WORD_PENALTY = 40;
+const MIN_WORD_LENGTH = 4;
+const MAX_WORD_FORMS = 6;
 // A doctor surfaced through a strongly matched specialty.
 const SPECIALTY_DOCTOR_WEIGHT = 0.85;
 const STRONG_SPECIALTY_SCORE = 70;
@@ -56,13 +68,15 @@ function formsOf(normalized) {
     tokens,
     singular: singularForm(normalized),
     singularTokens: tokens.map(singularize),
+    stem: tokens.map(stemToken).join(" "),
+    stemTokens: tokens.map(stemToken),
     compact: compactForm(normalized),
   };
 }
 
 const wordPrefixMatch = (query, value) =>
   query.tokens.every((q, i) =>
-    value.tokens.some((v, j) => v.startsWith(q) || value.singularTokens[j].startsWith(query.singularTokens[i])),
+    value.tokens.some((v, j) => v.startsWith(q) || value.singularTokens[j].startsWith(query.singularTokens[i]) || value.stemTokens[j].startsWith(query.stemTokens[i])),
   );
 
 // Scores one catalog value against one query, 0-100. Both arguments are
@@ -78,11 +92,12 @@ function scoreText(queryIn, valueIn, { textOnly = false } = {}) {
 
   if (value.text === query.text) return SCORE.EXACT;
   if (value.singular === query.singular || value.compact === query.compact) return SCORE.EQUIVALENT;
+  if (value.stem === query.stem) return SCORE.STEM_EQUIVALENT;
   if (value.text.startsWith(query.text)) return SCORE.PREFIX;
   if (wordPrefixMatch(query, value)) return SCORE.WORD_PREFIX;
   // The whole value is named inside a longer query, e.g. "chronic migraine
   // pain" contains the condition "chronic migraine".
-  if (value.singularTokens.every((v) => query.singularTokens.includes(v))) return SCORE.NAMED_IN_QUERY;
+  if (value.stemTokens.every((v) => query.stemTokens.includes(v))) return SCORE.NAMED_IN_QUERY;
   if (query.text.length >= MIN_SUBSTRING_LENGTH && (value.text.includes(query.text) || value.compact.includes(query.compact))) {
     return SCORE.CONTAINS;
   }
@@ -132,13 +147,14 @@ function fieldsFor(type, record) {
 
 // viaCore: the best score came from the filler-stripped core query rather
 // than the literal text the user typed.
+// recognized: the query names the whole value (see RECOGNIZED), not a lone word of it.
 function bestScore(queryForms, fields) {
-  let best = { score: 0, matchedOn: null, viaCore: false };
+  let best = { score: 0, matchedOn: null, viaCore: false, recognized: false };
   for (const { forms, weight, label, textOnly } of fields) {
-    for (const { query, penalty, core } of queryForms) {
+    for (const { query, penalty, core, word } of queryForms) {
       const raw = scoreText(query, forms, { textOnly });
       const score = raw ? raw * weight - penalty : 0;
-      if (score > best.score) best = { score, matchedOn: label, viaCore: Boolean(core) };
+      if (score > best.score) best = { score, matchedOn: label, viaCore: Boolean(core), recognized: RECOGNIZED.has(raw) && !textOnly && !word };
     }
   }
   return best;
@@ -166,25 +182,12 @@ function byRank(type) {
     recordKey(type, a.record).localeCompare(recordKey(type, b.record));
 }
 
-// Returns { category: [...], specialty: [...], ... } of internal matches:
-// { type, score, matchedOn, record } where record is a frozen catalog entry.
-function matchCatalog(catalog, normalizedQuery, options = {}) {
-  const types = options.types && options.types.length ? options.types : RESULT_TYPES;
-  const perTypeLimit = options.perTypeLimit || MAX_RESULTS_PER_TYPE;
-  const totalLimit = options.totalLimit || MAX_RESULTS_TOTAL;
+const emptyMatches = () => Object.fromEntries(RESULT_TYPES.map((type) => [type, []]));
 
-  const matches = Object.fromEntries(RESULT_TYPES.map((type) => [type, []]));
-  // Punctuation-heavy input can normalise to almost nothing (e.g. "(a+)+$"
-  // -> "a"); a single character would prefix-match far too broadly.
-  const full = normalizeForMatch(normalizedQuery);
-  if (full.length < MIN_MATCH_LENGTH) return matches;
-
-  const queryForms = [{ query: formsOf(full), penalty: 0 }];
-  const core = coreQuery(full);
-  if (core.length >= MIN_MATCH_LENGTH && core !== full) {
-    queryForms.push({ query: formsOf(core), penalty: CORE_QUERY_PENALTY, core: true });
-  }
-
+// Scores every record against the given query forms and keeps the best matches
+// per type, within the per-type and total limits.
+function rankMatches(catalog, queryForms, { types, perTypeLimit, totalLimit }) {
+  const matches = emptyMatches();
   // Specialties are always scored: doctors can be reached through them.
   const scoredTypes = new Set([...types, ...(types.includes("doctor") ? ["specialty"] : [])]);
   const scored = {};
@@ -229,6 +232,36 @@ function matchCatalog(catalog, normalizedQuery, options = {}) {
   for (const match of kept) matches[match.type].push(match);
   for (const type of RESULT_TYPES) matches[type].sort(byRank(type));
   return matches;
+}
+
+// Returns { category: [...], specialty: [...], ... } of internal matches:
+// { type, score, matchedOn, record } where record is a frozen catalog entry.
+function matchCatalog(catalog, normalizedQuery, options = {}) {
+  const types = options.types && options.types.length ? options.types : RESULT_TYPES;
+  const perTypeLimit = options.perTypeLimit || MAX_RESULTS_PER_TYPE;
+  const totalLimit = options.totalLimit || MAX_RESULTS_TOTAL;
+
+  // Punctuation-heavy input can normalise to almost nothing (e.g. "(a+)+$"
+  // -> "a"); a single character would prefix-match far too broadly.
+  const full = normalizeForMatch(normalizedQuery);
+  if (full.length < MIN_MATCH_LENGTH) return emptyMatches();
+
+  // Only filler words ("the", "can you"): there is nothing meaningful to look for.
+  const core = coreQuery(full);
+  if (!core) return emptyMatches();
+
+  const queryForms = [{ query: formsOf(full), penalty: 0 }];
+  if (core.length >= MIN_MATCH_LENGTH && core !== full) {
+    queryForms.push({ query: formsOf(core), penalty: CORE_QUERY_PENALTY, core: true });
+  }
+  const found = rankMatches(catalog, queryForms, { types, perTypeLimit, totalLimit });
+  if (Object.values(found).some((list) => list.length)) return found;
+
+  // Nothing matched as a whole: try the meaningful words of a longer query one by one.
+  const words = [...new Set(tokenize(core).filter((word) => word.length >= MIN_WORD_LENGTH && !/d/.test(word)))].slice(0, MAX_WORD_FORMS);
+  if (words.length < 2) return found;
+  const wordForms = words.map((word) => ({ query: formsOf(word), penalty: WORD_PENALTY, core: true, word: true }));
+  return rankMatches(catalog, wordForms, { types, perTypeLimit, totalLimit });
 }
 
 // Merges several match sets (e.g. literal query + resolved AI intent) into

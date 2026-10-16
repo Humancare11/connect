@@ -7,7 +7,11 @@ import {
   notificationsSupported,
   requestNotificationPermission,
   setSoundEnabled,
+  setVisitorSoundEnabled,
+  setVoiceEnabled,
   soundEnabled,
+  visitorSoundEnabled,
+  voiceEnabled,
 } from "./liveChatNotify";
 import "./LiveChatToasts.css";
 
@@ -17,6 +21,8 @@ export default function NotificationsBanner() {
   const [permission, setPermission] = useState(notificationPermission);
   const [dismissed, setDismissed] = useState(bannerDismissed);
   const [sound, setSound] = useState(soundEnabled);
+  const [visitorSound, setVisitorSound] = useState(visitorSoundEnabled);
+  const [voice, setVoice] = useState(voiceEnabled);
 
   useEffect(() => {
     installAudioUnlock();
@@ -56,6 +62,42 @@ export default function NotificationsBanner() {
         }}
       >
         {sound ? "🔔 Sound on" : "🔕 Sound off"}
+      </button>
+      <button
+        type="button"
+        className="lcn-sound"
+        aria-pressed={visitorSound}
+        title={
+          visitorSound
+            ? sound
+              ? "A soft sound plays when a new visitor arrives (Live Chat tab only)"
+              : "On, but silent while Sound is off"
+            : "No sound for new website visitors"
+        }
+        onClick={() => {
+          setVisitorSoundEnabled(!visitorSound);
+          setVisitorSound(!visitorSound);
+        }}
+      >
+        {visitorSound ? "👤 Visitor sound on" : "👤 Visitor sound off"}
+      </button>
+      <button
+        type="button"
+        className="lcn-sound"
+        aria-pressed={voice}
+        title={
+          voice
+            ? sound
+              ? "Spoken alerts: Patient wants a live agent, and New visitor (Live Chat tab only)"
+              : "On, but silent while Sound is off"
+            : "No spoken alerts"
+        }
+        onClick={() => {
+          setVoiceEnabled(!voice);
+          setVoice(!voice);
+        }}
+      >
+        {voice ? "🗣 Voice alerts on" : "🗣 Voice alerts off"}
       </button>
     </div>
   );

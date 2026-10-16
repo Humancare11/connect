@@ -2,12 +2,14 @@ const express = require("express");
 const multer = require("multer");
 const mongoose = require("mongoose");
 const Mailbox = require("../models/Mailbox");
+const { EMAIL_DOMAIN } = Mailbox;
 const EmailMessage = require("../models/EmailMessage");
 const EmailAttachment = require("../models/EmailAttachment");
 const User = require("../models/User");
 const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
 const { parseListQuery, buildMessageFilter, EmailQueryError } = require("../services/email/emailQueries");
 const { serializeMailbox, serializeListItem, serializeThreadMessage, idOf } = require("../services/email/emailSerializers");
+const { summarizeLinks, summarizeDownloads } = require("../services/email/clickSummary");
 const { recordView, summarizeViews } = require("../services/email/emailViews");
 const { EmailHttpError, pickReplyTarget, sendNewMail, sendReply, setSpamState } = require("../services/email/emailSender");
 const { getAttachmentBytes } = require("../services/email/attachmentFiles");
@@ -105,6 +107,12 @@ function createAdminEmailRouter({
     const v = textField(req, "trackOpens");
     return v === "1" ? true : v === "0" ? false : undefined;
   };
+  // The "Request read receipt" box: "1" asks for one; anything else does not (default off).
+  const requestReceiptField = (req) => textField(req, "requestReceipt") === "1";
+  // The "Send attachments as secure links" box: "1" asks for it; anything else does not (default off).
+  const secureLinksField = (req) => textField(req, "secureLinks") === "1";
+  // The "Add my signature" box: "1" adds MY signature image (the server finds it by the session); anything else does not.
+  const signatureField = (req) => textField(req, "signature") === "1";
   const validatedFiles = async (req) => Promise.all((req.files || []).map(validateAttachment));
 
   const handle = (fn) => async (req, res) => {
@@ -130,7 +138,7 @@ function createAdminEmailRouter({
     const ids = mailboxes.map((m) => m._id);
 
     const rows = await EmailMessage.aggregate([
-      { $match: { mailbox: { $in: ids }, direction: "in", firstViewedAt: null, gmailRead: { $ne: true } } },
+      { $match: { mailbox: { $in: ids }, direction: "in", isReceipt: { $ne: true }, firstViewedAt: null, gmailRead: { $ne: true } } },
       { $group: { _id: { mailbox: "$mailbox", isSpam: "$isSpam" }, n: { $sum: 1 } } },
     ]);
     const unread = new Map();
@@ -152,7 +160,7 @@ function createAdminEmailRouter({
     res.json({
       mailboxes: mailboxes.map((m) => ({ ...serializeMailbox(m), unread: unread.get(String(m._id)) || 0, spam: spamBy.get(String(m._id)) || 0 })),
       counts: { received, spam },
-      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled) },
+      tracking: { available: Boolean(tracking.active), disclosure: Boolean(tracking.active && tracking.disclosureEnabled), trackInternal: tracking.trackInternalRecipients !== false, companyDomain: EMAIL_DOMAIN, secureLinks: Boolean(tracking.secureLinksActive), secureLinkDays: tracking.secureLinkDays },
     });
   }));
 
@@ -201,17 +209,20 @@ function createAdminEmailRouter({
 
     const mailboxes = await accessibleMailboxes(actor.id);
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
-    const opened = await EmailMessage.findOne({ _id: req.params.id, mailbox: { $in: mailboxes.map((m) => m._id) } });
+    const opened = await EmailMessage.findOne({ _id: req.params.id, isReceipt: { $ne: true }, mailbox: { $in: mailboxes.map((m) => m._id) } });
     if (!opened) return res.status(404).json({ msg: "Mail not found." });
 
     // A spam mail stands alone; otherwise the thread hides any spam in it.
     const thread = opened.gmailThreadId && !opened.isSpam
-      ? await EmailMessage.find({ mailbox: opened.mailbox, gmailThreadId: opened.gmailThreadId, isSpam: false }).sort({ messageDate: 1, _id: 1 })
+      ? await EmailMessage.find({ mailbox: opened.mailbox, gmailThreadId: opened.gmailThreadId, isSpam: false, isReceipt: { $ne: true } }).sort({ messageDate: 1, _id: 1 })
       : [opened];
 
-    const [attachments, views] = await Promise.all([
+    const outIds = thread.filter((m) => m.direction === "out").map((m) => m._id);
+    const [attachments, views, linksByMessage, filesByMessage] = await Promise.all([
       EmailAttachment.find({ message: { $in: thread.map((m) => m._id) } }).sort({ _id: 1 }).lean(),
       summarizeViews(opened._id),
+      summarizeLinks(outIds),
+      summarizeDownloads(outIds),
     ]);
     const attachmentsByMessage = new Map();
     for (const a of attachments) {
@@ -226,8 +237,8 @@ function createAdminEmailRouter({
     const { replyTo } = pickReplyTarget(opened, thread);
 
     res.json({
-      message: serializeThreadMessage(opened, mailboxMap, attachmentsByMessage, adminsById),
-      thread: thread.map((m) => serializeThreadMessage(m, mailboxMap, attachmentsByMessage, adminsById)),
+      message: serializeThreadMessage(opened, mailboxMap, attachmentsByMessage, adminsById, linksByMessage, filesByMessage),
+      thread: thread.map((m) => serializeThreadMessage(m, mailboxMap, attachmentsByMessage, adminsById, linksByMessage, filesByMessage)),
       views,
       reply: {
         allowed: !opened.isSpam,
@@ -290,6 +301,9 @@ function createAdminEmailRouter({
       gmail: lazyGmail(mailbox),
       store,
       trackOpens: trackOpensField(req),
+      requestReceipt: requestReceiptField(req),
+      secureLinks: secureLinksField(req),
+      useSignature: signatureField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
@@ -327,6 +341,9 @@ function createAdminEmailRouter({
       gmail: lazyGmail(mailbox),
       store,
       trackOpens: trackOpensField(req),
+      requestReceipt: requestReceiptField(req),
+      secureLinks: secureLinksField(req),
+      useSignature: signatureField(req),
       trackingState: await trackingState(),
     });
     const mailboxMap = new Map(mailboxes.map((m) => [String(m._id), m]));
@@ -374,6 +391,35 @@ function createAdminEmailRouter({
     res.set({
       "Content-Type": safeContentType(attachment.mimeType),
       "Content-Disposition": contentDisposition(attachment.filename),
+      "Content-Length": String(bytes.length),
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; sandbox",
+      "Cache-Control": "private, no-store",
+    });
+    res.end(bytes);
+  }));
+
+  // GET /messages/:id/signature-image — the image signature this mail went out with. Same
+  // access as the mail itself: an admin who may open the mail may see its signature image.
+  router.get("/messages/:id/signature-image", handle(async (req, res) => {
+    const actor = await loadActor(req, res);
+    if (!actor) return;
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ msg: "File not found." });
+    const mailboxes = await accessibleMailboxes(actor.id);
+    const message = await EmailMessage.findOne({ _id: req.params.id, direction: "out", mailbox: { $in: mailboxes.map((m) => m._id) } })
+      .select("signatureImage")
+      .lean();
+    if (!message?.signatureImage?.key) return res.status(404).json({ msg: "File not found." });
+
+    let bytes;
+    try {
+      bytes = await store.get(message.signatureImage.key);
+    } catch (err) {
+      console.error("[email-signature-image] could not read:", err?.message || err);
+      return res.status(503).json({ msg: "The image could not be loaded. Please try again." });
+    }
+    res.set({
+      "Content-Type": message.signatureImage.mime,
       "Content-Length": String(bytes.length),
       "X-Content-Type-Options": "nosniff",
       "Content-Security-Policy": "default-src 'none'; sandbox",

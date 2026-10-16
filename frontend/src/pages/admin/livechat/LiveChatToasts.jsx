@@ -5,7 +5,16 @@ export default function LiveChatToasts({ toasts, onOpen }) {
   return (
     <div className="lcx-toasts" aria-live="polite">
       {toasts.map((toast) => (
-        <button key={toast.id} type="button" className="lcx-toast" onClick={() => onOpen(toast)}>
+        // A chat link is a plain anchor that opens a new tab. onOpen dismisses the toast, and follows the link in
+        // place when this already is the Live Chat tab.
+        <a
+          key={toast.id}
+          href={toast.path || undefined}
+          target={toast.path ? "_blank" : undefined}
+          rel={toast.path ? "noopener" : undefined}
+          className="lcx-toast"
+          onClick={(event) => onOpen(toast, event)}
+        >
           <span className="lcx-toast-av" aria-hidden="true">
             {String(toast.title || "?").slice(0, 1).toUpperCase()}
           </span>
@@ -13,7 +22,7 @@ export default function LiveChatToasts({ toasts, onOpen }) {
             <b>{toast.title}</b>
             <span>{toast.body}</span>
           </span>
-        </button>
+        </a>
       ))}
     </div>
   );

@@ -13,6 +13,18 @@ const { Country } = require("country-state-city");
 const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 const MAX_EVENT_BYTES = 2048;
 
+// A short piece of an error for the log: emails, phone-like numbers and long token-like runs are masked, so an error
+// that happens to quote patient text or a secret does not put it in the log.
+function scrubLogText(value, max) {
+  return String(value ?? "")
+    .replace(/[^\s@]+@[^\s@]+/g, "[email]")
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[number]")
+    .replace(/[A-Za-z0-9_-]{24,}/g, "[token]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
 // Pages that are never tracked (same areas the site hides its public layout on, plus login and payment).
 const UNTRACKED_PREFIXES = [
   "/admin",
@@ -203,18 +215,20 @@ function setupVisitorNamespace(ns, ctx) {
 
     if (chatEnabled) {
       // Never log the error object or its message: it could carry patient text.
-      const safely = async (cb, fn) => {
+      const safely = async (cb, fn, event = "unknown") => {
         try {
           reply(cb, await fn());
         } catch (err) {
-          console.error(`[livechat] chat event failed: ${err?.name || "Error"}`);
+          console.error(
+            `[livechat] chat event failed: event=${event} name=${err?.name || "Error"} code=${scrubLogText(err?.code, 40) || "-"} msg=${scrubLogText(err?.message, 120) || "-"}`
+          );
           reply(cb, { ok: false, error: "server_error" });
         }
       };
 
       socket.on("chat:resume", (a, b) => {
         const [, cb] = args(a, b);
-        safely(cb, () => ctx.chat.resume(visitorId));
+        safely(cb, () => ctx.chat.resume(visitorId), "chat:resume");
       });
 
       socket.on("chat:start", (a, b) => {
@@ -235,32 +249,40 @@ function setupVisitorNamespace(ns, ctx) {
             device: { type: agent.device, os: agent.os, browser: agent.browser },
             page: path && isTrackablePath(path) ? { path, title: cleanTitle(payload.title) } : null,
           });
-        });
+        }, "chat:start");
       });
 
       socket.on("chat:message", (a, b) => {
         const [payload, cb] = args(a, b);
-        safely(cb, () => ctx.chat.sendMessage(visitorId, payload.text));
+        safely(
+          cb,
+          async () => {
+            // Acknowledged once the message is saved; the AI turn (`aiDone`) keeps running in the background.
+            const { aiDone, ...ack } = await ctx.chat.sendMessage(visitorId, payload.text);
+            return ack;
+          },
+          "chat:message"
+        );
       });
 
       socket.on("chat:option", (a, b) => {
         const [payload, cb] = args(a, b);
-        safely(cb, () => ctx.chat.pickOption(visitorId, String(payload.key || "").slice(0, 40)));
+        safely(cb, () => ctx.chat.pickOption(visitorId, String(payload.key || "").slice(0, 40)), "chat:option");
       });
 
       socket.on("chat:agent", (a, b) => {
         const [, cb] = args(a, b);
-        safely(cb, () => ctx.chat.talkToAgent(visitorId));
+        safely(cb, () => ctx.chat.talkToAgent(visitorId), "chat:agent");
       });
 
       socket.on("chat:switch-ai", (a, b) => {
         const [, cb] = args(a, b);
-        safely(cb, () => ctx.chat.switchToAi(visitorId));
+        safely(cb, () => ctx.chat.switchToAi(visitorId), "chat:switch-ai");
       });
 
       socket.on("chat:rate", (a, b) => {
         const [payload, cb] = args(a, b);
-        safely(cb, () => ctx.chat.rate(visitorId, payload.stars));
+        safely(cb, () => ctx.chat.rate(visitorId, payload.stars), "chat:rate");
       });
 
       // Typing carries a boolean only, never the text being typed.
@@ -278,4 +300,4 @@ function setupVisitorNamespace(ns, ctx) {
   });
 }
 
-module.exports = { setupVisitorNamespace, classifySource, cleanPath, isTrackablePath, parseUserAgent };
+module.exports = { scrubLogText, setupVisitorNamespace, classifySource, cleanPath, isTrackablePath, parseUserAgent };

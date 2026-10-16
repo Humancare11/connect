@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { hub } from "./liveChatHub";
 import LiveChatToasts from "./LiveChatToasts";
 import { useLiveChatAdmin } from "./useLiveChatAdmin";
-import { openLiveChat } from "./liveChatTabs";
+import { inLiveChatTab, openLiveChat } from "./liveChatTabs";
 
 const AGENT_ROLES = ["admin", "superadmin"];
 
@@ -23,10 +23,16 @@ export function LiveChatAdminProvider({ user }) {
   return (
     <LiveChatToasts
       toasts={toasts}
-      onOpen={(toast) => {
+      onOpen={(toast, event) => {
         hub.dismissToast(toast.id);
-        // Opens the chat in the Live Chat tab (this tab, if that is where we are).
-        if (toast.path) openLiveChat(toast.path);
+        // In the Live Chat tab the chat is followed in place (no reload); anywhere else the anchor itself opens a
+        // new tab.
+        if (toast.path && inLiveChatTab()) {
+          event?.preventDefault();
+          openLiveChat(toast.path);
+        } else if (!toast.path) {
+          event?.preventDefault();
+        }
       }}
     />
   );

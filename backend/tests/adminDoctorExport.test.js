@@ -132,3 +132,60 @@ describe("admin doctor export", () => {
     }
   });
 });
+
+// The same endpoint through the REAL admin router (real verifyAdminToken + superAdminOnly, real route order),
+// the way server.js mounts it, with a real signed session cookie/bearer token.
+describe("admin doctor export through the real admin router", () => {
+  const cors = require("cors");
+  const cookieParser = require("cookie-parser");
+  const User = require("../models/User");
+  const Session = require("../models/Session");
+  const { signAccessToken } = require("../middleware/verifyToken");
+  let mongod, server, base;
+
+  const tokenFor = async (role) => {
+    const user = await User.create({ name: role, email: `${role}@test.co`, password: "x", role });
+    const session = await Session.create({ userId: String(user._id), role, expiresAt: new Date(Date.now() + 3600e3) });
+    return signAccessToken(user, session._id);
+  };
+
+  before(async () => {
+    process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
+    process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy"; // adminController builds a Stripe client on import
+    mongod = await MongoMemoryServer.create();
+    await mongoose.connect(mongod.getUri());
+    await Promise.all([Doctor.init(), Enrollment.init()]);
+    const app = express();
+    app.use(cors({ origin: true, credentials: true }));
+    app.use(express.json());
+    app.use(cookieParser());
+    app.use("/api/admin", require("../routes/admin"));
+    server = http.createServer(app);
+    await new Promise((r) => server.listen(0, "127.0.0.1", r));
+    base = `http://127.0.0.1:${server.address().port}/api/admin/doctors/export?type=all&fields=full`;
+  });
+  after(async () => {
+    await new Promise((r) => server.close(r));
+    await mongoose.disconnect();
+    await mongod.stop();
+  });
+
+  test("a superadmin gets the spreadsheet, not the /doctors/:id handler; filename header is exposed to browsers", async () => {
+    const token = await tokenFor("superadmin");
+    await Doctor.create({ name: "Dr Real", email: "real@test.co", password: "x" });
+    const res = await fetch(base, { headers: { Authorization: `Bearer ${token}`, Origin: "https://uat.example.com" } });
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("content-type"), /spreadsheetml/);
+    assert.match(res.headers.get("content-disposition"), /attachment; filename="all_doctors_/);
+    assert.match(res.headers.get("access-control-expose-headers"), /Content-Disposition/);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(Buffer.from(await res.arrayBuffer()));
+    assert.equal(wb.worksheets[0].rowCount, 2);
+  });
+
+  test("a plain admin is refused with 403 and unauthenticated with 401", async () => {
+    const admin = await tokenFor("admin");
+    assert.equal((await fetch(base, { headers: { Authorization: `Bearer ${admin}` } })).status, 403);
+    assert.equal((await fetch(base)).status, 401);
+  });
+});

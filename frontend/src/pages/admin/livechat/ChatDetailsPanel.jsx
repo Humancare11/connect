@@ -94,7 +94,7 @@ function Tags({ tags, onSave }) {
   );
 }
 
-export default function PatientPanel({ detail, now, onSaveContact, onSaveTags }) {
+export default function PatientPanel({ detail, now, onSaveContact, onSaveTags, readOnly = false }) {
   const { conversation: c, panel: p } = detail;
   const [sections, setSections] = useState(readSections);
   const toggle = (id, open) =>
@@ -172,14 +172,25 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
         <span className={p.returning ? "is-ret" : "is-first"}>{p.returning ? "Returning visitor" : "First visit"}</span>
       </div>
 
-      <TellMe key={c.conversationId} url={`/api/admin/livechat/conversations/${c.conversationId}/summary`} />
+      {!readOnly && <TellMe key={c.conversationId} url={`/api/admin/livechat/conversations/${c.conversationId}/summary`} />}
 
       <Section id="qual" title="Qualification" badge={hasName ? "Contact saved" : "Add contact"} {...sectionProps}>
-        <ContactForm key={`${c.conversationId}:${p.contact.email}:${p.contact.name}`} contact={p.contact} onSave={onSaveContact} />
+        {readOnly ? (
+          <dl className="wk-kv">
+            <dt>Name</dt>
+            <dd>{p.contact.name || "–"}</dd>
+            <dt>Email</dt>
+            <dd>{p.contact.email || "–"}</dd>
+            <dt>Phone</dt>
+            <dd>{p.contact.phone || "–"}</dd>
+          </dl>
+        ) : (
+          <ContactForm key={`${c.conversationId}:${p.contact.email}:${p.contact.name}`} contact={p.contact} onSave={onSaveContact} />
+        )}
       </Section>
 
       <Section id="ctx" title="Patient context" {...sectionProps}>
-        <PatientContextFields key={c.visitorId} visitorId={c.visitorId} fields={p.fields} fieldDefs={p.fieldDefs} />
+        {!readOnly && <PatientContextFields key={c.visitorId} visitorId={c.visitorId} fields={p.fields} fieldDefs={p.fieldDefs} />}
         <dl className="wk-kv">
           <dt>Topic</dt>
           <dd>{p.context.topic || "–"}</dd>
@@ -207,11 +218,29 @@ export default function PatientPanel({ detail, now, onSaveContact, onSaveTags })
           )}
           <dt>Started on</dt>
           <dd className="wk-link">{p.info.startedPage.path ? `…humancareconnect.co${p.info.startedPage.path}` : "–"}</dd>
+          {p.info.aiNotice && (
+            <>
+              <dt>AI notice</dt>
+              <dd>
+                AI notice accepted: {new Date(p.info.aiNotice.acceptedAt).toLocaleString()} · policy {p.info.aiNotice.policyVersion || "–"}
+              </dd>
+            </>
+          )}
+          {p.info.safety && (
+            <>
+              <dt>AI Review</dt>
+              <dd>
+                {p.info.safety.reviewStatus === "reviewed"
+                  ? `Reviewed: ${p.info.safety.reviewOutcome === "issue" ? "Issue" : "OK"}${p.info.safety.reviewedAt ? ` · ${new Date(p.info.safety.reviewedAt).toLocaleString()}` : ""}`
+                  : "Flagged as medical · not reviewed yet"}
+              </dd>
+            </>
+          )}
         </dl>
       </Section>
 
       <Section id="tags" title="Chat tags" {...sectionProps}>
-        <Tags tags={p.tags} onSave={onSaveTags} />
+        {readOnly ? <span className="wk-small wk-muted">{p.tags.length ? p.tags.join(", ") : "No tags"}</span> : <Tags tags={p.tags} onSave={onSaveTags} />}
       </Section>
 
       <Section id="recent" title="Recent conversations" {...sectionProps}>

@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { handoffLabel } from "./liveChatHub";
 import Icon from "./lcIcons";
 import Composer from "./Composer";
-import { CLOSED_LABEL, dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
+import LanguageSwitch from "./LanguageSwitch";
+import DeleteChatsDialog from "./DeleteChatsDialog";
+import { dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 import { DEFAULT_AI_NAME } from "../../../features/livechat/aiName";
 
@@ -134,6 +135,7 @@ function Message({ m, first, c, aiName, onOpenFile, translation, shownOriginal, 
 }
 
 export default function ChatConversation({
+  readOnly = false, // the Archive page: no reply, note, take over, hand back, resolve or block
   detail,
   me,
   role,
@@ -152,6 +154,8 @@ export default function ChatConversation({
   onTyping,
   onOpenFile,
   onBlockIp,
+  onDetect, // retry the language detection: async, returns { language, reason }
+  onDelete, // Super Admin: delete an archived chat (to Trash); async, returns { ok, error }
   onDownload,
   onSendFile,
   onTranslate,
@@ -165,7 +169,15 @@ export default function ChatConversation({
   const [info, setInfo] = useState("");
 
   // Translation (this admin only; the patient never sees any of it)
-  const language = c.language || null; // { code, name } for non-English chats
+  const [detected, setDetected] = useState(null); // a language found by the "Detect language" link
+  const language = c.language || detected || null; // { code, name } for non-English chats
+  // Only for a chat whose language is really unknown (the server says so: nothing stored, and non-English-looking text).
+  const canDetect = !language && c.languageUnknown === true;
+  const runDetect = async () => {
+    const res = onDetect ? await onDetect() : null;
+    if (res?.language) setDetected(res.language);
+    return res || { language: null, reason: "failed" };
+  };
   const [view, setView] = useState(detail.view === "en" ? "en" : "original");
   const [translations, setTranslations] = useState({}); // messageId -> { text, from, fromName }
   const [originals, setOriginals] = useState(() => new Set()); // messages switched back to the original
@@ -174,13 +186,18 @@ export default function ChatConversation({
   const asked = useRef(new Set()); // message ids already sent for translation
   const mounted = useRef(true);
 
-  const closed = c.mode === "archived";
+  const archived = c.mode === "archived";
+  // An archived chat that went there from the Queue today can still be joined or replied to from Archive temp.
+  const closed = archived && !c.joinable;
   const mine = c.assignee?.id === me;
   const heldByOther = c.mode === "live" && !mine;
   const superadmin = role === "superadmin";
-  const canTakeOver = !closed && (c.mode === "ai" || c.mode === "queue" || (heldByOther && superadmin));
-  const canHandBack = c.mode === "live" && (mine || superadmin);
-  const canResolve = !closed && (!heldByOther || superadmin);
+  const canDelete = superadmin && archived && typeof onDelete === "function";
+  const showMore = (Boolean(c.ip) && !readOnly) || canDelete;
+  const [deleting, setDeleting] = useState(null); // null, or { busy, error }
+  const canTakeOver = !readOnly && !closed && (c.mode === "ai" || c.mode === "queue" || archived || (heldByOther && superadmin));
+  const canHandBack = !readOnly && c.mode === "live" && (mine || superadmin);
+  const canResolve = !readOnly && !closed && !archived && (!heldByOther || superadmin);
   // Only the assignee replies; everyone else (and everyone on a closed chat) can still leave internal notes.
   const notesOnly = closed || heldByOther;
 
@@ -304,28 +321,6 @@ export default function ChatConversation({
       <div className="wk-head">
         <div className="wk-head-t">
           <strong>{heading}</strong>
-          {closed && <span className="wk-tag wk-tag--done">{CLOSED_LABEL[c.closedReason] || "Resolved"}</span>}
-          {c.mode === "queue" && c.emailStatus === "failed" && (
-            <span className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">
-              Email failed
-            </span>
-          )}
-          {c.mode === "queue" && c.emailStatus !== "failed" && c.emailFollowUp && <span className="wk-tag wk-tag--wait">Email follow-up</span>}
-          {(c.mode === "queue" || c.mode === "live") && handoffLabel(c.handoffReason) && (
-            <span className="wk-tag wk-tag--lang" title="Why this chat was handed to a person">
-              {handoffLabel(c.handoffReason)}
-            </span>
-          )}
-          {c.invited && (
-            <span className="wk-tag wk-tag--ai" title="You started this chat; the visitor has not replied yet">
-              Invited
-            </span>
-          )}
-          {c.rating ? (
-            <span className="wk-rating" title={`Patient rating: ${c.rating} of 5`}>
-              {"★".repeat(c.rating)}
-            </span>
-          ) : null}
           {heldByOther && <span className="wk-small wk-muted">held by {c.assignee?.name}</span>}
         </div>
         <div className="wk-actions">
@@ -344,9 +339,11 @@ export default function ChatConversation({
               Resolve
             </button>
           )}
-          <button type="button" className="hic" onClick={() => composerRef.current?.startNote()} title="Add an internal note" aria-label="Add an internal note">
-            <Icon name="note" />
-          </button>
+          {!readOnly && (
+            <button type="button" className="hic" onClick={() => composerRef.current?.startNote()} title="Add an internal note" aria-label="Add an internal note">
+              <Icon name="note" />
+            </button>
+          )}
           <button type="button" className="hic" onClick={onDownload} title="Download transcript" aria-label="Download transcript">
             <Icon name="download" />
           </button>
@@ -356,25 +353,40 @@ export default function ChatConversation({
           <button type="button" className="hic pn" onClick={onTogglePanel} aria-pressed={panelOpen} title="Show or hide patient details" aria-label="Toggle patient details">
             <Icon name="panel" />
           </button>
-          {c.ip && (
+          {showMore && (
             <button type="button" className="hic" data-more onClick={() => setMenu(menu === "more" ? "" : "more")} title="More" aria-label="More actions" aria-expanded={menu === "more"}>
               <Icon name="dots" />
             </button>
           )}
-          {menu === "more" && c.ip && (
+          {menu === "more" && showMore && (
             <div className="pop pop--more" role="menu">
-              <button
-                type="button"
-                className="pop-item danger"
-                disabled={busy}
-                onClick={() => {
-                  setMenu("");
-                  onBlockIp();
-                }}
-              >
-                <b>Block IP {c.ip}</b>
-                <span>Closes its chats</span>
-              </button>
+              {c.ip && !readOnly && (
+                <button
+                  type="button"
+                  className="pop-item danger"
+                  disabled={busy}
+                  onClick={() => {
+                    setMenu("");
+                    onBlockIp();
+                  }}
+                >
+                  <b>Block IP {c.ip}</b>
+                  <span>Closes its chats</span>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  type="button"
+                  className="pop-item danger"
+                  onClick={() => {
+                    setMenu("");
+                    setDeleting({ busy: false, error: "" });
+                  }}
+                >
+                  <b>Delete chat</b>
+                  <span>Moves it to Trash for 30 days</span>
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -397,19 +409,6 @@ export default function ChatConversation({
             Started · {dayWord(startedAt)} {timeOf(startedAt)}
           </span>
         </div>
-        {language && (
-          <div className="wk-viewswitch">
-            <div className="wk-seg" role="group" aria-label="Message language">
-              <button type="button" aria-pressed={view === "original"} onClick={() => chooseView("original")}>
-                Original
-              </button>
-              <button type="button" aria-pressed={view === "en"} onClick={() => chooseView("en")}>
-                English
-              </button>
-            </div>
-            {translating && <span className="wk-small wk-muted">Translating…</span>}
-          </div>
-        )}
         {messages.map((m, i) => (
           <Message
             key={m.id}
@@ -441,6 +440,12 @@ export default function ChatConversation({
       )}
       </div>
 
+      {readOnly ? (
+        <div className="wk-readonly">
+          <span>Read-only: this chat is in the Archive.</span>
+          {language && <LanguageSwitch view={view} onChoose={chooseView} translating={translating} />}
+        </div>
+      ) : (
       <Composer
         ref={composerRef}
         conversation={c}
@@ -451,6 +456,11 @@ export default function ChatConversation({
         busy={busy}
         canned={canned}
         language={language}
+        canDetect={canDetect}
+        onDetect={onDetect ? runDetect : undefined}
+        view={view}
+        onChooseView={chooseView}
+        translating={translating}
         onSend={andScroll(onSend)}
         onNote={andScroll(onNote)}
         onSuggest={onSuggest}
@@ -459,6 +469,24 @@ export default function ChatConversation({
         onTyping={onTyping}
         onNotice={setTransError}
       />
+      )}
+      {deleting && (
+        <DeleteChatsDialog
+          title="Delete chat"
+          count={1}
+          countLabel="will be moved to Trash"
+          description="It disappears from the lists, Archive and reports, and the patient cannot reopen it. You can restore it from Trash for 30 days."
+          confirmLabel="Move to Trash"
+          busy={deleting.busy}
+          error={deleting.error}
+          onCancel={() => setDeleting(null)}
+          onConfirm={async () => {
+            setDeleting({ busy: true, error: "" });
+            const r = await onDelete();
+            if (mounted.current && r && r.ok === false) setDeleting({ busy: false, error: r.error || "Could not delete this chat." });
+          }}
+        />
+      )}
     </div>
   );
 }

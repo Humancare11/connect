@@ -99,7 +99,10 @@ function createS3FileStore() {
 }
 
 function createFileService({ models, chat, store, env = process.env, now = () => Date.now() }) {
-  const { LcFile } = models;
+  const { LcFile, LcConversation } = models;
+  // A file of a chat in Trash can no longer be opened (tests may omit LcConversation).
+  const inTrash = async (conversationId) =>
+    Boolean(LcConversation && (await LcConversation.exists({ conversationId, mode: "trashed" })));
   const limits = readFileLimits(env);
   const uploadLimiter = createWindowLimiter({ windowMs: 10 * 60_000, max: limits.uploadsPer10Min, now });
   let fileStore = store || null;
@@ -107,7 +110,9 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
 
   // A patient uploads into their OWN open chat.
   async function upload({ visitorId, file }) {
-    const conv = await chat.findOpenConversation(visitorId);
+    let conv = await chat.findOpenConversation(visitorId);
+    const reopening = !conv;
+    if (!conv) conv = await chat.findReopenable(visitorId); // closed for inactivity: reopened once the file is accepted
     if (!conv) throw new FileError(409, "no_conversation");
     if (!uploadLimiter.allow(visitorId)) throw new FileError(429, "rate_limited");
     if ((await LcFile.countDocuments({ conversationId: conv.conversationId })) >= limits.maxFilesPerChat) {
@@ -115,6 +120,10 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     }
     const check = await inspectUpload({ buffer: file?.buffer, originalName: file?.originalname, maxBytes: limits.maxBytes });
     if (!check.ok) throw new FileError(check.error === "file_too_large" ? 413 : 400, check.error);
+    if (reopening) {
+      conv = await chat.reopenInactive(visitorId);
+      if (!conv) throw new FileError(409, "no_conversation");
+    }
 
     const name = displayName(file.originalname, check.ext);
     const key = `livechat/${conv.conversationId}/${crypto.randomUUID()}.${check.ext}`;
@@ -171,7 +180,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
   async function presignForPatient({ visitorId, fileId }) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
     const doc = await LcFile.findOne({ _id: fileId, visitorId, sender: "agent" });
-    if (!doc) throw new FileError(404, "not_found");
+    if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
     const name = decryptLiveChatText(doc.name);
     let url;
     try {
@@ -187,7 +196,7 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
   async function presign(actor, fileId) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
     const doc = await LcFile.findById(fileId);
-    if (!doc) throw new FileError(404, "not_found");
+    if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
     const name = decryptLiveChatText(doc.name);
     let url;
     try {

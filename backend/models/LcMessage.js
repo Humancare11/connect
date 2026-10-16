@@ -27,6 +27,8 @@ const messageSchema = new mongoose.Schema(
     ],
     // The admin's own English text when the reply was translated before sending (what the patient got is `text`).
     sourceText: ENC_FIELD,
+    // true when the reply filter blocked the model's reply and a fixed safe reply was sent in its place (this message).
+    safetyBlocked: { type: Boolean, default: false },
     // Site pages shown as buttons under an AI reply (titles and urls come from the server allowlist, not patient data).
     links: [{ _id: false, title: { type: String, maxlength: 120 }, url: { type: String, maxlength: 200 } }],
   },

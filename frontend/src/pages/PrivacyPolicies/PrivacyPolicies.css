@@ -79,6 +79,10 @@
   line-height: 1.8;
 }
 
+#website-chat {
+  scroll-margin-top: 110px; /* the fixed header must not cover the heading */
+}
+
 .rcp-section {
   /* border-top: 1px solid #E5E7EB; */
   margin-top: 32px;

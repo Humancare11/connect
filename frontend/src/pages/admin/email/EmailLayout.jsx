@@ -186,6 +186,11 @@ export default function EmailLayout() {
             </div>
 
             {mailboxesQ.isSuccess && !mailboxes.length && <div className="em-sub em-rail-note">No mail IDs are set up yet.</div>}
+            {/* Every admin: their own signatures. */}
+            <Link to={`${EMAIL_BASE}/settings/my-signature`} className="em-manage">
+              <Icon name="compose" size={16} />
+              My signature
+            </Link>
             {/* Super Admin only (the page and its API refuse everyone else too). */}
             {admin?.role === "superadmin" && (
               <Link to={`${EMAIL_BASE}/settings/mail-ids`} className="em-manage">

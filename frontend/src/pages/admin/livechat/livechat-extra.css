@@ -62,5 +62,93 @@ html.lc-shell-open,html.lc-shell-open body{height:100%;overflow:hidden}
 .lcx .rt-credit a{color:inherit;text-decoration:underline}
 
 /* Original | English switch: sticky at the top of the message area, under the "Started" line */
-.lcx .wk-viewswitch{position:sticky;top:0;z-index:3;display:flex;justify-content:center;align-items:center;gap:10px;width:100%;max-width:820px;margin:0 auto;padding:6px 0 8px;background:linear-gradient(var(--bg) 75%,transparent)}
-.lcx .wk-viewswitch .wk-seg{background:var(--surface)}
+
+/* Archive page: filters, table, pager and the read-only viewer */
+.lcx .ar{display:flex;flex-direction:column;gap:14px;min-height:0;padding:4px 4px 24px}
+.lcx .ar-head h1{margin:0;font-size:20px;font-weight:700}
+.lcx .ar-head p{margin:4px 0 0;font-size:13px}
+.lcx .ar-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.lcx .ar-presets{display:flex;gap:6px;align-items:center}
+.lcx .ar-chip{border:1px solid var(--line-2);background:transparent;color:var(--ink);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer}
+.lcx .ar-chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+.lcx .ar-field{display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--muted)}
+.lcx .ar-field input,.lcx .ar-field select{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:7px 10px;font-size:13px;font-family:inherit;min-height:34px}
+.lcx .ar-field input:focus,.lcx .ar-field select:focus{border-color:var(--accent);outline:none}
+.lcx .ar-search{flex:1 1 260px;min-width:220px}
+.lcx .ar-searchbox{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:0 10px;color:var(--muted)}
+.lcx .ar-searchbox:focus-within{border-color:var(--accent)}
+.lcx .ar-searchbox input{border:0;background:transparent;padding:7px 0;min-width:0;flex:1}
+.lcx .ar-link{border:0;background:transparent;color:var(--accent-ink);font-size:12.5px;font-weight:600;cursor:pointer;padding:8px 4px}
+.lcx .ar-note{border:1px solid var(--warn-line);background:var(--lang-bg);color:var(--lang-ink);border-radius:10px;padding:8px 12px;font-size:12.5px}
+.lcx .ar-tablewrap{overflow:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);max-height:calc(100vh - 360px);min-height:160px}
+.lcx .ar-table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}
+.lcx .ar-table th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.lcx .ar-table td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.lcx .ar-table td small{display:block;font-size:11px;margin-top:2px}
+.lcx .ar-table tbody tr{cursor:pointer}
+.lcx .ar-table tbody tr:hover,.lcx .ar-table tbody tr:focus-visible{background:var(--surface-2)}
+.lcx .ar-table tr.ar-empty{cursor:default}.lcx .ar-table tr.ar-empty td{text-align:center;color:var(--muted);padding:28px}
+.lcx .ar-num{text-align:right;font-variant-numeric:tabular-nums}
+.lcx .ar-pager{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lcx .ar-pager .wk-btn{margin-left:8px}
+.lcx .ar-pager .wk-btn:disabled{opacity:.5;cursor:default}
+.lcx .ar-viewer{display:flex;flex-direction:column;flex:1 1 0;min-height:0;gap:10px}
+.lcx .ar-back{display:flex;align-items:center;gap:12px}
+.lcx .ar-back .wk-btn{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.lcx .wk-inbox.ar-two{grid-template-columns:minmax(0,1fr) 340px}
+.lcx .wk-readonly{border-top:1px solid var(--line);padding:12px 18px;font-size:12.5px;color:var(--muted);background:var(--surface)}
+@media (max-width:760px){.lcx .wk-inbox.ar-two{grid-template-columns:1fr}.lcx .ar-tablewrap{max-height:none}}
+
+/* Original | English switch in the composer toolbar and the read-only bar */
+.lcx .cm-bar{flex-wrap:wrap}
+.lcx .cm-view{display:inline-flex;align-items:center;gap:8px;margin-left:6px}
+.lcx .cm-view .wk-seg{background:var(--surface)}
+.lcx .cm-view .wk-seg button{background:transparent;color:var(--muted)}
+.lcx .cm-view .wk-seg button[aria-pressed="true"]{background:#3b82f6;color:#fff}
+.lcx .cm-view{margin-left:0}
+.lcx .cm-nolang{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);padding:0 4px}
+.lcx .cm-nolang .wk-link:disabled{opacity:.5}
+.lcx .wk-readonly{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.lcx .ar-bulk{display:flex;flex-wrap:wrap;gap:8px}
+.lcx .ar-check{width:36px;text-align:center}
+.lcx .ar-table--narrow{min-width:760px}
+.lcx .ar-table tbody tr.ar-row--static{cursor:default}
+.lcx .wk-btn.dc-danger{background:var(--danger-ink,#b42318);border-color:var(--danger-ink,#b42318);color:#fff}
+.lcx .wk-btn.dc-danger:disabled{opacity:.5;cursor:default}
+.lcx .wk-btn.dc-danger-ghost{color:var(--danger-ink,#b42318);border-color:var(--danger-ink,#b42318)}
+.lcx .wk-btn.dc-danger-ghost:disabled{opacity:.5;cursor:default}
+.lcx .dc-backdrop{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(15,23,42,.45)}
+.lcx .dc-dialog{width:100%;max-width:440px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+.lcx .dc-dialog h2{margin:0;font-size:17px}
+.lcx .dc-dialog p{margin:0}
+.lcx .dc-count{font-size:15px}
+.lcx .dc-type{display:flex;flex-direction:column;gap:6px;font-size:13px}
+.lcx .dc-type input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface);color:var(--ink);font:inherit}
+.lcx .dc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+
+/* AI Review page */
+.lcx .rv-tabs{display:flex;gap:8px;margin:0 0 14px}
+.lcx .rv-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:0 0 14px}
+.lcx .rv-filters label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.lcx .rv-filters select,.lcx .rv-filters input{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
+.lcx .rv-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}
+@media (max-width:1100px){.lcx .rv-split{grid-template-columns:minmax(0,1fr)}}
+.lcx .rv-split .lcp-table{min-width:0}
+.lcx .rv-link{background:none;border:0;padding:0;color:var(--accent-ink);text-decoration:underline;cursor:pointer}
+.lcx .rv-row--open td{background:var(--accent-soft)}
+.lcx .rv-issue{color:var(--danger-ink);font-weight:600}
+.lcx .rv-empty{border:1px dashed var(--line-2);border-radius:14px;padding:32px;text-align:center}
+.lcx .rv-detail{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:14px}
+.lcx .rv-detail-head{display:flex;justify-content:space-between;gap:12px}
+.lcx .rv-transcript{max-height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.lcx .rv-msg{border-radius:10px;padding:8px 10px;font-size:13.5px;overflow-wrap:anywhere;background:var(--surface-2)}
+.lcx .rv-msg--patient{background:var(--bubble);color:var(--bubble-ink)}
+.lcx .rv-msg--ai{background:var(--ai-soft);color:var(--ai-ink)}
+.lcx .rv-msg-meta{font-size:11px;color:var(--muted);margin-bottom:2px}
+.lcx .rv-badge{margin-left:8px;padding:1px 7px;border-radius:999px;background:var(--warn-soft);color:var(--warn);font-weight:600}
+.lcx .rv-history ul{margin:6px 0 0;padding-left:18px}
+.lcx .rv-note{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--muted);font-size:12.5px}
+.lcx .rv-form{display:flex;flex-direction:column;gap:8px}
+.lcx .rv-outcomes{display:flex;gap:18px}
+.lcx .rv-outcomes label{display:flex;gap:6px;align-items:center}
+.lcx .rv-form textarea{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;resize:vertical}

@@ -249,14 +249,19 @@ test("admin queries are read-only: aggregate / find only, never a write", () => 
   const src = read("services/searchAnalytics/adminQueries.js");
   const used = [...src.matchAll(/\b(Interaction|Stat)\.(\w+)\(/g)].map((m) => `${m[1]}.${m[2]}`).sort();
   assert.deepEqual(used, [
+    // Six reads before, plus loadDailyTerms and the read-time privacy check findRefusedTerms (both aggregate only).
     "Interaction.aggregate", "Interaction.aggregate", "Interaction.aggregate", "Interaction.aggregate", "Interaction.aggregate", "Interaction.aggregate",
+    "Interaction.aggregate", "Interaction.aggregate",
     "Stat.aggregate", "Stat.find", "Stat.find",
   ]);
   assert.ok(!/\.(updateOne|updateMany|insertOne|insertMany|create|deleteOne|deleteMany|bulkWrite|replaceOne|findOneAndUpdate|findOneAndDelete|findOneAndReplace|save|remove|drop|createIndex|collection)\b/.test(src));
   assert.ok(!/[{,]\s*\$(out|merge)\s*:/.test(src), "no aggregation stage may write");
   // The 3-interaction privacy floor lives in the data layer: on every term-day cell, and on the term total.
-  assert.ok(src.includes("{ $match: { cell: { $gte: MIN_TERM_INTERACTIONS } } }"));
-  assert.ok(src.includes("{ $match: { n: { $gte: MIN_TERM_INTERACTIONS } } }"));
+  // The floor is the caller's visibleFrom, clamped inside every loader so it can be raised but never lowered below 3.
+  assert.ok(src.includes("const cellFloor = { cell: { $gte: visibleFrom } };"));
+  assert.ok(src.includes("{ $match: { n: { $gte: visibleFrom }, _id: { $nin: excludeTermKeys } } }"));
+  assert.ok(src.includes("Math.max(MIN_TERM_INTERACTIONS,"));
+  assert.equal((src.match(/visibleFrom = termFloor\(visibleFrom\);/g) || []).length, 3, "loadWindowTerms, loadSummary and loadDailyTerms all clamp");
   // /trend is budgeted: every database operation goes through the budget.
   assert.ok(src.includes("budget.run("));
 });
@@ -269,7 +274,9 @@ test("the admin controller touches no model, writes nothing and logs only a fixe
   assert.ok(!/console\.(log|warn|error|info|debug)\(/.test(src), "no direct console calls");
   assert.ok(!/\.message\b|\.stack\b/.test(src), "never reads an error message");
   const calls = [...src.matchAll(/\blogger\(([^;]*)\);/g)].map((m) => m[1].trim());
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
+  // The third line is the fail-closed notice of the read-time privacy check: endpoint, reason and error NAME only.
+  assert.ok(calls.some((call) => call.startsWith("`[search-analytics] term privacy check incomplete (${reason}${name}): ${endpointName}`")));
   assert.ok(calls.some((call) => call.startsWith("`[search-analytics] admin read failed: ${endpoint} ${")));
   assert.ok(calls.some((call) => call === "`[search-analytics] admin read failed: ${endpoint} TrendBudgetError`")); // fixed text, no error detail
   assert.ok(!/req\.(body|headers|cookies|ip|user|params)/.test(src), "only the validated query is read");

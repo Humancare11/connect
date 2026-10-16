@@ -1,4 +1,5 @@
 import axios from "axios";
+import { isBinaryPayload } from "./utils/binaryPayload";
 import { dispatchSessionActivity, SESSION_EXPIRED_EVENT } from "./utils/session";
 
 // URLs that must never trigger the reactive refresh-and-retry flow below:
@@ -161,7 +162,7 @@ api.interceptors.response.use(
     // Rewrites upload-looking strings into API URLs. Requests that carry arbitrary
     // text (the Email module: subjects like "patients/reports …") or binary data
     // (file downloads) opt out with { skipUrlNormalize: true }.
-    if (response.data && !response.config?.skipUrlNormalize) response.data = _deepNormalizeUrls(response.data);
+    if (response.data && !response.config?.skipUrlNormalize && !isBinaryPayload(response.data)) response.data = _deepNormalizeUrls(response.data);
     return response;
   },
   async (error) => {

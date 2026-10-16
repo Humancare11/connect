@@ -1,7 +1,9 @@
 import { io } from "socket.io-client";
 import api, { getUserAuthToken } from "../../../api";
-import { installAudioUnlock, playChime, showBrowserNotification } from "./liveChatNotify";
-import { shouldAlert } from "./liveChatTabs";
+import { audioUnlocked, installAudioUnlock, playChime, playVisitorSound, showBrowserNotification, soundEnabled, visitorSoundEnabled, voiceEnabled } from "./liveChatNotify";
+import { inLiveChatTab, shouldAlert } from "./liveChatTabs";
+import { createVisitorSoundGate } from "./visitorSound";
+import { createVoiceGate, speakPhrase } from "./voiceAlerts";
 
 // One shared connection to /livechat-admin for the whole admin session.
 //
@@ -18,6 +20,22 @@ const TOAST_MS = 6000;
 const MAX_TOASTS = 3;
 
 let socket = null;
+const visitorGate = createVisitorSoundGate(); // "new website visitor" sound: once per new visitor (see visitorSound.js)
+const voiceGate = createVoiceGate(); // spoken alerts (see voiceAlerts.js)
+
+// Speaks "New visitor" / "Patient wants a live agent" when every rule of voiceAlerts.js allows it.
+function announceVoice(kind) {
+  const decision = voiceGate.decide({
+    kind,
+    inLiveChatTab: inLiveChatTab(),
+    voiceOn: voiceEnabled(),
+    mainSoundOn: soundEnabled(),
+    visitorSoundOn: visitorSoundEnabled(),
+    unlocked: audioUnlocked(),
+  });
+  if (!decision.speak) return;
+  if (!speakPhrase(decision.text, { interrupt: decision.interrupt, onEnd: () => voiceGate.finished() })) voiceGate.finished();
+}
 let refs = 0;
 let releaseTimer = null;
 let unreadTimer = null;
@@ -93,6 +111,7 @@ function onChatEvent(event, payload) {
       break;
     case "queue:new":
       scheduleUnread();
+      announceVoice("queue");
       pushToast({
         title: "Waiting for an agent",
         body: `${payload.name || "A patient"} asked for a live agent`,
@@ -162,7 +181,10 @@ function connect() {
     set({ status: "live" });
     refreshUnread();
   });
-  socket.on("disconnect", (reason) => set({ status: reason === "io server disconnect" ? "denied" : "reconnecting" }));
+  socket.on("disconnect", (reason) => {
+    visitorGate.unprime(); // arrivals while the connection was down are not announced afterwards
+    set({ status: reason === "io server disconnect" ? "denied" : "reconnecting" });
+  });
   socket.on("connect_error", (err) => {
     const message = String(err?.message || "");
     if (message.includes("Invalid namespace")) {
@@ -182,11 +204,26 @@ function connect() {
       visitors: new Map(visitors.map((v) => [v.visitorId, v])),
       clockOffset: serverTime ? serverTime - Date.now() : snapshot.clockOffset,
     });
+    visitorGate.prime(visitors.map((v) => v.visitorId)); // visitors already here are not announced
   });
   socket.on("visitors:delta", (delta) => {
     const next = new Map(snapshot.visitors);
     if (delta.type === "remove") next.delete(delta.visitorId);
-    else if (delta.visitor) next.set(delta.visitor.visitorId, delta.visitor);
+    else if (delta.visitor) {
+      const id = delta.visitor.visitorId;
+      const arrival = visitorGate.shouldPlay({
+        visitorId: id,
+        known: snapshot.visitors.has(id),
+        inLiveChatTab: inLiveChatTab(),
+        enabled: visitorSoundEnabled(),
+        mainSoundOn: soundEnabled(),
+      });
+      if (arrival) {
+        playVisitorSound();
+        announceVoice("visitor");
+      }
+      next.set(id, delta.visitor);
+    }
     set({ visitors: next });
   });
   ["chat:new", "queue:new", "chat:message", "chat:updated", "chat:typing", "chat:taken", "chat:reopened", "ai:unavailable", "abuse:alert"].forEach((event) =>

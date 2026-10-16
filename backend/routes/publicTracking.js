@@ -82,4 +82,5 @@ function createPublicTrackingRouter({ record = recordOpen, limitPerMinute = trac
 module.exports = createPublicTrackingRouter();
 module.exports.create = createPublicTrackingRouter;
 module.exports.PIXEL = PIXEL;
+module.exports.createIpGate = createIpGate;
 module.exports.HEADERS = HEADERS;

@@ -13,14 +13,14 @@ const { FileError } = require("../services/liveChat/fileService");
 //   GET  /api/livechat/config   tells the widget the module is on (the widget stays hidden on a 404)
 //   POST /api/livechat/upload   a patient's report (pdf/jpg/png, max 10 MB) into their own open chat; needs the chat token
 //   GET  /api/livechat/files/:id/url  a file the team sent the patient: a short link, own chat only; needs the chat token
-//   POST /api/livechat/contact  the contact form: validates, checks Turnstile + honeypot, registers the visitor and
+//   POST /api/livechat/contact  the contact form: validates, checks the honeypot (and the AI-notice flag when the notice is on), registers the visitor and
 //                               returns the chat token that unlocks the chat sockets
 //
-// Options exist so tests run without Cloudflare or the real limiters:
-//   chat, loadSettings, verifyTurnstile, isIpBlocked, env, limiters
+// Options exist so tests run without the real limiters:
+//   chat, loadSettings, isIpBlocked, env, limiters
 const HONEYPOT_FIELD = "companyUrl"; // hidden in the form; real people never fill it in
 
-function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env = process.env, limiters = {} }) {
+function create({ chat, loadSettings, isIpBlocked, files, env = process.env, limiters = {} }) {
   // Real client IP (same proxy rules as everywhere); LIVECHAT_DEV_FAKE_IP replaces it outside production only.
   const getClientIp = (req) => devFakeIp(env) || realClientIp(req);
   const router = express.Router();
@@ -38,7 +38,15 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env =
     try {
       const settings = await loadSettings();
       res.set("Cache-Control", "no-store");
-      res.json({ enabled: true, agentName: settings.agentDisplayName || "Sam", aiName: aiNameOf(settings), privacyPolicyUrl: "/privacy-policy" });
+      res.json({
+        enabled: true,
+        agentName: settings.agentDisplayName || "Sam",
+        aiName: aiNameOf(settings),
+        privacyPolicyUrl: "/privacy-policy",
+        // The AI notice above "Start chat" (Super Admin setting, off until the policy section is published).
+        showAiNotice: settings.showAiNotice === true,
+        policyVersion: String(settings.policyVersion || "v1"),
+      });
     } catch (err) {
       next(err);
     }
@@ -103,17 +111,17 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env =
       }
       if (await isIpBlocked(ip)) return res.status(403).json({ ok: false, errors: { form: "Chat is not available right now." } });
 
-      const captcha = await verifyTurnstile({ token: body.turnstileToken, ip, env });
-      if (!captcha.ok) {
-        return res.status(400).json({
-          ok: false,
-          errors: {
-            captcha:
-              captcha.reason === "failed" || captcha.reason === "missing_token"
-                ? "Please complete the verification and try again."
-                : "Verification is unavailable right now. Please try again in a moment.",
-          },
-        });
+      // A cached older widget may still send turnstileToken; it is ignored (never read, never an error).
+
+      // While "Show AI notice" is on, the form must come from a widget that shows the notice. An old cached widget
+      // does not send the flag and gets a clear "refresh the page" error (its form shows errors.form), not a crash.
+      const settings = await loadSettings();
+      let consent = null;
+      if (settings.showAiNotice === true) {
+        if (body.aiNoticeAccepted !== true) {
+          return res.status(400).json({ ok: false, error: "refresh_required", errors: { form: "Please refresh the page to continue." } });
+        }
+        consent = { policyVersion: String(settings.policyVersion || "v1") };
       }
 
       const result = await chat.registerContact({
@@ -122,6 +130,7 @@ function create({ chat, loadSettings, verifyTurnstile, isIpBlocked, files, env =
         email: body.email,
         phone: body.phone,
         ip,
+        consent,
       });
       if (!result.ok) return res.status(400).json({ ok: false, errors: result.errors });
 

@@ -1,81 +1,38 @@
-import { useMemo, useState } from "react";
-import { handoffLabel } from "./liveChatHub";
+import { useEffect, useMemo, useState } from "react";
 import Icon from "./lcIcons";
 import NotificationsBanner from "./NotificationsBanner";
-import { CLOSED_LABEL, timeOf } from "./chatUtils";
+import { timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 
 // Left column: the chat list (docs/live-chat-admin-ui.html). Live agent chats: Queue, My chats, Other agents, Back with
-// the AI and Archived. AI chats: Talking to the AI and Archived. Each group shows its count, can be collapsed, and
-// sorts Oldest / Newest first.
+// the AI and Archive temp (chats archived today, India time; at midnight it empties and the Archive page has them).
+// AI chats: Talking to the AI and Archive temp. Each group shows its count, can be collapsed, and is always sorted by
+// latest activity, newest on top (a chat with a new message moves to the top).
 const groupsFor = (view, me) =>
   view === "live"
     ? [
-        ["Queue", (c) => c.mode === "queue", "Oldest"],
-        ["My chats", (c) => c.mode === "live" && c.assignee?.id === me, "Oldest"],
-        ["Other agents", (c) => c.mode === "live" && c.assignee?.id !== me, "Newest"],
-        ["Back with the AI", (c) => c.mode === "ai", "Newest"],
-        ["Archived", (c) => c.mode === "archived", "Newest"],
+        ["Queue", (c) => c.mode === "queue"],
+        ["My chats", (c) => c.mode === "live" && c.assignee?.id === me],
+        ["Other agents", (c) => c.mode === "live" && c.assignee?.id !== me],
+        ["Back with the AI", (c) => c.mode === "ai"],
+        ["Archive temp", (c) => c.mode === "archived"],
       ]
     : [
-        ["Talking to the AI", (c) => c.mode !== "archived", "Newest"],
-        ["Archived", (c) => c.mode === "archived", "Newest"],
+        ["Talking to the AI", (c) => c.mode !== "archived"],
+        ["Archive temp", (c) => c.mode === "archived"],
       ];
 
-// Small labels under the preview: why a chat is in the Queue, what happened to its follow-up email, who holds it.
-function Labels({ row, me }) {
-  const tags = [];
-  if (row.mode === "queue") {
-    if (row.emailStatus === "failed") {
-      tags.push(
-        <span key="mail" className="wk-tag wk-tag--wait" title="The follow-up email could not be sent">
-          Email failed
-        </span>
-      );
-    } else if (row.emailFollowUp) {
-      tags.push(
-        <span key="mail" className="wk-tag wk-tag--wait">
-          Email follow-up
-        </span>
-      );
-    }
-    if (handoffLabel(row.handoffReason)) {
-      tags.push(
-        <span key="why" className="wk-tag wk-tag--lang" title="Why this chat needs a person">
-          {handoffLabel(row.handoffReason)}
-        </span>
-      );
-    }
-  } else if (row.mode === "live" && row.assignee?.id !== me) {
-    tags.push(
-      <span key="who" className="wk-tag wk-tag--human">
-        {row.assignee?.name || "Agent"}
-      </span>
-    );
-  } else if (row.mode === "archived") {
-    tags.push(
-      <span key="done" className="wk-tag wk-tag--done">
-        {CLOSED_LABEL[row.closedReason] || "Resolved"}
-      </span>
-    );
-  }
-  if (row.rating) {
-    tags.push(
-      <span key="stars" className="wk-rating">
-        {"★".repeat(row.rating)}
-      </span>
-    );
-  }
-  return tags.length ? <span className="wk-tags-row">{tags}</span> : null;
-}
+// Midnight in India (a fixed +05:30 offset, no daylight saving) that started the day containing `ms`.
+const IST_OFFSET_MS = 5.5 * 3_600_000;
+const DAY_MS = 86_400_000;
+const istDayStart = (ms) => Math.floor((ms + IST_OFFSET_MS) / DAY_MS) * DAY_MS - IST_OFFSET_MS;
+const activityAt = (row) => new Date(row.lastMessageAt || row.startedAt || 0).getTime();
 
-function Item({ row, me, active, typing, onSelect }) {
+function Item({ row, active, typing, onSelect }) {
   const last = row.preview;
   let preview = "";
   let withReply = false;
-  if (row.mode === "archived" && row.closedReason === "patient_left") preview = "Archived · patient left the website";
-  else if (row.invited) preview = "Invited · no reply yet";
-  else if (last) {
+  if (last) {
     withReply = last.sender === "ai" || last.sender === "agent";
     preview = last.text;
   }
@@ -96,14 +53,8 @@ function Item({ row, me, active, typing, onSelect }) {
               <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{preview}</span>
             </span>
           )}
-          {row.language?.name ? (
-            <span className="wk-tag wk-tag--lang" title={`The patient writes in ${row.language.name}`}>
-              {row.language.name}
-            </span>
-          ) : null}
           {row.unread > 0 && <span className="wk-badge">{row.unread}</span>}
         </span>
-        <Labels row={row} me={me} />
       </span>
     </button>
   );
@@ -111,14 +62,20 @@ function Item({ row, me, active, typing, onSelect }) {
 
 export default function ChatList({ view, rows, me, activeId, typing, query, onQuery, onSelect, loading }) {
   const [collapsed, setCollapsed] = useState({});
-  const [sortBy, setSortBy] = useState({});
+  // Archive temp holds only chats archived today (India time): a minute timer drops yesterday's at midnight, without a reload.
+  const [dayStart, setDayStart] = useState(() => istDayStart(Date.now()));
+  useEffect(() => {
+    const timer = window.setInterval(() => setDayStart(istDayStart(Date.now())), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const live = view === "live";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q));
-  }, [rows, query]);
+    const current = rows.filter((r) => r.mode !== "archived" || new Date(r.closedAt || r.lastMessageAt).getTime() >= dayStart);
+    if (!q) return current;
+    return current.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q));
+  }, [rows, query, dayStart]);
 
   return (
     <nav className="wk-list" aria-label="Chats" data-lenis-prevent>
@@ -132,11 +89,8 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
       </div>
       <div>
         {!loading && filtered.length === 0 && <div className="wk-empty">{query ? "No chats match" : live ? "No live agent chats yet" : "No AI chats right now"}</div>}
-        {groupsFor(view, me).map(([title, test, defaultSort]) => {
-          const sort = sortBy[title] || defaultSort;
-          const items = filtered
-            .filter(test)
-            .sort((a, b) => (sort === "Oldest" ? 1 : -1) * (new Date(a.lastMessageAt) - new Date(b.lastMessageAt)));
+        {groupsFor(view, me).map(([title, test]) => {
+          const items = filtered.filter(test).sort((a, b) => activityAt(b) - activityAt(a));
           if (!items.length) return null;
           const closed = collapsed[title];
           return (
@@ -145,18 +99,10 @@ export default function ChatList({ view, rows, me, activeId, typing, query, onQu
                 <button type="button" className="lh-t" aria-expanded={!closed} onClick={() => setCollapsed({ ...collapsed, [title]: !closed })}>
                   {title} {items.length} <Icon name="chevD" size={15} />
                 </button>
-                <button
-                  type="button"
-                  className="lh-s"
-                  title="Change sort order"
-                  onClick={() => setSortBy({ ...sortBy, [title]: sort === "Oldest" ? "Newest" : "Oldest" })}
-                >
-                  {sort}
-                </button>
               </div>
               {!closed &&
                 items.map((row) => (
-                  <Item key={row.conversationId} row={row} me={me} active={row.conversationId === activeId} typing={typing.has(row.visitorId)} onSelect={onSelect} />
+                  <Item key={row.conversationId} row={row} active={row.conversationId === activeId} typing={typing.has(row.visitorId)} onSelect={onSelect} />
                 ))}
             </div>
           );

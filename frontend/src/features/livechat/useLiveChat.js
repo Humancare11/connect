@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { apiBaseOf } from "./apiBase";
 
 // Patient-side chat state. Talks to the server over Socket.IO (/livechat) with the chat token that the contact form
 // returns; without that token the server refuses every chat event.
@@ -6,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // Stored in this browser (first-party, functional): the visitor id, the chat token (so a returning visitor skips
 // the form) and whether the window was open (so a chat survives page changes).
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = apiBaseOf(import.meta.env.VITE_API_URL);
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (typeof window !== "undefined" ? window.location.origin : "");
 const TOKEN_KEY = "hcLiveChatToken";
 const ID_KEY = "hcLiveChatVisitorId"; // shared with the visitor tracker so chats and presence line up
@@ -82,6 +83,8 @@ const startDetails = () => {
   };
 };
 
+const AI_TYPING_MAX_MS = 25_000; // the "is typing" line never stays longer than this
+
 const ERRORS = {
   rate_limited: "You're sending messages too quickly. Please wait a moment.",
   message_too_long: "Messages can be up to 1,000 characters.",
@@ -99,6 +102,10 @@ export function useLiveChat() {
   const [aiTyping, setAiTyping] = useState(false);
   const [agentTyping, setAgentTyping] = useState(""); // the agent's name while they type, else ""
   const [uploading, setUploading] = useState(false);
+  // Messages the patient just sent, shown at once: { id, text, at, status: "sending" | "failed" }. An entry leaves when
+  // the server acknowledges it (the saved message itself arrives over the socket) and stays, with its text, if not.
+  const [outbox, setOutbox] = useState([]);
+  const outboxSeq = useRef(0);
   // An admin wrote to this visitor, who never opened the widget: { conversationId, agentName } (name only).
   const [invite, setInvite] = useState(() => {
     const pending = typeof window !== "undefined" ? window.__hcChatInvite : null;
@@ -178,6 +185,7 @@ export function useLiveChat() {
           return { ...current, messages: [...current.messages, message] };
         });
         if (message.sender === "agent") setAgentTyping("");
+        if (message.sender !== "patient") setAiTyping(false); // a reply or notice ends the "is typing" line
         if (message.sender !== "patient" && !openRef.current) setUnread((n) => n + 1);
       });
       socket.on("chat:state", (state) => setConversation(state));
@@ -253,7 +261,7 @@ export function useLiveChat() {
   }, [open, phase, conversation, emit]);
 
   const submitContact = useCallback(
-    async ({ name, email, phone, turnstileToken, companyUrl }) => {
+    async ({ name, email, phone, companyUrl, aiNoticeAccepted }) => {
       let body;
       try {
         const res = await fetch(`${API_BASE}/api/livechat/contact`, {
@@ -263,8 +271,9 @@ export function useLiveChat() {
             name,
             email,
             phone,
-            turnstileToken,
             companyUrl,
+            // Sent only when the form showed the AI notice (Super Admin setting); the server records the acceptance.
+            ...(aiNoticeAccepted ? { aiNoticeAccepted: true } : {}),
             visitorId: store.get(ID_KEY) || undefined,
           }),
         });
@@ -290,15 +299,43 @@ export function useLiveChat() {
     [connect, resume]
   );
 
+  // Shows the message at once ("sending") and returns; the caller clears its input. If the server rejects it or does
+  // not answer in time, the message stays on screen as "Not sent – tap to retry" with its text kept.
   const send = useCallback(
-    async (text) => {
+    async (text, retryId) => {
       setNotice("");
+      const id = retryId || `out-${Date.now()}-${(outboxSeq.current += 1)}`;
+      setOutbox((list) =>
+        retryId
+          ? list.map((m) => (m.id === id ? { ...m, status: "sending" } : m))
+          : [...list, { id, text, at: new Date().toISOString(), status: "sending" }]
+      );
       const res = await emit("chat:message", { text });
-      if (!res.ok) setNotice(ERRORS[res.error] ?? ERRORS.server_error);
+      if (res.ok) {
+        setOutbox((list) => list.filter((m) => m.id !== id));
+      } else {
+        setOutbox((list) => list.map((m) => (m.id === id ? { ...m, status: "failed" } : m)));
+        setNotice(ERRORS[res.error] ?? ERRORS.server_error);
+      }
       return Boolean(res.ok);
     },
     [emit]
   );
+
+  const retrySend = useCallback(
+    (id) => {
+      const failed = outbox.find((m) => m.id === id && m.status === "failed");
+      if (failed) send(failed.text, id);
+    },
+    [outbox, send]
+  );
+
+  // The AI "is typing" line hides itself after a maximum wait, whatever happens on the server.
+  useEffect(() => {
+    if (!aiTyping) return undefined;
+    const timer = setTimeout(() => setAiTyping(false), AI_TYPING_MAX_MS);
+    return () => clearTimeout(timer);
+  }, [aiTyping]);
 
   const pickOption = useCallback(
     async (key) => {
@@ -425,6 +462,8 @@ export function useLiveChat() {
     aiTyping,
     agentTyping,
     uploading,
+    outbox,
+    retrySend,
     // the bubble is only for a visitor who has no chat on screen yet
     invite: conversation ? null : invite,
     connection,

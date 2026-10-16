@@ -80,6 +80,8 @@ app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 // Mounted before helmet/CORS/cookies on purpose: it sets its own headers and
 // must answer every request identically. Inert unless open tracking is switched on.
 app.use("/api/e", require("./routes/publicTracking"));
+app.use("/api/l", require("./routes/publicLinks"));
+app.use("/api/d", require("./routes/publicDownloads"));
 
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside
@@ -596,6 +598,8 @@ app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
+// Registered first: signatures are private to each admin and have their own guard.
+app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));

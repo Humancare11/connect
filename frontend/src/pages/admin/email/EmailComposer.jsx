@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Icon, TrackOpensToggle } from "./EmailParts";
-import { ACCEPT_ATTR, EMAIL_RE, addFiles, newRequestId } from "./emailUtils";
+import { AttachmentList, Icon, ReceiptToggle, SecureLinksToggle, SignatureStrip, TrackOpensToggle } from "./EmailParts";
+import { messageOf } from "./signatureUtils";
+import { useSignatureChoice } from "./useSignatureChoice";
+import { ACCEPT_ATTR, EMAIL_RE, addFiles, internalCaveat, newRequestId } from "./emailUtils";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 
 // Gmail-style compose window: docked bottom-right, with a full-view toggle.
@@ -16,10 +18,15 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
   const [trackChoice, setTrackChoice] = useState(null);
   const mailboxDefault = mailboxes.find((m) => m.id === from)?.trackOpensDefault !== false;
   const trackOpens = trackChoice ?? mailboxDefault;
+  const [receipt, setReceipt] = useState(false);
+  const [secure, setSecure] = useState(false);
   const [to, setTo] = useState("");
   const [cc, setCc] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const bodyRef = useRef(null);
+  // My signature image is added by the server when the box under the message is ticked.
+  const signature = useSignatureChoice();
   const [files, setFiles] = useState([]);
   const [full, setFull] = useState(false);
   const [error, setError] = useState("");
@@ -31,7 +38,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
     toRef.current?.focus();
   }, []);
 
-  const dirty = Boolean(to || cc || subject || body || files.length);
+  const dirty = Boolean(to || cc || subject || messageOf(body) || files.length);
 
   const askDiscard = () =>
     confirm({
@@ -67,8 +74,12 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
       fd.append("cc", cc.trim());
       fd.append("subject", subject.trim());
       fd.append("body", body.trim());
+      // Only "add mine": the server finds my image from the session, never from the request.
+      if (signature.use) fd.append("signature", "1");
       fd.append("clientRequestId", requestId.current);
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
+      if (tracking?.available && receipt) fd.append("requestReceipt", "1");
+      if (tracking?.secureLinks && secure && files.length) fd.append("secureLinks", "1");
       files.forEach((f) => fd.append("files", f));
       return emailApi.send(fd);
     },
@@ -84,7 +95,7 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
     if (cc.trim() && !cc.split(/[,;]/).map((s) => s.trim()).filter(Boolean).every((r) => EMAIL_RE.test(r))) {
       return setError("One of the Cc addresses is not valid.");
     }
-    if (!subject.trim() || !body.trim()) return setError("Subject and message are both required.");
+    if (!subject.trim() || !messageOf(body)) return setError("Subject and message are both required.");
     setError("");
     send.mutate();
   };
@@ -133,7 +144,8 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
           <div className="em-c-row">
             <input type="text" placeholder="Subject" aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
           </div>
-          <textarea aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
+          <textarea ref={bodyRef} aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
+          <SignatureStrip field={signature} />
           <div className="em-c-foot">
             <AttachmentList items={files} onRemove={(i) => setFiles(files.filter((_, idx) => idx !== i))} />
             <button type="submit" className="em-btn em-btn-primary" disabled={send.isPending || !mailboxes.length}>
@@ -146,7 +158,16 @@ export default function EmailComposer({ mailboxes, tracking, defaultMailboxId, a
             <span className="em-hint">
               Sent by <b>{adminName}</b>
             </span>
-            {tracking?.available && <TrackOpensToggle checked={trackOpens} onChange={setTrackChoice} disclosure={tracking.disclosure} />}
+            {tracking?.available && (
+              <TrackOpensToggle
+                checked={trackOpens}
+                onChange={setTrackChoice}
+                disclosure={tracking.disclosure}
+                caveat={internalCaveat(`${to},${cc}`.split(/[,;\s]+/), tracking)}
+              />
+            )}
+            {tracking?.available && <ReceiptToggle checked={receipt} onChange={setReceipt} />}
+            {tracking?.secureLinks && files.length > 0 && <SecureLinksToggle checked={secure} onChange={setSecure} days={tracking.secureLinkDays} />}
             {error && <div className="em-errtext" role="alert">{error}</div>}
           </div>
         </form>

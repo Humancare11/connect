@@ -11,12 +11,12 @@
 // Errors are thrown as AgentError (status + code) and mapped to JSON by routes/adminLiveChat.js.
 const net = require("net");
 const mongoose = require("mongoose");
-const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { aiNameOf } = require("./settingsDefaults");
 const { createWindowLimiter } = require("./limits");
 const { createTranslationService, publicLanguage } = require("./translationService");
-const { scrubContact } = require("./languageHints");
+const { scrubContact, tooShortToDetect, looksEnglish } = require("./languageHints");
 
 class AgentError extends Error {
   constructor(status, code, extra = {}) {
@@ -29,6 +29,7 @@ class AgentError extends Error {
 
 const CONVERSATION_ID_RE = /^HC[A-Z0-9]{8}$/;
 const LIST_LIMIT = 200;
+const { istTodayStart } = require("./istDay");
 const MAX_AGENT_TEXT = 2000;
 const MAX_TAGS = 10;
 
@@ -80,7 +81,7 @@ function createAgentService({
   async function load(conversationId) {
     if (!CONVERSATION_ID_RE.test(String(conversationId))) throw new AgentError(404, "not_found");
     const conv = await LcConversation.findOne({ conversationId });
-    if (!conv) throw new AgentError(404, "not_found");
+    if (!conv || conv.mode === "trashed") throw new AgentError(404, "not_found"); // Trash is reached only through the trash service
     return conv;
   }
 
@@ -94,6 +95,17 @@ function createAgentService({
     email: decryptLiveChatText(source?.email),
     phone: decryptLiveChatText(source?.phone),
   });
+
+  // Archived by inactivity from the Queue, today (India time): can be joined or replied to from Archive temp.
+  function isJoinable(conv) {
+    return Boolean(
+      conv.mode === "archived" &&
+        conv.closedReason === "inactive" &&
+        conv.modeBeforeLeft === "queue" &&
+        conv.closedAt &&
+        new Date(conv.closedAt).getTime() >= istTodayStart(now()).getTime()
+    );
+  }
 
   // One row of a chat list (also pushed as chat:updated). `last` is the latest visible message, if known.
   function rowOf(conv, { userId, last } = {}) {
@@ -117,6 +129,9 @@ function createAgentService({
       emailFollowUp: Boolean(conv.offlineRequested || conv.followUpNoticeAt),
       emailStatus: conv.followUp?.status || "", // "", sending, sent, failed, skipped
       closedReason: conv.closedReason || "",
+      closedAt: conv.closedAt || null,
+      // A Queue chat archived by inactivity today (IST): an admin can still join or reply from Archive temp.
+      joinable: isJoinable(conv),
       startedAt: conv.startedAt,
       lastMessageAt: conv.lastMessageAt,
       queuedAt: conv.queuedAt,
@@ -145,7 +160,14 @@ function createAgentService({
 
   // "ai": chats that were never live. "live": chats that were ever live (queue, mine, others, handed back, archived).
   async function list(actor, view) {
-    const filter = view === "live" ? { everLive: true } : { everLive: false };
+    // "Archive temp": archived chats stay in the lists for 24 hours (the time a patient can still reopen one); the
+    // Archive page has the rest. The newest-closed archived chats come first within their group.
+    const since = istTodayStart(now()); // chats archived today (India time); at midnight the group empties
+    const filter = {
+      everLive: view === "live",
+      mode: { $ne: "trashed" },
+      $or: [{ mode: { $ne: "archived" } }, { closedAt: { $gte: since } }],
+    };
     const convs = await LcConversation.find(filter).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
     const lasts = await lastMessages(convs.map((c) => c.conversationId));
     return convs.map((c) => rowOf(c, { userId: actor.id, last: lasts.get(c.conversationId) }));
@@ -206,20 +228,39 @@ function createAgentService({
   }
 
   // The conversation plus everything the patient panel shows. Opening a chat marks it read for this admin.
-  async function detail(actor, conversationId) {
+  async function detail(actor, conversationId, { markRead: markAsRead = true } = {}) {
     const conv = await load(conversationId);
-    await markReadDoc(conv, actor.id);
+    if (markAsRead) await markReadDoc(conv, actor.id); // the Archive page only looks: it leaves unread counts alone
+    if (!conv.language?.code) {
+      // No language yet: one bounded detection (daily cap respected), waited for at most 4 s so the controls show at once.
+      const found = await Promise.race([
+        translation.detectOnOpen(conv).catch(() => null),
+        new Promise((resolve) => setTimeout(() => resolve(null), 4000).unref?.()),
+      ]);
+      if (found?.language) conv.language = { code: found.language.code, name: found.language.name, detectedAt: new Date(now()) };
+    }
     const [rows, visitor, chats, pages, others] = await Promise.all([
       LcMessage.find({ conversationId }).sort({ createdAt: 1 }).limit(500).lean(),
       chat.loadVisitor(conv.visitorId),
-      LcConversation.countDocuments({ visitorId: conv.visitorId }),
+      LcConversation.countDocuments({ visitorId: conv.visitorId, mode: { $ne: "trashed" } }),
       LcPageVisit.find({ conversationId }).sort({ enteredAt: 1 }).lean(),
-      LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId } })
+      LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId }, mode: { $ne: "trashed" } })
         .sort({ startedAt: -1 })
         .limit(5)
         .lean(),
     ]);
     const files = await chat.filesMeta(rows);
+    // Whether the composer should offer "Detect language": no language stored at all (an English chat stores "en"),
+    // and a recent patient message that is clearly not English and long enough to tell.
+    const languageUnknown =
+      !conv.language?.code &&
+      rows
+        .filter((m) => m.sender === "patient" && !m.internal && !m.fileId)
+        .slice(-4)
+        .some((m) => {
+          const text = decryptLiveChatText(m.text);
+          return text.trim() && !tooShortToDetect(text) && !looksEnglish(text);
+        });
     const messages = rows.map((m) => ({
       id: String(m._id),
       sender: m.sender,
@@ -246,7 +287,7 @@ function createAgentService({
     const settingsForFields = await loadSettings();
     return {
       aiName: aiNameOf(settingsForFields),
-      conversation: rowOf(conv, { userId: actor.id }),
+      conversation: { ...rowOf(conv, { userId: actor.id }), languageUnknown },
       view: translation.viewOf(conv, actor.id),
       messages,
       panel: {
@@ -269,6 +310,17 @@ function createAgentService({
           liveStartedAt: conv.liveStartedAt,
           closedAt: conv.closedAt,
           startedPage: conv.startedPage || { path: "", title: "" },
+          // The AI notice the patient accepted when they started the chat (only while "Show AI notice" is on).
+          aiNotice: conv.consent?.aiNoticeAcceptedAt ? { acceptedAt: conv.consent.aiNoticeAcceptedAt, policyVersion: conv.consent.policyVersion || "" } : null,
+          // Flagged for the AI Review page, and where the review stands.
+          safety: conv.flags?.medical
+            ? {
+                reasons: conv.flags.reasons || [],
+                reviewStatus: conv.review?.status || "unreviewed",
+                reviewOutcome: conv.review?.lastOutcome || "",
+                reviewedAt: conv.review?.lastAt || null,
+              }
+            : null,
         },
         tags: conv.tags || [],
         fields: contextFieldsOf(visitor, settingsForFields),
@@ -302,7 +354,7 @@ function createAgentService({
   // Unread messages for this admin: AI chats, and live agent chats that concern them (queue, their own chats,
   // chats handed back to the AI). Chats another agent is holding do not count.
   async function unread(actor) {
-    const convs = await LcConversation.find({ mode: { $ne: "archived" }, patientMessageCount: { $gt: 0 } })
+    const convs = await LcConversation.find({ mode: { $nin: ["archived", "trashed"] }, patientMessageCount: { $gt: 0 } })
       .select("everLive mode assigneeId patientMessageCount reads")
       .lean();
     const out = { ai: 0, live: 0 };
@@ -325,10 +377,41 @@ function createAgentService({
     return fresh;
   }
 
+  const inactiveDueFor = (settings) =>
+    new Date(now() + Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10))) * 60_000);
+
   // Must run inside chat.withLock(conversationId).
   async function takeOverLocked(actor, conv, settings) {
-    if (conv.mode === "archived") throw new AgentError(409, "closed");
     const me = String(actor.id);
+    if (conv.mode === "archived") {
+      if (!isJoinable(conv)) throw new AgentError(409, "closed");
+      // Joining reopens the chat as a live chat assigned to this admin.
+      const name = await displayNameOf(me, settings);
+      const joined = await LcConversation.findOneAndUpdate(
+        { _id: conv._id, mode: "archived", closedReason: "inactive", modeBeforeLeft: "queue" },
+        {
+          $set: {
+            mode: "live",
+            assigneeId: oid(me),
+            agentName: name,
+            everLive: true,
+            closedReason: "",
+            closedAt: null,
+            leftAt: null,
+            modeBeforeLeft: "",
+            offlineRequested: false,
+            followUpDueAt: null,
+            leaveDueAt: null,
+            inactiveDueAt: inactiveDueFor(settings),
+            liveStartedAt: conv.liveStartedAt || new Date(now()),
+          },
+        },
+        { returnDocument: "after" }
+      );
+      if (!joined) throw new AgentError(409, "closed");
+      await chat.addMessage(joined, "system", `${name} joined the chat`);
+      return { conv: joined };
+    }
     const name = await displayNameOf(me, settings);
 
     if (conv.mode === "live") {
@@ -340,7 +423,7 @@ function createAgentService({
       const previous = { id: String(conv.assigneeId), name: conv.agentName || "another agent" };
       const taken = await LcConversation.findOneAndUpdate(
         { _id: conv._id, mode: "live", assigneeId: conv.assigneeId },
-        { $set: { assigneeId: oid(me), agentName: name } },
+        { $set: { assigneeId: oid(me), agentName: name, inactiveDueAt: inactiveDueFor(settings) } },
         { returnDocument: "after" }
       );
       if (!taken) throw new AgentError(409, "assigned", { assignee: { name: "another agent" } });
@@ -361,6 +444,7 @@ function createAgentService({
           everLive: true,
           offlineRequested: false,
           followUpDueAt: null,
+          inactiveDueAt: inactiveDueFor(settings), // joining counts like an admin message for the inactivity timer
           liveStartedAt: conv.liveStartedAt || new Date(now()),
         },
       },
@@ -395,7 +479,7 @@ function createAgentService({
     return chat.withLock(conversationId, async () => {
       let conv = await load(conversationId);
       const settings = await loadSettings();
-      if (conv.mode === "archived") throw new AgentError(409, "closed");
+      if (conv.mode === "archived" && !isJoinable(conv)) throw new AgentError(409, "closed");
       const me = String(actor.id);
       if (conv.mode === "live" && !sameId(conv.assigneeId, me)) {
         throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
@@ -422,7 +506,7 @@ function createAgentService({
     return chat.withLock(conversationId, async () => {
       let conv = await load(conversationId);
       const settings = await loadSettings();
-      if (conv.mode === "archived") throw new AgentError(409, "closed");
+      if (conv.mode === "archived" && !isJoinable(conv)) throw new AgentError(409, "closed");
       const me = String(actor.id);
       if (conv.mode === "live" && !sameId(conv.assigneeId, me)) {
         throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
@@ -466,7 +550,7 @@ function createAgentService({
         throw new AgentError(409, "not_assignee", { assignee: { name: conv.agentName || "another agent" } });
       }
       const closed = await LcConversation.findOneAndUpdate(
-        { _id: conv._id, mode: { $ne: "archived" } },
+        { _id: conv._id, mode: { $nin: ["archived", "trashed"] } },
         { $set: { mode: "archived", closedReason: "resolved", closedAt: new Date(now()) } },
         { returnDocument: "after" }
       );
@@ -519,7 +603,7 @@ function createAgentService({
       { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
       { upsert: true }
     );
-    await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $ne: "archived" } }, { $set: { contact: enc } });
+    await LcConversation.updateMany({ visitorId: conv.visitorId, mode: { $nin: ["archived", "trashed"] } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
     if (presence.get(conv.visitorId)) presence.update(conv.visitorId, { name: values.name, email: values.email });
     const fresh = await LcConversation.findById(conv._id);
     chat.toAgents("chat:updated", { conversationId, row: rowOf(fresh) });
@@ -630,7 +714,7 @@ function createAgentService({
 
   // From Real-time visitors: the visitor's latest chat. A visitor with no chat has nothing to summarize.
   async function summarizeVisitor(actor, visitorId) {
-    const conv = await LcConversation.findOne({ visitorId: String(visitorId || "") }).sort({ startedAt: -1 });
+    const conv = await LcConversation.findOne({ visitorId: String(visitorId || ""), mode: { $ne: "trashed" } }).sort({ startedAt: -1 });
     if (!conv) throw new AgentError(409, "no_chat");
     return summarizeConversation(actor, conv);
   }
@@ -643,8 +727,8 @@ function createAgentService({
     if (!record && !visitor) throw new AgentError(404, "not_found");
     const contact = contactOf(visitor);
     const [chats, recent, tickets] = await Promise.all([
-      LcConversation.countDocuments({ visitorId: id }),
-      LcConversation.find({ visitorId: id }).sort({ startedAt: -1 }).limit(5).lean(),
+      LcConversation.countDocuments({ visitorId: id, mode: { $ne: "trashed" } }),
+      LcConversation.find({ visitorId: id, mode: { $ne: "trashed" } }).sort({ startedAt: -1 }).limit(5).lean(),
       ticketCount(contact.email),
     ]);
     const visits = visitor?.visits || 1;
@@ -707,7 +791,7 @@ function createAgentService({
       { $set: { ...enc, emailHash: hashLiveChatEmail(values.email) }, $setOnInsert: { firstSeenAt: new Date(now()) } },
       { upsert: true }
     );
-    await LcConversation.updateMany({ visitorId: id, mode: { $ne: "archived" } }, { $set: { contact: enc } });
+    await LcConversation.updateMany({ visitorId: id, mode: { $nin: ["archived", "trashed"] } }, { $set: { contact: enc, searchKeys: searchKeysOf(values.email, values.phone) } });
     if (presence.get(id)) presence.update(id, { name: values.name, email: values.email });
     return { ok: true, contact: values };
   }
@@ -766,6 +850,14 @@ function createAgentService({
     return { ok: true, ...(await translation.translateMessages(actor, conv, clean)) };
   }
 
+  // The composer's "Detect language" link. Returns the language (or why none was found).
+  async function detectLanguage(actor, conversationId) {
+    const conv = await load(conversationId);
+    if (!translation.limiter.allow(String(actor.id))) throw new AgentError(429, "rate_limited");
+    const found = await translation.detectOnOpen(conv, { manual: true });
+    return { ok: true, language: found.language, reason: found.reason };
+  }
+
   async function translateReply(actor, conversationId, text) {
     const conv = await load(conversationId);
     return { ok: true, ...(await translation.translateReply(actor, conv, text)) };
@@ -800,7 +892,7 @@ function createAgentService({
     const record = presence.get(id);
     // Someone who is not on the website (or not tracked) cannot be invited: there is no way to reach them.
     if (!known && !record) throw new AgentError(409, "contact_required");
-    const open = await LcConversation.findOne({ visitorId: id, mode: { $ne: "archived" } });
+    const open = await LcConversation.findOne({ visitorId: id, mode: { $nin: ["archived", "trashed"] } });
     if (open) return { ok: true, existing: true, conversationId: open.conversationId };
 
     const settings = await loadSettings();
@@ -820,7 +912,12 @@ function createAgentService({
       source: record?.source || "",
       referrer: record?.referrer || "",
       startedPage: { path: record?.page?.path || "", title: record?.page?.title || "" },
-      ...(known ? { contact: { name: visitor.name, email: visitor.email, phone: visitor.phone } } : {}),
+      ...(known
+        ? {
+            contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
+            searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
+          }
+        : {}),
     });
     if (known) await LcVisitor.updateOne({ visitorId: id }, { $inc: { chatCount: 1 } });
     await chat.backfillPages(conv, record?.pages);
@@ -846,11 +943,11 @@ function createAgentService({
     await ipBlock.block({ ip, reason, by: oid(actor.id) });
 
     let closed = 0;
-    const open = await LcConversation.find({ ip, mode: { $ne: "archived" } });
+    const open = await LcConversation.find({ ip, mode: { $nin: ["archived", "trashed"] } });
     for (const conv of open) {
       await chat.withLock(conv.conversationId, async () => {
         const archived = await LcConversation.findOneAndUpdate(
-          { _id: conv._id, mode: { $ne: "archived" } },
+          { _id: conv._id, mode: { $nin: ["archived", "trashed"] } },
           { $set: { mode: "archived", closedReason: "blocked", closedAt: new Date(now()) } },
           { returnDocument: "after" }
         );
@@ -919,7 +1016,7 @@ function createAgentService({
         // Back in the Queue: the follow-up step applies again, unless the email notice was already given for this chat.
         const queued = await LcConversation.findOneAndUpdate(
           { _id: current._id, mode: "live", assigneeId: current.assigneeId },
-          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings) } },
+          { $set: { mode: "queue", assigneeId: null, agentName: "", queuedAt: new Date(now()), followUpDueAt: chat.followUpDueFor(current, settings), inactiveDueAt: null } },
           { returnDocument: "after" }
         );
         if (!queued) return;
@@ -977,6 +1074,7 @@ function createAgentService({
     suggest,
     translate,
     translateReply,
+    detectLanguage,
     setTranslateView,
     startChat,
     relayTyping,

@@ -35,7 +35,7 @@ export default function EmailFilters({ folder, allMailIds, filters, mailboxes, a
         ? [["", "All"], ["noreply", "Sent (no reply yet)"], ["replied", "Client replied"], ["failed", "Failed"]]
         : [["", "All"], ["noreply", "Not replied yet"], ["replied", "Replied"]],
     },
-    open: { label: "Open status", options: [["", "All"], ...TRACKING_FILTER_OPTIONS] },
+    open: { label: "Read status", options: [["", "All"], ...TRACKING_FILTER_OPTIONS] },
     view: { label: "First viewed by", options: [["", "Anyone"], ["none", "Nobody yet"], ...adminOpts] },
     att: { label: "Attachment", options: [["", "Any"], ["1", "Has attachment"]] },
   };

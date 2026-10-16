@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import api from "../../../api";
 import { useAdmin } from "../../../context/AdminContext";
 import Icon from "./lcIcons";
 import { LiveChatAdminProvider } from "./LiveChatAdminProvider";
@@ -16,10 +17,14 @@ const ITEMS = [
   { path: BASE, label: "Real-time visitors", icon: "eye", exact: true },
   { path: `${BASE}/ai-chats`, label: "AI chats", icon: "bot", badge: "ai" },
   { path: `${BASE}/agent-chats`, label: "Live agent chats", icon: "headset", badge: "live" },
+  { path: `${BASE}/archive`, label: "Archive", icon: "archive" },
+  { path: `${BASE}/ai-review`, label: "AI Review", icon: "shield", reviewOnly: true },
+  { path: `${BASE}/trash`, label: "Trash", icon: "trash", superOnly: true },
   { path: `${BASE}/team`, label: "Team", icon: "users" },
   { path: `${BASE}/reports`, label: "Reports", icon: "chart" },
   { path: `${BASE}/settings`, label: "AI agent settings", icon: "sliders" },
 ];
+const BASE_API = "/api/admin/livechat";
 const FONT_URL = "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap";
 
 const isChatRoute = (pathname) => /\/live-chat\/(ai-chats|agent-chats)(\/|$)/.test(pathname);
@@ -57,9 +62,23 @@ export default function LiveChatShell({ children }) {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
+  const [canReview, setCanReview] = useState(false); // AI Review: Super Admin, or an admin the Super Admin has allowed
   const autoCollapsed = useRef(false); // collapsed by us on the chat pages (for room), given back when leaving
 
   useGeistFont();
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get(`${BASE_API}/review/access`)
+      .then(({ data }) => {
+        if (!cancelled) setCanReview(Boolean(data.canReview));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // The shell is a fixed box: the page itself must not scroll behind it (only the panes inside do).
   useEffect(() => {
@@ -127,7 +146,7 @@ export default function LiveChatShell({ children }) {
               </span>
               <span className="lx-nav-label">Admin dashboard</span>
             </Link>
-            {ITEMS.map((item) => {
+            {ITEMS.filter((item) => (!item.superOnly || user?.role === "superadmin") && (!item.reviewOnly || canReview)).map((item) => {
               const active = matches(item, pathname);
               const count = item.badge ? unread[item.badge] || 0 : 0;
               return (

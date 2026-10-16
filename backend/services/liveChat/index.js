@@ -174,6 +174,11 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     if (devFakeIp(env)) console.warn("[livechat] DEV ONLY: LIVECHAT_DEV_FAKE_IP is active, every visitor gets that IP. Never use this in production.");
     else console.warn("[livechat] LIVECHAT_DEV_FAKE_IP is ignored (it only works outside production and needs a valid public IP).");
   }
+  if (isProduction(env)) {
+    // Names only, never values.
+    const missing = ["LIVECHAT_OPENAI_ORG_ID", "LIVECHAT_OPENAI_PROJECT_ID"].filter((name) => !String(env[name] || "").trim());
+    if (missing.length) console.warn(`[livechat] ${missing.join(" and ")} not set: AI requests are not pinned to the organisation/project that holds the data-handling agreement.`);
+  }
   if (!isProduction(env)) console.log("[livechat] DEV: the per-IP daily chat limit is skipped for loopback addresses and LIVECHAT_DEV_FAKE_IP (never in production).");
   const graceMs = options.graceMs ?? intFromEnv("LIVECHAT_PRESENCE_GRACE_MS", DEFAULT_GRACE_MS, env);
   const adminNs = io.of("/livechat-admin");
@@ -215,7 +220,9 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     LcFile: require("../../models/LcFile"),
     LcBlockedIp: require("../../models/LcBlockedIp"),
     LcSettingsAudit: require("../../models/LcSettingsAudit"),
+    LcChatDeletionAudit: require("../../models/LcChatDeletionAudit"),
     LcAgentProfile: require("../../models/LcAgentProfile"),
+    LcReviewLog: require("../../models/LcReviewLog"),
   };
   const settingsCacheMs = options.settingsCacheMs ?? 5000;
   let cached = { at: 0, value: null };
@@ -236,7 +243,6 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createAiService } = require("./aiService");
   const { createLimits } = require("./limits");
   const { createChatService } = require("./chatService");
-  const { verifyTurnstile } = require("./turnstile");
   const limits = createLimits({ models, readLimits: () => readLimits(env), isExemptIp: (ip) => ipLimitExempt(ip, env) });
   const agents = createAgentRegistry({
     onGone: (userId) => agentSvc?.agentGone(userId),
@@ -254,8 +260,15 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const followUp = createFollowUpMailer({ models, loadSettings, sendMail: options.sendMail, env });
   let announce = () => {}; // set below, once the agent service exists
   let agentSvc = null;
+  // The pages the AI may link to: the site's own categories, specialties and conditions (cached), the static list as fallback.
+  const sitePages =
+    options.sitePages ||
+    require("./sitePages").createSitePages(undefined, {
+      source: options.siteCatalog === false ? null : require("./siteCatalog").createSiteCatalog({ models: options.siteCatalogModels }).load,
+    });
   const chat = createChatService({
     models,
+    sitePages,
     loadSettings,
     ai,
     limits,
@@ -268,6 +281,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     followUp,
     abuse,
     leaveGraceMs: graceMs,
+    aiDeadlineMs: options.aiDeadlineMs, // tests only; the default is 25 s
   });
   const files = createFileService({ models, chat, store: options.fileStore, env });
   const { createAgentService } = require("./agentService");
@@ -293,7 +307,10 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const { createStatsService } = require("./statsService");
   const settingsSvc = createSettingsService({ models, invalidateSettings });
   const statsSvc = createStatsService({ models, loadSettings, agents });
-  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock });
+  const archiveSvc = require("./archiveService").createArchiveService({ models });
+  const trashSvc = require("./trashService").createTrashService({ models, archive: archiveSvc, store: options.fileStore });
+  const reviewSvc = require("./reviewService").createReviewService({ models });
+  Object.assign(ctx, { chat, agents, limits, loadSettings, agentSvc, files, ipBlock, trashSvc });
 
   require("./visitorNamespace").setupVisitorNamespace(visitorNs, ctx);
   require("./adminNamespace").setupAdminNamespace(adminNs, ctx);
@@ -304,7 +321,6 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
       require("../../routes/liveChatPublic").create({
         chat,
         loadSettings,
-        verifyTurnstile: options.verifyTurnstile || verifyTurnstile,
         isIpBlocked: (ip) => ctx.isIpBlocked(ip),
         files,
         env,
@@ -314,13 +330,25 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc, trash: trashSvc, review: reviewSvc, trashLimiter: options.trashLimiter })
     );
   }
 
   // The follow-up step ("Our team will connect with you by email"): due times live on the conversations, so this job
   // only has to look. One sweep right now picks up whatever came due while the server was down.
-  const runFollowUp = () => chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+  // The same sweep closes chats that went quiet after an AI or admin reply ("Inactive").
+  const runFollowUp = () => {
+    chat.runFollowUpDue().catch((err) => console.error("[livechat] follow-up job failed:", err?.message));
+    chat.runInactiveDue().catch((err) => console.error("[livechat] inactivity job failed:", err?.message));
+    // The midnight (India time) cleanup. A freshly started server waits one presence grace period first, so patients
+    // who are reconnecting after the restart are not mistaken for gone.
+    if (Date.now() - startedAt >= sweepDelayMs) {
+      chat.runDailySweep().catch((err) => console.error("[livechat] daily sweep failed:", err?.message));
+      chat.runAbandonedSweep().catch((err) => console.error("[livechat] abandoned-chat sweep failed:", err?.message));
+    }
+  };
+  const startedAt = Date.now();
+  const sweepDelayMs = options.dailySweepStartDelayMs ?? Math.max(graceMs, 60_000);
   const followUpTimer = setInterval(runFollowUp, options.followUpJobMs || chat.followUpJobMs);
   followUpTimer.unref?.();
   setTimeout(runFollowUp, 2000).unref?.();
@@ -335,6 +363,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     agentSvc,
     settingsSvc,
     statsSvc,
+    archiveSvc,
     files,
     followUp,
     ipBlock,

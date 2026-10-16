@@ -190,7 +190,7 @@ const BUILDERS = {
 };
 
 // matches: output of matchCatalog. Returns { results, total }.
-// Each item also carries `rank` (1-based) - its position in the final
+// Each item also carries `recognized` and `rank` (1-based) - its position in the final
 // cross-type order (see crossTypeOrdering.js). It is additive: grouping and the
 // order inside each group are unchanged, and clients that ignore it keep the
 // old group order.
@@ -203,6 +203,9 @@ function buildResults(matches, catalog) {
       results[RESULT_GROUPS[type]].push({
         ...BUILDERS[type](match.record, catalog.index),
         matchedOn: match.matchedOn,
+        // true when the query names the whole record (or the AI layer chose it); false for
+        // a partial hit such as a prefix, so clients never open it without the user choosing.
+        recognized: match.recognized === true,
         rank: rankOf.get(match),
       });
       total += 1;

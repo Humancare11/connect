@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Country } from "country-state-city";
 import api from "../../api";
+import { describeBlobError } from "../../utils/binaryPayload";
 import { useAdmin } from "../../context/AdminContext";
 import "./AdminDashboard.css";
 
@@ -142,7 +143,7 @@ function DownloadDoctorsMenu({ onError }) {
     setOpen(false);
     setBusy(true);
     try {
-      const res = await api.get("/api/admin/doctors/export", { params: { type, fields }, responseType: "blob" });
+      const res = await api.get("/api/admin/doctors/export", { params: { type, fields }, responseType: "blob", skipUrlNormalize: true });
       const disposition = res.headers?.["content-disposition"] || "";
       const name = /filename="([^"]+)"/.exec(disposition)?.[1] || `doctors_${type}_${fields}.xlsx`;
       const url = URL.createObjectURL(res.data);
@@ -154,10 +155,8 @@ function DownloadDoctorsMenu({ onError }) {
       a.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      // A failed blob request carries its JSON error as a Blob.
-      let msg = "";
-      try { msg = JSON.parse(await err?.response?.data?.text())?.msg; } catch { /* not JSON */ }
-      onError(msg || "Download failed. Please try again.");
+      // A failed blob request carries its JSON error as a Blob; show the real message and HTTP status.
+      onError(await describeBlobError(err));
     } finally {
       setBusy(false);
     }

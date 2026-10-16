@@ -4,6 +4,8 @@ import socket, { setSocketAuthRole } from "../socket";
 import "./videocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
 import api, { getUserAuthToken } from "../api";
+import CallMoreMenu from "../components/CallMoreMenu";
+import useMobileCallControls from "../hooks/useMobileCallControls";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
@@ -36,7 +38,6 @@ import {
   FiUser,
   FiVideo,
   FiVideoOff,
-  FiWifi,
   FiX,
 } from "react-icons/fi";
 
@@ -411,31 +412,6 @@ const describeIceCandidate = (candidate = "") => {
     protocol: protocolMatch?.[1]?.toLowerCase() || "unknown",
     address: addressMatch?.[1] || "",
   };
-};
-
-// Turns the stats already gathered by startStatsCollection into a coarse,
-// user-facing quality bucket. Inbound packet loss is derived from the DELTA
-// between this poll and the previous one (not the raw cumulative counter) —
-// using the cumulative value directly would mean a single lost packet early
-// in a long call marks the connection "poor" for its entire remaining
-// duration. packetsLost / packetsReceived come from the inbound-rtp reports
-// (they don't exist on candidate-pair).
-const deriveConnectionQuality = (diagnostics, previousSample) => {
-  if (diagnostics.rtt === null) return "unknown";
-
-  let lossRatio = 0;
-  if (previousSample) {
-    const deltaReceived =
-      diagnostics.packetsReceived - previousSample.packetsReceived;
-    const deltaLost = diagnostics.packetsLost - previousSample.packetsLost;
-    if (deltaLost > 0 && deltaReceived + deltaLost > 0) {
-      lossRatio = deltaLost / (deltaReceived + deltaLost);
-    }
-  }
-
-  if (diagnostics.rtt > 400 || lossRatio > 0.08) return "poor";
-  if (diagnostics.rtt > 200 || lossRatio > 0.03) return "weak";
-  return "good";
 };
 
 const MEDIA_CONSTRAINTS = {
@@ -1127,7 +1103,6 @@ export default function VideoCall() {
   const inlineErrorTimerRef = useRef(null);
   // Previous stats poll's packet counters, so quality can be derived from
   // the delta between polls instead of a misleading cumulative total.
-  const lastStatsSampleRef = useRef(null);
   // Telemetry events queued while the socket is disconnected, replayed once
   // it reconnects — see logVideoEvent/flushTelemetryQueue below.
   const telemetryQueueRef = useRef([]);
@@ -1169,7 +1144,7 @@ export default function VideoCall() {
   const [isReady, setIsReady] = useState(false);
   const [peerJoined, setPeerJoined] = useState(false);
   const [inCall, setInCall] = useState(false);
-  const [connectionQuality, setConnectionQuality] = useState("unknown");
+  const mobileControls = useMobileCallControls();
   const [isRemoteConnected, setIsRemoteConnected] = useState(false);
   const [connectionState, setConnectionState] = useState("idle");
   const [callDuration, setCallDuration] = useState(0);
@@ -1662,8 +1637,6 @@ export default function VideoCall() {
   const stopStatsCollection = useCallback(() => {
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
-    lastStatsSampleRef.current = null;
-    setConnectionQuality("unknown");
   }, []);
 
   const startStatsCollection = useCallback(
@@ -1736,16 +1709,6 @@ export default function VideoCall() {
           if (typeof diagnostics.rtt === "number") {
             lastRttMsRef.current = diagnostics.rtt;
           }
-
-          const quality = deriveConnectionQuality(
-            diagnostics,
-            lastStatsSampleRef.current,
-          );
-          lastStatsSampleRef.current = {
-            packetsReceived: diagnostics.packetsReceived,
-            packetsLost: diagnostics.packetsLost,
-          };
-          setConnectionQuality(quality);
         } catch (err) {
           logger.warn("[webrtc-stats] getStats failed:", err.message);
         }
@@ -5567,6 +5530,84 @@ export default function VideoCall() {
       : {};
   const screenShareSupported = canUseScreenShare();
 
+  const shareBtn = (
+    <button
+      className={`hc-vc__btn hc-vc__btn--share ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
+      onClick={toggleScreenShare}
+      disabled={
+        !isReady ||
+        // Only gates *starting* a new share — stopping one already in
+        // progress must stay available regardless of peer state.
+        // peerLeft covers the common case (pcRef.current is nulled by
+        // handleParticipantLeft while it's true); startScreenShare
+        // itself remains the authoritative check and surfaces a
+        // message for any other case where a connection isn't usable.
+        (!isScreenSharing && (!screenShareSupported || peerLeft))
+      }
+      title={
+        !screenShareSupported
+          ? "Screen sharing is not supported on this browser"
+          : isScreenSharing
+            ? "Stop sharing"
+            : peerLeft
+              ? "Screen sharing is unavailable while the other participant is away"
+              : "Share screen"
+      }
+    >
+      <span className="hc-vc__btn-icon">
+        <FiMonitor />
+      </span>
+      <span className="hc-vc__btn-label">
+        {isScreenSharing ? "Stop" : "Share"}
+      </span>
+    </button>
+  );
+
+  const fullBtn = (
+    <button
+      className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
+      onClick={toggleFullscreen}
+      title={isFullscreen ? "Exit full screen" : "Full screen"}
+    >
+      <span className="hc-vc__btn-icon">
+        {isFullscreen ? <FiMinimize /> : <FiMaximize />}
+      </span>
+      <span className="hc-vc__btn-label">
+        {isFullscreen ? "Exit" : "Full"}
+      </span>
+    </button>
+  );
+
+  const hideBtn = (
+    <button
+      className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
+      onClick={toggleSelfView}
+      title={
+        isSelfViewMinimized ? "Show self view" : "Minimize self view"
+      }
+    >
+      <span className="hc-vc__btn-icon">
+        {isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}
+      </span>
+      <span className="hc-vc__btn-label">
+        {isSelfViewMinimized ? "Show Me" : "Hide Me"}
+      </span>
+    </button>
+  );
+
+  const notesBtn = isDoctor ? (
+    <button
+      className={`hc-vc__btn ${notesOpen ? "hc-vc__btn--notes-on" : ""}`}
+      onClick={toggleNotes}
+      title="Consultation notes"
+    >
+      <span className="hc-vc__btn-icon">
+        <FiFileText />
+      </span>
+      <span className="hc-vc__btn-label">Notes</span>
+    </button>
+  ) : null;
+
   // ── Main call UI ──────────────────────────────────────────────────
   return (
     <div className="hc-vc__page" ref={pageRef}>
@@ -6229,89 +6270,16 @@ export default function VideoCall() {
             </span>
           </button>
 
-          <button
-            className={`hc-vc__btn hc-vc__btn--share ${isScreenSharing ? "hc-vc__btn--active" : ""}`}
-            onClick={toggleScreenShare}
-            disabled={
-              !isReady ||
-              // Only gates *starting* a new share — stopping one already in
-              // progress must stay available regardless of peer state.
-              // peerLeft covers the common case (pcRef.current is nulled by
-              // handleParticipantLeft while it's true); startScreenShare
-              // itself remains the authoritative check and surfaces a
-              // message for any other case where a connection isn't usable.
-              (!isScreenSharing && (!screenShareSupported || peerLeft))
-            }
-            title={
-              !screenShareSupported
-                ? "Screen sharing is not supported on this browser"
-                : isScreenSharing
-                  ? "Stop sharing"
-                  : peerLeft
-                    ? "Screen sharing is unavailable while the other participant is away"
-                    : "Share screen"
-            }
-          >
-            <span className="hc-vc__btn-icon">
-              <FiMonitor />
-            </span>
-            <span className="hc-vc__btn-label">
-              {isScreenSharing ? "Stop" : "Share"}
-            </span>
-          </button>
+          {!mobileControls && shareBtn}
           {inCall && isDoctor && (
             <div className="hc-vc__timer">
               <FiClock />
               <span>{fmtDuration(callDuration)}</span>
             </div>
           )}
-          {inCall && (
-            <div className="hc-vc__live-pill">
-              <span className="hc-vc__live-dot" />
-              Live
-            </div>
-          )}
-          {inCall && connectionQuality !== "unknown" && (
-            <div
-              className={`hc-vc__quality-pill hc-vc__quality-pill--${connectionQuality}`}
-              title={
-                connectionQuality === "poor"
-                  ? "Poor connection — the call may drop"
-                  : connectionQuality === "weak"
-                    ? "Unstable connection — video quality may drop"
-                    : "Good connection"
-              }
-            >
-              <FiWifi />
-            </div>
-          )}
-          <button
-            className={`hc-vc__btn ${isFullscreen ? "hc-vc__btn--active" : ""}`}
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Exit full screen" : "Full screen"}
-          >
-            <span className="hc-vc__btn-icon">
-              {isFullscreen ? <FiMinimize /> : <FiMaximize />}
-            </span>
-            <span className="hc-vc__btn-label">
-              {isFullscreen ? "Exit" : "Full"}
-            </span>
-          </button>
+          {!mobileControls && fullBtn}
 
-          <button
-            className={`hc-vc__btn ${isSelfViewMinimized ? "hc-vc__btn--active" : ""}`}
-            onClick={toggleSelfView}
-            title={
-              isSelfViewMinimized ? "Show self view" : "Minimize self view"
-            }
-          >
-            <span className="hc-vc__btn-icon">
-              {isSelfViewMinimized ? <FiMaximize2 /> : <FiMinimize2 />}
-            </span>
-            <span className="hc-vc__btn-label">
-              {isSelfViewMinimized ? "Show Me" : "Hide Me"}
-            </span>
-          </button>
+          {!mobileControls && hideBtn}
 
           <button
             className={`hc-vc__btn ${chatOpen ? "hc-vc__btn--chat-on" : ""}`}
@@ -6329,18 +6297,7 @@ export default function VideoCall() {
             )}
           </button>
 
-          {isDoctor && (
-            <button
-              className={`hc-vc__btn ${notesOpen ? "hc-vc__btn--notes-on" : ""}`}
-              onClick={toggleNotes}
-              title="Consultation notes"
-            >
-              <span className="hc-vc__btn-icon">
-                <FiFileText />
-              </span>
-              <span className="hc-vc__btn-label">Notes</span>
-            </button>
-          )}
+          {!mobileControls && notesBtn}
 
           <button
             className="hc-vc__btn hc-vc__btn--end"
@@ -6355,6 +6312,14 @@ export default function VideoCall() {
               {completing ? "Completing..." : "Leave Call"}
             </span>
           </button>
+
+          {mobileControls && (
+            <CallMoreMenu>
+              {fullBtn}
+              {hideBtn}
+              {notesBtn}
+            </CallMoreMenu>
+          )}
         </div>
       </div>
       {/* Cam error banner */}

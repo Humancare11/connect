@@ -44,7 +44,7 @@ function PageLinks({ links, onNavigate }) {
           }}
         >
           <span>{link.title}</span>
-          <span aria-hidden="true">{link.url === "/appointment-booking" ? "Book →" : "Learn more & book →"}</span>
+          <span aria-hidden="true">{link.url.startsWith("/appointment-booking") ? "Book →" : "Learn more & book →"}</span>
         </a>
       ))}
     </div>
@@ -98,11 +98,10 @@ function Message({ message, aiName, onNavigate, onOpenFile }) {
   );
 }
 
-export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
+export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiNotice = false }) {
   const chat = useLiveChat();
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
@@ -112,6 +111,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   const waiting = mode === "queue";
   const withAgent = mode === "live";
   const ended = mode === "archived";
+  const canContinue = ended && Boolean(conversation?.canContinue); // closed for inactivity: writing again continues it
   const agentName = conversation?.agent?.name || "";
   const aiName = conversation?.aiName || configAiName; // the server setting; the config answer covers the contact form
   const messageCount = conversation?.messages.length ?? 0;
@@ -120,7 +120,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messageCount, chat.aiTyping, open, phase, conversation?.options?.length]);
+  }, [messageCount, chat.outbox.length, chat.aiTyping, open, phase, conversation?.options?.length]);
 
   useEffect(() => {
     if (open && phase === "chat") inputRef.current?.focus();
@@ -132,14 +132,13 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
     return () => document.documentElement.classList.remove("lcw-open");
   }, [open]);
 
-  const submit = async (event) => {
+  const submit = (event) => {
     event.preventDefault();
     const text = draft.trim();
-    if (!text || sending || phase !== "chat" || !conversation) return;
-    setSending(true);
-    const ok = await chat.send(text);
-    setSending(false);
-    if (ok) setDraft("");
+    if (!text || phase !== "chat" || !conversation) return;
+    setDraft(""); // the message shows at once; if it is not sent it stays on screen with a retry
+    inputRef.current?.focus();
+    chat.send(text);
   };
 
   // Nothing here ever says the team is offline.
@@ -153,7 +152,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
   };
 
   const limitReached = chat.limitReached && !conversation;
-  const locked = phase !== "chat" || !conversation || ended;
+  const locked = phase !== "chat" || !conversation || (ended && !canContinue);
 
   return (
     <div className="lcw-root">
@@ -197,7 +196,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
           </header>
 
           <div className="lcw-body" ref={bodyRef} aria-live="polite" data-lenis-prevent>
-            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} />}
+            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} showNotice={showAiNotice} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
             {phase === "chat" && !conversation && limitReached && (
               <div className="lcw-sys" role="alert">
@@ -210,8 +209,21 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
                 {conversation.messages.map((message) => (
                   <Message key={message.id} message={message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
                 ))}
+                {chat.outbox.map((m) =>
+                  m.status === "failed" ? (
+                    <button key={m.id} type="button" className="lcw-msg lcw-msg--right lcw-msg--failed" onClick={() => chat.retrySend(m.id)}>
+                      {m.text}
+                      <span className="lcw-meta">Not sent – tap to retry</span>
+                    </button>
+                  ) : (
+                    <div key={m.id} className="lcw-msg lcw-msg--right lcw-msg--sending">
+                      {m.text}
+                      <span className="lcw-meta">Sending…</span>
+                    </div>
+                  )
+                )}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
-                {ended && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
+                {ended && !canContinue && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
                 {ended && (
                   <div className="lcw-opts">
                     <button type="button" className="lcw-opt" onClick={chat.startNew}>
@@ -285,12 +297,12 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME }) {
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
+                placeholder={canContinue ? "Send a message to continue" : ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"
               />
-              <button type="submit" className="lcw-send" aria-label="Send" disabled={locked || sending || !draft.trim()}>
+              <button type="submit" className="lcw-send" aria-label="Send" disabled={locked || !draft.trim()}>
                 ➤
               </button>
             </form>

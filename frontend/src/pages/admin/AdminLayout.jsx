@@ -6,8 +6,6 @@ import "./AdminDashboard.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
-import { useLiveChatAdmin } from "./livechat/useLiveChatAdmin";
-import { openLiveChat } from "./livechat/liveChatTabs";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -178,7 +176,6 @@ const NAV_ITEMS = [
   {
     key: "live-chat",
     label: "Live Chat",
-    badge: "NEW",
     path: "/admin-dashboard/live-chat",
     external: true,
     roles: ["admin", "superadmin"],
@@ -217,50 +214,13 @@ function useMediaQuery(query) {
 
 // A parent entry with a submenu: a flyout to the right of the sidebar on
 // desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
-// Unread count chip (live chat pages); nothing when there is nothing unread.
-const UnreadBadge = ({ count, style }) =>
-  count > 0 ? (
-    <span className="ad-nav-badge" style={style}>
-      {count > 99 ? "99+" : count}
-    </span>
-  ) : null;
-
-// "Live Chat": a link that opens (or re-uses) the one Live Chat browser tab. A plain click goes through
-// openLiveChat; middle-click and Ctrl/Cmd-click keep the normal new-tab behaviour of the anchor.
-function LiveChatNavLink({ item, onNavigate }) {
-  const { unread } = useLiveChatAdmin();
-  const total = (unread.ai || 0) + (unread.live || 0);
+// "Live Chat": a plain anchor that opens the Live Chat dashboard in a new tab on every click. No onClick, no script, no
+// window features, no badge, no unread count.
+function LiveChatNavLink({ item }) {
   return (
-    <a
-      href={item.path}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="ad-nav-item"
-      title="Opens in a new tab"
-      onClick={(event) => {
-        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-        openLiveChat(item.path);
-        onNavigate();
-      }}
-    >
+    <a href={item.path} target="_blank" rel="noopener" className="ad-nav-item" title="Opens in a new tab">
       <span className="ad-nav-icon">{item.icon}</span>
       {item.label}
-      <span
-        style={{
-          marginLeft: 8,
-          fontSize: 10,
-          fontWeight: 800,
-          letterSpacing: "0.06em",
-          background: "#22c55e",
-          color: "#062814",
-          borderRadius: 6,
-          padding: "2px 6px",
-        }}
-      >
-        {item.badge}
-      </span>
-      <UnreadBadge count={total} style={{ marginLeft: 8 }} />
     </a>
   );
 }
@@ -614,7 +574,7 @@ export default function AdminLayout({ children }) {
                 />
               );
             }
-            if (item.external) return <LiveChatNavLink key={item.key} item={item} onNavigate={closeDrawer} />;
+            if (item.external) return <LiveChatNavLink key={item.key} item={item} />;
             const link = withTarget(item);
             return (
               <Link

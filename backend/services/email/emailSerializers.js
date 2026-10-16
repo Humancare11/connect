@@ -2,6 +2,8 @@
 // (never spread from the document) so nothing internal — ciphertext, Gmail ids,
 // idempotency keys — can reach the browser.
 
+const { computeReadStatus } = require("./readStatus");
+
 const idOf = (v) => (v ? String(v._id || v) : null);
 
 // Decrypts content; a key mismatch must not take the whole list down.
@@ -23,14 +25,41 @@ function serializeMailbox(mb) {
   };
 }
 
-// Open tracking as the screens show it: status "opened" | "pending" | "unavailable".
-// Only for outbound mail that actually went out. Never includes the token or its hash.
+// Tracking as the screens show it. Only for outbound mail that actually went out.
+// Never includes the token or its hash.
+//   status / reason / *OpenedAt / openCount   the open-pixel state ("opened" | "pending" | "unavailable")
+//   readStatus / readStatusAt                 the one combined status (see readStatus.js)
+//   signals                                   every signal behind it, null where there is none
 // A row without a tracking block (older mail, or mail sent from Gmail directly)
 // is "unavailable".
+const signal = (count, first, last) => (count > 0 ? { count, first: first || null, last: last || null } : null);
+
 function trackingView(doc) {
-  if (doc.direction !== "out" || !["sent", "replied"].includes(doc.status)) return null;
+  const combined = computeReadStatus(doc);
+  if (!combined) return null;
   const t = doc.tracking;
   const multiRecipient = (doc.to?.length || 0) + (doc.cc?.length || 0) > 1;
+  const signals = {
+    replied: doc.status === "replied" ? { at: doc.repliedAt || null } : null,
+    downloaded: signal(t?.downloadCount || 0, t?.firstDownloadedAt, t?.lastDownloadedAt),
+    clicked: signal(t?.clickCount || 0, t?.firstClickedAt, t?.lastClickedAt),
+    receipt: t?.receiptAt ? { at: t.receiptAt, by: t.receiptBy || "" } : null,
+    opened: signal(t?.status === "opened" ? t.openCount || 0 : 0, t?.firstOpenedAt, t?.lastOpenedAt),
+    openedApple: signal(t?.appleOpenCount || 0, t?.firstAppleOpenedAt, t?.lastAppleOpenedAt),
+  };
+  // includesInternal: an open may be one of our own colleagues. Both are facts fixed at send time.
+  const summary = {
+    readStatus: combined.status,
+    readStatusAt: combined.at,
+    signals,
+    multiRecipient,
+    includesInternal: Boolean(t?.includesInternal),
+    receiptRequested: Boolean(t?.receiptRequested),
+    secureLinks: Boolean(t?.secureLinks),
+    secureLinksExpireAt: t?.secureLinksExpireAt || null,
+    receiptBy: t?.receiptBy || "",
+    allRecipientsApple: Boolean(t?.allRecipientsApple),
+  };
   if (!t) {
     return {
       status: "unavailable",
@@ -38,7 +67,7 @@ function trackingView(doc) {
       firstOpenedAt: null,
       lastOpenedAt: null,
       openCount: 0,
-      multiRecipient,
+      ...summary,
     };
   }
   return {
@@ -47,7 +76,7 @@ function trackingView(doc) {
     firstOpenedAt: t.firstOpenedAt || null,
     lastOpenedAt: t.lastOpenedAt || null,
     openCount: t.openCount || 0,
-    multiRecipient,
+    ...summary,
   };
 }
 
@@ -86,14 +115,28 @@ function serializeListItem(doc, mailboxMap) {
   return { ...baseFields(doc, mailboxMap), snippet: safeContent(doc).snippet };
 }
 
-// attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role }).
-function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById) {
+// attachmentsByMessage: Map(messageId → EmailAttachment[]); adminsById: Map(id → { name, role });
+// linksByMessage: Map(messageId → [{ index, url, count, first, last }]) (see clickSummary.js).
+function serializeThreadMessage(doc, mailboxMap, attachmentsByMessage, adminsById, linksByMessage = new Map(), filesByMessage = new Map()) {
   const content = safeContent(doc);
   const base = baseFields(doc, mailboxMap);
   const sender = doc.sentByAdmin ? adminsById.get(idOf(doc.sentByAdmin)) : null;
   return {
     ...base,
     sentBy: base.sentBy ? { ...base.sentBy, role: sender?.role || "" } : null,
+    // The image signature this mail went out with (never the storage key).
+    signatureImage: doc.signatureImage
+      ? {
+          mime: doc.signatureImage.mime,
+          width: doc.signatureImage.width,
+          height: doc.signatureImage.height,
+          alt: doc.signatureImage.alt || "",
+        }
+      : null,
+    // Which tracked link was clicked: only on the mail page, never in lists.
+    tracking: base.tracking
+      ? { ...base.tracking, links: linksByMessage.get(idOf(doc._id)) || [], files: filesByMessage.get(idOf(doc._id)) || [] }
+      : null,
     text: content.text,
     html: content.html,
     attachments: (attachmentsByMessage.get(idOf(doc._id)) || []).map((a) => ({

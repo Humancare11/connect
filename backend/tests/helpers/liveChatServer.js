@@ -77,6 +77,14 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
         return `https://files.test/${key}?sig=fake`;
       },
       remove: async (key) => void store.delete(key),
+      removeMany: async (keys) => {
+        const failed = [];
+        for (const key of keys) {
+          if (failures.removeKeys?.has(key)) failed.push(key);
+          else store.delete(key);
+        }
+        return failed;
+      },
     },
     sessionCheckMs: 100,
     guard: [fakeAuth, liveChatAgentOnly],
@@ -147,7 +155,7 @@ const once = (socket, event, timeoutMs = 2000) =>
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// ── Chat tests: real in-memory MongoDB, scripted AI, fake Turnstile ───────────────────────────────────────────
+// ── Chat tests: real in-memory MongoDB, scripted AI ───────────────────────────────────────────
 
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
@@ -234,6 +242,7 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     LcFile: require("../../models/LcFile"),
     LcBlockedIp: require("../../models/LcBlockedIp"),
     LcSettingsAudit: require("../../models/LcSettingsAudit"),
+    LcChatDeletionAudit: require("../../models/LcChatDeletionAudit"),
     LcAgentProfile: require("../../models/LcAgentProfile"),
   };
   await Promise.all(Object.values(models).map((m) => m.init()));
@@ -248,7 +257,6 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
       settingsCacheMs: 0,
       getSettings: undefined, // the real settings reader (the Phase 1 stub only suits the socket tests)
       publicLimiters: { contact: PASS, config: PASS, upload: PASS }, // the per-IP route limiters are not under test
-      verifyTurnstile: async ({ token }) => (token === "good-token" ? { ok: true } : { ok: false, reason: "failed" }),
       ...mount,
     },
   });
@@ -293,7 +301,6 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
           name: "Emma Wilson",
           email: `emma${seq}@example.com`,
           phone: "",
-          turnstileToken: "good-token",
           ...extra,
         },
         headers
@@ -303,7 +310,15 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     // A chat socket for a visitor that has submitted the form.
     chatSocket: (token, extra = {}, headers = {}) => lc.connect("/livechat", { auth: { chatToken: token, ...extra }, headers }),
     // emit with an acknowledgement
+    // A chat:message is acknowledged as soon as it is saved; the AI turn runs on in the background. This helper keeps
+    // the old shape of the tests (the call returns once the AI turn is over too). Tests of the ack itself use
+    // `raw` (no waiting).
     call: (socket, event, payload) =>
+      api.raw(socket, event, payload).then(async (reply) => {
+        if (event === "chat:message") await lc.livechat.chat.whenAiIdle();
+        return reply;
+      }),
+    raw: (socket, event, payload) =>
       new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error(`no ack for ${event}`)), 3000);
         const done = (reply) => {

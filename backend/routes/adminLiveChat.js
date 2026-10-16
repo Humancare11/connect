@@ -33,6 +33,10 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET/POST/PUT/DELETE /canned-replies                   canned replies (writes: superadmin only)
 //   GET  /team, PUT /team/:userId/display-name            Team page; an agent renames themselves, a superadmin anyone
 //   GET  /reports?from=YYYY-MM-DD&to=YYYY-MM-DD           Reports page
+//   GET  /review/access                                   whether this user may open AI Review (any agent)
+//   GET  /review?status=&from=&to=, /review/log, /review/:id, POST /review/:id   AI Review (Super Admin or reviewer);
+//                                                         the review log is append-only: there is no edit or delete
+//   PUT  /team/:userId/reviewer                           allow / stop an admin from using AI Review (Super Admin)
 //
 // Options exist so tests can run without real sessions:
 //   guard     auth middleware chain (default: verified admin session, then agent role)
@@ -41,7 +45,35 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   getSettings  () => settings document
 const DEFAULT_GUARD = [verifyAdminToken, liveChatAgentOnly];
 
-function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats } = {}) {
+// 10 requests a minute per user on the delete endpoints (in memory, like the socket limiter).
+function makeUserLimiter({ windowMs = 60_000, max = 10, now = () => Date.now() } = {}) {
+  const hits = new Map();
+  return (key) => {
+    const t = now();
+    const entry = hits.get(key);
+    if (!entry || t > entry.resetAt) {
+      hits.set(key, { count: 1, resetAt: t + windowMs });
+      return true;
+    }
+    entry.count += 1;
+    return entry.count <= max;
+  };
+}
+
+// AI Review: Super Admin, or an admin the Super Admin has given the reviewer permission (a flag on the user record,
+// read here because the session token does not carry it).
+async function canReview(user) {
+  if (user?.role === "superadmin") return true;
+  if (user?.role !== "admin") return false;
+  try {
+    const row = await require("../models/User").findById(user.id).select("liveChatReviewer accountDisabled").lean();
+    return Boolean(row?.liveChatReviewer) && row.accountDisabled !== true;
+  } catch {
+    return false;
+  }
+}
+
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, review, trashLimiter } = {}) {
   const router = express.Router();
   router.use(guard);
   router.use(express.json({ limit: "32kb" }));
@@ -99,7 +131,29 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.put("/canned-replies/:id", superAdminOnly, handle((req) => settings.updateCanned(actor(req), req.params.id, req.body)));
   router.delete("/canned-replies/:id", superAdminOnly, handle((req) => settings.deleteCanned(actor(req), req.params.id)));
 
+  // ── AI Review (flagged medical chats) ─────────────────────────────────────────
+
+  const reviewerOnly = async (req, res, next) => {
+    try {
+      if (await canReview(req.user)) return next();
+      return res.status(403).json({ ok: false, error: "reviewer_only" });
+    } catch (err) {
+      return next(err);
+    }
+  };
+  // Lets the Live Chat menu know whether to show the AI Review page. Open to every agent.
+  router.get("/review/access", handle(async (req) => ({ ok: true, canReview: await canReview(req.user) })));
+  if (review) {
+    router.get("/review", reviewerOnly, handle((req) => review.list({ status: req.query.status, from: req.query.from, to: req.query.to })));
+    router.get("/review/log", reviewerOnly, handle((req) => review.log({ before: req.query.before })));
+    router.get("/review/:id", reviewerOnly, handle((req) => review.detail(idOf(req))));
+    router.post("/review/:id", reviewerOnly, handle((req) => review.review(actor(req), idOf(req), req.body)));
+    // No PUT / PATCH / DELETE on purpose: the review log is append-only.
+  }
+
   router.get("/team", handle(() => stats.team()));
+  // Who may open AI Review. Super Admin only; audited in the settings change log.
+  router.put("/team/:userId/reviewer", superAdminOnly, handle((req) => settings.setReviewer(actor(req), req.params.userId, req.body?.enabled)));
   // The AI's name is a setting, so it is saved (and audited) like one: Super Admin only. Registered before :userId.
   router.put("/team/ai/display-name", superAdminOnly, handle((req) => settings.update(actor(req), { aiDisplayName: req.body?.displayName })));
   router.put("/team/:userId/display-name", handle((req) => settings.setDisplayName(actor(req), req.params.userId, req.body?.displayName)));
@@ -121,7 +175,29 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
     handle((req) => agent.startChat(actor(req), req.body?.visitorId))
   );
 
-  router.get("/conversations/:id", handle((req) => agent.detail(actor(req), idOf(req)).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))));
+  // The Archive page: every archived chat with filters and search (admin + superadmin, like the chat lists).
+  router.get("/archive", handle((req) => archive.list(req.query)));
+
+  // Delete / Trash: Super Admin only (403 for admins), rate limited, audited in the service.
+  if (trash) {
+    const allow = trashLimiter || makeUserLimiter();
+    const limited = (req, res, next) => {
+      if (allow(String(req.user.id))) return next();
+      return res.status(429).set("Retry-After", "60").json({ ok: false, error: "rate_limited" });
+    };
+    router.post("/archive/delete-preview", superAdminOnly, handle((req) => trash.preview(req.body?.filters || {})));
+    router.post("/archive/delete", superAdminOnly, limited, handle((req) => trash.remove(actor(req), req.body)));
+    router.get("/trash", superAdminOnly, handle((req) => trash.list(req.query)));
+    router.post("/trash/restore", superAdminOnly, limited, handle((req) => trash.restore(actor(req), req.body)));
+    router.post("/trash/purge", superAdminOnly, limited, handle((req) => trash.purge(actor(req), req.body)));
+  }
+
+  router.get(
+    "/conversations/:id",
+    handle((req) =>
+      agent.detail(actor(req), idOf(req), { markRead: req.query.archive !== "1" }).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))
+    )
+  );
   // Plain-text download (no notes). Not cached; the file name carries only the chat ID.
   router.get("/conversations/:id/transcript", async (req, res, next) => {
     try {
@@ -162,6 +238,7 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text, req.body?.sourceText)));
   // Translation (admin side only): English view of a chat, the reply box, and the per-admin view choice.
   router.post("/conversations/:id/translate", handle((req) => agent.translate(actor(req), idOf(req), req.body?.messageIds)));
+  router.post("/conversations/:id/detect-language", handle((req) => agent.detectLanguage(actor(req), idOf(req))));
   router.post("/conversations/:id/translate-reply", handle((req) => agent.translateReply(actor(req), idOf(req), req.body?.text)));
   router.put("/conversations/:id/view", handle((req) => agent.setTranslateView(actor(req), idOf(req), req.body?.view)));
   router.post("/conversations/:id/notes", handle((req) => agent.addNote(actor(req), idOf(req), req.body?.text)));
@@ -208,4 +285,4 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   return router;
 }
 
-module.exports = { create, DEFAULT_GUARD };
+module.exports = { create, DEFAULT_GUARD, makeUserLimiter };

@@ -1,8 +1,7 @@
 import { onTabMessage, postToTabs } from "../../../utils/crossTab";
 
-// The Live Chat dashboard lives in its own, named browser tab. This module knows whether that tab is open, opens or
-// re-uses it, and tells the other admin tabs to stay quiet (no sound, no toasts) while it is open.
-export const LIVECHAT_TAB_NAME = "humancare-livechat";
+// The Live Chat dashboard opens in a new browser tab on every click. This module knows whether a Live Chat tab is
+// open (a heartbeat between tabs) and tells the other admin tabs to stay quiet (no sound, no toasts) while it is.
 export const LIVECHAT_HOME = "/admin-dashboard/live-chat";
 const HEARTBEAT_MS = 5000;
 const ALIVE_MS = 12000; // a heartbeat this recent means the Live Chat tab is open
@@ -24,9 +23,6 @@ onTabMessage((message) => {
     case "lc:who":
       if (isLiveChatTab) postToTabs({ type: "lc:heartbeat" });
       break;
-    case "lc:navigate":
-      if (isLiveChatTab && goTo && validPath(message.path)) goTo(message.path);
-      break;
     default:
   }
 });
@@ -42,7 +38,6 @@ export const shouldAlert = () => isLiveChatTab || !isLiveChatTabOpen();
 export function registerLiveChatTab(navigate) {
   isLiveChatTab = true;
   goTo = navigate;
-  window.name = LIVECHAT_TAB_NAME; // a tab opened any other way becomes the named tab too
   postToTabs({ type: "lc:heartbeat" });
   const timer = window.setInterval(() => postToTabs({ type: "lc:heartbeat" }), HEARTBEAT_MS);
   const closed = () => postToTabs({ type: "lc:closed" });
@@ -56,24 +51,17 @@ export function registerLiveChatTab(navigate) {
   };
 }
 
-// Opens the Live Chat dashboard (or a chat in it) in the one named tab. No "noopener" on window.open: it would put
-// the new tab in its own browsing-context group, the name could not be found again, and every click would open a
-// new tab. The page is our own origin, so nothing is exposed.
+// True in the Live Chat tab itself: a link to a chat is followed in place there (no reload).
+export const inLiveChatTab = () => isLiveChatTab && Boolean(goTo);
+
+// For places that cannot be an anchor (a browser notification's click). Always a new tab (no window features), except
+// inside the Live Chat tab itself, where the chat is followed in place.
 export function openLiveChat(path = LIVECHAT_HOME) {
   const target = validPath(path) ? path : LIVECHAT_HOME;
-  if (isLiveChatTab && goTo) {
+  if (inLiveChatTab()) {
     goTo(target);
     window.focus();
     return;
   }
-  if (isLiveChatTabOpen()) {
-    postToTabs({ type: "lc:navigate", path: target });
-    try {
-      window.open("", LIVECHAT_TAB_NAME)?.focus(); // finds the named tab and brings it forward, without reloading it
-    } catch {
-      /* the browser may refuse to focus: the tab still moved */
-    }
-    return;
-  }
-  window.open(target, LIVECHAT_TAB_NAME);
+  window.open(target, "_blank");
 }

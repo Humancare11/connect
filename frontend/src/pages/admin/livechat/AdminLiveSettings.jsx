@@ -22,8 +22,8 @@ const AI_MODES = [
 
 // the fields the page edits (everything else on the settings document is not sent back)
 const EDITABLE = [
-  "aiMode", "followUpMinutes", "aiDisplayName", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
-  "dailySpendCapUsd", "handoffRules", "quickOptions", "prices", "customFields",
+  "aiMode", "followUpMinutes", "inactiveMinutes", "aiDisplayName", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
+  "aiMayLinkConditionPages", "showAiNotice", "policyVersion", "dailySpendCapUsd", "handoffRules", "quickOptions", "prices", "customFields",
 ];
 const MAX_CUSTOM_FIELDS = 10;
 const pick = (settings) => Object.fromEntries(EDITABLE.map((k) => [k, k === "customFields" ? settings[k] || [] : settings[k]]));
@@ -209,13 +209,52 @@ export default function AdminLiveSettings() {
               </span>
               <ErrorText errors={errors} name="followUpMinutes" />
             </div>
+            <div className="lcp-field">
+              <label htmlFor="inactiveMinutes">Archive an inactive chat after (minutes, 5-60)</label>
+              <input
+                id="inactiveMinutes"
+                type="number"
+                min="5"
+                max="60"
+                value={form.inactiveMinutes ?? 10}
+                onChange={(e) => set("inactiveMinutes", Number(e.target.value))}
+              />
+              <span className="lcp-help">
+                When the last message is from the AI or an admin and the patient writes nothing for this long, the chat moves to Archived as
+                "Inactive" and the patient is told they can write again to continue. Chats in the Queue are never archived this way.
+              </span>
+              <ErrorText errors={errors} name="inactiveMinutes" />
+            </div>
           </div>
 
           <div className="lcp-panel">
             <h3>What the AI says</h3>
             <label className="lcp-check">
-              <input type="checkbox" checked disabled /> Never diagnose or suggest medication (always on)
+              <input type="checkbox" checked disabled /> Never give medical advice: no diagnosis, treatment, medicines or test interpretation. The AI says it cannot and points to a Humancare doctor (always on)
             </label>
+            <label className="lcp-check">
+              <input
+                type="checkbox"
+                checked={form.aiMayLinkConditionPages !== false}
+                onChange={(e) => set("aiMayLinkConditionPages", e.target.checked)}
+              />{" "}
+              AI may link condition pages
+            </label>
+            <span className="lcp-help">For a medical question the AI always gives the booking link. When this is on it may also show one matching condition page. When off, only the booking link.</span>
+            <label className="lcp-check">
+              <input type="checkbox" checked={form.showAiNotice === true} onChange={(e) => set("showAiNotice", e.target.checked)} /> Show AI notice
+            </label>
+            <span className="lcp-help">
+              Shows the AI notice above Start chat in the widget and records, when a visitor starts a chat, the time they accepted it and the policy
+              version below. Keep this off until the "Website chat" section of the Privacy Policy is published. When on, widgets that are open in a browser
+              must be refreshed before a new chat can start.
+            </span>
+            <div className="lcp-field">
+              <label htmlFor="policyVersion">Privacy policy version</label>
+              <input id="policyVersion" value={form.policyVersion || ""} maxLength={20} onChange={(e) => set("policyVersion", e.target.value)} />
+              <span className="lcp-help">Stored with every acceptance, e.g. v1. Changing it asks returning visitors to accept the notice again.</span>
+              <ErrorText errors={errors} name="policyVersion" />
+            </div>
             <div className="lcp-field">
               <label htmlFor="greeting">Greeting</label>
               <textarea id="greeting" value={form.greeting} maxLength={600} onChange={(e) => set("greeting", e.target.value)} />
@@ -237,6 +276,7 @@ export default function AdminLiveSettings() {
 
           <div className="lcp-panel">
             <h3>Prices the AI may quote</h3>
+            <span className="lcp-help">Prices and business facts can only be changed by a Super Admin. Every change is logged with who, when, and the full before and after.</span>
             {form.prices.map((p, i) => (
               <div key={i}>
                 <div className="lcp-row lcp-row--price">
@@ -417,7 +457,7 @@ export default function AdminLiveSettings() {
                   <td>
                     <ul>
                       {entry.changes.map((c, i) => (
-                        <li key={i}>
+                        <li key={i} style={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>
                           <b>{c.field.replace(/^cannedReply/, "savedReply")}</b>: <span className="lcp-muted">{c.before || "(empty)"}</span> → {c.after || "(empty)"}
                         </li>
                       ))}

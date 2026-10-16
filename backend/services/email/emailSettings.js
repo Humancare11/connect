@@ -1,4 +1,5 @@
 const EmailSettings = require("../../models/EmailSettings");
+const { parseScannerIps } = require("./scannerLists");
 
 // Open tracking is active only when ALL of these hold:
 //   1. EMAIL_TRACKING_ENABLED=true            (deploy-time gate; unset in production until approved)
@@ -24,6 +25,14 @@ const positive = (value, fallback) => (Number(value) > 0 ? Number(value) : fallb
 function trackingEnv(env = process.env) {
   return {
     envEnabled: env.EMAIL_TRACKING_ENABLED === "true",
+    // Second deploy-time gate: link click tracking (rewriting links through /api/l).
+    linksEnvEnabled: env.EMAIL_TRACKING_LINKS_ENABLED === "true",
+    // Third deploy-time gate: secure attachment links (/api/d). The expiry can never exceed the cap.
+    secureLinksEnvEnabled: env.EMAIL_SECURE_LINKS_ENABLED === "true",
+    secureLinkDaysMax: Math.floor(positive(env.EMAIL_SECURE_LINK_DAYS_MAX, 30)),
+    // Several different links of one mail hit within a few seconds is a scanner, not a person.
+    clickBurstLinks: positive(env.EMAIL_CLICK_BURST_LINKS, 3),
+    clickBurstSeconds: positive(env.EMAIL_CLICK_BURST_SECONDS, 5),
     baseUrl: normalizeBaseUrl(env.PUBLIC_TRACKING_BASE_URL),
     baseUrlSet: Boolean(String(env.PUBLIC_TRACKING_BASE_URL || "").trim()),
     graceSeconds: Number.isFinite(Number(env.EMAIL_TRACKING_GRACE_SECONDS)) && env.EMAIL_TRACKING_GRACE_SECONDS !== undefined && env.EMAIL_TRACKING_GRACE_SECONDS !== ""
@@ -32,6 +41,12 @@ function trackingEnv(env = process.env) {
     dedupeMinutes: positive(env.EMAIL_TRACKING_DEDUPE_MINUTES, 10),
     ratePerMinute: positive(env.EMAIL_TRACKING_RATE_PER_MIN, 60),
     ignoreIps: String(env.EMAIL_TRACKING_IGNORE_IPS || "").split(",").map((s) => s.trim()).filter(Boolean),
+    // Scanner address ranges, "vendor=cidr,vendor=cidr" (a bare range is vendor "other").
+    scannerIps: parseScannerIps(env.EMAIL_SCANNER_IPS),
+    // Extra Apple Mail Privacy Protection ranges (Apple's own 17.0.0.0/8 is built in).
+    appleIps: String(env.EMAIL_APPLE_PROXY_IPS || "").split(",").map((s) => s.trim()).filter(Boolean),
+    // A scanner-flagged hit counts as an open only when another hit comes this long after the first.
+    secondHitMinutes: positive(env.EMAIL_SECOND_HIT_MINUTES, 2),
   };
 }
 
@@ -55,14 +70,27 @@ const clearSettingsCache = () => {
 async function getTrackingState({ env = process.env, now, full = false } = {}) {
   const e = trackingEnv(env);
   const gated = e.envEnabled && Boolean(e.baseUrl);
-  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, disclosureEnabled: true, disclosureText: "" };
+  const s = gated || full ? await loadSettings({ now }) : { trackingEnabled: false, footerNoticeEnabled: false, disclosureText: "", trackInternalRecipients: true, trackClicks: false, secureLinksEnabled: false, secureLinkDays: 7 };
   return {
     ...e,
     baseUrlOk: Boolean(e.baseUrl),
     switchOn: Boolean(s.trackingEnabled),
-    disclosureEnabled: Boolean(s.disclosureEnabled),
+    // Only an explicit switch-on adds a notice; the default is none.
+    disclosureEnabled: Boolean(s.footerNoticeEnabled),
     disclosureText: s.disclosureText || "",
+    // Default ON: mail to company addresses is tracked too, with a caveat (see emailTracking.js).
+    trackInternalRecipients: s.trackInternalRecipients !== false,
+    trackClicks: Boolean(s.trackClicks),
+    secureLinksEnabled: Boolean(s.secureLinksEnabled),
+    // What a new mail gets: the stored setting (default 7 days), never above the server cap.
+    secureLinkDays: Math.max(1, Math.min(Math.floor(Number(s.secureLinkDays) || 7), e.secureLinkDaysMax)),
+    secureLinkDaysStored: Number(s.secureLinkDays) || 7,
     active: e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled),
+    // Link tracking needs open tracking to be active AND its own env gate AND its own switch.
+    linksActive: e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled) && e.linksEnvEnabled && Boolean(s.trackClicks),
+    // Secure links need tracking active (downloads are recorded), their own env gate and their own switch.
+    secureLinksActive:
+      e.envEnabled && Boolean(e.baseUrl) && Boolean(s.trackingEnabled) && e.secureLinksEnvEnabled && Boolean(s.secureLinksEnabled),
   };
 }
 

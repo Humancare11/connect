@@ -17,6 +17,7 @@ const OUT = path.join(__dirname, "..", "data", "liveChatSitePages.json");
 // Service pages and the booking page. Each one must be an active route (checked below).
 const SERVICE_PAGES = [
   { url: "/appointment-booking", title: "Book an appointment", keywords: ["book", "booking", "appointment", "schedule", "visit", "see a doctor", "how to book"] },
+  { url: "/telemedicine-cost-usa", title: "Pricing", keywords: ["price", "prices", "pricing", "cost", "how much", "fee", "fees", "charge", "flat price"] },
   { url: "/medical-services", title: "All medical services", keywords: ["services", "what do you treat", "what can you treat"] },
   { url: "/online-doctor-consultation", title: "Online doctor consultation", keywords: ["consultation", "online doctor", "talk to a doctor", "video visit", "telehealth"] },
   { url: "/how-does-a-telemedicine-appointment-work", title: "How a telemedicine visit works", keywords: ["how does it work", "telemedicine", "video call"] },

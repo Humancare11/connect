@@ -412,9 +412,15 @@ describe("live chat: AI agent settings, canned replies, display names", () => {
       assert.equal((await save({ greeting: cur.greeting })).body.changed, 0);
       assert.equal((await audit()).length, count);
 
+      // other long values are shortened...
+      await save({ greeting: "G".repeat(590) });
+      const greeting = (await audit())[0].changes.find((c) => c.field === "greeting");
+      assert.ok(greeting.after.length < 450 && greeting.after.includes("590 characters"));
+      await save({ greeting: cur.greeting });
+      // ...but business facts and prices are logged in full
       await save({ businessFacts: "F".repeat(5000) });
       const change = (await audit())[0].changes.find((c) => c.field === "businessFacts");
-      assert.ok(change.after.length < 450 && change.after.includes("5000 characters"));
+      assert.equal(change.after, "F".repeat(5000));
       await save({ businessFacts: "" });
     });
 

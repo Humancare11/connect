@@ -2,6 +2,8 @@
 
 Docs only. No Content Security Policy was changed anywhere in this branch.
 
+> **Update:** Cloudflare Turnstile has been removed from live chat, so live chat no longer needs the `challenges.cloudflare.com` entries below. They can be removed from a future CSP only if nothing else on the site uses Cloudflare. The real site-wide CSP config was not touched.
+
 ## What exists today
 
 - `frontend/index.html` has a `<meta http-equiv="Content-Security-Policy">` at about line 88, after `</head>`. Browsers only honor it inside `<head>`, so it is ignored. The site currently runs without an effective CSP.
@@ -12,8 +14,8 @@ Docs only. No Content Security Policy was changed anywhere in this branch.
 
 | Directive | Needed |
 |---|---|
-| `script-src` | `https://challenges.cloudflare.com` (Turnstile) |
-| `frame-src` | `https://challenges.cloudflare.com` |
+| `script-src` | `'self'` (the former `https://challenges.cloudflare.com` entry was for Turnstile, now removed from live chat) |
+| `frame-src` | none needed now (was `https://challenges.cloudflare.com` for Turnstile) |
 | `connect-src` | `'self'` plus the API origin, and `wss://<api origin>` for Socket.IO |
 | `img-src` | `'self' data:` (S3 files are opened in a new tab through presigned links, not embedded) |
 | `style-src` | `'self' 'unsafe-inline'` (React inline styles) |
@@ -34,8 +36,7 @@ Ship as an HTTP response header on the static site (Render `headers` in `render.
 ```
 Content-Security-Policy-Report-Only:
   default-src 'self';
-  script-src 'self' https://challenges.cloudflare.com;
-  frame-src https://challenges.cloudflare.com;
+  script-src 'self';
   connect-src 'self' https://<api-origin> wss://<api-origin>;
   img-src 'self' data: https:;
   style-src 'self' 'unsafe-inline';

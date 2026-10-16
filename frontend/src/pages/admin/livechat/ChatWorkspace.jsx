@@ -351,6 +351,26 @@ export default function ChatWorkspace({ view }) {
         reloadListSoon();
       }
     },
+    detect: async () => {
+      try {
+        const { data } = await api.post(`${BASE}/conversations/${id}/detect-language`);
+        return { language: data.language || null, reason: data.reason || "" };
+      } catch (err) {
+        return { language: null, reason: err?.response?.status === 429 ? "busy" : "failed" };
+      }
+    },
+    // Super Admin, archived chats only (the server checks both). The chat leaves the list at once.
+    remove: async () => {
+      try {
+        await api.post(`${BASE}/archive/delete`, { ids: [id] });
+        go(null, true);
+        reloadListSoon();
+        return { ok: true };
+      } catch (err) {
+        const code = err?.response?.data?.error;
+        return { ok: false, error: code === "rate_limited" ? "Too many delete requests. Wait a minute and try again." : "Could not delete this chat." };
+      }
+    },
     suggest: async () => {
       const r = await act(post("suggest"));
       return r.ok ? r.data.reply : "";
@@ -422,6 +442,8 @@ export default function ChatWorkspace({ view }) {
             onTyping={onTyping}
             onOpenFile={handlers.openFile}
             onBlockIp={handlers.blockIp}
+            onDelete={handlers.remove}
+            onDetect={handlers.detect}
             onDownload={handlers.download}
             onSendFile={handlers.sendFile}
           />
