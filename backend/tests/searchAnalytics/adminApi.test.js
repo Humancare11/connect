@@ -532,7 +532,7 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     const summary = await get("/summary");
     assert.deepEqual(Object.keys(summary.json), ["success", "window", "data", "meta"]);
     assert.deepEqual(Object.keys(summary.json.window), ["from", "to", "days"]);
-    assert.deepEqual(Object.keys(summary.json.meta), ["kThreshold", "generatedAt", "collectionEnabled", "truncated"]);
+    assert.deepEqual(Object.keys(summary.json.meta), ["kThreshold", "generatedAt", "collectionEnabled", "truncated", "termsCheckComplete"]);
     assert.equal(summary.json.meta.kThreshold, 3);
     assert.equal(summary.json.meta.generatedAt, NOW.toISOString());
     assert.deepEqual(Object.keys(summary.json.data), ["interactions", "bySettledBy", "outcomes", "aiStatuses", "dedicatedPageAvailable", "terms", "gaps"]);
@@ -540,7 +540,7 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
 
     const terms = await get("/terms");
     assert.deepEqual(Object.keys(terms.json.data), ["items", "pagination", "sort", "filters"]);
-    assert.deepEqual(Object.keys(terms.json.data.items[0]), ["term", "termKey", "interactions", "lastSeen", "bySettledBy", "outcomes", "aiStatuses", "dedicatedPageAvailable", "topResultPath", "coverage"]);
+    assert.deepEqual(Object.keys(terms.json.data.items[0]), ["term", "termKey", "interactions", "lastSeen", "bySettledBy", "outcomes", "aiStatuses", "dedicatedPageAvailable", "topResultPath", "coverage", "trendAvailable"]);
     assert.deepEqual(Object.keys(terms.json.data.items[0].outcomes), ["dedicatedPageFound", "fallbackOnly", "noResults"]);
     assert.deepEqual(Object.keys(terms.json.data.filters), ["outcome", "aiStatus", "minCount"]);
 
