@@ -159,7 +159,7 @@ test("--apply confirmation is bound to the database and the plan hash", () => {
 
 test("plan integrity: current plan passes; tampering and stale sources fail", () => {
   const hashes = Object.fromEntries(
-    Object.entries(plan.sources).map(([k, s]) => [k, sha256(fs.readFileSync(path.join(REPO, s.path), "utf8"))]),
+    Object.entries(plan.sources).map(([k, s]) => [k, sha256(fs.readFileSync(path.join(REPO, s.path), "utf8").replace(/\r\n/g, "\n"))]),
   );
   assert.deepEqual(verifyPlanIntegrity(plan, hashes), []);
   assert.ok(verifyPlanIntegrity(plan, { ...hashes, searchIndex: "0" }).some((e) => /regenerate/.test(e)));

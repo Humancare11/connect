@@ -41,7 +41,9 @@ const CLASSIFICATIONS = ["EXACT", "NAME_VARIATION", "CLEAR_SEMANTIC_MATCH", "NEE
 const EXECUTION_FLAGS = ["--apply", "--execute", "--write", "--commit"];
 
 const rel = (file) => path.relative(REPO_DIR, file).split(path.sep).join("/");
+// Source files are hashed with LF line endings so the hash is the same for a CRLF (Windows autocrlf) and an LF checkout.
 const sha256 = (text) => crypto.createHash("sha256").update(text).digest("hex");
+const sourceSha256 = (text) => sha256(text.replace(/\r\n/g, "\n"));
 const lower = (value) => String(value).trim().toLowerCase();
 const byText = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -57,7 +59,7 @@ async function loadLegacyIndex() {
     categories: mod.categories,
     specialties: mod.specialties,
     conditions: [...mod.conditions, ...additional],
-    source: { path: rel(LEGACY_INDEX_FILE), sha256: sha256(text) },
+    source: { path: rel(LEGACY_INDEX_FILE), sha256: sourceSha256(text) },
   };
 }
 
@@ -75,7 +77,7 @@ function loadAppRoutes() {
     }
   }
   const duplicates = [...declarations].filter(([, n]) => n > 1).map(([p]) => p).sort();
-  return { paths, duplicates, source: { path: rel(APP_ROUTES_FILE), sha256: sha256(text), staticRoutes: paths.size, duplicateDeclarations: duplicates } };
+  return { paths, duplicates, source: { path: rel(APP_ROUTES_FILE), sha256: sourceSha256(text), staticRoutes: paths.size, duplicateDeclarations: duplicates } };
 }
 
 async function readLiveState(db, models) {
@@ -1065,7 +1067,7 @@ async function main() {
     sources: {
       searchIndex: legacy.source,
       appRoutes: app.source,
-      decisions: { path: rel(DECISIONS_FILE), sha256: sha256(fs.readFileSync(DECISIONS_FILE, "utf8")) },
+      decisions: { path: rel(DECISIONS_FILE), sha256: sourceSha256(fs.readFileSync(DECISIONS_FILE, "utf8")) },
     },
     safety: guard.summary(),
   };

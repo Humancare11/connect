@@ -7,12 +7,12 @@
   "sources": {
     "searchIndex": {
       "path": "frontend/src/data/searchIndex.js",
-      "sha256": "f855f5ab0ecc8cd389fd32e6f4af01b5ad5ff2be118dc1551ebf90bf2a07a7b6"
+      "sha256": "21481be38a1f19c69cc2c14bf05599f8718377d69c5e214780628227fbe69bfb"
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "8c64e4d8cec6e43a7d69b7c83aa312b4dde21f235cac786edc48d5bd6cb27cb0",
-      "staticRoutes": 381,
+      "sha256": "65094084be2fa9177178f5a44c4ad25211b746b3a9928a47eebecd9dd319abbd",
+      "staticRoutes": 384,
       "duplicateDeclarations": []
     },
     "decisions": {
