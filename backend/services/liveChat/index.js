@@ -274,6 +274,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     followUp,
     abuse,
     leaveGraceMs: graceMs,
+    aiDeadlineMs: options.aiDeadlineMs, // tests only; the default is 25 s
   });
   const files = createFileService({ models, chat, store: options.fileStore, env });
   const { createAgentService } = require("./agentService");

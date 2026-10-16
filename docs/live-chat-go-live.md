@@ -6,7 +6,7 @@ Tick each item on staging first, then production.
 - [ ] **BLOCKER:** Publish the "Website chat" section of the Privacy Policy (AI processing by OpenAI, message storage and retention, page tracking with cookie consent) after counsel approval, before `LIVECHAT_ENABLED` / `VITE_LIVECHAT_ENABLED` are turned on in production. The in-widget privacy and tracking notices were removed on 2026-10-10, so the Privacy Policy is the only place patients are told. Wording: `docs/live-chat-privacy-draft.md`.
 
 ## Environment
-- [ ] Backend: `LIVECHAT_ENABLED=true`, `LIVECHAT_ENCRYPTION_KEY` (64 hex), `LIVECHAT_OPENAI_API_KEY`, `LIVECHAT_MODEL`, `LIVECHAT_FOLLOWUP_MAILBOX`, S3 vars (`AWS_S3_BUCKET` etc.). See `backend/.env.example`.
+- [ ] Backend: `LIVECHAT_ENABLED=true`, `LIVECHAT_ENCRYPTION_KEY` (64 hex), `LIVECHAT_OPENAI_API_KEY`, `LIVECHAT_MODEL`, **REQUIRED** `LIVECHAT_PRICE_INPUT_PER_1M` and `LIVECHAT_PRICE_OUTPUT_PER_1M` (plus `LIVECHAT_PRICE_CACHED_INPUT_PER_1M`; without prices the AI does not run and the backend logs `AI unavailable (not_configured: missing_prices)`), `LIVECHAT_FOLLOWUP_MAILBOX`, S3 vars (`AWS_S3_BUCKET` etc.). See `backend/.env.example`.
 - [ ] OpenAI data handling: `LIVECHAT_OPENAI_ORG_ID` and `LIVECHAT_OPENAI_PROJECT_ID` set to the organisation and project that hold the data-handling (HIPAA) agreement. Optional in code, but in production the backend logs a startup warning (variable names only, never values) when either is missing. Every live-chat model call is sent with `store: false`.
 - [ ] Frontend build: `VITE_LIVECHAT_ENABLED=true`.
 - [ ] `LIVECHAT_ENCRYPTION_KEY` backed up in two safe places. Losing it makes every chat unreadable.

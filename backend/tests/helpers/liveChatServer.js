@@ -310,7 +310,15 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
     // A chat socket for a visitor that has submitted the form.
     chatSocket: (token, extra = {}, headers = {}) => lc.connect("/livechat", { auth: { chatToken: token, ...extra }, headers }),
     // emit with an acknowledgement
+    // A chat:message is acknowledged as soon as it is saved; the AI turn runs on in the background. This helper keeps
+    // the old shape of the tests (the call returns once the AI turn is over too). Tests of the ack itself use
+    // `raw` (no waiting).
     call: (socket, event, payload) =>
+      api.raw(socket, event, payload).then(async (reply) => {
+        if (event === "chat:message") await lc.livechat.chat.whenAiIdle();
+        return reply;
+      }),
+    raw: (socket, event, payload) =>
       new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error(`no ack for ${event}`)), 3000);
         const done = (reply) => {
