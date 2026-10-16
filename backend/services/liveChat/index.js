@@ -260,8 +260,15 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
   const followUp = createFollowUpMailer({ models, loadSettings, sendMail: options.sendMail, env });
   let announce = () => {}; // set below, once the agent service exists
   let agentSvc = null;
+  // The pages the AI may link to: the site's own categories, specialties and conditions (cached), the static list as fallback.
+  const sitePages =
+    options.sitePages ||
+    require("./sitePages").createSitePages(undefined, {
+      source: options.siteCatalog === false ? null : require("./siteCatalog").createSiteCatalog({ models: options.siteCatalogModels }).load,
+    });
   const chat = createChatService({
     models,
+    sitePages,
     loadSettings,
     ai,
     limits,

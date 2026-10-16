@@ -173,7 +173,13 @@ describe("live chat: patient file uploads and admin access", () => {
 
       lc.ai.calls.length = 0;
       await lc.call(chat.socket, "chat:message", { text: "I sent my report" });
-      assert.equal(JSON.stringify(lc.ai.calls[0]).includes("HIV"), false, "file names are never given to the AI");
+      // The call now carries the site's whole page list, which has a page titled "HIV Prevention Guidance": the bare word "HIV"
+      // is no longer a valid probe for the call as a whole. The file name itself must not appear anywhere in the call, and
+      // the conversation part (history) must contain none of it.
+      const call = JSON.stringify(lc.ai.calls[0]);
+      assert.equal(call.includes(secretName), false, "file names are never given to the AI");
+      assert.equal(call.includes("Emma-Wilson"), false, "file names are never given to the AI");
+      assert.equal(JSON.stringify(lc.ai.calls[0].history).includes("HIV"), false, "file names are never given to the AI");
       chat.socket.close();
     });
 

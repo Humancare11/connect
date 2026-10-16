@@ -97,7 +97,7 @@ describe("live chat: page links come from a server allowlist built from the app'
       usage: { inputTokens: 1000, cachedInputTokens: 0, outputTokens: 50, costUsd: 0.0001 }, ...extra,
     });
 
-    test("the AI gets only matching pages; real links reach the patient, invented ones are dropped", async () => {
+    test("the AI gets the whole page list; real links reach the patient, invented ones are dropped", async () => {
       const socket = await openChat();
       lc.ai.queue.push(
         reply({
@@ -111,7 +111,7 @@ describe("live chat: page links come from a server allowlist built from the app'
       );
       await lc.call(socket, "chat:message", { text: "I have a fever" });
       assert.ok(lc.ai.calls[0].pages.some((p) => p.url.endsWith("/fever")), "the model was shown the fever page");
-      assert.ok(lc.ai.calls[0].pages.length <= 15);
+      assert.ok(lc.ai.calls[0].pages.length > 100, "the model sees the whole list (titles and paths only) and picks the best match");
       const state = (await lc.call(socket, "chat:resume")).conversation;
       const last = state.messages.at(-1);
       assert.equal(last.sender, "ai");
