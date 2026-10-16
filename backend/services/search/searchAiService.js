@@ -8,14 +8,15 @@
 //
 // What is sent to OpenAI: a static system prompt, the controlled vocabulary
 // (active category/specialty/condition/service names and their aliases) and
-// the normalised, redacted query. Nothing else. Requests use store:false, a
+// the normalised query, only when it passes the privacy gate (analyzeForAi);
+// queries that look personal are never sent. Nothing else. Requests use store:false, a
 // timeout, no retries, a server-side daily cap, a per-client minute cap and a
 // small circuit breaker. Queries, prompts, responses and the key are never
 // logged: only outcome, latency and model name.
 
 const crypto = require("crypto");
 const { normalizeForMatch } = require("./queryNormalizer");
-const { redactQuery } = require("./queryRedaction");
+const { redactQuery, analyzeForAi } = require("./queryRedaction");
 const { validateIntent, resolveConditionTerms, SearchAiError, INTENTS, LIMITS, OUTPUT_KEYS } = require("./searchAiValidator");
 
 // Vocabulary bounds: the prompt never grows with the database.
@@ -247,6 +248,14 @@ function createSearchAiService({
     // The client already left: do not call the provider or spend any budget.
     if (signal?.aborted) return { status: "cancelled" };
 
+    // Privacy gate: text that looks personal (names, contact details, ids,
+    // addresses, dates of birth, ...) is never sent to the provider, masked or
+    // not. The search stays deterministic. This runs before the cache and
+    // before any budget is counted, and nothing about the query is logged.
+    if (!analyzeForAi(query).safe) return { status: "skipped", reason: "privacy" };
+
+    // Defence in depth: the gate above should already have removed anything
+    // redactQuery would mask.
     const safeQuery = redactQuery(query);
     if (normalizeForMatch(safeQuery).length < 2) return { status: "skipped", reason: "empty_query" };
 

@@ -39,11 +39,17 @@ test("a single full-mode result still navigates directly", async () => {
   assert.equal(out.suggestions[0].route, "/chronic-care/gastroenterology/abdominal-pain");
 });
 
-test("no results (and failures) keep the no-results behaviour", async () => {
+test("no results keep the no-results behaviour; a failed request is an error, not 'no match'", async () => {
   const { session } = stub({ full: body("full", {}) });
-  assert.equal((await runSubmitSearch(session, QUERY)).action, "empty");
+  const none = await runSubmitSearch(session, QUERY);
+  assert.equal(none.action, "empty");
+  assert.equal(none.degraded, false, "an empty answer from healthy smart matching is not 'degraded'");
+  assert.deepEqual(none.suggestions, []);
   const failing = createSearchSession({ search: async () => { throw new Error("boom"); } });
-  assert.equal((await runSubmitSearch(failing, QUERY)).action, "empty");
+  const failed = await runSubmitSearch(failing, QUERY);
+  assert.equal(failed.action, "error");
+  assert.ok(failed.reason, "the error carries a reason for the message shown to the user");
+  assert.deepEqual(failed.suggestions, []);
 });
 
 test("Enter and the Search button share one path and use full-mode results, not the stale instant result", async () => {

@@ -116,6 +116,18 @@ function parseTermsQuery(query, options = {}) {
   };
 }
 
+// Daily terms: same window, filters and pagination rules as /terms. There is no
+// minCount: the privacy floor is not adjustable here.
+function parseDailyTermsQuery(query, options = {}) {
+  checkShape(query, ["from", "to", "outcome", "aiStatus", "limit", "offset"]);
+  return {
+    window: parseWindow(query, { maxDays: RAW_WINDOW_MAX_DAYS, ...options }),
+    outcome: parseEnum(query.outcome, "outcome", OUTCOMES),
+    aiStatus: parseEnum(query.aiStatus, "aiStatus", AI_STATUSES),
+    ...parsePagination(query),
+  };
+}
+
 function parseGapsQuery(query, options = {}) {
   checkShape(query, ["from", "to", "minCount", "limit", "offset"]);
   return {
@@ -140,6 +152,7 @@ module.exports = {
   parseSummaryQuery,
   parseTermsQuery,
   parseGapsQuery,
+  parseDailyTermsQuery,
   parseTrendQuery,
   parseWindow,
   startOfUtcDay,

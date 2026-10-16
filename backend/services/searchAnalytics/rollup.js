@@ -20,6 +20,7 @@
 
 const SearchInteraction = require("../../models/SearchInteraction");
 const SearchTermDailyStat = require("../../models/SearchTermDailyStat");
+const { analyzeForAnalytics } = require("../search/queryRedaction");
 const {
   MIN_TERM_INTERACTIONS,
   ROLLUP_RETENTION_MONTHS,
@@ -183,6 +184,16 @@ function buildRows(day, { detail, rest, restTermCount }, now) {
   for (const [termKey, acc] of [...terms.entries()].sort(([a], [b]) => (a < b ? -1 : 1))) {
     if (acc.totals.interactions < MIN_TERM_INTERACTIONS) {
       mergeInto(other, acc.totals); // fell below the threshold since pass (A)
+      distinctTerms += 1;
+      continue;
+    }
+    // A legacy raw document recorded before a privacy rule existed may carry a
+    // term the current filter refuses. Its text must never reach a term row (the
+    // row would also fail model validation and abort the whole day), so the
+    // term - every spelling of it - is folded into "other" as counts only. The
+    // text is not stored, logged or reported.
+    if ([...acc.spellings.keys()].some((spelling) => !analyzeForAnalytics(spelling).store)) {
+      mergeInto(other, acc.totals);
       distinctTerms += 1;
       continue;
     }

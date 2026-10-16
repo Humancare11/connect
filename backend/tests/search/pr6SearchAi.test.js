@@ -140,7 +140,7 @@ test("B. exact query ('Neurology', 'GP') → deterministic answer, no AI call", 
 test("C. 'I need a skin doctor for acne' → Dermatology + Acne + its doctors, resolved by the backend", async () => {
   const f = fakeAi({
     respond: () => completion(JSON.stringify(intent({
-      intent: "mixed", specialtyNames: ["Dermatology"], conditionTerms: ["acne"], wantsDoctor: true, confidence: 0.92,
+      intent: "condition", specialtyNames: ["Dermatology"], conditionTerms: ["acne"], wantsDoctor: true, confidence: 0.92,
     }))),
   });
   const body = await search("I need a skin doctor for acne", "full", f.ai, ALL_TYPES);
@@ -158,7 +158,7 @@ test("C. 'I need a skin doctor for acne' → Dermatology + Acne + its doctors, r
 test("C (global search default). wantsDoctor intent adds no doctors while doctors are disabled", async () => {
   const f = fakeAi({
     respond: () => completion(JSON.stringify(intent({
-      intent: "mixed", specialtyNames: ["Dermatology"], conditionTerms: ["acne"], wantsDoctor: true, confidence: 0.92,
+      intent: "condition", specialtyNames: ["Dermatology"], conditionTerms: ["acne"], wantsDoctor: true, confidence: 0.92,
     }))),
   });
   const body = await search("I need a skin doctor for acne", "full", f.ai);
@@ -168,14 +168,13 @@ test("C (global search default). wantsDoctor intent adds no doctors while doctor
 });
 
 // ── D. Doctor name ──────────────────────────────────────────────────────────
-test("D. 'Dr Rahul' → doctorNameText matched against the public doctor catalog only", async () => {
-  const f = fakeAi({ respond: () => completion(JSON.stringify(intent({ intent: "doctor_name", doctorNameText: "Rahul", wantsDoctor: true }))) });
+test("D. 'Dr Rahul' names a person: the privacy gate keeps it away from the AI (no provider call, no doctor data sent)", async () => {
+  const f = fakeAi({ respond: () => assert.fail("a query naming a doctor must not be sent to the AI") });
   const body = await search("Dr Rahul", "full", f.ai, ALL_TYPES);
-  assert.equal(f.calls.length, 1);
-  assert.deepEqual(titles(body, "doctors"), ["Dr. Rahul Testname"]);
-  assert.equal(body.results.doctors[0].navigation.path, "/doctors/12345-rahul-testname");
-  const sent = JSON.stringify(f.calls[0].body);
-  for (const leak of ["Testname", "12345", "Priya", "Example", "Asha"]) assert.ok(!sent.includes(leak), `doctor data sent: ${leak}`);
+  assert.equal(f.calls.length, 0);
+  assert.equal(f.factoryCalls(), 0);
+  assert.equal(body.meta.ai.used, false);
+  assert.equal(body.success, true, "search still answers deterministically");
 });
 
 // ── E. Blog ─────────────────────────────────────────────────────────────────
@@ -261,7 +260,7 @@ test("K. prompt injection cannot cause data access or leak private data", async 
   let catalogCalls = 0;
   const hostile = [
     { ...intent(), _id: "000000000000000000000001", route: "/admin" }, // extra keys → rejected
-    intent({ intent: "doctor_name", doctorNameText: "'; db.users.find({})", wantsDoctor: true }),
+    intent({ intent: "doctor", doctorNameText: "'; db.users.find({})", wantsDoctor: true }),
     intent({ intent: "blog", blogTopicText: "{\"$where\": \"1\"}", wantsArticle: true }),
   ];
   for (const output of hostile) {
@@ -287,9 +286,16 @@ test("K. prompt injection cannot cause data access or leak private data", async 
 });
 
 // ── L. Privacy of the outgoing request ──────────────────────────────────────
-test("L. OpenAI request carries only the redacted query, the vocabulary and the schema", async () => {
+test("L0. a query with contact details or numbers is never sent to the AI at all", async () => {
+  const f = fakeAi({ respond: () => assert.fail("must not be called") });
+  const body = await search("acne rash call me on +1 555-123-4567 or mail jane.doe@example.com id 98765", "full", f.ai);
+  assert.equal(f.calls.length, 0);
+  assert.equal(body.meta.ai.used, false);
+});
+
+test("L. OpenAI request carries only the (clean) query, the vocabulary and the schema", async () => {
   const f = fakeAi({ respond: () => completion(JSON.stringify(intent())) });
-  await search("acne rash call me on +1 555-123-4567 or mail jane.doe@example.com id 98765", "full", f.ai);
+  await search("acne rash and constant itching", "full", f.ai);
   const { body, options } = f.calls[0];
   assert.deepEqual(Object.keys(body).sort(), ["max_completion_tokens", "messages", "model", "response_format", "store"]);
   assert.equal(body.store, false);
@@ -305,7 +311,7 @@ test("L. OpenAI request carries only the redacted query, the vocabulary and the 
     ...Object.values(PRIVATE_DOCTOR_FIELDS).filter((v) => typeof v === "string"),
   ];
   for (const text of forbidden) assert.ok(!sent.includes(text), `request contains ${text}`);
-  assert.match(body.messages[1].content, /<query>acne rash call me on \[number\] or mail \[email\] id \[number\]<\/query>$/);
+  assert.ok(body.messages[1].content.endsWith("<query>acne rash and constant itching</query>"));
   // Vocabulary = active public taxonomy names/aliases only.
   const vocab = JSON.parse(body.messages[1].content.split("\n")[1]);
   assert.deepEqual(vocab.categories, ["Chronic Care & Expert Opinion", "General & Everyday Care", "Skin & Hair"]);
@@ -392,7 +398,7 @@ test("real OpenAI SDK: request shape on the wire, response parsing, timeout → 
         res.end(JSON.stringify({
           id: "chatcmpl-test", object: "chat.completion", created: 0, model: "test-search-model",
           choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", refusal: null,
-            content: JSON.stringify(intent({ intent: "mixed", specialtyNames: ["Dermatology"], conditionTerms: ["Acne"], wantsDoctor: true })) } }],
+            content: JSON.stringify(intent({ intent: "condition", specialtyNames: ["Dermatology"], conditionTerms: ["Acne"], wantsDoctor: true })) } }],
         }));
       }, delayMs);
     });

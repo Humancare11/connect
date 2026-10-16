@@ -52,11 +52,16 @@ test("condition defaults applied for records without the PR2 fields", () => {
 test("taxonomy queries use fixed filters and explicit field selection", () => {
   const finds = calls.filter((c) => c.filter);
   assert.equal(finds.length, 3);
-  for (const call of finds) assert.deepEqual(call.filter, { isActive: true });
+  // Conditions are filtered by active OR searchable (search-only content, PR 8.1); the hierarchy and the exact
+  // searchable rule are then applied in memory (isConditionSearchable). Categories and specialties stay active-only.
+  for (const call of finds) {
+    if (call.model === "HealthcareCondition") assert.deepEqual(call.filter, { $or: [{ isSearchable: true }, { isActive: true }] });
+    else assert.deepEqual(call.filter, { isActive: true });
+  }
   const selects = Object.fromEntries(calls.filter((c) => c.select).map((c) => [c.model, c.select]));
   assert.equal(selects.HealthcareCategory, "_id name description icon isActive");
   assert.equal(selects.HealthcareSpecialty, "_id categoryId name description icon aliases isActive");
-  assert.equal(selects.HealthcareCondition, "_id specialtyId name description icon aliases kind legacyId slug route isActive");
+  assert.equal(selects.HealthcareCondition, "_id specialtyId name description icon aliases kind legacyId slug route isActive isSearchable");
 });
 
 // ── Public doctor allowlist ───────────────────────────────────────────────
@@ -102,7 +107,9 @@ test("result groups and item shape", () => {
   const { results, total } = run("acne");
   assert.deepEqual(Object.keys(results), ["categories", "specialties", "conditions", "services", "doctors", "blogs"]);
   const acne = results.conditions[0];
-  assert.deepEqual(Object.keys(acne).sort(), ["description", "icon", "id", "matchedOn", "metadata", "navigation", "title", "type"]);
+  assert.deepEqual(Object.keys(acne).sort(), ["description", "icon", "id", "matchedOn", "metadata", "navigation", "rank", "recognized", "title", "type"]);
+  assert.equal(typeof acne.rank, "number"); // 1-based position in the final cross-type order
+  assert.equal(typeof acne.recognized, "boolean");
   assert.equal(total, Object.values(results).flat().length);
 });
 

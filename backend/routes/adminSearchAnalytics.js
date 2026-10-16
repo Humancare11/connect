@@ -5,7 +5,7 @@ const { createSearchAnalyticsAdminController } = require("../controllers/searchA
 
 // Admin Search Analytics - read-only aggregate APIs, mounted at
 // /api/admin/search-analytics:
-//   GET /summary   GET /terms   GET /gaps   GET /trend
+//   GET /summary   GET /terms   GET /daily-terms   GET /gaps   GET /trend
 //
 // Guard order: no-store header first (so even a 401/403 is never cached), then
 // the same authentication and authorization as the other Admin panel routes
@@ -14,7 +14,14 @@ const { createSearchAnalyticsAdminController } = require("../controllers/searchA
 // limit. The routes exist whether or not analytics collection
 // is switched on; with it off they simply report whatever was collected before.
 
-const ENDPOINTS = ["summary", "terms", "gaps", "trend"];
+// URL path -> controller handler.
+const ENDPOINTS = Object.freeze({
+  summary: "summary",
+  terms: "terms",
+  "daily-terms": "dailyTerms",
+  gaps: "gaps",
+  trend: "trend",
+});
 
 function noStore(req, res, next) {
   res.set("Cache-Control", "no-store");
@@ -28,8 +35,8 @@ function createAdminSearchAnalyticsRouter({
   const router = express.Router();
   router.use(noStore, ...guard);
 
-  for (const name of ENDPOINTS) {
-    router.get(`/${name}`, controller[name]);
+  for (const [name, handler] of Object.entries(ENDPOINTS)) {
+    router.get(`/${name}`, controller[handler]);
     // Everything else on a known path is refused, never routed to a handler.
     router.all(`/${name}`, (req, res) => {
       res.set("Allow", "GET");

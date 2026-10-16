@@ -34,6 +34,36 @@ const emptyResponse = (mode) => ({
   meta: { total: 0, mode },
 });
 
+// Why a search request failed, as a short code the page can word honestly.
+function failureKind(err) {
+  const status = err?.response?.status;
+  if (status === 429) return "rate_limited";
+  if (status >= 500) return "unavailable";
+  if (err?.code === "ECONNABORTED" || err?.code === "ETIMEDOUT" || err?.name === "TimeoutError") return "timeout";
+  return "network";
+}
+
+/**
+ * What the dropdown says when it has nothing to list.
+ *  - none:     a finished search with no relevant match
+ *  - broad:    an as-you-type search with no quick match (Enter searches more broadly)
+ *  - degraded: a finished search that found nothing while smart matching was unavailable
+ *  - error:    the request failed (reason: rate_limited | timeout | unavailable | network)
+ */
+export function describeEmptyState({ kind, reason } = {}, query = "") {
+  const quoted = `"${query}"`;
+  if (kind === "error") {
+    if (reason === "rate_limited") return { title: "Too many searches right now", subtitle: "Please wait a moment and try again.", hint: false };
+    if (reason === "timeout") return { title: "The search took too long", subtitle: "Please try again.", hint: false };
+    return { title: "Search is temporarily unavailable", subtitle: "Please check your connection and try again.", hint: false };
+  }
+  if (kind === "degraded") {
+    return { title: `We couldn't fully search for ${quoted}`, subtitle: "Smart matching is unavailable right now. Try a simpler term, such as a condition name.", hint: true };
+  }
+  if (kind === "broad") return { title: `No quick match for ${quoted}`, subtitle: "Press Enter to search more broadly.", hint: true };
+  return { title: `No treatments found for ${quoted}`, subtitle: "Try searching by symptom, condition, or specialty", hint: true };
+}
+
 const cleanQuery = (query) => String(query ?? "").replace(/\s+/g, " ").trim();
 
 // ── Search analytics: interaction ids (memory only) ──────────────────────────
@@ -131,6 +161,8 @@ export function toSuggestions(response) {
   const suggestions = SEARCH_GROUPS.flatMap((group) =>
     (results[group] || []).map((item) => ({
       rank: Number.isFinite(item.rank) ? item.rank : null,
+      // false only for a partial hit (e.g. a prefix); older responses without the field count as recognized.
+      recognized: item.recognized !== false,
       id: `${item.type}:${item.id}`,
       type: item.type,
       title: item.title,
@@ -297,13 +329,16 @@ export function createSearchSession({
     endEpisode();
   }
 
-  async function run(query, { mode = "instant", types } = {}) {
+  // automatic: true marks a request the user did not commit to (not wired to
+  // a typing pause today). It joins no analytics episode and carries no
+  // interaction id, so it can never be recorded as a deliberate submission.
+  async function run(query, { mode = "instant", types, automatic = false } = {}) {
     cancel();
     stopIdle(); // any new request means the user is not idle
     const id = latestId;
     const q = normalize(query);
     let ep = null;
-    if (q.length >= SEARCH_MIN_LENGTH) {
+    if (q.length >= SEARCH_MIN_LENGTH && !automatic) {
       try {
         ep = touch(q);
         if (mode === "full") ep.submittedQuery = q;
@@ -340,9 +375,9 @@ export function createSearchSession({
         }
       }
       return response;
-    } catch {
+    } catch (err) {
       if (id !== latestId || current.signal.aborted) return null;
-      return { ...emptyResponse(mode), success: false };
+      return { ...emptyResponse(mode), success: false, error: failureKind(err) };
     } finally {
       if (controller === current) controller = null;
     }

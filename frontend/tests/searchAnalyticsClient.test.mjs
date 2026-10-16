@@ -562,10 +562,13 @@ test("Home notifies the session only from the two selection paths", () => {
   assert.equal((home.match(/searchSession\.select\(\)/g) || []).length, 2);
   // Clicking a suggestion: select() runs first, then the unchanged handleSearch(item).
   assert.match(home, /onClick=\{\(\) => \{\s*searchSession\.select\(\);[^\n]*\n\s*handleSearch\(item\);\s*\}\}/);
-  // Enter on a highlighted suggestion.
-  assert.match(home, /searchSession\.select\(\);[^\n]*\n\s*handleSearch\(filteredSuggestions\[activeIndex\]\);/);
+  // Enter or the Search button on a highlighted suggestion: ONE shared handler (handleExplicitSubmit) picks the
+  // highlighted result via chooseExplicitAction, then select() runs first and handleSearch(choice.item) follows.
+  assert.match(home, /searchSession\.select\(\);[^\n]*\n\s*handleSearch\(choice\.item\);/);
+  assert.match(home, /<button onClick=\{handleExplicitSubmit\}>Search<\/button>/);
+  assert.match(home, /handleExplicitSubmit\(\);/); // the Enter key
   // The automatic "open the top result" after a full search is NOT a selection.
-  const submit = home.slice(home.indexOf("const submitSearch"), home.indexOf("// ── Keyboard navigation"));
+  const submit = home.slice(home.indexOf("const submitSearch"), home.indexOf("const handleExplicitSubmit"));
   assert.ok(!submit.includes("select()"));
   const handleSearch = home.slice(home.indexOf("const handleSearch"), home.indexOf("// ── Submit (Search button"));
   assert.ok(!handleSearch.includes("select()"));
@@ -583,7 +586,10 @@ test("Home still runs instant as-you-type and full on submit without handling id
   // Submit runs the full search through the shared submit helper, which calls session.run(query, { mode: "full" }).
   assert.match(home, /runSubmitSearch\(searchSession, query\)/);
   const submit = fs.readFileSync(new URL("../src/api/searchSubmit.js", import.meta.url), "utf8");
-  assert.match(submit, /session\.run\(query, \{ mode: "full" \}\)/);
+  assert.match(submit, /session\.run\(query, \{ mode: "full"/);
+  // No automatic AI ("full") search after a typing pause: text typed so far is sent to the AI only on an explicit
+  // submit (Enter / the Search button).
+  assert.ok(!/autoFull\.consider/.test(home), "Home must not start a full search on a typing pause");
   assert.ok(!/interactionId|randomUUID/.test(home));
   assert.match(home, /\}, 250\);/); // the existing 250 ms debounce is untouched
 });
