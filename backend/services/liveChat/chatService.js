@@ -95,6 +95,7 @@ function createChatService({
   leaveGraceMs = 30_000, // a visitor with no connection for this long has left
   now = () => Date.now(),
   log = () => {},
+  aiDeadlineMs = 25_000, // the longest a patient waits for the model before the fallback goes out
 }) {
   const { LcVisitor, LcConversation, LcMessage, LcPageVisit, LcFile } = models;
   let detector = detectLanguage;
@@ -113,7 +114,7 @@ function createChatService({
 
   const aiUnavailableNow = () => breaker.until > now();
 
-  function openBreaker(kind) {
+  function openBreaker(kind, reason = "") {
     // Quota / bad config will not fix itself in seconds; transient failures retry sooner.
     const longLived = ["quota", "config", "not_configured", "spend_cap"].includes(kind);
     breaker.until = now() + (longLived ? 10 * 60_000 : 30_000);
@@ -121,7 +122,7 @@ function createChatService({
     if (!breaker.alerted) {
       breaker.alerted = true; // alert admins once per outage
       emitToAgents("ai:unavailable", { kind });
-      console.warn(`[livechat] AI unavailable (${kind}); patients see the fallback, live chat keeps working`);
+      console.warn(`[livechat] AI unavailable (${kind}${reason ? `: ${reason}` : ""}); patients see the fallback, live chat keeps working`);
     }
   }
   const closeBreakerIfRecovered = () => {
@@ -680,15 +681,56 @@ function createChatService({
     });
     if (!saved) return { ok: false, error: "no_conversation" };
 
-    // ...the AI turn is NOT: the model can take seconds, and an admin's "Take over" must never wait for it. AI
-    // turns of one chat run one after another (their own lock key); every change an AI turn makes re-checks that
-    // the chat is still an AI chat (see `ifStillAi`).
-    if (saved.mode === "ai") await withLock(`ai:${saved.conversationId}`, () => aiTurn(saved, loaded.visitor, text.text));
-    // No language yet (AI off, cap reached, or straight to an agent): one small call on a clearly non-English message.
-    if (detector && !saved.language?.code && !tooShortToDetect(text.text) && !looksEnglish(text.text)) {
-      detector(saved, text.text).catch(() => {});
+    // ...the AI turn is NOT: the model can take seconds, and neither the patient's acknowledgement nor an admin's
+    // "Take over" may wait for it. The turn runs in the background (`aiDone`, which never rejects); only one runs per
+    // chat at a time (see `runAiTurn`); every change a turn makes re-checks that the chat is still an AI chat
+    // (see `ifStillAi`).
+    const aiDone = (async () => {
+      if (saved.mode === "ai") await runAiTurn(saved, loaded.visitor, text.text);
+      // No language yet (AI off, cap reached, or straight to an agent): one small call on a clearly non-English message.
+      if (detector && !saved.language?.code && !tooShortToDetect(text.text) && !looksEnglish(text.text)) {
+        await detector(saved, text.text).catch(() => {});
+      }
+    })().catch((err) => {
+      console.error(`[livechat] ai turn failed: ${err?.name || "Error"}`); // never the message: it could carry patient text
+    });
+    inFlight.add(aiDone);
+    aiDone.finally(() => inFlight.delete(aiDone));
+    return { ok: true, aiDone };
+  }
+
+  // One AI turn per chat at a time. A message that arrives while a turn runs does not start another: when the running
+  // turn ends, exactly one more turn runs, and it sees every message that came in meanwhile.
+  const aiRuns = new Map(); // conversationId -> { again, texts, promise }
+  const inFlight = new Set(); // every running aiDone (tests wait for them)
+  function runAiTurn(conv, visitor, text) {
+    const key = conv.conversationId;
+    const running = aiRuns.get(key);
+    if (running) {
+      running.again = true;
+      running.texts.push(text);
+      return running.promise;
     }
-    return { ok: true };
+    const run = { again: false, texts: [], promise: null };
+    run.promise = (async () => {
+      try {
+        let current = conv;
+        let patientText = text;
+        for (;;) {
+          await aiTurn(current, visitor, patientText);
+          if (!run.again) return;
+          patientText = run.texts.join(" ");
+          run.again = false;
+          run.texts = [];
+          current = await LcConversation.findById(conv._id);
+          if (!current || current.mode !== "ai") return;
+        }
+      } finally {
+        aiRuns.delete(key);
+      }
+    })();
+    aiRuns.set(key, run);
+    return run.promise;
   }
 
   // The language a fixed safety string is sent in: the model's own answer when it gave one, else a guess from the text.
@@ -719,7 +761,34 @@ function createChatService({
     await addMessage(current, "ai", text, { ...(booking ? { links: [booking] } : {}), ...(blocked ? { safetyBlocked: true } : {}) });
   }
 
+  // Whatever goes wrong inside a turn (an error, a hung model), the patient is never left with nothing: the typing
+  // indicator goes off and the "AI unavailable" fallback goes out, unless a reply was already posted.
   async function aiTurn(conv, visitor, patientText = "") {
+    const turn = { posted: false };
+    try {
+      return await aiTurnSteps(conv, visitor, patientText, turn);
+    } catch (err) {
+      console.error(`[livechat] ai turn failed: ${err?.name || "Error"}`);
+      emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: false });
+      if (turn.posted) return undefined;
+      try {
+        const settings = await loadSettings();
+        const current = await LcConversation.findById(conv._id);
+        if (current?.mode !== "ai") return undefined;
+        return await aiFallback(current, { first: firstNameOf(decryptLiveChatText(visitor.name)), settings });
+      } catch {
+        try {
+          const current = await LcConversation.findById(conv._id);
+          if (current?.mode === "ai") await addMessage(current, "system", "Our assistant is unavailable right now. Please try again in a moment.");
+        } catch {
+          /* nothing more can be done */
+        }
+        return undefined;
+      }
+    }
+  }
+
+  async function aiTurnSteps(conv, visitor, patientText, turn) {
     const settings = await loadSettings();
     const first = firstNameOf(decryptLiveChatText(visitor.name));
     closeBreakerIfRecovered();
@@ -739,6 +808,7 @@ function createChatService({
       return ifStillAi(async (current) => {
         await markMedical(current, ["emergency_keyword"]); // also when it is a false alarm: the AI Review page shows those
         await addMessage(current, "ai", safety.fixedText("emergency", emergency.language));
+        turn.posted = true;
         return requestAgent(await LcConversation.findById(current._id), { first, settings, reason: "emergency", language: emergency.language });
       });
     }
@@ -751,13 +821,19 @@ function createChatService({
     if (!limits.aiRepliesLeft(conv, settings)) {
       return ifStillAi(async (current) => {
         await addMessage(current, "ai", "I've reached my limit for this chat. Let me connect you with a live agent who can help further.");
+        turn.posted = true;
         return requestAgent(await LcConversation.findById(current._id), { first, settings, reason: "ai_limit" });
       });
     }
 
     const spend = await limits.spendStatus(settings);
     if (spend.capReached) openBreaker("spend_cap");
-    if (aiUnavailableNow()) return ifStillAi((current) => aiFallback(current, { first, settings }));
+    if (aiUnavailableNow()) {
+      return ifStillAi(async (current) => {
+        await aiFallback(current, { first, settings });
+        turn.posted = true;
+      });
+    }
 
     emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: true });
     let result;
@@ -773,31 +849,49 @@ function createChatService({
       lastPatientText = rawHistory.filter((m) => m.role === "patient").at(-1)?.text || "";
       // How many questions in a row the AI already missed: the prompt differs between the first and the second miss.
       const streakRow = await LcConversation.findById(conv._id).select("unansweredStreak").lean();
-      result = await ai.generateReply({
-        settings,
-        history,
-        pages: sitePages
-          .candidatesFor(lastPatient)
-          .filter((p) => linkConditions || p.type !== "condition")
-          .map((p) => ({ title: p.title, url: p.url })),
-        unansweredStreak: streakRow?.unansweredStreak || 0,
+      let timer;
+      const deadline = new Promise((resolve) => {
+        timer = setTimeout(() => resolve({ ok: false, kind: "timeout" }), aiDeadlineMs);
+        timer.unref?.();
       });
+      try {
+        result = await Promise.race([
+          ai.generateReply({
+            settings,
+            history,
+            pages: sitePages
+              .candidatesFor(lastPatient)
+              .filter((p) => linkConditions || p.type !== "condition")
+              .map((p) => ({ title: p.title, url: p.url })),
+            unansweredStreak: streakRow?.unansweredStreak || 0,
+          }),
+          deadline,
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
     } catch {
       result = { ok: false, kind: "api_error" };
     }
     emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: false });
 
     if (result.usage) await recordUsage(conv, settings, result.usage); // the tokens were spent either way
-    if (!result.ok && result.kind !== "too_long") openBreaker(result.kind); // too long is the model's habit, not an outage
+    if (!result.ok && result.kind !== "too_long") openBreaker(result.kind, result.reason); // too long is the model's habit, not an outage
 
     // An admin may have taken the chat over while the model was thinking: such a reply is never posted.
     return ifStillAi(async (current) => {
       if (!result.ok && result.kind === "too_long") {
         // Still over 200 characters after the retry: the safe reply goes out instead.
         await LcConversation.updateOne({ _id: current._id }, { $inc: { aiReplyCount: 1 } });
-        return sendSafeReply(current, { patientText: lastPatientText });
+        await sendSafeReply(current, { patientText: lastPatientText });
+        turn.posted = true;
+        return undefined;
       }
-      if (!result.ok) return aiFallback(current, { first, settings });
+      if (!result.ok) {
+        await aiFallback(current, { first, settings });
+        turn.posted = true;
+        return undefined;
+      }
       // Streaks of consecutive off-topic messages and consecutive "could not answer" replies.
       const offTopicStreak = result.offTopic ? (current.offTopicStreak || 0) + 1 : 0;
       const unansweredStreak = result.handoffReason === "unanswered" ? (current.unansweredStreak || 0) + 1 : 0;
@@ -820,11 +914,13 @@ function createChatService({
         } else {
           await sendSafeReply(current, { patientText: lastPatientText, blockedReply: result.reply, language: result.language, blocked: true });
         }
+        turn.posted = true;
       } else {
         // Off-topic never hands over; from the third in a row the patient is reminded of the button.
         const reply =
           result.offTopic && offTopicStreak >= OFF_TOPIC_REMINDER_AT ? `${result.reply} ${OFF_TOPIC_REMINDER}` : result.reply;
         await addMessage(current, "ai", reply, links.length ? { links } : {});
+        turn.posted = true;
       }
       // One "not sure" is not enough: "unanswered" hands over on the second miss in a row.
       const due = result.handoffReason === "unanswered" ? unansweredStreak >= UNANSWERED_HANDOFF_AT : true;
@@ -1359,6 +1455,9 @@ function createChatService({
     toAgents: (event, payload) => emitToAgents(event, payload),
     // exposed for tests
     aiBreaker: breaker,
+    whenAiIdle: async () => {
+      while (inFlight.size) await Promise.all([...inFlight]);
+    },
   };
 }
 

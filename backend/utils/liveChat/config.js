@@ -74,6 +74,12 @@ function readAiConfig(env = process.env) {
     priceInput,
     priceOutput,
     priceCached: priceCached ?? priceInput,
+    // Which conditions fail (for the "AI unavailable" log line): missing_api_key, missing_model, missing_prices.
+    missing: [
+      !env.LIVECHAT_OPENAI_API_KEY && "missing_api_key",
+      !env.LIVECHAT_MODEL && "missing_model",
+      (priceInput === null || priceOutput === null) && "missing_prices",
+    ].filter(Boolean),
     usable: Boolean(env.LIVECHAT_MODEL && env.LIVECHAT_OPENAI_API_KEY && priceInput !== null && priceOutput !== null),
   };
 }

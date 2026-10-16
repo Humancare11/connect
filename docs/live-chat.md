@@ -169,6 +169,16 @@ The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui
 - **AI Review page** (Live Chat menu; Super Admin, or an admin the Super Admin ticks under Team > AI Review, stored as `User.liveChatReviewer`): flagged chats newest first, filter Unreviewed / Reviewed / All and a date range (India days). The reviewer reads the transcript (no internal notes) and marks it OK or Issue with a note (an Issue needs a note; the page says not to put patient names or health details in it).
 - **Review log** (`LcReviewLog`, its own collection): one new row per review (reviewer, time, outcome, encrypted note, plus the public chat id, chat start date and flag reasons copied in). Append-only: no edit or delete route, and the model refuses updates and deletes. Retention and the Trash purge never touch it, so it still names a chat after the chat is deleted (the "Review log" tab shows those rows).
 
+## Later: performance
+
+UAT finding: EC2 (us-east-1) and Atlas UAT are in different regions, so every MongoDB query costs about 190 ms, even a `findOne` by `_id`. Moving the cluster is planned. Done so far: `chat:message` is acknowledged right after the message is saved and the AI turn runs in the background (one turn per chat at a time). Not done yet, on purpose (kept out to keep that change small):
+
+- **Settings cache TTL:** the in-memory `lcsettings` cache is 5 s (`settingsCacheMs`, cleared on save); raise it to about 30 s. `runDailySweep` reads `LcSettings.getSettings()` directly every tick; use the cached `loadSettings()`.
+- **Background timers:** every 15 s the follow-up, inactive, abandoned-sweep (3 finds: stale, queue, leave) and daily-sweep jobs run about 7 `lcconversations` queries in total, even when idle. Merge the discovery queries into one, run the daily sweep only when the India day changed, and use a longer interval (about 30 s, env-tunable).
+- **Parallel queries (`Promise.all`):** widget bootstrap (config, socket connect and resume), `chat:start` (visitor, settings, open chat, geo), `chat:message` (visitor and open chat, then save), `chat:resume`, the AI turn (spend status, history, streak) and the admin list and conversation loads.
+- **Indexes on `LcConversation`:** today only `{mode, lastMessageAt}`, `{mode, closedAt}`, flags and trash. Add `{visitorId, mode, startedAt}` (findOpen) and partial indexes on `inactiveDueAt`, `followUpDueAt` and `leaveDueAt`; check `LcVisitor.visitorId` is indexed.
+- **`[perf]` timing logs (no patient data):** total ms and DB query count for widget bootstrap, `chat:start`, `chat:message`, the AI call and the admin loads.
+
 ## Tests
 
 `cd backend && npm test` (or `node --test --test-concurrency=2 "tests/liveChat*.test.js"` for the live chat suites only). The admin UI work added `liveChatVisitorPanel`, `liveChatTranscript`, `liveChatComposer` (Suggest redaction, Translate targets, files sent to patients) and `liveChatContext` (patient context, custom fields, AI summary); the settings, reports and retention suites cover Phase 5 and the retention of agent-sent files.

@@ -278,13 +278,13 @@ function createAiService({ env = process.env, providers = {}, log = defaultLog, 
   async function generateReply({ settings, history, pages = [], unansweredStreak = 0 }) {
     const config = readAiConfig(env);
     if (!config.usable) {
-      log({ outcome: "not_configured" });
-      return { ok: false, kind: "not_configured" };
+      log({ outcome: "not_configured", missing: config.missing });
+      return { ok: false, kind: "not_configured", reason: config.missing.join(",") };
     }
     const active = getProvider(config);
     if (!active) {
       log({ outcome: "unknown_provider" });
-      return { ok: false, kind: "not_configured" };
+      return { ok: false, kind: "not_configured", reason: "unknown_provider" };
     }
 
     const started = now();

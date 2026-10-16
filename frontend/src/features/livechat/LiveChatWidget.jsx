@@ -102,7 +102,6 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const chat = useLiveChat();
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
@@ -121,7 +120,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   useEffect(() => {
     const el = bodyRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messageCount, chat.aiTyping, open, phase, conversation?.options?.length]);
+  }, [messageCount, chat.outbox.length, chat.aiTyping, open, phase, conversation?.options?.length]);
 
   useEffect(() => {
     if (open && phase === "chat") inputRef.current?.focus();
@@ -133,14 +132,13 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
     return () => document.documentElement.classList.remove("lcw-open");
   }, [open]);
 
-  const submit = async (event) => {
+  const submit = (event) => {
     event.preventDefault();
     const text = draft.trim();
-    if (!text || sending || phase !== "chat" || !conversation) return;
-    setSending(true);
-    const ok = await chat.send(text);
-    setSending(false);
-    if (ok) setDraft("");
+    if (!text || phase !== "chat" || !conversation) return;
+    setDraft(""); // the message shows at once; if it is not sent it stays on screen with a retry
+    inputRef.current?.focus();
+    chat.send(text);
   };
 
   // Nothing here ever says the team is offline.
@@ -211,6 +209,19 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                 {conversation.messages.map((message) => (
                   <Message key={message.id} message={message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
                 ))}
+                {chat.outbox.map((m) =>
+                  m.status === "failed" ? (
+                    <button key={m.id} type="button" className="lcw-msg lcw-msg--right lcw-msg--failed" onClick={() => chat.retrySend(m.id)}>
+                      {m.text}
+                      <span className="lcw-meta">Not sent – tap to retry</span>
+                    </button>
+                  ) : (
+                    <div key={m.id} className="lcw-msg lcw-msg--right lcw-msg--sending">
+                      {m.text}
+                      <span className="lcw-meta">Sending…</span>
+                    </div>
+                  )
+                )}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
                 {ended && !canContinue && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
                 {ended && (
@@ -291,7 +302,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                 disabled={locked}
                 aria-label="Your message"
               />
-              <button type="submit" className="lcw-send" aria-label="Send" disabled={locked || sending || !draft.trim()}>
+              <button type="submit" className="lcw-send" aria-label="Send" disabled={locked || !draft.trim()}>
                 ➤
               </button>
             </form>
