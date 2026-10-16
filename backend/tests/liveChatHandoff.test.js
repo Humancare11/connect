@@ -71,7 +71,7 @@ describe("prompt: first and second 'could not answer'", () => {
     for (const q of ["what causes migraines?", "can I take ibuprofen", "what dose of amoxicillin", "do I have diabetes?", "what does my blood test result mean?", "sore throat"]) {
       assert.ok(examples.includes(q), q);
     }
-    assert.ok(examples.includes("Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare doctor can help you by video."));
+    assert.ok(examples.includes("Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare doctor can help you."));
     // the old "answer it as general information" examples are gone
     assert.ok(!lines.some((l) => l.includes('"what causes migraines?" -> false, none')));
   });
