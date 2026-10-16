@@ -159,7 +159,7 @@ describe("200-character reply rule (links do not count)", () => {
 describe("prompt: condition-page links setting and the SAFETY rule", () => {
   test("on (default): the model may add one matching condition page; off: booking link only", () => {
     const pages = [{ title: "Book an appointment", url: "/appointment-booking" }];
-    assert.match(buildSystemPrompt(DEFAULT_SETTINGS, pages), /at most one matching condition page/);
+    assert.match(buildSystemPrompt(DEFAULT_SETTINGS, pages), /the ONE health-topic page/);
     assert.match(buildSystemPrompt({ ...DEFAULT_SETTINGS, aiMayLinkConditionPages: true }, pages), /You MAY also add the one best matching condition page/);
     const off = buildSystemPrompt({ ...DEFAULT_SETTINGS, aiMayLinkConditionPages: false }, pages);
     assert.match(off, /Give only the booking page link: never link a condition page/);

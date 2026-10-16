@@ -110,7 +110,8 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       await say(chat, "I get bad headaches every week");
       const reply = await lastAi(chat);
       assert.equal(reply.text, safety.FIXED_TEXT.fallback.en);
-      assert.deepEqual(reply.links.map((l) => l.url), ["/appointment-booking"]);
+      // the page that fits "headaches" (lay-word map) now goes above the booking card
+      assert.deepEqual(reply.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/headache", "/appointment-booking"]);
       const rows = await stored(chat);
       assert.equal(rows.filter((m) => decryptLiveChatText(m.text).includes("migraine")).length, 0); // the model's text is never stored
       assert.equal(rows.filter((m) => m.safetyBlocked).length, 1);

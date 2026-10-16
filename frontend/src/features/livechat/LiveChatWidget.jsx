@@ -44,7 +44,7 @@ function PageLinks({ links, onNavigate }) {
           }}
         >
           <span>{link.title}</span>
-          <span aria-hidden="true">{link.url === "/appointment-booking" ? "Book →" : "Learn more & book →"}</span>
+          <span aria-hidden="true">{link.url.startsWith("/appointment-booking") ? "Book →" : "Learn more & book →"}</span>
         </a>
       ))}
     </div>

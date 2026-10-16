@@ -13,7 +13,6 @@ const { newVisitorId } = require("./chatToken");
 const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish, scrubContact } = require("./languageHints");
 const safety = require("./safety");
-const { BOOKING_URL } = require("./sitePages");
 
 // Shown the moment a chat goes to the team, whoever is or is not at their desk.
 const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`;
@@ -757,8 +756,10 @@ function createChatService({
   async function sendSafeReply(current, { patientText, blockedReply = "", language, blocked = false }) {
     const medication = safety.isMedicationText(patientText) || safety.isMedicationText(blockedReply);
     const text = safety.fixedText(medication ? "fallbackMedication" : "fallback", safetyLanguage(language, patientText));
-    const booking = sitePages.linkFor(BOOKING_URL);
-    await addMessage(current, "ai", text, { ...(booking ? { links: [booking] } : {}), ...(blocked ? { safetyBlocked: true } : {}) });
+    // The page that fits what the patient wrote (from the server's lay-word map and list) above the booking card.
+    const settings = await loadSettings();
+    const links = sitePages.arrange([], { allowContent: settings.aiMayLinkConditionPages !== false, medical: true, hintText: patientText });
+    await addMessage(current, "ai", text, { ...(links.length ? { links } : {}), ...(blocked ? { safetyBlocked: true } : {}) });
   }
 
   // Whatever goes wrong inside a turn (an error, a hung model), the patient is never left with nothing: the typing
@@ -838,8 +839,10 @@ function createChatService({
     emitToVisitor(conv.visitorId, "chat:typing", { from: "ai", typing: true });
     let result;
     let lastPatientText = "";
+    let hintText = "";
     const linkConditions = settings.aiMayLinkConditionPages !== false;
     try {
+      await sitePages.refresh(); // the live page list (cached for 10 minutes)
       const rawHistory = (await recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
       // The model never sees the patient's name, email or phone (the stored chat and what the patient sees are unchanged).
       const contact = { name: decryptLiveChatText(visitor.name), email: decryptLiveChatText(visitor.email), phone: decryptLiveChatText(visitor.phone) };
@@ -847,6 +850,7 @@ function createChatService({
       // Pages that fit what the patient just wrote; the model may only point at these.
       const lastPatient = rawHistory.filter((m) => m.role === "patient").slice(-2).map((m) => m.text).join(" ");
       lastPatientText = rawHistory.filter((m) => m.role === "patient").at(-1)?.text || "";
+      hintText = lastPatient;
       // How many questions in a row the AI already missed: the prompt differs between the first and the second miss.
       const streakRow = await LcConversation.findById(conv._id).select("unansweredStreak").lean();
       let timer;
@@ -859,10 +863,9 @@ function createChatService({
           ai.generateReply({
             settings,
             history,
-            pages: sitePages
-              .candidatesFor(lastPatient)
-              .filter((p) => linkConditions || p.type !== "condition")
-              .map((p) => ({ title: p.title, url: p.url })),
+            // Every page title (no content), so the model can pick the best match; the lay-word map adds a hint.
+            pages: sitePages.pagesForPrompt({ allowContent: linkConditions }),
+            pageHint: linkConditions ? sitePages.hintFor(lastPatient).map((p) => p.title) : [],
             unansweredStreak: streakRow?.unansweredStreak || 0,
           }),
           deadline,
@@ -900,7 +903,7 @@ function createChatService({
       await LcConversation.updateOne({ _id: current._id }, update);
       await noteLanguage(current, result.language, lastPatientText);
       // Only pages on the server's own list reach the patient (an invented url is dropped).
-      const links = sitePages.filterLinks(result.links).filter((l) => linkConditions || sitePages.typeOf(l.url) !== "condition");
+      const links = sitePages.arrange(result.links, { allowContent: linkConditions, medical: result.topic === "medical", hintText });
       // The reply check: advice-like wording never reaches the patient, whatever the model was told.
       const verdict = safety.checkReply(result.reply);
       await markMedical(current, [

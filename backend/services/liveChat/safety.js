@@ -28,15 +28,15 @@ const FIXED_TEXT = {
   // Sent instead of a model reply that gave (or looked like) medical advice, or that stayed over the length limit.
   // The booking page button is shown directly under it.
   fallback: {
-    en: "I can't give medical advice. A licensed Humancare doctor can help you. Book here:",
-    hi: "चिकित्सीय सलाह देना मेरे लिए संभव नहीं है। Humancare के लाइसेंस प्राप्त डॉक्टर आपकी मदद कर सकते हैं। यहां बुक करें:",
-    es: "No puedo dar consejo médico. Un médico con licencia de Humancare puede ayudarle. Reserve aquí:",
+    en: "Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare doctor can help you by video. Book here:",
+    hi: "आपकी तबीयत ठीक नहीं है, यह जानकर दुख हुआ। चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare के लाइसेंस प्राप्त डॉक्टर वीडियो पर आपकी मदद कर सकते हैं। यहां बुक करें:",
+    es: "Lamento que no se sienta bien. No puedo dar consejo médico, pero un médico con licencia de Humancare puede ayudarle por video. Reserve aquí:",
   },
   // The same, when the patient's message or the blocked reply is about a medication or a refill.
   fallbackMedication: {
-    en: "Our licensed doctors can help with medication questions and refills. Book here:",
-    hi: "हमारे लाइसेंस प्राप्त डॉक्टर दवाओं से जुड़े सवालों और रिफिल में मदद कर सकते हैं। यहां बुक करें:",
-    es: "Nuestros médicos con licencia pueden ayudarle con preguntas sobre medicamentos y renovaciones de recetas. Reserve aquí:",
+    en: "Sorry you're dealing with this. Our licensed doctors can help with medication questions and refills by video. Book here:",
+    hi: "यह जानकर दुख हुआ कि आप परेशान हैं। हमारे लाइसेंस प्राप्त डॉक्टर वीडियो पर दवाओं से जुड़े सवालों और रिफिल में मदद कर सकते हैं। यहां बुक करें:",
+    es: "Lamento que esté pasando por esto. Nuestros médicos con licencia pueden ayudarle por video con preguntas sobre medicamentos y renovaciones de recetas. Reserve aquí:",
   },
 };
 
