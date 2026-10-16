@@ -432,6 +432,33 @@ const CSS = `
   .drprofile__hero { padding:18px 16px; gap:14px; }
   .drprofile__hero-name { font-size:18px; }
   .drprofile__hero-meta { font-size:13px; }
+  .drprofile__actions > .drprofile__btn { flex:1 1 100%; }
+}
+
+.drprofile__wrap,
+.drprofile__hero,
+.drprofile__hero-main,
+.drprofile__card,
+.drprofile__edit-card,
+.drprofile__field,
+.drprofile__grid,
+.drprofile__grid-wide {
+  min-width:0;
+  max-width:100%;
+}
+
+.drprofile__field input,
+.drprofile__field select,
+.drprofile__field textarea {
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+
+@media (max-width:760px) {
+  .drprofile__wrap { width:100%; }
+  .drprofile__hero-meta,
+  .drprofile__read span { overflow-wrap:anywhere; }
 }
 
 /* MultiSelect */
@@ -982,7 +1009,7 @@ function MultiSelect({
   return (
     <>
       <div className="ms-wrapper" ref={wrapperRef}>
-        <div
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(!open))(e); } }}
           ref={triggerRef}
           className={`ms-trigger${open ? " open" : ""}`}
           onClick={() => setOpen(!open)}
@@ -1119,7 +1146,7 @@ function SignedImage({ doctorId, field, alt, fallback, className }) {
   }, [doctorId, field]);
   if (failed || !src) return fallback || null;
   return (
-    <img
+    <img decoding="async"
       className={className}
       src={src}
       alt={alt}
@@ -1229,14 +1256,14 @@ function PhotoEditor({ value, doctorId, editable, onChange, initials }) {
         style={{ display: "none" }}
         onChange={(e) => upload(e.target.files?.[0])}
       />
-      <div
+      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => editable && ref.current?.click())(e); } }}
         className="drprofile__photo-circle"
         onClick={() => editable && ref.current?.click()}
       >
         {preview ? (
-          <img src={preview} alt="Profile preview" />
+          <img decoding="async" src={preview} alt="Profile preview" />
         ) : showDirect ? (
-          <img src={directUrl} alt="Profile" />
+          <img decoding="async" src={directUrl} alt="Profile" />
         ) : value ? (
           <SignedImage
             doctorId={doctorId}
@@ -1593,9 +1620,10 @@ export default function DoctorProfile() {
     }
   };
 
-  const inp = (key, placeholder = "", type = "text") => (
+  const inp = (key, placeholder = "", type = "text", autoComplete) => (
     <input
       type={type}
+      autoComplete={autoComplete}
       value={form[key] || ""}
       placeholder={placeholder}
       onChange={(e) => update(key, e.target.value)}
@@ -1920,13 +1948,13 @@ export default function DoctorProfile() {
             <EditSection icon="👤" title="Personal & Contact Details">
               <div className="drprofile__grid-wide">
                 <InputField label="First Name">
-                  {inp("firstName", "First name")}
+                  {inp("firstName", "First name", "text", "given-name")}
                 </InputField>
                 <InputField label="Surname">
-                  {inp("surname", "Surname")}
+                  {inp("surname", "Surname", "text", "family-name")}
                 </InputField>
                 <InputField label="Email">
-                  {inp("email", "Email", "email")}
+                  {inp("email", "Email", "email", "email")}
                 </InputField>
                 <InputField label="Phone">
                   <div className="de-phone-input">
@@ -1954,7 +1982,7 @@ export default function DoctorProfile() {
                 </InputField>
                 <InputField label="Gender">{sel("gender", GENDERS)}</InputField>
                 <InputField label="Date of Birth">
-                  {inp("dob", "", "date")}
+                  {inp("dob", "", "date", "bday")}
                 </InputField>
                 <InputField label="Languages Known" full>
                   {inp("languagesKnown", "English, Hindi, Spanish")}
@@ -1983,12 +2011,12 @@ export default function DoctorProfile() {
                   </select>
                 </InputField>
                 <InputField label="State / Province">{stateField()}</InputField>
-                <InputField label="City">{inp("city", "City")}</InputField>
+                <InputField label="City">{inp("city", "City", "text", "address-level2")}</InputField>
                 <InputField label="ZIP / Postal">
-                  {inp("zip", "ZIP")}
+                  {inp("zip", "ZIP", "text", "postal-code")}
                 </InputField>
                 <InputField label="Street Address" full>
-                  {inp("address", "Street address")}
+                  {inp("address", "Street address", "text", "street-address")}
                 </InputField>
               </div>
             </EditSection>

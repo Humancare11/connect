@@ -17,6 +17,8 @@ export const emailApi = {
   recordView: (id) => api.post(`${BASE}/messages/${id}/view`, null, RAW).then((r) => r.data),
   send: (formData) => api.post(`${BASE}/send`, formData, RAW).then((r) => r.data),
   reply: (id, formData) => api.post(`${BASE}/messages/${id}/reply`, formData, RAW).then((r) => r.data),
+  // The image signature a sent mail went out with (blob; see useAuthImage).
+  signatureImageBlob: (id) => api.get(`${BASE}/messages/${id}/signature-image`, { responseType: "blob", ...RAW }).then((r) => r.data),
   markSpam: (id) => api.post(`${BASE}/messages/${id}/spam`, null, RAW).then((r) => r.data),
   notSpam: (id) => api.post(`${BASE}/messages/${id}/not-spam`, null, RAW).then((r) => r.data),
 
@@ -33,6 +35,25 @@ export const emailApi = {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(url), 10_000);
   },
+};
+
+// My signature: ONE image per admin (every admin and Super Admin, each only their own: the
+// server decides whose it is from the session, nothing here says whose it is).
+const SIGNATURE_BASE = "/api/admin/email/signatures";
+
+export const signaturesApi = {
+  // → { signature: { image: { mime, width, height, bytes } | null, autoAdd, updatedAt }, limits }
+  get: () => api.get(SIGNATURE_BASE, RAW).then((r) => r.data),
+  setAutoAdd: (autoAdd) => api.patch(SIGNATURE_BASE, { autoAdd }, RAW).then((r) => r.data),
+  // PNG or JPG. The file is decoded, resized and re-encoded on the server.
+  uploadImage: (file) => {
+    const fd = new FormData();
+    fd.append("image", file);
+    return api.put(`${SIGNATURE_BASE}/image`, fd, RAW).then((r) => r.data);
+  },
+  removeImage: () => api.delete(`${SIGNATURE_BASE}/image`, RAW).then((r) => r.data),
+  // Needs the session header, so it is fetched as a blob (see useAuthImage).
+  imageBlob: () => api.get(`${SIGNATURE_BASE}/image`, { responseType: "blob", ...RAW }).then((r) => r.data),
 };
 
 // Super Admin only (the server refuses everyone else): manage the company mail IDs.

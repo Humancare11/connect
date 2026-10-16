@@ -1,17 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
 import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
 import { formatShortDate as formatDate } from "../../utils/prescriptionForm";
-
-const EMPTY_CERT = {
-  diagnosis: "",
-  recommendation: "",
-  restFromDate: "",
-  restToDate: "",
-  notes: "",
-};
+import CertificateModal from "../../components/CertificateModal";
+import useModalA11y from "../../hooks/useModalA11y";
 
 // ── Small reusable components ─────────────────────────────────────────────────
 
@@ -40,6 +34,8 @@ function Avatar({ name, size = 40 }) {
 // preparing an accurate prescription, without leaving the current flow.
 
 function ConsultationNotesModal({ patient, onClose }) {
+  const notesDialogRef = useRef(null);
+  useModalA11y(notesDialogRef, true, onClose);
   return (
     <div
       className="dp-modal-overlay"
@@ -48,7 +44,7 @@ function ConsultationNotesModal({ patient, onClose }) {
       aria-modal="true"
       aria-label={`Consultation notes for ${patient.name}`}
     >
-      <div
+      <div ref={notesDialogRef}
         className="dp-modal dp-notes-modal"
         onClick={(e) => e.stopPropagation()}
       >
@@ -68,140 +64,11 @@ function ConsultationNotesModal({ patient, onClose }) {
   );
 }
 
-// ── Medical Certificate Modal ─────────────────────────────────────────────────
-
-function CertificateModal({ patient, appointments, onClose, onSaved }) {
-  const [form, setForm] = useState({
-    ...EMPTY_CERT,
-    appointmentId: appointments[0]?._id || "",
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-
-  const setField = (k, v) => setForm((p) => ({ ...p, [k]: v }));
-
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!form.diagnosis.trim()) {
-      setError("Diagnosis is required.");
-      return;
-    }
-    if (!form.appointmentId) {
-      setError("Select an appointment.");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    try {
-      await api.post("/api/medical/certificates", {
-        ...form,
-        patientId: patient._id,
-      });
-      onSaved("certificate");
-    } catch (err) {
-      setError(err.response?.data?.msg || "Failed to issue certificate.");
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="dp-modal-overlay" onClick={onClose}>
-      <div className="dp-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="dp-modal-header">
-          <h2>Medical Certificate</h2>
-          <span className="dp-modal-patient">for {patient.name}</span>
-          <button className="dp-modal-close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-
-        <form className="dp-modal-body" onSubmit={submit}>
-          {error && <div className="dp-modal-error">{error}</div>}
-
-          <label className="dp-label">Appointment</label>
-          <select
-            className="dp-input"
-            value={form.appointmentId}
-            onChange={(e) => setField("appointmentId", e.target.value)}
-          >
-            {appointments.map((a) => (
-              <option key={a._id} value={a._id}>
-                {formatDate(a.date)} — {a.time} ({a.status})
-              </option>
-            ))}
-          </select>
-
-          <label className="dp-label">Diagnosis *</label>
-          <input
-            className="dp-input"
-            value={form.diagnosis}
-            onChange={(e) => setField("diagnosis", e.target.value)}
-            placeholder="Diagnosis / condition"
-          />
-
-          <label className="dp-label">Recommendation</label>
-          <input
-            className="dp-input"
-            value={form.recommendation}
-            onChange={(e) => setField("recommendation", e.target.value)}
-            placeholder="e.g. Bed rest recommended"
-          />
-
-          <div className="dp-date-row">
-            <div>
-              <label className="dp-label">Rest From</label>
-              <input
-                className="dp-input"
-                type="date"
-                value={form.restFromDate}
-                onChange={(e) => setField("restFromDate", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="dp-label">Rest To</label>
-              <input
-                className="dp-input"
-                type="date"
-                value={form.restToDate}
-                onChange={(e) => setField("restToDate", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <label className="dp-label">Additional Notes</label>
-          <textarea
-            className="dp-input dp-textarea"
-            value={form.notes}
-            onChange={(e) => setField("notes", e.target.value)}
-            placeholder="Any additional remarks..."
-            rows={3}
-          />
-
-          <div className="dp-modal-footer">
-            <button
-              type="button"
-              className="dp-btn dp-btn--ghost"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="dp-btn dp-btn--primary"
-              disabled={saving}
-            >
-              {saving ? "Saving…" : "Issue Certificate"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ── Patient Detail Panel ──────────────────────────────────────────────────────
 
 function PatientPanel({ entry, onClose }) {
+  const panelDialogRef = useRef(null);
+  useModalA11y(panelDialogRef, true, onClose);
   const { patient } = entry;
   const navigate = useNavigate();
   const [history, setHistory] = useState(null);
@@ -240,7 +107,7 @@ function PatientPanel({ entry, onClose }) {
 
   return (
     <div className="dp-panel-overlay" onClick={onClose}>
-      <div className="dp-panel" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelDialogRef} role="dialog" aria-modal="true" aria-label={`Patient details for ${patient.name}`} className="dp-panel" onClick={(e) => e.stopPropagation()}>
         {toast && <div className="dp-toast">{toast}</div>}
 
         <div className="dp-panel-header">

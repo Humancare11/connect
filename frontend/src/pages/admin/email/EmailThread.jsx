@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import emailApi, { apiMessage } from "../../../api/emailApi";
-import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { AttachmentList, Avatar, GmailMark, Icon, MailboxChip, ReceiptToggle, SecureLinksToggle, SignatureStrip, TrackOpensToggle, TrackingNote } from "./EmailParts";
+import { messageOf } from "./signatureUtils";
+import { SentSignatureImage } from "./SignatureView";
+import { useSignatureChoice } from "./useSignatureChoice";
 import {
   ACCEPT_ATTR,
   EMAIL_BASE,
@@ -16,8 +19,25 @@ import {
   personLabel,
   roleLabel,
   trackingInfo,
+  internalCaveat,
   useEmailShell,
 } from "./emailUtils";
+
+// The text of a mail. A mail that went out with the sender's signature shows that image (its
+// own stored copy) below the message, as the recipient sees it.
+export function MessageText({ m }) {
+  const si = m.signatureImage;
+  const text = <div className="em-msg-body">{m.text || "(no text)"}</div>;
+  if (!si) return text;
+  return (
+    <>
+      {text}
+      <div className="sg-sent">
+        <SentSignatureImage messageId={m.id} image={si} />
+      </div>
+    </>
+  );
+}
 
 function MessageBlock({ m, onDownload, showTracking }) {
   const outbound = m.direction === "out";
@@ -41,7 +61,7 @@ function MessageBlock({ m, onDownload, showTracking }) {
           </div>
           <span className="em-time">{fmtFull(m.messageDate)}</span>
         </div>
-        <div className="em-msg-body">{m.text || "(no text)"}</div>
+        <MessageText m={m} />
         <AttachmentList items={m.attachments.filter((a) => !a.isInline)} onOpen={onDownload} />
         {outbound && showTracking && <TrackingNote tracking={m.tracking} />}
       </div>
@@ -88,8 +108,8 @@ function InfoBoxes({ m, views }) {
       )}
 
       {outbound && info && (
-        <InfoBox icon={<Icon name="open" size={20} />} label="Open tracking">
-          <b className={info.kind === "opened" ? "em-ok" : undefined}>{info.text}</b>
+        <InfoBox icon={<Icon name="open" size={20} />} label="Read status">
+          <b className={info.kind !== "na" && info.kind !== "pending" && info.kind !== "automated" ? "em-ok" : undefined}>{info.text}</b>
           <small>{info.detail}</small>
         </InfoBox>
       )}
@@ -129,8 +149,13 @@ function InfoBoxes({ m, views }) {
 
 function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const [body, setBody] = useState("");
+  const bodyRef = useRef(null);
+  // My signature image is added by the server when the box under the reply is ticked.
+  const signature = useSignatureChoice();
   const [trackChoice, setTrackChoice] = useState(null);
   const trackOpens = trackChoice ?? message.mailbox?.trackOpensDefault !== false;
+  const [receipt, setReceipt] = useState(false);
+  const [secure, setSecure] = useState(false);
   const [files, setFiles] = useState([]);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(null);
@@ -142,9 +167,12 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
     mutationFn: ({ confirm }) => {
       const fd = new FormData();
       fd.append("body", body.trim());
+      if (signature.use) fd.append("signature", "1");
       fd.append("clientRequestId", requestId.current);
       if (confirm) fd.append("confirm", "1");
       if (tracking?.available) fd.append("trackOpens", trackOpens ? "1" : "0");
+      if (tracking?.available && receipt) fd.append("requestReceipt", "1");
+      if (tracking?.secureLinks && secure && files.length) fd.append("secureLinks", "1");
       files.forEach((f) => fd.append("files", f));
       return emailApi.reply(message.id, fd);
     },
@@ -164,7 +192,7 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
   const submit = (e, confirm = false) => {
     e?.preventDefault();
     if (send.isPending) return;
-    if (!body.trim()) {
+    if (!messageOf(body)) {
       setError("The reply is empty.");
       return;
     }
@@ -191,7 +219,8 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
           · as <b>{adminName}</b>
         </span>
       </div>
-      <textarea aria-label="Reply message" placeholder="Write your reply…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
+      <textarea ref={bodyRef} aria-label="Reply message" placeholder="Write your reply…" value={body} onChange={(e) => setBody(e.target.value)} autoFocus />
+      <SignatureStrip field={signature} />
       {conflict && (
         <div className="em-banner warn" role="alert">
           <span>
@@ -217,7 +246,16 @@ function ReplyBox({ message, reply, adminName, tracking, onSent, onCancel }) {
           <input type="file" multiple accept={ACCEPT_ATTR} onChange={onFiles} aria-label="Attach files to reply" />
           <Icon name="clip" />
         </label>
-        {tracking?.available && <TrackOpensToggle checked={trackOpens} onChange={setTrackChoice} disclosure={tracking.disclosure} />}
+        {tracking?.available && (
+          <TrackOpensToggle
+            checked={trackOpens}
+            onChange={setTrackChoice}
+            disclosure={tracking.disclosure}
+            caveat={internalCaveat([message.from?.address], tracking)}
+          />
+        )}
+        {tracking?.available && <ReceiptToggle checked={receipt} onChange={setReceipt} />}
+        {tracking?.secureLinks && files.length > 0 && <SecureLinksToggle checked={secure} onChange={setSecure} days={tracking.secureLinkDays} />}
         {error && <span className="em-errtext" role="alert">{error}</span>}
         <span style={{ flex: 1 }} />
         <button type="button" className="em-btn em-btn-ghost" onClick={onCancel}>

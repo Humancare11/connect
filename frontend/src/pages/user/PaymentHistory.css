@@ -12,8 +12,8 @@
   justify-content: space-between;
   gap: 16px;
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 22px;
   box-shadow:
@@ -49,8 +49,8 @@
 
 .ph-panel {
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 18px;
   box-shadow:
@@ -115,7 +115,8 @@
 }
 
 .ph-invoice-no {
-  font-family: monospace;
+  font-family: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
   font-size: 12px;
   color: #4b5db8;
 }

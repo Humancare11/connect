@@ -274,13 +274,13 @@
 
 .hc-concern-step {
   background: var(--glass);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   padding: 40px 44px 32px;
-  max-width: 1200px;
+  max-width: var(--container-md);
   width: 100%;
   margin: 0 auto;
   animation: hc-fade-slide-up var(--slow) var(--ease) both;
@@ -502,10 +502,11 @@
   box-shadow: var(--shadow-glow-primary);
 }
 
-.hc-btn--primary:not(:disabled):hover,
-.hc-btn--primary-dark:not(:disabled):hover {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 28px rgba(27, 47, 75, 0.32);
+@media (hover: hover) and (pointer: fine) {
+  .hc-btn--primary:not(:disabled):hover, .hc-btn--primary-dark:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(27, 47, 75, 0.32);
+  }
 }
 
 .hc-btn--primary:not(:disabled):active,
@@ -526,14 +527,14 @@
 
 .hc-timing-step {
   position: relative;
-  max-width: 1200px;
+  max-width: var(--container-md);
   width: 100%;
   margin: 0 auto;
   padding: 44px 48px 32px;
   border-radius: var(--radius-lg);
   background: var(--glass);
-  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-lg);
   color: var(--text);
@@ -762,8 +763,8 @@
     right: 0;
     bottom: 0;
     background: var(--glass-strong);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     padding: 14px 18px calc(14px + env(safe-area-inset-bottom));
     box-shadow: 0 -4px 16px rgba(11, 31, 58, 0.1);
     border-top: 1px solid var(--border);
@@ -929,5 +930,22 @@
 
   .hc-heading {
     font-size: 18px;
+  }
+}
+
+/* Touch targets: larger invisible hit area, layout unchanged */
+.hc-back-link {
+  position: relative;
+}
+.hc-back-link::after {
+  content: "";
+  position: absolute;
+  inset: -12px -6px;
+}
+
+/* Keep the LiveChat launcher above the fixed step navigation bar */
+@media (max-width: 640px) {
+  body:has(.hc-step-nav) #chat-widget-container {
+    bottom: 84px !important;
   }
 }

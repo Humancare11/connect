@@ -1,0 +1,288 @@
+const express = require("express");
+const multer = require("multer");
+const { verifyAdminToken, liveChatAgentOnly, superAdminOnly } = require("../middleware/verifyToken");
+const { toPublicVisitor } = require("../services/liveChat/presence");
+const { AgentError, CONVERSATION_ID_RE } = require("../services/liveChat/agentService");
+const { FileError } = require("../services/liveChat/fileService");
+const { SettingsError } = require("../services/liveChat/settingsService");
+const { StatsError } = require("../services/liveChat/statsService");
+const sitePages = require("../services/liveChat/sitePages").createSitePages();
+const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
+
+// Live Chat admin API. Admin + Super Admin only (employeeadmin, paymentadmin, doctors, patients and partners
+// are rejected by liveChatAgentOnly on every route below).
+//
+//   GET  /visitors, /summary, /settings                   Real-time visitors and settings (read)
+//   GET  /conversations?view=ai|live                      chat lists (AI chats / Live agent chats)
+//   GET  /conversations/:id                               one chat with its patient panel (marks it read)
+//   PUT  /visitors/:visitorId/context                     patient context fields (encrypted)
+//   POST /visitors/:visitorId/summary, POST /conversations/:id/summary   AI summary of the chat (on demand, not saved)
+//   GET  /conversations/:id/transcript                    plain-text download (no internal notes; access is logged)
+//   POST /conversations/:id/files                         an agent sends a file (pdf/jpg/png) to the patient
+//   POST /conversations/:id/messages|notes|takeover|handback|resolve|read|suggest|translate|translate-reply
+//   PUT  /conversations/:id/view                          English / original view (per admin, per chat)
+//   PUT  /conversations/:id/tags|contact
+//   GET  /visitors/:visitorId/panel, PUT /visitors/:visitorId/contact   Real-time visitors side panel and contact edit
+//   POST /conversations/start                             admin-started chat with a visitor who has contact details
+//   GET  /unread, /canned-replies
+//   GET  /files/:id/url                                   a 5-minute presigned link to a patient's file (role-checked)
+//   POST /conversations/:id/block-ip, /visitors/:visitorId/block-ip   block an abusive IP
+//   GET  /blocked-ips, DELETE /blocked-ips/:id            list / unblock
+//   GET  /settings, /settings/audit                       AI agent settings and their change log (admin: read only)
+//   PUT  /settings                                        save settings (superadmin only; applies at once, logged)
+//   GET/POST/PUT/DELETE /canned-replies                   canned replies (writes: superadmin only)
+//   GET  /team, PUT /team/:userId/display-name            Team page; an agent renames themselves, a superadmin anyone
+//   GET  /reports?from=YYYY-MM-DD&to=YYYY-MM-DD           Reports page
+//   GET  /review/access                                   whether this user may open AI Review (any agent)
+//   GET  /review?status=&from=&to=, /review/log, /review/:id, POST /review/:id   AI Review (Super Admin or reviewer);
+//                                                         the review log is append-only: there is no edit or delete
+//   PUT  /team/:userId/reviewer                           allow / stop an admin from using AI Review (Super Admin)
+//
+// Options exist so tests can run without real sessions:
+//   guard     auth middleware chain (default: verified admin session, then agent role)
+//   presence  the in-memory visitor store
+//   agent     the agent service (lists, take over, replies, ...)
+//   getSettings  () => settings document
+const DEFAULT_GUARD = [verifyAdminToken, liveChatAgentOnly];
+
+// 10 requests a minute per user on the delete endpoints (in memory, like the socket limiter).
+function makeUserLimiter({ windowMs = 60_000, max = 10, now = () => Date.now() } = {}) {
+  const hits = new Map();
+  return (key) => {
+    const t = now();
+    const entry = hits.get(key);
+    if (!entry || t > entry.resetAt) {
+      hits.set(key, { count: 1, resetAt: t + windowMs });
+      return true;
+    }
+    entry.count += 1;
+    return entry.count <= max;
+  };
+}
+
+// AI Review: Super Admin, or an admin the Super Admin has given the reviewer permission (a flag on the user record,
+// read here because the session token does not carry it).
+async function canReview(user) {
+  if (user?.role === "superadmin") return true;
+  if (user?.role !== "admin") return false;
+  try {
+    const row = await require("../models/User").findById(user.id).select("liveChatReviewer accountDisabled").lean();
+    return Boolean(row?.liveChatReviewer) && row.accountDisabled !== true;
+  } catch {
+    return false;
+  }
+}
+
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, review, trashLimiter } = {}) {
+  const router = express.Router();
+  router.use(guard);
+  router.use(express.json({ limit: "32kb" }));
+
+  // Runs a handler and maps AgentError to JSON ({ ok: false, error, ...extra }).
+  const handle = (fn) => async (req, res, next) => {
+    try {
+      res.set("Cache-Control", "no-store");
+      res.json(await fn(req));
+    } catch (err) {
+      if (err instanceof AgentError) return res.status(err.status).json({ ok: false, error: err.code, ...err.extra });
+      if (err instanceof FileError) return res.status(err.status).json({ ok: false, error: err.code });
+      if (err instanceof SettingsError) return res.status(err.status).json({ ok: false, error: err.code, ...err.extra });
+      if (err instanceof StatsError) return res.status(err.status).json({ ok: false, error: err.code });
+      return next(err);
+    }
+  };
+  const actor = (req) => ({ id: String(req.user.id), role: req.user.role });
+  const idOf = (req) => {
+    if (!CONVERSATION_ID_RE.test(String(req.params.id))) throw new AgentError(404, "not_found");
+    return req.params.id;
+  };
+
+  // ── Real-time visitors / settings ─────────────────────────────────────────────
+
+  router.get("/visitors", (req, res) => {
+    res.json({ visitors: presence.list().map(toPublicVisitor), serverTime: Date.now() });
+  });
+
+  router.get("/summary", (req, res) => {
+    const visitors = presence.list();
+    const count = (activity) => visitors.filter((v) => v.activity === activity).length;
+    res.json({
+      onWebsite: visitors.length,
+      chatting: count("chatting") + count("invited"),
+      waiting: count("waiting"),
+      withAi: count("ai"),
+    });
+  });
+
+  router.get(
+    "/settings",
+    handle(async (req) => {
+      const loader = getSettings || (() => settings.get());
+      const doc = await loader();
+      // linkPages: the site pages an option may show as a button (service pages and the booking page).
+      const linkPages = sitePages.pages.filter((p) => p.type === "service").map((p) => ({ title: p.title, url: p.url }));
+      return { ok: true, settings: doc?.toObject ? doc.toObject() : doc, canEdit: req.user.role === "superadmin", linkPages };
+    })
+  );
+  router.put("/settings", superAdminOnly, handle((req) => settings.update(actor(req), req.body)));
+  router.get("/settings/audit", handle(async (req) => ({ ok: true, entries: await settings.audit(req.query.limit) })));
+
+  router.post("/canned-replies", superAdminOnly, handle((req) => settings.createCanned(actor(req), req.body)));
+  router.put("/canned-replies/:id", superAdminOnly, handle((req) => settings.updateCanned(actor(req), req.params.id, req.body)));
+  router.delete("/canned-replies/:id", superAdminOnly, handle((req) => settings.deleteCanned(actor(req), req.params.id)));
+
+  // ── AI Review (flagged medical chats) ─────────────────────────────────────────
+
+  const reviewerOnly = async (req, res, next) => {
+    try {
+      if (await canReview(req.user)) return next();
+      return res.status(403).json({ ok: false, error: "reviewer_only" });
+    } catch (err) {
+      return next(err);
+    }
+  };
+  // Lets the Live Chat menu know whether to show the AI Review page. Open to every agent.
+  router.get("/review/access", handle(async (req) => ({ ok: true, canReview: await canReview(req.user) })));
+  if (review) {
+    router.get("/review", reviewerOnly, handle((req) => review.list({ status: req.query.status, from: req.query.from, to: req.query.to })));
+    router.get("/review/log", reviewerOnly, handle((req) => review.log({ before: req.query.before })));
+    router.get("/review/:id", reviewerOnly, handle((req) => review.detail(idOf(req))));
+    router.post("/review/:id", reviewerOnly, handle((req) => review.review(actor(req), idOf(req), req.body)));
+    // No PUT / PATCH / DELETE on purpose: the review log is append-only.
+  }
+
+  router.get("/team", handle(() => stats.team()));
+  // Who may open AI Review. Super Admin only; audited in the settings change log.
+  router.put("/team/:userId/reviewer", superAdminOnly, handle((req) => settings.setReviewer(actor(req), req.params.userId, req.body?.enabled)));
+  // The AI's name is a setting, so it is saved (and audited) like one: Super Admin only. Registered before :userId.
+  router.put("/team/ai/display-name", superAdminOnly, handle((req) => settings.update(actor(req), { aiDisplayName: req.body?.displayName })));
+  router.put("/team/:userId/display-name", handle((req) => settings.setDisplayName(actor(req), req.params.userId, req.body?.displayName)));
+  router.get("/reports", handle((req) => stats.reports({ from: req.query.from, to: req.query.to })));
+
+  // ── Chats ─────────────────────────────────────────────────────────────────────
+
+  router.get(
+    "/conversations",
+    handle(async (req) => {
+      const view = req.query.view;
+      if (view !== "ai" && view !== "live") throw new AgentError(400, "invalid_view");
+      return { ok: true, conversations: await agent.list(actor(req), view), serverTime: Date.now() };
+    })
+  );
+
+  router.post(
+    "/conversations/start",
+    handle((req) => agent.startChat(actor(req), req.body?.visitorId))
+  );
+
+  // The Archive page: every archived chat with filters and search (admin + superadmin, like the chat lists).
+  router.get("/archive", handle((req) => archive.list(req.query)));
+
+  // Delete / Trash: Super Admin only (403 for admins), rate limited, audited in the service.
+  if (trash) {
+    const allow = trashLimiter || makeUserLimiter();
+    const limited = (req, res, next) => {
+      if (allow(String(req.user.id))) return next();
+      return res.status(429).set("Retry-After", "60").json({ ok: false, error: "rate_limited" });
+    };
+    router.post("/archive/delete-preview", superAdminOnly, handle((req) => trash.preview(req.body?.filters || {})));
+    router.post("/archive/delete", superAdminOnly, limited, handle((req) => trash.remove(actor(req), req.body)));
+    router.get("/trash", superAdminOnly, handle((req) => trash.list(req.query)));
+    router.post("/trash/restore", superAdminOnly, limited, handle((req) => trash.restore(actor(req), req.body)));
+    router.post("/trash/purge", superAdminOnly, limited, handle((req) => trash.purge(actor(req), req.body)));
+  }
+
+  router.get(
+    "/conversations/:id",
+    handle((req) =>
+      agent.detail(actor(req), idOf(req), { markRead: req.query.archive !== "1" }).then((d) => ({ ok: true, ...d, serverTime: Date.now() }))
+    )
+  );
+  // Plain-text download (no notes). Not cached; the file name carries only the chat ID.
+  router.get("/conversations/:id/transcript", async (req, res, next) => {
+    try {
+      const { filename, text } = await agent.transcript(actor(req), idOf(req));
+      res.set({
+        "Cache-Control": "no-store",
+        "Content-Type": "text/plain; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "X-Content-Type-Options": "nosniff",
+      });
+      res.send(text);
+    } catch (err) {
+      if (err instanceof AgentError) return res.status(err.status).set("Cache-Control", "no-store").json({ ok: false, error: err.code });
+      return next(err);
+    }
+  });
+  // An agent sends a file to the patient (pdf/jpg/png). The body is a single multipart "file" field.
+  const uploadOne = multer({ storage: multer.memoryStorage(), limits: { fileSize: files.limits.maxBytes + 1, files: 1, fields: 1 } }).single("file");
+  router.post(
+    "/conversations/:id/files",
+    (req, res, next) => {
+      try {
+        idOf(req);
+      } catch {
+        return res.status(404).json({ ok: false, error: "not_found" });
+      }
+      return uploadOne(req, res, (err) => {
+        if (err?.code === "LIMIT_FILE_SIZE") return res.status(413).json({ ok: false, error: "file_too_large" });
+        if (err) return res.status(400).json({ ok: false, error: "invalid_upload" });
+        return next();
+      });
+    },
+    handle((req) => {
+      if (!req.file) throw new AgentError(400, "no_file");
+      return agent.sendFile(actor(req), idOf(req), req.file);
+    })
+  );
+  router.post("/conversations/:id/messages", handle((req) => agent.sendMessage(actor(req), idOf(req), req.body?.text, req.body?.sourceText)));
+  // Translation (admin side only): English view of a chat, the reply box, and the per-admin view choice.
+  router.post("/conversations/:id/translate", handle((req) => agent.translate(actor(req), idOf(req), req.body?.messageIds)));
+  router.post("/conversations/:id/detect-language", handle((req) => agent.detectLanguage(actor(req), idOf(req))));
+  router.post("/conversations/:id/translate-reply", handle((req) => agent.translateReply(actor(req), idOf(req), req.body?.text)));
+  router.put("/conversations/:id/view", handle((req) => agent.setTranslateView(actor(req), idOf(req), req.body?.view)));
+  router.post("/conversations/:id/notes", handle((req) => agent.addNote(actor(req), idOf(req), req.body?.text)));
+  router.post("/conversations/:id/takeover", handle((req) => agent.takeOver(actor(req), idOf(req))));
+  router.post("/conversations/:id/handback", handle((req) => agent.handBack(actor(req), idOf(req))));
+  router.post("/conversations/:id/resolve", handle((req) => agent.resolve(actor(req), idOf(req))));
+  router.post("/conversations/:id/read", handle((req) => agent.markRead(actor(req), idOf(req))));
+  router.post("/conversations/:id/suggest", handle((req) => agent.suggest(actor(req), idOf(req))));
+  router.put("/conversations/:id/tags", handle((req) => agent.setTags(actor(req), idOf(req), req.body?.tags)));
+  router.put("/conversations/:id/contact", handle((req) => agent.updateContact(actor(req), idOf(req), req.body)));
+
+  router.post("/conversations/:id/block-ip", handle((req) => agent.blockIp(actor(req), { conversationId: idOf(req), reason: req.body?.reason })));
+  const visitorIdOf = (req) => {
+    if (!VISITOR_ID_RE.test(String(req.params.visitorId))) throw new AgentError(404, "not_found");
+    return req.params.visitorId;
+  };
+  router.put("/visitors/:visitorId/context", handle((req) => agent.updateContext(actor(req), visitorIdOf(req), req.body)));
+  router.post("/visitors/:visitorId/summary", handle((req) => agent.summarizeVisitor(actor(req), visitorIdOf(req))));
+  router.post("/conversations/:id/summary", handle((req) => agent.summarize(actor(req), idOf(req))));
+  router.get("/visitors/:visitorId/panel", handle((req) => agent.visitorPanel(actor(req), visitorIdOf(req))));
+  router.put("/visitors/:visitorId/contact", handle((req) => agent.updateVisitorContact(actor(req), visitorIdOf(req), req.body)));
+  router.post(
+    "/visitors/:visitorId/block-ip",
+    handle((req) => {
+      if (!VISITOR_ID_RE.test(String(req.params.visitorId))) throw new AgentError(404, "not_found");
+      return agent.blockIp(actor(req), { visitorId: req.params.visitorId, reason: req.body?.reason });
+    })
+  );
+  router.get("/blocked-ips", handle(() => agent.blockedIps()));
+  router.delete("/blocked-ips/:id", handle((req) => agent.unblockIp(actor(req), req.params.id)));
+  // The role check is the guard above; the link is short-lived and every issue is logged on the file.
+  router.get("/files/:id/url", handle((req) => files.presign(actor(req), req.params.id)));
+
+  router.get("/unread", handle(async (req) => ({ ok: true, ...(await agent.unread(actor(req))) })));
+  // In a chat: the active canned replies plus the agent's display name. With ?all=1 (settings page): every reply.
+  router.get(
+    "/canned-replies",
+    handle(async (req) => {
+      if (req.query.all === "1") return { ok: true, replies: await settings.listCanned() };
+      return { ok: true, ...(await agent.canned(actor(req))) };
+    })
+  );
+
+  return router;
+}
+
+module.exports = { create, DEFAULT_GUARD, makeUserLimiter };

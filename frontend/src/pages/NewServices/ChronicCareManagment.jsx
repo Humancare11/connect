@@ -265,7 +265,7 @@ export default function ChronicCareManagement() {
     <>
       <SEO />
 
-      <main
+      <div
         className="service-page service-page--chronic-care"
         style={{
           "--service-accent": s.accentColor,
@@ -735,7 +735,7 @@ export default function ChronicCareManagement() {
             </section>
           </motion.div>
         </AnimatePresence>
-      </main>
+      </div>
     </>
   );
 }

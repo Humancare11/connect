@@ -153,8 +153,8 @@
 }
 .sa-checker select {
   width: 100%;
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   font: inherit;
   font-size: 14px;
   color: var(--sa-navy);
@@ -442,7 +442,7 @@
   font-size: 14px;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.2s;
+  transition: background var(--duration-base);
 }
 .sa-help-btn:hover {
   background: #1d4ed8;

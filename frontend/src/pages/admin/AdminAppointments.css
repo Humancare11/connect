@@ -17,7 +17,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
 }
 
 .adp-tab:hover {
@@ -75,7 +75,7 @@
   color: #0f172a;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background var(--duration-fast), border-color var(--duration-fast), color var(--duration-fast);
 }
 
 .adp-view-btn:hover {
@@ -176,12 +176,16 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: var(--duration-base) ease;
 }
 
 .adp-modal-close:hover {
   background: #163f72;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-modal-close:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* =========================
@@ -276,7 +280,7 @@
   color: #ffffff;
   font-size: 14px;
   outline: none;
-  transition: 0.2s ease;
+  transition: var(--duration-base) ease;
   margin-bottom: 16px;
 }
 
@@ -326,9 +330,13 @@
 }
 
 .adp-doctor-row:hover {
-  transform: translateY(-2px);
   border-color: #4d82bd;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-doctor-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  }
 }
 
 .adp-doctor-row div {
@@ -351,13 +359,17 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: var(--duration-base) ease;
   min-width: 100px;
 }
 
 .adp-assign-btn:hover {
-  transform: translateY(-1px);
   background: linear-gradient(135deg, #2364ad, #2e7dd6);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-assign-btn:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .adp-assign-btn:disabled {
@@ -377,7 +389,7 @@
   color: #ffffff;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: var(--duration-base) ease;
 }
 
 .adp-alt-btn:hover {
@@ -513,14 +525,18 @@
   color: #dbeafe;
   text-decoration: none;
   font-size: 13px;
-  transition: 0.2s ease;
+  transition: var(--duration-base) ease;
   max-width: 260px;
 }
 
 .adp-report-chip:hover {
   background: #14345c;
   border-color: #4d82bd;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .adp-report-chip:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .adp-report-name {
@@ -695,6 +711,10 @@
   color: #0f172a;
   background: transparent;
   font: inherit;
+}
+.adp-search input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
 }
 
 .adp-search--wide {

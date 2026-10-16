@@ -64,7 +64,7 @@ const cat = {
     {
       name: "HIV Prevention / PrEP Guidance",
       // desc: "Preventive care for HIV protection",
-      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention",
+      path: "/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance",
     },
     {
       name: "Partner Exposure Concerns",
@@ -411,12 +411,12 @@ export default function SexualHealth() {
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "sexual" } });
-  const goToContact = () => navigate("/contact");
+  const goToContact = () => navigate("/contact-us");
 
   return (
     <div
       style={{
-        fontFamily: "'Satoshi', sans-serif",
+        fontFamily: "var(--font-primary)",
         background: "var(--bg)",
         color: "var(--navy)",
         minHeight: "100vh",
@@ -573,11 +573,11 @@ export default function SexualHealth() {
             badge="FAQ"
             title="Frequently Asked Questions"
             description={`Everything you need to know about ${cat.label} care at Humancare Connect. Can't find an answer?`}
-            stats={[
-              "Avg. response in 10 min",
-              "HIPAA secure & private",
-              "Available Globally",
-            ]}
+            // stats={[
+            //   "Avg. response in 10 min",
+            //   "HIPAA secure & private",
+            //   "Available Globally",
+            // ]}
             sections={cat.faqGroups.map((group) => ({
               title: group.label,
               items: group.items.map((faq) => ({

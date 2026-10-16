@@ -259,7 +259,7 @@ export default function UserRaiseTicket() {
                     className={`urt-ticket ${isOpen ? "urt-ticket--open" : ""} ${focusedTicketId === ticket._id ? "urt-ticket--focused" : ""}`}
                     style={{ animationDelay: `${i * 0.04}s` }}
                   >
-                    <div
+                    <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setExpanded(isOpen ? null : ticket._id))(e); } }}
                       className="urt-ticket-top"
                       onClick={() => setExpanded(isOpen ? null : ticket._id)}
                     >

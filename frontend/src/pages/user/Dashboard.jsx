@@ -212,7 +212,9 @@ export default function Dashboard() {
             <span className="hc-dash__ov-num">{appointments.length}</span>
             <span className="hc-dash__ov-label">Total Appointments</span>
             <span className="hc-dash__ov-sub">
-              {pendingCount} pending · {confirmedCount} confirmed · {completedCount} completed
+              <span>{pendingCount} pending</span>
+              <span>{confirmedCount} confirmed</span>
+              <span>{completedCount} completed</span>
             </span>
           </div>
         </div>

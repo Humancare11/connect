@@ -351,7 +351,7 @@ export default function SpecialtiesSection() {
               >
                 {/* Background image */}
                 <div className="aa-card-img">
-                  <img
+                  <img decoding="async"
                     src={item.img}
                     alt={item.alt || item.name}
                     title={item.name}

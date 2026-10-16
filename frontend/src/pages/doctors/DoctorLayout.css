@@ -60,8 +60,8 @@
   position: fixed;
   inset: 0;
   background: rgba(2, 6, 23, 0.6);
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   z-index: 40;
 }
 
@@ -77,8 +77,8 @@
   z-index: 50;
 
   background: #01164a !important;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 24px;
   box-shadow:
@@ -89,7 +89,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--duration-slow) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Brand ────────────────────────────────────────────────────── */
@@ -211,13 +211,17 @@
   transition:
     background 0.18s ease,
     color 0.18s ease,
-    transform 0.15s ease;
+    transform var(--duration-fast) ease;
 }
 
 .dl-nav-item:hover {
   background: #ffffff80 !important;
   color: #ffffff !important;
-  transform: translateX(2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dl-nav-item:hover {
+    transform: translateX(2px);
+  }
 }
 
 .dl-nav-item--active {
@@ -228,8 +232,10 @@
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
-.dl-nav-item--active:hover {
-  transform: none;
+@media (hover: hover) and (pointer: fine) {
+  .dl-nav-item--active:hover {
+    transform: none;
+  }
 }
 
 .dl-nav-icon {
@@ -305,8 +311,8 @@
   z-index: 30;
 
   background: #01164a !important;
-  backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 20px;
   box-shadow:
@@ -332,7 +338,7 @@
   cursor: pointer;
   padding: 6px;
   border-radius: 8px;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
   flex-shrink: 0;
 }
 
@@ -376,6 +382,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* was an <h1>: keep the heading font */
+  font-family: var(--font-primary);
+  letter-spacing: -0.02em;
 }
 
 .dl-topbar-title svg {
@@ -404,13 +413,17 @@
   text-decoration: none;
   transition:
     opacity 0.18s,
-    transform 0.15s;
+    transform var(--duration-fast);
   white-space: nowrap;
 }
 
 .dl-topbar-book:hover {
   opacity: 0.9;
-  transform: translateY(-1px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .dl-topbar-book:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .dl-topbar-book:active {
@@ -441,6 +454,30 @@
 
   .dl-topbar {
     padding: 0 16px;
+  }
+
+  .dl-topbar-book {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    justify-content: center;
+    padding: 0;
+    background-color: #01164a !important;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+  }
+
+  .dl-topbar-book:hover {
+    background-color: #0b2a68 !important;
+  }
+
+  .dl-topbar-book span {
+    display: none;
+  }
+
+  .dl-topbar-book svg {
+    width: 19px;
+    height: 19px;
+    flex: 0 0 auto;
   }
 }
 
@@ -482,8 +519,17 @@
   }
 
   .dl-topbar-book {
-    padding: 7px 10px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    justify-content: center;
+    flex: 0 0 42px;
     font-size: 12px;
+  }
+
+  .dl-topbar-book svg {
+    width: 19px;
+    height: 19px;
   }
 
   .dl-topbar-eyebrow {
@@ -640,8 +686,10 @@
   }
 
   .dl-topbar-book {
-    padding: 6px 8px;
-    font-size: 11px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    flex-basis: 40px;
   }
 
   .dl-topbar-title {
@@ -675,8 +723,9 @@
   }
 
   .dl-topbar-book {
-    padding: 5px 7px;
-    font-size: 10px;
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
 }
 
@@ -690,5 +739,35 @@
 
   50% {
     opacity: 0.5;
+  }
+}
+
+/* Keep routed dashboard content constrained to the available viewport. */
+.dl-main,
+.dl-content {
+  min-width: 0;
+}
+
+.dl-content > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .dl-page {
+    display: block;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  .dl-main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
+  }
+
+  .dl-content {
+    padding: 2px 0 20px;
   }
 }

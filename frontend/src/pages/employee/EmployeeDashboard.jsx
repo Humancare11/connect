@@ -95,7 +95,7 @@ export default function EmployeeAdminDashboard() {
               : tasks.filter((task) => task.status === "Completed").length;
 
           return (
-          <div
+          <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/employee-dashboard/my-tasks"))(e); } }}
             key={label}
             className={`ead-stat ead-stat--${color}`}
             style={{ cursor: "pointer" }}
@@ -152,13 +152,13 @@ export default function EmployeeAdminDashboard() {
         <div style={{ padding: "20px 22px" }}>
           <div className="ead-grid">
             {PLACEHOLDER_CARDS.map(({ label, icon: Icon }) => (
-              <div key={label} className="ead-action-card" onClick={() => navigate("/employee-dashboard/my-tasks")}>
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/employee-dashboard/my-tasks"))(e); } }} key={label} className="ead-action-card" onClick={() => navigate("/employee-dashboard/my-tasks")}>
                 <div className="ead-action-icon"><Icon /></div>
                 <div className="ead-action-label">{label}</div>
                 <div className="ead-action-sub">Open Task Master</div>
               </div>
             ))}
-            <div className="ead-action-card" onClick={() => navigate("/employee-dashboard/assign-task")}>
+            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/employee-dashboard/assign-task"))(e); } }} className="ead-action-card" onClick={() => navigate("/employee-dashboard/assign-task")}>
               <div className="ead-action-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 7h-9"/>

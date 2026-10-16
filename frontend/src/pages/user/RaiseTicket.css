@@ -35,7 +35,7 @@
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 9999;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -43,8 +43,8 @@
   border-radius: 14px;
   font-size: 14px;
   font-weight: 500;
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   box-shadow: 0 8px 28px rgba(15, 23, 42, .18);
   animation: urt-slide-in .3s cubic-bezier(.22, 1, .36, 1) both;
 }
@@ -136,8 +136,8 @@
   gap: 2px;
   flex-shrink: 0;
   background: var(--urt-glass-bg);
-  backdrop-filter: blur(var(--urt-glass-blur-sm));
   -webkit-backdrop-filter: blur(var(--urt-glass-blur-sm));
+  backdrop-filter: blur(var(--urt-glass-blur-sm));
   border: 1px solid var(--urt-glass-border);
   border-radius: 16px;
   padding: 12px 20px;
@@ -170,15 +170,15 @@
 .urt-form-panel,
 .urt-list-panel {
   background: var(--urt-glass-bg);
-  backdrop-filter: blur(var(--urt-glass-blur));
   -webkit-backdrop-filter: blur(var(--urt-glass-blur));
+  backdrop-filter: blur(var(--urt-glass-blur));
   border: 1px solid var(--urt-glass-border);
   border-radius: 22px;
   overflow: hidden;
   box-shadow: var(--urt-glass-shadow);
   position: relative;
   animation: urt-up .4s cubic-bezier(.22, 1, .36, 1) .05s both;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--duration-base);
 }
 
 /* Top shine */
@@ -209,8 +209,8 @@
   height: 44px;
   border-radius: 13px;
   background: #ffffff;
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   border: 1px solid #08308E;
   color: var(--urt-teal);
   display: flex;
@@ -268,8 +268,8 @@
   width: 100%;
   padding: 11px 14px;
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   border: 1px solid rgba(226, 232, 240, 0.70);
   border-radius: 12px;
   color: var(--urt-ink);
@@ -326,9 +326,11 @@ select.urt-input {
   margin-top: 4px;
 }
 
-.urt-submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px #08308E;
+@media (hover: hover) and (pointer: fine) {
+  .urt-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px #08308E;
+  }
 }
 
 .urt-submit-btn:active {
@@ -346,8 +348,8 @@ select.urt-input {
   margin: 0 24px 22px;
   padding: 14px 16px;
   background: rgba(25, 201, 163, 0.06);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   border: 1px solid #08308E;
   border-radius: 14px;
 }
@@ -395,8 +397,8 @@ select.urt-input {
   display: flex;
   gap: 5px;
   background: rgba(255, 255, 255, 0.40);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 11px;
   padding: 4px;
@@ -423,7 +425,7 @@ select.urt-input {
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
-  transition: background .15s, color .15s, box-shadow .15s;
+  transition: background var(--duration-fast), color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
 .urt-tab:hover {
@@ -502,8 +504,8 @@ select.urt-input {
   color: #94a3b8;
   flex-shrink: 0;
   background: rgba(241, 245, 249, 0.70);
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   padding: 3px 8px;
   border-radius: 6px;
   border: 1px solid rgba(226, 232, 240, 0.65);
@@ -585,8 +587,8 @@ select.urt-input {
 .urt-resolution {
   padding: 14px 16px;
   background: rgba(240, 253, 244, 0.75);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border: 1px solid rgba(134, 239, 172, 0.60);
   border-radius: 12px;
   position: relative;
@@ -630,8 +632,8 @@ select.urt-input {
   font-size: 11.5px;
   font-weight: 600;
   white-space: nowrap;
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 
 .urt-s-open {
@@ -732,6 +734,8 @@ select.urt-input {
 @media (max-width: 560px) {
   .urt-root {
     padding: 18px 14px;
+    width: 100%;
+    min-width: 0;
   }
 
   .urt-page-title {
@@ -751,6 +755,33 @@ select.urt-input {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .urt-head-stat {
+    align-items: center;
+    align-self: flex-start;
+    min-width: 172px;
+  }
+
+  .urt-stat-label {
+    text-align: center;
+  }
+
+  .urt-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .urt-form-panel,
+  .urt-list-panel {
+    min-width: 0;
+  }
+
+  .urt-panel-head {
+    padding: 18px;
+  }
+
+  .urt-form {
+    padding: 18px;
   }
 
   .urt-ticket-top {

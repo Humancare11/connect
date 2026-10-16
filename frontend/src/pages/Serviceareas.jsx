@@ -116,7 +116,7 @@ export default function Serviceareas() {
         description={`Humancare Connect offers teleconsultation to patients physically located in ${AVAILABLE_COUNT} U.S. states. Teleconsultation is not currently available in California, Massachusetts, Rhode Island, or Vermont.`}
       />
 
-      <main className="sa-page">
+      <div className="sa-page">
         {/* HERO */}
         <section
           className="sa-hero"
@@ -318,7 +318,7 @@ export default function Serviceareas() {
             </aside>
           </div>
         </section>
-      </main>
+      </div>
     </>
   );
 }

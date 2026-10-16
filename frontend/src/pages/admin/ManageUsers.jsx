@@ -10,6 +10,7 @@ import {
 } from "./userAdminActions";
 import DeletionRequestsPanel from "./DeletionRequestsPanel";
 import "./ManageUsers.css";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
 
 // Remembers where the list was scrolled when a profile is opened, so coming
 // back (the page's Back button or the browser's) puts the admin in the same place.
@@ -31,6 +32,7 @@ function formatPatientId(value) {
 }
 
 export default function ManageUsers() {
+  const confirm = useConfirm();
   const location = useLocation();
   const navigate = useNavigate();
   const navigationType = useNavigationType();
@@ -111,21 +113,21 @@ export default function ManageUsers() {
   };
 
   const handleDelete = async (userId, userName) => {
-    const result = await deleteUserAccount(userId, userName);
+    const result = await deleteUserAccount(userId, userName, confirm);
     if (!result.done) return;
     if (result.ok) setUsers((prev) => prev.filter((u) => u._id !== userId));
     showToast(result.message, result.ok);
   };
 
   const handleApproveDelete = async (userId, userName) => {
-    const result = await approveUserDeletion(userId, userName);
+    const result = await approveUserDeletion(userId, userName, confirm);
     if (!result.done) return;
     if (result.ok) setUsers((prev) => prev.filter((u) => u._id !== userId));
     showToast(result.message, result.ok);
   };
 
   const handleRejectDelete = async (userId, userName) => {
-    const result = await rejectUserDeletion(userId, userName);
+    const result = await rejectUserDeletion(userId, userName, confirm);
     if (!result.done) return;
     if (result.ok) {
       setUsers((prev) => prev.map((u) => (u._id === userId ? mergeUpdatedUser(u, result.user) : u)));
@@ -309,8 +311,8 @@ export default function ManageUsers() {
                     </td>
                     <td
                       style={{
-                        fontFamily:
-                          "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+                        fontFamily: "var(--font-secondary)",
+                        fontVariantNumeric: "tabular-nums",
                         color: "#475569",
                       }}
                     >

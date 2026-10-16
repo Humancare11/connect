@@ -87,7 +87,7 @@
 .wcu-layout {
   position: relative;
   z-index: 1;
-  max-width: 1280px;
+  max-width: var(--container-lg);
   margin: 0 auto;
   display: grid;
   grid-template-columns: 350px 1fr;
@@ -165,8 +165,8 @@
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 100%);
   border: 1px solid rgba(124, 183, 255, 0.28);
   border-radius: 18px;
-  backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
   overflow: hidden;
   box-shadow: 0 18px 50px rgba(8, 48, 142, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.10);
 }
@@ -227,22 +227,28 @@
   font-weight: 600;
   color: #fff;
   letter-spacing: 0.3px;
-  transition: transform 0.3s var(--ease-spring), box-shadow 0.3s ease, filter 0.2s ease;
+  transition: transform var(--duration-slow) var(--ease-spring), box-shadow var(--duration-slow) ease, filter var(--duration-base) ease;
   box-shadow: 0 10px 28px rgba(11, 87, 232, 0.28);
 }
 
 .wcu-cta:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 18px 48px rgba(11, 87, 232, 0.38);
   filter: brightness(1.1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wcu-cta:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 18px 48px rgba(11, 87, 232, 0.38);
+  }
 }
 
 .wcu-cta svg {
-  transition: transform 0.3s var(--ease-spring);
+  transition: transform var(--duration-slow) var(--ease-spring);
 }
 
-.wcu-cta:hover svg {
-  transform: translateX(4px);
+@media (hover: hover) and (pointer: fine) {
+  .wcu-cta:hover svg {
+    transform: translateX(4px);
+  }
 }
 
 /* ── Right column ── */
@@ -311,7 +317,7 @@
   box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   animation: wcu-float-a 6s ease-in-out infinite;
   animation-delay: var(--delay, 0s);
-  transition: transform 0.4s var(--ease-spring), box-shadow 0.4s ease, border-color 0.3s ease;
+  transition: transform 0.4s var(--ease-spring), box-shadow 0.4s ease, border-color var(--duration-slow) ease;
 }
 
 .wcu-card:nth-child(2n) {
@@ -323,9 +329,13 @@
 }
 
 .wcu-card:hover {
-  transform: scale(1.03) translateY(-5px);
-  box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   border-color: var(--glass-border-bright);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wcu-card:hover {
+    transform: scale(1.03) translateY(-5px);
+    box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
 }
 
 .wcu-card--sm {
@@ -356,8 +366,12 @@
 }
 
 .wcu-card:hover .wcu-card__photo img {
-  transform: scale(1.04);
   filter: saturate(1.05) brightness(0.82) contrast(1.03);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wcu-card:hover .wcu-card__photo img {
+    transform: scale(1.04);
+  }
 }
 
 /* Full-card scrim removed to make background bright and clean */
@@ -495,7 +509,11 @@
 
 .wcu-card:hover .wcu-card__hint {
   opacity: 1;
-  transform: translateY(0);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wcu-card:hover .wcu-card__hint {
+    transform: translateY(0);
+  }
 }
 
 /* ================================================================
@@ -511,8 +529,8 @@
   justify-content: center;
   padding: 24px;
   background: rgba(4, 12, 20, 0.55);
-  backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.38s var(--ease-out);
@@ -556,7 +574,7 @@
 .wcu-popup--hiding {
   transform: scale(0.75) translateY(30px);
   opacity: 0;
-  transition: transform 0.34s var(--ease-out), opacity 0.3s var(--ease-out);
+  transition: transform 0.34s var(--ease-out), opacity var(--duration-slow) var(--ease-out);
 }
 
 /* ── Photo image spans full card background ── */
@@ -612,14 +630,18 @@
   cursor: pointer;
   color: #ffffff;
   transition: background 0.22s ease, transform 0.25s ease, color 0.22s ease;
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .wcu-popup__close:hover {
   background: #7cb7ff;
   color: #071739;
-  transform: scale(1.1) rotate(90deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .wcu-popup__close:hover {
+    transform: scale(1.1) rotate(90deg);
+  }
 }
 
 /* ── Text content overlays on top of background photo ── */
@@ -1048,8 +1070,10 @@
 
 /* Touch devices */
 @media (hover: none) and (pointer: coarse) {
-  .wcu-card:hover {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .wcu-card:hover {
+      transform: none;
+    }
   }
 
   .wcu-card:active {
@@ -1061,8 +1085,10 @@
     transform: translateY(0);
   }
 
-  .wcu-cta:hover {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .wcu-cta:hover {
+      transform: none;
+    }
   }
 
   .wcu-cta:active {
@@ -1076,7 +1102,9 @@
     animation: none;
   }
 
-  .wcu-card:hover {
-    transform: none;
+  @media (hover: hover) and (pointer: fine) {
+    .wcu-card:hover {
+      transform: none;
+    }
   }
 }

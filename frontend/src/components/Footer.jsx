@@ -42,7 +42,6 @@ export default function Footer() {
           </p>
 
           {/* COMPLIANCE BADGES */}
-          
 
           {/* CONTACT DETAILS — blended into footer background */}
           <div className="footer-contact-list">
@@ -143,7 +142,12 @@ export default function Footer() {
 
       {/* FOOTER BOTTOM */}
       <div className="footer-bottom">
-        <span>© 2026 Humancare Connect, Inc.</span>
+        <span>
+          © 2026 Humancare Connect, Inc. ·{" "}
+          <a href="https://db-ip.com" target="_blank" rel="noopener noreferrer">
+            IP Geolocation by DB-IP
+          </a>
+        </span>
 
         <div className="footer-socials">
           <a

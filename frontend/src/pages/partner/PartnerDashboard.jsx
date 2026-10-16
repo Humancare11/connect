@@ -229,7 +229,16 @@ export default function PartnerDashboard() {
                 <tr
                   key={c._id}
                   className="pt-row-link"
+                  tabIndex={0}
+                  aria-label="Open case details"
                   onClick={() => openCase(c._id)}
+                  onKeyDown={(e) => {
+                    if (e.target !== e.currentTarget) return;
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openCase(c._id);
+                    }
+                  }}
                 >
                   <td style={{ fontWeight: 600, color: "#0369a1" }}>
                     {c.caseNumber}

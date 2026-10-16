@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 
-// Log every query in non-production environments — mongoose's own debug
-// flag; the boolean form is used (rather than a custom callback) since its
-// signature is stable across driver versions, unlike the callback form.
-mongoose.set("debug", process.env.NODE_ENV !== "production");
+// Mongoose query logging is off unless MONGOOSE_DEBUG=true, and never on in production (queries can carry
+// patient data and the output is slow and noisy). The boolean form is used (rather than a custom callback) since
+// its signature is stable across driver versions, unlike the callback form.
+const debugRequested = process.env.MONGOOSE_DEBUG === "true";
+const isProduction = process.env.NODE_ENV === "production";
+mongoose.set("debug", debugRequested && !isProduction);
+if (debugRequested && isProduction) console.warn("[db] MONGOOSE_DEBUG is ignored in production");
 
 // Warn on slow queries in every environment (production included) — this is
 // often the only signal that surfaces a missing index before a user

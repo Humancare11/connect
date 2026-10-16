@@ -24,7 +24,7 @@ const SCORE = Object.freeze({
   PREFIX: 85, // value starts with the query
   WORD_PREFIX: 70, // every query word starts a word of the value
   NAMED_IN_QUERY: 65, // the whole value appears inside a longer query
-  CONTAINS: 50, // the value contains the query (query >= 3 characters)
+  CONTAINS: 50, // the value contains the query (query >= 4 characters, PR 10)
 });
 
 // Field weights. Resulting priority (score = base × weight):
@@ -37,7 +37,11 @@ const WEIGHT = Object.freeze({ NAME: 1, ALIAS: 0.95, DESCRIPTION: 0.6, BLOG_PATH
 
 const MIN_SCORE = 40;
 const MIN_MATCH_LENGTH = 2;
-const MIN_CONTAINS_LENGTH = 3;
+// Mid-word substring matching ("heatrash" for "rash") is only trusted for
+// queries of 4+ characters. Short terms and abbreviations ("uti", "ent", "flu", "gp",
+// "bp") match on whole words, word prefixes, exact names and approved aliases
+// only, so "uti" can never match "Routine Check-Ups" (PR 10).
+const MIN_SUBSTRING_LENGTH = 4;
 // The filler-stripped "core" query ranks slightly below the literal query.
 const CORE_QUERY_PENALTY = 5;
 // A doctor surfaced through a strongly matched specialty.
@@ -69,7 +73,8 @@ function scoreText(queryIn, valueIn, { textOnly = false } = {}) {
   if (!query.text || !value.text) return 0;
 
   // Long free text (descriptions, blog paths) only counts whole-word prefixes.
-  if (textOnly) return query.text.length >= MIN_CONTAINS_LENGTH && wordPrefixMatch(query, value) ? SCORE.WORD_PREFIX : 0;
+  // (PR 10: 3-letter terms are too ambiguous for free text; titles and names still match them.)
+  if (textOnly) return query.text.length >= MIN_SUBSTRING_LENGTH && wordPrefixMatch(query, value) ? SCORE.WORD_PREFIX : 0;
 
   if (value.text === query.text) return SCORE.EXACT;
   if (value.singular === query.singular || value.compact === query.compact) return SCORE.EQUIVALENT;
@@ -78,7 +83,7 @@ function scoreText(queryIn, valueIn, { textOnly = false } = {}) {
   // The whole value is named inside a longer query, e.g. "chronic migraine
   // pain" contains the condition "chronic migraine".
   if (value.singularTokens.every((v) => query.singularTokens.includes(v))) return SCORE.NAMED_IN_QUERY;
-  if (query.text.length >= MIN_CONTAINS_LENGTH && (value.text.includes(query.text) || value.compact.includes(query.compact))) {
+  if (query.text.length >= MIN_SUBSTRING_LENGTH && (value.text.includes(query.text) || value.compact.includes(query.compact))) {
     return SCORE.CONTAINS;
   }
   return 0;

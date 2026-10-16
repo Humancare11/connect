@@ -1,0 +1,23 @@
+.hc-route-spinner {
+  display: flex;
+  justify-content: center;
+  padding-top: 160px;
+}
+.hc-route-spinner__ring {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(37, 99, 235, 0.2);
+  border-top-color: var(--primary, #2563eb);
+  border-radius: 50%;
+  animation: hc-route-spin 0.8s linear infinite;
+}
+@keyframes hc-route-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hc-route-spinner__ring {
+    animation-duration: 2.4s;
+  }
+}

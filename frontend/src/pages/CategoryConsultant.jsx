@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import "./CategoryConsultant.css";
+import { useToast } from "../components/ui/Toast";
 
 const CATEGORY_MAP = {
   general: "General & Everyday Care",
@@ -129,6 +130,7 @@ const CHEVRON_ICON = (
    ===================================================================== */
 
 export default function CategoryConsultant({ onComplete }) {
+  const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -325,7 +327,7 @@ export default function CategoryConsultant({ onComplete }) {
       }
     } catch (error) {
       console.error(error);
-      alert("Error preparing booking");
+      toast.error("Error preparing booking");
     }
   };
 

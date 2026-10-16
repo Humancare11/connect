@@ -1,0 +1,94 @@
+.hc-ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid transparent;
+  border-radius: 100px;
+  font-family: var(--font-secondary);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background var(--duration-base) ease,
+    border-color var(--duration-base) ease,
+    color var(--duration-base) ease;
+}
+.hc-ui-btn--sm {
+  padding: 9px 18px;
+  font-size: 13.5px;
+}
+.hc-ui-btn--md {
+  padding: 13px 24px;
+  font-size: 15px;
+}
+.hc-ui-btn--lg {
+  padding: 15px 28px;
+  font-size: 15px;
+}
+
+.hc-ui-btn--primary {
+  background: #0b57e8;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(11, 87, 232, 0.35);
+}
+.hc-ui-btn--primary:hover:not(:disabled) {
+  background: #083ebd;
+}
+.hc-ui-btn--secondary {
+  background: #fff;
+  color: #0b57e8;
+  border-color: #0b57e8;
+}
+.hc-ui-btn--secondary:hover:not(:disabled) {
+  background: #eff6ff;
+}
+.hc-ui-btn--ghost {
+  background: transparent;
+  color: #0b57e8;
+}
+.hc-ui-btn--ghost:hover:not(:disabled) {
+  background: rgba(11, 87, 232, 0.08);
+}
+.hc-ui-btn--danger {
+  background: #dc2626;
+  color: #fff;
+}
+.hc-ui-btn--danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.hc-ui-btn:disabled,
+.hc-ui-btn[aria-busy="true"] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.hc-ui-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.hc-ui-btn__spinner {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: currentColor;
+  animation: hc-ui-btn-spin 0.7s linear infinite;
+}
+.hc-ui-btn--secondary .hc-ui-btn__spinner,
+.hc-ui-btn--ghost .hc-ui-btn__spinner {
+  border-color: rgba(11, 87, 232, 0.25);
+  border-top-color: currentColor;
+}
+@keyframes hc-ui-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hc-ui-btn__spinner {
+    animation-duration: 2.4s;
+  }
+}

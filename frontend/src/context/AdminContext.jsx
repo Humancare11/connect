@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import api, { clearUserAuthToken, setActiveAuthRole } from "../api";
-import { clearClientSession } from "../utils/session";
+import { clearClientSession, dispatchSessionActivity } from "../utils/session";
+import { broadcastLogout, startSessionSync } from "../utils/crossTab";
 
 const AdminContext = createContext(null);
 
@@ -62,7 +63,29 @@ export function AdminProvider({ children }) {
     clearUserAuthToken();
     clearClientSession();
     setAdmin(null);
+    broadcastLogout(); // the dashboard tab and the Live Chat tab share one session: signing out in one signs out both
   }, []);
+
+  // Other admin tabs: share activity (so an idle tab does not log out an admin who is working in another one) and
+  // follow a sign-out. The server session is already revoked by the tab that signed out.
+  const roleRef = useRef("");
+  useEffect(() => {
+    roleRef.current = admin?.role || "";
+  }, [admin]);
+  const signedIn = Boolean(admin);
+  useEffect(() => {
+    if (!signedIn) return undefined;
+    return startSessionSync({
+      onRemoteActivity: dispatchSessionActivity,
+      onRemoteLogout: () => {
+        const role = roleRef.current;
+        clearUserAuthToken();
+        clearClientSession();
+        setAdmin(null);
+        window.location.assign(role === "paymentadmin" ? "/payment-admin-login" : "/adminauth");
+      },
+    });
+  }, [signedIn]);
 
   return (
     <AdminContext.Provider value={{ admin, loading, login, logout }}>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import socket from "../../socket";
 import "./DoctorLayout.css";
 import api, { getUserAuthToken } from "../../api";
@@ -137,18 +138,21 @@ const IconLogout = () => (
     <line x1="21" y1="12" x2="9" y2="12" />
   </svg>
 );
-const IconPlus = () => (
+const IconHome = () => (
   <svg
-    width="14"
-    height="14"
+    width="18"
+    height="18"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2.5"
+    strokeWidth="2"
     strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
   >
-    <line x1="12" y1="5" x2="12" y2="19" />
-    <line x1="5" y1="12" x2="19" y2="12" />
+    <path d="m3 10 9-7 9 7" />
+    <path d="M5 9v11h14V9" />
+    <path d="M9 20v-6h6v6" />
   </svg>
 );
 
@@ -320,7 +324,7 @@ export default function DoctorLayout({ children }) {
     );
   };
 
-  const currentPage = menuItems.find((m) => isActiveLink(pathForItem(m)));
+  // const currentPage = menuItems.find((m) => isActiveLink(pathForItem(m)));
 
   return (
     <div className="dl-page">
@@ -390,10 +394,10 @@ export default function DoctorLayout({ children }) {
 
           <div className="dl-topbar-left">
             <p className="dl-topbar-eyebrow">Humancare Connect</p>
-            <h1 className="dl-topbar-title">
+            {/* <h1 className="dl-topbar-title">
               {currentPage?.icon}
               {currentPage?.label || "Dashboard"}
-            </h1>
+            </h1> */}
           </div>
 
           <div className="dl-topbar-right">
@@ -455,13 +459,18 @@ export default function DoctorLayout({ children }) {
               {togglingStatus ? "Updating..." : isOnline ? "Online" : "Offline"}
             </span>
 
-            <Link to="/" className="dl-topbar-book">
-              <IconPlus /> Home
+            <Link
+              to="/doctor-dashboard"
+              className="dl-topbar-book"
+              aria-label="Dashboard home"
+              title="Dashboard home"
+            >
+              <IconHome /> <span>Home</span>
             </Link>
           </div>
         </header>
 
-        <main className="dl-content">{children}</main>
+        <main className="dl-content" id="main-content" tabIndex={-1}><ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary></main>
       </div>
     </div>
   );

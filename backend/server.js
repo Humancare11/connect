@@ -50,8 +50,10 @@ const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
+const { scheduleSearchAnalyticsRollup } = require("./jobs/searchAnalyticsJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
 const { scheduleEmailSync } = require("./jobs/emailSyncJob");
+const { mountLiveChat, seedLiveChatDefaults } = require("./services/liveChat");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
 const { seedCategoryPricing } = require("./models/CategoryPricing");
 const {
@@ -78,6 +80,8 @@ app.set("trust proxy", parseTrustProxy(process.env.TRUST_PROXY));
 // Mounted before helmet/CORS/cookies on purpose: it sets its own headers and
 // must answer every request identically. Inert unless open tracking is switched on.
 app.use("/api/e", require("./routes/publicTracking"));
+app.use("/api/l", require("./routes/publicLinks"));
+app.use("/api/d", require("./routes/publicDownloads"));
 
 // Creates a default account if it doesn't already exist. In development
 // this uses a fixed, well-known password for local convenience. Outside
@@ -142,8 +146,10 @@ const startServer = async () => {
   await normalizeCategoryPricingCurrency();
   await ensureRetentionDefaults();
   scheduleRetentionCleanup();
+  scheduleSearchAnalyticsRollup(); // no-op unless search analytics is enabled; never throws or blocks startup
   scheduleInvoiceReconciliation();
   scheduleEmailSync();
+  await seedLiveChatDefaults().catch((err) => console.error("[livechat] seed failed:", err.message));
 
   await ensureBucketCors(allowedOrigins);
 
@@ -385,6 +391,7 @@ app.use("/api", (req, res, next) => {
 
 const contactRoutes = require("./routes/contact");
 app.use("/api/contact", contactRoutes);
+app.use("/api/careers", require("./routes/careers"));
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -591,6 +598,8 @@ app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
+// Registered first: signatures are private to each admin and have their own guard.
+app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
@@ -608,6 +617,7 @@ app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/services", require("./routes/services"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/superadmin/blogs", require("./routes/superadminBlogs"));
+app.use("/api/admin/search-analytics", require("./routes/adminSearchAnalytics"));
 app.use("/api/blogs", require("./routes/blogs"));
 app.use("/api/appointment-tree", require("./routes/appointmentTree"));
 app.use("/api/retention-policies", require("./routes/retention"));
@@ -814,6 +824,11 @@ const io = new Server(server, {
 app.set("io", io);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
 app.set("evictAllFromAppointmentRoom", evictAllFromAppointmentRoom);
+// Reopening a completed appointment must lift the "terminated" block set by
+// evictAllFromAppointmentRoom, otherwise nobody can rejoin for up to 5 minutes.
+app.set("allowAppointmentRoomRejoin", (appointmentId) => {
+  terminatedAppointmentRooms.delete(String(appointmentId));
+});
 
 io.engine.on("connection_error", (err) => {
   console.warn("[socket] connection_error", {
@@ -3215,6 +3230,10 @@ io.on("connection", (socket) => {
   });
 
 }); // end io.on("connection")
+
+// Live Chat (kill switch: LIVECHAT_ENABLED, default off). Registers the /livechat and /livechat-admin socket
+// namespaces and /api/admin/livechat; does nothing at all when the module is disabled or misconfigured.
+mountLiveChat({ app, io, validateAccessToken: validateSocketAccessToken });
 
 // ── Global error handler ──────────────────────────────────────────────────
 // Catches uncaught errors from routes/middleware (Express 5 auto-forwards

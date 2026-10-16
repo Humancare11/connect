@@ -49,8 +49,7 @@
   --ead-shadow: 0 4px 16px -6px rgba(20, 24, 40, 0.12);
   --ead-shadow-lg: 0 18px 48px -18px rgba(20, 24, 40, 0.28);
 
-  --ead-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  --ead-font: var(--font-secondary);
 }
 
 /* ============================================================
@@ -114,9 +113,13 @@
     border-color 0.16s ease;
 }
 .ead-stat:hover {
-  box-shadow: var(--ead-shadow);
-  transform: translateY(-2px);
   border-color: var(--ead-line-strong);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ead-stat:hover {
+    box-shadow: var(--ead-shadow);
+    transform: translateY(-2px);
+  }
 }
 
 .ead-stat-icon {
@@ -338,8 +341,12 @@
 }
 .ead-action-card:hover {
   border-color: var(--ead-accent);
-  box-shadow: var(--ead-shadow);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ead-action-card:hover {
+    box-shadow: var(--ead-shadow);
+    transform: translateY(-2px);
+  }
 }
 
 .ead-action-icon {

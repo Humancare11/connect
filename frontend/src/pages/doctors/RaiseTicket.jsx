@@ -192,7 +192,7 @@ const RaiseTicket = () => {
                     className={`rt-ticket ${isOpen ? 'rt-ticket--open' : ''}`}
                     style={{ animationDelay: `${i * 0.04}s` }}
                   >
-                    <div className="rt-ticket-top" onClick={() => setExpanded(isOpen ? null : ticket._id)}>
+                    <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setExpanded(isOpen ? null : ticket._id))(e); } }} className="rt-ticket-top" onClick={() => setExpanded(isOpen ? null : ticket._id)}>
                       <div className="rt-ticket-left">
                         <div className="rt-ticket-id">#{String(i + 1).padStart(3, '0')}</div>
                         <div className="rt-ticket-info">

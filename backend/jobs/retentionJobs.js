@@ -33,6 +33,31 @@ async function runRetentionCleanup(req = null) {
     result.uploadedFiles = await deleteUploadsOlderThan(olderThan);
   }
 
+  // Website live chat has its own policy and its own collections (Lc*); it runs even when the module is switched off.
+  if (byKey.liveChat) {
+    const { runLiveChatRetention } = require("../services/liveChat/retention");
+    const liveChat = await runLiveChatRetention({ cutoff: cutoff(byKey.liveChat.retentionDays) });
+    result.liveChat = liveChat.chats + liveChat.contacts;
+    result.liveChatDetail = liveChat;
+  }
+
+  // Super Admin Trash: chats deleted 30+ days ago are purged for good (always, like the live-chat retention).
+  try {
+    const { createTrashService } = require("../services/liveChat/trashService");
+    const models = {
+      LcConversation: require("../models/LcConversation"),
+      LcMessage: require("../models/LcMessage"),
+      LcFile: require("../models/LcFile"),
+      LcPageVisit: require("../models/LcPageVisit"),
+      LcVisitor: require("../models/LcVisitor"),
+      LcChatDeletionAudit: require("../models/LcChatDeletionAudit"),
+    };
+    const trashPurge = await createTrashService({ models, archive: null }).autoPurge();
+    result.liveChatTrash = trashPurge.deleted;
+  } catch (err) {
+    console.error("live chat trash purge error:", err);
+  }
+
   await recordActivity(req, {
     action: "RETENTION_CLEANUP_RUN",
     resource: "RetentionPolicy",

@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./industrySlider.css";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 import { BsBuildingsFill } from "react-icons/bs";
 import { MdHealthAndSafety } from "react-icons/md";
 import { FaAnchor, FaBalanceScale, FaHotel } from "react-icons/fa";
@@ -115,7 +116,37 @@ const industries = [
 
 export default function IndustrySlider() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const reducedMotion = usePrefersReducedMotion();
+
+  // Swiper reads its autoplay option once at init, so stop/resume it when the preference changes.
+  useEffect(() => {
+    const autoplay = swiperRef.current?.autoplay;
+    if (!autoplay) return;
+    if (reducedMotion) autoplay.stop();
+    else autoplay.start();
+  }, [reducedMotion]);
   const swiperRef = useRef(null);
+  const tabRefs = useRef([]);
+  const navScrollRef = useRef(null);
+
+  // Keep the active pill centred inside the nav strip when it overflows (mobile/tablet).
+  // Scrolls only the strip itself — scrollIntoView would also scroll the page
+  // vertically on every autoplay tick while the user is reading elsewhere.
+  useEffect(() => {
+    const wrap = navScrollRef.current;
+    const el = tabRefs.current[activeIndex];
+    if (!wrap || !el || wrap.scrollWidth <= wrap.clientWidth) return;
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const delta =
+      elRect.left + elRect.width / 2 - (wrapRect.left + wrapRect.width / 2);
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    wrap.scrollBy({ left: delta, behavior: reduceMotion ? "auto" : "smooth" });
+  }, [activeIndex]);
 
   const handleTabClick = (index) => {
     if (swiperRef.current) {
@@ -143,6 +174,8 @@ export default function IndustrySlider() {
 
         {/* Sync Tabs — scroll wrapper keeps nav on one line on mobile */}
         <motion.div
+          ref={navScrollRef}
+          layoutScroll
           className="slider-nav-scroll-wrap"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -153,6 +186,9 @@ export default function IndustrySlider() {
             {industries.map((ind, i) => (
               <button
                 key={ind.id}
+                ref={(el) => (tabRefs.current[i] = el)}
+                type="button"
+                aria-pressed={activeIndex === i}
                 className={`nav-v2-item ${activeIndex === i ? "active" : ""}`}
                 onClick={() => handleTabClick(i)}
                 style={{
@@ -189,10 +225,14 @@ export default function IndustrySlider() {
               modifier: 2.5,
               slideShadows: false,
             }}
-            autoplay={{
-              delay: 5000,
-              disableOnInteraction: false,
-            }}
+            autoplay={
+              reducedMotion
+                ? false
+                : {
+                    delay: 5000,
+                    disableOnInteraction: false,
+                  }
+            }
             pagination={{ clickable: true }}
             onSwiper={(swiper) => (swiperRef.current = swiper)}
             onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}

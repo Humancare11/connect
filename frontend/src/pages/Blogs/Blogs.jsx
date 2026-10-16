@@ -260,7 +260,7 @@ export default function BlogPage() {
                   >
                     <article>
                       <div className="card-img-wrap">
-                        <img
+                        <img decoding="async"
                           src={blog.image}
                           alt={blog.title}
                           className="card-img"

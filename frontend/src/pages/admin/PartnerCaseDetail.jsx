@@ -10,6 +10,7 @@ import {
   formatMoney,
 } from "../partner/caseConstants";
 import "./PartnerCaseDetail.css";
+import useModalA11y from "../../hooks/useModalA11y";
  
 const NEXT_STATUS = {
   submitted: ["assigned", "cancelled"],
@@ -47,6 +48,8 @@ export default function AdminPartnerCaseDetail() {
   const [notes, setNotes] = useState("");
   const [notesDirty, setNotesDirty] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const chatDrawerRef = useRef(null);
+  useModalA11y(chatDrawerRef, chatOpen, () => setChatOpen(false));
   const chatEndRef = useRef(null);
  
   const caseQ = useQuery({
@@ -310,7 +313,7 @@ export default function AdminPartnerCaseDetail() {
       {chatOpen && (
         <>
           <div className="pt-chat-overlay" onClick={() => setChatOpen(false)} />
-          <aside className="pt-chat-drawer" role="dialog" aria-label="Case messages">
+          <aside className="pt-chat-drawer" ref={chatDrawerRef} role="dialog" aria-modal="true" aria-label="Case messages">
             <div className="pt-chat-drawer__head">
               <p className="pt-chat-drawer__title">Messages</p>
               <button

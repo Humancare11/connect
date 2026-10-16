@@ -38,7 +38,7 @@ function PhotoSlot({ label, image, icon, className = "", variant = "blue" }) {
       <div className="photo-slot__texture" />
       <div className="photo-slot__sheen" />
       {image ? (
-        <img
+        <img decoding="async"
           src={image}
           alt={label}
           className="photo-slot__image"
@@ -255,15 +255,13 @@ export default function AboutPage() {
         <section>
           <div className="corp-hero about-page-hero">
             <div className="corp-hero-inner">
-              <h1>
-                One Connection to Better Healthcare.
-              </h1>
+              <h1>One Connection to Better Healthcare.</h1>
               <p>
-               At Humancare Connect, we make quality healthcare more accessible
-for patients across the United States. Through secure online doctor
-consultations and virtual care services, we connect individuals,
-families, and organizations with licensed U.S. providers, right
-from the comfort of home.
+                At Humancare Connect, we make quality healthcare more accessible
+                for patients across the United States. Through secure online
+                doctor consultations and virtual care services, we connect
+                individuals, families, and organizations with licensed U.S.
+                providers, right from the comfort of home.
               </p>
             </div>
           </div>
@@ -276,16 +274,13 @@ from the comfort of home.
               <Rv>
                 <div className="why__left">
                   {/* <Eyebrow>Our story</Eyebrow> */}
-                  <h2
-                    className="heading heading--lg why__heading"
-                    style={{ marginTop: 16 }}
-                  >
+                  <h2 className="heading heading--lg why__heading">
                     Why We
                     <br />
                     Started
                   </h2>
                   <div className="why__img-wrap">
-                    <img
+                    <img decoding="async"
                       src={WhyHumancareImg}
                       width="1790"
                       height="1860"
@@ -336,9 +331,7 @@ from the comfort of home.
             <Rv delay={80}>
               <h2 className="heading heading--lg problem__title">
                 The Healthcare{" "}
-                <span className="text-blue">
-                  Challenges We’re Solving
-                </span>
+                <span className="text-blue">Challenges We’re Solving</span>
               </h2>
               <p className="heading heading--lg problem__desc">
                 Healthcare should be simple, transparent, and built around the
@@ -421,7 +414,7 @@ from the comfort of home.
                 </p>
               </div>
               <div className="network__img-wrap">
-                <img
+                <img decoding="async"
                   src={NetworkDoctorsImg}
                   width="1790"
                   height="1860"
@@ -614,7 +607,7 @@ from the comfort of home.
                     </p>
                   </div>
                   <div className="trust-privacy__badges">
-                    {[ "HIPAA-aligned", "Encrypted"].map((b) => (
+                    {["HIPAA-aligned", "Encrypted"].map((b) => (
                       <span key={b} className="badge">
                         {b}
                       </span>

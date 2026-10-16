@@ -154,7 +154,7 @@
 .stage {
   position: relative;
   width: 100%;
-  max-width: 1200px;
+  max-width: var(--container-md);
   height: 660px;
   perspective: 1800px;
   perspective-origin: 50% 45%;
@@ -175,8 +175,8 @@
 
 .card {
   background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(18px) saturate(160%);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
   border-radius: 28px;
   width: 390px;
   height: 560px;
@@ -193,8 +193,8 @@
   transform-origin: center center;
   cursor: pointer;
   transition:
-    box-shadow 0.3s,
-    background 0.3s;
+    box-shadow var(--duration-slow),
+    background var(--duration-slow);
 }
 .card::before {
   content: "";
@@ -238,8 +238,8 @@
 } */
 .card.active {
   background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
   width: 480px;
   height: 600px;
   padding: 50px 46px 42px;
@@ -263,8 +263,8 @@
   width: 64px;
   height: 64px;
   background: rgba(43, 191, 156, 0.12);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   border-radius: 18px;
   border: 1px solid rgba(43, 191, 156, 0.25);
   display: flex;
@@ -367,12 +367,16 @@
   cursor: pointer;
   letter-spacing: 0.2px;
   transition:
-    background 0.2s,
-    transform 0.15s;
+    background var(--duration-base),
+    transform var(--duration-fast);
 }
 .cta:hover {
   background: #2bbf9c;
-  transform: scale(1.04);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cta:hover {
+    transform: scale(1.04);
+  }
 }
 
 /* CONTROLS */
@@ -394,7 +398,7 @@
   justify-content: center;
   font-size: 22px;
   color: #0d2b3e;
-  transition: all 0.2s;
+  transition: background var(--duration-base), border-color var(--duration-base), color var(--duration-base);
   box-shadow: 0 2px 12px rgba(13, 43, 62, 0.07);
   line-height: 1;
   font-weight: 300;
@@ -433,7 +437,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  transition: all 0.2s;
+  transition: border-color var(--duration-base), color var(--duration-base);
   padding: 9px 16px;
   border-radius: 22px;
 }

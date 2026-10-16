@@ -1,6 +1,7 @@
 import React from "react";
 import { Country } from "country-state-city";
 import "./RxSlip.css";
+import useModalA11y from "../hooks/useModalA11y";
 
 import defaultClinicLogoUrl from "../assets/prescription-logo.png";
 import defaultClinicFooterLogoUrl from "../assets/prescription-footer-logo.png";
@@ -265,6 +266,8 @@ export const PrescriptionSlip = RxSlip;
 export function RxSlipModal({ open, onClose, ...rxSlipProps }) {
   const slipRef = React.useRef(null);
   const [downloading, setDownloading] = React.useState(false);
+  const modalRef = React.useRef(null);
+  useModalA11y(modalRef, open, onClose);
 
   if (!open) return null;
 
@@ -286,9 +289,9 @@ export function RxSlipModal({ open, onClose, ...rxSlipProps }) {
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className="rx-modal-box">
+      <div className="rx-modal-box" ref={modalRef} role="dialog" aria-modal="true" aria-labelledby="rx-modal-title">
         <div className="rx-modal-header">
-          <div className="rx-modal-title">Prescription Preview</div>
+          <div className="rx-modal-title" id="rx-modal-title">Prescription Preview</div>
           <div className="rx-modal-actions">
             <button
               type="button"
@@ -324,6 +327,8 @@ export async function downloadPrescriptionPDF(
     import("html2canvas"),
     import("jspdf"),
   ]);
+
+  await document.fonts.ready;
 
   const canvas = await html2canvas(element, {
     scale: 2,

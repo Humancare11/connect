@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import "./demo.css";
 import { BsBuildingsFill } from "react-icons/bs";
 import { MdHealthAndSafety } from "react-icons/md";
+import usePrefersReducedMotion from "../hooks/usePrefersReducedMotion";
 import {
   FaAnchor,
   FaBalanceScale,
@@ -130,6 +131,7 @@ const TOTAL = industries.length;
 export default function IndustryCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const reducedMotion = usePrefersReducedMotion();
   const [screenWidth, setScreenWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 1200,
   );
@@ -149,10 +151,10 @@ export default function IndustryCarousel() {
   };
 
   useEffect(() => {
-    if (isPlaying) startAuto();
+    if (isPlaying && !reducedMotion) startAuto();
     else clearInterval(intervalRef.current);
     return () => clearInterval(intervalRef.current);
-  }, [isPlaying]);
+  }, [isPlaying, reducedMotion]);
 
   const handleTabClick = (i) => {
     setActiveIndex(((i % TOTAL) + TOTAL) % TOTAL);
@@ -283,7 +285,7 @@ export default function IndustryCarousel() {
         {/* Tab Bar */}
         <div className="tab-bar">
           {industries.map((ind, i) => (
-            <div
+            <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => handleTabClick(i))(e); } }}
               key={ind.id}
               className={`tab-item ${activeIndex === i ? "active" : ""}`}
               onClick={() => handleTabClick(i)}
@@ -304,7 +306,7 @@ export default function IndustryCarousel() {
             const isClickable = Math.abs(offset) <= 2 && !isActive;
 
             return (
-              <div
+              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => isClickable && handleTabClick(i))(e); } }}
                 key={ind.id}
                 className="card-slot"
                 style={{

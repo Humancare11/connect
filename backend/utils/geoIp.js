@@ -42,8 +42,11 @@ function getReader() {
       })
       .catch((err) => {
         console.warn(
-          `[geoip] Could not open ${file} (${err.code || err.message}). ` +
-            "New users will have an empty location until the database is installed."
+          `[geoip] WARNING: location database not found or unreadable at ${file} (${err.code || err.message}). ` +
+            "Locations (signup, live chat visitors) will be EMPTY until it is installed. " +
+            "Download the free DB-IP \"IP to City Lite\" .mmdb from https://db-ip.com/db/download/ip-to-city-lite, " +
+            "unzip it and save it as backend/data/dbip-city-lite.mmdb (or set GEOIP_DB_PATH). " +
+            "Local requests from localhost (::1 / 127.0.0.1) never have a location; in development set LIVECHAT_DEV_FAKE_IP to a public IP to test."
         );
         return null;
       });

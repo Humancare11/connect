@@ -42,7 +42,7 @@ const CATEGORY_LANDING_ROUTES = Object.freeze({
   "Sexual Health": "/sexual-health",
   "Skin & Hair": "/skin-and-hair-care",
   "Travel & Global Care": "/travel-and-global-care",
-  "Weight & Nutrition": "/weight-and-nurtrition",
+  "Weight & Nutrition": "/weight-and-nutrition",
   "Women's Health": "/women-health",
 });
 

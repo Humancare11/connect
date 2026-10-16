@@ -136,7 +136,7 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
   });
 };
 
-const sendEmail = async ({ to, subject, text, html, replyTo }) => {
+const sendEmail = async ({ to, subject, text, html, replyTo, attachments }) => {
   await sendMail({
     from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
@@ -144,6 +144,7 @@ const sendEmail = async ({ to, subject, text, html, replyTo }) => {
     text,
     html,
     ...(replyTo ? { replyTo } : {}),
+    ...(attachments?.length ? { attachments } : {}),
   });
 };
 
@@ -490,4 +491,107 @@ const sendDoctorApprovalEmail = async (to, { name, loginUrl }) => {
   });
 };
 
-module.exports = { sendOTPEmail, sendEmail, sendInvoiceEmail, sendManualInvoiceEmail, sendGopEmail, sendDoctorApprovalEmail };
+// Shared layout for the booking/assignment notifications sent to admins and
+// doctors (see utils/bookingNotifications.js). Every value is escaped here, so
+// callers pass plain text. `rows` is a list of [label, value] pairs; rows with
+// an empty value are skipped. Deliberately carries no patient contact details
+// or clinical text — the CTA link leads to the authenticated dashboard.
+const buildBookingNotificationHTML = ({ badge, greeting, intro, rows = [], ctaUrl, ctaLabel }) => {
+  const rowsHtml = rows
+    .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+    .map(
+      ([label, value]) =>
+        `<tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">${escapeHtml(label)}</td><td style="font-size:13px;color:#1e1b4b;font-weight:600;text-align:right;padding:4px 0;">${escapeHtml(value)}</td></tr>`
+    )
+    .join("");
+  const safeUrl = ctaUrl ? escapeHtml(ctaUrl) : "";
+  const cta = safeUrl
+    ? `<div style="text-align:center;margin:0 0 20px;">
+      <a href="${safeUrl}" style="display:inline-block;background:#0a1f44;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:10px;">${escapeHtml(ctaLabel || "Open dashboard")}</a>
+      <p style="font-size:12px;color:#6b7280;margin:10px 0 0;">Full details are available after you sign in.</p>
+    </div>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>${escapeHtml(badge)} — Humancare Connect</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
+<div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
+
+  <div style="background:#dcebff;padding:20px 32px;text-align:center;border-radius: 16px 16px 0 0;">
+    <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
+    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">${escapeHtml(badge)}</span>
+  </div>
+
+  <div style="padding:24px 32px;">
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 12px;">${escapeHtml(greeting)}</p>
+    <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">${escapeHtml(intro)}</p>
+${rowsHtml ? `
+    <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">${rowsHtml}</table>
+    </div>
+` : ""}
+    ${cta}
+  </div>
+
+  <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:middle;width:140px;">
+          <img src="https://humancareconnect.co/logo-footer.png" alt="Humancare Connect"  style="display:block;object-fit:contain;width:140px;height:44px;"/>
+        </td>
+        <td style="vertical-align:middle;text-align:right;">
+          <table cellpadding="0" cellspacing="0" border="0" style="margin-left:auto;">
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="mailto:support@humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">support@humancareconnect.co</a></td></tr>
+            <tr><td style="padding:2px 0;font-size:12px;"><a href="https://humancareconnect.co" style="color:#4b5db8;text-decoration:none;font-weight:500;">humancareconnect.co</a></td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e5e7eb;text-align:center;">
+      <p style="margin:4px 0 0;font-size:11px;color:#b0b7c9;">© ${new Date().getFullYear()} Humancare Connect. All rights reserved.</p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>`;
+};
+
+const buildBookingNotificationText = ({ greeting, intro, rows = [], ctaUrl }) =>
+  [
+    greeting,
+    "",
+    intro,
+    "",
+    ...rows
+      .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
+      .map(([label, value]) => `${label}: ${value}`),
+    ...(ctaUrl ? ["", `Full details (sign in required): ${ctaUrl}`] : []),
+  ].join("\n");
+
+const sendBookingNotificationEmail = async (to, { subject, badge, greeting, intro, rows, ctaUrl, ctaLabel }) => {
+  await sendMail({
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
+    to,
+    subject,
+    text: buildBookingNotificationText({ greeting, intro, rows, ctaUrl }),
+    html: buildBookingNotificationHTML({ badge, greeting, intro, rows, ctaUrl, ctaLabel }),
+  });
+};
+
+module.exports = {
+  sendOTPEmail,
+  sendEmail,
+  sendInvoiceEmail,
+  sendManualInvoiceEmail,
+  sendGopEmail,
+  sendDoctorApprovalEmail,
+  sendBookingNotificationEmail,
+  buildBookingNotificationHTML,
+  buildBookingNotificationText,
+};

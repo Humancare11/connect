@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import api from "../api";
@@ -17,7 +18,7 @@ const ELEMENTS_APPEARANCE = {
     colorText: "#0f172a",
     colorDanger: "#dc2626",
     borderRadius: "8px",
-    fontFamily: "'DM Sans', 'Inter', system-ui, sans-serif",
+    fontFamily: "'Inter', system-ui, sans-serif",
   },
 };
 
@@ -102,7 +103,19 @@ function CheckoutForm({ amountPaise, currency, token, email, onPaid }) {
   );
 }
 
-export default function PaymentLinkCheckout() {
+const VISUALLY_HIDDEN = {
+  position: "absolute",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: "hidden",
+  clip: "rect(0, 0, 0, 0)",
+  whiteSpace: "nowrap",
+  border: 0,
+};
+
+function PaymentLinkCheckoutPage() {
   const { token } = useParams();
   const [link, setLink] = useState(null);
   const [clientSecret, setClientSecret] = useState("");
@@ -185,7 +198,7 @@ export default function PaymentLinkCheckout() {
   };
 
   return (
-    <main className="plc-page">
+    <div className="plc-page">
       <section className="plc-card">
         <div className="plc-topbar">
           <div className="plc-brand">
@@ -196,9 +209,9 @@ export default function PaymentLinkCheckout() {
         </div>
 
         {loading ? (
-          <div className="plc-state">Loading payment...</div>
+          <div className="plc-state"><h1 style={VISUALLY_HIDDEN}>Secure Payment</h1>Loading payment...</div>
         ) : error && !link ? (
-          <div className="plc-error">{error}</div>
+          <div className="plc-error"><h1 style={VISUALLY_HIDDEN}>Secure Payment</h1>{error}</div>
         ) : paidRef || link?.status === "paid" ? (
           <div className="plc-grid plc-success-grid">
             <div className="plc-summary-panel">
@@ -278,7 +291,16 @@ export default function PaymentLinkCheckout() {
                   )}
                 </>
               ) : (
-                <Elements stripe={stripePromise} options={{ clientSecret, appearance: ELEMENTS_APPEARANCE }}>
+                <Elements stripe={stripePromise} options={{
+                  clientSecret,
+                  appearance: ELEMENTS_APPEARANCE,
+                  fonts: [
+                    {
+                      cssSrc:
+                        "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+                    },
+                  ],
+                }}>
                   <CheckoutForm amountPaise={link.amountPaise} currency={link.currency} token={token} email={billingEmail} onPaid={handlePaid} />
                 </Elements>
               )}
@@ -288,6 +310,17 @@ export default function PaymentLinkCheckout() {
           </div>
         )}
       </section>
-    </main>
+    </div>
+  );
+}
+
+export default function PaymentLinkCheckout() {
+  return (
+    <>
+      <Helmet>
+        <title>Secure Payment | Humancare Connect</title>
+      </Helmet>
+      <PaymentLinkCheckoutPage />
+    </>
   );
 }

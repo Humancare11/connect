@@ -2,10 +2,11 @@ import { useState } from "react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import DeleteAccountModal from "./DeleteAccountModal";
+import Button from "./ui/Button";
 
 const DANGER = "#c0392b";
 const DANGER_BG = "#fcedec";
-const FONT = "'Plus Jakarta Sans', sans-serif";
+const FONT = "var(--font-secondary)";
 
 const formatDate = (value) => {
   if (!value) return "";
@@ -94,14 +95,13 @@ export default function DeleteAccountSection() {
           <p style={{ fontSize: 13, color: "#6b7ca3", lineHeight: 1.5, margin: "0 0 12px" }}>
             Our team will review your request and email you once it has been processed. Your account stays active until then.
           </p>
-          <button
+          <Button variant="secondary"
             type="button"
             onClick={cancelRequest}
             disabled={cancelling}
-            style={{ padding: "10px 20px", borderRadius: 12, border: `1.5px solid ${DANGER}`, background: "#fff", color: DANGER, fontFamily: FONT, fontSize: 13.5, fontWeight: 700, cursor: cancelling ? "not-allowed" : "pointer", opacity: cancelling ? 0.7 : 1 }}
           >
             {cancelling ? "Cancelling…" : "Cancel request"}
-          </button>
+          </Button>
         </div>
       ) : (
         <>
@@ -110,13 +110,12 @@ export default function DeleteAccountSection() {
               Your previous deletion request was declined, so your account is unchanged. You can submit a new request if you still want to delete it.
             </p>
           )}
-          <button
+          <Button variant="danger"
             type="button"
             onClick={() => setOpen(true)}
-            style={{ padding: "11px 24px", borderRadius: 12, border: `1.5px solid ${DANGER}`, background: "#fff", color: DANGER, fontFamily: FONT, fontSize: 13.5, fontWeight: 700, cursor: "pointer" }}
           >
             {status === "rejected" ? "Request account deletion again" : "Delete my account"}
-          </button>
+          </Button>
         </>
       )}
 

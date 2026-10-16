@@ -196,9 +196,11 @@ body {
   box-shadow: 0 4px 20px rgba(37, 99, 235, 0.45);
 }
 
-.hcc-btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.55);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(37, 99, 235, 0.55);
+  }
 }
 
 .hcc-btn-secondary {
@@ -428,9 +430,9 @@ body {
   padding: 32px 28px 26px;
   cursor: pointer;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    transform 0.2s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    transform var(--duration-base);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -440,8 +442,12 @@ body {
 
 .hcc-specialty-card:hover {
   border-color: rgba(37, 99, 235, 0.45);
-  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.14);
-  transform: translateY(-3px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-specialty-card:hover {
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.14);
+    transform: translateY(-3px);
+  }
 }
 
 .hcc-specialty-card:active {
@@ -484,13 +490,17 @@ body {
   color: var(--blue);
   opacity: 0.6;
   transition:
-    opacity 0.2s,
-    transform 0.2s;
+    opacity var(--duration-base),
+    transform var(--duration-base);
 }
 
 .hcc-specialty-card:hover .hcc-specialty-footer {
   opacity: 1;
-  transform: translateX(2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-specialty-card:hover .hcc-specialty-footer {
+    transform: translateX(2px);
+  }
 }
 
 /* link wrappers for cards to preserve right-click/new-tab behavior */
@@ -510,12 +520,13 @@ body {
 .hcc-specialty-arrow {
   color: var(--blue);
   flex-shrink: 0;
-  transition: transform 0.2s;
+  transition: transform var(--duration-base);
 }
 
-.hcc-specialty-card:hover .hcc-specialty-footer svg,
-.hcc-specialty-card:hover .hcc-specialty-arrow {
-  transform: translateX(3px);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-specialty-card:hover .hcc-specialty-footer svg, .hcc-specialty-card:hover .hcc-specialty-arrow {
+    transform: translateX(3px);
+  }
 }
 
 /* Backward-compat: if markup still uses the old standalone arrow class,
@@ -542,9 +553,9 @@ body {
   padding: 16px 16px 14px;
   cursor: pointer;
   transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    transform 0.2s;
+    border-color var(--duration-base),
+    box-shadow var(--duration-base),
+    transform var(--duration-base);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -554,8 +565,12 @@ body {
 
 .hcc-condition-card:hover {
   border-color: rgba(37, 99, 235, 0.4);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
-  transform: translateY(-2px);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-condition-card:hover {
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+    transform: translateY(-2px);
+  }
 }
 
 .hcc-condition-card:active {
@@ -620,7 +635,7 @@ body {
   border: 1.5px solid var(--line);
   border-radius: 20px;
   padding: 24px;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--duration-base);
   flex: 1 1 0;
   min-width: 0;
 }
@@ -710,7 +725,7 @@ body {
   color: var(--navy);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: all var(--duration-base) ease;
   margin-bottom: 24px;
   width: 100%;
   box-shadow: 0 2px 8px rgba(30, 58, 95, 0.08);
@@ -751,7 +766,7 @@ body {
   background: var(--white);
   border: 1.5px solid var(--line);
   border-radius: 12px;
-  transition: all 0.2s ease;
+  transition: all var(--duration-base) ease;
 }
 
 .hcc-faq-trust-badge:hover {
@@ -825,7 +840,7 @@ body {
 
 .hcc-faq-item {
   border-bottom: 1px solid var(--line);
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 
 .hcc-faq-item:last-child {
@@ -1033,8 +1048,8 @@ body {
     0 0 0 1px rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.5);
   transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+    transform var(--duration-slow) ease,
+    box-shadow var(--duration-slow) ease;
   animation: cardFadeIn 0.6s ease-out;
   /* Overflow containment — critical for mobile */
   width: 100%;
@@ -1043,12 +1058,11 @@ body {
   overflow: hidden;
 }
 
-.hcc-booking-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 28px 72px rgba(13, 34, 64, 0.35),
-    0 12px 28px rgba(13, 34, 64, 0.18),
-    0 0 0 1px rgba(255, 255, 255, 0.8);
+@media (hover: hover) and (pointer: fine) {
+  .hcc-booking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 28px 72px rgba(13, 34, 64, 0.35), 0 12px 28px rgba(13, 34, 64, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.8);
+  }
 }
 
 @keyframes cardFadeIn {
@@ -1218,7 +1232,7 @@ body {
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: 10px;
-  transition: all 0.25s ease;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
   opacity: 0;
   animation: featureSlideIn 0.5s ease-out forwards;
 }
@@ -1238,8 +1252,12 @@ body {
 .hcc-booking-feature-row:hover {
   background: rgba(37, 99, 235, 0.03);
   border-color: rgba(37, 99, 235, 0.2);
-  transform: translateX(3px);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-booking-feature-row:hover {
+    transform: translateX(3px);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+  }
 }
 
 .hcc-booking-check {
@@ -1272,7 +1290,7 @@ body {
   justify-content: center;
   gap: 8px;
   margin-bottom: 16px;
-  transition: all 0.3s ease;
+  transition: all var(--duration-slow) ease;
   box-shadow:
     0 6px 20px rgba(37, 99, 235, 0.4),
     0 2px 8px rgba(37, 99, 235, 0.3);
@@ -1300,11 +1318,13 @@ body {
 }
 
 .hcc-booking-cta:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 10px 28px rgba(37, 99, 235, 0.5),
-    0 4px 12px rgba(37, 99, 235, 0.35);
   background: linear-gradient(135deg, #2e4a7a 100%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .hcc-booking-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(37, 99, 235, 0.5), 0 4px 12px rgba(37, 99, 235, 0.35);
+  }
 }
 
 .hcc-booking-cta:active {
@@ -1335,7 +1355,7 @@ body {
   color: var(--blue);
   text-decoration: none;
   font-weight: 600;
-  transition: color 0.2s ease;
+  transition: color var(--duration-base) ease;
   border-bottom: 1px solid transparent;
 }
 
@@ -1349,7 +1369,7 @@ body {
 /* 1. Large screens – compress columns slightly (1200px and below) */
 @media (max-width: 1200px) {
   .hcc-inner {
-    padding: 90px clamp(24px, 3.5vw, 50px) 48px;
+    padding: 104px clamp(24px, 3.5vw, 50px) 48px;
     gap: 32px;
     /* still two columns, just tighter */
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 400px);
@@ -1387,8 +1407,8 @@ body {
     /* single column: card drops below the headline */
     grid-template-columns: 1fr;
     gap: 36px;
-    /* 84px top: badge always clears the 72px sticky navbar */
-    padding: 84px clamp(20px, 4vw, 48px) 52px;
+    /* 108px top: badge clears the fixed navbar (bottom edge ~82px) */
+    padding: 108px clamp(20px, 4vw, 48px) 52px;
     align-items: start;
     max-width: 100%;
     overflow: hidden;
@@ -1415,7 +1435,7 @@ body {
   .hcc-booking-card {
     max-width: 560px;
     width: 100%;
-    margin: 0;
+    margin: 0 auto; /* center the card once the hero stacks */
     box-sizing: border-box;
   }
 
@@ -1472,8 +1492,8 @@ body {
   }
 
   .hcc-inner {
-    /* 80px top: comfortably clears 72px sticky navbar on all phones */
-    padding: 80px 16px 38px;
+    /* 100px top: clears the fixed navbar (bottom edge ~74px) */
+    padding: 100px 16px 38px;
     gap: 28px;
     overflow: hidden;
   }
@@ -1551,8 +1571,8 @@ body {
   }
 
   .hcc-inner {
-    /* 76px top: clears navbar on standard mobile devices */
-    padding: 76px 16px 36px;
+    /* 100px top: clears navbar on standard mobile devices */
+    padding: 100px 16px 36px;
     gap: 22px;
     overflow: hidden;
   }
@@ -1913,8 +1933,8 @@ body {
   }
 
   .hcc-inner {
-    /* 72px top: minimum to clear navbar on very small phones */
-    padding: 72px 12px 28px;
+    /* 96px top: clears navbar on very small phones */
+    padding: 96px 12px 28px;
     gap: 18px;
     overflow: hidden;
   }
@@ -1944,5 +1964,22 @@ body {
 
   .hcc-section-title {
     font-size: 19px;
+  }
+}
+
+/* Readable minimum on phones (12px) */
+@media (max-width: 480px) {
+  .hcc-booking-price-sub > span,
+  a.hcc-booking-link,
+  p.hcc-booking-terms,
+  div.hcc-condition-expand {
+    font-size: 12px;
+  }
+}
+
+/* Keep the LiveChat launcher above the fixed mobile CTA bar */
+@media (max-width: 1100px) {
+  body:has(.hcc-mobile-cta) #chat-widget-container {
+    bottom: 72px !important;
   }
 }

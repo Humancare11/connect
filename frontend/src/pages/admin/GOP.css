@@ -30,8 +30,7 @@
   padding: 32px 20px 96px;
   box-sizing: border-box;
   color: var(--gop-ink);
-  font-family:
-    "Helvetica Neue", Helvetica, Arial, "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-secondary);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -420,10 +419,10 @@
   border-radius: var(--gop-radius);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    opacity 0.15s ease;
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    opacity var(--duration-fast) ease;
 }
 
 .gop-btn:focus-visible,
@@ -502,9 +501,9 @@
   border-radius: 2px;
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    border-color 0.15s ease;
+    background var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease;
 }
 
 .gop-icon-btn:hover:not(:disabled) {
@@ -590,12 +589,6 @@
 .gop-banner__meta {
   font-size: 13px;
   color: var(--gop-ink-soft);
-}
-
-.gop-banner__warn {
-  color: var(--gop-danger);
-  font-style: normal;
-  font-weight: 600;
 }
 
 .gop-banner__actions {
@@ -866,6 +859,14 @@
   color: var(--gop-danger);
   text-align: right;
   cursor: help;
+}
+
+.gop-email-flag--sent {
+  color: #1a7f4b;
+}
+
+.gop-email-flag--muted {
+  color: var(--gop-muted);
 }
 
 .gop-actions {
