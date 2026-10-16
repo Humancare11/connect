@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
 const { startChatServer, sleep, FILES, AGENT_A, SUPER_S } = require("./helpers/liveChatServer");
 const { decryptLiveChatText } = require("../utils/liveChat/crypto");
 
-const CLOSED_LINE = "This chat was closed after 10 minutes of inactivity. Send a message any time to continue.";
+const CLOSED_LINE = "No new messages for a while. You can keep writing here any time and we'll continue.";
 
 async function waitFor(fn, ms = 4000, step = 50) {
   const end = Date.now() + ms;
@@ -266,12 +266,13 @@ describe("live chat: inactive chats are archived", () => {
       chat.socket.close();
     });
 
-    test("after 24 hours it stays closed and the message is refused", async () => {
+    test("after 30 days (the device window) it is no longer shown and the message is refused", async () => {
       const chat = await openChat();
       await aiAnswered(chat);
       await makeDue(chat.id);
       assert.ok(await waitFor(async () => (await convOf(chat.id)).closedReason === "inactive"));
-      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 25 * 3_600_000) } });
+      await new Promise((r) => setTimeout(r, 400)); // let any late AI line land first, so it cannot undo the back-dating
+      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 31 * 86_400_000), lastMessageAt: new Date(Date.now() - 31 * 86_400_000) } });
       assert.equal(await stateOf(chat.socket), null, "an old Inactive chat is no longer shown to the patient");
       const res = await lc.call(chat.socket, "chat:message", { text: "hi" });
       assert.deepEqual([res.ok, res.error], [false, "no_conversation"]);
@@ -306,7 +307,7 @@ describe("live chat: inactive chats are archived", () => {
       assert.ok(Math.abs(minutesAhead((await convOf(chat.id)).inactiveDueAt) - 15) < 0.5);
       await makeDue(chat.id);
       assert.ok(await waitFor(async () => (await convOf(chat.id)).closedReason === "inactive"));
-      assert.equal(texts(await stateOf(chat.socket)).at(-1), "This chat was closed after 15 minutes of inactivity. Send a message any time to continue.");
+      assert.equal(texts(await stateOf(chat.socket)).at(-1), "No new messages for a while. You can keep writing here any time and we'll continue.");
       chat.socket.close();
     });
   });

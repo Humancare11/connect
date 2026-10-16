@@ -9,7 +9,7 @@
 // addresses are protected; results are cached on the message (encrypted); every call counts toward the daily
 // cap and is refused once it is reached; requests are rate-limited per admin; internal notes and team-only lines
 // are never translated.
-const { encryptLiveChatText, decryptLiveChatText } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, decryptLiveChatOrEmpty } = require("../../utils/liveChat/crypto");
 const { createWindowLimiter } = require("./limits");
 const { looksEnglish, tooShortToDetect, protect, restore, contactLiterals, scrubContact } = require("./languageHints");
 
@@ -63,7 +63,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
     const todo = [];
     for (const m of rows) {
       let cached = cachedEnglish(m);
-      const text = decryptLiveChatText(m.text);
+      const text = decryptLiveChatOrEmpty(m.text);
       // An older "already English" answer on a non-English chat is checked again once (entries made before the
       // romanized-text rules have no version 2).
       if (cached?.same && (cached.v || 1) < 2 && hint && text.trim() && !looksEnglish(text)) {
@@ -71,7 +71,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
         cached = null;
       }
       if (cached) {
-        if (!cached.same) out[String(m._id)] = { text: decryptLiveChatText(cached.text), from: cached.from, fromName: cached.fromName };
+        if (!cached.same) out[String(m._id)] = { text: decryptLiveChatOrEmpty(cached.text), from: cached.from, fromName: cached.fromName };
         continue;
       }
       if (!text.trim()) continue;
@@ -171,7 +171,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
   // The patient's name, email and phone are held back from the model (swapped for tokens and put back after).
   async function contactOf(conv) {
     const visitor = await chat.loadVisitor(conv.visitorId);
-    const pick = (field) => decryptLiveChatText(visitor?.[field]?.cipherText ? visitor[field] : conv.contact?.[field]);
+    const pick = (field) => decryptLiveChatOrEmpty(visitor?.[field]?.cipherText ? visitor[field] : conv.contact?.[field]);
     return { name: pick("name"), email: pick("email"), phone: pick("phone") };
   }
 
@@ -242,7 +242,7 @@ function createTranslationService({ models, ai, limits, loadSettings, chat, fail
       .limit(OPEN_DETECT_LOOKBACK)
       .select("text")
       .lean();
-    const texts = rows.map((r) => decryptLiveChatText(r.text)).filter((t) => t.trim());
+    const texts = rows.map((r) => decryptLiveChatOrEmpty(r.text)).filter((t) => t.trim());
     if (!texts.length) return { ok: false, language: null, reason: "no_text" };
     const candidate = texts.find((t) => !tooShortToDetect(t) && !looksEnglish(t));
     if (!candidate) return { ok: true, language: null, reason: texts.some((t) => looksEnglish(t)) ? "english" : "no_text" };

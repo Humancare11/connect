@@ -31,7 +31,7 @@ Our website has a chat window. When you open it, you first chat with Connect AI,
 
 **Who else receives your information.** Our hosting, database and email providers, each under an agreement that protects your information. We do not sell your chat information or use it for advertising.
 
-**Security and retention.** Chat messages and contact details are encrypted when stored. Conversations are kept for 365 days and then deleted, unless the law requires us to keep them longer.
+**Security and retention.** Chat messages and contact details are encrypted when stored. Conversations are kept for 365 days and then deleted, unless the law requires us to keep them longer. Ending a chat or clearing it from your device does not delete our record of it; conversations are kept for 365 days, as above.
 
 **Your choices and rights.** You can ask to chat with a person instead of Connect AI at any time. You can request a copy of your chat or ask us to delete it by emailing [privacy contact email]. You may have other rights under the laws of your state, as described elsewhere in this policy.
 
@@ -43,7 +43,7 @@ The earlier "Website chat" paragraph (OpenAI operates the assistant, DB-IP locat
 
 ## Cookie Policy: additions
 
-- Storage used by chat: a first-party visitor identifier and a chat session token, kept in the browser so a chat can continue within 24 hours. The page-view tracker runs only after you accept cookies.
+- Storage used by chat: a first-party visitor identifier and a chat session token, kept in your browser so your chat continues when you come back. The chat window shows an earlier conversation on that device for up to 30 days after your last message. You can end the chat and, if you wish, tick "Also clear this chat from this device" so it no longer appears on this device. Closing the tab, locking your phone or losing your connection does not end your chat. The page-view tracker runs only after you accept cookies.
 
 ## Items for counsel
 

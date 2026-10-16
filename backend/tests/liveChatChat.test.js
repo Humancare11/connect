@@ -55,12 +55,31 @@ describe("live chat: contact form gate, quick options, live-agent button", () =>
       assert.equal(decryptLiveChatText(visitor.phone), "+13023039993");
     });
 
-    test("the honeypot silently drops bots", async () => {
+    test("a filled honeypot creates nothing, is a recoverable 'Please try again.', logs one line without personal data, and a second submit goes through", async () => {
       const count = await lc.models.LcVisitor.countDocuments();
-      const bot = await lc.post("/contact", { name: "Bot Botson", email: "bot@x.co", companyUrl: "http://spam.example" });
-      assert.equal(bot.status, 200);
-      assert.equal(bot.body.token, "");
+      const logged = [];
+      const original = console.warn;
+      console.warn = (...args) => logged.push(args.join(" "));
+      let results;
+      try {
+        results = [
+          await lc.post("/contact", { name: "Bot Botson", email: "bot@x.co", hcRefNote: "http://spam.example" }),
+          await lc.post("/contact", { name: "Bot Botson", email: "bot@x.co", companyUrl: "http://spam.example" }), // an old cached widget
+        ];
+      } finally {
+        console.warn = original;
+      }
+      for (const bot of results) {
+        assert.equal(bot.status, 400);
+        assert.deepEqual([bot.body.ok, bot.body.errors?.form, bot.body.token], [false, "Please try again.", undefined]);
+      }
       assert.equal(await lc.models.LcVisitor.countDocuments(), count);
+      const lines = logged.filter((l) => l.includes("hidden field was filled"));
+      assert.equal(lines.length, 2);
+      assert.ok(!lines.join(" ").match(/Botson|bot@x.co|spam.example/), "no personal data in the log");
+      const again = await lc.post("/contact", { name: "Real Person", email: "real.person@example.com", hcRefNote: "" });
+      assert.equal(again.status, 200);
+      assert.ok(again.body.token);
     });
 
     test("a turnstileToken from an old cached widget is silently ignored: no error, the chat starts", async () => {

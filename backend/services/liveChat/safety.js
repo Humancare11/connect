@@ -19,6 +19,18 @@ const FIXED_TEXT = {
     hi: "कृपया अभी 911 पर कॉल करें या नज़दीकी इमरजेंसी रूम में जाएं। अगर आप अमेरिका से बाहर हैं, तो अपने देश के आपातकालीन नंबर पर कॉल करें। अमेरिका में आत्महत्या या संकट में सहायता के लिए 988 पर कॉल या टेक्स्ट भी कर सकते हैं।",
     es: "Llame al 911 ahora mismo o vaya a la sala de emergencias más cercana. Si está fuera de EE. UU., llame a su número local de emergencias. En EE. UU. también puede llamar o enviar un mensaje de texto al 988 para apoyo en crisis o por pensamientos suicidas.",
   },
+  // The quiet-chat lines (inactivity job, midnight sweep). The chat is NOT closed: the patient can keep writing, so these
+  // never say "closed" or "ended". Picked by the chat's language.
+  inactive: {
+    en: "No new messages for a while. You can keep writing here any time and we'll continue.",
+    hi: "कुछ समय से कोई नया संदेश नहीं आया है। आप कभी भी यहीं लिख सकते हैं, हम बातचीत आगे बढ़ाएंगे।",
+    es: "Hace un rato que no hay mensajes nuevos. Puede seguir escribiendo aquí en cualquier momento y continuaremos.",
+  },
+  quietSinceYesterday: {
+    en: "No new messages since yesterday. You can keep writing here any time and we'll continue.",
+    hi: "कल से कोई नया संदेश नहीं आया है। आप कभी भी यहीं लिख सकते हैं, हम बातचीत आगे बढ़ाएंगे।",
+    es: "No hay mensajes nuevos desde ayer. Puede seguir escribiendo aquí en cualquier momento y continuaremos.",
+  },
   // Sent after the 911 message, when the chat has been handed to the team (replaces the usual "Connecting you" line).
   teamNotified: {
     en: "Our team has been notified.",
@@ -28,9 +40,9 @@ const FIXED_TEXT = {
   // Sent instead of a model reply that gave (or looked like) medical advice, or that stayed over the length limit.
   // The booking page button is shown directly under it.
   fallback: {
-    en: "Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare doctor can help you. Book here:",
-    hi: "आपकी तबीयत ठीक नहीं है, यह जानकर दुख हुआ। चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं। यहां बुक करें:",
-    es: "Lamento que no se sienta bien. No puedo dar consejo médico, pero un médico con licencia de Humancare puede ayudarle. Reserve aquí:",
+    en: "Sorry you're not feeling well. I can't give medical advice, but a licensed Humancare Connect doctor can help you. Book here:",
+    hi: "आपकी तबीयत ठीक नहीं है, यह जानकर दुख हुआ। चिकित्सीय सलाह देना मेरे लिए संभव नहीं है, लेकिन Humancare Connect के लाइसेंस प्राप्त डॉक्टर मदद कर सकते हैं। यहां बुक करें:",
+    es: "Lamento que no se sienta bien. No puedo dar consejo médico, pero un médico con licencia de Humancare Connect puede ayudarle. Reserve aquí:",
   },
   // The same, when the patient's message or the blocked reply is about a medication or a refill.
   fallbackMedication: {
@@ -190,6 +202,7 @@ const EMERGENCY_PATTERNS = {
   en: [
     /\bchest (?:pain|pains|pressure|tightness|discomfort)\b/,
     /\b(?:pain|pressure|tight(?:ness)?|squeezing|crushing|heavy|heaviness|discomfort)\b[^.!?\n]{0,30}\b(?:in|across|on) (?:my |the |your )?chest\b/,
+    /\b(?:tight(?:ness)?|tightening|squeezing|pressure|heavy|heaviness) (?:in|around|across|on) (?:my |the |your )?chest\b|\b(?:tight|heavy|squeezing) chest\b|\bchest (?:is |feels? |feeling )?(?:tight|heavy|squeezing|squeezed|pressure)\b/,
     /\bheart attack\b/,
     /\b(?:can'?t|cannot|can not|unable to|not able to|hard to|difficult to|trouble|difficulty|struggling to|struggling with|problems?) (?:breathe|breathing|get (?:any )?air|catch my breath)\b/,
     /\b(?:short(?:ness)? of breath|gasping for (?:air|breath)|stopped breathing|not breathing|choking)\b/,

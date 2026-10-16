@@ -4,12 +4,12 @@
 export default function InviteBubble({ agentName, onReply, onLater }) {
   const name = agentName || "Our team";
   return (
-    <div className="lcw-peek" role="alertdialog" aria-label="New message from Humancare support">
+    <div className="lcw-peek" role="alertdialog" aria-label="New message from Humancare Connect support">
       <div className="lcw-peek-head">
         <span className="lcw-av lcw-av--xs">{String(name).slice(0, 2).toUpperCase()}</span>
-        <span>{name} · Humancare support</span>
+        <span>{name} · Humancare Connect support</span>
       </div>
-      <p>{name} from Humancare support sent you a message</p>
+      <p>{name} from Humancare Connect support sent you a message</p>
       <div className="lcw-peek-actions">
         <button type="button" onClick={onLater}>
           Later

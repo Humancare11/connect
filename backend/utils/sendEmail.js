@@ -496,7 +496,7 @@ const sendDoctorApprovalEmail = async (to, { name, loginUrl }) => {
 // callers pass plain text. `rows` is a list of [label, value] pairs; rows with
 // an empty value are skipped. Deliberately carries no patient contact details
 // or clinical text — the CTA link leads to the authenticated dashboard.
-const buildBookingNotificationHTML = ({ badge, greeting, intro, rows = [], ctaUrl, ctaLabel }) => {
+const buildBookingNotificationHTML = ({ badge, greeting, intro, rows = [], ctaUrl, ctaLabel, footnote }) => {
   const rowsHtml = rows
     .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
     .map(
@@ -535,7 +535,8 @@ ${rowsHtml ? `
       <table width="100%" cellpadding="0" cellspacing="0" border="0">${rowsHtml}</table>
     </div>
 ` : ""}
-    ${cta}
+    ${cta}${footnote ? `
+    <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;">${escapeHtml(footnote)}</p>` : ""}
   </div>
 
   <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">

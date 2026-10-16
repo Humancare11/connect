@@ -1,5 +1,7 @@
 // The live-chat "day" for the daily cleanup and Archive temp: India Standard Time (Asia/Kolkata), a fixed +05:30
 // offset with no daylight saving, so plain arithmetic is exact.
+// The one place the live-chat day zone is named (Active / Recent / Archive buckets, daily sweep).
+const LIVECHAT_DAY_ZONE = "Asia/Kolkata";
 const IST_OFFSET_MS = 5.5 * 3_600_000;
 const DAY_MS = 86_400_000;
 
@@ -11,4 +13,4 @@ const istDayStart = (key) => new Date(Date.parse(`${key}T00:00:00.000Z`) - IST_O
 
 const istTodayStart = (ms) => istDayStart(istDayKey(ms));
 
-module.exports = { istDayKey, istDayStart, istTodayStart, IST_OFFSET_MS, DAY_MS };
+module.exports = { LIVECHAT_DAY_ZONE, istDayKey, istDayStart, istTodayStart, IST_OFFSET_MS, DAY_MS };

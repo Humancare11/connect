@@ -146,7 +146,7 @@ describe("live chat: Queue chats go to Archive temp after inactivity", () => {
       await lc.livechat.chat.runInactiveDue();
       await lc.models.LcConversation.updateOne(
         { conversationId: chat.id },
-        { $set: { closedAt: new Date(istTodayStart(Date.now()).getTime() - 1000) } }
+        { $set: { closedAt: new Date(istTodayStart(Date.now()).getTime() - 1000), lastMessageAt: new Date(istTodayStart(Date.now()).getTime() - 1000), lastActivityAt: new Date(istTodayStart(Date.now()).getTime() - 1000) } }
       );
       const rows = (await rest("GET", "/conversations?view=live", A)).body.conversations;
       assert.ok(!rows.some((r) => r.conversationId === chat.id), "gone from Archive temp");
@@ -174,11 +174,11 @@ describe("live chat: Queue chats go to Archive temp after inactivity", () => {
       chat.socket.close();
     });
 
-    test("after 24 hours it stays archived", async () => {
+    test("after 30 days it stays archived", async () => {
       const chat = await queued();
       await makeDue(chat.id);
       await lc.livechat.chat.runInactiveDue();
-      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 25 * 60 * MIN) } });
+      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { closedAt: new Date(Date.now() - 31 * 24 * 60 * MIN), lastMessageAt: new Date(Date.now() - 31 * 24 * 60 * MIN) } });
       await lc.call(chat.socket, "chat:message", { text: "hello again" }).catch(() => ({}));
       assert.equal((await convOf(chat.id)).mode, "archived");
       chat.socket.close();

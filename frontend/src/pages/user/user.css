@@ -310,6 +310,7 @@
    ═══════════════════════════════════════════════════════════════ */
 .hc-ul__main {
   flex: 1;
+  min-width: 0; /* let wide children (tables) shrink instead of overflowing the shell */
   margin-left: calc(248px + 32px);
   /* sidebar width + left gap + right gap */
   min-height: 100vh;

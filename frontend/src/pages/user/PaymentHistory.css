@@ -174,22 +174,142 @@
   cursor: not-allowed;
 }
 
+/* ══ RESPONSIVE ══════════════════════════════════════════
+   Layout widths (user.css): above 768px the sidebar is fixed beside the
+   content, so the content column is roughly (viewport - 342px).
+   - >1050px : full table, unchanged.
+   - 961-1050: compact table (tighter padding, wrapping text).
+   - <=960px : payment cards (the table cannot fit beside the sidebar). */
+.ph-invoice-no {
+  overflow-wrap: anywhere;
+}
+
+.ph-download-btn {
+  white-space: nowrap;
+}
+
+@media (max-width: 1050px) {
+  .ph-table th,
+  .ph-table td {
+    padding: 12px 10px;
+  }
+  .ph-table td.ph-desc,
+  .ph-table td.ph-invoice-cell {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 960px) {
+  .ph-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ph-table-wrap {
+    overflow-x: visible;
+  }
+
+  .ph-table,
+  .ph-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .ph-table thead {
+    display: none;
+  }
+
+  .ph-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 14px;
+    margin: 8px 0;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 14px;
+  }
+
+  .ph-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .ph-table td {
+    display: block;
+    padding: 0;
+    border-bottom: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  .ph-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Row 1: date (left) + amount (right) */
+  .ph-table td.ph-date {
+    grid-column: 1;
+    font-weight: 600;
+    color: #1e1b4b;
+  }
+  .ph-table td.ph-amount {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+    font-size: 15px;
+  }
+
+  /* Remaining fields: labelled, full width */
+  .ph-table td[data-label="Description"],
+  .ph-table td[data-label="Method"],
+  .ph-table td[data-label="Invoice"] {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: right;
+  }
+  .ph-table td[data-label="Description"]::before,
+  .ph-table td[data-label="Method"]::before,
+  .ph-table td[data-label="Invoice"]::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #9ca3af;
+    padding-top: 2px;
+    text-align: left;
+  }
+
+  .ph-table td.ph-action-cell {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+  .ph-download-btn {
+    width: 100%;
+    min-height: 44px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 640px) {
   .ph-page {
     padding: 0 8px;
   }
+  .ph-header {
+    padding: 18px 16px;
+  }
 }
 
-/* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
-@media (max-width: 1024px) {
-  .ph-table { font-size: 13px; }
-}
-@media (max-width: 900px) {
-  .ph-header { flex-direction: column; gap: 10px; }
-  .ph-search { width: 100%; }
-}
-/* (existing 640px breakpoint retained above) */
 @media (max-width: 420px) {
-  .ph-table th, .ph-table td { padding: 8px 6px; font-size: 11.5px; }
-  .ph-pagination { flex-wrap: wrap; gap: 4px; }
+  .ph-pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }

@@ -76,8 +76,8 @@ test("the Archive page: menu item under Live agent chats, route, and a read-only
   assert.match(page, /archive: 1/, "viewing does not mark the chat read");
 });
 
-test('the chat lists call the group "Archive temp"', () => {
+test('the chat lists call the group "Recent (temp archive)"', () => {
   const list = read("pages/admin/livechat/ChatList.jsx");
-  assert.equal((list.match(/"Archive temp"/g) || []).length, 2);
+  assert.ok(list.includes('const RECENT = "Recent (temp archive)"') && list.split("[RECENT,").length - 1 === 2, "one constant used by both lists");
   assert.doesNotMatch(list, /\["Archived",/);
 });

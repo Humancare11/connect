@@ -2,31 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import Icon from "./lcIcons";
 import NotificationsBanner from "./NotificationsBanner";
 import { timeOf } from "./chatUtils";
+import { bucketOf, activityAt } from "./chatBuckets";
 import { initials } from "./visitorUtils";
 
-// Left column: the chat list (docs/live-chat-admin-ui.html). Live agent chats: Queue, My chats, Other agents, Back with
-// the AI and Archive temp (chats archived today, India time; at midnight it empties and the Archive page has them).
-// AI chats: Talking to the AI and Archive temp. Each group shows its count, can be collapsed, and is always sorted by
-// latest activity, newest on top (a chat with a new message moves to the top).
+// Left column: the chat list (docs/live-chat-admin-ui.html). Active chats (a message in the last 10 minutes, online or
+// not) are grouped by who holds them; "Recent (temp archive)" holds the chats quiet for 10 minutes but still from today
+// (India time). Older chats are on the Archive page. Which list a chat is in comes from its last message only
+// (chatBuckets.js), so a new message brings it straight back to Active. Each group shows its count, can be collapsed,
+// and is sorted by latest activity, newest on top.
+const RECENT = "Recent (temp archive)";
 const groupsFor = (view, me) =>
   view === "live"
     ? [
-        ["Queue", (c) => c.mode === "queue"],
-        ["My chats", (c) => c.mode === "live" && c.assignee?.id === me],
-        ["Other agents", (c) => c.mode === "live" && c.assignee?.id !== me],
-        ["Back with the AI", (c) => c.mode === "ai"],
-        ["Archive temp", (c) => c.mode === "archived"],
+        ["Queue", (c) => c.bucket === "active" && c.mode === "queue"],
+        ["My chats", (c) => c.bucket === "active" && c.mode === "live" && c.assignee?.id === me],
+        ["Other agents", (c) => c.bucket === "active" && c.mode === "live" && c.assignee?.id !== me],
+        ["Back with the AI", (c) => c.bucket === "active" && c.mode === "ai"],
+        ["Ended or resolved", (c) => c.bucket === "active" && c.mode === "archived"],
+        [RECENT, (c) => c.bucket === "recent"],
       ]
     : [
-        ["Talking to the AI", (c) => c.mode !== "archived"],
-        ["Archive temp", (c) => c.mode === "archived"],
+        ["Talking to the AI", (c) => c.bucket === "active" && c.mode !== "archived"],
+        ["Ended or resolved", (c) => c.bucket === "active" && c.mode === "archived"],
+        [RECENT, (c) => c.bucket === "recent"],
       ];
 
-// Midnight in India (a fixed +05:30 offset, no daylight saving) that started the day containing `ms`.
-const IST_OFFSET_MS = 5.5 * 3_600_000;
-const DAY_MS = 86_400_000;
-const istDayStart = (ms) => Math.floor((ms + IST_OFFSET_MS) / DAY_MS) * DAY_MS - IST_OFFSET_MS;
-const activityAt = (row) => new Date(row.lastMessageAt || row.startedAt || 0).getTime();
 
 function Item({ row, active, typing, onSelect }) {
   const last = row.preview;
@@ -60,22 +60,23 @@ function Item({ row, active, typing, onSelect }) {
   );
 }
 
-export default function ChatList({ view, rows, me, activeId, typing, query, onQuery, onSelect, loading }) {
+export default function ChatList({ view, rows, me, activeId, typing, query, onQuery, onSelect, loading, clockOffset = 0 }) {
   const [collapsed, setCollapsed] = useState({});
-  // Archive temp holds only chats archived today (India time): a minute timer drops yesterday's at midnight, without a reload.
-  const [dayStart, setDayStart] = useState(() => istDayStart(Date.now()));
+  // Chats move Active -> Recent (10 minutes) -> Archive page (after India midnight) on their own: re-sort every 15 s.
+  // Time is the server's (clockOffset = server minus this computer), so a wrong clock on this computer cannot hide chats.
+  const [tick, setTick] = useState(() => Date.now());
   useEffect(() => {
-    const timer = window.setInterval(() => setDayStart(istDayStart(Date.now())), 30_000);
+    const timer = window.setInterval(() => setTick(Date.now()), 15_000);
     return () => window.clearInterval(timer);
   }, []);
   const live = view === "live";
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const current = rows.filter((r) => r.mode !== "archived" || new Date(r.closedAt || r.lastMessageAt).getTime() >= dayStart);
+    const current = rows.map((r) => ({ ...r, bucket: bucketOf(r, tick + clockOffset) })).filter((r) => r.bucket !== "archive");
     if (!q) return current;
     return current.filter((r) => [r.name, r.email, r.ip, r.city, r.state, r.country, r.conversationId, r.topic].join(" ").toLowerCase().includes(q));
-  }, [rows, query, dayStart]);
+  }, [rows, query, tick, clockOffset]);
 
   return (
     <nav className="wk-list" aria-label="Chats" data-lenis-prevent>

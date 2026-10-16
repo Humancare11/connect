@@ -16,7 +16,8 @@
     "copy:spa-fallback": "node -e \"const fs=require('fs');fs.copyFileSync('dist/index.html','dist/200.html')\"",
     "preview": "vite preview",
     "serve:dist": "node scripts/serve-dist.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:e2e": "node --test tests/e2e/liveChatWidget.e2e.test.mjs"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -64,6 +65,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "playwright-core": "^1.62.1",
     "vite": "^8.0.1"
   }
 }

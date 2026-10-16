@@ -11,7 +11,7 @@
 // Errors are thrown as AgentError (status + code) and mapped to JSON by routes/adminLiveChat.js.
 const net = require("net");
 const mongoose = require("mongoose");
-const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, decryptLiveChatOrEmpty, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { validateContact, newConversationId, firstNameOf } = require("./chatService");
 const { aiNameOf } = require("./settingsDefaults");
 const { createWindowLimiter } = require("./limits");
@@ -30,6 +30,7 @@ class AgentError extends Error {
 const CONVERSATION_ID_RE = /^HC[A-Z0-9]{8}$/;
 const LIST_LIMIT = 200;
 const { istTodayStart } = require("./istDay");
+const { bucketOf, activityOf, activityGte } = require("./buckets");
 const MAX_AGENT_TEXT = 2000;
 const MAX_TAGS = 10;
 
@@ -96,6 +97,13 @@ function createAgentService({
     phone: decryptLiveChatText(source?.phone),
   });
 
+  // For scrubbing text before it goes to the AI: a value no key can decrypt is dropped (the placeholder is never used).
+  const scrubContactOf = (source) => ({
+    name: decryptLiveChatOrEmpty(source?.name),
+    email: decryptLiveChatOrEmpty(source?.email),
+    phone: decryptLiveChatOrEmpty(source?.phone),
+  });
+
   // Archived by inactivity from the Queue, today (India time): can be joined or replied to from Archive temp.
   function isJoinable(conv) {
     return Boolean(
@@ -133,7 +141,8 @@ function createAgentService({
       // A Queue chat archived by inactivity today (IST): an admin can still join or reply from Archive temp.
       joinable: isJoinable(conv),
       startedAt: conv.startedAt,
-      lastMessageAt: conv.lastMessageAt,
+      lastMessageAt: new Date(activityOf(conv)), // the last real message (either side), what the buckets use
+      bucket: bucketOf(conv, now()),
       queuedAt: conv.queuedAt,
       unread: userId ? unreadFor(conv, userId) : 0,
       online: Boolean(presence.get(conv.visitorId)),
@@ -155,20 +164,24 @@ function createAgentService({
       { $sort: { createdAt: -1 } },
       { $group: { _id: "$conversationId", sender: { $first: "$sender" }, text: { $first: "$text" }, at: { $first: "$createdAt" } } },
     ]);
-    return new Map(rows.map((r) => [r._id, { sender: r.sender, text: decryptLiveChatText(r.text).slice(0, 120), at: r.at }]));
+    return new Map(rows.map((r) => [r._id, { sender: r.sender, text: decryptLiveChatText(r.text, r._id).slice(0, 120), at: r.at }]));
   }
+
+  // The chats a chat page lists (Active + Recent). The unread badge uses the SAME filter, so the two always agree.
+  const listFilter = (view) => ({
+    // AI page: chats that never had an agent (a missing flag counts as never); agent page: chats that ever had one. Together
+    // they cover every chat, none is hidden from both.
+    ...(view ? { everLive: view === "live" ? true : { $ne: true } } : {}),
+    mode: { $ne: "trashed" },
+    $and: [{ $or: [activityGte(istTodayStart(now())), { mode: "queue" }] }],
+  });
 
   // "ai": chats that were never live. "live": chats that were ever live (queue, mine, others, handed back, archived).
   async function list(actor, view) {
-    // "Archive temp": archived chats stay in the lists for 24 hours (the time a patient can still reopen one); the
-    // Archive page has the rest. The newest-closed archived chats come first within their group.
-    const since = istTodayStart(now()); // chats archived today (India time); at midnight the group empties
-    const filter = {
-      everLive: view === "live",
-      mode: { $ne: "trashed" },
-      $or: [{ mode: { $ne: "archived" } }, { closedAt: { $gte: since } }],
-    };
-    const convs = await LcConversation.find(filter).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
+    // Active (activity in the last 10 minutes, online or not) and Recent (quiet, but today in India time) come from the
+    // time of the last message, whatever the chat's mode. Older chats are on the Archive page. Queue chats stay listed.
+    // No status is written for this, so a chat can never be lost between lists (see buckets.js).
+    const convs = await LcConversation.find(listFilter(view)).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
     const lasts = await lastMessages(convs.map((c) => c.conversationId));
     return convs.map((c) => rowOf(c, { userId: actor.id, last: lasts.get(c.conversationId) }));
   }
@@ -227,6 +240,16 @@ function createAgentService({
     return { translation: { text: decryptLiveChatText(t.text), from: t.from, fromName: t.fromName } };
   }
 
+  // The extras around a chat (visitor card, page timeline, other chats, ticket count, file info) must never stop the chat
+  // itself from opening: a failing lookup is logged by name (no patient data) and the section falls back to empty.
+  const soft = (name, work, fallback) =>
+    Promise.resolve()
+      .then(work)
+      .catch((err) => {
+        console.error(`[livechat] chat detail: ${name} failed: ${err?.name || "Error"}: ${String(err?.message || "").slice(0, 160)}`);
+        return fallback;
+      });
+
   // The conversation plus everything the patient panel shows. Opening a chat marks it read for this admin.
   async function detail(actor, conversationId, { markRead: markAsRead = true } = {}) {
     const conv = await load(conversationId);
@@ -241,15 +264,20 @@ function createAgentService({
     }
     const [rows, visitor, chats, pages, others] = await Promise.all([
       LcMessage.find({ conversationId }).sort({ createdAt: 1 }).limit(500).lean(),
-      chat.loadVisitor(conv.visitorId),
-      LcConversation.countDocuments({ visitorId: conv.visitorId, mode: { $ne: "trashed" } }),
-      LcPageVisit.find({ conversationId }).sort({ enteredAt: 1 }).lean(),
-      LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId }, mode: { $ne: "trashed" } })
-        .sort({ startedAt: -1 })
-        .limit(5)
-        .lean(),
+      soft("visitor", () => chat.loadVisitor(conv.visitorId), null),
+      soft("chat count", () => LcConversation.countDocuments({ visitorId: conv.visitorId, mode: { $ne: "trashed" } }), 1),
+      soft("page timeline", () => LcPageVisit.find({ conversationId }).sort({ enteredAt: 1 }).lean(), []),
+      soft(
+        "other chats",
+        () =>
+          LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId }, mode: { $ne: "trashed" } })
+            .sort({ startedAt: -1 })
+            .limit(5)
+            .lean(),
+        []
+      ),
     ]);
-    const files = await chat.filesMeta(rows);
+    const files = await soft("files", () => chat.filesMeta(rows), new Map());
     // Whether the composer should offer "Detect language": no language stored at all (an English chat stores "en"),
     // and a recent patient message that is clearly not English and long enough to tell.
     const languageUnknown =
@@ -264,7 +292,7 @@ function createAgentService({
     const messages = rows.map((m) => ({
       id: String(m._id),
       sender: m.sender,
-      text: decryptLiveChatText(m.text),
+      text: decryptLiveChatText(m.text, m._id),
       at: m.createdAt,
       agentName: m.agentName || "",
       internal: Boolean(m.internal),
@@ -294,7 +322,7 @@ function createAgentService({
         contact,
         location: { city: conv.geo?.city || "", state: conv.geo?.state || "", country: conv.geo?.country || "" },
         timeZone: conv.timeZone || "",
-        counts: { chats, tickets: await ticketCount(contact.email), visits },
+        counts: { chats, tickets: await soft("tickets", () => ticketCount(contact.email), 0), visits },
         returning: visits > 1 || chats > 1,
         context: {
           topic: conv.topic || "",
@@ -354,7 +382,8 @@ function createAgentService({
   // Unread messages for this admin: AI chats, and live agent chats that concern them (queue, their own chats,
   // chats handed back to the AI). Chats another agent is holding do not count.
   async function unread(actor) {
-    const convs = await LcConversation.find({ mode: { $nin: ["archived", "trashed"] }, patientMessageCount: { $gt: 0 } })
+    // Only chats a chat page lists count (not yesterday's leftovers): the badge and the list agree.
+    const convs = await LcConversation.find({ ...listFilter(), mode: { $nin: ["archived", "trashed"] }, patientMessageCount: { $gt: 0 } })
       .select("everLive mode assigneeId patientMessageCount reads")
       .lean();
     const out = { ai: 0, live: 0 };
@@ -699,7 +728,7 @@ function createAgentService({
     const settings = await loadSettings();
     if ((await limits.spendStatus(settings)).capReached) throw new AgentError(503, "ai_unavailable", { kind: "spend_cap" });
     const visitor = await chat.loadVisitor(conv.visitorId);
-    const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
+    const contact = scrubContactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
     const history = (await chat.recentHistory(conv, 30)).map((m) => ({ role: m.sender, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
     if (!history.length) throw new AgentError(409, "no_content");
     const result = await ai.summarizeChat({ history });
@@ -820,7 +849,7 @@ function createAgentService({
       { $push: { transcriptLog: { $each: [{ userId: oid(actor.id), at: new Date(now()) }], $slice: -50 } } }
     );
     const text = [
-      `Humancare live chat ${conv.conversationId}`,
+      `Humancare Connect live chat ${conv.conversationId}`,
       `Started: ${stamp(conv.startedAt)} UTC`,
       conv.closedAt ? `Closed: ${stamp(conv.closedAt)} UTC` : "Status: open",
       "",
@@ -875,7 +904,7 @@ function createAgentService({
     if ((await limits.spendStatus(settings)).capReached) throw new AgentError(503, "ai_unavailable", { kind: "spend_cap" });
     // The patient's name, email and phone never go to the model: they are replaced in the chat text first.
     const visitor = await chat.loadVisitor(conv.visitorId);
-    const contact = contactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
+    const contact = scrubContactOf(visitor && chat.hasContact(visitor) ? visitor : conv.contact);
     const history = (await chat.recentHistory(conv)).map((m) => ({ role: m.sender, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
     const result = await ai.suggestReply({ settings, history, agentName: conv.agentName || (await displayNameOf(actor.id, settings)) });
     if (result.usage) await chat.recordUsage(conv, settings, result.usage);
@@ -915,7 +944,7 @@ function createAgentService({
       ...(known
         ? {
             contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
-            searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
+            searchKeys: searchKeysOf(decryptLiveChatOrEmpty(visitor.email), decryptLiveChatOrEmpty(visitor.phone)),
           }
         : {}),
     });

@@ -123,7 +123,7 @@ describe("live chat: patient file uploads and admin access", () => {
       assert.equal((await lc.upload("forged.token.value", { name: "a.pdf", buffer: FILES.pdf })).status, 401);
     });
 
-    test("a patient with no open chat cannot upload", async () => {
+    test("a patient with no chat cannot upload; a resolved chat is reopened by the upload", async () => {
       const contact = await lc.submitContact();
       const res = await lc.upload(contact.token, { name: "a.pdf", buffer: FILES.pdf });
       assert.deepEqual([res.status, res.body.error], [409, "no_conversation"]);
@@ -131,7 +131,8 @@ describe("live chat: patient file uploads and admin access", () => {
       const chat = await openChat();
       await rest("POST", `/conversations/${chat.id}/resolve`);
       const closed = await lc.upload(chat.token, { name: "a.pdf", buffer: FILES.pdf });
-      assert.deepEqual([closed.status, closed.body.error], [409, "no_conversation"]);
+      assert.equal(closed.status, 200, JSON.stringify(closed.body));
+      assert.notEqual((await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean()).mode, "archived");
       chat.socket.close();
     });
 

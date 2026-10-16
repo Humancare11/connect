@@ -617,8 +617,12 @@
   width: 100%;
 }
 .adp-search input:focus-visible {
-  outline: 2px solid var(--primary, #2563eb);
-  outline-offset: 2px;
+  /* Focus is shown on the rounded container (.adp-search:focus-within), not as a box around the input. */
+  outline: none;
+}
+.adp-search:focus-within {
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .adp-search svg {

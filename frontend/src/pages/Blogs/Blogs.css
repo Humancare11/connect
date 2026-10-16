@@ -166,8 +166,8 @@ h4 {
   font-family: var(--font-secondary);
 }
 .hero-search-input:focus-visible {
-  outline: 2px solid var(--primary, #2563eb);
-  outline-offset: 2px;
+  /* Focus is shown on the rounded container (.hero-search:focus-within), not as a box around the input. */
+  outline: none;
 }
 
 .hero-search-input::placeholder {

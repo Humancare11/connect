@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import GreetingBubble from "./GreetingBubble";
 import { DEFAULT_AI_NAME } from "./aiName";
+import { buildTimeline } from "./timeline";
+import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -75,7 +77,7 @@ function Message({ message, aiName, onNavigate, onOpenFile }) {
     <div className="lcw-bot">
       <span className="lcw-av lcw-av--sm">{isAgent ? initialsOf(message.agentName) : "HC"}</span>
       <div className="lcw-bw">
-        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare support" : aiName}</span>
+        <span className="lcw-bn">{isAgent ? message.agentName || "Humancare Connect support" : aiName}</span>
         <div className="lcw-msg lcw-msg--left">
           {message.file ? (
             <span className="lcw-file">
@@ -102,6 +104,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const chat = useLiveChat();
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
+  const [confirmEnd, setConfirmEnd] = useState(false); // the "End this chat?" dialog
   const [photoOk, setPhotoOk] = useState(true);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
@@ -144,7 +147,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   // Nothing here ever says the team is offline.
   let status = "Online";
   if (waiting) status = conversation.emailFollowUp ? "Message received" : "Connecting to our team";
-  if (withAgent) status = "Live agent · Humancare support";
+  if (withAgent) status = "Live agent · Humancare Connect support";
 
   // On a phone the window covers the page: after a page link it folds away so the patient can read the page.
   const afterNavigate = () => {
@@ -157,13 +160,13 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   return (
     <div className="lcw-root">
       {open && (
-        <section className="lcw-window" role="dialog" aria-label="Humancare chat" data-lenis-prevent>
+        <section className="lcw-window" role="dialog" aria-label="Humancare Connect chat" data-lenis-prevent>
           <header className="lcw-head">
             <div className="lcw-av lcw-av--lg">
               {withAgent ? initialsOf(agentName) : "HC"}
             </div>
             <div className="lcw-who">
-              <strong>{withAgent ? agentName || "Humancare support" : aiName}</strong>
+              <strong>{withAgent ? agentName || "Humancare Connect support" : aiName}</strong>
               <small>
                 <span title={status}>{status}</span>
               </small>
@@ -190,7 +193,12 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
             <button type="button" className="lcw-x" onClick={() => setOpen(false)} aria-label="Minimize chat">
               –
             </button>
-            <button type="button" className="lcw-x" onClick={() => setOpen(false)} aria-label="Close chat">
+            <button
+              type="button"
+              className="lcw-x"
+              onClick={() => setConfirmEnd(true)}
+              aria-label="End chat"
+            >
               ✕
             </button>
           </header>
@@ -206,33 +214,26 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
             {phase === "chat" && !conversation && !limitReached && <div className="lcw-sys">Starting your chat…</div>}
             {phase === "chat" && conversation && (
               <>
-                {conversation.messages.map((message) => (
-                  <Message key={message.id} message={message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />
-                ))}
-                {chat.outbox.map((m) =>
-                  m.status === "failed" ? (
-                    <button key={m.id} type="button" className="lcw-msg lcw-msg--right lcw-msg--failed" onClick={() => chat.retrySend(m.id)}>
+                {buildTimeline(conversation.messages, chat.outbox).map((item) => {
+                  if (item.kind === "message") {
+                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />;
+                  }
+                  const m = item.entry;
+                  return m.status === "failed" ? (
+                    <button key={item.key} type="button" className="lcw-msg lcw-msg--right lcw-msg--failed" onClick={() => chat.retrySend(m.id)}>
                       {m.text}
                       <span className="lcw-meta">Not sent – tap to retry</span>
                     </button>
                   ) : (
-                    <div key={m.id} className="lcw-msg lcw-msg--right lcw-msg--sending">
+                    <div key={item.key} className="lcw-msg lcw-msg--right lcw-msg--sending">
                       {m.text}
                       <span className="lcw-meta">Sending…</span>
                     </div>
-                  )
-                )}
+                  );
+                })}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
-                {ended && !canContinue && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
-                {ended && (
-                  <div className="lcw-opts">
-                    <button type="button" className="lcw-opt" onClick={chat.startNew}>
-                      <span className="lcw-opt-label">Start a new chat</span>
-                      <span className="lcw-opt-chev" aria-hidden="true">
-                        ›
-                      </span>
-                    </button>
-                  </div>
+                {ended && (conversation.canRate || conversation.rating) && (
+                  <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />
                 )}
                 {chat.agentTyping && (
                   <div className="lcw-typing">
@@ -297,7 +298,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={canContinue ? "Send a message to continue" : ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
+                placeholder={ended && !canContinue ? "Chat is unavailable" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Type a message…"}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"
@@ -307,6 +308,15 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               </button>
             </form>
           </footer>
+          {confirmEnd && (
+            <EndChatDialog
+              onCancel={() => setConfirmEnd(false)}
+              onEnd={async (clear) => {
+                await chat.endChat(clear);
+                setConfirmEnd(false);
+              }}
+            />
+          )}
         </section>
       )}
 
