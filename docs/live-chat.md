@@ -207,3 +207,14 @@ UAT finding: EC2 (us-east-1) and Atlas UAT are in different regions, so every Mo
 2. `npm uninstall @livechat/widget-react` in `frontend/`.
 3. Remove any LiveChat/Text domains from the CSP proposal and from the privacy and cookie wording.
 4. Delete the `VITE_LIVECHAT_ENABLED` branching once the flag is permanently true.
+
+## Admin lists: Active, Recent, Archive (computed, nothing written)
+
+Where a chat shows is computed from the time of its last real message (patient, AI or agent; notes and system lines do not count), in `backend/services/liveChat/buckets.js` (mirrored in `frontend/.../livechat/chatBuckets.js`). The day zone is one constant, `LIVECHAT_DAY_ZONE = "Asia/Kolkata"`.
+
+- **Active** (AI chats and Live agent chats pages): a message in the last 10 minutes, whether or not the visitor is online (online is only a badge). A chat waiting in the Queue always stays here.
+- **Recent (temp archive)**: quiet for 10 minutes but still today (India time). Fully openable with its history.
+- **Archive page**: last message before today (India time); filters, search and 50-per-page paging as before.
+- A new message from the patient puts the chat straight back to Active (same chat, same history); resolved and ended chats follow the same timeline and just show their status.
+- No job writes these buckets, so a chat cannot be lost between lists. The existing inactivity job still closes idle chats (the patient sees the closing line) but no longer decides which list a chat is in.
+- Nothing is deleted automatically by the chat lists or the sweeps. Deletion is only the manual Super Admin Trash flow (Archive page chats only, 30 days in Trash) and the data-retention job (365 days).

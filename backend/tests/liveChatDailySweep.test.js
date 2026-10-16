@@ -67,7 +67,7 @@ describe("live chat: IST midnight cleanup", () => {
   }
 
   describe("Archive temp is 'archived today (IST)'", () => {
-    test("a chat archived just after IST midnight is listed, one archived just before is not; both stay on the Archive page", async () => {
+    test("a chat archived just after IST midnight is listed, one archived just before is not; the Archive page has only the older one", async () => {
       const start = todayStart().getTime();
       const today = await seed({ mode: "archived", closedAt: new Date(start + 1000), lastAt: new Date(start + 1000) });
       const before = await seed({ mode: "archived", closedAt: new Date(start - 1000), lastAt: new Date(start - 1000) });
@@ -75,7 +75,7 @@ describe("live chat: IST midnight cleanup", () => {
       assert.ok(ids.includes(today), "archived today");
       assert.ok(!ids.includes(before), "archived before IST midnight: Archive page only");
       const all = (await rest("GET", "/archive?from=2000-01-01", A)).body.rows.map((r) => r.conversationId);
-      assert.ok(all.includes(today) && all.includes(before));
+      assert.ok(all.includes(before) && !all.includes(today), "the Archive page holds only chats whose last message is before today");
     });
   });
 

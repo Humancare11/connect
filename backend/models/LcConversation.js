@@ -112,6 +112,7 @@ const conversationSchema = new mongoose.Schema(
     liveStartedAt: { type: Date, default: null },
     firstAgentReplyAt: { type: Date, default: null },
     lastMessageAt: { type: Date, default: Date.now, index: true },
+    lastActivityAt: { type: Date, default: null }, // last visible patient / AI / agent message (decides Active / Recent / Archive)
     closedAt: { type: Date, default: null },
     // Set only while mode is "trashed": when, by whom (user id), and when the daily job purges it.
     trash: {
@@ -127,6 +128,7 @@ const conversationSchema = new mongoose.Schema(
 );
 
 conversationSchema.index({ mode: 1, lastMessageAt: -1 });
+conversationSchema.index({ lastActivityAt: -1 });
 conversationSchema.index({ "trash.purgeAfter": 1 }, { partialFilterExpression: { mode: "trashed" } });
 conversationSchema.index({ "flags.medical": 1, "flags.lastAt": -1 }); // AI Review list
 conversationSchema.index({ mode: 1, closedAt: -1 }); // Archive list and Archive temp

@@ -196,7 +196,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
             <button
               type="button"
               className="lcw-x"
-              onClick={() => (phase === "chat" && conversation ? setConfirmEnd(true) : setOpen(false))}
+              onClick={() => setConfirmEnd(true)}
               aria-label="End chat"
             >
               ✕
@@ -298,7 +298,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={canContinue ? "Send a message to continue" : ended ? "Chat is unavailable" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
+                placeholder={ended && !canContinue ? "Chat is unavailable" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Type a message…"}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"

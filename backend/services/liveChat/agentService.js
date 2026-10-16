@@ -30,6 +30,7 @@ class AgentError extends Error {
 const CONVERSATION_ID_RE = /^HC[A-Z0-9]{8}$/;
 const LIST_LIMIT = 200;
 const { istTodayStart } = require("./istDay");
+const { bucketOf, activityOf, activityGte } = require("./buckets");
 const MAX_AGENT_TEXT = 2000;
 const MAX_TAGS = 10;
 
@@ -133,7 +134,8 @@ function createAgentService({
       // A Queue chat archived by inactivity today (IST): an admin can still join or reply from Archive temp.
       joinable: isJoinable(conv),
       startedAt: conv.startedAt,
-      lastMessageAt: conv.lastMessageAt,
+      lastMessageAt: new Date(activityOf(conv)), // the last real message (either side), what the buckets use
+      bucket: bucketOf(conv, now()),
       queuedAt: conv.queuedAt,
       unread: userId ? unreadFor(conv, userId) : 0,
       online: Boolean(presence.get(conv.visitorId)),
@@ -160,13 +162,14 @@ function createAgentService({
 
   // "ai": chats that were never live. "live": chats that were ever live (queue, mine, others, handed back, archived).
   async function list(actor, view) {
-    // "Archive temp": archived chats stay in the lists for 24 hours (the time a patient can still reopen one); the
-    // Archive page has the rest. The newest-closed archived chats come first within their group.
-    const since = istTodayStart(now()); // chats archived today (India time); at midnight the group empties
+    // Active (activity in the last 10 minutes, online or not) and Recent (quiet, but today in India time) come from the
+    // time of the last message, whatever the chat's mode. Older chats are on the Archive page. Queue chats stay listed.
+    // No status is written for this, so a chat can never be lost between lists (see buckets.js).
+    const since = istTodayStart(now());
     const filter = {
       everLive: view === "live",
       mode: { $ne: "trashed" },
-      $or: [{ mode: { $ne: "archived" } }, { closedAt: { $gte: since } }],
+      $and: [{ $or: [activityGte(since), { mode: "queue" }] }],
     };
     const convs = await LcConversation.find(filter).sort({ lastMessageAt: -1 }).limit(LIST_LIMIT);
     const lasts = await lastMessages(convs.map((c) => c.conversationId));
