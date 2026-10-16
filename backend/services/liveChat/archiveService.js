@@ -9,6 +9,8 @@
 const { decryptLiveChatText, hashLiveChatEmail, hashLiveChatPhone, normalizePhone } = require("../../utils/liveChat/crypto");
 const { StatsError, zonedDayStart, addDays } = require("./statsService");
 const { dayKey } = require("./limits");
+const { activityLt, activityIn, activityOf } = require("./buckets");
+const { istTodayStart } = require("./istDay");
 
 const PAGE_SIZE = 50;
 const SCAN_CAP = 5000;
@@ -25,10 +27,12 @@ const isRealDay = (value) => {
 };
 
 function createArchiveService({ models, now = () => Date.now() }) {
+  // The Archive page holds every chat whose last message is before today (India time): see buckets.js.
+  const beforeToday = () => activityLt(istTodayStart(now()));
   const { LcConversation, LcMessage } = models;
 
   function baseFilter(query) {
-    const filter = { mode: "archived" };
+    const filter = { mode: { $nin: ["trashed"] }, $and: [beforeToday()] };
     const range = {};
     let from = query.from || "";
     let to = query.to || "";
@@ -37,7 +41,7 @@ function createArchiveService({ models, now = () => Date.now() }) {
     if (from && to && from > to) throw new StatsError(400, "invalid_range");
     if (from) range.$gte = zonedDayStart(from, ZONE);
     if (to) range.$lt = zonedDayStart(addDays(to, 1), ZONE);
-    if (range.$gte || range.$lt) filter.closedAt = range;
+    if (range.$gte || range.$lt) filter.$and.push(activityIn(range));
     const type = query.type;
     if (type === "ai") filter.everLive = false;
     else if (type === "live") filter.everLive = true;
@@ -91,15 +95,15 @@ function createArchiveService({ models, now = () => Date.now() }) {
     let defaulted = null;
     if (!exactHit) {
       const scanFilter = { ...filter };
-      if (!scanFilter.closedAt && !from && !to) {
+      if (!from && !to) {
         // a scan always needs a window: the last 30 days when none was chosen
         const today = dayKey(new Date(now()), ZONE);
         defaulted = { from: addDays(today, -29), to: today };
-        scanFilter.closedAt = { $gte: zonedDayStart(defaulted.from, ZONE), $lt: zonedDayStart(addDays(today, 1), ZONE) };
+        scanFilter.$and = [...filter.$and, activityIn({ $gte: zonedDayStart(defaulted.from, ZONE), $lt: zonedDayStart(addDays(today, 1), ZONE) })];
       }
       const wantsDigits = /^[+\d\s().-]+$/.test(q) && digits.length >= 3;
       let scanned = 0;
-      const cursor = LcConversation.find(scanFilter).sort({ closedAt: -1 }).select("conversationId contact").lean().cursor();
+      const cursor = LcConversation.find(scanFilter).sort({ lastMessageAt: -1 }).select("conversationId contact").lean().cursor();
       for await (const row of cursor) {
         scanned += 1;
         if (scanned > SCAN_CAP) {
@@ -137,7 +141,7 @@ function createArchiveService({ models, now = () => Date.now() }) {
     }
 
     const convs = await LcConversation.find(where)
-      .sort({ closedAt: -1, _id: -1 })
+      .sort({ lastMessageAt: -1, _id: -1 })
       .skip((page - 1) * PAGE_SIZE)
       .limit(PAGE_SIZE)
       .lean();
@@ -150,7 +154,7 @@ function createArchiveService({ models, now = () => Date.now() }) {
       reason: REASON_KEY(c.closedReason),
       assignee: c.assigneeId || c.agentName ? c.agentName || "Agent" : "",
       startedAt: c.startedAt,
-      closedAt: c.closedAt,
+      closedAt: c.closedAt || new Date(activityOf(c)),
       messages: counts.get(c.conversationId) || 0,
     }));
     return {

@@ -9,6 +9,8 @@
 const { decryptLiveChatText } = require("../../utils/liveChat/crypto");
 const { StatsError } = require("./statsService");
 const { purgeConversations, pruneVisitors } = require("./retention");
+const { activityLt } = require("./buckets");
+const { istTodayStart } = require("./istDay");
 
 const TRASH_DAYS = 30;
 const DAY_MS = 86_400_000;
@@ -73,7 +75,11 @@ function createTrashService({ models, archive, purge = purgeConversations, now =
     const deleted = [];
     for (let i = 0; i < ids.length; i += 500) {
       const batch = ids.slice(i, i + 500);
-      await LcConversation.updateMany({ conversationId: { $in: batch }, mode: "archived" }, { $set: { mode: "trashed", trash } });
+      // Only chats on the Archive page (last message before today, India time) that nobody is handling right now.
+      await LcConversation.updateMany(
+        { conversationId: { $in: batch }, mode: { $nin: ["trashed", "queue", "live"] }, ...activityLt(istTodayStart(now())) },
+        { $set: { mode: "trashed", trash } }
+      );
       const done = await LcConversation.find({ conversationId: { $in: batch }, mode: "trashed", "trash.at": stamp }).select("conversationId").lean();
       deleted.push(...done.map((d) => d.conversationId));
     }

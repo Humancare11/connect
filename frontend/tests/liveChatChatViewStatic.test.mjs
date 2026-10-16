@@ -122,7 +122,9 @@ test("the chat list sorts every group newest first with no Oldest / Newest toggl
   const list = read("ChatList.jsx");
   assert.doesNotMatch(list, /Oldest|Change sort order|sortBy/);
   assert.match(list, /activityAt\(b\) - activityAt\(a\)/);
-  assert.match(list, /Asia|IST_OFFSET_MS/, "Archive temp drops yesterday's chats at midnight India time");
+  const buckets = read("chatBuckets.js");
+  assert.ok(buckets.includes("Asia/Kolkata"), "Recent drops yesterday's chats at midnight India time");
+  assert.match(list, /bucketOf/);
 });
 
 test("an archived chat that came from the Queue today can be joined from Archive temp; other archived chats stay closed", async () => {

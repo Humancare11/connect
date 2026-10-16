@@ -26,7 +26,7 @@ describe("live chat: Archive temp and the Archive page", () => {
   const convOf = (id) => lc.models.LcConversation.findOne({ conversationId: id }).lean();
 
   // A real chat (contact, start, one patient message), then archived directly with the wanted shape.
-  async function archived({ name = "Emma Wilson", email, phone = "", city = "", ip, reason = "resolved", live = false, closedAt = new Date(), assignee = "" } = {}) {
+  async function archived({ name = "Emma Wilson", email, phone = "", city = "", ip, reason = "resolved", live = false, closedAt = new Date(Date.now() - 2 * 86_400_000), assignee = "" } = {}) {
     const contact = await lc.submitContact({ name, ...(email ? { email } : {}), phone });
     const socket = await lc.chatSocket(contact.token);
     const started = await lc.call(socket, "chat:start", {});
@@ -40,6 +40,7 @@ describe("live chat: Archive temp and the Archive page", () => {
       everLive: live,
       startedAt: new Date(closedAt.getTime() - 20 * 60_000),
       lastMessageAt: closedAt,
+      lastActivityAt: closedAt,
       ...(city ? { "geo.city": city } : {}),
       ...(ip ? { ip } : {}),
       ...(assignee ? { agentName: assignee } : {}),
@@ -56,7 +57,7 @@ describe("live chat: Archive temp and the Archive page", () => {
   const idsOf = (body) => body.rows.map((r) => r.conversationId);
 
   describe("Archive temp: the chat lists", () => {
-    test("archived chats stay in the lists for the rest of the IST day only, newest closed first, in both views", async () => {
+    test("chats whose last message is today stay in the chat lists (Recent), older ones are only on the Archive page", async () => {
       const { istTodayStart } = require("../services/liveChat/istDay");
       const start = istTodayStart(Date.now()).getTime(); // midnight India time
       const fresh = await archived({ closedAt: new Date(start + 1_000) });
@@ -78,9 +79,10 @@ describe("live chat: Archive temp and the Archive page", () => {
       assert.ok(live.includes(freshLive));
       assert.ok(!live.includes(oldLive));
 
-      // ...but the Archive page has all of them
+      // The Archive page holds only the chats whose last message is before today (India time)
       const all = idsOf(await archive({ from: "2000-01-01" }));
-      for (const id of [fresh, fresher, old, freshLive, oldLive]) assert.ok(all.includes(id), id);
+      for (const id of [old, oldLive]) assert.ok(all.includes(id), id);
+      for (const id of [fresh, fresher, freshLive]) assert.ok(!all.includes(id), "today: still in the chat lists, not in the Archive");
     });
   });
 
@@ -193,6 +195,7 @@ describe("live chat: Archive temp and the Archive page", () => {
           mode: "archived",
           closedReason: "inactive",
           closedAt: new Date(base + i * 60_000),
+          lastMessageAt: new Date(base + i * 60_000),
           startedAt: new Date(base + i * 60_000 - 600_000),
         });
       }
@@ -214,7 +217,7 @@ describe("live chat: Archive temp and the Archive page", () => {
     test("opening a chat from the Archive does not mark it read; the normal view does", async () => {
       const id = await archived({ closedAt: new Date("2026-08-01T12:00:00Z") });
       const unreadOf = async () => (await rest("GET", `/conversations?view=ai`, A)).body.conversations.find((c) => c.conversationId === id)?.unread;
-      await lc.models.LcConversation.updateOne({ conversationId: id }, { $set: { closedAt: new Date() } }); // visible in the list
+      await lc.models.LcConversation.updateOne({ conversationId: id }, { $set: { closedAt: new Date(), lastMessageAt: new Date(), lastActivityAt: new Date() } }); // visible in the list
       const before = await unreadOf();
       assert.ok(before > 0);
       assert.equal((await rest("GET", `/conversations/${id}?archive=1`, A)).status, 200);

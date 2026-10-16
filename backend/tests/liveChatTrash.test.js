@@ -32,7 +32,7 @@ describe("live chat: Super Admin delete, Trash, restore, purge", () => {
   const audits = () => lc.models.LcChatDeletionAudit.find().sort({ createdAt: 1 }).lean();
 
   // A real chat with a message (and optionally a file), then archived with the wanted shape.
-  async function chat({ archived = true, reason = "resolved", live = false, closedAt = new Date(), withFile = false, email = EMAIL, ip } = {}) {
+  async function chat({ archived = true, reason = "resolved", live = false, closedAt = new Date(Date.now() - 2 * 86_400_000), withFile = false, email = EMAIL, ip } = {}) {
     const contact = await lc.submitContact({ name: NAME, email });
     const socket = await lc.chatSocket(contact.token);
     const started = await lc.call(socket, "chat:start", {});
@@ -49,7 +49,7 @@ describe("live chat: Super Admin delete, Trash, restore, purge", () => {
     if (archived) {
       await lc.models.LcConversation.updateOne(
         { conversationId: id },
-        { $set: { mode: "archived", closedReason: reason, closedAt, everLive: live, lastMessageAt: closedAt, ...(ip ? { ip } : {}) } }
+        { $set: { mode: "archived", closedReason: reason, closedAt, everLive: live, lastMessageAt: closedAt, lastActivityAt: closedAt, ...(ip ? { ip } : {}) } }
       );
     }
     return { id, visitorId: contact.visitorId, token: contact.token, fileKey };
@@ -245,7 +245,7 @@ describe("live chat: Super Admin delete, Trash, restore, purge", () => {
       socket.close();
       assert.equal((await conv(c.id)).mode, "trashed");
 
-      const inactive = await chat({ reason: "inactive", closedAt: new Date() });
+      const inactive = await chat({ reason: "inactive" });
       await rest("POST", "/archive/delete", SA, { ids: [inactive.id] });
       const socket2 = await lc.chatSocket(inactive.token);
       const resumed = await lc.call(socket2, "chat:resume", {}).catch(() => ({}));

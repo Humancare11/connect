@@ -178,6 +178,7 @@ html.hc-cookie-open .lcw-window {
 }
 
 .lcw-window {
+  position: relative; /* the End chat dialog covers the window, not the page */
   width: 380px;
   max-width: calc(100vw - 32px);
   height: 600px;

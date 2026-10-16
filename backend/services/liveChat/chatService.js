@@ -264,6 +264,8 @@ function createChatService({
       ...stored,
     });
     const update = { $set: { lastMessageAt: new Date(now()) } };
+    // Real conversation activity (either side). Notes, internal lines and system lines do not move a chat between buckets.
+    if (!["system", "note"].includes(sender) && !extra.internal) update.$set.lastActivityAt = update.$set.lastMessageAt;
     // Whatever the patient does first (types, attaches a file, asks for an agent, picks a card), the cards are gone for good.
     if (sender === "patient") {
       update.$inc = { patientMessageCount: 1 };

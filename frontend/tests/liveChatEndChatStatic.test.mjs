@@ -29,6 +29,18 @@ test("'–' minimizes; X opens the dialog (and only closes when there is no chat
   assert.match(widget, /await chat\.endChat\(clear\)/);
 });
 
+test("X always opens the dialog (any chat state), '–' only minimises, the dialog is anchored inside the window, placeholder is 'Type a message…'", () => {
+  const widget = squash(read("features/livechat/LiveChatWidget.jsx"));
+  assert.ok(widget.includes('className="lcw-x" onClick={() => setConfirmEnd(true)} aria-label="End chat"'), "X opens the dialog");
+  assert.ok(widget.includes('onClick={() => setOpen(false)} aria-label="Minimize chat"'), "dash minimises");
+  assert.ok(!widget.includes('phase === "chat" && conversation ? setConfirmEnd'), "no state-dependent X");
+  assert.ok(widget.includes('"Type a message…"'));
+  assert.ok(!widget.includes("Send a message to continue") && !widget.includes('"Message..."'));
+  const css = read("features/livechat/LiveChatWidget.css");
+  const start = css.indexOf(String.fromCharCode(10) + ".lcw-window {");
+  assert.ok(css.slice(start, css.indexOf("}", start)).includes("position: relative"));
+});
+
 test("End chat sends chat:end, closes the widget; 'clear' forgets the token, visitor id and chat on this device", () => {
   const hook = squash(read("features/livechat/useLiveChat.js"));
   assert.match(hook, /emit\("chat:end", \{ clear: Boolean\(clear\) \}\)/);

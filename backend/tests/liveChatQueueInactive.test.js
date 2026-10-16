@@ -146,7 +146,7 @@ describe("live chat: Queue chats go to Archive temp after inactivity", () => {
       await lc.livechat.chat.runInactiveDue();
       await lc.models.LcConversation.updateOne(
         { conversationId: chat.id },
-        { $set: { closedAt: new Date(istTodayStart(Date.now()).getTime() - 1000) } }
+        { $set: { closedAt: new Date(istTodayStart(Date.now()).getTime() - 1000), lastMessageAt: new Date(istTodayStart(Date.now()).getTime() - 1000), lastActivityAt: new Date(istTodayStart(Date.now()).getTime() - 1000) } }
       );
       const rows = (await rest("GET", "/conversations?view=live", A)).body.conversations;
       assert.ok(!rows.some((r) => r.conversationId === chat.id), "gone from Archive temp");
