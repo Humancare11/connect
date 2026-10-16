@@ -102,29 +102,20 @@ describe("live chat: catch-up for abandoned chats", () => {
   });
 
   describe("patient left", () => {
-    test("a passed persisted leave time archives the chat as patient_left, dated when they left", async () => {
-      const dueAt = ago(2 * MIN);
-      const id = await seed({ mode: "ai", last: "patient", lastAt: ago(5 * MIN), leaveDueAt: dueAt });
+    test("a passed leave time (from an older version) no longer archives anything", async () => {
+      const id = await seed({ mode: "ai", last: "patient", lastAt: ago(5 * MIN), leaveDueAt: ago(2 * MIN) });
       const out = await sweep();
-      assert.ok(out.left >= 1);
+      assert.equal(out.left, 0);
       const c = await convOf(id);
-      assert.equal(c.mode, "archived");
-      assert.equal(c.closedReason, "patient_left");
-      assert.equal(c.leaveDueAt, null);
-      assert.ok(c.leftAt < dueAt, "left at the leave time minus the grace, not now");
-      const second = await sweep();
-      assert.equal(second.left, 0, "idempotent");
+      assert.deepEqual([c.mode, c.closedReason], ["ai", ""]);
     });
 
-    test("no persisted leave time and nobody connected (restart): the grace starts now, the chat is archived after it", async () => {
+    test("no persisted leave time and nobody connected (restart): the chat stays open and no leave time is made up", async () => {
       const id = await seed({ mode: "ai", last: "patient", lastAt: ago(5 * MIN) });
       await sweep();
-      const waiting = await convOf(id);
-      assert.equal(waiting.mode, "ai", "not archived on the first look");
-      assert.ok(waiting.leaveDueAt && waiting.leaveDueAt > new Date(), "a leave time was recorded");
-      await lc.models.LcConversation.updateOne({ conversationId: id }, { $set: { leaveDueAt: ago(1000) } });
       await sweep();
-      assert.equal((await convOf(id)).closedReason, "patient_left");
+      const c = await convOf(id);
+      assert.deepEqual([c.mode, c.leaveDueAt], ["ai", null]);
     });
 
     test("the Queue, an admin-held chat with the patient waiting, and a connected patient are never archived as left", async () => {
@@ -143,22 +134,22 @@ describe("live chat: catch-up for abandoned chats", () => {
     });
   });
 
-  describe("the leave time survives restarts", () => {
-    test("closing the last connection persists it; connecting again clears it", async () => {
+  describe("restarts and dropped connections", () => {
+    test("closing the last connection stores no leave time, and a sweep after a restart leaves the chat open", async () => {
       const contact = await lc.submitContact({ name: "Persist Me" });
       const socket = await lc.chatSocket(contact.token);
       const started = await lc.call(socket, "chat:start", {});
       const id = started.conversation.conversationId;
-      assert.equal((await convOf(id)).leaveDueAt, null);
 
       socket.close();
-      const set = await waitFor(async () => (await convOf(id)).leaveDueAt);
-      assert.ok(set, "leaveDueAt stored in the database, not only in memory");
-      assert.ok(set > new Date(), "one grace period ahead");
+      await sleep(700);
+      assert.equal((await convOf(id)).leaveDueAt, null, "nothing is stored about the visitor leaving");
+      await sweep();
+      assert.equal((await convOf(id)).mode, "ai");
 
       const again = await lc.chatSocket(contact.token);
-      await lc.call(again, "chat:resume");
-      assert.ok(await waitFor(async () => (await convOf(id)).leaveDueAt === null), "cleared on reconnect");
+      const resumed = await lc.call(again, "chat:resume");
+      assert.equal(resumed.conversation.conversationId, id);
       again.close();
     });
   });

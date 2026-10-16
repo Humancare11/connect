@@ -26,7 +26,7 @@ const UPLOAD_ERRORS = {
   empty_file: "That file is empty.",
   too_many_files: "You've reached the limit of files for this chat. Please email support@humancareconnect.co.",
   rate_limited: "You're sending files too quickly. Please wait a few minutes.",
-  no_conversation: "This chat has ended. Please start a new one.",
+  no_conversation: "We couldn't find your chat. Please try again.",
   unauthorized: "Please fill in your details to start the chat.",
   blocked: "Chat is not available right now.",
   storage_failed: "We couldn't save that file. Please try again.",
@@ -91,7 +91,7 @@ const ERRORS = {
   empty_message: "",
   chat_limit: "You've reached today's chat limit. Please try again tomorrow or email support@humancareconnect.co.",
   contact_required: "Please fill in your details to start the chat.",
-  no_conversation: "This chat has ended. Please start a new one.",
+  no_conversation: "We couldn't find your chat. Please try again.",
   server_error: "Something went wrong. Please try again.",
 };
 
@@ -299,6 +299,12 @@ export function useLiveChat() {
     [connect, resume]
   );
 
+  // After a drop (lock screen, tunnel, backend restart) the socket reconnects by itself; a send or retry waits a moment for it.
+  const waitOnline = useCallback(async (maxMs = 8000) => {
+    const until = Date.now() + maxMs;
+    while (Date.now() < until && !socketRef.current?.connected) await new Promise((resolve) => setTimeout(resolve, 250));
+  }, []);
+
   // Shows the message at once ("sending") and returns; the caller clears its input. If the server rejects it or does
   // not answer in time, the message stays on screen as "Not sent – tap to retry" with its text kept.
   const send = useCallback(
@@ -310,7 +316,16 @@ export function useLiveChat() {
           ? list.map((m) => (m.id === id ? { ...m, status: "sending" } : m))
           : [...list, { id, text, at: new Date().toISOString(), status: "sending" }]
       );
-      const res = await emit("chat:message", { text });
+      await waitOnline();
+      let res = await emit("chat:message", { text });
+      if (!res.ok && res.error === "no_conversation") {
+        // The server has no chat for this device (e.g. it was removed): start one, then send the same text.
+        const started = await emit("chat:start", startDetails());
+        if (started.ok) {
+          setConversation(started.conversation);
+          res = await emit("chat:message", { text });
+        }
+      }
       if (res.ok) {
         setOutbox((list) => list.filter((m) => m.id !== id));
       } else {
@@ -319,7 +334,7 @@ export function useLiveChat() {
       }
       return Boolean(res.ok);
     },
-    [emit]
+    [emit, waitOnline]
   );
 
   const retrySend = useCallback(
@@ -346,13 +361,31 @@ export function useLiveChat() {
     [emit]
   );
 
-  // After a chat ended (resolved by the team): open a fresh one.
-  const startNew = useCallback(async () => {
-    setNotice("");
-    const res = await emit("chat:start", startDetails());
-    if (res.ok) setConversation(res.conversation);
-    else setNotice(ERRORS[res.error] ?? ERRORS.server_error); // the ended chat stays on screen, so the notice banner carries the limit message
-  }, [emit]);
+  // X > "End chat". The chat is closed but stays readable, and writing in it again continues the same thread. With
+  // `clear` this device forgets everything: the chat, the chat session (token), the visitor id and the saved details,
+  // so the next visit shows the contact form again (for shared computers).
+  const endChat = useCallback(
+    async (clear) => {
+      await emit("chat:end", { clear: Boolean(clear) });
+      if (clear) {
+        store.remove(TOKEN_KEY);
+        store.remove(ID_KEY);
+        store.remove(OPEN_KEY, "session");
+        store.remove(INVITE_KEY, "session");
+        socketRef.current?.close();
+        socketRef.current = null;
+        connectingRef.current = null;
+        setConversation(null);
+        setOutbox([]);
+        setFirstName("");
+        setUnread(0);
+        setNotice("");
+        setPhase("form");
+      }
+      setOpen(false);
+    },
+    [emit, setOpen]
+  );
 
   // Rates a chat the team has just resolved (1-5, once). The result arrives as a chat:state update.
   const rate = useCallback(
@@ -478,7 +511,7 @@ export function useLiveChat() {
     pickOption,
     talkToAgent,
     switchToAi,
-    startNew,
+    endChat,
     rate,
     uploadFile,
     openFile,

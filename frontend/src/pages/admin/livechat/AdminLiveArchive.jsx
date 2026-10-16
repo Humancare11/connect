@@ -19,6 +19,7 @@ const REASONS = [
   ["all", "All reasons"],
   ["inactive", "Inactive"],
   ["patient_left", "Left"],
+  ["patient_ended", "Ended by patient"],
   ["resolved", "Resolved"],
   ["blocked", "Blocked"],
 ];

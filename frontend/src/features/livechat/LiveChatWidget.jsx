@@ -4,6 +4,7 @@ import ContactForm from "./ContactForm";
 import GreetingBubble from "./GreetingBubble";
 import { DEFAULT_AI_NAME } from "./aiName";
 import { buildTimeline } from "./timeline";
+import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -103,6 +104,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const chat = useLiveChat();
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
+  const [confirmEnd, setConfirmEnd] = useState(false); // the "End this chat?" dialog
   const [photoOk, setPhotoOk] = useState(true);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
@@ -191,7 +193,12 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
             <button type="button" className="lcw-x" onClick={() => setOpen(false)} aria-label="Minimize chat">
               –
             </button>
-            <button type="button" className="lcw-x" onClick={() => setOpen(false)} aria-label="Close chat">
+            <button
+              type="button"
+              className="lcw-x"
+              onClick={() => (phase === "chat" && conversation ? setConfirmEnd(true) : setOpen(false))}
+              aria-label="End chat"
+            >
               ✕
             </button>
           </header>
@@ -225,16 +232,8 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                   );
                 })}
                 <QuickOptions options={conversation.options} onPick={chat.pickOption} />
-                {ended && !canContinue && <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />}
-                {ended && (
-                  <div className="lcw-opts">
-                    <button type="button" className="lcw-opt" onClick={chat.startNew}>
-                      <span className="lcw-opt-label">Start a new chat</span>
-                      <span className="lcw-opt-chev" aria-hidden="true">
-                        ›
-                      </span>
-                    </button>
-                  </div>
+                {ended && (conversation.canRate || conversation.rating) && (
+                  <RatingCard rating={conversation.rating} canRate={conversation.canRate} onRate={chat.rate} />
                 )}
                 {chat.agentTyping && (
                   <div className="lcw-typing">
@@ -299,7 +298,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
                 }}
-                placeholder={canContinue ? "Send a message to continue" : ended ? "This chat has ended" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
+                placeholder={canContinue ? "Send a message to continue" : ended ? "Chat is unavailable" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Message..."}
                 autoComplete="off"
                 disabled={locked}
                 aria-label="Your message"
@@ -309,6 +308,15 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               </button>
             </form>
           </footer>
+          {confirmEnd && (
+            <EndChatDialog
+              onCancel={() => setConfirmEnd(false)}
+              onEnd={async (clear) => {
+                await chat.endChat(clear);
+                setConfirmEnd(false);
+              }}
+            />
+          )}
         </section>
       )}
 

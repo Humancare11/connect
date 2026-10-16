@@ -20,7 +20,9 @@ const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team n
 const EMAIL_NOTICE_TEXT = (email) => `Our team will connect with you by email at ${email || "your email address"} shortly.`;
 const FOLLOW_UP_JOB_MS = 15_000; // how often due follow-ups are looked for
 const INACTIVE_JOB_LIMIT = 25;
-const REOPEN_WINDOW_MS = 24 * 3_600_000; // a chat closed as "patient left" or "inactive" continues within this long
+// A device keeps showing (and can continue) its last chat for this long after the chat's last message. Server data is
+// kept for the retention period regardless; this only limits what a returning browser is shown.
+const DEVICE_WINDOW_MS = 30 * 24 * 3_600_000;
 const { istDayKey, istDayStart } = require("./istDay");
 const DAILY_CLOSE_TEXT = "This chat was closed at the end of the day. Send a message any time to continue.";
 const SWEEP_BATCH = 100;
@@ -243,10 +245,9 @@ function createChatService({
       agent: conv.mode === "live" && conv.agentName ? { name: conv.agentName } : null,
       rating: conv.rating?.stars ? { stars: conv.rating.stars } : null,
       canRate: conv.mode === "archived" && conv.closedReason === "resolved" && !conv.rating?.stars,
-      // Closed for inactivity: the patient can just write again and the same chat continues.
-      canContinue: Boolean(
-        conv.mode === "archived" && conv.closedReason === "inactive" && conv.closedAt && now() - new Date(conv.closedAt).getTime() < REOPEN_WINDOW_MS
-      ),
+      // A closed chat (inactive, resolved, ended ...) never dead-ends: the patient can write again and the same chat
+      // continues. Only a blocked visitor cannot.
+      canContinue: conv.mode === "archived" && conv.closedReason !== "blocked",
       closedReason: conv.mode === "archived" ? conv.closedReason || "" : "",
       messages,
     };
@@ -399,49 +400,48 @@ function createChatService({
     const settings = await loadSettings();
     if (!noticeAccepted(visitor, settings)) return { ok: true, needContact: true };
     await touchVisitor(visitorId);
-    let conv = await findOpen(visitorId);
-    if (!conv) conv = await reopenIfLeft(visitorId, visitor); // back within 24 h of leaving: the chat continues
-    let conversation = conv ? await serialize(conv.toObject(), settings) : null;
-    if (!conversation) {
-      // A chat that was just resolved and not rated yet stays reachable, so the patient can rate after moving on.
-      const rateable = await LcConversation.findOne({
-        visitorId,
-        mode: "archived",
-        closedReason: "resolved",
-        "rating.stars": null,
-        closedAt: { $gte: new Date(now() - 24 * 3_600_000) },
-      }).sort({ closedAt: -1 });
-      if (rateable) conversation = await serialize(rateable.toObject(), settings);
-    }
-    if (!conversation) {
-      // A chat closed for inactivity stays on screen (with the closing line) so the patient can write and continue it.
-      const inactive = await LcConversation.findOne({
-        visitorId,
-        mode: "archived",
-        closedReason: "inactive",
-        closedAt: { $gte: new Date(now() - REOPEN_WINDOW_MS) },
-      }).sort({ closedAt: -1 });
-      if (inactive) conversation = await serialize(inactive.toObject(), settings);
-    }
+    let conv = await retireIfStale(await findOpen(visitorId), visitor);
+    // No open chat: the device shows its latest closed chat (history included) while it is inside the device window.
+    // Writing in it reopens the same thread (findOrReopen).
+    if (!conv) conv = await findContinuable(visitorId, visitor);
+    const conversation = conv ? await serialize(conv.toObject ? conv.toObject() : conv, settings) : null;
     return { ok: true, needContact: false, firstName: firstNameOf(decryptLiveChatText(visitor.name)), conversation };
   }
 
-  // A visitor who left (tab closed, 30 s) and comes back within 24 hours continues the same chat: an AI chat goes
-  // back to the AI; a chat that had an agent goes back to the Queue (the agent may have moved on).
-  async function reopenIfLeft(visitorId, visitor, reasons = ["patient_left"]) {
-    const since = new Date(now() - REOPEN_WINDOW_MS);
-    const windows = {
-      patient_left: { closedReason: "patient_left", leftAt: { $gte: since } },
-      inactive: { closedReason: "inactive", closedAt: { $gte: since } },
-    };
-    const doc = await LcConversation.findOne({
+  // The oldest moment a device may still show a chat from: 30 days back, or the last "clear this chat from this device".
+  function deviceSince(visitor) {
+    const limit = now() - DEVICE_WINDOW_MS;
+    const cleared = visitor?.deviceClearedAt ? new Date(visitor.deviceClearedAt).getTime() : 0;
+    return new Date(Math.max(limit, cleared));
+  }
+
+  // The visitor's latest closed chat that this device may still show or continue. A blocked chat stays closed.
+  function findContinuable(visitorId, visitor) {
+    return LcConversation.findOne({
       visitorId,
       mode: "archived",
-      $or: reasons.map((r) => windows[r]),
-    }).sort({ closedAt: -1 });
+      closedReason: { $ne: "blocked" },
+      lastMessageAt: { $gt: deviceSince(visitor) },
+    }).sort({ lastMessageAt: -1 });
+  }
+
+  // An open chat nobody has written in for longer than the device window is closed quietly, so the device starts fresh.
+  async function retireIfStale(conv, visitor) {
+    if (!conv || conv.lastMessageAt > deviceSince(visitor)) return conv;
+    await LcConversation.updateOne(
+      { _id: conv._id, mode: { $in: ["ai", "live", "queue"] } },
+      { $set: { modeBeforeLeft: conv.mode, mode: "archived", closedReason: "inactive", closedAt: new Date(now()), inactiveDueAt: null, leaveDueAt: null } }
+    );
+    return null;
+  }
+
+  // A closed chat continues when the patient writes (or sends a file): the same conversation reopens. A chat that had an
+  // agent (or was waiting for one) goes back to the Queue; one that never had an agent goes back to the AI.
+  async function reopenArchived(visitorId, visitor) {
+    const doc = await findContinuable(visitorId, visitor);
     if (!doc) return null;
     const settings = await loadSettings();
-    const target = doc.modeBeforeLeft === "ai" ? "ai" : "queue";
+    const target = doc.everLive || doc.modeBeforeLeft === "queue" || doc.modeBeforeLeft === "live" ? "queue" : "ai";
     // A Queue chat that was archived quietly (the patient was never told it closed): no "welcome back" line.
     const quiet = doc.modeBeforeLeft === "queue" && doc.closedReason === "inactive";
     const set = { mode: target, closedReason: "", closedAt: null, leftAt: null, modeBeforeLeft: "", inactiveDueAt: null, leaveDueAt: null };
@@ -455,7 +455,7 @@ function createChatService({
       });
     }
     const won = await LcConversation.findOneAndUpdate(
-      { _id: doc._id, mode: "archived", closedReason: { $in: reasons } },
+      { _id: doc._id, mode: "archived", closedReason: { $ne: "blocked" } },
       { $set: set },
       { returnDocument: "after" }
     );
@@ -473,32 +473,37 @@ function createChatService({
     return won;
   }
 
-  // ── Visitor left ─────────────────────────────────────────────────────────────
-
-  // About 30 s after the last connection of a visitor (tracker or chat) closes, an open chat is archived as
-  // "patient left". A chat in the Queue that is waiting for its email notice (or already has it) stays there: the
-  // patient asked for the team and will be written to by email.
-  const keepsInQueue = (c) => Boolean(c.offlineRequested || (c.mode === "queue" && c.followUpDueAt));
-  async function visitorLeft(visitorId) {
+  // The patient ends the chat from the widget (X, "End chat"). The chat is archived as "patient_ended" (the admin lists
+  // show it in Archive temp); it is not deleted and the patient can still write in it. clear: this device also forgets
+  // the chat (the next resume shows nothing older than now).
+  async function endChat(visitorId, { clear = false } = {}) {
     const open = await findOpen(visitorId);
-    if (!open || keepsInQueue(open)) return;
-    await withLock(open.conversationId, async () => {
-      const current = await LcConversation.findById(open._id);
-      if (!current || current.mode === "archived" || keepsInQueue(current)) return;
-      const stamp = new Date(now());
-      const archived = await LcConversation.findOneAndUpdate(
-        { _id: current._id, mode: { $ne: "archived" } },
-        { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_left", leftAt: stamp, closedAt: stamp, leaveDueAt: null } },
-        { returnDocument: "after" }
-      );
-      if (!archived) return;
-      await addMessage(archived, "system", "Patient left the website", { internal: true });
-      announce(archived);
-    });
+    if (open) {
+      await withLock(open.conversationId, async () => {
+        const current = await LcConversation.findById(open._id);
+        if (!current || current.mode === "archived") return;
+        const stamp = new Date(now());
+        const archived = await LcConversation.findOneAndUpdate(
+          { _id: current._id, mode: { $in: ["ai", "live", "queue"] } },
+          { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_ended", closedAt: stamp, inactiveDueAt: null, leaveDueAt: null } },
+          { returnDocument: "after" }
+        );
+        if (!archived) return;
+        await addMessage(archived, "system", "Patient ended the chat", { internal: true });
+        setActivity(visitorId, archived);
+        announce(archived);
+        await pushState(archived); // every open tab of this patient shows the ended chat
+      });
+    }
+    if (clear) await LcVisitor.updateOne({ visitorId }, { $set: { deviceClearedAt: new Date(now()) } });
+    return { ok: true };
   }
 
+  // ── Presence (never closes a chat) ─────────────────────────────────────────────────────────────
+
   // Counts a visitor's open connections (tracker and chat sockets together). Returns a function to call when one
-  // closes. When the last one has been closed for leaveGraceMs, visitorLeft() runs; a reconnect in time cancels it.
+  // closes. Leaving the site, hiding the tab, locking the phone, a dropped socket or a restart NEVER closes a chat: the
+  // grace period below only keeps the visitor counted as "on the site" for a moment after a drop.
   const connections = new Map();
   const leaveTimers = new Map();
   // On the site right now: a tracked visit, an open chat connection, or one that dropped less than the grace period ago.
@@ -506,10 +511,6 @@ function createChatService({
   function trackConnection(visitorId) {
     clearTimeout(leaveTimers.get(visitorId));
     leaveTimers.delete(visitorId);
-    if (!connections.has(visitorId)) {
-      // back on the site: the persisted "left" time no longer applies
-      LcConversation.updateMany({ visitorId, leaveDueAt: { $ne: null } }, { $set: { leaveDueAt: null } }).catch(() => {});
-    }
     connections.set(visitorId, (connections.get(visitorId) || 0) + 1);
     let released = false;
     return () => {
@@ -521,15 +522,7 @@ function createChatService({
         return;
       }
       connections.delete(visitorId);
-      // Persist when this visitor counts as gone, so a restart that loses the timer below does not strand the chat.
-      LcConversation.updateMany(
-        { visitorId, mode: { $in: ["ai", "live", "queue"] } },
-        { $set: { leaveDueAt: new Date(now() + leaveGraceMs) } }
-      ).catch(() => {});
-      const timer = setTimeout(() => {
-        leaveTimers.delete(visitorId);
-        if (!connections.has(visitorId)) visitorLeft(visitorId).catch(() => {});
-      }, leaveGraceMs);
+      const timer = setTimeout(() => leaveTimers.delete(visitorId), leaveGraceMs);
       timer.unref?.();
       leaveTimers.set(visitorId, timer);
     };
@@ -574,20 +567,14 @@ function createChatService({
   const findOpenConversation = (visitorId) => findOpen(visitorId);
   // The patient's file upload: an Inactive chat they could continue (found without reopening it), and the reopen
   // itself, which the upload asks for only after the file passed validation.
-  const findReopenable = (visitorId) =>
-    LcConversation.findOne({
-      visitorId,
-      mode: "archived",
-      closedReason: "inactive",
-      closedAt: { $gte: new Date(now() - REOPEN_WINDOW_MS) },
-    }).sort({ closedAt: -1 });
+  const findReopenable = async (visitorId) => findContinuable(visitorId, await loadVisitor(visitorId));
 
   async function startConversation(visitorId, context = {}) {
     const visitor = await loadVisitor(visitorId);
     if (!hasContact(visitor)) return { ok: false, error: "contact_required" };
     const settings = await loadSettings();
     if (!noticeAccepted(visitor, settings)) return { ok: false, error: "contact_required" };
-    const existing = await findOpen(visitorId);
+    const existing = await retireIfStale(await findOpen(visitorId), visitor);
     if (existing) return { ok: true, conversation: await serialize(existing.toObject(), settings) };
 
     if (!(await limits.canStartChat(context.ip))) {
@@ -639,13 +626,13 @@ function createChatService({
 
   // ── Patient messages ─────────────────────────────────────────────────────────
 
-  // The patient writes (or sends a file) to a chat that was closed for inactivity: the same conversation reopens.
+  // The patient writes (or sends a file) to a closed chat (inactive, resolved, ended ...): the same conversation reopens.
   async function findOrReopen(visitorId) {
     const open = await findOpen(visitorId);
     if (open) return open;
     const visitor = await loadVisitor(visitorId);
     if (!hasContact(visitor)) return null;
-    const reopened = await reopenIfLeft(visitorId, visitor, ["inactive"]);
+    const reopened = await reopenArchived(visitorId, visitor);
     if (reopened) await pushState(reopened); // the widget leaves its "closed" view at once
     return reopened;
   }
@@ -1136,14 +1123,12 @@ function createChatService({
   // connected, or an admin-held chat where the patient wrote last (they are waiting for an answer).
   //   1. "Inactive": no inactivity due time, the last visible message is from the AI or an admin and is older than
   //      the inactivity minutes.
-  //   2. "Patient left": nobody connected and the persisted leave time has passed. A chat with no leave time and no
-  //      connection gets one now (it is archived one grace period later), so nothing stays open forever.
+  //   (A patient who left the site, hid the tab or lost the connection is NOT a reason to close a chat.)
   async function runAbandonedSweep({ limit = 100 } = {}) {
     const stamp = new Date(now());
     const minutes = inactiveMinutesOf(await loadSettings());
     const cutoff = new Date(now() - minutes * 60_000);
     let archivedInactive = 0;
-    let archivedLeft = 0;
 
     const lastVisible = (conversationId) =>
       LcMessage.findOne({ conversationId, sender: { $in: ["patient", "ai", "agent"] }, internal: { $ne: true } })
@@ -1204,44 +1189,7 @@ function createChatService({
       }
     }
 
-    // 2. patient left
-    const open = await LcConversation.find({ mode: { $in: ["ai", "live"] }, $or: [{ leaveDueAt: null }, { leaveDueAt: { $lte: stamp } }] })
-      .select("_id conversationId visitorId leaveDueAt")
-      .limit(limit)
-      .lean();
-    for (const row of open) {
-      if (isConnected(row.visitorId)) continue;
-      try {
-        if (!row.leaveDueAt) {
-          // nobody is connected and no leave time was kept (restart): start the grace period now
-          await LcConversation.updateOne({ _id: row._id, leaveDueAt: null }, { $set: { leaveDueAt: new Date(now() + leaveGraceMs) } });
-          continue;
-        }
-        const done = await withLock(row.conversationId, async () => {
-          const current = await LcConversation.findById(row._id);
-          if (!current || !["ai", "live"].includes(current.mode) || !current.leaveDueAt || current.leaveDueAt > stamp) return false;
-          if (isConnected(current.visitorId)) return false;
-          if (current.mode === "live") {
-            const last = await lastVisible(current.conversationId);
-            if (last?.sender === "patient") return false; // an admin holds it and the patient is waiting
-          }
-          const leftAt = new Date(Math.min(stamp.getTime(), current.leaveDueAt.getTime() - leaveGraceMs));
-          const archived = await LcConversation.findOneAndUpdate(
-            { _id: current._id, mode: { $in: ["ai", "live"] }, leaveDueAt: { $ne: null, $lte: stamp } },
-            { $set: { modeBeforeLeft: current.mode, mode: "archived", closedReason: "patient_left", leftAt, closedAt: leftAt, inactiveDueAt: null, leaveDueAt: null } },
-            { returnDocument: "after" }
-          );
-          if (!archived) return false;
-          await addMessage(archived, "system", "Patient left the website", { internal: true });
-          announce(archived);
-          return true;
-        });
-        if (done) archivedLeft += 1;
-      } catch (err) {
-        log({ event: "abandoned_left_failed", conversationId: row.conversationId, message: err?.message });
-      }
-    }
-    return { inactive: archivedInactive, left: archivedLeft };
+    return { inactive: archivedInactive, left: 0 }; // a patient who left the site never closes a chat
   }
 
   // The midnight (India time) cleanup. Archives, as "inactive" (so the patient can continue within 24 h), every chat
@@ -1344,7 +1292,7 @@ function createChatService({
   // Header button "Switch to AI": the chat goes back to the AI at once. A chat that was ever live stays in Live agent
   // chats (group "Back with the AI"); the agent holding it sees a team-only line and the AI carries on.
   async function switchToAi(visitorId) {
-    const loaded = await loadOpenForMessage(visitorId, { reopen: true });
+    const loaded = await loadOpenForMessage(visitorId);
     if (loaded.error) return { ok: false, error: loaded.error };
     return withLock(loaded.conv.conversationId, async () => {
       const conv = await LcConversation.findById(loaded.conv._id);
@@ -1426,7 +1374,7 @@ function createChatService({
     reopenInactive: findOrReopen,
     trackConnection,
     isConnected,
-    visitorLeft,
+    endChat,
     rate,
     pendingInvite,
     filesMeta,

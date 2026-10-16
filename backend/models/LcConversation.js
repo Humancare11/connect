@@ -13,7 +13,7 @@ const conversationSchema = new mongoose.Schema(
     assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     closedReason: {
       type: String,
-      enum: ["", "resolved", "patient_left", "offline_request", "ai_unavailable", "blocked", "inactive"],
+      enum: ["", "resolved", "patient_left", "patient_ended", "offline_request", "ai_unavailable", "blocked", "inactive"],
       default: "",
     },
     topic: { type: String, default: "", maxlength: 80 },
