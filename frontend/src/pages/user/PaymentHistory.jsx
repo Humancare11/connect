@@ -127,18 +127,18 @@ export default function PaymentHistory() {
                 <tbody>
                   {payments.map((p) => (
                     <tr key={p._id}>
-                      <td>{formatDate(p.paidAt)}</td>
-                      <td>Tele Consultation</td>
-                      <td>{gatewayLabel(p.gateway)}</td>
-                      <td className="ph-amount">{formatAmount(p.amountCents, p.currency)}</td>
-                      <td>
+                      <td data-label="Date" className="ph-date">{formatDate(p.paidAt)}</td>
+                      <td data-label="Description" className="ph-desc">Tele Consultation</td>
+                      <td data-label="Method">{gatewayLabel(p.gateway)}</td>
+                      <td data-label="Amount" className="ph-amount">{formatAmount(p.amountCents, p.currency)}</td>
+                      <td data-label="Invoice" className="ph-invoice-cell">
                         {p.invoice ? (
                           <span className="ph-invoice-no">{p.invoice.invoiceNumber}</span>
                         ) : (
                           <span className="ph-invoice-pending">Generating…</span>
                         )}
                       </td>
-                      <td>
+                      <td className="ph-action-cell">
                         <button
                           className="ph-download-btn"
                           disabled={!p.invoice || downloadingId === p._id}
