@@ -118,20 +118,22 @@ describe("live chat: admin workspace (lists, take over, notes, assignment, panel
       chat.socket.close();
     });
 
-    test("resolve archives the chat for good; it stays under Live agent chats", async () => {
+    test("resolve archives the chat; it stays under Live agent chats until the patient writes again", async () => {
       const chat = await openChat();
       await rest("POST", `/conversations/${chat.id}/messages`, { ...A, body: { text: "Done?" } });
       const res = await rest("POST", `/conversations/${chat.id}/resolve`, A);
       assert.equal(res.status, 200);
       assert.equal((await rowIn("live", chat.id)).mode, "archived");
       assert.equal((await rowIn("live", chat.id)).closedReason, "resolved");
-
-      const sent = await lc.call(chat.socket, "chat:message", { text: "one more thing" });
-      assert.deepEqual([sent.ok, sent.error], [false, "no_conversation"]);
       const again = await rest("POST", `/conversations/${chat.id}/resolve`, A);
       assert.equal(again.body.already, true);
       const late = await rest("POST", `/conversations/${chat.id}/messages`, { ...A, body: { text: "hello?" } });
       assert.deepEqual([late.status, late.body.error], [409, "closed"]);
+
+      // the patient writes in the resolved chat: the same thread reopens (it had an agent: back to the Queue)
+      const sent = await lc.call(chat.socket, "chat:message", { text: "one more thing" });
+      assert.deepEqual([sent.ok, sent.error], [true, undefined]);
+      assert.equal((await rowIn("live", chat.id)).mode, "queue");
       chat.socket.close();
     });
 

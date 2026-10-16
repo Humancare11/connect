@@ -22,4 +22,4 @@ export const dayWord = (iso) => {
 export const sizeOf = (bytes) =>
   bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round((bytes || 0) / 1024))} KB`;
 
-export const CLOSED_LABEL = { patient_left: "Left", blocked: "Blocked", inactive: "Inactive" };
+export const CLOSED_LABEL = { patient_left: "Left", patient_ended: "Ended by patient", blocked: "Blocked", inactive: "Inactive" };

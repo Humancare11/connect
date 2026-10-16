@@ -227,6 +227,16 @@ function createAgentService({
     return { translation: { text: decryptLiveChatText(t.text), from: t.from, fromName: t.fromName } };
   }
 
+  // The extras around a chat (visitor card, page timeline, other chats, ticket count, file info) must never stop the chat
+  // itself from opening: a failing lookup is logged by name (no patient data) and the section falls back to empty.
+  const soft = (name, work, fallback) =>
+    Promise.resolve()
+      .then(work)
+      .catch((err) => {
+        console.error(`[livechat] chat detail: ${name} failed: ${err?.name || "Error"}: ${String(err?.message || "").slice(0, 160)}`);
+        return fallback;
+      });
+
   // The conversation plus everything the patient panel shows. Opening a chat marks it read for this admin.
   async function detail(actor, conversationId, { markRead: markAsRead = true } = {}) {
     const conv = await load(conversationId);
@@ -241,15 +251,20 @@ function createAgentService({
     }
     const [rows, visitor, chats, pages, others] = await Promise.all([
       LcMessage.find({ conversationId }).sort({ createdAt: 1 }).limit(500).lean(),
-      chat.loadVisitor(conv.visitorId),
-      LcConversation.countDocuments({ visitorId: conv.visitorId, mode: { $ne: "trashed" } }),
-      LcPageVisit.find({ conversationId }).sort({ enteredAt: 1 }).lean(),
-      LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId }, mode: { $ne: "trashed" } })
-        .sort({ startedAt: -1 })
-        .limit(5)
-        .lean(),
+      soft("visitor", () => chat.loadVisitor(conv.visitorId), null),
+      soft("chat count", () => LcConversation.countDocuments({ visitorId: conv.visitorId, mode: { $ne: "trashed" } }), 1),
+      soft("page timeline", () => LcPageVisit.find({ conversationId }).sort({ enteredAt: 1 }).lean(), []),
+      soft(
+        "other chats",
+        () =>
+          LcConversation.find({ visitorId: conv.visitorId, conversationId: { $ne: conversationId }, mode: { $ne: "trashed" } })
+            .sort({ startedAt: -1 })
+            .limit(5)
+            .lean(),
+        []
+      ),
     ]);
-    const files = await chat.filesMeta(rows);
+    const files = await soft("files", () => chat.filesMeta(rows), new Map());
     // Whether the composer should offer "Detect language": no language stored at all (an English chat stores "en"),
     // and a recent patient message that is clearly not English and long enough to tell.
     const languageUnknown =
@@ -294,7 +309,7 @@ function createAgentService({
         contact,
         location: { city: conv.geo?.city || "", state: conv.geo?.state || "", country: conv.geo?.country || "" },
         timeZone: conv.timeZone || "",
-        counts: { chats, tickets: await ticketCount(contact.email), visits },
+        counts: { chats, tickets: await soft("tickets", () => ticketCount(contact.email), 0), visits },
         returning: visits > 1 || chats > 1,
         context: {
           topic: conv.topic || "",
@@ -820,7 +835,7 @@ function createAgentService({
       { $push: { transcriptLog: { $each: [{ userId: oid(actor.id), at: new Date(now()) }], $slice: -50 } } }
     );
     const text = [
-      `Humancare live chat ${conv.conversationId}`,
+      `Humancare Connect live chat ${conv.conversationId}`,
       `Started: ${stamp(conv.startedAt)} UTC`,
       conv.closedAt ? `Closed: ${stamp(conv.closedAt)} UTC` : "Status: open",
       "",

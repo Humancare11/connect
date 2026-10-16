@@ -95,7 +95,11 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       assert.ok(detail.messages.some((m) => m.internal && m.text === "Patient rated the chat 4★"));
 
       const patient = await lc.call(chat.socket, "chat:resume");
-      assert.equal(patient.conversation, null, "a rated chat is done; the widget offers a new chat");
+      assert.deepEqual(
+        [patient.conversation.conversationId, patient.conversation.mode, patient.conversation.canRate, patient.conversation.rating.stars],
+        [chat.id, "archived", false, 4],
+        "a rated chat stays on screen and can still be continued"
+      );
       chat.socket.close();
     });
 
@@ -382,21 +386,15 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
   // ── Visitor left ──────────────────────────────────────────────────────────────
 
   describe("visitor left", () => {
-    test("about 30 s (here 0.25 s) after the last connection closes, an open chat is archived as 'patient left'", async () => {
+    test("closing the last connection never archives the chat, however long the visitor stays away", async () => {
       const chat = await openChat();
       await lc.call(chat.socket, "chat:message", { text: "hello" });
       chat.socket.close();
-      await sleep(100);
-      assert.equal((await convOf(chat.id)).mode, "ai", "not yet");
-      assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "archived", 2500));
-
+      await sleep(900); // several grace periods (here 0.25 s each)
+      await lc.livechat.chat.runAbandonedSweep();
       const conv = await convOf(chat.id);
-      assert.deepEqual([conv.closedReason, conv.modeBeforeLeft], ["patient_left", "ai"]);
-      assert.ok(conv.leftAt && conv.closedAt);
-      const row = await rowIn("ai", chat.id);
-      assert.deepEqual([row.mode, row.closedReason], ["archived", "patient_left"]);
-      const detail = (await rest("GET", `/conversations/${chat.id}`)).body;
-      assert.ok(detail.messages.some((m) => m.internal && m.text === "Patient left the website"));
+      assert.deepEqual([conv.mode, conv.closedReason, conv.leftAt, conv.leaveDueAt], ["ai", "", null, null]);
+      assert.equal((await rowIn("ai", chat.id)).mode, "ai");
     });
 
     test("reconnecting inside the grace period (a page change) keeps the chat open", async () => {
@@ -409,14 +407,14 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       next.close();
     });
 
-    test("a chat socket and a tracker count together: the visitor has left only when both are gone", async () => {
+    test("a chat socket and a tracker both gone: the chat is still open", async () => {
       const chat = await openChat({}, { consent: true });
       const tracker = await lc.trackerSocket(chat.visitorId);
       chat.socket.close();
       await sleep(600);
-      assert.equal((await convOf(chat.id)).mode, "ai", "the tracker is still connected");
       tracker.close();
-      assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "archived", 2500));
+      await sleep(900);
+      assert.equal((await convOf(chat.id)).mode, "ai");
     });
 
     test("a chat waiting in the Queue is NOT archived when the visitor leaves: the email follow-up still applies", async () => {
@@ -432,11 +430,11 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       assert.equal((await convOf(chat.id)).mode, "queue", "still in the Queue after the notice");
     });
 
-    test("a returning visitor within 24 hours continues the same AI chat", async () => {
+    test("a returning visitor, even days later, continues the same open chat with its history (no welcome-back line)", async () => {
       const chat = await openChat({ name: "Emma Wilson" });
       await lc.call(chat.socket, "chat:message", { text: "How much is a refill?" });
       chat.socket.close();
-      assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "archived", 2500));
+      await lc.models.LcConversation.updateOne({ conversationId: chat.id }, { $set: { lastMessageAt: new Date(Date.now() - 3 * 86_400_000) } });
 
       const back = await lc.chatSocket(chat.token);
       const resumed = await lc.call(back, "chat:resume");
@@ -444,24 +442,41 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       assert.equal(resumed.conversation.conversationId, chat.id);
       assert.equal(resumed.conversation.mode, "ai");
       assert.ok(texts(resumed.conversation).includes("How much is a refill?"), "the earlier messages are still there");
-      assert.ok(texts(resumed.conversation).includes("Welcome back, Emma!"));
-      const conv = await convOf(chat.id);
-      assert.deepEqual([conv.closedReason, conv.leftAt, conv.modeBeforeLeft], ["", null, ""]);
-      assert.equal((await rowIn("ai", chat.id)).mode, "ai");
+      assert.ok(!texts(resumed.conversation).some((t) => t.startsWith("Welcome back")));
       back.close();
     });
 
-    test("a chat that had an agent returns to the Queue when the visitor comes back", async () => {
+    test("an older chat closed as 'patient left' comes back with its history; writing reopens the same thread", async () => {
+      const chat = await openChat({ name: "Emma Wilson" });
+      await lc.call(chat.socket, "chat:message", { text: "How much is a refill?" });
+      await lc.models.LcConversation.updateOne(
+        { conversationId: chat.id },
+        { $set: { mode: "archived", closedReason: "patient_left", modeBeforeLeft: "ai", closedAt: new Date(), leftAt: new Date() } }
+      );
+      const resumed = (await lc.call(chat.socket, "chat:resume")).conversation;
+      assert.deepEqual([resumed.conversationId, resumed.mode, resumed.canContinue], [chat.id, "archived", true]);
+      assert.ok(texts(resumed).includes("How much is a refill?"));
+
+      assert.equal((await lc.call(chat.socket, "chat:message", { text: "I am back" })).ok, true);
+      const conv = await convOf(chat.id);
+      assert.deepEqual([conv.mode, conv.closedReason, conv.leftAt, conv.modeBeforeLeft], ["ai", "", null, ""]);
+      assert.equal((await rowIn("ai", chat.id)).mode, "ai");
+      assert.ok(texts((await lc.call(chat.socket, "chat:resume")).conversation).includes("Welcome back, Emma!"));
+      chat.socket.close();
+    });
+
+    test("a closed chat that had an agent returns to the Queue when the patient writes", async () => {
       const agent = await agentOnline(AGENT_B);
       const chat = await openChat({ name: "Emma Wilson" });
       await rest("POST", `/conversations/${chat.id}/takeover`, A);
-      chat.socket.close();
-      assert.ok(await waitFor(async () => (await convOf(chat.id)).mode === "archived", 2500));
-      assert.equal((await convOf(chat.id)).modeBeforeLeft, "live");
+      await lc.models.LcConversation.updateOne(
+        { conversationId: chat.id },
+        { $set: { mode: "archived", closedReason: "patient_left", modeBeforeLeft: "live", closedAt: new Date(), leftAt: new Date() } }
+      );
       agent.socket.events.length = 0;
 
-      const back = await lc.chatSocket(chat.token);
-      const resumed = (await lc.call(back, "chat:resume")).conversation;
+      assert.equal((await lc.call(chat.socket, "chat:message", { text: "are you there?" })).ok, true);
+      const resumed = (await lc.call(chat.socket, "chat:resume")).conversation;
       assert.equal(resumed.mode, "queue");
       assert.equal(resumed.agent, null);
       assert.ok(texts(resumed).includes("Welcome back, Emma! We're reconnecting you with our team."));
@@ -470,29 +485,32 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       await sleep(100);
       assert.ok(agent.socket.events.some(([e, p]) => e === "queue:new" && p.reason === "returned"));
       assert.ok(agent.socket.events.some(([e]) => e === "chat:reopened"));
-      back.close();
+      chat.socket.close();
       agent.socket.close();
     });
 
-    test("after more than 24 hours it is not reopened; a resolved chat is never reopened", async () => {
+    test("after 30 days the device starts fresh; a resolved chat inside the window continues when the patient writes", async () => {
       const stale = await openChat();
-      stale.socket.close();
-      assert.ok(await waitFor(async () => (await convOf(stale.id)).mode === "archived", 2500));
-      await lc.models.LcConversation.updateOne({ conversationId: stale.id }, { $set: { leftAt: new Date(Date.now() - 25 * 3600_000) } });
+      await lc.models.LcConversation.updateOne(
+        { conversationId: stale.id },
+        { $set: { mode: "archived", closedReason: "patient_left", closedAt: new Date(), lastMessageAt: new Date(Date.now() - 31 * 86_400_000) } }
+      );
       const back = await lc.chatSocket(stale.token);
-      assert.equal((await stateOf(back)), null, "too late: nothing to continue");
+      assert.equal(await stateOf(back), null, "older than 30 days: nothing is shown");
       const fresh = await lc.call(back, "chat:start", {});
       assert.notEqual(fresh.conversation.conversationId, stale.id);
-      assert.equal((await convOf(stale.id)).mode, "archived");
+      assert.equal((await convOf(stale.id)).mode, "archived", "the server data is untouched");
 
       const resolved = await openChat();
       await rest("POST", `/conversations/${resolved.id}/resolve`, A);
       resolved.socket.close();
-      await sleep(600);
       const again = await lc.chatSocket(resolved.token);
       const state = await stateOf(again);
-      assert.equal(state.mode, "archived", "a resolved chat stays resolved (the patient can still rate it)");
-      assert.equal((await convOf(resolved.id)).closedReason, "resolved");
+      assert.deepEqual([state.conversationId, state.mode, state.canContinue, state.canRate], [resolved.id, "archived", true, true]);
+      assert.equal((await lc.call(again, "chat:message", { text: "one more thing" })).ok, true);
+      const conv = await convOf(resolved.id);
+      assert.notEqual(conv.mode, "archived");
+      assert.equal(conv.closedReason, "");
       back.close();
       again.close();
     });
@@ -588,14 +606,14 @@ describe("live chat: rating, offline mode + email, AI outage, agent offline, vis
       tracker.close();
     });
 
-    test("an invite the visitor never answers is archived as 'patient left' when they leave", async () => {
+    test("an invite the visitor never answers stays open when they leave", async () => {
       const vid = newVisitor();
       const tracker = await lc.trackerSocket(vid);
       await waitFor(() => lc.livechat.presence.get(vid));
       const start = await rest("POST", "/conversations/start", { ...A, body: { visitorId: vid } });
       tracker.close();
-      assert.ok(await waitFor(async () => (await convOf(start.body.conversationId)).mode === "archived", 2500));
-      assert.equal((await convOf(start.body.conversationId)).closedReason, "patient_left");
+      await sleep(900);
+      assert.notEqual((await convOf(start.body.conversationId)).mode, "archived");
     });
 
     test("a returning visitor who already has contact details is invited too (no form needed)", async () => {

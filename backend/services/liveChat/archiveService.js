@@ -14,8 +14,8 @@ const PAGE_SIZE = 50;
 const SCAN_CAP = 5000;
 const ZONE = "America/New_York"; // the same fixed zone Reports uses for days
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
-const REASON_VALUES = { inactive: ["inactive"], patient_left: ["patient_left"], blocked: ["blocked"], resolved: ["resolved", "", "offline_request", "ai_unavailable"] };
-const REASON_KEY = (closedReason) => (["inactive", "patient_left", "blocked"].includes(closedReason) ? closedReason : "resolved");
+const REASON_VALUES = { inactive: ["inactive"], patient_left: ["patient_left"], patient_ended: ["patient_ended"], blocked: ["blocked"], resolved: ["resolved", "", "offline_request", "ai_unavailable"] };
+const REASON_KEY = (closedReason) => (["inactive", "patient_left", "patient_ended", "blocked"].includes(closedReason) ? closedReason : "resolved");
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const isRealDay = (value) => {

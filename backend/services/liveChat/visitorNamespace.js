@@ -107,7 +107,7 @@ function countryCodeFor(name) {
 }
 
 const TRACKING_EVENTS = ["visitor:page", "visitor:heartbeat"];
-const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:switch-ai", "chat:typing", "chat:rate"];
+const CHAT_EVENTS = ["chat:resume", "chat:start", "chat:message", "chat:option", "chat:agent", "chat:switch-ai", "chat:typing", "chat:rate", "chat:end"];
 const EVENTS = [...TRACKING_EVENTS, ...CHAT_EVENTS];
 const MAX_CHAT_MESSAGE_BYTES = 5000; // 1,000 characters can be up to 4 bytes each, plus JSON overhead
 
@@ -250,6 +250,12 @@ function setupVisitorNamespace(ns, ctx) {
             page: path && isTrackablePath(path) ? { path, title: cleanTitle(payload.title) } : null,
           });
         }, "chat:start");
+      });
+
+      // X > "End chat": closes the chat (it stays readable and continuable); clear: this device also forgets it.
+      socket.on("chat:end", (a, b) => {
+        const [payload, cb] = args(a, b);
+        safely(cb, () => ctx.chat.endChat(visitorId, { clear: payload.clear === true }), "chat:end");
       });
 
       socket.on("chat:message", (a, b) => {

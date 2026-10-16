@@ -73,7 +73,10 @@ const PrivacyPolicy1 = () => {
                         <strong>Who else receives your information.</strong> Our hosting, database and email providers, each under an agreement that protects your information. We do not sell your chat information or use it for advertising.
                     </p>
                     <p>
-                        <strong>Security and retention.</strong> Chat messages and contact details are encrypted when stored. Conversations are kept for 365 days and then deleted, unless the law requires us to keep them longer.
+                        <strong>Security and retention.</strong> Chat messages and contact details are encrypted when stored. Conversations are kept for 365 days and then deleted, unless the law requires us to keep them longer. Ending a chat or clearing it from your device does not delete our record of it; conversations are kept for 365 days, as above.
+                    </p>
+                    <p>
+                        <strong>Chat on your device.</strong> We keep a first-party visitor identifier and a chat session token in your browser so your chat continues when you come back. The chat window shows an earlier conversation on that device for up to 30 days after your last message. You can end the chat and, if you wish, tick "Also clear this chat from this device" so it no longer appears on this device. Closing the tab, locking your phone or losing your connection does not end your chat.
                     </p>
                     <p>
                         <strong>Your choices and rights.</strong> You can ask to chat with a person instead of Connect AI at any time. You can request a copy of your chat or ask us to delete it by emailing{" "}

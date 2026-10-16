@@ -8,7 +8,7 @@ const QUICK_OPTIONS = [
     label: "Online Consultation with Prescription",
     icon: "stethoscope",
     reply:
-      "You can see a licensed US doctor online. A general consultation is $49, and if the doctor decides a prescription is appropriate it is issued after the visit. Book from Book Appointment, choose a category and pick a time.",
+      "You can see a licensed US doctor online. A general consultation is $49, and if the doctor decides a prescription is appropriate it is issued during your online consultation. Book from Book Appointment, choose a category and pick a time.",
   },
   {
     key: "refill",
@@ -56,8 +56,8 @@ const PRICES = [
 
 // Canned replies for agents (seeded once; {agentName} is replaced with the agent's display name when inserted).
 const CANNED_REPLIES = [
-  { title: "Greeting", text: "Hi, I'm {agentName} from Humancare support. How can I help?" },
-  { title: "Slot booked", text: "I've booked a General consultation for you today at 6:00 PM. You'll get the video link by email." },
+  { title: "Greeting", text: "Hi, I'm {agentName} from Humancare Connect support. How can I help?" },
+  { title: "Slot booked", text: "I've booked a General consultation for you today at 6:00 PM. You'll get the link to your online consultation by email." },
   { title: "Payment confirmed", text: "Your payment went through. A confirmation email will reach you within 5 minutes." },
   { title: "Prescription re-sent", text: "I've re-sent your prescription to your pharmacy. It should arrive within 30 minutes." },
 ];

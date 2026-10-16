@@ -29,6 +29,7 @@ const visitorSchema = new mongoose.Schema(
     },
     firstSeenAt: { type: Date, default: Date.now },
     lastSeenAt: { type: Date, default: Date.now },
+    deviceClearedAt: { type: Date, default: null }, // the patient chose "clear this chat from this device": older chats are not shown again
     visits: { type: Number, default: 1 },
     chatCount: { type: Number, default: 0 },
     lastIp: { type: String, default: "" },

@@ -170,7 +170,7 @@ describe("prompt: condition-page links setting and the SAFETY rule", () => {
   test("the SAFETY prompt forbids all medical information and keeps the emergency rule", () => {
     const lines = buildSystemPrompt(DEFAULT_SETTINGS).split("\n");
     const rule = lines.find((l) => l.startsWith("SAFETY"));
-    for (const needle of ["NO medical information or advice", "diagnose", "treatment", "medications, doses or interactions", "test results", '"general information"', "licensed Humancare doctor"]) {
+    for (const needle of ["NO medical information or advice", "diagnose", "treatment", "medications, doses or interactions", "test results", '"general information"', "licensed Humancare Connect doctor"]) {
       assert.ok(rule.includes(needle), needle);
     }
     assert.ok(lines.some((l) => l.startsWith("EMERGENCY") && l.includes("911")));
