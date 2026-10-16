@@ -4,7 +4,7 @@ const { createSitePages } = require("../services/liveChat/sitePages");
 const { titlesFor, serviceTitleFor } = require("../services/liveChat/pageSynonyms");
 const { buildSystemPrompt, tidyReply, validate } = require("../services/liveChat/aiService");
 const safety = require("../services/liveChat/safety");
-const { DEFAULT_SETTINGS } = require("../services/liveChat/settingsDefaults");
+const { DEFAULT_SETTINGS, QUICK_OPTIONS, CANNED_REPLIES } = require("../services/liveChat/settingsDefaults");
 
 const sp = createSitePages();
 const titles = (links) => links.map((l) => l.title);
@@ -137,6 +137,25 @@ describe("live chat: brand name and reply style", () => {
     assert.match(prompt, /never write "Sorry for the confusion"/);
     assert.match(prompt, /no dashes/);
     assert.match(prompt, /state the actual price in USD from the Prices list/);
+  });
+
+  test("no prompt line and no fixed or default text says 'visit', 'in-person' or 'video call' (it is an online consultation)", () => {
+    const FORBIDDEN = /visit|in-person|in person|video call|videollamada|vídeo llamada|वीडियो कॉल|वीडियो/i;
+    // Page titles are the site's own data (e.g. "How a telemedicine visit works"): the prompt tells the model not to repeat them.
+    const settingsVariants = [DEFAULT_SETTINGS, { ...DEFAULT_SETTINGS, aiMayLinkConditionPages: false }, { prices: [] }];
+    for (const settings of settingsVariants) {
+      for (const line of buildSystemPrompt(settings, sp.pagesForPrompt().filter((p) => !FORBIDDEN.test(p.title)), { pageHint: ["Joint Pain"], unansweredStreak: 1, shorter: true }).split(String.fromCharCode(10))) {
+        if (line.startsWith("WORDING:")) continue; // the rule itself names the forbidden words
+        assert.doesNotMatch(line, FORBIDDEN, line.slice(0, 60));
+      }
+    }
+    assert.match(prompt, /WORDING: our service is an online consultation/);
+    assert.match(prompt, /Our doctors decide if a sick note is appropriate during your online consultation./);
+    for (const [kind, langs] of Object.entries(safety.FIXED_TEXT)) {
+      for (const [lang, text] of Object.entries(langs)) assert.doesNotMatch(text, FORBIDDEN, `${kind}.${lang}`);
+    }
+    for (const option of QUICK_OPTIONS) assert.doesNotMatch(option.reply || "", FORBIDDEN, option.key);
+    for (const canned of CANNED_REPLIES) assert.doesNotMatch(canned.text, FORBIDDEN, canned.title);
   });
 
   test("tidyReply: straight quotes, no dashes, full brand", () => {

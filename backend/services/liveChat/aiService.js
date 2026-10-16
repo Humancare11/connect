@@ -15,7 +15,7 @@ const { MAX_REPLY_CHARS, replyLength, FIXED_TEXT } = require("./safety");
 
 // Why the AI asks for a person. "none" is the default and the only value that never reaches an agent.
 // explicit_request: asked for a person | account_issue: their own booking/payment/account | technical_issue: site,
-// login, video call or upload not working | emergency | complaint: upset or asks for a manager | unanswered: a genuine
+// login, online consultation or upload not working | emergency | complaint: upset or asks for a manager | unanswered: a genuine
 // Humancare Connect question the AI could not answer (the server waits for a second miss in a row).
 const HANDOFF_REASONS = ["none", "explicit_request", "account_issue", "technical_issue", "emergency", "complaint", "unanswered"];
 const TOPICS = ["consultation", "refill", "second_opinion", "sick_notes", "pricing", "booking", "lab", "insurance", "privacy", "medical", "other"];
@@ -114,12 +114,12 @@ function translateSystem(target, { hint = "", force = false } = {}) {
 
 // Facts that are always available to the AI. Admin-editable facts and prices (AI settings) are added on top.
 const BASE_FACTS = [
-  "Humancare Connect is a US online telehealth service. Patients book a video visit with a licensed doctor.",
-  "Booking: open Book Appointment, choose a category, specialty or condition, pick a time and pay, then join the secure video visit from the dashboard.",
-  "Booking is available 24/7 and same-day appointments are common for non-emergency concerns.",
+  "Humancare Connect is a US online telehealth service. Patients book an online consultation with a licensed doctor.",
+  "Booking: open Book Appointment, choose a category, specialty or condition, pick a time and pay, then join the secure online consultation from the dashboard.",
+  "Booking is available 24/7 and same-day online consultations are common for non-emergency concerns.",
   "No insurance is needed: prices are flat.",
-  "Humancare Connect follows HIPAA privacy and security standards; visits and records are handled on a secure platform.",
-  "A doctor decides whether a prescription, sick note or certificate is appropriate after the visit.",
+  "Humancare Connect follows HIPAA privacy and security standards; consultations and records are handled on a secure platform.",
+  "A doctor decides whether a prescription, sick note or certificate is appropriate during your online consultation.",
 ];
 
 // The HANDOFF rule of the prompt follows the handoff toggles in the AI settings. Emergency is always on.
@@ -129,7 +129,7 @@ function handoffRule(rules = {}, unansweredStreak = 0, aiName = DEFAULT_AI_NAME)
   const reasons = [];
   if (on("onPatientRequest")) reasons.push('"explicit_request": the patient clearly asks to talk to a human, agent, person or doctor');
   if (on("onAccountOrPayment")) reasons.push('"account_issue": a specific booking, appointment, payment, refund, prescription status or account problem that staff must look up');
-  if (on("onTechnicalIssue")) reasons.push('"technical_issue": the website, login, video call or an upload is not working for them');
+  if (on("onTechnicalIssue")) reasons.push('"technical_issue": the website, login, the online consultation or an upload is not working for them');
   reasons.push('"emergency": the patient describes an emergency');
   if (on("onComplaint")) reasons.push('"complaint": the patient is upset, complains, or asks for a manager');
   if (on("onUnsure")) reasons.push('"unanswered": a genuine question about Humancare Connect (services, prices, booking, policies) that the facts do not answer');
@@ -138,7 +138,7 @@ function handoffRule(rules = {}, unansweredStreak = 0, aiName = DEFAULT_AI_NAME)
   if (!on("onAccountOrPayment")) off.push("account, booking or payment questions (you cannot see them: say so and point to their dashboard or support email)");
   if (!on("onTechnicalIssue")) off.push("technical problems (give one short helpful tip and mention the Talk to live agent button)");
   if (!on("onComplaint")) off.push("complaints (apologise briefly and mention the Talk to live agent button)");
-  if (!on("onUnsure")) off.push("questions you cannot answer (say you are not sure and suggest booking a visit)");
+  if (!on("onUnsure")) off.push("questions you cannot answer (say you are not sure and suggest booking an online consultation)");
   return [
     "HANDOFF: handoff and handoffReason hand the chat to a live agent, who should only get chats with a real need.",
     `Allowed reasons: ${reasons.join("; ")}.`,
@@ -153,7 +153,7 @@ function handoffRule(rules = {}, unansweredStreak = 0, aiName = DEFAULT_AI_NAME)
     `Medical questions -> false, none, and the reply is the refusal from SAFETY, for example "${FIXED_TEXT.fallback.en.replace(/ Book here:$/, "")}" plus the booking link in links. This holds for "what causes migraines?", "can I take ibuprofen with my blood pressure pills?", "what dose of amoxicillin is right for me?", "do I have diabetes?", "what does my blood test result mean?" and "I have had a sore throat for three days" alike. Never answer the medical part, not even partly or "in general".`,
     '"I want to talk to a person" -> false, explicit_request. "can a doctor call me?" -> false, explicit_request.',
     '"my payment failed" -> false, account_issue. "where is my refund?" -> false, account_issue. "my prescription is not showing" -> false, account_issue.',
-    '"the video call will not start" -> false, technical_issue. "I cannot log in" -> false, technical_issue.',
+    '"my online consultation will not start" -> false, technical_issue. "I cannot log in" -> false, technical_issue.',
     '"I have chest pain and cannot breathe" -> false, emergency (reply tells them to call 911 now).',
     '"this is terrible service" -> false, complaint. "let me speak to a manager" -> false, complaint.',
     '"do you accept my pet insurance for dental implants in Mars?" (a genuine Humancare Connect question the facts do not cover) -> false, unanswered.',
@@ -192,6 +192,7 @@ function buildSystemPrompt(settings = {}, pages = [], { unansweredStreak = 0, sh
     "EMERGENCY: If the patient describes an emergency (for example chest pain, trouble breathing, stroke signs, severe bleeding, overdose, thoughts of suicide or self-harm), tell them in the reply to call 911 (or their local emergency number) right now, set handoff to true and handoffReason to \"emergency\".",
     handoffRule(settings.handoffRules, unansweredStreak, aiNameOf(settings)),
     "STYLE: Every reply is at most 200 characters, not counting links or URLs: one or two short, warm, plain sentences. Reply in the patient's language. No markdown.",
+    "WORDING: our service is an online consultation. Never write \"visit\", \"appointment visit\", \"in-person\" or \"video call\"; say \"online consultation\" (or \"consultation\"). Example: \"Our doctors decide if a sick note is appropriate during your online consultation.\" If a page title contains one of these words, do not repeat the title in your reply: say \"the page below\" instead (the button still shows the title).",
     "BRAND: in English always write \"Humancare Connect\", never \"Humancare\" alone.",
     "VOICE: speak as the company in the first person plural (\"we\", \"our services\", \"our doctors\"); use \"I\" only to say who you are or what you cannot do. Do not apologise unless the patient reports a symptom or a problem; never write \"Sorry for the confusion\". Use plain, correct English in short sentences, straight apostrophes (it's, I'm, can't) and no dashes (no em-dash, no en-dash): use a comma or a full stop instead.",
     "PRICES: when the patient asks about price or cost, state the actual price in USD from the Prices list (for example \"A General consultation is $49.\"). Use the service they named or the closest one; if they name none, give 2-3 key prices. Add the Pricing page to links. Never answer only that the price is flat or low.",
