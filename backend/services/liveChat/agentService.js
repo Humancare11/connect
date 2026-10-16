@@ -157,12 +157,14 @@ function createAgentService({
       { $sort: { createdAt: -1 } },
       { $group: { _id: "$conversationId", sender: { $first: "$sender" }, text: { $first: "$text" }, at: { $first: "$createdAt" } } },
     ]);
-    return new Map(rows.map((r) => [r._id, { sender: r.sender, text: decryptLiveChatText(r.text).slice(0, 120), at: r.at }]));
+    return new Map(rows.map((r) => [r._id, { sender: r.sender, text: decryptLiveChatText(r.text, r._id).slice(0, 120), at: r.at }]));
   }
 
   // The chats a chat page lists (Active + Recent). The unread badge uses the SAME filter, so the two always agree.
   const listFilter = (view) => ({
-    ...(view ? { everLive: view === "live" } : {}),
+    // AI page: chats that never had an agent (a missing flag counts as never); agent page: chats that ever had one. Together
+    // they cover every chat, none is hidden from both.
+    ...(view ? { everLive: view === "live" ? true : { $ne: true } } : {}),
     mode: { $ne: "trashed" },
     $and: [{ $or: [activityGte(istTodayStart(now())), { mode: "queue" }] }],
   });
@@ -283,7 +285,7 @@ function createAgentService({
     const messages = rows.map((m) => ({
       id: String(m._id),
       sender: m.sender,
-      text: decryptLiveChatText(m.text),
+      text: decryptLiveChatText(m.text, m._id),
       at: m.createdAt,
       agentName: m.agentName || "",
       internal: Boolean(m.internal),

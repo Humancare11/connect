@@ -218,3 +218,10 @@ Where a chat shows is computed from the time of its last real message (patient, 
 - A new message from the patient puts the chat straight back to Active (same chat, same history); resolved and ended chats follow the same timeline and just show their status.
 - No job writes these buckets, so a chat cannot be lost between lists. The existing inactivity job still closes idle chats (the patient sees the closing line) but no longer decides which list a chat is in.
 - Nothing is deleted automatically by the chat lists or the sweeps. Deletion is only the manual Super Admin Trash flow (Archive page chats only, 30 days in Trash) and the data-retention job (365 days).
+
+## Encryption key mismatch and key rotation
+
+- The key is **`LIVECHAT_ENCRYPTION_KEY`** (32 bytes, 64 hex characters or base64). Every backend that uses the same database must have the same value.
+- Text that no configured key can decrypt never breaks a page: the list, the chat detail, the Archive, search, transcripts and the sockets show "[Message can't be shown – encryption key mismatch]" and the rest of the chat keeps working. The AI, emails and greetings never receive that placeholder (they get an empty value). Each admin request that hit such data logs one line: method, path (the chat code), the number of undecryptable items and message ids. No content and no key material is logged.
+- **Rotating the key:** put the new key in `LIVECHAT_ENCRYPTION_KEY` and the old one(s) in `LIVECHAT_ENCRYPTION_KEY_PREVIOUS` (comma separated). Reading tries the current key, then the previous ones; new data is always written with the current key. The search hashes (exact email / phone in the Archive) are derived from the current key only: after a rotation run `scripts/backfillLiveChatSearchKeys.js`.
+- **Diagnostic (read-only, never writes):** `npm run livechat:decrypt-check` (in `backend/`) prints an 8-hex SHA-256 fingerprint of each configured key (compare it between environments), then per chat how many encrypted fields fail with the current key alone and with current + previous keys. It prints counts and chat codes only.

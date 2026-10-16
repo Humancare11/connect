@@ -1,6 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const { verifyAdminToken, liveChatAgentOnly, superAdminOnly } = require("../middleware/verifyToken");
+const { runWithDecryptReport } = require("../utils/liveChat/crypto");
 const { toPublicVisitor } = require("../services/liveChat/presence");
 const { AgentError, CONVERSATION_ID_RE } = require("../services/liveChat/agentService");
 const { FileError } = require("../services/liveChat/fileService");
@@ -82,7 +83,12 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   const handle = (fn) => async (req, res, next) => {
     try {
       res.set("Cache-Control", "no-store");
-      res.json(await fn(req));
+      // Text that no key can decrypt becomes a placeholder; what happened is logged once per request (counts and ids only).
+      const { value, report } = await runWithDecryptReport(() => fn(req));
+      if (report.count) {
+        console.error(`[livechat] ${req.method} ${req.originalUrl.split("?")[0]}: ${report.count} undecryptable item(s)${report.ids.size ? `, ids: ${[...report.ids].slice(0, 20).join(",")}` : ""} (key mismatch?)`);
+      }
+      res.json(value);
     } catch (err) {
       if (err instanceof AgentError) return res.status(err.status).json({ ok: false, error: err.code, ...err.extra });
       if (err instanceof FileError) return res.status(err.status).json({ ok: false, error: err.code });

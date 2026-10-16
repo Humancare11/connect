@@ -10,7 +10,7 @@
 //                         appointment within 7 days after the chat started
 //   - AI cost             from the daily AI usage totals (kept even after chats are deleted)
 const mongoose = require("mongoose");
-const { decryptLiveChatText } = require("../../utils/liveChat/crypto");
+const { decryptLiveChatText, decryptLiveChatOrEmpty } = require("../../utils/liveChat/crypto");
 const { dayKey } = require("./limits");
 const { aiNameOf } = require("./settingsDefaults");
 
@@ -171,7 +171,7 @@ function createStatsService({ models, loadSettings, agents = { isAvailable: () =
   async function bookingsAfterChat(chats) {
     const withEmail = [];
     for (const c of chats) {
-      const email = decryptLiveChatText(c.contact?.email).toLowerCase();
+      const email = decryptLiveChatOrEmpty(c.contact?.email).toLowerCase();
       if (email) withEmail.push({ startedAt: c.startedAt, email });
     }
     if (!withEmail.length) return { chatsWithContact: 0, chatsWithBooking: 0, bookings: 0, windowDays: BOOKING_WINDOW_DAYS };

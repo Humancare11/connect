@@ -11,6 +11,7 @@
     "backfill:uploads": "node scripts/backfillUploadsToS3.js",
     "backfill:patient-ids": "node scripts/backfillPatientIds.js",
     "livechat:eval": "node scripts/liveChatEval.js",
+    "livechat:decrypt-check": "node scripts/liveChatDecryptCheck.js",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "keywords": [],
