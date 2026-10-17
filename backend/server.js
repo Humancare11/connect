@@ -757,7 +757,20 @@ const directCallStatsLimiter = makeSocketLimiter({ windowMs: 1200, max: 2 });
 // the handlers themselves.
 const directPinVerifyLimiter = makeSocketLimiter({ windowMs: 10000, max: 8 });
 
+// Signaling events that are refused (not in the room, malformed, rate limited)
+// used to be dropped silently, which made a wedged call impossible to explain.
+// Log the reason server-side and tell the sender, capped so a flooding client
+// can't turn the replies into amplification.
+const signalingErrorLimiter = makeSocketLimiter({ windowMs: 1000, max: 3 });
+function rejectSignal(socket, event, code) {
+  console.warn("[socket] signaling event rejected", { event, code, socketId: socket.id });
+  if (!signalingErrorLimiter.allow(socket.id)) return undefined;
+  socket.emit("signaling-error", { event, code, msg: "That request was not accepted (" + code + ")." });
+  return undefined;
+}
+
 const SOCKET_LIMITERS = [
+  signalingErrorLimiter,
   chatMessageLimiter,
   videoSdpLimiter,
   iceCandidateLimiter,
@@ -2020,7 +2033,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join-appointment-room", async ({ appointmentId, userId, role, token, capabilities } = {}) => {
-    if (!appointmentId) return;
+    if (!appointmentId) {
+      socket.emit("room-access-denied", { msg: "No appointment was specified.", reason: "invalid_appointment" });
+      return;
+    }
 
     const room = appointmentRoomName(appointmentId);
     const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role, token });
@@ -2304,14 +2320,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("video-offer", ({ appointmentId, offer, offerId }) => {
-    if (!appointmentId || !offer) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!appointmentId || !offer) return rejectSignal(socket, "video-offer", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "video-offer", "not_in_room");
     // Refuse to relay anything that isn't a well-formed offer (malformed /
     // oversized SDP can only crash or spam the peer). Checked before the rate
     // limiter so junk payloads don't burn a legitimate participant's budget —
     // mirrors the direct-room relay.
-    if (!isValidSessionDescription(offer, "offer")) return;
-    if (!videoSdpLimiter.allow(socket.id)) return;
+    if (!isValidSessionDescription(offer, "offer")) return rejectSignal(socket, "video-offer", "invalid_payload");
+    if (!videoSdpLimiter.allow(socket.id)) return rejectSignal(socket, "video-offer", "rate_limited");
 
     // offerId is opaque to the server — sanitized (any non-plausible value
     // becomes undefined) and relayed so the two peers can correlate an answer
@@ -2322,10 +2338,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
-    if (!appointmentId || !answer) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!isValidSessionDescription(answer, "answer")) return;
-    if (!videoSdpLimiter.allow(socket.id)) return;
+    if (!appointmentId || !answer) return rejectSignal(socket, "video-answer", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "video-answer", "not_in_room");
+    if (!isValidSessionDescription(answer, "answer")) return rejectSignal(socket, "video-answer", "invalid_payload");
+    if (!videoSdpLimiter.allow(socket.id)) return rejectSignal(socket, "video-answer", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -2333,9 +2349,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
-    if (!appointmentId || !candidate) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!iceCandidateLimiter.allow(socket.id)) return;
+    if (!appointmentId || !candidate) return rejectSignal(socket, "ice-candidate", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "ice-candidate", "not_in_room");
+    if (!iceCandidateLimiter.allow(socket.id)) return rejectSignal(socket, "ice-candidate", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -2343,9 +2359,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("ice-restart-request", ({ appointmentId }) => {
-    if (!appointmentId) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!iceRestartLimiter.allow(socket.id)) return;
+    if (!appointmentId) return rejectSignal(socket, "ice-restart-request", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "ice-restart-request", "not_in_room");
+    if (!iceRestartLimiter.allow(socket.id)) return rejectSignal(socket, "ice-restart-request", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -2358,9 +2374,9 @@ io.on("connection", (socket) => {
   // by inspecting the media alone — the mobile client explicitly signals
   // it. Relayed the same way as the other simple call-signaling events.
   socket.on("camera-state", ({ appointmentId, isCamOff }) => {
-    if (!appointmentId) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!cameraStateLimiter.allow(socket.id)) return;
+    if (!appointmentId) return rejectSignal(socket, "camera-state", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "camera-state", "not_in_room");
+    if (!cameraStateLimiter.allow(socket.id)) return rejectSignal(socket, "camera-state", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -2376,9 +2392,9 @@ io.on("connection", (socket) => {
   // event simply ignore it, and the requester falls back to rebuilding alone
   // after its own timeout.
   socket.on("request-peer-rebuild", ({ appointmentId } = {}) => {
-    if (!appointmentId) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!peerRebuildRequestLimiter.allow(socket.id)) return;
+    if (!appointmentId) return rejectSignal(socket, "request-peer-rebuild", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "request-peer-rebuild", "not_in_room");
+    if (!peerRebuildRequestLimiter.allow(socket.id)) return rejectSignal(socket, "request-peer-rebuild", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
@@ -2973,14 +2989,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("direct-video-offer", ({ roomId, offer, offerId } = {}) => {
-    if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
-    if (!isValidSessionDescription(offer, "offer")) return;
+    if (!roomId) return rejectSignal(socket, "direct-video-offer", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-video-offer", "not_in_room");
+    if (!isValidSessionDescription(offer, "offer")) return rejectSignal(socket, "direct-video-offer", "invalid_payload");
     if (!directSdpLimiter.allow(socket.id)) {
       // A dropped offer/answer wedges the peer in "have-local-offer" until
       // its ~8s watchdog — log it so a real glare-storm is visible rather
       // than silently degrading the call.
       console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — offer dropped`);
-      return;
+      return rejectSignal(socket, "direct-video-offer", "rate_limited");
     }
     // offerId is opaque to the server — relayed unchanged so the two peers can
     // correlate an answer back to the offer it belongs to. DirectVideoCall.jsx
@@ -2992,11 +3009,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("direct-video-answer", ({ roomId, answer, offerId } = {}) => {
-    if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
-    if (!isValidSessionDescription(answer, "answer")) return;
+    if (!roomId) return rejectSignal(socket, "direct-video-answer", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-video-answer", "not_in_room");
+    if (!isValidSessionDescription(answer, "answer")) return rejectSignal(socket, "direct-video-answer", "invalid_payload");
     if (!directSdpLimiter.allow(socket.id)) {
       console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — answer dropped`);
-      return;
+      return rejectSignal(socket, "direct-video-answer", "rate_limited");
     }
     socket
       .to(directRoomName(roomId))
@@ -3004,16 +3022,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("direct-ice-candidate", ({ roomId, candidate } = {}) => {
-    if (!roomId || !candidate) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directIceCandidateLimiter.allow(socket.id)) return;
+    if (!roomId || !candidate) return rejectSignal(socket, "direct-ice-candidate", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-ice-candidate", "not_in_room");
+    if (!directIceCandidateLimiter.allow(socket.id)) return rejectSignal(socket, "direct-ice-candidate", "rate_limited");
     socket.to(directRoomName(roomId)).emit("direct-ice-candidate", { candidate });
   });
 
   socket.on("direct-ice-restart-request", ({ roomId } = {}) => {
-    if (!roomId) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directIceRestartLimiter.allow(socket.id)) return;
+    if (!roomId) return rejectSignal(socket, "direct-ice-restart-request", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-ice-restart-request", "not_in_room");
+    if (!directIceRestartLimiter.allow(socket.id)) return rejectSignal(socket, "direct-ice-restart-request", "rate_limited");
     const meta = directRoomSockets.get(socket.id);
     // The client-visible signal that a Retry/reconnect is under way — a
     // manual "Retry" tap (forceReconnect) asks the polite peer to restart
@@ -3032,9 +3050,9 @@ io.on("connection", (socket) => {
   // don't listen for it ignore the relayed event by default (Socket.IO
   // doesn't error on an unhandled event) — safe in both directions.
   socket.on("direct-media-state", ({ roomId, isMicOff, isCamOff } = {}) => {
-    if (!roomId) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directMediaStateLimiter.allow(socket.id)) return;
+    if (!roomId) return rejectSignal(socket, "direct-media-state", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-media-state", "not_in_room");
+    if (!directMediaStateLimiter.allow(socket.id)) return rejectSignal(socket, "direct-media-state", "rate_limited");
 
     const meta = directRoomSockets.get(socket.id);
     logDirectRoom("media_state_changed", {
@@ -3186,9 +3204,9 @@ io.on("connection", (socket) => {
   // room has no association with any Appointment/ChatMessage record and no
   // authenticated identity to attribute a stored message to.
   socket.on("direct-room-message", ({ roomId, text } = {}) => {
-    if (!roomId || !text) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directChatLimiter.allow(socket.id)) return;
+    if (!roomId || !text) return rejectSignal(socket, "direct-room-message", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-room-message", "not_in_room");
+    if (!directChatLimiter.allow(socket.id)) return rejectSignal(socket, "direct-room-message", "rate_limited");
 
     const meta = directRoomSockets.get(socket.id);
     socket.to(directRoomName(roomId)).emit("direct-room-message", {
