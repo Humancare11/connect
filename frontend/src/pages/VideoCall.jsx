@@ -17,6 +17,7 @@ import {
 } from "../utils/retryDebug";
 import { extractDtlsFingerprint, extractSdpDirections } from "../utils/webrtcSdp";
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
+import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
   FiAlertTriangle,
@@ -1028,6 +1029,9 @@ export default function VideoCall() {
   const statsTimerRef = useRef(null);
   const pendingRemoteCandidatesRef = useRef([]);
   const joinedSocketIdRef = useRef("");
+  // Non-terminal "room-access-denied" retry state (see handleRoomDenied).
+  const joinDenyAttemptRef = useRef(0);
+  const joinRetryTimerRef = useRef(null);
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
   const ignoreOfferResetTimerRef = useRef(null);
@@ -1185,6 +1189,8 @@ export default function VideoCall() {
   // MANUAL_RECONNECT_HOLD_MS passes, whichever comes first. The timer ref
   // doubles as the re-entrancy guard (non-null == a Retry is being held).
   const [manualReconnecting, setManualReconnecting] = useState(false);
+  // null | "retrying" | "failed" — set while a refused join is being retried.
+  const [joinRetryPhase, setJoinRetryPhase] = useState(null);
   const manualReconnectCooldownRef = useRef(null);
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false,
@@ -1755,6 +1761,50 @@ export default function VideoCall() {
     logVideoEvent("appointment_room_join_requested", { socketId: socket.id });
     return true;
   }, [appointmentId, doctorId, isDoctor, logVideoEvent, userId]);
+
+  // Re-attempts the room join on the live socket (local media untouched). When
+  // `refreshAuth` is set the session cookie is refreshed first and the socket
+  // reconnected, because the server derives identity from the handshake.
+  const retryJoin = useCallback(
+    async ({ refreshAuth = false } = {}) => {
+      if (completedRef.current) return;
+      if (refreshAuth) {
+        try {
+          await api.post("/api/auth/refresh", null, {
+            authRole: isDoctor ? "doctor" : "user",
+          });
+        } catch {
+          // Still retried below; the backoff decides when to give up.
+        }
+        if (completedRef.current) return;
+        setSocketAuthRole(isDoctor ? "doctor" : "user");
+        joinedSocketIdRef.current = "";
+        // "connect" re-runs the join with the fresh handshake credentials.
+        socket.disconnect();
+        socket.connect();
+        return;
+      }
+      joinedSocketIdRef.current = "";
+      if (!socket.connected) {
+        socket.connect();
+        return;
+      }
+      emitOnlineAndJoinRoom();
+    },
+    [emitOnlineAndJoinRoom, isDoctor],
+  );
+
+  const retryJoinManually = useCallback(() => {
+    window.clearTimeout(joinRetryTimerRef.current);
+    joinDenyAttemptRef.current = 0;
+    setJoinRetryPhase("retrying");
+    void retryJoin({ refreshAuth: true });
+  }, [retryJoin]);
+
+  useEffect(
+    () => () => window.clearTimeout(joinRetryTimerRef.current),
+    [],
+  );
 
   // ── Block / intercept browser back button during confirmed call ───
   // Also released once apptError is set — apptError covers every gate-screen
@@ -3779,6 +3829,9 @@ export default function VideoCall() {
     };
 
     const handlePeerJoined = (payload = {}) => {
+      // peer-joined is only echoed to a socket the server let into the room.
+      joinDenyAttemptRef.current = 0;
+      setJoinRetryPhase(null);
       const { resumedCall, peerCapabilities } = payload || {};
       // The server relays the OTHER participant's announced capabilities.
       // Absent / malformed = an older client (or an older server) = not
@@ -4047,6 +4100,9 @@ export default function VideoCall() {
       }
     };
     const handleChatHistory = (payload) => {
+      // The server only sends history after accepting a join.
+      joinDenyAttemptRef.current = 0;
+      setJoinRetryPhase(null);
       if (mounted && payload?.appointmentId === appointmentId) {
         const history = Array.isArray(payload.messages) ? payload.messages : [];
         setMessages(
@@ -4100,8 +4156,31 @@ export default function VideoCall() {
       setTimeout(() => setPrescriptionNotif(null), 10000);
     };
 
-    const handleRoomDenied = ({ msg } = {}) => {
+    const handleRoomDenied = ({ msg, reason } = {}) => {
       if (!mounted) return;
+      // Only a refusal that waiting cannot fix ends the call. Anything else
+      // (expired token, server/DB error, room briefly full, or a reason an
+      // older server never sent) is retried with backoff while the camera,
+      // mic and peer connection stay alive.
+      if (!isTerminalDenyReason(reason)) {
+        logVideoEvent("room_join_denied_retrying", {
+          reason: reason || "unknown",
+          attempt: joinDenyAttemptRef.current,
+        });
+        const delay = nextJoinRetryDelay(joinDenyAttemptRef.current);
+        if (delay === null) {
+          setJoinRetryPhase("failed");
+          return;
+        }
+        joinDenyAttemptRef.current += 1;
+        setJoinRetryPhase("retrying");
+        window.clearTimeout(joinRetryTimerRef.current);
+        joinRetryTimerRef.current = window.setTimeout(() => {
+          if (!mounted) return;
+          void retryJoin({ refreshAuth: reason === "unauthenticated" });
+        }, delay);
+        return;
+      }
       // Previously left the camera/mic running and the RTCPeerConnection
       // open indefinitely behind the "Access Denied" gate screen — local
       // media was already acquired by this effect independently of whether
@@ -4625,6 +4704,7 @@ export default function VideoCall() {
     attachLocalMediaStream,
     verifyLocalPlaybackLiveness,
     emitOnlineAndJoinRoom,
+    retryJoin,
     logVideoEvent,
     flushTelemetryQueue,
     stopStatsCollection,
@@ -5874,6 +5954,28 @@ export default function VideoCall() {
                       : "Both participants are ready. Video starting soon."
                     : "Share the appointment link with the other person to begin."}
                 </p>
+              </div>
+            )}
+
+            {joinRetryPhase && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>
+                  {joinRetryPhase === "failed"
+                    ? "Couldn't rejoin the call."
+                    : "Reconnecting…"}
+                </span>
+                {joinRetryPhase === "failed" && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={retryJoinManually}
+                  >
+                    Retry
+                  </button>
+                )}
               </div>
             )}
 

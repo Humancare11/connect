@@ -15,6 +15,7 @@ import "./videocall.css";
 import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
 import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDebug";
+import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { extractDtlsFingerprint } from "../utils/webrtcSdp";
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
@@ -814,6 +815,12 @@ export default function DirectVideoCall() {
   // finished).
   const networkRecoveryInProgressRef = useRef(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
+  // null | "retrying" | "failed" — a refused join (room full / server error)
+  // being retried with backoff while the call UI and local media stay up.
+  const [joinRetryPhase, setJoinRetryPhase] = useState(null);
+  const joinDenyAttemptRef = useRef(0);
+  const joinRetryTimerRef = useRef(null);
+  const rejoinRoomRef = useRef(() => {});
   // The stall banner reads "Waiting for the other person to reconnect…"
   // instead of the generic text — set immediately on the server's
   // peer-socket-down event (this side's own connection is fine, only the
@@ -3482,8 +3489,41 @@ export default function DirectVideoCall() {
 
     socket.on("connect", joinRoom);
     socket.io.on("reconnect", handleSocketReconnect);
-    socket.on("direct-room-joined", handleRoomJoined);
-    socket.on("direct-room-error", handleRoomError);
+    // Socket-originated refusals only: "full" and "server_error" can clear on
+    // their own (the guest's own stale socket still being evicted, a DB blip),
+    // so they are retried with backoff; every other code is final. Local
+    // failures (e.g. RTCPeerConnection construction) still go straight to
+    // handleRoomError.
+    rejoinRoomRef.current = joinRoom;
+    const handleJoinRefused = (payload = {}) => {
+      if (!mountedRef.current) return;
+      if (!isRetryableDirectCode(payload.code)) {
+        handleRoomError(payload);
+        return;
+      }
+      const delay = nextJoinRetryDelay(joinDenyAttemptRef.current);
+      if (delay === null) {
+        setJoinRetryPhase("failed");
+        return;
+      }
+      joinDenyAttemptRef.current += 1;
+      setJoinRetryPhase("retrying");
+      window.clearTimeout(joinRetryTimerRef.current);
+      joinRetryTimerRef.current = window.setTimeout(() => {
+        if (!mountedRef.current) return;
+        if (socket.connected) joinRoom();
+        else socket.connect();
+      }, delay);
+    };
+    const handleJoinAccepted = (payload) => {
+      joinDenyAttemptRef.current = 0;
+      window.clearTimeout(joinRetryTimerRef.current);
+      setJoinRetryPhase(null);
+      handleRoomJoined(payload);
+    };
+
+    socket.on("direct-room-joined", handleJoinAccepted);
+    socket.on("direct-room-error", handleJoinRefused);
     socket.on("direct-peer-joined", handlePeerJoined);
     socket.on("direct-participant-left", handleParticipantLeft);
     socket.on("direct-peer-socket-down", handleDirectPeerSocketDown);
@@ -3515,8 +3555,9 @@ export default function DirectVideoCall() {
       startedRef.current = false;
       socket.off("connect", joinRoom);
       socket.io.off("reconnect", handleSocketReconnect);
-      socket.off("direct-room-joined", handleRoomJoined);
-      socket.off("direct-room-error", handleRoomError);
+      window.clearTimeout(joinRetryTimerRef.current);
+      socket.off("direct-room-joined", handleJoinAccepted);
+      socket.off("direct-room-error", handleJoinRefused);
       socket.off("direct-peer-joined", handlePeerJoined);
       socket.off("direct-participant-left", handleParticipantLeft);
       socket.off("direct-peer-socket-down", handleDirectPeerSocketDown);
@@ -4290,6 +4331,32 @@ export default function DirectVideoCall() {
                   {connecting && "Both participants are ready. Video starting soon."}
                   {reconnecting && "Restoring your connection to the call."}
                 </p>
+              </div>
+            )}
+
+            {joinRetryPhase && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>
+                  {joinRetryPhase === "failed"
+                    ? "Couldn't rejoin the call."
+                    : "Reconnecting…"}
+                </span>
+                {joinRetryPhase === "failed" && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={() => {
+                      joinDenyAttemptRef.current = 0;
+                      setJoinRetryPhase("retrying");
+                      rejoinRoomRef.current();
+                    }}
+                  >
+                    Retry
+                  </button>
+                )}
               </div>
             )}
 

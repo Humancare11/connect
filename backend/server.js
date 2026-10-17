@@ -47,6 +47,7 @@ const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
+const { normalizeDenyReason, classifyAppointmentLookupError } = require("./utils/roomDenyReason");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -1101,7 +1102,14 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
 async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
   if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
 
-  const resolved = await resolveSocketIdentity(socket, requestedIdentity);
+  let resolved;
+  try {
+    resolved = await resolveSocketIdentity(socket, requestedIdentity);
+  } catch (err) {
+    // Session/token lookup hit the DB and failed — transient, not "unauthenticated".
+    console.error("[socket] identity resolution failed:", err?.message);
+    return { allowed: false, reason: "server_error" };
+  }
   if (!resolved) return { allowed: false, reason: "unauthenticated" };
   const identity = { userId: String(resolved.id), role: resolved.role };
 
@@ -1134,8 +1142,11 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
         }
       }
     }
-  } catch {
-    return { allowed: false, reason: "invalid_appointment" };
+  } catch (err) {
+    // Only a malformed id is permanent; a DB error must not read as "invalid".
+    const reason = classifyAppointmentLookupError(err);
+    if (reason === "server_error") console.error("[socket] appointment lookup failed:", err?.message);
+    return { allowed: false, reason };
   }
 
   if (!appointment) return { allowed: false, reason: "appointment_not_found" };
@@ -1985,7 +1996,10 @@ io.on("connection", (socket) => {
     const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role, token });
 
     if (!access.allowed) {
-      socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
+      socket.emit("room-access-denied", {
+        msg: "Access to this call room was denied.",
+        reason: normalizeDenyReason(access.reason),
+      });
       console.warn("[socket] appointment room access denied", {
         socketId: socket.id,
         appointmentId,
@@ -2091,7 +2105,7 @@ io.on("connection", (socket) => {
     }
 
     if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
-      socket.emit("room-access-denied", { msg: "This call room is full." });
+      socket.emit("room-access-denied", { msg: "This call room is full.", reason: "room_full" });
       return;
     }
 
