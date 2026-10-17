@@ -9,6 +9,7 @@ import { createDirectRoom } from "../helpers/directRoomSeed.js";
 import { expect, newParty, readInbound, test, waitForVideoFlowing, assertFramesFlowing } from "../helpers/harness.js";
 import {
   dropSocket,
+  ensureBackendUp,
   endLocalTracks,
   forceRelayOnly,
   injectServerReply,
@@ -87,6 +88,9 @@ async function enterPin(page, pin) {
 }
 
 test.describe("direct call — resilience", () => {
+  test.beforeEach(async () => {
+    await ensureBackendUp();
+  });
   test.skip(!process.env.TEST_DIRECT_ROOM_ID, "TEST_DIRECT_ROOM_ID is not set (local mode only)");
   test.beforeEach(async ({}, testInfo) => testInfo.setTimeout(300_000));
 
@@ -319,6 +323,9 @@ test.describe("direct call — resilience", () => {
 });
 
 test.describe("direct call — PIN room", () => {
+  test.beforeEach(async () => {
+    await ensureBackendUp();
+  });
   test.skip(!process.env.TEST_ADMIN_EMAIL, "needs the seeded admin (local mode)");
   test.beforeEach(async ({}, testInfo) => testInfo.setTimeout(240_000));
 
@@ -386,6 +393,9 @@ test.describe("direct call — PIN room", () => {
 });
 
 test.describe("direct call — via TURN relay", () => {
+  test.beforeEach(async () => {
+    await ensureBackendUp();
+  });
   test.skip(!turnAvailable(), "set E2E_TURN_DIR to a folder with node-turn + turn-server.js (see README)");
   test.beforeEach(async ({}, testInfo) => testInfo.setTimeout(300_000));
   test.afterEach(async () => {

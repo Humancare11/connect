@@ -20,6 +20,7 @@ import { LOCAL_MONGO_URI } from "../helpers/env.js";
 import { createFreshAppointment } from "../helpers/directRoomSeed.js";
 import {
   dropSocket,
+  ensureBackendUp,
   endLocalTracks,
   forceRelayOnly,
   inboundBytes,
@@ -54,6 +55,9 @@ async function expectHealthy(call, label, { timeoutMs = 60_000 } = {}) {
 }
 
 test.describe("appointment call — resilience", () => {
+  test.beforeEach(async () => {
+    await ensureBackendUp();
+  });
   test.beforeEach(async ({}, testInfo) => {
     testInfo.setTimeout(300_000);
   });
@@ -298,7 +302,7 @@ test.describe("appointment call — resilience", () => {
       expect(res.ok(), `complete failed: ${res.status()}`).toBeTruthy();
       // the patient is told and sent away, and the camera is released
       await expect(patient.page).toHaveURL(/dashboard|login|\/$/, { timeout: 30_000 });
-      expect(await liveLocalTracks(patient.page, "video")).toBe(0);
+      await expect.poll(() => liveLocalTracks(patient.page, "video"), { timeout: 15_000, message: "camera released after leaving" }).toBe(0);
       expect(await pageErrors(patient)).toBe(0);
       expect(await pageErrors(doctor)).toBe(0);
       // coming back is refused with a message, not a blank screen
@@ -313,6 +317,9 @@ test.describe("appointment call — resilience", () => {
 
 // ── Scenarios that need a real TURN relay (E2E_TURN_DIR -> node-turn) ──────
 test.describe("appointment call — via TURN relay", () => {
+  test.beforeEach(async () => {
+    await ensureBackendUp();
+  });
   test.skip(!turnAvailable(), "set E2E_TURN_DIR to a folder with node-turn + turn-server.js (see README)");
   test.beforeEach(async ({}, testInfo) => testInfo.setTimeout(300_000));
   test.afterEach(async () => {

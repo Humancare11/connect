@@ -215,13 +215,24 @@ export async function startBackend() {
     },
     stdio: "ignore",
     windowsHide: true,
+    // Must outlive the Playwright worker that started it: a failing test makes
+    // Playwright replace its worker, and a plain child would die with it.
+    detached: true,
   });
+  respawned.unref();
   const deadline = Date.now() + 90_000;
   while (Date.now() < deadline) {
     if ((await httpStatus(`http://127.0.0.1:${LOCAL_PORTS.backend}/api/rtc/ice-servers`)) === 401) return;
     await sleep(300);
   }
   throw new Error("backend did not come back after restart");
+}
+
+// Safety net for every resilience test: if an earlier test (or its worker)
+// left the backend dead, bring it back instead of failing the rest of the run.
+export async function ensureBackendUp() {
+  if ((await httpStatus(`http://127.0.0.1:${LOCAL_PORTS.backend}/api/rtc/ice-servers`)) === 401) return;
+  await startBackend();
 }
 
 export async function restartBackend() {

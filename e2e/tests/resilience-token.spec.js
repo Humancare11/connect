@@ -1,7 +1,7 @@
 // Token expiry DURING a call. Needs a short access-token lifetime so a token
 // genuinely expires mid-call: ACCESS_TOKEN_TTL=20s npx playwright test tests/resilience-token.spec.js
 import { expect, test } from "../helpers/harness.js";
-import { dropSocket, restartBackend, sleep, waitForSocketConnected } from "../helpers/resilience.js";
+import { dropSocket, ensureBackendUp, restartBackend, sleep, waitForSocketConnected } from "../helpers/resilience.js";
 
 const TTL = process.env.ACCESS_TOKEN_TTL || "";
 const ttlMs = (() => {
@@ -11,6 +11,9 @@ const ttlMs = (() => {
 })();
 
 test.describe("appointment call — token expiry mid-call", () => {
+  test.beforeEach(async () => {
+    await ensureBackendUp();
+  });
   test.skip(!ttlMs, "set ACCESS_TOKEN_TTL (e.g. 20s) so the access token really expires during the call");
   test.beforeEach(async ({}, testInfo) => testInfo.setTimeout(300_000));
 
