@@ -3,7 +3,6 @@
 import fs from "node:fs";
 import path from "node:path";
 import { request } from "@playwright/test";
-import { ADMIN_STATE } from "../global-setup.js";
 import { LOCAL_MONGO_URI } from "../helpers/env.js";
 import { createDirectRoom } from "../helpers/directRoomSeed.js";
 import { expect, newParty, readInbound, test, waitForVideoFlowing, assertFramesFlowing } from "../helpers/harness.js";
@@ -71,16 +70,29 @@ async function expectHealthy({ host, guest }, label, timeoutMs = 60_000) {
   expect(await guest.logs.count(/pageerror/), `${label}: guest page errors`).toBe(0);
 }
 
+// One admin session per worker, renewed when it expires (a long run outlives the
+// 15-minute access token saved by global-setup, and logins are rate limited).
+let adminApi = null;
+let adminLoggedInAt = 0;
+
+async function adminSession(baseURL) {
+  if (adminApi && Date.now() - adminLoggedInAt < 10 * 60_000) return adminApi;
+  if (adminApi) await adminApi.dispose();
+  adminApi = await request.newContext({ baseURL });
+  const login = await adminApi.post("/api/auth/admin-login", {
+    data: { email: process.env.TEST_ADMIN_EMAIL, password: process.env.TEST_ADMIN_PASSWORD },
+  });
+  expect(login.ok(), `admin login failed: ${login.status()}`).toBeTruthy();
+  adminLoggedInAt = Date.now();
+  return adminApi;
+}
+
 async function createPinRoom(baseURL) {
-  const api = await request.newContext({ baseURL, storageState: ADMIN_STATE });
-  try {
-    const res = await api.post("/api/direct-video-room", { data: { note: "resilience pin", expiresInHours: 24 } });
-    expect(res.ok(), `create PIN room failed: ${res.status()}`).toBeTruthy();
-    const body = await res.json();
-    return { roomId: body.room.roomId, doctorPin: body.doctorPin, patientPin: body.patientPin };
-  } finally {
-    await api.dispose();
-  }
+  const api = await adminSession(baseURL);
+  const res = await api.post("/api/direct-video-room", { data: { note: "resilience pin", expiresInHours: 24 } });
+  expect(res.ok(), `create PIN room failed: ${res.status()}`).toBeTruthy();
+  const body = await res.json();
+  return { roomId: body.room.roomId, doctorPin: body.doctorPin, patientPin: body.patientPin };
 }
 
 async function enterPin(page, pin) {
