@@ -49,6 +49,7 @@ const credentials = new Proxy({}, {
   },
 });
 
+process.on("uncaughtException", (e) => console.log("[turn] uncaught", e && e.stack));
 const server = new Turn({
   authMech: "long-term",
   credentials,
@@ -57,7 +58,8 @@ const server = new Turn({
   externalIps: { "127.0.0.1": "127.0.0.1" },
   listeningPort: PORT,
   realm: "e2e.local",
-  debugLevel: "ERROR",
+  debugLevel: process.env.TURN_DEBUG ? "TRACE" : "ERROR",
+  debug: process.env.TURN_DEBUG ? (lvl, msg) => console.log("[turn:" + lvl + "]", String(msg).slice(0, 300)) : undefined,
   log: () => {},
 });
 server.start();

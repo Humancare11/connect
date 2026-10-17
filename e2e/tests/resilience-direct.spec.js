@@ -34,8 +34,10 @@ async function joinAsGuest(party, room, name) {
 }
 
 async function twoParties(browser, baseURL, room, { relay = false } = {}) {
-  const host = await newParty(browser, "host", null, baseURL);
-  const guest = await newParty(browser, "guest", null, baseURL);
+  // Relay runs omit the camera/mic permission grant (see helpers/relayCall.js).
+  const ctxOptions = relay ? { permissions: [] } : {};
+  const host = await newParty(browser, "host", null, baseURL, ctxOptions);
+  const guest = await newParty(browser, "guest", null, baseURL, ctxOptions);
   if (relay) await Promise.all([forceRelayOnly(host.context), forceRelayOnly(guest.context)]);
   await joinAsGuest(host, room, "Host");
   await joinAsGuest(guest, room, "Guest");

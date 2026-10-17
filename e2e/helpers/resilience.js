@@ -1,6 +1,7 @@
 // Fault-injection helpers for the resilience e2e specs. Everything here acts on
 // the TEST browser or on the throwaway local backend/TURN processes - nothing
 // in the app is modified.
+import fs from "node:fs";
 import { spawn, execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -261,7 +262,7 @@ export async function startTurn({ dropPercent = 0, latencyMs = 0 } = {}) {
       DROP_PERCENT: String(dropPercent),
       LATENCY_MS: String(latencyMs),
     },
-    stdio: "ignore",
+    stdio: process.env.TURN_LOG ? ["ignore", fs.openSync(process.env.TURN_LOG, "a"), fs.openSync(process.env.TURN_LOG, "a")] : "ignore",
     windowsHide: true,
   });
   await sleep(700);

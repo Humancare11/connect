@@ -16,6 +16,7 @@ import {
   waitForVideoFlowing,
 } from "../helpers/harness.js";
 import { DOCTOR_STATE, PATIENT_STATE } from "../global-setup.js";
+import { newRelayCall } from "../helpers/relayCall.js";
 import { LOCAL_MONGO_URI } from "../helpers/env.js";
 import { createFreshAppointment } from "../helpers/directRoomSeed.js";
 import {
@@ -317,43 +318,55 @@ test.describe("appointment call — resilience", () => {
 
 // ── Scenarios that need a real TURN relay (E2E_TURN_DIR -> node-turn) ──────
 test.describe("appointment call — via TURN relay", () => {
-  test.beforeEach(async () => {
+  test.skip(!turnAvailable(), "set E2E_TURN_DIR to a folder with node-turn + turn-server.js (see README)");
+  test.beforeEach(async ({}, testInfo) => {
+    testInfo.setTimeout(300_000);
     await ensureBackendUp();
   });
-  test.skip(!turnAvailable(), "set E2E_TURN_DIR to a folder with node-turn + turn-server.js (see README)");
-  test.beforeEach(async ({}, testInfo) => testInfo.setTimeout(300_000));
   test.afterEach(async () => {
     await stopTurn();
   });
 
-  test("15 relay-only (iceTransportPolicy=relay) — connects THROUGH the relay", async ({ call }) => {
-    await startTurn();
-    await Promise.all([forceRelayOnly(call.doctor.context), forceRelayOnly(call.patient.context)]);
-    await call.joinBoth({ flowTimeoutMs: 60_000 });
-    expect(await selectedCandidateTypes(call.doctor.page)).toMatchObject({ local: "relay" });
-    expect(await selectedCandidateTypes(call.patient.page)).toMatchObject({ local: "relay" });
-    await assertFramesFlowing(call.doctor.page, 8_000, { label: "relay doctor" });
+  // Runs `body` with a doctor+patient pair forced onto the relay, always cleaning up.
+  async function withRelayCall(browser, baseURL, turnOptions, body) {
+    const call = await newRelayCall(browser, baseURL);
+    try {
+      await startTurn(turnOptions);
+      await Promise.all([forceRelayOnly(call.doctor.context), forceRelayOnly(call.patient.context)]);
+      await body(call);
+    } finally {
+      await call.close();
+    }
+  }
+
+  test("15 relay-only (iceTransportPolicy=relay) — connects THROUGH the relay", async ({ browser, baseURL }) => {
+    await withRelayCall(browser, baseURL, {}, async (call) => {
+      await call.joinBoth({ flowTimeoutMs: 60_000 });
+      expect(await selectedCandidateTypes(call.doctor.page)).toMatchObject({ local: "relay" });
+      expect(await selectedCandidateTypes(call.patient.page)).toMatchObject({ local: "relay" });
+      await assertFramesFlowing(call.doctor.page, 8_000, { label: "relay doctor" });
+    });
   });
 
-  test("2b REAL media outage: relay dies + patient offline 20s, both come back — recovers", async ({ call }) => {
-    await startTurn();
-    await Promise.all([forceRelayOnly(call.doctor.context), forceRelayOnly(call.patient.context)]);
-    await call.joinBoth({ flowTimeoutMs: 60_000 });
-    await call.patient.context.setOffline(true);
-    await stopTurn(); // media path is genuinely dead now
-    await sleep(20_000);
-    await startTurn();
-    await call.patient.context.setOffline(false);
-    await expectHealthy(call, "relay + network outage", { timeoutMs: 120_000 });
+  test("2b REAL media outage: relay dies + patient offline 20s, both come back — recovers", async ({ browser, baseURL }) => {
+    await withRelayCall(browser, baseURL, {}, async (call) => {
+      await call.joinBoth({ flowTimeoutMs: 60_000 });
+      await call.patient.context.setOffline(true);
+      await stopTurn(); // the media path is genuinely dead now
+      await sleep(20_000);
+      await startTurn();
+      await call.patient.context.setOffline(false);
+      await expectHealthy(call, "relay + network outage", { timeoutMs: 120_000 });
+    });
   });
 
-  test("18 impaired relay (15% loss, ~150ms latency) — the call stays up", async ({ call }) => {
-    await startTurn({ dropPercent: 15, latencyMs: 150 });
-    await Promise.all([forceRelayOnly(call.doctor.context), forceRelayOnly(call.patient.context)]);
-    await call.joinBoth({ flowTimeoutMs: 90_000 });
-    await assertFramesFlowing(call.doctor.page, 45_000, { maxStallMs: 10_000, label: "doctor under loss" });
-    await assertFramesFlowing(call.patient.page, 15_000, { maxStallMs: 10_000, label: "patient under loss" });
-    await expect(errorGate(call.doctor.page)).toHaveCount(0);
-    await expect(errorGate(call.patient.page)).toHaveCount(0);
+  test("18 impaired relay (15% loss, ~150ms latency) — the call stays up", async ({ browser, baseURL }) => {
+    await withRelayCall(browser, baseURL, { dropPercent: 15, latencyMs: 150 }, async (call) => {
+      await call.joinBoth({ flowTimeoutMs: 90_000 });
+      await assertFramesFlowing(call.doctor.page, 45_000, { maxStallMs: 10_000, label: "doctor under loss" });
+      await assertFramesFlowing(call.patient.page, 15_000, { maxStallMs: 10_000, label: "patient under loss" });
+      await expect(errorGate(call.doctor.page)).toHaveCount(0);
+      await expect(errorGate(call.patient.page)).toHaveCount(0);
+    });
   });
 });
