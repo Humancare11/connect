@@ -50,6 +50,8 @@ const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { normalizeDenyReason, classifyAppointmentLookupError } = require("./utils/roomDenyReason");
 const { createGraceTimerRegistry } = require("./utils/graceTimers");
 const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
+const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
+const { createPresenceDownTracker } = require("./utils/presenceDown");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -677,7 +679,10 @@ const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
 // clears this). Lets the still-connected side distinguish "the peer's network
 // just dropped" from its own connection trouble well before the
 // SOCKET_LEAVE_GRACE_MS grace period would otherwise tell it anything.
-const appointmentSocketDown = new Map();
+// Which participants of each appointment currently have a dropped socket - a
+// SET per appointment (a single slot was overwritten when the second
+// participant dropped too, losing the first one's "peer is back" signal).
+const appointmentPresenceDown = createPresenceDownTracker();
 // One pending "did they really leave?" grace timer per (appointmentId, userId).
 // A rejoin cancels it and a fresh disconnect restarts it, so an old timer can
 // never emit participant-left for someone who is connected - or who only
@@ -714,7 +719,7 @@ const chatMessageLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // handshake was being silently dropped, wedging the call at "connecting".
 // 6 keeps headroom for that burst while still capping well below a flood.
 const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
-const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
+const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // A rebuild request is a rare recovery signal (the client side already caps
@@ -735,7 +740,7 @@ const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // "connecting" forever. 6 keeps comfortable headroom for that burst while
 // still capping well below anything a real flood needs.
 const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
-const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
+const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // Matches cameraStateLimiter above — same event shape, same room-scoped relay.
 const directMediaStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
@@ -819,8 +824,12 @@ const io = new Server(server, {
   },
   transports: ["polling", "websocket"],
   connectTimeout: Number(process.env.SOCKET_CONNECT_TIMEOUT_MS || 45000),
-  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
-  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 30000),
+  // Dead-peer detection: a peer whose network vanished is noticed after at
+  // most pingInterval + pingTimeout (25s) instead of the old 25s + 30s = 55s.
+  // 15s of silence on an already-open socket is still generous enough not to
+  // false-disconnect slow mobile links (pongs are tiny).
+  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 10000),
+  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 15000),
   connectionStateRecovery: {
     maxDisconnectionDuration: Math.min(
       Number(process.env.SOCKET_STATE_RECOVERY_MS || SOCKET_LEAVE_GRACE_MS),
@@ -1186,7 +1195,7 @@ const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
 // roomId -> the guestId whose socket just dropped — the direct-room analogue
 // of appointmentSocketDown above (same purpose: an immediate, pre-grace-period
 // "it's the peer, not you" signal for the still-connected side).
-const directRoomSocketDown = new Map();
+const directPresenceDown = createPresenceDownTracker();
 // Direct-room analogue of appointmentLeaveTimers, keyed (roomId, guestId).
 const directLeaveTimers = createGraceTimerRegistry();
 const directLeaveKey = (roomId, guestId) => `${String(roomId)}:${String(guestId)}`;
@@ -1684,8 +1693,7 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   socket.join(room);
   directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
 
-  if (directRoomSocketDown.get(roomId) === guestId) {
-    directRoomSocketDown.delete(roomId);
+  if (directPresenceDown.clearDown(roomId, guestId)) {
     socket.to(room).emit("direct-peer-socket-up");
   }
 
@@ -1934,6 +1942,16 @@ app.set("recordExpectedDisconnectReason", (guestId, reason) => {
 });
 
 io.on("connection", (socket) => {
+  // Contain any handler error (null payload, DB failure, ...) to this socket.
+  installSocketErrorGuard(socket);
+
+  // Liveness probe: clients ack-ping after a resume/wake to find out whether
+  // their socket is really still connected to this server.
+  socket.on("hc-ping", (...args) => {
+    const ack = args[args.length - 1];
+    if (typeof ack === "function") ack({ ok: true, t: Date.now() });
+  });
+
   // Socket.IO restored socket.rooms/socket.data from a prior session within
   // connectionStateRecovery's window — see the join-appointment-room repair
   // below for why our own bookkeeping still needs to be rebuilt on top of it.
@@ -2047,8 +2065,7 @@ io.on("connection", (socket) => {
 
       // This same user's socket just came back from a drop — tell whoever's
       // waiting they're no longer gone. See the "disconnect" handler above.
-      if (appointmentSocketDown.get(appointmentId) === access.identity.userId) {
-        appointmentSocketDown.delete(appointmentId);
+      if (appointmentPresenceDown.clearDown(appointmentId, access.identity.userId)) {
         socket.to(room).emit("peer-socket-up");
       }
 
@@ -2126,8 +2143,7 @@ io.on("connection", (socket) => {
     socketRooms.set(socket.id, appointmentId);
     appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, socketUserId));
 
-    if (appointmentSocketDown.get(appointmentId) === socketUserId) {
-      appointmentSocketDown.delete(appointmentId);
+    if (appointmentPresenceDown.clearDown(appointmentId, socketUserId)) {
       socket.to(room).emit("peer-socket-up");
     }
 
@@ -2386,7 +2402,7 @@ io.on("connection", (socket) => {
       // or the setTimeout below for where it times out (participant-left).
       if (disconnectedUserId) {
         io.to(appointmentRoom).emit("peer-socket-down");
-        appointmentSocketDown.set(appointmentId, disconnectedUserId);
+        appointmentPresenceDown.markDown(appointmentId, disconnectedUserId);
       }
 
       appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
@@ -2399,11 +2415,9 @@ io.on("connection", (socket) => {
           return disconnectedUserId && String(peerUserId) === String(disconnectedUserId);
         });
 
-        // Only clear an entry this same disconnect set — a second, unrelated
-        // disconnect for a different user may have overwritten it since.
-        if (appointmentSocketDown.get(appointmentId) === disconnectedUserId) {
-          appointmentSocketDown.delete(appointmentId);
-        }
+        // The grace period is over either way - this user is no longer merely
+        // "dropped": they either rejoined (already cleared) or are declared gone.
+        appointmentPresenceDown.clearDown(appointmentId, disconnectedUserId);
 
         if (!sameUserStillInRoom) {
           io.to(appointmentRoom).emit("participant-left");
@@ -2478,7 +2492,7 @@ io.on("connection", (socket) => {
       roomDoc = await DirectVideoRoom.findOne({ roomId });
     } catch (err) {
       console.error("[direct-room] pin lookup error:", err.message);
-      socket.emit("direct-pin-error", { msg: "Could not verify this meeting. Please try again." });
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
       return;
     }
     if (!roomDoc || !roomDoc.doctorPinEncrypted) {
@@ -2532,7 +2546,13 @@ io.on("connection", (socket) => {
     // Slot free — grant it outright.
     const sessionId = randomUUID();
     roomDoc[sessionField] = { sessionId, guestId, startedAt: new Date() };
-    await roomDoc.save();
+    try {
+      await roomDoc.save();
+    } catch (err) {
+      console.error("[direct-room] pin session save error:", err.message);
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
     socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId }) });
   });
 
@@ -2571,7 +2591,7 @@ io.on("connection", (socket) => {
       roomDoc = await DirectVideoRoom.findOne({ roomId });
     } catch (err) {
       console.error("[direct-room] takeover lookup error:", err.message);
-      socket.emit("direct-pin-error", { msg: "Could not verify this meeting. Please try again." });
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
       return;
     }
     if (!roomDoc || !roomDoc.doctorPinEncrypted || roomDoc.status !== "active") {
@@ -2623,7 +2643,13 @@ io.on("connection", (socket) => {
     const sessionId = randomUUID();
     const sessionField = role === "doctor" ? "doctorSession" : "patientSession";
     roomDoc[sessionField] = { sessionId, guestId, startedAt: new Date() };
-    await roomDoc.save();
+    try {
+      await roomDoc.save();
+    } catch (err) {
+      console.error("[direct-room] takeover session save error:", err.message);
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
     slots[role] = { guestId, socketId: null, sessionId, lastTakeoverAt: Date.now() };
 
     logDirectRoom("session_taken_over", { roomId, guestId, socketId: socket.id, role });
@@ -2703,8 +2729,7 @@ io.on("connection", (socket) => {
       // nudge the peer to renegotiate before returning.
       directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
       directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
-      if (directRoomSocketDown.get(roomId) === guestId) {
-        directRoomSocketDown.delete(roomId);
+      if (directPresenceDown.clearDown(roomId, guestId)) {
         socket.to(room).emit("direct-peer-socket-up");
       }
       const recoveredEntry = getDirectRoomEntry(roomId);
@@ -2846,8 +2871,7 @@ io.on("connection", (socket) => {
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
     directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
-    if (directRoomSocketDown.get(roomId) === guestId) {
-      directRoomSocketDown.delete(roomId);
+    if (directPresenceDown.clearDown(roomId, guestId)) {
       socket.to(room).emit("direct-peer-socket-up");
     }
     roomEntry.seats.set(guestId, Date.now());
@@ -3189,7 +3213,7 @@ io.on("connection", (socket) => {
     // and both join-direct-room branches below) or timed out by
     // direct-participant-left in the setTimeout further down.
     io.to(room).emit("direct-peer-socket-down");
-    directRoomSocketDown.set(roomId, guestId);
+    directPresenceDown.markDown(roomId, guestId);
 
     // disconnect_reason: prefer a fresh client/beacon hint (best-effort —
     // may not exist), then Socket.IO's own reason where it's unambiguous
@@ -3245,11 +3269,7 @@ io.on("connection", (socket) => {
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
       );
 
-      // Only clear an entry this same disconnect set — a second, unrelated
-      // disconnect for a different guest may have overwritten it since.
-      if (directRoomSocketDown.get(roomId) === guestId) {
-        directRoomSocketDown.delete(roomId);
-      }
+      directPresenceDown.clearDown(roomId, guestId);
 
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
