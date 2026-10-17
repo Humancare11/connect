@@ -16,6 +16,7 @@ import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
 import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDebug";
 import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetry";
+import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { extractDtlsFingerprint } from "../utils/webrtcSdp";
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
@@ -2718,15 +2719,24 @@ export default function DirectVideoCall() {
         // connection stuck in "disconnected" may never fire again.
         if (typeof navigator === "undefined" || navigator.onLine !== false) {
           const now = Date.now();
-          if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+          // Compared against the last REAL attempt (stamped below), not this
+          // tick: stamping every tick kept the cooldown from ever elapsing
+          // while the loop ran, so an exhausted budget never refilled.
+          if (
+            iceRecoveryBudgetRefilled(
+              now,
+              lastIceRecoveryAtRef.current,
+              ICE_RECOVERY_COOLDOWN_MS,
+            )
+          ) {
             iceRecoveryAttemptsRef.current = 0;
           }
-          lastIceRecoveryAtRef.current = now;
 
           if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
             requestPeerIceRestart();
           } else {
             iceRecoveryAttemptsRef.current += 1;
+            lastIceRecoveryAtRef.current = now;
             if (isInitiatorRef.current) {
               await createAndSendIceRestartOffer();
             } else {

@@ -18,6 +18,7 @@ import {
 import { extractDtlsFingerprint, extractSdpDirections } from "../utils/webrtcSdp";
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
+import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
   FiAlertTriangle,
@@ -2741,10 +2742,18 @@ export default function VideoCall() {
         // DirectVideoCall.jsx's scheduleIceRestart.
         if (typeof navigator === "undefined" || navigator.onLine !== false) {
           const now = Date.now();
-          if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+          // Compared against the last REAL attempt (stamped below), not this
+          // tick: stamping every tick kept the cooldown from ever elapsing
+          // while the loop ran, so an exhausted budget never refilled.
+          if (
+            iceRecoveryBudgetRefilled(
+              now,
+              lastIceRecoveryAtRef.current,
+              ICE_RECOVERY_COOLDOWN_MS,
+            )
+          ) {
             iceRecoveryAttemptsRef.current = 0;
           }
-          lastIceRecoveryAtRef.current = now;
 
           if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
             logVideoEvent("ice_recovery_exhausted", {
@@ -2755,6 +2764,7 @@ export default function VideoCall() {
             requestPeerIceRestart();
           } else {
             iceRecoveryAttemptsRef.current += 1;
+            lastIceRecoveryAtRef.current = now;
             logVideoEvent("ice_recovery_attempt", {
               attempts: iceRecoveryAttemptsRef.current,
               connectionState: pc.connectionState,
