@@ -418,6 +418,18 @@ const describeIceCandidate = (candidate = "") => {
   };
 };
 
+// STUN-only config used when /api/rtc/ice-servers is unreachable or unusable:
+// a call that may fail on strict NATs beats a dead "not configured" screen.
+const FALLBACK_ICE_CONFIG = {
+  iceServers: [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
+  iceCandidatePoolSize: 10,
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
+};
+
 const MEDIA_CONSTRAINTS = {
   audio: {
     echoCancellation: true,
@@ -882,7 +894,7 @@ export default function VideoCall() {
 
   // ── ICE server config (STUN + short-lived TURN credential) ────────
   const [iceConfig, setIceConfig] = useState(null);
-  const [iceConfigError, setIceConfigError] = useState("");
+  const [iceConfigError] = useState("");
 
   const apptDoctorId = appt?.doctorId?._id || appt?.doctorId || "";
   const apptPatientId = appt?.patientId?._id || appt?.patientId || "";
@@ -1482,6 +1494,16 @@ export default function VideoCall() {
 
     const RETRY_DELAYS_MS = [1000, 2000]; // delay before the 2nd and 3rd attempts
 
+    // Endpoint unreachable / unusable after retries: keep the call possible with
+    // the build's static (STUN-only) config and tell the user, instead of
+    // blocking the consultation outright.
+    const applyIceFallback = (reason) => {
+      if (cancelled) return;
+      logger.warn("[video-call] ICE config unavailable, using STUN-only fallback:", reason);
+      setIceConfig(FALLBACK_ICE_CONFIG);
+      showInlineMessage("Relay server unavailable - the call may not connect on some networks.", 8000);
+    };
+
     // Relay credentials are short-lived. Re-mint them at 80% of the TTL and
     // apply them to the live connection in place (setConfiguration) - never
     // via state, which would tear the call down and rebuild it.
@@ -1515,7 +1537,9 @@ export default function VideoCall() {
           const iceServers = sanitizeIceServers(res.data?.iceServers);
           const error = validateIceServers(iceServers);
           if (error) {
-            setIceConfigError(error);
+            // The server answered with something unusable: fall back to
+            // STUN-only (below) rather than a dead "not configured" screen.
+            applyIceFallback(error);
             return;
           }
           setIceConfig({
@@ -1540,7 +1564,7 @@ export default function VideoCall() {
             }, nextDelay);
             return;
           }
-          setIceConfigError(
+          applyIceFallback(
             err.response?.data?.msg ||
               err.message ||
               "Could not fetch video call configuration.",
