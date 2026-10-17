@@ -48,6 +48,7 @@ const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { normalizeDenyReason, classifyAppointmentLookupError } = require("./utils/roomDenyReason");
+const { createGraceTimerRegistry } = require("./utils/graceTimers");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -676,6 +677,12 @@ const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
 // just dropped" from its own connection trouble well before the
 // SOCKET_LEAVE_GRACE_MS grace period would otherwise tell it anything.
 const appointmentSocketDown = new Map();
+// One pending "did they really leave?" grace timer per (appointmentId, userId).
+// A rejoin cancels it and a fresh disconnect restarts it, so an old timer can
+// never emit participant-left for someone who is connected - or who only
+// dropped again moments ago. See the "disconnect" handler.
+const appointmentLeaveTimers = createGraceTimerRegistry();
+const appointmentLeaveKey = (appointmentId, userId) => `${String(appointmentId)}:${String(userId)}`;
 // Entries persist across a room's transient auto-eviction (see the
 // disconnect grace-timeout handler below) so a simultaneous-drop-and-
 // reconnect still counts as a resume, not a first join — but that means
@@ -1179,6 +1186,9 @@ const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
 // of appointmentSocketDown above (same purpose: an immediate, pre-grace-period
 // "it's the peer, not you" signal for the still-connected side).
 const directRoomSocketDown = new Map();
+// Direct-room analogue of appointmentLeaveTimers, keyed (roomId, guestId).
+const directLeaveTimers = createGraceTimerRegistry();
+const directLeaveKey = (roomId, guestId) => `${String(roomId)}:${String(guestId)}`;
 // roomId -> {
 //   initiatorGuestId,          // stable impolite-peer assignment (see below)
 //   participantGuestIds: Set,  // every guestId ever seen in this room
@@ -1671,6 +1681,7 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   slots[role] = { guestId, socketId: socket.id, sessionId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
   directRoomSockets.set(socket.id, { roomId, guestId, name: roleDisplayName(role), role });
   socket.join(room);
+  directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
 
   if (directRoomSocketDown.get(roomId) === guestId) {
     directRoomSocketDown.delete(roomId);
@@ -2031,6 +2042,7 @@ io.on("connection", (socket) => {
     // Repair it unconditionally in both cases before returning.
     if (socket.rooms.has(room)) {
       socketRooms.set(socket.id, appointmentId);
+      appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, access.identity.userId));
 
       // This same user's socket just came back from a drop — tell whoever's
       // waiting they're no longer gone. See the "disconnect" handler above.
@@ -2111,6 +2123,7 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
+    appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, socketUserId));
 
     if (appointmentSocketDown.get(appointmentId) === socketUserId) {
       appointmentSocketDown.delete(appointmentId);
@@ -2375,7 +2388,7 @@ io.on("connection", (socket) => {
         appointmentSocketDown.set(appointmentId, disconnectedUserId);
       }
 
-      setTimeout(() => {
+      appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
         const sameUserStillInRoom = Array.from(socketRooms.entries()).some(([sid, roomAppointmentId]) => {
           if (String(roomAppointmentId) !== String(appointmentId)) return false;
           const peerSocket = io.sockets.sockets.get(sid);
@@ -2402,7 +2415,7 @@ io.on("connection", (socket) => {
           // cleared on a real, intentional departure — see the explicit
           // leave-appointment-room handler above, which already does this.
         }
-      }, SOCKET_LEAVE_GRACE_MS);
+      });
 
       socketRooms.delete(socket.id);
     }
@@ -2688,6 +2701,7 @@ io.on("connection", (socket) => {
       // checks it — so repair it here, keep the seat reservation fresh, and
       // nudge the peer to renegotiate before returning.
       directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+      directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
       if (directRoomSocketDown.get(roomId) === guestId) {
         directRoomSocketDown.delete(roomId);
         socket.to(room).emit("direct-peer-socket-up");
@@ -2830,6 +2844,7 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
+    directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
     if (directRoomSocketDown.get(roomId) === guestId) {
       directRoomSocketDown.delete(roomId);
       socket.to(room).emit("direct-peer-socket-up");
@@ -3224,7 +3239,7 @@ io.on("connection", (socket) => {
       });
     }
 
-    setTimeout(() => {
+    directLeaveTimers.schedule(directLeaveKey(roomId, guestId), DIRECT_ROOM_LEAVE_GRACE_MS, () => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
       );
@@ -3240,7 +3255,7 @@ io.on("connection", (socket) => {
         const remaining = io.sockets.adapter.rooms.get(room);
         if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }
-    }, DIRECT_ROOM_LEAVE_GRACE_MS);
+    });
   });
 
 }); // end io.on("connection")
