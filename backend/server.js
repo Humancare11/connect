@@ -49,6 +49,7 @@ const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
 const { normalizeDenyReason, classifyAppointmentLookupError } = require("./utils/roomDenyReason");
 const { createGraceTimerRegistry } = require("./utils/graceTimers");
+const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -3301,46 +3302,11 @@ startServer()
 // Without this, SIGTERM (e.g. a container orchestrator redeploying/scaling
 // down) kills the process immediately — mid-request HTTP calls get dropped
 // and active video-call sockets disconnect without a clean close frame.
-let shuttingDown = false;
-async function gracefulShutdown(signal) {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  console.log(`\n[shutdown] ${signal} received — closing server...`);
-
-  // Most orchestrators (Docker, ECS, k8s) SIGKILL shortly after SIGTERM
-  // anyway if the process hasn't exited — this just makes that deterministic
-  // and logged instead of the process hanging silently on a stuck close.
-  const forceExitTimer = setTimeout(() => {
-    console.error("[shutdown] Graceful shutdown timed out — forcing exit.");
-    process.exit(1);
-  }, 10000);
-  forceExitTimer.unref();
-
-  try {
-    // Disconnects all Socket.IO clients (active video-call signaling
-    // connections included) before the HTTP server stops — closing the raw
-    // HTTP server first would otherwise hang waiting for those long-lived
-    // websocket connections to end on their own.
-    await new Promise((resolve) => io.close(resolve));
-    console.log("[shutdown] Socket.IO closed.");
-
-    await new Promise((resolve, reject) => {
-      server.close((err) => (err ? reject(err) : resolve()));
-    });
-    console.log("[shutdown] HTTP server closed.");
-
-    await mongoose.connection.close();
-    console.log("[shutdown] MongoDB connection closed.");
-
-    clearTimeout(forceExitTimer);
-    console.log("[shutdown] Graceful shutdown complete.");
-    process.exit(0);
-  } catch (err) {
-    console.error("[shutdown] Error during graceful shutdown:", err);
-    clearTimeout(forceExitTimer);
-    process.exit(1);
-  }
-}
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+// io.close() also closes the attached HTTP server, so it is closed exactly once
+// (see utils/gracefulShutdown.js); the handlers are registered once per process.
+const gracefulShutdown = createGracefulShutdown({
+  io,
+  server,
+  closeDatabase: () => mongoose.connection.close(),
+});
+registerShutdownSignals(process, gracefulShutdown);
