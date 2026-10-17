@@ -19,6 +19,8 @@ import { extractDtlsFingerprint, extractSdpDirections } from "../utils/webrtcSdp
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
+import { probeSocketAlive } from "../utils/socketLiveness";
+import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
   FiAlertTriangle,
@@ -1192,6 +1194,16 @@ export default function VideoCall() {
   const [manualReconnecting, setManualReconnecting] = useState(false);
   // null | "retrying" | "failed" — set while a refused join is being retried.
   const [joinRetryPhase, setJoinRetryPhase] = useState(null);
+  // True while the signaling socket is down. Kept apart from connectionState /
+  // isRemoteConnected, which describe the MEDIA path - see handleSocketDisconnect.
+  const [signalingLost, setSignalingLost] = useState(false);
+  // null | { phase: "recovering" | "failed" } - local camera/mic died mid-call.
+  const [mediaRecovery, setMediaRecovery] = useState(null);
+  const localMediaRecoveryRef = useRef(null);
+  const retryMediaPermissionsRef = useRef(null);
+  // Latest relay credentials (refreshed before the TTL runs out) for any
+  // RTCPeerConnection built after the page first loaded them.
+  const freshIceServersRef = useRef(null);
   const manualReconnectCooldownRef = useRef(null);
   const [isOffline, setIsOffline] = useState(
     typeof navigator !== "undefined" ? !navigator.onLine : false,
@@ -1310,6 +1322,14 @@ export default function VideoCall() {
       // so use it to kick an immediate recovery check (and reconnect the
       // socket right away rather than waiting out its backoff delay).
       if (!socket.connected) socket.connect();
+      else {
+        void probeSocketAlive(socket).then((alive) => {
+          if (alive) return;
+          joinedSocketIdRef.current = "";
+          socket.disconnect();
+          socket.connect();
+        });
+      }
       kickIceRecoveryRef.current();
       // Also give the remote-video renderer a chance to recover in case the
       // PeerConnection never actually left "connected" throughout — see
@@ -1462,6 +1482,31 @@ export default function VideoCall() {
 
     const RETRY_DELAYS_MS = [1000, 2000]; // delay before the 2nd and 3rd attempts
 
+    // Relay credentials are short-lived. Re-mint them at 80% of the TTL and
+    // apply them to the live connection in place (setConfiguration) - never
+    // via state, which would tear the call down and rebuild it.
+    let refreshTimer = null;
+    const scheduleIceRefresh = (ttlSeconds) => {
+      if (!(ttlSeconds > 0)) return;
+      refreshTimer = window.setTimeout(async () => {
+        try {
+          const res = await api.get("/api/rtc/ice-servers", { authRole: activeRole });
+          if (cancelled) return;
+          const fresh = sanitizeIceServers(res.data?.iceServers);
+          if (validateIceServers(fresh)) throw new Error("unusable ICE config");
+          freshIceServersRef.current = fresh;
+          const pc = pcRef.current;
+          if (pc && pc.signalingState !== "closed") {
+            pc.setConfiguration({ ...pc.getConfiguration(), iceServers: fresh });
+          }
+          scheduleIceRefresh(Number(res.data?.ttlSeconds) || 0);
+        } catch (err) {
+          logger.warn("[video-call] ICE credential refresh failed, retrying in 60s:", err?.message || err);
+          if (!cancelled) scheduleIceRefresh(75); // 80% of 75s = 60s
+        }
+      }, ttlSeconds * 800);
+    };
+
     const attemptFetch = (attempt) => {
       api
         .get("/api/rtc/ice-servers", { authRole: activeRole })
@@ -1479,6 +1524,12 @@ export default function VideoCall() {
             bundlePolicy: "max-bundle",
             rtcpMuxPolicy: "require",
           });
+          freshIceServersRef.current = null;
+          if (res.data?.warning === "no_turn") {
+            logger.warn("[video-call] server reports no TURN relay is configured - calls across strict NATs/mobile carriers may fail.");
+            showInlineMessage("Relay server unavailable - the call may not connect on some networks.", 8000);
+          }
+          scheduleIceRefresh(Number(res.data?.ttlSeconds) || 0);
         })
         .catch((err) => {
           if (cancelled) return;
@@ -1502,7 +1553,11 @@ export default function VideoCall() {
     return () => {
       cancelled = true;
       clearTimeout(retryTimer);
+      clearTimeout(refreshTimer);
     };
+    // showInlineMessage is declared further down this component and is stable ([]),
+    // so it is intentionally not a dependency (listing it would read it before init).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRole]);
 
   // ── Reliable cleanup: stop tracks + notify peers ───
@@ -2443,7 +2498,11 @@ export default function VideoCall() {
 
     let pc;
     try {
-      pc = new RTCPeerConnection(iceConfig);
+      pc = new RTCPeerConnection(
+        freshIceServersRef.current
+          ? { ...iceConfig, iceServers: freshIceServersRef.current }
+          : iceConfig,
+      );
     } catch (err) {
       logger.error("RTCPeerConnection construction failed:", err);
       setApptError("Could not start the video call on this browser or device.");
@@ -4257,6 +4316,7 @@ export default function VideoCall() {
     socket.on("camera-state", handleCameraState);
 
     const joinRoom = () => {
+      setSignalingLost(false);
       emitOnlineAndJoinRoom();
       flushTelemetryQueue();
       resyncConnectionStateFromPeerConnection();
@@ -4268,8 +4328,18 @@ export default function VideoCall() {
       logVideoEvent("socket_disconnected_during_call", {
         inCall: inCallRef.current,
       });
-      setConnectionState("disconnected");
-      setIsRemoteConnected(false);
+      // Signaling and media are independent. Only claim the call dropped if the
+      // peer connection itself is unhealthy; otherwise show the small
+      // "signaling lost" pill and leave the live video alone.
+      setSignalingLost(true);
+      const mediaUp =
+        pc.connectionState === "connected" ||
+        pc.iceConnectionState === "connected" ||
+        pc.iceConnectionState === "completed";
+      if (!mediaUp) {
+        setConnectionState("disconnected");
+        setIsRemoteConnected(false);
+      }
     };
 
     // Socket.IO v4 event order on a reconnect: the Manager's "reconnect"
@@ -4419,7 +4489,27 @@ export default function VideoCall() {
         socket.connect();
         return;
       }
-      void verifyConnectionAfterVisible();
+      // socket.connected can stay true for a while after the OS froze the tab
+      // or the machine slept. Round-trip an ack; if it fails, refresh the
+      // session and force a fresh connection (which re-joins the room).
+      void (async () => {
+        if (await probeSocketAlive(socket)) {
+          if (mounted) void verifyConnectionAfterVisible();
+          return;
+        }
+        if (!mounted) return;
+        logVideoEvent("resume_socket_probe_failed", { via: "visibilitychange" });
+        try {
+          await api.post("/api/auth/refresh", null, { authRole: isDoctor ? "doctor" : "user" });
+        } catch {
+          // Non-fatal - the rejoin retries below handle a still-bad session.
+        }
+        if (!mounted) return;
+        setSocketAuthRole(isDoctor ? "doctor" : "user");
+        joinedSocketIdRef.current = "";
+        socket.disconnect();
+        socket.connect();
+      })();
     };
 
     // Keep the shared socket's handshake auth aligned with THIS page's role,
@@ -5347,6 +5437,38 @@ export default function VideoCall() {
     retryingMedia,
   ]);
 
+  retryMediaPermissionsRef.current = retryMediaPermissions;
+
+  // Local camera/mic that ENDS mid-call (device unplugged, Bluetooth headset
+  // dropped, tab backgrounded and the OS reclaimed the camera, permission
+  // revoked): re-acquire and replaceTrack onto the existing senders. Checked on
+  // a 2s poll plus devicechange / tab-visible so detection is fast even on
+  // browsers that never fire a track "ended" event.
+  useEffect(() => {
+    if (!canJoinConsultation) return undefined;
+    const recovery = createLocalMediaRecovery({
+      hasProblem: () => hasEndedTrack(localStreamRef.current),
+      recover: () => retryMediaPermissionsRef.current?.(),
+      isActive: () => !completedRef.current && Boolean(pcRef.current) && pcRef.current.signalingState !== "closed",
+      onState: setMediaRecovery,
+      log: (event, details) => logVideoEvent(event, details),
+    });
+    localMediaRecoveryRef.current = recovery;
+    const poll = window.setInterval(() => recovery.check("poll"), 2000);
+    const onDeviceChange = () => recovery.check("devicechange", { force: true });
+    const onVisible = () => {
+      if (document.visibilityState === "visible") recovery.check("visible", { force: true });
+    };
+    navigator.mediaDevices?.addEventListener?.("devicechange", onDeviceChange);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(poll);
+      navigator.mediaDevices?.removeEventListener?.("devicechange", onDeviceChange);
+      document.removeEventListener("visibilitychange", onVisible);
+      localMediaRecoveryRef.current = null;
+    };
+  }, [canJoinConsultation, logVideoEvent]);
+
   const handleRxSaved = useCallback(() => {
     setShowRxModal(false);
     setRxSavedToast(true);
@@ -5964,6 +6086,37 @@ export default function VideoCall() {
                       : "Both participants are ready. Video starting soon."
                     : "Share the appointment link with the other person to begin."}
                 </p>
+              </div>
+            )}
+
+            {signalingLost && peerJoined && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Connection to the call service lost - reconnecting. Your call continues.</span>
+              </div>
+            )}
+
+            {mediaRecovery && !(mediaRecovery.phase === "failed" && camError) && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>
+                  {mediaRecovery.phase === "failed"
+                    ? "Your camera or microphone stopped and could not be restored."
+                    : "Your camera or microphone stopped - reconnecting it\u2026"}
+                </span>
+                {mediaRecovery.phase === "failed" && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={() => localMediaRecoveryRef.current?.retryNow()}
+                  >
+                    Retry
+                  </button>
+                )}
               </div>
             )}
 
