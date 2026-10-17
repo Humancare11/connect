@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { lazy, Suspense, useState, useEffect, useLayoutEffect, useCallback, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import "./MyRecords.css";
 import api from "../../api";
@@ -78,6 +78,65 @@ function PrescriptionCard({ rx, patient }) {
   );
 }
 
+// ── Scale-to-fit certificate preview ──────────────────────────────────────────
+// The certificate is a fixed 794px (A4) document. On narrower content areas the
+// on-screen preview is scaled down to fit; below CERT_MIN_SCALE it stops
+// shrinking and the surrounding .mr-slip-wrap scrolls horizontally instead.
+// This is display-only: the PDF is captured from a separate, unscaled instance.
+
+const CERT_WIDTH = 794;
+const CERT_MIN_SCALE = 0.5;
+
+function ScaledCertificatePreview({ cert, patient }) {
+  const measureRef = useRef(null);
+  const innerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const measureEl = measureRef.current;
+    const innerEl = innerRef.current;
+    if (!measureEl || !innerEl) return undefined;
+
+    const update = () => {
+      const avail = measureEl.clientWidth;
+      if (avail > 0) {
+        setScale(Math.max(CERT_MIN_SCALE, Math.min(1, avail / CERT_WIDTH)));
+      }
+      setHeight(innerEl.offsetHeight); // layout height, unaffected by transform
+    };
+    update();
+
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(update);
+    ro.observe(measureEl);
+    ro.observe(innerEl);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={measureRef} className="mr-cert-measure">
+      <div
+        className="mr-cert-box"
+        style={{
+          width: CERT_WIDTH * scale,
+          height: height ? height * scale : undefined,
+        }}
+      >
+        <div
+          ref={innerRef}
+          className="mr-cert-inner"
+          style={{ width: CERT_WIDTH, transform: `scale(${scale})` }}
+        >
+          <Suspense fallback={null}>
+            <MedicalCertificateSlip cert={cert} patient={patient} />
+          </Suspense>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Certificate Card with letterhead view ─────────────────────────────────────
 
 function CertificateCard({ cert, patient }) {
@@ -121,8 +180,16 @@ function CertificateCard({ cert, patient }) {
         <span className={`mr-chevron ${open ? "mr-chevron--open" : ""}`}>›</span>
       </div>
 
-      {/* Slip — always in DOM so ref is valid for PDF download */}
-      <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
+      {/* On-screen preview — scaled to fit, only mounted while open */}
+      {open && (
+        <div className="mr-slip-wrap">
+          <ScaledCertificatePreview cert={cert} patient={patient} />
+        </div>
+      )}
+
+      {/* PDF source — always in DOM, offscreen and never scaled, so the
+          capture ref stays valid and is independent of the preview */}
+      <div className="mr-slip-offscreen" aria-hidden="true">
         <Suspense fallback={null}>
           <MedicalCertificateSlip cert={cert} patient={patient} slipRef={slipRef} />
         </Suspense>

@@ -402,6 +402,21 @@
   margin: 0 auto;
 }
 
+/* Scaled certificate preview (display only — see ScaledCertificatePreview) */
+.mr-cert-measure {
+  width: 100%;
+  min-width: 0;
+}
+
+.mr-cert-box {
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.mr-cert-inner {
+  transform-origin: top left;
+}
+
 /* Hidden but in DOM so PDF ref stays valid.
    IMPORTANT: keep real dimensions & visibility so html2canvas
    can still capture it correctly when the card is collapsed —
