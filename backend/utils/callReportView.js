@@ -5,6 +5,7 @@
 // the same shape the direct-call report uses - participants, problems,
 // timeline - plus a small summary. Pure; no I/O.
 const { describeClientLabel } = require("./clientDescriptor");
+const { summarizeStats, connectionTypeLabel } = require("./callStatsAggregator");
 
 const ROLE_LABEL = { doctor: "Doctor", patient: "Patient" };
 const who = (role) => ROLE_LABEL[role] || "Someone";
@@ -96,6 +97,31 @@ function buildProblems(report) {
       });
     }
   }
+  for (const role of ["doctor", "patient"]) {
+    const s = summarizeStats(p[role]?.stats);
+    if (!s) continue;
+    const at = s.lastSampleAt || report.lastActivityAt;
+    if (s.packetLossPct.avg !== null && s.packetLossPct.avg >= 5) {
+      problems.push({
+        at, who: who(role), label: `High packet loss (average ${s.packetLossPct.avg}%)`, detectable: "server",
+        suggestion: "Audio and video break up when many packets are lost - usually a weak Wi-Fi or mobile signal.",
+      });
+    }
+    if (s.rttMs.avg !== null && s.rttMs.avg >= 400) {
+      problems.push({
+        at, who: who(role), label: `High delay (average round trip ${s.rttMs.avg} ms)`, detectable: "server",
+        suggestion: "A slow or distant network path; conversation feels laggy. Try another network.",
+      });
+    }
+    const q = s.qualityCounts || {};
+    const total = Object.values(q).reduce((a, b) => a + b, 0);
+    if (total >= 3 && (q.poor || 0) / total >= 0.3) {
+      problems.push({
+        at, who: who(role), label: `Poor connection quality for ${Math.round(((q.poor || 0) / total) * 100)}% of the call`, detectable: "best-effort",
+        suggestion: "Quality is measured by the device itself while the call is running.",
+      });
+    }
+  }
   if (report.bothPresentAt && !report.connectedAt) {
     problems.push({
       at: report.bothPresentAt, who: "Call", label: "Both joined but the video call never connected", detectable: "server",
@@ -111,6 +137,7 @@ function buildParticipants(report) {
     .filter((role) => p[role])
     .map((role) => {
       const x = p[role];
+      const stats = summarizeStats(x.stats);
       return {
         key: role,
         role,
@@ -126,6 +153,9 @@ function buildParticipants(report) {
         disconnects: x.disconnects || 0,
         connectionState: x.connectionState || "unknown",
         maskedIp: x.maskedIp || "",
+        stats: stats,
+        connectionType: stats ? connectionTypeLabel(stats.iceType) : "",
+        quality: stats ? stats.lastQuality || "" : "",
       };
     });
 }
@@ -158,4 +188,22 @@ function buildCallReportView(report, { openSegmentSec = 0 } = {}) {
   };
 }
 
-module.exports = { buildCallReportView, describeEvent, buildProblems, dur };
+// Compact row for the admin appointment list: is there a report, how long, did it
+// connect, was anything wrong.
+function buildCallSummary(report, openSegmentSec = 0) {
+  if (!report) return null;
+  const durationSec = (report.durationSec || 0) + openSegmentSec;
+  const problems = buildProblems(report);
+  return {
+    durationSec,
+    durationLabel: dur(durationSec),
+    connected: Boolean(report.connectedAt),
+    inProgress: openSegmentSec > 0,
+    problemCount: problems.length,
+    hasProblem: problems.length > 0,
+    firstProblem: problems[0] ? `${problems[0].who}: ${problems[0].label}` : "",
+    endReason: report.endReason || "",
+  };
+}
+
+module.exports = { buildCallReportView, buildCallSummary, describeEvent, buildProblems, dur };

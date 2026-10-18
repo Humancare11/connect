@@ -10,6 +10,25 @@ const mongoose = require("mongoose");
 // Deliberately NOT stored: IP addresses (only the same masked form the direct
 // report keeps, admin-only), the raw User-Agent string, SDP / ICE candidate
 // addresses, chat, or any media.
+// Quality aggregates (phase 2) - running sums / counts / min / max, folded from
+// the clients' periodic samples; averages are computed when the report is read.
+// No defaults on purpose: $min / $max / $inc create the paths on first write.
+const statsSchema = new mongoose.Schema(
+  {
+    samples: Number,
+    rttSum: Number, rttN: Number, rttMin: Number, rttMax: Number,
+    lossSum: Number, lossN: Number, lossMin: Number, lossMax: Number,
+    jitterSum: Number, jitterN: Number, jitterMin: Number, jitterMax: Number,
+    bitrateSum: Number, bitrateN: Number, bitrateMin: Number, bitrateMax: Number,
+    ice: { host: Number, srflx: Number, prflx: Number, relay: Number },
+    quality: { good: Number, weak: Number, poor: Number, unknown: Number },
+    lastIceType: String,
+    lastQuality: String,
+    lastSampleAt: Date,
+  },
+  { _id: false },
+);
+
 const participantSchema = new mongoose.Schema(
   {
     role: { type: String, enum: ["doctor", "patient"], required: true },
@@ -37,6 +56,7 @@ const participantSchema = new mongoose.Schema(
     reconnects: { type: Number, default: 0 },
     disconnects: { type: Number, default: 0 },
     connectionState: { type: String, default: "" }, // connected | disconnected | left
+    stats: { type: statsSchema, default: undefined },
   },
   { _id: false },
 );

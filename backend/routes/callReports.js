@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { verifyToken, adminOnly, superAdminOnly } = require("../middleware/verifyToken");
-const { getCallReport, deleteCallReport } = require("../controllers/callReportController");
+const { getCallReport, deleteCallReport, getCallReportSummaries } = require("../controllers/callReportController");
 
 // Admin-only, the same role guard as the direct-call report (adminOnly), with
 // one difference: verifyToken (any valid session) instead of verifyAdminToken.
@@ -15,6 +15,8 @@ const { getCallReport, deleteCallReport } = require("../controllers/callReportCo
 // revoke their sessions). Only a real admin who is not a superadmin reaches
 // superAdminOnly, whose critical privilege_escalation event is the platform's
 // existing behaviour (it revokes that admin's sessions).
+// Registered first: "summaries" must never be read as an :appointmentId.
+router.post("/summaries", verifyToken, adminOnly, getCallReportSummaries);
 router.get("/:appointmentId", verifyToken, adminOnly, getCallReport);
 router.delete("/:appointmentId", verifyToken, adminOnly, superAdminOnly, deleteCallReport);
 

@@ -731,6 +731,9 @@ const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+// call-stats: every 30s normally, every ~3s while an admin watches the report.
+const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
+const callWatchLimiter = makeSocketLimiter({ windowMs: 5000, max: 10 });
 // A rebuild request is a rare recovery signal (the client side already caps
 // itself at a few automatic rebuilds per minute) — 3 per 10s is ample headroom
 // for a legitimate manual-Retry + automatic-watchdog overlap while still
@@ -1356,6 +1359,12 @@ const DIRECT_CLIENT_REPORTABLE_REASONS = new Set([
 function isAdminSocket(socket) {
   return socket.userRole === "admin" || socket.userRole === "superadmin";
 }
+
+// Admin call report, live view: appointmentId -> Set(admin socket ids). Watchers
+// join callMonitorRoomName(...) which participants never join, so live stats
+// reach admins only. Participants are told only that the sampling rate may go up.
+const appointmentCallWatchers = new Map();
+const callMonitorRoomName = (appointmentId) => `call_monitor_${appointmentId}`;
 
 // Phase 4: admin alerts (email + in-app). See utils/directCallAlerts.js for
 // the flag/debounce/trigger logic — this just wires the real Mongo model,
@@ -2089,6 +2098,7 @@ io.on("connection", (socket) => {
       try {
         const client = describeJoinClient({ declared: clientInfo, userAgent: socket.handshake?.headers?.["user-agent"] });
         client.label = describeClientLabel(client);
+        if (appointmentCallWatchers.has(String(appointmentId))) socket.emit("call-monitoring-active", true);
         callReportRecorder.onJoin({
           appointmentId: String(appointmentId),
           kind: access.kind,
@@ -2437,6 +2447,61 @@ io.on("connection", (socket) => {
       role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
     });
     return undefined;
+  });
+
+  // Quality sample from a participant (admin call report). The recorder
+  // validates and range-checks every field (unknown fields are ignored); the
+  // sanitised sample is relayed live only to admins watching this call.
+  socket.on("call-stats", (payload = {}) => {
+    const appointmentId = payload && payload.appointmentId;
+    if (!appointmentId) return rejectSignal(socket, "call-stats", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "call-stats", "not_in_room");
+    if (!callStatsLimiter.allow(socket.id)) return undefined;
+    const id = String(appointmentId);
+    const role = callReportRole(socketUsers.get(socket.id)?.role || socket.userRole);
+    const sample = callReportRecorder.onStats({ appointmentId: id, role, sample: payload, final: payload.final === true });
+    const watchers = appointmentCallWatchers.get(id);
+    if (sample && watchers && watchers.size > 0) {
+      io.to(callMonitorRoomName(id)).emit("call-live-stats", { appointmentId: id, role, at: Date.now(), ...sample });
+    }
+    return undefined;
+  });
+
+  // Admin-only live watch. Anyone else is ignored silently: no error, no
+  // security event - the report endpoints are the audited surface.
+  socket.on("admin-watch-call", ({ appointmentId } = {}) => {
+    if (!isAdminSocket(socket) || !appointmentId) return;
+    if (!callWatchLimiter.allow(socket.id)) return;
+    const id = String(appointmentId);
+    if (!/^[a-f0-9]{24}$/i.test(id)) return;
+    let watchers = appointmentCallWatchers.get(id);
+    if (!watchers) {
+      watchers = new Set();
+      appointmentCallWatchers.set(id, watchers);
+    }
+    const wasEmpty = watchers.size === 0;
+    watchers.add(socket.id);
+    socket.join(callMonitorRoomName(id));
+    if (wasEmpty) io.to(appointmentRoomName(id)).emit("call-monitoring-active", true);
+  });
+
+  const stopWatchingCall = (id) => {
+    const watchers = appointmentCallWatchers.get(id);
+    if (!watchers || !watchers.has(socket.id)) return;
+    watchers.delete(socket.id);
+    socket.leave(callMonitorRoomName(id));
+    if (watchers.size === 0) {
+      appointmentCallWatchers.delete(id);
+      io.to(appointmentRoomName(id)).emit("call-monitoring-active", false);
+    }
+  };
+
+  socket.on("admin-unwatch-call", ({ appointmentId } = {}) => {
+    if (appointmentId) stopWatchingCall(String(appointmentId));
+  });
+
+  socket.on("disconnect", () => {
+    for (const id of [...appointmentCallWatchers.keys()]) stopWatchingCall(id);
   });
 
   socket.on("camera-state", ({ appointmentId, isCamOff }) => {
@@ -3414,6 +3479,14 @@ startServer()
 const gracefulShutdown = createGracefulShutdown({
   io,
   server,
-  closeDatabase: () => mongoose.connection.close(),
+  closeDatabase: async () => {
+    // Pending call-quality aggregates would otherwise be lost on a redeploy.
+    try {
+      await callReportRecorder.flush();
+    } catch (err) {
+      console.warn("[call-report] shutdown flush failed:", err.message);
+    }
+    return mongoose.connection.close();
+  },
 });
 registerShutdownSignals(process, gracefulShutdown);

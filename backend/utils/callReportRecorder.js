@@ -20,10 +20,19 @@ const RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 const INFERRED_CONNECTED_MIN_SEC = 15;
 const DENIED_EVENT_MIN_GAP_MS = 30_000;
 
+// Stats: samples closer together than this are used for the live view only;
+// aggregates fold roughly one sample per 30s however often a client sends.
+const STATS_FOLD_MIN_GAP_MS = 25_000;
+// A participant's pending aggregate is written at most this often (and on any
+// drop / leave / end).
+const STATS_FLUSH_MS = 60_000;
+
+const { sanitizeStatsSample, createPendingStats } = require("./callStatsAggregator");
+
 const ROLES = ["doctor", "patient"];
 const other = (role) => (role === "doctor" ? "patient" : "doctor");
 
-function createCallReportRecorder({ CallReport, logger = console, now = () => Date.now() }) {
+function createCallReportRecorder({ CallReport, logger = console, now = () => Date.now(), setTimer = setTimeout, clearTimer = clearTimeout }) {
   const states = new Map(); // appointmentId -> in-memory state
   const chains = new Map(); // appointmentId -> promise (write order)
 
@@ -32,7 +41,10 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     if (!st) {
       st = {
         kind: kind || "appointment",
-        roles: { doctor: { state: null, droppedAt: 0, label: "" }, patient: { state: null, droppedAt: 0, label: "" } },
+        roles: {
+          doctor: { state: null, droppedAt: 0, label: "", pending: createPendingStats(), lastFoldedAt: 0, flushTimer: null },
+          patient: { state: null, droppedAt: 0, label: "", pending: createPendingStats(), lastFoldedAt: 0, flushTimer: null },
+        },
         bothSince: 0,
         connectedReported: false,
         connectedInferred: false,
@@ -49,6 +61,7 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
       $set: { lastActivityAt: new Date(t), expiresAt: new Date(t + RETENTION_MS) },
       $inc: {},
       $min: {},
+      $max: {},
       $unset: {},
       _events: [],
     };
@@ -58,6 +71,7 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     const out = { $setOnInsert: update.$setOnInsert, $set: update.$set };
     if (Object.keys(update.$inc).length) out.$inc = update.$inc;
     if (Object.keys(update.$min).length) out.$min = update.$min;
+    if (Object.keys(update.$max).length) out.$max = update.$max;
     if (Object.keys(update.$unset).length) out.$unset = update.$unset;
     if (update._events.length) out.$push = { events: { $each: update._events, $slice: -EVENT_CAP } };
     return out;
@@ -96,6 +110,45 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     }
     update.$set.callEndedAt = new Date(endMs);
     st.bothSince = 0;
+  }
+
+  // ---------------------------------------------------------------- stats
+  function flushStats(appointmentId, role) {
+    const st = states.get(appointmentId);
+    if (!st) return undefined;
+    const rr = st.roles[role];
+    if (rr.flushTimer) {
+      clearTimer(rr.flushTimer);
+      rr.flushTimer = null;
+    }
+    const update = newUpdate(now(), st.kind);
+    if (!rr.pending.drainInto(update, `participants.${role}.stats`)) return undefined;
+    return write(appointmentId, update, { upsert: false });
+  }
+
+  // A stats sample from a participant. Returns the sanitised sample (so the
+  // server can forward it to a watching admin) or null if it was unusable.
+  function onStats({ appointmentId, role, sample: raw, final = false }) {
+    const id = String(appointmentId || "");
+    const st = states.get(id);
+    if (!st || !ROLES.includes(role)) return null;
+    const rr = st.roles[role];
+    if (rr.state !== "in" && rr.state !== "dropped") return null;
+    const sample = sanitizeStatsSample(raw);
+    if (!sample) return null;
+    const t = now();
+    if (final || t - rr.lastFoldedAt >= STATS_FOLD_MIN_GAP_MS) {
+      rr.lastFoldedAt = t;
+      rr.pending.add(sample, t);
+      if (!rr.flushTimer) {
+        rr.flushTimer = setTimer(() => {
+          rr.flushTimer = null;
+          flushStats(id, role);
+        }, STATS_FLUSH_MS);
+        if (rr.flushTimer && typeof rr.flushTimer.unref === "function") rr.flushTimer.unref();
+      }
+    }
+    return sample;
   }
 
   // ---------------------------------------------------------------- events
@@ -168,6 +221,7 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     const r = st.roles[role];
     if (r.state !== "in") return;
     const t = now();
+    flushStats(id, role);
     r.state = "dropped";
     r.droppedAt = t;
     const update = newUpdate(t, st.kind);
@@ -189,6 +243,7 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     if (r.state === "left" || r.state === null) return;
     const t = now();
     const leftMs = how === "grace_expired" && r.droppedAt ? r.droppedAt : t;
+    flushStats(id, role);
     r.state = "left";
     r.droppedAt = 0;
     const update = newUpdate(t, st.kind);
@@ -239,6 +294,7 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     const st = states.get(id);
     const update = newUpdate(t, st?.kind);
     if (st) {
+      for (const role of ROLES) flushStats(id, role);
       closeSegment(st, update, t);
       for (const r of ROLES) {
         if (st.roles[r].state === "in" || st.roles[r].state === "dropped") {
@@ -260,11 +316,13 @@ function createCallReportRecorder({ CallReport, logger = console, now = () => Da
     return st && st.bothSince ? Math.max(0, Math.round((now() - st.bothSince) / 1000)) : 0;
   }
 
+  // Writes every pending stats aggregate, then waits for all queued writes.
   async function flush() {
+    for (const id of Array.from(states.keys())) for (const role of ROLES) flushStats(id, role);
     await Promise.allSettled(Array.from(chains.values()));
   }
 
-  return { onJoin, onDrop, onLeft, onConnected, onJoinDenied, onCallEnded, openSegmentSec, flush, _states: states };
+  return { onJoin, onDrop, onLeft, onConnected, onJoinDenied, onCallEnded, onStats, flushStats, openSegmentSec, flush, _states: states };
 }
 
-module.exports = { createCallReportRecorder, EVENT_CAP, RETENTION_MS, INFERRED_CONNECTED_MIN_SEC };
+module.exports = { createCallReportRecorder, EVENT_CAP, RETENTION_MS, INFERRED_CONNECTED_MIN_SEC, STATS_FOLD_MIN_GAP_MS, STATS_FLUSH_MS };

@@ -3,7 +3,7 @@ const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const CallReport = require("../models/CallReport");
 const { recordActivity } = require("../utils/activityLogger");
-const { buildCallReportView } = require("../utils/callReportView");
+const { buildCallReportView, buildCallSummary } = require("../utils/callReportView");
 
 const VIEW_LOG_CAP = 50;
 
@@ -98,4 +98,29 @@ const deleteCallReport = async (req, res) => {
   }
 };
 
-module.exports = { getCallReport, deleteCallReport };
+const MAX_SUMMARY_IDS = 100;
+
+// POST /api/call-reports/summaries { ids: [...] } - admin only. One compact row
+// per appointment that has a report, for the admin appointment list.
+const getCallReportSummaries = async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
+    if (ids.length === 0 || ids.length > MAX_SUMMARY_IDS || !ids.every(isObjectId)) {
+      return res.status(400).json({ msg: `Send between 1 and ${MAX_SUMMARY_IDS} valid appointment ids.` });
+    }
+    const reports = await CallReport.find({ appointmentId: { $in: ids } })
+      .select("appointmentId kind durationSec connectedAt endReason events participants.doctor.reconnects participants.patient.reconnects participants.doctor.stats participants.patient.stats participants.doctor.lastSeenAt participants.patient.lastSeenAt lastActivityAt bothPresentAt")
+      .lean();
+    const recorder = req.app.get("callReportRecorder");
+    const summaries = {};
+    for (const report of reports) {
+      summaries[report.appointmentId] = buildCallSummary(report, recorder ? recorder.openSegmentSec(report.appointmentId) : 0);
+    }
+    res.status(200).json({ summaries });
+  } catch (error) {
+    console.error("getCallReportSummaries error:", error);
+    res.status(500).json({ msg: "Failed to load call summaries." });
+  }
+};
+
+module.exports = { getCallReport, deleteCallReport, getCallReportSummaries };

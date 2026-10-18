@@ -221,6 +221,147 @@ test("retention: every report carries a 90-day expiry", async () => {
   closeAll(doctor, patient);
 });
 
+const sample = (id, extra = {}) => ({ appointmentId: id, rtt: 55, packetLoss: 0.02, jitter: 8, bitrateKbps: 640, outKbps: 520, iceType: "srflx", quality: "good", resolution: "640x480", reconnects: 0, ...extra });
+// waitFor also matches events seen earlier, so count new arrivals instead.
+const noEvent = async (socket, event, ms = 700) => {
+  const seen = () => socket.events.filter((e) => e.event === event).length;
+  const before = seen();
+  await sleep(ms);
+  assert.equal(seen(), before, `unexpected "${event}"`);
+};
+
+test("web and app-style quality stats land in the report, with Relay / Direct and min/avg/max", async () => {
+  const id = await stack.makeAppointment("confirmed");
+  const { doctor, patient } = await joinPair({ appointmentId: id });
+  doctor.emit("call-stats", sample(id, { rtt: 40, iceType: "srflx" }));
+  patient.emit("call-stats", sample(id, { rtt: 300, packetLoss: 0.12, iceType: "relay", quality: "poor" }));
+  await sleep(2100);
+  doctor.emit("call-stats", sample(id, { rtt: 80, final: true }));
+  patient.emit("call-stats", sample(id, { rtt: 100, packetLoss: 0.04, iceType: "relay", quality: "weak", final: true }));
+  await sleep(300);
+  // leaving flushes the pending aggregate (no waiting for the 60s timer)
+  patient.emit("leave-appointment-room", { appointmentId: id });
+  doctor.emit("leave-appointment-room", { appointmentId: id });
+  const view = await eventually(async () => {
+    const r = await getReport(id, adminToken());
+    return { ok: Boolean(part(r.body, "patient")?.stats?.samples >= 2 && part(r.body, "doctor")?.stats?.samples >= 2), value: r.body };
+  });
+  const p = part(view, "patient");
+  const d = part(view, "doctor");
+  assert.equal(p.connectionType, "Relay (TURN)");
+  assert.equal(d.connectionType, "Direct (peer-to-peer)");
+  assert.equal(p.stats.rttMs.min, 100);
+  assert.equal(p.stats.rttMs.max, 300);
+  assert.equal(p.stats.rttMs.avg, 200);
+  assert.equal(p.stats.packetLossPct.max, 12);
+  assert.equal(p.stats.iceType, "relay");
+  assert.equal(p.quality, "weak");
+  closeAll(doctor, patient);
+});
+
+test("forged stats are dropped: out-of-range numbers, unknown fields, non-participants, oversized payloads", async () => {
+  const id = await stack.makeAppointment("confirmed");
+  const { doctor, patient } = await joinPair({ appointmentId: id });
+  patient.emit("call-stats", { appointmentId: id, rtt: -1, packetLoss: 99, jitter: "x", iceType: "<img>", quality: "<script>", $where: "1", blob: "x".repeat(200_000) });
+  await sleep(2100);
+  patient.emit("call-stats", { appointmentId: id }); // empty
+  await sleep(2100);
+  patient.emit("call-stats", sample(id, { rtt: 1e9, final: true })); // rtt rejected, rest kept
+  const stranger = await stack.connect({ token: stack.tokens.other.accessToken });
+  stranger.emit("call-stats", sample(id));
+  assert.equal((await stack.waitFor(stranger, "signaling-error")).code, "not_in_room");
+  await sleep(200);
+  patient.emit("leave-appointment-room", { appointmentId: id });
+  const doc = await eventually(async () => {
+    const d = await stack.models.CallReport.findOne({ appointmentId: id }).lean();
+    return { ok: d?.participants?.patient?.stats?.samples === 1, value: d };
+  });
+  const st = doc.participants.patient.stats;
+  assert.equal(st.rttN, undefined, "the out-of-range rtt never reached the data");
+  assert.equal(st.lossN, 1);
+  assert.equal(st.lossMax, 0.02);
+  assert.equal(JSON.stringify(doc).includes("<script>"), false);
+  assert.equal(JSON.stringify(doc).includes("$where"), false);
+  assert.equal(doc.participants.doctor.stats, undefined, "no stats at all for the doctor: report still renders");
+  const r = await getReport(id, adminToken());
+  assert.equal(r.status, 200);
+  assert.equal(part(r.body, "doctor").stats, null);
+  closeAll(doctor, patient, stranger);
+});
+
+test("live stats reach watching admins only; participants are told monitoring is on; doctor/patient/stranger cannot watch", async () => {
+  const id = await stack.makeAppointment("confirmed");
+  const { doctor, patient } = await joinPair({ appointmentId: id });
+  const admin = await stack.connect({ token: adminToken() });
+
+  // non-admins trying to watch: silently ignored, they receive nothing
+  const stranger = await stack.connect({ token: stack.tokens.other.accessToken });
+  for (const s of [doctor, patient, stranger]) s.emit("admin-watch-call", { appointmentId: id });
+  await sleep(300);
+  doctor.emit("call-stats", sample(id));
+  await Promise.all([noEvent(doctor, "call-live-stats"), noEvent(patient, "call-live-stats"), noEvent(stranger, "call-live-stats")]);
+
+  // a real admin watches
+  const active = stack.waitFor(patient, "call-monitoring-active");
+  admin.emit("admin-watch-call", { appointmentId: id });
+  assert.equal(await active, true);
+  await sleep(2100); // limiter window
+  doctor.emit("call-stats", sample(id, { rtt: 77, iceType: "relay" }));
+  const live = await stack.waitFor(admin, "call-live-stats");
+  assert.equal(live.role, "doctor");
+  assert.equal(live.rtt, 77);
+  assert.equal(live.iceType, "relay");
+  assert.equal(live.appointmentId, id);
+  await noEvent(patient, "call-live-stats");
+
+  // a participant who (re)joins while watched is told too
+  const late = await stack.connect({ token: stack.tokens.patient.accessToken });
+  const lateActive = stack.waitFor(late, "call-monitoring-active");
+  await stack.joinAppointment(late, "patient", { appointmentId: id });
+  assert.equal(await lateActive, true);
+
+  // last watcher leaving switches it off again
+  const off = stack.waitFor(doctor, "call-monitoring-active", { predicate: (v) => v === false });
+  admin.emit("admin-unwatch-call", { appointmentId: id });
+  await off;
+  await sleep(2100);
+  doctor.emit("call-stats", sample(id));
+  await noEvent(admin, "call-live-stats");
+  closeAll(doctor, patient, admin, stranger, late);
+});
+
+test("stats are rate limited: a flood is cut off and never turns into a flood of writes", async () => {
+  const id = await stack.makeAppointment("confirmed");
+  const { doctor, patient } = await joinPair({ appointmentId: id });
+  for (let i = 0; i < 200; i += 1) patient.emit("call-stats", sample(id, { rtt: 10 + i }));
+  await sleep(500);
+  patient.emit("leave-appointment-room", { appointmentId: id });
+  const doc = await eventually(async () => {
+    const d = await stack.models.CallReport.findOne({ appointmentId: id }).lean();
+    return { ok: Boolean(d?.participants?.patient?.stats), value: d };
+  });
+  assert.ok(doc.participants.patient.stats.samples <= 2, `samples folded: ${doc.participants.patient.stats.samples}`);
+  closeAll(doctor, patient);
+});
+
+test("the list summaries endpoint returns one compact row per call that has a report", async () => {
+  const withReport = await stack.makeAppointment("confirmed");
+  const without = await stack.makeAppointment("confirmed");
+  const { doctor, patient } = await joinPair({ appointmentId: withReport });
+  doctor.emit("call-connected", { appointmentId: withReport });
+  await eventually(async () => ({ ok: (await getReport(withReport, adminToken())).body.summary?.connected === true, value: null }));
+  const post = (ids) => fetch(`${stack.baseUrl}/api/call-reports/summaries`, { method: "POST", headers: { ...bearer(adminToken()), "Content-Type": "application/json" }, body: JSON.stringify({ ids }) });
+  const res = await post([withReport, without]);
+  assert.equal(res.status, 200);
+  const { summaries } = await res.json();
+  assert.equal(summaries[withReport].connected, true);
+  assert.equal(typeof summaries[withReport].durationLabel, "string");
+  assert.equal(summaries[without], undefined, "no report -> no row");
+  assert.equal((await post(["nope"])).status, 400);
+  assert.equal((await post(Array(101).fill(withReport))).status, 400);
+  closeAll(doctor, patient);
+});
+
 test("AUTHORIZATION: only admins read a report; only superadmins delete it; refusing doctors / patients / strangers never revokes their sessions", async () => {
   // Last in the file on purpose: the plain-admin DELETE at the end is refused by
   // superAdminOnly, a "critical privilege_escalation" event that (existing
@@ -245,6 +386,13 @@ test("AUTHORIZATION: only admins read a report; only superadmins delete it; refu
   assert.equal((await deleteReport(id, undefined)).status, 401);
   assert.equal((await deleteReport(id, "not.a.jwt")).status, 401);
   for (const [name, token] of nonAdmins) assert.equal((await deleteReport(id, token)).status, 403, `DELETE as ${name}`);
+
+  // SUMMARIES (batch list endpoint): same guard
+  const postSummaries = async (token) => (await fetch(`${stack.baseUrl}/api/call-reports/summaries`, { method: "POST", headers: { ...(token ? bearer(token) : {}), "Content-Type": "application/json" }, body: JSON.stringify({ ids: [id] }) })).status;
+  assert.equal(await postSummaries(undefined), 401);
+  assert.equal(await postSummaries("not.a.jwt"), 401);
+  for (const [name, token] of nonAdmins) assert.equal(await postSummaries(token), 403, `SUMMARIES as ${name}`);
+  assert.equal(await postSummaries(adminToken()), 200);
 
   // ...and NONE of those refusals revoked a session: the same tokens still work.
   const rest = async (path, token) => (await fetch(`${stack.baseUrl}${path}`, { headers: bearer(token) })).status;
