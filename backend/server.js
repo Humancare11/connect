@@ -52,6 +52,9 @@ const { createGraceTimerRegistry } = require("./utils/graceTimers");
 const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
 const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
 const { createPresenceDownTracker } = require("./utils/presenceDown");
+const CallReport = require("./models/CallReport");
+const { createCallReportRecorder } = require("./utils/callReportRecorder");
+const { describeJoinClient, describeClientLabel } = require("./utils/clientDescriptor");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -610,6 +613,7 @@ app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));
+app.use("/api/call-reports", require("./routes/callReports"));
 app.use("/api/upload", require("./routes/upload"));
 app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
@@ -689,6 +693,10 @@ const appointmentPresenceDown = createPresenceDownTracker();
 // dropped again moments ago. See the "disconnect" handler.
 const appointmentLeaveTimers = createGraceTimerRegistry();
 const appointmentLeaveKey = (appointmentId, userId) => `${String(appointmentId)}:${String(userId)}`;
+// Admin-only call report (models/CallReport.js), built from the events below.
+const callReportRecorder = createCallReportRecorder({ CallReport });
+// socket role ("user" | "doctor") -> report role
+const callReportRole = (role) => (role === "doctor" ? "doctor" : role === "user" ? "patient" : null);
 // Entries persist across a room's transient auto-eviction (see the
 // disconnect grace-timeout handler below) so a simultaneous-drop-and-
 // reconnect still counts as a resume, not a first join — but that means
@@ -722,6 +730,7 @@ const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
+const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // A rebuild request is a rare recovery signal (the client side already caps
 // itself at a few automatic rebuilds per minute) — 3 per 10s is ample headroom
 // for a legitimate manual-Retry + automatic-watchdog overlap while still
@@ -770,6 +779,7 @@ function rejectSignal(socket, event, code) {
 }
 
 const SOCKET_LIMITERS = [
+  callConnectedLimiter,
   signalingErrorLimiter,
   chatMessageLimiter,
   videoSdpLimiter,
@@ -853,6 +863,7 @@ const io = new Server(server, {
 });
 
 app.set("io", io);
+app.set("callReportRecorder", callReportRecorder);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
 app.set("evictAllFromAppointmentRoom", evictAllFromAppointmentRoom);
 // Reopening a completed appointment must lift the "terminated" block set by
@@ -1084,6 +1095,7 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
     if (!peerSocket) continue;
     const identity = getSocketIdentity(peerSocket);
     if (identity?.role === "doctor" && String(identity.userId) === String(doctorUserId)) {
+      callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: "doctor", how: "removed_from_appointment" });
       peerSocket.emit("appointment-access-revoked", {
         msg: "You have been removed from this appointment.",
       });
@@ -1110,6 +1122,8 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
   const idStr = String(appointmentId);
   terminatedAppointmentRooms.add(idStr);
   setTimeout(() => terminatedAppointmentRooms.delete(idStr), 5 * 60 * 1000).unref();
+
+  callReportRecorder.onCallEnded({ appointmentId: idStr, reason });
 
   const room = appointmentRoomName(appointmentId);
   const socketIds = io.sockets.adapter.rooms.get(room);
@@ -1146,6 +1160,7 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
   const userId = String(identity.userId);
   let appointment = null;
   let allowed = false;
+  let kind = "appointment";
 
   try {
     appointment = await Appointment.findById(appointmentId)
@@ -1163,6 +1178,7 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
 
       if (cc) {
         appointment = cc;
+        kind = "category_consultation";
 
         if (identity.role === "user") {
           allowed = String(cc.patientId) === userId;
@@ -1186,7 +1202,7 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
   // right after, since identity/ownership alone never changes on cancel or
   // complete (unlike reassignment, where the doctorId itself changes).
   if (TERMINAL_APPOINTMENT_STATUSES.has(String(appointment.status || "").toLowerCase())) {
-    return { allowed: false, reason: "appointment_ended", identity, appointment };
+    return { allowed: false, reason: "appointment_ended", identity, appointment, kind };
   }
 
   return {
@@ -1194,6 +1210,7 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
     reason: allowed ? "participant" : "not_participant",
     identity,
     appointment,
+    kind,
   };
 }
 
@@ -2032,7 +2049,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token, capabilities } = {}) => {
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token, capabilities, clientInfo } = {}) => {
     if (!appointmentId) {
       socket.emit("room-access-denied", { msg: "No appointment was specified.", reason: "invalid_appointment" });
       return;
@@ -2053,8 +2070,37 @@ io.on("connection", (socket) => {
         userId: access.identity?.userId || socket.userId || null,
         role: access.identity?.role || socket.userRole || null,
       });
+      // Only for a report that already exists and a known participant: a refused
+      // stranger must never be able to create (or write to) a report.
+      if (access.identity && ["server_error", "appointment_ended"].includes(normalizeDenyReason(access.reason))) {
+        callReportRecorder.onJoinDenied({
+          appointmentId: String(appointmentId),
+          role: callReportRole(access.identity.role),
+          reason: normalizeDenyReason(access.reason),
+        });
+      }
       return;
     }
+
+    // Admin call report: where this participant joined from. Declared by the
+    // client, reconciled with the User-Agent the server observed (see
+    // utils/clientDescriptor.js) - informational only.
+    const recordJoinForReport = () => {
+      try {
+        const client = describeJoinClient({ declared: clientInfo, userAgent: socket.handshake?.headers?.["user-agent"] });
+        client.label = describeClientLabel(client);
+        callReportRecorder.onJoin({
+          appointmentId: String(appointmentId),
+          kind: access.kind,
+          role: callReportRole(access.identity.role),
+          userId: access.identity.userId,
+          client,
+          maskedIp: resolveMaskedIp(socket),
+        });
+      } catch (err) {
+        console.warn("[call-report] join not recorded:", err.message);
+      }
+    };
 
     // Recorded on every (re)join, including the already-in-room / recovered
     // branch below — a client that stops announcing (an older build) reads
@@ -2078,6 +2124,7 @@ io.on("connection", (socket) => {
     if (socket.rooms.has(room)) {
       socketRooms.set(socket.id, appointmentId);
       appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, access.identity.userId));
+      recordJoinForReport();
 
       // This same user's socket just came back from a drop — tell whoever's
       // waiting they're no longer gone. See the "disconnect" handler above.
@@ -2158,6 +2205,7 @@ io.on("connection", (socket) => {
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
     appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, socketUserId));
+    recordJoinForReport();
 
     if (appointmentPresenceDown.clearDown(appointmentId, socketUserId)) {
       socket.to(room).emit("peer-socket-up");
@@ -2217,6 +2265,11 @@ io.on("connection", (socket) => {
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
     const room = appointmentRoomName(appointmentId);
+    callReportRecorder.onLeft({
+      appointmentId: String(appointmentId),
+      role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
+      how: "explicit",
+    });
     socket.to(room).emit("participant-left");
     socket.leave(room);
     socketRooms.delete(socket.id);
@@ -2373,6 +2426,19 @@ io.on("connection", (socket) => {
   // frames per spec), so the peer can't tell "camera off" from "frozen"
   // by inspecting the media alone — the mobile client explicitly signals
   // it. Relayed the same way as the other simple call-signaling events.
+  // The participant's own RTCPeerConnection reached "connected" (the server
+  // alone cannot tell "both in the room" from "media actually flowing").
+  socket.on("call-connected", ({ appointmentId } = {}) => {
+    if (!appointmentId) return rejectSignal(socket, "call-connected", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "call-connected", "not_in_room");
+    if (!callConnectedLimiter.allow(socket.id)) return undefined;
+    callReportRecorder.onConnected({
+      appointmentId: String(appointmentId),
+      role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
+    });
+    return undefined;
+  });
+
   socket.on("camera-state", ({ appointmentId, isCamOff }) => {
     if (!appointmentId) return rejectSignal(socket, "camera-state", "invalid_payload");
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "camera-state", "not_in_room");
@@ -2409,6 +2475,8 @@ io.on("connection", (socket) => {
       const liveIdentity = socketUsers.get(socket.id);
       const disconnectedUserId = liveIdentity?.userId || socket.userId || "";
       const appointmentRoom = `appointment_${appointmentId}`;
+      const reportRole = callReportRole(liveIdentity?.role || socket.userRole);
+      callReportRecorder.onDrop({ appointmentId: String(appointmentId), role: reportRole, reason });
 
       // Immediate, pre-grace-period signal: tell whoever's left in the room
       // that the OTHER side just dropped, so they can show "waiting for the
@@ -2436,6 +2504,7 @@ io.on("connection", (socket) => {
         appointmentPresenceDown.clearDown(appointmentId, disconnectedUserId);
 
         if (!sameUserStillInRoom) {
+          callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: reportRole, how: "grace_expired" });
           io.to(appointmentRoom).emit("participant-left");
           // Deliberately NOT clearing roomActivated here: this path also
           // fires when both participants drop at once (e.g. a shared
