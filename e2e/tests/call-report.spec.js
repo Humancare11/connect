@@ -167,6 +167,110 @@ test.describe("appointment call report (admin only)", () => {
     }
   });
 
+  // ---------------------------------------------------------------- phase 2: quality stats
+
+  test("web <-> web: stats columns, connection type and the Live section show real numbers; list badge appears", async ({ browser, baseURL }) => {
+    const appointmentId = await freshAppointment();
+    const doctor = await newParty(browser, "doctor", DOCTOR_STATE, baseURL);
+    const patient = await newParty(browser, "patient", PATIENT_STATE, baseURL);
+    let admin;
+    try {
+      const url = `/video-call/${appointmentId}`;
+      await Promise.all([doctor.page.goto(url, { waitUntil: "domcontentloaded" }), patient.page.goto(url, { waitUntil: "domcontentloaded" })]);
+      await Promise.all([
+        waitForVideoFlowing(doctor.page, { timeoutMs: 40_000, label: "doctor" }),
+        waitForVideoFlowing(patient.page, { timeoutMs: 40_000, label: "patient" }),
+      ]);
+
+      admin = await adminPage(browser, baseURL, appointmentId);
+      await expect(admin.page.getByRole("heading", { name: "Live" })).toBeVisible({ timeout: 20_000 });
+      // watching speeds the clients up (~3s): live numbers arrive without waiting 30s
+      await expect(admin.page.getByText(/RTT: \d+ms/).first()).toBeVisible({ timeout: 30_000 });
+
+      // the patient leaves: the pending aggregate is written at once
+      await patient.page.goto("/");
+      await sleep(2_500);
+      await admin.page.reload({ waitUntil: "domcontentloaded" });
+      const rows = admin.page.locator(".dvc-table tbody tr").filter({ hasText: /Doctor|Patient/ });
+      await expect(rows.filter({ hasText: "Patient" }).first()).toContainText(/Direct \(peer-to-peer\)|Relay \(TURN\)/, { timeout: 20_000 });
+      await expect(rows.filter({ hasText: "Patient" }).first()).not.toContainText("No stats received");
+
+      // the call column in the appointment list (one batch query)
+      const listRequests = [];
+      admin.page.on("request", (r) => r.url().includes("/api/call-reports/summaries") && listRequests.push(r.postData()));
+      await admin.page.goto("/admin-dashboard/appointments?tab=all", { waitUntil: "domcontentloaded" });
+      const row = admin.page.locator("tr", { hasText: appointmentId });
+      await expect(row).toContainText(/Connected|Not connected/, { timeout: 30_000 });
+      expect(listRequests.length, "one batch request, not one per row").toBe(1);
+    } finally {
+      await admin?.context.close();
+      await doctor.context.close();
+      await patient.context.close();
+    }
+  });
+
+  test("app (simulated) <-> web: relay vs direct, stats and live numbers per participant", async ({ browser, baseURL }) => {
+    const appointmentId = await freshAppointment();
+    const doctor = await newParty(browser, "doctor", DOCTOR_STATE, baseURL);
+    let admin;
+    let appPatient;
+    try {
+      await doctor.page.goto(`/video-call/${appointmentId}`, { waitUntil: "domcontentloaded" });
+      const patientLogin = await login(baseURL, "/api/auth/login", { email: process.env.TEST_PATIENT_EMAIL, password: process.env.TEST_PATIENT_PASSWORD });
+      const patientId = decodeId(patientLogin.accessToken);
+      appPatient = await appSocket(baseURL, patientLogin.accessToken, { role: "user", appointmentId, userId: patientId, clientInfo: ANDROID_INFO });
+
+      admin = await adminPage(browser, baseURL, appointmentId);
+      await expect(admin.page.getByRole("heading", { name: "Live" })).toBeVisible({ timeout: 20_000 });
+      const monitoring = new Promise((resolve) => appPatient.once("call-monitoring-active", resolve));
+      expect(await Promise.race([monitoring, sleep(10_000).then(() => "timeout")])).toBe(true);
+
+      const sample = { appointmentId, rtt: 210, packetLoss: 0.06, jitter: 14, bitrateKbps: 420, outKbps: 300, iceType: "relay", quality: "weak", resolution: "480x640", connectionState: "connected" };
+      appPatient.emit("call-stats", sample);
+      await expect(admin.page.getByText("RTT: 210ms")).toBeVisible({ timeout: 15_000 });
+      await expect(admin.page.getByText("Relay", { exact: true }).first()).toBeVisible();
+      await sleep(2_100);
+      appPatient.emit("call-stats", { ...sample, final: true, rtt: 230 });
+
+      appPatient.close();
+      await sleep(2_000);
+      await admin.page.reload({ waitUntil: "domcontentloaded" });
+      const patientRow = admin.page.locator(".dvc-table tbody tr").filter({ hasText: "Patient" }).first();
+      await expect(patientRow).toContainText("Relay (TURN)", { timeout: 20_000 });
+      await expect(patientRow).toContainText("210 / 220 / 230");
+      await expect(patientRow).toContainText("Weak");
+      // problems derived from the quality numbers
+      await expect(admin.page.getByText(/packet loss/i).first()).toBeVisible();
+    } finally {
+      appPatient?.close();
+      await admin?.context.close();
+      await doctor.context.close();
+    }
+  });
+
+  test("doctor and patient never receive live stats or monitoring details they should not see", async ({ browser, baseURL }) => {
+    const appointmentId = await freshAppointment();
+    let appPatient;
+    let appDoctor;
+    try {
+      const d = await login(baseURL, "/api/doctor/login", { email: process.env.TEST_DOCTOR_EMAIL, password: process.env.TEST_DOCTOR_PASSWORD });
+      const p = await login(baseURL, "/api/auth/login", { email: process.env.TEST_PATIENT_EMAIL, password: process.env.TEST_PATIENT_PASSWORD });
+      appDoctor = await appSocket(baseURL, d.accessToken, { role: "doctor", appointmentId, userId: decodeId(d.accessToken) });
+      appPatient = await appSocket(baseURL, p.accessToken, { role: "user", appointmentId, userId: decodeId(p.accessToken), clientInfo: ANDROID_INFO });
+      const seen = [];
+      for (const s of [appDoctor, appPatient]) s.on("call-live-stats", (x) => seen.push(x));
+      appDoctor.emit("admin-watch-call", { appointmentId });
+      appPatient.emit("admin-watch-call", { appointmentId });
+      await sleep(500);
+      appPatient.emit("call-stats", { appointmentId, rtt: 50, iceType: "host", quality: "good" });
+      await sleep(1_500);
+      expect(seen).toEqual([]);
+    } finally {
+      appDoctor?.close();
+      appPatient?.close();
+    }
+  });
+
   test("doctor, patient and an unrelated user cannot open the report (UI and API)", async ({ browser, baseURL }) => {
     const appointmentId = await freshAppointment();
     const doctor = await newParty(browser, "doctor", DOCTOR_STATE, baseURL);

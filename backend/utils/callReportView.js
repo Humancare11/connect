@@ -153,6 +153,7 @@ function buildParticipants(report) {
         disconnects: x.disconnects || 0,
         connectionState: x.connectionState || "unknown",
         maskedIp: x.maskedIp || "",
+        statsReceived: Boolean(stats),
         stats: stats,
         connectionType: stats ? connectionTypeLabel(stats.iceType) : "",
         quality: stats ? stats.lastQuality || "" : "",
