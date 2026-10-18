@@ -6,7 +6,10 @@ const isStale = (sample) => Date.now() - sample.at > 6000;
 
 // "Live" section of an admin call report. Extracted verbatim from
 // AdminDirectVideoCallDetail.jsx. Samples are keyed by `participantKey(p)`.
-export default function LiveCard({ liveOpen, participants, liveSamples, participantKey }) {
+// Optional (the appointment report): `showMedia={false}` hides the mic/camera
+// line (those clients do not report it) and `renderExtra(sample)` adds a line
+// of extra readings. The direct report passes neither and renders as before.
+export default function LiveCard({ liveOpen, participants, liveSamples, participantKey, showMedia = true, renderExtra }) {
   const active = participants.filter((p) => p.connectionState !== "left");
   return (
     <div className="dvc-card">
@@ -47,8 +50,8 @@ export default function LiveCard({ liveOpen, participants, liveSamples, particip
                 ) : (
                   <>
                     <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#374151", flexWrap: "wrap" }}>
-                      <span>Mic: {sample.micOn ? "On" : "Off"}</span>
-                      <span>Camera: {sample.camOn ? "On" : "Off"}</span>
+                      {showMedia && <span>Mic: {sample.micOn ? "On" : "Off"}</span>}
+                      {showMedia && <span>Camera: {sample.camOn ? "On" : "Off"}</span>}
                       <span style={{ color: CONNECTION_STATE_COLORS[sample.connectionState] || "#374151" }}>
                         {sample.connectionState || "unknown"}
                       </span>
@@ -60,6 +63,11 @@ export default function LiveCard({ liveOpen, participants, liveSamples, particip
                       </span>
                       <span>Jitter: {typeof sample.jitter === "number" ? `${sample.jitter}ms` : "-"}</span>
                     </div>
+                    {renderExtra && (
+                      <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#6b7280", marginTop: 6, flexWrap: "wrap" }}>
+                        {renderExtra(sample)}
+                      </div>
+                    )}
                     {stale && <div style={{ fontSize: 11, color: "#d97706", marginTop: 6 }}>No recent samples</div>}
                   </>
                 )}

@@ -20,6 +20,7 @@ import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTi
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { probeSocketAlive } from "../utils/socketLiveness";
+import { buildCallStatsSample } from "../utils/callStatsSample";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
@@ -1045,6 +1046,13 @@ export default function VideoCall() {
   const pendingRemoteCandidatesRef = useRef([]);
   const joinedSocketIdRef = useRef("");
   const callConnectedReportedRef = useRef(false);
+  // Admin call report quality samples (see the call-stats effect below).
+  const callStatsSnapshotRef = useRef(null);
+  const lastCallSampleRef = useRef(null);
+  const lastCallSampleSentRef = useRef(true);
+  const callMonitoredRef = useRef(false);
+  const socketDropsRef = useRef(0);
+  const sendFinalCallStatsRef = useRef(() => {});
   // Non-terminal "room-access-denied" retry state (see handleRoomDenied).
   const joinDenyAttemptRef = useRef(0);
   const joinRetryTimerRef = useRef(null);
@@ -1598,6 +1606,7 @@ export default function VideoCall() {
     reconnectStallTimerRef.current = null;
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
+    sendFinalCallStatsRef.current();
     socket.emit("leave-appointment-room", { appointmentId });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current?.getTracks().forEach((t) => {
@@ -1803,6 +1812,60 @@ export default function VideoCall() {
     },
     [logVideoEvent, stopStatsCollection],
   );
+
+  // Quality samples for the admin-only call report: every 30s, every ~3s while
+  // an admin has the report open (told via call-monitoring-active), and once
+  // more on leave. Technical numbers only; the server validates everything.
+  useEffect(() => {
+    if (!appointmentId) return undefined;
+    let timer = null;
+    let stopped = false;
+    const sendSample = (final) => {
+      const sample = lastCallSampleRef.current;
+      if (!sample || !socket.connected) return;
+      socket.emit("call-stats", { appointmentId, ...sample, reconnects: socketDropsRef.current, ...(final ? { final: true } : {}) });
+      lastCallSampleSentRef.current = true;
+    };
+    sendFinalCallStatsRef.current = () => sendSample(true);
+    const tick = async () => {
+      timer = null;
+      try {
+        const pc = pcRef.current;
+        if (pc && pc.signalingState !== "closed" && pc.connectionState === "connected" && socket.connected && joinedSocketIdRef.current) {
+          const report = await pc.getStats();
+          const now = Date.now();
+          const { sample, snapshot } = buildCallStatsSample(report, callStatsSnapshotRef.current, now, { connectionState: pc.connectionState });
+          callStatsSnapshotRef.current = snapshot;
+          lastCallSampleRef.current = sample;
+          lastCallSampleSentRef.current = false;
+          sendSample(false);
+        }
+      } catch (err) {
+        logger.warn("[call-stats] sample failed:", err?.message || err);
+      }
+      if (!stopped) timer = setTimeout(tick, callMonitoredRef.current ? 3000 : STATS_INTERVAL_MS);
+    };
+    const onMonitoring = (active) => {
+      callMonitoredRef.current = active === true;
+      if (!stopped && callMonitoredRef.current && timer) {
+        clearTimeout(timer);
+        timer = setTimeout(tick, 500);
+      }
+    };
+    const onDrop = () => {
+      socketDropsRef.current += 1;
+    };
+    socket.on("call-monitoring-active", onMonitoring);
+    socket.on("disconnect", onDrop);
+    timer = setTimeout(tick, 5000);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      socket.off("call-monitoring-active", onMonitoring);
+      socket.off("disconnect", onDrop);
+      sendFinalCallStatsRef.current = () => {};
+    };
+  }, [appointmentId]);
 
   const emitOnlineAndJoinRoom = useCallback(() => {
     if (!socket.connected || !isReadyRef.current) return false;
@@ -4741,6 +4804,7 @@ export default function VideoCall() {
         !pageUnloadingRef.current &&
         !isManualReconnect
       ) {
+        sendFinalCallStatsRef.current();
         socket.emit("leave-appointment-room", { appointmentId });
       }
       socket.off("connect", joinRoom);
