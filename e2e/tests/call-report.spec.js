@@ -220,9 +220,9 @@ test.describe("appointment call report (admin only)", () => {
       const patientId = decodeId(patientLogin.accessToken);
       appPatient = await appSocket(baseURL, patientLogin.accessToken, { role: "user", appointmentId, userId: patientId, clientInfo: ANDROID_INFO });
 
+      const monitoring = new Promise((resolve) => appPatient.once("call-monitoring-active", resolve));
       admin = await adminPage(browser, baseURL, appointmentId);
       await expect(admin.page.getByRole("heading", { name: "Live" })).toBeVisible({ timeout: 20_000 });
-      const monitoring = new Promise((resolve) => appPatient.once("call-monitoring-active", resolve));
       expect(await Promise.race([monitoring, sleep(10_000).then(() => "timeout")])).toBe(true);
 
       const sample = { appointmentId, rtt: 210, packetLoss: 0.06, jitter: 14, bitrateKbps: 420, outKbps: 300, iceType: "relay", quality: "weak", resolution: "480x640", connectionState: "connected" };
