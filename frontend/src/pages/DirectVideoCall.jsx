@@ -827,6 +827,10 @@ export default function DirectVideoCall() {
   const localMediaRecoveryRef = useRef(null);
   const pinRunnerRef = useRef(null);
   const joinDenyAttemptRef = useRef(0);
+  // True once this page has been let into the room at least once. Only then is a
+  // "full" refusal plausibly our OWN stale seat still being released (worth
+  // retrying); for a first join it means a third person and is final at once.
+  const joinedOnceRef = useRef(false);
   const joinRetryTimerRef = useRef(null);
   const rejoinRoomRef = useRef(() => {});
   // The stall banner reads "Waiting for the other person to reconnect…"
@@ -3561,7 +3565,7 @@ export default function DirectVideoCall() {
     rejoinRoomRef.current = joinRoom;
     const handleJoinRefused = (payload = {}) => {
       if (!mountedRef.current) return;
-      if (!isRetryableDirectCode(payload.code)) {
+      if (!isRetryableDirectCode(payload.code) || (payload.code === "full" && !joinedOnceRef.current)) {
         handleRoomError(payload);
         return;
       }
@@ -3580,6 +3584,7 @@ export default function DirectVideoCall() {
       }, delay);
     };
     const handleJoinAccepted = (payload) => {
+      joinedOnceRef.current = true;
       joinDenyAttemptRef.current = 0;
       window.clearTimeout(joinRetryTimerRef.current);
       setJoinRetryPhase(null);
