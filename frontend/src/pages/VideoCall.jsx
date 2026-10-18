@@ -1044,6 +1044,7 @@ export default function VideoCall() {
   const statsTimerRef = useRef(null);
   const pendingRemoteCandidatesRef = useRef([]);
   const joinedSocketIdRef = useRef("");
+  const callConnectedReportedRef = useRef(false);
   // Non-terminal "room-access-denied" retry state (see handleRoomDenied).
   const joinDenyAttemptRef = useRef(0);
   const joinRetryTimerRef = useRef(null);
@@ -1837,6 +1838,9 @@ export default function VideoCall() {
       // rebuild its pc without stranding this one. A client that omits this
       // is treated as an older build that can't.
       capabilities: WEB_CLIENT_CAPABILITIES,
+      // For the admin call report. The server derives browser + OS from the
+      // User-Agent it observes; this only declares the platform.
+      clientInfo: { platform: "web" },
     });
     logVideoEvent("appointment_room_join_requested", { socketId: socket.id });
     return true;
@@ -3170,6 +3174,12 @@ export default function VideoCall() {
     // that function's own comment for why it needs to reuse this. Mirrors
     // VideoCallController._handleConnectedState in the Flutter app.
     const markPeerConnectionHealthy = () => {
+      // Once per page load: tells the server our peer connection really reached
+      // "connected" (admin call report: "connected" vs "both joined but no media").
+      if (!callConnectedReportedRef.current && socket.connected) {
+        callConnectedReportedRef.current = true;
+        socket.emit("call-connected", { appointmentId });
+      }
       retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "markPeerConnectionHealthy:called", {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
