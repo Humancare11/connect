@@ -221,26 +221,40 @@ test("retention: every report carries a 90-day expiry", async () => {
   closeAll(doctor, patient);
 });
 
-test("AUTHORIZATION: only admins read a report; only superadmins delete it (doctor, patient, stranger, anonymous all refused)", async () => {
-  // Last in the file on purpose: a refused superadmin-only call is a "critical
-  // privilege_escalation" security event, and the platform answers that by
-  // revoking ALL of that user's sessions - so every token used for a refused
-  // DELETE below is dead afterwards.
+test("AUTHORIZATION: only admins read a report; only superadmins delete it; refusing doctors / patients / strangers never revokes their sessions", async () => {
+  // Last in the file on purpose: the plain-admin DELETE at the end is refused by
+  // superAdminOnly, a "critical privilege_escalation" event that (existing
+  // platform behaviour) revokes that admin's sessions.
   const id = await stack.makeAppointment("confirmed");
   const { doctor, patient } = await joinPair({ appointmentId: id });
   await eventually(async () => ({ ok: (await getReport(id, adminToken())).body.participants?.length === 2, value: null }));
 
-  const refusedRead = [
-    ["no token", undefined, 401],
-    ["garbage token", "not.a.jwt", 401],
-    ["doctor of that appointment", stack.tokens.doctor.accessToken, 403],
-    ["patient of that appointment", stack.tokens.patient.accessToken, 403],
-    ["stranger (another patient)", stack.tokens.other.accessToken, 403],
+  const nonAdmins = [
+    ["doctor of that appointment", stack.tokens.doctor.accessToken],
+    ["patient of that appointment", stack.tokens.patient.accessToken],
+    ["stranger (another patient)", stack.tokens.other.accessToken],
   ];
-  for (const [name, token, expected] of refusedRead) {
-    assert.equal((await getReport(id, token)).status, expected, `GET as ${name}`);
-  }
+
+  // READ: anonymous / garbage -> 401; every valid non-admin token -> 403
+  assert.equal((await getReport(id, undefined)).status, 401);
+  assert.equal((await getReport(id, "not.a.jwt")).status, 401);
+  for (const [name, token] of nonAdmins) assert.equal((await getReport(id, token)).status, 403, `GET as ${name}`);
   assert.equal((await getReport(id, adminToken())).status, 200);
+
+  // DELETE: the same refusals, and still 403 (not 401) for doctor / patient / stranger
+  assert.equal((await deleteReport(id, undefined)).status, 401);
+  assert.equal((await deleteReport(id, "not.a.jwt")).status, 401);
+  for (const [name, token] of nonAdmins) assert.equal((await deleteReport(id, token)).status, 403, `DELETE as ${name}`);
+
+  // ...and NONE of those refusals revoked a session: the same tokens still work.
+  const rest = async (path, token) => (await fetch(`${stack.baseUrl}${path}`, { headers: bearer(token) })).status;
+  assert.equal(await rest("/api/appointments/doctor", stack.tokens.doctor.accessToken), 200, "doctor session survives");
+  assert.equal(await rest("/api/appointments/mine", stack.tokens.patient.accessToken), 200, "patient session survives");
+  assert.equal(await rest("/api/appointments/mine", stack.tokens.other.accessToken), 200, "stranger session survives");
+  const again = await stack.connect({ token: stack.tokens.patient.accessToken });
+  await stack.joinAppointment(again, "patient", { appointmentId: id });
+  await stack.waitFor(again, "peer-joined");
+  again.close();
 
   // input validation + unknown ids
   assert.equal((await getReport("not-an-id", adminToken())).status, 400);
@@ -254,13 +268,13 @@ test("AUTHORIZATION: only admins read a report; only superadmins delete it (doct
   const body = JSON.stringify((await getReport(id, adminToken())).body);
   assert.ok(!/Mozilla|Dart\/|v=0|candidate:/i.test(body));
 
-  // nobody but a superadmin may delete (a plain admin included)
-  const refusedDelete = [...refusedRead, ["a regular admin", adminToken(), 403]];
-  for (const [name, token, expected] of refusedDelete) {
-    assert.equal((await deleteReport(id, token)).status, expected, `DELETE as ${name}`);
-  }
   assert.equal(await stack.models.CallReport.countDocuments({ appointmentId: id }), 1, "nothing was deleted by the refused calls");
 
+  // a plain admin may read but not delete (this is the one refusal that is a critical event)
+  assert.equal((await deleteReport(id, adminToken())).status, 403);
+  assert.equal(await stack.models.CallReport.countDocuments({ appointmentId: id }), 1);
+
+  // only a superadmin deletes
   assert.equal((await deleteReport(id, stack.tokens.superadmin.accessToken)).status, 200);
   assert.equal(await stack.models.CallReport.countDocuments({ appointmentId: id }), 0);
   closeAll(doctor, patient);
