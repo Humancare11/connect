@@ -52,3 +52,11 @@ Legend: **W** = web (Chrome/Safari), **A** = Android patient app, **I** = iOS pa
 - Deploy/restart the backend mid-call (rolling): calls recover without errors; with >1 instance a call must stay on one node (in-memory room state is per process - **do not scale horizontally without a Socket.IO adapter**).
 - SIGTERM: log shows "Graceful shutdown complete", no ERR_SERVER_NOT_RUNNING.
 - MongoDB primary failover during a call: joins answer `server_error` and clients retry; no process crash.
+
+## 6. Admin call report (admin-only) - real devices
+- 6.1 Android and iOS patient app join a call: report shows `App (Android|iOS <version>, v<app version>, <model>)`; the doctor in a browser shows `Web (<browser> on <OS>)`.
+- 6.2 Doctor app (doctorapp, unchanged): shows `App (version and OS not reported)`.
+- 6.3 Quality stats from a phone: on mobile data the "Connection type" is usually `Relay (TURN)` behind carrier NAT and `Direct (peer-to-peer)` on home Wi-Fi; delay/loss/jitter/bitrate columns are filled after ~30s of call (first sample ~5s, then every 30s).
+- 6.4 Live section: open the report while a call runs -> numbers update about every 3-5s; close the page -> the sampling returns to every 30s (no way to see this from the call screen - the participant UI shows nothing).
+- 6.5 Doctor / patient accounts: `/admin-dashboard/.../call-report` and `/api/call-reports/*` are refused (403); nothing about reports on the call screen.
+- 6.6 Appointments list (admin): Call column shows duration, Connected / Not connected and a warning badge for calls with problems.
