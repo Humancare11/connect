@@ -23,6 +23,8 @@
   font-family: var(--font-secondary);
   position: relative;
   overflow: hidden;
+  /* clip keeps the ambient blobs contained without breaking the sticky topbar */
+  overflow: clip;
 }
 
 /* Soft ambient blobs */
@@ -204,7 +206,7 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
-  color: #c3c3c3 !important;
+  color: #c3c3c3;
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -215,8 +217,8 @@
 }
 
 .dl-nav-item:hover {
-  background: #ffffff80 !important;
-  color: #ffffff !important;
+  background: #ffffff80;
+  color: #ffffff;
 }
 @media (hover: hover) and (pointer: fine) {
   .dl-nav-item:hover {
@@ -247,7 +249,7 @@
 
 .dl-nav-item--active .dl-nav-icon {
   opacity: 1;
-  color: #ffffff !important;
+  color: #ffffff;
 }
 
 .dl-nav-label {
@@ -332,6 +334,8 @@
 .dl-burger {
   display: none;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 4.5px;
   background: none;
   border: none;
@@ -343,14 +347,14 @@
 }
 
 .dl-burger:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .dl-burger span {
   display: block;
   width: 20px;
   height: 1.5px;
-  background: #6b7280;
+  background: #ffffff; /* topbar is navy, same as the patient dashboard burger */
   border-radius: 2px;
   transition:
     transform 0.25s,
@@ -770,4 +774,12 @@
   .dl-content {
     padding: 2px 0 20px;
   }
+}
+
+/* ── 340px and below: keep the topbar on one line down to 299px ── */
+@media (max-width: 340px) {
+  .dl-topbar { gap: 6px; padding: 0 6px; }
+  .dl-topbar-right { gap: 5px; }
+  .dl-topbar-status-text { display: none !important; }
+  .dl-sidebar { width: min(260px, calc(100vw - 20px)); }
 }
