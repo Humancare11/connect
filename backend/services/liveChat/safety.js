@@ -231,7 +231,7 @@ const EMERGENCY_PATTERNS = {
     /\bdil\s*ka\s*daura|\blakwa\b|\bbehosh/,
   ],
   es: [
-    /\bdolor (?:de|en el|en mi|toracico|de mi) ?(?:pecho|toracico)?\b.*|\bdolor toracico\b/,
+    /\bdolor (?:de|en|del)(?: el| mi| la)? (?:pecho|torax|toracico)\b|\bdolor (?:toracico|opresivo)\b/,
     /\b(?:presion|opresion|tension) en (?:el|mi) pecho\b/,
     /\binfarto\b|\bataque (?:al corazon|cardiaco)\b/,
     /\bno puedo respirar\b|\bme cuesta (?:mucho )?respirar\b|\bdificultad (?:para|al) respirar\b|\bfalta de aire\b|\bme falta (?:el )?aire\b|\bno (?:me )?entra (?:el )?aire\b|\bahog/,
@@ -243,17 +243,78 @@ const EMERGENCY_PATTERNS = {
   ],
 };
 
+// Severe-pain signals. Ordinary pain ("back pain", "headache", "knee pain", "I have pain", "dolor de cabeza", "sar dard") is NOT
+// here: only a strong word (severe, unbearable, excruciating, worst ...) or "cannot move because of the pain" counts.
+// Each sentence is checked on its own. SEVERE_PAIN_NEGATED is cut out of the sentence first ("no severe pain", "not unbearable"),
+// and a sentence that matches SEVERE_PAIN_SKIP (long ago, a pain scale, "what is severe pain") is ignored.
+const SEVERE_PAIN = {
+  en: [
+    /\b(?:severe|unbearable|excruciating|agonizing|agonising|intolerable|crippling)\s+(?:[a-z]+\s+){0,2}(?:pain|pains|ache|aches|cramps?)\b/,
+    /\bworst\s+(?:[a-z]+\s+){0,2}(?:pain|headache|ache)\b|\b(?:pain|headache|ache) of my life\b/,
+    /\b(?:pain|headache|ache|cramps?)\s+(?:is|was|has become|got|gets|feels?)\s+(?:so |really |very |just )?(?:unbearable|excruciating|agonizing|agonising|intolerable)\b/,
+    /\bin agony\b|\b(?:screaming|crying|doubled over|writhing) (?:in|with) pain\b|\bwrithing\b/,
+    /\bsudden(?:ly)?\s+(?:severe|intense|terrible|worst|excruciating)\s+(?:[a-z]+\s+)?(?:headache|pain)\b|\bthunderclap headache\b/,
+    /\b(?:severe|intense|unbearable|excruciating|terrible|agonizing|agonising)\s+(?:stomach|abdominal|abdomen|belly|tummy)\s+(?:pain|pains|ache|cramps?)\b/,
+    /\b(?:pain|ache|cramps?) in my (?:stomach|abdomen|belly|tummy)\b[^.!?\n]{0,25}\b(?:severe|unbearable|worst|excruciating)\b/,
+    /\bcan'?t (?:move|walk|stand up|get up|sit up|bear|stand)\b[^.!?\n]{0,25}\b(?:pain|hurts?)\b|\b(?:pain|hurts?)\b[^.!?\n]{0,20}\bcan'?t (?:move|walk|stand up|get up)\b/,
+  ],
+  hi: [
+    /(?:असहनीय|भयंकर|भयानक|बर्दाश्त\s*से\s*बाहर|सबसे\s*बुरा)\s*(?:\S+\s+){0,2}(?:दर्द|पीड़ा)/u,
+    /अचानक\s*(?:बहुत\s*)?(?:तेज़|तेज)\s*(?:सिर|सर)\s*दर्द/u,
+    /दर्द\s*(?:से|के\s*कारण|की\s*वजह\s*से)\s*(?:चिल्ला|तड़प|हिल\s*नहीं|चल\s*नहीं|उठ\s*नहीं)/u,
+    /दर्द[^।.!?\n]{0,20}जान\s*निकल|जान\s*निकल[^।.!?\n]{0,20}दर्द/u,
+    /\b(?:asahniya|asahaniya|asahniy|bhayankar|bhayanak)\s+(?:\w+\s+){0,2}dard\b/,
+    /\bbardasht\s+se\s+bahar\b[^.!?\n]{0,15}\bdard\b|\bdard\b[^.!?\n]{0,15}\bbardasht\s+se\s+bahar\b/,
+    /\bsabse\s+(?:bura|zyada|tez)\s+(?:\w+\s+)?dard\b/,
+    /\bachanak\s+(?:bahut\s+)?tez\s+(?:sar|sir)\s*dard\b/,
+    /\bpet\s+(?:mein|me|main)\s+(?:bahut\s+|behad\s+)?(?:tez|bhayankar|asahniya)\s+dard\b/,
+    /\bdard\s+(?:se|ki wajah se|ke karan)\s+(?:tadap|chilla|hil|chal|uth)/,
+  ],
+  es: [
+    /\bdolor\s+(?:muy\s+)?(?:severo|insoportable|atroz|terrible|intenso)\b|\b(?:severo|insoportable|atroz|terrible|intenso)\s+dolor\b/,
+    /\bel peor dolor\b/,
+    /\bdolor de cabeza\s+(?:repentino|subito|de repente)\s+y\s+(?:severo|fuerte|intenso)\b/,
+    /\bdolor\s+(?:abdominal|de estomago|de vientre|de barriga)\s+(?:muy\s+)?(?:severo|intenso|insoportable|atroz)\b/,
+    /\bno (?:puedo|aguanto) (?:moverme|caminar|levantarme)\b[^.!?\n]{0,25}\bdolor\b|\bdolor\b[^.!?\n]{0,25}\bno puedo (?:moverme|caminar|levantarme)\b/,
+    /\bno aguanto (?:mas )?el dolor\b|\bme retuerzo de dolor\b|\b(?:grito|gritando) de dolor\b/,
+  ],
+};
+
+const SEVERE_PAIN_NEGATED = {
+  en: /\b(?:no|not|never|without|isn'?t|aren'?t|wasn'?t|weren'?t|barely|hardly|mild|slight|minimal|less)\b[^.!?\n]{0,15}\b(?:severe|unbearable|excruciating|agonizing|agonising|intolerable|crippling|intense|worst|terrible)\b/g,
+  hi: /(?:नहीं|कोई)\s*(?:\S+\s+){0,2}(?:असहनीय|भयंकर|भयानक)|\b(?:nahi|nahin|koi)\s+(?:\w+\s+){0,2}(?:asahniya|asahaniya|bhayankar|bhayanak)\b/gu,
+  es: /\b(?:no (?:tengo|tiene|siento|es|hay|fue|era)|sin|nunca|ningun)\b(?:\s+\w+){0,3}\s+(?:severo|insoportable|atroz|terrible|intenso)\b/g,
+};
+
+const SEVERE_PAIN_SKIP = {
+  en: /\b(?:years?|months?|decades?) ago\b|\blast (?:year|month)\b|\bin the past\b|\bused to\b|\bas a (?:child|kid)\b|\bhistory of\b|\bwhen i was\b|\bpain (?:scale|level|rating|management|clinic|relief|specialist)\b|\brate (?:my|the) pain\b|\bwhat (?:is|are|causes?)\b[^.!?\n]*\b(?:severe|unbearable)\b/,
+  hi: /(?:साल|महीने|दिन)\s*पहले|पिछले\s*(?:साल|महीने)|\b(?:saal|sal|mahine|din)\s+pehle\b|\bpichle\s+(?:saal|mahine)\b/u,
+  es: /\bhace\s+(?:\w+\s+)?(?:anos|meses|dias)\b|\bcuando era\s+(?:nino|nina|pequeno)\b|\bhistorial\b|\bescala (?:del? )?dolor\b|\bque (?:es|causa)\b/,
+};
+
+function severePain(language, raw, folded) {
+  for (const text of new Set([folded, raw])) {
+    for (const sentence of text.split(/[.!?\n।]+/)) {
+      if (!sentence.trim() || SEVERE_PAIN_SKIP[language].test(sentence)) continue;
+      const cleaned = sentence.replace(SEVERE_PAIN_NEGATED[language], " ");
+      if (SEVERE_PAIN[language].some((re) => re.test(cleaned))) return true;
+    }
+  }
+  return false;
+}
+
 // Returns { language: "en" | "hi" | "es" } when the message describes an emergency, otherwise null.
 function detectEmergency(text) {
   const raw = String(text || "");
   if (!raw.trim()) return null;
   const folded = fold(raw);
   const hit = (list) => list.some((re) => re.test(folded) || re.test(raw));
+  const is = (language) => hit(EMERGENCY_PATTERNS[language]) || severePain(language, raw, folded);
   // Devanagari / Hinglish first so a Hindi message is answered in Hindi.
-  if (hit(EMERGENCY_PATTERNS.hi)) return { language: "hi" };
-  if (hit(EMERGENCY_PATTERNS.es) && !hit(EMERGENCY_PATTERNS.en)) return { language: "es" };
-  if (hit(EMERGENCY_PATTERNS.en)) return { language: "en" };
-  if (hit(EMERGENCY_PATTERNS.es)) return { language: "es" };
+  if (is("hi")) return { language: "hi" };
+  if (is("es") && !is("en")) return { language: "es" };
+  if (is("en")) return { language: "en" };
+  if (is("es")) return { language: "es" };
   return null;
 }
 

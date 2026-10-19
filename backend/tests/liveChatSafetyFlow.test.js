@@ -95,6 +95,29 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       chat.socket.close();
     });
 
+    test("severe pain: the fixed 911 message, Queue hand-over, review flag, no model call and no link button; plain back pain is not an emergency", async () => {
+      const chat = await openChat();
+      await say(chat, "I have severe knee pain");
+      assert.equal(lc.ai.calls.length, 0);
+      const state = await stateOf(chat);
+      assert.equal(state.mode, "queue");
+      const emergencyMessage = state.messages.find((m) => m.sender === "ai" && m.text === safety.FIXED_TEXT.emergency.en);
+      assert.ok(emergencyMessage);
+      assert.equal(emergencyMessage.links, undefined);
+      const conv = await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean();
+      assert.equal(conv.handoffReason, "emergency");
+      assert.equal(conv.flags.medical, true);
+      assert.ok(conv.flags.reasons.includes("emergency_keyword"));
+      chat.socket.close();
+
+      lc.ai.queue.push(modelReply("Sorry you're dealing with back pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
+      const normal = await openChat();
+      await say(normal, "back pain");
+      assert.equal(lc.ai.calls.length, 1);
+      assert.notEqual((await stateOf(normal)).mode, "queue");
+      normal.socket.close();
+    });
+
     test("a normal price question is not an emergency and reaches the model", async () => {
       const chat = await openChat();
       await say(chat, "How much is a consultation?");

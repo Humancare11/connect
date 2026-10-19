@@ -71,6 +71,57 @@ describe("medication wording picks the fallback variant", () => {
   });
 });
 
+describe("emergency detector: severe pain is an emergency, ordinary pain is not", () => {
+  const cases = {
+    en: [
+      "severe pain", "I have unbearable pain", "the pain is excruciating", "worst pain of my life", "worst headache of my life", "sudden severe headache",
+      "I have a sudden intense headache", "severe stomach pain", "severe abdominal pain", "excruciating belly pain", "I can't move because of the pain",
+      "I can't walk, it hurts so much", "severe knee pain", "severe back pain", "my headache is unbearable", "I'm in agony", "crying in pain", "thunderclap headache",
+    ],
+    hi: ["असहनीय दर्द", "पेट में भयंकर दर्द", "बर्दाश्त से बाहर दर्द है", "सबसे बुरा दर्द", "अचानक बहुत तेज़ सिरदर्द", "दर्द से चिल्ला रहा हूँ", "asahniya dard hai", "bhayankar dard", "pet mein bahut tez dard", "dard bardasht se bahar hai", "achanak bahut tez sar dard"],
+    es: ["dolor severo", "dolor insoportable", "el peor dolor de cabeza de mi vida", "dolor abdominal severo", "dolor de estómago insoportable", "no puedo moverme por el dolor", "no aguanto el dolor", "me retuerzo de dolor", "dolor de cabeza repentino y severo"],
+  };
+  for (const [language, texts] of Object.entries(cases)) {
+    test(`${language}: severe pain is an emergency`, () => {
+      for (const text of texts) assert.deepEqual(safety.detectEmergency(text), { language }, text);
+    });
+  }
+
+  test("ordinary pain stays a normal reply (en / hi / es)", () => {
+    const ordinary = [
+      "back pain", "I have a headache", "knee pain", "I have pain", "my back hurts", "bad headache", "pain in my leg", "sore throat", "stomach ache", "my knee hurts when I walk far",
+      "सिर दर्द", "पीठ दर्द", "घुटने में दर्द", "sar dard", "kamar dard", "bahut tez sar dard", "pet dard",
+      "dolor de cabeza", "dolor de espalda", "dolor de rodilla", "dolor en mi pierna", "dolor de garganta", "dolor de estomago", "dolor fuerte de espalda", "me duele la rodilla",
+    ];
+    for (const text of ordinary) assert.equal(safety.detectEmergency(text), null, text);
+  });
+
+  test("negated, past and informational wording is not an alarm", () => {
+    const calm = [
+      "I have no severe pain", "it is not unbearable", "mild pain, not severe", "barely any severe pain", "I had severe pain 3 years ago", "I used to get excruciating headaches",
+      "what is severe pain", "what is the pain scale", "where is the pain management clinic", "I can't stand the noise", "worst day ever", "the traffic is unbearable",
+      "मुझे कोई असहनीय दर्द नहीं है", "तीन साल पहले भयंकर दर्द हुआ था", "mujhe koi asahniya dard nahi hai", "teen saal pehle bhayankar dard tha",
+      "no tengo dolor severo", "hace dos anos tuve dolor insoportable", "que es el dolor severo",
+    ];
+    for (const text of calm) assert.equal(safety.detectEmergency(text), null, text);
+  });
+
+  test("Spanish: 'dolor de ...' is an emergency only for the chest (regression: dolor de cabeza used to alarm)", () => {
+    for (const text of ["dolor de cabeza", "dolor de espalda", "dolor de rodilla", "dolor en mi pierna", "dolor de garganta", "tengo dolor de cabeza desde ayer"]) {
+      assert.equal(safety.detectEmergency(text), null, text);
+    }
+    for (const text of ["dolor de pecho", "Tengo dolor de pecho", "dolor en el pecho", "dolor en mi pecho", "dolor toracico", "dolor opresivo", "dolor del pecho"]) {
+      assert.deepEqual(safety.detectEmergency(text), { language: "es" }, text);
+    }
+  });
+
+  test("a very long message is checked in a few milliseconds (no catastrophic backtracking)", () => {
+    const start = Date.now();
+    for (const text of ["severe ".repeat(20000), "a ".repeat(50000) + "pain", "dolor ".repeat(20000), "दर्द ".repeat(20000), "can't move ".repeat(10000) + "pain"]) safety.detectEmergency(text);
+    assert.ok(Date.now() - start < 2000, `took ${Date.now() - start} ms`);
+  });
+});
+
 describe("emergency detector (patient message)", () => {
   test("matches the listed emergencies in English, Hindi/Hinglish and Spanish", () => {
     const cases = {
