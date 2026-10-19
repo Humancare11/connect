@@ -123,7 +123,9 @@ describe("200-character reply rule (links do not count)", () => {
     const prompt = buildSystemPrompt(DEFAULT_SETTINGS);
     assert.match(prompt, /at most 200 characters, not counting links or URLs/);
     assert.match(prompt, /2-3 key prices/);
-    assert.match(prompt, /Pricing page/);
+    const withPages = buildSystemPrompt(DEFAULT_SETTINGS, [{ title: "Pricing", url: "/telemedicine-cost-usa" }]);
+    assert.match(withPages, /AT MOST ONE page in links/);
+    assert.match(withPages, /never add a page because of a price in your own reply/);
   });
 
   const AI_ENV = { LIVECHAT_MODEL: "gpt-6-luna", LIVECHAT_OPENAI_API_KEY: "k", LIVECHAT_PRICE_INPUT_PER_1M: "0.1", LIVECHAT_PRICE_OUTPUT_PER_1M: "0.5" };

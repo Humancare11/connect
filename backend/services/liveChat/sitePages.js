@@ -3,7 +3,8 @@
 // that reaches the patient: it can only point at an entry of this list, and filterLinks() drops everything else
 // (and takes the title from the list, never from the model).
 const { titlesFor, serviceTitleFor, isServiceTopic } = require("./pageSynonyms");
-const MAX_LINKS = 3;
+const MAX_LINKS = 1; // one button per AI reply
+const MAX_SUGGESTED = 3; // what filterLinks keeps by default (arrange asks for more and then shows one)
 const MAX_CANDIDATES = 14;
 const BOOKING_URL = "/appointment-booking";
 const CONTENT_TYPES = new Set(["condition", "specialty", "category"]); // pages about a health topic (setting: aiMayLinkConditionPages)
@@ -16,7 +17,7 @@ const slugify = (text) =>
 
 // pages: the list to start with (the static allowlist). options.source: async () => pages | null, the live list from the
 // site's database (see siteCatalog.js); `refresh()` swaps it in (it is cached there), and a null answer keeps the current one.
-function createSitePages(initialPages = require("../../data/liveChatSitePages.json"), { source = null } = {}) {
+function createSitePages(initialPages = require("../../data/liveChatSitePages.json"), { source = null, log = console.log } = {}) {
   let pages = initialPages;
   let byUrl;
   let prepared;
@@ -68,7 +69,7 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
   }
 
   // raw: whatever the model returned (any shape). Keeps only allowlisted urls, once each, with the list's own title.
-  function filterLinks(raw, max = MAX_LINKS) {
+  function filterLinks(raw, max = MAX_SUGGESTED) {
     if (!Array.isArray(raw)) return [];
     const out = [];
     for (const item of raw) {
@@ -126,35 +127,43 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
     return { title: booking.title, url: target || BOOKING_URL };
   }
 
-  // The links of a reply, in the order the patient sees the cards: the matched health-topic page first, the booking card
-  // last. raw: whatever the model returned. A health-topic reply (medical) always carries a booking card, and when the
-  // model named no page the server uses the best lay-word match. Without `allowContent` only service pages and booking
-  // remain. Everything is checked against the list.
+  // The link of a reply: ONE button at most. The patient's latest message decides, the model's suggestions only fill in:
+  //   1. a health-topic page the words clearly match (the phrase map wins over the model's pick) -> only that page;
+  //   2. a service page the words name (sick note, refills, second opinion, lab ...), else the model's one service pick;
+  //   3. price words and no specific service -> only Pricing (a price in the AI's own text never adds it);
+  //   4. a health or service topic with no match -> only the plain Book card;
+  //   5. nothing else (greeting, small talk, refusal, emergency) -> no button.
+  // raw: whatever the model returned. Without `allowContent` health-topic pages are never used. Everything is checked
+  // against the list. Old stored messages with several links are not touched: this only decides new replies.
   function arrange(raw, { allowContent = true, medical = false, hintText = "" } = {}) {
-    let links = filterLinks(raw);
-    if (!allowContent) links = links.filter((l) => !isContent(l.url));
-    // A sick-note or price question always gets its service page, even when the model named none.
-    if (!links.some((l) => typeOf(l.url) === "service" && l.url !== BOOKING_URL)) {
-      const service = serviceFor(hintText);
-      if (service) links = [...links, service].slice(0, MAX_LINKS);
-    }
-    let content = links.find((l) => isContent(l.url)) || null;
-    if (allowContent && (medical || content)) {
-      // The curated phrase map is exact: when it names a page it wins over the model's pick (a model can wander, e.g.
-      // hair fall -> Men's Health), and it fills in when the model named none.
-      const hinted = hintFor(hintText, 1)[0];
-      if (hinted && (!content || content.url !== hinted.url)) content = { title: hinted.title, url: hinted.url };
-    }
+    let suggested = filterLinks(raw, 6);
+    if (!allowContent) suggested = suggested.filter((l) => !isContent(l.url));
     const isBookingPage = (url) => url === BOOKING_URL || url.startsWith(`${BOOKING_URL}/`);
-    const services = links.filter((l) => !isContent(l.url) && !isBookingPage(l.url));
-    // A reply about a health issue or a service (sick note, price, refills ...) always ends with Book, unless the matched
-    // page already is a booking page. A reply that links nothing (who are you, off-topic) gets no Book either.
-    const wantsBooking = medical || Boolean(content) || isServiceTopic(hintText) || services.length > 0 || links.some((l) => l.url === BOOKING_URL);
-    const booking = wantsBooking && !(content && isBookingPage(content.url)) ? bookingFor(content ? content.url : BOOKING_URL) : null;
-    if (booking && booking.url === content?.url) return [content, ...services.slice(0, MAX_LINKS - 1)];
-    // Order: the matched health-topic page, then service pages (Pricing ...), then Book. At most MAX_LINKS.
-    const room = MAX_LINKS - (content ? 1 : 0) - (booking ? 1 : 0);
-    return [...(content ? [content] : []), ...services.slice(0, Math.max(0, room)), ...(booking ? [booking] : [])];
+    const pricing = pages.find((p) => p.type === "service" && p.url !== BOOKING_URL && fold(p.title) === "pricing");
+    const isPricing = (url) => Boolean(pricing) && url === pricing.url;
+
+    const pick = () => {
+      const modelContent = suggested.find((l) => isContent(l.url)) || null;
+      if (allowContent && (medical || modelContent)) {
+        const hinted = hintFor(hintText, 1)[0];
+        const content = hinted ? { title: hinted.title, url: hinted.url } : modelContent;
+        if (content) return content;
+      }
+      const wanted = serviceFor(hintText); // a service named by the patient's words (Pricing only when nothing more specific)
+      if (wanted) return wanted;
+      const modelService = suggested.find((l) => !isContent(l.url) && !isBookingPage(l.url) && !isPricing(l.url));
+      if (modelService) return modelService;
+      const wantsBooking = medical || isServiceTopic(hintText) || suggested.length > 0;
+      return wantsBooking ? bookingFor(BOOKING_URL) : null;
+    };
+
+    const chosen = pick();
+    const shown = chosen ? [chosen] : [];
+    // Debug line for the server log: urls only, never patient text.
+    if (suggested.length && (suggested.length > 1 || suggested[0].url !== shown[0]?.url)) {
+      log(`[livechat] links: model=[${suggested.map((l) => l.url).join(",")}] -> shown=[${shown.map((l) => l.url).join(",")}]`);
+    }
+    return shown;
   }
 
   return {

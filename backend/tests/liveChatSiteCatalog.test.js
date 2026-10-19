@@ -150,14 +150,13 @@ describe("live chat: the links of a reply (arrange)", () => {
   const sp = createSitePages(live);
   const urls = (links) => links.map((l) => l.url);
 
-  test("matched page first, booking card last and opened on the matched specialty", () => {
+  test("the matched page is the only button (no Book card next to it)", () => {
     const links = sp.arrange([{ title: "x", url: "/appointment-booking" }, { title: "x", url: "/joint-pain" }], { medical: true });
-    assert.deepEqual(urls(links), ["/joint-pain", "/appointment-booking/eye-ear-bone/orthopedics"]);
-    assert.equal(links[1].title, "Book an appointment");
+    assert.deepEqual(urls(links), ["/joint-pain"]);
   });
 
   test("no page from the model: the server uses the lay-word match; none matches: booking only", () => {
-    assert.deepEqual(urls(sp.arrange([], { medical: true, hintText: "pain in my legs" })), ["/joint-pain", "/appointment-booking/eye-ear-bone/orthopedics"]);
+    assert.deepEqual(urls(sp.arrange([], { medical: true, hintText: "pain in my legs" })), ["/joint-pain"]);
     assert.deepEqual(urls(sp.arrange([], { medical: true, hintText: "what dose of paracetamol" })), ["/appointment-booking"]);
   });
 
@@ -167,16 +166,16 @@ describe("live chat: the links of a reply (arrange)", () => {
     assert.equal(sp.pagesForPrompt({ allowContent: true }).some((p) => sp.isContent(p.url)), true);
   });
 
-  test("invented urls are dropped; a service reply is ordered page, Pricing, then Book", () => {
-    assert.deepEqual(urls(sp.arrange([{ url: "https://evil.example" }, { url: "/telemedicine-cost-usa" }, { url: "/made-up" }], { medical: false })), ["/telemedicine-cost-usa", "/appointment-booking"]);
-    assert.deepEqual(urls(sp.arrange([{ url: "/appointment-booking" }, { url: "/doctors-note" }], { medical: false })), ["/doctors-note", "/appointment-booking"]);
+  test("invented urls are dropped; a service reply is one page", () => {
+    assert.deepEqual(urls(sp.arrange([{ url: "https://evil.example" }, { url: "/telemedicine-cost-usa" }, { url: "/made-up" }], { medical: false, hintText: "price?" })), ["/telemedicine-cost-usa"]);
+    // Pricing from the model without price words in the patient's message is not shown
+    assert.deepEqual(urls(sp.arrange([{ url: "/telemedicine-cost-usa" }], { medical: false, hintText: "thanks" })), ["/appointment-booking"]);
+    assert.deepEqual(urls(sp.arrange([{ url: "/appointment-booking" }, { url: "/doctors-note" }], { medical: false })), ["/doctors-note"]);
   });
 
-  test("at most 3 cards, and the booking card is never the one dropped", () => {
+  test("at most one card, whatever the model sends", () => {
     const links = sp.arrange([{ url: "/joint-pain" }, { url: "/doctors-note" }, { url: "/telemedicine-cost-usa" }, { url: "/appointment-booking" }], { medical: true });
-    assert.equal(links.length, 3);
-    assert.equal(links[0].url, "/joint-pain");
-    assert.ok(links[2].url.startsWith("/appointment-booking"));
+    assert.deepEqual(urls(links), ["/joint-pain"]);
   });
 
   test("the model sees every page title and path, and a short hint", () => {
@@ -241,13 +240,13 @@ describe("live chat: end to end, a medical message gets the matching page card a
   }
   const lastAi = async (socket) => (await lc.call(socket, "chat:resume")).conversation.messages.filter((m) => m.sender === "ai").at(-1);
 
-  test("leg pain: the model named no page, the server adds the best match above the booking card", async () => {
+  test("leg pain: the model named no page, the server adds the best match as the only button", async () => {
     lc.ai.queue.push(reply("Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "hi ai please suggest me something i have pain in my legs" });
     const ai = await lastAi(socket);
     assert.equal(ai.text.startsWith("Sorry you're dealing with leg pain."), true);
-    assert.deepEqual(ai.links.map((l) => l.url), ["/joint-pain", "/appointment-booking"]);
+    assert.deepEqual(ai.links.map((l) => l.url), ["/joint-pain"]);
     assert.deepEqual(lc.ai.calls[0].pageHint, ["Joint Pain"], "one clearly matching page");
     assert.ok(lc.ai.calls[0].pages.length > 100);
     socket.close();
@@ -264,21 +263,21 @@ describe("live chat: end to end, a medical message gets the matching page card a
     socket.close();
   });
 
-  test("a price question gets no health-topic page, and Pricing then Book", async () => {
+  test("a price question gets no health-topic page, and only Pricing", async () => {
     lc.ai.queue.push(reply("A general consultation is $49.", { topic: "pricing", links: [{ title: "Pricing", url: "/telemedicine-cost-usa" }] }));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "how much is a consultation?" });
-    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/telemedicine-cost-usa", "/appointment-booking"]);
+    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/telemedicine-cost-usa"]);
     socket.close();
   });
 
-  test("a blocked reply still gets the fixed warm text with the page and Book cards", async () => {
+  test("a blocked reply still gets the fixed warm text with the page as its only button", async () => {
     lc.ai.queue.push(reply("You may have a migraine. Rest in a dark room.", { language: { code: "hi", name: "Hindi" } }));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "sar dard ho raha hai" });
     const ai = await lastAi(socket);
     assert.equal(ai.text, safety.FIXED_TEXT.fallback.hi);
-    assert.deepEqual(ai.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/headache", "/appointment-booking"]);
+    assert.deepEqual(ai.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/headache"]);
     socket.close();
   });
 });

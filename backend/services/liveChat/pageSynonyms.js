@@ -42,9 +42,14 @@ const GROUPS = [
 ];
 
 // Service pages (not health topics), asked for by name, so they are safe to add on the server:
-// a sick-note question gets the Doctor's note page, a price question the Pricing page.
+// a sick-note question gets the Doctor's note page, a refill question the refills page, a price question the Pricing page.
+// The first matching group wins, so the order is the priority (specific services before Pricing).
 const SERVICE_GROUPS = [
   { terms: ["sick note", "sick notes", "doctor's note", "doctors note", "doctor note", "doctor notes", "medical certificate", "work note", "note for work", "fit note", "excuse note", "nota medica", "justificante medico"], title: "Doctor's note (sick note)" },
+  { terms: ["prescription", "prescriptions", "refill", "refills", "prescription refill", "medication refill", "renew my prescription", "receta", "recetas", "receta medica", "renovar receta", "prescription chahiye", "dawai ki parchi", "प्रिस्क्रिप्शन", "रिफिल", "पर्चा"], title: "Online prescription refills" },
+  { terms: ["second opinion", "another opinion", "segunda opinion", "dusri raay", "doosri raay", "दूसरी राय"], title: "Online second medical opinion" },
+  { terms: ["lab requisition", "lab requisitions", "lab order", "requisicion de laboratorio", "orden de laboratorio", "लैब रिक्विजिशन"], title: "Lab requisitions" },
+  // Pricing stays LAST: a specific service in the same message wins ("prescription refill price" -> the refills page).
   { terms: ["price", "prices", "pricing", "cost", "costs", "how much", "fee", "fees", "charge", "charges", "rates", "kitna", "kitne", "kimat", "precio", "precios", "cuanto cuesta", "कीमत", "कितना", "फीस"], title: "Pricing" },
 ];
 
