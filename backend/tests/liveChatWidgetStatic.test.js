@@ -113,7 +113,7 @@ describe("live chat: the AI's name comes from one setting", () => {
 });
 
 describe("live chat: launcher logo", () => {
-  const widget = read(FEATURE, "LiveChatWidget.jsx");
+  const widget = read(FEATURE, "LiveChatWidget.jsx") + read(FEATURE, "LauncherButton.jsx");
   const css = stripComments(read(FEATURE, "LiveChatWidget.css"));
   // the declarations of the first `selector { ... }` rule (plain string search, selectors are matched literally)
   const rule = (selector) => {
@@ -123,8 +123,9 @@ describe("live chat: launcher logo", () => {
 
   test("the closed launcher is a real 'Open chat' button holding the logo (alt empty), with an HC fallback", () => {
     assert.match(widget, /aria-label="Open chat"/);
-    assert.match(widget, /<img src="\/livechat\/launcher-logo\.png" alt=""/);
-    assert.match(widget, /onError=\{\(\) => setPhotoOk\(false\)\}/);
+    assert.match(widget, /LOGO_SRC = "\/livechat\/launcher-logo\.png"/);
+    assert.match(widget, /<img src=\{LOGO_SRC\} alt=""/);
+    assert.match(widget, /onError=\{\(\) => setLogoOk\(false\)\}/);
     assert.match(widget, /lcw-launcher--logo/);
     assert.match(widget, /lcw-launcher--hc/);
     assert.doesNotMatch(widget, /agent-avatar/);
@@ -133,17 +134,17 @@ describe("live chat: launcher logo", () => {
     assert.equal(fs.existsSync(path.join(ROOT, "docs", "livechat-launcher-logo.png")), false, "the file was moved, not copied");
   });
 
-  test("bare logo: 72px (60px on phones), no circle / background / border, drop shadow, small hover lift, no other animation", () => {
+  test("bare logo: 56px (48px on phones), no circle / background / border, drop shadow, small hover lift, only the faces animate", () => {
     const logo = rule(".lcw-launcher--logo");
-    assert.match(logo, /width:\s*72px/);
+    assert.match(logo, /width:\s*56px/);
     assert.match(logo, /background:\s*none/);
     assert.match(logo, /border:\s*0/);
     assert.match(logo, /border-radius:\s*0/);
-    assert.match(rule(".lcw-launcher--logo img"), /height:\s*auto/);
-    assert.match(rule(".lcw-launcher--logo img"), /drop-shadow\(0 6px 14px rgba\(11, 42, 122, 0\.28\)\)/);
+    assert.match(rule(".lcw-launcher-face svg"), /height:\s*auto/);
+    assert.match(rule(".lcw-launcher-face svg"), /drop-shadow\(0 6px 10px rgba\(11, 42, 122, 0\.3\)\)/);
     assert.match(rule(".lcw-launcher--logo:hover"), /translateY\(-3px\)/);
     assert.doesNotMatch(css, /\.lcw-launcher--logo[^{]*\{[^}]*(animation|rotate|scaleX|flip)/);
-    assert.match(css, /@media \(max-width: 520px\) \{\s*\.lcw-launcher--logo \{\s*width: 60px;/);
+    assert.match(css, /@media \(max-width: 480px\) \{\s*\.lcw-launcher--logo \{\s*width: 48px;/);
     assert.match(rule(".lcw-launcher--hc"), /border-radius|width:\s*60px/);
     assert.match(rule(".lcw-launcher--logo .lcw-badge"), /top:\s*2px/);
   });
@@ -190,7 +191,7 @@ describe("live chat: greeting bubble", () => {
   test("the admin invite bubble wins, and the launcher is a real button named 'Open chat'", () => {
     const widget = read(FEATURE, "LiveChatWidget.jsx");
     assert.match(widget, /<GreetingBubble open=\{open\} blocked=\{Boolean\(chat\.invite\)\}/);
-    assert.match(widget, /aria-label="Open chat"/);
+    assert.match(read(FEATURE, "LauncherButton.jsx"), /aria-label="Open chat"/);
   });
 });
 

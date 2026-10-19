@@ -317,4 +317,133 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(contactCalls.length, 2);
     });
   });
+  describe("launcher button and greeting", () => {
+    const launcher = () => page.locator(".lcw-launcher");
+    const isFlipped = () => launcher().evaluate((el) => el.classList.contains("lcw-launcher--flipped"));
+    // The page clock is controlled, so seconds pass at once.
+    async function openWithClock(options = {}) {
+      if (options.reducedMotion) await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.clock.install({ time: Date.now() });
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      await launcher().waitFor();
+      // Freeze the clock right after mount: every timer has run for well under 0.3 s.
+      await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
+    }
+    const tick = (ms) => page.clock.runFor(ms);
+
+    test("56px wide on desktop and 48px at 480px or narrower, logo aspect ratio kept", async () => {
+      await page.setViewportSize({ width: 1200, height: 800 });
+      await openWithClock();
+      let box = await launcher().boundingBox();
+      assert.equal(Math.round(box.width), 56);
+      assert.ok(Math.abs(box.height / box.width - 256 / 236) < 0.02, `ratio ${box.height / box.width}`);
+      await page.setViewportSize({ width: 480, height: 800 });
+      box = await launcher().boundingBox();
+      assert.equal(Math.round(box.width), 48);
+    });
+
+    test("front face is the existing logo; the faces are aria-hidden; the button keeps its label", async () => {
+      await openWithClock();
+      assert.equal(await launcher().getAttribute("aria-label"), "Open chat");
+      assert.equal(await page.locator(".lcw-launcher-front img").getAttribute("src"), "/livechat/launcher-logo.png");
+      assert.equal(await page.locator(".lcw-launcher-flip").getAttribute("aria-hidden"), "true");
+      assert.ok(await page.locator(".lcw-launcher-front img").evaluate((img) => img.complete && img.naturalWidth === 236), "the logo file loads");
+      assert.equal(await page.locator(".lcw-launcher-back .lcw-launcher-dots i").count(), 3);
+    });
+
+    test("flips to the typing dots after 3 s, back to the logo 3 s later, and keeps looping", async () => {
+      await openWithClock();
+      assert.equal(await isFlipped(), false);
+      await tick(2500);
+      assert.equal(await isFlipped(), false);
+      await tick(900);
+      assert.equal(await isFlipped(), true);
+      await tick(3000);
+      assert.equal(await isFlipped(), false);
+      await tick(3000);
+      assert.equal(await isFlipped(), true);
+    });
+
+    test("hover pauses the flip and shows the logo; leaving starts the cycle again", async () => {
+      await openWithClock();
+      await tick(3400);
+      assert.equal(await isFlipped(), true);
+      await launcher().hover();
+      assert.equal(await isFlipped(), false);
+      await tick(9000);
+      assert.equal(await isFlipped(), false, "no flip while hovered");
+      await page.mouse.move(5, 5);
+      await tick(3400);
+      assert.equal(await isFlipped(), true);
+    });
+
+    test("keyboard focus pauses the flip", async () => {
+      await openWithClock();
+      await page.keyboard.press("Tab");
+      assert.ok(await launcher().evaluate((el) => el === document.activeElement), "launcher is focused");
+      await tick(9000);
+      assert.equal(await isFlipped(), false);
+    });
+
+    test("a hidden tab pauses the flip", async () => {
+      await openWithClock();
+      const setHidden = (hidden) =>
+        page.evaluate((value) => {
+          Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
+          document.dispatchEvent(new Event("visibilitychange"));
+        }, hidden);
+      await setHidden(true);
+      await tick(9000);
+      assert.equal(await isFlipped(), false);
+      await setHidden(false);
+      await tick(3400);
+      assert.equal(await isFlipped(), true);
+    });
+
+    test("click opens the chat and the flip does not run while the chat is open; closing shows the logo", async () => {
+      await openWithClock();
+      await tick(3400);
+      await launcher().click();
+      await page.waitForSelector(".lcw-window");
+      assert.equal(await page.locator(".lcw-launcher-flip").count(), 0, "no flipping launcher while open");
+      await tick(9000);
+      assert.equal(await page.locator(".lcw-launcher--flipped").count(), 0);
+      await page.getByRole("button", { name: "Minimize chat" }).click();
+      await page.waitForSelector(".lcw-window", { state: "detached" });
+      assert.equal(await isFlipped(), false, "back to the logo side");
+    });
+
+    test("prefers-reduced-motion: no flip, no bouncing dots", async () => {
+      await openWithClock({ reducedMotion: true });
+      await tick(9000);
+      assert.equal(await isFlipped(), false);
+      assert.equal(await page.locator(".lcw-launcher-back").evaluate((el) => getComputedStyle(el).display), "none");
+      assert.equal(await page.locator(".lcw-launcher-dots i").first().evaluate((el) => getComputedStyle(el).animationName), "none");
+    });
+
+    test("greeting: typing dots for 1.2 s, then the message; the x closes it", async () => {
+      await openWithClock();
+      await tick(2500);
+      assert.equal(await page.locator(".lcw-greet").count(), 0, "not before 3 s");
+      await tick(900);
+      assert.equal(await page.locator(".lcw-greet[role=status] .lcw-greet-dots").count(), 1, "dots first");
+      assert.equal(await page.getByText("Are you looking to consult with a doctor?").count(), 0);
+      assert.equal(await page.locator(".lcw-greet-dots").count(), 1, "still typing");
+      await tick(1200);
+      await page.getByText("Are you looking to consult with a doctor?").waitFor();
+      assert.equal(await page.locator(".lcw-greet-dots").count(), 0);
+      await page.getByRole("button", { name: "Dismiss greeting" }).click();
+      assert.equal(await page.locator(".lcw-greet").count(), 0);
+    });
+
+    test("clicking the greeting opens the chat", async () => {
+      await openWithClock();
+      await tick(3400);
+      await page.locator(".lcw-greet-dots").waitFor(); // React schedules the typing timer after the greeting renders
+      await tick(1200);
+      await page.getByText("Are you looking to consult with a doctor?").click();
+      await page.waitForSelector(".lcw-window");
+      assert.equal(await page.locator(".lcw-greet").count(), 0);
+    });
+  });
 });

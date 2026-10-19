@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import GreetingBubble from "./GreetingBubble";
+import LauncherButton from "./LauncherButton";
 import { DEFAULT_AI_NAME } from "./aiName";
 import { buildTimeline } from "./timeline";
 import EndChatDialog from "./EndChatDialog";
@@ -105,7 +106,6 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
   const [confirmEnd, setConfirmEnd] = useState(false); // the "End this chat?" dialog
-  const [photoOk, setPhotoOk] = useState(true);
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
@@ -329,22 +329,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
           ✕ Close
         </button>
       ) : (
-        <button
-          type="button"
-          className={`lcw-launcher ${photoOk ? "lcw-launcher--logo" : "lcw-launcher--hc"}`}
-          onClick={() => setOpen(true)}
-          aria-label="Open chat"
-          aria-expanded="false"
-        >
-          {photoOk ? (
-            <img src="/livechat/launcher-logo.png" alt="" width="236" height="256" onError={() => setPhotoOk(false)} />
-          ) : (
-            <span className="lcw-launcher-hc" aria-hidden="true">
-              HC
-            </span>
-          )}
-          {chat.unread > 0 && <span className="lcw-badge">{chat.unread}</span>}
-        </button>
+        <LauncherButton unread={chat.unread} onOpen={() => setOpen(true)} />
       )}
     </div>
   );

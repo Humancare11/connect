@@ -63,29 +63,88 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   box-shadow: 0 18px 40px -16px rgba(11, 31, 92, 0.45);
 }
-/* Closed state: our logo (a transparent speech-bubble PNG) as the button, no circle, background or border. */
+/* Closed state: our logo (a transparent speech-bubble PNG) as the button, no circle, background or border. It flips
+   to a "typing" back face every 3 seconds (LauncherButton.jsx starts and pauses the flip). */
 .lcw-launcher--logo {
-  width: 72px;
+  width: 56px;
+  aspect-ratio: 236 / 256;
   padding: 0;
+  display: block;
   background: none;
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  perspective: 500px;
   transition: transform 0.15s ease;
-}
-.lcw-launcher--logo img {
-  display: block;
-  width: 100%;
-  height: auto;
-  filter: drop-shadow(0 6px 14px rgba(11, 42, 122, 0.28));
 }
 .lcw-launcher--logo:hover {
   transform: translateY(-3px);
 }
+.lcw-launcher-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease;
+}
+.lcw-launcher--flipped .lcw-launcher-flip {
+  transform: rotateY(180deg);
+}
+.lcw-launcher-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.lcw-launcher-back {
+  transform: rotateY(180deg);
+}
+.lcw-launcher-face img,
+.lcw-launcher-face svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 10px rgba(11, 42, 122, 0.3));
+}
+.lcw-launcher-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  display: flex;
+  justify-content: center;
+  gap: 12%;
+  transform: translateY(-50%);
+}
+.lcw-launcher-dots i {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  animation: lcw-launcher-bounce 1s infinite;
+}
+.lcw-launcher-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lcw-launcher-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes lcw-launcher-bounce {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-45%);
+  }
+}
 .lcw-launcher--logo .lcw-badge {
   position: absolute;
   top: 2px;
-  right: 2px;
+  left: 2px;
+  z-index: 2;
 }
 /* If the logo cannot load: the navy "HC" circle. */
 .lcw-launcher--hc {
@@ -105,17 +164,29 @@ html.hc-cookie-open .lcw-window {
   top: -4px;
   right: -4px;
 }
-@media (max-width: 520px) {
+@media (max-width: 480px) {
   .lcw-launcher--logo {
-    width: 60px;
+    width: 48px;
+  }
+  .lcw-launcher-dots i {
+    width: 5px;
+    height: 5px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lcw-launcher--logo {
+  .lcw-launcher--logo,
+  .lcw-launcher-flip {
     transition: none;
   }
   .lcw-launcher--logo:hover {
     transform: none;
+  }
+  .lcw-launcher-back {
+    display: none;
+  }
+  .lcw-launcher-dots i,
+  .lcw-greet-dots i {
+    animation: none;
   }
 }
 
@@ -127,8 +198,28 @@ html.hc-cookie-open .lcw-window {
   max-width: 280px;
   background: var(--lcw-surface);
   border: 1px solid var(--lcw-line);
-  border-radius: 14px 14px 4px 14px;
+  border-radius: 18px 18px 5px 18px;
   box-shadow: 0 14px 34px -14px rgba(11, 31, 92, 0.4);
+}
+.lcw-greet--typing {
+  padding: 15px 18px;
+}
+.lcw-greet-dots {
+  display: inline-flex;
+  gap: 5px;
+}
+.lcw-greet-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lcw-accent);
+  animation: lcw-launcher-bounce 1s infinite;
+}
+.lcw-greet-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.lcw-greet-dots i:nth-child(3) {
+  animation-delay: 0.3s;
 }
 .lcw-greet-text {
   flex: 1;
