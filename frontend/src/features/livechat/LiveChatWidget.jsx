@@ -29,12 +29,22 @@ const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase()
 
 // Buttons to real pages of this site (the server only sends pages from its own list). A plain click moves within the
 // site (client-side routing), so the widget and the conversation stay alive on the next page.
-function PageLinks({ links, onNavigate }) {
+// The server's "Talk to a live agent" link (not a page) is a button that starts the same hand-over as the header button;
+// it is hidden once the chat is no longer with the AI.
+const AGENT_LINK = "#talk-to-live-agent";
+function PageLinks({ links, onNavigate, onAgent, canRequestAgent }) {
   const navigate = useNavigate();
-  if (!links?.length) return null;
+  const shown = (links || []).filter((link) => link.url !== AGENT_LINK || canRequestAgent);
+  if (!shown.length) return null;
   return (
     <div className="lcw-links">
-      {links.map((link) => (
+      {shown.map((link) =>
+        link.url === AGENT_LINK ? (
+          <button key={link.url} type="button" className="lcw-link" onClick={onAgent}>
+            <span>{link.title}</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        ) : (
         <a
           key={link.url}
           className="lcw-link"
@@ -49,12 +59,13 @@ function PageLinks({ links, onNavigate }) {
           <span>{link.title}</span>
           <span aria-hidden="true">{link.url.startsWith("/appointment-booking") ? "Book →" : "Learn more & book →"}</span>
         </a>
-      ))}
+        )
+      )}
     </div>
   );
 }
 
-function Message({ message, aiName, onNavigate, onOpenFile }) {
+function Message({ message, aiName, onNavigate, onOpenFile, onAgent, canRequestAgent }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
@@ -95,7 +106,7 @@ function Message({ message, aiName, onNavigate, onOpenFile }) {
           )}
           <span className="lcw-meta">{timeOf(message.at)}</span>
         </div>
-        <PageLinks links={message.links} onNavigate={onNavigate} />
+        <PageLinks links={message.links} onNavigate={onNavigate} onAgent={onAgent} canRequestAgent={canRequestAgent} />
       </div>
     </div>
   );
@@ -216,7 +227,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               <>
                 {buildTimeline(conversation.messages, chat.outbox).map((item) => {
                   if (item.kind === "message") {
-                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />;
+                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} onAgent={chat.talkToAgent} canRequestAgent={Boolean(conversation?.canRequestAgent)} />;
                   }
                   const m = item.entry;
                   return m.status === "failed" ? (

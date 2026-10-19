@@ -157,11 +157,11 @@ describe("live chat: the links of a reply (arrange)", () => {
 
   test("no page from the model: the server uses the lay-word match; none matches: booking only", () => {
     assert.deepEqual(urls(sp.arrange([], { medical: true, hintText: "pain in my legs" })), ["/joint-pain"]);
-    assert.deepEqual(urls(sp.arrange([], { medical: true, hintText: "what dose of paracetamol" })), ["/appointment-booking"]);
+    assert.deepEqual(urls(sp.arrange([], { medical: true, hintText: "what dose of paracetamol" })), ["#talk-to-live-agent"]);
   });
 
   test("setting OFF: booking only, whatever the model or the map says", () => {
-    assert.deepEqual(urls(sp.arrange([{ url: "/joint-pain" }], { allowContent: false, medical: true, hintText: "pain in my legs" })), ["/appointment-booking"]);
+    assert.deepEqual(urls(sp.arrange([{ url: "/joint-pain" }], { allowContent: false, medical: true, hintText: "pain in my legs" })), ["#talk-to-live-agent"]);
     assert.deepEqual(sp.pagesForPrompt({ allowContent: false }).some((p) => sp.isContent(p.url)), false);
     assert.equal(sp.pagesForPrompt({ allowContent: true }).some((p) => sp.isContent(p.url)), true);
   });
@@ -169,7 +169,7 @@ describe("live chat: the links of a reply (arrange)", () => {
   test("invented urls are dropped; a service reply is one page", () => {
     assert.deepEqual(urls(sp.arrange([{ url: "https://evil.example" }, { url: "/telemedicine-cost-usa" }, { url: "/made-up" }], { medical: false, hintText: "price?" })), ["/telemedicine-cost-usa"]);
     // Pricing from the model without price words in the patient's message is not shown
-    assert.deepEqual(urls(sp.arrange([{ url: "/telemedicine-cost-usa" }], { medical: false, hintText: "thanks" })), ["/appointment-booking"]);
+    assert.deepEqual(urls(sp.arrange([{ url: "/telemedicine-cost-usa" }], { medical: false, hintText: "thanks" })), []);
     assert.deepEqual(urls(sp.arrange([{ url: "/appointment-booking" }, { url: "/doctors-note" }], { medical: false })), ["/doctors-note"]);
   });
 
@@ -252,12 +252,40 @@ describe("live chat: end to end, a medical message gets the matching page card a
     socket.close();
   });
 
-  test("setting OFF: Book only, and the model is not shown health-topic pages", async () => {
+  test("a health question with no matching page gets only the live-agent button (hi / es labels), and the header flow then takes the chat", async () => {
+    lc.ai.queue.push(reply("Sorry you are worried. I can't give medical advice, but a licensed Humancare Connect doctor can help you.", { topic: "medical" }));
+    const socket = await openChat();
+    await lc.call(socket, "chat:message", { text: "I feel weird" });
+    const ai = await lastAi(socket);
+    assert.deepEqual(ai.links, [{ title: "Talk to a live agent", url: "#talk-to-live-agent" }]);
+    assert.equal((await lc.call(socket, "chat:resume")).conversation.canRequestAgent, true);
+    // the button calls the same event as the header button; afterwards the chat is no longer with the AI (button hidden)
+    assert.equal((await lc.call(socket, "chat:agent")).ok, true);
+    const after = (await lc.call(socket, "chat:resume")).conversation;
+    assert.equal(after.canRequestAgent, false);
+    assert.equal(after.mode, "queue");
+    socket.close();
+  });
+
+  test("Spanish and Hindi health questions with no page get the localized live-agent label", async () => {
+    lc.ai.queue.push(reply("Lamento que se sienta mal. No puedo dar consejo médico.", { topic: "medical", language: { code: "es", name: "Spanish" } }));
+    const es = await openChat();
+    await lc.call(es, "chat:message", { text: "me siento raro" });
+    assert.deepEqual((await lastAi(es)).links, [{ title: "Hablar con un agente en vivo", url: "#talk-to-live-agent" }]);
+    es.close();
+    lc.ai.queue.push(reply("आपकी तकलीफ़ सुनकर दुख हुआ। मैं चिकित्सा सलाह नहीं दे सकता।", { topic: "medical", language: { code: "hi", name: "Hindi" } }));
+    const hi = await openChat();
+    await lc.call(hi, "chat:message", { text: "mujhe ajeeb lag raha hai" });
+    assert.deepEqual((await lastAi(hi)).links, [{ title: "लाइव एजेंट से बात करें", url: "#talk-to-live-agent" }]);
+    hi.close();
+  });
+
+  test("setting OFF: the live-agent button only, and the model is not shown health-topic pages", async () => {
     await lc.setSettings({ aiMayLinkConditionPages: false });
     lc.ai.queue.push(reply("Sorry you're dealing with leg pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you.", { links: [{ title: "Joint Pain", url: "/joint-pain" }] }));
     const socket = await openChat();
     await lc.call(socket, "chat:message", { text: "pain in my legs" });
-    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["/appointment-booking"]);
+    assert.deepEqual((await lastAi(socket)).links.map((l) => l.url), ["#talk-to-live-agent"]);
     assert.equal(lc.ai.calls[0].pages.some((p) => p.url === "/joint-pain"), false);
     assert.deepEqual(lc.ai.calls[0].pageHint, []);
     socket.close();

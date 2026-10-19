@@ -2,11 +2,15 @@
 // (backend/scripts/buildLiveChatSitePages.js -> backend/data/liveChatSitePages.json). The model never writes a URL
 // that reaches the patient: it can only point at an entry of this list, and filterLinks() drops everything else
 // (and takes the title from the list, never from the model).
-const { titlesFor, serviceTitleFor, isServiceTopic } = require("./pageSynonyms");
+const { titlesFor, serviceTitleFor, isServiceTopic, isExplicitBooking } = require("./pageSynonyms");
 const MAX_LINKS = 1; // one button per AI reply
 const MAX_SUGGESTED = 3; // what filterLinks keeps by default (arrange asks for more and then shows one)
 const MAX_CANDIDATES = 14;
 const BOOKING_URL = "/appointment-booking";
+// Not a page: the widget shows this link as a "Talk to a live agent" button that starts the same hand-over as the header
+// button. Only the server adds it (filterLinks never lets a model-written url through).
+const AGENT_URL = "#talk-to-live-agent";
+const AGENT_LABELS = { en: "Talk to a live agent", hi: "लाइव एजेंट से बात करें", es: "Hablar con un agente en vivo" };
 const CONTENT_TYPES = new Set(["condition", "specialty", "category"]); // pages about a health topic (setting: aiMayLinkConditionPages)
 const slugify = (text) =>
   String(text || "")
@@ -127,15 +131,23 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
     return { title: booking.title, url: target || BOOKING_URL };
   }
 
+  const agentLink = (language) => {
+    const base = String((language && typeof language === "object" ? language.code : language) || "").toLowerCase().split(/[-_]/)[0];
+    return { title: AGENT_LABELS[base] || AGENT_LABELS.en, url: AGENT_URL };
+  };
+
   // The link of a reply: ONE button at most. The patient's latest message decides, the model's suggestions only fill in:
   //   1. a health-topic page the words clearly match (the phrase map wins over the model's pick) -> only that page;
-  //   2. a service page the words name (sick note, refills, second opinion, lab ...), else the model's one service pick;
-  //   3. price words and no specific service -> only Pricing (a price in the AI's own text never adds it);
-  //   4. a health or service topic with no match -> only the plain Book card;
-  //   5. nothing else (greeting, small talk, refusal, emergency) -> no button.
+  //   2. a service page the words name (sick note, refills, second opinion, lab ...), else Pricing on price words;
+  //   3. an explicit request to book -> only Book;
+  //   4. a service page the model picked when nothing above applies;
+  //   5. a health or service question with no matching page -> only "Talk to a live agent" (or, with noMatch: "book",
+  //      the Book card, for the fixed safe-reply texts that end with "Book here:");
+  //   6. nothing else (greeting, small talk, refusal, emergency) -> no button.
+  // A price in the AI's own text never adds Pricing; the model's own Book / Pricing picks are ignored.
   // raw: whatever the model returned. Without `allowContent` health-topic pages are never used. Everything is checked
   // against the list. Old stored messages with several links are not touched: this only decides new replies.
-  function arrange(raw, { allowContent = true, medical = false, hintText = "" } = {}) {
+  function arrange(raw, { allowContent = true, medical = false, hintText = "", language = "en", noMatch = "agent" } = {}) {
     let suggested = filterLinks(raw, 6);
     if (!allowContent) suggested = suggested.filter((l) => !isContent(l.url));
     const isBookingPage = (url) => url === BOOKING_URL || url.startsWith(`${BOOKING_URL}/`);
@@ -151,10 +163,11 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
       }
       const wanted = serviceFor(hintText); // a service named by the patient's words (Pricing only when nothing more specific)
       if (wanted) return wanted;
+      if (isExplicitBooking(hintText)) return bookingFor(BOOKING_URL);
       const modelService = suggested.find((l) => !isContent(l.url) && !isBookingPage(l.url) && !isPricing(l.url));
       if (modelService) return modelService;
-      const wantsBooking = medical || isServiceTopic(hintText) || suggested.length > 0;
-      return wantsBooking ? bookingFor(BOOKING_URL) : null;
+      if (medical || isServiceTopic(hintText)) return noMatch === "book" ? bookingFor(BOOKING_URL) : agentLink(language);
+      return null;
     };
 
     const chosen = pick();
@@ -179,10 +192,11 @@ function createSitePages(initialPages = require("../../data/liveChatSitePages.js
     hintFor,
     serviceFor,
     bookingFor,
+    agentLink,
     arrange,
     filterLinks,
     linkFor,
   };
 }
 
-module.exports = { createSitePages, MAX_LINKS, BOOKING_URL, CONTENT_TYPES };
+module.exports = { createSitePages, MAX_LINKS, BOOKING_URL, AGENT_URL, AGENT_LABELS, CONTENT_TYPES };

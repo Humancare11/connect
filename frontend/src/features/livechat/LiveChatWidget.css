@@ -658,6 +658,13 @@ html.hc-cookie-open .lcw-window {
   font-weight: 700;
   text-decoration: none;
 }
+button.lcw-link {
+  width: 100%;
+  font-family: inherit;
+  line-height: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 .lcw-link span:last-child {
   font-size: 12px;
   white-space: nowrap;

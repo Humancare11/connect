@@ -53,8 +53,12 @@ const SERVICE_GROUPS = [
   { terms: ["price", "prices", "pricing", "cost", "costs", "how much", "fee", "fees", "charge", "charges", "rates", "kitna", "kitne", "kimat", "precio", "precios", "cuanto cuesta", "कीमत", "कितना", "फीस"], title: "Pricing" },
 ];
 
-// Service topics with no page of their own: the reply still ends with a Book button.
-const BOOKING_TOPICS = ["prescription", "prescriptions", "refill", "refills", "lab requisition", "lab requisitions", "lab test", "second opinion", "consultation", "consultations", "appointment", "appointments", "book", "booking", "visit", "doctor visit", "telehealth", "fit to fly", "certificate", "receta", "cita", "consulta", "reservar"];
+// Service topics with no page of their own (a consultation, a certificate ...): with no page to point at, the chat offers the
+// live-agent button. Topics that have a page (refills, sick note, second opinion, lab, price) are in SERVICE_GROUPS.
+const SERVICE_TOPICS = ["lab test", "consultation", "consultations", "visit", "doctor visit", "telehealth", "fit to fly", "certificate", "consulta"];
+
+// The patient explicitly asks to book: only then does the chat show the Book button.
+const BOOK_TERMS = ["book", "booking", "book a doctor", "schedule", "appointment", "appointments", "make an appointment", "reservar", "reserva", "cita", "agendar", "agendar cita", "book karna", "appointment lena", "appointment book", "बुक", "बुकिंग", "अपॉइंटमेंट", "अपॉइन्टमेंट"];
 
 // Lower case, accents removed, punctuation to spaces; Devanagari letters are kept.
 const foldHint = (text) =>
@@ -67,7 +71,8 @@ const foldHint = (text) =>
 
 const prep = (list) => list.map((t) => foldHint(t)).filter(Boolean);
 const prepared = GROUPS.map((g) => ({ terms: prep(g.terms), not: prep(g.not || []), targets: g.targets }));
-const preparedBooking = prep(BOOKING_TOPICS);
+const preparedServiceTopics = prep(SERVICE_TOPICS);
+const preparedBookTerms = prep(BOOK_TERMS);
 const preparedServices = SERVICE_GROUPS.map((g) => ({ terms: prep(g.terms), title: g.title }));
 
 const has = (hay, t) => hay.includes(` ${t} `) || hay.includes(` ${t}s `); // also the plural (headaches)
@@ -90,10 +95,16 @@ function serviceTitleFor(text) {
   return "";
 }
 
-// True when the message is about a service we sell (refill, consultation, booking ...): the reply offers Book.
+// True when the message is about a service we sell that has no page of its own (consultation, certificate ...).
 function isServiceTopic(text) {
   const hay = ` ${foldHint(text)} `;
-  return preparedBooking.some((t) => has(hay, t));
+  return preparedServiceTopics.some((t) => has(hay, t));
 }
 
-module.exports = { titlesFor, serviceTitleFor, isServiceTopic, GROUPS, SERVICE_GROUPS, foldHint };
+// True when the patient explicitly asks to book or schedule ("book", "appointment", "reservar cita" ...).
+function isExplicitBooking(text) {
+  const hay = ` ${foldHint(text)} `;
+  return preparedBookTerms.some((t) => has(hay, t));
+}
+
+module.exports = { titlesFor, serviceTitleFor, isServiceTopic, isExplicitBooking, GROUPS, SERVICE_GROUPS, foldHint };

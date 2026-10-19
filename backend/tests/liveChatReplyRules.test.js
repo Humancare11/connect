@@ -9,8 +9,10 @@ const { DEFAULT_SETTINGS, QUICK_OPTIONS, CANNED_REPLIES } = require("../services
 const sp = createSitePages();
 const titles = (links) => links.map((l) => l.title);
 const BOOK = "Book an appointment";
+const AGENT = "Talk to a live agent";
+const AGENT_URL = "#talk-to-live-agent";
 
-describe("live chat: at most ONE link button (matching page, else Pricing on price words, else plain Book, else none)", () => {
+describe("live chat: at most ONE link button (matching page, else Pricing, else Book only when asked, else Talk to a live agent, else none)", () => {
   // [patient message, topic is medical, expected link titles when the model names no page]
   const TABLE = [
     ["leg pain", true, ["Joint Pain"]],
@@ -20,21 +22,35 @@ describe("live chat: at most ONE link button (matching page, else Pricing on pri
     ["hair fall", true, ["Skin & Hair Care"]],
     ["my hair is falling out", true, ["Skin & Hair Care"]],
     ["I feel stressed", true, ["Behavioral Medicine"]],
-    ["sleep problems", true, [BOOK]],
-    ["I have a cold sore", true, [BOOK]],
+    // health question, no matching page: the live-agent button, never Book
+    ["I feel weird", true, [AGENT]],
+    ["sleep problems", true, [AGENT]],
+    ["I have a cold sore", true, [AGENT]],
+    ["I need to fill my car with gas", true, [AGENT]],
+    ["skin", true, [AGENT]],
+    ["I feel sad", true, [AGENT]],
     ["what is the price of a gas card", false, ["Pricing"]],
-    ["I need to fill my car with gas", true, [BOOK]],
-    ["skin", true, [BOOK]],
-    ["I feel sad", true, [BOOK]],
     ["who are you?", false, []],
     ["hi", false, []],
+    ["thanks", false, []],
     // service questions: the service page is added by the server even when the model named none, and it stands alone
     ["I need a sick note", false, ["Doctor's note (sick note)"]],
     ["Need prescription", false, ["Online prescription refills"]],
     ["can I get a prescription refill", false, ["Online prescription refills"]],
     ["prescription refill price", false, ["Online prescription refills"]],
     ["price?", false, ["Pricing"]],
+    ["how much", false, ["Pricing"]],
     ["how much does it cost", false, ["Pricing"]],
+    ["how much to book an appointment", false, ["Pricing"]], // price beats Book
+    // a service topic with no page of its own: the live-agent button
+    ["I need a fit to fly certificate", false, [AGENT]],
+    ["tell me about the consultation", false, [AGENT]],
+    // explicit booking request: only Book
+    ["I want to book an appointment", false, [BOOK]],
+    ["can you schedule a visit", false, [BOOK]],
+    ["mujhe appointment book karna hai", false, [BOOK]],
+    ["quiero reservar una cita", false, [BOOK]],
+    // Hindi / Spanish
     ["mujhe prescription chahiye", false, ["Online prescription refills"]],
     ["necesito una receta", false, ["Online prescription refills"]],
     ["cuanto cuesta", false, ["Pricing"]],
@@ -49,7 +65,7 @@ describe("live chat: at most ONE link button (matching page, else Pricing on pri
 
   test("chest tightness never gets a page from the fallback (it is handled as an emergency)", () => {
     assert.deepEqual(titlesFor("chest tightness"), []);
-    assert.deepEqual(titles(sp.arrange([], { allowContent: true, medical: true, hintText: "chest tightness" })), [BOOK]);
+    assert.deepEqual(titles(sp.arrange([], { allowContent: true, medical: true, hintText: "chest tightness" })), [AGENT]);
   });
 
   test("at most one health-topic page, and a message with two topics gets one topic's page only", () => {
@@ -77,7 +93,7 @@ describe("live chat: at most ONE link button (matching page, else Pricing on pri
   });
 
   test("health-topic pages are never added when the setting forbids them, but service pages still are", () => {
-    assert.deepEqual(titles(sp.arrange([], { allowContent: false, medical: true, hintText: "back pain" })), [BOOK]);
+    assert.deepEqual(titles(sp.arrange([], { allowContent: false, medical: true, hintText: "back pain" })), [AGENT]);
     assert.deepEqual(titles(sp.arrange([], { allowContent: false, medical: false, hintText: "price?" })), ["Pricing"]);
   });
 
@@ -90,8 +106,11 @@ describe("live chat: at most ONE link button (matching page, else Pricing on pri
     const all = ["/online-prescription-refills", "/telemedicine-cost-usa", "/appointment-booking"];
     assert.deepEqual(titles(sp.arrange(all, { allowContent: true, medical: false, hintText: "Need prescription" })), ["Online prescription refills"]);
     // Pricing from the model without price words in the patient's message is dropped
-    assert.deepEqual(titles(sp.arrange(["/telemedicine-cost-usa"], { allowContent: true, medical: false, hintText: "I want to renew" })), [BOOK]);
+    assert.deepEqual(titles(sp.arrange(["/telemedicine-cost-usa"], { allowContent: true, medical: false, hintText: "I want to renew" })), []);
     assert.deepEqual(titles(sp.arrange(["/telemedicine-cost-usa", "/doctors-note"], { allowContent: true, medical: false, hintText: "thanks" })), ["Doctor's note (sick note)"]);
+    // the model's own Book pick is ignored unless the patient asks to book
+    assert.deepEqual(titles(sp.arrange(["/appointment-booking"], { allowContent: true, medical: false, hintText: "thanks" })), []);
+    assert.deepEqual(titles(sp.arrange(["/appointment-booking"], { allowContent: true, medical: false, hintText: "I want to book" })), [BOOK]);
     // never more than one, whatever the model sends
     for (const hintText of ["leg pain", "price?", "hello", "Need prescription"]) {
       assert.ok(sp.arrange([...all, "/joint-pain", "/doctors-note"], { allowContent: true, medical: true, hintText }).length <= 1, hintText);
@@ -100,6 +119,22 @@ describe("live chat: at most ONE link button (matching page, else Pricing on pri
     // a health-topic page that is itself a booking page (a category page) is the only button
     const cat = createSitePages([{ type: "category", title: "Skin & Hair", url: "/appointment-booking/skin-hair", keywords: [] }, { type: "service", title: BOOK, url: "/appointment-booking", keywords: [] }]);
     assert.deepEqual(titles(cat.arrange([], { allowContent: true, medical: true, hintText: "hair fall" })), ["Skin & Hair"]);
+  });
+
+  test("the live-agent link: server-made, localized en/hi/es, a sentinel url the model can never write", () => {
+    const one = (language) => sp.arrange([], { allowContent: true, medical: true, hintText: "I feel weird", language });
+    assert.deepEqual(one("en"), [{ title: "Talk to a live agent", url: AGENT_URL }]);
+    assert.deepEqual(one("hi"), [{ title: "लाइव एजेंट से बात करें", url: AGENT_URL }]);
+    assert.deepEqual(one("es"), [{ title: "Hablar con un agente en vivo", url: AGENT_URL }]);
+    assert.deepEqual(one({ code: "es-MX" })[0].title, "Hablar con un agente en vivo");
+    assert.deepEqual(one("fr")[0].title, "Talk to a live agent");
+    // a model-written sentinel is dropped by the allowlist
+    assert.deepEqual(sp.filterLinks([AGENT_URL, { url: AGENT_URL }]), []);
+    // the fixed safe-reply texts end with "Book here:": that path keeps Book as its fallback
+    assert.deepEqual(titles(sp.arrange([], { allowContent: true, medical: true, hintText: "I feel weird", noMatch: "book" })), [BOOK]);
+    // hi / es health questions without a page
+    assert.deepEqual(titles(sp.arrange([], { allowContent: true, medical: true, hintText: "mujhe ajeeb lag raha hai", language: "hi" })), ["लाइव एजेंट से बात करें"]);
+    assert.deepEqual(titles(sp.arrange([], { allowContent: true, medical: true, hintText: "me siento raro", language: "es" })), ["Hablar con un agente en vivo"]);
   });
 
   test("the debug log names urls only when the model's links are trimmed", () => {
@@ -111,6 +146,9 @@ describe("live chat: at most ONE link button (matching page, else Pricing on pri
     logged.arrange(["/online-prescription-refills"], { allowContent: true, medical: false, hintText: "Need prescription" });
     logged.arrange([], { allowContent: true, medical: false, hintText: "hi" });
     assert.deepEqual(lines, []);
+    // the agent sentinel shows up in the log when it is what is shown
+    logged.arrange(["/appointment-booking"], { allowContent: true, medical: true, hintText: "I feel weird" });
+    assert.deepEqual(lines, ["[livechat] links: model=[/appointment-booking] -> shown=[#talk-to-live-agent]"]);
   });
 
   test("when the phrase map names a page it wins over a different page picked by the model", () => {

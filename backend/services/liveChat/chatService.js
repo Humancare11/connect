@@ -747,7 +747,7 @@ function createChatService({
     const text = safety.fixedText(medication ? "fallbackMedication" : "fallback", safetyLanguage(language, patientText));
     // The page that fits what the patient wrote (from the server's lay-word map and list) above the booking card.
     const settings = await loadSettings();
-    const links = sitePages.arrange([], { allowContent: settings.aiMayLinkConditionPages !== false, medical: true, hintText: patientText });
+    const links = sitePages.arrange([], { allowContent: settings.aiMayLinkConditionPages !== false, medical: true, hintText: patientText, noMatch: "book" }); // the fixed texts end with "Book here:"
     await addMessage(current, "ai", text, { ...(links.length ? { links } : {}), ...(blocked ? { safetyBlocked: true } : {}) });
   }
 
@@ -891,7 +891,7 @@ function createChatService({
       await LcConversation.updateOne({ _id: current._id }, update);
       await noteLanguage(current, result.language, lastPatientText);
       // Only pages on the server's own list reach the patient (an invented url is dropped).
-      const links = sitePages.arrange(result.links, { allowContent: linkConditions, medical: result.topic === "medical", hintText });
+      const links = sitePages.arrange(result.links, { allowContent: linkConditions, medical: result.topic === "medical", hintText, language: safetyLanguage(result.language, lastPatientText) });
       // The reply check: advice-like wording never reaches the patient, whatever the model was told.
       const verdict = safety.checkReply(result.reply);
       await markMedical(current, [

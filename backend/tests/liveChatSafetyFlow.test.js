@@ -194,8 +194,8 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       const off = await openChat();
       await say(off, asked);
       assert.equal(lc.ai.calls[1].pages.some((p) => sitePages.typeOf(p.url) === "condition"), false);
-      const links = (await lastAi(off)).links.map((l) => l.url);
-      assert.deepEqual(links, ["/appointment-booking"]);
+      const links = ((await lastAi(off)).links || []).map((l) => l.url);
+      assert.deepEqual(links, []); // no condition page allowed, and a non-medical reply gets no button
       on.socket.close();
       off.socket.close();
     });
