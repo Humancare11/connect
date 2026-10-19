@@ -3921,7 +3921,8 @@ export default function DirectVideoCall() {
 
   // "Still trying" notice (observational only - never touches recovery).
   // Held back only while a join retry / manual Retry is in progress (those have
-  // their own notices); it stacks above the stall banner.
+  // their own notices). While it shows it replaces the older "Reconnection is
+  // taking longer than expected" banner (one at a time).
   const slowConnectSuppressedRef = useRef(false);
   slowConnectSuppressedRef.current = Boolean(manualReconnecting || joinRetryPhase);
   const slowConnect = useSlowConnectNotice(() => {
@@ -4512,7 +4513,7 @@ export default function DirectVideoCall() {
                 (manualReconnecting): the tap itself clears reconnectStalled,
                 which used to make the banner — and its "Reconnecting…"
                 button — vanish the instant it was pressed. */}
-            {(reconnectStalled || manualReconnecting) && (
+            {(reconnectStalled || manualReconnecting) && !slowConnect && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
@@ -4543,7 +4544,7 @@ export default function DirectVideoCall() {
             )}
 
             {slowConnect && (
-              <div className="hc-vc__reconnect-stalled-notice hc-vc__slow-connect-notice" role="status">
+              <div className="hc-vc__reconnect-stalled-notice" role="status">
                 <span>
                   <FiAlertTriangle />
                 </span>

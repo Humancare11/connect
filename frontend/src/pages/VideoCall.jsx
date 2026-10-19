@@ -5318,7 +5318,8 @@ export default function VideoCall() {
 
   // "Still trying" notice (observational only - never touches recovery).
   // Held back only while a join retry / manual Retry / media recovery is in
-  // progress (those have their own notices); it stacks above the stall banner.
+  // progress (those have their own notices). While it shows it replaces the
+  // older "Reconnection is taking longer than expected" banner (one at a time).
   const slowConnectSuppressedRef = useRef(false);
   slowConnectSuppressedRef.current = Boolean(manualReconnecting || joinRetryPhase || mediaRecovery);
   const slowConnect = useSlowConnectNotice(() => {
@@ -6196,7 +6197,7 @@ export default function VideoCall() {
                 which used to make the banner (and its "Reconnecting…"
                 button) vanish the instant it was pressed. It goes away when
                 the rebuilt connection is healthy or the hold ends. */}
-            {(reconnectStalled || manualReconnecting) && (
+            {(reconnectStalled || manualReconnecting) && !slowConnect && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
@@ -6231,7 +6232,7 @@ export default function VideoCall() {
             )}
 
             {slowConnect && (
-              <div className="hc-vc__reconnect-stalled-notice hc-vc__slow-connect-notice" role="status">
+              <div className="hc-vc__reconnect-stalled-notice" role="status">
                 <span>
                   <FiAlertTriangle />
                 </span>

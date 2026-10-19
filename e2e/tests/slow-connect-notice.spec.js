@@ -51,14 +51,17 @@ test.describe("still-trying notice", () => {
       const started = Date.now();
       await expect(doctor.page.getByText(NOTICE_TEXT)).toBeVisible({ timeout: 45_000 });
       await expect(patient.page.getByText(NOTICE_TEXT)).toBeVisible({ timeout: 15_000 });
+      // one banner at a time: the older stall banner is hidden while this one shows
+      await expect(doctor.page.getByText("Reconnection is taking longer than expected")).toHaveCount(0);
+      await expect(patient.page.getByText("Reconnection is taking longer than expected")).toHaveCount(0);
       const waited = (Date.now() - started + 15_000) / 1000;
       expect(waited, "notice should not appear before ~30s").toBeGreaterThan(27);
-      await expect(doctor.page.locator(".hc-vc__slow-connect-notice").getByRole("button", { name: "Retry" })).toBeVisible();
-      await expect(doctor.page.locator(".hc-vc__slow-connect-notice").getByRole("button", { name: "Leave" })).toBeVisible();
+      await expect(doctor.page.getByRole("button", { name: "Retry" })).toBeVisible();
+      await expect(doctor.page.getByRole("button", { name: "Leave", exact: true })).toBeVisible();
 
       // unblock, then use the notice's own Retry (full rebuild)
       await Promise.all([doctor.page.evaluate(() => (window.__blockIce = false)), patient.page.evaluate(() => (window.__blockIce = false))]);
-      await doctor.page.locator(".hc-vc__slow-connect-notice").getByRole("button", { name: "Retry" }).click();
+      await doctor.page.getByRole("button", { name: "Retry" }).click();
 
       await Promise.all([
         waitForVideoFlowing(doctor.page, { timeoutMs: 60_000, label: "doctor after unblock" }),
