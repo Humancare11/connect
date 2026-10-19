@@ -18,6 +18,7 @@ import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDe
 import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { probeSocketAlive } from "../utils/socketLiveness";
+import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { createPinActionRunner } from "../utils/directPinRunner";
 import { extractDtlsFingerprint } from "../utils/webrtcSdp";
@@ -3918,6 +3919,26 @@ export default function DirectVideoCall() {
     setStage("ended");
   }, [cleanupCall]);
 
+  // "Still trying" notice (observational only - never touches recovery).
+  // Held back only while a join retry / manual Retry is in progress (those have
+  // their own notices); it stacks above the stall banner.
+  const slowConnectSuppressedRef = useRef(false);
+  slowConnectSuppressedRef.current = Boolean(manualReconnecting || joinRetryPhase);
+  const slowConnect = useSlowConnectNotice(() => {
+    const pc = pcRef.current;
+    return {
+      joined: joinedOnceRef.current || hasConnectedOnceRef.current,
+      peerPresent: peerPresentRef.current,
+      connected: Boolean(
+        pc &&
+          (pc.connectionState === "connected" ||
+            pc.iceConnectionState === "connected" ||
+            pc.iceConnectionState === "completed"),
+      ),
+      suppressed: slowConnectSuppressedRef.current,
+    };
+  });
+
   // Every path that would drop the call — the "Leave Call" button, a mobile
   // back-swipe/gesture, the hardware back button — routes through here so the
   // user gets one confirmation instead of the call ending silently.
@@ -4518,6 +4539,21 @@ export default function DirectVideoCall() {
                     End Call
                   </button>
                 )}
+              </div>
+            )}
+
+            {slowConnect && (
+              <div className="hc-vc__reconnect-stalled-notice hc-vc__slow-connect-notice" role="status">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Connection is taking longer than usual. Still trying…</span>
+                <button type="button" className="hc-vc__rx-btn-primary" onClick={forceReconnect}>
+                  Retry
+                </button>
+                <button type="button" className="hc-vc__rx-btn-ghost" onClick={leaveCall}>
+                  Leave
+                </button>
               </div>
             )}
 

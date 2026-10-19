@@ -492,6 +492,11 @@
 
 /* Reconnect stalled notice — like peer-left-notice, offset higher so it
    never overlaps that banner if both happen to show at once */
+/* "Still trying" notice: same look, stacked above the stall banner. */
+.hc-vc__reconnect-stalled-notice.hc-vc__slow-connect-notice {
+  bottom: 196px;
+}
+
 .hc-vc__reconnect-stalled-notice {
   position: absolute;
   bottom: 136px;

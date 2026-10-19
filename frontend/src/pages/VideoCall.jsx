@@ -20,6 +20,7 @@ import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTi
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { probeSocketAlive } from "../utils/socketLiveness";
+import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import {
@@ -5315,6 +5316,26 @@ export default function VideoCall() {
     void requestPcRebuild("manual_retry", { manual: true });
   }, [appointmentId, isDoctor, requestPcRebuild]);
 
+  // "Still trying" notice (observational only - never touches recovery).
+  // Held back only while a join retry / manual Retry / media recovery is in
+  // progress (those have their own notices); it stacks above the stall banner.
+  const slowConnectSuppressedRef = useRef(false);
+  slowConnectSuppressedRef.current = Boolean(manualReconnecting || joinRetryPhase || mediaRecovery);
+  const slowConnect = useSlowConnectNotice(() => {
+    const pc = pcRef.current;
+    return {
+      joined: Boolean(joinedSocketIdRef.current) || hasConnectedOnceRef.current,
+      peerPresent: peerPresentRef.current,
+      connected: Boolean(
+        pc &&
+          (pc.connectionState === "connected" ||
+            pc.iceConnectionState === "connected" ||
+            pc.iceConnectionState === "completed"),
+      ),
+      suppressed: slowConnectSuppressedRef.current,
+    };
+  });
+
   useEffect(
     () => () => {
       window.clearTimeout(manualReconnectCooldownRef.current);
@@ -6206,6 +6227,21 @@ export default function VideoCall() {
                     End Call
                   </button>
                 )}
+              </div>
+            )}
+
+            {slowConnect && (
+              <div className="hc-vc__reconnect-stalled-notice hc-vc__slow-connect-notice" role="status">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Connection is taking longer than usual. Still trying…</span>
+                <button type="button" className="hc-vc__rx-btn-primary" onClick={forceReconnect}>
+                  Retry
+                </button>
+                <button type="button" className="hc-vc__rx-btn-ghost" onClick={leaveCall}>
+                  Leave
+                </button>
               </div>
             )}
 
