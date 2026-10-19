@@ -240,6 +240,12 @@ export default function AdminAppointmentDetails() {
           <Link className="adp-back-button" to="/admin-dashboard/appointments">
             Back to Appointments
           </Link>
+          <Link
+            className="adp-alt-btn"
+            to={`/admin-dashboard/appointments/${appointment._id}/call-report`}
+          >
+            View call report
+          </Link>
           {/* A completed appointment must be reopened before its doctor can change. */}
           {currentStatus !== "complete" && (
             <Link

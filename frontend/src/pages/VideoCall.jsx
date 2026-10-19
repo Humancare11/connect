@@ -20,6 +20,7 @@ import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTi
 import { isTerminalDenyReason, nextJoinRetryDelay } from "../utils/roomDenyRetry";
 import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
 import { probeSocketAlive } from "../utils/socketLiveness";
+import { buildCallStatsSample } from "../utils/callStatsSample";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
@@ -58,9 +59,9 @@ function logLocalAnswerDirections(role, appointmentId, answerSdp, localStream, s
   const hasLiveLocal = (kind) =>
     Boolean(
       localStream &&
-        localStream
-          .getTracks()
-          .some((t) => t.kind === kind && t.readyState !== "ended"),
+      localStream
+        .getTracks()
+        .some((t) => t.kind === kind && t.readyState !== "ended"),
     );
   const notSendrecv = directions.filter((d) => {
     const [kind, dir] = d.split(":");
@@ -376,11 +377,11 @@ const normalizeIceUrls = (urls) =>
 const sanitizeIceServers = (iceServers) =>
   Array.isArray(iceServers)
     ? iceServers.filter(
-        (server) =>
-          server &&
-          typeof server === "object" &&
-          normalizeIceUrls(server.urls).length > 0,
-      )
+      (server) =>
+        server &&
+        typeof server === "object" &&
+        normalizeIceUrls(server.urls).length > 0,
+    )
     : [];
 
 const validateIceServers = (iceServers) => {
@@ -739,7 +740,7 @@ const playVideoElement = async (videoEl) => {
 // fires on the video element whenever the underlying track's dimensions
 // change (device rotation, camera renegotiation), not just on first load.
 const watchVideoOrientation = (videoEl, onOrientationChange) => {
-  if (!videoEl) return () => {};
+  if (!videoEl) return () => { };
   const update = () => {
     const { videoWidth, videoHeight } = videoEl;
     if (videoWidth && videoHeight) {
@@ -759,7 +760,7 @@ const setTrackHint = (track, hint) => {
   if (!track || !("contentHint" in track)) return;
   try {
     track.contentHint = hint;
-  } catch (_) {}
+  } catch (_) { }
 };
 
 const getSenderForKind = (pc, kind) => {
@@ -832,7 +833,7 @@ const tuneSenderQuality = async (
     }
 
     await sender.setParameters(params);
-  } catch (_) {}
+  } catch (_) { }
 };
 
 // Chat messages have no server-issued id in the payload this page receives,
@@ -1045,6 +1046,14 @@ export default function VideoCall() {
   const statsTimerRef = useRef(null);
   const pendingRemoteCandidatesRef = useRef([]);
   const joinedSocketIdRef = useRef("");
+  const callConnectedReportedRef = useRef(false);
+  // Admin call report quality samples (see the call-stats effect below).
+  const callStatsSnapshotRef = useRef(null);
+  const lastCallSampleRef = useRef(null);
+  const lastCallSampleSentRef = useRef(true);
+  const callMonitoredRef = useRef(false);
+  const socketDropsRef = useRef(0);
+  const sendFinalCallStatsRef = useRef(() => { });
   // Non-terminal "room-access-denied" retry state (see handleRoomDenied).
   const joinDenyAttemptRef = useRef(0);
   const joinRetryTimerRef = useRef(null);
@@ -1096,7 +1105,7 @@ export default function VideoCall() {
   // networkRecoveryRef below) — assigned to resumeScreenShareIfPending
   // outside the main effect (where startScreenShare's own dependencies
   // live) and invoked from inside it, from markPeerConnectionHealthy.
-  const resumeScreenShareRef = useRef(() => {});
+  const resumeScreenShareRef = useRef(() => { });
   const socketAuthRefreshedRef = useRef(false);
   const verifyingVisibilityRef = useRef(false);
   const hasConnectedOnceRef = useRef(false);
@@ -1138,7 +1147,7 @@ export default function VideoCall() {
   // and the socket's transport are independent failure domains), instead of
   // only reacting to the next scheduled ICE-restart timer tick or the
   // socket's own "reconnect" event. Mirrors DirectVideoCall.jsx.
-  const kickIceRecoveryRef = useRef(() => {});
+  const kickIceRecoveryRef = useRef(() => { });
   // Same cross-effect invocation pattern as kickIceRecoveryRef just above —
   // assigned inside the main effect (where markPeerConnectionHealthy and
   // remoteRebindPendingRef live) and invoked from the separate online/offline
@@ -1149,7 +1158,7 @@ export default function VideoCall() {
   // frames — see its assignment for the full reasoning. Mirrors the
   // equivalent, already-applied fix in the Flutter app's
   // VideoCallController._handleNetworkInterfaceChanged.
-  const networkRecoveryRef = useRef(() => {});
+  const networkRecoveryRef = useRef(() => { });
   // Guards the function above against overlapping runs (e.g. the browser
   // firing "online" again before the previous check's settle delay has
   // finished).
@@ -1567,8 +1576,8 @@ export default function VideoCall() {
           }
           applyIceFallback(
             err.response?.data?.msg ||
-              err.message ||
-              "Could not fetch video call configuration.",
+            err.message ||
+            "Could not fetch video call configuration.",
           );
         });
     };
@@ -1598,6 +1607,7 @@ export default function VideoCall() {
     reconnectStallTimerRef.current = null;
     clearInterval(statsTimerRef.current);
     statsTimerRef.current = null;
+    sendFinalCallStatsRef.current();
     socket.emit("leave-appointment-room", { appointmentId });
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current?.getTracks().forEach((t) => {
@@ -1804,6 +1814,60 @@ export default function VideoCall() {
     [logVideoEvent, stopStatsCollection],
   );
 
+  // Quality samples for the admin-only call report: every 30s, every ~3s while
+  // an admin has the report open (told via call-monitoring-active), and once
+  // more on leave. Technical numbers only; the server validates everything.
+  useEffect(() => {
+    if (!appointmentId) return undefined;
+    let timer = null;
+    let stopped = false;
+    const sendSample = (final) => {
+      const sample = lastCallSampleRef.current;
+      if (!sample || !socket.connected) return;
+      socket.emit("call-stats", { appointmentId, ...sample, reconnects: socketDropsRef.current, ...(final ? { final: true } : {}) });
+      lastCallSampleSentRef.current = true;
+    };
+    sendFinalCallStatsRef.current = () => sendSample(true);
+    const tick = async () => {
+      timer = null;
+      try {
+        const pc = pcRef.current;
+        if (pc && pc.signalingState !== "closed" && pc.connectionState === "connected" && socket.connected && joinedSocketIdRef.current) {
+          const report = await pc.getStats();
+          const now = Date.now();
+          const { sample, snapshot } = buildCallStatsSample(report, callStatsSnapshotRef.current, now, { connectionState: pc.connectionState });
+          callStatsSnapshotRef.current = snapshot;
+          lastCallSampleRef.current = sample;
+          lastCallSampleSentRef.current = false;
+          sendSample(false);
+        }
+      } catch (err) {
+        logger.warn("[call-stats] sample failed:", err?.message || err);
+      }
+      if (!stopped) timer = setTimeout(tick, callMonitoredRef.current ? 3000 : STATS_INTERVAL_MS);
+    };
+    const onMonitoring = (active) => {
+      callMonitoredRef.current = active === true;
+      if (!stopped && callMonitoredRef.current && timer) {
+        clearTimeout(timer);
+        timer = setTimeout(tick, 500);
+      }
+    };
+    const onDrop = () => {
+      socketDropsRef.current += 1;
+    };
+    socket.on("call-monitoring-active", onMonitoring);
+    socket.on("disconnect", onDrop);
+    timer = setTimeout(tick, 5000);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      socket.off("call-monitoring-active", onMonitoring);
+      socket.off("disconnect", onDrop);
+      sendFinalCallStatsRef.current = () => { };
+    };
+  }, [appointmentId]);
+
   const emitOnlineAndJoinRoom = useCallback(() => {
     if (!socket.connected || !isReadyRef.current) return false;
     if (joinedSocketIdRef.current === socket.id) return true;
@@ -1838,6 +1902,9 @@ export default function VideoCall() {
       // rebuild its pc without stranding this one. A client that omits this
       // is treated as an older build that can't.
       capabilities: WEB_CLIENT_CAPABILITIES,
+      // For the admin call report. The server derives browser + OS from the
+      // User-Agent it observes; this only declares the platform.
+      clientInfo: { platform: "web" },
     });
     logVideoEvent("appointment_room_join_requested", { socketId: socket.id });
     return true;
@@ -1983,7 +2050,7 @@ export default function VideoCall() {
     const remoteHasMedia = Boolean(remoteStreamRef.current?.getTracks().length);
     setPlaybackBlocked(
       remoteHasMedia &&
-        (!remoteAudioOk || (Boolean(remoteVideo?.srcObject) && !remoteOk)),
+      (!remoteAudioOk || (Boolean(remoteVideo?.srcObject) && !remoteOk)),
     );
   }, []);
 
@@ -2046,10 +2113,10 @@ export default function VideoCall() {
             activeSender,
             track.kind === "video"
               ? {
-                  maxBitrate: BITRATE_PROFILE.cameraVideo,
-                  maxFramerate: 30,
-                  maintainResolution: true,
-                }
+                maxBitrate: BITRATE_PROFILE.cameraVideo,
+                maxFramerate: 30,
+                maintainResolution: true,
+              }
               : { maxBitrate: BITRATE_PROFILE.voiceAudio },
           ),
         );
@@ -2143,7 +2210,7 @@ export default function VideoCall() {
           // Don't let a silent background recovery hang indefinitely on a
           // stuck permission prompt — bail and let it try again next stall.
           retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "verifyLocalPlaybackLiveness:recapture_timed_out", {});
-          recaptureAttempt.then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => {});
+          recaptureAttempt.then((s) => s.getTracks().forEach((t) => t.stop())).catch(() => { });
           return;
         }
         const freshStream = await recaptureAttempt;
@@ -2482,7 +2549,7 @@ export default function VideoCall() {
     clearTimeout(reconnectStallTimerRef.current);
     reconnectStallTimerRef.current = null;
     setReconnectStalled(false);
-    let resolveLocalReady = () => {};
+    let resolveLocalReady = () => { };
     const localReadyPromise = new Promise((resolve) => {
       resolveLocalReady = resolve;
     });
@@ -3171,6 +3238,12 @@ export default function VideoCall() {
     // that function's own comment for why it needs to reuse this. Mirrors
     // VideoCallController._handleConnectedState in the Flutter app.
     const markPeerConnectionHealthy = () => {
+      // Once per page load: tells the server our peer connection really reached
+      // "connected" (admin call report: "connected" vs "both joined but no media").
+      if (!callConnectedReportedRef.current && socket.connected) {
+        callConnectedReportedRef.current = true;
+        socket.emit("call-connected", { appointmentId });
+      }
       retryDebugLog(isDoctor ? "doctor" : "patient", appointmentId, "markPeerConnectionHealthy:called", {
         connectionState: pc.connectionState,
         iceConnectionState: pc.iceConnectionState,
@@ -4732,6 +4805,7 @@ export default function VideoCall() {
         !pageUnloadingRef.current &&
         !isManualReconnect
       ) {
+        sendFinalCallStatsRef.current();
         socket.emit("leave-appointment-room", { appointmentId });
       }
       socket.off("connect", joinRoom);
@@ -5219,10 +5293,10 @@ export default function VideoCall() {
       if (isScreenSharing && screenStreamRef.current) {
         const selfViewEl = isSwapped ? mainVideoRef.current : pipVideoRef.current;
         selfViewEl.srcObject = screenStreamRef.current;
-        selfViewEl.play?.().catch(() => {});
+        selfViewEl.play?.().catch(() => { });
       }
 
-      pipVideoRef.current.play?.().catch(() => {});
+      pipVideoRef.current.play?.().catch(() => { });
     });
 
     return () => cancelAnimationFrame(frameId);
@@ -5274,7 +5348,7 @@ export default function VideoCall() {
       setCompleting(false);
       showInlineMessage(
         err.response?.data?.msg ||
-          "Failed to complete appointment. Please try again.",
+        "Failed to complete appointment. Please try again.",
         5000,
       );
     }
@@ -5329,9 +5403,9 @@ export default function VideoCall() {
       peerPresent: peerPresentRef.current,
       connected: Boolean(
         pc &&
-          (pc.connectionState === "connected" ||
-            pc.iceConnectionState === "connected" ||
-            pc.iceConnectionState === "completed"),
+        (pc.connectionState === "connected" ||
+          pc.iceConnectionState === "connected" ||
+          pc.iceConnectionState === "completed"),
       ),
       suppressed: slowConnectSuppressedRef.current,
     };
@@ -5382,7 +5456,7 @@ export default function VideoCall() {
         // If it resolves after all, don't leave the camera/mic light on for
         // an attempt the user already gave up on — a later Retry click
         // starts its own fresh, independent capture.
-        mediaAttempt.then((lateStream) => lateStream.getTracks().forEach((t) => t.stop())).catch(() => {});
+        mediaAttempt.then((lateStream) => lateStream.getTracks().forEach((t) => t.stop())).catch(() => { });
         return;
       }
       const stream = await mediaAttempt;
@@ -5779,12 +5853,12 @@ export default function VideoCall() {
   const pipStyle =
     pipPos.x !== null
       ? {
-          position: "fixed",
-          left: `${pipPos.x}px`,
-          top: `${pipPos.y}px`,
-          right: "auto",
-          bottom: "auto",
-        }
+        position: "fixed",
+        left: `${pipPos.x}px`,
+        top: `${pipPos.y}px`,
+        right: "auto",
+        bottom: "auto",
+      }
       : {};
   const screenShareSupported = canUseScreenShare();
 
@@ -6429,10 +6503,10 @@ export default function VideoCall() {
                               {msg.fileType?.includes("pdf")
                                 ? "📄"
                                 : msg.fileType?.includes("word") ||
-                                    msg.fileType?.includes("doc")
+                                  msg.fileType?.includes("doc")
                                   ? "📝"
                                   : msg.fileType?.includes("sheet") ||
-                                      msg.fileType?.includes("excel")
+                                    msg.fileType?.includes("excel")
                                     ? "📊"
                                     : "📎"}
                             </span>

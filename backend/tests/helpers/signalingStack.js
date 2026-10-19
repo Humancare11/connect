@@ -99,6 +99,8 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     doctor: { email: `doctor-${crypto.randomBytes(4).toString("hex")}@signal.invalid`, password: `Dd1!${crypto.randomBytes(8).toString("hex")}` },
     patient: { email: `patient-${crypto.randomBytes(4).toString("hex")}@signal.invalid`, password: `Pp1!${crypto.randomBytes(8).toString("hex")}` },
     other: { email: `other-${crypto.randomBytes(4).toString("hex")}@signal.invalid`, password: `Oo1!${crypto.randomBytes(8).toString("hex")}` },
+    admin: { email: `admin-${crypto.randomBytes(4).toString("hex")}@signal.invalid`, password: `Aa1!${crypto.randomBytes(8).toString("hex")}` },
+    superadmin: { email: `super-${crypto.randomBytes(4).toString("hex")}@signal.invalid`, password: `Ss1!${crypto.randomBytes(8).toString("hex")}` },
   };
   process.env.JWT_SECRET ||= childEnv.JWT_SECRET;
   // Models read crypto keys at require-time in some modules - give this process the same ones.
@@ -114,6 +116,10 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
   const doctor = await Doctor.create({ name: "Signal Doctor", email: creds.doctor.email, password: creds.doctor.password, isEnrolled: true });
   const patient = await User.create({ name: "Signal Patient", email: creds.patient.email, password: await bcrypt.hash(creds.patient.password, 10), role: "user" });
   const other = await User.create({ name: "Signal Other", email: creds.other.email, password: await bcrypt.hash(creds.other.password, 10), role: "user" });
+  const adminUser = await User.create({ name: "Signal Admin", email: creds.admin.email, password: await bcrypt.hash(creds.admin.password, 10), role: "admin" });
+  const superUser = await User.create({ name: "Signal Super", email: creds.superadmin.email, password: await bcrypt.hash(creds.superadmin.password, 10), role: "superadmin" });
+  ids.adminId = String(adminUser._id);
+  ids.superadminId = String(superUser._id);
   ids.doctorId = String(doctor._id);
   ids.patientId = String(patient._id);
   ids.otherId = String(other._id);
@@ -136,6 +142,28 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     return String(appt._id);
   }
 
+  // Raw inserts: this only needs documents the access check can read, not the full
+  // booking flow's validation.
+  async function makeCategoryConsultation(status = "Confirmed") {
+    const enrollments = mongoose.connection.collection("enrollments");
+    await enrollments.updateOne({ doctorId: doctor._id }, { $setOnInsert: { createdAt: new Date() } }, { upsert: true });
+    const enrollmentId = (await enrollments.findOne({ doctorId: doctor._id }))._id;
+    const _id = new mongoose.Types.ObjectId();
+    await mongoose.connection.collection("categoryconsultations").insertOne({
+      _id,
+      concern: "signal test",
+      severity: "mild",
+      supportType: "video",
+      urgency: "normal",
+      date: new Date().toISOString().slice(0, 10),
+      patientId: patient._id,
+      status,
+      assignedDoctorId: enrollmentId,
+      createdAt: new Date(),
+    });
+    return String(_id);
+  }
+
   async function makeDirectRoom({ status = "active", expiresInMs = 6 * 3600 * 1000 } = {}) {
     const room = await DirectVideoRoom.create({
       roomId: crypto.randomBytes(16).toString("hex"),
@@ -154,7 +182,7 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
   await startBackend();
 
   async function login(role) {
-    const url = role === "doctor" ? "/api/doctor/login" : "/api/auth/login";
+    const url = role === "doctor" ? "/api/doctor/login" : role === "admin" || role === "superadmin" ? "/api/auth/admin-login" : "/api/auth/login";
     const res = await fetch(baseUrl + url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -165,11 +193,17 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     return { accessToken: body.accessToken, refreshToken: body.refreshToken };
   }
 
-  const tokens = { doctor: await login("doctor"), patient: await login("patient"), other: await login("other") };
+  const tokens = {
+    doctor: await login("doctor"),
+    patient: await login("patient"),
+    other: await login("other"),
+    admin: await login("admin"),
+    superadmin: await login("superadmin"),
+  };
 
   const sockets = new Set();
 
-  function connect({ token, reconnection = false, extra = {} } = {}) {
+  function connect({ token, reconnection = false, userAgent, extra = {} } = {}) {
     const socket = ioClient(baseUrl, {
       path: "/socket.io/",
       transports: ["websocket"],
@@ -177,6 +211,7 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
       reconnectionDelay: 200,
       reconnectionDelayMax: 500,
       auth: token ? { token } : {},
+      ...(userAgent ? { extraHeaders: { "user-agent": userAgent } } : {}),
       forceNew: true,
       ...extra,
     });
@@ -212,12 +247,12 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
 
   const count = (socket, event) => socket.events.filter((e) => e.event === event).length;
 
-  async function joinAppointment(socket, role, { appointmentId = ids.appointmentId, tokenOverride } = {}) {
+  async function joinAppointment(socket, role, { appointmentId = ids.appointmentId, tokenOverride, clientInfo } = {}) {
     const userId = role === "doctor" ? ids.doctorId : role === "patient" ? ids.patientId : ids.otherId;
     const token = tokenOverride === undefined ? tokens[role]?.accessToken : tokenOverride;
     const apptRole = role === "doctor" ? "doctor" : "user";
     socket.emit("user-online", { userId, role: apptRole, token });
-    socket.emit("join-appointment-room", { appointmentId, userId, role: apptRole, token, capabilities: { peerRebuild: true } });
+    socket.emit("join-appointment-room", { appointmentId, userId, role: apptRole, token, capabilities: { peerRebuild: true }, ...(clientInfo !== undefined ? { clientInfo } : {}) });
   }
 
   async function alive() {
@@ -244,6 +279,7 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     sleep,
     joinAppointment,
     makeAppointment,
+    makeCategoryConsultation,
     makeDirectRoom,
     alive,
     login,
@@ -251,7 +287,8 @@ async function startStack({ env = {}, graceMs = 1500 } = {}) {
     stopBackend,
     startBackend,
     killMongo: () => mongod.stop(),
-    models: { Appointment, DirectVideoRoom, User, Doctor },
+    models: { Appointment, DirectVideoRoom, User, Doctor, CallReport: require(path.join(BACKEND_DIR, "models/CallReport.js")) },
+    mongoose,
     get childPid() {
       return child?.pid;
     },

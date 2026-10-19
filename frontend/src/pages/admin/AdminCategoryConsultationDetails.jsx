@@ -170,6 +170,12 @@ export default function AdminCategoryConsultationDetails() {
           >
             Back to Category Consultations
           </Link>
+          <Link
+            className="adp-alt-btn"
+            to={`/admin-dashboard/category-consultations/${consultation._id}/call-report`}
+          >
+            View call report
+          </Link>
           {/* A completed consultation must be reopened before its doctor can change. */}
           {String(consultation.status || "").toLowerCase() !== "completed" && (
             <button
