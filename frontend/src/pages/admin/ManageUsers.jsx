@@ -160,7 +160,7 @@ export default function ManageUsers() {
   const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, i) => firstPageShown + i);
 
   return (
-    <div className="mu-page">
+    <div className="mu-list-page">
       {toast && (
         <div
           className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}

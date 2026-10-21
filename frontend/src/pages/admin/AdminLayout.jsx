@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react"; // useState still used for sideOpen
-import { createPortal } from "react-dom";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import "./AdminDashboard.css";
@@ -198,9 +197,6 @@ const isVisibleTo = (item, role) => {
 const pathMatches = (target, pathname, exact) =>
   pathname === target || (!exact && pathname.startsWith(`${target}/`));
 
-const CLOSE_DELAY_MS = 200;
-const FLYOUT_GAP_PX = 4;
-
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
   useEffect(() => {
@@ -212,8 +208,6 @@ function useMediaQuery(query) {
   return matches;
 }
 
-// A parent entry with a submenu: a flyout to the right of the sidebar on
-// desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
 // "Live Chat": a plain anchor that opens the Live Chat dashboard in a new tab on every click. No onClick, no script, no
 // window features, no badge, no unread count.
 function LiveChatNavLink({ item }) {
@@ -225,156 +219,26 @@ function LiveChatNavLink({ item }) {
   );
 }
 
-function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChange, onNavigate }) {
-  const buttonRef = useRef(null);
-  const flyoutRef = useRef(null);
-  const closeTimer = useRef(null);
-  const pinned = useRef(false); // opened / kept open by a click or key, not just by hovering
-  const focusFirstOnOpen = useRef(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+// A parent entry with a submenu: the submenu expands in place under its parent
+// (click or keyboard) and pushes the entries below it down, at every width.
+function NavGroup({ item, links, active, isLinkActive, open, onOpenChange, onNavigate }) {
   const menuId = `ad-submenu-${item.key}`;
-
-  const cancelClose = () => clearTimeout(closeTimer.current);
-  const close = () => {
-    cancelClose();
-    pinned.current = false;
-    onOpenChange(null);
-  };
-  const scheduleClose = () => {
-    if (inline || pinned.current) return;
-    cancelClose();
-    closeTimer.current = setTimeout(close, CLOSE_DELAY_MS);
-  };
-  const show = () => {
-    if (!inline && buttonRef.current) {
-      const button = buttonRef.current.getBoundingClientRect();
-      const sidebar = buttonRef.current.closest(".ad-sidebar").getBoundingClientRect();
-      setPosition({ top: button.top, left: sidebar.right + FLYOUT_GAP_PX });
-    }
-    onOpenChange(item.key);
-  };
-
-  const onMouseEnter = () => {
-    if (inline) return;
-    cancelClose();
-    if (!open) show();
-  };
-
-  const onClick = (event) => {
-    cancelClose();
-    if (!open) {
-      pinned.current = true;
-      focusFirstOnOpen.current = event.detail === 0; // opened with Enter / Space
-      show();
-    } else if (!inline && !pinned.current) {
-      pinned.current = true; // opened by hover, clicked: keep it open
-    } else {
-      close();
-    }
-  };
-
-  const focusItem = (index) => {
-    const items = flyoutRef.current?.querySelectorAll('[role="menuitem"]');
-    if (items?.length) items[(index + items.length) % items.length].focus();
-  };
-
-  // After a keyboard open, move focus into the submenu once it is rendered.
-  useEffect(() => {
-    if (open && focusFirstOnOpen.current) {
-      focusFirstOnOpen.current = false;
-      focusItem(0);
-    }
-  });
-
-  // Close on an outside click, and when the page scrolls or resizes under the flyout.
-  useEffect(() => {
-    if (!open || inline) return undefined;
-    const onPointerDown = (event) => {
-      if (buttonRef.current?.contains(event.target) || flyoutRef.current?.contains(event.target)) return;
-      close();
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("resize", close);
-    const nav = buttonRef.current?.closest(".ad-nav");
-    nav?.addEventListener("scroll", close);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      window.removeEventListener("resize", close);
-      nav?.removeEventListener("scroll", close);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, inline]);
-
-  useEffect(() => () => clearTimeout(closeTimer.current), []);
-
+  const toggle = () => onOpenChange(open ? null : item.key);
   const onButtonKeyDown = (event) => {
     if (event.key === "Escape" && open) {
       event.preventDefault();
-      close();
-    } else if ((event.key === "ArrowRight" || event.key === "ArrowDown") && !inline) {
-      event.preventDefault();
-      if (!open) {
-        pinned.current = true;
-        focusFirstOnOpen.current = true;
-        show();
-      } else focusItem(0);
-    } else if (event.key === "Tab" && !event.shiftKey && open && !inline) {
-      event.preventDefault();
-      focusItem(0);
+      onOpenChange(null);
     }
-  };
-
-  const onMenuKeyDown = (event) => {
-    const items = [...(flyoutRef.current?.querySelectorAll('[role="menuitem"]') || [])];
-    const index = items.indexOf(document.activeElement);
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-      buttonRef.current?.focus();
-    } else if (event.key === "ArrowDown") {
-      event.preventDefault();
-      focusItem(index + 1);
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      focusItem(index - 1);
-    } else if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      buttonRef.current?.focus();
-    } else if (event.key === "Tab") {
-      if (event.shiftKey && index === 0) {
-        event.preventDefault();
-        buttonRef.current?.focus();
-      } else if (!event.shiftKey && index === items.length - 1) {
-        // Leave the submenu: close it and continue with the next sidebar entry.
-        event.preventDefault();
-        close();
-        const focusables = [
-          ...document.querySelectorAll(".ad-nav > a.ad-nav-item, .ad-nav > .ad-nav-group > .ad-nav-parent, .ad-logout-btn"),
-        ];
-        const at = focusables.indexOf(buttonRef.current);
-        (focusables[at + 1] || buttonRef.current)?.focus();
-      }
-    }
-  };
-
-  const linkClass = (link) => `ad-nav-item ad-flyout-item${isLinkActive(link) ? " active" : ""}`;
-  const handleNavigate = () => {
-    close();
-    onNavigate();
   };
 
   return (
     <div className="ad-nav-group">
       <button
-        ref={buttonRef}
         type="button"
         className={`ad-nav-item ad-nav-parent${active ? " active" : ""}${open ? " open" : ""}`}
-        aria-haspopup="true"
         aria-expanded={open}
         aria-controls={menuId}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={scheduleClose}
-        onClick={onClick}
+        onClick={toggle}
         onKeyDown={onButtonKeyDown}
       >
         <span className="ad-nav-icon">{item.icon}</span>
@@ -398,40 +262,15 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
         <span className="ad-nav-arrow" aria-hidden="true">›</span>
       </button>
 
-      {open && inline && (
-        <div className="ad-subnav" id={menuId}>
-          {links.map((link) => (
-            <Link key={link.target} to={link.target} className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={handleNavigate}>
-              <span className="ad-nav-icon">{link.icon}</span>
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      )}
-
-      {open &&
-        !inline &&
-        createPortal(
-          <div
-            ref={flyoutRef}
-            id={menuId}
-            className="ad-flyout"
-            role="menu"
-            aria-label={item.label}
-            style={{ top: position.top, left: position.left }}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
-            onKeyDown={onMenuKeyDown}
-          >
-            {links.map((link) => (
-              <Link key={link.target} to={link.target} role="menuitem" className={linkClass(link)} onClick={handleNavigate}>
-                <span className="ad-nav-icon">{link.icon}</span>
-                {link.label}
-              </Link>
-            ))}
-          </div>,
-          document.body
-        )}
+      {/* Always rendered so aria-controls resolves; `hidden` keeps it out of the layout and the tab order. */}
+      <div className="ad-subnav" id={menuId} hidden={!open}>
+        {links.map((link) => (
+          <Link key={link.target} to={link.target} className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={onNavigate}>
+            <span className="ad-nav-icon">{link.icon}</span>
+            {link.label}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -580,7 +419,7 @@ export default function AdminLayout({ children }) {
           {visibleItems.map((item) => {
             if (item.links) {
               const active = item.links.some(isLinkActive);
-              const open = openKey === item.key || (openKey === undefined && isPhone && active);
+              const open = openKey === item.key || (openKey === undefined && active);
               return (
                 <NavGroup
                   key={item.key}
@@ -589,7 +428,6 @@ export default function AdminLayout({ children }) {
                   active={active}
                   isLinkActive={isLinkActive}
                   open={open}
-                  inline={isPhone}
                   onOpenChange={setOpenKey}
                   onNavigate={closeDrawer}
                 />

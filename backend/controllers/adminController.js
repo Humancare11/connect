@@ -3,6 +3,8 @@ const Enrollment = require("../models/Enrollment");
 const Doctor = require("../models/Doctor");
 const mongoose = require("mongoose");
 const Appointment = require("../models/Appointment");
+const Ticket = require("../models/Ticket");
+const UserTicket = require("../models/UserTicket");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
@@ -135,7 +137,26 @@ const getAdminStats = async (req, res) => {
     const totalAppointments = await Appointment.countDocuments();
     const pendingAccountDeletionRequests = await User.countDocuments({ deletionRequestStatus: "pending" });
 
-    res.status(200).json({ totalUsers, activeUsers, totalDoctors, totalAppointments, pendingAccountDeletionRequests });
+    // Dashboard summaries (additive): counts only, so the dashboard never has to download the ticket or appointment lists.
+    const [pendingDoctorApprovals, openDoctorTickets, openPatientTickets, appointmentStatusRows] = await Promise.all([
+      Enrollment.countDocuments({ approvalStatus: "pending" }),
+      Ticket.countDocuments({ status: "open" }),
+      UserTicket.countDocuments({ status: "open" }),
+      Appointment.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
+    ]);
+    // Same grouping the Appointments page uses: "requested" counts as upcoming, "completed" as complete.
+    const appointmentsByStatus = { upcoming: 0, assigned: 0, pending: 0, confirmed: 0, complete: 0, cancelled: 0 };
+    appointmentStatusRows.forEach(({ _id, count }) => {
+      const key = _id === "requested" ? "upcoming" : _id === "completed" ? "complete" : _id || "upcoming";
+      if (key in appointmentsByStatus) appointmentsByStatus[key] += count;
+    });
+
+    res.status(200).json({
+      totalUsers, activeUsers, totalDoctors, totalAppointments, pendingAccountDeletionRequests,
+      pendingDoctorApprovals,
+      openTickets: { doctor: openDoctorTickets, patient: openPatientTickets },
+      appointmentsByStatus,
+    });
   } catch (error) {
     console.error("Admin stats error:", error);
     res.status(500).json({ msg: "Failed to fetch admin stats" });

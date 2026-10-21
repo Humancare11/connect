@@ -318,13 +318,13 @@
 }
 
 /* Manage Users heading: mirrors Our Doctors (.adp-doctors-page). Scoped so other admin pages are unaffected. */
-.mu-page .adp-header {
+.mu-list-page .adp-header {
   display: block;
   padding: 0;
   margin-bottom: 24px;
 }
 
-.mu-page .adp-eyebrow {
+.mu-list-page .adp-eyebrow {
   display: inline;
   margin: 0;
   font-size: 11px;
@@ -334,7 +334,7 @@
   color: #0e6ceb;
 }
 
-.mu-page .adp-title {
+.mu-list-page .adp-title {
   margin: 4px 0 2px;
   font-size: 22px;
   font-weight: 800;
@@ -343,7 +343,7 @@
   text-align: left;
 }
 
-.mu-page .adp-sub {
+.mu-list-page .adp-sub {
   margin: 0;
   max-width: none;
   font-size: 14px;
@@ -351,7 +351,7 @@
   color: #6b7ca3;
 }
 
-.mu-page .mu-history-link {
+.mu-list-page .mu-history-link {
   display: inline-block;
   margin-top: 6px;
   font-size: 13px;
@@ -361,7 +361,7 @@
   overflow-wrap: anywhere;
 }
 
-.mu-page .mu-history-link:hover {
+.mu-list-page .mu-history-link:hover {
   text-decoration: underline;
 }
 
@@ -602,14 +602,14 @@
    Consultations Info over A/C Information on the right. Both columns are the
    same height: the row stretches them, the right column's last card (A/C)
    absorbs any difference, and rows inside a stretched card are spread evenly.
-   Below 1000px it is a single column in DOM order (Personal, Consultations, A/C). ── */
+   Below 1360px (the sidebar takes ~290px, so each column needs the room) it is a single column in DOM order (Personal, Consultations, A/C). ── */
 .mu-col-right {
   display: flex;
   flex-direction: column;
   gap: 14px;
   min-width: 0;
 }
-@media (min-width: 1000px) {
+@media (min-width: 1360px) {
   .mu-grid--profile {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: stretch;
@@ -806,6 +806,157 @@
   }
   .mu-consult-count {
     font-size: 24px;
+  }
+}
+
+/* ── User profile: responsive refinements (profile-only selectors) ── */
+
+/* Consultations table: keep dates, times and IDs whole; the View button never shrinks. */
+.mu-consults .mu-ctable .mu-cell-main,
+.mu-consults .mu-ctable .mu-cell-sub {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.mu-consults .mu-ctable .mu-view-btn {
+  white-space: nowrap;
+}
+.mu-consults .mu-consult-head {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.mu-consults .mu-status-select {
+  max-width: 100%;
+}
+/* break only when a word cannot fit on its own line (e.g. a long email), not mid-word otherwise */
+.mu-grid--profile .mu-row-value {
+  overflow-wrap: break-word;
+}
+
+/* Table view (≥520px): fixed layout so the four columns always share the card width — Sr. No and View get
+   fixed widths, Date and App. ID split the rest. No horizontal scrolling inside the card. */
+@media (min-width: 520px) {
+  .mu-consults .mu-ctable {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .mu-consults .mu-ctable th,
+  .mu-consults .mu-ctable td {
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  .mu-consults .mu-ctable .mu-col-sr {
+    width: 52px;
+  }
+  .mu-consults .mu-ctable th:last-child,
+  .mu-consults .mu-ctable .mu-cell-action {
+    width: 84px;
+  }
+  /* dates may wrap only at spaces ("23 Oct" / "2026"); IDs and times stay whole */
+  .mu-consults .mu-ctable td[data-label="Date"] .mu-cell-main {
+    white-space: normal;
+  }
+}
+
+/* Phones: each consultation becomes a stacked card so "View" never scrolls out of sight. */
+@media (max-width: 519px) {
+  .mu-ctable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .mu-ctable,
+  .mu-ctable tbody {
+    display: block;
+    width: 100%;
+  }
+  .mu-ctable tr {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 8px 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f3fa;
+  }
+  .mu-ctable tbody tr:last-child {
+    border-bottom: none;
+  }
+  .mu-ctable td,
+  .mu-ctable tbody tr:last-child td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+  }
+  .mu-ctable td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7ca3;
+  }
+  .mu-ctable .mu-col-sr {
+    width: auto;
+  }
+  /* date + time, and ID + type, read as one line each */
+  .mu-ctable td[data-label="Date"] > div,
+  .mu-ctable .mu-cell-id > div {
+    display: inline;
+  }
+  .mu-ctable td[data-label="Date"] .mu-cell-sub,
+  .mu-ctable .mu-cell-id .mu-cell-sub {
+    margin-left: 8px;
+  }
+  .mu-ctable .mu-cell-id,
+  .mu-ctable .mu-cell-action {
+    grid-column: 1 / -1;
+  }
+  .mu-ctable .mu-cell-action .mu-view-btn {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
+
+/* Info rows: label above value on very narrow phones */
+@media (max-width: 420px) {
+  .mu-grid--profile .mu-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .mu-grid--profile .mu-row-value {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+/* Touch targets (≥44px) up to tablet width */
+@media (max-width: 768px) {
+  .mu-hero-actions .adp-btn,
+  .mu-consults .mu-status-select {
+    min-height: 44px;
+  }
+  .mu-consults .mu-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+  .mu-consults .mu-pager-btn {
+    min-width: 44px;
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mu-skeleton {
+    animation: none;
   }
 }
 

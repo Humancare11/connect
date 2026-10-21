@@ -1,6 +1,10 @@
 /* ─── Page shell ─────────────────────────────────────────── */
+/* The page is an inline-size container: breakpoints below follow the width left after the admin sidebar,
+   not the viewport. Shared with AdminAssignCategoryDoctor.jsx. */
 .aad-page {
-  min-height: 100vh;
+  container: aad / inline-size;
+  max-width: 1440px;
+  margin-inline: auto;
   background: #f6f8fb;
   font-family: var(--font-secondary);
   color: #1a1d23;
@@ -10,6 +14,7 @@
 /* ─── Top nav ─────────────────────────────────────────────── */
 .aad-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding: 13px 24px;
@@ -36,27 +41,28 @@
   color: #1a1d23;
 }
 
-/* ─── Appointment bar ─────────────────────────────────────── */
+/* ─── Appointment summary ──────────────────────────────────── */
+/* Narrow: stacked rows. ≥480px: two-column grid. ≥940px: one horizontal strip. Values wrap; nothing scrolls. */
 .aad-appt-bar {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   background: #fff;
   border-bottom: 0.5px solid #e2e4e9;
-  padding: 0 24px;
-  overflow-x: auto;
+  padding: 0 14px;
 }
+
+.aad-appt-sep { display: none; }
 
 .aad-appt-field {
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 3px;
-  padding: 12px 20px;
-  border-right: 0.5px solid #e2e4e9;
-  flex-shrink: 0;
+  min-width: 0;
+  padding: 10px 6px;
+  border-bottom: 0.5px solid #eef0f4;
 }
-.aad-appt-field:first-child { padding-left: 0; }
-.aad-appt-field:last-child  { border-right: none; }
+.aad-appt-field:last-child { border-bottom: none; }
 
 .aad-appt-label {
   font-size: 10px;
@@ -70,13 +76,38 @@
   font-size: 13px;
   font-weight: 500;
   color: #1a1d23;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
-.aad-appt-doctor { color: #3b6ef6; }
+.aad-appt-doctor { color: #3b6ef6; font-weight: 600; }
+
+@container aad (min-width: 480px) {
+  .aad-appt-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 18px;
+    padding: 0 24px;
+  }
+  .aad-appt-field:nth-last-child(-n + 2) { border-bottom: none; }
+}
+
+@container aad (min-width: 940px) {
+  .aad-appt-bar {
+    display: flex;
+    column-gap: 0;
+  }
+  .aad-appt-field {
+    flex: 1 1 0;
+    padding: 12px 14px;
+    border-bottom: none;
+    border-right: 0.5px solid #e2e4e9;
+  }
+  .aad-appt-field:first-child { padding-left: 0; }
+  .aad-appt-field:last-child { border-right: none; }
+}
 
 /* ─── Banner ──────────────────────────────────────────────── */
 .aad-banner {
   margin: 14px 20px 0;
+  overflow-wrap: anywhere;
   padding: 10px 15px;
   border-radius: 8px;
   font-size: 13px;
@@ -95,11 +126,16 @@
 }
 
 /* ─── List header ─────────────────────────────────────────── */
+.aad-list-section {
+  container: aadlist / inline-size;
+}
+
 .aad-list-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 12px 14px;
   padding: 16px 18px;
   border-bottom: 0.5px solid #e2e4e9;
   background: #fff;
@@ -107,6 +143,7 @@
 
 .aad-list-title {
   min-width: 0;
+  flex: 1 1 260px;
 }
 
 .aad-list-title h2 {
@@ -129,12 +166,14 @@
   display: flex;
   align-items: center;
   gap: 7px;
+  flex: 0 1 340px;
+  min-width: 0;
+  box-sizing: border-box;
   border: 0.5px solid #d4d7e0;
   border-radius: 6px;
   padding: 8px 11px;
   background: #fff;
   cursor: text;
-  flex-shrink: 0;
 }
 .aad-search svg { color: #9ba3b4; flex-shrink: 0; }
 .aad-search input {
@@ -143,7 +182,8 @@
   outline: none;
   font-size: 12.5px;
   color: #1a1d23;
-  width: 240px;
+  width: 100%;
+  min-width: 0;
 }
 .aad-search input:focus-visible {
   /* Focus is shown on the rounded container (.aad-search:focus-within), not as a box around the input. */
@@ -155,18 +195,19 @@
 }
 .aad-search input::placeholder { color: #bcc1cc; }
 
-/* ─── Doctor table ────────────────────────────────────────── */
+/* ─── Doctor list: three presentations, chosen by the card's own width ───
+   ≥860px  full table (ID column shown)
+   560–859 compact table (ID moves under the name)
+   <560    one card per doctor */
 .aad-doctor-list {
   display: flex;
   flex-direction: column;
-  overflow-x: auto;
 }
 
 .aad-doctor-row {
   display: grid;
-  grid-template-columns: 78px 140px minmax(220px, 1fr) 190px 170px 110px;
+  grid-template-columns: 56px 110px minmax(0, 1.6fr) minmax(0, 1.2fr) minmax(0, 1fr) 110px;
   align-items: center;
-  min-width: 908px;
   gap: 12px;
   padding: 13px 18px;
   border-bottom: 0.5px solid #f0f1f5;
@@ -176,9 +217,6 @@
 .aad-doctor-row:hover { background: #fafbfc; }
 
 .aad-doctor-row--head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   background: #f8fafc;
   border-bottom-color: #e2e8f0;
 }
@@ -204,10 +242,12 @@
   font-size: 13px;
   line-height: 1.35;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
+
+.aad-cell-group { display: contents; }
+
+.aad-id-inline { display: none; }
 
 .aad-cell-sr {
   text-align: center;
@@ -228,9 +268,75 @@
   justify-content: flex-end;
 }
 
+@container aadlist (max-width: 859px) {
+  .aad-doctor-row {
+    grid-template-columns: 40px minmax(0, 1.6fr) minmax(0, 1.1fr) minmax(0, .8fr) 96px;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+  .aad-cell-id { display: none; }
+  .aad-id-inline {
+    display: block;
+    margin-top: 2px;
+    font-size: 11.5px;
+    font-weight: 400;
+    color: #667085;
+  }
+  .aad-assign-btn { min-width: 0; width: 100%; padding-inline: 8px; }
+}
+
+@container aadlist (max-width: 559px) {
+  .aad-doctor-row--head { display: none; }
+  .aad-doctor-list { padding: 4px 12px 8px; gap: 10px; }
+  .aad-doctor-row {
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-areas:
+      "sr name"
+      "sr meta"
+      "action action";
+    gap: 4px 12px;
+    padding: 12px;
+    border: 1px solid #e6eaf2;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .aad-doctor-row:last-child { border-bottom: 1px solid #e6eaf2; }
+  .aad-doctor-row--selected { background: #f0f5ff; }
+  .aad-cell-sr {
+    grid-area: sr;
+    align-self: start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .aad-cell-name { grid-area: name; font-size: 14px; }
+  .aad-cell-group {
+    grid-area: meta;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+    min-width: 0;
+  }
+  .aad-cell-group .aad-cell { font-size: 12.5px; color: #667085; }
+  .aad-cell-group .aad-cell-country::before { content: "•"; margin-right: 6px; }
+  .aad-doctor-action { grid-area: action; margin-top: 6px; }
+  .aad-assign-btn { min-height: 44px; font-size: 13px; }
+}
+
 /* ─── Assign button ───────────────────────────────────────── */
 .aad-assign-btn {
   min-width: 92px;
+  min-height: 34px;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 7px 13px;
   border-radius: 6px;
   font-size: 12px;
@@ -246,6 +352,7 @@
   background: #f0f1f5;
 }
 .aad-assign-btn:disabled { opacity: .5; cursor: not-allowed; }
+.aad-assign-btn:focus-visible { outline: 2px solid #3b6ef6; outline-offset: 2px; }
 
 .aad-assign-btn--primary {
   background: #3b6ef6;
@@ -297,51 +404,20 @@
 }
 
 /* ─── Responsive ──────────────────────────────────────────── */
-@media (max-width: 860px) {
-  .aad-appt-bar { padding: 0 14px; }
-  .aad-appt-field { padding: 10px 14px; }
-  .aad-list-section { margin: 12px 10px 28px; }
-  .aad-list-header { flex-direction: column; align-items: flex-start; }
-  .aad-search { width: 100%; box-sizing: border-box; }
-  .aad-search input { width: 100%; }
-  .aad-doctor-row { padding: 12px 14px; }
+@container aad (max-width: 600px) {
+  .aad-banner { margin: 10px 10px 0; }
+  .aad-list-section { margin: 10px 10px 28px; }
+  .aad-list-header { padding: 14px; }
+  .aad-search { flex: 1 1 100%; }
+  .aad-nav { padding: 12px 14px; }
 }
 
-/* -- Mobile Medium (=600px) -- */
-@media (max-width: 600px) {
-  .aad-appt-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-
-  .aad-doctor-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .aad-doctor-actions {
-    width: 100%;
-  }
-
-  .aad-assign-btn {
-    width: 100%;
-    justify-content: center;
-  }
+@container aad (max-width: 420px) {
+  .aad-banner { margin: 8px 6px 0; }
+  .aad-list-section { margin: 8px 6px 20px; border-radius: 12px; }
 }
 
-/* -- Mobile Small (=420px) -- */
-@media (max-width: 420px) {
-  .aad-appt-bar {
-    padding: 0 10px;
-  }
-
-  .aad-list-section {
-    margin: 8px 6px 20px;
-    border-radius: 12px;
-  }
-
-  .aad-doctor-info h4 {
-    font-size: 14px;
-  }
+/* Heading and search share a row only when the card is wide; otherwise search drops below, full width. */
+@container aadlist (max-width: 859px) {
+  .aad-search { flex: 1 1 100%; }
 }

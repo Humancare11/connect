@@ -109,15 +109,20 @@ function DoctorRow({
       <div className="aad-cell aad-cell-sr">{index + 1}</div>
       <div className="aad-cell aad-cell-id">{doctor.doctorId || "-"}</div>
       <div className="aad-cell aad-cell-name">
-        {doctorDisplayName(doctor.name)}
+        <span className="aad-name-text">{doctorDisplayName(doctor.name)}</span>
+        {/* shown instead of the ID column on tablet/phone layouts */}
+        <span className="aad-id-inline">ID: {doctor.doctorId || "-"}</span>
       </div>
-      <div className="aad-cell aad-cell-specialty">
-        {doctor.specialty || "-"}
+      <div className="aad-cell-group">
+        <div className="aad-cell aad-cell-specialty">
+          {doctor.specialty || "-"}
+        </div>
+        <div className="aad-cell aad-cell-country">{getCountryName(doctor.country) || "-"}</div>
       </div>
-      <div className="aad-cell aad-cell-country">{getCountryName(doctor.country) || "-"}</div>
       <div className="aad-doctor-action">
         <button
           type="button"
+          aria-label={`${selected ? "Assigned" : appointment.doctorId ? "Reassign" : "Assign"} ${doctorDisplayName(doctor.name)}`}
           className={`aad-assign-btn ${selected ? "aad-assign-btn--current" : doctor.doctorId ? "aad-assign-btn--primary" : ""}`}
           disabled={assigning || selected || !doctor.doctorId}
           onClick={() => onAssign(doctor)}
@@ -359,6 +364,7 @@ export default function AdminAssignDoctor() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
+              aria-label="Search doctors by name, ID, specialty or country"
               placeholder="Search by name, ID, specialty, country…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}

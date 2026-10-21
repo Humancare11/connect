@@ -379,7 +379,7 @@ export default function AdminDirectVideoConsultation() {
           <div className="dvc-empty">No video consultation rooms generated yet.</div>
         ) : (
           <div className="dvc-table-wrap">
-            <table className="dvc-table">
+            <table className="dvc-table dvc-table--rooms">
               <thead>
                 <tr>
                   <th>Created</th>
@@ -397,19 +397,19 @@ export default function AdminDirectVideoConsultation() {
                 {rooms.map((room) => (
                   <Fragment key={room.roomId}>
                     <tr>
-                      <td>{formatDate(room.createdAt)}</td>
-                      <td>{room.doctorName || "-"}</td>
-                      <td>{formatDate(room.expiresAt)}</td>
-                      <td>{room.note || "-"}</td>
-                      <td>
+                      <td data-label="Created">{formatDate(room.createdAt)}</td>
+                      <td data-label="Doctor">{room.doctorName || "-"}</td>
+                      <td data-label="Expires">{formatDate(room.expiresAt)}</td>
+                      <td data-label="Note">{room.note || "-"}</td>
+                      <td data-label="Status">
                         <span className={`dvc-status dvc-status--${room.status}`}>{statusLabel(room.status)}</span>
                       </td>
-                      <td>
+                      <td data-label="Link">
                         <button className="dvc-link-btn" type="button" onClick={() => copyHistoryLink(room.joinLink)}>
                           Copy
                         </button>
                       </td>
-                      <td>
+                      <td data-label="PINs">
                         {room.hasPin ? (
                           <button className="dvc-link-btn" type="button" onClick={() => togglePinPanel(room.roomId)}>
                             {expandedPinRoomId === room.roomId ? "Hide PINs" : "View PINs"}
@@ -418,12 +418,12 @@ export default function AdminDirectVideoConsultation() {
                           "-"
                         )}
                       </td>
-                      <td>
+                      <td data-label="Report">
                         <Link className="dvc-link-btn" to={`/admin-dashboard/direct-video-consultation/calls/${room.roomId}`}>
                           Report
                         </Link>
                       </td>
-                      <td>
+                      <td data-label="Action">
                         <button
                           type="button"
                           className="dvc-link-btn"
