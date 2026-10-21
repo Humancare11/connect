@@ -15,6 +15,7 @@ import { useConfirm } from "../../components/ui/ConfirmDialog";
 // Remembers where the list was scrolled when a profile is opened, so coming
 // back (the page's Back button or the browser's) puts the admin in the same place.
 const SCROLL_KEY = "manage-users:list-scroll";
+const PAGE_SIZE = 10;
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -48,14 +49,18 @@ export default function ManageUsers() {
   // opening a profile and coming back, and the browser's Back button works.
   const search = searchParams.get("q") || "";
   const filter = searchParams.get("filter") === "deletion_requests" ? "deletion_requests" : "all";
-  const updateParams = ({ q = search, filter: nextFilter = filter }) => {
+  // Changing the search or the tab starts again from page 1.
+  const page = Math.max(1, parseInt(searchParams.get("page"), 10) || 1);
+  const updateParams = ({ q = search, filter: nextFilter = filter, page: nextPage = 1 }) => {
     const next = {};
     if (q) next.q = q;
     if (nextFilter !== "all") next.filter = nextFilter;
+    if (nextPage > 1) next.page = String(nextPage);
     setSearchParams(next, { replace: true });
   };
   const setSearch = (q) => updateParams({ q });
   const setFilter = (nextFilter) => updateParams({ filter: nextFilter });
+  const setPage = (nextPage) => updateParams({ page: nextPage });
 
   // Also called after a decision made in the Deletion Requests tab, so the
   // pending count and the Users list stay in step with the history.
@@ -147,8 +152,15 @@ export default function ManageUsers() {
         u.email?.toLowerCase().includes(search.toLowerCase()),
     );
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageStart = (currentPage - 1) * PAGE_SIZE;
+  const visibleUsers = filtered.slice(pageStart, pageStart + PAGE_SIZE);
+  const firstPageShown = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, i) => firstPageShown + i);
+
   return (
-    <div>
+    <div className="mu-page">
       {toast && (
         <div
           className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}
@@ -160,51 +172,14 @@ export default function ManageUsers() {
         <span className="adp-eyebrow">Admin Panel</span>
         <h1 className="adp-title">Manage Users</h1>
         <p className="adp-sub">
-          View and manage all registered patient accounts.{" "}
-          <Link to="/admin-dashboard/deletion-requests">Deletion request history →</Link>
+          View and manage all registered patient accounts.
         </p>
+        <Link className="mu-history-link" to="/admin-dashboard/deletion-requests">
+          Deletion request history →
+        </Link>
       </div>
 
-      <div
-        className="adp-stats"
-        style={{ gridTemplateColumns: "repeat(4,1fr)" }}
-      >
-        <div className="adp-stat adp-stat--blue">
-          <div className="adp-stat-icon">👥</div>
-          <div className="adp-stat-value">{users.length}</div>
-          <div className="adp-stat-label">Total Users</div>
-        </div>
-        <div className="adp-stat adp-stat--green">
-          <div className="adp-stat-icon">✅</div>
-          <div className="adp-stat-value">
-            {users.filter((u) => u.role === "user").length}
-          </div>
-          <div className="adp-stat-label">Patients</div>
-        </div>
-        <div className="adp-stat adp-stat--purple">
-          <div className="adp-stat-icon">🗓</div>
-          <div className="adp-stat-value">
-            {
-              users.filter((u) => {
-                const d = new Date(u.createdAt);
-                const now = new Date();
-                return (
-                  d.getMonth() === now.getMonth() &&
-                  d.getFullYear() === now.getFullYear()
-                );
-              }).length
-            }
-          </div>
-          <div className="adp-stat-label">Joined This Month</div>
-        </div>
-        <div className="adp-stat adp-stat--amber">
-          <div className="adp-stat-icon">🗑️</div>
-          <div className="adp-stat-value">{deletionRequestCount}</div>
-          <div className="adp-stat-label">Pending Deletion Requests</div>
-        </div>
-      </div>
-
-      <div className="adp-card">
+      <div className="adp-card mu-users-card">
         <div className="adp-card-header">
           <div className="adp-tabs">
             {[
@@ -263,23 +238,24 @@ export default function ManageUsers() {
           </div>
         ) : (
           <div className="adp-table-wrap">
-            <table className="adp-table">
+            <table className="adp-table mu-users-table">
               <thead>
                 <tr>
                   <th>User</th>
                   <th>Patient ID</th>
                   <th>Mobile</th>
-                  <th>Gender</th>
+                  <th className="mu-col-gender">Gender</th>
                   <th>Country</th>
-                  <th>Status</th>
+                  <th className="mu-col-status">Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
+                {visibleUsers.map((u) => (
                   <tr key={u._id}>
                     <td>
                       <div
+                        className="mu-users-user"
                         style={{
                           display: "flex",
                           alignItems: "center",
@@ -299,7 +275,7 @@ export default function ManageUsers() {
                                 .toUpperCase()
                             : "U"}
                         </div>
-                        <div>
+                        <div className="mu-users-who">
                           <div style={{ fontWeight: 600, color: "#0f172a" }}>
                             {u.name}
                           </div>
@@ -310,6 +286,8 @@ export default function ManageUsers() {
                       </div>
                     </td>
                     <td
+                      className="mu-col-id"
+                      data-label="Patient ID"
                       style={{
                         fontFamily: "var(--font-secondary)",
                         fontVariantNumeric: "tabular-nums",
@@ -318,12 +296,12 @@ export default function ManageUsers() {
                     >
                       {formatPatientId(u.patientId)}
                     </td>
-                    <td>{u.mobile || "—"}</td>
-                    <td style={{ textTransform: "capitalize" }}>
+                    <td className="mu-col-mobile" data-label="Mobile">{u.mobile || "—"}</td>
+                    <td className="mu-col-gender" data-label="Gender" style={{ textTransform: "capitalize" }}>
                       {u.gender || "—"}
                     </td>
-                    <td>{getCountryName(u.country) || "—"}</td>
-                    <td>
+                    <td className="mu-col-country" data-label="Country">{getCountryName(u.country) || "—"}</td>
+                    <td className="mu-col-status" data-label="Status">
                       {u.deletionRequestStatus === "pending" ? (
                         <span
                           style={{
@@ -344,7 +322,7 @@ export default function ManageUsers() {
                         "—"
                       )}
                     </td>
-                    <td>
+                    <td className="mu-col-actions">
                       <div style={{ display: "flex", gap: 6 }}>
                         <Link
                           className="adp-btn adp-btn--view"
@@ -383,6 +361,51 @@ export default function ManageUsers() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+        {filter !== "deletion_requests" && !loading && filtered.length > 0 && (
+          <div className="mu-users-foot">
+            <span>
+              Showing {pageStart + 1} - {pageStart + visibleUsers.length} of {filtered.length} users
+            </span>
+            {totalPages > 1 && (
+              <nav className="mu-pager" aria-label="User pages">
+                <button
+                  type="button"
+                  className="mu-pager-btn"
+                  aria-label="Previous page"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(currentPage - 1)}
+                >
+                  ‹
+                </button>
+                {pageNumbers.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`mu-pager-btn${n === currentPage ? " mu-pager-btn--active" : ""}`}
+                    aria-current={n === currentPage ? "page" : undefined}
+                    onClick={() => n !== currentPage && setPage(n)}
+                  >
+                    {n}
+                  </button>
+                ))}
+                {firstPageShown + 4 < totalPages && (
+                  <span className="mu-pager-gap" aria-hidden="true">
+                    …
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="mu-pager-btn"
+                  aria-label="Next page"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(currentPage + 1)}
+                >
+                  ›
+                </button>
+              </nav>
+            )}
           </div>
         )}
       </div>

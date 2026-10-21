@@ -443,6 +443,7 @@ export default function AdminLayout({ children }) {
   // phone drawer then shows the group containing the current page).
   const [openKey, setOpenKey] = useState(undefined);
   const isPhone = useMediaQuery("(max-width: 768px)");
+  const burgerRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -454,6 +455,21 @@ export default function AdminLayout({ children }) {
       navigate("/adminauth");
     }
   }, [user, loading, navigate]);
+
+  // The drawer only exists on phones: drop its open state when the desktop sidebar takes over.
+  if (!isPhone && sideOpen) setSideOpen(false);
+
+  // Escape closes the phone drawer and returns focus to the toggle.
+  useEffect(() => {
+    if (!sideOpen || !isPhone) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setSideOpen(false);
+      burgerRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [sideOpen, isPhone]);
 
   const logout = async () => {
     await contextLogout();
@@ -522,7 +538,7 @@ export default function AdminLayout({ children }) {
     <div className="ad-root">
       {/* Live chat: one shared connection for every admin page (unread badges, toasts). Admin + superadmin only. */}
       <LiveChatAdminProvider user={user} />
-      {sideOpen && (
+      {sideOpen && isPhone && (
         <div
           style={{
             position: "fixed",
@@ -535,7 +551,12 @@ export default function AdminLayout({ children }) {
       )}
 
       {/* ── Sidebar ── */}
-      <aside className={`ad-sidebar${sideOpen ? " open" : ""}`}>
+      {/* inert: a closed phone drawer is off-screen, so keep its links out of the tab order */}
+      <aside
+        id="ad-sidebar"
+        className={`ad-sidebar${sideOpen ? " open" : ""}`}
+        inert={isPhone && !sideOpen}
+      >
         {/* <div className="ad-brand">
           <div className="ad-brand-mark">H</div>
           <span className="ad-brand-name">Humancare</span>
@@ -607,6 +628,12 @@ export default function AdminLayout({ children }) {
         <header className="ad-topbar">
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button
+              ref={burgerRef}
+              type="button"
+              className="ad-menu-btn"
+              aria-label={!isPhone ? "Navigation menu" : sideOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-controls="ad-sidebar"
+              aria-expanded={isPhone ? sideOpen : true}
               onClick={() => setSideOpen((p) => !p)}
               style={{
                 background: "none",

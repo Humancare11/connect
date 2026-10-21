@@ -149,32 +149,9 @@ export default function AdminAppointments() {
 
   return (
     <div className="adp-page">
-     
-
-      <div className="adp-stats">
-        {[
-          { key: "upcoming", label: "Upcoming" },
-          { key: "assigned", label: "Assigned" },
-          { key: "pending", label: "Pending" },
-          { key: "confirmed", label: "Confirmed" },
-          { key: "complete", label: "Complete" },
-          { key: "all", label: "Total" },
-        ].map((stat) => (
-          <button
-            type="button"
-            key={stat.key}
-            className={`adp-stat ${filter === stat.key ? "adp-stat--active" : ""}`}
-            onClick={() => setActiveFilter(stat.key)}
-          >
-            <span className="adp-stat-value">{counts[stat.key]}</span>
-            <span className="adp-stat-label">{stat.label}</span>
-          </button>
-        ))}
-      </div>
-
-      <section className="adp-card">
+      <section className="adp-card adp-appts-card">
         <div className="adp-card-header">
-          {/* <div className="adp-tabs" role="tablist" aria-label="Appointment status">
+          <div className="adp-tabs" role="tablist" aria-label="Appointment status">
             {STATUS_ORDER.map((tab) => (
               <button
                 type="button"
@@ -186,7 +163,7 @@ export default function AdminAppointments() {
                 <span className="adp-tab-count">{counts[tab] ?? 0}</span>
               </button>
             ))}
-          </div> */}
+          </div>
           <label className="adp-search" aria-label="Search appointments">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
@@ -217,8 +194,8 @@ export default function AdminAppointments() {
             <p>No appointments match this view.</p>
           </div>
         ) : (
-          <div className="adp-table-wrap">
-            <table className="adp-flow-table">
+          <div className="adp-table-wrap adp-appts-wrap">
+            <table className="adp-flow-table adp-appts">
               <thead>
                 <tr>
                   <th>SR No</th>
@@ -238,28 +215,28 @@ export default function AdminAppointments() {
 
                   return (
                     <tr key={appointment._id}>
-                      <td className="adp-sr-cell">{index + 1}</td>
-                      <td>
+                      <td className="adp-sr-cell" data-label="SR No">{index + 1}</td>
+                      <td data-label="Booking ID">
                         <span className="adp-booking-id">{appointment._id}</span>
                       </td>
-                      <td>
+                      <td data-label="Patient">
                         <div className="adp-patient-cell">
                           <strong>{appointment.patientId?.name || "Unknown patient"}</strong>
                           <span>{patientGender(appointment)} - {getCountryName(patientCountry(appointment))}</span>
                         </div>
                       </td>
-                      <td>{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</td>
-                      <td>{getCountryName(doctorCountry(appointment))}</td>
-                      <td>
+                      <td data-label="Consultation Fee">{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</td>
+                      <td data-label="Doctor Country">{getCountryName(doctorCountry(appointment))}</td>
+                      <td data-label="Status">
                         <StatusPill status={appointment.status} />
                       </td>
-                      <td>{assignedBy(appointment)}</td>
-                      <td>
+                      <td data-label="Assigned By">{assignedBy(appointment)}</td>
+                      <td className="adp-col-view">
                         <Link className="adp-view-btn" to={`/admin-dashboard/appointments/${appointment._id}`}>
                           View
                         </Link>
                       </td>
-                      <td>
+                      <td className="adp-col-actions">
                         <div className="adp-list-actions">
                           {assigned ? (
                             <>

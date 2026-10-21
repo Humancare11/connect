@@ -66,7 +66,7 @@ export default function AdminDirectVideoCallDetail() {
     socket.off("direct-call-stats", handleLiveSample);
   }, [roomId, handleLiveSample]);
 
-  const startWatching = useCallback(async () => {
+  const startWatching = useCallback(async (isCancelled = () => false) => {
     // This admin socket has typically never connected before this report
     // page mounted — no other admin page uses it. If the admin's access
     // token has since expired (e.g. they had this report open, idle, past
@@ -76,6 +76,12 @@ export default function AdminDirectVideoCallDetail() {
     // (isAdminSocket() fails closed on the server for an unauthenticated
     // socket).
     await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true }).catch(() => {});
+    // The refresh is async: if the page unmounted (or the room changed, or
+    // StrictMode re-ran this effect) while it was in flight, stopWatching()
+    // already ran as a no-op because nothing was watching yet. Continuing
+    // would join the watcher room after the admin left, with nothing left
+    // to ever leave it.
+    if (isCancelled()) return;
     setSocketAuthRole("admin");
     if (socket.connected) {
       // Already connected under a possibly-stale identity (e.g. connected
@@ -96,8 +102,12 @@ export default function AdminDirectVideoCallDetail() {
   // telemetry cadence and only the current page's lifetime controls that,
   // never leaving it thinking a closed page is still watching.
   useEffect(() => {
-    startWatching();
-    return () => stopWatching();
+    let cancelled = false;
+    startWatching(() => cancelled);
+    return () => {
+      cancelled = true;
+      stopWatching();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
@@ -107,7 +117,12 @@ export default function AdminDirectVideoCallDetail() {
     api
       .get(`/api/direct-video-room/${roomId}/events`)
       .then((res) => setData(res.data))
-      .catch(() => setError("Failed to load this call's report."))
+      .catch((err) => {
+        const status = err.response?.status;
+        if (status === 404) setError("This call could not be found. It may have been removed.");
+        else if (status === 401 || status === 403) setError("You don't have access to this call's report.");
+        else setError("Failed to load this call's report.");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -147,9 +162,20 @@ export default function AdminDirectVideoCallDetail() {
   };
 
   if (loading) return <div className="dvc-page dvc-empty">Loading call report…</div>;
-  if (error || !data) return <div className="dvc-page dvc-error">{error || "Not found."}</div>;
+  if (error || !data || !data.room) {
+    return (
+      <div className="dvc-page">
+        <div className="dvc-error">{error || "Not found."}</div>
+        <Link to="/admin-dashboard/direct-video-consultation" className="dvc-secondary">
+          ← Back to Direct Video Consultation
+        </Link>
+      </div>
+    );
+  }
 
-  const { room, participants, timeline } = data;
+  const { room } = data;
+  const participants = data.participants || [];
+  const timeline = data.timeline || [];
   const problems = data.problems || [];
 
   return (
@@ -163,8 +189,8 @@ export default function AdminDirectVideoCallDetail() {
             {formatDate(room.createdAt)} · Expires {formatDate(room.expiresAt)}
           </p>
         </div>
-        <Link to="/admin-dashboard/direct-video-consultation/calls" className="dvc-secondary">
-          ← Back to Calls
+        <Link to="/admin-dashboard/direct-video-consultation" className="dvc-secondary">
+          ← Back to Direct Video Consultation
         </Link>
       </div>
 

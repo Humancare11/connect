@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import { ChevronDown, EllipsisVertical, FileText } from "lucide-react";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
 import "./GOP.css";
@@ -90,10 +92,207 @@ function formatDob(value) {
   return `${dd}.${mm}.${d.getUTCFullYear()}`;
 }
 
+// Layout tier of the page, measured from the page's own width rather than the
+// viewport: the admin shell reserves 252–288px for its sidebar on desktop, so
+// the viewport alone says little about how much room this page really has.
+//   wide   ≥ 960px   two column stacks, every section open
+//   mid    ≥ 700px   and the desktop sidebar is showing (769px+ viewport):
+//                    sections 1 and 4 side by side, sections 2 and 3 collapsible
+//   narrow < 700px   single column, every section collapsible
+//   xs     < 520px   narrow, with the label/value tables stacked
+function useGopLayout(ref) {
+  const [layout, setLayout] = useState("wide");
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const desktopShell = window.matchMedia("(min-width: 769px)");
+    const measure = () => {
+      const width = el.getBoundingClientRect().width;
+      let next = "narrow";
+      if (width >= 960) next = "wide";
+      else if (width >= 700 && desktopShell.matches) next = "mid";
+      else if (width < 520) next = "xs";
+      setLayout((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+    observer?.observe(el);
+    desktopShell.addEventListener("change", measure);
+    return () => {
+      observer?.disconnect();
+      desktopShell.removeEventListener("change", measure);
+    };
+  }, [ref]);
+
+  return layout;
+}
+
+// One numbered section of the form. When `collapsible` it is an accordion
+// (button header with aria-expanded/aria-controls); otherwise a plain caption.
+// The body stays mounted when collapsed (`hidden`), so values and validity
+// state are never lost.
+function GopSection({ n, title, collapsible, open, onToggle, children }) {
+  const bodyId = `gop-section-${n}-body`;
+  const expanded = !collapsible || open;
+  return (
+    <section
+      className={`gop-doc__section${collapsible ? " gop-sec--acc" : ""}${expanded ? " is-open" : ""}`}
+      data-gop-section={n}
+    >
+      {collapsible ? (
+        <h2 className="gop-acc__heading">
+          <button
+            type="button"
+            className="gop-acc__btn"
+            aria-expanded={expanded}
+            aria-controls={bodyId}
+            onClick={() => onToggle(n)}
+          >
+            <span>
+              {n}. {title}
+            </span>
+            <ChevronDown className="gop-acc__chevron" size={18} aria-hidden="true" />
+          </button>
+        </h2>
+      ) : (
+        <p className="gop-doc__caption">
+          {n}. {title}
+        </p>
+      )}
+      <div id={bodyId} className="gop-sec__body" hidden={!expanded}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function EmailFlag({ gop, showReason }) {
+  if (gop.emailed) {
+    return (
+      <span className="gop-email-flag gop-email-flag--sent" title={`Emailed to ${gop.providerEmail}`}>
+        ✓ emailed {formatDate(gop.emailedAt)}
+      </span>
+    );
+  }
+  if (gop.emailError) {
+    return (
+      <span className="gop-email-flag" title={gop.emailError}>
+        ⚠ email failed
+        {showReason && <span className="gop-email-flag__reason">{gop.emailError}</span>}
+      </span>
+    );
+  }
+  return (
+    <span className="gop-email-flag gop-email-flag--muted" title="Not emailed to the provider yet">
+      not emailed
+    </span>
+  );
+}
+
+// ⋮ menu for a history card: Download and Send/Resend. Closes on outside
+// press, Escape, Tab and after a choice; arrow keys move between items.
+function RowMenu({ gop, open, setOpenId, onDownload, onSend, downloading, sendBusy }) {
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuId = `gop-menu-${gop._id}`;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    menuRef.current?.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
+    const onPointerDown = (event) => {
+      if (menuRef.current?.contains(event.target) || triggerRef.current?.contains(event.target)) return;
+      setOpenId("");
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open, setOpenId]);
+
+  const close = (restoreFocus) => {
+    setOpenId("");
+    if (restoreFocus) triggerRef.current?.focus();
+  };
+
+  const onKeyDown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close(true);
+    } else if (event.key === "Tab") {
+      setOpenId("");
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const items = Array.from(menuRef.current?.querySelectorAll('[role="menuitem"]:not(:disabled)') || []);
+      if (!items.length) return;
+      const index = items.indexOf(document.activeElement);
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      items[(index + step + items.length) % items.length].focus();
+    }
+  };
+
+  return (
+    <div className="gop-menu-wrap">
+      <button
+        ref={triggerRef}
+        type="button"
+        className="gop-menu-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        aria-label={`Actions for GOP ${gop.gopNumber}`}
+        onClick={() => setOpenId(open ? "" : gop._id)}
+      >
+        <EllipsisVertical size={20} aria-hidden="true" />
+      </button>
+      {open && (
+        <div
+          id={menuId}
+          ref={menuRef}
+          className="gop-menu"
+          role="menu"
+          aria-label={`GOP ${gop.gopNumber} actions`}
+          onKeyDown={onKeyDown}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="gop-menu__item"
+            disabled={downloading}
+            onClick={() => {
+              close(true);
+              onDownload(gop._id);
+            }}
+          >
+            {downloading ? "Preparing…" : "Download"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="gop-menu__item"
+            disabled={sendBusy}
+            onClick={() => {
+              close(true);
+              onSend(gop);
+            }}
+          >
+            {gop.emailed ? "Resend" : "Send Email"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GOP() {
   const toast = useToast();
   const confirm = useConfirm();
   const { admin } = useAdmin();
+
+  const pageRef = useRef(null);
+  const layout = useGopLayout(pageRef);
+  // Accordion state, keyed by section number. Patient Information starts open.
+  const [openSections, setOpenSections] = useState({ 1: true });
+  // History card ⋮ menu: the _id of the GOP whose menu is open.
+  const [menuOpenId, setMenuOpenId] = useState("");
 
   const [caseType, setCaseType] = useState(DEFAULT_CASE_TYPE);
   const [patientName, setPatientName] = useState("");
@@ -312,8 +511,37 @@ export default function GOP() {
   const amountDisplayPreview = formatMoney(amountCentsPreview, currency);
   const providerNamePreview = providerName.trim() || "the provider";
 
+  const isCompact = layout === "narrow" || layout === "xs";
+  const collapsibleFor = (n) =>
+    isCompact ? true : layout === "mid" ? n === 2 || n === 3 : false;
+  const toggleSection = (n) => setOpenSections((prev) => ({ ...prev, [n]: !prev[n] }));
+  const sectionProps = (n, title) => ({
+    n,
+    title,
+    collapsible: collapsibleFor(n),
+    open: Boolean(openSections[n]),
+    onToggle: toggleSection,
+  });
+
+  // Browser validation can't focus a field inside a collapsed section, so
+  // open the section holding the first invalid field before the browser runs
+  // its own check (this click handler runs before the form's submit
+  // validation). The field is then visible and gets the native focus/message.
+  const revealFirstInvalidSection = (event) => {
+    const invalid = event.currentTarget.form?.querySelector(":invalid");
+    const sectionEl = invalid?.closest("[data-gop-section]");
+    if (!sectionEl) return;
+    const n = Number(sectionEl.dataset.gopSection);
+    if (collapsibleFor(n) && !openSections[n]) {
+      flushSync(() => setOpenSections((prev) => ({ ...prev, [n]: true })));
+    }
+  };
+
   return (
-    <div className="gop-page">
+    <div
+      ref={pageRef}
+      className={`gop-page gop-page--${layout}${isCompact ? " gop-page--compact" : ""}`}
+    >
       <div className="gop-toolbar">
         <p className="gop-eyebrow">Cases · Guarantee of Payment</p>
         <div className="gop-metrics">
@@ -375,241 +603,258 @@ export default function GOP() {
           </tbody>
         </table>
 
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">1. Patient Information</p>
-          <table className="gop-table">
-            <tbody>
-              <tr>
-                <th>Name</th>
-                <td>
-                  <input
-                    type="text"
-                    className="gop-input"
-                    maxLength={120}
-                    value={patientName}
-                    onChange={(event) => setPatientName(event.target.value)}
-                    placeholder="Full name"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th>Date of Birth</th>
-                <td>
-                  <input
-                    type="date"
-                    className="gop-input"
-                    value={patientDob}
-                    onChange={(event) => setPatientDob(event.target.value)}
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th>Telephone</th>
-                <td>
-                  <input
-                    type="tel"
-                    className="gop-input"
-                    maxLength={40}
-                    value={patientPhone}
-                    onChange={(event) => setPatientPhone(event.target.value)}
-                    placeholder="+1 555 000 0000"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th>Patient Location</th>
-                <td>
-                  <input
-                    type="text"
-                    className="gop-input"
-                    maxLength={200}
-                    value={patientLocation}
-                    onChange={(event) => setPatientLocation(event.target.value)}
-                    placeholder="Hotel, address, or resort name"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+        <div className="gop-doc__cols">
+          <div className="gop-doc__col gop-doc__col--a">
+            <GopSection {...sectionProps(1, "Patient Information")}>
+              <table className="gop-table">
+                <tbody>
+                  <tr>
+                    <th>Name</th>
+                    <td>
+                      <input
+                        type="text"
+                        className="gop-input"
+                        maxLength={120}
+                        value={patientName}
+                        onChange={(event) => setPatientName(event.target.value)}
+                        placeholder="Full name"
+                        aria-label="Patient name"
+                        required
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Date of Birth</th>
+                    <td>
+                      <input
+                        type="date"
+                        className="gop-input"
+                        value={patientDob}
+                        onChange={(event) => setPatientDob(event.target.value)}
+                        aria-label="Patient date of birth"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Telephone</th>
+                    <td>
+                      <input
+                        type="tel"
+                        className="gop-input"
+                        maxLength={40}
+                        value={patientPhone}
+                        onChange={(event) => setPatientPhone(event.target.value)}
+                        placeholder="+1 555 000 0000"
+                        aria-label="Patient telephone"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Patient Location</th>
+                    <td>
+                      <input
+                        type="text"
+                        className="gop-input"
+                        maxLength={200}
+                        value={patientLocation}
+                        onChange={(event) => setPatientLocation(event.target.value)}
+                        placeholder="Hotel, address, or resort name"
+                        aria-label="Patient location"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </GopSection>
 
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">2. Patient Complaint</p>
-          <textarea
-            className="gop-input gop-textarea"
-            rows={2}
-            maxLength={1000}
-            value={patientComplaint}
-            onChange={(event) => setPatientComplaint(event.target.value)}
-            placeholder="Describe the patient's complaint / reason for the visit."
-          />
-        </section>
-
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">3. Requested Service</p>
-          <textarea
-            className="gop-input gop-textarea"
-            rows={2}
-            maxLength={1000}
-            value={requestedService}
-            onChange={(event) => setRequestedService(event.target.value)}
-            placeholder={DEFAULT_REQUESTED_SERVICE}
-          />
-        </section>
-
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">4. Service Provider</p>
-          <table className="gop-table">
-            <tbody>
-              <tr>
-                <th>Provider</th>
-                <td>
-                  <input
-                    type="text"
-                    className="gop-input"
-                    maxLength={120}
-                    value={providerName}
-                    onChange={(event) => setProviderName(event.target.value)}
-                    placeholder="Doctor / clinic name"
-                    required
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th>Contact</th>
-                <td>
-                  <input
-                    type="tel"
-                    className="gop-input"
-                    maxLength={60}
-                    value={providerContact}
-                    onChange={(event) => setProviderContact(event.target.value)}
-                    placeholder="+1 555 000 0000"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th>Clinic Address</th>
-                <td>
-                  <input
-                    type="text"
-                    className="gop-input"
-                    maxLength={200}
-                    value={providerAddress}
-                    onChange={(event) => setProviderAddress(event.target.value)}
-                    placeholder="Clinic street address"
-                  />
-                </td>
-              </tr>
-              <tr>
-                <th>Email</th>
-                <td>
-                  <input
-                    type="email"
-                    className="gop-input"
-                    maxLength={254}
-                    value={providerEmail}
-                    onChange={(event) => setProviderEmail(event.target.value)}
-                    placeholder="provider@example.com"
-                    required
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">5. Payment Authorization</p>
-
-          <div className="gop-amount-row">
-            <span className="gop-amount-row__label">
-              Agreed Payment for {caseType || DEFAULT_CASE_TYPE}:
-            </span>
-            <div className="gop-amount">
-              <span className="gop-amount__prefix">{currencySymbol(currency)}</span>
-              <input
-                type="number"
-                className="gop-input gop-input--flush gop-amount__input"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                placeholder="0.00"
-                required
+            <GopSection {...sectionProps(2, "Patient Complaint")}>
+              <textarea
+                className="gop-input gop-textarea"
+                rows={2}
+                maxLength={1000}
+                value={patientComplaint}
+                onChange={(event) => setPatientComplaint(event.target.value)}
+                placeholder="Describe the patient's complaint / reason for the visit."
+                aria-label="Patient complaint"
               />
-            </div>
-            <select
-              className="gop-input gop-select gop-amount__currency"
-              value={currency}
-              onChange={(event) => setCurrency(event.target.value)}
+            </GopSection>
+
+            <GopSection {...sectionProps(3, "Requested Service")}>
+              <textarea
+                className="gop-input gop-textarea"
+                rows={2}
+                maxLength={1000}
+                value={requestedService}
+                onChange={(event) => setRequestedService(event.target.value)}
+                placeholder={DEFAULT_REQUESTED_SERVICE}
+                aria-label="Requested service"
+              />
+            </GopSection>
+          </div>
+
+          <div className="gop-doc__col gop-doc__col--b">
+            <GopSection {...sectionProps(4, "Service Provider")}>
+              <table className="gop-table">
+                <tbody>
+                  <tr>
+                    <th>Provider</th>
+                    <td>
+                      <input
+                        type="text"
+                        className="gop-input"
+                        maxLength={120}
+                        value={providerName}
+                        onChange={(event) => setProviderName(event.target.value)}
+                        placeholder="Doctor / clinic name"
+                        aria-label="Provider name"
+                        required
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Contact</th>
+                    <td>
+                      <input
+                        type="tel"
+                        className="gop-input"
+                        maxLength={60}
+                        value={providerContact}
+                        onChange={(event) => setProviderContact(event.target.value)}
+                        placeholder="+1 555 000 0000"
+                        aria-label="Provider contact"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Clinic Address</th>
+                    <td>
+                      <input
+                        type="text"
+                        className="gop-input"
+                        maxLength={200}
+                        value={providerAddress}
+                        onChange={(event) => setProviderAddress(event.target.value)}
+                        placeholder="Clinic street address"
+                        aria-label="Clinic address"
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Email</th>
+                    <td>
+                      <input
+                        type="email"
+                        className="gop-input"
+                        maxLength={254}
+                        value={providerEmail}
+                        onChange={(event) => setProviderEmail(event.target.value)}
+                        placeholder="provider@example.com"
+                        aria-label="Provider email"
+                        required
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </GopSection>
+
+            <GopSection {...sectionProps(5, "Payment Authorization")}>
+              <div className="gop-amount-row">
+                <span className="gop-amount-row__label">
+                  Agreed Payment for {caseType || DEFAULT_CASE_TYPE}:
+                </span>
+                <div className="gop-amount">
+                  <span className="gop-amount__prefix">{currencySymbol(currency)}</span>
+                  <input
+                    type="number"
+                    className="gop-input gop-input--flush gop-amount__input"
+                    min="0"
+                    step="0.01"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    placeholder="0.00"
+                    aria-label="Agreed payment amount"
+                    required
+                  />
+                </div>
+                <select
+                  className="gop-input gop-select gop-amount__currency"
+                  value={currency}
+                  onChange={(event) => setCurrency(event.target.value)}
+                  aria-label="Currency"
+                >
+                  {CURRENCY_OPTIONS.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <p className="gop-doc__terms">
+                Humancare Connect, Inc. is authorized to pay {providerNamePreview} only for the
+                service described above, at the agreed amount of {amountDisplayPreview}. No
+                additional or extra payment is authorized without prior written pre-approval
+                from Humancare Connect, Inc.
+              </p>
+              <p className="gop-doc__terms">
+                Payment of {amountDisplayPreview} will be made to {providerNamePreview}{" "}
+                immediately upon completion of the service, via payment link, once the
+                required documentation described below has been received.
+              </p>
+            </GopSection>
+
+            <GopSection {...sectionProps(6, "Required Documentation for Payment Release")}>
+              <ol className="gop-doclist">
+                {REQUIRED_DOCS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ol>
+            </GopSection>
+          </div>
+        </div>
+
+        <div className="gop-doc__bottom">
+          <GopSection {...sectionProps(7, "Issuer")}>
+            <p className="gop-doc__issuer-label">Authorized by:</p>
+            <input
+              type="text"
+              className="gop-input gop-doc__issuer-input"
+              maxLength={120}
+              value={authorizedByName}
+              onChange={(event) => setAuthorizedByName(event.target.value)}
+              placeholder="Full name"
+              aria-label="Authorized by"
+              required
+            />
+            <p className="gop-doc__issuer-company">Humancare Connect, Inc.</p>
+          </GopSection>
+
+          <div className="gop-doc__actions">
+            {error && (
+              <div className="gop-alert" role="alert">
+                {error}
+              </div>
+            )}
+            <small className="gop-hint">
+              The GOP is generated only — it is not emailed automatically. Use
+              “Send Email” on the generated GOP to email it to the provider.
+            </small>
+            <button
+              className="gop-btn gop-btn--generate"
+              type="submit"
+              disabled={!canSubmit}
+              aria-busy={submitting}
+              onClick={revealFirstInvalidSection}
             >
-              {CURRENCY_OPTIONS.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              {submitting ? (
+                <span className="gop-spinner" aria-hidden="true" />
+              ) : (
+                <FileText size={16} aria-hidden="true" />
+              )}
+              {submitting ? "Generating…" : "Generate GOP"}
+            </button>
           </div>
-
-          <p className="gop-doc__terms">
-            Humancare Connect, Inc. is authorized to pay {providerNamePreview} only for the
-            service described above, at the agreed amount of {amountDisplayPreview}. No
-            additional or extra payment is authorized without prior written pre-approval
-            from Humancare Connect, Inc.
-          </p>
-          <p className="gop-doc__terms">
-            Payment of {amountDisplayPreview} will be made to {providerNamePreview}{" "}
-            immediately upon completion of the service, via payment link, once the
-            required documentation described below has been received.
-          </p>
-        </section>
-
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">6. Required Documentation for Payment Release</p>
-          <ol className="gop-doclist">
-            {REQUIRED_DOCS.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ol>
-        </section>
-
-        <section className="gop-doc__section">
-          <p className="gop-doc__caption">7. Issuer</p>
-          <p className="gop-doc__issuer-label">Authorized by:</p>
-          <input
-            type="text"
-            className="gop-input gop-doc__issuer-input"
-            maxLength={120}
-            value={authorizedByName}
-            onChange={(event) => setAuthorizedByName(event.target.value)}
-            placeholder="Full name"
-            required
-          />
-          <p className="gop-doc__issuer-company">Humancare Connect, Inc.</p>
-        </section>
-
-        {error && (
-          <div className="gop-alert" role="alert">
-            {error}
-          </div>
-        )}
-
-        <div className="gop-doc__actions">
-          <small className="gop-hint">
-            The GOP is generated only — it is not emailed automatically. Use
-            “Send Email” on the generated GOP to email it to the provider.
-          </small>
-          <button
-            className="gop-btn gop-btn--primary"
-            type="submit"
-            disabled={!canSubmit}
-            aria-busy={submitting}
-          >
-            {submitting && <span className="gop-spinner" aria-hidden="true" />}
-            {submitting ? "Generating…" : "Generate GOP"}
-          </button>
         </div>
 
         <footer className="gop-doc__foot">
@@ -686,20 +931,6 @@ export default function GOP() {
             <p className="gop-eyebrow">History</p>
             <h2>Recent GOPs</h2>
           </div>
-          <button
-            className="gop-btn gop-btn--ghost gop-btn--sm"
-            type="button"
-            onClick={() => fetchHistory()}
-            disabled={historyLoading}
-          >
-            {historyLoading && (
-              <span className="gop-spinner gop-spinner--dark" aria-hidden="true" />
-            )}
-            {historyLoading ? "Refreshing…" : "Refresh"}
-          </button>
-        </div>
-
-        <div className="gop-history-controls">
           <label className="gop-search" htmlFor="gop-history-search">
             <svg
               className="gop-search__icon"
@@ -721,10 +952,22 @@ export default function GOP() {
               type="search"
               className="gop-search__input"
               placeholder="Search by patient, provider, email, or GOP #"
+              aria-label="Search GOPs"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
             />
           </label>
+          <button
+            className="gop-btn gop-btn--outline gop-btn--sm gop-card__refresh"
+            type="button"
+            onClick={() => fetchHistory()}
+            disabled={historyLoading}
+          >
+            {historyLoading && (
+              <span className="gop-spinner gop-spinner--dark" aria-hidden="true" />
+            )}
+            {historyLoading ? "Refreshing…" : "Refresh"}
+          </button>
         </div>
 
         {resendError && (
@@ -800,48 +1043,49 @@ export default function GOP() {
                       {formatMoney(gop.amountCents, gop.currency)}
                     </td>
                     <td data-label="Actions" className="gop-col-actions">
-                      <div className="gop-actions">
-                        <button
-                          className="gop-btn gop-btn--link"
-                          type="button"
-                          disabled={downloadingId === gop._id}
-                          onClick={() => download(gop._id)}
-                        >
-                          {downloadingId === gop._id && (
-                            <span className="gop-spinner" aria-hidden="true" />
-                          )}
-                          Download
-                        </button>
-                        <button
-                          className="gop-btn gop-btn--link gop-btn--accent"
-                          type="button"
-                          disabled={Boolean(resendingId)}
-                          onClick={() => sendEmail(gop)}
-                        >
-                          {resendingId === gop._id && (
-                            <span className="gop-spinner" aria-hidden="true" />
-                          )}
-                          {gop.emailed ? "Resend Email" : "Send Email"}
-                        </button>
-                      </div>
-                      {gop.emailed ? (
-                        <span
-                          className="gop-email-flag gop-email-flag--sent"
-                          title={`Emailed to ${gop.providerEmail}`}
-                        >
-                          ✓ emailed {formatDate(gop.emailedAt)}
-                        </span>
-                      ) : gop.emailError ? (
-                        <span className="gop-email-flag" title={gop.emailError}>
-                          ⚠ email failed
-                        </span>
+                      {isCompact ? (
+                        <div className="gop-card-actions">
+                          <div className="gop-card-actions__status">
+                            <EmailFlag gop={gop} showReason />
+                          </div>
+                          <RowMenu
+                            gop={gop}
+                            open={menuOpenId === gop._id}
+                            setOpenId={setMenuOpenId}
+                            onDownload={download}
+                            onSend={sendEmail}
+                            downloading={downloadingId === gop._id}
+                            sendBusy={Boolean(resendingId)}
+                          />
+                        </div>
                       ) : (
-                        <span
-                          className="gop-email-flag gop-email-flag--muted"
-                          title="Not emailed to the provider yet"
-                        >
-                          not emailed
-                        </span>
+                        <>
+                          <div className="gop-actions">
+                            <button
+                              className="gop-btn gop-btn--link gop-btn--accent"
+                              type="button"
+                              disabled={downloadingId === gop._id}
+                              onClick={() => download(gop._id)}
+                            >
+                              {downloadingId === gop._id && (
+                                <span className="gop-spinner" aria-hidden="true" />
+                              )}
+                              Download
+                            </button>
+                            <button
+                              className="gop-btn gop-btn--link gop-btn--accent"
+                              type="button"
+                              disabled={Boolean(resendingId)}
+                              onClick={() => sendEmail(gop)}
+                            >
+                              {resendingId === gop._id && (
+                                <span className="gop-spinner" aria-hidden="true" />
+                              )}
+                              {gop.emailed ? "Resend" : "Send Email"}
+                            </button>
+                          </div>
+                          <EmailFlag gop={gop} />
+                        </>
                       )}
                     </td>
                   </tr>

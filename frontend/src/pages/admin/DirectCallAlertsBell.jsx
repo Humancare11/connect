@@ -71,18 +71,17 @@ export default function DirectCallAlertsBell() {
   };
 
   return (
-    <div ref={panelRef} style={{ position: "relative" }}>
+    <div ref={panelRef} className="ad-bell">
       <button
         type="button"
         onClick={openPanel}
         aria-label="Direct call alerts"
+        className="ad-bell-btn"
         style={{
           position: "relative",
           background: "rgba(255,255,255,0.12)",
           border: "1px solid rgba(255,255,255,0.2)",
           borderRadius: 10,
-          width: 36,
-          height: 36,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -120,11 +119,8 @@ export default function DirectCallAlertsBell() {
 
       {open && (
         <div
+          className="ad-bell-panel"
           style={{
-            position: "absolute",
-            top: 44,
-            right: 0,
-            width: 340,
             maxHeight: 420,
             overflowY: "auto",
             background: "#fff",

@@ -792,7 +792,6 @@ const AdminCategoryConsultations = lazy(
 const AdminDirectVideoConsultation = lazy(
   () => import("./pages/admin/AdminDirectVideoConsultation"),
 );
-const AdminDirectVideoCalls = lazy(() => import("./pages/admin/AdminDirectVideoCalls"));
 const AdminDirectVideoCallDetail = lazy(
   () => import("./pages/admin/AdminDirectVideoCallDetail"),
 );
@@ -1974,14 +1973,10 @@ export function AppLayout() {
             }
           />
           <Route
+            // The calls list page was removed; keep old bookmarks working.
+            // Individual reports (/calls/:roomId) are a separate route below.
             path="/admin-dashboard/direct-video-consultation/calls"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDirectVideoCalls />
-                </AdminLayout>
-              </PrivateRoute>
-            }
+            element={<Navigate to="/admin-dashboard/direct-video-consultation" replace />}
           />
           <Route
             path="/admin-dashboard/direct-video-consultation/calls/:roomId"

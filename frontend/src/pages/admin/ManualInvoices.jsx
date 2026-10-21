@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
+import { ChevronDown, EllipsisVertical, FileText, RefreshCw } from "lucide-react";
 import api from "../../api";
 import "./ManualInvoices.css";
 import { useToast } from "../../components/ui/Toast";
@@ -112,8 +114,209 @@ function statusLabel(status) {
   return status === "paid" ? "Paid" : "Due";
 }
 
+// Layout tier, measured from this page's own width rather than the viewport:
+// the same component renders inside the admin and payment-admin shells, and
+// the desktop shell reserves 252–288px for its sidebar.
+//   wide     ≥ 900px   From / Bill To side by side, table history, no accordions
+//   mid      ≥ 560px   single-column sheet, history as cards, Terms collapsible
+//   compact  < 560px   Bill To, Line Items and Terms collapsible
+//   xs       < 360px   compact, with the dates/currency strip in one column
+function useInvoiceLayout(ref) {
+  const [layout, setLayout] = useState("wide");
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const measure = () => {
+      const width = el.getBoundingClientRect().width;
+      let next = "wide";
+      if (width < 360) next = "xs";
+      else if (width < 560) next = "compact";
+      else if (width < 900) next = "mid";
+      setLayout((prev) => (prev === next ? prev : next));
+    };
+    measure();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+    observer?.observe(el);
+    return () => observer?.disconnect();
+  }, [ref]);
+
+  return layout;
+}
+
+// A collapsible part of the invoice sheet. When `collapsible` it renders a
+// button header (aria-expanded / aria-controls); otherwise just its content.
+// The body stays mounted when collapsed (`hidden`), so values and validity
+// are never lost.
+function InvoiceSection({ id, title, collapsible, open, onToggle, className = "", children }) {
+  const bodyId = `mi-section-${id}-body`;
+  const expanded = !collapsible || open;
+  return (
+    <section
+      className={`mi-sec ${className}${collapsible ? " mi-sec--acc" : ""}${expanded ? " is-open" : ""}`}
+      data-mi-section={id}
+    >
+      {collapsible && (
+        <h2 className="mi-acc__heading">
+          <button
+            type="button"
+            className="mi-acc__btn"
+            aria-expanded={expanded}
+            aria-controls={bodyId}
+            onClick={() => onToggle(id)}
+          >
+            <span>{title}</span>
+            <ChevronDown className="mi-acc__chevron" size={18} aria-hidden="true" />
+          </button>
+        </h2>
+      )}
+      <div id={bodyId} className="mi-sec__body" hidden={!expanded}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+// Email delivery state. The failure reason is printed (not only a tooltip) so
+// it is readable on touch screens.
+function EmailFlag({ invoice }) {
+  if (invoice.emailed) {
+    return (
+      <span className="mi-email-flag mi-email-flag--sent" title={`Emailed to ${invoice.clientEmail}`}>
+        ✓ emailed
+      </span>
+    );
+  }
+  if (invoice.emailError) {
+    return (
+      <span className="mi-email-flag" title={invoice.emailError}>
+        ⚠ email failed
+        <span className="mi-email-flag__reason">{invoice.emailError}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="mi-email-flag mi-email-flag--muted" title="Not emailed to the client yet">
+      not emailed
+    </span>
+  );
+}
+
+// ⋮ menu for a history card: every action that applies to the invoice.
+// Closes on outside press, Escape, Tab and after a choice; arrow keys move
+// between items. The popup is absolutely positioned and the card layout sets
+// no overflow clip, so it is never cut off.
+function InvoiceRowMenu({ invoice, open, setOpenId, onDownload, onMarkPaid, onSend, downloading, sending }) {
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const menuId = `mi-rowmenu-${invoice._id}`;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    menuRef.current?.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
+    const onPointerDown = (event) => {
+      if (menuRef.current?.contains(event.target) || triggerRef.current?.contains(event.target)) return;
+      setOpenId("");
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [open, setOpenId]);
+
+  const close = (restoreFocus) => {
+    setOpenId("");
+    if (restoreFocus) triggerRef.current?.focus();
+  };
+
+  const onKeyDown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close(true);
+    } else if (event.key === "Tab") {
+      setOpenId("");
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const items = Array.from(menuRef.current?.querySelectorAll('[role="menuitem"]:not(:disabled)') || []);
+      if (!items.length) return;
+      const index = items.indexOf(document.activeElement);
+      const step = event.key === "ArrowDown" ? 1 : -1;
+      items[(index + step + items.length) % items.length].focus();
+    }
+  };
+
+  return (
+    <div className="mi-rowmenu-wrap">
+      <button
+        ref={triggerRef}
+        type="button"
+        className="mi-rowmenu-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? menuId : undefined}
+        aria-label={`Actions for invoice ${invoice.invoiceNumber}`}
+        onClick={() => setOpenId(open ? "" : invoice._id)}
+      >
+        <EllipsisVertical size={20} aria-hidden="true" />
+      </button>
+      {open && (
+        <div
+          id={menuId}
+          ref={menuRef}
+          className="mi-rowmenu"
+          role="menu"
+          aria-label={`Invoice ${invoice.invoiceNumber} actions`}
+          onKeyDown={onKeyDown}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="mi-rowmenu__item"
+            disabled={downloading}
+            onClick={() => {
+              close(true);
+              onDownload(invoice._id);
+            }}
+          >
+            {downloading ? "Preparing…" : "Download"}
+          </button>
+          {invoice.status === "due" && (
+            <button
+              type="button"
+              role="menuitem"
+              className="mi-rowmenu__item"
+              onClick={() => {
+                close(true);
+                onMarkPaid(invoice._id);
+              }}
+            >
+              Mark as Paid
+            </button>
+          )}
+          <button
+            type="button"
+            role="menuitem"
+            className="mi-rowmenu__item"
+            disabled={sending}
+            onClick={() => {
+              close(true);
+              onSend(invoice._id);
+            }}
+          >
+            {sending ? "Sending…" : invoice.emailed ? "Resend Email" : "Send Invoice Email"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ManualInvoices() {
   const toast = useToast();
+  const pageRef = useRef(null);
+  const layout = useInvoiceLayout(pageRef);
+  // Accordion state for the sections that collapse on narrower layouts.
+  const [openSections, setOpenSections] = useState({ billTo: false, items: false, terms: false });
+  // History ⋮ menu: the _id of the invoice whose menu is open.
+  const [menuOpenId, setMenuOpenId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [companyName, setCompanyName] = useState("");
@@ -458,8 +661,46 @@ export default function ManualInvoices() {
           "",
         )}). Please remit payment for the amount above by the due date indicated.`;
 
+  const isCompact = layout === "compact" || layout === "xs";
+  const isStack = layout !== "wide";
+  const collapsibleFor = (id) => (isCompact ? true : layout === "mid" ? id === "terms" : false);
+  const toggleSection = (id) => setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
+  const sectionProps = (id, title) => ({
+    id,
+    title,
+    collapsible: collapsibleFor(id),
+    open: Boolean(openSections[id]),
+    onToggle: toggleSection,
+  });
+
+  // Browser validation can't focus a field inside a collapsed section, so open
+  // the section holding the first invalid field before the browser runs its
+  // own check (this click handler runs before the form's submit validation).
+  const revealFirstInvalidSection = (event) => {
+    const invalid = event.currentTarget.form?.querySelector(":invalid");
+    const sectionEl = invalid?.closest("[data-mi-section]");
+    if (!sectionEl) return;
+    const id = sectionEl.dataset.miSection;
+    if (collapsibleFor(id) && !openSections[id]) {
+      flushSync(() => setOpenSections((prev) => ({ ...prev, [id]: true })));
+    }
+  };
+
+  const addLineButton = (
+    <button
+      type="button"
+      className="mi-btn mi-btn--ghost mi-btn--sm mi-items__add"
+      onClick={addItem}
+    >
+      + Add line
+    </button>
+  );
+
   return (
-    <div className="mi-page">
+    <div
+      ref={pageRef}
+      className={`mi-inv-page mi-inv-page--${layout}${isStack ? " mi-inv-page--stack" : ""}${isCompact ? " mi-inv-page--compact" : ""}`}
+    >
       {/* Slim toolbar above the sheet — anything *about* the invoices rather
           than *on* one lives here, so the document below stays a faithful
           copy of what the client receives. */}
@@ -521,78 +762,80 @@ export default function ManualInvoices() {
             ))}
           </section>
 
-          <section className="mi-doc__party">
-            <p className="mi-doc__caption">Bill to</p>
+          <InvoiceSection {...sectionProps("billTo", "Bill To")} className="mi-doc__party">
+            {!collapsibleFor("billTo") && <p className="mi-doc__caption">Bill to</p>}
 
-            {partners.length > 0 && (
-              <label className="mi-line">
-                <span className="mi-line__label">Partner</span>
-                <select
-                  className="mi-input mi-select"
-                  value={partnerId}
-                  onChange={(event) => selectPartner(event.target.value)}
-                >
-                  <option value="">One-off client (no partner)</option>
-                  {partners.map((partner) => (
-                    <option key={partner._id} value={partner._id}>
-                      {partner.companyName}
-                      {partner.partnerCode ? ` (${partner.partnerCode})` : ""}
-                    </option>
-                  ))}
-                </select>
+            <div className="mi-bill">
+              {partners.length > 0 && (
+                <label className="mi-line mi-line--partner">
+                  <span className="mi-line__label">Partner</span>
+                  <select
+                    className="mi-input mi-select"
+                    value={partnerId}
+                    onChange={(event) => selectPartner(event.target.value)}
+                  >
+                    <option value="">One-off client (no partner)</option>
+                    {partners.map((partner) => (
+                      <option key={partner._id} value={partner._id}>
+                        {partner.companyName}
+                        {partner.partnerCode ? ` (${partner.partnerCode})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              <label className="mi-line mi-line--company">
+                <span className="mi-line__label">Company</span>
+                <input
+                  type="text"
+                  className="mi-input mi-input--strong"
+                  maxLength={160}
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.target.value)}
+                  placeholder={'BAR "Nova Assistance" LTD'}
+                />
               </label>
-            )}
 
-            <label className="mi-line">
-              <span className="mi-line__label">Company</span>
-              <input
-                type="text"
-                className="mi-input mi-input--strong"
-                maxLength={160}
-                value={companyName}
-                onChange={(event) => setCompanyName(event.target.value)}
-                placeholder={'BAR "Nova Assistance" LTD'}
-              />
-            </label>
+              <label className="mi-line mi-line--contact">
+                <span className="mi-line__label">Contact name</span>
+                <input
+                  type="text"
+                  className="mi-input"
+                  maxLength={120}
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Nova Assistance"
+                  required
+                />
+              </label>
 
-            <label className="mi-line">
-              <span className="mi-line__label">Contact name</span>
-              <input
-                type="text"
-                className="mi-input"
-                maxLength={120}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="Nova Assistance"
-                required
-              />
-            </label>
+              <label className="mi-line mi-line--email">
+                <span className="mi-line__label">Email</span>
+                <input
+                  type="email"
+                  className="mi-input"
+                  maxLength={254}
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="accounts@example.com"
+                  required
+                />
+              </label>
 
-            <label className="mi-line">
-              <span className="mi-line__label">Email</span>
-              <input
-                type="email"
-                className="mi-input"
-                maxLength={254}
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="accounts@example.com"
-                required
-              />
-            </label>
-
-            <label className="mi-line">
-              <span className="mi-line__label">Address</span>
-              <input
-                type="text"
-                className="mi-input"
-                maxLength={200}
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                placeholder="Chisinau, 10th Bucuresti Street"
-              />
-            </label>
-          </section>
+              <label className="mi-line mi-line--address">
+                <span className="mi-line__label">Address</span>
+                <input
+                  type="text"
+                  className="mi-input"
+                  maxLength={200}
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  placeholder="Chisinau, 10th Bucuresti Street"
+                />
+              </label>
+            </div>
+          </InvoiceSection>
         </div>
 
         {/* Meta strip — the four printed columns above the item table. */}
@@ -612,6 +855,7 @@ export default function ManualInvoices() {
                 className="mi-input mi-input--flush mi-input--accent"
                 value={dueDate}
                 onChange={(event) => setDueDate(event.target.value)}
+                aria-label="Due date"
               />
             </div>
           )}
@@ -621,6 +865,7 @@ export default function ManualInvoices() {
               className="mi-input mi-input--flush mi-select"
               value={paymentTerms}
               onChange={(event) => applyPaymentTerms(event.target.value)}
+              aria-label="Payment terms"
             >
               {PAYMENT_TERMS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -635,6 +880,7 @@ export default function ManualInvoices() {
               className="mi-input mi-input--flush mi-select"
               value={currency}
               onChange={(event) => setCurrency(event.target.value)}
+              aria-label="Currency"
             >
               {CURRENCY_OPTIONS.map((option) => (
                 <option key={option.code} value={option.code}>
@@ -645,92 +891,93 @@ export default function ManualInvoices() {
           </div>
         </div>
 
-        {/* Item table — navy header band, one row per billed line. */}
-        <div className="mi-items">
-          <div className="mi-items__head">
-            <span>Description</span>
-            <span className="mi-items__center">Qty</span>
-            <span className="mi-items__right">Rate</span>
-            <span className="mi-items__right">Amount</span>
-            <span aria-hidden="true" />
-          </div>
-          {items.map((item) => (
-            <div className="mi-items__row" key={item.id}>
-              <span className="mi-items__mlabel">Description</span>
-              <input
-                type="text"
-                className="mi-input mi-input--flush"
-                maxLength={200}
-                value={item.description}
-                onChange={(event) =>
-                  updateItem(item.id, "description", event.target.value)
-                }
-                placeholder="House Call Visit — Germany"
-                required
-              />
-
-              <span className="mi-items__mlabel">Qty</span>
-              <input
-                type="number"
-                className="mi-input mi-input--flush mi-input--center"
-                min="0.01"
-                step="0.01"
-                value={item.quantity}
-                onChange={(event) =>
-                  updateItem(item.id, "quantity", event.target.value)
-                }
-                required
-              />
-
-              <span className="mi-items__mlabel">Rate</span>
-              <div className="mi-amount">
-                <span className="mi-amount__prefix">
-                  {currencySymbol(currency)}
-                </span>
+        <InvoiceSection {...sectionProps("items", `Line Items (${items.length})`)} className="mi-doc__items">
+          {/* Item table — navy header band, one row per billed line. */}
+          <div className="mi-items">
+            <div className="mi-items__head">
+              <span>Description</span>
+              <span className="mi-items__center">Qty</span>
+              <span className="mi-items__right">Rate</span>
+              <span className="mi-items__right">Amount</span>
+              <span aria-hidden="true" />
+            </div>
+            {items.map((item) => (
+              <div className="mi-items__row" key={item.id}>
+                <span className="mi-items__mlabel">Description</span>
                 <input
-                  type="number"
-                  className="mi-input mi-input--flush mi-input--num mi-amount__input"
-                  min="0"
-                  step="0.01"
-                  value={item.rate}
+                  type="text"
+                  className="mi-input mi-input--flush"
+                  maxLength={200}
+                  value={item.description}
                   onChange={(event) =>
-                    updateItem(item.id, "rate", event.target.value)
+                    updateItem(item.id, "description", event.target.value)
                   }
-                  placeholder="0.00"
+                  placeholder="House Call Visit — Germany"
+                  aria-label="Line description"
                   required
                 />
+
+                <span className="mi-items__mlabel">Qty</span>
+                <input
+                  type="number"
+                  className="mi-input mi-input--flush mi-input--center"
+                  min="0.01"
+                  step="0.01"
+                  value={item.quantity}
+                  onChange={(event) =>
+                    updateItem(item.id, "quantity", event.target.value)
+                  }
+                  aria-label="Quantity"
+                  required
+                />
+
+                <span className="mi-items__mlabel">Rate</span>
+                <div className="mi-amount">
+                  <span className="mi-amount__prefix">
+                    {currencySymbol(currency)}
+                  </span>
+                  <input
+                    type="number"
+                    className="mi-input mi-input--flush mi-input--num mi-amount__input"
+                    min="0"
+                    step="0.01"
+                    value={item.rate}
+                    onChange={(event) =>
+                      updateItem(item.id, "rate", event.target.value)
+                    }
+                    placeholder="0.00"
+                    aria-label="Rate"
+                    required
+                  />
+                </div>
+
+                <span className="mi-items__mlabel">Amount</span>
+                <span className="mi-items__amount">
+                  {formatMoney(computeItemAmountCents(item), currency)}
+                </span>
+
+                <button
+                  type="button"
+                  className="mi-icon-btn"
+                  onClick={() => removeItem(item.id)}
+                  disabled={items.length === 1}
+                  aria-label="Remove line"
+                >
+                  ×
+                </button>
               </div>
+            ))}
+          </div>
+          {isCompact && addLineButton}
+        </InvoiceSection>
 
-              <span className="mi-items__mlabel">Amount</span>
-              <span className="mi-items__amount">
-                {formatMoney(computeItemAmountCents(item), currency)}
-              </span>
-
-              <button
-                type="button"
-                className="mi-icon-btn"
-                onClick={() => removeItem(item.id)}
-                disabled={items.length === 1}
-                aria-label="Remove line"
-              >
-                ×
-              </button>
+        <div className="mi-items-foot">
+          {!isCompact && addLineButton}
+          <div className="mi-total">
+            <div className="mi-total__box">
+              <span>{isPaid ? "Total Paid:" : "Total Due:"}</span>
+              <strong>{formatMoney(totalCentsPreview, currency)}</strong>
             </div>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          className="mi-btn mi-btn--ghost mi-btn--sm mi-items__add"
-          onClick={addItem}
-        >
-          + Add line
-        </button>
-
-        <div className="mi-total">
-          <div className="mi-total__box">
-            <span>{isPaid ? "Total Paid:" : "Total Due:"}</span>
-            <strong>{formatMoney(totalCentsPreview, currency)}</strong>
           </div>
         </div>
 
@@ -755,30 +1002,33 @@ export default function ManualInvoices() {
           </label>
         </div>
 
-        <section className="mi-doc__block">
-          <p className="mi-doc__caption">Terms</p>
-          {!isPaid && <p className="mi-doc__terms">{termsLine}</p>}
-          {!isPaid && (
+        <InvoiceSection {...sectionProps("terms", "Terms and Closing Note")} className="mi-doc__terms-wrap">
+          <section className="mi-doc__block">
+            <p className="mi-doc__caption">Terms</p>
+            {!isPaid && <p className="mi-doc__terms">{termsLine}</p>}
+            {!isPaid && (
+              <p className="mi-doc__terms-pair">
+                <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
+              </p>
+            )}
             <p className="mi-doc__terms-pair">
-              <strong>Payment Due Date:</strong> {formatDocDate(dueDate)}
+              <strong>Payment Terms:</strong> {paymentTerms}
             </p>
-          )}
-          <p className="mi-doc__terms-pair">
-            <strong>Payment Terms:</strong> {paymentTerms}
-          </p>
-        </section>
+          </section>
 
-        <section className="mi-doc__block">
-          <p className="mi-doc__caption">Closing note</p>
-          <textarea
-            className="mi-input mi-textarea"
-            rows={2}
-            maxLength={500}
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            placeholder="Thank you for your business."
-          />
-        </section>
+          <section className="mi-doc__block">
+            <p className="mi-doc__caption">Closing note</p>
+            <textarea
+              className="mi-input mi-textarea"
+              rows={2}
+              maxLength={500}
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="Thank you for your business."
+              aria-label="Closing note"
+            />
+          </section>
+        </InvoiceSection>
 
         {error && (
           <div className="mi-alert" role="alert">
@@ -793,11 +1043,16 @@ export default function ManualInvoices() {
             the client.
           </small>
           <button
-            className="mi-btn mi-btn--primary"
+            className="mi-btn mi-btn--generate"
             type="submit"
             disabled={!canSubmit}
+            onClick={revealFirstInvalidSection}
           >
-            {submitting && <span className="mi-spinner" aria-hidden="true" />}
+            {submitting ? (
+              <span className="mi-spinner" aria-hidden="true" />
+            ) : (
+              <FileText size={16} aria-hidden="true" />
+            )}
             {submitting ? "Generating…" : "Generate Invoice"}
           </button>
         </div>
@@ -866,23 +1121,25 @@ export default function ManualInvoices() {
         </div>
       )}
 
-      <section className="mi-card">
-        <div className="mi-card__head">
-          <div className="mi-card__title">
+      <section className="mi-inv-card">
+        <div className="mi-inv-card__head">
+          <div className="mi-inv-card__title">
             <p className="mi-eyebrow">History</p>
             <h2>Recent Invoices</h2>
           </div>
           <button
-            className="mi-btn mi-btn--ghost mi-btn--sm"
+            className="mi-btn mi-btn--outline mi-btn--sm"
             type="button"
             onClick={() => fetchHistory()}
             disabled={historyLoading}
           >
-            {historyLoading && (
+            {historyLoading ? (
               <span
                 className="mi-spinner mi-spinner--dark"
                 aria-hidden="true"
               />
+            ) : (
+              <RefreshCw size={14} aria-hidden="true" />
             )}
             {historyLoading ? "Refreshing…" : "Refresh"}
           </button>
@@ -991,17 +1248,16 @@ export default function ManualInvoices() {
               </thead>
               <tbody>
                 {history.map((invoice) => (
-                  // data-label drives the stacked card layout under 820px —
-                  // each cell prints its own header, so a 7-column table
-                  // doesn't force a horizontal scroll on a phone.
+                  // On narrower layouts each row becomes a compact card (see
+                  // the mi-td--* grid areas in the CSS).
                   <tr key={invoice._id}>
-                    <td data-label="Created" className="mi-cell-muted">
+                    <td data-label="Created" className="mi-cell-muted mi-td--created">
                       {formatDate(invoice.createdAt)}
                     </td>
-                    <td data-label="Invoice #" className="mi-cell-number">
+                    <td data-label="Invoice #" className="mi-cell-number mi-td--number">
                       {invoice.invoiceNumber}
                     </td>
-                    <td data-label="Client">
+                    <td data-label="Client" className="mi-td--client">
                       <div className="mi-person">
                         <strong>{invoice.clientName}</strong>
                         <span title={invoice.clientEmail}>
@@ -1017,7 +1273,7 @@ export default function ManualInvoices() {
                         )}
                       </div>
                     </td>
-                    <td data-label="Description">
+                    <td data-label="Description" className="mi-td--desc">
                       {/* Clamped to two lines with the full text on hover: one
                           long package description would otherwise stretch this
                           column and squeeze every other one. */}
@@ -1027,73 +1283,65 @@ export default function ManualInvoices() {
                     </td>
                     <td
                       data-label="Amount"
-                      className="mi-col-amount mi-cell-amount"
+                      className="mi-col-amount mi-cell-amount mi-td--amount"
                     >
                       {formatMoney(invoice.amountCents, invoice.currency)}
                     </td>
-                    <td data-label="Status">
+                    <td data-label="Status" className="mi-td--status">
                       <span
                         className={`mi-status mi-status--${invoice.status === "paid" ? "paid" : "due"}`}
                       >
                         {statusLabel(invoice.status)}
                       </span>
-                      {invoice.emailed ? (
-                        <span
-                          className="mi-email-flag mi-email-flag--sent"
-                          title={`Emailed to ${invoice.clientEmail}`}
-                        >
-                          ✓ emailed
-                        </span>
-                      ) : invoice.emailError ? (
-                        <span
-                          className="mi-email-flag"
-                          title={invoice.emailError}
-                        >
-                          ⚠ email failed
-                        </span>
-                      ) : (
-                        <span
-                          className="mi-email-flag mi-email-flag--muted"
-                          title="Not emailed to the client yet"
-                        >
-                          not emailed
-                        </span>
-                      )}
+                      <EmailFlag invoice={invoice} />
                     </td>
-                    <td data-label="Actions" className="mi-col-actions">
-                      <div className="mi-actions">
-                        <button
-                          className="mi-btn mi-btn--link"
-                          type="button"
-                          disabled={downloadingId === invoice._id}
-                          onClick={() => download(invoice._id)}
-                        >
-                          {downloadingId === invoice._id && (
-                            <span className="mi-spinner" aria-hidden="true" />
-                          )}
-                          Download
-                        </button>
-                        {invoice.status === "due" && (
+                    <td data-label="Actions" className="mi-col-actions mi-td--actions">
+                      {isStack ? (
+                        <InvoiceRowMenu
+                          invoice={invoice}
+                          open={menuOpenId === invoice._id}
+                          setOpenId={setMenuOpenId}
+                          onDownload={download}
+                          onMarkPaid={openMarkPaid}
+                          onSend={resendEmail}
+                          downloading={downloadingId === invoice._id}
+                          sending={resendingId === invoice._id}
+                        />
+                      ) : (
+                        <div className="mi-inv-actions">
                           <button
                             className="mi-btn mi-btn--link mi-btn--accent"
                             type="button"
-                            onClick={() => openMarkPaid(invoice._id)}
+                            disabled={downloadingId === invoice._id}
+                            onClick={() => download(invoice._id)}
                           >
-                            Mark as Paid
+                            {downloadingId === invoice._id && (
+                              <span className="mi-spinner" aria-hidden="true" />
+                            )}
+                            Download
                           </button>
-                        )}
-                        <button
-                          className="mi-btn mi-btn--link mi-btn--accent"
-                          type="button"
-                          disabled={resendingId === invoice._id}
-                          onClick={() => resendEmail(invoice._id)}
-                        >
-                          {resendingId === invoice._id && (
-                            <span className="mi-spinner" aria-hidden="true" />
+                          {invoice.status === "due" && (
+                            <button
+                              className="mi-btn mi-btn--link mi-btn--accent"
+                              type="button"
+                              onClick={() => openMarkPaid(invoice._id)}
+                            >
+                              Mark as Paid
+                            </button>
                           )}
-                          {invoice.emailed ? "Resend Email" : "Send Invoice Email"}
-                        </button>
-                      </div>
+                          <button
+                            className="mi-btn mi-btn--link mi-btn--accent"
+                            type="button"
+                            disabled={resendingId === invoice._id}
+                            onClick={() => resendEmail(invoice._id)}
+                          >
+                            {resendingId === invoice._id && (
+                              <span className="mi-spinner" aria-hidden="true" />
+                            )}
+                            {invoice.emailed ? "Resend Email" : "Send Invoice Email"}
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -1135,18 +1383,18 @@ export default function ManualInvoices() {
           screen the form sat off-canvas next to the row it belonged to. */}
       {markPaidInvoice && (
         <div
-          className="mi-modal"
+          className="mi-inv-modal"
           role="presentation"
           onMouseDown={closeMarkPaid}
         >
           <div
-            className="mi-modal__panel"
+            className="mi-inv-modal__panel"
             role="dialog"
             aria-modal="true"
             aria-labelledby="mi-modal-title"
             onMouseDown={(event) => event.stopPropagation()}
           >
-            <div className="mi-modal__head">
+            <div className="mi-inv-modal__head">
               <div>
                 <p className="mi-eyebrow">Mark as paid</p>
                 <h3 id="mi-modal-title">{markPaidInvoice.invoiceNumber}</h3>
@@ -1178,7 +1426,7 @@ export default function ManualInvoices() {
               </div>
             </dl>
 
-            <p className="mi-modal__note">
+            <p className="mi-inv-modal__note">
               The invoice PDF is regenerated as a paid receipt. No email is
               sent — use “Send Invoice Email” on the invoice afterward to send
               the updated receipt to {markPaidInvoice.clientEmail}.
@@ -1190,7 +1438,7 @@ export default function ManualInvoices() {
               </div>
             )}
 
-            <div className="mi-modal__buttons">
+            <div className="mi-inv-modal__buttons">
               <button
                 className="mi-btn mi-btn--ghost"
                 type="button"

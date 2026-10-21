@@ -80,6 +80,11 @@ function decidedByText(row) {
   return who ? `by ${who}${via}` : "by an admin (unknown)";
 }
 
+function initialsOf(name) {
+  const letters = String(name || "").split(" ").filter(Boolean).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  return letters || "U";
+}
+
 function ReasonCell({ text }) {
   const [open, setOpen] = useState(false);
   if (!text) return <span className="adr-muted">—</span>;
@@ -284,7 +289,7 @@ export default function DeletionRequestsPanel({ syncUrl = false, search: externa
           <p>{hasFilters ? "Nothing matches these filters." : "No one has requested account deletion yet."}</p>
         </div>
       ) : (
-        <div className="adp-table-wrap" aria-busy={loading}>
+        <div className="adp-table-wrap adr-wrap" aria-busy={loading}>
           <table className="adp-table adr-table">
             <thead>
               <tr>
@@ -302,8 +307,13 @@ export default function DeletionRequestsPanel({ syncUrl = false, search: externa
               {data.items.map((row) => (
                 <tr key={row._id}>
                   <td data-label="Person">
-                    <div className="adr-name">{row.name || "—"}</div>
-                    <div className="adr-muted">{row.email || "—"}</div>
+                    <div className="adr-person">
+                      <span className="adr-avatar" aria-hidden="true">{initialsOf(row.name)}</span>
+                      <div className="adr-who">
+                        <div className="adr-name">{row.name || "—"}</div>
+                        <div className="adr-muted">{row.email || "—"}</div>
+                      </div>
+                    </div>
                   </td>
                   <td data-label="Patient ID" className="adr-mono">{formatPatientId(row.patientId)}</td>
                   <td data-label="Requested">

@@ -1,7 +1,34 @@
-/* Search Analytics: reuses the Admin design tokens (adp-* header/stat cards from
-   AdminDashboard.css); only the table/filter pieces are namespaced here. */
+/* Search Analytics. Self-contained (prefix sa-): the page header and summary
+   cards copy the Admin dashboard look but use their own sa-* classes, because
+   the shared adp-* names are redefined globally by other admin stylesheets
+   (AdminAppointments.css, ManageUsers.css) and the result depended on which
+   page had been opened first. */
 
-.sa-page { color: #0b0443; }
+.sa-page {
+  container: sa / inline-size;
+  min-width: 0;
+  color: #0b0443;
+}
+
+.sa-page *,
+.sa-page *::before,
+.sa-page *::after {
+  box-sizing: border-box;
+}
+
+/* ------------------------------------------------------------ header ----- */
+
+.sa-header { margin-bottom: 24px; }
+.sa-eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0e6ceb;
+}
+.sa-title { font-size: 22px; font-weight: 800; color: #0b0443; margin: 4px 0 2px; }
+.sa-sub { font-size: 14px; color: #6b7ca3; margin: 0; }
 
 .sa-banner {
   margin: 0 0 16px;
@@ -13,6 +40,60 @@
   font-weight: 600;
 }
 
+/* ------------------------------------------------------- summary cards --- */
+
+.sa-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.sa-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(8, 58, 176, 0.12), 0 1.5px 6px rgba(8, 58, 176, 0.07);
+}
+
+.sa-stat::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+  pointer-events: none;
+}
+
+.sa-stat-value { font-size: 30px; font-weight: 800; color: #0b0443; line-height: 1; }
+.sa-stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7ca3;
+}
+.sa-stat--blue { border-top: 3px solid #1d4ed8; }
+.sa-stat--blue .sa-stat-value { color: #1d4ed8; }
+.sa-stat--green { border-top: 3px solid #059669; }
+.sa-stat--green .sa-stat-value { color: #059669; }
+.sa-stat--amber { border-top: 3px solid #b45309; }
+.sa-stat--amber .sa-stat-value { color: #b45309; }
+
+/* ------------------------------------------- window / filters / pager ---- */
+
 .sa-window,
 .sa-filters,
 .sa-pager {
@@ -23,11 +104,12 @@
 }
 
 .sa-window { margin-bottom: 18px; }
-.sa-filters { margin-bottom: 14px; }
-.sa-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: #6b7ca3; }
+.sa-filters { margin-bottom: 14px; align-items: flex-end; }
+.sa-filters label { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: 12px; font-weight: 600; color: #6b7ca3; }
 .sa-hint { margin: 0 0 12px; font-size: 12px; color: #6b7ca3; }
 .sa-filters select,
 .sa-filters input[type="date"] {
+  max-width: 100%;
   padding: 7px 10px;
   border: 1px solid #d5dcef;
   border-radius: 10px;
@@ -47,11 +129,23 @@
   cursor: pointer;
 }
 .sa-btn:disabled { opacity: 0.5; cursor: default; }
-.sa-refresh { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.sa-btn:focus-visible,
+.sa-tab:focus-visible,
+.sa-link:focus-visible,
+.sa-filters select:focus-visible,
+.sa-filters input:focus-visible {
+  outline: 2px solid #0e6ceb;
+  outline-offset: 2px;
+}
+.sa-refresh { display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-left: auto; }
 .sa-spin { animation: sa-spin 1s linear infinite; }
 @keyframes sa-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .sa-spin { animation: none; } }
 .sa-btn--active { background: #01164a; border-color: #01164a; color: #fff; }
+
+.sa-pager { justify-content: flex-end; margin-top: 12px; font-size: 13px; color: #6b7ca3; }
+
+/* --------------------------------------------------------------- tabs ---- */
 
 .sa-tabs { display: flex; gap: 4px; border-bottom: 1px solid #d5dcef; margin-bottom: 16px; }
 .sa-tab {
@@ -67,6 +161,7 @@
 .sa-tab--active { color: #0e6ceb; border-bottom-color: #0e6ceb; }
 
 .sa-panel {
+  min-width: 0;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 16px;
@@ -76,6 +171,8 @@
 
 .sa-note { margin: 0 0 12px; font-size: 13px; color: #6b7ca3; }
 .sa-note--error { color: #b91c1c; font-weight: 600; }
+
+/* ------------------------------------------------------------- tables ---- */
 
 .sa-table-wrap { overflow-x: auto; }
 .sa-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -94,6 +191,9 @@
 .sa-path { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
 .sa-empty { text-align: center; color: #6b7ca3; padding: 24px 10px; }
 
+/* Dates stay on one line (YYYY-MM-DD would otherwise break at the hyphens). */
+.sa-date { white-space: nowrap; }
+
 .sa-link { border: 0; background: none; padding: 0; color: #0e6ceb; font-weight: 600; font-size: 13px; cursor: pointer; }
 .sa-link:hover { text-decoration: underline; }
 
@@ -105,9 +205,11 @@
 .sa-bar-cell { width: 35%; min-width: 120px; }
 .sa-bar { display: block; height: 10px; border-radius: 5px; background: #1d4ed8; }
 
-.sa-pager { justify-content: flex-end; margin-top: 12px; font-size: 13px; color: #6b7ca3; }
-
 .sa-other { margin-top: 18px; }
+.sa-table--other th { white-space: normal; }
+.sa-trend-none { color: #6b7ca3; font-size: 13px; cursor: help; }
+.sa-trend-why { display: none; }
+
 /* Visually hidden, still read by screen readers (table captions). */
 .sa-sr {
   position: absolute;
@@ -121,4 +223,161 @@
   border: 0;
 }
 
-.sa-trend-none { color: #6b7ca3; font-size: 13px; cursor: help; }
+/* Between roughly 800 and 1080px the wide tables get tighter cells. */
+@container sa (max-width: 1079px) {
+  .sa-table:not(.sa-table--cards) th,
+  .sa-table:not(.sa-table--cards) td {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .sa-table:not(.sa-table--cards) td { font-size: 12.5px; }
+}
+
+/* --------------------------------------------- tables as cards (JSX flag) -- */
+
+/* SearchAnalytics.jsx adds sa-table--cards when the page is narrower than that
+   tab's own limit (CARDS_BELOW). Every column's data is kept: each cell prints
+   its label above its value. */
+.sa-table-wrap--cards { overflow: visible; }
+
+.sa-table--cards,
+.sa-table--cards tbody {
+  display: block;
+}
+
+.sa-table--cards thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.sa-table--cards tbody tr {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+  margin-bottom: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e1e7f5;
+  border-radius: 12px;
+}
+
+.sa-table--cards td {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.sa-table--cards td[data-label]::before {
+  content: attr(data-label);
+  display: block;
+  margin-bottom: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7ca3;
+}
+
+/* The term is the card's title, so it carries no label. */
+.sa-table--cards td.sa-term {
+  grid-column: 1 / -1;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.sa-table--cards td.sa-term::before { content: none; }
+.sa-table--cards td.sa-path,
+.sa-table--cards td.sa-chipcell,
+.sa-table--cards td.sa-act,
+.sa-table--cards td.sa-bar-cell { grid-column: 1 / -1; }
+.sa-table--cards td.sa-path { word-break: break-all; }
+.sa-table--cards .sa-act { margin-top: 2px; }
+.sa-table--cards .sa-link,
+.sa-table--cards .sa-trend-none { font-size: 14px; }
+.sa-table--cards .sa-link { min-height: 44px; padding: 0 2px; }
+.sa-table--cards .sa-trend-why {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b7ca3;
+}
+
+.sa-table--cards .sa-bar-cell { width: auto; min-width: 0; }
+
+.sa-table--cards tbody tr.sa-empty-row {
+  display: block;
+  padding: 0;
+}
+
+.sa-table--cards tbody tr.sa-empty-row td { padding: 24px 12px; text-align: center; }
+
+/* Daily terms card: term first, then date and count side by side. */
+.sa-table--daily.sa-table--cards td.sa-term { order: -1; }
+
+/* Trend card: day, searches with its bar, then the three outcome counts. */
+.sa-table--trend.sa-table--cards tbody tr { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sa-table--trend.sa-table--cards td.sa-day,
+.sa-table--trend.sa-table--cards td:nth-child(2) { grid-column: 1 / -1; }
+.sa-table--trend.sa-table--cards td.sa-day { font-weight: 700; font-size: 14px; }
+.sa-table--trend.sa-table--cards td.sa-bar-cell { margin-top: -4px; }
+
+/* ------------------------------------------- narrow layouts (container) -- */
+
+@container sa (max-width: 759px) {
+  .sa-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@container sa (max-width: 639px) {
+  .sa-panel { padding: 14px 12px; }
+
+  /* Four tabs share the row; labels may wrap to two lines instead of clipping. */
+  .sa-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+  .sa-tab {
+    min-height: 44px;
+    padding: 8px 4px;
+    font-size: 13px;
+    line-height: 1.2;
+    text-align: center;
+  }
+}
+
+@container sa (max-width: 559px) {
+  .sa-title { font-size: 20px; }
+  .sa-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .sa-stat { padding: 14px 14px; }
+  .sa-stat:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+  /* Window buttons side by side, Refresh on its own full-width row. */
+  .sa-window { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .sa-window .sa-btn { min-height: 44px; padding-left: 6px; padding-right: 6px; }
+  .sa-refresh { grid-column: 1 / -1; margin-left: 0; }
+
+  /* Filters: one per row, full width, 16px text (stops iOS focus zoom). */
+  .sa-filters { display: grid; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+  .sa-filters select,
+  .sa-filters input[type="date"] {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+  .sa-filters .sa-link { min-height: 44px; text-align: left; }
+
+  .sa-pager { justify-content: center; }
+  .sa-pager span { order: -1; flex: 1 1 100%; text-align: center; }
+  .sa-pager .sa-btn { flex: 1; min-height: 44px; }
+
+  .sa-note .sa-link { min-height: 44px; padding: 0 6px; }
+}
+
+@container sa (max-width: 479px) {
+  .sa-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -268,10 +268,6 @@ export default function AdminDirectVideoConsultation() {
         </div>
       </div>
 
-      <Link to="/admin-dashboard/direct-video-consultation/calls" className="dvc-secondary" style={{ display: "inline-block", marginBottom: 16 }}>
-        View Calls &amp; Reports →
-      </Link>
-
       <form className="dvc-card dvc-form" onSubmit={generateLink}>
         <div className="dvc-form__title">
           <h2>Generate a Secure Link</h2>

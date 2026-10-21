@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FiRefreshCw } from "react-icons/fi";
 import { getSearchAnalytics } from "../../api/searchAnalyticsApi";
 import {
@@ -38,6 +38,11 @@ const GAP_LABELS = {
   alias_opportunity: "Alias opportunity",
 };
 
+// Page width (px) below which a tab's table becomes a list of cards. Each tab
+// has its own number: Top terms and Content gaps have eight columns, Trend six,
+// Daily terms three, so they stay tables for different amounts of space.
+const CARDS_BELOW = { terms: 800, gaps: 940, trend: 680, daily: 560 };
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const dayKey = (date) => date.toISOString().slice(0, 10);
 
@@ -56,6 +61,24 @@ function errorMessage(err) {
   if (status === 503) return "This view could not be computed right now. Please try again shortly.";
   if (status === 401 || status === 403) return "You do not have access to this view.";
   return "Search analytics is temporarily unavailable.";
+}
+
+// Width of the page's own box, not the viewport: the admin shell reserves a
+// sidebar, so the room a table gets depends on the shell as much as the screen.
+function useElementWidth(ref) {
+  const [width, setWidth] = useState(1200);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const measure = () => setWidth(Math.round(el.getBoundingClientRect().width));
+    measure();
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+    observer?.observe(el);
+    return () => observer?.disconnect();
+  }, [ref]);
+
+  return width;
 }
 
 function useAnalytics(path, params, enabled = true, refreshKey = 0) {
@@ -120,7 +143,7 @@ function Pager({ pagination, onPage }) {
   );
 }
 
-function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
+function TermsTab({ range, onSelectTerm, refreshKey, onBusy, width }) {
   const [outcome, setOutcome] = useState("");
   const [aiStatus, setAiStatus] = useState("");
   const [sort, setSort] = useState("count");
@@ -129,6 +152,7 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
   const { loading, refreshing, error, body } = useAnalytics("/terms", params, true, refreshKey);
   useReportBusy(refreshing, onBusy);
   const items = body?.data?.items || [];
+  const cards = width < CARDS_BELOW.terms;
 
   return (
     <>
@@ -160,8 +184,8 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
       <PrivacyCheckNotice meta={body?.meta} />
       {!loading && (!error || body) && (
         <>
-          <div className="sa-table-wrap">
-            <table className="sa-table">
+          <div className={`sa-table-wrap${cards ? " sa-table-wrap--cards" : ""}`}>
+            <table className={`sa-table sa-table--terms${cards ? " sa-table--cards" : ""}`}>
               <thead>
                 <tr>
                   <th>Search term</th><th>Searches</th><th>Page found</th><th>Fallback</th><th>No results</th><th>Last seen</th><th>Coverage</th><th />
@@ -170,24 +194,24 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
               <tbody>
                 {items.map((row) => (
                   <tr key={row.termKey}>
-                    <td className="sa-term">{row.term}</td>
-                    <td>{fmt(row.interactions)}</td>
-                    <td>{fmt(row.outcomes.dedicatedPageFound)}</td>
-                    <td>{fmt(row.outcomes.fallbackOnly)}</td>
-                    <td>{fmt(row.outcomes.noResults)}</td>
-                    <td>{row.lastSeen || "-"}</td>
-                    <td>{GAP_LABELS[row.coverage] || (row.coverage ? row.coverage.replace(/_/g, " ") : "-")}</td>
-                    <td>
+                    <td className="sa-term" data-label="Search term">{row.term}</td>
+                    <td data-label="Searches">{fmt(row.interactions)}</td>
+                    <td data-label="Page found">{fmt(row.outcomes.dedicatedPageFound)}</td>
+                    <td data-label="Fallback">{fmt(row.outcomes.fallbackOnly)}</td>
+                    <td data-label="No results">{fmt(row.outcomes.noResults)}</td>
+                    <td className="sa-date" data-label="Last seen">{row.lastSeen || "-"}</td>
+                    <td data-label="Coverage">{GAP_LABELS[row.coverage] || (row.coverage ? row.coverage.replace(/_/g, " ") : "-")}</td>
+                    <td className="sa-act">
                       {(() => {
                         const trend = trendActionFor(row);
                         return trend.available
                           ? <button type="button" className="sa-link" onClick={() => onSelectTerm(row.termKey, row.term)}>{trend.label}</button>
-                          : <span className="sa-trend-none" title={trend.title}>{trend.label}</span>;
+                          : <><span className="sa-trend-none" title={trend.title}>{trend.label}</span><span className="sa-trend-why">{trend.title}</span></>;
                       })()}
                     </td>
                   </tr>
                 ))}
-                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr><td colSpan={8} className="sa-empty">No search terms for this period yet. A term appears after at least 3 searches.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr className="sa-empty-row"><td colSpan={8} className="sa-empty">No search terms for this period yet. A term appears after at least 3 searches.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -198,7 +222,7 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy }) {
   );
 }
 
-function DailyTermsTab({ range, refreshKey, onBusy }) {
+function DailyTermsTab({ range, refreshKey, onBusy, width }) {
   const [outcome, setOutcome] = useState("");
   const [aiStatus, setAiStatus] = useState("");
   const [day, setDay] = useState("");
@@ -208,6 +232,7 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
   useReportBusy(refreshing, onBusy);
   const items = body?.data?.items || [];
   const other = body?.data?.other || [];
+  const cards = width < CARDS_BELOW.daily;
 
   return (
     <>
@@ -235,8 +260,8 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
       <PrivacyCheckNotice meta={body?.meta} />
       {!loading && (!error || body) && (
         <>
-          <div className="sa-table-wrap">
-            <table className="sa-table">
+          <div className={`sa-table-wrap${cards ? " sa-table-wrap--cards" : ""}`}>
+            <table className={`sa-table sa-table--daily${cards ? " sa-table--cards" : ""}`}>
               <caption className="sa-sr">Search terms by UTC date</caption>
               <thead>
                 <tr><th scope="col">Date (UTC)</th><th scope="col">Search term</th><th scope="col">Interactions</th></tr>
@@ -244,26 +269,26 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
               <tbody>
                 {items.map((row) => (
                   <tr key={`${row.day}|${row.term}`}>
-                    <td>{row.day}</td>
-                    <td className="sa-term">{row.term}</td>
-                    <td>{fmt(row.interactions)}</td>
+                    <td className="sa-date" data-label="Date (UTC)">{row.day}</td>
+                    <td className="sa-term" data-label="Search term">{row.term}</td>
+                    <td data-label="Interactions">{fmt(row.interactions)}</td>
                   </tr>
                 ))}
-                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr><td colSpan={3} className="sa-empty">No listed terms for this period.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr className="sa-empty-row"><td colSpan={3} className="sa-empty">No listed terms for this period.</td></tr>}
               </tbody>
             </table>
           </div>
           <Pager pagination={body?.data?.pagination} onPage={setOffset} />
           {other.length > 0 && (
             <div className="sa-table-wrap sa-other">
-              <table className="sa-table">
+              <table className="sa-table sa-table--other">
                 <caption className="sa-sr">Searches not listed individually, by UTC date</caption>
                 <thead>
                   <tr><th scope="col">Date (UTC)</th><th scope="col">Other (not shown as terms)</th></tr>
                 </thead>
                 <tbody>
                   {other.map((row) => (
-                    <tr key={row.day}><td>{row.day}</td><td>{fmt(row.interactions)}</td></tr>
+                    <tr key={row.day}><td className="sa-date">{row.day}</td><td>{fmt(row.interactions)}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -275,11 +300,12 @@ function DailyTermsTab({ range, refreshKey, onBusy }) {
   );
 }
 
-function GapsTab({ range, onSelectTerm, refreshKey, onBusy }) {
+function GapsTab({ range, onSelectTerm, refreshKey, onBusy, width }) {
   const [offset, setOffset] = useState(0);
   const { loading, refreshing, error, body } = useAnalytics("/gaps", { ...range, limit: PAGE_SIZE, offset }, true, refreshKey);
   useReportBusy(refreshing, onBusy);
   const items = body?.data?.items || [];
+  const cards = width < CARDS_BELOW.gaps;
 
   return (
     <>
@@ -287,8 +313,8 @@ function GapsTab({ range, onSelectTerm, refreshKey, onBusy }) {
       <PrivacyCheckNotice meta={body?.meta} />
       {!loading && (!error || body) && (
         <>
-          <div className="sa-table-wrap">
-            <table className="sa-table">
+          <div className={`sa-table-wrap${cards ? " sa-table-wrap--cards" : ""}`}>
+            <table className={`sa-table sa-table--gaps${cards ? " sa-table--cards" : ""}`}>
               <thead>
                 <tr>
                   <th>Search term</th><th>Opportunity</th><th>Searches</th><th>Confirmed</th><th>Page found rate</th><th>Top result</th><th>Last seen</th><th />
@@ -297,17 +323,17 @@ function GapsTab({ range, onSelectTerm, refreshKey, onBusy }) {
               <tbody>
                 {items.map((row) => (
                   <tr key={row.termKey}>
-                    <td className="sa-term">{row.term}</td>
-                    <td><span className={`sa-chip sa-chip--${row.gapType}`}>{GAP_LABELS[row.gapType] || "-"}</span></td>
-                    <td>{fmt(row.interactions)}</td>
-                    <td>{fmt(row.confirmedInteractions)}</td>
-                    <td>{pct(row.confirmedDedicatedRate)}</td>
-                    <td className="sa-path">{row.topResultPath?.path || "-"}</td>
-                    <td>{row.lastSeen || "-"}</td>
-                    <td><button type="button" className="sa-link" onClick={() => onSelectTerm(row.termKey, row.term)}>Trend</button></td>
+                    <td className="sa-term" data-label="Search term">{row.term}</td>
+                    <td className="sa-chipcell" data-label="Opportunity"><span className={`sa-chip sa-chip--${row.gapType}`}>{GAP_LABELS[row.gapType] || "-"}</span></td>
+                    <td data-label="Searches">{fmt(row.interactions)}</td>
+                    <td data-label="Confirmed">{fmt(row.confirmedInteractions)}</td>
+                    <td data-label="Page found rate">{pct(row.confirmedDedicatedRate)}</td>
+                    <td className="sa-path" data-label="Top result">{row.topResultPath?.path || "-"}</td>
+                    <td className="sa-date" data-label="Last seen">{row.lastSeen || "-"}</td>
+                    <td className="sa-act"><button type="button" className="sa-link" onClick={() => onSelectTerm(row.termKey, row.term)}>Trend</button></td>
                   </tr>
                 ))}
-                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr><td colSpan={8} className="sa-empty">No content opportunities found for this period.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr className="sa-empty-row"><td colSpan={8} className="sa-empty">No content opportunities found for this period.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -318,12 +344,13 @@ function GapsTab({ range, onSelectTerm, refreshKey, onBusy }) {
   );
 }
 
-function TrendTab({ range, term, onClear, refreshKey, onBusy }) {
+function TrendTab({ range, term, onClear, refreshKey, onBusy, width }) {
   const params = { ...range, ...(term ? { termKey: term.key } : {}) };
   const { loading, refreshing, error, body } = useAnalytics("/trend", params, true, refreshKey);
   useReportBusy(refreshing, onBusy);
   const points = body?.data?.points || [];
   const max = Math.max(1, ...points.map((p) => p.interactions));
+  const cards = width < CARDS_BELOW.trend;
 
   return (
     <>
@@ -333,23 +360,23 @@ function TrendTab({ range, term, onClear, refreshKey, onBusy }) {
       </p>
       <Notice loading={loading} error={error} />
       {!loading && (!error || body) && (
-        <div className="sa-table-wrap">
-          <table className="sa-table">
+        <div className={`sa-table-wrap${cards ? " sa-table-wrap--cards" : ""}`}>
+          <table className={`sa-table sa-table--trend${cards ? " sa-table--cards" : ""}`}>
             <thead>
               <tr><th>Day</th><th>Searches</th><th /><th>Page found</th><th>Fallback</th><th>No results</th></tr>
             </thead>
             <tbody>
               {points.map((p) => (
                 <tr key={p.day}>
-                  <td>{p.day}{p.final ? "" : " (in progress)"}</td>
-                  <td>{fmt(p.interactions)}</td>
+                  <td className="sa-day" data-label="Day"><span className="sa-date">{p.day}</span>{p.final ? "" : " (in progress)"}</td>
+                  <td data-label="Searches">{fmt(p.interactions)}</td>
                   <td className="sa-bar-cell"><span className="sa-bar" style={{ width: `${(p.interactions / max) * 100}%` }} /></td>
-                  <td>{fmt(p.dedicatedPageFound)}</td>
-                  <td>{fmt(p.fallbackOnly)}</td>
-                  <td>{fmt(p.noResults)}</td>
+                  <td data-label="Page found">{fmt(p.dedicatedPageFound)}</td>
+                  <td data-label="Fallback">{fmt(p.fallbackOnly)}</td>
+                  <td data-label="No results">{fmt(p.noResults)}</td>
                 </tr>
               ))}
-              {points.length === 0 && <tr><td colSpan={6} className="sa-empty">No trend data for this period.</td></tr>}
+              {points.length === 0 && <tr className="sa-empty-row"><td colSpan={6} className="sa-empty">No trend data for this period.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -365,6 +392,9 @@ export default function SearchAnalytics() {
   const [range, setRange] = useState(() => windowParams(30));
   const [refreshKey, setRefreshKey] = useState(0);
   const [tabBusy, setTabBusy] = useState(false);
+  const pageRef = useRef(null);
+  const tabRefs = useRef({});
+  const width = useElementWidth(pageRef);
 
   const changeWindow = useCallback((next) => {
     setDays(next);
@@ -382,16 +412,30 @@ export default function SearchAnalytics() {
     setRefreshKey((n) => n + 1);
   }, [days]);
 
+  // Arrow keys / Home / End move between tabs (tablist keyboard pattern).
+  const onTabKeyDown = (event) => {
+    const index = TABS.findIndex((t) => t.key === tab);
+    let next = null;
+    if (event.key === "ArrowRight") next = (index + 1) % TABS.length;
+    else if (event.key === "ArrowLeft") next = (index - 1 + TABS.length) % TABS.length;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = TABS.length - 1;
+    if (next === null) return;
+    event.preventDefault();
+    setTab(TABS[next].key);
+    tabRefs.current[TABS[next].key]?.focus();
+  };
+
   const summary = useAnalytics("/summary", range, true, refreshKey);
   const refreshing = summary.refreshing || tabBusy;
   const totals = summary.body?.data;
 
   return (
-    <div className="sa-page">
-      <div className="adp-header">
-        <span className="adp-eyebrow">Content opportunities</span>
-        <h1 className="adp-title">Search Analytics</h1>
-        <p className="adp-sub">
+    <div className="sa-page" ref={pageRef}>
+      <div className="sa-header">
+        <span className="sa-eyebrow">Content opportunities</span>
+        <h1 className="sa-title">Search Analytics</h1>
+        <p className="sa-sub">
           Aggregated, privacy-filtered patient search activity. A search term appears only after at least 3 searches; searches the privacy filters reject are never recorded or shown.
         </p>
       </div>
@@ -422,28 +466,39 @@ export default function SearchAnalytics() {
       <Notice loading={summary.loading} error={summary.error} />
       <PrivacyCheckNotice meta={summary.body?.meta} />
       {totals && (
-        <div className="adp-stats">
-          <div className="adp-stat adp-stat--blue"><span className="adp-stat-value">{fmt(totals.interactions)}</span><span className="adp-stat-label">Searches</span></div>
-          <div className="adp-stat adp-stat--green"><span className="adp-stat-value">{fmt(totals.outcomes.dedicatedPageFound)}</span><span className="adp-stat-label">Page found</span></div>
-          <div className="adp-stat adp-stat--amber"><span className="adp-stat-value">{fmt(totals.outcomes.fallbackOnly)}</span><span className="adp-stat-label">Fallback only</span></div>
-          <div className="adp-stat"><span className="adp-stat-value">{fmt(totals.outcomes.noResults)}</span><span className="adp-stat-label">No results</span></div>
-          <div className="adp-stat"><span className="adp-stat-value">{fmt(totals.gaps.pageMissing + totals.gaps.noCatalogMatch + totals.gaps.aliasOpportunity)}</span><span className="adp-stat-label">Content gaps</span></div>
+        <div className="sa-stats">
+          <div className="sa-stat sa-stat--blue"><span className="sa-stat-value">{fmt(totals.interactions)}</span><span className="sa-stat-label">Searches</span></div>
+          <div className="sa-stat sa-stat--green"><span className="sa-stat-value">{fmt(totals.outcomes.dedicatedPageFound)}</span><span className="sa-stat-label">Page found</span></div>
+          <div className="sa-stat sa-stat--amber"><span className="sa-stat-value">{fmt(totals.outcomes.fallbackOnly)}</span><span className="sa-stat-label">Fallback only</span></div>
+          <div className="sa-stat"><span className="sa-stat-value">{fmt(totals.outcomes.noResults)}</span><span className="sa-stat-label">No results</span></div>
+          <div className="sa-stat"><span className="sa-stat-value">{fmt(totals.gaps.pageMissing + totals.gaps.noCatalogMatch + totals.gaps.aliasOpportunity)}</span><span className="sa-stat-label">Content gaps</span></div>
         </div>
       )}
 
-      <div className="sa-tabs" role="tablist">
+      <div className="sa-tabs" role="tablist" aria-label="Search analytics views" onKeyDown={onTabKeyDown}>
         {TABS.map((t) => (
-          <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} className={`sa-tab${tab === t.key ? " sa-tab--active" : ""}`} onClick={() => setTab(t.key)}>
+          <button
+            key={t.key}
+            ref={(el) => { tabRefs.current[t.key] = el; }}
+            type="button"
+            role="tab"
+            id={`sa-tab-${t.key}`}
+            aria-selected={tab === t.key}
+            aria-controls="sa-panel"
+            tabIndex={tab === t.key ? 0 : -1}
+            className={`sa-tab${tab === t.key ? " sa-tab--active" : ""}`}
+            onClick={() => setTab(t.key)}
+          >
             {t.label}
           </button>
         ))}
       </div>
 
-      <section className="sa-panel">
-        {tab === "terms" && <TermsTab range={range} onSelectTerm={selectTerm} refreshKey={refreshKey} onBusy={setTabBusy} />}
-        {tab === "daily" && <DailyTermsTab range={range} refreshKey={refreshKey} onBusy={setTabBusy} />}
-        {tab === "gaps" && <GapsTab range={range} onSelectTerm={selectTerm} refreshKey={refreshKey} onBusy={setTabBusy} />}
-        {tab === "trend" && <TrendTab range={range} term={term} onClear={() => setTerm(null)} refreshKey={refreshKey} onBusy={setTabBusy} />}
+      <section className="sa-panel" id="sa-panel" role="tabpanel" aria-labelledby={`sa-tab-${tab}`}>
+        {tab === "terms" && <TermsTab range={range} onSelectTerm={selectTerm} refreshKey={refreshKey} onBusy={setTabBusy} width={width} />}
+        {tab === "daily" && <DailyTermsTab range={range} refreshKey={refreshKey} onBusy={setTabBusy} width={width} />}
+        {tab === "gaps" && <GapsTab range={range} onSelectTerm={selectTerm} refreshKey={refreshKey} onBusy={setTabBusy} width={width} />}
+        {tab === "trend" && <TrendTab range={range} term={term} onClear={() => setTerm(null)} refreshKey={refreshKey} onBusy={setTabBusy} width={width} />}
       </section>
     </div>
   );

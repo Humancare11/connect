@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import api from "../../api";
 import useModalA11y from "../../hooks/useModalA11y";
-import "./AdminDashboard.css";
+import "./AdminDashboard.css"; // keyframes used by the resolve dialog (adp-scalein, adp-spin)
+import "./SupportTickets.css";
 
 const CATEGORY_LABELS = {
   appointment: "Appointment",
@@ -43,7 +44,7 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
         display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
       }}
     >
-      <div ref={resolveDialogRef} role="dialog" aria-modal="true" aria-label="Resolve ticket"
+      <div ref={resolveDialogRef} className="st-modal-dialog" role="dialog" aria-modal="true" aria-label="Resolve ticket"
         onClick={e => e.stopPropagation()}
         style={{
           background: "#ffffff",
@@ -71,6 +72,9 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#ffffff" }}>Resolve Ticket</h3>
           </div>
           <button
+            type="button"
+            className="st-modal-btn"
+            aria-label="Close"
             onClick={onClose}
             style={{
               background: "rgba(255,255,255,0.15)",
@@ -113,7 +117,7 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
               {ticket.description}
             </div>
             {ticket.createdBy?.name && (
-              <div style={{ fontSize: 12, color: "#6b7280", marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              <div className="st-modal-meta" style={{ fontSize: 12, color: "#6b7280", marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{
                   width: 20, height: 20, borderRadius: "50%",
                   background: "#dbeafe", color: "#1d4ed8",
@@ -123,7 +127,7 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
                   {ticket.createdBy.name[0]?.toUpperCase()}
                 </span>
                 <span>{ticket.createdBy.name}</span>
-                {ticket.createdBy.email && <span style={{ color: "#9ca3af" }}>· {ticket.createdBy.email}</span>}
+                {ticket.createdBy.email && <span className="st-modal-email" style={{ color: "#9ca3af" }}>· {ticket.createdBy.email}</span>}
               </div>
             )}
           </div>
@@ -138,6 +142,7 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
             Resolution Message <span style={{ color: "#ef4444" }}>*</span>
           </label>
           <textarea
+            className="st-modal-field"
             value={resolution}
             onChange={e => setResolution(e.target.value)}
             placeholder="Describe how the issue was resolved…"
@@ -172,6 +177,8 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
           display: "flex", gap: 10, justifyContent: "flex-end",
         }}>
           <button
+            type="button"
+            className="st-modal-btn"
             onClick={onClose}
             style={{
               padding: "9px 20px",
@@ -189,6 +196,8 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
             Cancel
           </button>
           <button
+            type="button"
+            className="st-modal-btn"
             onClick={submit}
             disabled={!canSubmit}
             style={{
@@ -224,52 +233,67 @@ function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
 function TicketCard({ ticket, onResolve }) {
   const [open, setOpen] = useState(false);
   const isResolved = ticket.status === "resolved";
+  const toggle = () => setOpen((p) => !p);
+  const bodyId = `st-body-${ticket._id}`;
 
   return (
-    <div className="adp-ticket-card">
-      <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => setOpen(p => !p))(e); } }} className="adp-ticket-row" onClick={() => setOpen(p => !p)}>
-        <div className="adp-avatar" style={{ background: isResolved ? "#ecfdf5" : "#eff6ff", color: isResolved ? "#059669" : "#2563eb" }}>
+    <div className="st-ticket">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-controls={open ? bodyId : undefined}
+        className="st-ticket__row"
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return;
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            toggle();
+          }
+        }}
+        onClick={toggle}
+      >
+        <div className={`st-avatar${isResolved ? " st-avatar--resolved" : ""}`}>
           {ticket.createdBy?.name?.[0]?.toUpperCase() || "?"}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 14, color: "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ticket.title}</div>
-          <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-            {ticket.createdBy?.name}
-            {ticket.createdBy?.email && <span style={{ color: "#94a3b8" }}> · {ticket.createdBy.email}</span>}
+        <div className="st-ticket__main">
+          <div className="st-ticket__title" title={ticket.title}>{ticket.title}</div>
+          <div className="st-ticket__meta">
+            {ticket.createdBy?.name && <span className="st-ticket__name">{ticket.createdBy.name}</span>}
+            {ticket.createdBy?.email && <span className="st-ticket__email">{ticket.createdBy.email}</span>}
             {ticket.category && (
-              <span style={{ marginLeft: 8, padding: "1px 8px", background: "#f1f5f9", borderRadius: 10, fontSize: 11 }}>
-                {CATEGORY_LABELS[ticket.category] || ticket.category}
-              </span>
+              <span className="st-chip">{CATEGORY_LABELS[ticket.category] || ticket.category}</span>
             )}
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <span style={{ fontSize: 11, color: "#94a3b8" }}>
+        <div className="st-ticket__side">
+          <span className="st-date">
             {new Date(ticket.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
           </span>
-          <span className={`adp-badge adp-badge--${ticket.status}`}>{ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}</span>
+          <span className={`st-badge st-badge--${ticket.status}`}>{ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}</span>
           {!isResolved && (
-            <button className="adp-btn adp-btn--resolve" onClick={e => { e.stopPropagation(); onResolve(ticket); }}>
+            <button type="button" className="st-resolve" onClick={(e) => { e.stopPropagation(); onResolve(ticket); }}>
               Resolve
             </button>
           )}
-          <span style={{ fontSize: 16, color: "#cbd5e1", transform: open ? "rotate(180deg)" : "none", transition: "transform .2s" }}>⌄</span>
         </div>
+
+        <span className={`st-chevron${open ? " st-chevron--open" : ""}`} aria-hidden="true">⌄</span>
       </div>
 
       {open && (
-        <div className="adp-ticket-body">
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 6 }}>Description</div>
-          <p style={{ fontSize: 13.5, color: "#475569", lineHeight: 1.65, margin: 0 }}>{ticket.description}</p>
+        <div className="st-ticket__body" id={bodyId}>
+          <div className="st-label">Description</div>
+          <p className="st-text">{ticket.description}</p>
 
           {isResolved && ticket.resolution && (
-            <div style={{ marginTop: 14, padding: "12px 16px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: "#16a34a", textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 6 }}>✓ Resolution</div>
-              <p style={{ fontSize: 13.5, color: "#374151", lineHeight: 1.65, margin: 0 }}>{ticket.resolution}</p>
+            <div className="st-resolution">
+              <div className="st-label st-label--ok">✓ Resolution</div>
+              <p className="st-text">{ticket.resolution}</p>
               {ticket.resolvedBy && (
-                <p style={{ fontSize: 11, color: "#94a3b8", margin: "6px 0 0" }}>
+                <p className="st-resolution__by">
                   Resolved by {ticket.resolvedBy.name} · {new Date(ticket.updatedAt).toLocaleDateString("en-IN")}
                 </p>
               )}
@@ -336,9 +360,9 @@ export default function SupportTickets() {
   };
 
   return (
-    <div>
+    <div className="st-page">
       {toast && (
-        <div className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}>
+        <div className={`st-toast ${toast.ok ? "st-toast--ok" : "st-toast--err"}`} role="status">
           <span>{toast.ok ? "✓" : "!"}</span> {toast.msg}
         </div>
       )}
@@ -351,94 +375,62 @@ export default function SupportTickets() {
         />
       )}
 
-      <div className="adp-header">
-        <span className="adp-eyebrow">Admin Panel</span>
-        <h1 className="adp-title">Support Tickets</h1>
-        <p className="adp-sub">Manage and resolve support requests from patients and doctors.</p>
+      <div className="st-header">
+        <span className="st-eyebrow">Admin Panel</span>
+        <h1 className="st-title">Support Tickets</h1>
+        <p className="st-sub">Manage and resolve support requests from patients and doctors.</p>
       </div>
 
-      <div className="adp-stats" style={{ gridTemplateColumns: "repeat(4,1fr)" }}>
-        <div className="adp-stat adp-stat--blue">
-          <div className="adp-stat-icon">🎫</div>
-          <div className="adp-stat-value">{patientTickets.length + doctorTickets.length}</div>
-          <div className="adp-stat-label">Total Tickets</div>
-        </div>
-        <div className="adp-stat adp-stat--amber">
-          <div className="adp-stat-icon">⏳</div>
-          <div className="adp-stat-value">{openCount + drOpenCount}</div>
-          <div className="adp-stat-label">Open Tickets</div>
-        </div>
-        <div className="adp-stat">
-          <div className="adp-stat-icon">👤</div>
-          <div className="adp-stat-value">{patientTickets.length}</div>
-          <div className="adp-stat-label">Patient Tickets</div>
-        </div>
-        <div className="adp-stat">
-          <div className="adp-stat-icon">🩺</div>
-          <div className="adp-stat-value">{doctorTickets.length}</div>
-          <div className="adp-stat-label">Doctor Tickets</div>
-        </div>
-      </div>
-
-      <div className="adp-card">
-        <div className="adp-card-header" style={{ flexDirection: "column", alignItems: "flex-start", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", flexWrap: "wrap", gap: 10 }}>
+      <div className="st-card">
+        <div className="st-card__head">
+          <div className="st-toolbar">
             {/* Source tabs */}
-            <div style={{ display: "flex", gap: 6, background: "#f8fafc", padding: 4, borderRadius: 10, border: "1px solid #e2e8f0" }}>
+            <div className="st-source">
               {[
                 { key: "patient", label: "Patient Tickets", open: openCount },
                 { key: "doctor",  label: "Doctor Tickets",  open: drOpenCount },
               ].map(t => (
                 <button
                   key={t.key}
+                  type="button"
+                  aria-pressed={tab === t.key}
                   onClick={() => { setTab(t.key); setFilter("all"); setSearch(""); }}
-                  style={{
-                    padding: "7px 16px", borderRadius: 7, border: "none", cursor: "pointer",
-                    fontSize: 13, fontWeight: 600, fontFamily: "inherit", transition: "all .15s",
-                    background: tab === t.key ? "#fff" : "transparent",
-                    color: tab === t.key ? "#19c9a3" : "#64748b",
-                    boxShadow: tab === t.key ? "0 1px 4px rgba(15,23,42,.08)" : "none",
-                    display: "flex", alignItems: "center", gap: 8,
-                  }}
+                  className={`st-source__btn${tab === t.key ? " is-active" : ""}`}
                 >
                   {t.label}
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, padding: "1px 7px", borderRadius: 20,
-                    background: tab === t.key ? (t.open > 0 ? "#fef3c7" : "rgba(25,201,163,.15)") : "#e2e8f0",
-                    color: tab === t.key ? (t.open > 0 ? "#d97706" : "#19c9a3") : "#64748b",
-                  }}>
+                  <span className={`st-source__count${t.open > 0 ? " has-open" : ""}`}>
                     {t.open > 0 ? `${t.open} open` : (tab === t.key ? source.length : (t.key === "patient" ? patientTickets.length : doctorTickets.length))}
                   </span>
                 </button>
               ))}
             </div>
 
-            <div className="adp-search">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input placeholder="Search by name or title…" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
+            <label className="st-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" aria-label="Search tickets by name or title" placeholder="Search by name or title…" value={search} onChange={e => setSearch(e.target.value)} />
+            </label>
           </div>
 
-          <div className="adp-tabs">
+          <div className="st-filters">
             {[
               { key: "all",      label: "All" },
               { key: "open",     label: "Open" },
               { key: "resolved", label: "Resolved" },
             ].map(f => (
-              <button key={f.key} className={`adp-tab ${filter === f.key ? "active" : ""}`} onClick={() => setFilter(f.key)}>
+              <button key={f.key} type="button" aria-pressed={filter === f.key} className={`st-filter${filter === f.key ? " active" : ""}`} onClick={() => setFilter(f.key)}>
                 {f.label}
-                <span className="adp-tab-count">{tabCounts[f.key]}</span>
+                <span className="st-filter__count">{tabCounts[f.key]}</span>
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ padding: "16px 20px" }}>
+        <div className="st-list">
           {loading ? (
-            <div className="adp-loading"><div className="adp-spinner" /><p>Loading tickets…</p></div>
+            <div className="st-state"><div className="st-spinner" /><p>Loading tickets…</p></div>
           ) : displayed.length === 0 ? (
-            <div className="adp-empty">
-              <div className="adp-empty-icon">🎫</div>
+            <div className="st-state st-state--empty">
+              <div className="st-state__icon">🎫</div>
               <h3>No tickets found</h3>
               <p>No {tab} tickets match your filter.</p>
             </div>

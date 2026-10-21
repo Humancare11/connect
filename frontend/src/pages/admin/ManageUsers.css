@@ -317,6 +317,54 @@
   }
 }
 
+/* Manage Users heading: mirrors Our Doctors (.adp-doctors-page). Scoped so other admin pages are unaffected. */
+.mu-page .adp-header {
+  display: block;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.mu-page .adp-eyebrow {
+  display: inline;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0e6ceb;
+}
+
+.mu-page .adp-title {
+  margin: 4px 0 2px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: normal;
+  color: #0b0443;
+  text-align: left;
+}
+
+.mu-page .adp-sub {
+  margin: 0;
+  max-width: none;
+  font-size: 14px;
+  line-height: normal;
+  color: #6b7ca3;
+}
+
+.mu-page .mu-history-link {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0e6ceb;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.mu-page .mu-history-link:hover {
+  text-decoration: underline;
+}
+
 /* ══════════════════════════════════════════════════════════
    USER PROFILE CONTENT (used by AdminUserProfile.jsx)
    Prefixed .mu-* because .adp-* rules are defined in several admin stylesheets.
@@ -764,4 +812,168 @@
 /* Users table: "View" is a link (to the profile page) styled like the row buttons */
 .adp-table a.adp-btn {
   text-decoration: none;
+}
+
+/* ── Manage Users list (ManageUsers.jsx) ──
+   The layout follows the width of the list itself (not the viewport), because the sidebar takes a different share of the
+   screen at each breakpoint: full table, then table without Gender/Status, then two-line rows, then phone rows. */
+.mu-users-card .adp-table-wrap {
+  container: mu-users / inline-size;
+}
+.mu-users-card .adp-search {
+  flex: 1 1 240px;
+  max-width: 360px;
+  min-width: 0;
+}
+.mu-users-table th,
+.mu-users-table td {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.mu-users-table td:first-child {
+  min-width: 200px;
+}
+.mu-users-table .mu-users-user .adp-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 15px;
+  border: 1px solid rgba(8, 58, 176, 0.15);
+  backdrop-filter: none;
+}
+.mu-users-who {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+.mu-users-table .mu-col-mobile,
+.mu-users-table .mu-col-actions {
+  white-space: nowrap;
+}
+.mu-users-table .adp-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.mu-users-table .adp-btn--reject {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  box-shadow: none;
+}
+.mu-users-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 22px;
+  font-size: 12px;
+  color: #6b7ca3;
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+.mu-users-foot .mu-pager {
+  margin: 0;
+  padding: 0;
+  border-top: none;
+}
+
+@container mu-users (max-width: 1019px) {
+  .mu-users-table .mu-col-gender,
+  .mu-users-table .mu-col-status {
+    display: none;
+  }
+}
+
+/* Two-line rows: user and actions on top, ID / mobile / country underneath */
+@container mu-users (max-width: 819px) {
+  .mu-users-table,
+  .mu-users-table tbody,
+  .mu-users-table tr,
+  .mu-users-table td {
+    display: block;
+  }
+  .mu-users-table thead {
+    display: none;
+  }
+  .mu-users-table tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  }
+  .mu-users-table tbody tr:last-child {
+    border-bottom: none;
+  }
+  .mu-users-table td {
+    padding: 0;
+    border-bottom: none;
+    min-width: 0;
+  }
+  .mu-users-table td:first-child {
+    grid-column: 1 / 4;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .mu-users-table .mu-col-actions {
+    grid-column: 4;
+    grid-row: 1;
+  }
+  .mu-users-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+}
+
+/* Phones: user on top, ID / mobile / gender / country as one line, actions across the bottom */
+@container mu-users (max-width: 519px) {
+  .mu-users-table tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 10px;
+  }
+  .mu-users-table td:first-child,
+  .mu-users-table .mu-col-actions {
+    flex: 1 1 100%;
+  }
+  .mu-users-table .mu-col-actions {
+    margin-top: 4px;
+  }
+  .mu-users-table td[data-label]::before {
+    display: none;
+  }
+  .mu-users-table .mu-col-id::before {
+    content: "ID ";
+    display: inline;
+    font-size: inherit;
+    color: inherit;
+  }
+  .mu-users-table .mu-col-gender {
+    display: block;
+  }
+  .mu-users-table .mu-col-actions > div {
+    width: 100%;
+  }
+  .mu-users-table .mu-col-actions .adp-btn {
+    flex: 1 1 0;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .mu-users-card .adp-card-header {
+    padding: 14px;
+  }
+  .mu-users-card .adp-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .mu-users-foot {
+    padding: 12px 14px;
+    justify-content: center;
+  }
 }

@@ -1,0 +1,432 @@
+/* PartnerCases.css — Admin → Partner Cases. Page-scoped (prefix pcs-).
+   The old markup borrowed the Partner Portal's shared pt-* classes
+   (partner/partner.css); nothing here touches those, so the portal pages are
+   unaffected. Layout follows the page's own width (container query), because
+   the admin shell reserves a sidebar and the viewport alone says little. */
+
+.pcs-page {
+  container: pcs / inline-size;
+  width: 100%;
+  min-width: 0;
+}
+
+.pcs-inner {
+  --pcs-ink: #0f172a;
+  --pcs-muted: #64748b;
+  --pcs-line: #e9eef5;
+  --pcs-navy: #16305e;
+  --pcs-blue: #0369a1;
+  padding: 4px 2px 40px;
+  color: var(--pcs-ink);
+  font-family: var(--font-secondary);
+}
+
+.pcs-inner *,
+.pcs-inner *::before,
+.pcs-inner *::after {
+  box-sizing: border-box;
+}
+
+.pcs-head {
+  margin-bottom: 20px;
+}
+
+.pcs-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--pcs-navy);
+}
+
+.pcs-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--pcs-muted);
+}
+
+/* ---------------------------------------------------------- toolbar ----- */
+
+.pcs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.pcs-field {
+  min-width: 0;
+  min-height: 40px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--pcs-ink);
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 9px;
+}
+
+.pcs-field:focus-visible {
+  outline: 2px solid var(--pcs-blue);
+  outline-offset: 1px;
+  border-color: var(--pcs-blue);
+}
+
+.pcs-field--search {
+  flex: 1 1 240px;
+}
+
+.pcs-field--select {
+  flex: 0 1 190px;
+}
+
+/* ------------------------------------------------------------ table ----- */
+
+/* No overflow, no fixed height: the panel grows with its rows and the page
+   itself scrolls. */
+.pcs-panel {
+  background: #fff;
+  border: 1px solid var(--pcs-line);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.pcs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pcs-table th {
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pcs-muted);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--pcs-line);
+}
+
+.pcs-table th:first-child {
+  border-top-left-radius: 13px;
+}
+
+.pcs-table th:last-child {
+  border-top-right-radius: 13px;
+}
+
+.pcs-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #1e293b;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  overflow-wrap: break-word;
+}
+
+/* Long names may break anywhere; short words (e.g. Teleconsultation) stay whole. */
+.pcs-td--partner,
+.pcs-td--patient {
+  overflow-wrap: anywhere;
+}
+
+.pcs-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pcs-row {
+  cursor: pointer;
+}
+
+.pcs-row:hover td {
+  background: #f8fafc;
+}
+
+.pcs-row:focus-visible {
+  outline: 2px solid var(--pcs-blue);
+  outline-offset: -2px;
+}
+
+.pcs-num {
+  font-weight: 600;
+  color: var(--pcs-blue);
+  white-space: nowrap;
+}
+
+.pcs-muted {
+  color: var(--pcs-muted);
+}
+
+.pcs-amount {
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pcs-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pcs-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pcs-dot::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.pcs-state {
+  padding: 36px 16px !important;
+  text-align: center;
+  color: var(--pcs-muted);
+}
+
+.pcs-state--error {
+  color: #b42318;
+}
+
+/* -------------------------------------------------------- pagination ----- */
+
+.pcs-pager {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.pcs-pager__info {
+  font-size: 13px;
+  color: var(--pcs-muted);
+}
+
+.pcs-btn {
+  min-height: 40px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pcs-navy);
+  background: #fff;
+  border: 1.5px solid #d5dce7;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.pcs-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.pcs-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pcs-btn:focus-visible {
+  outline: 2px solid var(--pcs-blue);
+  outline-offset: 2px;
+}
+
+/* ----------------------------------------------------- tablet: compact -- */
+
+@container pcs (max-width: 899px) {
+  .pcs-table th,
+  .pcs-table td {
+    padding: 10px 8px;
+  }
+
+  .pcs-table th {
+    font-size: 10.5px;
+    letter-spacing: 0.03em;
+  }
+
+  .pcs-table td {
+    font-size: 12.5px;
+  }
+}
+
+/* ------------------------------------------- narrow: cards (<760px) ----- */
+
+@container pcs (max-width: 759px) {
+  .pcs-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pcs-field--search {
+    grid-column: 1 / -1;
+  }
+
+  /* 16px text stops iOS zooming on focus; 44px is a comfortable touch target. */
+  .pcs-field,
+  .pcs-btn {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .pcs-btn {
+    font-size: 14px;
+  }
+
+  .pcs-panel {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .pcs-table,
+  .pcs-table tbody {
+    display: block;
+  }
+
+  .pcs-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .pcs-table tbody tr.pcs-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "num num status"
+      "patient patient patient"
+      "partner partner partner"
+      "service service service"
+      "urgency date amount";
+    column-gap: 12px;
+    row-gap: 4px;
+    margin-bottom: 12px;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid var(--pcs-line);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .pcs-table tbody tr.pcs-row:hover td {
+    background: transparent;
+  }
+
+  .pcs-table tbody tr.pcs-row td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    font-size: 13px;
+  }
+
+  .pcs-td--num {
+    grid-area: num;
+    font-size: 15px !important;
+    align-self: center;
+  }
+
+  .pcs-td--status {
+    grid-area: status;
+    justify-self: end;
+  }
+
+  .pcs-td--patient {
+    grid-area: patient;
+    margin-top: 4px;
+    font-size: 15px !important;
+    font-weight: 600;
+  }
+
+  .pcs-td--partner {
+    grid-area: partner;
+  }
+
+  .pcs-td--service {
+    grid-area: service;
+  }
+
+  .pcs-td--urgency {
+    grid-area: urgency;
+    margin-top: 8px;
+    align-self: center;
+  }
+
+  .pcs-td--date {
+    grid-area: date;
+    margin-top: 8px;
+    align-self: center;
+  }
+
+  .pcs-td--amount {
+    grid-area: amount;
+    margin-top: 8px;
+    align-self: center;
+    justify-self: end;
+    font-size: 14px !important;
+  }
+
+  /* Loading / empty / error rows are a single cell, not a card. */
+  .pcs-table tbody tr.pcs-state-row {
+    display: block;
+    background: #fff;
+    border: 1px solid var(--pcs-line);
+    border-radius: 14px;
+  }
+
+  .pcs-table tbody tr.pcs-state-row td {
+    display: block;
+  }
+
+  .pcs-pager {
+    justify-content: space-between;
+  }
+
+  .pcs-pager .pcs-btn {
+    flex: 1;
+  }
+
+  .pcs-pager__info {
+    flex: none;
+    text-align: center;
+  }
+}
+
+/* 700–759px keeps the single-row toolbar; only the table becomes cards
+   (8 columns are cramped below ~760px). */
+@container pcs (min-width: 700px) and (max-width: 759px) {
+  .pcs-toolbar {
+    display: flex;
+  }
+
+  .pcs-field--search {
+    grid-column: auto;
+  }
+}
+
+@container pcs (max-width: 359px) {
+  .pcs-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pcs-pager {
+    flex-wrap: wrap;
+  }
+
+  .pcs-pager__info {
+    flex-basis: 100%;
+    order: -1;
+  }
+}

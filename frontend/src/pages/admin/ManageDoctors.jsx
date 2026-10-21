@@ -163,7 +163,7 @@ function DownloadDoctorsMenu({ onError }) {
   };
 
   return (
-    <div style={{ position: "relative", display: "inline-block" }}>
+    <div style={{ position: "relative", display: "inline-block", marginLeft: "auto" }}>
       <button className="adp-btn adp-btn--view" onClick={() => setOpen((v) => !v)} disabled={busy} aria-haspopup="menu" aria-expanded={open}>
         {busy ? "Preparing download..." : "Download Doctors ▾"}
       </button>
@@ -171,7 +171,7 @@ function DownloadDoctorsMenu({ onError }) {
         <div
           role="menu"
           style={{
-            position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20, minWidth: 320,
+            position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20, width: "min(320px, calc(100vw - 32px))",
             background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, boxShadow: "0 8px 24px rgba(15,23,42,.12)", padding: 6,
           }}
         >
@@ -307,7 +307,7 @@ export default function ManageDoctors() {
   }, [enrollments, filter, search]);
 
   return (
-    <div>
+    <div className="adp-doctors-page">
       {toast && (
         <div className={`adp-toast ${toast.ok ? "adp-toast--ok" : "adp-toast--err"}`}>
           <span>{toast.ok ? "OK" : "!"}</span> {toast.msg}
@@ -321,21 +321,6 @@ export default function ManageDoctors() {
           <p className="adp-sub">Monitor registration progress, review update or delete requests, and control doctor onboarding.</p>
         </div>
         {admin?.role === "superadmin" && <DownloadDoctorsMenu onError={(m) => showToast(m, false)} />}
-      </div>
-
-      <div className="adp-stats" style={{ gridTemplateColumns: "repeat(5,1fr)" }}>
-        {[
-          { label: "Total", value: counts.all, cls: "" },
-          { label: "Pending", value: counts.pending, cls: "adp-stat--amber" },
-          { label: "Approved", value: counts.approved, cls: "adp-stat--green" },
-          { label: "Rejected", value: counts.rejected, cls: "" },
-          { label: "Update Requests", value: counts.update_requests, cls: "" },
-        ].map((card) => (
-          <div key={card.label} className={`adp-stat ${card.cls}`}>
-            <div className="adp-stat-value">{card.value}</div>
-            <div className="adp-stat-label">{card.label}</div>
-          </div>
-        ))}
       </div>
 
       <div className="adp-card">
@@ -464,8 +449,8 @@ export default function ManageDoctors() {
                         </span>
                       </td>
                       <td>{row.specialization || <span style={{ color: "#94a3b8" }}>-</span>}</td>
-                      <td><ProgressCell progress={progress} /></td>
-                      <td>
+                      <td className="adp-span"><ProgressCell progress={progress} /></td>
+                      <td className="adp-end">
                         <span
                           style={{
                             background: statusMeta.bg,
@@ -479,7 +464,7 @@ export default function ManageDoctors() {
                           {statusMeta.label}
                         </span>
                       </td>
-                      <td>
+                      <td className="adp-span">
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           <a
                             className="adp-btn adp-btn--view"

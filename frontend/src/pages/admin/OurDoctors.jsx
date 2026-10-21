@@ -30,29 +30,10 @@ export default function OurDoctors() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-  const [workflowStats, setWorkflowStats] = useState({
-    totalDoctors: 0,
-    profileUpdateRequests: 0,
-    profileDeleteRequests: 0,
-  });
-
   useEffect(() => {
-    Promise.all([
-      api.get("/api/admin/approved-doctors"),
-      api.get("/api/admin/doctor-workflow-stats"),
-    ])
-      .then(([doctorRes, statsRes]) => {
-        setDoctors(doctorRes.data || []);
-        setWorkflowStats({
-          totalDoctors: Number(statsRes?.data?.totalDoctors || 0),
-          profileUpdateRequests: Number(
-            statsRes?.data?.profileUpdateRequests || 0,
-          ),
-          profileDeleteRequests: Number(
-            statsRes?.data?.profileDeleteRequests || 0,
-          ),
-        });
-      })
+    api
+      .get("/api/admin/approved-doctors")
+      .then((res) => setDoctors(res.data || []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -79,7 +60,7 @@ export default function OurDoctors() {
   });
 
   return (
-    <div>
+    <div className="adp-doctors-page">
       {/* Header */}
       <div className="adp-header">
         <span className="adp-eyebrow">Admin Panel</span>
@@ -89,36 +70,10 @@ export default function OurDoctors() {
         </p>
       </div>
 
-      {/* Stats */}
-      <div
-        className="adp-stats"
-        style={{ gridTemplateColumns: "repeat(3,1fr)" }}
-      >
-        {[
-          {
-            label: "Total Doctors",
-            value: workflowStats.totalDoctors || doctors.length,
-          },
-          {
-            label: "Profile Update Requests",
-            value: workflowStats.profileUpdateRequests,
-          },
-          {
-            label: "Profile Delete Requests",
-            value: workflowStats.profileDeleteRequests,
-          },
-        ].map((s) => (
-          <div key={s.label} className="adp-stat">
-            <div className="adp-stat-value">{s.value}</div>
-            <div className="adp-stat-label">{s.label}</div>
-          </div>
-        ))}
-      </div>
-
       <div className="adp-card">
         <div className="adp-card-header">
           {/* Specialization tabs */}
-          <div className="adp-tabs" style={{ flexWrap: "wrap" }}>
+          <div className="adp-tabs">
             <button
               className={`adp-tab ${filter === "all" ? "active" : ""}`}
               onClick={() => setFilter("all")}
@@ -150,6 +105,7 @@ export default function OurDoctors() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
+              aria-label="Search doctors"
               placeholder="Search by name, email or Doctor ID…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -280,7 +236,7 @@ export default function OurDoctors() {
                           <span style={{ color: "#94a3b8" }}>—</span>
                         )}
                       </td>
-                      <td>
+                      <td className="adp-span">
                         {phone ? (
                           <span
                             style={{ fontFamily: "var(--font-secondary)", fontVariantNumeric: "tabular-nums", fontSize: 13 }}
@@ -304,7 +260,7 @@ export default function OurDoctors() {
                           View Profile
                         </button>
                       </td>
-                      <td>
+                      <td className="adp-end">
                         <span
                           style={{
                             display: "inline-flex",
