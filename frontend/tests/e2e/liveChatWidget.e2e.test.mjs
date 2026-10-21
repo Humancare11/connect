@@ -149,7 +149,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
     mock.failNextMessage = false;
     mock.conversation = freshConversation();
     await context?.close();
-    context = await browser.newContext({ viewport: { width: 420, height: 800 } });
+    context = await browser.newContext({ viewport: { width: 420, height: 800 }, reducedMotion: "reduce" }); // reduced motion: no intro, the launcher is the plain round button
     page = await context.newPage();
   });
 
@@ -445,23 +445,43 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.ok(Math.abs(button.x - intro.slot.left) <= 1.5, "the round button is where the slot was");
     });
 
-    test("a browser that cannot play VP9 (or Safari/iOS) skips the intro: the compact bar shows and the video is never requested", async () => {
+    test("Safari/iOS (and a browser without VP9) get doctor-ios.mp4 with a soft edge mask, and the intro plays", async () => {
+      const iosUa = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+      const macUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
       const cases = [
+        { name: "Safari", options: { userAgent: macUa } },
+        { name: "iPhone Chrome", options: { userAgent: iosUa.replace("Version/17.4 Mobile", "CriOS/124.0 Mobile") } },
         { name: "no VP9", options: { noVp9: true } },
-        { name: "Safari", options: { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15" } },
-        { name: "iPhone Chrome", options: { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/124.0 Mobile/15E148 Safari/604.1" } },
       ];
       for (const { name, options } of cases) {
         await newPage(options);
         const requested = [];
         page.on("request", (request) => requested.push(request.url()));
         await load({ clock: false });
-        await launcher().waitFor();
-        await realWait(600);
-        assert.equal(await page.locator(".lcw-gr-doc").count(), 0, `${name}: no doctor`);
-        assert.ok(await page.locator(".lcw-gr-minif").isVisible(), `${name}: the pill is there`);
+        const doctor = page.locator(".lcw-gr-doc");
+        await doctor.waitFor();
+        assert.ok(await doctor.evaluate((el) => el.classList.contains("lcw-gr-doc--ios")), `${name}: iOS variant`);
+        assert.equal(await doctor.locator("source").getAttribute("src"), "/livechat/doctor-ios.mp4?v=1", name);
+        assert.equal(await doctor.locator("video").getAttribute("poster"), null, `${name}: no poster (it would be transparent on grey)`);
+        const mask = await doctor.locator("video").evaluate((v) => getComputedStyle(v).maskImage || getComputedStyle(v).webkitMaskImage);
+        assert.match(mask, /radial-gradient/, `${name}: soft radial edge mask`);
+        for (const attr of ["controls", "autoplay", "loop"]) assert.equal(await doctor.locator("video").getAttribute(attr), null, `${name}: no ${attr}`);
+        assert.equal(await doctor.locator("video").evaluate((v) => v.muted && v.playsInline), true, `${name}: muted and inline`);
+        await page.waitForFunction(() => document.querySelector(".lcw-gr-doc video")?.currentTime > 0.5, null, { timeout: 8000 });
         assert.equal(requested.filter((url) => url.includes("doctor-alpha")).length, 0, `${name}: the transparent video was not requested`);
       }
+    });
+
+    test("play() rejected (iOS Low Power Mode): the compact bar shows straight away", async () => {
+      await newPage();
+      await page.addInitScript(() => {
+        HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException("play() refused", "NotAllowedError"));
+      });
+      await load({ clock: false });
+      await launcher().waitFor({ timeout: 8000 });
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.ok(await page.locator(".lcw-gr-minif").isVisible());
+      await page.waitForFunction(() => document.querySelectorAll("video").length === 0, null, { timeout: 8000 }); // the avatar gives up too: the button is just the chat icon
     });
 
     test("after the video ends he loops only the standing part: never back to the walk-in", async () => {
@@ -692,17 +712,46 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.locator(".lcw-ph-chat").count(), 1);
     });
 
-    test("phone (390px): no intro and no pill, just the round button with the live avatar", async () => {
-      await newPage({ width: 390, height: 800 });
-      await load({ clock: false });
+    test("phone (390x844): the intro plays with the transparent video, no pill, feet on the button's line, flies into the round button, all inside the viewport", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      const doctor = page.locator(".lcw-gr-doc");
+      await doctor.waitFor();
+      assert.equal(await doctor.locator("source").getAttribute("src"), "/livechat/doctor-alpha.webm?v=1", "Chromium gets the transparent video");
+      assert.equal(await doctor.evaluate((el) => el.classList.contains("lcw-gr-doc--ios")), false);
+      assert.equal(await page.locator(".lcw-gr-minif").evaluate((el) => getComputedStyle(el).display), "none", "no pill on phones");
+      await page.waitForFunction(() => document.querySelector(".lcw-gr-doc video")?.currentTime > 0.5, null, { timeout: 8000 });
+      for (const banner of [false, true]) {
+        await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
+        await realWait(100);
+        const m = await page.evaluate(() => {
+          const rect = (el) => el.getBoundingClientRect().toJSON();
+          return { doc: rect(document.querySelector(".lcw-gr-doc")), slot: rect(document.querySelector(".lcw-gr-slot")), w: innerWidth, h: innerHeight };
+        });
+        const label = `banner=${banner}`;
+        assert.ok(m.doc.height >= 140 && m.doc.height <= 171, `${label}: about 150px tall, 170px at most (got ${m.doc.height})`);
+        assert.ok(Math.abs(m.doc.bottom - m.slot.bottom) <= 2, `${label}: feet on the round button's bottom line (${m.doc.bottom} vs ${m.slot.bottom})`);
+        assert.ok(m.doc.left >= 0 && m.doc.top >= 0 && m.doc.right <= m.w && m.doc.bottom <= m.h, `${label}: the doctor is inside the viewport ${JSON.stringify(m.doc)}`);
+        assert.ok(m.slot.right <= m.w - 16, `${label}: the button's place keeps its margin`);
+      }
+      await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
+      const before = await page.locator(".lcw-gr-slot").boundingBox();
+      await freeze();
+      await tick(10_500);
+      await tick(1000);
       await launcher().waitFor();
-      await realWait(700); // the bar pops in
-      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
-      assert.equal(await page.locator(".lcw-gr-minif").evaluate((el) => getComputedStyle(el).display), "none");
-      const box = await launcher().boundingBox();
-      assert.equal(Math.round(box.width), 64);
+      await realWait(700);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the doctor flew into the button");
+      const button = await launcher().boundingBox();
+      assert.ok(Math.abs(button.x - before.x) <= 1.5 && Math.abs(button.y - before.y) <= 1.5, "the button is exactly where the doctor was heading");
+      assert.ok(button.x >= 0 && button.y >= 0 && button.x + button.width <= 390 && button.y + button.height <= 844, "button inside the viewport");
       await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
-      await launcher().click();
+    });
+
+    test("phone: tapping the doctor opens the chat", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      await page.locator(".lcw-gr-doc").click();
       await page.waitForSelector(".lcw-cform");
       assert.equal(await page.locator(".lcw-held").count(), 0);
     });

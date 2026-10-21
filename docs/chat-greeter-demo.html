@@ -76,8 +76,11 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
 .circ.ph-chat .chatico{opacity:1;transform:none}
 .circ.arrive{animation:arrive .45s cubic-bezier(.2,.9,.3,1.5) both}
 @keyframes arrive{0%{transform:scale(.55)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+/* Safari/iOS get doctor-ios.mp4 (light-grey background): a soft radial mask fades the box edges into the page */
+.doc.ios video{-webkit-mask-image:radial-gradient(ellipse 50% 170% at 46% 100%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 50% 170% at 46% 100%,#000 55%,transparent 100%)}
 @media (max-width:560px),(max-height:560px){.bar{--gr-w:130px}}
-@media (max-width:480px){.pill{display:none}}
+/* phones: no pill, a smaller doctor (<=170px tall) on the round button's bottom line, kept inside the screen */
+@media (max-width:480px){.pill{display:none}.bar{--gr-w:min(110px,28vw)}.doc{right:max(-20px,calc(32px - var(--gr-w) * .57))}}
 
 /* Mock chat window that opens after sending */
 .win{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:12px;width:min(340px,calc(100% - 24px));
@@ -143,7 +146,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
         </button>
       </span>
       <button class="doc" id="doc" aria-label="Open chat">
-        <video id="vid" poster="../frontend/public/livechat/poster-alpha.webp?v=1" muted playsinline preload="auto"><source src="../frontend/public/livechat/doctor-alpha.webm?v=1" type='video/webm; codecs="vp9"'></video>
+        <video id="vid" muted playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
       </button>
     </div>
 
@@ -175,19 +178,20 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
     <section class="box">
       <h3>What happens</h3>
       <ol>
-        <li>On every page load the doctor walks in from the right and waves (first 3 seconds of the video), his feet on the bottom line of the message bar.</li>
+        <li>On every page load, on desktop and phones, the doctor walks in from the right and waves (first 3 seconds of the video), his feet on the bottom line of the message bar (or of the round button on phones, where there is no message box).</li>
         <li>At about 3.2 s the white "Write a message…" box slides in at its final place, left of him. The arrow turns black when there is text.</li>
         <li>After the video ends he keeps standing and waving (only the part from 4.0 s loops).</li>
         <li>After 10 seconds of visible, idle time only the doctor shrinks into the round button; the box stays where it is. Typing, focusing the box or a hidden tab holds the 10 seconds.</li>
         <li>The round button shows the live avatar (red LIVE badge, teal ring that fills), then fades to black, then shows the chat icon, and repeats.</li>
         <li>Typing in the box and sending, or clicking the doctor or the round button, opens the chat. The typed text waits above the name and email form and is sent as the first message after Start chat.</li>
-        <li>Closing the chat brings back the compact bar. On phones only the round button shows. Browsers that cannot play the transparent video (Safari, iOS) and visitors who prefer reduced motion get the compact bar directly.</li>
+        <li>Closing the chat brings back the compact bar. On phones only the round button shows. Visitors who prefer reduced motion or have data saver on, and browsers where the video cannot start (for example iOS Low Power Mode), get the compact bar directly.</li>
       </ol>
     </section>
     <section class="box">
       <h3>About the videos</h3>
       <ul>
-        <li><b>doctor-alpha.webm</b> (VP9 with alpha, 360 x 556, no sound) is the intro; <b>poster-alpha.webp</b> is its transparent standing frame.</li>
+        <li><b>doctor-alpha.webm</b> (VP9 with alpha, 360 x 556, no sound) is the intro in Chrome, Edge, Firefox and Android; <b>poster-alpha.webp</b> is its transparent standing frame.</li>
+        <li><b>doctor-ios.mp4</b> (H.264, same framing, light-grey background) is the intro in Safari, iOS and iPadOS, with a soft mask on its edges.</li>
         <li><b>doctor.webm / doctor.mp4</b> (grey studio background) are only used inside the round avatar, cropped to head and shoulders.</li>
         <li>All files are loaded with <code>?v=1</code>; bump it when a file is replaced.</li>
       </ul>
@@ -201,11 +205,16 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
   var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var ua=navigator.userAgent, safari=/iPad|iPhone|iPod/.test(ua)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(ua));
   var vp9=false; try{ vp9=!!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); }catch(e){}
-  var canIntro=!reduce&&!safari&&vp9&&window.innerWidth>480;
+  var ios=safari||!vp9;           // Safari/iOS/iPadOS and browsers without VP9: the MP4 with the grey background
+  var canIntro=!reduce;           // phones play the intro too
 
   var $=function(id){return document.getElementById(id);};
   var bar=$('bar'), pill=$('pill'), pillInput=$('pillInput'), slot=$('slot'), doc=$('doc'), vid=$('vid'), circ=$('circ'), cvid=$('cvid'), win=$('win');
   var shrinkT=null, cycT=null, flyT=null, clock=null;
+  var vsrc=document.createElement('source');
+  if(ios){ doc.classList.add('ios'); vsrc.src='../frontend/public/livechat/doctor-ios.mp4?v=1'; vsrc.type='video/mp4'; }
+  else { vid.poster='../frontend/public/livechat/poster-alpha.webp?v=1'; vsrc.src='../frontend/public/livechat/doctor-alpha.webm?v=1'; vsrc.type='video/webm; codecs="vp9"'; }
+  vid.appendChild(vsrc);
 
   function loopFrom(v){ v.addEventListener('timeupdate',function(){ if(!v.paused&&isFinite(v.duration)&&v.currentTime>=LOOP_FROM&&v.duration-v.currentTime<0.15) v.currentTime=LOOP_FROM; });
     v.addEventListener('ended',function(){ v.currentTime=LOOP_FROM; v.play().catch(function(){}); }); }

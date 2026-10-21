@@ -3,6 +3,7 @@ import LauncherButton from "./LauncherButton";
 import {
   ALPHA_POSTER_SRC,
   ALPHA_WEBM_SRC,
+  IOS_MP4_SRC,
   CHAR_CENTER,
   FLY_MS,
   MAX_PILL_CHARS,
@@ -22,7 +23,9 @@ import {
 //   fly     after SHRINK_AFTER_MS of visible, idle time only the doctor shrinks into the round button (FLIP animation)
 //   compact the pill and the round button (LauncherButton); only the round button on phones
 // Typing in the pill and sending, or clicking the doctor or the round button, calls onOpen(text). `stage` is the
-// parent's remembered stage: a greeter that mounts as "compact" never plays the intro.
+// parent's remembered stage: a greeter that mounts as "compact" never plays the intro. `introKind` picks the video:
+// "alpha" (transparent WebM) or "ios" (MP4 with a grey background, edges faded by the CSS mask). On phones there is no
+// pill; the doctor stands over the round button's slot all the same.
 const EASE = "cubic-bezier(.55,0,.25,1)";
 const TICK_MS = 250;
 
@@ -32,7 +35,7 @@ const SendIcon = () => (
   </svg>
 );
 
-export default function DoctorGreeter({ stage, video = true, unread = 0, text, setText, onOpen, onSettled }) {
+export default function DoctorGreeter({ stage, video = true, introKind = "alpha", unread = 0, text, setText, onOpen, onSettled }) {
   const [mode, setMode] = useState(stage === "intro" ? "intro" : "compact"); // intro | fly | compact
   const [pillShown, setPillShown] = useState(false);
   const [playing, setPlaying] = useState(false); // the intro video has started: the 10 s clock runs
@@ -219,10 +222,16 @@ export default function DoctorGreeter({ stage, video = true, unread = 0, text, s
         {mode !== "intro" && <LauncherButton buttonRef={circRef} unread={unread} avatar={video} arrive={arrive} onOpen={open} />}
       </span>
       {mode !== "compact" && (
-        <button ref={docRef} type="button" className="lcw-gr-doc" onClick={open} aria-label="Open chat" aria-expanded="false">
-          <video ref={introVideoRef} muted playsInline preload="auto" poster={ALPHA_POSTER_SRC} aria-hidden="true" tabIndex={-1}>
-            <source src={ALPHA_WEBM_SRC} type='video/webm; codecs="vp9"' />
-          </video>
+        <button ref={docRef} type="button" className={`lcw-gr-doc${introKind === "ios" ? " lcw-gr-doc--ios" : ""}`} onClick={open} aria-label="Open chat" aria-expanded="false">
+          {introKind === "ios" ? (
+            <video ref={introVideoRef} muted playsInline preload="auto" aria-hidden="true" tabIndex={-1} disablePictureInPicture disableRemotePlayback>
+              <source src={IOS_MP4_SRC} type="video/mp4" />
+            </video>
+          ) : (
+            <video ref={introVideoRef} muted playsInline preload="auto" poster={ALPHA_POSTER_SRC} aria-hidden="true" tabIndex={-1} disablePictureInPicture disableRemotePlayback>
+              <source src={ALPHA_WEBM_SRC} type='video/webm; codecs="vp9"' />
+            </video>
+          )}
         </button>
       )}
     </div>

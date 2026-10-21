@@ -115,6 +115,12 @@ html.hc-cookie-open .lcw-window {
   max-width: none;
   object-fit: contain;
 }
+/* The MP4 for Safari/iOS keeps its light-grey studio background: a soft radial mask fades the box edges into the page
+   (solid down the middle so the feet at the frame's bottom edge stay). */
+.lcw-gr-doc--ios video {
+  -webkit-mask-image: radial-gradient(ellipse 50% 170% at 46% 100%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 50% 170% at 46% 100%, #000 55%, transparent 100%);
+}
 .lcw-gr-doc:focus-visible {
   border-radius: 16px;
 }
@@ -343,8 +349,16 @@ html.hc-cookie-open .lcw-window {
     --gr-w: 130px;
   }
 }
-/* Phones: only the round button, no pill. */
+/* Phones: no pill, only the round button; the doctor is smaller (110px wide = 170px tall at most) and scales with the
+   screen, still standing on the round button's bottom line. */
 @media (max-width: 480px) {
+  .lcw-gr-mini {
+    --gr-w: min(110px, 28vw);
+  }
+  /* the frame may not hang over the screen edge (it is wider than the button), so he stands as near the button as fits */
+  .lcw-gr-mini .lcw-gr-doc {
+    right: max(calc(-1 * max(20px, env(safe-area-inset-right, 0px))), calc(32px - var(--gr-w) * 0.57));
+  }
   .lcw-gr-minif {
     display: none;
   }

@@ -8,6 +8,7 @@ import {
   ALPHA_POSTER_SRC,
   ALPHA_WEBM_SRC,
   AVATAR_MS,
+  IOS_MP4_SRC,
   CHAT_MS,
   DARK_MS,
   LOOP_FROM,
@@ -31,7 +32,7 @@ const widget = strip(read("src/features/livechat/LiveChatWidget.jsx"));
 const form = strip(read("src/features/livechat/ContactForm.jsx"));
 const css = strip(read("src/features/livechat/LiveChatWidget.css"));
 
-const base = { reduced: false, saveData: false, width: 1280, played: false, open: false, invite: false };
+const base = { reduced: false, saveData: false, played: false, open: false, invite: false };
 
 test("timings match the approved design", () => {
   assert.equal(SHOW_PILL_AT, 3.2);
@@ -48,16 +49,14 @@ test("the round button cycles avatar -> dark -> chat icon -> avatar", () => {
   assert.deepEqual(nextStep("chat"), { next: "avatar", ms: CHAT_MS });
 });
 
-test("the intro plays on every page load for everyone on a desktop; not on a phone, with the window open or an invite", () => {
+test("the intro plays on every page load on every device; not with reduced motion, data saver, the window open or an invite", () => {
   assert.equal(shouldPlayIntro(base), true);
   assert.equal(shouldPlayIntro({ ...base, played: true }), false, "already played on this page load");
   assert.equal(shouldPlayIntro({ ...base, open: true }), false, "chat window already open");
   assert.equal(shouldPlayIntro({ ...base, invite: true }), false, "an admin wrote to the visitor");
   assert.equal(shouldPlayIntro({ ...base, reduced: true }), false, "reduced motion");
   assert.equal(shouldPlayIntro({ ...base, saveData: true }), false, "data saver");
-  assert.equal(shouldPlayIntro({ ...base, width: 480 }), false, "phone");
-  assert.equal(shouldPlayIntro({ ...base, width: 481 }), true);
-  assert.equal(shouldPlayIntro({ ...base, alpha: false }), false, "a browser that cannot play the transparent video gets the compact bar");
+  assert.equal(shouldPlayIntro({ ...base, width: 390 }), true, "phones play the intro too");
 });
 
 test("Safari and every iOS browser count as unable to play VP9-with-alpha; Chrome, Edge and Firefox can", () => {
@@ -94,7 +93,9 @@ test("the ring has fixed pixel sizes and opts out of the site's global svg max-w
   assert.doesNotMatch(css, /\.lcw-gr-ring \{[^}]*calc\(100% \+ 8px\)/);
 });
 
-test("the intro is the transparent WebM with its transparent poster; the avatar keeps doctor.webm/mp4; all versioned", () => {
+test("the intro is the transparent WebM (iOS/Safari: doctor-ios.mp4); the avatar keeps doctor.webm/mp4; all versioned", () => {
+  assert.equal(IOS_MP4_SRC, "/livechat/doctor-ios.mp4?v=1");
+  assert.ok(fs.existsSync(path.join(root, "public/livechat/doctor-ios.mp4")));
   assert.equal(ALPHA_WEBM_SRC, "/livechat/doctor-alpha.webm?v=1");
   assert.equal(ALPHA_POSTER_SRC, "/livechat/poster-alpha.webp?v=1");
   assert.equal(WEBM_SRC, "/livechat/doctor.webm?v=1");
@@ -102,12 +103,18 @@ test("the intro is the transparent WebM with its transparent poster; the avatar 
   for (const file of ["doctor-alpha.webm", "poster-alpha.webp", "doctor.webm", "doctor.mp4", "poster.jpg"]) assert.ok(fs.existsSync(path.join(root, "public/livechat", file)), file);
   assert.match(greeter, /src=\{ALPHA_WEBM_SRC\}/);
   assert.match(greeter, /poster=\{ALPHA_POSTER_SRC\}/);
-  assert.doesNotMatch(greeter, /MP4_SRC|poster\.jpg/, "no fallback video for the intro: browsers without VP9 alpha skip it");
+  assert.match(greeter, /src=\{IOS_MP4_SRC\}/);
+  assert.doesNotMatch(greeter, /src=\{MP4_SRC\}|poster\.jpg/, "the intro never uses the avatar's grey-background video");
+  assert.doesNotMatch(greeter, /controls|autoPlay|\bloop\b/, "no controls, and the loop is done from LOOP_FROM in code");
+  assert.match(greeter, /introKind === "ios"/);
+  assert.match(greeter, /disablePictureInPicture/);
   assert.ok(launcher.indexOf("src={WEBM_SRC}") < launcher.indexOf("src={MP4_SRC}"));
 });
 
-test("no mask, feathering or grey background on the intro video; the doctor stands on the bar's bottom line", () => {
-  assert.doesNotMatch(css, /mask-image|mask:|radial-gradient/);
+test("the transparent intro video has no mask or background; only the iOS/Safari MP4 gets a soft radial edge mask", () => {
+  assert.doesNotMatch(css.replace(/\.lcw-gr-doc--ios video \{[^}]*\}/, ""), /mask-image|mask:|radial-gradient/);
+  assert.match(css, /\.lcw-gr-doc--ios video \{\s*-webkit-mask-image: radial-gradient\([^}]*mask-image: radial-gradient/);
+  assert.doesNotMatch(css, /\.lcw-gr-doc \{[^}]*mask/);
   const doc = css.match(/\.lcw-gr-doc \{[^}]*\}/)[0];
   assert.match(doc, /position: absolute;/);
   assert.match(doc, /bottom: 0;/);
@@ -164,7 +171,7 @@ test("every class is .lcw-*; sizes, phone rule and reduced motion", () => {
   assert.ok(classes.length > 20);
   assert.ok(classes.every((cls) => cls.startsWith(".lcw-") || /^\.(\d)/.test(cls)), classes.filter((cls) => !cls.startsWith(".lcw-")).join(" "));
   assert.match(css, /\.lcw-launcher--round \{[^}]*width: 64px;[^}]*height: 64px;/);
-  assert.match(css, /@media \(max-width: 480px\) \{\s*\.lcw-gr-minif \{\s*display: none;/);
+  assert.match(css, /@media \(max-width: 480px\) \{[^@]*--gr-w: min\(110px, 28vw\);[^@]*\.lcw-gr-minif \{\s*display: none;/);
   assert.match(css, /prefers-reduced-motion: reduce\) \{[^@]*\.lcw-gr-live i,[^@]*animation: none;/);
   assert.match(css, /right: max\(20px, env\(safe-area-inset-right, 0px\)\)/);
 });

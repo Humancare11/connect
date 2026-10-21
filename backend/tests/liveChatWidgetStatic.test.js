@@ -125,7 +125,7 @@ describe("live chat: doctor greeter and round button", () => {
 
   test("the closed launcher is a real 'Open chat' button (the round button, and the doctor in the intro)", () => {
     assert.match(launcher, /aria-label="Open chat"/);
-    assert.match(greeter, /className="lcw-gr-doc"[^>]*aria-label="Open chat"/);
+    assert.match(greeter, /className=\{`lcw-gr-doc[^>]*aria-label="Open chat"/);
     assert.match(widget, /<DoctorGreeter/);
     assert.doesNotMatch(widget, /GreetingBubble|LOGO_SRC|lcw-launcher--logo/);
   });
@@ -151,7 +151,7 @@ describe("live chat: doctor greeter and round button", () => {
   test("round button: 64px, black circle, and only the pill is hidden on phones", () => {
     assert.match(rule(".lcw-launcher--round"), /width:\s*64px/);
     assert.match(rule(".lcw-launcher--round"), /border-radius:\s*50%/);
-    assert.match(css, /@media \(max-width: 480px\) \{\s*\.lcw-gr-minif \{\s*display: none;/);
+    assert.match(css, /@media \(max-width: 480px\) \{[^@]*\.lcw-gr-minif \{\s*display: none;/);
   });
 });
 

@@ -8,7 +8,7 @@ import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
-import { canPlayAlphaIntro, canUseVideo, introPlayedThisLoad, prefersReducedMotion, saveDataOn, shouldPlayIntro } from "./greeterConfig";
+import { canUseVideo, introPlayedThisLoad, introVideoKind, prefersReducedMotion, saveDataOn, shouldPlayIntro } from "./greeterConfig";
 import { useLiveChat } from "./useLiveChat";
 import "./LiveChatWidget.css";
 
@@ -123,15 +123,14 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
     shouldPlayIntro({
       reduced: prefersReducedMotion(),
       saveData: saveDataOn(),
-      width: window.innerWidth,
       played: introPlayedThisLoad(),
-      alpha: canPlayAlphaIntro(),
       open,
       invite: Boolean(chat.invite),
     })
       ? "intro"
       : "compact"
   );
+  const [introKind] = useState(introVideoKind); // alpha | ios
   const [video] = useState(canUseVideo); // false: reduced motion or data saver, the round button is just the chat icon
   const [pill, setPill] = useState(""); // what the patient typed in the greeter's pill
   // The text typed in the pill, kept while the contact form is shown and sent as the first message once the chat starts.
@@ -401,6 +400,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
         <DoctorGreeter
           stage={stage}
           video={video}
+          introKind={introKind}
           unread={chat.unread}
           text={pill}
           setText={setPill}

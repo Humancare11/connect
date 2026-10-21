@@ -6,6 +6,9 @@ export const MP4_SRC = `/livechat/doctor.mp4${VIDEO_VERSION}`;
 export const POSTER_SRC = `/livechat/poster.jpg${VIDEO_VERSION}`;
 // The intro: the doctor on a transparent background (VP9 with alpha), and its transparent standing frame.
 export const ALPHA_WEBM_SRC = `/livechat/doctor-alpha.webm${VIDEO_VERSION}`;
+// Safari, iOS and iPadOS (and any browser without VP9) get the same shot as an H.264 MP4 with its light-grey background,
+// whose box edges are faded with a soft mask (see .lcw-gr-doc--ios in the CSS).
+export const IOS_MP4_SRC = `/livechat/doctor-ios.mp4${VIDEO_VERSION}`;
 export const ALPHA_POSTER_SRC = `/livechat/poster-alpha.webp${VIDEO_VERSION}`;
 export const CHAR_CENTER = 0.43; // the doctor's centre, as a fraction of the intro video's width
 
@@ -17,7 +20,6 @@ export const FLY_MS = 750;
 export const AVATAR_MS = 4200; // round button: live avatar (the ring fills in this time)
 export const DARK_MS = 500; // ... fades to black
 export const CHAT_MS = 4500; // ... black circle with the chat icon
-export const PHONE_MAX_WIDTH = 480;
 export const MAX_PILL_CHARS = 500;
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
@@ -45,7 +47,7 @@ export function isSafari(userAgent, maxTouchPoints = 0) {
   return /Safari\//.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(ua);
 }
 
-// Can this browser play the transparent intro video?
+// Can this browser play the transparent intro video (VP9 with alpha in WebM)?
 export function canPlayAlphaIntro() {
   if (typeof document === "undefined" || typeof navigator === "undefined") return false;
   if (isSafari(navigator.userAgent, navigator.maxTouchPoints)) return false;
@@ -56,11 +58,13 @@ export function canPlayAlphaIntro() {
   }
 }
 
-// Not on a phone, with reduced motion or data saver, with the chat window already open, an admin invite waiting, in a
-// browser that cannot play the transparent video (they get the compact bar), or once it has played on this page load.
-export function shouldPlayIntro({ reduced, saveData, width, played, open, invite, alpha = true }) {
-  if (reduced || saveData || played || open || invite || !alpha) return false;
-  return width > PHONE_MAX_WIDTH;
+// Which intro video this browser gets: "alpha" (transparent WebM) or "ios" (MP4 with a grey background).
+export const introVideoKind = () => (canPlayAlphaIntro() ? "alpha" : "ios");
+
+// On every device, phones included, except with reduced motion or data saver, with the chat window already open, an
+// admin invite waiting, or once it has played on this page load.
+export function shouldPlayIntro({ reduced, saveData, played, open, invite }) {
+  return !(reduced || saveData || played || open || invite);
 }
 
 // The next step of the round button's cycle: live avatar -> black -> chat icon -> live avatar.
