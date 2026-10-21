@@ -8,7 +8,7 @@ import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
-import { canUseVideo, prefersReducedMotion, saveDataOn, shouldPlayIntro, wasGreeted } from "./greeterConfig";
+import { canUseVideo, prefersReducedMotion, saveDataOn, introPlayedThisLoad, shouldPlayIntro } from "./greeterConfig";
 import { useLiveChat } from "./useLiveChat";
 import "./LiveChatWidget.css";
 
@@ -117,15 +117,14 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
   const [confirmEnd, setConfirmEnd] = useState(false); // the "End this chat?" dialog
-  // The doctor greeter: the intro plays once per browser session (never on a phone, for a returning patient, with the
-  // window open or an admin invite waiting); from then on, and whenever the window closes, the compact bar shows.
+  // The doctor greeter: the intro plays on every page load or refresh (not on a phone, with the window open or an
+  // admin invite waiting); after it, on route changes, and whenever the window closes, the compact bar shows.
   const [stage, setStage] = useState(() =>
     shouldPlayIntro({
       reduced: prefersReducedMotion(),
       saveData: saveDataOn(),
       width: window.innerWidth,
-      greeted: wasGreeted(),
-      hasSession: chat.hasSession,
+      played: introPlayedThisLoad(),
       open,
       invite: Boolean(chat.invite),
     })

@@ -13,6 +13,8 @@ import {
   SHOW_PILL_AT,
   SHRINK_AFTER_MS,
   WEBM_SRC,
+  introPlayedThisLoad,
+  markIntroPlayed,
   nextStep,
   shouldPlayIntro,
 } from "../src/features/livechat/greeterConfig.js";
@@ -26,7 +28,7 @@ const widget = strip(read("src/features/livechat/LiveChatWidget.jsx"));
 const form = strip(read("src/features/livechat/ContactForm.jsx"));
 const css = strip(read("src/features/livechat/LiveChatWidget.css"));
 
-const base = { reduced: false, saveData: false, width: 1280, greeted: false, hasSession: false, open: false, invite: false };
+const base = { reduced: false, saveData: false, width: 1280, played: false, open: false, invite: false };
 
 test("timings match the approved design", () => {
   assert.equal(SHOW_PILL_AT, 3.2);
@@ -43,16 +45,31 @@ test("the round button cycles avatar -> dark -> chat icon -> avatar", () => {
   assert.deepEqual(nextStep("chat"), { next: "avatar", ms: CHAT_MS });
 });
 
-test("the intro plays once per session, on a desktop, for a first-time visitor only", () => {
+test("the intro plays on every page load for everyone on a desktop; not on a phone, with the window open or an invite", () => {
   assert.equal(shouldPlayIntro(base), true);
-  assert.equal(shouldPlayIntro({ ...base, greeted: true }), false, "already played in this session");
-  assert.equal(shouldPlayIntro({ ...base, hasSession: true }), false, "returning patient");
+  assert.equal(shouldPlayIntro({ ...base, played: true }), false, "already played on this page load");
   assert.equal(shouldPlayIntro({ ...base, open: true }), false, "chat window already open");
   assert.equal(shouldPlayIntro({ ...base, invite: true }), false, "an admin wrote to the visitor");
   assert.equal(shouldPlayIntro({ ...base, reduced: true }), false, "reduced motion");
   assert.equal(shouldPlayIntro({ ...base, saveData: true }), false, "data saver");
   assert.equal(shouldPlayIntro({ ...base, width: 480 }), false, "phone");
   assert.equal(shouldPlayIntro({ ...base, width: 481 }), true);
+});
+
+test("the played flag is page memory only: set once, no storage, and not read from the browser", () => {
+  const config = strip(read("src/features/livechat/greeterConfig.js"));
+  assert.equal(introPlayedThisLoad(), false);
+  markIntroPlayed();
+  assert.equal(introPlayedThisLoad(), true, "a remounted widget (route change) sees that the intro already played");
+  assert.doesNotMatch(config, /sessionStorage|localStorage|hcLiveChatGreeted|wasGreeted|markGreeted/);
+  assert.doesNotMatch(widget + greeter, /sessionStorage|localStorage|hcLiveChatGreeted|hasSession/);
+  assert.match(widget, /played: introPlayedThisLoad\(\)/);
+  assert.match(greeter, /markIntroPlayed\(\)/);
+});
+
+test("the ring has fixed pixel sizes and opts out of the site's global svg max-width/height rules", () => {
+  assert.match(css, /\.lcw-gr-ring \{\s*position: absolute;\s*top: -4px;\s*left: -4px;\s*width: 72px;\s*height: 72px;\s*max-width: none;\s*max-height: none;/);
+  assert.doesNotMatch(css, /\.lcw-gr-ring \{[^}]*calc\(100% \+ 8px\)/);
 });
 
 test("video sources are versioned and WebM comes before MP4", () => {

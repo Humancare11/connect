@@ -289,11 +289,16 @@ html.hc-cookie-open .lcw-window {
     opacity: 0.25;
   }
 }
+/* The site's global `svg { max-width: 100%; height: auto }` (index.css) would shrink a ring that is wider than its
+   button, so the ring has fixed pixel sizes and opts out of both. */
 .lcw-gr-ring {
   position: absolute;
-  inset: -4px;
-  width: calc(100% + 8px);
-  height: calc(100% + 8px);
+  top: -4px;
+  left: -4px;
+  width: 72px;
+  height: 72px;
+  max-width: none;
+  max-height: none;
   opacity: 0;
   transform: rotate(-90deg);
   pointer-events: none;
@@ -326,6 +331,7 @@ html.hc-cookie-open .lcw-window {
 }
 .lcw-gr-chatico {
   position: relative;
+  max-width: none;
   opacity: 0;
   transform: scale(0.6);
   transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4);

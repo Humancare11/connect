@@ -327,28 +327,34 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
         Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
         document.dispatchEvent(new Event("visibilitychange"));
       }, hidden);
-    // A new browser context. `seed` runs before the page: greeted = the intro already played in this session.
-    async function newPage({ width = 1280, height = 800, reducedMotion = false, greeted = false, returning = false } = {}) {
+    // A new browser context. `compact` starts with the window open (no intro) and minimises it: the compact bar.
+    let compactStart = false;
+    async function newPage({ width = 1280, height = 800, reducedMotion = false, compact = false, returning = false } = {}) {
+      compactStart = compact;
       await context?.close();
       context = await browser.newContext({ viewport: { width, height }, reducedMotion: reducedMotion ? "reduce" : "no-preference" });
       page = await context.newPage();
       await page.addInitScript(
-        ([isGreeted, isReturning, token, visitor]) => {
+        ([isCompact, isReturning, token, visitor]) => {
           if (sessionStorage.getItem("hcTestBooted")) return;
           sessionStorage.setItem("hcTestBooted", "1");
-          if (isGreeted) sessionStorage.setItem("hcLiveChatGreeted", "1");
+          if (isCompact) sessionStorage.setItem("hcLiveChatOpen", "1");
           if (isReturning) {
             localStorage.setItem("hcLiveChatToken", token);
             localStorage.setItem("hcLiveChatVisitorId", visitor);
           }
         },
-        [greeted, returning, TOKEN, VISITOR]
+        [compact, returning, TOKEN, VISITOR]
       );
     }
     // The page clock runs normally until it is paused; the video itself always plays in real time.
     async function load({ clock = true } = {}) {
       if (clock) await page.clock.install({ time: Date.now() });
       await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      if (compactStart) {
+        await page.getByRole("button", { name: "Minimize chat" }).click();
+        await page.locator(".lcw-gr-mini").waitFor();
+      }
     }
     const freeze = async () => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
     const tick = (ms) => page.clock.runFor(ms);
@@ -367,7 +373,6 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       const doctor = page.locator(".lcw-gr-doc");
       await doctor.waitFor();
       assert.equal(await doctor.getAttribute("aria-label"), "Open chat");
-      assert.equal(await page.evaluate(() => sessionStorage.getItem("hcLiveChatGreeted")), "1");
       assert.equal(await page.locator(".lcw-gr-ask.is-show").count(), 0, "no pill while he is still walking in");
       await introPill().waitFor({ timeout: 8000 });
       assert.ok((await videoTime()) >= 3.1, "the pill came in with the video, not before");
@@ -427,7 +432,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
     });
 
     test("the avatar never shows the walk-in, has a LIVE badge and a ring, and cycles avatar -> black -> chat icon -> avatar", async () => {
-      await newPage({ greeted: true });
+      await newPage({ compact: true });
       await load();
       await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
       assert.equal((await page.locator(".lcw-gr-live").innerText()).trim(), "LIVE");
@@ -489,7 +494,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
     });
 
     test("clicking the round button with text typed in the compact pill holds the text the same way", async () => {
-      await newPage({ greeted: true });
+      await newPage({ compact: true });
       await load({ clock: false });
       await answerContact();
       await page.getByLabel("Write a message").fill("Do you take insurance?");
@@ -503,25 +508,25 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
     });
 
     test("closing the window before the chat starts puts the typed text back in the pill", async () => {
-      await newPage({ greeted: true });
+      await newPage({ compact: true });
       await load({ clock: false });
       await page.getByLabel("Write a message").fill("Hello there");
       await page.getByRole("button", { name: "Send message" }).click();
       await page.waitForSelector(".lcw-cform");
       await page.getByRole("button", { name: "Minimize chat" }).click();
       await page.locator(".lcw-gr-mini").waitFor();
-      assert.equal(await page.getByLabel("Write a message").inputValue(), "Hello there");
+      await page.waitForFunction(() => document.querySelector(".lcw-gr-minif input")?.value === "Hello there"); // restored right after the window closes
       assert.equal(sentEvents("chat:message").length, 0);
     });
 
-    test("a returning patient: the compact bar shows, and a typed message goes straight into the chat", async () => {
+    test("a returning patient also gets the intro, and a message typed in its pill goes straight into the chat", async () => {
       await newPage({ returning: true });
       mock.conversation = freshConversation();
       await load({ clock: false });
-      await page.locator(".lcw-gr-mini").waitFor();
-      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "no intro for a returning patient");
-      await page.getByLabel("Write a message").fill("Is the doctor available today?");
-      await page.getByRole("button", { name: "Send message" }).click();
+      await page.locator(".lcw-gr-doc").waitFor();
+      await introPill().waitFor({ timeout: 8000 });
+      await introPill().getByLabel("Write a message").fill("Is the doctor available today?");
+      await introPill().getByRole("button", { name: "Send message" }).click();
       await page.locator(".lcw-msg--right", { hasText: "Is the doctor available today?" }).waitFor();
       assert.equal(await page.locator(".lcw-cform").count(), 0);
       assert.deepEqual(sentEvents("chat:message"), [{ text: "Is the doctor available today?" }]);
@@ -539,16 +544,58 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.locator(".lcw-gr-ask").count(), 0);
     });
 
-    test("once per session: a reload shows the compact bar; a new browser session plays the intro again", async () => {
+    test("the intro plays again on every reload and in every new tab", async () => {
       await newPage();
       await load();
       await page.locator(".lcw-gr-doc").waitFor();
       await page.reload();
-      await page.locator(".lcw-gr-mini").waitFor();
-      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
-      await newPage();
-      await load();
       await page.locator(".lcw-gr-doc").waitFor();
+      assert.equal(await page.locator(".lcw-gr-mini").count(), 0, "a reload starts with the intro, not the compact bar");
+      const second = await context.newPage();
+      await second.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      await second.locator(".lcw-gr-doc").waitFor();
+    });
+
+    test("the ring, the circle and the LIVE badge are fully visible, in the viewport and not clipped, with the site's global svg rule and the cookie banner", async () => {
+      for (const [width, height] of [
+        [1280, 800],
+        [1440, 900],
+        [390, 844],
+      ]) {
+        await newPage({ width, height, compact: true });
+        await load({ clock: false });
+        // what index.css does to every svg on the real site
+        await page.addStyleTag({ content: "img,video,canvas,svg{max-width:100%;height:auto}" });
+        await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
+        await realWait(700); // the pop-in animation
+        for (const banner of [false, true]) {
+          await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
+          await realWait(100);
+          const report = await page.evaluate(() => {
+            const button = document.querySelector(".lcw-launcher--round");
+            const ring = document.querySelector(".lcw-gr-ring");
+            const live = document.querySelector(".lcw-gr-live");
+            const box = (el) => el.getBoundingClientRect();
+            const clippers = [];
+            for (let el = button; el && el !== document.documentElement; el = el.parentElement) {
+              const cs = getComputedStyle(el);
+              if (el !== button && (cs.overflow !== "visible" || cs.clipPath !== "none" || cs.contain.includes("paint"))) clippers.push(el.className || el.tagName);
+            }
+            return { b: box(button), r: box(ring), l: box(live), w: innerWidth, h: innerHeight, clippers };
+          });
+          const label = `${width}x${height} banner=${banner}`;
+          assert.deepEqual(report.clippers, [], `${label}: no ancestor clips the button`);
+          assert.equal(Math.round(report.b.width), 64, label);
+          assert.equal(Math.round(report.r.width), 72, `${label}: ring is 72px wide (got ${report.r.width})`);
+          assert.equal(Math.round(report.r.height), 72, `${label}: ring is 72px tall (got ${report.r.height})`);
+          assert.equal(Math.round(report.r.left), Math.round(report.b.left) - 4, `${label}: ring is centred on the button`);
+          assert.equal(Math.round(report.r.top), Math.round(report.b.top) - 4, `${label}: ring is centred on the button`);
+          for (const [name, r] of [["button", report.b], ["ring", report.r], ["LIVE badge", report.l]]) {
+            assert.ok(r.left >= 0 && r.top >= 0 && r.right <= report.w && r.bottom <= report.h, `${label}: ${name} inside the viewport ${JSON.stringify(r)}`);
+          }
+          assert.ok(report.l.left >= report.b.left && report.l.right <= report.b.right && report.l.bottom <= report.b.bottom, `${label}: LIVE badge inside the circle`);
+        }
+      }
     });
 
     test("a hidden tab pauses the videos and holds the 10 s clock", async () => {
@@ -594,7 +641,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
     });
 
     test("the unread badge sits on the round button, and the keyboard reaches both the pill and the button", async () => {
-      await newPage({ greeted: true, returning: true });
+      await newPage({ compact: true, returning: true });
       mock.conversation = freshConversation();
       await load({ clock: false });
       await page.locator(".lcw-gr-mini").waitFor();

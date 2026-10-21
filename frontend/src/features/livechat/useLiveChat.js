@@ -97,7 +97,6 @@ const ERRORS = {
 
 export function useLiveChat() {
   const [phase, setPhase] = useState(() => (store.get(TOKEN_KEY) ? "loading" : "form")); // loading | form | chat
-  const [hasSession] = useState(() => Boolean(store.get(TOKEN_KEY))); // a returning patient: this device has chatted before
   const [conversation, setConversation] = useState(null);
   const [firstName, setFirstName] = useState("");
   const [aiTyping, setAiTyping] = useState(false);
@@ -491,7 +490,6 @@ export function useLiveChat() {
 
   return {
     phase,
-    hasSession,
     conversation,
     firstName,
     aiTyping,

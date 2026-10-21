@@ -10,7 +10,7 @@ import {
   START_TIMEOUT_MS,
   WEBM_SRC,
   keepLooping,
-  markGreeted,
+  markIntroPlayed,
   mute,
   watchSources,
 } from "./greeterConfig";
@@ -83,9 +83,10 @@ export default function DoctorGreeter({ stage, video = true, unread = 0, text, s
   const refocusRef = useRef(false);
   textRef.current = text;
 
-  // The intro counts as played as soon as it starts, so later pages of this session show the compact bar.
+  // The intro counts as played as soon as it starts, so a widget that remounts on the same page load (a route change
+  // through a page without the chat) shows the compact bar.
   useEffect(() => {
-    if (mode === "intro") markGreeted();
+    if (mode === "intro") markIntroPlayed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

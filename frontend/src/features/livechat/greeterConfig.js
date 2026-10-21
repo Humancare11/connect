@@ -14,7 +14,6 @@ export const AVATAR_MS = 4200; // round button: live avatar (the ring fills in t
 export const DARK_MS = 500; // ... fades to black
 export const CHAT_MS = 4500; // ... black circle with the chat icon
 export const PHONE_MAX_WIDTH = 480;
-export const GREETED_KEY = "hcLiveChatGreeted"; // sessionStorage: the intro has played in this browser session
 export const MAX_PILL_CHARS = 500;
 
 const REDUCED = "(prefers-reduced-motion: reduce)";
@@ -25,26 +24,19 @@ export const saveDataOn = () => typeof navigator !== "undefined" && Boolean(navi
 // Whether the video (intro or live avatar) may be used at all. Without it the round button just shows the chat icon.
 export const canUseVideo = () => !prefersReducedMotion() && !saveDataOn();
 
-export function wasGreeted() {
-  try {
-    return sessionStorage.getItem(GREETED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
+// The intro plays on every full page load or refresh (new tab, reload), and never again until the next one: this flag
+// lives in the page's own memory, so client-side route changes (even through a page without the widget) do not restart
+// it and nothing is stored in the browser.
+let introPlayed = false;
+export const introPlayedThisLoad = () => introPlayed;
+export const markIntroPlayed = () => {
+  introPlayed = true;
+};
 
-export function markGreeted() {
-  try {
-    sessionStorage.setItem(GREETED_KEY, "1");
-  } catch {
-    /* storage unavailable: the intro may play again on the next page load */
-  }
-}
-
-// The intro plays once per browser session, never on a phone, and never for a returning patient, an open chat or an
-// admin invite.
-export function shouldPlayIntro({ reduced, saveData, width, greeted, hasSession, open, invite }) {
-  if (reduced || saveData || greeted || hasSession || open || invite) return false;
+// Not on a phone, with reduced motion or data saver, with the chat window already open, an admin invite waiting, or
+// once it has played on this page load.
+export function shouldPlayIntro({ reduced, saveData, width, played, open, invite }) {
+  if (reduced || saveData || played || open || invite) return false;
   return width > PHONE_MAX_WIDTH;
 }
 
