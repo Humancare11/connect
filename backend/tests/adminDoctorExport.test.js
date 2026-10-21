@@ -44,13 +44,13 @@ describe("admin doctor export", () => {
       if (enroll) {
         await Enrollment.create({
           doctorId: d._id, email: `${name.toLowerCase()}@x.co`, firstName: name, surname: "Doc",
-          countryCode: "+91", phoneNumber: "9876543210", state: "Kerala", country: "IN",
+          countryCode: "+91", phoneNumber: "9876543210", state: "KL", country: "IN",
           accountNumber: "ACCT-SECRET", paypalId: "paypal-secret", payoutEmail: "pay@secret.co", ...enroll,
         });
       }
       return d;
     };
-    await mk("Old", new Date("2026-01-01"), { approvalStatus: "approved" });
+    await mk("Old", new Date("2026-01-01"), { approvalStatus: "approved", state: "Kerala", country: "India" });
     await mk("Newest", new Date("2026-03-01"), { approvalStatus: "approved" });
     await mk("Pending", new Date("2026-02-01"), { approvalStatus: "pending" });
     await mk("Disabled", new Date("2026-02-15"), { approvalStatus: "approved" }, { accountDisabled: true });
@@ -116,11 +116,38 @@ describe("admin doctor export", () => {
     assert.deepEqual(data.map((r) => r[headers.indexOf("Name")]), ["Newest Doc", "Old Doc"]);
   });
 
-  test("basic export has exactly the 4 columns", async () => {
+  test("basic export has exactly the 5 columns, with full country and state names", async () => {
     const { headers, data } = await sheet(await get("?type=active&fields=basic"));
-    assert.deepEqual(headers, ["Name", "Phone Number", "Email", "State"]);
-    assert.ok(data.every((r) => r.length === 4));
-    assert.deepEqual(data[0], ["Newest Doc", "+91 9876543210", "newest@x.co", "Kerala"]);
+    assert.deepEqual(headers, ["Name", "Phone Number", "Email", "Country", "State"]);
+    assert.ok(data.every((r) => r.length === 5));
+    // "Newest" is stored as legacy codes IN / KL; "Old" as full names.
+    assert.deepEqual(data[0], ["Newest Doc", "+91 9876543210", "newest@x.co", "India", "Kerala"]);
+    assert.deepEqual(data[1].slice(3), ["India", "Kerala"]);
+  });
+
+  test("state codes resolve per country, names are kept, unknown values fall back to the original", async () => {
+    const mk = (name, country, state) =>
+      Doctor.create({ name, email: `${name.toLowerCase()}@loc.co`, password: "x" }).then((d) =>
+        Enrollment.create({ doctorId: d._id, firstName: name, surname: "Loc", approvalStatus: "approved", country, state }));
+    await mk("Au", "AU", "WA");
+    await mk("Us", "US", "WA");
+    await mk("Mh", "India", "MH");
+    await mk("Nsw", "au", "nsw");
+    await mk("Bad", "ZZ", "QQ");
+    await mk("Badstate", "IN", "Nowhere");
+    await mk("Blank", "", "");
+    for (const qs of ["?type=active&fields=basic", "?type=active&fields=full", "?type=all&fields=full"]) {
+      const { headers, data } = await sheet(await get(qs));
+      const c = headers.indexOf("Country"), s = headers.indexOf("State"), n = headers.indexOf("Name");
+      const by = Object.fromEntries(data.map((r) => [r[n], [r[c], r[s]]]));
+      assert.deepEqual(by["Au Loc"], ["Australia", "Western Australia"], qs);
+      assert.deepEqual(by["Us Loc"], ["United States", "Washington"], qs);
+      assert.deepEqual(by["Mh Loc"], ["India", "Maharashtra"], qs);
+      assert.deepEqual(by["Nsw Loc"], ["Australia", "New South Wales"], qs);
+      assert.deepEqual(by["Bad Loc"], ["ZZ", "QQ"], qs);
+      assert.deepEqual(by["Badstate Loc"], ["India", "Nowhere"], qs);
+      assert.ok(by["Blank Loc"].every((v) => v == null || v === ""), qs);
+    }
   });
 
   test("no sensitive data appears in any export", async () => {

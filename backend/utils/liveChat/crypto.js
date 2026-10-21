@@ -4,6 +4,7 @@
 // Outside production a domain-separated key derived from JWT_SECRET is used when the env key is not set, so
 // local development works. checkLiveChatConfig() makes the key mandatory in production.
 const crypto = require("crypto");
+const { AsyncLocalStorage } = require("async_hooks");
 const { parseLiveChatKey } = require("./config");
 
 const KEY_VERSION = process.env.LIVECHAT_ENCRYPTION_KEY_VERSION || "v1";
@@ -25,6 +26,58 @@ function activeKey() {
     .digest();
 }
 
+// Keys used to READ data: the current key first, then the previous ones (LIVECHAT_ENCRYPTION_KEY_PREVIOUS, comma
+// separated) so data written before a key change stays readable. New data is always written with the current key.
+function previousKeys(env = process.env) {
+  return String(env.LIVECHAT_ENCRYPTION_KEY_PREVIOUS || "")
+    .split(",")
+    .map((part) => parseLiveChatKey(part))
+    .filter(Boolean);
+}
+const readKeys = () => [activeKey(), ...previousKeys()];
+
+// First 8 hex characters of SHA-256 of a key: enough to compare two environments, useless to an attacker.
+const keyFingerprint = (key) => crypto.createHash("sha256").update(key).digest("hex").slice(0, 8);
+
+// What a reader sees instead of data that no key can decrypt. It never reaches the AI (see decryptLiveChatOrEmpty).
+const UNREADABLE_TEXT = "[Message can't be shown – encryption key mismatch]";
+const isUnreadable = (text) => text === UNREADABLE_TEXT;
+
+// Per-request report of what could not be decrypted (count + ids, never content), logged once by the route wrapper.
+const reportStore = new AsyncLocalStorage();
+function runWithDecryptReport(work) {
+  const report = { count: 0, ids: new Set() };
+  return reportStore.run(report, () => Promise.resolve(work(report)).then((value) => ({ value, report }), (error) => Promise.reject(Object.assign(error, { decryptReport: report }))));
+}
+let lastLooseLog = 0;
+function noteUnreadable(id) {
+  const report = reportStore.getStore();
+  if (report) {
+    report.count += 1;
+    if (id) report.ids.add(String(id));
+    return;
+  }
+  if (Date.now() - lastLooseLog > 60_000) {
+    lastLooseLog = Date.now();
+    console.error("[livechat] some stored text could not be decrypted (key mismatch); showing a placeholder");
+  }
+}
+
+// { ok, text }: tries the current key, then the previous keys. Never throws.
+function tryDecryptLiveChatText(record, keys = readKeys()) {
+  if (!record?.cipherText) return { ok: true, text: "" };
+  for (const key of keys) {
+    try {
+      const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(record.iv, "base64"));
+      decipher.setAuthTag(Buffer.from(record.authTag, "base64"));
+      return { ok: true, text: Buffer.concat([decipher.update(Buffer.from(record.cipherText, "base64")), decipher.final()]).toString("utf8") };
+    } catch {
+      /* try the next key */
+    }
+  }
+  return { ok: false, text: "" };
+}
+
 function encryptLiveChatText(text) {
   const value = String(text ?? "");
   if (!value) return { cipherText: "", iv: "", authTag: "", keyVersion: KEY_VERSION };
@@ -39,11 +92,19 @@ function encryptLiveChatText(text) {
   };
 }
 
-function decryptLiveChatText(record) {
-  if (!record?.cipherText) return "";
-  const decipher = crypto.createDecipheriv("aes-256-gcm", activeKey(), Buffer.from(record.iv, "base64"));
-  decipher.setAuthTag(Buffer.from(record.authTag, "base64"));
-  return Buffer.concat([decipher.update(Buffer.from(record.cipherText, "base64")), decipher.final()]).toString("utf8");
+// Never throws: text no key can decrypt becomes UNREADABLE_TEXT, so one bad record cannot break a list or a chat.
+function decryptLiveChatText(record, id) {
+  const result = tryDecryptLiveChatText(record);
+  if (result.ok) return result.text;
+  noteUnreadable(id);
+  return UNREADABLE_TEXT;
+}
+
+// Same, but "" when unreadable: for anything that goes to the AI, to an email or into a greeting.
+function decryptLiveChatOrEmpty(record) {
+  const result = tryDecryptLiveChatText(record);
+  if (!result.ok) noteUnreadable();
+  return result.ok ? result.text : "";
 }
 
 // Keyed hash so a contact can be looked up by email without storing the email in the clear.
@@ -64,4 +125,4 @@ function hashLiveChatPhone(phone) {
 }
 const searchKeysOf = (email, phone) => ({ emailHash: hashLiveChatEmail(email), phoneHash: hashLiveChatPhone(phone) });
 
-module.exports = { ENC_FIELD, encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, hashLiveChatPhone, normalizePhone, searchKeysOf };
+module.exports = { ENC_FIELD, UNREADABLE_TEXT, isUnreadable, previousKeys, readKeys, activeKey, keyFingerprint, tryDecryptLiveChatText, runWithDecryptReport, noteUnreadable, decryptLiveChatOrEmpty, encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, hashLiveChatPhone, normalizePhone, searchKeysOf };

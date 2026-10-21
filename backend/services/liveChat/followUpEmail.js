@@ -5,7 +5,7 @@
 // The email contains NO health details: no topic, no message text, no file names, no reason. Only the first name
 // and the chat reference.
 const { followUpMailboxAddress } = require("../../utils/liveChat/config");
-const { decryptLiveChatText } = require("../../utils/liveChat/crypto");
+const { decryptLiveChatText, decryptLiveChatOrEmpty } = require("../../utils/liveChat/crypto");
 
 function buildFollowUpEmail({ firstName, conversationId, settings, date = new Date() }) {
   const lines = [
@@ -70,7 +70,7 @@ function createFollowUpMailer({ models, loadSettings, sendMail = sendViaEmailMod
 
   // Never throws and never blocks the chat. Resolves to { sent, reason }.
   async function send(conv) {
-    const email = decryptLiveChatText(conv.contact?.email);
+    const email = decryptLiveChatOrEmpty(conv.contact?.email);
     if (!email) {
       await LcConversation.updateOne({ _id: conv._id, "followUp.status": "" }, { $set: { "followUp.status": "skipped", "followUp.at": new Date(now()) } });
       return { sent: false, reason: "no_email" };
@@ -81,7 +81,7 @@ function createFollowUpMailer({ models, loadSettings, sendMail = sendViaEmailMod
 
     try {
       const settings = await loadSettings();
-      const first = String(decryptLiveChatText(conv.contact?.name) || "").trim().split(/\s+/)[0];
+      const first = String(decryptLiveChatOrEmpty(conv.contact?.name) || "").trim().split(/\s+/)[0];
       const { subject, body } = buildFollowUpEmail({ firstName: first, conversationId: conv.conversationId, settings, date: new Date(now()) });
       await sendMail({ to: email, subject, body, conversationId: conv.conversationId }, env);
       await LcConversation.updateOne({ _id: conv._id }, { $set: { "followUp.status": "sent", "followUp.at": new Date(now()) } });

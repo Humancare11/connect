@@ -261,7 +261,7 @@ export function useLiveChat() {
   }, [open, phase, conversation, emit]);
 
   const submitContact = useCallback(
-    async ({ name, email, phone, companyUrl, aiNoticeAccepted }) => {
+    async ({ name, email, phone, hcRefNote, aiNoticeAccepted }) => {
       let body;
       try {
         const res = await fetch(`${API_BASE}/api/livechat/contact`, {
@@ -271,7 +271,7 @@ export function useLiveChat() {
             name,
             email,
             phone,
-            companyUrl,
+            hcRefNote,
             // Sent only when the form showed the AI notice (Super Admin setting); the server records the acceptance.
             ...(aiNoticeAccepted ? { aiNoticeAccepted: true } : {}),
             visitorId: store.get(ID_KEY) || undefined,

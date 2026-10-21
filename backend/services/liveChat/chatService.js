@@ -8,7 +8,7 @@
 //   - any AI failure (quota, cap, bad output, outage) shows the "AI unavailable" fallback and keeps live chat usable,
 //   - notes (sender "note") never reach the patient.
 const crypto = require("crypto");
-const { encryptLiveChatText, decryptLiveChatText, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, decryptLiveChatOrEmpty, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
 const { newVisitorId } = require("./chatToken");
 const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish, scrubContact } = require("./languageHints");
@@ -24,9 +24,9 @@ const INACTIVE_JOB_LIMIT = 25;
 // kept for the retention period regardless; this only limits what a returning browser is shown.
 const DEVICE_WINDOW_MS = 30 * 24 * 3_600_000;
 const { istDayKey, istDayStart } = require("./istDay");
-const DAILY_CLOSE_TEXT = "This chat was closed at the end of the day. Send a message any time to continue.";
 const SWEEP_BATCH = 100;
-const INACTIVE_TEXT = (minutes) => `This chat was closed after ${minutes} minutes of inactivity. Send a message any time to continue.`;
+// Quiet-chat lines (no "closed"): safety.fixedText("inactive" | "quietSinceYesterday", language).
+const quietLine = (kind, conv) => safety.fixedText(kind, conv?.language?.code);
 const inactiveMinutesOf = (settings) => Math.min(60, Math.max(5, Math.round(Number(settings?.inactiveMinutes) || 10)));
 const followUpMinutesOf = (settings) => Math.min(30, Math.max(1, Math.round(Number(settings?.followUpMinutes) || 1)));
 
@@ -299,7 +299,7 @@ function createChatService({
     emitToAgents("chat:message", {
       conversationId: conv.conversationId,
       visitorId: conv.visitorId,
-      name: firstNameOf(decryptLiveChatText(conv.contact?.name)),
+      name: firstNameOf(decryptLiveChatOrEmpty(conv.contact?.name)),
       everLive: Boolean(conv.everLive),
       assigneeId: conv.assigneeId ? String(conv.assigneeId) : null,
       message: { ...message, internal: Boolean(extra.internal), ...(sourceText ? { sourceText } : {}) },
@@ -351,7 +351,7 @@ function createChatService({
     const conv = await findOpen(visitorId);
     if (!conv) return;
     const visitor = await loadVisitor(visitorId);
-    if (hasContact(visitor) && presence.get(visitorId)) presence.update(visitorId, { name: decryptLiveChatText(visitor.name), email: decryptLiveChatText(visitor.email) });
+    if (hasContact(visitor) && presence.get(visitorId)) presence.update(visitorId, { name: decryptLiveChatOrEmpty(visitor.name), email: decryptLiveChatOrEmpty(visitor.email) });
     setActivity(visitorId, conv);
   }
 
@@ -407,7 +407,7 @@ function createChatService({
     // Writing in it reopens the same thread (findOrReopen).
     if (!conv) conv = await findContinuable(visitorId, visitor);
     const conversation = conv ? await serialize(conv.toObject ? conv.toObject() : conv, settings) : null;
-    return { ok: true, needContact: false, firstName: firstNameOf(decryptLiveChatText(visitor.name)), conversation };
+    return { ok: true, needContact: false, firstName: firstNameOf(decryptLiveChatOrEmpty(visitor.name)), conversation };
   }
 
   // The oldest moment a device may still show a chat from: 30 days back, or the last "clear this chat from this device".
@@ -462,7 +462,7 @@ function createChatService({
       { returnDocument: "after" }
     );
     if (!won) return findOpen(visitorId); // someone else reopened it first
-    const first = firstNameOf(decryptLiveChatText(visitor.name));
+    const first = firstNameOf(decryptLiveChatOrEmpty(visitor.name));
     const welcome =
       target === "ai" ? `Welcome back, ${first}!` : `Welcome back, ${first}! We're reconnecting you with our team.`;
     if (!quiet) await addMessage(won, "system", welcome);
@@ -606,7 +606,7 @@ function createChatService({
       cookieChoice: ["accepted", "declined", "unknown"].includes(context.cookieChoice) ? context.cookieChoice : "unknown",
       startedPage: { path: record?.page?.path || context.page?.path || "", title: record?.page?.title || context.page?.title || "" },
       contact: { name: visitor.name, email: visitor.email, phone: visitor.phone },
-      searchKeys: searchKeysOf(decryptLiveChatText(visitor.email), decryptLiveChatText(visitor.phone)),
+      searchKeys: searchKeysOf(decryptLiveChatOrEmpty(visitor.email), decryptLiveChatOrEmpty(visitor.phone)),
       // The AI-notice acceptance recorded when the visitor pressed Start chat.
       ...(visitor.consent?.aiNoticeAcceptedAt
         ? { consent: { aiNoticeAcceptedAt: visitor.consent.aiNoticeAcceptedAt, policyVersion: visitor.consent.policyVersion || "" } }
@@ -616,7 +616,7 @@ function createChatService({
     await touchVisitor(visitorId);
     await backfillPages(conv, record?.pages);
 
-    const first = firstNameOf(decryptLiveChatText(visitor.name));
+    const first = firstNameOf(decryptLiveChatOrEmpty(visitor.name));
     const greeting = String(settings.greeting || "").replace(/\{\s*first\s*name\s*\}/gi, first);
     await addMessage(conv, "ai", greeting);
     setActivity(visitorId, conv);
@@ -765,7 +765,7 @@ function createChatService({
         const settings = await loadSettings();
         const current = await LcConversation.findById(conv._id);
         if (current?.mode !== "ai") return undefined;
-        return await aiFallback(current, { first: firstNameOf(decryptLiveChatText(visitor.name)), settings });
+        return await aiFallback(current, { first: firstNameOf(decryptLiveChatOrEmpty(visitor.name)), settings });
       } catch {
         try {
           const current = await LcConversation.findById(conv._id);
@@ -780,7 +780,7 @@ function createChatService({
 
   async function aiTurnSteps(conv, visitor, patientText, turn) {
     const settings = await loadSettings();
-    const first = firstNameOf(decryptLiveChatText(visitor.name));
+    const first = firstNameOf(decryptLiveChatOrEmpty(visitor.name));
     closeBreakerIfRecovered();
 
     // Runs `fn` under the chat's lock, but only if no admin has taken the chat over (or closed it) in the meantime.
@@ -834,7 +834,7 @@ function createChatService({
       await sitePages.refresh(); // the live page list (cached for 10 minutes)
       const rawHistory = (await recentHistory(conv)).map((m) => ({ role: m.sender, text: m.text }));
       // The model never sees the patient's name, email or phone (the stored chat and what the patient sees are unchanged).
-      const contact = { name: decryptLiveChatText(visitor.name), email: decryptLiveChatText(visitor.email), phone: decryptLiveChatText(visitor.phone) };
+      const contact = { name: decryptLiveChatOrEmpty(visitor.name), email: decryptLiveChatOrEmpty(visitor.email), phone: decryptLiveChatOrEmpty(visitor.phone) };
       const history = rawHistory.map((m) => ({ ...m, text: scrubContact(m.text, contact, (kind) => `[${kind}]`) }));
       // Pages that fit what the patient just wrote; the model may only point at these.
       lastPatientText = rawHistory.filter((m) => m.role === "patient").at(-1)?.text || "";
@@ -941,7 +941,7 @@ function createChatService({
       .sort({ createdAt: -1 })
       .limit(limit)
       .lean();
-    return rows.reverse().map((m) => ({ sender: m.sender, text: decryptLiveChatText(m.text) }));
+    return rows.reverse().map((m) => ({ sender: m.sender, text: decryptLiveChatOrEmpty(m.text) }));
   }
 
   // "{aiName} is unavailable..." then hand the patient to the team (queue, or saved request if offline).
@@ -1032,7 +1032,7 @@ function createChatService({
       if (!claimed) continue; // an admin took it, the patient went back to the AI, or another run got it first
       try {
         await withLock(claimed.conversationId, async () => {
-          const email = decryptLiveChatText(claimed.contact?.email);
+          const email = decryptLiveChatOrEmpty(claimed.contact?.email);
           await addMessage(claimed, "ai", EMAIL_NOTICE_TEXT(email));
           setActivity(claimed.visitorId, claimed);
           announce(claimed);
@@ -1091,7 +1091,7 @@ function createChatService({
             { returnDocument: "after" }
           );
           if (!archived) return false;
-          await addMessage(archived, "system", INACTIVE_TEXT(inactiveMinutesOf(await loadSettings())));
+          await addMessage(archived, "system", quietLine("inactive", archived));
           setActivity(archived.visitorId, archived);
           announce(archived);
           await pushState(archived);
@@ -1158,7 +1158,7 @@ function createChatService({
             { returnDocument: "after" }
           );
           if (!archived) return false;
-          await addMessage(archived, "system", INACTIVE_TEXT(minutes));
+          await addMessage(archived, "system", quietLine("inactive", archived));
           setActivity(archived.visitorId, archived);
           announce(archived);
           await pushState(archived);
@@ -1255,7 +1255,7 @@ function createChatService({
               { returnDocument: "after" }
             );
             if (!closed) return false;
-            await addMessage(closed, "system", DAILY_CLOSE_TEXT);
+            await addMessage(closed, "system", quietLine("quietSinceYesterday", closed));
             setActivity(closed.visitorId, closed);
             announce(closed);
             await pushState(closed);
@@ -1285,7 +1285,7 @@ function createChatService({
       const live = (settings.quickOptions || []).find((o) => o.key === "live");
       await addMessage(conv, "patient", live?.label || "Talk to a live agent");
       return requestAgent(await LcConversation.findById(conv._id), {
-        first: firstNameOf(decryptLiveChatText(loaded.visitor.name)),
+        first: firstNameOf(decryptLiveChatOrEmpty(loaded.visitor.name)),
         settings,
       });
     });
@@ -1337,7 +1337,7 @@ function createChatService({
       const fresh = await LcConversation.findById(conv._id);
 
       if (key === "live") {
-        await requestAgent(fresh, { first: firstNameOf(decryptLiveChatText(loaded.visitor.name)), settings });
+        await requestAgent(fresh, { first: firstNameOf(decryptLiveChatOrEmpty(loaded.visitor.name)), settings });
       } else if (fresh.mode === "ai" && option.reply) {
         const link = option.link ? sitePages.linkFor(option.link) : null;
         await addMessage(fresh, "ai", option.reply, link ? { links: [link] } : {});

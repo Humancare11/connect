@@ -1,5 +1,6 @@
 const express = require("express");
 const ExcelJS = require("exceljs");
+const { Country, State } = require("country-state-city");
 const Doctor = require("../models/Doctor");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { recordActivity } = require("../utils/activityLogger");
@@ -23,13 +24,36 @@ const pick = (d) => {
   };
 };
 
+// Enrollment.country/state hold full names (current form) or legacy ISO codes. Exports show full names:
+// codes resolve through the same country-state-city lists the form uses, state codes per the doctor's country
+// ("WA" = Western Australia in AU, Washington in US). Anything unresolvable keeps its original value.
+const same = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+const COUNTRIES = Country.getAllCountries();
+const findCountry = (v) => {
+  const t = String(v ?? "").trim();
+  return t ? COUNTRIES.find((c) => same(c.isoCode, t)) || COUNTRIES.find((c) => same(c.name, t)) || null : null;
+};
+const countryName = (v) => findCountry(v)?.name || String(v ?? "").trim();
+const stateName = (state, country) => {
+  const t = String(state ?? "").trim();
+  const c = findCountry(country);
+  if (!t || !c) return t;
+  const states = State.getStatesOfCountry(c.isoCode);
+  return (states.find((s) => same(s.isoCode, t)) || states.find((s) => same(s.name, t)))?.name || t;
+};
+const locationOf = (d) => ({
+  country: countryName(d.enrollment?.country),
+  state: stateName(d.enrollment?.state, d.enrollment?.country),
+});
+
 // Only whitelisted columns exist here, so nothing else (password, tokens, payout, files...) can reach a sheet.
 const COLUMNS = {
   basic: [
     { header: "Name", width: 28, get: (d) => pick(d).name },
     { header: "Phone Number", width: 20, get: (d) => pick(d).phone },
     { header: "Email", width: 32, get: (d) => pick(d).email },
-    { header: "State", width: 20, get: (d) => d.enrollment?.state || "" },
+    { header: "Country", width: 20, get: (d) => locationOf(d).country },
+    { header: "State", width: 22, get: (d) => locationOf(d).state },
   ],
   full: [
     { header: "Doctor ID", width: 10, get: (d) => d.doctorId ?? "" },
@@ -38,8 +62,8 @@ const COLUMNS = {
     { header: "Phone Number", width: 20, get: (d) => pick(d).phone },
     { header: "Gender", width: 10, get: (d) => d.enrollment?.gender || "" },
     { header: "Date of Birth", width: 14, get: (d) => d.enrollment?.dob || "" },
-    { header: "Country", width: 16, get: (d) => d.enrollment?.country || "" },
-    { header: "State", width: 20, get: (d) => d.enrollment?.state || "" },
+    { header: "Country", width: 16, get: (d) => locationOf(d).country },
+    { header: "State", width: 22, get: (d) => locationOf(d).state },
     { header: "City", width: 18, get: (d) => d.enrollment?.city || "" },
     { header: "Zip", width: 10, get: (d) => d.enrollment?.zip || "" },
     { header: "Address", width: 36, get: (d) => d.enrollment?.address || "" },
