@@ -712,39 +712,53 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.locator(".lcw-ph-chat").count(), 1);
     });
 
-    test("phone (390x844): the intro plays with the transparent video, no pill, feet on the button's line, flies into the round button, all inside the viewport", async () => {
+    test("phone (390x844): the intro plays with the transparent video, the pill is in place beside him, feet on the button's line, only he flies into the round button, all inside the viewport", async () => {
       await newPage({ width: 390, height: 844 });
       await load();
       const doctor = page.locator(".lcw-gr-doc");
       await doctor.waitFor();
       assert.equal(await doctor.locator("source").getAttribute("src"), "/livechat/doctor-alpha.webm?v=1", "Chromium gets the transparent video");
       assert.equal(await doctor.evaluate((el) => el.classList.contains("lcw-gr-doc--ios")), false);
-      assert.equal(await page.locator(".lcw-gr-minif").evaluate((el) => getComputedStyle(el).display), "none", "no pill on phones");
       await page.waitForFunction(() => document.querySelector(".lcw-gr-doc video")?.currentTime > 0.5, null, { timeout: 8000 });
+      await introPill().waitFor({ timeout: 8000 }); // slides in at 3.2 s, like on the desktop
+      await realWait(900);
       for (const banner of [false, true]) {
         await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
         await realWait(100);
         const m = await page.evaluate(() => {
           const rect = (el) => el.getBoundingClientRect().toJSON();
-          return { doc: rect(document.querySelector(".lcw-gr-doc")), slot: rect(document.querySelector(".lcw-gr-slot")), w: innerWidth, h: innerHeight };
+          return { doc: rect(document.querySelector(".lcw-gr-doc")), slot: rect(document.querySelector(".lcw-gr-slot")), pill: rect(document.querySelector(".lcw-gr-minif")), w: innerWidth, h: innerHeight };
         });
         const label = `banner=${banner}`;
         assert.ok(m.doc.height >= 140 && m.doc.height <= 171, `${label}: about 150px tall, 170px at most (got ${m.doc.height})`);
         assert.ok(Math.abs(m.doc.bottom - m.slot.bottom) <= 2, `${label}: feet on the round button's bottom line (${m.doc.bottom} vs ${m.slot.bottom})`);
         assert.ok(m.doc.left >= 0 && m.doc.top >= 0 && m.doc.right <= m.w && m.doc.bottom <= m.h, `${label}: the doctor is inside the viewport ${JSON.stringify(m.doc)}`);
-        assert.ok(m.slot.right <= m.w - 16, `${label}: the button's place keeps its margin`);
+        assert.ok(m.slot.right <= m.w - 12 + 0.5, `${label}: the button keeps its 12px margin`);
+        assert.ok(Math.abs(m.pill.left - 12) <= 1 && Math.abs(m.slot.left - m.pill.right - 10) <= 1, `${label}: pill and button share the row (12px gutter, 10px gap)`);
+        assert.ok(Math.abs(m.pill.width - (m.w - 64 - 10 - 24)) <= 1, `${label}: the pill takes the width that is left (${m.pill.width})`);
+        assert.ok(Math.abs(m.pill.top + m.pill.height / 2 - (m.slot.top + m.slot.height / 2)) <= 1, `${label}: the pill is centred on the button's row`);
       }
       await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
-      const before = await page.locator(".lcw-gr-slot").boundingBox();
+      assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16, "16px or more: iOS does not zoom on focus");
+      const pillBefore = await page.locator(".lcw-gr-minif").boundingBox();
+      const slotBefore = await page.locator(".lcw-gr-slot").boundingBox();
       await freeze();
       await tick(10_500);
+      const pillAt = () => page.locator(".lcw-gr-minif").boundingBox();
+      for (let i = 0; i < 4; i += 1) {
+        await realWait(150);
+        const r = await pillAt();
+        assert.ok(Math.abs(r.x - pillBefore.x) <= 1 && Math.abs(r.y - pillBefore.y) <= 1 && Math.abs(r.width - pillBefore.width) <= 1, "the pill does not move while he flies");
+      }
       await tick(1000);
       await launcher().waitFor();
       await realWait(700);
       assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the doctor flew into the button");
       const button = await launcher().boundingBox();
-      assert.ok(Math.abs(button.x - before.x) <= 1.5 && Math.abs(button.y - before.y) <= 1.5, "the button is exactly where the doctor was heading");
+      assert.ok(Math.abs(button.x - slotBefore.x) <= 1.5 && Math.abs(button.y - slotBefore.y) <= 1.5, "the button is exactly where the doctor was heading");
       assert.ok(button.x >= 0 && button.y >= 0 && button.x + button.width <= 390 && button.y + button.height <= 844, "button inside the viewport");
+      const pillAfter = await pillAt();
+      assert.ok(Math.abs(pillAfter.x - pillBefore.x) <= 1 && Math.abs(pillAfter.y - pillBefore.y) <= 1, "the pill is where it was");
       await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
     });
 
@@ -754,6 +768,76 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.locator(".lcw-gr-doc").click();
       await page.waitForSelector(".lcw-cform");
       assert.equal(await page.locator(".lcw-held").count(), 0);
+    });
+
+    test("phones 360x740, 390x844 and 430x932: the compact bar has the pill and the button on one row, inside the viewport above the cookie banner; typing and sending opens the chat with the held text", async () => {
+      for (const [width, height] of [
+        [360, 740],
+        [390, 844],
+        [430, 932],
+      ]) {
+        mock.events.length = 0;
+        mock.conversation = null;
+        await newPage({ width, height, compact: true });
+        await answerContact();
+        await load({ clock: false });
+        await page.locator(".lcw-gr-minif").waitFor();
+        await realWait(700); // the pop-in
+        for (const banner of [false, true]) {
+          await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
+          await realWait(100);
+          const m = await page.evaluate(() => {
+            const rect = (el) => el.getBoundingClientRect().toJSON();
+            return { pill: rect(document.querySelector(".lcw-gr-minif")), button: rect(document.querySelector(".lcw-launcher--round")), w: innerWidth, h: innerHeight };
+          });
+          const label = `${width}x${height} banner=${banner}`;
+          assert.ok(m.pill.left >= 12 - 0.5 && m.button.right <= m.w - 12 + 0.5 && m.button.bottom <= m.h && m.pill.top >= 0, `${label}: inside the viewport with 12px gutters ${JSON.stringify(m)}`);
+          assert.ok(Math.abs(m.pill.width - (m.w - 64 - 10 - 24)) <= 1, `${label}: pill width ${m.pill.width}`);
+          assert.ok(Math.abs(m.button.left - m.pill.right - 10) <= 1, `${label}: 10px gap`);
+          assert.ok(Math.abs(m.pill.top + m.pill.height / 2 - (m.button.top + m.button.height / 2)) <= 1, `${label}: one row`);
+          if (banner) assert.ok(m.button.bottom <= m.h - 190 + 1, `${label}: the bar sits above the cookie banner (${m.button.bottom} vs ${m.h - 190})`);
+        }
+        await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
+        assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16);
+        assert.equal(await page.locator(".lcw-gr-minif input").getAttribute("placeholder"), "Write a message…");
+        const input = page.getByLabel("Write a message");
+        await input.fill("I need a refill");
+        await realWait(300);
+        assert.equal(await page.locator(".lcw-gr-minif button").evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(17, 17, 17)", "the arrow turns black");
+        await input.press("Enter");
+        await page.waitForSelector(".lcw-cform");
+        assert.equal((await page.locator(".lcw-held-text").innerText()).trim(), "I need a refill");
+        assert.equal(await page.locator(".lcw-window").evaluate((el) => getComputedStyle(el).position), "fixed", "full-screen chat window on phones");
+        assert.equal(sentEvents("chat:message").length, 0, "nothing is sent before the form");
+        await fillForm();
+        await page.getByRole("button", { name: "Start chat" }).click();
+        await page.locator(".lcw-msg--right", { hasText: "I need a refill" }).waitFor();
+        assert.deepEqual(sentEvents("chat:message"), [{ text: "I need a refill" }], `${width}x${height}: sent once, as typed`);
+      }
+    });
+
+    test("phone: while the pill is focused the 10 s shrink waits, and the bar is lifted above the keyboard", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await page.locator(".lcw-gr-minif input").focus();
+      await tick(30_000);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1, "the doctor stays while the pill is focused");
+      // a keyboard of 300px: the visual viewport shrinks, the layout viewport does not (iOS Safari)
+      await page.evaluate(() => {
+        const vv = window.visualViewport;
+        Object.defineProperty(vv, "height", { configurable: true, get: () => window.innerHeight - 300 });
+        vv.dispatchEvent(new Event("resize"));
+      });
+      assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "300px");
+      const lifted = await page.locator(".lcw-gr-minif").boundingBox();
+      assert.ok(lifted.y + lifted.height <= 844 - 300, `the pill sits above the keyboard (bottom ${lifted.y + lifted.height})`);
+      await page.locator(".lcw-gr-minif input").blur();
+      assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "", "the lift is removed when the pill loses focus");
+      await tick(10_500);
+      await tick(1000);
+      await launcher().waitFor();
     });
 
     test("the unread badge sits on the round button, and the keyboard reaches both the pill and the button", async () => {

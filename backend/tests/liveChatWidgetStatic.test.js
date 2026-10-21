@@ -148,10 +148,10 @@ describe("live chat: doctor greeter and round button", () => {
     assert.ok(launcher.indexOf("src={WEBM_SRC}") < launcher.indexOf("src={MP4_SRC}"), "the avatar lists WebM before MP4");
   });
 
-  test("round button: 64px, black circle, and only the pill is hidden on phones", () => {
+  test("round button: 64px, black circle, and on phones the pill shares its row", () => {
     assert.match(rule(".lcw-launcher--round"), /width:\s*64px/);
     assert.match(rule(".lcw-launcher--round"), /border-radius:\s*50%/);
-    assert.match(css, /@media \(max-width: 480px\) \{[^@]*\.lcw-gr-minif \{\s*display: none;/);
+    assert.match(css, /@media \(max-width: 480px\) \{[^@]*--gr-gut-r:/);
   });
 });
 

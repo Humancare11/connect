@@ -47,6 +47,7 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
   const inputRef = useRef(null);
   const circRef = useRef(null);
   const focusedRef = useRef(false);
+  const [focused, setFocused] = useState(false);
   const textRef = useRef(text);
   const refocusRef = useRef(false);
   textRef.current = text;
@@ -180,6 +181,23 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
     }
   }, [mode]);
 
+  // iOS Safari does not resize the page when the keyboard opens, it covers the bottom: while the pill is focused the bar
+  // is lifted by the part of the layout viewport the keyboard hides (--lcw-kb, read by .lcw-root).
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!focused || !vv) return undefined;
+    const root = document.documentElement;
+    const update = () => root.style.setProperty("--lcw-kb", `${Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop))}px`);
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      root.style.removeProperty("--lcw-kb");
+    };
+  }, [focused]);
+
   const open = () => onOpen(text.trim());
   const typing = text.trim().length > 0;
 
@@ -206,9 +224,11 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
           onChange={(event) => setText(event.target.value)}
           onFocus={() => {
             focusedRef.current = true;
+            setFocused(true);
           }}
           onBlur={() => {
             focusedRef.current = false;
+            setFocused(false);
           }}
           onKeyDown={(event) => {
             if (event.key === "Escape") event.currentTarget.blur();

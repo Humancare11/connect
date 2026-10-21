@@ -21,7 +21,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
 .lede{margin:4px 0 0;color:var(--muted);max-width:64ch}
 
 /* Mock site (the doctor video is transparent, so any page colour works) */
-.site{position:relative;height:560px;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+.site{container-type:inline-size;position:relative;height:560px;border-radius:18px;overflow:hidden;border:1px solid var(--line);
   background:linear-gradient(180deg,#f7f6f4 0%,#e9e7e4 100%);color:#14213d}
 .site .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;gap:12px}
 .site .logo{font:700 18px var(--display);color:#163a9e}
@@ -79,8 +79,9 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
 /* Safari/iOS get doctor-ios.mp4 (light-grey background): a soft radial mask fades the box edges into the page */
 .doc.ios video{-webkit-mask-image:radial-gradient(ellipse 50% 170% at 46% 100%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 50% 170% at 46% 100%,#000 55%,transparent 100%)}
 @media (max-width:560px),(max-height:560px){.bar{--gr-w:130px}}
-/* phones: no pill, a smaller doctor (<=170px tall) on the round button's bottom line, kept inside the screen */
-@media (max-width:480px){.pill{display:none}.bar{--gr-w:min(110px,28vw)}.doc{right:max(-20px,calc(32px - var(--gr-w) * .57))}}
+/* phones: pill + round button on one row (12px gutters, 10px gap, the pill takes the width that is left); a smaller doctor
+   (<=170px tall) on the round button's bottom line, kept inside the screen. On iOS the real widget also lifts the bar above the keyboard. */
+@media (max-width:480px){.bar{--gr-w:min(110px,28vw);--gut:12px;right:var(--gut);gap:10px}.pill{width:calc(100cqw - 64px - 10px - 2 * var(--gut))}.doc{right:max(calc(-1 * var(--gut)),calc(32px - var(--gr-w) * .57))}}
 
 /* Mock chat window that opens after sending */
 .win{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:12px;width:min(340px,calc(100% - 24px));
@@ -178,13 +179,13 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
     <section class="box">
       <h3>What happens</h3>
       <ol>
-        <li>On every page load, on desktop and phones, the doctor walks in from the right and waves (first 3 seconds of the video), his feet on the bottom line of the message bar (or of the round button on phones, where there is no message box).</li>
+        <li>On every page load, on desktop and phones, the doctor walks in from the right and waves (first 3 seconds of the video), his feet on the bottom line of the message bar (the same on phones, where the box sits left of the round button).</li>
         <li>At about 3.2 s the white "Write a message…" box slides in at its final place, left of him. The arrow turns black when there is text.</li>
         <li>After the video ends he keeps standing and waving (only the part from 4.0 s loops).</li>
         <li>After 10 seconds of visible, idle time only the doctor shrinks into the round button; the box stays where it is. Typing, focusing the box or a hidden tab holds the 10 seconds.</li>
         <li>The round button shows the live avatar (red LIVE badge, teal ring that fills), then fades to black, then shows the chat icon, and repeats.</li>
         <li>Typing in the box and sending, or clicking the doctor or the round button, opens the chat. The typed text waits above the name and email form and is sent as the first message after Start chat.</li>
-        <li>Closing the chat brings back the compact bar. On phones only the round button shows. Visitors who prefer reduced motion or have data saver on, and browsers where the video cannot start (for example iOS Low Power Mode), get the compact bar directly.</li>
+        <li>Closing the chat brings back the compact bar. Visitors who prefer reduced motion or have data saver on, and browsers where the video cannot start (for example iOS Low Power Mode), get the compact bar directly.</li>
       </ol>
     </section>
     <section class="box">

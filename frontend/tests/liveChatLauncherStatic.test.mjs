@@ -171,7 +171,10 @@ test("every class is .lcw-*; sizes, phone rule and reduced motion", () => {
   assert.ok(classes.length > 20);
   assert.ok(classes.every((cls) => cls.startsWith(".lcw-") || /^\.(\d)/.test(cls)), classes.filter((cls) => !cls.startsWith(".lcw-")).join(" "));
   assert.match(css, /\.lcw-launcher--round \{[^}]*width: 64px;[^}]*height: 64px;/);
-  assert.match(css, /@media \(max-width: 480px\) \{[^@]*--gr-w: min\(110px, 28vw\);[^@]*\.lcw-gr-minif \{\s*display: none;/);
+  assert.match(css, /@media \(max-width: 480px\) \{[^@]*--gr-w: min\(110px, 28vw\);/);
+  assert.match(css, /\.lcw-gr-minif \{\s*width: calc\(100vw - 64px - 10px - var\(--gr-gut-l\) - var\(--gr-gut-r\)\);/, "phones: the pill takes the row's width");
+  assert.match(css, /--gr-gut-l: max\(12px, env\(safe-area-inset-left, 0px\)\);/);
+  assert.doesNotMatch(css, /\.lcw-gr-minif \{\s*display: none;/, "the pill shows on phones too");
   assert.match(css, /prefers-reduced-motion: reduce\) \{[^@]*\.lcw-gr-live i,[^@]*animation: none;/);
   assert.match(css, /right: max\(20px, env\(safe-area-inset-right, 0px\)\)/);
 });
@@ -191,6 +194,16 @@ test("held first message: kept while the form shows, sent by chat.send once the 
   assert.match(widget, /setDraft\(heldRef\.current\)/, "a chat that cannot take it gets it in the message box");
   assert.match(widget, /phase !== "chat"\) return;/, "nothing is sent while the contact form is up");
   assert.match(form, /Waiting to send/);
+});
+
+test("iOS keyboard: while the pill is focused the bar is lifted by what visualViewport says the keyboard hides", () => {
+  assert.match(greeter, /window\.visualViewport/);
+  assert.match(greeter, /window\.innerHeight - vv\.height - vv\.offsetTop/);
+  assert.match(greeter, /setProperty\("--lcw-kb"/);
+  assert.match(greeter, /removeProperty\("--lcw-kb"\)/);
+  assert.match(css, /bottom: calc\(20px \+ env\(safe-area-inset-bottom, 0px\) \+ var\(--lcw-kb, 0px\)\)/);
+  assert.match(css, /bottom: calc\(190px \+ env\(safe-area-inset-bottom, 0px\) \+ var\(--lcw-kb, 0px\)\)/, "the cookie-banner offsets move with it");
+  assert.match(css, /\.lcw-gr-minif input \{[^}]*font-size: 16px;/);
 });
 
 test("the unread badge sits on the round button and an unread message or admin invite ends the intro", () => {

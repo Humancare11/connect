@@ -25,7 +25,7 @@
 .lcw-root {
   position: fixed;
   right: max(20px, env(safe-area-inset-right, 0px));
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px) + var(--lcw-kb, 0px)); /* --lcw-kb: the iOS keyboard (DoctorGreeter.jsx) */
   z-index: 100000;
   display: flex;
   flex-direction: column;
@@ -34,14 +34,14 @@
 }
 /* While the cookie banner is on screen, the launcher and the window sit above it so they never cover its buttons. */
 html.hc-cookie-open .lcw-root {
-  bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(130px + env(safe-area-inset-bottom, 0px) + var(--lcw-kb, 0px));
 }
 html.hc-cookie-open .lcw-window {
   max-height: calc(100vh - 250px);
 }
 @media (max-width: 700px) {
   html.hc-cookie-open .lcw-root {
-    bottom: calc(190px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(190px + env(safe-area-inset-bottom, 0px) + var(--lcw-kb, 0px));
   }
   html.hc-cookie-open .lcw-window {
     max-height: calc(100vh - 310px);
@@ -349,18 +349,25 @@ html.hc-cookie-open .lcw-window {
     --gr-w: 130px;
   }
 }
-/* Phones: no pill, only the round button; the doctor is smaller (110px wide = 170px tall at most) and scales with the
-   screen, still standing on the round button's bottom line. */
+/* Phones: the pill and the round button share one row, 12px (or the safe-area inset) from the screen edges; the pill takes
+   the width that is left. The doctor is smaller (110px wide = 170px tall at most) and scales with the screen, still
+   standing on the round button's bottom line. */
 @media (max-width: 480px) {
+  .lcw-root {
+    right: max(12px, env(safe-area-inset-right, 0px));
+  }
   .lcw-gr-mini {
     --gr-w: min(110px, 28vw);
+    --gr-gut-l: max(12px, env(safe-area-inset-left, 0px));
+    --gr-gut-r: max(12px, env(safe-area-inset-right, 0px));
+    gap: 10px;
+  }
+  .lcw-gr-minif {
+    width: calc(100vw - 64px - 10px - var(--gr-gut-l) - var(--gr-gut-r));
   }
   /* the frame may not hang over the screen edge (it is wider than the button), so he stands as near the button as fits */
   .lcw-gr-mini .lcw-gr-doc {
-    right: max(calc(-1 * max(20px, env(safe-area-inset-right, 0px))), calc(32px - var(--gr-w) * 0.57));
-  }
-  .lcw-gr-minif {
-    display: none;
+    right: max(calc(-1 * var(--gr-gut-r)), calc(32px - var(--gr-w) * 0.57));
   }
 }
 @media (prefers-reduced-motion: reduce) {
