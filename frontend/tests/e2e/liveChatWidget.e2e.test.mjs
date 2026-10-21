@@ -98,7 +98,10 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
           handler(payload || {}, ack);
         });
       reply("chat:resume", (_p, ack) => ack({ ok: true, needContact: false, firstName: "Dana", conversation: mock.conversation }));
-      reply("chat:start", (_p, ack) => ack({ ok: true, conversation: mock.conversation }));
+      reply("chat:start", (_p, ack) => {
+        mock.conversation ||= freshConversation(); // a patient who has never chatted gets a new chat here
+        ack({ ok: true, conversation: mock.conversation });
+      });
       reply("chat:end", (_p, ack) => ack({ ok: true }));
       reply("chat:message", (payload, ack) => {
         if (mock.failNextMessage) {
@@ -317,133 +320,300 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(contactCalls.length, 2);
     });
   });
-  describe("launcher button and greeting", () => {
+  describe("doctor greeter and round button", () => {
     const launcher = () => page.locator(".lcw-launcher");
-    const isFlipped = () => launcher().evaluate((el) => el.classList.contains("lcw-launcher--flipped"));
-    // The page clock is controlled, so seconds pass at once.
-    async function openWithClock(options = {}) {
-      if (options.reducedMotion) await page.emulateMedia({ reducedMotion: "reduce" });
-      await page.clock.install({ time: Date.now() });
-      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
-      await launcher().waitFor();
-      // Freeze the clock right after mount: every timer has run for well under 0.3 s.
-      await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
+    const setHidden = (hidden) =>
+      page.evaluate((value) => {
+        Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }, hidden);
+    // A new browser context. `seed` runs before the page: greeted = the intro already played in this session.
+    async function newPage({ width = 1280, height = 800, reducedMotion = false, greeted = false, returning = false } = {}) {
+      await context?.close();
+      context = await browser.newContext({ viewport: { width, height }, reducedMotion: reducedMotion ? "reduce" : "no-preference" });
+      page = await context.newPage();
+      await page.addInitScript(
+        ([isGreeted, isReturning, token, visitor]) => {
+          if (sessionStorage.getItem("hcTestBooted")) return;
+          sessionStorage.setItem("hcTestBooted", "1");
+          if (isGreeted) sessionStorage.setItem("hcLiveChatGreeted", "1");
+          if (isReturning) {
+            localStorage.setItem("hcLiveChatToken", token);
+            localStorage.setItem("hcLiveChatVisitorId", visitor);
+          }
+        },
+        [greeted, returning, TOKEN, VISITOR]
+      );
     }
+    // The page clock runs normally until it is paused; the video itself always plays in real time.
+    async function load({ clock = true } = {}) {
+      if (clock) await page.clock.install({ time: Date.now() });
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+    }
+    const freeze = async () => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
     const tick = (ms) => page.clock.runFor(ms);
+    const introPill = () => page.locator(".lcw-gr-ask.is-show .lcw-gr-form");
+    const answerContact = () =>
+      page.route("**/api/livechat/contact", (route) =>
+        route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, visitorId: VISITOR, firstName: "Dana", token: TOKEN }) })
+      );
+    // Real time: the page's own timers are frozen by the clock.
+    const realWait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const videoTime = () => page.locator(".lcw-gr-doc video").evaluate((v) => v.currentTime);
 
-    test("56px wide on desktop and 48px at 480px or narrower, logo aspect ratio kept", async () => {
-      await page.setViewportSize({ width: 1200, height: 800 });
-      await openWithClock();
-      let box = await launcher().boundingBox();
-      assert.equal(Math.round(box.width), 56);
-      assert.ok(Math.abs(box.height / box.width - 256 / 236) < 0.02, `ratio ${box.height / box.width}`);
-      await page.setViewportSize({ width: 480, height: 800 });
-      box = await launcher().boundingBox();
-      assert.equal(Math.round(box.width), 48);
-    });
-
-    test("front face is the existing logo; the faces are aria-hidden; the button keeps its label", async () => {
-      await openWithClock();
+    test("intro: the doctor plays, the pill slides in at about 3.2 s with a grey arrow that turns black when typing, then he flies into the compact bar", async () => {
+      await newPage();
+      await load();
+      const doctor = page.locator(".lcw-gr-doc");
+      await doctor.waitFor();
+      assert.equal(await doctor.getAttribute("aria-label"), "Open chat");
+      assert.equal(await page.evaluate(() => sessionStorage.getItem("hcLiveChatGreeted")), "1");
+      assert.equal(await page.locator(".lcw-gr-ask.is-show").count(), 0, "no pill while he is still walking in");
+      await introPill().waitFor({ timeout: 8000 });
+      assert.ok((await videoTime()) >= 3.1, "the pill came in with the video, not before");
+      const input = introPill().getByLabel("Write a message");
+      assert.equal(await input.getAttribute("placeholder"), "Write a message…");
+      const arrow = introPill().getByRole("button", { name: "Send message" });
+      assert.equal(await arrow.evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(230, 230, 230)");
+      await input.fill("hi");
+      await realWait(400); // the colour change is a 0.15 s CSS transition
+      assert.equal(await arrow.evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(17, 17, 17)");
+      await input.fill("");
+      await input.blur();
+      await freeze();
+      await tick(10500); // the 10 s clock counts visible, idle time
+      await tick(1000);
+      await page.locator(".lcw-gr-mini").waitFor();
+      assert.equal(await page.locator(".lcw-gr").count(), 0, "the intro is gone");
+      await realWait(700); // the arrival animation
+      const box = await launcher().boundingBox();
+      assert.ok(Math.round(box.width) === 64 && Math.round(box.height) === 64, `round button is 64px (got ${box.width}x${box.height})`);
       assert.equal(await launcher().getAttribute("aria-label"), "Open chat");
-      assert.equal(await page.locator(".lcw-launcher-front img").getAttribute("src"), "/livechat/launcher-logo.png");
-      assert.equal(await page.locator(".lcw-launcher-flip").getAttribute("aria-hidden"), "true");
-      assert.ok(await page.locator(".lcw-launcher-front img").evaluate((img) => img.complete && img.naturalWidth === 236), "the logo file loads");
-      assert.equal(await page.locator(".lcw-launcher-back .lcw-launcher-dots i").count(), 3);
+      assert.ok(await page.locator(".lcw-gr-minif").isVisible());
     });
 
-    test("flips to the typing dots after 3 s, back to the logo 3 s later, and keeps looping", async () => {
-      await openWithClock();
-      assert.equal(await isFlipped(), false);
-      await tick(2500);
-      assert.equal(await isFlipped(), false);
-      await tick(900);
-      assert.equal(await isFlipped(), true);
-      await tick(3000);
-      assert.equal(await isFlipped(), false);
-      await tick(3000);
-      assert.equal(await isFlipped(), true);
+    test("after the video ends he loops only the standing part: never back to the walk-in", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await page.locator(".lcw-gr-doc video").evaluate((v) => {
+        window.__times = [];
+        v.addEventListener("timeupdate", () => window.__times.push(v.currentTime));
+        v.currentTime = Math.max(0, v.duration - 0.6);
+      });
+      await realWait(3500);
+      const seen = await page.evaluate(() => window.__times);
+      const wrapped = seen.findIndex((t, i) => i > 0 && t < seen[i - 1] - 1);
+      assert.ok(wrapped > 0, "the video reached its end and looped");
+      assert.ok(Math.min(...seen.slice(wrapped)) >= 3.9, `after the loop it never goes below 4.0 s (min ${Math.min(...seen.slice(wrapped))})`);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1);
     });
 
-    test("hover pauses the flip and shows the logo; leaving starts the cycle again", async () => {
-      await openWithClock();
-      await tick(3400);
-      assert.equal(await isFlipped(), true);
-      await launcher().hover();
-      assert.equal(await isFlipped(), false);
-      await tick(9000);
-      assert.equal(await isFlipped(), false, "no flip while hovered");
-      await page.mouse.move(5, 5);
-      await tick(3400);
-      assert.equal(await isFlipped(), true);
+    test("while the patient is typing or has text in the pill the doctor does not shrink", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await introPill().getByLabel("Write a message").fill("I have a question");
+      await tick(30_000);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1);
+      assert.equal(await page.locator(".lcw-gr-mini").count(), 0);
+      await introPill().getByLabel("Write a message").fill("");
+      await introPill().getByLabel("Write a message").blur();
+      await tick(10_500);
+      await tick(1000);
+      await page.locator(".lcw-gr-mini").waitFor();
     });
 
-    test("keyboard focus pauses the flip", async () => {
-      await openWithClock();
-      await page.keyboard.press("Tab");
-      assert.ok(await launcher().evaluate((el) => el === document.activeElement), "launcher is focused");
-      await tick(9000);
-      assert.equal(await isFlipped(), false);
+    test("the avatar never shows the walk-in, has a LIVE badge and a ring, and cycles avatar -> black -> chat icon -> avatar", async () => {
+      await newPage({ greeted: true });
+      await load();
+      await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
+      assert.equal((await page.locator(".lcw-gr-live").innerText()).trim(), "LIVE");
+      assert.equal(await page.locator(".lcw-gr-prog").evaluate((el) => getComputedStyle(el).animationName), "lcw-gr-ringfill");
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "no intro");
+      // Sample the avatar video for a while: whenever the avatar is visible the video is at 4.0 s or later.
+      const walkIn = await page.locator(".lcw-gr-cav video").evaluate(
+        (v) =>
+          new Promise((resolve) => {
+            const cav = v.closest(".lcw-gr-cav");
+            let bad = 0;
+            let visible = 0;
+            const timer = setInterval(() => {
+              if (Number(getComputedStyle(cav).opacity) > 0.05) {
+                visible += 1;
+                if (v.currentTime < 3.95) bad += 1;
+              }
+            }, 30);
+            setTimeout(() => {
+              clearInterval(timer);
+              resolve({ bad, visible });
+            }, 1500);
+          })
+      );
+      assert.ok(walkIn.visible > 10, "the avatar was on screen");
+      assert.equal(walkIn.bad, 0, "the walk-in was never visible in the avatar");
+      await freeze();
+      await tick(4300);
+      await page.locator(".lcw-ph-dark").waitFor();
+      await tick(600);
+      await page.locator(".lcw-ph-chat").waitFor();
+      await realWait(600); // the icon fades in
+      assert.equal(await page.locator(".lcw-gr-chatico").evaluate((el) => getComputedStyle(el).opacity), "1");
+      assert.equal(await page.locator(".lcw-gr-cav video").evaluate((v) => v.paused), true, "the video is paused while the chat icon shows");
+      await tick(4600);
+      await page.locator(".lcw-ph-avatar").waitFor();
     });
 
-    test("a hidden tab pauses the flip", async () => {
-      await openWithClock();
-      const setHidden = (hidden) =>
-        page.evaluate((value) => {
-          Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
-          document.dispatchEvent(new Event("visibilitychange"));
-        }, hidden);
-      await setHidden(true);
-      await tick(9000);
-      assert.equal(await isFlipped(), false);
-      await setHidden(false);
-      await tick(3400);
-      assert.equal(await isFlipped(), true);
+    test("typing in the pill and sending opens the chat with the form; the text waits, then is sent as the first message after Start chat", async () => {
+      await newPage();
+      mock.conversation = null; // no chat yet: the server creates it on chat:start
+      await load();
+      await answerContact();
+      await introPill().waitFor({ timeout: 8000 });
+      await introPill().getByLabel("Write a message").fill("I need a prescription refill");
+      await introPill().getByLabel("Write a message").press("Enter");
+      await page.waitForSelector(".lcw-cform");
+      assert.equal((await page.locator(".lcw-held-text").innerText()).trim(), "I need a prescription refill");
+      assert.match(await page.locator(".lcw-held small").innerText(), /Waiting to send/);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the greeter is gone while the window is open");
+      assert.equal(sentEvents("chat:message").length, 0, "nothing is sent before the form");
+      await fillForm();
+      await page.getByRole("button", { name: "Start chat" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "I need a prescription refill" }).waitFor();
+      const order = mock.events.map(([event]) => event);
+      assert.ok(order.indexOf("chat:start") !== -1 && order.indexOf("chat:start") < order.indexOf("chat:message"), `chat:start comes before the first message (${order})`);
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "I need a prescription refill" }], "sent once, exactly as typed");
+      assert.equal(await page.locator(".lcw-held").count(), 0);
     });
 
-    test("click opens the chat and the flip does not run while the chat is open; closing shows the logo", async () => {
-      await openWithClock();
-      await tick(3400);
+    test("clicking the round button with text typed in the compact pill holds the text the same way", async () => {
+      await newPage({ greeted: true });
+      await load({ clock: false });
+      await answerContact();
+      await page.getByLabel("Write a message").fill("Do you take insurance?");
       await launcher().click();
-      await page.waitForSelector(".lcw-window");
-      assert.equal(await page.locator(".lcw-launcher-flip").count(), 0, "no flipping launcher while open");
-      await tick(9000);
-      assert.equal(await page.locator(".lcw-launcher--flipped").count(), 0);
+      await page.waitForSelector(".lcw-cform");
+      assert.equal((await page.locator(".lcw-held-text").innerText()).trim(), "Do you take insurance?");
+      await fillForm();
+      await page.getByRole("button", { name: "Start chat" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "Do you take insurance?" }).waitFor();
+      assert.equal(sentEvents("chat:message").length, 1);
+    });
+
+    test("closing the window before the chat starts puts the typed text back in the pill", async () => {
+      await newPage({ greeted: true });
+      await load({ clock: false });
+      await page.getByLabel("Write a message").fill("Hello there");
+      await page.getByRole("button", { name: "Send message" }).click();
+      await page.waitForSelector(".lcw-cform");
       await page.getByRole("button", { name: "Minimize chat" }).click();
-      await page.waitForSelector(".lcw-window", { state: "detached" });
-      assert.equal(await isFlipped(), false, "back to the logo side");
+      await page.locator(".lcw-gr-mini").waitFor();
+      assert.equal(await page.getByLabel("Write a message").inputValue(), "Hello there");
+      assert.equal(sentEvents("chat:message").length, 0);
     });
 
-    test("prefers-reduced-motion: no flip, no bouncing dots", async () => {
-      await openWithClock({ reducedMotion: true });
-      await tick(9000);
-      assert.equal(await isFlipped(), false);
-      assert.equal(await page.locator(".lcw-launcher-back").evaluate((el) => getComputedStyle(el).display), "none");
-      assert.equal(await page.locator(".lcw-launcher-dots i").first().evaluate((el) => getComputedStyle(el).animationName), "none");
+    test("a returning patient: the compact bar shows, and a typed message goes straight into the chat", async () => {
+      await newPage({ returning: true });
+      mock.conversation = freshConversation();
+      await load({ clock: false });
+      await page.locator(".lcw-gr-mini").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "no intro for a returning patient");
+      await page.getByLabel("Write a message").fill("Is the doctor available today?");
+      await page.getByRole("button", { name: "Send message" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "Is the doctor available today?" }).waitFor();
+      assert.equal(await page.locator(".lcw-cform").count(), 0);
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "Is the doctor available today?" }]);
     });
 
-    test("greeting: typing dots for 1.2 s, then the message; the x closes it", async () => {
-      await openWithClock();
-      await tick(2500);
-      assert.equal(await page.locator(".lcw-greet").count(), 0, "not before 3 s");
-      await tick(900);
-      assert.equal(await page.locator(".lcw-greet[role=status] .lcw-greet-dots").count(), 1, "dots first");
-      assert.equal(await page.getByText("Are you looking to consult with a doctor?").count(), 0);
-      assert.equal(await page.locator(".lcw-greet-dots").count(), 1, "still typing");
-      await tick(1200);
-      await page.getByText("Are you looking to consult with a doctor?").waitFor();
-      assert.equal(await page.locator(".lcw-greet-dots").count(), 0);
-      await page.getByRole("button", { name: "Dismiss greeting" }).click();
-      assert.equal(await page.locator(".lcw-greet").count(), 0);
+    test("clicking the doctor opens the chat; closing it brings back the compact bar, not the intro", async () => {
+      await newPage();
+      await load();
+      await page.locator(".lcw-gr-doc").click();
+      await page.waitForSelector(".lcw-cform");
+      assert.equal(await page.locator("video").count(), 0, "no video plays while the window is open");
+      await page.getByRole("button", { name: "Minimize chat" }).click();
+      await page.locator(".lcw-gr-mini").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-ask").count(), 0);
     });
 
-    test("clicking the greeting opens the chat", async () => {
-      await openWithClock();
-      await tick(3400);
-      await page.locator(".lcw-greet-dots").waitFor(); // React schedules the typing timer after the greeting renders
-      await tick(1200);
-      await page.getByText("Are you looking to consult with a doctor?").click();
-      await page.waitForSelector(".lcw-window");
-      assert.equal(await page.locator(".lcw-greet").count(), 0);
+    test("once per session: a reload shows the compact bar; a new browser session plays the intro again", async () => {
+      await newPage();
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+      await page.reload();
+      await page.locator(".lcw-gr-mini").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      await newPage();
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+    });
+
+    test("a hidden tab pauses the videos and holds the 10 s clock", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await setHidden(true);
+      assert.equal(await page.locator(".lcw-gr-doc video").evaluate((v) => v.paused), true);
+      await tick(30_000);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1, "the intro waits while the tab is hidden");
+      await setHidden(false);
+      await page.locator(".lcw-gr-doc video").evaluate((v) => v.paused).then((paused) => assert.equal(paused, false));
+      await tick(10_500);
+      await tick(1000);
+      await page.locator(".lcw-gr-mini").waitFor();
+    });
+
+    test("prefers-reduced-motion: no video, no flying; the compact bar with the chat icon only", async () => {
+      await newPage({ reducedMotion: true });
+      await load({ clock: false });
+      await page.locator(".lcw-gr-mini").waitFor();
+      assert.equal(await page.locator("video").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-live").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-chatico").evaluate((el) => getComputedStyle(el).opacity), "1");
+      assert.equal(await page.locator(".lcw-ph-chat").count(), 1);
+    });
+
+    test("phone (390px): no intro and no pill, just the round button with the live avatar", async () => {
+      await newPage({ width: 390, height: 800 });
+      await load({ clock: false });
+      await launcher().waitFor();
+      await realWait(700); // the bar pops in
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-minif").evaluate((el) => getComputedStyle(el).display), "none");
+      const box = await launcher().boundingBox();
+      assert.equal(Math.round(box.width), 64);
+      await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
+      await launcher().click();
+      await page.waitForSelector(".lcw-cform");
+      assert.equal(await page.locator(".lcw-held").count(), 0);
+    });
+
+    test("the unread badge sits on the round button, and the keyboard reaches both the pill and the button", async () => {
+      await newPage({ greeted: true, returning: true });
+      mock.conversation = freshConversation();
+      await load({ clock: false });
+      await page.locator(".lcw-gr-mini").waitFor();
+      await page.waitForFunction(() => true);
+      for (let i = 0; i < 50 && !sentEvents("chat:resume").length; i += 1) await new Promise((resolve) => setTimeout(resolve, 100));
+      io.of("/livechat").emit("chat:message", {
+        conversationId: mock.conversation.conversationId,
+        message: { id: "a1", sender: "agent", agentName: "Sam", text: "Hello, this is Sam.", at: new Date().toISOString() },
+      });
+      await page.locator(".lcw-launcher--round .lcw-badge").waitFor();
+      assert.equal((await page.locator(".lcw-launcher--round .lcw-badge").innerText()).trim(), "1");
+      await page.getByLabel("Write a message").focus();
+      await page.keyboard.press("Tab");
+      assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("aria-label")), "Send message");
+      await page.keyboard.press("Tab");
+      assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("aria-label")), "Open chat");
+      await page.keyboard.press("Enter");
+      await page.getByText("Hello, this is Sam.").waitFor();
+      assert.equal(await page.locator(".lcw-badge").count(), 0, "opening clears the badge");
     });
   });
 });

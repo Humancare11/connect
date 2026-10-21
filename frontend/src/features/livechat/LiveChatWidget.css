@@ -24,7 +24,7 @@
 /* Launcher + window sit above the cookie banner (z-index 99999). */
 .lcw-root {
   position: fixed;
-  right: 20px;
+  right: max(20px, env(safe-area-inset-right, 0px));
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   z-index: 100000;
   display: flex;
@@ -63,188 +63,346 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   box-shadow: 0 18px 40px -16px rgba(11, 31, 92, 0.45);
 }
-/* Closed state: our logo (a transparent speech-bubble PNG) as the button, no circle, background or border. It flips
-   to a "typing" back face every 3 seconds (LauncherButton.jsx starts and pauses the flip). */
-.lcw-launcher--logo {
-  width: 56px;
-  aspect-ratio: 236 / 256;
+/* The doctor greeter (DoctorGreeter.jsx, docs/chat-greeter-demo.html) and the round button (LauncherButton.jsx). */
+.lcw-gr {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.lcw-gr-doc {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 170px;
+  aspect-ratio: 400 / 712;
   padding: 0;
-  display: block;
-  background: none;
   border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  perspective: 500px;
-  transition: transform 0.15s ease;
+  background: none;
+  cursor: pointer;
 }
-.lcw-launcher--logo:hover {
-  transform: translateY(-3px);
-}
-.lcw-launcher-flip {
-  position: absolute;
-  inset: 0;
-  transform-style: preserve-3d;
-  transition: transform 0.6s ease;
-}
-.lcw-launcher--flipped .lcw-launcher-flip {
-  transform: rotateY(180deg);
-}
-.lcw-launcher-face {
-  position: absolute;
-  inset: 0;
-  display: block;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.lcw-launcher-back {
-  transform: rotateY(180deg);
-}
-.lcw-launcher-face img,
-.lcw-launcher-face svg {
+/* The studio-grey video background fades out at the edges so it blends into the page. */
+.lcw-gr-doc video {
   display: block;
   width: 100%;
-  height: auto;
-  filter: drop-shadow(0 6px 10px rgba(11, 42, 122, 0.3));
+  height: 100%;
+  object-fit: cover;
+  -webkit-mask-image: radial-gradient(ellipse 58% 54% at 52% 54%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 58% 54% at 52% 54%, #000 62%, transparent 100%);
 }
-.lcw-launcher-dots {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 44%;
+.lcw-gr-doc:focus-visible {
+  border-radius: 16px;
+}
+.lcw-gr-ask {
+  margin-bottom: 110px;
+  margin-right: -8px;
+}
+.lcw-gr-form,
+.lcw-gr-minif {
   display: flex;
-  justify-content: center;
-  gap: 12%;
-  transform: translateY(-50%);
-}
-.lcw-launcher-dots i {
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: #fff;
-  animation: lcw-launcher-bounce 1s infinite;
-}
-.lcw-launcher-dots i:nth-child(2) {
-  animation-delay: 0.15s;
-}
-.lcw-launcher-dots i:nth-child(3) {
-  animation-delay: 0.3s;
-}
-@keyframes lcw-launcher-bounce {
-  0%,
-  70%,
-  100% {
-    transform: translateY(0);
-  }
-  35% {
-    transform: translateY(-45%);
-  }
-}
-.lcw-launcher--logo .lcw-badge {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  z-index: 2;
-}
-/* If the logo cannot load: the navy "HC" circle. */
-.lcw-launcher--hc {
-  width: 60px;
+  align-items: center;
+  gap: 8px;
   height: 60px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 999px;
+  box-shadow: 0 8px 26px rgba(20, 33, 61, 0.14);
+}
+.lcw-gr-form {
+  max-width: 0;
   padding: 0;
-  justify-content: center;
-  background: var(--lcw-brand);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-width 0.75s cubic-bezier(0.3, 1.35, 0.4, 1), padding 0.75s cubic-bezier(0.3, 1.35, 0.4, 1), opacity 0.2s;
 }
-.lcw-launcher-hc {
-  font-weight: 800;
-  font-size: 18px;
-  letter-spacing: 0.02em;
+.lcw-gr-ask.is-show .lcw-gr-form {
+  width: min(300px, calc(100vw - 200px));
+  max-width: 320px;
+  padding: 0 8px 0 24px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
-.lcw-launcher--hc .lcw-badge {
+.lcw-gr-minif {
+  width: min(290px, calc(100vw - 120px));
+  padding: 0 8px 0 24px;
+}
+.lcw-gr-form:focus-within,
+.lcw-gr-minif:focus-within {
+  border-color: #c9d6f5;
+  box-shadow: 0 8px 26px rgba(20, 33, 61, 0.18), 0 0 0 3px rgba(31, 79, 214, 0.12);
+}
+.lcw-gr-form input,
+.lcw-gr-minif input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: #14213d;
+  font: inherit;
+  font-size: 16px; /* 16px keeps iOS from zooming the page */
+}
+.lcw-gr-ask .lcw-gr-form input {
+  opacity: 0;
+  transition: opacity 0.35s 0.45s;
+}
+.lcw-gr-ask.is-show .lcw-gr-form input {
+  opacity: 1;
+}
+.lcw-gr-form input::placeholder,
+.lcw-gr-minif input::placeholder {
+  color: #6b6f78;
+}
+.lcw-root .lcw-gr-form input:focus-visible,
+.lcw-root .lcw-gr-minif input:focus-visible {
+  outline: 0; /* the pill's own focus ring (above) shows the focus */
+}
+.lcw-gr-form button,
+.lcw-gr-minif button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e6e6e6;
+  color: #2b2b2b;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.lcw-gr-form.is-typing button,
+.lcw-gr-minif.is-typing button {
+  background: #111;
+  color: #fff;
+}
+
+/* Compact bar: the pill and the round button. Measured while hidden, so the doctor knows where to fly. */
+.lcw-gr-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lcw-gr-mini.is-pop {
+  animation: lcw-gr-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+.lcw-gr-mini.is-measuring {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  right: 0;
+  bottom: 0;
+  visibility: hidden;
+  animation: none;
 }
-@media (max-width: 480px) {
-  .lcw-launcher--logo {
-    width: 48px;
+@keyframes lcw-gr-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
   }
-  .lcw-launcher-dots i {
-    width: 5px;
-    height: 5px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .lcw-launcher--logo,
-  .lcw-launcher-flip {
-    transition: none;
-  }
-  .lcw-launcher--logo:hover {
+  to {
+    opacity: 1;
     transform: none;
-  }
-  .lcw-launcher-back {
-    display: none;
-  }
-  .lcw-launcher-dots i,
-  .lcw-greet-dots i {
-    animation: none;
   }
 }
 
-/* Greeting bubble above the launcher. */
-.lcw-greet {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  max-width: 280px;
-  background: var(--lcw-surface);
-  border: 1px solid var(--lcw-line);
-  border-radius: 18px 18px 5px 18px;
-  box-shadow: 0 14px 34px -14px rgba(11, 31, 92, 0.4);
-}
-.lcw-greet--typing {
-  padding: 15px 18px;
-}
-.lcw-greet-dots {
-  display: inline-flex;
-  gap: 5px;
-}
-.lcw-greet-dots i {
-  width: 7px;
-  height: 7px;
+.lcw-launcher--round {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
   border-radius: 50%;
+  background: #111;
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s;
+}
+.lcw-launcher--round:hover {
+  transform: scale(1.05);
+}
+.lcw-launcher--arrive {
+  animation: lcw-gr-arrive 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.5) both;
+}
+@keyframes lcw-gr-arrive {
+  0% {
+    transform: scale(0.55);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.lcw-gr-cav {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #e9e7e4;
+  opacity: 0;
+  transition: opacity 0.45s ease, filter 0.45s ease;
+}
+.lcw-gr-cav video {
+  position: absolute;
+  top: -52%;
+  left: -33%;
+  width: 160%;
+  max-width: none;
+  pointer-events: none;
+}
+.lcw-ph-avatar .lcw-gr-cav {
+  opacity: 1;
+}
+.lcw-ph-dark .lcw-gr-cav {
+  filter: brightness(0);
+}
+.lcw-gr-live {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2.5px 5px;
+  border-radius: 999px;
+  background: rgba(25, 25, 28, 0.78);
+  color: #fff;
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  transform: translateX(-50%);
+}
+.lcw-gr-live i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: lcw-gr-blink 1.2s infinite;
+}
+@keyframes lcw-gr-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+.lcw-gr-ring {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  opacity: 0;
+  transform: rotate(-90deg);
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.lcw-ph-avatar .lcw-gr-ring {
+  opacity: 1;
+}
+.lcw-gr-ring circle {
+  fill: none;
+  stroke-width: 2.5;
+}
+.lcw-gr-ring .lcw-gr-track {
+  stroke: rgba(0, 0, 0, 0.18);
+  stroke-width: 1.2;
+}
+.lcw-gr-ring .lcw-gr-prog {
+  stroke: #2dd4bf;
+  stroke-linecap: round;
+  stroke-dasharray: 213.6;
+  stroke-dashoffset: 213.6;
+}
+.lcw-ph-avatar .lcw-gr-prog {
+  animation: lcw-gr-ringfill 4.2s linear forwards; /* AVATAR_MS in greeterConfig.js */
+}
+@keyframes lcw-gr-ringfill {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.lcw-gr-chatico {
+  position: relative;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+}
+.lcw-ph-chat .lcw-gr-chatico {
+  opacity: 1;
+  transform: none;
+}
+.lcw-launcher--round .lcw-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  z-index: 2;
+}
+
+/* The message the patient typed, waiting above the contact form. */
+.lcw-held {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  margin-bottom: 12px;
+}
+.lcw-held-text {
+  max-width: 85%;
+  padding: 9px 12px;
+  border-radius: 14px 14px 4px 14px;
   background: var(--lcw-accent);
-  animation: lcw-launcher-bounce 1s infinite;
+  color: #fff;
+  overflow-wrap: anywhere;
 }
-.lcw-greet-dots i:nth-child(2) {
-  animation-delay: 0.15s;
-}
-.lcw-greet-dots i:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.lcw-greet-text {
-  flex: 1;
-  border: 0;
-  background: none;
-  color: var(--lcw-ink);
-  font: inherit;
-  font-weight: 600;
-  text-align: left;
-  padding: 12px 4px 12px 14px;
-  cursor: pointer;
-}
-.lcw-greet-x {
-  border: 0;
-  background: none;
+.lcw-held small {
   color: var(--lcw-muted);
-  font: inherit;
-  font-size: 12px;
-  padding: 8px 10px;
-  cursor: pointer;
 }
-@media (max-width: 520px) {
-  .lcw-greet {
-    max-width: 220px;
-    font-size: 13px;
+
+@media (max-width: 560px) {
+  .lcw-gr-doc {
+    width: 120px;
+  }
+  .lcw-gr-ask {
+    margin-bottom: 80px;
+  }
+  .lcw-gr-ask.is-show .lcw-gr-form {
+    width: calc(100vw - 32px - 120px);
+  }
+}
+@media (max-height: 560px) {
+  .lcw-gr-doc {
+    width: 120px;
+  }
+  .lcw-gr-ask {
+    margin-bottom: 80px;
+  }
+}
+/* Phones: only the round button, no pill. */
+@media (max-width: 480px) {
+  .lcw-gr-ask,
+  .lcw-gr-minif {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lcw-gr-form,
+  .lcw-gr-ask .lcw-gr-form input,
+  .lcw-gr-cav,
+  .lcw-gr-ring,
+  .lcw-gr-chatico,
+  .lcw-launcher--round {
+    transition: none;
+  }
+  .lcw-gr-mini.is-pop,
+  .lcw-launcher--arrive,
+  .lcw-gr-live i,
+  .lcw-ph-avatar .lcw-gr-prog {
+    animation: none;
+  }
+  .lcw-launcher--round:hover {
+    transform: none;
   }
 }
 
