@@ -329,11 +329,12 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       }, hidden);
     // A new browser context. `compact` starts with the window open (no intro) and minimises it: the compact bar.
     let compactStart = false;
-    async function newPage({ width = 1280, height = 800, reducedMotion = false, compact = false, returning = false } = {}) {
+    async function newPage({ width = 1280, height = 800, reducedMotion = false, compact = false, returning = false, userAgent, noVp9 = false } = {}) {
       compactStart = compact;
       await context?.close();
-      context = await browser.newContext({ viewport: { width, height }, reducedMotion: reducedMotion ? "reduce" : "no-preference" });
+      context = await browser.newContext({ viewport: { width, height }, reducedMotion: reducedMotion ? "reduce" : "no-preference", ...(userAgent ? { userAgent } : {}) });
       page = await context.newPage();
+      if (noVp9) await page.addInitScript(() => (HTMLVideoElement.prototype.canPlayType = () => ""));
       await page.addInitScript(
         ([isCompact, isReturning, token, visitor]) => {
           if (sessionStorage.getItem("hcTestBooted")) return;
@@ -353,12 +354,12 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
       if (compactStart) {
         await page.getByRole("button", { name: "Minimize chat" }).click();
-        await page.locator(".lcw-gr-mini").waitFor();
+        await page.locator(".lcw-launcher--round").waitFor();
       }
     }
     const freeze = async () => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
     const tick = (ms) => page.clock.runFor(ms);
-    const introPill = () => page.locator(".lcw-gr-ask.is-show .lcw-gr-form");
+    const introPill = () => page.locator(".lcw-gr-minif:not(.is-away)");
     const answerContact = () =>
       page.route("**/api/livechat/contact", (route) =>
         route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, visitorId: VISITOR, firstName: "Dana", token: TOKEN }) })
@@ -373,7 +374,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       const doctor = page.locator(".lcw-gr-doc");
       await doctor.waitFor();
       assert.equal(await doctor.getAttribute("aria-label"), "Open chat");
-      assert.equal(await page.locator(".lcw-gr-ask.is-show").count(), 0, "no pill while he is still walking in");
+      assert.equal(await introPill().count(), 0, "no pill while he is still walking in");
       await introPill().waitFor({ timeout: 8000 });
       assert.ok((await videoTime()) >= 3.1, "the pill came in with the video, not before");
       const input = introPill().getByLabel("Write a message");
@@ -388,13 +389,79 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await freeze();
       await tick(10500); // the 10 s clock counts visible, idle time
       await tick(1000);
-      await page.locator(".lcw-gr-mini").waitFor();
-      assert.equal(await page.locator(".lcw-gr").count(), 0, "the intro is gone");
+      await page.locator(".lcw-launcher--round").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the doctor is gone");
       await realWait(700); // the arrival animation
       const box = await launcher().boundingBox();
       assert.ok(Math.round(box.width) === 64 && Math.round(box.height) === 64, `round button is 64px (got ${box.width}x${box.height})`);
       assert.equal(await launcher().getAttribute("aria-label"), "Open chat");
       assert.ok(await page.locator(".lcw-gr-minif").isVisible());
+    });
+
+
+    test("the doctor stands on the compact bar's bottom line, there is no mask or background, and only he moves when he shrinks (the pill stays put)", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await realWait(900); // the pill's slide-in
+      await freeze();
+      const intro = await page.evaluate(() => {
+        const rect = (el) => el.getBoundingClientRect().toJSON();
+        const doc = document.querySelector(".lcw-gr-doc");
+        const video = doc.querySelector("video");
+        return {
+          doc: rect(doc),
+          slot: rect(document.querySelector(".lcw-gr-slot")),
+          pill: rect(document.querySelector(".lcw-gr-minif")),
+          mask: getComputedStyle(video).maskImage || getComputedStyle(video).webkitMaskImage || "none",
+          docBg: getComputedStyle(doc).backgroundColor,
+          poster: video.getAttribute("poster"),
+          src: video.querySelector("source").getAttribute("src"),
+        };
+      });
+      assert.equal(intro.mask, "none", "no radial mask on the intro video");
+      assert.equal(intro.docBg, "rgba(0, 0, 0, 0)", "no background behind the doctor");
+      assert.equal(intro.src, "/livechat/doctor-alpha.webm?v=1");
+      assert.equal(intro.poster, "/livechat/poster-alpha.webp?v=1");
+      assert.ok(Math.abs(intro.doc.bottom - intro.slot.bottom) <= 2, `feet on the bar's bottom line: doctor ${intro.doc.bottom} vs bar ${intro.slot.bottom}`);
+      assert.ok(Math.abs(intro.pill.top + intro.pill.height / 2 - (intro.slot.top + intro.slot.height / 2)) <= 1, "the pill is vertically centred on the bar");
+      assert.ok(intro.pill.right <= intro.slot.left, "the pill is left of the round button's place");
+      await tick(10_500); // he starts to fly; the animation itself runs in real time
+      const pillAt = () => page.locator(".lcw-gr-minif").evaluate((el) => el.getBoundingClientRect().toJSON());
+      const samples = [await pillAt()];
+      for (let i = 0; i < 5; i += 1) {
+        await realWait(150);
+        samples.push(await pillAt());
+      }
+      await tick(1000);
+      await launcher().waitFor();
+      await realWait(700);
+      samples.push(await pillAt());
+      for (const r of samples) {
+        for (const key of ["left", "top", "right", "bottom"]) assert.ok(Math.abs(r[key] - intro.pill[key]) <= 1, `the pill did not move (${key}: ${r[key]} vs ${intro.pill[key]})`);
+      }
+      const button = await launcher().boundingBox();
+      assert.ok(Math.abs(button.y + button.height - intro.doc.bottom) <= 2, "the round button sits on the doctor's bottom line");
+      assert.ok(Math.abs(button.x - intro.slot.left) <= 1.5, "the round button is where the slot was");
+    });
+
+    test("a browser that cannot play VP9 (or Safari/iOS) skips the intro: the compact bar shows and the video is never requested", async () => {
+      const cases = [
+        { name: "no VP9", options: { noVp9: true } },
+        { name: "Safari", options: { userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15" } },
+        { name: "iPhone Chrome", options: { userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/124.0 Mobile/15E148 Safari/604.1" } },
+      ];
+      for (const { name, options } of cases) {
+        await newPage(options);
+        const requested = [];
+        page.on("request", (request) => requested.push(request.url()));
+        await load({ clock: false });
+        await launcher().waitFor();
+        await realWait(600);
+        assert.equal(await page.locator(".lcw-gr-doc").count(), 0, `${name}: no doctor`);
+        assert.ok(await page.locator(".lcw-gr-minif").isVisible(), `${name}: the pill is there`);
+        assert.equal(requested.filter((url) => url.includes("doctor-alpha")).length, 0, `${name}: the transparent video was not requested`);
+      }
     });
 
     test("after the video ends he loops only the standing part: never back to the walk-in", async () => {
@@ -423,12 +490,12 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await introPill().getByLabel("Write a message").fill("I have a question");
       await tick(30_000);
       assert.equal(await page.locator(".lcw-gr-doc").count(), 1);
-      assert.equal(await page.locator(".lcw-gr-mini").count(), 0);
+      assert.equal(await page.locator(".lcw-launcher--round").count(), 0);
       await introPill().getByLabel("Write a message").fill("");
       await introPill().getByLabel("Write a message").blur();
       await tick(10_500);
       await tick(1000);
-      await page.locator(".lcw-gr-mini").waitFor();
+      await page.locator(".lcw-launcher--round").waitFor();
     });
 
     test("the avatar never shows the walk-in, has a LIVE badge and a ring, and cycles avatar -> black -> chat icon -> avatar", async () => {
@@ -514,7 +581,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.getByRole("button", { name: "Send message" }).click();
       await page.waitForSelector(".lcw-cform");
       await page.getByRole("button", { name: "Minimize chat" }).click();
-      await page.locator(".lcw-gr-mini").waitFor();
+      await page.locator(".lcw-launcher--round").waitFor();
       await page.waitForFunction(() => document.querySelector(".lcw-gr-minif input")?.value === "Hello there"); // restored right after the window closes
       assert.equal(sentEvents("chat:message").length, 0);
     });
@@ -539,9 +606,9 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.waitForSelector(".lcw-cform");
       assert.equal(await page.locator("video").count(), 0, "no video plays while the window is open");
       await page.getByRole("button", { name: "Minimize chat" }).click();
-      await page.locator(".lcw-gr-mini").waitFor();
+      await page.locator(".lcw-launcher--round").waitFor();
       assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
-      assert.equal(await page.locator(".lcw-gr-ask").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-minif.is-away").count(), 0, "the pill is in place at once, not sliding in again");
     });
 
     test("the intro plays again on every reload and in every new tab", async () => {
@@ -550,7 +617,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.locator(".lcw-gr-doc").waitFor();
       await page.reload();
       await page.locator(".lcw-gr-doc").waitFor();
-      assert.equal(await page.locator(".lcw-gr-mini").count(), 0, "a reload starts with the intro, not the compact bar");
+      assert.equal(await page.locator(".lcw-launcher--round").count(), 0, "a reload starts with the intro, not the compact bar");
       const second = await context.newPage();
       await second.goto(`${viteUrl}/tests/e2e/harness/index.html`);
       await second.locator(".lcw-gr-doc").waitFor();
@@ -611,13 +678,13 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.locator(".lcw-gr-doc video").evaluate((v) => v.paused).then((paused) => assert.equal(paused, false));
       await tick(10_500);
       await tick(1000);
-      await page.locator(".lcw-gr-mini").waitFor();
+      await page.locator(".lcw-launcher--round").waitFor();
     });
 
     test("prefers-reduced-motion: no video, no flying; the compact bar with the chat icon only", async () => {
       await newPage({ reducedMotion: true });
       await load({ clock: false });
-      await page.locator(".lcw-gr-mini").waitFor();
+      await page.locator(".lcw-launcher--round").waitFor();
       assert.equal(await page.locator("video").count(), 0);
       assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
       assert.equal(await page.locator(".lcw-gr-live").count(), 0);
@@ -644,7 +711,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await newPage({ compact: true, returning: true });
       mock.conversation = freshConversation();
       await load({ clock: false });
-      await page.locator(".lcw-gr-mini").waitFor();
+      await page.locator(".lcw-launcher--round").waitFor();
       await page.waitForFunction(() => true);
       for (let i = 0; i < 50 && !sentEvents("chat:resume").length; i += 1) await new Promise((resolve) => setTimeout(resolve, 100));
       io.of("/livechat").emit("chat:message", {

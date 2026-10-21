@@ -5,6 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  ALPHA_POSTER_SRC,
+  ALPHA_WEBM_SRC,
   AVATAR_MS,
   CHAT_MS,
   DARK_MS,
@@ -14,6 +16,7 @@ import {
   SHRINK_AFTER_MS,
   WEBM_SRC,
   introPlayedThisLoad,
+  isSafari,
   markIntroPlayed,
   nextStep,
   shouldPlayIntro,
@@ -54,6 +57,25 @@ test("the intro plays on every page load for everyone on a desktop; not on a pho
   assert.equal(shouldPlayIntro({ ...base, saveData: true }), false, "data saver");
   assert.equal(shouldPlayIntro({ ...base, width: 480 }), false, "phone");
   assert.equal(shouldPlayIntro({ ...base, width: 481 }), true);
+  assert.equal(shouldPlayIntro({ ...base, alpha: false }), false, "a browser that cannot play the transparent video gets the compact bar");
+});
+
+test("Safari and every iOS browser count as unable to play VP9-with-alpha; Chrome, Edge and Firefox can", () => {
+  const ua = {
+    safariMac: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    safariIphone: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+    chromeIphone: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/124.0 Mobile/15E148 Safari/604.1",
+    ipadAsMac: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    chrome: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    edge: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 Edg/124.0",
+    chromeAndroid: "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36",
+    firefox: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0",
+  };
+  assert.equal(isSafari(ua.safariMac), true);
+  assert.equal(isSafari(ua.safariIphone), true);
+  assert.equal(isSafari(ua.chromeIphone), true, "iOS Chrome is WebKit too");
+  assert.equal(isSafari(ua.ipadAsMac, 5), true);
+  for (const name of ["chrome", "edge", "chromeAndroid", "firefox"]) assert.equal(isSafari(ua[name]), false, name);
 });
 
 test("the played flag is page memory only: set once, no storage, and not read from the browser", () => {
@@ -72,12 +94,34 @@ test("the ring has fixed pixel sizes and opts out of the site's global svg max-w
   assert.doesNotMatch(css, /\.lcw-gr-ring \{[^}]*calc\(100% \+ 8px\)/);
 });
 
-test("video sources are versioned and WebM comes before MP4", () => {
+test("the intro is the transparent WebM with its transparent poster; the avatar keeps doctor.webm/mp4; all versioned", () => {
+  assert.equal(ALPHA_WEBM_SRC, "/livechat/doctor-alpha.webm?v=1");
+  assert.equal(ALPHA_POSTER_SRC, "/livechat/poster-alpha.webp?v=1");
   assert.equal(WEBM_SRC, "/livechat/doctor.webm?v=1");
   assert.equal(MP4_SRC, "/livechat/doctor.mp4?v=1");
-  for (const file of ["doctor.webm", "doctor.mp4", "poster.jpg"]) assert.ok(fs.existsSync(path.join(root, "public/livechat", file)), file);
-  assert.ok(greeter.indexOf("src={WEBM_SRC}") < greeter.indexOf("src={MP4_SRC}"));
+  for (const file of ["doctor-alpha.webm", "poster-alpha.webp", "doctor.webm", "doctor.mp4", "poster.jpg"]) assert.ok(fs.existsSync(path.join(root, "public/livechat", file)), file);
+  assert.match(greeter, /src=\{ALPHA_WEBM_SRC\}/);
+  assert.match(greeter, /poster=\{ALPHA_POSTER_SRC\}/);
+  assert.doesNotMatch(greeter, /MP4_SRC|poster\.jpg/, "no fallback video for the intro: browsers without VP9 alpha skip it");
   assert.ok(launcher.indexOf("src={WEBM_SRC}") < launcher.indexOf("src={MP4_SRC}"));
+});
+
+test("no mask, feathering or grey background on the intro video; the doctor stands on the bar's bottom line", () => {
+  assert.doesNotMatch(css, /mask-image|mask:|radial-gradient/);
+  const doc = css.match(/\.lcw-gr-doc \{[^}]*\}/)[0];
+  assert.match(doc, /position: absolute;/);
+  assert.match(doc, /bottom: 0;/);
+  assert.match(doc, /aspect-ratio: 360 \/ 556;/);
+  assert.match(doc, /background: none;/);
+  assert.match(css, /\.lcw-gr-mini \{[^}]*align-items: center;/);
+  assert.match(css, /\.lcw-gr-slot \{[^}]*width: 64px;[^}]*height: 64px;/);
+});
+
+test("the pill is part of the bar from the start and is not part of the flight", () => {
+  assert.doesNotMatch(greeter, /askFormRef|miniFormRef|lcw-gr-ask|lcw-gr-form/);
+  assert.match(greeter, /className=\{`lcw-gr-minif\$\{away \? " is-away" : ""\}/);
+  assert.match(greeter, /doc\.animate\(/);
+  assert.doesNotMatch(greeter, /ask\.animate|form\.animate/);
 });
 
 test("videos are muted, inline, preloaded and aria-hidden; the avatar only shows after it has seeked past the walk-in", () => {
@@ -108,7 +152,7 @@ test("accessibility: named buttons and input, decorative video, pill hidden from
   assert.match(greeter, /aria-label="Write a message"/);
   assert.match(greeter, /aria-label="Send message"/);
   assert.match(greeter, /aria-hidden="true" tabIndex=\{-1\}/);
-  assert.match(greeter, /inert=\{!pillShown \|\| mode === "fly"\}/);
+  assert.match(greeter, /inert=\{away\}/);
   assert.match(greeter, /event\.key === "Escape"/);
   assert.match(greeter, /circRef\.current\?\.focus\(\)/, "focus moves to the round button after the flight");
   assert.match(launcher, /aria-label="Open chat"/);
@@ -120,10 +164,9 @@ test("every class is .lcw-*; sizes, phone rule and reduced motion", () => {
   assert.ok(classes.length > 20);
   assert.ok(classes.every((cls) => cls.startsWith(".lcw-") || /^\.(\d)/.test(cls)), classes.filter((cls) => !cls.startsWith(".lcw-")).join(" "));
   assert.match(css, /\.lcw-launcher--round \{[^}]*width: 64px;[^}]*height: 64px;/);
-  assert.match(css, /@media \(max-width: 480px\) \{\s*\.lcw-gr-ask,\s*\.lcw-gr-minif \{\s*display: none;/);
+  assert.match(css, /@media \(max-width: 480px\) \{\s*\.lcw-gr-minif \{\s*display: none;/);
   assert.match(css, /prefers-reduced-motion: reduce\) \{[^@]*\.lcw-gr-live i,[^@]*animation: none;/);
   assert.match(css, /right: max\(20px, env\(safe-area-inset-right, 0px\)\)/);
-  assert.match(css, /ellipse 58% 54% at 52% 54%/, "the video edges are feathered with the radial mask");
 });
 
 test("the old launcher, greeting bubble and logo are gone", () => {

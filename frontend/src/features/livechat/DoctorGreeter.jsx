@@ -1,25 +1,27 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import LauncherButton from "./LauncherButton";
 import {
+  ALPHA_POSTER_SRC,
+  ALPHA_WEBM_SRC,
+  CHAR_CENTER,
   FLY_MS,
   MAX_PILL_CHARS,
-  MP4_SRC,
-  POSTER_SRC,
   SHOW_PILL_AT,
   SHRINK_AFTER_MS,
   START_TIMEOUT_MS,
-  WEBM_SRC,
   keepLooping,
   markIntroPlayed,
   mute,
   watchSources,
 } from "./greeterConfig";
 
-// What the patient sees while the chat is closed (docs/chat-greeter-demo.html):
-//   intro   the doctor walks in and waves at the bottom-right, a "Write a message…" pill slides in beside him
-//   fly     after SHRINK_AFTER_MS of visible, idle time he shrinks into the round button (FLIP animation)
+// What the patient sees while the chat is closed (docs/chat-greeter-demo.html). One bar holds the "Write a message…"
+// pill and the round button's slot, bottom-right, from the start:
+//   intro   the transparent doctor video stands on the bar's bottom line over the slot (walks in, waves); the pill
+//           slides in at its final place when he has walked in
+//   fly     after SHRINK_AFTER_MS of visible, idle time only the doctor shrinks into the round button (FLIP animation)
 //   compact the pill and the round button (LauncherButton); only the round button on phones
-// Typing in either pill and sending, or clicking the doctor or the round button, calls onOpen(text). `stage` is the
+// Typing in the pill and sending, or clicking the doctor or the round button, calls onOpen(text). `stage` is the
 // parent's remembered stage: a greeter that mounts as "compact" never plays the intro.
 const EASE = "cubic-bezier(.55,0,.25,1)";
 const TICK_MS = 250;
@@ -30,41 +32,6 @@ const SendIcon = () => (
   </svg>
 );
 
-function Pill({ className, text, setText, onSubmit, formRef, inputRef, onFocus, onBlur, inert }) {
-  const typing = text.trim().length > 0;
-  return (
-    <form
-      ref={formRef}
-      className={`${className}${typing ? " is-typing" : ""}`}
-      autoComplete="off"
-      inert={inert}
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit();
-      }}
-    >
-      <input
-        ref={inputRef}
-        type="text"
-        value={text}
-        maxLength={MAX_PILL_CHARS}
-        placeholder="Write a message…"
-        aria-label="Write a message"
-        autoComplete="off"
-        onChange={(event) => setText(event.target.value)}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") event.currentTarget.blur();
-        }}
-      />
-      <button type="submit" aria-label="Send message">
-        <SendIcon />
-      </button>
-    </form>
-  );
-}
-
 export default function DoctorGreeter({ stage, video = true, unread = 0, text, setText, onOpen, onSettled }) {
   const [mode, setMode] = useState(stage === "intro" ? "intro" : "compact"); // intro | fly | compact
   const [pillShown, setPillShown] = useState(false);
@@ -73,15 +40,14 @@ export default function DoctorGreeter({ stage, video = true, unread = 0, text, s
   const [popIn] = useState(() => stage !== "intro"); // a bar that was not flown in pops in
   const introVideoRef = useRef(null);
   const docRef = useRef(null);
-  const askFormRef = useRef(null);
-  const askInputRef = useRef(null);
-  const miniFormRef = useRef(null);
-  const miniInputRef = useRef(null);
+  const slotRef = useRef(null);
+  const inputRef = useRef(null);
   const circRef = useRef(null);
   const focusedRef = useRef(false);
   const textRef = useRef(text);
   const refocusRef = useRef(false);
   textRef.current = text;
+  const away = mode === "intro" && !pillShown;
 
   // The intro counts as played as soon as it starts, so a widget that remounts on the same page load (a route change
   // through a page without the chat) shows the compact bar.
@@ -165,48 +131,35 @@ export default function DoctorGreeter({ stage, video = true, unread = 0, text, s
     return () => clearInterval(timer);
   }, [mode, playing]);
 
-  // The flight (FLIP): the doctor and the pill move from where they are to where the compact bar is already laid out
-  // (hidden), then the compact bar takes over.
+  // The flight (FLIP): only the doctor moves, from where he stands to the round button's slot, then the button takes
+  // over. The pill is already in its final place and does not move.
   useLayoutEffect(() => {
     if (mode !== "fly") return undefined;
     const doc = docRef.current;
-    const ask = askFormRef.current;
-    const circ = circRef.current;
-    const miniForm = miniFormRef.current;
+    const slot = slotRef.current;
     const animations = [];
     let done = false;
     const finish = () => {
       if (done) return;
       done = true;
       clearTimeout(timer);
-      refocusRef.current = Boolean(doc && (document.activeElement === doc || ask?.contains(document.activeElement)));
+      refocusRef.current = Boolean(doc && document.activeElement === doc);
       setArrive(true);
       toCompact();
     };
     const timer = setTimeout(finish, FLY_MS + 60);
-    if (!doc || !circ || typeof doc.animate !== "function") {
+    if (!doc || !slot || typeof doc.animate !== "function") {
       finish();
       return () => clearTimeout(timer);
     }
     const d = doc.getBoundingClientRect();
-    const c = circ.getBoundingClientRect();
-    const dx = c.left + c.width / 2 - (d.left + d.width / 2);
+    const c = slot.getBoundingClientRect();
+    const dx = c.left + c.width / 2 - (d.left + d.width * CHAR_CENTER);
     const dy = c.top + c.height / 2 - (d.top + d.height * 0.54);
     const scale = c.width / (d.width * 0.9);
-    doc.style.transformOrigin = "50% 54%";
+    doc.style.transformOrigin = `${CHAR_CENTER * 100}% 54%`;
     const move = doc.animate([{ transform: "none" }, { transform: `translate(${dx}px, ${dy}px) scale(${scale})` }], { duration: FLY_MS, easing: EASE, fill: "forwards" });
     animations.push(move, doc.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, delay: 620, fill: "forwards" }));
-    const a = ask?.getBoundingClientRect();
-    const m = miniForm?.getBoundingClientRect();
-    if (a && m && a.width > 0 && m.width > 0) {
-      ask.style.transformOrigin = "0 0";
-      animations.push(
-        ask.animate(
-          [{ transform: "none" }, { transform: `translate(${m.left - a.left}px, ${m.top - a.top}px) scale(${m.width / a.width}, ${m.height / a.height})` }],
-          { duration: FLY_MS, easing: EASE, fill: "forwards" }
-        )
-      );
-    }
     move.finished.then(finish, () => {});
     return () => {
       done = true;
@@ -216,7 +169,7 @@ export default function DoctorGreeter({ stage, video = true, unread = 0, text, s
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
-  // A flight that began with the keyboard on the doctor or the pill ends with the focus on the round button.
+  // A flight that began with the keyboard on the doctor ends with the focus on the round button.
   useLayoutEffect(() => {
     if (mode === "compact" && refocusRef.current) {
       refocusRef.current = false;
@@ -225,58 +178,53 @@ export default function DoctorGreeter({ stage, video = true, unread = 0, text, s
   }, [mode]);
 
   const open = () => onOpen(text.trim());
-  const sendFrom = (inputRef) => () => {
-    if (!text.trim()) inputRef.current?.focus();
-    else open();
-  };
-  const onFocus = () => {
-    focusedRef.current = true;
-  };
-  const onBlur = () => {
-    focusedRef.current = false;
-  };
+  const typing = text.trim().length > 0;
 
   return (
-    <>
+    <div className={`lcw-gr-mini${popIn ? " is-pop" : ""}`}>
+      <form
+        className={`lcw-gr-minif${away ? " is-away" : ""}${typing ? " is-typing" : ""}`}
+        autoComplete="off"
+        inert={away}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!text.trim()) inputRef.current?.focus();
+          else open();
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="text"
+          value={text}
+          maxLength={MAX_PILL_CHARS}
+          placeholder="Write a message…"
+          aria-label="Write a message"
+          autoComplete="off"
+          onChange={(event) => setText(event.target.value)}
+          onFocus={() => {
+            focusedRef.current = true;
+          }}
+          onBlur={() => {
+            focusedRef.current = false;
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") event.currentTarget.blur();
+          }}
+        />
+        <button type="submit" aria-label="Send message">
+          <SendIcon />
+        </button>
+      </form>
+      <span ref={slotRef} className={`lcw-gr-slot${mode === "fly" ? " is-hidden" : ""}`}>
+        {mode !== "intro" && <LauncherButton buttonRef={circRef} unread={unread} avatar={video} arrive={arrive} onOpen={open} />}
+      </span>
       {mode !== "compact" && (
-        <div key="intro" className="lcw-gr">
-          <div className={`lcw-gr-ask${pillShown ? " is-show" : ""}`}>
-            <Pill
-              className="lcw-gr-form"
-              text={text}
-              setText={setText}
-              onSubmit={sendFrom(askInputRef)}
-              formRef={askFormRef}
-              inputRef={askInputRef}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              inert={!pillShown || mode === "fly"}
-            />
-          </div>
-          <button ref={docRef} type="button" className="lcw-gr-doc" onClick={open} aria-label="Open chat" aria-expanded="false">
-            <video ref={introVideoRef} muted playsInline preload="auto" poster={POSTER_SRC} aria-hidden="true" tabIndex={-1}>
-              <source src={WEBM_SRC} type='video/webm; codecs="vp9"' />
-              <source src={MP4_SRC} type="video/mp4" />
-            </video>
-          </button>
-        </div>
+        <button ref={docRef} type="button" className="lcw-gr-doc" onClick={open} aria-label="Open chat" aria-expanded="false">
+          <video ref={introVideoRef} muted playsInline preload="auto" poster={ALPHA_POSTER_SRC} aria-hidden="true" tabIndex={-1}>
+            <source src={ALPHA_WEBM_SRC} type='video/webm; codecs="vp9"' />
+          </video>
+        </button>
       )}
-      {mode !== "intro" && (
-        <div key="mini" className={`lcw-gr-mini${mode === "fly" ? " is-measuring" : ""}${popIn ? " is-pop" : ""}`}>
-          <Pill
-            className="lcw-gr-minif"
-            text={text}
-            setText={setText}
-            onSubmit={sendFrom(miniInputRef)}
-            formRef={miniFormRef}
-            inputRef={miniInputRef}
-            onFocus={onFocus}
-            onBlur={onBlur}
-            inert={mode === "fly"}
-          />
-          <LauncherButton buttonRef={circRef} unread={unread} avatar={video} arrive={arrive} onOpen={open} />
-        </div>
-      )}
-    </>
+    </div>
   );
 }

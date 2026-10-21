@@ -8,7 +8,7 @@ import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
-import { canUseVideo, prefersReducedMotion, saveDataOn, introPlayedThisLoad, shouldPlayIntro } from "./greeterConfig";
+import { canPlayAlphaIntro, canUseVideo, introPlayedThisLoad, prefersReducedMotion, saveDataOn, shouldPlayIntro } from "./greeterConfig";
 import { useLiveChat } from "./useLiveChat";
 import "./LiveChatWidget.css";
 
@@ -125,6 +125,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
       saveData: saveDataOn(),
       width: window.innerWidth,
       played: introPlayedThisLoad(),
+      alpha: canPlayAlphaIntro(),
       open,
       invite: Boolean(chat.invite),
     })

@@ -63,77 +63,87 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   box-shadow: 0 18px 40px -16px rgba(11, 31, 92, 0.45);
 }
-/* The doctor greeter (DoctorGreeter.jsx, docs/chat-greeter-demo.html) and the round button (LauncherButton.jsx). */
-.lcw-gr {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-}
-.lcw-gr-doc {
+/* The doctor greeter (DoctorGreeter.jsx, docs/chat-greeter-demo.html) and the round button (LauncherButton.jsx).
+   One bar holds the pill and the round button's slot from the first second; the doctor (a transparent video, no mask)
+   stands on the bar's bottom line over the slot, and only he flies when it is time to shrink. */
+.lcw-gr-mini {
+  --gr-w: 160px; /* the doctor's width; his height follows the video's 360:556 frame */
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lcw-gr-mini.is-pop {
+  animation: lcw-gr-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+@keyframes lcw-gr-pop {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Where the round button is (and where he flies to). */
+.lcw-gr-slot {
   flex: none;
-  display: block;
-  width: 170px;
-  aspect-ratio: 400 / 712;
+  width: 64px;
+  height: 64px;
+}
+.lcw-gr-slot.is-hidden {
+  visibility: hidden;
+}
+/* His feet are the frame's bottom edge, which is the bar's bottom line. The frame is wider than the round button, so
+   it hangs over the right edge; the character's centre (43% of the frame) sits over the button's centre. */
+.lcw-gr-doc {
+  position: absolute;
+  right: calc(32px - var(--gr-w) * 0.57);
+  bottom: 0;
+  width: var(--gr-w);
+  aspect-ratio: 360 / 556;
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
 }
-/* The studio-grey video background fades out at the edges so it blends into the page. */
 .lcw-gr-doc video {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  -webkit-mask-image: radial-gradient(ellipse 58% 54% at 52% 54%, #000 62%, transparent 100%);
-  mask-image: radial-gradient(ellipse 58% 54% at 52% 54%, #000 62%, transparent 100%);
+  max-width: none;
+  object-fit: contain;
 }
 .lcw-gr-doc:focus-visible {
   border-radius: 16px;
 }
-.lcw-gr-ask {
-  margin-bottom: 110px;
-  margin-right: -8px;
-}
-.lcw-gr-form,
 .lcw-gr-minif {
+  position: relative;
+  z-index: 1; /* above the doctor's frame, so the arrow stays clickable */
   display: flex;
   align-items: center;
   gap: 8px;
+  width: min(290px, calc(100vw - 120px));
   height: 60px;
+  padding: 0 8px 0 24px;
   background: #fff;
   border: 1px solid #ececec;
   border-radius: 999px;
   box-shadow: 0 8px 26px rgba(20, 33, 61, 0.14);
+  transition: opacity 0.45s ease, transform 0.6s cubic-bezier(0.3, 1.35, 0.4, 1), visibility 0s;
 }
-.lcw-gr-form {
-  max-width: 0;
-  padding: 0;
-  overflow: hidden;
+/* Before the doctor has finished walking in the pill waits to the right of its place, then slides in. */
+.lcw-gr-minif.is-away {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: max-width 0.75s cubic-bezier(0.3, 1.35, 0.4, 1), padding 0.75s cubic-bezier(0.3, 1.35, 0.4, 1), opacity 0.2s;
+  transform: translateX(28px);
 }
-.lcw-gr-ask.is-show .lcw-gr-form {
-  width: min(300px, calc(100vw - 200px));
-  max-width: 320px;
-  padding: 0 8px 0 24px;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-.lcw-gr-minif {
-  width: min(290px, calc(100vw - 120px));
-  padding: 0 8px 0 24px;
-}
-.lcw-gr-form:focus-within,
 .lcw-gr-minif:focus-within {
   border-color: #c9d6f5;
   box-shadow: 0 8px 26px rgba(20, 33, 61, 0.18), 0 0 0 3px rgba(31, 79, 214, 0.12);
 }
-.lcw-gr-form input,
 .lcw-gr-minif input {
   flex: 1;
   min-width: 0;
@@ -144,22 +154,12 @@ html.hc-cookie-open .lcw-window {
   font: inherit;
   font-size: 16px; /* 16px keeps iOS from zooming the page */
 }
-.lcw-gr-ask .lcw-gr-form input {
-  opacity: 0;
-  transition: opacity 0.35s 0.45s;
-}
-.lcw-gr-ask.is-show .lcw-gr-form input {
-  opacity: 1;
-}
-.lcw-gr-form input::placeholder,
 .lcw-gr-minif input::placeholder {
   color: #6b6f78;
 }
-.lcw-root .lcw-gr-form input:focus-visible,
 .lcw-root .lcw-gr-minif input:focus-visible {
   outline: 0; /* the pill's own focus ring (above) shows the focus */
 }
-.lcw-gr-form button,
 .lcw-gr-minif button {
   flex: none;
   display: grid;
@@ -174,37 +174,9 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-.lcw-gr-form.is-typing button,
 .lcw-gr-minif.is-typing button {
   background: #111;
   color: #fff;
-}
-
-/* Compact bar: the pill and the round button. Measured while hidden, so the doctor knows where to fly. */
-.lcw-gr-mini {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.lcw-gr-mini.is-pop {
-  animation: lcw-gr-pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
-}
-.lcw-gr-mini.is-measuring {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  visibility: hidden;
-  animation: none;
-}
-@keyframes lcw-gr-pop {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 .lcw-launcher--round {
@@ -366,35 +338,19 @@ html.hc-cookie-open .lcw-window {
   color: var(--lcw-muted);
 }
 
-@media (max-width: 560px) {
-  .lcw-gr-doc {
-    width: 120px;
-  }
-  .lcw-gr-ask {
-    margin-bottom: 80px;
-  }
-  .lcw-gr-ask.is-show .lcw-gr-form {
-    width: calc(100vw - 32px - 120px);
-  }
-}
-@media (max-height: 560px) {
-  .lcw-gr-doc {
-    width: 120px;
-  }
-  .lcw-gr-ask {
-    margin-bottom: 80px;
+@media (max-width: 560px), (max-height: 560px) {
+  .lcw-gr-mini {
+    --gr-w: 130px;
   }
 }
 /* Phones: only the round button, no pill. */
 @media (max-width: 480px) {
-  .lcw-gr-ask,
   .lcw-gr-minif {
     display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lcw-gr-form,
-  .lcw-gr-ask .lcw-gr-form input,
+  .lcw-gr-minif,
   .lcw-gr-cav,
   .lcw-gr-ring,
   .lcw-gr-chatico,

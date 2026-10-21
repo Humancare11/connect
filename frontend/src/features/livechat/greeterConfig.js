@@ -4,6 +4,10 @@ export const VIDEO_VERSION = "?v=1"; // bump when doctor.webm / doctor.mp4 / pos
 export const WEBM_SRC = `/livechat/doctor.webm${VIDEO_VERSION}`;
 export const MP4_SRC = `/livechat/doctor.mp4${VIDEO_VERSION}`;
 export const POSTER_SRC = `/livechat/poster.jpg${VIDEO_VERSION}`;
+// The intro: the doctor on a transparent background (VP9 with alpha), and its transparent standing frame.
+export const ALPHA_WEBM_SRC = `/livechat/doctor-alpha.webm${VIDEO_VERSION}`;
+export const ALPHA_POSTER_SRC = `/livechat/poster-alpha.webp${VIDEO_VERSION}`;
+export const CHAR_CENTER = 0.43; // the doctor's centre, as a fraction of the intro video's width
 
 export const SHOW_PILL_AT = 3.2; // seconds into the video: the message pill slides in
 export const LOOP_FROM = 4.0; // seconds: every loop restarts here
@@ -33,10 +37,29 @@ export const markIntroPlayed = () => {
   introPlayed = true;
 };
 
-// Not on a phone, with reduced motion or data saver, with the chat window already open, an admin invite waiting, or
-// once it has played on this page load.
-export function shouldPlayIntro({ reduced, saveData, width, played, open, invite }) {
-  if (reduced || saveData || played || open || invite) return false;
+// Safari and every iOS browser (all WebKit) do not play VP9-with-alpha WebM correctly, whatever canPlayType says.
+export function isSafari(userAgent, maxTouchPoints = 0) {
+  const ua = String(userAgent || "");
+  if (/iPad|iPhone|iPod/.test(ua)) return true;
+  if (/Macintosh/.test(ua) && maxTouchPoints > 1) return true; // iPadOS reports a Mac
+  return /Safari\//.test(ua) && !/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(ua);
+}
+
+// Can this browser play the transparent intro video?
+export function canPlayAlphaIntro() {
+  if (typeof document === "undefined" || typeof navigator === "undefined") return false;
+  if (isSafari(navigator.userAgent, navigator.maxTouchPoints)) return false;
+  try {
+    return Boolean(document.createElement("video").canPlayType('video/webm; codecs="vp9"'));
+  } catch {
+    return false;
+  }
+}
+
+// Not on a phone, with reduced motion or data saver, with the chat window already open, an admin invite waiting, in a
+// browser that cannot play the transparent video (they get the compact bar), or once it has played on this page load.
+export function shouldPlayIntro({ reduced, saveData, width, played, open, invite, alpha = true }) {
+  if (reduced || saveData || played || open || invite || !alpha) return false;
   return width > PHONE_MAX_WIDTH;
 }
 
