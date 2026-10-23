@@ -107,6 +107,9 @@ appointmentSchema.index({ patientId: 1, createdAt: -1 });
 // Doctor's appointment list (most recent first)
 appointmentSchema.index({ doctorId: 1, createdAt: -1 });
 
+// Unified admin Appointments list: newest booking first
+appointmentSchema.index({ bookedAt: -1 });
+
 // Admin: all appointments sorted by booking time
 appointmentSchema.index({ createdAt: -1 });
 
