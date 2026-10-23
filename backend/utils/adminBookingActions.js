@@ -442,6 +442,20 @@ async function setTesting(ids, value, actor) {
   return { results, updated: kindById.size };
 }
 
+// Deletes a category consultation for good (super admin only, from the booking's View page). Regular
+// appointments have never been deletable: they are cancelled instead. Nothing is refunded and nobody is
+// notified; anyone still in the call room is removed.
+async function deleteBooking(app, id) {
+  const loaded = await loadBooking(id);
+  if (loaded.kind !== "category") {
+    throw new LifecycleError(400, "Only category consultations can be deleted. Cancel a regular appointment instead.");
+  }
+  const result = await CategoryConsultation.deleteOne({ _id: loaded.doc._id });
+  if (!result.deletedCount) throw new LifecycleError(404, "Appointment not found.");
+  app.get("evictAllFromAppointmentRoom")?.(loaded.doc._id, { reason: "cancelled" });
+  return { kind: "category", id: String(loaded.doc._id), paid: loaded.doc.paymentStatus === "paid" };
+}
+
 const BULK_ACTIONS = ["auto-complete", "cancel", "mark-testing", "unmark-testing"];
 
 // Runs one action over up to 100 bookings and answers per id. Each booking goes
@@ -506,6 +520,7 @@ module.exports = {
   revertDoctor,
   confirmBooking,
   cancelBooking,
+  deleteBooking,
   autoCompleteBooking,
   setTesting,
   bulkAction,

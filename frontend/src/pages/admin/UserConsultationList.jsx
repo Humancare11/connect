@@ -18,7 +18,7 @@ const STATUS_OPTIONS = [
 // The existing admin detail pages, opened as they are (in a new tab).
 const DETAIL_ROUTES = {
   appointment: (id) => `/admin-dashboard/appointments/${id}`,
-  category: (id) => `/admin-dashboard/category-consultations/${id}`,
+  category: (id) => `/admin-dashboard/appointments/${id}`,
 };
 
 const KIND_LABELS = { appointment: "Doctor", category: "Category" };

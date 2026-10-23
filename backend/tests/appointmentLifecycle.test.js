@@ -37,9 +37,7 @@ const {
   completeAppointment,
   adminCompleteAppointment,
   reopenAppointment,
-  reassignAppointmentDoctor,
 } = require("../controllers/appointmentController");
-const { updateCategoryConsultationStatus, assignDoctor } = require("../controllers/CategoryConsultationController");
 const { createPrescription, createMedicalCertificate } = require("../controllers/medicalController");
 
 const APPT_ID = "64b000000000000000000001";
@@ -372,82 +370,4 @@ test("prescriptions and certificates still work for completed appointments (My P
   accessResult = { _id: APPT_ID, patientId: PATIENT_ID, status: "complete" };
   assert.equal((await call(createPrescription, rxReq())).status, 201);
   assert.equal((await call(createMedicalCertificate, rxReq())).status, 201);
-});
-
-// ── change-doctor on a completed appointment ───────────────────────────────
-
-test("change-doctor is blocked on a completed appointment (must reopen first), even for the same doctor", async () => {
-  let saved = false;
-  appointmentDoc = { ...apptDoc({ status: "complete" }), save: async () => { saved = true; } };
-  const out = await call(reassignAppointmentDoctor, { ...adminReq, body: { doctorId: 12345 } });
-  assert.equal(out.status, 409);
-  assert.match(out.body.msg, /Reopen it before changing the doctor/);
-  assert.equal(saved, false);
-  assert.equal(events.length, 0);
-});
-
-// ── legacy PATCH /category-consultation/:id/status ─────────────────────────
-
-const statusReq = (status) => ({ ...adminReq, body: { status } });
-const stubConsultation = (status) => {
-  const consultation = { status, saves: 0, async save() { this.saves += 1; } };
-  CategoryConsultation.findById = async () => consultation;
-  return consultation;
-};
-
-test("status endpoint: invalid values are rejected", async () => {
-  const consultation = stubConsultation("Pending");
-  const out = await call(updateCategoryConsultationStatus, statusReq("banana"));
-  assert.equal(out.status, 400);
-  assert.match(out.body.message, /Allowed values/);
-  assert.equal(consultation.saves, 0);
-});
-
-test("status endpoint: completing is refused in favour of the new Complete endpoint", async () => {
-  const consultation = stubConsultation("Confirmed");
-  for (const value of ["Completed", "complete", "COMPLETED"]) {
-    const out = await call(updateCategoryConsultationStatus, statusReq(value));
-    assert.equal(out.status, 400);
-    assert.match(out.body.message, /admin-complete/);
-  }
-  assert.equal(consultation.saves, 0);
-  assert.equal(consultation.status, "Confirmed");
-});
-
-test("status endpoint: a completed consultation can't be changed here (reopen first)", async () => {
-  const consultation = stubConsultation("Completed");
-  const out = await call(updateCategoryConsultationStatus, statusReq("Confirmed"));
-  assert.equal(out.status, 409);
-  assert.match(out.body.message, /reopen/i);
-  assert.equal(consultation.saves, 0);
-  assert.equal(consultation.status, "Completed");
-});
-
-test("status endpoint: valid values still work, case-insensitively, saved in canonical form", async () => {
-  const consultation = stubConsultation("Pending");
-  const out = await call(updateCategoryConsultationStatus, statusReq("cancelled"));
-  assert.equal(out.status, 200);
-  assert.equal(consultation.status, "Cancelled");
-  assert.equal(consultation.saves, 1);
-});
-
-// ── category assign-doctor on a completed consultation ─────────────────────
-
-test("category assign-doctor is blocked on a Completed consultation (reopen first)", async () => {
-  let updated = false;
-  CategoryConsultation.findById = () => lean({ appointmentType: "NEXT_AVAILABLE", assignedDoctorId: ENROLLMENT_ID, status: "Completed" });
-  CategoryConsultation.findOneAndUpdate = async () => { updated = true; return null; };
-  const out = await call(assignDoctor, { ...adminReq, body: { doctorId: ENROLLMENT_ID } });
-  assert.equal(out.status, 409);
-  assert.match(out.body.message, /Reopen it before changing the doctor/);
-  assert.equal(updated, false);
-});
-
-test("category assign-doctor still works for non-completed consultations", async () => {
-  require("../models/Enrollment").findById = async () => ({ _id: ENROLLMENT_ID, firstName: "Nina", surname: "Shah" });
-  CategoryConsultation.findById = () => lean({ appointmentType: "FLEXIBLE_TIME", assignedDoctorId: null, status: "Pending" });
-  CategoryConsultation.findOneAndUpdate = async () => ({ _id: APPT_ID, patientId: PATIENT_ID });
-  const out = await call(assignDoctor, { ...adminReq, body: { doctorId: ENROLLMENT_ID } });
-  assert.equal(out.status, 200);
-  assert.equal(out.body.success, true);
 });

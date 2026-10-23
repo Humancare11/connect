@@ -1,9 +1,9 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const { verifyAdminToken, adminOnly } = require("../middleware/verifyToken");
+const { verifyAdminToken, adminOnly, superAdminOnly } = require("../middleware/verifyToken");
 const User = require("../models/User");
 const { LifecycleError } = require("../utils/appointmentLifecycle");
-const { ListQueryError, listAdminBookings, loadAdminBookingRow } = require("../utils/adminBookingList");
+const { ListQueryError, listAdminBookings, loadAdminBookingRow, loadAdminBookingRowById } = require("../utils/adminBookingList");
 const actions = require("../utils/adminBookingActions");
 const { recordActivity } = require("../utils/activityLogger");
 
@@ -20,8 +20,9 @@ async function actorOf(req) {
 }
 
 // The unified admin Appointments list and its actions (appointments + category
-// consultations). `guard` is overridable so tests can stand in for the token check.
-function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
+// consultations). `guard` (admins) and `superGuard` (super admins only: delete) are overridable so tests can
+// stand in for the token check.
+function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdminToken, superAdminOnly] } = {}) {
   const router = express.Router();
 
   // GET /api/admin/bookings?status=&hideTesting=&q=&page=&limit=&sort=
@@ -32,6 +33,19 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
       if (error instanceof ListQueryError) return res.status(400).json({ msg: error.message });
       console.error("listAdminBookings error:", error);
       res.status(500).json({ msg: "Failed to fetch appointments." });
+    }
+  });
+
+  // One booking as a list row (either kind), for the booking's View page.
+  router.get("/:id", ...guard, async (req, res) => {
+    try {
+      if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ msg: "Invalid booking id." });
+      const booking = await loadAdminBookingRowById(req.params.id);
+      if (!booking) return res.status(404).json({ msg: "Appointment not found." });
+      res.status(200).json({ booking });
+    } catch (error) {
+      console.error("getAdminBooking error:", error);
+      res.status(500).json({ msg: "Failed to fetch the appointment." });
     }
   });
 
@@ -120,6 +134,19 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
     } catch (error) {
       if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message, ...(error.code ? { code: error.code } : {}) });
       console.error("ADMIN_SET_TESTING error:", error);
+      res.status(500).json({ msg: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Super admin only. A category consultation is deleted for good; a regular appointment is refused (cancel it).
+  router.delete("/:id", ...superGuard, async (req, res) => {
+    try {
+      const result = await actions.deleteBooking(req.app, req.params.id);
+      await recordActivity(req, { action: "ADMIN_DELETE_BOOKING", resource: "CategoryConsultation", resourceId: result.id, details: { paid: result.paid } });
+      res.status(200).json({ msg: "Booking deleted.", id: result.id, paid: result.paid });
+    } catch (error) {
+      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message, ...(error.code ? { code: error.code } : {}) });
+      console.error("ADMIN_DELETE_BOOKING error:", error);
       res.status(500).json({ msg: "Something went wrong. Please try again." });
     }
   });

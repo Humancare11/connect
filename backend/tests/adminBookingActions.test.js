@@ -14,7 +14,7 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const adminBookings = require("../routes/adminBookings");
-const { adminOnly } = require("../middleware/verifyToken");
+const { adminOnly, superAdminOnly } = require("../middleware/verifyToken");
 const notify = require("../utils/bookingNotifications");
 const push = require("../utils/pushNotifications");
 const mailer = require("../utils/sendEmail");
@@ -96,7 +96,7 @@ describe("admin booking actions", () => {
     app.use(express.json());
     app.set("io", { to: (room) => ({ emit: (ev, payload) => emitted.push({ room, ev, payload }) }) });
     app.set("evictDoctorFromAppointmentRoom", (id, doctorUserId) => evicted.push({ id: String(id), doctorUserId }));
-    app.use("/api/admin/bookings", adminBookings.create({ guard: [fakeAuth, adminOnly] }));
+    app.use("/api/admin/bookings", adminBookings.create({ guard: [fakeAuth, adminOnly], superGuard: [fakeAuth, superAdminOnly] }));
     server = http.createServer(app);
     await new Promise((r) => server.listen(0, "127.0.0.1", r));
     base = `http://127.0.0.1:${server.address().port}/api/admin/bookings`;
@@ -1103,6 +1103,73 @@ describe("admin booking actions", () => {
       const b = await make("appointment", "assigned", { doctor: D1 });
       await post(`/${b._id}/confirm`);
       assert.equal((await fresh("appointment", b._id)).confirmedBy.role, "admin");
+    });
+  });
+
+  describe("the booking's View page: one row, and delete (super admin only)", () => {
+    const request = async (method, path, role = "admin") => {
+      const res = await fetch(`${base}${path}`, { method, headers: role ? { "x-test-role": role } : {} });
+      return { status: res.status, body: await res.json() };
+    };
+
+    for (const kind of KINDS) {
+      test(`${kind}: GET /:id returns the booking as a list row`, async () => {
+        const b = await make(kind, "assigned", { doctor: D1, paymentStatus: "paid", paymentGateway: "stripe" });
+        const res = await request("GET", `/${b._id}`);
+        assert.equal(res.status, 200);
+        assert.equal(res.body.booking.id, String(b._id));
+        assert.equal(res.body.booking.kind, kind);
+        assert.equal(res.body.booking.status, "assigned");
+        assert.equal(res.body.booking.doctorName, "Martin Perlin");
+        assert.equal(res.body.booking.paid, true);
+        assert.equal(res.body.booking.paymentGateway, "stripe");
+      });
+    }
+
+    test("GET /:id: 400 for a bad id, 404 for an unknown one, admins only", async () => {
+      assert.equal((await request("GET", "/nope")).status, 400);
+      assert.equal((await request("GET", `/${new mongoose.Types.ObjectId()}`)).status, 404);
+      const b = await make("appointment", "upcoming");
+      assert.equal((await request("GET", `/${b._id}`, "")).status, 401);
+      assert.equal((await request("GET", `/${b._id}`, "user")).status, 403);
+      assert.equal((await request("GET", `/${b._id}`, "doctor")).status, 403);
+    });
+
+    test("a super admin deletes a category consultation: gone for good, the call room closed, the paid flag returned", async () => {
+      const evictions = [];
+      app.set("evictAllFromAppointmentRoom", (id, opts) => evictions.push({ id: String(id), ...opts }));
+      try {
+        const b = await make("category", "assigned", { doctor: D1, paymentStatus: "paid" });
+        const res = await request("DELETE", `/${b._id}`, "superadmin");
+        assert.equal(res.status, 200);
+        assert.equal(res.body.id, String(b._id));
+        assert.equal(res.body.paid, true);
+        assert.equal(await fresh("category", b._id), null);
+        assert.deepEqual(evictions, [{ id: String(b._id), reason: "cancelled" }]);
+        assert.equal((await request("DELETE", `/${b._id}`, "superadmin")).status, 404, "a second delete finds nothing");
+        assert.deepEqual(calls, [], "nobody is emailed");
+        assert.deepEqual(pushes, []);
+      } finally {
+        app.set("evictAllFromAppointmentRoom", undefined);
+      }
+    });
+
+    test("an ordinary admin cannot delete, and neither can anyone signed out; the booking stays", async () => {
+      const b = await make("category", "upcoming");
+      assert.equal((await request("DELETE", `/${b._id}`, "admin")).status, 403);
+      assert.equal((await request("DELETE", `/${b._id}`, "")).status, 401);
+      assert.equal((await request("DELETE", `/${b._id}`, "user")).status, 403);
+      assert.ok(await fresh("category", b._id));
+    });
+
+    test("a regular appointment is refused (cancel it instead) and stays; a bad id is a 400", async () => {
+      const b = await make("appointment", "upcoming");
+      const res = await request("DELETE", `/${b._id}`, "superadmin");
+      assert.equal(res.status, 400);
+      assert.match(res.body.msg, /Cancel a regular appointment/);
+      assert.ok(await fresh("appointment", b._id));
+      assert.equal((await request("DELETE", "/nope", "superadmin")).status, 400);
+      assert.equal((await request("DELETE", `/${new mongoose.Types.ObjectId()}`, "superadmin")).status, 404);
     });
   });
 

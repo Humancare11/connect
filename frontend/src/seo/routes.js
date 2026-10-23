@@ -60,7 +60,6 @@ export const SEO_ROUTES = {
   "/admin-auth": {"robots":"noindex,nofollow","title":"Admin Login | Humancare Connect"},
   "/admin-dashboard": {"robots":"noindex,nofollow"},
   "/admin-dashboard/appointments": {"robots":"noindex,nofollow"},
-  "/admin-dashboard/category-consultations": {"robots":"noindex,nofollow"},
   "/admin-dashboard/deletion-requests": {"robots":"noindex,nofollow"},
   "/admin-dashboard/direct-video-consultation": {"robots":"noindex,nofollow"},
   "/admin-dashboard/direct-video-consultation/calls": {"robots":"noindex,nofollow"},

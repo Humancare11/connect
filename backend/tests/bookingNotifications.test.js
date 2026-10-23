@@ -49,7 +49,6 @@ Enrollment.findOne = () => chain({ timezone: "Asia/Kolkata" });
 Enrollment.findById = (id) => chain(enrollments[id] || null);
 
 const notify = require("../utils/bookingNotifications");
-const { assignDoctor } = require("../controllers/CategoryConsultationController");
 
 const appointment = {
   _id: "a1",
@@ -200,62 +199,6 @@ test("whenText converts the UTC instant into the target timezone", () => {
   });
   assert.match(out, /3:30 PM/);
   assert.match(out, /Asia\/Kolkata/);
-});
-
-// ── category assignDoctor controller ───────────────────────────────────────
-const call = async (handler, req) => {
-  const out = { status: 200, body: null };
-  const res = { status(c) { out.status = c; return this; }, json(b) { out.body = b; return this; } };
-  await handler(req, res);
-  return out;
-};
-const flush = () => new Promise((r) => setImmediate(r));
-
-const setupAssign = (existing) => {
-  enrollments.e2 = { _id: "e2", firstName: "Nina", surname: "Shah", email: "nina@example.com", doctorId: "d2" };
-  enrollments.e1 = { _id: "e1", firstName: "Omar", surname: "Khan", email: "omar@example.com", doctorId: "d1" };
-  CategoryConsultation.findById = () => chain(existing);
-  Enrollment.findById = (id) => chain(enrollments[id] || null);
-  CategoryConsultation.findOneAndUpdate = async () => ({
-    _id: "c1",
-    patientId: "p1",
-    date: "2030-01-15",
-    appointmentType: "NEXT_AVAILABLE",
-    assignedSlot: "10:00 AM",
-    categoryName: "General",
-    specialtyName: "Cardiology",
-  });
-};
-
-test("category assign: first assignment emails the doctor once", async () => {
-  setupAssign({ appointmentType: "NEXT_AVAILABLE", assignedDoctorId: null });
-  const out = await call(assignDoctor, { params: { id: "c1" }, body: { doctorId: "e2", appointmentTime: "10:00 AM" } });
-  await flush();
-  assert.equal(out.status, 200);
-  assert.deepEqual(sent.map((m) => m.to), ["nina@example.com"]);
-});
-
-test("category assign: same doctor again sends nothing", async () => {
-  setupAssign({ appointmentType: "NEXT_AVAILABLE", assignedDoctorId: "e2" });
-  await call(assignDoctor, { params: { id: "c1" }, body: { doctorId: "e2" } });
-  await flush();
-  assert.equal(sent.length, 0);
-});
-
-test("category assign: a different doctor emails new + previous", async () => {
-  setupAssign({ appointmentType: "NEXT_AVAILABLE", assignedDoctorId: "e1" });
-  await call(assignDoctor, { params: { id: "c1" }, body: { doctorId: "e2" } });
-  await flush();
-  assert.deepEqual(sent.map((m) => m.to).sort(), ["nina@example.com", "omar@example.com"]);
-});
-
-test("category assign: a failing mailer does not fail the assignment", async () => {
-  mailFails = true;
-  setupAssign({ appointmentType: "NEXT_AVAILABLE", assignedDoctorId: "e1" });
-  const out = await call(assignDoctor, { params: { id: "c1" }, body: { doctorId: "e2" } });
-  await flush();
-  assert.equal(out.status, 200);
-  assert.equal(out.body.success, true);
 });
 
 // ── reopen email to the doctor ─────────────────────────────────────────────

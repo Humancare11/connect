@@ -123,15 +123,8 @@ const NAV_ITEMS = [
       { path: "/admin-dashboard/deletion-requests", label: "Deletion Requests", icon: ICONS.document },
     ],
   },
-  {
-    key: "appointments",
-    label: "Appointments",
-    icon: ICONS.calendar,
-    children: [
-      { path: "/admin-dashboard/appointments", label: "Appointments", icon: ICONS.calendar },
-      { path: "/admin-dashboard/category-consultations", label: "Category Consultations", icon: ICONS.calendar },
-    ],
-  },
+  // One list for doctor appointments and category consultations.
+  { key: "appointments", label: "Appointments", path: "/admin-dashboard/appointments", icon: ICONS.calendar },
   { key: "direct-video", label: "Direct Video Consultation", path: "/admin-dashboard/direct-video-consultation", icon: ICONS.video },
   {
     key: "documents",
@@ -193,7 +186,7 @@ const isVisibleTo = (item, role) => {
 };
 
 // A page belongs to a menu item when it is that item's page or any page under it
-// (detail pages, assign-doctor pages, …). The dashboard only matches itself.
+// (detail pages, …). The dashboard only matches itself.
 const pathMatches = (target, pathname, exact) =>
   pathname === target || (!exact && pathname.startsWith(`${target}/`));
 

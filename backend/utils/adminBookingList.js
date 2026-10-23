@@ -295,6 +295,12 @@ async function loadAdminBookingRow(kind, id) {
   return doc ? toAppointmentRow(doc) : null;
 }
 
+// One booking as a list row, whichever kind it is (null if there is none).
+async function loadAdminBookingRowById(id) {
+  if (!mongoose.isValidObjectId(id)) return null;
+  return (await loadAdminBookingRow("appointment", id)) || (await loadAdminBookingRow("category", id));
+}
+
 // ── The list ─────────────────────────────────────────────────────────────────
 
 const combine = (...filters) => {
@@ -366,6 +372,7 @@ module.exports = {
   computeCounts,
   listAdminBookings,
   loadAdminBookingRow,
+  loadAdminBookingRowById,
   toAppointmentRow,
   toCategoryRow,
 };

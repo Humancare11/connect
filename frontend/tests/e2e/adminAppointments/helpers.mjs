@@ -108,5 +108,5 @@ export function createHelpers({ page, api, harnessUrl }) {
     await page.screenshot({ path: path.join(screenshotDir, `${name}.png`) });
   };
 
-  return { call, make, doc, calls, reset, remove, until, sleep, open, rowsLocator, row, rowText, search, tabCount, tabs, headers, toasts, modal, confirmDialog, doctorNames, pickDoctor, chooseReason, shot };
+  return { harnessUrl, call, make, doc, calls, reset, remove, until, sleep, open, rowsLocator, row, rowText, search, tabCount, tabs, headers, toasts, modal, confirmDialog, doctorNames, pickDoctor, chooseReason, shot };
 }

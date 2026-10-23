@@ -673,6 +673,19 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.open("/admin-dashboard/appointments?tab=all");
   });
 
+  test("old Category Consultations and assign-doctor URLs redirect to the Appointments page", async () => {
+    const landed = async (start) => {
+      await page.goto(`${h.harnessUrl}/tests/e2e/adminAppointments/harness/index.html?mode=routes&start=${encodeURIComponent(start)}`);
+      return (await page.locator("#landed").innerText()).trim();
+    };
+    const id = "64b000000000000000000abc";
+    assert.equal(await landed("/admin-dashboard/category-consultations"), "/admin-dashboard/appointments?tab=all");
+    assert.equal(await landed(`/admin-dashboard/category-consultations/${id}`), `/admin-dashboard/appointments/${id}`);
+    assert.equal(await landed(`/admin-dashboard/category-consultations/assign-doctor/${id}`), `/admin-dashboard/appointments/${id}`);
+    assert.equal(await landed(`/admin-dashboard/appointments/${id}/assign`), `/admin-dashboard/appointments/${id}`);
+    await h.open("/admin-dashboard/appointments?tab=all");
+  });
+
   test("no page errors in the whole run", () => {
     assert.deepEqual(pageErrors, []);
   });

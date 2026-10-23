@@ -366,7 +366,8 @@ async function notifyPatientDoctorChanged({ booking, isCategory, doctorName, rea
           patientTimezone: booking.patientTimezone,
           targetTimezone: booking.patientTimezone,
         });
-    const label = /^dr\.?\s/i.test(doctorName || "") ? doctorName : `Dr. ${doctorName || ""}`.trim();
+    // No name, no Doctor row (never a bare "Dr.").
+    const label = !doctorName ? "" : /^dr\.?\s/i.test(doctorName) ? doctorName : `Dr. ${doctorName}`;
     const intro = reassigned
       ? "Your assigned doctor has changed due to unavailability. Your appointment time remains the same, and a new doctor has been assigned to ensure you receive the best care."
       : "A doctor has been assigned to your appointment. We will let you know once they have confirmed.";
