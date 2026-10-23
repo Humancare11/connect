@@ -635,6 +635,7 @@ const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);
 const { decideAppointmentAccess, deniedMessage } = require("./utils/appointmentRoomAccess");
+const { withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -668,6 +669,7 @@ const socketUsers = new Map(); // socketId -> { userId, role }
 // (peer should renegotiate quickly) vs. an ordinary first-time join (peer
 // should not be perturbed while a normal handshake is already in progress).
 const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
+const roomState = { socketRooms, roomActivated };
 // appointmentId -> the userId whose socket just dropped, from the moment the
 // "disconnect" handler fires until either that same user rejoins (peer-socket-up)
 // or the grace period expires without them (participant-left, which also
@@ -1054,6 +1056,7 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
     const identity = getSocketIdentity(peerSocket);
     if (identity?.role === "doctor" && String(identity.userId) === String(doctorUserId)) {
       peerSocket.emit("appointment-access-revoked", {
+        appointmentId: String(appointmentId),
         msg: "You have been removed from this appointment.",
       });
       peerSocket.leave(room);
@@ -1083,6 +1086,7 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
     const peerSocket = io.sockets.sockets.get(socketId);
     if (!peerSocket) continue;
     peerSocket.emit("appointment-access-revoked", {
+      appointmentId: String(appointmentId),
       msg: reason === "completed"
         ? "This appointment has been marked complete."
         : "This appointment has been cancelled.",
@@ -1867,6 +1871,9 @@ io.on("connection", (socket) => {
       socketId: socket.id,
       rooms: Array.from(socket.rooms),
     });
+    // The library restores socket.rooms, but socketRooms was cleared on disconnect. Rebuild it now (not only when
+    // the client re-emits join-appointment-room) so leave-appointment-room and every gated event work at once.
+    rebuildAfterRecovery(socket, roomState);
   }
 
   socket.on("user-online", async ({ userId: requestedUserId, role: requestedRole, token } = {}) => {
@@ -1967,13 +1974,14 @@ io.on("connection", (socket) => {
     // video-offer/answer/ice-candidate and chat message is silently dropped.
     // Repair it unconditionally in both cases before returning.
     if (socket.rooms.has(room)) {
+      leaveOtherAppointmentRooms(socket, appointmentId, roomState);
       socketRooms.set(socket.id, appointmentId);
 
       // This same user's socket just came back from a drop — tell whoever's
       // waiting they're no longer gone. See the "disconnect" handler above.
       if (appointmentSocketDown.get(appointmentId) === access.identity.userId) {
         appointmentSocketDown.delete(appointmentId);
-        socket.to(room).emit("peer-socket-up");
+        socket.to(room).emit("peer-socket-up", withAppointmentId(appointmentId));
       }
 
       const existing = io.sockets.adapter.rooms.get(room);
@@ -1985,11 +1993,13 @@ io.on("connection", (socket) => {
       // receiver's point of view: the room gets the joiner's, the joiner gets
       // the peer's (null when nobody else is present).
       socket.to(room).emit("peer-joined", {
+        appointmentId: String(appointmentId),
         resumedCall: wasActivated,
         peerCapabilities: socketCapabilities.get(socket.id),
       });
       if (peerPresent) {
         socket.emit("peer-joined", {
+          appointmentId: String(appointmentId),
           resumedCall: wasActivated,
           peerCapabilities: getPeerCapabilities(existing, access.identity.userId),
         });
@@ -2046,12 +2056,15 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // One call at a time: leave any earlier appointment room, so its events (a late participant-left, ICE, ...)
+    // can never reach this call.
+    leaveOtherAppointmentRooms(socket, appointmentId, roomState);
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
 
     if (appointmentSocketDown.get(appointmentId) === socketUserId) {
       appointmentSocketDown.delete(appointmentId);
-      socket.to(room).emit("peer-socket-up");
+      socket.to(room).emit("peer-socket-up", withAppointmentId(appointmentId));
     }
 
     ChatMessage.find({ appointmentId })
@@ -2089,11 +2102,13 @@ io.on("connection", (socket) => {
     if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
     socket.to(room).emit("peer-joined", {
+      appointmentId: String(appointmentId),
       resumedCall: wasActivated,
       peerCapabilities: socketCapabilities.get(socket.id),
     });
     if (peerPresent) {
       socket.emit("peer-joined", {
+        appointmentId: String(appointmentId),
         resumedCall: wasActivated,
         peerCapabilities: getPeerCapabilities(
           io.sockets.adapter.rooms.get(room),
@@ -2107,15 +2122,7 @@ io.on("connection", (socket) => {
     if (!appointmentId) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
-    const room = appointmentRoomName(appointmentId);
-    socket.to(room).emit("participant-left");
-    socket.leave(room);
-    socketRooms.delete(socket.id);
-
-    const remaining = io.sockets.adapter.rooms.get(room);
-    if (!remaining || remaining.size === 0) {
-      roomActivated.delete(appointmentId);
-    }
+    leaveAppointmentRoom(socket, appointmentId, roomState);
   });
 
   socket.on(
@@ -2225,7 +2232,7 @@ io.on("connection", (socket) => {
     // back to the offer it's meant for (see VideoCall.jsx handleAnswer).
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-offer", { offer, offerId: sanitizeOfferId(offerId) });
+      .emit("video-offer", { appointmentId: String(appointmentId), offer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
@@ -2236,7 +2243,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-answer", { answer, offerId: sanitizeOfferId(offerId) });
+      .emit("video-answer", { appointmentId: String(appointmentId), answer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
@@ -2246,7 +2253,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("ice-candidate", { candidate });
+      .emit("ice-candidate", { appointmentId: String(appointmentId), candidate });
   });
 
   socket.on("ice-restart-request", ({ appointmentId }) => {
@@ -2256,7 +2263,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("ice-restart-request");
+      .emit("ice-restart-request", withAppointmentId(appointmentId));
   });
 
   // Native mobile stops producing frames entirely when a video track's
@@ -2271,7 +2278,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("camera-state", { isCamOff: Boolean(isCamOff) });
+      .emit("camera-state", { appointmentId: String(appointmentId), isCamOff: Boolean(isCamOff) });
   });
 
   // Asks the other participant to tear down and rebuild its own
@@ -2289,7 +2296,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("request-peer-rebuild");
+      .emit("request-peer-rebuild", withAppointmentId(appointmentId));
   });
 
   socket.on("disconnect", (reason) => {
@@ -2308,7 +2315,7 @@ io.on("connection", (socket) => {
       // join-appointment-room below for where this gets resolved (peer-socket-up)
       // or the setTimeout below for where it times out (participant-left).
       if (disconnectedUserId) {
-        io.to(appointmentRoom).emit("peer-socket-down");
+        io.to(appointmentRoom).emit("peer-socket-down", withAppointmentId(appointmentId));
         appointmentSocketDown.set(appointmentId, disconnectedUserId);
       }
 
@@ -2329,7 +2336,7 @@ io.on("connection", (socket) => {
         }
 
         if (!sameUserStillInRoom) {
-          io.to(appointmentRoom).emit("participant-left");
+          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId));
           // Deliberately NOT clearing roomActivated here: this path also
           // fires when both participants drop at once (e.g. a shared
           // network outage) and later both reconnect — clearing it would
