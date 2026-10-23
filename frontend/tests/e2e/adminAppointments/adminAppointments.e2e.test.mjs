@@ -76,13 +76,13 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
 
   // ── The list itself ───────────────────────────────────────────────────────
 
-  test("the eight tabs, in order, with the columns the spec asks for; Assigned by is hidden on Upcoming", async () => {
+  test("the eight tabs, in order, with the columns the spec asks for (the first header is the selection checkbox); Assigned by is hidden on Upcoming", async () => {
     assert.deepEqual((await h.tabs()).map((t) => t.replace(/\s*[\d–]+$/, "")), ["All", "Upcoming", "Assigned", "Pending", "Confirmed", "Complete", "Cancelled", "Testing"]);
     await page.click('[role="tab"]:has-text("Upcoming")');
     await h.until(async () => !(await h.headers()).includes("Assigned by") && (await h.rowsLocator().count()) > 0, "the Upcoming tab");
     await page.click('[role="tab"]:has-text("All")');
     await h.until(async () => (await h.headers()).includes("Assigned by"), "the All tab");
-    assert.deepEqual(await h.headers(), ["#", "Booking ID", "Patient", "Doctor", "Category", "Booking date", "Consultation date", "Fee", "Status", "Assigned by", "Actions"]);
+    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Category", "Booking date", "Consultation date", "Fee", "Status", "Assigned by", "Actions"]);
     assert.equal(await h.rowsLocator().count(), 25);
     const text = await page.locator("table.adp-bk").innerText();
     assert.ok(text.includes("TESTING") && text.includes("Not scheduled") && text.includes("Alternate doctor") && text.includes("Not assigned"));
@@ -412,6 +412,265 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.modal().locator('button[type="submit"]').click();
     await h.modal().waitFor({ state: "detached" });
     await h.until(async () => /Cancelled/.test(await h.rowText("Ed Error")), "retry works");
+  });
+
+  // ── Selecting rows and bulk actions ───────────────────────────────────────
+
+  const menuLabels = async () => page.locator('[role="menu"] button').allInnerTexts();
+  const openMenu = async () => {
+    await page.locator(".adp-bk-headcheck").click();
+    await page.locator('[role="menu"]').waitFor();
+  };
+  const choose = async (label) => {
+    await page.locator('[role="menu"] button', { hasText: label }).click();
+    await page.locator('[role="menu"]').waitFor({ state: "detached" });
+  };
+  const selectedText = async () => (await page.locator(".adp-bk-bulk-count").innerText()).trim();
+  const bulkButton = (action) => page.locator(`.adp-bk-bulk-btn[data-bulk="${action}"]`);
+  const resultItems = async (section) => page.locator(`.hc-modal ul[aria-label="${section}"] li`).allInnerTexts();
+  const resultTitle = async () => (await page.locator(".hc-modal h2").innerText()).trim();
+  const closeResult = async () => {
+    await page.locator(".hc-modal button", { hasText: "Close" }).click();
+    await page.locator(".hc-modal").waitFor({ state: "detached" });
+  };
+
+  test("the header checkbox opens a menu of only the choices that make sense; it does not select by itself", async () => {
+    await page.fill(".adp-search input", "");
+    await page.click('[role="tab"]:has-text("All")');
+    await h.until(async () => (await h.rowsLocator().count()) === 25, "25 rows");
+
+    assert.equal(await page.locator(".adp-bk-rowcheck").count(), 0, "no row tick boxes until selecting");
+    await openMenu();
+    assert.deepEqual(await menuLabels(), ["Select this page", "Select one by one"]);
+    assert.equal(await page.locator(".adp-bk-headcheck").isChecked(), false, "the header checkbox did not select anything");
+    assert.equal(await page.locator(".adp-bk-bulk").count(), 0);
+    await page.keyboard.press("Escape");
+    await page.locator('[role="menu"]').waitFor({ state: "detached" });
+
+    await openMenu();
+    await choose("Select one by one");
+    assert.equal(await page.locator(".adp-bk-rowcheck").count(), 25, "tick boxes appear on every row");
+    assert.equal(await selectedText(), "0 selected on this page");
+    assert.equal(await bulkButton("auto-complete").isDisabled(), true, "nothing to act on yet");
+    await openMenu();
+    assert.deepEqual(await menuLabels(), ["Select this page", "Exit selection"]);
+    await page.keyboard.press("Escape");
+
+    await page.locator(".adp-bk-rowcheck").nth(0).check();
+    await page.locator(".adp-bk-rowcheck").nth(3).check();
+    assert.equal(await selectedText(), "2 selected on this page");
+    assert.equal(await page.locator(".adp-bk-headcheck").evaluate((el) => el.indeterminate), true, "partly selected");
+    await openMenu();
+    assert.deepEqual(await menuLabels(), ["Select this page", "Clear selection", "Exit selection"]);
+    await choose("Select this page");
+    assert.equal(await selectedText(), "25 selected on this page");
+    assert.equal(await page.locator(".adp-bk-headcheck").isChecked(), true);
+    await openMenu();
+    assert.deepEqual(await menuLabels(), ["Clear selection", "Exit selection"]);
+    await choose("Clear selection");
+    assert.equal(await selectedText(), "0 selected on this page");
+    assert.equal(await page.locator(".adp-bk-rowcheck").count(), 25, "selection stays on after Clear");
+
+    await page.locator(".adp-bk-rowcheck").nth(1).check();
+    await page.click('button[aria-label="Next page"]');
+    await h.until(async () => (await selectedText()) === "0 selected on this page", "the selection is of one page: a new page starts again");
+    await page.click('button[aria-label="Previous page"]');
+    await openMenu();
+    await choose("Exit selection");
+    assert.equal(await page.locator(".adp-bk-bulk").count(), 0);
+    assert.equal(await page.locator(".adp-bk-rowcheck").count(), 0);
+
+    await openMenu();
+    await choose("Select this page");
+    await page.locator(".adp-bk-bulk-btn--done").click();
+    assert.equal(await page.locator(".adp-bk-bulk").count(), 0, "Done leaves selection");
+    await h.shot("selection-menu");
+  });
+
+  test("bulk auto complete on a mixed selection: allowed rows done, the rest skipped with the server's reason", async () => {
+    await h.reset();
+    const ids = {
+      a: await h.make({ status: "assigned", doctor: 0, name: "Mix A" }),
+      b: await h.make({ kind: "category", status: "confirmed", doctor: 1, name: "Mix B" }),
+      t: await h.make({ status: "assigned", doctor: 2, name: "Mix T", testing: true }),
+      c: await h.make({ status: "pending", doctor: 3, name: "Mix C" }),
+      d: await h.make({ status: "upcoming", name: "Mix D" }),
+      e: await h.make({ status: "complete", doctor: 0, name: "Mix E" }),
+      gone: await h.make({ status: "assigned", doctor: 1, name: "Mix Gone" }),
+    };
+    await h.search("Mix ");
+    await h.until(async () => (await h.rowsLocator().count()) === 7, "7 Mix rows");
+    await openMenu();
+    await choose("Select this page");
+    assert.equal(await selectedText(), "7 selected on this page");
+    await h.remove(ids.gone); // disappears while it is ticked
+
+    await bulkButton("auto-complete").click();
+    await h.confirmDialog().waitFor();
+    const message = await h.confirmDialog().innerText();
+    // The page counts what looks completable (the booking deleted underneath still looks Assigned); the server has the last word.
+    assert.match(message, /Auto complete 4 appointments\?/);
+    assert.match(message, /3 of the selected bookings are not Assigned or Confirmed and will be skipped/);
+    await h.shot("bulk-auto-complete-confirm");
+    await h.confirmDialog().locator("button", { hasText: "Mark complete" }).click();
+
+    await h.modal().waitFor();
+    assert.equal(await resultTitle(), "Auto complete: 3 done, 4 skipped");
+    const skipped = (await resultItems("Not done")).map((t) => t.replace(/\s+/g, " "));
+    assert.equal(skipped.length, 4);
+    assert.ok(skipped.some((t) => /Mix C/.test(t) && /Skipped/.test(t) && /This one is pending/.test(t)), skipped.join("\n"));
+    assert.ok(skipped.some((t) => /Mix D/.test(t) && /This one is upcoming/.test(t)));
+    assert.ok(skipped.some((t) => /Mix E/.test(t) && /This one is complete/.test(t)));
+    assert.ok(skipped.some((t) => /no longer exists/.test(t)));
+    await h.shot("bulk-result");
+    await closeResult();
+
+    await h.until(async () => /Complete/.test(await h.rowText("Mix A")) && /Complete/.test(await h.rowText("Mix B")) && /Complete/.test(await h.rowText("Mix T")), "rows refreshed to Complete");
+    assert.match(await h.rowText("Mix C"), /Pending/);
+    assert.equal((await h.doc(ids.a)).status, "complete");
+    assert.equal((await h.doc(ids.b)).status, "Completed");
+    assert.equal((await h.doc(ids.c)).status, "pending");
+    assert.equal(await selectedText(), "0 selected on this page", "ticks cleared after the action");
+    const pushes = (await h.calls()).filter((c) => c.name === "push:Appointment completed");
+    assert.equal(pushes.length, 2, "two patients told; the testing booking sends nothing");
+  });
+
+  test("bulk cancel: one required reason, the paid bookings counted before and after, notifications only for real bookings", async () => {
+    await h.reset();
+    const ids = {
+      p1: await h.make({ status: "confirmed", doctor: 1, paid: true, gateway: "stripe", name: "Cx One" }),
+      p2: await h.make({ status: "assigned", doctor: 2, paid: true, gateway: "paypal", name: "Cx Two" }),
+      p3: await h.make({ status: "upcoming", name: "Cx Three" }),
+      p4: await h.make({ status: "complete", doctor: 0, name: "Cx Four" }),
+      p5: await h.make({ status: "assigned", doctor: 3, paid: true, gateway: "stripe", name: "Cx Five", testing: true }),
+    };
+    await h.search("Cx ");
+    await h.until(async () => (await h.rowsLocator().count()) === 5, "5 Cx rows");
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("cancel").click();
+    await h.modal().waitFor();
+    assert.equal(await resultTitle(), "Cancel 5 bookings?");
+    const text = (await h.modal().innerText()).replace(/\s+/g, " ");
+    assert.match(text, /1 of the selected bookings is already Complete or Cancelled and will be skipped/);
+    assert.match(text, /3 of the selected bookings were paid and are not refunded automatically\. Refund them: Stripe \(2\), PayPal \(1\)\./);
+    assert.equal(await h.modal().locator('button[type="submit"]').isDisabled(), true, "a reason is required");
+    assert.deepEqual(await h.modal().locator("select option").allInnerTexts(), ["Choose a reason", "Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"]);
+    await h.shot("bulk-cancel-dialog");
+    await h.chooseReason("Duplicate booking");
+    await h.modal().locator('button[type="submit"]').click();
+
+    await h.until(async () => (await resultTitle()) === "Cancel: 4 done, 1 skipped", "result dialog");
+    const resultText = (await h.modal().innerText()).replace(/\s+/g, " ");
+    assert.match(resultText, /Cx Four/);
+    assert.match(resultText, /A complete booking can't be cancelled/);
+    assert.match(resultText, /3 of the cancelled bookings were paid and are not refunded automatically\. Refund them: Stripe \(2\), PayPal \(1\)\./);
+    await closeResult();
+
+    for (const key of ["p1", "p2", "p3", "p5"]) {
+      const saved = await h.doc(ids[key]);
+      assert.equal(String(saved.status).toLowerCase(), "cancelled", key);
+      assert.equal(saved.cancelReason, "Duplicate booking", key);
+    }
+    assert.equal((await h.doc(ids.p4)).cancelReason, "");
+    const names = (await h.calls()).map((c) => c.name);
+    assert.equal(names.filter((n) => n === "push:Appointment cancelled").length, 3, "p1, p2, p3 (not the testing booking)");
+    assert.equal(names.filter((n) => n === "notifyDoctorBookingCancelled").length, 2, "p1 and p2 had a doctor");
+
+    // Nothing paid in the selection: no refund warning.
+    await h.make({ status: "assigned", doctor: 0, name: "Cy Free" });
+    await h.search("Cy Free");
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("cancel").click();
+    await h.modal().waitFor();
+    assert.equal(await h.modal().getByText("refunded automatically").count(), 0);
+    await h.modal().getByText("Go back").click();
+    await h.modal().waitFor({ state: "detached" });
+  });
+
+  test("mark and unmark testing: any status, nothing sent, the Testing count follows", async () => {
+    await h.reset();
+    const ids = [
+      await h.make({ status: "complete", doctor: 0, name: "Tag One" }),
+      await h.make({ status: "cancelled", doctor: 1, name: "Tag Two" }),
+      await h.make({ kind: "category", status: "upcoming", name: "Tag Three" }),
+    ];
+    await h.search("Tag ");
+    await h.until(async () => (await h.rowsLocator().count()) === 3, "3 Tag rows");
+    await page.click('[role="tab"]:has-text("All")');
+    const testing = await h.tabCount("Testing");
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("mark-testing").click();
+    await h.until(async () => (await resultTitle()) === "Mark as testing: 3 done", "result");
+    await closeResult();
+    await h.until(async () => (await page.locator("table.adp-bk .adp-bk-tag").count()) === 3, "TESTING tags");
+    await h.until(async () => (await h.tabCount("Testing")) === testing + 3, "Testing count up by 3");
+    for (const id of ids) assert.equal((await h.doc(id)).isTesting, true);
+    assert.equal((await h.doc(ids[0])).testingMarkedBy.name, "Super Admin");
+
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("unmark-testing").click();
+    await h.until(async () => (await resultTitle()) === "Unmark testing: 3 done", "result");
+    await closeResult();
+    await h.until(async () => (await page.locator("table.adp-bk .adp-bk-tag").count()) === 0, "tags gone");
+    await h.until(async () => (await h.tabCount("Testing")) === testing, "Testing count back");
+    for (const id of ids) assert.equal((await h.doc(id)).isTesting, false);
+    assert.deepEqual(await h.calls(), [], "marking sends nothing");
+  });
+
+  test("a failed request keeps the selection and says so; there is no bulk Confirm", async () => {
+    const id = await h.make({ status: "confirmed", doctor: 0, name: "Fail Case" });
+    await h.search("Fail Case");
+    await openMenu();
+    await choose("Select this page");
+    assert.equal(await page.locator(".adp-bk-bulk-btn", { hasText: /^Confirm$/ }).count(), 0, "no bulk Confirm");
+    assert.deepEqual(await page.locator(".adp-bk-bulk-btn").allInnerTexts(), ["Auto complete", "Cancel", "Mark testing", "Unmark testing", "Done"]);
+    await page.route("**/api/admin/bookings/bulk", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
+    await bulkButton("mark-testing").click();
+    await h.until(async () => /Something went wrong/.test(await h.toasts()), "error message");
+    assert.equal(await selectedText(), "1 selected on this page", "the ticks are kept so it can be retried");
+    assert.equal((await h.doc(id)).isTesting, false);
+    await page.unroute("**/api/admin/bookings/bulk");
+    await bulkButton("mark-testing").click();
+    await h.until(async () => (await resultTitle()) === "Mark as testing: 1 done", "retry works");
+    await closeResult();
+    await page.locator(".adp-bk-bulk-btn--done").click();
+  });
+
+  test("on a phone-width screen the table is cards, and a Select button opens the same menu", async () => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await h.open("/admin-dashboard/appointments?tab=all");
+    await h.until(async () => (await page.locator(".adp-bk-seltools button").count()) === 1, "the Select button");
+    assert.equal(await page.locator(".adp-bk-headcheck").isVisible(), false, "the table header is hidden on cards");
+    await page.locator(".adp-bk-seltools button").click();
+    await page.locator('[role="menu"]').waitFor();
+    assert.deepEqual(await menuLabels(), ["Select this page", "Select one by one"]);
+    await choose("Select this page");
+    await h.until(async () => (await selectedText()) === "25 selected on this page", "25 selected");
+    assert.equal(await page.locator(".adp-bk-rowcheck").first().isVisible(), true, "each card shows its tick box");
+    assert.equal(await page.locator(".adp-bk-rownum").first().isVisible(), false);
+    const card = await page.evaluate(() => {
+      const num = document.querySelector("td.adp-bk-num");
+      const by = [...document.querySelectorAll('td[data-label="Assigned by"]')].find((td) => td.textContent.trim().length > 3);
+      const id = [...document.querySelectorAll("td[data-label=\"Booking ID\"]")].find((td) => td.querySelector(".adp-bk-tag"));
+      return {
+        numCaption: getComputedStyle(num, "::before").display,
+        assignedByWidth: Math.round(by.getBoundingClientRect().width),
+        idCellChildren: id ? id.children.length : -1,
+      };
+    });
+    assert.equal(card.numCaption, "none", "no stray # caption above the tick box");
+    assert.ok(card.assignedByWidth > 150, `Assigned by is not squeezed (${card.assignedByWidth}px)`);
+    assert.equal(card.idCellChildren, 1, "the TESTING tag stays with the booking id");
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    assert.ok(overflow <= 1, `sideways scroll ${overflow}px`);
+    await h.shot("selection-cards");
+    await page.locator(".adp-bk-bulk-btn--done").click();
+    await page.setViewportSize({ width: 1500, height: 1000 });
+    await h.open("/admin-dashboard/appointments?tab=all");
   });
 
   test("no page errors in the whole run", () => {

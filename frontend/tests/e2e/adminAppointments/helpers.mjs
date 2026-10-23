@@ -51,6 +51,7 @@ export function createHelpers({ page, api, harnessUrl }) {
   const doc = async (id) => (await call("GET", `/__doc/${id}`)).body;
   const calls = async () => (await call("GET", "/__calls")).body;
   const reset = () => call("POST", "/__reset");
+  const remove = (id) => call("DELETE", `/__doc/${id}`);
 
   const until = async (fn, what, ms = 8000) => {
     const end = Date.now() + ms;
@@ -107,5 +108,5 @@ export function createHelpers({ page, api, harnessUrl }) {
     await page.screenshot({ path: path.join(screenshotDir, `${name}.png`) });
   };
 
-  return { call, make, doc, calls, reset, until, sleep, open, rowsLocator, row, rowText, search, tabCount, tabs, headers, toasts, modal, confirmDialog, doctorNames, pickDoctor, chooseReason, shot };
+  return { call, make, doc, calls, reset, remove, until, sleep, open, rowsLocator, row, rowText, search, tabCount, tabs, headers, toasts, modal, confirmDialog, doctorNames, pickDoctor, chooseReason, shot };
 }

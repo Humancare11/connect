@@ -121,6 +121,11 @@ export async function startApiServer() {
   app.post("/__make", async (req, res) => res.json({ id: await make(req.body) }));
   app.get("/__calls", (req, res) => res.json(calls));
   app.post("/__reset", (req, res) => { calls.length = 0; res.json({}); });
+  app.delete("/__doc/:id", async (req, res) => {
+    await Appointment.deleteOne({ _id: req.params.id });
+    await CategoryConsultation.deleteOne({ _id: req.params.id });
+    res.json({});
+  });
   app.get("/__doc/:id", async (req, res) => res.json((await Appointment.findById(req.params.id).lean()) || (await CategoryConsultation.findById(req.params.id).lean())));
 
   const server = http.createServer(app);

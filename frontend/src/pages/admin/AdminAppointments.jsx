@@ -7,7 +7,11 @@ import BookingsTable from "./appointments/BookingsTable";
 import BookingsPager from "./appointments/BookingsPager";
 import BookingActionModals from "./appointments/BookingActionModals";
 import useAdminBookings from "./appointments/useAdminBookings";
+import BulkCancelModal from "./appointments/BulkCancelModal";
+import BulkResultModal from "./appointments/BulkResultModal";
 import useBookingActions from "./appointments/useBookingActions";
+import useBulkActions from "./appointments/useBulkActions";
+import useSelection from "./appointments/useSelection";
 import { DEFAULT_TAB, PAGE_SIZE, TAB_LABELS, pageFromParam, tabFromParam } from "./appointments/bookingFormat";
 
 const SEARCH_DELAY_MS = 300;
@@ -49,6 +53,10 @@ export default function AdminAppointments() {
 
   const rows = data?.items || [];
   const firstLoad = loading && !data;
+
+  // Ticked rows are of this page only: a new tab, filter, search or page starts again.
+  const selection = useSelection({ rows, resetKey: `${tab}|${hideTesting}|${q}|${page}` });
+  const bulk = useBulkActions({ selection, reload });
 
   // Bookings can disappear while you are on a later page (cancelled elsewhere, filtered
   // out): go back to the last page that exists instead of showing an empty one.
@@ -107,12 +115,16 @@ export default function AdminAppointments() {
                 {error} <RetryButton onRetry={reload} />
               </div>
             )}
-            <BookingsTable rows={rows} tab={tab} page={page} actions={actions} />
+            <BookingsTable rows={rows} tab={tab} page={page} actions={actions} selection={selection} bulk={bulk} />
             <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}
       </section>
       <BookingActionModals actions={actions} />
+      {bulk.dialog?.type === "cancel" && (
+        <BulkCancelModal rows={bulk.dialog.rows} submitting={bulk.busy} onSubmit={bulk.submitCancel} onClose={bulk.closeDialog} />
+      )}
+      {bulk.dialog?.type === "result" && <BulkResultModal result={bulk.dialog.result} onClose={bulk.closeDialog} />}
     </div>
   );
 }

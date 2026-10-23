@@ -1,6 +1,9 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Country } from "country-state-city";
 import StatusPill from "./StatusPill";
+import SelectionMenu from "./SelectionMenu";
+import BulkBar from "./BulkBar";
 import {
   AUTO_COMPLETE_HINT, canAlternate, canAssign, canAutoComplete, canCancel, canConfirm, formatBookedOn, formatConsultation, formatFee,
   isClosed, originalDoctorHint, rowNumber, shortBookingId, showAssignedByColumn,
@@ -57,15 +60,40 @@ function ActionsCell({ row, actions, busy }) {
   );
 }
 
-export default function BookingsTable({ rows, tab, page, actions }) {
+// True while the table area is narrow enough that the rows are shown as cards (the table header, and with it the
+// header checkbox, is hidden then). Same width the stylesheet switches layout at.
+function useIsNarrow(ref, max = 900) {
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(([entry]) => setNarrow(entry.contentRect.width < max));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref, max]);
+  return narrow;
+}
+
+export default function BookingsTable({ rows, tab, page, actions, selection, bulk }) {
   const showAssignedBy = showAssignedByColumn(tab);
+  const block = useRef(null);
+  const narrow = useIsNarrow(block);
 
   return (
+    <div ref={block} className="adp-bk-block">
+      {narrow && (
+        <div className="adp-bk-seltools">
+          <SelectionMenu selection={selection} pageCount={rows.length} variant="button" />
+        </div>
+      )}
+      {selection.selecting && <BulkBar count={selection.count} busy={bulk.busy} onAction={bulk.start} onDone={selection.exit} />}
     <div className="adp-table-wrap adp-bk-wrap">
-      <table className="adp-flow-table adp-bk">
+      <table className={`adp-flow-table adp-bk${selection.selecting ? " adp-bk--selecting" : ""}`}>
         <thead>
           <tr>
-            <th className="adp-bk-num">#</th>
+            <th className="adp-bk-num adp-bk-headcell">
+              <SelectionMenu selection={selection} pageCount={rows.length} />
+            </th>
             <th>Booking ID</th>
             <th>Patient</th>
             <th>Doctor</th>
@@ -83,13 +111,26 @@ export default function BookingsTable({ rows, tab, page, actions }) {
             const busy = actions.busyId === row.id;
             const consultation = formatConsultation(row.consultation);
             const country = getCountryName(row.patient?.country);
-            const classes = [row.isTesting && "adp-bk-row--testing", row.status === "cancelled" && "adp-bk-row--cancelled", busy && "adp-bk-row--busy"].filter(Boolean).join(" ");
+            const classes = [selection.isSelected(row.id) && "adp-bk-row--selected", row.isTesting && "adp-bk-row--testing", row.status === "cancelled" && "adp-bk-row--cancelled", busy && "adp-bk-row--busy"].filter(Boolean).join(" ");
             return (
               <tr key={`${row.kind}:${row.id}`} className={classes || undefined} aria-busy={busy || undefined}>
-                <td className="adp-sr-cell adp-bk-num" data-label="#">{rowNumber(page, index)}</td>
+                <td className="adp-sr-cell adp-bk-num" data-label="#">
+                  {selection.selecting && (
+                    <input
+                      type="checkbox"
+                      className="adp-bk-rowcheck"
+                      checked={selection.isSelected(row.id)}
+                      onChange={() => selection.toggle(row.id)}
+                      aria-label={`Select booking ${shortBookingId(row)}`}
+                    />
+                  )}
+                  <span className="adp-bk-rownum">{rowNumber(page, index)}</span>
+                </td>
                 <td data-label="Booking ID">
-                  <span className="adp-booking-id" title={row.id}>{shortBookingId(row)}</span>
-                  {row.isTesting && <span className="adp-bk-tag">TESTING</span>}
+                  <div className="adp-bk-idcell">
+                    <span className="adp-booking-id" title={row.id}>{shortBookingId(row)}</span>
+                    {row.isTesting && <span className="adp-bk-tag">TESTING</span>}
+                  </div>
                 </td>
                 <td data-label="Patient">
                   <div className="adp-patient-cell">
@@ -119,6 +160,7 @@ export default function BookingsTable({ rows, tab, page, actions }) {
           })}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }
