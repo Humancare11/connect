@@ -10,6 +10,9 @@ export const ALPHA_WEBM_SRC = `/livechat/doctor-alpha.webm${VIDEO_VERSION}`;
 // Safari, iOS and iPadOS (and any browser without VP9) get the same shot as an H.264 MP4 with its light-grey background,
 // whose box edges are faded with a soft mask (see .lcw-gr-doc--ios in the CSS).
 export const IOS_MP4_SRC = `/livechat/doctor-ios.mp4${VIDEO_VERSION}`;
+// Desktop only: the intro doctor stands this many px further left than the round button's centre, so his waving arm
+// stays clear of the screen edge (the pill, the round button and his feet line do not move). Phones ignore it.
+export const DOCTOR_SHIFT_LEFT_PX = 18;
 export const CHAR_CENTER = 0.43; // the doctor's centre, as a fraction of the intro video's width
 
 export const SHOW_PILL_AT = 3.2; // seconds into the video: the message pill slides in

@@ -552,6 +552,67 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
     });
 
+    test("desktop: the intro doctor keeps 16px or more from the right edge (1280, 1440, 1920), clear of the pill's arrow, while the pill, the round button's place and his feet line stay put", async () => {
+      // Measured on the standing frame: the character spans 14%..72% of the video frame's width; at pill height the coat starts at 28%.
+      const CHAR_LEFT = 0.14;
+      const CHAR_RIGHT = 0.72;
+      const COAT_LEFT = 0.28;
+      for (const [width, height] of [
+        [1280, 800],
+        [1440, 900],
+        [1920, 1080],
+      ]) {
+        await newPage({ width, height });
+        await load();
+        await introPill().waitFor({ timeout: 9000 });
+        await realWait(900); // the pill's slide-in
+        const m = await page.evaluate(() => {
+          const rect = (el) => el.getBoundingClientRect().toJSON();
+          return {
+            doc: rect(document.querySelector(".lcw-gr-doc")),
+            slot: rect(document.querySelector(".lcw-gr-slot")),
+            pill: rect(document.querySelector(".lcw-gr-minif")),
+            arrow: rect(document.querySelector(".lcw-gr-minif button")),
+            shift: getComputedStyle(document.querySelector(".lcw-gr-mini")).getPropertyValue("--gr-shift").trim(),
+          };
+        });
+        const label = `${width}px`;
+        assert.equal(m.shift, "18px", `${label}: the shift is the 18px from greeterConfig.js`);
+        const charRight = m.doc.left + CHAR_RIGHT * m.doc.width;
+        const charLeft = m.doc.left + CHAR_LEFT * m.doc.width;
+        assert.ok(width - charRight >= 16, `${label}: his waving arm is ${width - charRight}px from the right edge`);
+        assert.ok(charLeft >= 0, `${label}: and the frame's left side is on screen`);
+        assert.ok(m.doc.left + COAT_LEFT * m.doc.width >= m.arrow.right, `${label}: his body at the pill's height stays right of the pill's arrow button (${m.doc.left + COAT_LEFT * m.doc.width} vs ${m.arrow.right})`);
+        // unchanged: the compact bar is 20px from the edge, the button's place is 64px wide, the pill 12px left of it, feet on the bar's bottom line
+        assert.ok(Math.abs(m.slot.right - (width - 20)) <= 1, `${label}: the round button's place is where it was (right ${m.slot.right})`);
+        assert.equal(Math.round(m.slot.width), 64);
+        assert.ok(Math.abs(m.slot.left - m.pill.right - 12) <= 1, `${label}: the pill is 12px left of the button`);
+        assert.ok(Math.abs(m.pill.right - (width - 20 - 64 - 12)) <= 1, `${label}: the pill is where it was (right ${m.pill.right})`);
+        assert.ok(Math.abs(m.doc.bottom - m.slot.bottom) <= 2, `${label}: feet still on the bar's bottom line`);
+        // at 10 s he still flies into the round button, which stays where the slot was
+        await freeze();
+        await tick(10_500);
+        await tick(1000);
+        await launcher().waitFor();
+        await realWait(700);
+        const button = await launcher().boundingBox();
+        assert.ok(Math.abs(button.x - m.slot.left) <= 1.5 && Math.abs(button.y - m.slot.top) <= 1.5, `${label}: the button is where the slot was`);
+        const pillAfter = await page.locator(".lcw-gr-minif").boundingBox();
+        assert.ok(Math.abs(pillAfter.x - m.pill.left) <= 1 && Math.abs(pillAfter.y - m.pill.top) <= 1, `${label}: the pill did not move`);
+      }
+    });
+
+    test("phone: the doctor is not shifted (the phone layout is unchanged)", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+      const m = await page.evaluate(() => {
+        const rect = (el) => el.getBoundingClientRect().toJSON();
+        return { doc: rect(document.querySelector(".lcw-gr-doc")), w: innerWidth };
+      });
+      assert.ok(Math.abs(m.doc.right - m.w) <= 1, `on phones the frame still ends at the screen edge (${m.doc.right} of ${m.w})`);
+    });
+
     test("after the video ends he loops only the standing part: never back to the walk-in", async () => {
       await newPage();
       await load();

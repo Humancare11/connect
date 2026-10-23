@@ -99,7 +99,7 @@ html.hc-cookie-open .lcw-window {
    it hangs over the right edge; the character's centre (43% of the frame) sits over the button's centre. */
 .lcw-gr-doc {
   position: absolute;
-  right: calc(32px - var(--gr-w) * 0.57);
+  right: calc(32px - var(--gr-w) * 0.57 + var(--gr-shift, 0px)); /* --gr-shift: DOCTOR_SHIFT_LEFT_PX, desktop only */
   bottom: 0;
   width: var(--gr-w);
   aspect-ratio: 360 / 556;

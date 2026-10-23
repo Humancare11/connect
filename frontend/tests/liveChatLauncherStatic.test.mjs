@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import {
   ALPHA_WEBM_SRC,
   AVATAR_MS,
+  DOCTOR_SHIFT_LEFT_PX,
   IOS_MP4_SRC,
   CHAT_MS,
   DARK_MS,
@@ -221,4 +222,14 @@ test("chat disabled in admin settings: nothing mounts, so no video or poster is 
   assert.match(loader, /lazy\(\(\) => import\("\.\/LiveChatWidget"\)\)/, "the greeter ships in the lazy widget chunk");
   assert.doesNotMatch(loader, /doctor\.(webm|mp4)|poster\.jpg|<video/);
   assert.doesNotMatch(read("index.html"), /livechat\/(doctor|poster)/, "no preload hint on the page");
+});
+
+test("desktop: the intro doctor is shifted left by one adjustable number; the pill, button and feet line are not involved", () => {
+  assert.equal(DOCTOR_SHIFT_LEFT_PX, 18);
+  assert.match(greeter, /style=\{\{ "--gr-shift": `\$\{DOCTOR_SHIFT_LEFT_PX\}px` \}\}/);
+  assert.match(css, /\.lcw-gr-doc \{[^}]*right: calc\(32px - var\(--gr-w\) \* 0\.57 \+ var\(--gr-shift, 0px\)\);[^}]*bottom: 0;/);
+  const phone = css.match(/@media \(max-width: 480px\) \{[^@]*\.lcw-gr-mini \.lcw-gr-doc \{[^}]*\}/)[0];
+  assert.doesNotMatch(phone, /gr-shift/, "phones ignore the shift");
+  assert.doesNotMatch(css.match(/\.lcw-gr-minif \{[^}]*\}/)[0], /gr-shift/);
+  assert.doesNotMatch(css.match(/\.lcw-gr-slot \{[^}]*\}/)[0], /gr-shift/);
 });

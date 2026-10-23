@@ -4,6 +4,7 @@ import {
   ALPHA_WEBM_SRC,
   IOS_MP4_SRC,
   CHAR_CENTER,
+  DOCTOR_SHIFT_LEFT_PX,
   FLY_MS,
   MAX_PILL_CHARS,
   SHOW_PILL_AT,
@@ -210,7 +211,7 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
   const typing = text.trim().length > 0;
 
   return (
-    <div className={`lcw-gr-mini${popIn ? " is-pop" : ""}`}>
+    <div className={`lcw-gr-mini${popIn ? " is-pop" : ""}`} style={{ "--gr-shift": `${DOCTOR_SHIFT_LEFT_PX}px` }}>
       <form
         className={`lcw-gr-minif${away ? " is-away" : ""}${typing ? " is-typing" : ""}`}
         autoComplete="off"
