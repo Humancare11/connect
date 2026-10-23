@@ -1,0 +1,382 @@
+<title>Humancare Appointments Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: navy sidebar + white workspace, toolbar → status chips → table, matching the existing Humancare admin console */
+:root{
+  --side:#0c2563; --side-fg:#ffffff; --side-mute:#9fb0d6; --side-active:#1d3a80;
+  --bg:#f8fafc; --panel:#ffffff; --fg:#0f172a; --mute:#475569; --line:#e2e8f0; --head:#f8fafc;
+  --accent:#0f766e; --accent-fg:#ffffff; --accent-soft:#ccfbf1;
+  --ok:#15803d; --ok-bg:#dcfce7; --info:#1f5fbf; --info-bg:#e3edfc;
+  --bad:#b4372f; --bad-bg:#fde7e4; --warn:#9a6200; --warn-bg:#fff2d6;
+  --test:#475569; --test-bg:#f1f5f9; --badge:#f4a90b; color-scheme:light;
+  --f-ui:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh}
+/* sidebar */
+.side{background:var(--side);color:var(--side-fg);padding:18px 10px;display:flex;flex-direction:column;gap:2px}
+.brand{display:flex;gap:10px;align-items:center;padding:0 8px 16px}
+.logo{width:40px;height:40px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700}
+.brand b{display:block;font-size:17px}.brand small{color:var(--side-mute);letter-spacing:.12em;font-size:11px;font-weight:600}
+.grp{font-size:11px;letter-spacing:.14em;color:var(--side-mute);font-weight:600;padding:14px 12px 4px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-radius:7px;font-weight:500;font-size:14px}
+.nav.on{background:var(--side-active);font-weight:700}
+.nav i{font-style:normal;background:var(--badge);color:#1b1300;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px}
+/* main */
+.main{min-width:0;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:14px}
+.top{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{font-size:18px;margin:0}.top p{margin:0;color:var(--mute);font-size:13px}
+.top .grow{flex:1;min-width:180px}
+.search{flex:1 1 260px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--panel)}
+.search input{border:0;background:transparent;outline:0;width:100%}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:6px 12px;font-weight:600;font-size:13px;white-space:nowrap}
+.btn:hover{border-color:var(--mute)}
+.btn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.ok{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.ok:hover{filter:brightness(1.08)}
+.btn.bad{color:var(--fg)}
+.btn.bad:hover{background:var(--head)}
+.btn.tst{color:var(--test);border-color:color-mix(in srgb,var(--test) 40%,var(--line))}
+.btn.tst.on{background:var(--test-bg)}
+.btn:disabled{opacity:.35;cursor:not-allowed;filter:none}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--side);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+/* chips */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:20px;padding:6px 14px;font-weight:600;font-size:13.5px}
+.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+
+
+.filters .search{flex:0 1 340px;margin-left:auto}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mute);font-weight:500}
+.selcol{white-space:nowrap;width:1%}.selcol input{vertical-align:middle;margin:0 8px 0 0;width:16px;height:16px;accent-color:var(--accent)}
+.selmenu{position:absolute;top:calc(100% - 4px);left:8px;z-index:5;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px #0f172a22;padding:4px;display:flex;flex-direction:column;min-width:170px}
+.selmenu button{background:none;border:0;text-align:left;padding:8px 10px;border-radius:6px;font-weight:500;color:var(--fg)}
+.selmenu button:hover{background:var(--head)}
+.nav[data-view]{cursor:pointer}.nav[data-view]:hover{background:#ffffff14}
+.echips{display:flex;gap:8px;flex-wrap:wrap}
+.etools{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.filters .esearch{margin-left:0;flex:0 1 260px;min-width:200px;padding:7px 12px}
+.legend{display:flex;gap:20px;flex-wrap:wrap;color:var(--mute);font-size:13px}
+.legend span{display:flex;align-items:center;gap:8px}
+.sw{width:16px;height:16px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+.sw.auto{background:var(--head)}.sw.edit{background:#d9f2ea;border-color:#a7dccb}
+.etable{min-width:1440px}
+.etable th.r,.etable td.r{text-align:right}
+.etable th.ed{background:#d9f2ea}
+.etable td.ed{background:#eef9f5;padding:4px 6px}
+.etable td{padding:8px 10px;white-space:nowrap}
+.etable td.ed input,.etable td.ed select{font-size:14px}
+.etable th.cb,.etable td.cb{width:1%}
+.etable input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent)}
+.etable td.ed input,.etable td.ed select{width:100%;border:1px solid transparent;background:transparent;border-radius:6px;padding:6px 8px}
+.etable td.ed input:hover,.etable td.ed select:hover{border-color:#a7dccb;background:var(--panel)}
+.etable td.ed input:focus,.etable td.ed select:focus{border-color:var(--accent);background:var(--panel);outline:0}
+.etable .fee-in{text-align:right;width:90px!important;font-variant-numeric:tabular-nums}
+.etable select{font-weight:600;cursor:pointer;min-width:120px}
+.ps-Paid{color:var(--accent)}.ps-Unpaid{color:#b45309}.ps-On.hold,.ps-Onhold{color:#1d4ed8}.ps-Notpayable{color:var(--fg)}
+.etable .note{min-width:200px}
+.etable .muted{color:var(--mute);font-size:13px}
+.enote{color:var(--mute);font-size:13px;margin:0}
+.mf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mf label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--mute);font-weight:600}
+.mf input,.mf select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel);color:var(--fg);font-weight:400}
+.mf .full{grid-column:1/-1}
+.csv{width:100%;height:220px;font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+/* bulk bar */
+.bulk{background:var(--side);color:#fff;border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bulk .btn{background:transparent;color:#fff;border-color:#ffffff40}
+.bulk .btn:hover{background:#ffffff18}
+.bulk span{font-weight:600;margin-right:auto}
+/* table */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:1300px;font-variant-numeric:tabular-nums}
+th{background:var(--head);text-align:left;font-weight:600;color:var(--mute);font-size:13px;padding:11px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+
+tr.iscan td:not(.act){opacity:.6}
+.mono{font-family:var(--f-mono);font-size:12.5px;color:var(--mute)}
+.pt b{display:block;font-weight:600}.pt small{color:var(--mute);font-size:12.5px}
+.doc b{display:block;font-weight:500}
+.alt{display:inline-flex;gap:4px;align-items:center;font-size:12px;color:var(--accent);font-weight:600;background:none;border:0;padding:2px 0;border-bottom:1px dashed var(--line)}
+.alt:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.alt em{font-style:normal;color:var(--fg);font-weight:500}
+.alt:disabled{opacity:.5;cursor:default}
+.was{font-size:11.5px;color:var(--mute);margin-top:2px}
+.newdoc{display:inline-block;margin-left:6px;background:var(--accent-soft);color:var(--accent);font-size:10.5px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:1px 6px;vertical-align:1px}
+.tbtn{display:flex;align-items:center;gap:6px;border:1px solid var(--line);color:var(--fg);background:var(--panel);border-radius:20px;padding:6px 14px;font-weight:600;font-size:13px}
+.tbtn:hover{border-color:var(--mute)}
+.docs{display:flex;flex-direction:column;gap:2px;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px}
+.docs label{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer}
+.docs label:hover{background:var(--head)}
+.docs label span{flex:1;font-weight:500}.docs label small{color:var(--mute)}
+.lnk{background:none;border:0;color:var(--accent);font-weight:600;padding:0;font-size:13px}
+.fee{text-align:right;font-weight:700}
+.pill{display:inline-block;border-radius:20px;padding:3px 11px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.s-Complete{background:var(--ok-bg);color:var(--ok)}
+.s-Confirmed{background:var(--info-bg);color:var(--info)}
+.s-Pending{background:var(--warn-bg);color:var(--warn)}
+.s-Upcoming{background:#e0f2fe;color:#0369a1}
+.s-Assigned{background:#ede9fe;color:#6d28d9}
+.s-Cancelled{background:var(--bad-bg);color:var(--bad)}
+.tag{display:inline-block;margin-top:4px;background:var(--test-bg);color:var(--test);font-size:10.5px;font-weight:700;letter-spacing:.08em;border-radius:4px;padding:1px 6px}
+.act{white-space:nowrap}.act .row{display:flex;gap:6px}
+.empty{padding:40px;text-align:center;color:var(--mute)}
+/* modal */
+.scrim{position:fixed;inset:0;background:#0a1230a6;display:grid;place-items:center;z-index:30;padding:16px}
+.modal{background:var(--panel);color:var(--fg);border-radius:12px;width:min(440px,100%);padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 50px #0004}
+.modal h3{margin:0;font-size:17px}.modal p{margin:0;color:var(--mute);line-height:1.5}
+.modal select,.modal textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--panel)}
+.modal .foot{display:flex;justify-content:flex-end;gap:8px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--side);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;z-index:40}
+@media (max-width:860px){.app{grid-template-columns:1fr}.side{display:none}.filters .search{margin-left:0;flex:1 1 100%}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo">H</div><div><b>Humancare</b><small>ADMIN CONSOLE</small></div></div>
+    <div class="grp">WORKSPACE</div>
+    <div class="nav on" data-view="appts" role="button" tabindex="0">Appointments</div>
+  </aside>
+
+  <main class="main" id="view-appts">
+    <div class="top">
+      <div class="grow"><h1>Appointments</h1><p>Every booking, who it is with, and what state it is in.</p></div>
+      <label class="search"><span aria-hidden="true">⌕</span><input id="q-global" placeholder="Search patients, doctors, bookings, mail…"></label>
+      <button class="btn pri">+ New</button>
+      <div class="avatar">SA</div>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    
+
+    <div class="bulk" id="bulk" hidden>
+      <span id="bulk-n">0 selected</span>
+      <button class="btn" data-bulk="complete">Auto complete</button>
+      <button class="btn" data-bulk="cancel">Cancel</button>
+      <button class="btn" data-bulk="test">Mark as testing</button>
+      <button class="btn" data-bulk="untest">Unmark testing</button>
+      <button class="btn" data-bulk="clear">Done</button>
+    </div>
+
+    <div class="card"><div class="scroll">
+      <table>
+        <thead><tr>
+                    <th class="selcol" style="position:relative"><input type="checkbox" id="all" aria-label="Selection options" aria-haspopup="menu">
+            <div class="selmenu" id="selmenu" role="menu" hidden>
+              <button role="menuitem" data-sm="all">Select all</button>
+              <button role="menuitem" data-sm="manual">Select one by one</button>
+              <button role="menuitem" data-sm="none" class="inmode">Deselect all</button>
+              <button role="menuitem" data-sm="exit" class="inmode">Exit selection</button>
+            </div></th><th>Booking</th><th>Patient</th><th>Doctor</th><th>Category</th><th>Booking date</th><th>Consultation date</th><th style="text-align:right">Fee</th><th>Status</th><th id="th-by">Assigned by</th><th>Actions</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div></div>
+  </main>
+
+</div>
+
+<div class="scrim" id="scrim" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const DOCTORS=["Dr Hidayat Khan","Martin Perlin","Nobita Mestry","Shuzika Mestry","satish dalvi","Dr Ananya Rao","Dr Farah Siddiqui"];
+const SEED=[
+ ["a4c0d6","Rachel Secemski","United States","Martin Perlin","Travel & Global Care","2026-10-16",99,"Complete","Super Admin"],
+ ["136e89","Satish Dalvi","India","satish dalvi","Children & Family","",1,"Complete","Super Admin"],
+ ["e62b68","Piyush Y.","United Kingdom","Dr Hidayat Khan","Children & Family","",5,"Complete","Super Admin"],
+ ["6e39c3","Unknown patient","","Dr Hidayat Khan","Children & Family","",5,"Complete","Super Admin"],
+ ["6348b2","Unknown patient","","Dr Hidayat Khan","Children & Family","",5,"Complete","Super Admin"],
+ ["6348af","Muhammad I.","Oman","Dr Hidayat Khan","Children & Family","",5,"Complete","Super Admin"],
+ ["bf8290","Unknown patient","","Nobita Mestry","General & Everyday Care","",5,"Complete","admin@gmail.com"],
+ ["2c3350","Unknown patient","","Dr Hidayat Khan","General & Everyday Care","",5,"Complete","Super Admin"],
+ ["2c22ba","Unknown patient","","Shuzika Mestry","General & Everyday Care","",5,"Complete","admin@gmail.com"],
+ ["2c1e46","Unknown patient","","Dr Hidayat Khan","General & Everyday Care","",5,"Complete","Super Admin"],
+ ["312907","Unknown patient","","Dr Hidayat Khan","General & Everyday Care","",5,"Complete","admin@gmail.com"],
+ ["31a5d0","Unknown patient","","Nobita Mestry","General & Everyday Care","",5,"Complete","admin@gmail.com"],
+ ["7d10fe","Aisha K.","United Arab Emirates","Dr Hidayat Khan","Women's Health","2026-10-22",49,"Confirmed","Super Admin"],
+ ["7d44a1","Rohan Mehta","India","Dr Ananya Rao","Mental Wellbeing","2026-10-22",25,"Confirmed","Super Admin"],
+ ["8a02c9","Test User","India","Nobita Mestry","General & Everyday Care","2026-10-23",1,"Confirmed","admin@gmail.com"],
+ ["8a1b77","Laura Bianchi","Italy","Martin Perlin","Travel & Global Care","2026-10-24",99,"Confirmed","Super Admin"],
+ ["90cc12","Omar S.","Saudi Arabia","Dr Farah Siddiqui","Children & Family","2026-10-25",35,"Confirmed","Super Admin"],
+ ["91e0b4","Unknown patient","","Shuzika Mestry","General & Everyday Care","2026-10-26",5,"Confirmed","admin@gmail.com"],
+ ["9f3a28","Priya N.","Singapore","Dr Ananya Rao","Mental Wellbeing","2026-10-27",25,"Confirmed","Super Admin"],
+ ["a01d5e","test qa","India","satish dalvi","Children & Family","2026-10-28",1,"Confirmed","admin@gmail.com"],
+ ["a2b6f0","James O.","United Kingdom","Dr Hidayat Khan","General & Everyday Care","2026-10-29",45,"Confirmed","Super Admin"],
+ ["a3c911","Fatima Z.","Oman","Dr Farah Siddiqui","Women's Health","2026-10-30",49,"Confirmed","Super Admin"],
+ ["86e8b0","Unknown patient","","","General & Everyday Care","2026-10-31",5,"Upcoming",""],
+ ["b40c17","Neha Kulkarni","India","","Mental Wellbeing","2026-11-01",25,"Upcoming",""],
+ ["b52e9a","David L.","Canada","","Travel & Global Care","2026-11-02",99,"Upcoming",""],
+ ["c1d0e3","Sara M.","Qatar","Dr Hidayat Khan","Women's Health","2026-11-03",49,"Assigned","Super Admin"],
+ ["c2f871","Arjun P.","India","Dr Ananya Rao","Mental Wellbeing","2026-11-03",25,"Assigned","admin@gmail.com"],
+ ["d05b42","Unknown patient","","Nobita Mestry","General & Everyday Care","2026-11-04",5,"Pending","admin@gmail.com"],
+ ["d17a60","Khalid R.","Kuwait","Martin Perlin","Travel & Global Care","2026-11-05",99,"Pending","Super Admin"],
+];
+const KEY="hc-appts-v4";
+let testDocs=new Set(["satish dalvi"]);
+let data=SEED.map((r,i)=>({id:r[0],patient:r[1],country:r[2],doctor:r[3],cat:r[4],date:r[5],fee:r[6],status:r[7],by:r[8],orig:"",test:false}));
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s){data=data.map(d=>s.rows&&s.rows[d.id]?{...d,...s.rows[d.id]}:d);if(s.testDocs)testDocs=new Set(s.testDocs)}}catch(e){}
+const isTest=d=>d.test||testDocs.has(d.doctor);
+function save(){try{const o={};data.forEach(d=>o[d.id]={status:d.status,doctor:d.doctor,by:d.by,orig:d.orig,test:d.test,cancelReason:d.cancelReason||""});localStorage.setItem(KEY,JSON.stringify({rows:o,testDocs:[...testDocs]}))}catch(e){}}
+
+let filter="Complete", q="", hideTest=false, sel=new Set(), selMode=false;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+/* Booking date = when the patient booked; consultation date = when the call happens.
+   The demo data has no booking timestamp, so one is derived per booking ID (1–6 days before the consultation). */
+function bookedOn(d){
+  const h=parseInt(String(d.id).replace(/[^0-9a-f]/gi,"").slice(-4)||"0",16);
+  const base=d.date?new Date(d.date+"T00:00"):new Date("2026-10-15T00:00");
+  base.setDate(base.getDate()-(1+h%6)-(d.date?0:h%20));
+  return base.getFullYear()+"-"+String(base.getMonth()+1).padStart(2,"0")+"-"+String(base.getDate()).padStart(2,"0");
+}
+const fmtDate=d=>d?new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—";
+
+function visible(){
+  return data.filter(d=>{
+    if(filter==="Testing"){if(!isTest(d))return false}
+    else{ if(hideTest&&isTest(d))return false; if(filter!=="All"&&d.status!==filter)return false }
+    if(q){const t=(d.patient+d.country+d.doctor+d.orig+d.cat+d.id+d.by).toLowerCase();if(!t.includes(q))return false}
+    return true});
+}
+function renderFilters(){
+  const base=hideTest?data.filter(d=>!isTest(d)):data;
+  const n=s=>base.filter(d=>d.status===s).length;
+  const chips=[["All",base.length],["Upcoming",n("Upcoming")],["Assigned",n("Assigned")],["Pending",n("Pending")],["Confirmed",n("Confirmed")],["Complete",n("Complete")],["Cancelled",n("Cancelled"),"c"],["Testing",data.filter(isTest).length,"t"]];
+  $("#filters").innerHTML=chips.map(([k,c,cls])=>`<button class="chip ${cls||""} ${filter===k?"on":""}" data-f="${k}">${k} ${c}</button>`).join("")+
+   `<button class="chip ${hideTest?"on":""}" id="hide-test" aria-pressed="${hideTest}">${hideTest?"Showing without testing":"Hide testing"}</button>`;
+}
+function render(){
+  renderFilters();
+  const rows=visible();
+  $("#rows").innerHTML=rows.length?rows.map((d,i)=>{
+    const done=d.status==="Complete"||d.status==="Cancelled";
+    return `<tr class="${isTest(d)?"istest":""} ${d.status==="Cancelled"?"iscan":""}">
+      
+      <td class="selcol">${selMode?`<input type="checkbox" data-sel="${d.id}" ${sel.has(d.id)?"checked":""} aria-label="Select ${esc(d.id)}">`:""}<span>${i+1}</span></td>
+      <td class="mono">…${d.id}${isTest(d)?`<br><span class="tag">TESTING</span>`:""}</td>
+      <td class="pt"><b>${esc(d.patient)}</b><small>${esc(d.country)||"—"}</small></td>
+      <td class="doc">${d.doctor?`<b>${esc(d.doctor)}</b><button class="alt" data-alt="${d.id}" ${done?"disabled":""} title="${d.orig?"Earlier: "+esc(d.orig):"Change to another doctor"}">Alternate doctor</button>`:`<b>Not assigned</b>`}</td>
+      <td>${esc(d.cat)}</td>
+      <td style="white-space:nowrap">${fmtDate(d.booked||bookedOn(d))}</td>
+      <td style="white-space:nowrap">${d.date?fmtDate(d.date):`<span style="color:var(--mute);font-size:13px">Not scheduled</span>`}</td>
+      <td class="fee">$${d.fee.toFixed(2)}</td>
+      <td><span class="pill s-${d.status}">${d.status}</span></td>
+      ${filter==="Upcoming"?"":`<td>${d.doctor?esc(d.by):"—"}</td>`}
+      <td class="act"><div class="row">
+        <button class="btn">View</button>
+        ${d.doctor?`<button class="btn ok" data-do="complete" data-id="${d.id}" ${done?"disabled":""}>Auto complete</button>`:`<button class="btn ok" data-do="assign" data-id="${d.id}" ${done?"disabled":""}>Assign doctor</button>`}
+        <button class="btn bad" data-do="cancel" data-id="${d.id}" ${done?"disabled":""}>Cancel</button>
+      </div></td></tr>`}).join(""):`<tr><td colspan="${filter==="Upcoming"?10:11}" class="empty">No appointments match this view.</td></tr>`;
+  const allOn=rows.length>0&&rows.every(r=>sel.has(r.id));$("#all").checked=selMode&&allOn;$("#all").indeterminate=selMode&&!allOn;
+  $("#bulk").hidden=!selMode;$("#bulk-n").textContent=`${sel.size} selected`;
+  $("#th-by").hidden=filter==="Upcoming";
+  
+  
+}
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2200)}
+function modal(html,onOk){
+  $("#modal").innerHTML=html;$("#scrim").hidden=false;
+  const close=()=>$("#scrim").hidden=true;
+  $("#modal").querySelector("[data-no]").onclick=close;
+  $("#modal").querySelector("[data-ok]").onclick=()=>{onOk($("#modal"));close()};
+  $("#modal").querySelector("[data-ok]").focus();
+}
+const byId=id=>data.find(d=>d.id===id);
+
+function askComplete(ids){
+  const list=ids.map(byId).filter(d=>d.doctor&&d.status!=="Complete"&&d.status!=="Cancelled");
+  if(!list.length)return toast("Pick appointments that have a doctor and are still open");
+  modal(`<h3>Auto complete ${list.length>1?list.length+" appointments":"appointment"}?</h3>
+    <p>${list.length>1?"These bookings":"Booking …"+list[0].id+" with "+esc(list[0].doctor)} will be marked Complete without waiting for the consultation to close.</p>
+    <div class="foot"><button class="btn" data-no>Keep as is</button><button class="btn pri" data-ok>Mark complete</button></div>`,
+  ()=>{list.forEach(d=>d.status="Complete");save();sel.clear();render();toast(`${list.length} marked Complete`)});
+}
+function askCancel(ids){
+  const list=ids.map(byId).filter(d=>d.status!=="Complete"&&d.status!=="Cancelled");
+  if(!list.length)return toast("Selected appointments are already closed");
+  modal(`<h3>Cancel ${list.length>1?list.length+" appointments":"appointment"}?</h3>
+    <p>${list.length>1?"These bookings":"Booking …"+list[0].id+" for "+esc(list[0].patient)} will be cancelled. The patient and doctor slot will be released.</p>
+    <select id="cancel-reason"><option>Patient requested</option><option>Doctor unavailable</option><option>Payment failed</option><option>Duplicate booking</option><option>Testing booking</option></select>
+    <div class="foot"><button class="btn" data-no>Go back</button><button class="btn bad" data-ok>Cancel appointment</button></div>`,
+  m=>{const r=m.querySelector("#cancel-reason").value;list.forEach(d=>{d.status="Cancelled";d.cancelReason=r});save();sel.clear();render();toast(`${list.length} cancelled · ${r}`)});
+}
+function askAlt(id){
+  const d=byId(id), cur=d.doctor;
+  modal(`<h3>Alternate doctor</h3><p>Booking …${d.id} is with <b>${esc(cur)}</b>. The doctor you pick will replace them on this appointment.</p>
+    <select id="alt-doc">${DOCTORS.filter(x=>x!==cur).map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+    ${d.orig?`<button class="lnk" id="alt-reset" type="button">Go back to ${esc(d.orig)}</button>`:""}
+    <div class="foot"><button class="btn" data-no>Close</button><button class="btn pri" data-ok>Change doctor</button></div>`,
+  m=>{const nd=m.querySelector("#alt-doc").value;if(!d.orig)d.orig=cur;d.doctor=nd;if(d.doctor===d.orig){d.doctor=d.orig;d.orig=""}save();render();toast(`Doctor changed to ${nd}`)});
+  const r=document.getElementById("alt-reset");
+  if(r)r.onclick=()=>{d.doctor=d.orig;d.orig="";save();render();$("#scrim").hidden=true;toast(`Doctor changed back to ${d.doctor}`)};
+}
+function askAssign(id){
+  const d=byId(id);
+  modal(`<h3>Assign doctor</h3><p>Booking …${d.id} for ${esc(d.patient)} · ${esc(d.cat)}.</p>
+    <select id="as-doc">${DOCTORS.map(x=>`<option>${esc(x)}</option>`).join("")}</select>
+    <div class="foot"><button class="btn" data-no>Close</button><button class="btn pri" data-ok>Assign doctor</button></div>`,
+  m=>{d.doctor=m.querySelector("#as-doc").value;d.status="Assigned";d.by="Super Admin";save();render();toast(`Assigned to ${d.doctor}`)});
+}
+function askTestDocs(){
+  const all=[...new Set([...DOCTORS,...data.map(d=>d.doctor)])].filter(Boolean).sort((a,b)=>a.localeCompare(b));
+  modal(`<h3>Testing doctors</h3><p>Tick the doctors used for testing. All their appointments get the TESTING tag and are hidden when "Hide testing" is on.</p>
+    <div style="display:flex;gap:12px"><button class="lnk" type="button" id="td-all">Select all</button><button class="lnk" type="button" id="td-none">Clear all</button></div>
+    <div class="docs">${all.map((x,i)=>`<label><input type="checkbox" id="td-${i}" value="${esc(x)}" ${testDocs.has(x)?"checked":""}><span>${esc(x)}</span><small>${data.filter(d=>d.doctor===x).length} appts</small></label>`).join("")}</div>
+    <div class="foot"><button class="btn" data-no>Close</button><button class="btn pri" data-ok>Save</button></div>`,
+  m=>{testDocs=new Set([...m.querySelectorAll(".docs input:checked")].map(i=>i.value));save();render();toast(`${testDocs.size} doctor${testDocs.size===1?"":"s"} set as testing`)});
+  const box=$("#modal");
+  box.querySelector("#td-all").onclick=()=>box.querySelectorAll(".docs input").forEach(i=>i.checked=true);
+  box.querySelector("#td-none").onclick=()=>box.querySelectorAll(".docs input").forEach(i=>i.checked=false);
+}
+document.addEventListener("click",e=>{
+  const f=e.target.closest("[data-f]");if(f){filter=f.dataset.f;sel.clear();render();return}
+  if(e.target.id==="all"){e.preventDefault();const m=$("#selmenu");const vis=visible(),allSel=vis.length>0&&vis.every(d=>sel.has(d.id));m.querySelector('[data-sm="all"]').hidden=selMode&&allSel;m.querySelector('[data-sm="manual"]').hidden=selMode;m.querySelector('[data-sm="none"]').hidden=!selMode||sel.size===0;m.querySelector('[data-sm="exit"]').hidden=!selMode;m.hidden=!m.hidden;return}
+  const sm=e.target.closest("[data-sm]");
+  if(sm){const v=sm.dataset.sm;$("#selmenu").hidden=true;
+    if(v==="all"){selMode=true;visible().forEach(d=>sel.add(d.id))}
+    if(v==="manual"){selMode=true}
+    if(v==="none"){sel.clear()}
+    if(v==="exit"){selMode=false;sel.clear()}
+    render();return}
+  if(!e.target.closest("#selmenu"))$("#selmenu").hidden=true;
+  if(e.target.closest("#pick-test")){askTestDocs();return}
+  if(e.target.closest("#hide-test")){hideTest=!hideTest;render();return}
+  const a=e.target.closest("[data-alt]");if(a){askAlt(a.dataset.alt);return}
+  const b=e.target.closest("[data-do]");
+  if(b){const id=b.dataset.id,d=byId(id);
+    if(b.dataset.do==="complete")askComplete([id]);
+    if(b.dataset.do==="assign")askAssign(id);
+    if(b.dataset.do==="cancel")askCancel([id]);
+    return}
+  const k=e.target.closest("[data-bulk]");
+  if(k){const ids=[...sel];
+    if(k.dataset.bulk==="complete")askComplete(ids);
+    if(k.dataset.bulk==="cancel")askCancel(ids);
+    if(k.dataset.bulk==="test"||k.dataset.bulk==="untest"){ids.forEach(i=>byId(i).test=k.dataset.bulk==="test");save();sel.clear();render();toast(`${ids.length} updated`)}
+    if(k.dataset.bulk==="clear"){sel.clear();selMode=false;render()}
+  }
+  if(e.target.id==="scrim")$("#scrim").hidden=true;
+});
+document.addEventListener("change",e=>{
+  if(e.target.dataset.sel){e.target.checked?sel.add(e.target.dataset.sel):sel.delete(e.target.dataset.sel);render()}
+  
+  if(e.target.id==="hide-test"){hideTest=e.target.checked;render()}
+});
+document.addEventListener("input",e=>{
+  if(e.target.id==="q-table"||e.target.id==="q-global"){q=e.target.value.trim().toLowerCase();const pos=e.target.selectionStart,id=e.target.id;render();const el=document.getElementById(id);if(el){el.value=e.target.value;el.focus();el.setSelectionRange(pos,pos)}}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#scrim").hidden=true});
+render();
+</script>
+
