@@ -1,267 +1,111 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Country } from "country-state-city";
-import api from "../../api";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import "./AdminAppointments.css";
 import RetryButton from "../../components/ui/RetryButton";
+import BookingTabs from "./appointments/BookingTabs";
+import BookingsTable from "./appointments/BookingsTable";
+import BookingsPager from "./appointments/BookingsPager";
+import useAdminBookings from "./appointments/useAdminBookings";
+import { DEFAULT_TAB, PAGE_SIZE, TAB_LABELS, pageFromParam, tabFromParam } from "./appointments/bookingFormat";
 
-function getCountryName(isoCode) {
-  if (!isoCode) return "";
-  const country = Country.getCountryByCode(isoCode);
-  return country?.name || isoCode;
-}
+const SEARCH_DELAY_MS = 300;
 
-const STATUS_ORDER = ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "all"];
-
-const STATUS_META = {
-  upcoming: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
-  requested: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
-  assigned: { label: "Assigned", bg: "#f0fdfa", color: "#0f766e", border: "#99f6e4" },
-  pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
-  confirmed: { label: "Confirmed", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-  complete: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
-  completed: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
-  cancelled: { label: "Cancelled", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
-};
-
-function canonicalStatus(status) {
-  if (status === "requested") return "upcoming";
-  if (status === "completed") return "complete";
-  return status || "upcoming";
-}
-
-function formatMoney(value) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function patientCountry(appointment) {
-  return appointment.patientDetails?.country || appointment.patientId?.country || "-";
-}
-
-function patientGender(appointment) {
-  return appointment.patientDetails?.gender || appointment.patientId?.gender || "-";
-}
-
-function assignedBy(appointment) {
-  return appointment.assignedBy?.name || appointment.assignedBy?.email || "-";
-}
-
-function doctorCountry(appointment) {
-  return appointment.doctorMeta?.country || appointment.doctorId?.country || "-";
-}
-
-function hasAssignedDoctor(appointment) {
-  return Boolean(appointment.doctorId?._id || appointment.doctorId);
-}
-
-function StatusPill({ status }) {
-  const meta = STATUS_META[status] || STATUS_META[canonicalStatus(status)] || STATUS_META.upcoming;
-  return (
-    <span
-      className="adp-status-pill"
-      style={{ background: meta.bg, color: meta.color, borderColor: meta.border }}
-    >
-      {meta.label}
-    </span>
-  );
-}
-
+// Appointments and category consultations in one list. The tab, "Hide testing" and
+// the page live in the URL (so a reload or a shared link keeps the view); the search
+// text does not.
 export default function AdminAppointments() {
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const tab = tabFromParam(searchParams.get("tab"));
+  const hideTesting = searchParams.get("hideTesting") === "1";
+  const page = pageFromParam(searchParams.get("page"));
 
-  const [attempt, setAttempt] = useState(0);
-  const initialFilter = canonicalStatus(searchParams.get("tab"));
-  const [filter, setFilter] = useState(STATUS_ORDER.includes(initialFilter) ? initialFilter : "upcoming");
+  const [searchText, setSearchText] = useState("");
+  const [q, setQ] = useState("");
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
-  useEffect(() => {
-    let alive = true;
+  const { data, loading, error, reload } = useAdminBookings({ status: tab, hideTesting, q, page, limit: PAGE_SIZE });
 
-    async function loadAppointments() {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await api.get("/api/appointments/admin/all");
-        if (alive) setAppointments(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("Failed to load appointments", err);
-        if (alive) setError(err.response?.data?.msg || "Failed to load appointments.");
-      } finally {
-        if (alive) setLoading(false);
-      }
-    }
-
-    loadAppointments();
-    return () => {
-      alive = false;
-    };
-  }, [attempt]);
-
-  const counts = useMemo(() => {
-    const base = { all: appointments.length, upcoming: 0, assigned: 0, pending: 0, confirmed: 0, complete: 0, cancelled: 0 };
-    appointments.forEach((appointment) => {
-      const key = canonicalStatus(appointment.status);
-      if (base[key] !== undefined) base[key] += 1;
-    });
-    return base;
-  }, [appointments]);
-
-  const displayed = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return appointments.filter((appointment) => {
-      const status = canonicalStatus(appointment.status);
-      const matchesFilter = filter === "all" || status === filter;
-      if (!matchesFilter) return false;
-      if (!q) return true;
-
-      return [
-        appointment._id,
-        appointment.patientId?.name,
-        appointment.patientId?.email,
-        appointment.doctorId?.name,
-        appointment.category,
-        appointment.specialty,
-        appointment.condition,
-        patientGender(appointment),
-        patientCountry(appointment),
-        assignedBy(appointment),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [appointments, filter, search]);
-
-  const setActiveFilter = (nextFilter) => {
-    setFilter(nextFilter);
-    setSearchParams(nextFilter === "upcoming" ? {} : { tab: nextFilter });
+  // Writes the view to the URL, leaving out values that are the default.
+  const setView = (next) => {
+    const view = { tab, hideTesting, page, ...next };
+    const params = {};
+    if (view.tab !== DEFAULT_TAB) params.tab = view.tab;
+    if (view.hideTesting) params.hideTesting = "1";
+    if (view.page > 1) params.page = String(view.page);
+    setSearchParams(params);
   };
+
+  const onSearch = (event) => {
+    const value = event.target.value;
+    setSearchText(value);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setQ(value.trim()), SEARCH_DELAY_MS);
+    if (page > 1) setView({ page: 1 });
+  };
+
+  const rows = data?.items || [];
+  const firstLoad = loading && !data;
+
+  // Bookings can disappear while you are on a later page (cancelled elsewhere, filtered
+  // out): go back to the last page that exists instead of showing an empty one.
+  useEffect(() => {
+    if (!loading && data && rows.length === 0 && data.total > 0 && page > 1) {
+      setView({ page: Math.max(1, data.totalPages || 1) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, data]);
 
   return (
     <div className="adp-page">
-      <section className="adp-card adp-appts-card">
+      <section className="adp-card adp-bk-card">
         <div className="adp-card-header">
-          <div className="adp-tabs" role="tablist" aria-label="Appointment status">
-            {STATUS_ORDER.map((tab) => (
-              <button
-                type="button"
-                key={tab}
-                className={`adp-tab ${filter === tab ? "active" : ""}`}
-                onClick={() => setActiveFilter(tab)}
-              >
-                {tab === "all" ? "All" : STATUS_META[tab].label}
-                <span className="adp-tab-count">{counts[tab] ?? 0}</span>
-              </button>
-            ))}
-          </div>
+          <BookingTabs
+            tab={tab}
+            counts={data?.counts}
+            hideTesting={hideTesting}
+            onTab={(next) => setView({ tab: next, page: 1 })}
+            onToggleHideTesting={() => setView({ hideTesting: !hideTesting, page: 1 })}
+          />
           <label className="adp-search" aria-label="Search appointments">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              placeholder="Search patient, doctor, country, specialty..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search patient, doctor, category, booking ID..."
+              value={searchText}
+              maxLength={100}
+              onChange={onSearch}
             />
           </label>
         </div>
 
-        {loading ? (
+        {firstLoad ? (
           <div className="adp-loading">
             <div className="adp-spinner" />
             <p>Loading appointments...</p>
           </div>
-        ) : error ? (
+        ) : error && !data ? (
           <div className="adp-empty">
             <h3>Could not load appointments</h3>
             <p>{error}</p>
-            <RetryButton onRetry={() => setAttempt((n) => n + 1)} />
+            <RetryButton onRetry={reload} />
           </div>
-        ) : displayed.length === 0 ? (
+        ) : rows.length === 0 && !loading ? (
           <div className="adp-empty">
             <h3>No appointments found</h3>
-            <p>No appointments match this view.</p>
+            <p>{q ? "No appointments match your search." : `No ${TAB_LABELS[tab].toLowerCase()} appointments${hideTesting ? " (testing hidden)" : ""}.`}</p>
           </div>
         ) : (
-          <div className="adp-table-wrap adp-appts-wrap">
-            <table className="adp-flow-table adp-appts">
-              <thead>
-                <tr>
-                  <th>SR No</th>
-                  <th>Appointment Booking ID</th>
-                  <th>Patient Name</th>
-                  <th>Consultation Fee</th>
-                  <th>Doctor Country</th>
-                  <th>Status</th>
-                  <th>Assigned By</th>
-                  <th>View</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayed.map((appointment, index) => {
-                  const assigned = hasAssignedDoctor(appointment);
-
-                  return (
-                    <tr key={appointment._id}>
-                      <td className="adp-sr-cell" data-label="SR No">{index + 1}</td>
-                      <td data-label="Booking ID">
-                        <span className="adp-booking-id">{appointment._id}</span>
-                      </td>
-                      <td data-label="Patient">
-                        <div className="adp-patient-cell">
-                          <strong>{appointment.patientId?.name || "Unknown patient"}</strong>
-                          <span>{patientGender(appointment)} - {getCountryName(patientCountry(appointment))}</span>
-                        </div>
-                      </td>
-                      <td data-label="Consultation Fee">{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</td>
-                      <td data-label="Doctor Country">{getCountryName(doctorCountry(appointment))}</td>
-                      <td data-label="Status">
-                        <StatusPill status={appointment.status} />
-                      </td>
-                      <td data-label="Assigned By">{assignedBy(appointment)}</td>
-                      <td className="adp-col-view">
-                        <Link className="adp-view-btn" to={`/admin-dashboard/appointments/${appointment._id}`}>
-                          View
-                        </Link>
-                      </td>
-                      <td className="adp-col-actions">
-                        <div className="adp-list-actions">
-                          {assigned ? (
-                            <>
-                              <div className="adp-assigned-doctor-mini">
-                                <strong>{appointment.doctorId?.name || "Assigned doctor"}</strong>
-                                <span>{appointment.category || "-"} - {getCountryName(doctorCountry(appointment))}</span>
-                              </div>
-                              {!["complete", "completed"].includes(appointment.status) && (
-                                <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
-                                  Alternate Doctor
-                                </Link>
-                              )}
-                            </>
-                          ) : (
-                            <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
-                              Assign Doctor
-                            </Link>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className={loading ? "adp-bk-loading" : undefined} aria-busy={loading}>
+            {error && (
+              <div className="adp-bk-error" role="alert">
+                {error} <RetryButton onRetry={reload} />
+              </div>
+            )}
+            <BookingsTable rows={rows} tab={tab} page={page} />
+            <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}
       </section>

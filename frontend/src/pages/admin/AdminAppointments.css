@@ -1419,63 +1419,275 @@
   }
 }
 
-/* ── Admin Appointments list (AdminAppointments.jsx). AdminCategoryConsultations shares .adp-flow-table, so everything here is
-   scoped to .adp-appts*. The layout follows the width of the table area, not the viewport (the sidebar takes a different
-   share at each breakpoint): a full table when the 9 columns fit, otherwise one card per appointment. ── */
-.adp-appts-card .adp-card-header {
+/* ── Admin Appointments list (AdminAppointments.jsx, components in ./appointments). Appointments and category consultations
+   in one table. Everything is scoped to .adp-bk*. The layout follows the width of the table area, not the viewport (the
+   sidebar takes a different share at each breakpoint): a full table when the columns fit, otherwise one card per booking.
+   Colors are the admin ones: navy/white/slate, the teal accent (#0f766e), and the status pills from the reference. ── */
+.adp-bk-card .adp-card-header {
   flex-wrap: wrap;
   align-items: center;
 }
-.adp-appts-card .adp-search {
+.adp-bk-card .adp-search {
   flex: 1 1 260px;
-  max-width: 420px;
+  max-width: 380px;
   min-width: 0;
 }
-.adp-appts-wrap {
+.adp-bk-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.adp-bk-hide {
+  margin-left: 4px;
+}
+.adp-bk-hide.active {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+.adp-bk-wrap {
   container-type: inline-size;
+  overflow-x: auto;
 }
-.adp-appts {
-  min-width: 0;
+.adp-bk-loading {
+  opacity: 0.6;
+  transition: opacity 0.12s;
 }
-.adp-appts th,
-.adp-appts td {
-  padding: 12px 10px;
+.adp-bk-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b4372f;
+  font-size: 13px;
 }
-.adp-appts th {
+.adp-bk {
+  min-width: 900px;
+  font-size: 13px;
+}
+.adp-bk td {
+  font-size: 13px;
+}
+.adp-bk th,
+.adp-bk td {
+  padding: 12px 5px;
+}
+.adp-bk th {
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+}
+.adp-bk th:first-child,
+.adp-bk td:first-child {
+  padding-left: 12px;
+}
+.adp-bk th:last-child,
+.adp-bk td:last-child {
+  padding-right: 12px;
+}
+.adp-bk th {
   white-space: normal;
 }
-/* Status labels stay on one line; the cell is wide enough for the longest label ("Confirmed"). */
-.adp-appts .adp-status-pill {
+.adp-bk .adp-patient-cell strong {
+  font-size: 14px;
+}
+.adp-bk .adp-booking-id {
+  max-width: none;
+  display: block;
+}
+.adp-bk .adp-status-pill {
   white-space: nowrap;
 }
-.adp-appts td[data-label="Status"] {
-  min-width: 104px;
-}
-.adp-appts .adp-booking-id {
-  max-width: 130px;
-}
-.adp-appts .adp-assigned-doctor-mini {
-  min-width: 0;
-}
-.adp-appts td {
+.adp-bk td[data-label="Assigned by"] {
+  max-width: 116px;
   overflow-wrap: anywhere;
 }
-.adp-appts .adp-view-btn,
-.adp-appts .adp-alt-btn {
+.adp-bk-num {
+  width: 1%;
   white-space: nowrap;
+}
+.adp-bk-fee {
+  text-align: right;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.adp-bk-nowrap {
+  white-space: nowrap;
+}
+.adp-bk-time,
+.adp-bk-muted {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+}
+.adp-bk-muted {
+  display: inline;
+  font-size: 13px;
+}
+.adp-bk-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.adp-bk-row--testing {
+  background: #fcfdfe;
+}
+.adp-bk-row--cancelled td:not(.adp-bk-actions-cell) {
+  opacity: 0.6;
+}
+.adp-bk-doctor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.adp-bk-doctor strong,
+.adp-bk-nodoc {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+}
+.adp-bk-alt {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px dashed #cbd5e1;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.adp-bk-alt:hover:not(:disabled) {
+  border-bottom-color: #0f766e;
+}
+.adp-bk-alt:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.adp-bk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: 152px;
+}
+.adp-bk-doctor {
+  min-width: 118px;
+}
+.adp-bk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 9px;
+  border: 1px solid #dbe7ef;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.adp-bk-btn:hover:not(:disabled) {
+  border-color: #64748b;
+}
+.adp-bk-btn--ok {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+.adp-bk-btn--ok:hover:not(:disabled) {
+  border-color: #0f766e;
+  filter: brightness(1.08);
+}
+.adp-bk-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: none;
+}
+.adp-bk-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+}
+.adp-bk-pager {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.adp-bk-pager-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #dbe7ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.adp-bk-pager-btn:hover:not(:disabled):not(.adp-bk-pager-btn--active) {
+  background: #f1f5f9;
+}
+.adp-bk-pager-btn--active {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+.adp-bk-pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.adp-bk-pager-gap {
+  padding: 0 4px;
+  color: #94a3b8;
+}
+.adp-bk-pager-chev {
+  display: none;
+  font-size: 18px;
+  line-height: 1;
 }
 
 @container (max-width: 899px) {
-  .adp-appts,
-  .adp-appts tbody,
-  .adp-appts tr,
-  .adp-appts td {
+  .adp-bk {
+    min-width: 0;
+  }
+  .adp-bk-actions {
+    width: auto;
+  }
+  .adp-bk,
+  .adp-bk tbody,
+  .adp-bk tr,
+  .adp-bk td {
     display: block;
   }
-  .adp-appts thead {
+  .adp-bk thead {
     display: none;
   }
-  .adp-appts tr {
+  .adp-bk tr {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px 16px;
@@ -1485,12 +1697,13 @@
     border-radius: 12px;
     background: #ffffff;
   }
-  .adp-appts td {
+  .adp-bk td {
     padding: 0;
     border: 0;
     min-width: 0;
+    overflow-wrap: anywhere;
   }
-  .adp-appts td[data-label]::before {
+  .adp-bk td[data-label]::before {
     content: attr(data-label);
     display: block;
     margin-bottom: 2px;
@@ -1500,54 +1713,54 @@
     letter-spacing: 0.04em;
     text-transform: uppercase;
   }
-  .adp-appts .adp-sr-cell,
-  .adp-appts td[data-label="Patient"]::before {
+  .adp-bk td[data-label="Patient"]::before {
     display: none;
   }
-  .adp-appts td[data-label="Patient"],
-  .adp-appts .adp-col-view,
-  .adp-appts .adp-col-actions {
+  /* The row number means nothing on a card. */
+  .adp-bk .adp-bk-num {
+    display: none;
+  }
+  .adp-bk td[data-label="Patient"],
+  .adp-bk td.adp-bk-actions-cell {
     grid-column: 1 / -1;
   }
-  .adp-appts td[data-label="Patient"] {
+  .adp-bk td[data-label="Patient"] {
     order: -1;
   }
-  .adp-appts .adp-col-view .adp-view-btn,
-  .adp-appts .adp-col-actions .adp-alt-btn {
-    display: flex;
-    width: 100%;
+  .adp-bk .adp-bk-fee {
+    text-align: left;
   }
-  .adp-appts .adp-list-actions {
-    align-items: stretch;
-  }
-  .adp-appts .adp-secondary-link {
-    align-self: flex-start;
-  }
-  .adp-appts tbody tr:hover {
+  .adp-bk tbody tr:hover {
     background: #ffffff;
   }
 }
 
 @container (max-width: 479px) {
-  .adp-appts tr {
+  .adp-bk tr {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
   }
-  .adp-appts td[data-label]:not([data-label="Patient"]) {
+  .adp-bk td[data-label]:not([data-label="Patient"]):not([data-label="#"]) {
     display: grid;
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 12px;
     align-items: baseline;
   }
-  .adp-appts td[data-label]::before {
+  .adp-bk td[data-label]::before {
     margin: 0;
   }
 }
 
 @media (max-width: 760px) {
-  .adp-appts-card .adp-search {
+  .adp-bk-card .adp-search {
     flex-basis: 100%;
     max-width: none;
+  }
+  .adp-bk-pager-text {
+    display: none;
+  }
+  .adp-bk-pager-chev {
+    display: inline;
   }
 }
 
