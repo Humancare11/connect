@@ -282,4 +282,36 @@ describe("admin bookings list", () => {
       assert.equal((await get("q=Rachel")).body.counts.all, 2);
     });
   });
+  describe("search input is escaped and capped", () => {
+    test("regex-looking input is matched literally and cannot break or slow the query", async () => {
+      const a = await appt(1, { category: "Plain category" });
+      const tricky = await appt(2, { category: "weird [ category (a+)+$ .* text" });
+
+      for (const q of [".*(a+)+$", "[", "(", "\\", "a{1,", "(?<x>", "+*?", "$^|"]) {
+        const started = Date.now();
+        const res = await get(`q=${encodeURIComponent(q)}`);
+        assert.equal(res.status, 200, q);
+        assert.ok(Date.now() - started < 2000, `${q} was slow`);
+        // Never treated as a pattern: ".*" must not match everything.
+        assert.equal(res.body.items.some((r) => r.id === String(a._id)), false, q);
+      }
+      assert.deepEqual((await get(`q=${encodeURIComponent("[ category")}`)).body.items.map((r) => r.id), [String(tricky._id)]);
+      assert.deepEqual((await get(`q=${encodeURIComponent("(a+)+$ .*")}`)).body.items.map((r) => r.id), [String(tricky._id)]);
+    });
+
+    test("a catastrophic-backtracking pattern against a long value returns quickly", async () => {
+      await appt(1, { category: "a".repeat(5000) + "!" });
+      const started = Date.now();
+      const res = await get(`q=${encodeURIComponent("(a+)+$")}`);
+      assert.equal(res.status, 200);
+      assert.equal(res.body.items.length, 0);
+      assert.ok(Date.now() - started < 2000);
+    });
+
+    test("search text is cut to 100 characters", async () => {
+      const b = await appt(1, { category: "x".repeat(100) });
+      assert.deepEqual((await get(`q=${"x".repeat(150)}`)).body.items.map((r) => r.id), [String(b._id)]);
+      assert.equal((await get(`q=${"y".repeat(5000)}`)).status, 200);
+    });
+  });
 });

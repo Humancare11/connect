@@ -269,6 +269,30 @@ function toCategoryRow(c) {
   };
 }
 
+const findAppointmentRows = (idFilter) =>
+  Appointment.find({ _id: idFilter })
+    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus status assignedBy originalDoctorName isTesting bookedAt createdAt")
+    .populate("patientId", "name country")
+    .populate("doctorId", "name")
+    .lean();
+
+const findCategoryRows = (idFilter) =>
+  CategoryConsultation.find({ _id: idFilter })
+    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus status assignedBy originalDoctorName isTesting createdAt")
+    .populate("patientId", "name country")
+    .populate("assignedDoctorId", "firstName surname")
+    .lean();
+
+// One booking as a list row (used by the action endpoints to return the new state).
+async function loadAdminBookingRow(kind, id) {
+  if (kind === "category") {
+    const [doc] = await findCategoryRows(id);
+    return doc ? toCategoryRow(doc) : null;
+  }
+  const [doc] = await findAppointmentRows(id);
+  return doc ? toAppointmentRow(doc) : null;
+}
+
 // ── The list ─────────────────────────────────────────────────────────────────
 
 const combine = (...filters) => {
@@ -307,20 +331,8 @@ async function listAdminBookings(query) {
 
   const idsOf = (kind) => pageKeys.filter((k) => k.kind === kind).map((k) => k._id);
   const [appointments, categories] = await Promise.all([
-    idsOf("appointment").length
-      ? Appointment.find({ _id: { $in: idsOf("appointment") } })
-          .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus status assignedBy originalDoctorName isTesting bookedAt createdAt")
-          .populate("patientId", "name country")
-          .populate("doctorId", "name")
-          .lean()
-      : [],
-    idsOf("category").length
-      ? CategoryConsultation.find({ _id: { $in: idsOf("category") } })
-          .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus status assignedBy originalDoctorName isTesting createdAt")
-          .populate("patientId", "name country")
-          .populate("assignedDoctorId", "firstName surname")
-          .lean()
-      : [],
+    idsOf("appointment").length ? findAppointmentRows({ $in: idsOf("appointment") }) : [],
+    idsOf("category").length ? findCategoryRows({ $in: idsOf("category") }) : [],
   ]);
 
   const rows = new Map([
@@ -351,6 +363,7 @@ module.exports = {
   parseListQuery,
   computeCounts,
   listAdminBookings,
+  loadAdminBookingRow,
   toAppointmentRow,
   toCategoryRow,
 };
