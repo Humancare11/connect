@@ -103,7 +103,13 @@ export const originalDoctorHint = (row) => (row.originalDoctorName ? `Originally
 
 export const CANCEL_REASONS = ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"];
 
-export const PAID_WARNING = "This booking was paid. Refund it in Stripe.";
+const GATEWAY_NAMES = { stripe: "Stripe", paypal: "PayPal" };
+
+// Cancelling does not refund. The reminder names where the money was taken.
+export function refundWarning(row) {
+  const name = GATEWAY_NAMES[String(row?.paymentGateway || "").toLowerCase()];
+  return name ? `This booking was paid. Refund it in ${name}.` : "This booking was paid. Refund it with the payment provider.";
+}
 
 const hasDoctor = (row) => Boolean(row.doctorName);
 

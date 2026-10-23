@@ -2,12 +2,15 @@ import { useState } from "react";
 import { useToast } from "../../../components/ui/Toast";
 import { useConfirm } from "../../../components/ui/ConfirmDialog";
 import * as bookingApi from "./bookingApi";
-import { PAID_WARNING, explainActionError, shortBookingId } from "./bookingFormat";
+import { explainActionError, refundWarning, shortBookingId } from "./bookingFormat";
 
 // The row actions: Assign / Alternate doctor and Cancel open a dialog; Confirm and Auto
 // complete ask first. After any action the list and the tab counts are reloaded. A lost
 // race (409) closes the dialog, says so, and reloads; any other failure is shown in the
 // dialog (or as a message) and nothing is reloaded.
+// Themes the shared confirmation dialog in the admin teal (see AdminAppointments.css).
+export const ADMIN_CONFIRM = "adp-confirm";
+
 export default function useBookingActions({ reload }) {
   const toast = useToast();
   const confirm = useConfirm();
@@ -74,6 +77,7 @@ export default function useBookingActions({ reload }) {
         title: "Confirm this booking?",
         message: `Booking ${label(row)} will be confirmed on behalf of ${row.doctorName}. The doctor and the patient are told, and the video call opens for both.`,
         confirmText: "Confirm booking",
+        className: ADMIN_CONFIRM,
       });
       if (ok) perform(row, () => bookingApi.confirmBooking(row.id), () => toast.success(`Booking ${label(row)} confirmed.`));
     },
@@ -82,6 +86,7 @@ export default function useBookingActions({ reload }) {
         title: "Auto complete appointment?",
         message: `Booking ${label(row)} with ${row.doctorName} will be marked Complete without waiting for the consultation to close.`,
         confirmText: "Mark complete",
+        className: ADMIN_CONFIRM,
       });
       if (ok) perform(row, () => bookingApi.autoCompleteBooking(row.id), () => toast.success(`Booking ${label(row)} marked Complete.`));
     },
@@ -101,7 +106,7 @@ export default function useBookingActions({ reload }) {
         () => bookingApi.cancelBooking(row.id, choice),
         (data) => {
           toast.success(`Booking ${label(row)} cancelled.`);
-          if (data.paid) toast.info(PAID_WARNING);
+          if (data.paid) toast.info(refundWarning(data.booking || row));
         },
         { inDialog: true },
       ),

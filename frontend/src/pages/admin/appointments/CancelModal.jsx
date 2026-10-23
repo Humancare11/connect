@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Modal from "../../../components/ui/Modal";
-import { CANCEL_REASONS, PAID_WARNING, shortBookingId } from "./bookingFormat";
+import { CANCEL_REASONS, refundWarning, shortBookingId } from "./bookingFormat";
 
 // Cancelling needs one of the five reasons. A paid booking is not refunded automatically,
 // so the dialog says so up front.
@@ -21,7 +21,7 @@ export default function CancelModal({ row, submitting, error, onSubmit, onClose 
 
         {row.paid && (
           <p className="adp-bk-modal-warning" role="note">
-            {PAID_WARNING}
+            {refundWarning(row)}
           </p>
         )}
 

@@ -1637,6 +1637,27 @@
   pointer-events: none;
 }
 
+/* ── The shared confirmation dialog, themed in the admin teal. Opt-in: only a confirm() call that passes
+   className "adp-confirm" (this page's) gets it, so the dialog looks as before everywhere else. ── */
+.hc-modal.adp-confirm .hc-ui-btn--primary {
+  background: #0f766e;
+  box-shadow: none;
+}
+.hc-modal.adp-confirm .hc-ui-btn--primary:hover:not(:disabled) {
+  background: #0f766e;
+  filter: brightness(1.1);
+}
+.hc-modal.adp-confirm .hc-ui-btn--secondary {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+.hc-modal.adp-confirm .hc-ui-btn--secondary:hover:not(:disabled) {
+  background: #f0fdfa;
+}
+.hc-modal.adp-confirm .hc-ui-btn:focus-visible {
+  outline-color: #0f766e;
+}
+
 /* ── Row action dialogs (assign / alternate doctor, cancel). The frame is the shared Modal. ── */
 .hc-modal.adp-bk-modal {
   max-width: 520px;

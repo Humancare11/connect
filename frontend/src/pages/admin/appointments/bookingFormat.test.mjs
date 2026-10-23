@@ -4,7 +4,7 @@ import {
   DEFAULT_TAB, PAGE_SIZE, STATUS_META, TAB_LABELS, TAB_ORDER,
   formatBookedOn, formatConsultation, formatFee, isClosed, originalDoctorHint, pageFromParam, pageWindow,
   rangeText, rowNumber, shortBookingId, showAssignedByColumn, tabFromParam,
-  AUTO_COMPLETE_HINT, CANCEL_REASONS, PAID_WARNING, canAlternate, canAssign, canAutoComplete, canCancel, canConfirm,
+  AUTO_COMPLETE_HINT, CANCEL_REASONS, refundWarning, canAlternate, canAssign, canAutoComplete, canCancel, canConfirm,
   explainActionError, filterDoctors, needsAppointmentTime, toTime12, toTime24,
 } from "./bookingFormat.js";
 
@@ -81,7 +81,7 @@ const row = (status, doctorName = "Dr X", extra = {}) => ({ id: "1", kind: "appo
 
 test("the five cancel reasons and the paid warning are as agreed", () => {
   assert.deepEqual(CANCEL_REASONS, ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"]);
-  assert.equal(PAID_WARNING, "This booking was paid. Refund it in Stripe.");
+  assert.equal(refundWarning({ paymentGateway: "stripe" }), "This booking was paid. Refund it in Stripe.");
   assert.match(AUTO_COMPLETE_HINT, /assigned or confirmed/);
 });
 
@@ -171,4 +171,14 @@ test("booking id and the original-doctor hint", () => {
   assert.equal(shortBookingId({ id: "64b0000000000000abcdef12" }), "…ABCDEF12");
   assert.equal(originalDoctorHint({ originalDoctorName: "Martin Perlin" }), "Originally with Martin Perlin");
   assert.equal(originalDoctorHint({ originalDoctorName: "" }), "");
+});
+
+test("the refund reminder names the gateway the booking was paid through", () => {
+  assert.equal(refundWarning({ paymentGateway: "stripe" }), "This booking was paid. Refund it in Stripe.");
+  assert.equal(refundWarning({ paymentGateway: "paypal" }), "This booking was paid. Refund it in PayPal.");
+  assert.equal(refundWarning({ paymentGateway: "PayPal" }), "This booking was paid. Refund it in PayPal.");
+  for (const other of ["", "razorpay", undefined, null]) {
+    assert.equal(refundWarning({ paymentGateway: other }), "This booking was paid. Refund it with the payment provider.", String(other));
+  }
+  assert.equal(refundWarning(null), "This booking was paid. Refund it with the payment provider.");
 });
