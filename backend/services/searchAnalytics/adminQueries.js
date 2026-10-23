@@ -6,9 +6,11 @@
 // built field by field.
 //
 // Privacy rules enforced HERE, in the data layer, so no endpoint can bypass them:
-//  - TWO protections apply together to /terms, /summary, /daily-terms and /gaps:
-//    (1) the ordinary minimum: a term is listed only with at least MIN_TERM_INTERACTIONS
-//    (3) interactions (visibleFrom), and
+//  - /terms, /summary and /daily-terms list every term from its FIRST interaction
+//    (visibleFrom = 1, passed by the controller; /gaps keeps the ordinary minimum of
+//    MIN_TERM_INTERACTIONS = 3), but only behind two privacy protections that never
+//    depend on the count:
+//    (1) ingestion: a search the privacy filter rejects is never recorded, and
 //    (2) a read-time check: findRefusedTerms re-checks EVERY stored spelling in the window
 //    against the CURRENT rules (analyzeForAnalytics); a term with any refused spelling is
 //    excluded (excludeTermKeys) inside MongoDB, in the term list, in the counts and in the
@@ -21,7 +23,7 @@
 //    never show a term below it. A term's Trend is therefore empty until a day
 //    reaches 3 (trendAvailable on /terms rows says so). /gaps additionally excludes
 //    the terms findRefusedTerms reports (excludeTermKeys), like /terms.
-//  - A /terms caller may raise the minimum (minCount) above 3, never lower it.
+//  - A /terms caller may raise the minimum (minCount) above 1; /gaps callers never go below 3.
 //  - NOT hidden, by design: day-level totals (the rollup's "other" pool) and the
 //    composition (outcome / AI status / settle mode) inside a visible cell.
 //  - /trend is budgeted (see trendBudget.js): bounded time, bounded operations,
@@ -38,11 +40,12 @@ const { readDay, buildRows } = require("./rollup");
 const { addDays, dayKey, startOfUtcDay } = require("./adminParams");
 const { TREND_LIMITS, TrendBudgetError, createBudget, createGate } = require("./trendBudget");
 
-// The privacy minimum is enforced HERE for every caller: a caller may raise visibleFrom, never lower it below
-// MIN_TERM_INTERACTIONS (3), whatever it passes.
+// visibleFrom is the number of interactions a term-day cell and a term's total need to be listed. When a caller passes
+// nothing it is MIN_TERM_INTERACTIONS (3, what /gaps relies on); the term lists pass 1 (a term appears from its first
+// search). It can never go below 1, whatever is passed.
 const termFloor = (value) => {
   const n = Number(value);
-  return Number.isFinite(n) ? Math.max(MIN_TERM_INTERACTIONS, Math.floor(n)) : MIN_TERM_INTERACTIONS;
+  return Number.isFinite(n) ? Math.max(1, Math.floor(n)) : MIN_TERM_INTERACTIONS;
 };
 
 // Upper bound on distinct terms examined per request (largest first).

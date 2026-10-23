@@ -166,17 +166,17 @@ function createSearchAnalyticsAdminController({
     }
   };
 
-  // Which terms may be listed: BOTH protections apply. (1) The ordinary minimum: a term is listed only with at least
-  // MIN_TERM_INTERACTIONS (3) interactions, the same rule as /gaps and /trend. (2) The read-time check: a term with a
-  // stored spelling the CURRENT privacy rules refuse (all spellings in the window are checked, see findRefusedTerms) is
-  // excluded. If the check cannot be completed, no term-level row is returned by any endpoint (hideTerms): it fails
+  // Which terms may be listed: /terms, /summary and /daily-terms list a term from its FIRST search (visibleFrom 1);
+  // /gaps and /trend keep the minimum of MIN_TERM_INTERACTIONS (3). What never depends on the count: searches the
+  // ingestion filter rejects are never recorded, and the read-time check excludes a term with a stored spelling the
+  // CURRENT privacy rules refuse (all spellings in the window are checked, see findRefusedTerms). If the check cannot be completed, no term-level row is returned by any endpoint (hideTerms): it fails
   // closed. The incomplete check is logged with a fixed message (endpoint, reason, error name) and never any search text.
   async function termVisibility(window, endpointName) {
     const check = await queries.findRefusedTerms({ window });
     if (check.complete === true) {
       return {
         complete: true,
-        listOptions: { excludeTermKeys: check.keys }, // visibleFrom stays at the minimum of 3
+        listOptions: { excludeTermKeys: check.keys, visibleFrom: 1 }, // a term is listed from its first search
         gapOptions: { excludeTermKeys: check.keys },
       };
     }
@@ -227,7 +227,7 @@ function createSearchAnalyticsAdminController({
 
   const terms = endpoint("terms", async (query) => {
     const params = parseTermsQuery(query, { now: now() });
-    // A term is listed only with at least 3 interactions and when it passes the read-time check (see termVisibility).
+    // A term is listed from its first search, when it passes the read-time check (see termVisibility).
     // The caller may raise the minimum (minCount) but never lower it.
     const visibility = await termVisibility(params.window, "terms");
     const loaded = await queries.loadWindowTerms({ window: params.window, outcome: params.outcome, aiStatus: params.aiStatus, ...visibility.listOptions });
@@ -251,7 +251,7 @@ function createSearchAnalyticsAdminController({
     };
   });
 
-  // Daily terms: date, normalised term, count. A term is listed for a day only with at least 3 interactions that day and when it
+  // Daily terms: date, normalised term, count. A term is listed for a day from its first search that day, when it
   // passes the read-time check (see termVisibility); everything else, including terms the current privacy rules refuse, is only counted, per
   // day, as "other". Filtering happens inside MongoDB, so rows, total and hasMore are exact.
   const dailyTerms = endpoint("daily-terms", async (query) => {
