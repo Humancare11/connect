@@ -121,15 +121,18 @@ test("pagination: limit 1-100 (default 25), offset 0-1000 (default 0), digits on
   }
 });
 
-test("minCount can raise the floor of 3 but never lower it", () => {
-  assert.equal(parseTermsQuery({}, opts).minCount, 3);
+test("minCount: /terms lists from the first search and a caller can only raise it; /gaps never goes below 3", () => {
+  assert.equal(parseTermsQuery({}, opts).minCount, 1);
   assert.equal(parseGapsQuery({}, opts).minCount, 5);
+  assert.equal(parseTermsQuery({ minCount: "1" }, opts).minCount, 1);
   assert.equal(parseTermsQuery({ minCount: "3" }, opts).minCount, 3);
+  assert.equal(parseGapsQuery({ minCount: "3" }, opts).minCount, 3);
   assert.equal(parseGapsQuery({ minCount: "50" }, opts).minCount, 50);
-  for (const bad of ["0", "1", "2", "-3", "3.5", "1001", "abc", "three"]) {
+  for (const bad of ["0", "-3", "3.5", "1001", "abc", "three"]) {
     assert.equal(field(() => parseTermsQuery({ minCount: bad }, opts)), "minCount", bad);
     assert.equal(field(() => parseGapsQuery({ minCount: bad }, opts)), "minCount", bad);
   }
+  for (const bad of ["1", "2"]) assert.equal(field(() => parseGapsQuery({ minCount: bad }, opts)), "minCount", `gaps ${bad}`);
 });
 
 test("outcome, aiStatus and sort are strict allowlists", () => {

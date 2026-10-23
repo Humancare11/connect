@@ -211,7 +211,7 @@ function TermsTab({ range, onSelectTerm, refreshKey, onBusy, width }) {
                     </td>
                   </tr>
                 ))}
-                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr className="sa-empty-row"><td colSpan={8} className="sa-empty">No search terms for this period yet. A term appears after at least 3 searches.</td></tr>}
+                {items.length === 0 && !privacyCheckIncomplete(body?.meta) && <tr className="sa-empty-row"><td colSpan={8} className="sa-empty">No search terms for this period yet. A term can appear after a single search.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -436,7 +436,7 @@ export default function SearchAnalytics() {
         <span className="sa-eyebrow">Content opportunities</span>
         <h1 className="sa-title">Search Analytics</h1>
         <p className="sa-sub">
-          Aggregated, privacy-filtered patient search activity. A search term appears only after at least 3 searches; searches the privacy filters reject are never recorded or shown.
+          Aggregated, privacy-filtered patient search activity. A search term can appear after a single search; searches the privacy filters reject are never recorded or shown.
         </p>
       </div>
 

@@ -10,7 +10,6 @@ const SearchInteraction = require("../../models/SearchInteraction");
 const { interaction, many } = require("./rawInteractions");
 const { findRefusedTerms, loadWindowTerms, loadDailyTerms } = require("../../services/searchAnalytics/adminQueries");
 const { createSearchAnalyticsAdminController } = require("../../controllers/searchAnalyticsAdminController");
-const { MIN_TERM_INTERACTIONS } = require("../../services/searchAnalytics/constants");
 
 const WINDOW = { start: new Date("2026-10-01T00:00:00Z"), end: new Date("2026-10-08T00:00:00Z"), days: 7 };
 
@@ -106,7 +105,7 @@ describe("the controller applies BOTH protections and fails closed", () => {
   ];
 
   for (const [name, handler, loader] of ENDPOINTS) {
-    test(`/${name}: check complete -> refused keys excluded and the minimum of ${MIN_TERM_INTERACTIONS} is NOT lowered`, async () => {
+    test(`/${name}: check complete -> refused keys excluded, and terms are listed from their first search (visibleFrom 1)`, async () => {
       calls.length = 0;
       check = { keys: ["refused term"], complete: true };
       const { status, body } = await run(handler());
@@ -115,7 +114,7 @@ describe("the controller applies BOTH protections and fails closed", () => {
       assert.equal(body.meta.termsCheckComplete, true);
       const options = calls.find(([fn]) => fn === loader)[1];
       assert.deepEqual(options.excludeTermKeys, ["refused term"]);
-      assert.equal(options.visibleFrom, undefined, "visibleFrom is left at its default, MIN_TERM_INTERACTIONS (3)");
+      assert.equal(options.visibleFrom, 1, "a term is listed from its first search");
       assert.notEqual(options.hideTerms, true);
     });
 
@@ -132,11 +131,21 @@ describe("the controller applies BOTH protections and fails closed", () => {
     });
   }
 
-  test("/terms: a caller can raise minCount but never lower it below 3", async () => {
+  test("/terms: a caller can raise minCount above 1 but never below 1", async () => {
     check = { keys: [], complete: true };
-    assert.equal((await run(controller.terms, { minCount: "2" })).status, 400);
-    assert.equal((await run(controller.terms, { minCount: "1" })).status, 400);
+    assert.equal((await run(controller.terms, { minCount: "0" })).status, 400);
+    assert.equal((await run(controller.terms, { minCount: "1" })).status, 200);
     assert.equal((await run(controller.terms, { minCount: "5" })).status, 200);
+  });
+
+  test("/gaps keeps its own minimum: no visibleFrom is passed and minCount below 3 is refused", async () => {
+    check = { keys: ["refused term"], complete: true };
+    calls.length = 0;
+    assert.equal((await run(controller.gaps, {})).status, 200);
+    const options = calls.find(([fn]) => fn === "loadWindowTerms")[1];
+    assert.deepEqual(options.excludeTermKeys, ["refused term"]);
+    assert.equal(options.visibleFrom, undefined, "the data layer's default minimum of 3 applies");
+    assert.equal((await run(controller.gaps, { minCount: "2" })).status, 400);
   });
 
   test("/daily-terms has no minCount parameter at all", async () => {
@@ -145,14 +154,14 @@ describe("the controller applies BOTH protections and fails closed", () => {
   });
 });
 
-describe("end to end against an in-memory database: the minimum of 3 AND the read-time exclusion", () => {
+describe("end to end against an in-memory database: listing from the first search AND the read-time exclusion", () => {
   let mongod;
   before(async () => {
     mongod = await MongoMemoryServer.create();
     await mongoose.connect(mongod.getUri());
     await SearchInteraction.collection.insertMany([
       ...many(4, { term: "knee pain" }), // clean and frequent: listed
-      ...many(2, { term: "rare clean term" }), // clean but below 3: never listed
+      ...many(2, { term: "rare clean term" }), // clean and rare: listed from its first search (but not by /gaps, which keeps 3)
       ...many(5, { term: "call me on 555 123 4567" }), // frequent but refused by the current rules: never listed
     ]);
   });
@@ -168,18 +177,30 @@ describe("end to end against an in-memory database: the minimum of 3 AND the rea
     assert.deepEqual(check.keys, ["call me on 555 123 4567"]);
   });
 
-  test("/terms rows: frequent clean term only; below-3 and refused terms are absent", async () => {
+  test("/terms rows (visibleFrom 1): every clean term is listed, the refused one is absent", async () => {
+    const check = await findRefusedTerms({ window });
+    const { rows } = await loadWindowTerms({ window, visibleFrom: 1, excludeTermKeys: check.keys });
+    assert.deepEqual(rows.map((row) => row.termKey).sort(), ["knee pain", "rare clean term"]);
+    assert.ok(!JSON.stringify(rows).includes("555"));
+  });
+
+  test("/gaps rows (the data layer's default): the ordinary minimum of 3 still applies", async () => {
     const check = await findRefusedTerms({ window });
     const { rows } = await loadWindowTerms({ window, excludeTermKeys: check.keys });
     assert.deepEqual(rows.map((row) => row.termKey), ["knee pain"]);
   });
 
-  test("no caller can lower the minimum of 3: visibleFrom 1 or 0 is clamped inside the data layer", async () => {
-    for (const visibleFrom of [1, 0, -5, "1", NaN]) {
-      const { rows } = await loadWindowTerms({ window, visibleFrom, excludeTermKeys: ["call me on 555 123 4567"] });
+  test("the data layer: visibleFrom defaults to 3, accepts 1, and can never go below 1", async () => {
+    const refused = ["call me on 555 123 4567"];
+    for (const visibleFrom of [undefined, NaN]) {
+      const { rows } = await loadWindowTerms({ window, visibleFrom, excludeTermKeys: refused });
       assert.deepEqual(rows.map((row) => row.termKey), ["knee pain"], "visibleFrom=" + String(visibleFrom));
       const daily = await loadDailyTerms({ window, visibleFrom, excludeTermKeys: [], limit: 50, offset: 0 });
       assert.ok(!daily.rows.some((row) => row.termKey === "rare clean term"), "daily visibleFrom=" + String(visibleFrom));
+    }
+    for (const visibleFrom of [1, 0, -5, "1"]) {
+      const { rows } = await loadWindowTerms({ window, visibleFrom, excludeTermKeys: refused });
+      assert.deepEqual(rows.map((row) => row.termKey).sort(), ["knee pain", "rare clean term"], "visibleFrom=" + String(visibleFrom));
     }
   });
 
@@ -189,12 +210,12 @@ describe("end to end against an in-memory database: the minimum of 3 AND the rea
     assert.deepEqual(daily.rows, []);
   });
 
-  test("/daily-terms rows: below-3 days and refused terms are folded into 'other', never named", async () => {
+  test("/daily-terms rows (visibleFrom 1): clean terms are listed from their first search; the refused term is folded into 'other', never named", async () => {
     const check = await findRefusedTerms({ window });
-    const daily = await loadDailyTerms({ window, excludeTermKeys: check.keys, limit: 50, offset: 0 });
-    assert.deepEqual(daily.rows.map((row) => row.termKey), ["knee pain"]);
+    const daily = await loadDailyTerms({ window, visibleFrom: 1, excludeTermKeys: check.keys, limit: 50, offset: 0 });
+    assert.deepEqual(daily.rows.map((row) => row.termKey).sort(), ["knee pain", "rare clean term"]);
     assert.ok(!JSON.stringify(daily).includes("555"));
-    assert.ok(!JSON.stringify(daily).includes("rare clean term"));
+    assert.equal(daily.other.reduce((n, r) => n + r.interactions, 0), 5, "only the refused term's 5 interactions are counted as 'other'");
     assert.equal(daily.rows.reduce((n, r) => n + r.interactions, 0) + daily.other.reduce((n, r) => n + r.interactions, 0), 11);
   });
 });

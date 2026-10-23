@@ -113,6 +113,8 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     ...many(2, { term: "tiny alpha", createdAt: when("2026-10-07") }),
   ]);
   const SUPPRESSED_TEXT = ["secretrare", "onlyone", "tiny alpha", "alpha"];
+  // /gaps and /trend keep the ordinary minimum (a term-day cell needs 3 interactions); /terms, /summary and /daily-terms list from the first search.
+  const gapAndTrendEndpoints = ["/gaps", "/trend", "/trend?termKey=secretrare", "/gaps?minCount=3"];
   const everyEndpoint = ["/summary", "/terms", "/gaps", "/trend", "/trend?termKey=secretrare", "/terms?outcome=found", "/terms?sort=recent&limit=100", "/gaps?minCount=3"];
 
   // ── Authentication and authorization ──────────────────────────────────────
@@ -254,21 +256,24 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     assert.deepEqual(defaults.json.window, { from: "2026-09-10", to: "2026-10-09", days: 30 });
   });
 
-  // ── Suppressed terms (k = 3) ──────────────────────────────────────────────
-  test("terms below 3 interactions never appear in any endpoint, field, filter or error", async () => {
+  // ── Rare terms: listed from the first search; /gaps and /trend keep 3 ──────────
+  test("terms below 3 interactions never appear in /gaps or /trend, and /summary carries no term text (they are listed in /terms from their first search)", async () => {
     await seedScenario();
-    for (const path of everyEndpoint) {
+    for (const path of [...gapAndTrendEndpoints, "/summary"]) {
       const res = await get(path);
       for (const secret of SUPPRESSED_TEXT) assert.ok(!res.text.includes(secret), `${path} leaked ${secret}`);
     }
     // Not even in error responses or when asked for them directly.
-    for (const path of ["/trend?termKey=secretrare&from=bad", "/terms?outcome=secretrare", "/trend?termKey=tiny%20alpha", "/terms?minCount=1", "/terms?sort=secretrare"]) {
+    for (const path of ["/trend?termKey=secretrare&from=bad", "/trend?termKey=tiny%20alpha"]) {
       const res = await get(path);
       for (const secret of SUPPRESSED_TEXT) assert.ok(!res.text.includes(secret.replace("tiny alpha", "tiny")), `${path} leaked ${secret}`);
     }
+    // /terms lists them, from their first search.
+    const terms = await get("/terms?limit=100");
+    for (const term of ["secretrare", "onlyone", "tiny alpha"]) assert.ok(terms.json.data.items.some((i) => i.term === term), term);
   });
 
-  test("the data layer itself never loads a term below 3 interactions (separate from the controller's own filter)", async () => {
+  test("the data layer's default minimum (the one /gaps relies on) never loads a term below 3 interactions", async () => {
     await seedScenario();
     const { loadWindowTerms } = require("../../services/searchAnalytics/adminQueries");
     const { parseWindow } = require("../../services/searchAnalytics/adminParams");
@@ -289,29 +294,34 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     assert.ok(unavailableOnly.rows.every((row) => row.coverage === null && row.gap === null)); // no coverage while filtering
   });
 
-  test("terms with 3 or more are shown, rarer ones are only counted", async () => {
+  test("every term is shown from its first search, nothing is counted as suppressed", async () => {
     await seedScenario();
     const terms = await get("/terms?limit=100");
     assert.deepEqual(terms.json.data.items.map((i) => i.term).sort(), [
-      "acne", "ai down", "ankle sprain", "half down", "heartburn", "knee pain", "mostly down", "oncology care", "pimple help",
+      "acne", "ai down", "ankle sprain", "half down", "heartburn", "knee pain", "mostly down", "oncology care", "onlyone", "pimple help", "secretrare", "tiny alpha",
     ]);
-    assert.ok(terms.json.data.items.every((i) => i.interactions >= 3));
+    assert.ok(terms.json.data.items.every((i) => i.interactions >= 1));
+    assert.equal(terms.json.data.items.find((i) => i.term === "onlyone").interactions, 1);
     const summary = (await get("/summary")).json.data;
-    assert.deepEqual(summary.terms, { distinct: 12, shown: 9, suppressed: 3, interactionsInShownTerms: 59, interactionsInSuppressedTerms: 5 });
+    assert.deepEqual(summary.terms, { distinct: 12, shown: 12, suppressed: 0, interactionsInShownTerms: 64, interactionsInSuppressedTerms: 0 });
     assert.equal(summary.interactions, 64);
   });
 
-  test("minCount raises the floor, and filters apply the floor to the filtered count (no differencing of rare terms)", async () => {
+  test("minCount raises the minimum, and filters apply it to the filtered count", async () => {
     await seedScenario();
     const raised = await get("/terms?minCount=7&limit=100");
     assert.deepEqual(raised.json.data.items.map((i) => i.term).sort(), ["ai down".replace("ai down", "half down"), "mostly down"].sort());
     assert.ok(raised.json.data.items.every((i) => i.interactions >= 7));
-    // heartburn has 4 fallback_only and 2 found: filtering to `dedicated_page_found` leaves 2 -> hidden.
+    // heartburn has 4 fallback_only and 2 found: filtering to `dedicated_page_found` leaves 2, listed with 2.
     const found = await get("/terms?outcome=dedicated_page_found&limit=100");
     const keys = found.json.data.items.map((i) => i.termKey);
     assert.ok(keys.includes("acne") && keys.includes("knee pain"));
-    assert.ok(!keys.includes("heartburn"));
-    assert.ok(found.json.data.items.every((i) => i.interactions >= 3 && i.coverage === null));
+    assert.equal(found.json.data.items.find((i) => i.termKey === "heartburn").interactions, 2);
+    assert.ok(!keys.includes("half down"), "a term with no matching interaction is omitted");
+    assert.ok(found.json.data.items.every((i) => i.interactions >= 1 && i.coverage === null));
+    // raising the minimum applies to the filtered count: heartburn has 2 found, so minCount=3 omits it.
+    const raisedFound = await get("/terms?outcome=dedicated_page_found&minCount=3&limit=100");
+    assert.ok(!raisedFound.json.data.items.some((i) => i.termKey === "heartburn"));
     assert.equal(found.json.data.filters.outcome, "dedicated_page_found");
   });
 
@@ -427,7 +437,7 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
   test("pagination and sort validation: strict allowlists with fixed errors", async () => {
     await seedManyTerms();
     for (const query of ["limit=0", "limit=101", "limit=-1", "limit=1.5", "limit=abc", "limit=", "offset=1001", "offset=-1", "offset=x",
-      "sort=term", "sort=createdAt", "sort=count&sort=recent", "sort=", "outcome=nope", "aiStatus=nope", "minCount=2", "extra=1", "from[x]=1"]) {
+      "sort=term", "sort=createdAt", "sort=count&sort=recent", "sort=", "outcome=nope", "aiStatus=nope", "minCount=0", "extra=1", "from[x]=1"]) {
       const res = await get(`/terms?${query}`);
       assert.equal(res.status, 400, query);
       assert.equal(res.headers.get("cache-control"), "no-store");
@@ -662,37 +672,32 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     assert.deepEqual([point.interactions, point.dedicatedPageFound, point.fallbackOnly, point.noResults, point.final], [9, 5, 3, 1, true]);
   });
 
-  // ── Statistical differencing (k = 3, one suppression unit: the term-day cell) ──
-  // Every term-level number is released only as a sum of VISIBLE cells (a term with
-  // >= 3 interactions on a UTC day). These tests drive the real endpoints with
-  // overlapping windows, filters and endpoints and show that no combination exposes
-  // a hidden cell. They do not claim protection against every inference attack:
-  // see differencing 8 for what is deliberately still released.
+  // ── Windows, filters and reconciliation ──
+  // /terms, /daily-terms and /summary list every term from its FIRST interaction, so a term's count is the plain sum of its
+  // interactions in the window (after any filter). /gaps and /trend keep the ordinary suppression unit, the term-day cell
+  // (>= 3 interactions on a UTC day). These tests drive the real endpoints with overlapping windows, filters and endpoints and
+  // show that the numbers add up, and which numbers still come only from visible (>= 3) cells.
   const itemsOf = async (path) => Object.fromEntries((await get(path)).json.data.items.map((i) => [i.termKey, i]));
   const win = (from, to) => `from=${from}&to=${to}`;
   const D = (n) => `2026-10-0${n}`;
 
-  test("differencing 1: overlapping windows cannot expose a 2-interaction day of a term that is visible on other days", async () => {
-    // knee pain: 5 on the 5th (visible), 2 on the 6th (hidden), 4 on the 7th (visible).
+  test("windows 1: a term's count in /terms is the plain sum of its interactions in the window, however small the day", async () => {
+    // knee pain: 5 on the 5th, 2 on the 6th, 4 on the 7th.
     await seed([
       ...many(5, { term: "knee pain", createdAt: when(D(5)) }),
       ...many(2, { term: "knee pain", createdAt: when(D(6)) }),
       ...many(4, { term: "knee pain", createdAt: when(D(7)) }),
     ]);
     const n = async (from, to) => (await itemsOf(`/terms?${win(from, to)}&limit=100`))["knee pain"]?.interactions ?? 0;
-    // Under a per-window rule the 5th..6th window would say 7, and 7 - 5 = 2 would recover the hidden day.
-    assert.equal(await n(D(5), D(6)), 5);
+    assert.equal(await n(D(5), D(6)), 7);
     assert.equal(await n(D(5), D(5)), 5);
-    assert.equal(await n(D(6), D(6)), 0);
-    assert.equal(await n(D(6), D(7)), 4);
-    assert.equal(await n(D(5), D(7)), 9);
-    // Every window pair: the released values are 0, 4, 5 or 9 - sums of visible days. 2 and 7 never occur.
-    const seen = new Set();
-    for (const [a, b] of [[5, 5], [5, 6], [5, 7], [6, 6], [6, 7], [7, 7]]) seen.add(await n(D(a), D(b)));
-    assert.deepEqual([...seen].sort((x, y) => x - y), [0, 4, 5, 9]);
+    assert.equal(await n(D(6), D(6)), 2);
+    assert.equal(await n(D(6), D(7)), 6);
+    assert.equal(await n(D(5), D(7)), 11);
+    assert.equal(await n(D(7), D(7)), 4);
   });
 
-  test("differencing 2: /terms, /trend and /summary reconcile exactly, so subtracting them yields nothing hidden", async () => {
+  test("windows 2: /terms and /summary reconcile exactly; /trend counts only the days with >= 3 interactions", async () => {
     await seed([
       ...many(5, { term: "knee pain", createdAt: when(D(5)) }),
       ...many(2, { term: "knee pain", createdAt: when(D(6)) }),
@@ -700,29 +705,33 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
       ...many(1, { term: "lonely", createdAt: when(D(6)) }),
     ]);
     await runRollup({ now: new Date("2026-10-08T12:00:00.000Z"), logger: () => {} }); // rolls the 5th..7th up (final)
+    const expected = { "5-7": [11, 9], "5-6": [7, 5], "6-7": [6, 4], "6-6": [2, 0] }; // [/terms, /trend (days with >= 3)]
     for (const [a, b] of [[5, 7], [5, 6], [6, 7], [6, 6]]) {
       const query = win(D(a), D(b));
       const items = await itemsOf(`/terms?${query}&limit=100`);
       const trend = (await get(`/trend?${query}&termKey=knee%20pain`)).json.data.points;
-      assert.equal(items["knee pain"]?.interactions ?? 0, trend.reduce((sum, p) => sum + (p.interactions ?? 0), 0), `terms vs trend ${query}`);
+      const [termsTotal, trendTotal] = expected[`${a}-${b}`];
+      assert.equal(items["knee pain"]?.interactions ?? 0, termsTotal, `terms ${query}`);
+      assert.equal(trend.reduce((sum, p) => sum + (p.interactions ?? 0), 0), trendTotal, `trend ${query}`);
       const summary = (await get(`/summary?${query}`)).json.data;
       const listed = Object.values(items).reduce((sum, i) => sum + i.interactions, 0);
       assert.equal(summary.terms.interactionsInShownTerms, listed, `summary vs terms ${query}`);
       assert.equal(summary.interactions - listed, summary.terms.interactionsInSuppressedTerms);
+      assert.equal(summary.terms.interactionsInSuppressedTerms, 0, "nothing is suppressed from the first search on");
     }
   });
 
-  test("differencing 3: lastSeen never reveals the day of an interaction in a hidden cell", async () => {
+  test("windows 3: lastSeen is the term's latest day, whatever the size of that day", async () => {
     await seed([...many(4, { term: "knee pain", createdAt: when(D(2)) }), ...many(2, { term: "knee pain", createdAt: when(D(8)) })]);
     const item = (await itemsOf("/terms?limit=100"))["knee pain"];
-    assert.equal(item.lastSeen, "2026-10-02"); // not the 8th
-    assert.equal(item.interactions, 4);
+    assert.equal(item.lastSeen, "2026-10-08");
+    assert.equal(item.interactions, 6);
     const recent = (await get("/terms?sort=recent&limit=100")).json.data.items.find((i) => i.termKey === "knee pain");
-    assert.equal(recent.lastSeen, "2026-10-02");
+    assert.equal(recent.lastSeen, "2026-10-08");
   });
 
-  test("differencing 4: the spelling and the top result path come from visible cells only", async () => {
-    // The 4th: 3 interactions (visible) - 2 reach /a-page, 1 reaches /b-page. The 5th: 2 more reach /b-page (hidden).
+  test("windows 4: the spelling and the top result path come from all of the term's interactions", async () => {
+    // The 4th: 3 interactions - 2 reach /a-page, 1 reaches /b-page. The 5th: 2 more reach /b-page.
     await seed([
       ...many(2, { term: "Back Pain", termKey: "back pain", topResultPath: "/a-page", createdAt: when(D(4)) }),
       ...many(1, { term: "Back Pain", termKey: "back pain", topResultPath: "/b-page", createdAt: when(D(4), "13:00:00.000") }),
@@ -730,10 +739,10 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     ]);
     const res = await get("/terms?limit=100");
     const item = res.json.data.items.find((i) => i.termKey === "back pain");
-    assert.equal(item.interactions, 3);
-    assert.deepEqual(item.topResultPath, { path: "/a-page", count: 2, dedicated: true }); // counting the hidden cell would make /b-page win with 3
-    assert.equal(item.term, "Back Pain");
-    assert.ok(!res.text.includes("BACK PAIN!!"));
+    assert.equal(item.interactions, 5);
+    assert.deepEqual(item.topResultPath, { path: "/b-page", count: 3, dedicated: true });
+    assert.equal(item.term, "Back Pain"); // the most used spelling
+    assert.ok(!res.text.includes("BACK PAIN!!"), "only one spelling is released");
   });
 
   test("differencing 5: gaps are judged and counted on visible cells only", async () => {
@@ -747,29 +756,28 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     assert.equal(item.gapType, "no_catalog_match");
   });
 
-  test("differencing 6: filters cannot be combined with windows to pull out a hidden cell", async () => {
-    // day 4: 4 interactions (3 not-found + 1 found) - visible; day 5: 2 found - hidden.
+  test("windows 6: filters and windows add up to plain sums of the matching interactions", async () => {
+    // day 4: 4 interactions (3 not-found + 1 found); day 5: 2 found.
     await seed([
       ...many(3, { term: "tinnitus", outcome: "no_results", createdAt: when(D(4)) }),
       ...many(1, { term: "tinnitus", outcome: "dedicated_page_found", createdAt: when(D(4), "13:00:00.000") }),
       ...many(2, { term: "tinnitus", outcome: "dedicated_page_found", createdAt: when(D(5)) }),
     ]);
     const found = async (from, to) => (await itemsOf(`/terms?${win(from, to)}&outcome=dedicated_page_found&limit=100`)).tinnitus?.interactions ?? 0;
-    // Filtered to "found": day 4 contributes 1, the hidden day contributes nothing; 1 < 3 so the term is absent in every window.
-    assert.equal(await found(D(4), D(5)), 0);
-    assert.equal(await found(D(5), D(5)), 0);
-    assert.equal(await found(D(4), D(4)), 0);
-    // Unfiltered, the term shows 4 over both windows (the hidden 2 never enter).
-    assert.equal((await itemsOf(`/terms?${win(D(4), D(5))}&limit=100`)).tinnitus.interactions, 4);
-    for (const extra of ["minCount=5", "aiStatus=not_requested&minCount=3", "aiStatus=used"]) {
-      const items = await itemsOf(`/terms?${win(D(4), D(5))}&${extra}&limit=100`);
-      assert.ok(!items.tinnitus || items.tinnitus.interactions === 4, extra);
-    }
+    assert.equal(await found(D(4), D(5)), 3);
+    assert.equal(await found(D(5), D(5)), 2);
+    assert.equal(await found(D(4), D(4)), 1);
+    assert.equal((await itemsOf(`/terms?${win(D(4), D(5))}&limit=100`)).tinnitus.interactions, 6);
+    // minCount applies to the filtered count.
+    assert.equal((await itemsOf(`/terms?${win(D(4), D(5))}&minCount=5&limit=100`)).tinnitus.interactions, 6);
+    assert.ok(!(await itemsOf(`/terms?${win(D(4), D(5))}&outcome=dedicated_page_found&minCount=4&limit=100`)).tinnitus);
+    assert.equal((await itemsOf(`/terms?${win(D(4), D(5))}&aiStatus=not_requested&limit=100`)).tinnitus.interactions, 6);
+    assert.ok(!(await itemsOf(`/terms?${win(D(4), D(5))}&aiStatus=used&limit=100`)).tinnitus);
   });
 
-  test("differencing 7 (model check): across windows and filters, every released term count equals the sum of its visible cells", async () => {
+  test("windows 7 (model check): across windows and filters, every released term count equals the plain sum of its matching interactions", async () => {
     // Deterministic pseudo-random data: 6 terms over days 1..8 with 0..5 interactions per cell, random
-    // outcomes and AI statuses. Expected values come from a plain JS model of the cell rule.
+    // outcomes and AI statuses. Expected values come from a plain JS model.
     let state = 20260509;
     const rand = (max) => { state = (state * 1664525 + 1013904223) % 4294967296; return Math.floor(state / 65536) % max; };
     const outcomes = ["dedicated_page_found", "fallback_only", "no_results"];
@@ -791,18 +799,16 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
       }
     }
     await seed(docs);
-    const visibleCells = [...model.values()].flatMap((days) => [...days.values()]).filter((cell) => cell.length >= 3).length;
-    const hiddenCells = [...model.values()].flatMap((days) => [...days.values()]).filter((cell) => cell.length > 0 && cell.length < 3).length;
-    assert.ok(visibleCells > 5 && hiddenCells > 5, `the data must exercise both (${visibleCells} visible, ${hiddenCells} hidden)`);
+    const smallCells = [...model.values()].flatMap((days) => [...days.values()]).filter((cell) => cell.length > 0 && cell.length < 3).length;
+    assert.ok(smallCells > 5, `the data must include days with fewer than 3 interactions (${smallCells})`);
 
     const expected = (term, from, to, filter) => {
       let total = 0;
       for (let day = from; day <= to; day += 1) {
         const cell = model.get(term).get(day);
-        if (cell.length < 3) continue; // hidden cell: contributes to nothing
         total += cell.filter((x) => (!filter.outcome || x.outcome === filter.outcome) && (!filter.aiStatus || x.aiStatus === filter.aiStatus)).length;
       }
-      return total >= 3 ? total : 0;
+      return total;
     };
     const filters = [{}, { outcome: "no_results" }, { aiStatus: "not_requested" }, { outcome: "fallback_only", aiStatus: "used" }];
     let checked = 0;
@@ -819,18 +825,21 @@ describe("admin search analytics read APIs", { timeout: 300000 }, () => {
     assert.equal(checked, 4 * 8 * 6);
   });
 
-  test("differencing 8 (documented residual): the day-level pool is released as counts, and composition inside a visible cell is not hidden", async () => {
+  test("windows 8: /summary reports every interaction as shown, and the composition inside a term is released", async () => {
     await seed([
       ...many(4, { term: "knee pain", outcome: "no_results", createdAt: when(D(5)) }),
       ...many(1, { term: "knee pain", outcome: "dedicated_page_found", createdAt: when(D(5), "14:00:00.000") }),
       ...many(2, { term: "someone", createdAt: when(D(5)) }),
     ]);
-    // A single-day window shows how many interactions sit outside visible cells (2), never whose they are.
     const day = await get(`/summary?${win(D(5), D(5))}`);
-    assert.equal(day.json.data.terms.interactionsInSuppressedTerms, 2);
-    assert.ok(!day.text.includes("someone"));
-    // Inside a visible cell the breakdown is shown (approved response shape): 1 found out of 5.
+    assert.deepEqual(day.json.data.terms, { distinct: 2, shown: 2, suppressed: 0, interactionsInShownTerms: 7, interactionsInSuppressedTerms: 0 });
+    assert.ok(!day.text.includes("someone"), "the summary carries numbers, never term text");
+    // The breakdown inside a term is shown (approved response shape): 1 found out of 5.
     assert.equal((await itemsOf(`/terms?${win(D(5), D(5))}`))["knee pain"].outcomes.dedicatedPageFound, 1);
+    // /daily-terms lists both terms on that day and has nothing under "other".
+    const daily = await get(`/daily-terms?${win(D(5), D(5))}`);
+    assert.deepEqual(daily.json.data.items.map((i) => i.term).sort(), ["knee pain", "someone"]);
+    assert.deepEqual(daily.json.data.other, []);
   });
 
   // ── Trend budget over HTTP ────────────────────────────────────────────────
