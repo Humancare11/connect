@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import "./appointment.css";
 import api from "../../api";
 import socket from "../../socket";
+import { appointmentTab, groupAppointments, pendingNote } from "./appointmentTabs";
 
 export default function Appointments() {
   const location = useLocation();
@@ -31,13 +32,6 @@ export default function Appointments() {
       loadAppointments(false);
     }, 200);
   }, [loadAppointments]);
-
-  const appointmentStatus = useCallback((appointment) => {
-    if (appointment?.status === "assigned" && appointment?.doctorId) {
-      return "confirmed";
-    }
-    return appointment?.status || "";
-  }, []);
 
   // Initial load
   useEffect(() => {
@@ -85,35 +79,17 @@ export default function Appointments() {
     }
 
     setFocusedAppointmentId(activityId);
-    const status = appointmentStatus(target);
-    if (["requested", "upcoming", "pending"].includes(status)) {
-      setActiveTab("pending");
-    } else if (["confirmed", "completed", "complete"].includes(status)) {
-      setActiveTab(status === "complete" ? "completed" : status);
-    }
+    const tab = appointmentTab(target.status || "");
+    if (tab) setActiveTab(tab);
 
     setTimeout(() => {
       document
         .getElementById(`appt-${activityId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 40);
-  }, [appointments, appointmentStatus, location.search]);
+  }, [appointments, location.search]);
 
-  const pendingAppointments = appointments.filter((a) =>
-    ["requested", "upcoming", "pending"].includes(appointmentStatus(a)),
-  );
-  const confirmedAppointments = appointments.filter(
-    (a) => appointmentStatus(a) === "confirmed",
-  );
-  const completedAppointments = appointments.filter((a) =>
-    ["complete", "completed"].includes(appointmentStatus(a)),
-  );
-
-  const tabData = {
-    pending: pendingAppointments,
-    confirmed: confirmedAppointments,
-    completed: completedAppointments,
-  };
+  const tabData = groupAppointments(appointments);
   const currentList = tabData[activeTab];
 
   const formatDate = (dateStr) => {
@@ -147,19 +123,19 @@ export default function Appointments() {
       {/* Stats Strip */}
       <div className="appt-stats">
         <div className="appt-stat-card">
-          <span className="appt-stat-num">{pendingAppointments.length}</span>
+          <span className="appt-stat-num">{tabData.pending.length}</span>
           <span className="appt-stat-label">Pending</span>
           <div className="appt-stat-dot pending-dot" />
         </div>
         <div className="appt-stat-divider" />
         <div className="appt-stat-card">
-          <span className="appt-stat-num">{confirmedAppointments.length}</span>
+          <span className="appt-stat-num">{tabData.confirmed.length}</span>
           <span className="appt-stat-label">Confirmed</span>
           <div className="appt-stat-dot confirmed-dot" />
         </div>
         <div className="appt-stat-divider" />
         <div className="appt-stat-card">
-          <span className="appt-stat-num">{completedAppointments.length}</span>
+          <span className="appt-stat-num">{tabData.completed.length}</span>
           <span className="appt-stat-label">Completed</span>
           <div className="appt-stat-dot completed-dot" />
         </div>
@@ -303,9 +279,7 @@ export default function Appointments() {
                   <div className="appt-card-actions">
                     {activeTab === "pending" && (
                       <span className="appt-waiting-text">
-                        {["requested", "upcoming"].includes(appt.status)
-                          ? "Awaiting admin review and doctor assignment"
-                          : "Awaiting doctor confirmation"}
+                        {pendingNote(appt.status)}
                       </span>
                     )}
 

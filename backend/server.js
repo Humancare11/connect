@@ -634,8 +634,7 @@ app.use("/api/rtc", require("./routes/rtc"));
 const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);
-const CategoryConsultation = require("./models/CategoryConsultation");
-const Enrollment = require("./models/Enrollment");
+const { decideAppointmentAccess, deniedMessage } = require("./utils/appointmentRoomAccess");
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -1063,11 +1062,6 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
   }
 }
 
-// Statuses that end an appointment for good. Appointment uses lowercase
-// ("complete"/"cancelled"); CategoryConsultation uses capitalized
-// ("Completed"/"Cancelled") — compared case-insensitively below.
-const TERMINAL_APPOINTMENT_STATUSES = new Set(["complete", "completed", "cancelled"]);
-
 // Forcibly removes EVERY participant (patient + doctor) from an appointment's
 // room — used when the appointment's status itself changes to a terminal
 // state (cancelled/completed) and continued room access is no longer valid
@@ -1106,55 +1100,8 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
   if (!resolved) return { allowed: false, reason: "unauthenticated" };
   const identity = { userId: String(resolved.id), role: resolved.role };
 
-  const userId = String(identity.userId);
-  let appointment = null;
-  let allowed = false;
-
-  try {
-    appointment = await Appointment.findById(appointmentId)
-      .select("patientId doctorId status")
-      .lean();
-
-    if (appointment) {
-      allowed =
-        (identity.role === "user" && String(appointment.patientId) === userId) ||
-        (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
-    } else {
-      const cc = await CategoryConsultation.findById(appointmentId)
-        .select("patientId assignedDoctorId status")
-        .lean();
-
-      if (cc) {
-        appointment = cc;
-
-        if (identity.role === "user") {
-          allowed = String(cc.patientId) === userId;
-        } else if (identity.role === "doctor" && cc.assignedDoctorId) {
-          const enrollment = await Enrollment.findOne({ doctorId: identity.userId }).select("_id").lean();
-          allowed = !!enrollment && String(cc.assignedDoctorId) === String(enrollment._id);
-        }
-      }
-    }
-  } catch {
-    return { allowed: false, reason: "invalid_appointment" };
-  }
-
-  if (!appointment) return { allowed: false, reason: "appointment_not_found" };
-
-  // Once cancelled/completed, nobody may (re)join — this is what stops a
-  // participant evicted by evictAllFromAppointmentRoom from simply rejoining
-  // right after, since identity/ownership alone never changes on cancel or
-  // complete (unlike reassignment, where the doctorId itself changes).
-  if (TERMINAL_APPOINTMENT_STATUSES.has(String(appointment.status || "").toLowerCase())) {
-    return { allowed: false, reason: "appointment_ended", identity, appointment };
-  }
-
-  return {
-    allowed,
-    reason: allowed ? "participant" : "not_participant",
-    identity,
-    appointment,
-  };
+  // Participant, not ended, and confirmed: see utils/appointmentRoomAccess.js.
+  return decideAppointmentAccess(identity, appointmentId);
 }
 
 // ── Direct Video Room (ad-hoc, link-based, guest access — no login required) ──
@@ -1986,7 +1933,10 @@ io.on("connection", (socket) => {
     const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role, token });
 
     if (!access.allowed) {
-      socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
+      socket.emit("room-access-denied", {
+        msg: deniedMessage(access.reason, access.identity?.role),
+        reason: access.reason,
+      });
       console.warn("[socket] appointment room access denied", {
         socketId: socket.id,
         appointmentId,
