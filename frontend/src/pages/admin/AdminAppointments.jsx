@@ -5,7 +5,9 @@ import RetryButton from "../../components/ui/RetryButton";
 import BookingTabs from "./appointments/BookingTabs";
 import BookingsTable from "./appointments/BookingsTable";
 import BookingsPager from "./appointments/BookingsPager";
+import BookingActionModals from "./appointments/BookingActionModals";
 import useAdminBookings from "./appointments/useAdminBookings";
+import useBookingActions from "./appointments/useBookingActions";
 import { DEFAULT_TAB, PAGE_SIZE, TAB_LABELS, pageFromParam, tabFromParam } from "./appointments/bookingFormat";
 
 const SEARCH_DELAY_MS = 300;
@@ -25,6 +27,7 @@ export default function AdminAppointments() {
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const { data, loading, error, reload } = useAdminBookings({ status: tab, hideTesting, q, page, limit: PAGE_SIZE });
+  const actions = useBookingActions({ reload });
 
   // Writes the view to the URL, leaving out values that are the default.
   const setView = (next) => {
@@ -104,11 +107,12 @@ export default function AdminAppointments() {
                 {error} <RetryButton onRetry={reload} />
               </div>
             )}
-            <BookingsTable rows={rows} tab={tab} page={page} />
+            <BookingsTable rows={rows} tab={tab} page={page} actions={actions} />
             <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}
       </section>
+      <BookingActionModals actions={actions} />
     </div>
   );
 }

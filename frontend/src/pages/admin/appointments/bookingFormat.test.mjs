@@ -4,6 +4,8 @@ import {
   DEFAULT_TAB, PAGE_SIZE, STATUS_META, TAB_LABELS, TAB_ORDER,
   formatBookedOn, formatConsultation, formatFee, isClosed, originalDoctorHint, pageFromParam, pageWindow,
   rangeText, rowNumber, shortBookingId, showAssignedByColumn, tabFromParam,
+  AUTO_COMPLETE_HINT, CANCEL_REASONS, PAID_WARNING, canAlternate, canAssign, canAutoComplete, canCancel, canConfirm,
+  explainActionError, filterDoctors, needsAppointmentTime, toTime12, toTime24,
 } from "./bookingFormat.js";
 
 test("tabs are in the agreed order and every one has a label", () => {
@@ -73,6 +75,95 @@ test("booking date and fee", () => {
   assert.equal(formatFee(12.25), "$12.25");
   assert.equal(formatFee(0), "—");
   assert.equal(formatFee(undefined), "—");
+});
+
+const row = (status, doctorName = "Dr X", extra = {}) => ({ id: "1", kind: "appointment", status, doctorName, consultation: { date: "2026-11-01" }, ...extra });
+
+test("the five cancel reasons and the paid warning are as agreed", () => {
+  assert.deepEqual(CANCEL_REASONS, ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"]);
+  assert.equal(PAID_WARNING, "This booking was paid. Refund it in Stripe.");
+  assert.match(AUTO_COMPLETE_HINT, /assigned or confirmed/);
+});
+
+test("buttons follow the server rules for every status, with and without a doctor", () => {
+  for (const status of ["upcoming", "pending"]) {
+    const r = row(status, null);
+    assert.equal(canAssign(r), true, `assign ${status}`);
+    assert.equal(canAlternate(r), false, `alternate ${status}`);
+    assert.equal(canConfirm(r), false);
+    assert.equal(canAutoComplete(r), false);
+    assert.equal(canCancel(r), true);
+  }
+  const withDoctor = {
+    pending: { alternate: true, confirm: false, complete: false, cancel: true },
+    assigned: { alternate: true, confirm: true, complete: true, cancel: true },
+    confirmed: { alternate: true, confirm: false, complete: true, cancel: true },
+    complete: { alternate: false, confirm: false, complete: false, cancel: false },
+    cancelled: { alternate: false, confirm: false, complete: false, cancel: false },
+  };
+  for (const [status, want] of Object.entries(withDoctor)) {
+    const r = row(status);
+    assert.equal(canAssign(r), false, `assign ${status}`);
+    assert.equal(canAlternate(r), want.alternate, `alternate ${status}`);
+    assert.equal(canConfirm(r), want.confirm, `confirm ${status}`);
+    assert.equal(canAutoComplete(r), want.complete, `complete ${status}`);
+    assert.equal(canCancel(r), want.cancel, `cancel ${status}`);
+  }
+  // Complete / Cancelled rows with no doctor can't be assigned or cancelled either.
+  for (const status of ["complete", "cancelled"]) {
+    assert.equal(canAssign(row(status, null)), false);
+    assert.equal(canCancel(row(status, null)), false);
+  }
+});
+
+test("only a category booking with no time yet needs one", () => {
+  assert.equal(needsAppointmentTime({ kind: "category", consultation: null }), true);
+  assert.equal(needsAppointmentTime({ kind: "category", consultation: { date: "2026-11-02", time: "05:30 PM" } }), false);
+  assert.equal(needsAppointmentTime({ kind: "appointment", consultation: null }), false);
+});
+
+test("time conversion between the picker and the stored form", () => {
+  assert.equal(toTime12("17:30"), "05:30 PM");
+  assert.equal(toTime12("00:05"), "12:05 AM");
+  assert.equal(toTime12("12:00"), "12:00 PM");
+  assert.equal(toTime12("09:15"), "09:15 AM");
+  for (const bad of ["", "5pm", "24:00", "12:60", null]) assert.equal(toTime12(bad), "", String(bad));
+  assert.equal(toTime24("05:30 PM"), "17:30");
+  assert.equal(toTime24("12:05 AM"), "00:05");
+  assert.equal(toTime24("12:00 PM"), "12:00");
+  assert.equal(toTime24("9:15 am"), "09:15");
+  assert.equal(toTime24("Next Available"), "");
+  for (const t of ["00:00", "06:45", "12:30", "23:59"]) assert.equal(toTime24(toTime12(t)), t, t);
+});
+
+test("error wording: a 409 refreshes, a busy doctor keeps the dialog open", () => {
+  const err = (status, data) => ({ response: { status, data } });
+  const stale = { message: "This booking was already updated, refreshing", refresh: true };
+  assert.deepEqual(explainActionError(err(409, { msg: "just changed", code: "changed" })), stale);
+  assert.deepEqual(explainActionError(err(409, { msg: "A complete booking can't be cancelled." })), stale);
+  assert.deepEqual(
+    explainActionError(err(409, { msg: "The selected doctor is already booked for this slot.", code: "slot_taken" })),
+    { message: "The selected doctor is already booked for this slot.", refresh: false }
+  );
+  assert.deepEqual(explainActionError(err(400, { msg: "A cancel reason is required." })), { message: "A cancel reason is required.", refresh: false });
+  assert.equal(explainActionError(err(500, {})).message, "Something went wrong. Please try again.");
+  assert.match(explainActionError(new Error("Network Error")).message, /Could not reach the server/);
+});
+
+test("the doctor picker searches, sorts, and leaves out the current doctor", () => {
+  const doctors = [
+    { id: "3", name: "Dr. Farah Siddiqui", specialty: "Dermatology", city: "Dubai", country: "United Arab Emirates" },
+    { id: "1", name: "Dr. Martin Perlin", specialty: "Cardiology", city: "Boston", country: "United States" },
+    { id: "2", name: "Dr. Nobita Mestry", specialty: "General", city: "Pune", country: "India" },
+    { id: "", name: "Dr. No Id" },
+  ];
+  assert.deepEqual(filterDoctors(doctors, "").map((d) => d.id), ["3", "1", "2"]);
+  assert.deepEqual(filterDoctors(doctors, "india").map((d) => d.id), ["2"]);
+  assert.deepEqual(filterDoctors(doctors, "CARDIO").map((d) => d.id), ["1"]);
+  assert.deepEqual(filterDoctors(doctors, "", "Martin Perlin").map((d) => d.id), ["3", "2"]);
+  assert.deepEqual(filterDoctors(doctors, "", "Dr. Martin Perlin").map((d) => d.id), ["3", "2"]);
+  assert.equal(filterDoctors(doctors, "", "", 1).length, 1);
+  assert.deepEqual(filterDoctors(null, "x"), []);
 });
 
 test("booking id and the original-doctor hint", () => {

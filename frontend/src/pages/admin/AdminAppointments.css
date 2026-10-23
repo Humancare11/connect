@@ -1610,10 +1610,161 @@
   border-color: #0f766e;
   filter: brightness(1.08);
 }
+.adp-bk-btn--outline-ok {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+.adp-bk-btn--outline-ok:hover:not(:disabled) {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+.adp-bk-btn--danger {
+  border-color: #b4372f;
+  background: #b4372f;
+  color: #ffffff;
+}
+.adp-bk-btn--danger:hover:not(:disabled) {
+  border-color: #b4372f;
+  filter: brightness(1.08);
+}
 .adp-bk-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
   filter: none;
+}
+.adp-bk-row--busy td {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── Row action dialogs (assign / alternate doctor, cancel). The frame is the shared Modal. ── */
+.hc-modal.adp-bk-modal {
+  max-width: 520px;
+}
+.adp-bk-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adp-bk-modal-text {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.adp-bk-modal-text b {
+  color: #0f172a;
+}
+.adp-bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-field input,
+.adp-bk-field select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #dbe7ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 400;
+}
+.adp-bk-field input:focus-visible,
+.adp-bk-field select:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 1px;
+}
+.adp-bk-field small {
+  color: #64748b;
+  font-weight: 400;
+}
+.adp-bk-doclist {
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.adp-bk-doclist-note {
+  margin: 0;
+  padding: 16px;
+  color: #64748b;
+  font-size: 13px;
+}
+.adp-bk-docitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+}
+.adp-bk-docitem:last-child {
+  border-bottom: 0;
+}
+.adp-bk-docitem:hover {
+  background: #f8fafc;
+}
+.adp-bk-docitem.is-picked {
+  background: #f0fdfa;
+}
+.adp-bk-docitem input {
+  accent-color: #0f766e;
+}
+.adp-bk-docitem-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.adp-bk-docitem-main b {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+}
+.adp-bk-docitem-main small {
+  color: #64748b;
+  font-size: 12px;
+}
+.adp-bk-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.adp-bk-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.adp-bk-modal-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff2d6;
+  color: #9a6200;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-modal-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b4372f;
+  font-size: 13px;
 }
 .adp-bk-foot {
   display: flex;

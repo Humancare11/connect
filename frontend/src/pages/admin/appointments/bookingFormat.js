@@ -96,3 +96,73 @@ export const shortBookingId = (row) => `…${row.shortId || String(row.id).slice
 
 // Hover text for the doctor cell when the doctor was swapped.
 export const originalDoctorHint = (row) => (row.originalDoctorName ? `Originally with ${row.originalDoctorName}` : "");
+
+// ── Row actions ──────────────────────────────────────────────────────────────
+// Which buttons a row offers. They mirror the server's rules, so a button is enabled
+// exactly when the server would accept the action (the server still has the last word).
+
+export const CANCEL_REASONS = ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"];
+
+export const PAID_WARNING = "This booking was paid. Refund it in Stripe.";
+
+const hasDoctor = (row) => Boolean(row.doctorName);
+
+export const canAssign = (row) => !hasDoctor(row) && ["upcoming", "pending"].includes(row.status);
+export const canAlternate = (row) => hasDoctor(row) && !isClosed(row.status);
+export const canConfirm = (row) => hasDoctor(row) && row.status === "assigned";
+export const canAutoComplete = (row) => hasDoctor(row) && ["assigned", "confirmed"].includes(row.status);
+export const canCancel = (row) => !isClosed(row.status);
+
+// A Next Available category booking has no time until the admin picks one.
+export const needsAppointmentTime = (row) => row.kind === "category" && !row.consultation;
+
+export const AUTO_COMPLETE_HINT = "Only assigned or confirmed bookings can be auto completed";
+
+// <input type="time"> uses "17:30"; bookings store "05:30 PM".
+export function toTime12(value) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(value || "").trim());
+  if (!match) return "";
+  const hours = Number(match[1]);
+  if (hours > 23 || Number(match[2]) > 59) return "";
+  const period = hours >= 12 ? "PM" : "AM";
+  return `${String(hours % 12 || 12).padStart(2, "0")}:${match[2]} ${period}`;
+}
+
+export function toTime24(display) {
+  const match = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i.exec(String(display || "").trim());
+  if (!match) return "";
+  let hours = Number(match[1]) % 12;
+  if (match[3].toUpperCase() === "PM") hours += 12;
+  return `${String(hours).padStart(2, "0")}:${match[2]}`;
+}
+
+// What to tell the admin when an action fails. A 409 is nearly always "someone (or a
+// doctor) got there first, your list is stale": say so and refresh. The one 409 worth
+// reading is a busy doctor (code "slot_taken"): keep the dialog open to pick another.
+export function explainActionError(err) {
+  const status = err?.response?.status;
+  const data = err?.response?.data;
+  if (status === 409 && data?.code !== "slot_taken") {
+    return { message: "This booking was already updated, refreshing", refresh: true };
+  }
+  if (data?.msg) return { message: data.msg, refresh: false };
+  if (!err?.response) return { message: "Could not reach the server. Check your connection and try again.", refresh: false };
+  return { message: "Something went wrong. Please try again.", refresh: false };
+}
+
+// ── Doctor picker ────────────────────────────────────────────────────────────
+
+const plainName = (name) => String(name || "").replace(/^dr\.?\s+/i, "").trim().toLowerCase();
+
+// The approved doctors matching the search (name, specialty, city, country), without the
+// booking's current doctor, by name.
+export function filterDoctors(doctors, query, currentDoctorName = "", limit = 60) {
+  const q = String(query || "").trim().toLowerCase();
+  const current = plainName(currentDoctorName);
+  return (Array.isArray(doctors) ? doctors : [])
+    .filter((d) => d && d.id)
+    .filter((d) => !current || plainName(d.name) !== current)
+    .filter((d) => !q || [d.name, d.specialty, d.city, d.country].some((v) => String(v || "").toLowerCase().includes(q)))
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+    .slice(0, limit);
+}
