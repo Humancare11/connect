@@ -47,7 +47,10 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
           action: name,
           resource: result.kind === "category" ? "CategoryConsultation" : "Appointment",
           resourceId: result.id,
-          details: { ...(req.body?.doctorId ? { doctorId: req.body.doctorId } : {}) },
+          details: {
+            ...(req.body?.doctorId ? { doctorId: req.body.doctorId } : {}),
+            ...(req.body?.reason ? { reason: req.body.reason } : {}),
+          },
         });
         res.status(200).json({ msg: message, booking: await loadAdminBookingRow(result.kind, result.id), paid: result.paid });
       } catch (error) {
@@ -71,6 +74,28 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
 
   router.post("/:id/confirm", ...action("ADMIN_CONFIRM_BOOKING", "Booking confirmed.",
     (req) => actions.confirmBooking(req.app, req.params.id)));
+
+  // body: { reason: one of the five cancel reasons }. No refund: `paid` says whether one is due.
+  router.post("/:id/cancel", ...action("ADMIN_CANCEL_BOOKING", "Booking cancelled.",
+    (req, actor) => actions.cancelBooking(req.app, req.params.id, req.body, actor)));
+
+  // body: { ids: [up to 100], value: true | false }. Answers per id.
+  router.patch("/testing", ...guard, async (req, res) => {
+    try {
+      const actor = await actorOf(req);
+      const { results, updated } = await actions.setTesting(req.body?.ids, req.body?.value, actor);
+      await recordActivity(req, {
+        action: req.body.value ? "ADMIN_MARK_TESTING" : "ADMIN_UNMARK_TESTING",
+        resource: "Booking",
+        details: { count: updated, requested: results.length },
+      });
+      res.status(200).json({ msg: `${updated} booking${updated === 1 ? "" : "s"} updated.`, updated, results });
+    } catch (error) {
+      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message });
+      console.error("ADMIN_SET_TESTING error:", error);
+      res.status(500).json({ msg: "Something went wrong. Please try again." });
+    }
+  });
 
   return router;
 }

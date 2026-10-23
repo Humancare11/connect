@@ -134,7 +134,9 @@ const getAdminStats = async (req, res) => {
     const totalUsers = await User.countDocuments({ role: "user" });
     const activeUsers = await User.countDocuments({ role: "user" }); // For now, same as total users
     const totalDoctors = await Enrollment.countDocuments({ approvalStatus: "approved" });
-    const totalAppointments = await Appointment.countDocuments();
+    // Testing bookings are left out of every booking count (documents without the flag count).
+    const notTesting = { isTesting: { $ne: true } };
+    const totalAppointments = await Appointment.countDocuments(notTesting);
     const pendingAccountDeletionRequests = await User.countDocuments({ deletionRequestStatus: "pending" });
 
     // Dashboard summaries (additive): counts only, so the dashboard never has to download the ticket or appointment lists.
@@ -142,7 +144,7 @@ const getAdminStats = async (req, res) => {
       Enrollment.countDocuments({ approvalStatus: "pending" }),
       Ticket.countDocuments({ status: "open" }),
       UserTicket.countDocuments({ status: "open" }),
-      Appointment.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
+      Appointment.aggregate([{ $match: notTesting }, { $group: { _id: "$status", count: { $sum: 1 } } }]),
     ]);
     // Same grouping the Appointments page uses: "requested" counts as upcoming, "completed" as complete.
     const appointmentsByStatus = { upcoming: 0, assigned: 0, pending: 0, confirmed: 0, complete: 0, cancelled: 0 };

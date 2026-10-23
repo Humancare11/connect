@@ -19,6 +19,7 @@ const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const { LifecycleError, ACTIVE_DOCTOR_STATUSES } = require("./appointmentLifecycle");
 const { unifiedStatus } = require("./adminBookingList");
+const { CANCEL_REASONS } = require("./bookingAdminFields");
 // Called through the module objects (not destructured) so tests can replace them.
 const notify = require("./bookingNotifications");
 const push = require("./pushNotifications");
@@ -26,6 +27,7 @@ const push = require("./pushNotifications");
 const ACTIVE_CATEGORY_STATUSES = ["Assigned", "Confirmed"];
 const SLOT_TAKEN = "The selected doctor is already booked for this slot.";
 const CHANGED = "This booking was just changed by someone else. Refresh and try again.";
+const MAX_TESTING_IDS = 100;
 const TIME_PATTERN = /^\d{1,2}:\d{2}\s?(AM|PM)$/i;
 
 // ── Loading ──────────────────────────────────────────────────────────────────
@@ -343,9 +345,81 @@ async function confirmBooking(app, id) {
   return { kind, id: String(doc._id), paid: updated.paymentStatus === "paid" };
 }
 
+// Cancels any open booking. The reason is recorded and nothing is refunded:
+// `paid` tells the admin the money still has to be refunded by hand. The doctor's
+// slot is free again straight away, because the slot check only counts
+// Assigned / Pending / Confirmed bookings.
+async function cancelBooking(app, id, { reason } = {}, actor) {
+  if (!CANCEL_REASONS.includes(reason)) {
+    throw new LifecycleError(400, `A cancel reason is required. Choose one of: ${CANCEL_REASONS.join(", ")}.`);
+  }
+  const loaded = await loadBooking(id);
+  const { kind } = loaded;
+  if (isClosed(loaded)) {
+    throw new LifecycleError(409, `A ${statusOf(loaded)} booking can't be cancelled.`);
+  }
+  const doctor = currentDoctorKey(loaded) ? await currentDoctor(loaded) : null;
+
+  const updated = await conditionalUpdate(loaded, {
+    status: kind === "category" ? "Cancelled" : "cancelled",
+    cancelReason: reason,
+    cancelledBy: { id: actor?.id || null, name: actor?.name || "Admin", email: actor?.email || "" },
+    cancelledAt: new Date(),
+  });
+
+  emitBookingUpdate(app, updated, kind);
+  const io = app.get("io");
+  if (io && doctor?.userId) {
+    io.to(`doctor_${doctor.userId}`).emit("appointment-updated", { appointmentId: updated._id, status: "cancelled" });
+  }
+  app.get("evictAllFromAppointmentRoom")?.(updated._id, { reason: "cancelled" });
+
+  if (updated.isTesting !== true) {
+    push.sendPushToUser(updated.patientId, {
+      title: "Appointment cancelled",
+      body: "Your appointment has been cancelled.",
+      data: { type: "appointment", appointmentId: String(updated._id) },
+    });
+    if (doctor) quiet(notify.notifyDoctorBookingCancelled({ booking: updated, isCategory: kind === "category" }));
+  }
+  return { kind, id: String(updated._id), paid: updated.paymentStatus === "paid" };
+}
+
+// Mark or unmark up to 100 bookings as testing, whatever their status. Sends
+// nothing. Answers per id: "ok" or "not_found".
+async function setTesting(ids, value, actor) {
+  if (!Array.isArray(ids) || ids.length === 0) throw new LifecycleError(400, "ids must be a non-empty list.");
+  if (ids.length > MAX_TESTING_IDS) throw new LifecycleError(400, `Up to ${MAX_TESTING_IDS} bookings at a time.`);
+  if (typeof value !== "boolean") throw new LifecycleError(400, "value must be true or false.");
+
+  const unique = [...new Set(ids.map(String))];
+  const valid = unique.filter((id) => mongoose.isValidObjectId(id));
+  const [appointments, categories] = await Promise.all([
+    Appointment.find({ _id: { $in: valid } }).select("_id").lean(),
+    CategoryConsultation.find({ _id: { $in: valid } }).select("_id").lean(),
+  ]);
+  const kindById = new Map([
+    ...appointments.map((d) => [String(d._id), "appointment"]),
+    ...categories.map((d) => [String(d._id), "category"]),
+  ]);
+
+  const set = value
+    ? { isTesting: true, testingMarkedBy: { id: actor?.id || null, name: actor?.name || "Admin", email: actor?.email || "" }, testingMarkedAt: new Date() }
+    : { isTesting: false, testingMarkedBy: { id: null, name: "", email: "" }, testingMarkedAt: null };
+  await Promise.all([
+    appointments.length ? Appointment.updateMany({ _id: { $in: appointments.map((d) => d._id) } }, { $set: set }) : null,
+    categories.length ? CategoryConsultation.updateMany({ _id: { $in: categories.map((d) => d._id) } }, { $set: set }) : null,
+  ]);
+
+  const results = unique.map((id) => ({ id, status: kindById.has(id) ? "ok" : "not_found", ...(kindById.has(id) ? { kind: kindById.get(id) } : {}) }));
+  return { results, updated: kindById.size };
+}
+
 module.exports = {
   assignDoctor,
   alternateDoctor,
   revertDoctor,
   confirmBooking,
+  cancelBooking,
+  setTesting,
 };

@@ -102,6 +102,7 @@ describe("admin booking actions", () => {
     notify.notifyAppointmentDoctorChanged = async (a) => { calls.push({ name: "doctorChanged", kind: "appointment", ...a }); };
     notify.notifyConsultationDoctorChanged = async (a) => { calls.push({ name: "doctorChanged", kind: "category", ...a }); };
     notify.notifyPatientDoctorChanged = async (a) => { calls.push({ name: "patientChanged", ...a }); };
+    notify.notifyDoctorBookingCancelled = async (a) => { calls.push({ name: "doctorCancelled", ...a }); };
     push.sendPushToUser = (userId, payload) => { pushes.push({ userId: String(userId), ...payload }); };
   });
   after(async () => {
@@ -480,7 +481,251 @@ describe("admin booking actions", () => {
         nothingSent();
       });
     });
+
+    describe(`${kind}: cancel`, () => {
+      const cancelCalls = () => calls.filter((c) => c.name === "doctorCancelled");
+      const recordEvictions = () => {
+        const seen = [];
+        app.set("evictAllFromAppointmentRoom", (id, opts) => seen.push({ id: String(id), ...opts }));
+        return seen;
+      };
+      beforeEach(() => app.set("evictAllFromAppointmentRoom", undefined));
+
+      test("cancels an open booking, records reason and who, closes the call room, tells the patient and the doctor", async () => {
+        for (const status of ["pending", "assigned", "confirmed"]) {
+          calls = []; pushes = []; emitted = [];
+          const evictions = recordEvictions();
+          const b = await make(kind, status, { doctor: D1, paymentStatus: "paid" });
+          const res = await post(`/${b._id}/cancel`, { reason: "Doctor unavailable" });
+          assert.equal(res.status, 200, status);
+          assert.equal(res.body.booking.status, "cancelled");
+          assert.equal(res.body.paid, true);
+
+          const doc = await fresh(kind, b._id);
+          assert.equal(doc.status, STORED[kind].cancelled);
+          assert.equal(doc.cancelReason, "Doctor unavailable");
+          assert.equal(String(doc.cancelledBy.id), String(admin._id));
+          assert.equal(doc.cancelledBy.name, "Super Admin");
+          assert.equal(doc.cancelledBy.email, "sa@x.co");
+          assert.ok(doc.cancelledAt);
+
+          assert.deepEqual(evictions, [{ id: String(b._id), reason: "cancelled" }]);
+          for (const room of ["admin_room", `patient_${patient._id}`, `doctor_${D1.d._id}`]) {
+            assert.ok(emitted.some((e) => e.room === room && e.payload.status === "cancelled"), room);
+          }
+          assert.equal(pushes.length, 1);
+          assert.equal(pushes[0].userId, String(patient._id));
+          assert.equal(pushes[0].title, "Appointment cancelled");
+          assert.equal(cancelCalls().length, 1);
+          assert.equal(cancelCalls()[0].isCategory, kind === "category");
+          assert.equal(String(cancelCalls()[0].booking._id), String(b._id));
+        }
+      });
+
+      test("an unpaid booking reports paid: false, and a booking with no doctor sends no doctor email", async () => {
+        const b = await make(kind, "upcoming");
+        const res = await post(`/${b._id}/cancel`, { reason: "Duplicate booking" });
+        assert.equal(res.status, 200);
+        assert.equal(res.body.paid, false);
+        assert.equal(cancelCalls().length, 0);
+        assert.equal(pushes.length, 1);
+      });
+
+      test("a reason is required and must be one of the five", async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        for (const body of [{}, { reason: "" }, { reason: "Changed my mind" }, { reason: "patient requested" }, { reason: 5 }]) {
+          assert.equal((await post(`/${b._id}/cancel`, body)).status, 400, JSON.stringify(body));
+        }
+        assert.equal((await fresh(kind, b._id)).status, STORED[kind].assigned);
+        for (const reason of ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"]) {
+          const each = await make(kind, "upcoming");
+          assert.equal((await post(`/${each._id}/cancel`, { reason })).status, 200, reason);
+          assert.equal((await fresh(kind, each._id)).cancelReason, reason);
+        }
+      });
+
+      test("409 on Complete or Cancelled, 404/400 for an unknown or bad id, and nothing is sent", async () => {
+        for (const status of ["complete", "cancelled"]) {
+          const b = await make(kind, status, { doctor: D1 });
+          const res = await post(`/${b._id}/cancel`, { reason: "Patient requested" });
+          assert.equal(res.status, 409, status);
+          assert.match(res.body.msg, new RegExp(status));
+        }
+        assert.equal((await post(`/${new mongoose.Types.ObjectId()}/cancel`, { reason: "Patient requested" })).status, 404);
+        assert.equal((await post(`/nope/cancel`, { reason: "Patient requested" })).status, 400);
+        assert.deepEqual(calls, []);
+        assert.deepEqual(pushes, []);
+      });
+
+      test("the doctor's slot is released: a cancelled booking no longer blocks it", async () => {
+        const first = await make("appointment", "confirmed", { doctor: D1 });
+        const second = await make(kind, "upcoming");
+        assert.equal((await post(`/${second._id}/assign-doctor`, { doctorId: String(D1.e._id) })).status, 409);
+
+        assert.equal((await post(`/${first._id}/cancel`, { reason: "Patient requested" })).status, 200);
+        assert.equal((await post(`/${second._id}/assign-doctor`, { doctorId: String(D1.e._id) })).status, 200);
+      });
+
+      test("a cancelled category booking frees the slot too", async () => {
+        const first = await make("category", "confirmed", { doctor: D1 });
+        const second = await make(kind, "upcoming");
+        assert.equal((await post(`/${second._id}/assign-doctor`, { doctorId: String(D1.e._id) })).status, 409);
+        await post(`/${first._id}/cancel`, { reason: "Doctor unavailable" });
+        assert.equal((await post(`/${second._id}/assign-doctor`, { doctorId: String(D1.e._id) })).status, 200);
+      });
+
+      test("two admins cancelling at once: exactly one wins, the other gets 409", async () => {
+        const b = await make(kind, "confirmed", { doctor: D1 });
+        const results = await Promise.all([
+          post(`/${b._id}/cancel`, { reason: "Patient requested" }),
+          post(`/${b._id}/cancel`, { reason: "Doctor unavailable" }),
+        ]);
+        assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+        assert.equal(pushes.length, 1);
+      });
+
+      test("409 for the loser when the booking changes between the read and the write", async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        const Model = kind === "appointment" ? Appointment : CategoryConsultation;
+        const real = Model.findOneAndUpdate;
+        Model.findOneAndUpdate = async function (...args) {
+          Model.findOneAndUpdate = real;
+          // Another admin confirms it first.
+          await Model.updateOne({ _id: b._id }, { $set: { status: STORED[kind].confirmed } });
+          return real.apply(this, args);
+        };
+        try {
+          const res = await post(`/${b._id}/cancel`, { reason: "Patient requested" });
+          assert.equal(res.status, 409);
+          assert.match(res.body.msg, /just changed/);
+        } finally {
+          Model.findOneAndUpdate = real;
+        }
+        const doc = await fresh(kind, b._id);
+        assert.equal(doc.status, STORED[kind].confirmed);
+        assert.equal(doc.cancelReason, "");
+        assert.deepEqual(calls, []);
+        assert.deepEqual(pushes, []);
+      });
+
+      test("a testing booking is cancelled with no email or push (the call room is still closed)", async () => {
+        const evictions = recordEvictions();
+        const b = await make(kind, "confirmed", { doctor: D1, isTesting: true });
+        assert.equal((await post(`/${b._id}/cancel`, { reason: "Testing booking" })).status, 200);
+        assert.equal((await fresh(kind, b._id)).status, STORED[kind].cancelled);
+        assert.equal(evictions.length, 1);
+        nothingSent();
+      });
+    });
   }
+
+  describe("mark / unmark testing", () => {
+    const patch = async (body, role = "admin") => {
+      const res = await fetch(`${base}/testing`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json", ...(role ? { "x-test-role": role } : {}) },
+        body: JSON.stringify(body),
+      });
+      return { status: res.status, body: await res.json() };
+    };
+
+    test("marks bookings of any status and kind, then unmarks them, sending nothing", async () => {
+      const made = [];
+      for (const kind of KINDS) {
+        for (const status of ["upcoming", "assigned", "confirmed", "complete", "cancelled"]) {
+          made.push({ kind, doc: await make(kind, status, status === "upcoming" ? {} : { doctor: D1 }) });
+        }
+      }
+      const ids = made.map((m) => String(m.doc._id));
+
+      const marked = await patch({ ids, value: true });
+      assert.equal(marked.status, 200);
+      assert.equal(marked.body.updated, 10);
+      assert.equal(marked.body.results.every((r) => r.status === "ok"), true);
+      for (const { kind, doc } of made) {
+        const after = await fresh(kind, doc._id);
+        assert.equal(after.isTesting, true);
+        assert.equal(String(after.testingMarkedBy.id), String(admin._id));
+        assert.equal(after.testingMarkedBy.name, "Super Admin");
+        assert.equal(after.testingMarkedBy.email, "sa@x.co");
+        assert.ok(after.testingMarkedAt);
+        assert.equal(after.status, doc.status, "status is untouched");
+      }
+
+      const unmarked = await patch({ ids, value: false });
+      assert.equal(unmarked.status, 200);
+      for (const { kind, doc } of made) {
+        const after = await fresh(kind, doc._id);
+        assert.equal(after.isTesting, false);
+        assert.equal(after.testingMarkedBy.id, null);
+        assert.equal(after.testingMarkedBy.name, "");
+        assert.equal(after.testingMarkedBy.email, "");
+        assert.equal(after.testingMarkedAt, null);
+      }
+      nothingSent();
+    });
+
+    test("answers per id: ok, or not_found for unknown and invalid ids; repeated ids count once", async () => {
+      const a = await make("appointment", "upcoming");
+      const c = await make("category", "upcoming");
+      const unknown = String(new mongoose.Types.ObjectId());
+      const res = await patch({ ids: [String(a._id), unknown, "not-an-id", String(c._id), String(a._id)], value: true });
+      assert.equal(res.status, 200);
+      assert.equal(res.body.updated, 2);
+      assert.deepEqual(res.body.results, [
+        { id: String(a._id), status: "ok", kind: "appointment" },
+        { id: unknown, status: "not_found" },
+        { id: "not-an-id", status: "not_found" },
+        { id: String(c._id), status: "ok", kind: "category" },
+      ]);
+    });
+
+    test("up to 100 ids are accepted, 101 are not; bad input is a 400", async () => {
+      const fakeId = () => String(new mongoose.Types.ObjectId());
+      const ids = Array.from({ length: 100 }, fakeId);
+      assert.equal((await patch({ ids, value: true })).status, 200);
+      assert.equal((await patch({ ids: [...ids, fakeId()], value: true })).status, 400);
+      for (const body of [{}, { ids: [], value: true }, { ids: "abc", value: true }, { ids: [fakeId()] }, { ids: [fakeId()], value: "true" }]) {
+        assert.equal((await patch(body)).status, 400, JSON.stringify(body));
+      }
+    });
+
+    test("is admin-only", async () => {
+      assert.equal((await patch({ ids: ["x"], value: true }, "")).status, 401);
+      assert.equal((await patch({ ids: ["x"], value: true }, "user")).status, 403);
+    });
+
+    test("the list follows the flag: the Testing tab and Hide testing", async () => {
+      const a = await make("appointment", "upcoming");
+      const c = await make("category", "upcoming");
+      await patch({ ids: [String(a._id)], value: true });
+      const list = async (q) => (await fetch(`${base}?${q}`, { headers: { "x-test-role": "admin" } })).json();
+      assert.deepEqual((await list("status=testing")).items.map((r) => r.id), [String(a._id)]);
+      assert.deepEqual((await list("hideTesting=true")).items.map((r) => r.id), [String(c._id)]);
+      await patch({ ids: [String(a._id)], value: false });
+      assert.equal((await list("status=testing")).items.length, 0);
+    });
+  });
+
+  describe("overview counts leave out testing bookings", () => {
+    test("getAdminStats ignores isTesting=true and counts documents that have no flag", async () => {
+      const { getAdminStats } = require("../controllers/adminController");
+      await make("appointment", "upcoming");
+      const legacy = await make("appointment", "confirmed", { doctor: D1, time: "11:00 AM" });
+      await make("appointment", "complete", { doctor: D2 });
+      await make("appointment", "upcoming", { isTesting: true });
+      await make("appointment", "confirmed", { doctor: D3, isTesting: true });
+      await make("appointment", "complete", { doctor: D3, isTesting: true, time: "12:00 PM" });
+      // Written before the field existed: no isTesting key at all.
+      await Appointment.collection.updateOne({ _id: legacy._id }, { $unset: { isTesting: 1 } });
+
+      const res = { code: 0, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+      await getAdminStats({}, res);
+      assert.equal(res.code, 200);
+      assert.equal(res.body.totalAppointments, 3);
+      assert.deepEqual(res.body.appointmentsByStatus, { upcoming: 1, assigned: 0, pending: 0, confirmed: 1, complete: 1, cancelled: 0 });
+    });
+  });
 
   test("Appointment 'pending' with no doctor can be assigned; the Next Available time rules apply to category only", async () => {
     const pending = await make("appointment", "pending");
