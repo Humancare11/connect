@@ -136,7 +136,7 @@ async function conditionalUpdate(loaded, set) {
   const updated = await modelOf(kind).findOneAndUpdate(
     { _id: doc._id, status: doc.status, [doctorFieldOf(kind)]: doc[doctorFieldOf(kind)] ?? null },
     { $set: set },
-    { new: true }
+    { returnDocument: "after" }
   );
   if (!updated) throw new LifecycleError(409, CHANGED, "changed");
   return updated;

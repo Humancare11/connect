@@ -1,0 +1,12 @@
+/* The few CSS variables and base rules the page takes from the app's global stylesheet. */
+:root {
+  --font-primary: "Segoe UI", system-ui, sans-serif;
+  --font-secondary: "Segoe UI", system-ui, sans-serif;
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --primary: #2563eb;
+  --z-modal: 9999;
+  --z-toast: 10000;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: var(--font-primary); color: #0f172a; }
