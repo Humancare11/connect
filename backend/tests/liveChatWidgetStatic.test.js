@@ -112,8 +112,10 @@ describe("live chat: the AI's name comes from one setting", () => {
   });
 });
 
-describe("live chat: launcher logo", () => {
-  const widget = read(FEATURE, "LiveChatWidget.jsx");
+describe("live chat: doctor greeter and round button", () => {
+  const widget = stripComments(read(FEATURE, "LiveChatWidget.jsx"));
+  const launcher = stripComments(read(FEATURE, "LauncherButton.jsx"));
+  const greeter = stripComments(read(FEATURE, "DoctorGreeter.jsx"));
   const css = stripComments(read(FEATURE, "LiveChatWidget.css"));
   // the declarations of the first `selector { ... }` rule (plain string search, selectors are matched literally)
   const rule = (selector) => {
@@ -121,31 +123,34 @@ describe("live chat: launcher logo", () => {
     return at === -1 ? "" : css.slice(css.indexOf("{", at) + 1, css.indexOf("}", at));
   };
 
-  test("the closed launcher is a real 'Open chat' button holding the logo (alt empty), with an HC fallback", () => {
-    assert.match(widget, /aria-label="Open chat"/);
-    assert.match(widget, /<img src="\/livechat\/launcher-logo\.png" alt=""/);
-    assert.match(widget, /onError=\{\(\) => setPhotoOk\(false\)\}/);
-    assert.match(widget, /lcw-launcher--logo/);
-    assert.match(widget, /lcw-launcher--hc/);
-    assert.doesNotMatch(widget, /agent-avatar/);
-    const file = path.join(ROOT, "frontend", "public", "livechat", "launcher-logo.png");
-    assert.equal(fs.readFileSync(file).subarray(1, 4).toString(), "PNG");
-    assert.equal(fs.existsSync(path.join(ROOT, "docs", "livechat-launcher-logo.png")), false, "the file was moved, not copied");
+  test("the closed launcher is a real 'Open chat' button (the round button, and the doctor in the intro)", () => {
+    assert.match(launcher, /aria-label="Open chat"/);
+    assert.match(greeter, /className=\{`lcw-gr-doc[^>]*aria-label="Open chat"/);
+    assert.match(widget, /<DoctorGreeter/);
+    assert.doesNotMatch(widget, /GreetingBubble|LOGO_SRC|lcw-launcher--logo/);
   });
 
-  test("bare logo: 72px (60px on phones), no circle / background / border, drop shadow, small hover lift, no other animation", () => {
-    const logo = rule(".lcw-launcher--logo");
-    assert.match(logo, /width:\s*72px/);
-    assert.match(logo, /background:\s*none/);
-    assert.match(logo, /border:\s*0/);
-    assert.match(logo, /border-radius:\s*0/);
-    assert.match(rule(".lcw-launcher--logo img"), /height:\s*auto/);
-    assert.match(rule(".lcw-launcher--logo img"), /drop-shadow\(0 6px 14px rgba\(11, 42, 122, 0\.28\)\)/);
-    assert.match(rule(".lcw-launcher--logo:hover"), /translateY\(-3px\)/);
-    assert.doesNotMatch(css, /\.lcw-launcher--logo[^{]*\{[^}]*(animation|rotate|scaleX|flip)/);
-    assert.match(css, /@media \(max-width: 520px\) \{\s*\.lcw-launcher--logo \{\s*width: 60px;/);
-    assert.match(rule(".lcw-launcher--hc"), /border-radius|width:\s*60px/);
-    assert.match(rule(".lcw-launcher--logo .lcw-badge"), /top:\s*2px/);
+  test("the old H logo launcher and the greeting bubble are gone", () => {
+    assert.equal(fs.existsSync(path.join(ROOT, FEATURE, "GreetingBubble.jsx")), false);
+    assert.equal(fs.existsSync(path.join(ROOT, "frontend", "public", "livechat", "launcher-logo.png")), false);
+    assert.doesNotMatch(css, /lcw-launcher--(logo|hc|flipped)|lcw-launcher-(flip|face|dots)|lcw-greet/);
+  });
+
+  test("the video and poster are shipped, versioned and same-origin", () => {
+    const dir = path.join(ROOT, "frontend", "public", "livechat");
+    for (const file of ["doctor.webm", "doctor.mp4", "poster.jpg", "doctor-alpha.webm", "doctor-ios.mp4"]) assert.ok(fs.statSync(path.join(dir, file)).size > 1000, file);
+    const config = read(FEATURE, "greeterConfig.js");
+    assert.match(config, /VIDEO_VERSION = "\?v=1"/);
+    assert.match(config, /WEBM_SRC = `\/livechat\/doctor\.webm\$\{VIDEO_VERSION\}`/);
+    assert.match(config, /MP4_SRC = `\/livechat\/doctor\.mp4\$\{VIDEO_VERSION\}`/);
+    assert.match(config, /ALPHA_WEBM_SRC = `\/livechat\/doctor-alpha\.webm\$\{VIDEO_VERSION\}`/);
+    assert.ok(launcher.indexOf("src={WEBM_SRC}") < launcher.indexOf("src={MP4_SRC}"), "the avatar lists WebM before MP4");
+  });
+
+  test("round button: 64px, black circle, and on phones the pill shares its row", () => {
+    assert.match(rule(".lcw-launcher--round"), /width:\s*64px/);
+    assert.match(rule(".lcw-launcher--round"), /border-radius:\s*50%/);
+    assert.match(css, /@media \(max-width: 480px\) \{[^@]*--gr-gut-r:/);
   });
 });
 
@@ -167,30 +172,6 @@ describe("live chat: widget header status", () => {
     const span = css.match(/\.lcw-who small span\s*\{([^}]*)\}/)[1];
     assert.match(span, /white-space:\s*normal/);
     assert.doesNotMatch(span, /text-overflow|nowrap/);
-  });
-});
-
-describe("live chat: greeting bubble", () => {
-  const bubble = stripComments(read(FEATURE, "GreetingBubble.jsx"));
-
-  test("shows on every load and page change after 3 seconds, remembering nothing", () => {
-    assert.doesNotMatch(bubble, /sessionStorage|localStorage|document\.cookie/, "no shown/dismissed flag is stored");
-    assert.match(bubble, /DELAY_MS = 3000/);
-    assert.match(bubble, /useLocation\(\)/, "a client-side page change starts the wait again");
-    assert.match(bubble, /\}, \[pathname\]\)/);
-    assert.match(bubble, /Hello <span aria-hidden="true">👋<\/span>, Are you looking to consult with a doctor\?/);
-  });
-
-  test("hidden while the chat is open and for the rest of that page; X only hides it until the next load", () => {
-    assert.match(bubble, /if \(open \|\| blocked \|\| shownPath !== pathname\) return null/);
-    assert.match(bubble, /openedOnPage\.current/);
-    assert.match(bubble, /onClick=\{\(\) => setShownPath\(null\)\}/);
-  });
-
-  test("the admin invite bubble wins, and the launcher is a real button named 'Open chat'", () => {
-    const widget = read(FEATURE, "LiveChatWidget.jsx");
-    assert.match(widget, /<GreetingBubble open=\{open\} blocked=\{Boolean\(chat\.invite\)\}/);
-    assert.match(widget, /aria-label="Open chat"/);
   });
 });
 

@@ -1,0 +1,284 @@
+<title>Doctor Chat Greeter</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Reference for the live chat greeter (frontend/src/features/livechat/DoctorGreeter.jsx). A mock website with the greeter
+   docked bottom-right; notes below. Open this file from docs/ so the ../frontend/public/livechat/ paths resolve. */
+:root{
+  --bg:#f3f6fb; --surface:#fff; --fg:#14213d; --muted:#5b6b86; --line:#dde4f0;
+  --brand:#1f4fd6; --brand-deep:#163a9e;
+  --display:"Outfit",ui-sans-serif,system-ui,sans-serif;
+  --body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1424; --surface:#151d31; --fg:#e7ecf7; --muted:#9aa8c2; --line:#26314b; --brand:#4d7cff; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1424; --surface:#151d31; --fg:#e7ecf7; --muted:#9aa8c2; --line:#26314b; --brand:#4d7cff; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1000px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);margin:0;text-wrap:balance}
+.lede{margin:4px 0 0;color:var(--muted);max-width:64ch}
+
+/* Mock site (the doctor video is transparent, so any page colour works) */
+.site{container-type:inline-size;position:relative;height:560px;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+  background:linear-gradient(180deg,#f7f6f4 0%,#e9e7e4 100%);color:#14213d}
+.site .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;gap:12px}
+.site .logo{font:700 18px var(--display);color:#163a9e}
+.site .links{display:flex;gap:18px;font-size:14px;color:#334}
+.site .hero{padding:24px 22px;max-width:520px}
+.site .hero h2{font:700 clamp(26px,4.4vw,40px)/1.1 var(--display);margin:0 0 12px;text-wrap:balance}
+.site .hero p{margin:0 0 18px;color:#4a5670}
+.site .cta{display:inline-block;background:#163a9e;color:#fff;border-radius:12px;padding:12px 18px;font:600 15px var(--display)}
+
+/* ---- Greeter: one bar (pill + round button's slot) on the bottom line; the doctor stands on that line over the slot ---- */
+[hidden]{display:none!important}
+.bar{--gr-w:160px;position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:20px;display:flex;align-items:center;gap:12px}
+.slot{flex:none;width:64px;height:64px}
+.slot.is-hidden{visibility:hidden}
+/* frame is wider than the button: the character's centre (43% of the frame) sits over the button's centre */
+.doc{position:absolute;right:calc(32px - var(--gr-w) * .57);bottom:0;width:var(--gr-w);aspect-ratio:360/556;padding:0;border:0;background:none;cursor:pointer}
+.doc video{display:block;width:100%;height:100%;object-fit:contain}
+.doc:not(.on) video{visibility:hidden}
+.doc:focus-visible,.circ:focus-visible,.pill button:focus-visible{outline:3px solid #9cb8ff;outline-offset:3px;border-radius:16px}
+.pill{margin:0;position:relative;z-index:1;display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;height:60px;padding:0 8px 0 24px;
+  width:min(290px,calc(100vw - 120px));box-shadow:0 8px 26px rgba(20,33,61,.14);border:1px solid #ececec;
+  transition:opacity .45s ease,transform .6s cubic-bezier(.3,1.35,.4,1),visibility 0s}
+.pill.is-away{opacity:0;visibility:hidden;pointer-events:none;transform:translateX(28px)}
+.pill:focus-within{border-color:#c9d6f5;box-shadow:0 8px 26px rgba(20,33,61,.18),0 0 0 3px rgba(31,79,214,.12)}
+.pill input{flex:1;min-width:0;border:0;outline:0;background:none;font:400 16px var(--body);color:#14213d}
+.pill input::placeholder{color:#6b6f78}
+.pill button{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:#e6e6e6;color:#2b2b2b;display:grid;place-items:center;cursor:pointer;transition:background .15s,color .15s}
+.pill.typing button{background:#111;color:#fff}
+.bar.pop{animation:hpop .45s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes hpop{from{opacity:0;transform:translateY(10px) scale(.92)}to{opacity:1;transform:none}}
+
+/* Round button: live avatar (head and shoulders of the grey-background video) -> black -> chat icon */
+.circ{position:relative;width:64px;height:64px;border-radius:50%;border:0;background:#111;color:#fff;display:grid;place-items:center;cursor:pointer;
+  box-shadow:0 8px 22px rgba(0,0,0,.28);transition:transform .15s}
+.circ:hover{transform:scale(1.05)}
+.cav{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:#e9e7e4;opacity:0;transition:opacity .45s ease,filter .45s ease}
+.cav video{position:absolute;width:160%;left:-33%;top:-52%;max-width:none;pointer-events:none}
+.live{position:absolute;left:50%;bottom:3px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:3px;
+  background:rgba(25,25,28,.78);color:#fff;font:700 8.5px/1 var(--body);letter-spacing:.04em;padding:2.5px 5px;border-radius:999px}
+.live i{width:5px;height:5px;border-radius:50%;background:#ef4444;animation:blinkdot 1.2s infinite}
+@keyframes blinkdot{50%{opacity:.25}}
+/* the ring has fixed pixel sizes: sites often set svg{max-width:100%;height:auto}, which would shrink it */
+.ring{position:absolute;top:-4px;left:-4px;width:72px;height:72px;max-width:none;max-height:none;transform:rotate(-90deg);pointer-events:none;opacity:0;transition:opacity .3s}
+.ring circle{fill:none;stroke-width:2.5}
+.ring .track{stroke:rgba(0,0,0,.18);stroke-width:1.2}
+.ring .prog{stroke:#2dd4bf;stroke-linecap:round;stroke-dasharray:213.6;stroke-dashoffset:213.6}
+.circ.ph-avatar .cav{opacity:1}
+.circ.ph-avatar .ring{opacity:1}
+.circ.ph-avatar .ring .prog{animation:ringfill 4.2s linear forwards}
+@keyframes ringfill{to{stroke-dashoffset:0}}
+.circ.ph-dark .cav{filter:brightness(0)}
+.chatico{position:relative;max-width:none;opacity:0;transform:scale(.6);transition:opacity .3s ease,transform .35s cubic-bezier(.2,.9,.3,1.4)}
+.circ.ph-chat .chatico{opacity:1;transform:none}
+.circ.arrive{animation:arrive .45s cubic-bezier(.2,.9,.3,1.5) both}
+@keyframes arrive{0%{transform:scale(.55)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+/* Safari/iOS get doctor-ios.mp4 (light-grey background): a soft radial mask fades the box edges into the page */
+.doc.ios video{-webkit-mask-image:radial-gradient(ellipse 50% 170% at 46% 100%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 50% 170% at 46% 100%,#000 55%,transparent 100%)}
+@media (max-width:560px),(max-height:560px){.bar{--gr-w:130px}}
+/* phones: pill + round button on one row (12px gutters, 10px gap, the pill takes the width that is left); a smaller doctor
+   (<=170px tall) on the round button's bottom line, kept inside the screen. On iOS the real widget also lifts the bar above the keyboard. */
+@media (max-width:480px){.bar{--gr-w:min(110px,28vw);--gut:12px;right:var(--gut);gap:10px}.pill{width:calc(100cqw - 64px - 10px - 2 * var(--gut))}.doc{right:max(calc(-1 * var(--gut)),calc(32px - var(--gr-w) * .57))}}
+
+/* Mock chat window that opens after sending */
+.win{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:12px;width:min(340px,calc(100% - 24px));
+  background:#fff;color:#14213d;border-radius:18px;box-shadow:0 18px 50px rgba(20,33,61,.3);overflow:hidden;
+  display:grid;grid-template-rows:auto 1fr;max-height:500px;animation:pop .35s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.win header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #e6ebf5}
+.win .av{width:36px;height:36px;border-radius:50%;background:#163a9e;color:#fff;display:grid;place-items:center;font:700 13px var(--display)}
+.win header b{font:700 16px var(--display);display:block}
+.win header small{color:#5b6b86}
+.win .close{margin-left:auto;border:0;background:none;font-size:20px;color:#5b6b86;cursor:pointer;width:32px;height:32px;border-radius:8px}
+.win .body{padding:14px;display:grid;gap:10px;overflow:auto;background:#f6f8fc}
+.bub{max-width:85%;padding:9px 12px;border-radius:14px;font-size:14px}
+.me{justify-self:end;background:#1f4fd6;color:#fff;border-bottom-right-radius:4px}
+.held{font-size:11.5px;color:#5b6b86;justify-self:end;margin-top:-6px}
+.form{background:#fff;border:1px solid #e1e7f2;border-radius:14px;padding:12px;display:grid;gap:8px}
+.form label{font-size:12.5px;font-weight:600;color:#33415e}
+.form .in{border:1px solid #d6deec;border-radius:10px;padding:8px 10px;font-size:14px;color:#7a879e;background:#f8faff}
+.form .go{background:#1f4fd6;color:#fff;border-radius:10px;padding:9px;text-align:center;font:600 14px var(--display)}
+
+/* Notes */
+.panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.box h3{font:600 17px var(--display);margin:0 0 8px}
+.box ol,.box ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.act{font:inherit;font-size:14px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);cursor:pointer}
+.act:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.note{color:var(--muted);font-size:13.5px;margin:0}
+@media (max-width:560px){.site{height:600px}.site .links{display:none}}
+@media (prefers-reduced-motion:reduce){.pill,.cav,.ring,.chatico,.circ{transition:none}.bar.pop,.circ.arrive,.live i,.circ.ph-avatar .ring .prog{animation:none}.circ:hover{transform:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Doctor greeter for the chat</h1>
+    <p class="lede">The doctor (a transparent video, no background) walks in at the bottom-right and waves, standing on the same bottom line as the message bar. The "Write a message…" box slides in at its final place beside him. After a while only the doctor shrinks into a round button. Sending opens the chat.</p>
+  </header>
+
+  <div class="site" id="site" aria-label="Preview of the website with the greeter">
+    <div class="nav"><span class="logo">Humancare Connect</span><span class="links"><span>About</span><span>Book Appointment</span><span>Blogs</span></span></div>
+    <div class="hero">
+      <h2>Talk to a licensed doctor online in minutes.</h2>
+      <p>Book an online consultation with a licensed doctor from home.</p>
+      <span class="cta">Book Appointment</span>
+    </div>
+
+    <div class="bar" id="bar">
+      <form class="pill is-away" id="pill" autocomplete="off" inert>
+        <input id="pillInput" type="text" placeholder="Write a message…" aria-label="Write a message" maxlength="500">
+        <button type="submit" aria-label="Send message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+      <span class="slot" id="slot">
+        <button class="circ ph-chat" id="circ" aria-label="Open chat" hidden>
+          <span class="cav" aria-hidden="true">
+            <video id="cvid" muted playsinline preload="auto" poster="../frontend/public/livechat/poster.jpg?v=1"><source src="../frontend/public/livechat/doctor.webm?v=1" type='video/webm; codecs="vp9"'><source src="../frontend/public/livechat/doctor.mp4?v=1" type="video/mp4"></video>
+            <span class="live"><i></i>LIVE</span>
+          </span>
+          <svg class="ring" viewBox="0 0 72 72" aria-hidden="true"><circle class="track" cx="36" cy="36" r="34"/><circle class="prog" cx="36" cy="36" r="34"/></svg>
+          <svg class="chatico" width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4.5h14a1.5 1.5 0 0 1 1.5 1.5v9.5A1.5 1.5 0 0 1 19 17h-5.2l-2.3 2.8L9.2 17H5a1.5 1.5 0 0 1-1.5-1.5V6A1.5 1.5 0 0 1 5 4.5z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/></svg>
+        </button>
+      </span>
+      <button class="doc" id="doc" aria-label="Open chat">
+        <video id="vid" muted playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+      </button>
+    </div>
+
+    <div class="win" id="win" hidden role="dialog" aria-label="Chat">
+      <header>
+        <span class="av">HC</span>
+        <span><b>Connect AI</b><small>Online</small></span>
+        <button class="close" id="closeWin" aria-label="Close chat">×</button>
+      </header>
+      <div class="body">
+        <div class="bub me" id="heldMsg">I need a prescription refill</div>
+        <div class="held" id="heldLbl">Waiting to send</div>
+        <div class="form">
+          <label>Full name *</label><div class="in">Your name</div>
+          <label>Email *</label><div class="in">you@example.com</div>
+          <div class="go">Start chat</div>
+          <p class="note" id="heldNote" style="font-size:12px;margin:0">Your message above is sent as soon as you start the chat.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button class="act" id="replay">Replay intro</button>
+    <span class="note">Tip: type something in the box and press send.</span>
+  </div>
+
+  <div class="panel">
+    <section class="box">
+      <h3>What happens</h3>
+      <ol>
+        <li>On every page load, on desktop and phones, the doctor walks in from the right and waves (first 3 seconds of the video), his feet on the bottom line of the message bar (the same on phones, where the box sits left of the round button).</li>
+        <li>At about 3.2 s the white "Write a message…" box slides in at its final place, left of him. The arrow turns black when there is text.</li>
+        <li>After the video ends he keeps standing and waving (only the part from 4.0 s loops).</li>
+        <li>After 10 seconds of visible, idle time only the doctor shrinks into the round button; the box stays where it is. Typing, focusing the box or a hidden tab holds the 10 seconds.</li>
+        <li>The round button shows the live avatar (red LIVE badge, teal ring that fills), then fades to black, then shows the chat icon, and repeats.</li>
+        <li>Typing in the box and sending, or clicking the doctor or the round button, opens the chat. The typed text waits above the name and email form and is sent as the first message after Start chat.</li>
+        <li>Closing the chat brings back the compact bar. Visitors who prefer reduced motion or have data saver on, and browsers where the video cannot start (for example iOS Low Power Mode), get the compact bar directly.</li>
+      </ol>
+    </section>
+    <section class="box">
+      <h3>About the videos</h3>
+      <ul>
+        <li><b>doctor-alpha.webm</b> (VP9 with alpha, 360 x 556, no sound) is the intro in Chrome, Edge, Firefox and Android; it has no poster, so nothing of the doctor shows before the walk-in's first frame.</li>
+        <li><b>doctor-ios.mp4</b> (H.264, same framing, light-grey background) is the intro in Safari, iOS and iPadOS, with a soft mask on its edges.</li>
+        <li><b>doctor.webm / doctor.mp4</b> (grey studio background) are only used inside the round avatar, cropped to head and shoulders.</li>
+        <li>All files are loaded with <code>?v=1</code>; bump it when a file is replaced.</li>
+      </ul>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  var SHOW_AT=3.2, LOOP_FROM=4.0, SHRINK_MS=10000, AVATAR_MS=4200, DARK_MS=500, CHAT_MS=4500, FLY_MS=750, CHAR_CENTER=0.43;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ua=navigator.userAgent, safari=/iPad|iPhone|iPod/.test(ua)||(/Safari\//.test(ua)&&!/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(ua));
+  var vp9=false; try{ vp9=!!document.createElement('video').canPlayType('video/webm; codecs="vp9"'); }catch(e){}
+  var ios=safari||!vp9;           // Safari/iOS/iPadOS and browsers without VP9: the MP4 with the grey background
+  var canIntro=!reduce;           // phones play the intro too
+
+  var $=function(id){return document.getElementById(id);};
+  var bar=$('bar'), pill=$('pill'), pillInput=$('pillInput'), slot=$('slot'), doc=$('doc'), vid=$('vid'), circ=$('circ'), cvid=$('cvid'), win=$('win');
+  var shrinkT=null, cycT=null, flyT=null, clock=null;
+  var vsrc=document.createElement('source');
+  if(ios){ doc.classList.add('ios'); vsrc.src='../frontend/public/livechat/doctor-ios.mp4?v=1'; vsrc.type='video/mp4'; }
+  else { vsrc.src='../frontend/public/livechat/doctor-alpha.webm?v=1'; vsrc.type='video/webm; codecs="vp9"'; }
+  vid.appendChild(vsrc);
+
+  function loopFrom(v){ v.addEventListener('timeupdate',function(){ if(!v.paused&&isFinite(v.duration)&&v.currentTime>=LOOP_FROM&&v.duration-v.currentTime<0.15) v.currentTime=LOOP_FROM; });
+    v.addEventListener('ended',function(){ v.currentTime=LOOP_FROM; v.play().catch(function(){}); }); }
+  loopFrom(vid); loopFrom(cvid);
+
+  function stopAll(){ clearInterval(clock); clearTimeout(cycT); clearTimeout(flyT); }
+  function setPhase(p){ circ.classList.remove('ph-avatar','ph-dark','ph-chat'); circ.classList.add('ph-'+p); }
+  function cycle(p){
+    clearTimeout(cycT);
+    if(reduce){ setPhase('chat'); return; }
+    if(p==='avatar'){ setPhase('avatar'); try{ if(cvid.currentTime<LOOP_FROM) cvid.currentTime=LOOP_FROM; cvid.play().catch(function(){}); }catch(e){} cycT=setTimeout(function(){ cycle('dark'); },AVATAR_MS); }
+    else if(p==='dark'){ setPhase('dark'); cycT=setTimeout(function(){ cycle('chat'); },DARK_MS); }
+    else { setPhase('chat'); cvid.pause(); cycT=setTimeout(function(){ cycle('avatar'); },CHAT_MS); }
+  }
+  function showCompact(pop){
+    stopAll(); doc.hidden=true; vid.pause(); circ.hidden=false; slot.classList.remove('is-hidden');
+    pill.classList.remove('is-away'); pill.inert=false; bar.classList.toggle('pop',!!pop);
+    cycle(reduce?'chat':'avatar');
+  }
+  function fly(){
+    circ.hidden=false; slot.classList.add('is-hidden'); pill.inert=false;
+    try{ cvid.currentTime=Math.max(LOOP_FROM,vid.currentTime); }catch(e){}
+    var d=doc.getBoundingClientRect(), c=slot.getBoundingClientRect();
+    var dx=c.left+c.width/2-(d.left+d.width*CHAR_CENTER), dy=c.top+c.height/2-(d.top+d.height*0.54), s=c.width/(d.width*0.9);
+    doc.style.transformOrigin=(CHAR_CENTER*100)+'% 54%';
+    doc.animate([{transform:'none'},{transform:'translate('+dx+'px,'+dy+'px) scale('+s+')'}],{duration:FLY_MS,easing:'cubic-bezier(.55,0,.25,1)',fill:'forwards'});
+    doc.animate([{opacity:1},{opacity:0}],{duration:200,delay:620,fill:'forwards'});
+    flyT=setTimeout(function(){ showCompact(false); circ.classList.add('arrive'); },FLY_MS+10);
+  }
+  function startClock(){
+    var elapsed=0;
+    clock=setInterval(function(){
+      if(document.hidden||document.activeElement===pillInput||pillInput.value.trim()) return;
+      elapsed+=250; if(elapsed>=SHRINK_MS){ clearInterval(clock); fly(); }
+    },250);
+  }
+  function start(){
+    stopAll(); win.hidden=true; bar.hidden=false; circ.classList.remove('arrive'); circ.hidden=true; slot.classList.remove('is-hidden');
+    doc.style.transform=''; doc.style.opacity=''; doc.getAnimations&&doc.getAnimations().forEach(function(a){a.cancel();});
+    if(!canIntro){ doc.hidden=true; showCompact(true); return; }
+    doc.hidden=false; pill.classList.add('is-away'); pill.inert=true; bar.classList.remove('pop');
+    var started=false, giveUp=setTimeout(function(){ if(!started&&!document.hidden) showCompact(true); },2500);
+    doc.classList.remove('on');
+    vid.onplaying=function(){ started=true; clearTimeout(giveUp); doc.classList.add('on'); startClock(); };
+    try{ vid.currentTime=0; vid.play().catch(function(){ showCompact(true); }); }catch(e){ showCompact(true); }
+  }
+  vid.addEventListener('timeupdate',function(){ if(vid.currentTime>=SHOW_AT){ pill.classList.remove('is-away'); pill.inert=false; } });
+  vid.addEventListener('error',function(){ showCompact(true); },true);
+  document.addEventListener('visibilitychange',function(){ if(document.hidden){ vid.pause(); cvid.pause(); } else if(!doc.hidden){ vid.play().catch(function(){}); } else if(circ.classList.contains('ph-avatar')){ cvid.play().catch(function(){}); } });
+  pillInput.addEventListener('input',function(){ pill.classList.toggle('typing',pillInput.value.trim().length>0); });
+
+  function openChat(text){
+    stopAll(); vid.pause(); cvid.pause();
+    $('heldMsg').textContent=text||''; $('heldMsg').hidden=!text; $('heldLbl').hidden=!text; $('heldNote').hidden=!text;
+    bar.hidden=true; win.hidden=false;
+  }
+  function send(){ var t=pillInput.value.trim(); openChat(t); pillInput.value=''; pill.classList.remove('typing'); }
+  pill.addEventListener('submit',function(e){ e.preventDefault(); if(!pillInput.value.trim()){ pillInput.focus(); return; } send(); });
+  doc.addEventListener('click',send);
+  circ.addEventListener('click',send);
+  $('closeWin').addEventListener('click',function(){ win.hidden=true; bar.hidden=false; doc.hidden=true; showCompact(true); });
+  $('replay').addEventListener('click',start);
+  start();
+})();
+</script>

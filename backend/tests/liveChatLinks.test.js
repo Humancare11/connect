@@ -115,7 +115,7 @@ describe("live chat: page links come from a server allowlist built from the app'
       const state = (await lc.call(socket, "chat:resume")).conversation;
       const last = state.messages.at(-1);
       assert.equal(last.sender, "ai");
-      assert.deepEqual(last.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/fever", "/appointment-booking"]);
+      assert.deepEqual(last.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/fever"]);
       assert.equal(JSON.stringify(state).includes("phishing"), false);
       assert.equal(JSON.stringify(state).includes("fever-cure-now"), false);
       socket.close();

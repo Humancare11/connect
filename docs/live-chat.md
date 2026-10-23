@@ -155,7 +155,7 @@ The Live Chat admin is a separate dashboard, built from `docs/live-chat-admin-ui
 ## AI safety (LegitScript compliance)
 
 - **No medical advice.** The AI gives no medical information at all. For any medical question it says it cannot give medical advice, that a licensed Humancare doctor can help, and shows the booking link. Setting **AI may link condition pages** (Super Admin, default ON) lets it also show one matching condition page; OFF = booking link only.
-- **Emergency detector** (`services/liveChat/safety.js`): a patient message with chest pain, breathing trouble, stroke signs, overdose, suicide/self-harm or severe bleeding (English, Hindi/Hinglish, Spanish) gets a fixed "Please call 911 right now" message from the server and goes to the Queue as `emergency`. The model is not asked.
+- **Emergency detector** (`services/liveChat/safety.js`): a patient message with chest pain, breathing trouble, stroke signs, overdose, suicide/self-harm, severe bleeding or severe pain (see "Emergency detector: the full phrase list"; English, Hindi/Hinglish, Spanish) gets a fixed "Please call 911 right now" message from the server and goes to the Queue as `emergency`. The model is not asked.
 - **Reply filter**: after the model answers and before the message is saved, a deterministic check blocks dose units, drug names, "you have / sounds like <condition>", "take / try / use <drug>" and "diagnos*". A blocked reply is replaced by a fixed safe reply (en/hi/es, English otherwise) with the booking button, and the stored message has `safetyBlocked: true`. A medication/refill variant is used when the patient or the blocked reply is about a medication. Service wording (refills, sick notes, lab requisitions, second opinions, prices, booking) passes.
 - **200-character replies** (URLs not counted): one retry asking for a shorter reply, then the fixed safe reply. Price questions: 2-3 key prices plus the Pricing page.
 - **OpenAI data handling**: every model call has `store: false`; `LIVECHAT_OPENAI_ORG_ID` / `LIVECHAT_OPENAI_PROJECT_ID` pin requests to the organisation/project with the data-handling agreement (production warns when missing). The main reply sees the history with the patient's name, email and phone replaced by `[name]`, `[email]`, `[phone]`; stored messages and what patients/admins see are unchanged.
@@ -179,6 +179,73 @@ The fixed strings in `safety.js` (`FIXED_TEXT.fallback` and `FIXED_TEXT.fallback
 | fallbackMedication | es | Nuestros médicos con licencia pueden ayudarle con preguntas sobre medicamentos y renovaciones de recetas. Reserve aquí: | Lamento que esté pasando por esto. Nuestros médicos con licencia pueden ayudarle con preguntas sobre medicamentos y renovaciones de recetas. Reserve aquí: |
 
 The model's own replies follow the same shape (opener, refusal, page by title) but are free text, filtered by the reply filter, so they are not part of this list.
+
+## How to report an AI mistake
+
+Every mistake becomes a permanent test. You do not need to write code.
+
+1. Open `backend/tests/fixtures/liveChatMistakes.json`.
+2. Add one row to `rows`, for example `{ "patient_message": "I feel weird", "expected": "agent" }`.
+3. Say what SHOULD have happened in `expected`:
+   - `emergency`: the 911/988 message should go out.
+   - `refusal`: the AI's own reply should have been blocked (also add `"ai_reply": "<what the AI said>"`).
+   - `page:<url>`: only that page's button (for example `page:/online-prescription-refills`).
+   - `pricing`: only the Pricing button.
+   - `book`: only the Book an appointment button (the patient asked to book).
+   - `agent`: only the Talk to a live agent button.
+   - `none`: no button (greeting, small talk, thanks).
+4. Optional fields: `note` (why), `language` (`en`, `hi` or `es`), `medical` (whether the AI reported a medical topic), `model_links` (the pages the AI suggested).
+5. Run `cd backend && node --test tests/liveChatMistakes.test.js`. A row that fails shows the exact message. Ask a developer to fix the rule, and keep the row so the mistake cannot come back.
+
+Every row also checks that the message is **not** an emergency, unless it is expected to be one.
+
+## Emergency detector: the full phrase list (for medical review)
+
+The server, not the AI, answers these. The patient gets the fixed message ("Please call 911 right now, or go to the nearest emergency room ... you can also call or text 988 ..."), the chat goes to the Queue for a live agent, and it is flagged on the AI Review page (also when it turns out to be a false alarm). The code is `EMERGENCY_PATTERNS` and `SEVERE_PAIN` in `backend/services/liveChat/safety.js`. Capital letters and accents do not matter.
+
+### English
+
+- **Heart / chest:** chest pain, pressure, tightness, discomfort; pain or pressure "in my chest"; tight, heavy or squeezing chest; heart attack.
+- **Breathing:** can't breathe, cannot get air, trouble or difficulty breathing, shortness of breath, gasping for air, not breathing, choking.
+- **Stroke and nerves:** "having a stroke", face drooping or numb, slurred speech, can't speak properly, sudden numbness / weakness / loss of vision / confusion / trouble speaking / severe headache, can't move or feel an arm, leg, face or side.
+- **Overdose:** overdose, took too many / too much, swallowed too many or a lot of.
+- **Suicide and self-harm:** suicide or suicidal, kill myself, end my life, take my own life, want to die, don't want to live, better off dead, hurt / harm / cut / injure myself, self-harm.
+- **Bleeding:** severe, heavy, massive or serious bleeding; bleeding heavily or won't stop; coughing or vomiting blood; blood everywhere.
+- **Unconscious:** passed out, unconscious, unresponsive.
+- **Severe pain (new):**
+  - severe, unbearable, excruciating, agonizing, intolerable or crippling pain, ache or cramps, with any body part ("severe knee pain");
+  - the worst pain or headache; "pain of my life";
+  - "my headache / pain is unbearable (excruciating, agonizing)";
+  - in agony, screaming or crying in pain, writhing;
+  - sudden severe / intense / terrible headache or pain; thunderclap headache;
+  - severe, intense, unbearable or excruciating stomach, abdominal or belly pain;
+  - can't move, walk, stand up or get up because of the pain; can't bear the pain.
+- **Not an alarm:** ordinary pain ("back pain", "headache", "knee pain", "I have pain", "my back hurts", "bad headache"); "no / not / never / mild / barely" before a strong word ("no severe pain", "not unbearable"); something long ago ("3 years ago", "used to", "as a child", "history of"); a pain scale, pain management or "what is severe pain".
+
+### Hindi and Hinglish
+
+- **Heart / chest:** सीने / छाती में दर्द, जकड़न, भारीपन; seene / chhaati mein dard.
+- **Breathing:** साँस नहीं ले पा रहा, साँस लेने में तकलीफ / दिक्कत / मुश्किल, साँस फूलना; saans nahi, saans lene mein takleef.
+- **Suicide and self-harm:** आत्महत्या, मरना चाहता, जान दे दूँगा, खुद को मारना / नुकसान, जीना नहीं चाहता; aatmahatya, marna chahta, jaan de dunga, khud ko nuksan.
+- **Overdose:** ओवरडोज़, ज़्यादा गोलियाँ.
+- **Bleeding:** बहुत खून, खून नहीं रुक रहा / बह रहा; bahut khoon, khoon nahi ruk raha.
+- **Stroke, heart attack, unconscious:** लकवा, दिल का दौरा, हार्ट अटैक, बेहोश; lakwa, dil ka daura, behosh.
+- **Severe pain (new):** असहनीय / भयंकर / भयानक दर्द, बर्दाश्त से बाहर दर्द, सबसे बुरा दर्द, अचानक बहुत तेज़ सिरदर्द, दर्द से चिल्ला / तड़प, दर्द के कारण हिल / चल नहीं पा रहा, दर्द में जान निकल रही; asahniya / bhayankar dard, bardasht se bahar dard, sabse bura dard, achanak bahut tez sir dard, pet mein bahut tez dard, dard se tadap / chilla.
+- **Not an alarm:** ordinary pain (सिर दर्द, पीठ दर्द, sar dard, kamar dard, "bahut tez sar dard"); "nahi / koi" before the strong word (मुझे कोई असहनीय दर्द नहीं है); "saal pehle / पिछले साल".
+
+### Spanish
+
+- **Heart / chest:** dolor de / en el / en mi / del pecho, dolor torácico, dolor opresivo, presión u opresión en el pecho, infarto, ataque al corazón / cardíaco. (Fixed: "dolor de cabeza", "dolor de espalda", "dolor de rodilla" and other "dolor de ..." messages are NOT emergencies any more; only the chest is.)
+- **Breathing:** no puedo respirar, me cuesta respirar, dificultad para respirar, falta de aire, me falta el aire, ahogo.
+- **Stroke:** derrame cerebral, accidente cerebrovascular, cara o boca caída, habla arrastrada o confusa.
+- **Overdose:** sobredosis, tomé demasiadas / me tomé todas.
+- **Suicide and self-harm:** suicida, quiero morir, matarme, quitarme la vida, no quiero vivir, hacerme daño, autolesión, cortarme.
+- **Bleeding:** sangrado fuerte / abundante / severo / grave, mucha sangre, no deja de sangrar, vomito / toso sangre.
+- **Unconscious:** me desmayé, inconsciente, perdí el conocimiento.
+- **Severe pain (new):** dolor severo / insoportable / atroz / terrible / intenso, el peor dolor (de cabeza de mi vida), dolor de cabeza repentino y severo, dolor abdominal / de estómago severo, intenso o insoportable, no puedo moverme / caminar por el dolor, no aguanto el dolor, me retuerzo de dolor, grito de dolor.
+- **Not an alarm:** ordinary pain ("dolor de cabeza", "dolor de espalda", "dolor fuerte de espalda", "me duele la rodilla"); "no tengo / sin / nunca" before the strong word; "hace dos años", "que es el dolor severo".
+
+This list is deliberately conservative about everyday wording: a false alarm sends the patient the 911 message and puts the chat in the Queue. Missed phrases are best reported through the mistakes file above.
 
 ## AI notice and human review (LegitScript compliance, part 2)
 

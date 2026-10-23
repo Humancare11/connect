@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
-import GreetingBubble from "./GreetingBubble";
+import DoctorGreeter from "./DoctorGreeter";
 import { DEFAULT_AI_NAME } from "./aiName";
 import { buildTimeline } from "./timeline";
 import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
+import { canUseVideo, introPlayedThisLoad, introVideoKind, prefersReducedMotion, saveDataOn, shouldPlayIntro } from "./greeterConfig";
 import { useLiveChat } from "./useLiveChat";
 import "./LiveChatWidget.css";
 
@@ -28,12 +29,22 @@ const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase()
 
 // Buttons to real pages of this site (the server only sends pages from its own list). A plain click moves within the
 // site (client-side routing), so the widget and the conversation stay alive on the next page.
-function PageLinks({ links, onNavigate }) {
+// The server's "Talk to a live agent" link (not a page) is a button that starts the same hand-over as the header button;
+// it is hidden once the chat is no longer with the AI.
+const AGENT_LINK = "#talk-to-live-agent";
+function PageLinks({ links, onNavigate, onAgent, canRequestAgent }) {
   const navigate = useNavigate();
-  if (!links?.length) return null;
+  const shown = (links || []).filter((link) => link.url !== AGENT_LINK || canRequestAgent);
+  if (!shown.length) return null;
   return (
     <div className="lcw-links">
-      {links.map((link) => (
+      {shown.map((link) =>
+        link.url === AGENT_LINK ? (
+          <button key={link.url} type="button" className="lcw-link" onClick={onAgent}>
+            <span>{link.title}</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        ) : (
         <a
           key={link.url}
           className="lcw-link"
@@ -48,12 +59,13 @@ function PageLinks({ links, onNavigate }) {
           <span>{link.title}</span>
           <span aria-hidden="true">{link.url.startsWith("/appointment-booking") ? "Book →" : "Learn more & book →"}</span>
         </a>
-      ))}
+        )
+      )}
     </div>
   );
 }
 
-function Message({ message, aiName, onNavigate, onOpenFile }) {
+function Message({ message, aiName, onNavigate, onOpenFile, onAgent, canRequestAgent }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
@@ -94,7 +106,7 @@ function Message({ message, aiName, onNavigate, onOpenFile }) {
           )}
           <span className="lcw-meta">{timeOf(message.at)}</span>
         </div>
-        <PageLinks links={message.links} onNavigate={onNavigate} />
+        <PageLinks links={message.links} onNavigate={onNavigate} onAgent={onAgent} canRequestAgent={canRequestAgent} />
       </div>
     </div>
   );
@@ -105,7 +117,29 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const { phase, conversation, open, setOpen } = chat;
   const [draft, setDraft] = useState("");
   const [confirmEnd, setConfirmEnd] = useState(false); // the "End this chat?" dialog
-  const [photoOk, setPhotoOk] = useState(true);
+  // The doctor greeter: the intro plays on every page load or refresh (not on a phone, with the window open or an
+  // admin invite waiting); after it, on route changes, and whenever the window closes, the compact bar shows.
+  const [stage, setStage] = useState(() =>
+    shouldPlayIntro({
+      reduced: prefersReducedMotion(),
+      saveData: saveDataOn(),
+      played: introPlayedThisLoad(),
+      open,
+      invite: Boolean(chat.invite),
+    })
+      ? "intro"
+      : "compact"
+  );
+  const [introKind] = useState(introVideoKind); // alpha | ios
+  const [video] = useState(canUseVideo); // false: reduced motion or data saver, the round button is just the chat icon
+  const [pill, setPill] = useState(""); // what the patient typed in the greeter's pill
+  // The text typed in the pill, kept while the contact form is shown and sent as the first message once the chat starts.
+  const [held, setHeld] = useState("");
+  const heldRef = useRef("");
+  const holdText = (value) => {
+    heldRef.current = value;
+    setHeld(value);
+  };
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
@@ -135,6 +169,18 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
     return () => document.documentElement.classList.remove("lcw-open");
   }, [open]);
 
+  const openWithText = (text) => {
+    setStage("compact"); // closing the window brings back the compact bar, never the intro
+    setPill("");
+    holdText(text);
+    setOpen(true);
+  };
+
+  // An intro still playing gives way to the compact bar when a message arrives or an admin writes to the patient.
+  useEffect(() => {
+    if (stage === "intro" && (chat.unread > 0 || chat.invite)) setStage("compact");
+  }, [stage, chat.unread, chat.invite]);
+
   const submit = (event) => {
     event.preventDefault();
     const text = draft.trim();
@@ -156,6 +202,29 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
 
   const limitReached = chat.limitReached && !conversation;
   const locked = phase !== "chat" || !conversation || (ended && !canContinue);
+
+  // The held message: sent as the patient's first message as soon as the chat exists. If the chat cannot take it, it
+  // goes into the message box; if the window closes first it goes back into the pill. Nothing is sent before the form.
+  useEffect(() => {
+    if (!held) return;
+    if (!open) {
+      setPill(held);
+      holdText("");
+      return;
+    }
+    if (phase !== "chat") return;
+    if (limitReached || (conversation && locked)) {
+      setDraft(heldRef.current);
+      holdText("");
+      return;
+    }
+    if (!conversation) return;
+    const text = heldRef.current;
+    if (!text) return;
+    holdText("");
+    chat.send(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [held, open, phase, conversation, locked, limitReached]);
 
   return (
     <div className="lcw-root">
@@ -204,7 +273,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
           </header>
 
           <div className="lcw-body" ref={bodyRef} aria-live="polite" data-lenis-prevent>
-            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} showNotice={showAiNotice} />}
+            {phase === "form" && <ContactForm aiName={aiName} onSubmit={chat.submitContact} reply={Boolean(chat.invite)} showNotice={showAiNotice} heldText={held} />}
             {phase === "loading" && <div className="lcw-sys">Loading your chat…</div>}
             {phase === "chat" && !conversation && limitReached && (
               <div className="lcw-sys" role="alert">
@@ -216,7 +285,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               <>
                 {buildTimeline(conversation.messages, chat.outbox).map((item) => {
                   if (item.kind === "message") {
-                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} />;
+                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} onAgent={chat.talkToAgent} canRequestAgent={Boolean(conversation?.canRequestAgent)} />;
                   }
                   const m = item.entry;
                   return m.status === "failed" ? (
@@ -312,6 +381,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
             <EndChatDialog
               onCancel={() => setConfirmEnd(false)}
               onEnd={async (clear) => {
+                if (clear) holdText("");
                 await chat.endChat(clear);
                 setConfirmEnd(false);
               }}
@@ -322,29 +392,21 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
 
       {!open && chat.invite && <InviteBubble agentName={chat.invite.agentName} onReply={() => setOpen(true)} onLater={chat.dismissInvite} />}
 
-      <GreetingBubble open={open} blocked={Boolean(chat.invite)} onOpen={() => setOpen(true)} />
-
       {open ? (
         <button type="button" className="lcw-launcher" onClick={() => setOpen(false)} aria-expanded="true">
           ✕ Close
         </button>
       ) : (
-        <button
-          type="button"
-          className={`lcw-launcher ${photoOk ? "lcw-launcher--logo" : "lcw-launcher--hc"}`}
-          onClick={() => setOpen(true)}
-          aria-label="Open chat"
-          aria-expanded="false"
-        >
-          {photoOk ? (
-            <img src="/livechat/launcher-logo.png" alt="" width="236" height="256" onError={() => setPhotoOk(false)} />
-          ) : (
-            <span className="lcw-launcher-hc" aria-hidden="true">
-              HC
-            </span>
-          )}
-          {chat.unread > 0 && <span className="lcw-badge">{chat.unread}</span>}
-        </button>
+        <DoctorGreeter
+          stage={stage}
+          video={video}
+          introKind={introKind}
+          unread={chat.unread}
+          text={pill}
+          setText={setPill}
+          onOpen={openWithText}
+          onSettled={() => setStage("compact")}
+        />
       )}
     </div>
   );

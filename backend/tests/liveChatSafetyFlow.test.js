@@ -95,6 +95,29 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       chat.socket.close();
     });
 
+    test("severe pain: the fixed 911 message, Queue hand-over, review flag, no model call and no link button; plain back pain is not an emergency", async () => {
+      const chat = await openChat();
+      await say(chat, "I have severe knee pain");
+      assert.equal(lc.ai.calls.length, 0);
+      const state = await stateOf(chat);
+      assert.equal(state.mode, "queue");
+      const emergencyMessage = state.messages.find((m) => m.sender === "ai" && m.text === safety.FIXED_TEXT.emergency.en);
+      assert.ok(emergencyMessage);
+      assert.equal(emergencyMessage.links, undefined);
+      const conv = await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean();
+      assert.equal(conv.handoffReason, "emergency");
+      assert.equal(conv.flags.medical, true);
+      assert.ok(conv.flags.reasons.includes("emergency_keyword"));
+      chat.socket.close();
+
+      lc.ai.queue.push(modelReply("Sorry you're dealing with back pain. I can't give medical advice, but a licensed Humancare Connect doctor can help you."));
+      const normal = await openChat();
+      await say(normal, "back pain");
+      assert.equal(lc.ai.calls.length, 1);
+      assert.notEqual((await stateOf(normal)).mode, "queue");
+      normal.socket.close();
+    });
+
     test("a normal price question is not an emergency and reaches the model", async () => {
       const chat = await openChat();
       await say(chat, "How much is a consultation?");
@@ -111,7 +134,7 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       const reply = await lastAi(chat);
       assert.equal(reply.text, safety.FIXED_TEXT.fallback.en);
       // the page that fits "headaches" (lay-word map) now goes above the booking card
-      assert.deepEqual(reply.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/headache", "/appointment-booking"]);
+      assert.deepEqual(reply.links.map((l) => l.url), ["/general-and-everyday-care/general-physician/headache"]);
       const rows = await stored(chat);
       assert.equal(rows.filter((m) => decryptLiveChatText(m.text).includes("migraine")).length, 0); // the model's text is never stored
       assert.equal(rows.filter((m) => m.safetyBlocked).length, 1);
@@ -194,8 +217,8 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       const off = await openChat();
       await say(off, asked);
       assert.equal(lc.ai.calls[1].pages.some((p) => sitePages.typeOf(p.url) === "condition"), false);
-      const links = (await lastAi(off)).links.map((l) => l.url);
-      assert.deepEqual(links, ["/appointment-booking"]);
+      const links = ((await lastAi(off)).links || []).map((l) => l.url);
+      assert.deepEqual(links, []); // no condition page allowed, and a non-medical reply gets no button
       on.socket.close();
       off.socket.close();
     });

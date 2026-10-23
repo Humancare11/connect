@@ -98,7 +98,10 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
           handler(payload || {}, ack);
         });
       reply("chat:resume", (_p, ack) => ack({ ok: true, needContact: false, firstName: "Dana", conversation: mock.conversation }));
-      reply("chat:start", (_p, ack) => ack({ ok: true, conversation: mock.conversation }));
+      reply("chat:start", (_p, ack) => {
+        mock.conversation ||= freshConversation(); // a patient who has never chatted gets a new chat here
+        ack({ ok: true, conversation: mock.conversation });
+      });
       reply("chat:end", (_p, ack) => ack({ ok: true }));
       reply("chat:message", (payload, ack) => {
         if (mock.failNextMessage) {
@@ -146,7 +149,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
     mock.failNextMessage = false;
     mock.conversation = freshConversation();
     await context?.close();
-    context = await browser.newContext({ viewport: { width: 420, height: 800 } });
+    context = await browser.newContext({ viewport: { width: 420, height: 800 }, reducedMotion: "reduce" }); // reduced motion: no intro, the launcher is the plain round button
     page = await context.newPage();
   });
 
@@ -315,6 +318,678 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.getByRole("button", { name: /start chat/i }).click();
       await page.getByText("How can I help you today?").waitFor();
       assert.equal(contactCalls.length, 2);
+    });
+  });
+  describe("doctor greeter and round button", () => {
+    const launcher = () => page.locator(".lcw-launcher");
+    const setHidden = (hidden) =>
+      page.evaluate((value) => {
+        Object.defineProperty(document, "hidden", { configurable: true, get: () => value });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }, hidden);
+    // A new browser context. `compact` starts with the window open (no intro) and minimises it: the compact bar.
+    let compactStart = false;
+    async function newPage({ width = 1280, height = 800, reducedMotion = false, compact = false, returning = false, userAgent, noVp9 = false } = {}) {
+      compactStart = compact;
+      await context?.close();
+      context = await browser.newContext({ viewport: { width, height }, reducedMotion: reducedMotion ? "reduce" : "no-preference", ...(userAgent ? { userAgent } : {}) });
+      page = await context.newPage();
+      if (noVp9) await page.addInitScript(() => (HTMLVideoElement.prototype.canPlayType = () => ""));
+      await page.addInitScript(
+        ([isCompact, isReturning, token, visitor]) => {
+          if (sessionStorage.getItem("hcTestBooted")) return;
+          sessionStorage.setItem("hcTestBooted", "1");
+          if (isCompact) sessionStorage.setItem("hcLiveChatOpen", "1");
+          if (isReturning) {
+            localStorage.setItem("hcLiveChatToken", token);
+            localStorage.setItem("hcLiveChatVisitorId", visitor);
+          }
+        },
+        [compact, returning, TOKEN, VISITOR]
+      );
+    }
+    // The page clock runs normally until it is paused; the video itself always plays in real time.
+    async function load({ clock = true } = {}) {
+      if (clock) await page.clock.install({ time: Date.now() });
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      if (compactStart) {
+        await page.getByRole("button", { name: "Minimize chat" }).click();
+        await page.locator(".lcw-launcher--round").waitFor();
+      }
+    }
+    const freeze = async () => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 50);
+    const tick = (ms) => page.clock.runFor(ms);
+    const introPill = () => page.locator(".lcw-gr-minif:not(.is-away)");
+    const answerContact = () =>
+      page.route("**/api/livechat/contact", (route) =>
+        route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, visitorId: VISITOR, firstName: "Dana", token: TOKEN }) })
+      );
+    // Real time: the page's own timers are frozen by the clock.
+    const realWait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const videoTime = () => page.locator(".lcw-gr-doc video").evaluate((v) => v.currentTime);
+
+    test("intro: the doctor plays, the pill slides in at about 3.2 s with a grey arrow that turns black when typing, then he flies into the compact bar", async () => {
+      await newPage();
+      await load();
+      const doctor = page.locator(".lcw-gr-doc");
+      await doctor.waitFor();
+      assert.equal(await doctor.getAttribute("aria-label"), "Open chat");
+      assert.equal(await introPill().count(), 0, "no pill while he is still walking in");
+      await introPill().waitFor({ timeout: 8000 });
+      assert.ok((await videoTime()) >= 3.1, "the pill came in with the video, not before");
+      const input = introPill().getByLabel("Write a message");
+      assert.equal(await input.getAttribute("placeholder"), "Write a message…");
+      const arrow = introPill().getByRole("button", { name: "Send message" });
+      assert.equal(await arrow.evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(230, 230, 230)");
+      await input.fill("hi");
+      await realWait(400); // the colour change is a 0.15 s CSS transition
+      assert.equal(await arrow.evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(17, 17, 17)");
+      await input.fill("");
+      await input.blur();
+      await freeze();
+      await tick(10500); // the 10 s clock counts visible, idle time
+      await tick(1000);
+      await page.locator(".lcw-launcher--round").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the doctor is gone");
+      await realWait(700); // the arrival animation
+      const box = await launcher().boundingBox();
+      assert.ok(Math.round(box.width) === 64 && Math.round(box.height) === 64, `round button is 64px (got ${box.width}x${box.height})`);
+      assert.equal(await launcher().getAttribute("aria-label"), "Open chat");
+      assert.ok(await page.locator(".lcw-gr-minif").isVisible());
+    });
+
+
+    test("the doctor stands on the compact bar's bottom line, there is no mask or background, and only he moves when he shrinks (the pill stays put)", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await realWait(900); // the pill's slide-in
+      await freeze();
+      const intro = await page.evaluate(() => {
+        const rect = (el) => el.getBoundingClientRect().toJSON();
+        const doc = document.querySelector(".lcw-gr-doc");
+        const video = doc.querySelector("video");
+        return {
+          doc: rect(doc),
+          slot: rect(document.querySelector(".lcw-gr-slot")),
+          pill: rect(document.querySelector(".lcw-gr-minif")),
+          mask: getComputedStyle(video).maskImage || getComputedStyle(video).webkitMaskImage || "none",
+          docBg: getComputedStyle(doc).backgroundColor,
+          poster: video.getAttribute("poster"),
+          src: video.querySelector("source").getAttribute("src"),
+        };
+      });
+      assert.equal(intro.mask, "none", "no radial mask on the intro video");
+      assert.equal(intro.docBg, "rgba(0, 0, 0, 0)", "no background behind the doctor");
+      assert.equal(intro.src, "/livechat/doctor-alpha.webm?v=1");
+      assert.equal(intro.poster, null, "no poster on the intro video");
+      assert.ok(Math.abs(intro.doc.bottom - intro.slot.bottom) <= 2, `feet on the bar's bottom line: doctor ${intro.doc.bottom} vs bar ${intro.slot.bottom}`);
+      assert.ok(Math.abs(intro.pill.top + intro.pill.height / 2 - (intro.slot.top + intro.slot.height / 2)) <= 1, "the pill is vertically centred on the bar");
+      assert.ok(intro.pill.right <= intro.slot.left, "the pill is left of the round button's place");
+      await tick(10_500); // he starts to fly; the animation itself runs in real time
+      const pillAt = () => page.locator(".lcw-gr-minif").evaluate((el) => el.getBoundingClientRect().toJSON());
+      const samples = [await pillAt()];
+      for (let i = 0; i < 5; i += 1) {
+        await realWait(150);
+        samples.push(await pillAt());
+      }
+      await tick(1000);
+      await launcher().waitFor();
+      await realWait(700);
+      samples.push(await pillAt());
+      for (const r of samples) {
+        for (const key of ["left", "top", "right", "bottom"]) assert.ok(Math.abs(r[key] - intro.pill[key]) <= 1, `the pill did not move (${key}: ${r[key]} vs ${intro.pill[key]})`);
+      }
+      const button = await launcher().boundingBox();
+      assert.ok(Math.abs(button.y + button.height - intro.doc.bottom) <= 2, "the round button sits on the doctor's bottom line");
+      assert.ok(Math.abs(button.x - intro.slot.left) <= 1.5, "the round button is where the slot was");
+    });
+
+    test("Safari/iOS (and a browser without VP9) get doctor-ios.mp4 with a soft edge mask, and the intro plays", async () => {
+      const iosUa = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+      const macUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
+      const cases = [
+        { name: "Safari", options: { userAgent: macUa } },
+        { name: "iPhone Chrome", options: { userAgent: iosUa.replace("Version/17.4 Mobile", "CriOS/124.0 Mobile") } },
+        { name: "no VP9", options: { noVp9: true } },
+      ];
+      for (const { name, options } of cases) {
+        await newPage(options);
+        const requested = [];
+        page.on("request", (request) => requested.push(request.url()));
+        await load({ clock: false });
+        const doctor = page.locator(".lcw-gr-doc");
+        await doctor.waitFor();
+        assert.ok(await doctor.evaluate((el) => el.classList.contains("lcw-gr-doc--ios")), `${name}: iOS variant`);
+        assert.equal(await doctor.locator("source").getAttribute("src"), "/livechat/doctor-ios.mp4?v=1", name);
+        assert.equal(await doctor.locator("video").getAttribute("poster"), null, `${name}: no poster (it would be transparent on grey)`);
+        const mask = await doctor.locator("video").evaluate((v) => getComputedStyle(v).maskImage || getComputedStyle(v).webkitMaskImage);
+        assert.match(mask, /radial-gradient/, `${name}: soft radial edge mask`);
+        for (const attr of ["controls", "autoplay", "loop"]) assert.equal(await doctor.locator("video").getAttribute(attr), null, `${name}: no ${attr}`);
+        assert.equal(await doctor.locator("video").evaluate((v) => v.muted && v.playsInline), true, `${name}: muted and inline`);
+        await page.waitForFunction(() => document.querySelector(".lcw-gr-doc video")?.currentTime > 0.5, null, { timeout: 8000 });
+        assert.equal(requested.filter((url) => url.includes("doctor-alpha")).length, 0, `${name}: the transparent video was not requested`);
+      }
+    });
+
+    test("play() rejected (iOS Low Power Mode): the compact bar shows straight away", async () => {
+      await newPage();
+      await page.addInitScript(() => {
+        HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException("play() refused", "NotAllowedError"));
+      });
+      await load({ clock: false });
+      await launcher().waitFor({ timeout: 8000 });
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.ok(await page.locator(".lcw-gr-minif").isVisible());
+      await page.waitForFunction(() => document.querySelectorAll("video").length === 0, null, { timeout: 8000 }); // the avatar gives up too: the button is just the chat icon
+    });
+
+    test("nothing of the doctor shows before the walk-in's first frame: no poster, the video is hidden until it has really started, and the pill comes ~3.2 s after the start of playback (desktop and phone, transparent and iOS videos)", async () => {
+      const iosUa = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+      const macUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
+      const cases = [
+        { name: "desktop, transparent WebM", options: { width: 1280, height: 800 }, src: "doctor-alpha.webm" },
+        { name: "desktop, iOS MP4", options: { width: 1280, height: 800, userAgent: macUa }, src: "doctor-ios.mp4" },
+        { name: "phone, transparent WebM", options: { width: 390, height: 844 }, src: "doctor-alpha.webm" },
+        { name: "phone, iOS MP4", options: { width: 390, height: 844, userAgent: iosUa }, src: "doctor-ios.mp4" },
+      ];
+      for (const { name, options, src } of cases) {
+        await newPage(options);
+        // A frame-by-frame log from the first paint on: when the video can be seen, when it started, when the pill came.
+        await page.addInitScript(() => {
+          const log = { seen: false, poster: "unset", firstVisible: null, playingAt: null, pillAt: null, playingBeforeVisible: null };
+          window.__vlog = log;
+          document.addEventListener(
+            "playing",
+            (event) => {
+              if (event.target.closest?.(".lcw-gr-doc") && log.playingAt === null) log.playingAt = performance.now();
+            },
+            true
+          );
+          const tick = () => {
+            const video = document.querySelector(".lcw-gr-doc video");
+            if (video) {
+              log.seen = true;
+              log.poster = video.getAttribute("poster");
+              const style = getComputedStyle(video);
+              const visible = style.visibility !== "hidden" && style.opacity !== "0" && style.display !== "none";
+              if (visible && log.firstVisible === null) log.firstVisible = { time: video.currentTime, at: performance.now(), playingBefore: log.playingAt !== null, paused: video.paused };
+              const pill = document.querySelector(".lcw-gr-minif");
+              if (pill && !pill.classList.contains("is-away") && log.pillAt === null) log.pillAt = performance.now();
+            }
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        await load({ clock: false });
+        await page.locator(".lcw-gr-doc").waitFor();
+        await introPill().waitFor({ timeout: 9000 });
+        const log = await page.evaluate(() => window.__vlog);
+        assert.ok(log.seen, `${name}: the video was in the page`);
+        assert.equal(log.poster, null, `${name}: no poster attribute`);
+        assert.ok(log.firstVisible, `${name}: the video became visible`);
+        assert.ok(log.playingAt !== null && log.firstVisible.playingBefore, `${name}: it was invisible until 'playing' had fired`);
+        assert.ok(log.firstVisible.time < 1, `${name}: the first visible frame is the walk-in (currentTime ${log.firstVisible.time})`);
+        assert.equal(log.firstVisible.paused, false, `${name}: it was playing when first shown`);
+        const sincePlaying = (log.pillAt - log.playingAt) / 1000;
+        assert.ok(sincePlaying > 2.6 && sincePlaying < 4.2, `${name}: the pill came ${sincePlaying.toFixed(2)} s after playback started`);
+        assert.equal(await page.locator(".lcw-gr-doc video").getAttribute("poster"), null, name);
+        assert.ok((await page.locator(".lcw-gr-doc video source").getAttribute("src")).includes(src), `${name}: ${src}`);
+      }
+    });
+
+    test("if the intro video never starts (play() rejected, or too slow) the compact bar shows, never a still image of the doctor", async () => {
+      await newPage();
+      await page.addInitScript(() => {
+        HTMLMediaElement.prototype.play = () => new Promise(() => {}); // never settles: playback never starts
+      });
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc video").evaluate((v) => getComputedStyle(v).visibility), "hidden", "nothing visible while waiting");
+      await freeze();
+      await tick(2700); // the 2.5 s start timeout
+      await launcher().waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+    });
+
+    test("desktop: the intro doctor keeps 16px or more from the right edge (1280, 1440, 1920), clear of the pill's arrow, while the pill, the round button's place and his feet line stay put", async () => {
+      // Measured on the standing frame: the character spans 14%..72% of the video frame's width; at pill height the coat starts at 28%.
+      const CHAR_LEFT = 0.14;
+      const CHAR_RIGHT = 0.72;
+      const COAT_LEFT = 0.28;
+      for (const [width, height] of [
+        [1280, 800],
+        [1440, 900],
+        [1920, 1080],
+      ]) {
+        await newPage({ width, height });
+        await load();
+        await introPill().waitFor({ timeout: 9000 });
+        await realWait(900); // the pill's slide-in
+        const m = await page.evaluate(() => {
+          const rect = (el) => el.getBoundingClientRect().toJSON();
+          return {
+            doc: rect(document.querySelector(".lcw-gr-doc")),
+            slot: rect(document.querySelector(".lcw-gr-slot")),
+            pill: rect(document.querySelector(".lcw-gr-minif")),
+            arrow: rect(document.querySelector(".lcw-gr-minif button")),
+            shift: getComputedStyle(document.querySelector(".lcw-gr-mini")).getPropertyValue("--gr-shift").trim(),
+          };
+        });
+        const label = `${width}px`;
+        assert.equal(m.shift, "18px", `${label}: the shift is the 18px from greeterConfig.js`);
+        const charRight = m.doc.left + CHAR_RIGHT * m.doc.width;
+        const charLeft = m.doc.left + CHAR_LEFT * m.doc.width;
+        assert.ok(width - charRight >= 16, `${label}: his waving arm is ${width - charRight}px from the right edge`);
+        assert.ok(charLeft >= 0, `${label}: and the frame's left side is on screen`);
+        assert.ok(m.doc.left + COAT_LEFT * m.doc.width >= m.arrow.right, `${label}: his body at the pill's height stays right of the pill's arrow button (${m.doc.left + COAT_LEFT * m.doc.width} vs ${m.arrow.right})`);
+        // unchanged: the compact bar is 20px from the edge, the button's place is 64px wide, the pill 12px left of it, feet on the bar's bottom line
+        assert.ok(Math.abs(m.slot.right - (width - 20)) <= 1, `${label}: the round button's place is where it was (right ${m.slot.right})`);
+        assert.equal(Math.round(m.slot.width), 64);
+        assert.ok(Math.abs(m.slot.left - m.pill.right - 12) <= 1, `${label}: the pill is 12px left of the button`);
+        assert.ok(Math.abs(m.pill.right - (width - 20 - 64 - 12)) <= 1, `${label}: the pill is where it was (right ${m.pill.right})`);
+        assert.ok(Math.abs(m.doc.bottom - m.slot.bottom) <= 2, `${label}: feet still on the bar's bottom line`);
+        // at 10 s he still flies into the round button, which stays where the slot was
+        await freeze();
+        await tick(10_500);
+        await tick(1000);
+        await launcher().waitFor();
+        await realWait(700);
+        const button = await launcher().boundingBox();
+        assert.ok(Math.abs(button.x - m.slot.left) <= 1.5 && Math.abs(button.y - m.slot.top) <= 1.5, `${label}: the button is where the slot was`);
+        const pillAfter = await page.locator(".lcw-gr-minif").boundingBox();
+        assert.ok(Math.abs(pillAfter.x - m.pill.left) <= 1 && Math.abs(pillAfter.y - m.pill.top) <= 1, `${label}: the pill did not move`);
+      }
+    });
+
+    test("phone: the doctor is not shifted (the phone layout is unchanged)", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+      const m = await page.evaluate(() => {
+        const rect = (el) => el.getBoundingClientRect().toJSON();
+        return { doc: rect(document.querySelector(".lcw-gr-doc")), w: innerWidth };
+      });
+      assert.ok(Math.abs(m.doc.right - m.w) <= 1, `on phones the frame still ends at the screen edge (${m.doc.right} of ${m.w})`);
+    });
+
+    test("after the video ends he loops only the standing part: never back to the walk-in", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await page.locator(".lcw-gr-doc video").evaluate((v) => {
+        window.__times = [];
+        v.addEventListener("timeupdate", () => window.__times.push(v.currentTime));
+        v.currentTime = Math.max(0, v.duration - 0.6);
+      });
+      await realWait(3500);
+      const seen = await page.evaluate(() => window.__times);
+      const wrapped = seen.findIndex((t, i) => i > 0 && t < seen[i - 1] - 1);
+      assert.ok(wrapped > 0, "the video reached its end and looped");
+      assert.ok(Math.min(...seen.slice(wrapped)) >= 3.9, `after the loop it never goes below 4.0 s (min ${Math.min(...seen.slice(wrapped))})`);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1);
+    });
+
+    test("while the patient is typing or has text in the pill the doctor does not shrink", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await introPill().getByLabel("Write a message").fill("I have a question");
+      await tick(30_000);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1);
+      assert.equal(await page.locator(".lcw-launcher--round").count(), 0);
+      await introPill().getByLabel("Write a message").fill("");
+      await introPill().getByLabel("Write a message").blur();
+      await tick(10_500);
+      await tick(1000);
+      await page.locator(".lcw-launcher--round").waitFor();
+    });
+
+    test("the avatar never shows the walk-in, has a LIVE badge and a ring, and cycles avatar -> black -> chat icon -> avatar", async () => {
+      await newPage({ compact: true });
+      await load();
+      await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
+      assert.equal((await page.locator(".lcw-gr-live").innerText()).trim(), "LIVE");
+      assert.equal(await page.locator(".lcw-gr-prog").evaluate((el) => getComputedStyle(el).animationName), "lcw-gr-ringfill");
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "no intro");
+      // Sample the avatar video for a while: whenever the avatar is visible the video is at 4.0 s or later.
+      const walkIn = await page.locator(".lcw-gr-cav video").evaluate(
+        (v) =>
+          new Promise((resolve) => {
+            const cav = v.closest(".lcw-gr-cav");
+            let bad = 0;
+            let visible = 0;
+            const timer = setInterval(() => {
+              if (Number(getComputedStyle(cav).opacity) > 0.05) {
+                visible += 1;
+                if (v.currentTime < 3.95) bad += 1;
+              }
+            }, 30);
+            setTimeout(() => {
+              clearInterval(timer);
+              resolve({ bad, visible });
+            }, 1500);
+          })
+      );
+      assert.ok(walkIn.visible > 10, "the avatar was on screen");
+      assert.equal(walkIn.bad, 0, "the walk-in was never visible in the avatar");
+      await freeze();
+      await tick(4300);
+      await page.locator(".lcw-ph-dark").waitFor();
+      await tick(600);
+      await page.locator(".lcw-ph-chat").waitFor();
+      await realWait(600); // the icon fades in
+      assert.equal(await page.locator(".lcw-gr-chatico").evaluate((el) => getComputedStyle(el).opacity), "1");
+      assert.equal(await page.locator(".lcw-gr-cav video").evaluate((v) => v.paused), true, "the video is paused while the chat icon shows");
+      await tick(4600);
+      await page.locator(".lcw-ph-avatar").waitFor();
+    });
+
+    test("typing in the pill and sending opens the chat with the form; the text waits, then is sent as the first message after Start chat", async () => {
+      await newPage();
+      mock.conversation = null; // no chat yet: the server creates it on chat:start
+      await load();
+      await answerContact();
+      await introPill().waitFor({ timeout: 8000 });
+      await introPill().getByLabel("Write a message").fill("I need a prescription refill");
+      await introPill().getByLabel("Write a message").press("Enter");
+      await page.waitForSelector(".lcw-cform");
+      assert.equal((await page.locator(".lcw-held-text").innerText()).trim(), "I need a prescription refill");
+      assert.match(await page.locator(".lcw-held small").innerText(), /Waiting to send/);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the greeter is gone while the window is open");
+      assert.equal(sentEvents("chat:message").length, 0, "nothing is sent before the form");
+      await fillForm();
+      await page.getByRole("button", { name: "Start chat" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "I need a prescription refill" }).waitFor();
+      const order = mock.events.map(([event]) => event);
+      assert.ok(order.indexOf("chat:start") !== -1 && order.indexOf("chat:start") < order.indexOf("chat:message"), `chat:start comes before the first message (${order})`);
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "I need a prescription refill" }], "sent once, exactly as typed");
+      assert.equal(await page.locator(".lcw-held").count(), 0);
+    });
+
+    test("clicking the round button with text typed in the compact pill holds the text the same way", async () => {
+      await newPage({ compact: true });
+      await load({ clock: false });
+      await answerContact();
+      await page.getByLabel("Write a message").fill("Do you take insurance?");
+      await launcher().click();
+      await page.waitForSelector(".lcw-cform");
+      assert.equal((await page.locator(".lcw-held-text").innerText()).trim(), "Do you take insurance?");
+      await fillForm();
+      await page.getByRole("button", { name: "Start chat" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "Do you take insurance?" }).waitFor();
+      assert.equal(sentEvents("chat:message").length, 1);
+    });
+
+    test("closing the window before the chat starts puts the typed text back in the pill", async () => {
+      await newPage({ compact: true });
+      await load({ clock: false });
+      await page.getByLabel("Write a message").fill("Hello there");
+      await page.getByRole("button", { name: "Send message" }).click();
+      await page.waitForSelector(".lcw-cform");
+      await page.getByRole("button", { name: "Minimize chat" }).click();
+      await page.locator(".lcw-launcher--round").waitFor();
+      await page.waitForFunction(() => document.querySelector(".lcw-gr-minif input")?.value === "Hello there"); // restored right after the window closes
+      assert.equal(sentEvents("chat:message").length, 0);
+    });
+
+    test("a returning patient also gets the intro, and a message typed in its pill goes straight into the chat", async () => {
+      await newPage({ returning: true });
+      mock.conversation = freshConversation();
+      await load({ clock: false });
+      await page.locator(".lcw-gr-doc").waitFor();
+      await introPill().waitFor({ timeout: 8000 });
+      await introPill().getByLabel("Write a message").fill("Is the doctor available today?");
+      await introPill().getByRole("button", { name: "Send message" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "Is the doctor available today?" }).waitFor();
+      assert.equal(await page.locator(".lcw-cform").count(), 0);
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "Is the doctor available today?" }]);
+    });
+
+    test("clicking the doctor opens the chat; closing it brings back the compact bar, not the intro", async () => {
+      await newPage();
+      await load();
+      await page.locator(".lcw-gr-doc").click();
+      await page.waitForSelector(".lcw-cform");
+      assert.equal(await page.locator("video").count(), 0, "no video plays while the window is open");
+      await page.getByRole("button", { name: "Minimize chat" }).click();
+      await page.locator(".lcw-launcher--round").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-minif.is-away").count(), 0, "the pill is in place at once, not sliding in again");
+    });
+
+    test("the intro plays again on every reload and in every new tab", async () => {
+      await newPage();
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+      await page.reload();
+      await page.locator(".lcw-gr-doc").waitFor();
+      assert.equal(await page.locator(".lcw-launcher--round").count(), 0, "a reload starts with the intro, not the compact bar");
+      const second = await context.newPage();
+      await second.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      await second.locator(".lcw-gr-doc").waitFor();
+    });
+
+    test("the ring, the circle and the LIVE badge are fully visible, in the viewport and not clipped, with the site's global svg rule and the cookie banner", async () => {
+      for (const [width, height] of [
+        [1280, 800],
+        [1440, 900],
+        [390, 844],
+      ]) {
+        await newPage({ width, height, compact: true });
+        await load({ clock: false });
+        // what index.css does to every svg on the real site
+        await page.addStyleTag({ content: "img,video,canvas,svg{max-width:100%;height:auto}" });
+        await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
+        await realWait(700); // the pop-in animation
+        for (const banner of [false, true]) {
+          await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
+          await realWait(100);
+          const report = await page.evaluate(() => {
+            const button = document.querySelector(".lcw-launcher--round");
+            const ring = document.querySelector(".lcw-gr-ring");
+            const live = document.querySelector(".lcw-gr-live");
+            const box = (el) => el.getBoundingClientRect();
+            const clippers = [];
+            for (let el = button; el && el !== document.documentElement; el = el.parentElement) {
+              const cs = getComputedStyle(el);
+              if (el !== button && (cs.overflow !== "visible" || cs.clipPath !== "none" || cs.contain.includes("paint"))) clippers.push(el.className || el.tagName);
+            }
+            return { b: box(button), r: box(ring), l: box(live), w: innerWidth, h: innerHeight, clippers };
+          });
+          const label = `${width}x${height} banner=${banner}`;
+          assert.deepEqual(report.clippers, [], `${label}: no ancestor clips the button`);
+          assert.equal(Math.round(report.b.width), 64, label);
+          assert.equal(Math.round(report.r.width), 72, `${label}: ring is 72px wide (got ${report.r.width})`);
+          assert.equal(Math.round(report.r.height), 72, `${label}: ring is 72px tall (got ${report.r.height})`);
+          assert.equal(Math.round(report.r.left), Math.round(report.b.left) - 4, `${label}: ring is centred on the button`);
+          assert.equal(Math.round(report.r.top), Math.round(report.b.top) - 4, `${label}: ring is centred on the button`);
+          for (const [name, r] of [["button", report.b], ["ring", report.r], ["LIVE badge", report.l]]) {
+            assert.ok(r.left >= 0 && r.top >= 0 && r.right <= report.w && r.bottom <= report.h, `${label}: ${name} inside the viewport ${JSON.stringify(r)}`);
+          }
+          assert.ok(report.l.left >= report.b.left && report.l.right <= report.b.right && report.l.bottom <= report.b.bottom, `${label}: LIVE badge inside the circle`);
+        }
+      }
+    });
+
+    test("a hidden tab pauses the videos and holds the 10 s clock", async () => {
+      await newPage();
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await setHidden(true);
+      assert.equal(await page.locator(".lcw-gr-doc video").evaluate((v) => v.paused), true);
+      await tick(30_000);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1, "the intro waits while the tab is hidden");
+      await setHidden(false);
+      await page.locator(".lcw-gr-doc video").evaluate((v) => v.paused).then((paused) => assert.equal(paused, false));
+      await tick(10_500);
+      await tick(1000);
+      await page.locator(".lcw-launcher--round").waitFor();
+    });
+
+    test("prefers-reduced-motion: no video, no flying; the compact bar with the chat icon only", async () => {
+      await newPage({ reducedMotion: true });
+      await load({ clock: false });
+      await page.locator(".lcw-launcher--round").waitFor();
+      assert.equal(await page.locator("video").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-live").count(), 0);
+      assert.equal(await page.locator(".lcw-gr-chatico").evaluate((el) => getComputedStyle(el).opacity), "1");
+      assert.equal(await page.locator(".lcw-ph-chat").count(), 1);
+    });
+
+    test("phone (390x844): the intro plays with the transparent video, the pill is in place beside him, feet on the button's line, only he flies into the round button, all inside the viewport", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      const doctor = page.locator(".lcw-gr-doc");
+      await doctor.waitFor();
+      assert.equal(await doctor.locator("source").getAttribute("src"), "/livechat/doctor-alpha.webm?v=1", "Chromium gets the transparent video");
+      assert.equal(await doctor.evaluate((el) => el.classList.contains("lcw-gr-doc--ios")), false);
+      await page.waitForFunction(() => document.querySelector(".lcw-gr-doc video")?.currentTime > 0.5, null, { timeout: 8000 });
+      await introPill().waitFor({ timeout: 8000 }); // slides in at 3.2 s, like on the desktop
+      await realWait(900);
+      for (const banner of [false, true]) {
+        await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
+        await realWait(100);
+        const m = await page.evaluate(() => {
+          const rect = (el) => el.getBoundingClientRect().toJSON();
+          return { doc: rect(document.querySelector(".lcw-gr-doc")), slot: rect(document.querySelector(".lcw-gr-slot")), pill: rect(document.querySelector(".lcw-gr-minif")), w: innerWidth, h: innerHeight };
+        });
+        const label = `banner=${banner}`;
+        assert.ok(m.doc.height >= 140 && m.doc.height <= 171, `${label}: about 150px tall, 170px at most (got ${m.doc.height})`);
+        assert.ok(Math.abs(m.doc.bottom - m.slot.bottom) <= 2, `${label}: feet on the round button's bottom line (${m.doc.bottom} vs ${m.slot.bottom})`);
+        assert.ok(m.doc.left >= 0 && m.doc.top >= 0 && m.doc.right <= m.w && m.doc.bottom <= m.h, `${label}: the doctor is inside the viewport ${JSON.stringify(m.doc)}`);
+        assert.ok(m.slot.right <= m.w - 12 + 0.5, `${label}: the button keeps its 12px margin`);
+        assert.ok(Math.abs(m.pill.left - 12) <= 1 && Math.abs(m.slot.left - m.pill.right - 10) <= 1, `${label}: pill and button share the row (12px gutter, 10px gap)`);
+        assert.ok(Math.abs(m.pill.width - (m.w - 64 - 10 - 24)) <= 1, `${label}: the pill takes the width that is left (${m.pill.width})`);
+        assert.ok(Math.abs(m.pill.top + m.pill.height / 2 - (m.slot.top + m.slot.height / 2)) <= 1, `${label}: the pill is centred on the button's row`);
+      }
+      await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
+      assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16, "16px or more: iOS does not zoom on focus");
+      const pillBefore = await page.locator(".lcw-gr-minif").boundingBox();
+      const slotBefore = await page.locator(".lcw-gr-slot").boundingBox();
+      await freeze();
+      await tick(10_500);
+      const pillAt = () => page.locator(".lcw-gr-minif").boundingBox();
+      for (let i = 0; i < 4; i += 1) {
+        await realWait(150);
+        const r = await pillAt();
+        assert.ok(Math.abs(r.x - pillBefore.x) <= 1 && Math.abs(r.y - pillBefore.y) <= 1 && Math.abs(r.width - pillBefore.width) <= 1, "the pill does not move while he flies");
+      }
+      await tick(1000);
+      await launcher().waitFor();
+      await realWait(700);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0, "the doctor flew into the button");
+      const button = await launcher().boundingBox();
+      assert.ok(Math.abs(button.x - slotBefore.x) <= 1.5 && Math.abs(button.y - slotBefore.y) <= 1.5, "the button is exactly where the doctor was heading");
+      assert.ok(button.x >= 0 && button.y >= 0 && button.x + button.width <= 390 && button.y + button.height <= 844, "button inside the viewport");
+      const pillAfter = await pillAt();
+      assert.ok(Math.abs(pillAfter.x - pillBefore.x) <= 1 && Math.abs(pillAfter.y - pillBefore.y) <= 1, "the pill is where it was");
+      await page.locator(".lcw-ph-avatar").waitFor({ timeout: 8000 });
+    });
+
+    test("phone: tapping the doctor opens the chat", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      await page.locator(".lcw-gr-doc").click();
+      await page.waitForSelector(".lcw-cform");
+      assert.equal(await page.locator(".lcw-held").count(), 0);
+    });
+
+    test("phones 360x740, 390x844 and 430x932: the compact bar has the pill and the button on one row, inside the viewport above the cookie banner; typing and sending opens the chat with the held text", async () => {
+      for (const [width, height] of [
+        [360, 740],
+        [390, 844],
+        [430, 932],
+      ]) {
+        mock.events.length = 0;
+        mock.conversation = null;
+        await newPage({ width, height, compact: true });
+        await answerContact();
+        await load({ clock: false });
+        await page.locator(".lcw-gr-minif").waitFor();
+        await realWait(700); // the pop-in
+        for (const banner of [false, true]) {
+          await page.evaluate((on) => document.documentElement.classList.toggle("hc-cookie-open", on), banner);
+          await realWait(100);
+          const m = await page.evaluate(() => {
+            const rect = (el) => el.getBoundingClientRect().toJSON();
+            return { pill: rect(document.querySelector(".lcw-gr-minif")), button: rect(document.querySelector(".lcw-launcher--round")), w: innerWidth, h: innerHeight };
+          });
+          const label = `${width}x${height} banner=${banner}`;
+          assert.ok(m.pill.left >= 12 - 0.5 && m.button.right <= m.w - 12 + 0.5 && m.button.bottom <= m.h && m.pill.top >= 0, `${label}: inside the viewport with 12px gutters ${JSON.stringify(m)}`);
+          assert.ok(Math.abs(m.pill.width - (m.w - 64 - 10 - 24)) <= 1, `${label}: pill width ${m.pill.width}`);
+          assert.ok(Math.abs(m.button.left - m.pill.right - 10) <= 1, `${label}: 10px gap`);
+          assert.ok(Math.abs(m.pill.top + m.pill.height / 2 - (m.button.top + m.button.height / 2)) <= 1, `${label}: one row`);
+          if (banner) assert.ok(m.button.bottom <= m.h - 190 + 1, `${label}: the bar sits above the cookie banner (${m.button.bottom} vs ${m.h - 190})`);
+        }
+        await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
+        assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16);
+        assert.equal(await page.locator(".lcw-gr-minif input").getAttribute("placeholder"), "Write a message…");
+        const input = page.getByLabel("Write a message");
+        await input.fill("I need a refill");
+        await realWait(300);
+        assert.equal(await page.locator(".lcw-gr-minif button").evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(17, 17, 17)", "the arrow turns black");
+        await input.press("Enter");
+        await page.waitForSelector(".lcw-cform");
+        assert.equal((await page.locator(".lcw-held-text").innerText()).trim(), "I need a refill");
+        assert.equal(await page.locator(".lcw-window").evaluate((el) => getComputedStyle(el).position), "fixed", "full-screen chat window on phones");
+        assert.equal(sentEvents("chat:message").length, 0, "nothing is sent before the form");
+        await fillForm();
+        await page.getByRole("button", { name: "Start chat" }).click();
+        await page.locator(".lcw-msg--right", { hasText: "I need a refill" }).waitFor();
+        assert.deepEqual(sentEvents("chat:message"), [{ text: "I need a refill" }], `${width}x${height}: sent once, as typed`);
+      }
+    });
+
+    test("phone: while the pill is focused the 10 s shrink waits, and the bar is lifted above the keyboard", async () => {
+      await newPage({ width: 390, height: 844 });
+      await load();
+      await introPill().waitFor({ timeout: 8000 });
+      await freeze();
+      await page.locator(".lcw-gr-minif input").focus();
+      await tick(30_000);
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 1, "the doctor stays while the pill is focused");
+      // a keyboard of 300px: the visual viewport shrinks, the layout viewport does not (iOS Safari)
+      await page.evaluate(() => {
+        const vv = window.visualViewport;
+        Object.defineProperty(vv, "height", { configurable: true, get: () => window.innerHeight - 300 });
+        vv.dispatchEvent(new Event("resize"));
+      });
+      assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "300px");
+      const lifted = await page.locator(".lcw-gr-minif").boundingBox();
+      assert.ok(lifted.y + lifted.height <= 844 - 300, `the pill sits above the keyboard (bottom ${lifted.y + lifted.height})`);
+      await page.locator(".lcw-gr-minif input").blur();
+      assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "", "the lift is removed when the pill loses focus");
+      await tick(10_500);
+      await tick(1000);
+      await launcher().waitFor();
+    });
+
+    test("the unread badge sits on the round button, and the keyboard reaches both the pill and the button", async () => {
+      await newPage({ compact: true, returning: true });
+      mock.conversation = freshConversation();
+      await load({ clock: false });
+      await page.locator(".lcw-launcher--round").waitFor();
+      await page.waitForFunction(() => true);
+      for (let i = 0; i < 50 && !sentEvents("chat:resume").length; i += 1) await new Promise((resolve) => setTimeout(resolve, 100));
+      io.of("/livechat").emit("chat:message", {
+        conversationId: mock.conversation.conversationId,
+        message: { id: "a1", sender: "agent", agentName: "Sam", text: "Hello, this is Sam.", at: new Date().toISOString() },
+      });
+      await page.locator(".lcw-launcher--round .lcw-badge").waitFor();
+      assert.equal((await page.locator(".lcw-launcher--round .lcw-badge").innerText()).trim(), "1");
+      await page.getByLabel("Write a message").focus();
+      await page.keyboard.press("Tab");
+      assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("aria-label")), "Send message");
+      await page.keyboard.press("Tab");
+      assert.equal(await page.evaluate(() => document.activeElement?.getAttribute("aria-label")), "Open chat");
+      await page.keyboard.press("Enter");
+      await page.getByText("Hello, this is Sam.").waitFor();
+      assert.equal(await page.locator(".lcw-badge").count(), 0, "opening clears the badge");
     });
   });
 });
