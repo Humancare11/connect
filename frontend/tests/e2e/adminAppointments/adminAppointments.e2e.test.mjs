@@ -89,6 +89,24 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.shot("list-all");
   });
 
+  test("every tab lists what the server counts for it (25 at most), with the reference status colors", async () => {
+    const fromApi = async (q) => (await (await fetch(`${api.url}/api/admin/bookings?${q}`)).json());
+    const all = await fromApi("status=all&limit=1");
+    const pill = { Upcoming: "#e0f2fe", Assigned: "#ede9fe", Pending: "#fff2d6", Confirmed: "#e3edfc", Complete: "#dcfce7", Cancelled: "#fde7e4" };
+    const rgb = (hex) => { const n = parseInt(hex.slice(1), 16); return `rgb(${n >> 16}, ${(n >> 8) & 255}, ${n & 255})`; };
+    for (const tab of ["All", "Upcoming", "Assigned", "Pending", "Confirmed", "Complete", "Cancelled", "Testing"]) {
+      await page.click(`[role="tab"]:has-text("${tab}")`);
+      const key = tab.toLowerCase();
+      const want = Math.min(25, all.counts[key]);
+      await h.until(async () => (await h.rowsLocator().count()) === want && (await h.tabCount(tab)) === all.counts[key], `${tab}: ${want} rows`);
+      if (tab === "All" || tab === "Testing") continue;
+      const pills = () => page.$$eval("table.adp-bk tbody .adp-status-pill", (els) => els.map((e) => [e.textContent.trim(), getComputedStyle(e).backgroundColor]));
+      await h.until(async () => { const p = await pills(); return p.length > 0 && p.every(([text, bg]) => text === tab && bg === rgb(pill[tab])); }, `${tab} pills in the reference color`);
+      assert.equal((await h.headers()).includes("Assigned by"), tab !== "Upcoming");
+    }
+    await page.click("[role=tab]:has-text(\"All\")");
+  });
+
   test("tab counts come from the server and Hide testing removes exactly the testing bookings", async () => {
     const api1 = async (q) => (await (await fetch(`${api.url}/api/admin/bookings?${q}`)).json());
     const all = await api1("status=all&limit=1");
@@ -127,7 +145,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
   });
 
   test("no sideways page scroll from phone to wide desktop; cards below about 900px, a table above", async () => {
-    for (const [width, cards] of [[1500, false], [1126, false], [1040, false], [900, true], [390, true]]) {
+    for (const [width, cards] of [[1500, false], [1280, false], [1040, false], [900, true], [390, true]]) {
       await page.setViewportSize({ width, height: 900 });
       await h.open("/admin-dashboard/appointments?tab=all");
       const info = await page.evaluate(() => ({
