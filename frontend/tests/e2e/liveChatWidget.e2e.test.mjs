@@ -422,7 +422,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(intro.mask, "none", "no radial mask on the intro video");
       assert.equal(intro.docBg, "rgba(0, 0, 0, 0)", "no background behind the doctor");
       assert.equal(intro.src, "/livechat/doctor-alpha.webm?v=1");
-      assert.equal(intro.poster, "/livechat/poster-alpha.webp?v=1");
+      assert.equal(intro.poster, null, "no poster on the intro video");
       assert.ok(Math.abs(intro.doc.bottom - intro.slot.bottom) <= 2, `feet on the bar's bottom line: doctor ${intro.doc.bottom} vs bar ${intro.slot.bottom}`);
       assert.ok(Math.abs(intro.pill.top + intro.pill.height / 2 - (intro.slot.top + intro.slot.height / 2)) <= 1, "the pill is vertically centred on the bar");
       assert.ok(intro.pill.right <= intro.slot.left, "the pill is left of the round button's place");
@@ -482,6 +482,74 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
       assert.ok(await page.locator(".lcw-gr-minif").isVisible());
       await page.waitForFunction(() => document.querySelectorAll("video").length === 0, null, { timeout: 8000 }); // the avatar gives up too: the button is just the chat icon
+    });
+
+    test("nothing of the doctor shows before the walk-in's first frame: no poster, the video is hidden until it has really started, and the pill comes ~3.2 s after the start of playback (desktop and phone, transparent and iOS videos)", async () => {
+      const iosUa = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+      const macUa = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
+      const cases = [
+        { name: "desktop, transparent WebM", options: { width: 1280, height: 800 }, src: "doctor-alpha.webm" },
+        { name: "desktop, iOS MP4", options: { width: 1280, height: 800, userAgent: macUa }, src: "doctor-ios.mp4" },
+        { name: "phone, transparent WebM", options: { width: 390, height: 844 }, src: "doctor-alpha.webm" },
+        { name: "phone, iOS MP4", options: { width: 390, height: 844, userAgent: iosUa }, src: "doctor-ios.mp4" },
+      ];
+      for (const { name, options, src } of cases) {
+        await newPage(options);
+        // A frame-by-frame log from the first paint on: when the video can be seen, when it started, when the pill came.
+        await page.addInitScript(() => {
+          const log = { seen: false, poster: "unset", firstVisible: null, playingAt: null, pillAt: null, playingBeforeVisible: null };
+          window.__vlog = log;
+          document.addEventListener(
+            "playing",
+            (event) => {
+              if (event.target.closest?.(".lcw-gr-doc") && log.playingAt === null) log.playingAt = performance.now();
+            },
+            true
+          );
+          const tick = () => {
+            const video = document.querySelector(".lcw-gr-doc video");
+            if (video) {
+              log.seen = true;
+              log.poster = video.getAttribute("poster");
+              const style = getComputedStyle(video);
+              const visible = style.visibility !== "hidden" && style.opacity !== "0" && style.display !== "none";
+              if (visible && log.firstVisible === null) log.firstVisible = { time: video.currentTime, at: performance.now(), playingBefore: log.playingAt !== null, paused: video.paused };
+              const pill = document.querySelector(".lcw-gr-minif");
+              if (pill && !pill.classList.contains("is-away") && log.pillAt === null) log.pillAt = performance.now();
+            }
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        await load({ clock: false });
+        await page.locator(".lcw-gr-doc").waitFor();
+        await introPill().waitFor({ timeout: 9000 });
+        const log = await page.evaluate(() => window.__vlog);
+        assert.ok(log.seen, `${name}: the video was in the page`);
+        assert.equal(log.poster, null, `${name}: no poster attribute`);
+        assert.ok(log.firstVisible, `${name}: the video became visible`);
+        assert.ok(log.playingAt !== null && log.firstVisible.playingBefore, `${name}: it was invisible until 'playing' had fired`);
+        assert.ok(log.firstVisible.time < 1, `${name}: the first visible frame is the walk-in (currentTime ${log.firstVisible.time})`);
+        assert.equal(log.firstVisible.paused, false, `${name}: it was playing when first shown`);
+        const sincePlaying = (log.pillAt - log.playingAt) / 1000;
+        assert.ok(sincePlaying > 2.6 && sincePlaying < 4.2, `${name}: the pill came ${sincePlaying.toFixed(2)} s after playback started`);
+        assert.equal(await page.locator(".lcw-gr-doc video").getAttribute("poster"), null, name);
+        assert.ok((await page.locator(".lcw-gr-doc video source").getAttribute("src")).includes(src), `${name}: ${src}`);
+      }
+    });
+
+    test("if the intro video never starts (play() rejected, or too slow) the compact bar shows, never a still image of the doctor", async () => {
+      await newPage();
+      await page.addInitScript(() => {
+        HTMLMediaElement.prototype.play = () => new Promise(() => {}); // never settles: playback never starts
+      });
+      await load();
+      await page.locator(".lcw-gr-doc").waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc video").evaluate((v) => getComputedStyle(v).visibility), "hidden", "nothing visible while waiting");
+      await freeze();
+      await tick(2700); // the 2.5 s start timeout
+      await launcher().waitFor();
+      assert.equal(await page.locator(".lcw-gr-doc").count(), 0);
     });
 
     test("after the video ends he loops only the standing part: never back to the walk-in", async () => {

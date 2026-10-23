@@ -4,12 +4,12 @@ export const VIDEO_VERSION = "?v=1"; // bump when doctor.webm / doctor.mp4 / pos
 export const WEBM_SRC = `/livechat/doctor.webm${VIDEO_VERSION}`;
 export const MP4_SRC = `/livechat/doctor.mp4${VIDEO_VERSION}`;
 export const POSTER_SRC = `/livechat/poster.jpg${VIDEO_VERSION}`;
-// The intro: the doctor on a transparent background (VP9 with alpha), and its transparent standing frame.
+// The intro: the doctor on a transparent background (VP9 with alpha). It has no poster: nothing of him may show before
+// the walk-in's first frame.
 export const ALPHA_WEBM_SRC = `/livechat/doctor-alpha.webm${VIDEO_VERSION}`;
 // Safari, iOS and iPadOS (and any browser without VP9) get the same shot as an H.264 MP4 with its light-grey background,
 // whose box edges are faded with a soft mask (see .lcw-gr-doc--ios in the CSS).
 export const IOS_MP4_SRC = `/livechat/doctor-ios.mp4${VIDEO_VERSION}`;
-export const ALPHA_POSTER_SRC = `/livechat/poster-alpha.webp${VIDEO_VERSION}`;
 export const CHAR_CENTER = 0.43; // the doctor's centre, as a fraction of the intro video's width
 
 export const SHOW_PILL_AT = 3.2; // seconds into the video: the message pill slides in

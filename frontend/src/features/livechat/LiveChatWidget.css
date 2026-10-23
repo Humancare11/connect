@@ -108,6 +108,10 @@ html.hc-cookie-open .lcw-window {
   background: none;
   cursor: pointer;
 }
+/* Invisible (but laid out, so nothing shifts) until the walk-in's first frame has played. */
+.lcw-gr-doc:not(.is-playing) video {
+  visibility: hidden;
+}
 .lcw-gr-doc video {
   display: block;
   width: 100%;

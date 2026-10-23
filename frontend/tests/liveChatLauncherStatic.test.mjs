@@ -5,7 +5,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  ALPHA_POSTER_SRC,
   ALPHA_WEBM_SRC,
   AVATAR_MS,
   IOS_MP4_SRC,
@@ -97,12 +96,16 @@ test("the intro is the transparent WebM (iOS/Safari: doctor-ios.mp4); the avatar
   assert.equal(IOS_MP4_SRC, "/livechat/doctor-ios.mp4?v=1");
   assert.ok(fs.existsSync(path.join(root, "public/livechat/doctor-ios.mp4")));
   assert.equal(ALPHA_WEBM_SRC, "/livechat/doctor-alpha.webm?v=1");
-  assert.equal(ALPHA_POSTER_SRC, "/livechat/poster-alpha.webp?v=1");
   assert.equal(WEBM_SRC, "/livechat/doctor.webm?v=1");
   assert.equal(MP4_SRC, "/livechat/doctor.mp4?v=1");
-  for (const file of ["doctor-alpha.webm", "poster-alpha.webp", "doctor.webm", "doctor.mp4", "poster.jpg"]) assert.ok(fs.existsSync(path.join(root, "public/livechat", file)), file);
+  for (const file of ["doctor-alpha.webm", "doctor-ios.mp4", "doctor.webm", "doctor.mp4", "poster.jpg"]) assert.ok(fs.existsSync(path.join(root, "public/livechat", file)), file);
   assert.match(greeter, /src=\{ALPHA_WEBM_SRC\}/);
-  assert.match(greeter, /poster=\{ALPHA_POSTER_SRC\}/);
+  assert.equal(fs.existsSync(path.join(root, "public/livechat/poster-alpha.webp")), false, "the intro has no poster, so the file is gone");
+  assert.doesNotMatch(greeter, /poster=/, "no poster on the intro video: nothing of the doctor shows before the walk-in");
+  assert.match(launcher, /poster=\{POSTER_SRC\}/, "the avatar keeps its standing-frame poster");
+  assert.match(css, /\.lcw-gr-doc:not\(\.is-playing\) video \{\s*visibility: hidden;/);
+  assert.match(greeter, /requestVideoFrameCallback\(reveal\)/);
+  assert.match(greeter, /className=\{`lcw-gr-doc[^`]*\$\{playing \? " is-playing" : ""\}`\}/);
   assert.match(greeter, /src=\{IOS_MP4_SRC\}/);
   assert.doesNotMatch(greeter, /src=\{MP4_SRC\}|poster\.jpg/, "the intro never uses the avatar's grey-background video");
   assert.doesNotMatch(greeter, /controls|autoPlay|\bloop\b/, "no controls, and the loop is done from LOOP_FROM in code");

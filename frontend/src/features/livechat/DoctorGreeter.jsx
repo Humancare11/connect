@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import LauncherButton from "./LauncherButton";
 import {
-  ALPHA_POSTER_SRC,
   ALPHA_WEBM_SRC,
   IOS_MP4_SRC,
   CHAR_CENTER,
@@ -38,7 +37,7 @@ const SendIcon = () => (
 export default function DoctorGreeter({ stage, video = true, introKind = "alpha", unread = 0, text, setText, onOpen, onSettled }) {
   const [mode, setMode] = useState(stage === "intro" ? "intro" : "compact"); // intro | fly | compact
   const [pillShown, setPillShown] = useState(false);
-  const [playing, setPlaying] = useState(false); // the intro video has started: the 10 s clock runs
+  const [playing, setPlaying] = useState(false); // the walk-in's first frame is on screen: the video shows and the 10 s clock runs
   const [arrive, setArrive] = useState(false);
   const [popIn] = useState(() => stage !== "intro"); // a bar that was not flown in pops in
   const introVideoRef = useRef(null);
@@ -70,27 +69,36 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
     onSettled?.();
   };
 
-  // Intro video: starts when it can play, shows the pill at SHOW_PILL_AT, loops from LOOP_FROM, and gives up (compact
-  // bar, chat icon) if it cannot play or does not start in time.
+  // Intro video: starts when it can play, stays invisible until its first frame has really played (`playing` fired and
+  // either a video frame was presented or currentTime moved), shows the pill SHOW_PILL_AT seconds into the playback,
+  // loops from LOOP_FROM, and gives up (compact bar, chat icon) if it cannot play or does not start in time. No poster.
   useEffect(() => {
     if (mode !== "intro") return undefined;
     const el = introVideoRef.current;
     if (!el) return undefined;
     mute(el);
-    let started = false;
+    let started = false; // `playing` has fired
+    let shown = false; // the first frame is on screen
     const giveUp = () => {
       if (!started) toCompact();
     };
     const start = () => {
       el.play().catch(giveUp);
     };
+    const reveal = () => {
+      if (shown || !started) return;
+      shown = true;
+      setPlaying(true);
+    };
     const onPlaying = () => {
       started = true;
-      setPlaying(true);
       clearTimeout(timer);
+      if (typeof el.requestVideoFrameCallback === "function") el.requestVideoFrameCallback(reveal);
+      else if (el.currentTime > 0) reveal();
     };
     const onTime = () => {
-      if (el.currentTime >= SHOW_PILL_AT) setPillShown(true);
+      if (!shown && el.currentTime > 0) reveal();
+      if (shown && el.currentTime >= SHOW_PILL_AT) setPillShown(true);
     };
     const onVisibility = () => {
       if (document.hidden) el.pause();
@@ -242,13 +250,13 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
         {mode !== "intro" && <LauncherButton buttonRef={circRef} unread={unread} avatar={video} arrive={arrive} onOpen={open} />}
       </span>
       {mode !== "compact" && (
-        <button ref={docRef} type="button" className={`lcw-gr-doc${introKind === "ios" ? " lcw-gr-doc--ios" : ""}`} onClick={open} aria-label="Open chat" aria-expanded="false">
+        <button ref={docRef} type="button" className={`lcw-gr-doc${introKind === "ios" ? " lcw-gr-doc--ios" : ""}${playing ? " is-playing" : ""}`} onClick={open} aria-label="Open chat" aria-expanded="false">
           {introKind === "ios" ? (
             <video ref={introVideoRef} muted playsInline preload="auto" aria-hidden="true" tabIndex={-1} disablePictureInPicture disableRemotePlayback>
               <source src={IOS_MP4_SRC} type="video/mp4" />
             </video>
           ) : (
-            <video ref={introVideoRef} muted playsInline preload="auto" poster={ALPHA_POSTER_SRC} aria-hidden="true" tabIndex={-1} disablePictureInPicture disableRemotePlayback>
+            <video ref={introVideoRef} muted playsInline preload="auto" aria-hidden="true" tabIndex={-1} disablePictureInPicture disableRemotePlayback>
               <source src={ALPHA_WEBM_SRC} type='video/webm; codecs="vp9"' />
             </video>
           )}

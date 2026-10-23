@@ -138,13 +138,12 @@ describe("live chat: doctor greeter and round button", () => {
 
   test("the video and poster are shipped, versioned and same-origin", () => {
     const dir = path.join(ROOT, "frontend", "public", "livechat");
-    for (const file of ["doctor.webm", "doctor.mp4", "poster.jpg", "doctor-alpha.webm", "poster-alpha.webp"]) assert.ok(fs.statSync(path.join(dir, file)).size > 1000, file);
+    for (const file of ["doctor.webm", "doctor.mp4", "poster.jpg", "doctor-alpha.webm", "doctor-ios.mp4"]) assert.ok(fs.statSync(path.join(dir, file)).size > 1000, file);
     const config = read(FEATURE, "greeterConfig.js");
     assert.match(config, /VIDEO_VERSION = "\?v=1"/);
     assert.match(config, /WEBM_SRC = `\/livechat\/doctor\.webm\$\{VIDEO_VERSION\}`/);
     assert.match(config, /MP4_SRC = `\/livechat\/doctor\.mp4\$\{VIDEO_VERSION\}`/);
     assert.match(config, /ALPHA_WEBM_SRC = `\/livechat\/doctor-alpha\.webm\$\{VIDEO_VERSION\}`/);
-    assert.match(config, /ALPHA_POSTER_SRC = `\/livechat\/poster-alpha\.webp\$\{VIDEO_VERSION\}`/);
     assert.ok(launcher.indexOf("src={WEBM_SRC}") < launcher.indexOf("src={MP4_SRC}"), "the avatar lists WebM before MP4");
   });
 

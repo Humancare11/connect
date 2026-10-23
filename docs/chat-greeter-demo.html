@@ -39,6 +39,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
 /* frame is wider than the button: the character's centre (43% of the frame) sits over the button's centre */
 .doc{position:absolute;right:calc(32px - var(--gr-w) * .57);bottom:0;width:var(--gr-w);aspect-ratio:360/556;padding:0;border:0;background:none;cursor:pointer}
 .doc video{display:block;width:100%;height:100%;object-fit:contain}
+.doc:not(.on) video{visibility:hidden}
 .doc:focus-visible,.circ:focus-visible,.pill button:focus-visible{outline:3px solid #9cb8ff;outline-offset:3px;border-radius:16px}
 .pill{margin:0;position:relative;z-index:1;display:flex;align-items:center;gap:8px;background:#fff;border-radius:999px;height:60px;padding:0 8px 0 24px;
   width:min(290px,calc(100vw - 120px));box-shadow:0 8px 26px rgba(20,33,61,.14);border:1px solid #ececec;
@@ -191,7 +192,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
     <section class="box">
       <h3>About the videos</h3>
       <ul>
-        <li><b>doctor-alpha.webm</b> (VP9 with alpha, 360 x 556, no sound) is the intro in Chrome, Edge, Firefox and Android; <b>poster-alpha.webp</b> is its transparent standing frame.</li>
+        <li><b>doctor-alpha.webm</b> (VP9 with alpha, 360 x 556, no sound) is the intro in Chrome, Edge, Firefox and Android; it has no poster, so nothing of the doctor shows before the walk-in's first frame.</li>
         <li><b>doctor-ios.mp4</b> (H.264, same framing, light-grey background) is the intro in Safari, iOS and iPadOS, with a soft mask on its edges.</li>
         <li><b>doctor.webm / doctor.mp4</b> (grey studio background) are only used inside the round avatar, cropped to head and shoulders.</li>
         <li>All files are loaded with <code>?v=1</code>; bump it when a file is replaced.</li>
@@ -214,7 +215,7 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
   var shrinkT=null, cycT=null, flyT=null, clock=null;
   var vsrc=document.createElement('source');
   if(ios){ doc.classList.add('ios'); vsrc.src='../frontend/public/livechat/doctor-ios.mp4?v=1'; vsrc.type='video/mp4'; }
-  else { vid.poster='../frontend/public/livechat/poster-alpha.webp?v=1'; vsrc.src='../frontend/public/livechat/doctor-alpha.webm?v=1'; vsrc.type='video/webm; codecs="vp9"'; }
+  else { vsrc.src='../frontend/public/livechat/doctor-alpha.webm?v=1'; vsrc.type='video/webm; codecs="vp9"'; }
   vid.appendChild(vsrc);
 
   function loopFrom(v){ v.addEventListener('timeupdate',function(){ if(!v.paused&&isFinite(v.duration)&&v.currentTime>=LOOP_FROM&&v.duration-v.currentTime<0.15) v.currentTime=LOOP_FROM; });
@@ -258,7 +259,8 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,32px);mar
     if(!canIntro){ doc.hidden=true; showCompact(true); return; }
     doc.hidden=false; pill.classList.add('is-away'); pill.inert=true; bar.classList.remove('pop');
     var started=false, giveUp=setTimeout(function(){ if(!started&&!document.hidden) showCompact(true); },2500);
-    vid.onplaying=function(){ started=true; clearTimeout(giveUp); startClock(); };
+    doc.classList.remove('on');
+    vid.onplaying=function(){ started=true; clearTimeout(giveUp); doc.classList.add('on'); startClock(); };
     try{ vid.currentTime=0; vid.play().catch(function(){ showCompact(true); }); }catch(e){ showCompact(true); }
   }
   vid.addEventListener('timeupdate',function(){ if(vid.currentTime>=SHOW_AT){ pill.classList.remove('is-away'); pill.inert=false; } });
