@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { bookingAdminFields } = require("../utils/bookingAdminFields");
 
 
 const consultationSchema = new mongoose.Schema(
@@ -90,6 +91,22 @@ const consultationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Which admin assigned the doctor (Appointment has the same object).
+    assignedBy: {
+      id:         { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+      name:       { type: String, default: "" },
+      email:      { type: String, default: "" },
+      assignedAt: { type: Date, default: null },
+    },
+
+    // Enrollment of the first doctor, kept when an admin swaps in an alternate.
+    originalDoctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Enrollment",
+      default: null,
+    },
+    ...bookingAdminFields(),
     medicalReports: [
       {
         url: { type: String },

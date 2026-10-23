@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { bookingAdminFields } = require("../utils/bookingAdminFields");
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -62,6 +63,8 @@ const appointmentSchema = new mongoose.Schema(
       email:      { type: String, default: "" },
       assignedAt: { type: Date, default: null },
     },
+    originalDoctorId: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+    ...bookingAdminFields(),
     sessionStarted: { type: Boolean, default: false },
     // Set when an admin reopens a completed appointment; cleared again on completion.
     // Lets the doctor's list show a "Reopened by admin" note.
