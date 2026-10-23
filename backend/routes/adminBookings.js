@@ -54,7 +54,7 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
         });
         res.status(200).json({ msg: message, booking: await loadAdminBookingRow(result.kind, result.id), paid: result.paid });
       } catch (error) {
-        if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message });
+        if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message, ...(error.code ? { code: error.code } : {}) });
         console.error(`${name} error:`, error);
         res.status(500).json({ msg: "Something went wrong. Please try again." });
       }
@@ -73,7 +73,7 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
     (req, actor) => actions.revertDoctor(req.app, req.params.id, actor)));
 
   router.post("/:id/confirm", ...action("ADMIN_CONFIRM_BOOKING", "Booking confirmed.",
-    (req) => actions.confirmBooking(req.app, req.params.id)));
+    (req, actor) => actions.confirmBooking(req.app, req.params.id, actor)));
 
   // Assigned or Confirmed -> Complete.
   router.post("/:id/auto-complete", ...action("ADMIN_AUTO_COMPLETE_BOOKING", "Booking marked complete.",
@@ -96,7 +96,7 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
       });
       res.status(200).json({ msg: `${outcome.summary.ok} of ${outcome.results.length} bookings updated.`, ...outcome });
     } catch (error) {
-      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message });
+      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message, ...(error.code ? { code: error.code } : {}) });
       console.error("ADMIN_BULK error:", error);
       res.status(500).json({ msg: "Something went wrong. Please try again." });
     }
@@ -118,7 +118,7 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
       });
       res.status(200).json({ msg: `${updated} booking${updated === 1 ? "" : "s"} updated.`, updated, results });
     } catch (error) {
-      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message });
+      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message, ...(error.code ? { code: error.code } : {}) });
       console.error("ADMIN_SET_TESTING error:", error);
       res.status(500).json({ msg: "Something went wrong. Please try again." });
     }

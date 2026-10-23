@@ -20,10 +20,13 @@ const notifications = require("./bookingNotifications");
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 const ACTIVE_CATEGORY_STATUSES = ["Assigned", "Confirmed"];
 
+// `code` is an optional machine-readable reason ("changed": another admin changed the
+// booking first; "slot_taken": the doctor is busy then) so a client can tell the 409s apart.
 class LifecycleError extends Error {
-  constructor(statusCode, message) {
+  constructor(statusCode, message, code = "") {
     super(message);
     this.statusCode = statusCode;
+    this.code = code;
   }
 }
 
@@ -80,7 +83,7 @@ async function completeLoaded(app, loaded) {
     // Lost a race: someone changed the status after we read it.
     const fresh = await Model.findById(doc._id).select("status").lean();
     if (fresh && isCompleteStatus(fresh.status)) return { appointment: doc, alreadyComplete: true };
-    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.");
+    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.", "changed");
   }
 
   emitStatus(app, loaded, "complete");
@@ -178,7 +181,7 @@ async function reopenLoaded(app, loaded, actor) {
     { new: true }
   );
   if (!updated) {
-    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.");
+    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.", "changed");
   }
 
   // Lift the post-completion block so the doctor and patient can rejoin now.

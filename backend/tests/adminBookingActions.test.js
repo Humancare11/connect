@@ -18,9 +18,12 @@ const { adminOnly } = require("../middleware/verifyToken");
 const notify = require("../utils/bookingNotifications");
 const push = require("../utils/pushNotifications");
 const mailer = require("../utils/sendEmail");
+const { decideAppointmentAccess } = require("../utils/appointmentRoomAccess");
 
 // The real implementation, kept before the recorders below replace it.
 const realNotifyPatient = notify.notifyPatientDoctorChanged;
+const realNotifyCancelled = notify.notifyDoctorBookingCancelled;
+const realNotifyConfirmed = notify.notifyDoctorBookingConfirmed;
 
 const KINDS = ["appointment", "category"];
 
@@ -103,6 +106,7 @@ describe("admin booking actions", () => {
     notify.notifyConsultationDoctorChanged = async (a) => { calls.push({ name: "doctorChanged", kind: "category", ...a }); };
     notify.notifyPatientDoctorChanged = async (a) => { calls.push({ name: "patientChanged", ...a }); };
     notify.notifyDoctorBookingCancelled = async (a) => { calls.push({ name: "doctorCancelled", ...a }); };
+    notify.notifyDoctorBookingConfirmed = async (a) => { calls.push({ name: "doctorConfirmed", ...a }); };
     push.sendPushToUser = (userId, payload) => { pushes.push({ userId: String(userId), ...payload }); };
   });
   after(async () => {
@@ -290,13 +294,14 @@ describe("admin booking actions", () => {
         if (kind === "appointment") assert.equal(doc.sessionStarted, false);
       });
 
-      test("Assigned and Pending keep their status", async () => {
+      test("Assigned stays Assigned and Pending becomes Assigned: an admin's change always ends in Assigned", async () => {
         // Different target doctors, since every booking here shares one slot.
         for (const [status, target] of [["assigned", D2], ["pending", D3]]) {
           const b = await make(kind, status, { doctor: D1 });
           const res = await post(`/${b._id}/alternate-doctor`, { doctorId: String(target.e._id) });
           assert.equal(res.status, 200, status);
-          assert.equal(res.body.booking.status, status);
+          assert.equal(res.body.booking.status, "assigned", status);
+          assert.equal((await fresh(kind, b._id)).status, STORED[kind].assigned, status);
         }
       });
 
@@ -455,7 +460,55 @@ describe("admin booking actions", () => {
         assert.equal(pushes[0].userId, String(patient._id));
         assert.equal(pushes[0].title, "Appointment confirmed");
         assert.ok(emitted.some((e) => e.ev === "appointment-updated" && e.room === "admin_room" && e.payload.status === "confirmed"));
-        assert.deepEqual(calls, []);
+      });
+
+      test("records who confirmed (role admin) and when", async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        const before = Date.now();
+        await post(`/${b._id}/confirm`);
+        const doc = await fresh(kind, b._id);
+        assert.equal(String(doc.confirmedBy.id), String(admin._id));
+        assert.equal(doc.confirmedBy.name, "Super Admin");
+        assert.equal(doc.confirmedBy.email, "sa@x.co");
+        assert.equal(doc.confirmedBy.role, "admin");
+        assert.ok(doc.confirmedAt && doc.confirmedAt.getTime() >= before - 1000);
+      });
+
+      test("the doctor is told (event and email) and so is the patient (push)", async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        await post(`/${b._id}/confirm`);
+        assert.equal(pushes.length, 1);
+        assert.equal(pushes[0].userId, String(patient._id));
+        const sent = calls.filter((c) => c.name === "doctorConfirmed");
+        assert.equal(sent.length, 1);
+        assert.equal(sent[0].isCategory, kind === "category");
+        assert.equal(String(sent[0].booking._id), String(b._id));
+        assert.equal(calls.length, 1, "no other emails");
+        assert.ok(emitted.some((e) => e.room === `doctor_${D1.d._id}` && e.ev === "appointment-updated" && e.payload.status === "confirmed"));
+      });
+
+      test("after an admin confirm the booking opens the call room for its patient and its doctor, and not before", async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        const asPatient = { userId: String(patient._id), role: "user" };
+        const asDoctor = { userId: String(D1.d._id), role: "doctor" };
+        assert.equal((await decideAppointmentAccess(asPatient, String(b._id))).reason, "not_confirmed");
+        assert.equal((await decideAppointmentAccess(asDoctor, String(b._id))).reason, "not_confirmed");
+
+        assert.equal((await post(`/${b._id}/confirm`)).status, 200);
+        assert.equal((await decideAppointmentAccess(asPatient, String(b._id))).allowed, true);
+        assert.equal((await decideAppointmentAccess(asDoctor, String(b._id))).allowed, true);
+      });
+
+      test("assigning or changing the doctor never leaves the booking Confirmed", async () => {
+        const up = await make(kind, "upcoming");
+        await post(`/${up._id}/assign-doctor`, { doctorId: String(D1.e._id) });
+        assert.equal((await fresh(kind, up._id)).status, STORED[kind].assigned);
+        await post(`/${up._id}/confirm`);
+        await post(`/${up._id}/alternate-doctor`, { doctorId: String(D2.e._id) });
+        assert.equal((await fresh(kind, up._id)).status, STORED[kind].assigned);
+        await post(`/${up._id}/confirm`);
+        await post(`/${up._id}/revert-doctor`);
+        assert.equal((await fresh(kind, up._id)).status, STORED[kind].assigned);
       });
 
       test("409 on any other status", async () => {
@@ -1001,6 +1054,81 @@ describe("admin booking actions", () => {
     const doc = await fresh("category", b._id);
     assert.equal(doc.slot, "10:00 AM");
     assert.equal(doc.assignedSlot, null);
+  });
+
+  describe("409 codes the page relies on", () => {
+    test("a busy doctor is slot_taken; a lost race is changed; other 409s carry no code", async () => {
+      await make("appointment", "confirmed", { doctor: D1 });
+      const up = await make("category", "upcoming");
+      const busy = await post(`/${up._id}/assign-doctor`, { doctorId: String(D1.e._id) });
+      assert.equal(busy.status, 409);
+      assert.equal(busy.body.code, "slot_taken");
+
+      const closed = await make("appointment", "complete", { doctor: D2 });
+      const state = await post(`/${closed._id}/cancel`, { reason: "Patient requested" });
+      assert.equal(state.status, 409);
+      assert.equal(state.body.code, undefined);
+
+      const racing = await make("appointment", "assigned", { doctor: D3 });
+      const real = Appointment.findOneAndUpdate;
+      Appointment.findOneAndUpdate = async function (...args) {
+        Appointment.findOneAndUpdate = real;
+        await Appointment.updateOne({ _id: racing._id }, { $set: { status: "confirmed" } });
+        return real.apply(this, args);
+      };
+      try {
+        const lost = await post(`/${racing._id}/cancel`, { reason: "Patient requested" });
+        assert.equal(lost.status, 409);
+        assert.equal(lost.body.code, "changed");
+      } finally {
+        Appointment.findOneAndUpdate = real;
+      }
+    });
+  });
+
+  describe("doctor emails for cancel and admin confirm", () => {
+    const withMailer = async (fn) => {
+      const sent = [];
+      const real = mailer.sendBookingNotificationEmail;
+      mailer.sendBookingNotificationEmail = async (to, payload) => { sent.push({ to, ...payload }); };
+      try { await fn(sent); } finally { mailer.sendBookingNotificationEmail = real; }
+    };
+
+    for (const kind of KINDS) {
+      test(`${kind}: confirmed-by-admin email goes to the assigned doctor, with the booking and a dashboard link`, async () => {
+        await withMailer(async (sent) => {
+          const b = await make(kind, "confirmed", { doctor: D1 });
+          await realNotifyConfirmed({ booking: b.toObject(), isCategory: kind === "category" });
+          assert.equal(sent.length, 1);
+          assert.equal(sent[0].to, kind === "category" ? "martin@enroll.co" : "martinperlin@x.co");
+          assert.match(sent[0].subject, /confirmed/i);
+          assert.match(sent[0].intro, /on your behalf/);
+          assert.ok(sent[0].rows.some(([label, value]) => label === "Patient" && /Rachel/.test(value)));
+          assert.match(sent[0].ctaUrl, /doctor-dashboard\/appointments$/);
+        });
+      });
+
+      test(`${kind}: cancelled email goes to the doctor and does not include the cancel reason`, async () => {
+        await withMailer(async (sent) => {
+          const b = await make(kind, "cancelled", { doctor: D1, cancelReason: "Payment failed" });
+          await realNotifyCancelled({ booking: b.toObject(), isCategory: kind === "category" });
+          assert.equal(sent.length, 1);
+          assert.match(sent[0].subject, /cancelled/i);
+          assert.doesNotMatch(JSON.stringify(sent[0]), /Payment failed/);
+        });
+      });
+    }
+
+    test("no email when the doctor has no address", async () => {
+      await withMailer(async (sent) => {
+        await Doctor.updateOne({ _id: D1.d._id }, { $set: { email: "" } });
+        const b = await make("appointment", "confirmed", { doctor: D1 });
+        const quiet = console.warn;
+        console.warn = () => {};
+        try { await realNotifyConfirmed({ booking: b.toObject(), isCategory: false }); } finally { console.warn = quiet; }
+        assert.equal(sent.length, 0);
+      });
+    });
   });
 
   describe("patient email", () => {

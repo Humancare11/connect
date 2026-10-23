@@ -393,36 +393,41 @@ async function notifyPatientDoctorChanged({ booking, isCategory, doctorName, rea
   });
 }
 
-// An admin cancelled the booking. Goes to the assigned doctor only (`booking` is
-// an Appointment, or a CategoryConsultation when `isCategory`).
+// The assigned doctor's address and the booking's details, as the doctor should
+// see them. `booking` is an Appointment, or a CategoryConsultation when `isCategory`.
+async function doctorContactFor({ booking, isCategory }) {
+  if (isCategory) {
+    const enrollment = await Enrollment.findById(booking.assignedDoctorId).select("firstName surname email doctorId").lean();
+    return {
+      to: await enrollmentEmail(enrollment),
+      doctorName: doctorFullName(enrollment),
+      when: consultationWhen(booking),
+      category: booking.categoryName,
+    };
+  }
+  const [doctor, enrollment] = await Promise.all([
+    Doctor.findById(booking.doctorId).select("name email").lean(),
+    Enrollment.findOne({ doctorId: booking.doctorId }).select("timezone").lean(),
+  ]);
+  return {
+    to: doctor?.email,
+    doctorName: doctor?.name,
+    when: whenText({
+      date: booking.date,
+      time: booking.time,
+      utc: booking.appointmentDateTimeUtc,
+      patientTimezone: booking.patientTimezone,
+      targetTimezone: booking.doctorTimezone || enrollment?.timezone,
+    }),
+    category: booking.category,
+  };
+}
+
+// An admin cancelled the booking. Goes to the assigned doctor only.
 async function notifyDoctorBookingCancelled({ booking, isCategory }) {
   await safely("doctor cancelled email", async () => {
     const patient = await fetchPatient(booking.patientId);
-    let to, doctorName, when, category;
-
-    if (isCategory) {
-      const enrollment = await Enrollment.findById(booking.assignedDoctorId).select("firstName surname email doctorId").lean();
-      to = await enrollmentEmail(enrollment);
-      doctorName = doctorFullName(enrollment);
-      when = consultationWhen(booking);
-      category = booking.categoryName;
-    } else {
-      const [doctor, enrollment] = await Promise.all([
-        Doctor.findById(booking.doctorId).select("name email").lean(),
-        Enrollment.findOne({ doctorId: booking.doctorId }).select("timezone").lean(),
-      ]);
-      to = doctor?.email;
-      doctorName = doctor?.name;
-      when = whenText({
-        date: booking.date,
-        time: booking.time,
-        utc: booking.appointmentDateTimeUtc,
-        patientTimezone: booking.patientTimezone,
-        targetTimezone: booking.doctorTimezone || enrollment?.timezone,
-      });
-      category = booking.category;
-    }
-
+    const { to, doctorName, when, category } = await doctorContactFor({ booking, isCategory });
     if (!to) {
       console.warn("[booking-notify] cancelled email skipped: doctor has no email address.");
       return;
@@ -437,6 +442,32 @@ async function notifyDoctorBookingCancelled({ booking, isCategory }) {
         ["Date / time", when],
         ["Category", category],
       ],
+    });
+  });
+}
+
+// An admin confirmed the booking on the doctor's behalf. Goes to the assigned doctor
+// only: the patient hears about it through the same push a doctor's own confirm sends.
+async function notifyDoctorBookingConfirmed({ booking, isCategory }) {
+  await safely("doctor confirmed-by-admin email", async () => {
+    const patient = await fetchPatient(booking.patientId);
+    const { to, doctorName, when, category } = await doctorContactFor({ booking, isCategory });
+    if (!to) {
+      console.warn("[booking-notify] confirmed email skipped: doctor has no email address.");
+      return;
+    }
+    await mailer.sendBookingNotificationEmail(to, {
+      subject: "Humancare Connect — Appointment confirmed for you",
+      badge: "Appointment Confirmed",
+      greeting: doctorName ? `Hello Dr. ${doctorName},` : "Hello Doctor,",
+      intro: "The Humancare Connect team has confirmed this appointment on your behalf. It appears under Confirmed in your appointments, and you can join the consultation at the scheduled time.",
+      rows: [
+        ["Patient", patientLabel(patient)],
+        ["Date / time", when],
+        ["Category", category],
+      ],
+      ctaUrl: `${frontendBase()}/doctor-dashboard/appointments`,
+      ctaLabel: "Go to your dashboard",
     });
   });
 }
@@ -492,6 +523,7 @@ module.exports = {
   notifyConsultationDoctorChanged,
   notifyPatientDoctorChanged,
   notifyDoctorBookingCancelled,
+  notifyDoctorBookingConfirmed,
   // exported for tests
   _internals: { whenText, adminRecipients, patientLabel },
 };

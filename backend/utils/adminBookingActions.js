@@ -124,7 +124,7 @@ async function assertSlotFree(loaded, { enrollment, doctor }, timeOverride) {
       $or: [{ slot: time }, { assignedSlot: time }],
     }),
   ]);
-  if (appointmentConflict || categoryConflict) throw new LifecycleError(409, SLOT_TAKEN);
+  if (appointmentConflict || categoryConflict) throw new LifecycleError(409, SLOT_TAKEN, "slot_taken");
 }
 
 // ── Writing ──────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ async function conditionalUpdate(loaded, set) {
     { $set: set },
     { new: true }
   );
-  if (!updated) throw new LifecycleError(409, CHANGED);
+  if (!updated) throw new LifecycleError(409, CHANGED, "changed");
   return updated;
 }
 
@@ -301,8 +301,9 @@ async function swapDoctor(app, id, { doctorId, revert = false } = {}, actor) {
 
   const set = {
     ...doctorChangeFields(loaded, target, actor),
-    // The new doctor hasn't confirmed yet.
-    ...(status === "confirmed" ? { status: assignedStatus(kind) } : {}),
+    // However it stood (Pending, Assigned or Confirmed), the new doctor hasn't confirmed
+    // yet: it ends in Assigned, and the doctor or an admin confirms from there.
+    status: assignedStatus(kind),
   };
   if (revert) {
     set.originalDoctorId = null;
@@ -321,27 +322,37 @@ async function swapDoctor(app, id, { doctorId, revert = false } = {}, actor) {
 const alternateDoctor = (app, id, body, actor) => swapDoctor(app, id, { doctorId: body?.doctorId }, actor);
 const revertDoctor = (app, id, actor) => swapDoctor(app, id, { revert: true }, actor);
 
-// Admin confirms on the doctor's behalf: Assigned -> Confirmed, call enabled.
-// Same effect and notifications as the doctor's own confirm.
-async function confirmBooking(app, id) {
+// Admin confirms on the doctor's behalf: Assigned -> Confirmed, call enabled, and
+// who confirmed (role "admin") and when is recorded. The patient gets the same push
+// and live update as with the doctor's own confirm; the doctor, who did not act
+// here, is told by socket event and email. Nothing is sent for testing bookings.
+async function confirmBooking(app, id, actor) {
   const loaded = await loadBooking(id);
   const { kind, doc } = loaded;
   if (statusOf(loaded) !== "assigned" || !currentDoctorKey(loaded)) {
     throw new LifecycleError(409, `Only assigned bookings can be confirmed. This one is ${statusOf(loaded)}.`);
   }
+  const doctor = await currentDoctor(loaded);
 
   const updated = await conditionalUpdate(loaded, {
     status: kind === "category" ? "Confirmed" : "confirmed",
     ...(kind === "appointment" ? { sessionStarted: true } : {}),
+    confirmedBy: { id: actor?.id || null, name: actor?.name || "Admin", email: actor?.email || "", role: "admin" },
+    confirmedAt: new Date(),
   });
 
   emitBookingUpdate(app, updated, kind);
+  const io = app.get("io");
+  if (io && doctor.userId) {
+    io.to(`doctor_${doctor.userId}`).emit("appointment-updated", { appointmentId: updated._id, status: "confirmed" });
+  }
   if (updated.isTesting !== true) {
     push.sendPushToUser(updated.patientId, {
       title: "Appointment confirmed",
       body: "Your doctor has confirmed your appointment.",
       data: { type: "appointment", appointmentId: String(updated._id) },
     });
+    quiet(notify.notifyDoctorBookingConfirmed({ booking: updated, isCategory: kind === "category" }));
   }
   return { kind, id: String(doc._id), paid: updated.paymentStatus === "paid" };
 }
@@ -397,7 +408,7 @@ async function autoCompleteBooking(app, id) {
   }
   const full = await loadAppointmentAny(id);
   const { appointment, alreadyComplete } = await completeLoaded(app, full);
-  if (alreadyComplete) throw new LifecycleError(409, CHANGED);
+  if (alreadyComplete) throw new LifecycleError(409, CHANGED, "changed");
   return { kind: loaded.kind, id: String(appointment._id), paid: appointment.paymentStatus === "paid" };
 }
 
