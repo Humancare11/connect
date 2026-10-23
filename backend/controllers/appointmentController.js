@@ -664,6 +664,15 @@ const confirmAppointment = async (req, res) => {
       appointment.status = "confirmed";
       appointment.sessionStarted = true;
     }
+    // Who confirmed and when, as for an admin's confirm (role tells them apart).
+    const confirmingDoctor = await Doctor.findById(req.user.id).select("name email").lean();
+    appointment.confirmedBy = {
+      id: req.user.id,
+      name: confirmingDoctor?.name || "",
+      email: confirmingDoctor?.email || "",
+      role: "doctor",
+    };
+    appointment.confirmedAt = new Date();
     await appointment.save();
 
     const io = req.app.get("io");
@@ -683,11 +692,14 @@ const confirmAppointment = async (req, res) => {
       });
     }
 
-    sendPushToUser(appointment.patientId, {
-      title: "Appointment confirmed",
-      body: "Your doctor has confirmed your appointment.",
-      data: { type: "appointment", appointmentId: String(appointment._id) },
-    });
+    // Testing bookings never message anyone.
+    if (appointment.isTesting !== true) {
+      sendPushToUser(appointment.patientId, {
+        title: "Appointment confirmed",
+        body: "Your doctor has confirmed your appointment.",
+        data: { type: "appointment", appointmentId: String(appointment._id) },
+      });
+    }
 
     res.status(200).json({ msg: "Appointment confirmed.", appointment });
   } catch (error) {

@@ -1056,6 +1056,56 @@ describe("admin booking actions", () => {
     assert.equal(doc.assignedSlot, null);
   });
 
+  describe("a doctor confirming their own booking", () => {
+    // Loaded here, after the push recorder is installed, so the controller sees the recorder.
+    const confirmAs = async (doctorUserId, bookingId) => {
+      const { confirmAppointment } = require("../controllers/appointmentController");
+      const res = { code: 0, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+      await confirmAppointment({ params: { id: String(bookingId) }, user: { id: String(doctorUserId), role: "doctor" }, app }, res);
+      return res;
+    };
+
+    for (const kind of KINDS) {
+      test(`${kind}: records who confirmed (role doctor) and when, and tells the patient`, async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        const before = Date.now();
+        const res = await confirmAs(D1.d._id, b._id);
+        assert.equal(res.code, 200);
+        const doc = await fresh(kind, b._id);
+        assert.equal(doc.status, STORED[kind].confirmed);
+        assert.equal(String(doc.confirmedBy.id), String(D1.d._id));
+        assert.equal(doc.confirmedBy.name, "Martin Perlin");
+        assert.equal(doc.confirmedBy.email, "martinperlin@x.co");
+        assert.equal(doc.confirmedBy.role, "doctor");
+        assert.ok(doc.confirmedAt && doc.confirmedAt.getTime() >= before - 1000);
+        assert.equal(pushes.length, 1);
+        assert.equal(pushes[0].userId, String(patient._id));
+      });
+
+      test(`${kind}: a testing booking is confirmed with no push, and the record is still kept`, async () => {
+        const b = await make(kind, "assigned", { doctor: D1, isTesting: true });
+        assert.equal((await confirmAs(D1.d._id, b._id)).code, 200);
+        assert.equal((await fresh(kind, b._id)).confirmedBy.role, "doctor");
+        assert.deepEqual(pushes, []);
+      });
+
+      test(`${kind}: another doctor can't confirm it, and nothing is recorded`, async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        assert.equal((await confirmAs(D2.d._id, b._id)).code, 403);
+        const doc = await fresh(kind, b._id);
+        assert.equal(doc.status, STORED[kind].assigned);
+        assert.equal(doc.confirmedBy.role, "");
+        assert.equal(doc.confirmedAt, null);
+      });
+    }
+
+    test("the admin's confirm says role admin, so the two can be told apart", async () => {
+      const b = await make("appointment", "assigned", { doctor: D1 });
+      await post(`/${b._id}/confirm`);
+      assert.equal((await fresh("appointment", b._id)).confirmedBy.role, "admin");
+    });
+  });
+
   describe("409 codes the page relies on", () => {
     test("a busy doctor is slot_taken; a lost race is changed; other 409s carry no code", async () => {
       await make("appointment", "confirmed", { doctor: D1 });

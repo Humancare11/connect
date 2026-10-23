@@ -104,7 +104,7 @@ describe("admin bookings list", () => {
     test("appointment and category rows carry the requested fields", async () => {
       const a = await appt(5, {
         doctorId: doctor._id, status: "assigned", category: "Travel & Global Care", consultationPrice: 99,
-        paymentStatus: "paid", originalDoctorName: "Old Doc",
+        paymentStatus: "paid", paymentGateway: "stripe", originalDoctorName: "Old Doc",
         assignedBy: { id: patient._id, name: "Super Admin", email: "sa@x.co" },
       });
       const c = await cat(4, { status: "Assigned", assignedDoctorId: enrollment._id, consultationPrice: 25, appointmentType: "NEXT_AVAILABLE", urgency: "next", slot: null });
@@ -116,7 +116,7 @@ describe("admin bookings list", () => {
         patient: { name: "Rachel Secemski", country: "US" }, doctorName: "Martin Perlin", originalDoctorName: "Old Doc",
         category: "Travel & Global Care", bookedAt: day(5).toISOString(),
         consultation: { date: "2026-11-01", time: "10:00 AM", timezone: "" },
-        fee: 99, status: "assigned", assignedBy: "Super Admin", isTesting: false, paid: true,
+        fee: 99, status: "assigned", assignedBy: "Super Admin", isTesting: false, paid: true, paymentGateway: "stripe",
       });
 
       const cr = items.find((r) => r.kind === "category");
@@ -125,8 +125,17 @@ describe("admin bookings list", () => {
       assert.equal(cr.category, "Women's Health");
       assert.equal(cr.fee, 25);
       assert.equal(cr.paid, false);
+      assert.equal(cr.paymentGateway, "");
       // Next available with no assigned time yet: "Not scheduled".
       assert.equal(cr.consultation, null);
+    });
+
+    test("the payment gateway comes through for both kinds (so the refund reminder can name it)", async () => {
+      const a = await appt(1, { paymentStatus: "paid", paymentGateway: "paypal" });
+      const c = await cat(2, { paymentStatus: "paid", paymentGateway: "stripe" });
+      const { items } = (await get()).body;
+      assert.equal(items.find((r) => r.id === String(a._id)).paymentGateway, "paypal");
+      assert.equal(items.find((r) => r.id === String(c._id)).paymentGateway, "stripe");
     });
 
     test("a flexible category booking shows its chosen slot", async () => {

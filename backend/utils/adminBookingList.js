@@ -242,6 +242,7 @@ function toAppointmentRow(a) {
     assignedBy: hasDoctor ? assignedByName(a) : null,
     isTesting: a.isTesting === true,
     paid: a.paymentStatus === "paid",
+    paymentGateway: a.paymentGateway || "",
   };
 }
 
@@ -266,19 +267,20 @@ function toCategoryRow(c) {
     assignedBy: hasDoctor ? assignedByName(c) : null,
     isTesting: c.isTesting === true,
     paid: c.paymentStatus === "paid",
+    paymentGateway: c.paymentGateway || "",
   };
 }
 
 const findAppointmentRows = (idFilter) =>
   Appointment.find({ _id: idFilter })
-    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus status assignedBy originalDoctorName isTesting bookedAt createdAt")
+    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt")
     .populate("patientId", "name country")
     .populate("doctorId", "name")
     .lean();
 
 const findCategoryRows = (idFilter) =>
   CategoryConsultation.find({ _id: idFilter })
-    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus status assignedBy originalDoctorName isTesting createdAt")
+    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt")
     .populate("patientId", "name country")
     .populate("assignedDoctorId", "firstName surname")
     .lean();
