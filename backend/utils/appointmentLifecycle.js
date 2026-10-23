@@ -12,8 +12,9 @@
 const mongoose = require("mongoose");
 const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
-const { sendPushToUser } = require("./pushNotifications");
-const { notifyDoctorAppointmentReopened } = require("./bookingNotifications");
+// Called through the module objects so tests can replace them.
+const push = require("./pushNotifications");
+const notifications = require("./bookingNotifications");
 
 // Same set the booking flow uses to decide whether a doctor's slot is taken.
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
@@ -85,11 +86,14 @@ async function completeLoaded(app, loaded) {
   emitStatus(app, loaded, "complete");
   app.get("evictAllFromAppointmentRoom")?.(doc._id, { reason: "completed" });
 
-  sendPushToUser(doc.patientId, {
-    title: "Appointment completed",
-    body: "Your appointment has been marked as complete.",
-    data: { type: "appointment", appointmentId: String(doc._id) },
-  });
+  // Testing bookings never message anyone.
+  if (doc.isTesting !== true) {
+    push.sendPushToUser(doc.patientId, {
+      title: "Appointment completed",
+      body: "Your appointment has been marked as complete.",
+      data: { type: "appointment", appointmentId: String(doc._id) },
+    });
+  }
 
   return { appointment: updated, alreadyComplete: false };
 }
@@ -181,22 +185,25 @@ async function reopenLoaded(app, loaded, actor) {
   app.get("allowAppointmentRoomRejoin")?.(doc._id);
   emitStatus(app, loaded, "confirmed", { reopened: true });
 
-  const data = { type: "appointment", appointmentId: String(doc._id) };
-  sendPushToUser(doc.patientId, {
-    title: "Appointment reopened",
-    body: "Your appointment has been reopened by our team.",
-    data,
-  });
-  // Doctors authenticate from the Doctor collection; push tokens are stored on
-  // User, so this is a no-op unless the doctor also has a registered device.
-  sendPushToUser(doctorUserIdOf(loaded), {
-    title: "Appointment reopened",
-    body: "An appointment has been reopened by an admin.",
-    data,
-  });
+  // Testing bookings never message anyone.
+  if (doc.isTesting !== true) {
+    const data = { type: "appointment", appointmentId: String(doc._id) };
+    push.sendPushToUser(doc.patientId, {
+      title: "Appointment reopened",
+      body: "Your appointment has been reopened by our team.",
+      data,
+    });
+    // Doctors authenticate from the Doctor collection; push tokens are stored on
+    // User, so this is a no-op unless the doctor also has a registered device.
+    push.sendPushToUser(doctorUserIdOf(loaded), {
+      title: "Appointment reopened",
+      body: "An appointment has been reopened by an admin.",
+      data,
+    });
 
-  // Email fallback for the doctor (never throws or rejects).
-  notifyDoctorAppointmentReopened({ appointment: doc, isCategory });
+    // Email fallback for the doctor (never throws or rejects).
+    notifications.notifyDoctorAppointmentReopened({ appointment: doc, isCategory });
+  }
 
   return { appointment: updated };
 }

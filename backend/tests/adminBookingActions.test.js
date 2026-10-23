@@ -617,7 +617,251 @@ describe("admin booking actions", () => {
         nothingSent();
       });
     });
+
+    describe(`${kind}: auto complete`, () => {
+      const recordEvictions = () => {
+        const seen = [];
+        app.set("evictAllFromAppointmentRoom", (id, opts) => seen.push({ id: String(id), ...opts }));
+        return seen;
+      };
+      beforeEach(() => app.set("evictAllFromAppointmentRoom", undefined));
+
+      test("completes an Assigned or Confirmed booking, closes the call room, updates everyone, tells the patient", async () => {
+        for (const status of ["assigned", "confirmed"]) {
+          calls = []; pushes = []; emitted = [];
+          const evictions = recordEvictions();
+          const b = await make(kind, status, { doctor: D1, paymentStatus: "paid" });
+          const res = await post(`/${b._id}/auto-complete`);
+          assert.equal(res.status, 200, status);
+          assert.equal(res.body.booking.status, "complete");
+          assert.equal(res.body.paid, true);
+          assert.equal((await fresh(kind, b._id)).status, STORED[kind].complete);
+          assert.deepEqual(evictions, [{ id: String(b._id), reason: "completed" }]);
+          for (const room of ["admin_room", `patient_${patient._id}`, `doctor_${D1.d._id}`]) {
+            assert.ok(emitted.some((e) => e.room === room && e.payload.status === "complete"), room);
+          }
+          assert.equal(pushes.length, 1);
+          assert.equal(pushes[0].title, "Appointment completed");
+        }
+      });
+
+      test("409 for Upcoming, Pending, Complete and Cancelled; nothing changes or is sent", async () => {
+        const evictions = recordEvictions();
+        for (const status of ["upcoming", "pending", "complete", "cancelled"]) {
+          const b = await make(kind, status, status === "upcoming" ? {} : { doctor: D1 });
+          const res = await post(`/${b._id}/auto-complete`);
+          assert.equal(res.status, 409, status);
+          assert.equal((await fresh(kind, b._id)).status, STORED[kind][status]);
+        }
+        assert.equal((await post(`/${new mongoose.Types.ObjectId()}/auto-complete`)).status, 404);
+        assert.deepEqual(evictions, []);
+        assert.deepEqual(pushes, []);
+      });
+
+      test("two admins at once: exactly one wins", async () => {
+        const b = await make(kind, "confirmed", { doctor: D1 });
+        const results = await Promise.all([post(`/${b._id}/auto-complete`), post(`/${b._id}/auto-complete`)]);
+        assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+        assert.equal(pushes.length, 1);
+      });
+
+      test("a testing booking is completed with no push (the call room is still closed)", async () => {
+        const evictions = recordEvictions();
+        const b = await make(kind, "confirmed", { doctor: D1, isTesting: true });
+        assert.equal((await post(`/${b._id}/auto-complete`)).status, 200);
+        assert.equal((await fresh(kind, b._id)).status, STORED[kind].complete);
+        assert.equal(evictions.length, 1);
+        nothingSent();
+      });
+    });
   }
+
+  describe("bulk actions", () => {
+    const bulk = (body, role = "admin") => post("/bulk", body, role);
+    const byId = (res) => Object.fromEntries(res.body.results.map((r) => [r.id, r]));
+    let evictions;
+    beforeEach(() => {
+      evictions = [];
+      app.set("evictAllFromAppointmentRoom", (id, opts) => evictions.push({ id: String(id), ...opts }));
+    });
+    after(() => app.set("evictAllFromAppointmentRoom", undefined));
+
+    test("auto complete: per-id results, only open ones change, each closes its room and updates everyone", async () => {
+      const a = await make("appointment", "assigned", { doctor: D1 });
+      const c = await make("category", "confirmed", { doctor: D2 });
+      const done = await make("appointment", "complete", { doctor: D3 });
+      const upcoming = await make("category", "upcoming");
+      const unknown = String(new mongoose.Types.ObjectId());
+      const ids = [a, c, done, upcoming].map((d) => String(d._id)).concat([unknown, "not-an-id"]);
+
+      const res = await bulk({ action: "auto-complete", ids });
+      assert.equal(res.status, 200);
+      const r = byId(res);
+      assert.equal(r[String(a._id)].status, "ok");
+      assert.equal(r[String(a._id)].kind, "appointment");
+      assert.equal(r[String(c._id)].status, "ok");
+      assert.equal(r[String(c._id)].kind, "category");
+      assert.equal(r[String(done._id)].status, "conflict");
+      assert.match(r[String(done._id)].message, /complete/);
+      assert.equal(r[String(upcoming._id)].status, "conflict");
+      assert.equal(r[unknown].status, "not_found");
+      assert.equal(r["not-an-id"].status, "not_found");
+      assert.deepEqual(res.body.summary, { ok: 2, not_found: 2, conflict: 2, error: 0 });
+
+      assert.equal((await fresh("appointment", a._id)).status, "complete");
+      assert.equal((await fresh("category", c._id)).status, "Completed");
+      assert.equal((await fresh("category", upcoming._id)).status, "Pending");
+      assert.deepEqual(evictions.map((e) => e.id).sort(), [String(a._id), String(c._id)].sort());
+      assert.equal(evictions.every((e) => e.reason === "completed"), true);
+      for (const id of [a._id, c._id]) {
+        assert.ok(emitted.some((e) => e.room === "admin_room" && String(e.payload.appointmentId) === String(id) && e.payload.status === "complete"));
+        assert.ok(emitted.some((e) => e.room === `patient_${patient._id}` && String(e.payload.appointmentId) === String(id)));
+      }
+      assert.ok(emitted.some((e) => e.room === `doctor_${D1.d._id}` && e.payload.status === "complete"));
+      assert.equal(pushes.length, 2);
+    });
+
+    test("cancel: reason is required up front; nothing is touched when it is missing or wrong", async () => {
+      const b = await make("appointment", "confirmed", { doctor: D1 });
+      for (const body of [{}, { reason: "" }, { reason: "Changed my mind" }]) {
+        assert.equal((await bulk({ action: "cancel", ids: [String(b._id)], ...body })).status, 400, JSON.stringify(body));
+      }
+      assert.equal((await fresh("appointment", b._id)).status, "confirmed");
+      assert.deepEqual(evictions, []);
+    });
+
+    test("cancel: same rules as the single endpoint, with paid flags, rooms closed and doctor emails", async () => {
+      const paid = await make("appointment", "confirmed", { doctor: D1, paymentStatus: "paid" });
+      const unpaid = await make("category", "assigned", { doctor: D2 });
+      const noDoctor = await make("category", "upcoming");
+      const done = await make("appointment", "complete", { doctor: D3 });
+      const gone = await make("category", "cancelled", { doctor: D3 });
+      const ids = [paid, unpaid, noDoctor, done, gone].map((d) => String(d._id));
+
+      const res = await bulk({ action: "cancel", ids, reason: "Duplicate booking" });
+      assert.equal(res.status, 200);
+      const r = byId(res);
+      assert.deepEqual([paid, unpaid, noDoctor].map((d) => r[String(d._id)].status), ["ok", "ok", "ok"]);
+      assert.equal(r[String(done._id)].status, "conflict");
+      assert.equal(r[String(gone._id)].status, "conflict");
+      assert.equal(r[String(paid._id)].paid, true);
+      assert.equal(r[String(unpaid._id)].paid, false);
+      assert.deepEqual(res.body.summary, { ok: 3, not_found: 0, conflict: 2, error: 0 });
+      assert.equal(res.body.paidCount, 1);
+
+      for (const d of [paid, unpaid, noDoctor]) {
+        const kind = d === paid ? "appointment" : "category";
+        const after = await fresh(kind, d._id);
+        assert.equal(after.cancelReason, "Duplicate booking");
+        assert.equal(after.cancelledBy.name, "Super Admin");
+      }
+      assert.equal((await fresh("appointment", done._id)).cancelReason, "");
+      assert.deepEqual(evictions.map((e) => e.id).sort(), [paid, unpaid, noDoctor].map((d) => String(d._id)).sort());
+      assert.equal(evictions.every((e) => e.reason === "cancelled"), true);
+      assert.ok(emitted.some((e) => e.room === `doctor_${D1.d._id}` && e.payload.status === "cancelled"));
+      assert.equal(pushes.length, 3);
+      assert.equal(calls.filter((c) => c.name === "doctorCancelled").length, 2, "only bookings that had a doctor");
+    });
+
+    test("testing bookings in a bulk get no push or email but their rooms are still closed", async () => {
+      const t1 = await make("appointment", "confirmed", { doctor: D1, isTesting: true });
+      const t2 = await make("category", "assigned", { doctor: D2, isTesting: true });
+      const t3 = await make("appointment", "assigned", { doctor: D3, isTesting: true });
+
+      const cancel = await bulk({ action: "cancel", ids: [String(t1._id), String(t2._id)], reason: "Testing booking" });
+      assert.equal(cancel.body.summary.ok, 2);
+      const complete = await bulk({ action: "auto-complete", ids: [String(t3._id)] });
+      assert.equal(complete.body.summary.ok, 1);
+      assert.equal(evictions.length, 3);
+      nothingSent();
+    });
+
+    test("mark and unmark testing through the bulk endpoint", async () => {
+      const a = await make("appointment", "complete", { doctor: D1 });
+      const c = await make("category", "cancelled");
+      const unknown = String(new mongoose.Types.ObjectId());
+      const marked = await bulk({ action: "mark-testing", ids: [String(a._id), String(c._id), unknown] });
+      assert.equal(marked.status, 200);
+      assert.deepEqual(marked.body.summary, { ok: 2, not_found: 1, conflict: 0, error: 0 });
+      assert.equal((await fresh("appointment", a._id)).isTesting, true);
+      assert.equal((await fresh("category", c._id)).isTesting, true);
+
+      const unmarked = await bulk({ action: "unmark-testing", ids: [String(a._id), String(c._id)] });
+      assert.equal(unmarked.body.summary.ok, 2);
+      assert.equal((await fresh("appointment", a._id)).isTesting, false);
+      nothingSent();
+    });
+
+    test("a booking another admin changed first is a conflict and the rest still go through", async () => {
+      const first = await make("appointment", "confirmed", { doctor: D1 });
+      const second = await make("appointment", "confirmed", { doctor: D2 });
+      const real = Appointment.findOneAndUpdate;
+      Appointment.findOneAndUpdate = async function (...args) {
+        Appointment.findOneAndUpdate = real;
+        await Appointment.updateOne({ _id: first._id }, { $set: { status: "complete" } });
+        return real.apply(this, args);
+      };
+      try {
+        const res = await bulk({ action: "cancel", ids: [String(first._id), String(second._id)], reason: "Patient requested" });
+        const r = byId(res);
+        assert.equal(r[String(first._id)].status, "conflict");
+        assert.equal(r[String(second._id)].status, "ok");
+      } finally {
+        Appointment.findOneAndUpdate = real;
+      }
+      assert.equal((await fresh("appointment", first._id)).status, "complete");
+      assert.equal((await fresh("appointment", second._id)).status, "cancelled");
+    });
+
+    test("an unexpected failure on one booking is reported as error and the rest still go through", async () => {
+      const first = await make("appointment", "confirmed", { doctor: D1 });
+      const second = await make("appointment", "confirmed", { doctor: D2 });
+      const real = Appointment.findOneAndUpdate;
+      Appointment.findOneAndUpdate = async function () {
+        Appointment.findOneAndUpdate = real;
+        throw new Error("boom");
+      };
+      const logged = console.error;
+      console.error = () => {};
+      try {
+        const res = await bulk({ action: "cancel", ids: [String(first._id), String(second._id)], reason: "Patient requested" });
+        assert.equal(res.status, 200);
+        assert.deepEqual(res.body.summary, { ok: 1, not_found: 0, conflict: 0, error: 1 });
+        assert.equal(byId(res)[String(first._id)].status, "error");
+        assert.doesNotMatch(JSON.stringify(res.body), /boom/);
+      } finally {
+        console.error = logged;
+        Appointment.findOneAndUpdate = real;
+      }
+    });
+
+    test("repeated ids are handled once", async () => {
+      const b = await make("appointment", "confirmed", { doctor: D1 });
+      const res = await bulk({ action: "cancel", ids: [String(b._id), String(b._id)], reason: "Patient requested" });
+      assert.deepEqual(res.body.summary, { ok: 1, not_found: 0, conflict: 0, error: 0 });
+      assert.equal(pushes.length, 1);
+    });
+
+    test("400 for an unknown action (there is no bulk confirm), a bad id list, or more than 100 ids", async () => {
+      const fakeId = () => String(new mongoose.Types.ObjectId());
+      const b = await make("appointment", "assigned", { doctor: D1 });
+      assert.equal((await bulk({ action: "confirm", ids: [String(b._id)] })).status, 400);
+      assert.equal((await fresh("appointment", b._id)).status, "assigned");
+      for (const body of [{ ids: [fakeId()] }, { action: "nope", ids: [fakeId()] }, { action: "auto-complete" }, { action: "auto-complete", ids: [] }, { action: "auto-complete", ids: "abc" }]) {
+        assert.equal((await bulk(body)).status, 400, JSON.stringify(body));
+      }
+      const hundred = Array.from({ length: 100 }, fakeId);
+      assert.equal((await bulk({ action: "auto-complete", ids: hundred })).status, 200);
+      assert.equal((await bulk({ action: "auto-complete", ids: [...hundred, fakeId()] })).status, 400);
+    });
+
+    test("is admin-only", async () => {
+      const body = { action: "auto-complete", ids: [String(new mongoose.Types.ObjectId())] };
+      assert.equal((await bulk(body, "")).status, 401);
+      assert.equal((await bulk(body, "user")).status, 403);
+      assert.equal((await bulk(body, "doctor")).status, 403);
+    });
+  });
 
   describe("mark / unmark testing", () => {
     const patch = async (body, role = "admin") => {

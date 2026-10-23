@@ -17,7 +17,7 @@ const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
-const { LifecycleError, ACTIVE_DOCTOR_STATUSES } = require("./appointmentLifecycle");
+const { LifecycleError, ACTIVE_DOCTOR_STATUSES, loadAppointmentAny, completeLoaded } = require("./appointmentLifecycle");
 const { unifiedStatus } = require("./adminBookingList");
 const { CANCEL_REASONS } = require("./bookingAdminFields");
 // Called through the module objects (not destructured) so tests can replace them.
@@ -28,6 +28,7 @@ const ACTIVE_CATEGORY_STATUSES = ["Assigned", "Confirmed"];
 const SLOT_TAKEN = "The selected doctor is already booked for this slot.";
 const CHANGED = "This booking was just changed by someone else. Refresh and try again.";
 const MAX_TESTING_IDS = 100;
+const MAX_BULK_IDS = 100;
 const TIME_PATTERN = /^\d{1,2}:\d{2}\s?(AM|PM)$/i;
 
 // ── Loading ──────────────────────────────────────────────────────────────────
@@ -385,6 +386,21 @@ async function cancelBooking(app, id, { reason } = {}, actor) {
   return { kind, id: String(updated._id), paid: updated.paymentStatus === "paid" };
 }
 
+// Marks an Assigned or Confirmed booking Complete without waiting for the
+// consultation to close. Uses the shared completion (conditional update, call
+// room closed, socket update, patient push unless testing).
+async function autoCompleteBooking(app, id) {
+  const loaded = await loadBooking(id);
+  const status = statusOf(loaded);
+  if (!["assigned", "confirmed"].includes(status)) {
+    throw new LifecycleError(409, `Only assigned or confirmed bookings can be auto completed. This one is ${status}.`);
+  }
+  const full = await loadAppointmentAny(id);
+  const { appointment, alreadyComplete } = await completeLoaded(app, full);
+  if (alreadyComplete) throw new LifecycleError(409, CHANGED);
+  return { kind: loaded.kind, id: String(appointment._id), paid: appointment.paymentStatus === "paid" };
+}
+
 // Mark or unmark up to 100 bookings as testing, whatever their status. Sends
 // nothing. Answers per id: "ok" or "not_found".
 async function setTesting(ids, value, actor) {
@@ -415,11 +431,71 @@ async function setTesting(ids, value, actor) {
   return { results, updated: kindById.size };
 }
 
+const BULK_ACTIONS = ["auto-complete", "cancel", "mark-testing", "unmark-testing"];
+
+// Runs one action over up to 100 bookings and answers per id. Each booking goes
+// through the same code as the single endpoint, so the rules, 409s, call-room
+// closing, socket updates and the testing "send nothing" rule are identical.
+// A booking that can't be changed is reported, never fatal to the others:
+//   ok         done
+//   not_found  no such booking
+//   conflict   the booking's state doesn't allow it (Complete/Cancelled, wrong
+//              status, or another admin changed it first)
+//   error      unexpected failure (logged)
+// There is deliberately no bulk confirm: confirming stays a doctor action.
+async function bulkAction(app, { action, ids, reason } = {}, actor) {
+  if (!BULK_ACTIONS.includes(action)) {
+    throw new LifecycleError(400, `Invalid action. Allowed values: ${BULK_ACTIONS.join(", ")}.`);
+  }
+  if (!Array.isArray(ids) || ids.length === 0) throw new LifecycleError(400, "ids must be a non-empty list.");
+  if (ids.length > MAX_BULK_IDS) throw new LifecycleError(400, `Up to ${MAX_BULK_IDS} bookings at a time.`);
+  if (action === "cancel" && !CANCEL_REASONS.includes(reason)) {
+    throw new LifecycleError(400, `A cancel reason is required. Choose one of: ${CANCEL_REASONS.join(", ")}.`);
+  }
+
+  const unique = [...new Set(ids.map(String))];
+
+  if (action === "mark-testing" || action === "unmark-testing") {
+    const { results } = await setTesting(unique, action === "mark-testing", actor);
+    return summarize(action, results);
+  }
+
+  const run = action === "cancel"
+    ? (id) => cancelBooking(app, id, { reason }, actor)
+    : (id) => autoCompleteBooking(app, id);
+
+  const results = [];
+  for (const id of unique) {
+    try {
+      const done = await run(id);
+      results.push({ id, status: "ok", kind: done.kind, ...(action === "cancel" ? { paid: done.paid } : {}) });
+    } catch (error) {
+      if (!(error instanceof LifecycleError)) {
+        console.error(`bulk ${action} failed for ${id}:`, error);
+        results.push({ id, status: "error", message: "Something went wrong with this booking." });
+      } else if (error.statusCode === 404 || (error.statusCode === 400 && !mongoose.isValidObjectId(id))) {
+        results.push({ id, status: "not_found" });
+      } else {
+        results.push({ id, status: "conflict", message: error.message });
+      }
+    }
+  }
+  return summarize(action, results);
+}
+
+function summarize(action, results) {
+  const summary = { ok: 0, not_found: 0, conflict: 0, error: 0 };
+  for (const r of results) summary[r.status] += 1;
+  return { action, summary, results, paidCount: results.filter((r) => r.paid === true).length };
+}
+
 module.exports = {
   assignDoctor,
   alternateDoctor,
   revertDoctor,
   confirmBooking,
   cancelBooking,
+  autoCompleteBooking,
   setTesting,
+  bulkAction,
 };

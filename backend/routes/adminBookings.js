@@ -75,6 +75,33 @@ function create({ guard = [verifyAdminToken, adminOnly] } = {}) {
   router.post("/:id/confirm", ...action("ADMIN_CONFIRM_BOOKING", "Booking confirmed.",
     (req) => actions.confirmBooking(req.app, req.params.id)));
 
+  // Assigned or Confirmed -> Complete.
+  router.post("/:id/auto-complete", ...action("ADMIN_AUTO_COMPLETE_BOOKING", "Booking marked complete.",
+    (req) => actions.autoCompleteBooking(req.app, req.params.id)));
+
+  // body: { action: "auto-complete" | "cancel" | "mark-testing" | "unmark-testing", ids: [up to 100], reason? }
+  // Answers per id (ok / not_found / conflict / error). There is no bulk confirm.
+  router.post("/bulk", ...guard, async (req, res) => {
+    try {
+      const actor = await actorOf(req);
+      const outcome = await actions.bulkAction(req.app, req.body, actor);
+      await recordActivity(req, {
+        action: `ADMIN_BULK_${String(req.body.action).replace(/-/g, "_").toUpperCase()}`,
+        resource: "Booking",
+        details: {
+          ...outcome.summary,
+          ...(req.body.reason ? { reason: req.body.reason } : {}),
+          ids: outcome.results.filter((r) => r.status === "ok").map((r) => r.id),
+        },
+      });
+      res.status(200).json({ msg: `${outcome.summary.ok} of ${outcome.results.length} bookings updated.`, ...outcome });
+    } catch (error) {
+      if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message });
+      console.error("ADMIN_BULK error:", error);
+      res.status(500).json({ msg: "Something went wrong. Please try again." });
+    }
+  });
+
   // body: { reason: one of the five cancel reasons }. No refund: `paid` says whether one is due.
   router.post("/:id/cancel", ...action("ADMIN_CANCEL_BOOKING", "Booking cancelled.",
     (req, actor) => actions.cancelBooking(req.app, req.params.id, req.body, actor)));
