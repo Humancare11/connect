@@ -2,9 +2,12 @@
    Glassmorphism theme — matches User & Doctor dashboards             */
 
 
-*,
-*::before,
-*::after {
+/* Scoped to the admin shell: a bare `*` rule here would apply to every page once this file has loaded. (The app's own
+   index.css already sets border-box everywhere.) */
+.ad-root,
+.ad-root *,
+.ad-root *::before,
+.ad-root *::after {
   box-sizing: border-box;
 }
 

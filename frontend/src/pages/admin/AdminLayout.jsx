@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"; // useState still used for 
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import "./AdminDashboard.css";
+import "./AdminShell.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
@@ -205,8 +206,8 @@ function useMediaQuery(query) {
 // window features, no badge, no unread count.
 function LiveChatNavLink({ item }) {
   return (
-    <a href={item.path} target="_blank" rel="noopener" className="ad-nav-item" title="Opens in a new tab">
-      <span className="ad-nav-icon">{item.icon}</span>
+    <a href={item.path} target="_blank" rel="noopener" className="ash-nav-item" title="Opens in a new tab">
+      <span className="ash-nav-icon">{item.icon}</span>
       {item.label}
     </a>
   );
@@ -225,16 +226,16 @@ function NavGroup({ item, links, active, isLinkActive, open, onOpenChange, onNav
   };
 
   return (
-    <div className="ad-nav-group">
+    <div className="ash-nav-group">
       <button
         type="button"
-        className={`ad-nav-item ad-nav-parent${active ? " active" : ""}${open ? " open" : ""}`}
+        className={`ash-nav-item ash-nav-parent${active ? " active" : ""}${open ? " open" : ""}`}
         aria-expanded={open}
         aria-controls={menuId}
         onClick={toggle}
         onKeyDown={onButtonKeyDown}
       >
-        <span className="ad-nav-icon">{item.icon}</span>
+        <span className="ash-nav-icon">{item.icon}</span>
         {item.label}
         {item.badge && (
           <span
@@ -252,14 +253,14 @@ function NavGroup({ item, links, active, isLinkActive, open, onOpenChange, onNav
             {item.badge}
           </span>
         )}
-        <span className="ad-nav-arrow" aria-hidden="true">›</span>
+        <span className="ash-nav-arrow" aria-hidden="true">›</span>
       </button>
 
       {/* Always rendered so aria-controls resolves; `hidden` keeps it out of the layout and the tab order. */}
-      <div className="ad-subnav" id={menuId} hidden={!open}>
+      <div className="ash-subnav" id={menuId} hidden={!open}>
         {links.map((link) => (
-          <Link key={link.target} to={link.target} className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={onNavigate}>
-            <span className="ad-nav-icon">{link.icon}</span>
+          <Link key={link.target} to={link.target} className={`ash-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={onNavigate}>
+            <span className="ash-nav-icon">{link.icon}</span>
             {link.label}
           </Link>
         ))}
@@ -312,14 +313,7 @@ export default function AdminLayout({ children }) {
 
   if (loading || !user) return null;
 
-  const initials = user.name
-    ? user.name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase()
-    : "AD";
+  const initial = (user.name?.[0] || "A").toUpperCase();
 
   const pathname = location.pathname;
   const targetOf = (link) =>
@@ -367,7 +361,7 @@ export default function AdminLayout({ children }) {
   const closeDrawer = () => setSideOpen(false);
 
   return (
-    <div className="ad-root">
+    <div className="ad-root ash-root">
       {/* Live chat: one shared connection for every admin page (unread badges, toasts). Admin + superadmin only. */}
       <LiveChatAdminProvider user={user} />
       {sideOpen && isPhone && (
@@ -386,29 +380,28 @@ export default function AdminLayout({ children }) {
       {/* inert: a closed phone drawer is off-screen, so keep its links out of the tab order */}
       <aside
         id="ad-sidebar"
-        className={`ad-sidebar${sideOpen ? " open" : ""}`}
+        className={`ash-sidebar${sideOpen ? " open" : ""}`}
         inert={isPhone && !sideOpen}
       >
-        {/* <div className="ad-brand">
-          <div className="ad-brand-mark">H</div>
-          <span className="ad-brand-name">Humancare</span>
-        </div> */}
-
-        <div className="ad-profile">
-          <div className="ad-profile-avatar">{initials}</div>
-          <div className="ad-profile-info">
-            <div className="ad-profile-name">{user.name}</div>
-            <div className="ad-profile-role">
-              {user.role === "superadmin"
-                ? "Super Admin"
-                : user.role === "paymentadmin"
-                  ? "Payment Admin"
-                  : "Admin"}
-            </div>
-          </div>
+        <div className="ash-brand">
+          <div className="ash-brand-mark">H</div>
+          <span>Humancare</span>
         </div>
 
-        <nav className="ad-nav">
+        <div className="ash-profile">
+          <div className="ash-profile-avatar">{initial}</div>
+          <div className="ash-profile-name">{user.name}</div>
+          {user.email && <div className="ash-profile-email">{user.email}</div>}
+          <span className="ash-role-badge">
+            {user.role === "superadmin"
+              ? "Super Admin"
+              : user.role === "paymentadmin"
+                ? "Payment Admin"
+                : "Admin"}
+          </span>
+        </div>
+
+        <nav className="ash-nav">
           {visibleItems.map((item) => {
             if (item.links) {
               const active = item.links.some(isLinkActive);
@@ -432,18 +425,18 @@ export default function AdminLayout({ children }) {
               <Link
                 key={link.target}
                 to={link.target}
-                className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`}
+                className={`ash-nav-item${isLinkActive(link) ? " active" : ""}`}
                 onClick={closeDrawer}
               >
-                <span className="ad-nav-icon">{link.icon}</span>
+                <span className="ash-nav-icon">{link.icon}</span>
                 {link.label}
               </Link>
             );
           })}
         </nav>
 
-        <div className="ad-sidebar-footer">
-          <button className="ad-logout-btn" onClick={logout}>
+        <div className="ash-sidebar-footer">
+          <button className="ash-logout-btn" onClick={logout}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
@@ -455,25 +448,17 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* ── Main ── */}
-      <main className="ad-main" id="main-content" tabIndex={-1}>
-        <header className="ad-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <main className="ad-main ash-main" id="main-content" tabIndex={-1}>
+        <header className="ash-topbar">
+          <div className="ash-topbar-left">
             <button
               ref={burgerRef}
               type="button"
-              className="ad-menu-btn"
+              className="ad-menu-btn ash-menu-btn"
               aria-label={!isPhone ? "Navigation menu" : sideOpen ? "Close navigation menu" : "Open navigation menu"}
               aria-controls="ad-sidebar"
               aria-expanded={isPhone ? sideOpen : true}
               onClick={() => setSideOpen((p) => !p)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                color: "#64748b",
-                padding: 4,
-              }}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="3" y1="6" x2="21" y2="6" />
@@ -481,12 +466,12 @@ export default function AdminLayout({ children }) {
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
-            <div className="ad-topbar-title">{pageTitle}</div>
+            <div className="ash-topbar-title">{pageTitle}</div>
           </div>
-          <div className="ad-topbar-right">
+          <div className="ash-topbar-right">
             <DirectCallAlertsBell />
-            <span className="ad-topbar-user">
-              👋 {user.name?.split(" ")[0]}
+            <span className="ash-topbar-user">
+              <span className="ash-welcome">Welcome, </span>{user.name}
             </span>
           </div>
         </header>

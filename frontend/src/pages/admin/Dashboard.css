@@ -266,7 +266,9 @@
 .dash-table td.bold { font-weight: 600; color: #111827; }
 .dash-table td.muted { color: #6b7280; font-size: 13px; }
 
-.status-badge {
+/* Scoped to the Super Admin Portal: the patient's lab appointments page also has a .status-badge class, which this file must
+   not style when it has been loaded earlier in the same tab. */
+.dash-wrapper .status-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 20px;
