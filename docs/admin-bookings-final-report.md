@@ -83,6 +83,6 @@ Answered in the follow-up round: 1 (testing confirmation: no, Undo toast), 2 (re
 
 ## 8. Confirmations
 
-- **Nothing was merged or deployed.** The `admin` branch of this repo is pushed and has a pull request into `uat` (not merged), at Satish's request. The sibling repos have nothing pushed.
+- **Nothing was merged or deployed.** The `admin` branch of this repo is pushed to origin at Satish's request (the pull request into `uat` still has to be opened: https://github.com/Humancare11/connect/compare/uat...admin?expand=1 , with this report as the description). It is not merged. The sibling repos have nothing pushed.
 - **Atlas and any production database, server or secret were not touched.** Every test and browser run used `mongodb-memory-server`; the repo's browser harness refuses to start unless its database address is local.
 - **doctorapp:** a new local `admin` branch with one docs commit (`589b8fd`); `doctor-app.html` untouched. **connect-mobile:** no branch or commit yet (waiting for Satish's OK); `pubspec.yaml` untouched.
