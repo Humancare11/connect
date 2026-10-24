@@ -26,6 +26,7 @@ Satish's answers to the first report, done in commit `728cced2` and the sibling 
 - **Follow-ups (not now, as decided):**
   1. Make the web, mobile and doctor clients ignore call events whose `appointmentId` is not the call they are in. The server now tags every call event, and no longer sends them across calls, so this is a second line of defence.
   2. Make the dashboard overview match the All tab (today the overview counts regular appointments only, minus testing).
+  3. **Deleting a doctor leaves their open bookings stranded** (found by the read-only count on the UAT database: 3 Assigned appointments whose doctor, account and enrollment, was deleted: …53AC1588, …50E43207, …1459ABBD). Today the doctor delete flow does not look at the doctor's bookings, so they stay Assigned or Confirmed pointing at nothing, which the Appointments page shows as "Not assigned" (they can now be reassigned from the Doctor column, but nobody is warned). The delete flow should list the doctor's open bookings (Upcoming, Assigned, Pending, Confirmed, both kinds, matched by the Doctor id and by the Enrollment id) and **block the delete, or require reassigning them first**. Production may have the same orphaned bookings; Satish will run the read-only count there himself (the count queries are in this section; the "doctor deleted" check is: for each open booking, does its `doctorId` / `assignedDoctorId` still exist in `doctors` / `enrollments`). Not implemented.
 
 ### Round 3 (changes after Satish's local test)
 
