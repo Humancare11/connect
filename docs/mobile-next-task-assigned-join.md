@@ -1,6 +1,6 @@
 # connect-mobile next task: stop showing Join for Assigned bookings
 
-Status: **not started**. Do not change connect-mobile until this is scheduled.
+Status: **written, not pushed.** Branch `admin` in the connect-mobile repo, commit `68733f5` (one file, `lib/screens/appointments_screen.dart`), based on `origin/main` (`6539e7f`), so it carries none of the local-only camera-switch commits. `flutter analyze` on the file: no issues. It ships with the next mobile release.
 
 ## Why
 

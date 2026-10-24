@@ -21,8 +21,11 @@ Satish's answers to the first report, done in commit `728cced2` and the sibling 
 - `GET /api/appointments/admin/all` retired with 410, handler deleted. (`728cced2`)
 - Fees always show two decimals ($99.00). (`728cced2`)
 - doctorapp (own `admin` branch, commit `589b8fd`, nothing pushed): row 7, B1 and R1 of `docs/video/COMPATIBILITY.md` updated; new `docs/video/ADMIN_BACKEND_RETEST.md` manual checklist. `doctor-app.html` untouched.
-- connect-mobile: **not started, waiting for Satish's OK** on the base branch (`main` was chosen; its 4 local commits are listed for him first). The pre-existing `pubspec.yaml` change stays out of any commit.
-- **Follow-up (not now, as decided):** make the web, mobile and doctor clients ignore call events whose `appointmentId` is not the call they are in. The server now tags every call event, and no longer sends them across calls, so this is a second line of defence.
+- connect-mobile: branch `admin` created **from `origin/main`** (`6539e7f`, after a fetch) in a separate worktree, so the local-only camera-switch commits on local `main` and the modified `pubspec.yaml` were not involved. One commit, `68733f5`: `appointments_screen.dart` only (`displayStatus` is now the real status, so Assigned stays under Pending with no Join; the unused `hasAssignedDoctor` helper is gone). `flutter analyze` on the file: no issues. Not pushed. The worktree was removed; the branch is kept.
+- `retiredEndpoint` now logs every hit (`[retired-endpoint]`: method, path, role, `X-Client-Platform`, `X-App-Version`); the rule for removing the stubs is in the deploy notes.
+- **Follow-ups (not now, as decided):**
+  1. Make the web, mobile and doctor clients ignore call events whose `appointmentId` is not the call they are in. The server now tags every call event, and no longer sends them across calls, so this is a second line of defence.
+  2. Make the dashboard overview match the All tab (today the overview counts regular appointments only, minus testing).
 
 ## 2. Step 3 in brief
 
@@ -71,18 +74,22 @@ Files: `backend/utils/appointmentRoomState.js` (new), `backend/server.js` (wirin
 - **Evidence (tests with a real Socket.IO server and a real forced reconnect with state recovery, asserted `socket.recovered === true`):** after recovery `socketRooms` is rebuilt and a leave actually removes the socket from the room and tells the peer (a control test with the rebuild undone shows the leave being ignored, as before); call A, recovered reconnect, then call B on the same socket: the socket ends in B's room only, A's peer is told once (tagged A), a late `participant-left` sent into A reaches neither the socket nor B's other participant, signaling for A is no longer relayed and B's is; re-joining the same room keeps it and leaves nothing; and a source check that every call-event emit carries the id.
 - **Behavior change to know about:** moving to a second call without an explicit leave now tells the first call's peer `participant-left` (it previously never learned, which is the leak). Existing clients treat it as the normal "peer left" event.
 
-## 7. Needs Satish's decision
+## 7. Decisions (all answered)
 
-Answered in the follow-up round: 1 (testing confirmation: no, Undo toast), 2 (retire admin/all: done), 3 (mobile fix: waiting on his OK for the base branch), 4 (client use of appointmentId: later, listed as a follow-up above), 5 (doctor app: checklist and doc update done), 6 (two-decimal fees: done). Still open:
-
-7. **Overview counts vs the All tab** differ by design (the overview counts regular appointments only, minus testing); as agreed earlier, left that way.
-8. **No automatic refunds** on cancel (as agreed); the warning names Stripe or PayPal.
-9. **Optional `isTesting` backfill:** not run, not needed. Your call whether to run it later.
-10. **Remove the 410 stubs** after one release (they are in `routes/categoryConsultation.js`, `routes/appointments.js` and `middleware/retiredEndpoint.js`).
-11. **Pre-existing changes in the two sibling repos** that are not mine: a modified `connect-mobile/pubspec.yaml` and an untracked `doctorapp/doctor-app.html`; both are left out of every commit.
+1. Mark/Unmark testing: no confirmation; a toast with **Undo** (done).
+2. `GET /api/appointments/admin/all`: retired with 410 (done).
+3. connect-mobile fix: done on branch `admin` from `origin/main`, not pushed (see section 1).
+4. Client use of `appointmentId`: later; listed as follow-up 1.
+5. Doctor app: checklist and doc update done on doctorapp's `admin` branch (`589b8fd`), not pushed.
+6. Fees show two decimals (done).
+7. Overview stays regular appointments minus testing; "make the overview match the All tab" is follow-up 2.
+8. Refunds stay manual (cancel never refunds; the warning names Stripe or PayPal).
+9. The `isTesting` backfill is never run (`$ne: true` makes it unnecessary); the script stays in the repo.
+10. The 410 stubs stay, and log every hit. Remove them only after the next mobile and doctor app releases are live **and** the logs show no hits for 2 weeks (rule in the deploy notes).
+11. `connect-mobile/pubspec.yaml` (modified) and `doctorapp/doctor-app.html` (untracked) are Satish's and stay exactly as they are, uncommitted.
 
 ## 8. Confirmations
 
-- **Nothing was merged or deployed.** The `admin` branch of this repo is pushed to origin at Satish's request (the pull request into `uat` still has to be opened: https://github.com/Humancare11/connect/compare/uat...admin?expand=1 , with this report as the description). It is not merged. The sibling repos have nothing pushed.
+- **Nothing was merged or deployed.** The `admin` branch of this repo is pushed to origin at Satish's request; Satish opens the pull request into `uat` himself (https://github.com/Humancare11/connect/compare/uat...admin?expand=1, with this report as the description). The connect-mobile and doctorapp `admin` branches are local only.
 - **Atlas and any production database, server or secret were not touched.** Every test and browser run used `mongodb-memory-server`; the repo's browser harness refuses to start unless its database address is local.
-- **doctorapp:** a new local `admin` branch with one docs commit (`589b8fd`); `doctor-app.html` untouched. **connect-mobile:** no branch or commit yet (waiting for Satish's OK); `pubspec.yaml` untouched.
+- **doctorapp:** local `admin` branch, one docs commit (`589b8fd`); `doctor-app.html` untouched. **connect-mobile:** local `admin` branch, one commit (`68733f5`, one file); the checked-out branch and `pubspec.yaml` were never touched.

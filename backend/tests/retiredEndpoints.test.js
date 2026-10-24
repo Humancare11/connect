@@ -97,3 +97,36 @@ test("retiredEndpoint answers 410 with the pointer and nothing else", () => {
   assert.equal(out.status, 410);
   assert.deepEqual(out.body, { msg: "This endpoint has been retired. Use POST /somewhere instead.", code: "endpoint_retired", use: "POST /somewhere" });
 });
+
+test("every hit on a retired endpoint is logged with the path, the caller's role and the app version headers, and nothing else", () => {
+  const lines = [];
+  const warn = console.warn;
+  console.warn = (...args) => lines.push(args);
+  try {
+    const res = { status() { return this; }, json() { return this; } };
+    retiredEndpoint("POST /somewhere")(
+      {
+        method: "PUT",
+        originalUrl: "/api/appointments/64b000000000000000000001/change-doctor?token=secret",
+        user: { id: "u1", role: "admin", email: "a@x.co" },
+        headers: { "x-client-platform": "android", "x-app-version": "1.0.0+16", authorization: "Bearer secret", cookie: "c=1" },
+      },
+      res
+    );
+    retiredEndpoint("POST /somewhere")({}, res); // a bare request does not break it
+  } finally {
+    console.warn = warn;
+  }
+  assert.equal(lines.length, 2);
+  assert.equal(lines[0][0], "[retired-endpoint]");
+  assert.deepEqual(JSON.parse(lines[0][1]), {
+    method: "PUT",
+    path: "/api/appointments/64b000000000000000000001/change-doctor",
+    role: "admin",
+    platform: "android",
+    appVersion: "1.0.0+16",
+    use: "POST /somewhere",
+  });
+  assert.doesNotMatch(lines[0][1], /secret|a@x\.co|u1|Bearer/, "no token, email, id or auth header in the log");
+  assert.deepEqual(JSON.parse(lines[1][1]), { method: "", path: "", role: "", platform: "", appVersion: "", use: "POST /somewhere" });
+});

@@ -17,14 +17,23 @@ a call lock (only a **confirmed** booking opens the video room), and a socket re
    - Backend order inside the release: start the new backend, then publish the web build.
 2. **doctorapp: no release needed; retest it against the new backend before or right after the deploy**
    (it already shows Join only for `confirmed`). The things to retest are in section 4, "Doctor app".
-3. **connect-mobile: the assigned-join fix in the next mobile release** (`docs/mobile-next-task-assigned-join.md`).
+3. **connect-mobile: the assigned-join fix in the next mobile release.** It is written: branch `admin` in the connect-mobile repo, one commit (`68733f5`, only `lib/screens/appointments_screen.dart`), based on `origin/main` (`6539e7f`), **not pushed**. Details in `docs/mobile-next-task-assigned-join.md`.
    Until then a mobile patient sees "Join" on an Assigned booking and, on tapping it, reads the server's message:
    "Your doctor hasn't confirmed this appointment yet. You can join once it's confirmed." Nothing breaks.
-4. The 410 Gone endpoints (section 3 of the report) stay for one release, then can be deleted.
+4. The 410 Gone endpoints stay (see "When to remove the 410 stubs" below).
+
+### When to remove the 410 stubs
+
+Every hit on a retired endpoint is logged as one `[retired-endpoint]` line (method, path without query, caller role,
+`X-Client-Platform` and `X-App-Version` when an app sent them, and the replacement). **Remove the stubs
+(`middleware/retiredEndpoint.js` and its uses in `routes/categoryConsultation.js` and `routes/appointments.js`, plus
+`tests/retiredEndpoints.test.js`) only when both are true:** the next connect-mobile and doctor app releases are live, **and**
+the logs show no `[retired-endpoint]` hits for 2 weeks in a row. Search the logs for `[retired-endpoint]`; a hit with an
+`appVersion` tells you which app build still calls it.
 
 No database migration is required. New fields all have defaults and read as empty when missing.
 
-## 2. Optional `isTesting` backfill (do NOT run it as part of the deploy)
+## 2. The `isTesting` backfill: never run (the script stays in the repo)
 
 `backend/scripts/backfillBookingAdminFields.js` sets `isTesting: false` on bookings that have no `isTesting` field.
 It is optional: every filter uses `isTesting: { $ne: true }`, so a document without the field counts as "not testing".
@@ -38,7 +47,7 @@ db.categoryconsultations.countDocuments({ isTesting: { $exists: false } })
 ```
 
 The script has `node scripts/backfillBookingAdminFields.js --dry-run`, which prints the same two counts.
-Only run it for real if you want the field written everywhere; the admin pages work without it.
+Decision: **the backfill is never run.** The code uses `$ne: true` everywhere, so it is not needed; the script is kept in the repo only for reference.
 
 ## 3. Rollback
 
@@ -108,4 +117,11 @@ aaac0563 Step 5: socket recovery fix; every appointment call event carries appoi
 ec650fdf Step 6: full browser check of the Appointments page
 ```
 
-(Plus the commit that adds these two docs.)
+```
+88f28c6b Step 7: deploy notes and final report for the admin Appointments merge
+728cced2 Testing Undo toast, two-decimal fees, retire GET /appointments/admin/all (410)
+f28ac2ac Report: follow-up round (testing Undo, admin/all retired, two-decimal fees, doctorapp docs) and the open decisions
+a1effa68 Report: the PR still has to be opened (no gh CLI available)
+```
+
+Later commits (the 410 hit logging, the docs updates) are on the branch; use `git log uat..admin --oneline` for the exact list. Sibling repos (local branches, not pushed): doctorapp `admin` `589b8fd` (docs), connect-mobile `admin` `68733f5` (one file).
