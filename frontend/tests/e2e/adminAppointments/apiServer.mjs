@@ -120,8 +120,12 @@ export async function startApiServer() {
   app.use("/api/admin/bookings", adminBookings.create({ guard, superGuard: guard }));
   app.get("/api/doctor/approved", async (req, res) => {
     const list = await Enrollment.find({ approvalStatus: "approved" }).lean();
-    res.json(list.map((e) => ({ id: e._id, name: `Dr. ${e.firstName} ${e.surname}`, specialty: e.specialization, country: e.country, city: e.city, location: `${e.city}, ${e.country}` })));
+    // The real list gives each doctor's enrollment id (id), numeric doctor id and Doctor _id (mongoId).
+    res.json(list.map((e, i) => ({ id: e._id, doctorId: 10001 + i, mongoId: e.doctorId, name: `Dr. ${e.firstName} ${e.surname}`, specialty: e.specialization, country: e.country, city: e.city, location: `${e.city}, ${e.country}` })));
   });
+  // The regular-appointment record the assign page shows, from the real controller (no login: a fixed admin).
+  const { getAppointmentById } = load("controllers/appointmentController.js");
+  app.get("/api/appointments/:id", (req, res, next) => { req.user = { id: String(admin._id), role: "admin" }; next(); }, getAppointmentById);
 
   // Control endpoints for the tests.
   app.post("/__make", async (req, res) => res.json({ id: await make(req.body) }));

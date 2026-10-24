@@ -1055,6 +1055,15 @@ describe("admin booking actions", () => {
         assert.equal(res.body.booking.doctorName, "Martin Perlin");
         assert.equal(res.body.booking.paid, true);
         assert.equal(res.body.booking.paymentGateway, "stripe");
+        if (kind === "category") {
+          assert.equal(res.body.detail.concern, "x", "the category request's fields come with it");
+          assert.equal(res.body.detail.appointmentType, "FLEXIBLE_TIME");
+          assert.equal(res.body.detail.slot, "10:00 AM");
+          assert.equal(res.body.detail.categoryName, "Women's Health");
+          assert.equal(String(res.body.detail.assignedDoctorId), String(D1.e._id));
+        } else {
+          assert.equal(res.body.detail, undefined);
+        }
       });
     }
 

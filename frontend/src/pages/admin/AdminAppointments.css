@@ -1611,6 +1611,10 @@
   font-weight: 700;
   cursor: pointer;
 }
+a.adp-bk-alt {
+  display: inline-block;
+  text-decoration: none;
+}
 .adp-bk-alt:hover:not(:disabled) {
   border-bottom-color: #0f766e;
 }
@@ -1898,70 +1902,6 @@
 .adp-bk-field small {
   color: #64748b;
   font-weight: 400;
-}
-.adp-bk-doclist {
-  display: flex;
-  flex-direction: column;
-  max-height: 250px;
-  overflow-y: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-.adp-bk-doclist-note {
-  margin: 0;
-  padding: 16px;
-  color: #64748b;
-  font-size: 13px;
-}
-.adp-bk-docitem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-bottom: 1px solid #f1f5f9;
-  cursor: pointer;
-}
-.adp-bk-docitem:last-child {
-  border-bottom: 0;
-}
-.adp-bk-docitem:hover {
-  background: #f8fafc;
-}
-.adp-bk-docitem.is-picked {
-  background: #f0fdfa;
-}
-.adp-bk-docitem input {
-  accent-color: #0f766e;
-}
-.adp-bk-docitem-main {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.adp-bk-docitem-main b {
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 600;
-}
-.adp-bk-docitem-main small {
-  color: #64748b;
-  font-size: 12px;
-}
-.adp-bk-link {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #0f766e;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: underline;
-  cursor: pointer;
-}
-.adp-bk-link:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 .adp-bk-modal-warning {
   margin: 0;

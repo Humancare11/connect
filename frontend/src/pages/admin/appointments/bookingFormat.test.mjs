@@ -5,7 +5,7 @@ import {
   formatBookedOn, formatConsultation, formatFee, isClosed, originalDoctorHint, pageFromParam, pageWindow,
   rangeText, rowNumber, shortBookingId, showAssignedByColumn, tabFromParam,
   AUTO_COMPLETE_HINT, CANCEL_REASONS, refundWarning, canAlternate, assignedByHint, canAssign, canAutoComplete, canCancel, canReactivate,
-  explainActionError, filterDoctors, needsAppointmentTime, toTime12, toTime24,
+  explainActionError, toTime12, toTime24,
 } from "./bookingFormat.js";
 import * as formatModule from "./bookingFormat.js";
 
@@ -132,12 +132,6 @@ test("an empty 'Assigned by' next to a doctor explains itself on hover", () => {
   assert.equal(assignedByHint({ doctorName: null, assignedBy: null, status: "upcoming" }), "");
 });
 
-test("only a category booking with no time yet needs one", () => {
-  assert.equal(needsAppointmentTime({ kind: "category", consultation: null }), true);
-  assert.equal(needsAppointmentTime({ kind: "category", consultation: { date: "2026-11-02", time: "05:30 PM" } }), false);
-  assert.equal(needsAppointmentTime({ kind: "appointment", consultation: null }), false);
-});
-
 test("time conversion between the picker and the stored form", () => {
   assert.equal(toTime12("17:30"), "05:30 PM");
   assert.equal(toTime12("00:05"), "12:05 AM");
@@ -164,22 +158,6 @@ test("error wording: a 409 refreshes, a busy doctor keeps the dialog open", () =
   assert.deepEqual(explainActionError(err(400, { msg: "A cancel reason is required." })), { message: "A cancel reason is required.", refresh: false });
   assert.equal(explainActionError(err(500, {})).message, "Something went wrong. Please try again.");
   assert.match(explainActionError(new Error("Network Error")).message, /Could not reach the server/);
-});
-
-test("the doctor picker searches, sorts, and leaves out the current doctor", () => {
-  const doctors = [
-    { id: "3", name: "Dr. Farah Siddiqui", specialty: "Dermatology", city: "Dubai", country: "United Arab Emirates" },
-    { id: "1", name: "Dr. Martin Perlin", specialty: "Cardiology", city: "Boston", country: "United States" },
-    { id: "2", name: "Dr. Nobita Mestry", specialty: "General", city: "Pune", country: "India" },
-    { id: "", name: "Dr. No Id" },
-  ];
-  assert.deepEqual(filterDoctors(doctors, "").map((d) => d.id), ["3", "1", "2"]);
-  assert.deepEqual(filterDoctors(doctors, "india").map((d) => d.id), ["2"]);
-  assert.deepEqual(filterDoctors(doctors, "CARDIO").map((d) => d.id), ["1"]);
-  assert.deepEqual(filterDoctors(doctors, "", "Martin Perlin").map((d) => d.id), ["3", "2"]);
-  assert.deepEqual(filterDoctors(doctors, "", "Dr. Martin Perlin").map((d) => d.id), ["3", "2"]);
-  assert.equal(filterDoctors(doctors, "", "", 1).length, 1);
-  assert.deepEqual(filterDoctors(null, "x"), []);
 });
 
 test("booking id and the original-doctor hint", () => {

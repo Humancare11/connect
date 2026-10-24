@@ -6,6 +6,7 @@ const { LifecycleError } = require("../utils/appointmentLifecycle");
 const { ListQueryError, listAdminBookings, loadAdminBookingRow, loadAdminBookingRowById } = require("../utils/adminBookingList");
 const actions = require("../utils/adminBookingActions");
 const { recordActivity } = require("../utils/activityLogger");
+const CategoryConsultation = require("../models/CategoryConsultation");
 
 // The acting admin, for assignedBy and the audit log.
 async function actorOf(req) {
@@ -36,13 +37,19 @@ function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdm
     }
   });
 
-  // One booking as a list row (either kind), for the booking's View page.
+  // One booking as a list row (either kind), for the booking's View page and the assign-doctor page. For a category
+  // consultation `detail` also carries what that page shows about the request (the old category assign page's fields).
   router.get("/:id", ...guard, async (req, res) => {
     try {
       if (!mongoose.isValidObjectId(req.params.id)) return res.status(400).json({ msg: "Invalid booking id." });
       const booking = await loadAdminBookingRowById(req.params.id);
       if (!booking) return res.status(404).json({ msg: "Appointment not found." });
-      res.status(200).json({ booking });
+      const detail = booking.kind === "category"
+        ? await CategoryConsultation.findById(booking.id)
+            .select("concern severity supportType urgency timeWindow slot assignedSlot appointmentType categoryName specialtyName conditionName serviceName assignedDoctorId")
+            .lean()
+        : null;
+      res.status(200).json({ booking, ...(detail ? { detail } : {}) });
     } catch (error) {
       console.error("getAdminBooking error:", error);
       res.status(500).json({ msg: "Failed to fetch the appointment." });

@@ -4,10 +4,9 @@ import { useConfirm } from "../../../components/ui/ConfirmDialog";
 import * as bookingApi from "./bookingApi";
 import { explainActionError, refundWarning, shortBookingId } from "./bookingFormat";
 
-// The row actions: Assign / Alternate doctor and Cancel open a dialog; Confirm and Auto
-// complete ask first. After any action the list and the tab counts are reloaded. A lost
-// race (409) closes the dialog, says so, and reloads; any other failure is shown in the
-// dialog (or as a message) and nothing is reloaded.
+// The row actions: Cancel opens a dialog; Reactivate and Auto complete ask first. (Assign and Alternate doctor are the
+// full-page screen.) After any action the list and the tab counts are reloaded. A lost race (409) closes the dialog,
+// says so, and reloads; any other failure is shown in the dialog (or as a message) and nothing is reloaded.
 // Themes the shared confirmation dialog in the admin teal (see AdminAppointments.css).
 export const ADMIN_CONFIRM = "adp-confirm";
 
@@ -15,7 +14,7 @@ export default function useBookingActions({ reload }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [busyId, setBusyId] = useState("");
-  const [modal, setModal] = useState(null); // { type: "assign" | "alternate" | "cancel", row }
+  const [modal, setModal] = useState(null); // { type: "cancel", row }
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
 
@@ -60,14 +59,6 @@ export default function useBookingActions({ reload }) {
   const label = (row) => shortBookingId(row);
 
   const handlers = {
-    assign: (row) => {
-      setModalError("");
-      setModal({ type: "assign", row });
-    },
-    alternate: (row) => {
-      setModalError("");
-      setModal({ type: "alternate", row });
-    },
     cancel: (row) => {
       setModalError("");
       setModal({ type: "cancel", row });
@@ -94,12 +85,6 @@ export default function useBookingActions({ reload }) {
 
   // What the dialogs call.
   const submit = {
-    assign: (row, choice) =>
-      perform(row, () => bookingApi.assignDoctor(row.id, choice), () => toast.success(`Doctor assigned to booking ${label(row)}. They need to confirm it.`), { inDialog: true }),
-    alternate: (row, choice) =>
-      perform(row, () => bookingApi.alternateDoctor(row.id, choice), () => toast.success(`Doctor changed on booking ${label(row)}. The new doctor needs to confirm it.`), { inDialog: true }),
-    revert: (row) =>
-      perform(row, () => bookingApi.revertDoctor(row.id), () => toast.success(`Booking ${label(row)} is back with ${row.originalDoctorName}. They need to confirm it.`), { inDialog: true }),
     cancel: (row, choice) =>
       perform(
         row,

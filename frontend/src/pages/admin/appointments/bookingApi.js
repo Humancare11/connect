@@ -16,6 +16,3 @@ export const cancelBooking = (id, { reason }) => post(id, "cancel", { reason });
 // bulk confirm). Answers { summary, results: [{ id, status: ok | not_found | conflict | error, message? }] }.
 export const bulk = ({ action, ids, reason }) => api.post("/api/admin/bookings/bulk", { action, ids, ...(reason ? { reason } : {}) });
 
-// The approved doctors, as the old assign pages used them: `id` is the doctor's Enrollment
-// id, which is what the action endpoints take as doctorId.
-export const fetchApprovedDoctors = () => api.get("/api/doctor/approved").then((res) => (Array.isArray(res.data) ? res.data : []));

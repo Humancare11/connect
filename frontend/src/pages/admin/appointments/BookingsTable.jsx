@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import { useToast } from "../../../components/ui/Toast";
 import StatusPill from "./StatusPill";
 import SelectionMenu from "./SelectionMenu";
 import BulkBar from "./BulkBar";
 import { copyText } from "./copyText";
+import { assignUrl } from "./assignPageLogic";
 import {
   AUTO_COMPLETE_HINT, assignedByHint, canAlternate, canAssign, canAutoComplete, canCancel, canReactivate, formatBookedOn, formatConsultation,
   formatFee, isClosed, originalDoctorHint, rowNumber, shortBookingId, showAssignedByColumn,
@@ -48,23 +49,41 @@ function BookingIdCell({ row }) {
   );
 }
 
-function DoctorCell({ row, actions, busy }) {
+// "Assign doctor" and "Alternate doctor" open the full-page assign screen (the same page for both), which brings the
+// admin back to this tab and page after saving.
+function DoctorLink({ row, allowed, busy, className, children }) {
+  const [searchParams] = useSearchParams();
+  if (busy || !allowed) {
+    return (
+      <button type="button" className={className} disabled>
+        {children}
+      </button>
+    );
+  }
+  return (
+    <Link className={className} to={assignUrl(row.id, searchParams.toString())}>
+      {children}
+    </Link>
+  );
+}
+
+function DoctorCell({ row, busy }) {
   if (!row.doctorName) {
     return (
       <div className="adp-bk-doctor">
         <strong className="adp-bk-nodoc">Not assigned</strong>
-        <button type="button" className="adp-bk-alt adp-bk-assign" disabled={busy || !canAssign(row)} onClick={() => actions.handlers.assign(row)}>
+        <DoctorLink row={row} busy={busy} allowed={canAssign(row)} className="adp-bk-alt adp-bk-assign">
           Assign doctor
-        </button>
+        </DoctorLink>
       </div>
     );
   }
   return (
     <div className="adp-bk-doctor" title={originalDoctorHint(row) || undefined}>
       <strong>{row.doctorName}</strong>
-      <button type="button" className="adp-bk-alt" disabled={busy || !canAlternate(row)} onClick={() => actions.handlers.alternate(row)}>
+      <DoctorLink row={row} busy={busy} allowed={canAlternate(row)} className="adp-bk-alt">
         Alternate doctor
-      </button>
+      </DoctorLink>
     </div>
   );
 }
@@ -199,7 +218,7 @@ export default function BookingsTable({ rows, tab, page, actions, selection, bul
                       <span>{country || "—"}</span>
                     </div>
                   </td>
-                  <td data-label="Doctor"><DoctorCell row={row} actions={actions} busy={busy} /></td>
+                  <td data-label="Doctor"><DoctorCell row={row} busy={busy} /></td>
                   <td data-label="Category">{row.category || "—"}</td>
                   <td data-label="Booking date" className="adp-bk-nowrap">{formatBookedOn(row.bookedAt)}</td>
                   <td data-label="Consultation date" className="adp-bk-nowrap">

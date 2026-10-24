@@ -782,6 +782,7 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
 const AdminDeletionRequests = lazy(() => import("./pages/admin/AdminDeletionRequests"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
+const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
 );
@@ -1958,6 +1959,19 @@ export function AppLayout() {
             }
           />
           {legacyAdminRedirects}
+          <Route
+            path="/admin-dashboard/appointments/:id/assign"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <>
+                  <PageH1>Assign doctor</PageH1>
+                  <AdminAssignDoctor />
+                </>
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/admin-dashboard/appointments/:id"
             element={

@@ -130,9 +130,6 @@ export const canReactivate = (row) => hasDoctor(row) && row.status === "complete
 export const canAutoComplete = (row) => hasDoctor(row) && ["assigned", "confirmed"].includes(row.status);
 export const canCancel = (row) => !isClosed(row.status);
 
-// A Next Available category booking has no time until the admin picks one.
-export const needsAppointmentTime = (row) => row.kind === "category" && !row.consultation;
-
 export const AUTO_COMPLETE_HINT = "Only assigned or confirmed bookings can be auto completed";
 
 // <input type="time"> uses "17:30"; bookings store "05:30 PM".
@@ -165,21 +162,4 @@ export function explainActionError(err) {
   if (data?.msg) return { message: data.msg, refresh: false };
   if (!err?.response) return { message: "Could not reach the server. Check your connection and try again.", refresh: false };
   return { message: "Something went wrong. Please try again.", refresh: false };
-}
-
-// ── Doctor picker ────────────────────────────────────────────────────────────
-
-const plainName = (name) => String(name || "").replace(/^dr\.?\s+/i, "").trim().toLowerCase();
-
-// The approved doctors matching the search (name, specialty, city, country), without the
-// booking's current doctor, by name.
-export function filterDoctors(doctors, query, currentDoctorName = "", limit = 60) {
-  const q = String(query || "").trim().toLowerCase();
-  const current = plainName(currentDoctorName);
-  return (Array.isArray(doctors) ? doctors : [])
-    .filter((d) => d && d.id)
-    .filter((d) => !current || plainName(d.name) !== current)
-    .filter((d) => !q || [d.name, d.specialty, d.city, d.country].some((v) => String(v || "").toLowerCase().includes(q)))
-    .sort((a, b) => String(a.name).localeCompare(String(b.name)))
-    .slice(0, limit);
 }

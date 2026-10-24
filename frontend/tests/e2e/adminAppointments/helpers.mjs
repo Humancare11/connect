@@ -96,8 +96,21 @@ export function createHelpers({ page, api, harnessUrl }) {
   const toasts = async () => (await page.locator(".hc-toasts").innerText().catch(() => "")).replace(/\s+/g, " ");
   const modal = () => page.locator(".hc-modal");
   const confirmDialog = () => page.locator('[role="alertdialog"]');
-  const doctorNames = async () => page.$$eval(".adp-bk-docitem b", (els) => els.map((e) => e.textContent));
-  const pickDoctor = (name) => page.locator(".adp-bk-docitem", { hasText: name }).click();
+  // The full-page Assign / Alternate doctor screen.
+  const assignPage = () => page.locator(".aad-page");
+  const onAssignPage = async () => {
+    await page.waitForSelector(".aad-doctor-row:not(.aad-doctor-row--head), .aad-empty-row");
+  };
+  const pageDoctorNames = async () => page.$$eval(".aad-doctor-row:not(.aad-doctor-row--head) .aad-name-text", (els) => els.map((e) => e.textContent.trim()));
+  const pageDoctorRow = (name) => page.locator(".aad-doctor-row:not(.aad-doctor-row--head)", { hasText: name });
+  const chooseOnPage = (name) => pageDoctorRow(name).locator("button.aad-assign-btn").click();
+  const pageBanner = async () => (await page.locator(".aad-banner").innerText().catch(() => "")).replace(/\s+/g, " ").trim();
+  // From the list: the link under the doctor's name (or under "Not assigned") for the row of this patient.
+  const openAssignPage = async (name, label) => {
+    await row(name).locator('td[data-label="Doctor"] a', { hasText: label }).click();
+    await onAssignPage();
+  };
+  const waitForList = () => page.waitForSelector("table.adp-bk, .adp-empty");
   const chooseReason = (label) => page.selectOption(".hc-modal select", { label });
 
   // A screenshot for a person to look at; only taken when E2E_SCREENSHOTS=1.
@@ -108,5 +121,5 @@ export function createHelpers({ page, api, harnessUrl }) {
     await page.screenshot({ path: path.join(screenshotDir, `${name}.png`) });
   };
 
-  return { harnessUrl, call, make, doc, calls, reset, remove, until, sleep, open, rowsLocator, row, rowText, search, tabCount, tabs, headers, toasts, modal, confirmDialog, doctorNames, pickDoctor, chooseReason, shot };
+  return { harnessUrl, call, make, doc, calls, reset, remove, until, sleep, open, rowsLocator, row, rowText, search, tabCount, tabs, headers, toasts, modal, confirmDialog, assignPage, onAssignPage, pageDoctorNames, pageDoctorRow, chooseOnPage, pageBanner, openAssignPage, waitForList, chooseReason, shot };
 }

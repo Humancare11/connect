@@ -3,7 +3,7 @@
 // not sent; there is no login; no real database or secret is involved.
 //   npm run test:e2e:appointments   (from frontend/)       E2E_SCREENSHOTS=1 also saves screenshots
 // The tests skip themselves when Chromium (or Chrome/Edge) or the backend's dependencies are not installed.
-import { test, describe, before, after } from "node:test";
+import { test, describe, before, after, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -65,6 +65,15 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     });
     h = createHelpers({ page, api, harnessUrl });
     await h.open();
+  });
+
+  // A test that fails halfway can leave the page on another screen; the next one starts from the list.
+  beforeEach(async () => {
+    if (!h) return;
+    if ((await page.locator(".adp-search input").count()) === 0 || (await page.locator(".hc-modal").count()) > 0) {
+      await h.open("/admin-dashboard/appointments?tab=all");
+    }
+    await page.fill(".adp-search input", "");
   });
 
   after(async () => {
@@ -161,7 +170,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
 
   // ── Assign / alternate doctor ─────────────────────────────────────────────
 
-  test("assign a doctor: Assigned, the row and the tab counts refresh, the doctor and patient are told", async () => {
+  test("assign a doctor on the full page: Assigned, back to the list with a toast, tab counts refreshed, doctor and patient told", async () => {
     await h.reset();
     const id = await h.make({ status: "upcoming", name: "Anna Assign" });
     await h.search("Anna Assign");
@@ -169,18 +178,22 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await page.click('[role="tab"]:has-text("All")');
     const [upcoming, assigned] = [await h.tabCount("Upcoming"), await h.tabCount("Assigned")];
 
-    await h.row("Anna Assign").locator("button", { hasText: "Assign doctor" }).click();
-    await h.modal().waitFor();
-    assert.equal(await h.modal().locator("h2").innerText(), "Assign doctor");
-    await h.until(async () => (await h.doctorNames()).length === 4, "4 approved doctors");
-    assert.equal(await h.modal().locator('button[type="submit"]').isDisabled(), true, "disabled until a doctor is chosen");
-    assert.equal(await page.locator('.hc-modal input[type="time"]').count(), 0, "no time field for a regular appointment");
-    await h.pickDoctor("Nobita Mestry");
-    await h.modal().locator('button[type="submit"]').click();
-    await h.modal().waitFor({ state: "detached" });
-    await h.until(async () => /Doctor assigned/.test(await h.toasts()), "success message");
-    await h.until(async () => /Assigned/.test(await h.rowText("Anna Assign")) && /Nobita Mestry/.test(await h.rowText("Anna Assign")), "row refreshed");
+    await h.openAssignPage("Anna Assign", "Assign doctor");
+    assert.equal(await page.locator(".hc-modal").count(), 0, "no popup: it is a page");
+    assert.equal((await page.locator(".aad-nav-title").innerText()).trim(), "Assign Doctor");
+    const bar = (await page.locator(".aad-appt-bar").innerText()).replace(/\s+/g, " ");
+    assert.match(bar, /Patient Anna Assign/i);
+    assert.match(bar, /Current Doctor Unassigned/i);
+    assert.deepEqual((await h.pageDoctorNames()).sort(), ["Dr. Farah Siddiqui", "Dr. Hidayat Khan", "Dr. Martin Perlin", "Dr. Nobita Mestry"]);
+    assert.equal(await page.locator('input[type="time"]').count(), 0, "no time field for a regular appointment");
+    assert.equal(await page.locator(".aad-original").count(), 0, "no Go back before there is an original doctor");
+    await h.shot("assign-page");
+    await h.chooseOnPage("Nobita Mestry");
 
+    await h.waitForList();
+    await h.until(async () => /Doctor assigned/.test(await h.toasts()), "success toast");
+    await h.search("Anna Assign");
+    await h.until(async () => /Assigned/.test(await h.rowText("Anna Assign")) && /Nobita Mestry/.test(await h.rowText("Anna Assign")), "row shows the new doctor");
     const saved = await h.doc(id);
     assert.equal(saved.status, "assigned");
     assert.equal(saved.sessionStarted, false);
@@ -190,73 +203,143 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.ok(names.includes("notifyAppointmentDoctorChanged") && names.includes("notifyPatientDoctorChanged"));
   });
 
-  test("a Next Available category booking needs a time before it can be assigned", async () => {
+  test("after saving it returns to the same tab, 'Hide testing' setting and page; Back does the same without saving", async () => {
+    await h.reset();
+    const target = await h.make({ status: "upcoming", name: "Page Two Target" });
+    for (let i = 0; i < 26; i++) await h.make({ status: "complete", doctor: 0, name: `Filler ${i}` }); // newer, so the target falls to page 2 of All
+    await h.open("/admin-dashboard/appointments?tab=all&hideTesting=1&page=2");
+    await h.search("Page Two Target");
+    // search resets to page 1 in the URL; go back to the page-2 list with the search cleared and find the row there
+    await page.fill(".adp-search input", "");
+    await h.open("/admin-dashboard/appointments?tab=all&hideTesting=1&page=2");
+    await h.until(async () => (await page.locator("table.adp-bk tbody tr", { hasText: "Page Two Target" }).count()) === 1, "the target is on page 2");
+    await h.openAssignPage("Page Two Target", "Assign doctor");
+    await page.locator("a.aad-back").click();
+    await h.waitForList();
+    assert.match(await page.locator(".adp-bk-foot span").first().innerText(), /^Showing 26/, "Back returns to page 2");
+    assert.equal((await h.doc(target)).status, "upcoming", "Back saves nothing");
+    assert.equal(await page.locator(".adp-bk-hide").innerText(), "Showing without testing");
+
+    await h.openAssignPage("Page Two Target", "Assign doctor");
+    await h.chooseOnPage("Farah Siddiqui");
+    await h.waitForList();
+    assert.match(await page.locator(".adp-bk-foot span").first().innerText(), /^Showing 26/, "saving returns to page 2");
+    assert.equal(await page.locator('[role="tab"].active').first().innerText().then((t) => t.replace(/\s*\d+$/, "").trim()), "All");
+    assert.equal(await page.locator(".adp-bk-hide").innerText(), "Showing without testing");
+    assert.equal((await h.doc(target)).status, "assigned");
+  });
+
+  test("a Next Available category booking shows the old page's fields and the time field; a doctor can't be picked without a time", async () => {
     const id = await h.make({ kind: "category", status: "upcoming", nextAvailable: true, name: "Nina Next" });
     await h.search("Nina Next");
     assert.match(await h.rowText("Nina Next"), /Not scheduled/);
-    await h.row("Nina Next").locator("button", { hasText: "Assign doctor" }).click();
-    await h.modal().waitFor();
-    await h.until(async () => (await h.doctorNames()).length === 4, "doctors");
-    assert.equal(await page.locator('.hc-modal input[type="time"]').count(), 1);
-    await h.pickDoctor("Hidayat Khan");
-    assert.equal(await h.modal().locator('button[type="submit"]').isDisabled(), true, "disabled until a time is set");
-    await page.fill('.hc-modal input[type="time"]', "17:30");
-    assert.equal(await h.modal().locator('button[type="submit"]').isDisabled(), false);
-    await h.shot("assign-with-time");
-    await h.modal().locator('button[type="submit"]').click();
-    await h.modal().waitFor({ state: "detached" });
+    await h.openAssignPage("Nina Next", "Assign doctor");
+    const bar = (await page.locator(".aad-appt-bar").innerText()).replace(/\s+/g, " ");
+    for (const label of ["Concern", "Severity", "Support Type", "Urgency", "Time Window", "Appointment", "Current Doctor"]) assert.match(bar, new RegExp(label, "i"), label);
+    assert.equal(await page.locator('input[type="time"]').count(), 1);
+
+    await h.chooseOnPage("Hidayat Khan");
+    assert.match(await h.pageBanner(), /Enter the appointment time you're assigning before selecting a doctor/);
+    assert.equal(await page.locator(".aad-nav-title").count(), 1, "still on the page");
+    assert.equal((await h.doc(id)).status, "Pending", "nothing was saved");
+
+    await page.fill('input[type="time"]', "17:30");
+    await h.shot("assign-page-time");
+    await h.chooseOnPage("Hidayat Khan");
+    await h.waitForList();
+    await h.search("Nina Next");
     await h.until(async () => /05:30 PM/.test(await h.rowText("Nina Next")), "row shows the time");
     assert.equal((await h.doc(id)).assignedSlot, "05:30 PM");
   });
 
-  test("a busy doctor keeps the dialog open with the message; another doctor then works", async () => {
+  test("a flexible category booking shows its slot and needs no time", async () => {
+    const id = await h.make({ kind: "category", status: "upcoming", name: "Flex Cat", time: "04:00 PM" });
+    await h.search("Flex Cat");
+    await h.openAssignPage("Flex Cat", "Assign doctor");
+    assert.equal(await page.locator('input[type="time"]').count(), 0);
+    assert.match((await page.locator(".aad-appt-bar").innerText()).replace(/\s+/g, " "), /Slot 04:00 PM/i);
+    await h.chooseOnPage("Martin Perlin");
+    await h.waitForList();
+    assert.match(String((await h.doc(id)).status), /^Assigned$/);
+  });
+
+  test("a busy doctor stays on the page with the message; another doctor then works", async () => {
     await h.make({ status: "confirmed", doctor: 1, name: "Busy Bee", time: "11:00 AM", date: "2030-12-01" });
     const id = await h.make({ status: "upcoming", name: "Clash Case", time: "11:00 AM", date: "2030-12-01" });
     await h.search("Clash Case");
-    await h.row("Clash Case").locator("button", { hasText: "Assign doctor" }).click();
-    await h.modal().waitFor();
-    await h.until(async () => (await h.doctorNames()).length === 4, "doctors");
-    await h.pickDoctor("Nobita Mestry");
-    await h.modal().locator('button[type="submit"]').click();
-    await h.until(async () => /already booked/.test(await h.modal().innerText()), "inline message");
-    assert.equal(await h.modal().isVisible(), true);
+    await h.openAssignPage("Clash Case", "Assign doctor");
+    await h.chooseOnPage("Nobita Mestry");
+    await h.until(async () => /already booked/.test(await h.pageBanner()), "the message on the page");
+    assert.equal(await page.locator(".aad-nav-title").count(), 1, "still on the page");
     assert.equal((await h.doc(id)).status, "upcoming");
     assert.equal(/already updated, refreshing/.test(await h.toasts()), false, "a busy doctor is not a lost race");
-    await h.pickDoctor("Farah Siddiqui");
-    await h.modal().locator('button[type="submit"]').click();
-    await h.modal().waitFor({ state: "detached" });
+    await h.chooseOnPage("Farah Siddiqui");
+    await h.waitForList();
+    await h.search("Clash Case");
     await h.until(async () => /Farah Siddiqui/.test(await h.rowText("Clash Case")), "assigned to the other doctor");
   });
 
-  test("alternate doctor replaces the doctor and remembers the original; Go back restores it", async () => {
+  test("a booking changed by someone else meanwhile: the server's 409 message is shown on the page", async () => {
+    const id = await h.make({ status: "upcoming", name: "Raced Assign" });
+    await h.search("Raced Assign");
+    await h.openAssignPage("Raced Assign", "Assign doctor");
+    // another admin assigns it first
+    assert.equal((await h.call("POST", `/api/admin/bookings/${id}/assign-doctor`, { doctorId: (await (await fetch(`${api.url}/api/doctor/approved`)).json())[0].id })).status, 200);
+    await h.chooseOnPage("Hidayat Khan");
+    await h.until(async () => /already has a doctor/.test(await h.pageBanner()), "the 409 message on the page");
+    assert.equal(await page.locator(".aad-nav-title").count(), 1);
+  });
+
+  test("Alternate doctor opens the same page, replaces the doctor and remembers the original; Go back restores it", async () => {
     await h.reset();
     const id = await h.make({ status: "assigned", doctor: 0, name: "Alex Alt" });
     await h.search("Alex Alt");
-    await h.row("Alex Alt").locator(".adp-bk-alt").click();
-    await h.modal().waitFor();
-    assert.equal(await h.modal().locator("h2").innerText(), "Alternate doctor");
-    await h.until(async () => (await h.doctorNames()).length === 3, "the other 3 doctors");
-    assert.equal((await h.doctorNames()).includes("Dr. Martin Perlin"), false, "the current doctor is not offered");
-    assert.equal(await h.modal().getByText("Go back to").count(), 0);
-    await h.pickDoctor("Farah Siddiqui");
-    await h.modal().locator('button[type="submit"]').click();
-    await h.modal().waitFor({ state: "detached" });
+    await h.openAssignPage("Alex Alt", "Alternate doctor");
+    assert.equal((await page.locator(".aad-nav-title").innerText()).trim(), "Alternate Doctor");
+    assert.match((await page.locator(".aad-appt-bar").innerText()).replace(/\s+/g, " "), /Current Doctor Martin Perlin/i);
+    const current = h.pageDoctorRow("Martin Perlin").locator("button.aad-assign-btn");
+    assert.equal((await current.innerText()).trim(), "Assigned");
+    assert.equal(await current.isDisabled(), true, "the current doctor can't be picked again");
+    assert.equal((await h.pageDoctorRow("Farah Siddiqui").locator("button.aad-assign-btn").innerText()).trim(), "Reassign");
+    assert.equal(await page.locator(".aad-original").count(), 0, "no Go back yet");
+    await h.chooseOnPage("Farah Siddiqui");
+
+    await h.waitForList();
+    await h.until(async () => /Doctor changed/.test(await h.toasts()), "toast");
+    await h.search("Alex Alt");
     await h.until(async () => /Farah Siddiqui/.test(await h.rowText("Alex Alt")), "new doctor shown");
     assert.equal(await h.row("Alex Alt").locator(".adp-bk-doctor").getAttribute("title"), "Originally with Martin Perlin");
     assert.equal((await h.doc(id)).originalDoctorName, "Martin Perlin");
     const names = (await h.calls()).map((c) => c.name);
     assert.ok(names.includes("notifyAppointmentDoctorChanged") && names.includes("notifyPatientDoctorChanged"));
 
-    await h.row("Alex Alt").locator(".adp-bk-alt").click();
-    await h.modal().waitFor();
-    await h.until(async () => (await h.doctorNames()).length === 3, "doctors again");
-    await h.shot("alternate-go-back");
-    await h.modal().getByText("Go back to Martin Perlin").click();
-    await h.modal().waitFor({ state: "detached" });
+    await h.openAssignPage("Alex Alt", "Alternate doctor");
+    assert.match((await page.locator(".aad-original").innerText()).replace(/\s+/g, " "), /Originally with Martin Perlin\./);
+    await h.shot("alternate-page-go-back");
+    await page.locator(".aad-original-btn", { hasText: "Go back to Martin Perlin" }).click();
+    await h.waitForList();
+    await h.until(async () => /back with Martin Perlin/.test(await h.toasts()), "toast");
+    await h.search("Alex Alt");
     await h.until(async () => /Martin Perlin/.test(await h.rowText("Alex Alt")), "original restored");
     const restored = await h.doc(id);
     assert.equal(restored.originalDoctorId, null);
     assert.equal(restored.status, "assigned");
+  });
+
+  test("a second alternate keeps the very first doctor as the original", async () => {
+    const id = await h.make({ status: "assigned", doctor: 2, name: "Twice Alt" });
+    await h.search("Twice Alt");
+    await h.openAssignPage("Twice Alt", "Alternate doctor");
+    await h.chooseOnPage("Martin Perlin");
+    await h.waitForList();
+    await h.search("Twice Alt");
+    await h.until(async () => /Martin Perlin/.test(await h.rowText("Twice Alt")), "first change");
+    await h.openAssignPage("Twice Alt", "Alternate doctor");
+    await h.chooseOnPage("Farah Siddiqui");
+    await h.waitForList();
+    await h.search("Twice Alt");
+    await h.until(async () => /Farah Siddiqui/.test(await h.rowText("Twice Alt")), "second change");
+    assert.equal((await h.doc(id)).originalDoctorName, "Hidayat Khan");
   });
 
   test("changing the doctor on a Confirmed booking (either kind) sends it back to Assigned", async () => {
@@ -265,15 +348,28 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       const id = await h.make({ kind, status: "confirmed", doctor: 2, name });
       await h.search(name);
       assert.match(await h.rowText(name), /Confirmed/);
-      await h.row(name).locator(".adp-bk-alt").click();
-      await h.modal().waitFor();
-      await h.until(async () => (await h.doctorNames()).length === 3, "doctors");
-      await h.pickDoctor("Martin Perlin");
-      await h.modal().locator('button[type="submit"]').click();
-      await h.modal().waitFor({ state: "detached" });
+      await h.openAssignPage(name, "Alternate doctor");
+      if (kind === "category") assert.match((await page.locator(".aad-appt-bar").innerText()).replace(/\s+/g, " "), /Concern/i);
+      await h.chooseOnPage("Martin Perlin");
+      await h.waitForList();
+      await h.search(name);
       await h.until(async () => /Assigned/.test(await h.rowText(name)) && !/Confirmed/.test(await h.rowText(name)), `${kind} row is Assigned`);
       assert.notEqual((await h.doc(id)).status.toLowerCase(), "confirmed");
     }
+  });
+
+  test("a Complete or Cancelled booking: the list links are disabled, and the page itself refuses", async () => {
+    const id = await h.make({ status: "complete", doctor: 0, name: "Closed Page" });
+    await h.search("Closed Page");
+    const link = h.row("Closed Page").locator('td[data-label="Doctor"] .adp-bk-alt');
+    assert.equal(await link.evaluate((el) => el.tagName), "BUTTON", "not a link");
+    assert.equal(await link.isDisabled(), true);
+    await page.goto(`${h.harnessUrl}/tests/e2e/adminAppointments/harness/index.html?start=${encodeURIComponent(`/admin-dashboard/appointments/${id}/assign`)}`);
+    await h.onAssignPage();
+    assert.match(await h.pageBanner(), /A complete booking can't change doctor/);
+    const buttons = await page.locator(".aad-doctor-row:not(.aad-doctor-row--head) button.aad-assign-btn").evaluateAll((els) => els.map((e) => e.disabled));
+    assert.ok(buttons.length === 4 && buttons.every(Boolean), "every Assign button is disabled");
+    await h.open("/admin-dashboard/appointments?tab=all");
   });
 
   // ── Confirm, auto complete, cancel ────────────────────────────────────────
@@ -734,23 +830,14 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.open("/admin-dashboard/appointments?tab=all");
   });
 
-  test("Assign doctor is in the Doctor column, under Not assigned, and not in the Actions column", async () => {
-    const id = await h.make({ status: "upcoming", name: "Dora Doctorcell" });
+  test("Assign doctor is a link in the Doctor column, under Not assigned, and not in the Actions column", async () => {
+    await h.make({ status: "upcoming", name: "Dora Doctorcell" });
     await h.search("Dora Doctorcell");
     const doctorCell = h.row("Dora Doctorcell").locator('td[data-label="Doctor"]');
     assert.match((await doctorCell.innerText()).replace(/\s+/g, " "), /^Not assigned Assign doctor$/);
-    assert.equal(await h.row("Dora Doctorcell").locator(".adp-bk-actions button", { hasText: "Assign doctor" }).count(), 0, "not in Actions");
-    const [assign, alt] = [await doctorCell.locator("button").boundingBox(), null];
-    assert.ok(assign, "the button is shown");
-    await doctorCell.locator("button", { hasText: "Assign doctor" }).click();
-    await h.modal().waitFor();
-    await h.until(async () => (await h.doctorNames()).length === 4, "doctors");
-    await h.pickDoctor("Farah Siddiqui");
-    await h.modal().locator('button[type="submit"]').click();
-    await h.modal().waitFor({ state: "detached" });
-    await h.until(async () => /Farah Siddiqui/.test(await h.rowText("Dora Doctorcell")), "assigned");
-    assert.equal((await h.doc(id)).status, "assigned");
-    assert.equal(alt, null);
+    assert.equal(await doctorCell.locator("a", { hasText: "Assign doctor" }).count(), 1, "it is a link to the page");
+    assert.equal(await h.row("Dora Doctorcell").locator(".adp-bk-actions", { hasText: "Assign doctor" }).count(), 0, "not in Actions");
+    assert.equal(await page.locator(".hc-modal").count(), 0);
   });
 
   test("a booking marked Assigned (or Confirmed, or Pending) with no doctor can be assigned one, and so can one whose doctor was deleted", async () => {
@@ -765,14 +852,11 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       const id = await h.make({ name, ...spec });
       await h.search(name);
       assert.match(await h.rowText(name), /Not assigned/, name);
-      const assign = h.row(name).locator('td[data-label="Doctor"] button', { hasText: "Assign doctor" });
-      assert.equal(await assign.isDisabled(), false, `${name}: the Assign button is enabled`);
-      await assign.click();
-      await h.modal().waitFor();
-      await h.until(async () => (await h.doctorNames()).length === 4, "doctors");
-      await h.pickDoctor("Hidayat Khan");
-      await h.modal().locator('button[type="submit"]').click();
-      await h.modal().waitFor({ state: "detached" });
+      await h.openAssignPage(name, "Assign doctor");
+      assert.equal((await page.locator(".aad-nav-title").innerText()).trim(), "Assign Doctor", `${name}: treated as having no doctor`);
+      await h.chooseOnPage("Hidayat Khan");
+      await h.waitForList();
+      await h.search(name);
       await h.until(async () => /Hidayat Khan/.test(await h.rowText(name)), `${name} assigned`);
       assert.match(String((await h.doc(id)).status).toLowerCase(), /^assigned$/, name);
     }
@@ -893,7 +977,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.open("/admin-dashboard/appointments?tab=all");
   });
 
-  test("old Category Consultations and assign-doctor URLs redirect to the Appointments page", async () => {
+  test("old Category Consultations URLs redirect to the Appointments page, and the assign URL is a real page", async () => {
     const landed = async (start) => {
       await page.goto(`${h.harnessUrl}/tests/e2e/adminAppointments/harness/index.html?mode=routes&start=${encodeURIComponent(start)}`);
       return (await page.locator("#landed").innerText()).trim();
@@ -901,8 +985,8 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     const id = "64b000000000000000000abc";
     assert.equal(await landed("/admin-dashboard/category-consultations"), "/admin-dashboard/appointments?tab=all");
     assert.equal(await landed(`/admin-dashboard/category-consultations/${id}`), `/admin-dashboard/appointments/${id}`);
-    assert.equal(await landed(`/admin-dashboard/category-consultations/assign-doctor/${id}`), `/admin-dashboard/appointments/${id}`);
-    assert.equal(await landed(`/admin-dashboard/appointments/${id}/assign`), `/admin-dashboard/appointments/${id}`);
+    assert.equal(await landed(`/admin-dashboard/category-consultations/assign-doctor/${id}`), `/admin-dashboard/appointments/${id}/assign`, "the old category assign page opens the assign page");
+    assert.equal(await landed(`/admin-dashboard/appointments/${id}/assign`), `/admin-dashboard/appointments/${id}/assign`, "the assign URL is a page again, not a redirect");
     await h.open("/admin-dashboard/appointments?tab=all");
   });
 

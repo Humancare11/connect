@@ -13,26 +13,41 @@ const exists = (...p) => fs.existsSync(path.join(src, ...p));
 const walk = (dir) =>
   fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
 
-test("the old pages are deleted", () => {
-  for (const f of ["AdminCategoryConsultations.jsx", "AdminCategoryConsultationDetails.jsx", "AdminAssignCategoryDoctor.jsx", "AdminAssignDoctor.jsx", "AdminAssignDoctor.css"]) {
+test("the old Category Consultations pages and the old category assign page are deleted; the assign popup is gone", () => {
+  for (const f of ["AdminCategoryConsultations.jsx", "AdminCategoryConsultationDetails.jsx", "AdminAssignCategoryDoctor.jsx"]) {
     assert.equal(exists("pages", "admin", f), false, f);
   }
+  for (const f of ["DoctorPickerModal.jsx", "useApprovedDoctors.js"]) assert.equal(exists("pages", "admin", "appointments", f), false, f);
 });
 
-test("App.jsx no longer imports or routes the old pages, and uses the shared redirects", () => {
+test("one full-page assign screen serves both kinds, at /admin-dashboard/appointments/:id/assign, wired to the new endpoints", () => {
+  assert.equal(exists("pages", "admin", "AdminAssignDoctor.jsx"), true);
+  assert.equal(exists("pages", "admin", "AdminAssignDoctor.css"), true);
   const app = read("App.jsx");
-  assert.doesNotMatch(app, /AdminCategoryConsultation|AdminAssignCategoryDoctor|AdminAssignDoctor/);
-  assert.doesNotMatch(app, /element=\{<Admin(Category|Assign)/);
+  assert.match(app, /const AdminAssignDoctor = lazy\(\(\) => import\("\.\/pages\/admin\/AdminAssignDoctor"\)\)/);
+  assert.match(app, /path="\/admin-dashboard\/appointments\/:id\/assign"/);
+  assert.doesNotMatch(app, /AdminCategoryConsultation|AdminAssignCategoryDoctor/);
   assert.match(app, /\{legacyAdminRedirects\}/);
+  const page = read("pages", "admin", "AdminAssignDoctor.jsx");
+  assert.match(page, /alternateDoctor, assignDoctor, revertDoctor/);
+  assert.doesNotMatch(page, /change-doctor|category-consultation/);
 });
 
-test("the old URLs redirect: the list to Appointments (All tab), booking pages to the booking", () => {
+test("the list's Assign doctor and Alternate doctor go to that page; there is no popup code for them", () => {
+  const table = read("pages", "admin", "appointments", "BookingsTable.jsx");
+  assert.match(table, /assignUrl\(row\.id, searchParams\.toString\(\)\)/);
+  assert.doesNotMatch(table, /handlers\.(assign|alternate)/);
+  const hook = read("pages", "admin", "appointments", "useBookingActions.js");
+  assert.doesNotMatch(hook, /bookingApi\.(assign|alternate|revert)/);
+});
+
+test("the old URLs redirect: the list to Appointments (All tab), a category booking page to the booking, the old category assign page to the assign page; the assign URL itself is not redirected", () => {
   const r = read("pages", "admin", "legacyRedirects.jsx");
   assert.match(r, /path="\/admin-dashboard\/category-consultations" element=\{<Navigate to="\/admin-dashboard\/appointments\?tab=all" replace \/>\}/);
-  for (const p of ["/admin-dashboard/category-consultations/assign-doctor/:id", "/admin-dashboard/category-consultations/:id", "/admin-dashboard/appointments/:id/assign"]) {
-    assert.ok(r.includes(`path="${p}" element={<RedirectToBooking />}`), p);
-  }
-  assert.match(r, /\/admin-dashboard\/appointments\/\$\{id\}/);
+  assert.ok(r.includes('path="/admin-dashboard/category-consultations/assign-doctor/:id" element={<RedirectToBooking assign />}'));
+  assert.ok(r.includes('path="/admin-dashboard/category-consultations/:id" element={<RedirectToBooking />}'));
+  assert.doesNotMatch(r, /path="\/admin-dashboard\/appointments\/:id\/assign"/);
+  assert.ok(r.includes('/admin-dashboard/appointments/${id}${assign ? "/assign" : ""}'));
 });
 
 test("the sidebar has one Appointments entry and no Category Consultations", () => {
