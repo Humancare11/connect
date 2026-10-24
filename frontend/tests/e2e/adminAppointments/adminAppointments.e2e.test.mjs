@@ -621,8 +621,8 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await openMenu();
     await choose("Select this page");
     await bulkButton("mark-testing").click();
-    await h.until(async () => (await resultTitle()) === "Mark as testing: 3 done", "result");
-    await closeResult();
+    await h.until(async () => /3 bookings marked as testing\./.test(await h.toasts()), "the toast");
+    assert.equal(await page.locator(".hc-modal").count(), 0, "no dialog, no confirmation: just the toast");
     await h.until(async () => (await page.locator("table.adp-bk .adp-bk-tag").count()) === 3, "TESTING tags");
     await h.until(async () => (await h.tabCount("Testing")) === testing + 3, "Testing count up by 3");
     for (const id of ids) assert.equal((await h.doc(id)).isTesting, true);
@@ -631,8 +631,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await openMenu();
     await choose("Select this page");
     await bulkButton("unmark-testing").click();
-    await h.until(async () => (await resultTitle()) === "Unmark testing: 3 done", "result");
-    await closeResult();
+    await h.until(async () => /3 bookings unmarked as testing\./.test(await h.toasts()), "the toast");
     await h.until(async () => (await page.locator("table.adp-bk .adp-bk-tag").count()) === 0, "tags gone");
     await h.until(async () => (await h.tabCount("Testing")) === testing, "Testing count back");
     for (const id of ids) assert.equal((await h.doc(id)).isTesting, false);
@@ -653,8 +652,51 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.equal((await h.doc(id)).isTesting, false);
     await page.unroute("**/api/admin/bookings/bulk");
     await bulkButton("mark-testing").click();
-    await h.until(async () => (await resultTitle()) === "Mark as testing: 1 done", "retry works");
-    await closeResult();
+    await h.until(async () => /1 booking marked as testing\./.test(await h.toasts()), "retry works");
+    assert.equal((await h.doc(id)).isTesting, true);
+    await page.locator(".adp-bk-bulk-btn--done").click();
+  });
+
+  test("the testing toast has an Undo that reverses exactly the bookings that changed", async () => {
+    await h.reset();
+    const a = await h.make({ status: "confirmed", doctor: 0, name: "Undo One" });
+    const b = await h.make({ kind: "category", status: "upcoming", name: "Undo Two" });
+    const alreadyTesting = await h.make({ status: "assigned", doctor: 1, name: "Undo Three", testing: true });
+    await h.search("Undo ");
+    await h.until(async () => (await h.rowsLocator().count()) === 3, "3 Undo rows");
+    const undoButton = () => page.locator(".hc-toast__action", { hasText: "Undo" });
+    // Toasts from earlier tests may still be showing (the Undo ones stay 10 seconds): start from none.
+    while ((await page.locator(".hc-toast__close").count()) > 0) await page.locator(".hc-toast__close").first().click();
+    await h.until(async () => (await page.locator(".hc-toast").count()) === 0, "no toasts");
+
+    // Mark all three as testing, then Undo: the two that changed are unmarked, the one that already was testing stays.
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("mark-testing").click();
+    await h.until(async () => (await undoButton().count()) === 1, "the Undo button");
+    assert.match(await h.toasts(), /3 bookings marked as testing\./);
+    await h.shot("testing-undo-toast");
+    await undoButton().click();
+    await h.until(async () => /Undone\./.test(await h.toasts()), "undone");
+    await h.until(async () => (await h.doc(a)).isTesting === false && (await h.doc(b)).isTesting === false, "back to normal");
+    assert.equal((await h.doc(alreadyTesting)).isTesting, true, "a booking that was already testing is not touched by the Undo");
+    await h.until(async () => (await page.locator("table.adp-bk .adp-bk-tag").count()) === 1, "only the one that was testing before keeps its tag");
+    assert.equal(await undoButton().count(), 0, "the toast is dismissed");
+
+    // And the other way: unmark, then Undo marks them again.
+    await h.until(async () => (await page.locator(".adp-bk-rowcheck").count()) === 3, "still selecting");
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("mark-testing").click();
+    await h.until(async () => (await undoButton().count()) === 1, "Undo for the mark");
+    await openMenu();
+    await choose("Select this page");
+    await bulkButton("unmark-testing").click();
+    await h.until(async () => /unmarked as testing\./.test(await h.toasts()), "unmark toast");
+    await h.until(async () => (await undoButton().count()) >= 1, "Undo for the unmark");
+    await undoButton().last().click();
+    await h.until(async () => (await h.doc(a)).isTesting === true && (await h.doc(b)).isTesting === true, "marked again by the undo");
+    assert.deepEqual(await h.calls(), [], "none of this sent anything");
     await page.locator(".adp-bk-bulk-btn--done").click();
   });
 

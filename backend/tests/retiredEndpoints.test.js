@@ -35,6 +35,7 @@ const RETIRED = [
   { router: categoryRouter, method: "PATCH", path: "/:id/status", use: "POST /api/admin/bookings/:id/confirm, /cancel or /auto-complete" },
   { router: categoryRouter, method: "DELETE", path: "/:id", use: "DELETE /api/admin/bookings/:id (super admin only)" },
   { router: categoryRouter, method: "PATCH", path: "/:id/assign-doctor", use: "POST /api/admin/bookings/:id/assign-doctor (or /alternate-doctor)" },
+  { router: appointmentsRouter, method: "GET", path: "/admin/all", use: "GET /api/admin/bookings" },
   { router: appointmentsRouter, method: "PUT", path: "/:id/change-doctor", use: "POST /api/admin/bookings/:id/alternate-doctor (or /assign-doctor for a booking with no doctor)" },
 ];
 
@@ -85,6 +86,7 @@ test("the handlers behind the old endpoints are gone, not just unrouted", () => 
     assert.equal(categoryController[name], undefined, name);
   }
   assert.equal(appointmentController.reassignAppointmentDoctor, undefined);
+  assert.equal(appointmentController.getAllAppointments, undefined);
   for (const name of ["createCategoryConsultation", "getMyCategoryConsultations", "getDoctorCategoryConsultations"]) {
     assert.equal(typeof categoryController[name], "function", name);
   }

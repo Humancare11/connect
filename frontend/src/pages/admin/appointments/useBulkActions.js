@@ -4,7 +4,7 @@ import { useConfirm } from "../../../components/ui/ConfirmDialog";
 import * as bookingApi from "./bookingApi";
 import { explainActionError } from "./bookingFormat";
 import { ADMIN_CONFIRM } from "./useBookingActions";
-import { bulkRefundNote, describeBulkResult, eligibleCount, summarizeBulk } from "./selectionLogic";
+import { TESTING_ACTIONS, UNDO_TOAST_MS, bulkRefundNote, describeBulkResult, eligibleCount, summarizeBulk, testingToastText } from "./selectionLogic";
 
 // Bulk actions on the ticked rows. The server applies the same rules as for a single row and answers per
 // booking; a booking that can't be changed is reported (skipped, with the reason), never fatal to the rest.
@@ -42,6 +42,50 @@ export default function useBulkActions({ selection, reload }) {
     }
   };
 
+  // Mark / unmark testing: runs at once, answers with a toast that has Undo (the opposite action on the bookings that
+  // changed). Only if some booking was skipped or failed is the result list shown as well.
+  const runTesting = async (action, rows) => {
+    const rowsById = new Map(rows.map((r) => [r.id, r]));
+    setBusy(true);
+    try {
+      const res = await bookingApi.bulk({ action, ids: rows.map((r) => r.id) });
+      const items = (res.data.results || []).map((r) => describeBulkResult(r, rowsById));
+      const summary = summarizeBulk(items);
+      const doneIds = items.filter((i) => i.outcome === "done").map((i) => i.id);
+      // Undo reverses only what really changed: a booking that was already in the target state is left alone.
+      const target = action === "mark-testing";
+      const changedIds = doneIds.filter((id) => (rowsById.get(id)?.isTesting === true) !== target);
+      if (summary.skipped || summary.failed) {
+        setDialog({ type: "result", result: { action, items, summary, refundNote: "" } });
+      }
+      if (doneIds.length) {
+        const undoAction = TESTING_ACTIONS[action];
+        toast.success(testingToastText(action, doneIds.length), {
+          duration: UNDO_TOAST_MS,
+          action: changedIds.length === 0 ? undefined : {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                await bookingApi.bulk({ action: undoAction, ids: changedIds });
+                toast.info("Undone.");
+              } catch (err) {
+                toast.error(explainActionError(err).message);
+              } finally {
+                reload();
+              }
+            },
+          },
+        });
+      }
+      selection.clear();
+      reload();
+    } catch (err) {
+      toast.error(explainActionError(err).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const start = async (action) => {
     const rows = selection.selectedRows;
     if (rows.length === 0) return;
@@ -71,7 +115,7 @@ export default function useBulkActions({ selection, reload }) {
     }
 
     // Mark / unmark testing: any status, nothing is sent to anyone.
-    run(action, rows);
+    runTesting(action, rows);
   };
 
   return {

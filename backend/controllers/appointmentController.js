@@ -5,7 +5,6 @@ const User = require("../models/User");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const mongoose = require("mongoose");
 const { sendEmail } = require("../utils/sendEmail");
-const { recordSecurityEvent } = require("../utils/securityMonitor");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { getS3ObjectUrl } = require("../config/s3");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
@@ -836,60 +835,6 @@ const cancelAppointment = async (req, res) => {
   }
 };
 
-const getAllAppointments = async (req, res) => {
-  try {
-    const appointments = await Appointment.find()
-      .populate("patientId", "patientId name email gender dob city country")
-      .populate("doctorId", "name email doctorId")
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const doctorIds = appointments
-      .map((appt) => appt.doctorId?._id?.toString() || appt.doctorId?.toString())
-      .filter(Boolean);
-
-    const enrollments = await Enrollment.find({ doctorId: { $in: doctorIds } }).lean();
-    const enrollmentByDoctor = new Map(
-      enrollments.map((e) => [e.doctorId.toString(), e])
-    );
-
-    const enhancedAppointments = appointments.map((appt) => {
-      const doctorId = appt.doctorId?._id?.toString() || appt.doctorId?.toString();
-      const enrollment = doctorId ? enrollmentByDoctor.get(doctorId) : null;
-      return {
-        ...appt,
-        doctorMeta: {
-          specialty: enrollment?.specialization || "—",
-          city: enrollment?.city || "—",
-          country: enrollment?.country || "—",
-          experience: enrollment?.experience || "—",
-          price: enrollment?.consultantFees || null,
-          languages: enrollment?.languagesKnown || [],
-          address: enrollment?.clinicAddress || enrollment?.address || "—",
-          timezone: enrollment?.timezone || "",
-          phoneNumber: enrollment?.phoneNumber || "",
-          countryCode: enrollment?.countryCode || "",
-        },
-      };
-    });
-
-    if (enhancedAppointments.length >= 100) {
-      await recordSecurityEvent(req, {
-        type: "large_data_export",
-        severity: "medium",
-        title: "Large appointment dataset accessed",
-        resource: "Appointment",
-        metadata: { count: enhancedAppointments.length, endpoint: req.originalUrl },
-      });
-    }
-
-    res.status(200).json(await withPresignedMedicalReports(enhancedAppointments));
-  } catch (error) {
-    console.error("getAllAppointments error:", error);
-    res.status(500).json({ msg: "Failed to fetch appointments." });
-  }
-};
-
 const getAppointmentById = async (req, res) => {
   try {
     let appointment = await Appointment.findById(req.params.id)
@@ -1061,7 +1006,6 @@ module.exports = {
   adminCompleteAppointment,
   reopenAppointment,
   cancelAppointment,
-  getAllAppointments,
   getAppointmentById,
   getDoctorOwnAppointment,
   getPatientOwnAppointment,

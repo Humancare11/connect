@@ -70,7 +70,8 @@ test("booking date and fee", () => {
   assert.equal(formatBookedOn(null), "—");
   assert.equal(formatBookedOn("not a date"), "—");
   assert.match(formatBookedOn("2026-10-16T10:00:00.000Z"), /^\d{1,2} Oct 2026$/);
-  assert.equal(formatFee(99), "$99");
+  assert.equal(formatFee(99), "$99.00");
+  assert.equal(formatFee(5), "$5.00");
   assert.equal(formatFee(49.5), "$49.50");
   assert.equal(formatFee(12.25), "$12.25");
   assert.equal(formatFee(0), "—");

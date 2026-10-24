@@ -86,9 +86,8 @@ export function formatConsultation(consultation) {
 export function formatFee(value) {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "—";
-  // Whole dollars have no decimals; anything with cents shows both.
-  const digits = Number.isInteger(amount) ? 0 : 2;
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(amount);
+  // Always two decimals, as in the reference design: $99.00, $12.50.
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 }
 
 // The last 8 characters of the booking id, shown as "...ABCD1234".

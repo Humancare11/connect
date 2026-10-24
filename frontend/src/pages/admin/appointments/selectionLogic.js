@@ -91,6 +91,16 @@ export function describeBulkResult(result, rowsById) {
   return { id: result.id, name, outcome: "failed", reason: result.message || "Something went wrong with this booking.", paid: false };
 }
 
+// Marking or unmarking testing needs no confirmation: it answers with a toast that has an Undo, which does the
+// opposite to the same bookings.
+export const TESTING_ACTIONS = { "mark-testing": "unmark-testing", "unmark-testing": "mark-testing" };
+export const UNDO_TOAST_MS = 10000;
+
+export function testingToastText(action, count) {
+  const noun = count === 1 ? "booking" : "bookings";
+  return action === "mark-testing" ? `${count} ${noun} marked as testing.` : `${count} ${noun} unmarked as testing.`;
+}
+
 export function summarizeBulk(items) {
   const summary = { done: 0, skipped: 0, failed: 0 };
   for (const item of items) summary[item.outcome] += 1;

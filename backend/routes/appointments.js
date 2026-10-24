@@ -6,14 +6,15 @@ const {
   createAppointment, getPatientAppointments, getDoctorAppointments,
   confirmAppointment, completeAppointment, adminCompleteAppointment, reopenAppointment,
   cancelAppointment,
-  getAllAppointments, getAppointmentById, getDoctorOwnAppointment, getPatientOwnAppointment, getBookedSlots,
+  getAppointmentById, getDoctorOwnAppointment, getPatientOwnAppointment, getBookedSlots,
 } = require("../controllers/appointmentController");
 
 router.post("/", verifyUserToken, createAppointment);
 router.get("/mine", verifyUserToken, getPatientAppointments);
 router.get("/doctor", verifyDoctorToken, getDoctorAppointments);
 router.get("/booked-slots", verifyUserToken, getBookedSlots);
-router.get("/admin/all", verifyAdminToken, adminOnly, getAllAppointments);
+// Retired: the old admin Appointments page was its only caller. The unified list is GET /api/admin/bookings. Answers 410 for one release.
+router.get("/admin/all", verifyAdminToken, adminOnly, retiredEndpoint("GET /api/admin/bookings"));
 // Retired: it set the booking Confirmed straight away, which skips the doctor's confirmation. Answers 410 for one release.
 router.put("/:id/change-doctor", verifyAdminToken, adminOnly, retiredEndpoint("POST /api/admin/bookings/:id/alternate-doctor (or /assign-doctor for a booking with no doctor)"));
 router.put("/:id/confirm", verifyDoctorToken, confirmAppointment);
