@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {
   DEFAULT_TAB, PAGE_SIZE, STATUS_META, TAB_LABELS, TAB_ORDER,
   formatBookedOn, formatConsultation, formatFee, isClosed, originalDoctorHint, pageFromParam, pageWindow,
-  rangeText, rowNumber, shortBookingId, showAssignedByColumn, tabFromParam,
-  AUTO_COMPLETE_HINT, CANCEL_REASONS, refundWarning, canAlternate, assignedByHint, canAssign, canAutoComplete, canCancel, canReactivate,
+  rangeText, rowNumber, shortBookingId, tabFromParam, CARD_BELOW, rowActions,
+  CANCEL_REASONS, refundWarning, canAlternate, assignedByHint, canAssign, canAutoComplete, canCancel, canReactivate,
   explainActionError, toTime12, toTime24,
 } from "./bookingFormat.js";
 import * as formatModule from "./bookingFormat.js";
@@ -31,8 +31,9 @@ test("tab and page come from the URL safely", () => {
   for (const bad of ["0", "-2", "1.5", "abc", "", null, undefined]) assert.equal(pageFromParam(bad), 1, String(bad));
 });
 
-test("the Assigned by column is hidden on the Upcoming tab only", () => {
-  for (const tab of TAB_ORDER) assert.equal(showAssignedByColumn(tab), tab !== "upcoming", tab);
+test("there is no separate Assigned by column helper any more; the card layout starts at 1000px of table width", () => {
+  assert.equal(formatModule.showAssignedByColumn, undefined);
+  assert.equal(CARD_BELOW, 1000);
 });
 
 test("Complete and Cancelled are closed", () => {
@@ -84,7 +85,6 @@ const row = (status, doctorName = "Dr X", extra = {}) => ({ id: "1", kind: "appo
 test("the five cancel reasons and the paid warning are as agreed", () => {
   assert.deepEqual(CANCEL_REASONS, ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"]);
   assert.equal(refundWarning({ paymentGateway: "stripe" }), "This booking was paid. Refund it in Stripe.");
-  assert.match(AUTO_COMPLETE_HINT, /assigned or confirmed/);
 });
 
 test("buttons follow the server rules for every status, with and without a doctor", () => {
@@ -118,6 +118,28 @@ test("buttons follow the server rules for every status, with and without a docto
     assert.equal(canCancel(row(status, null)), false);
     assert.equal(canReactivate(row(status, null)), false);
   }
+});
+
+test("each row shows only the buttons that work for it (Cancel for super admins only)", () => {
+  const admin = { isSuperAdmin: false };
+  const sup = { isSuperAdmin: true };
+  // No doctor, any open status: View, Cancel (no Auto complete).
+  for (const status of ["upcoming", "pending", "assigned", "confirmed"]) {
+    assert.deepEqual(rowActions(row(status, null), sup), ["view", "cancel"], status);
+    assert.deepEqual(rowActions(row(status, null), admin), ["view"], status);
+  }
+  // A doctor and Assigned or Confirmed: View, Auto complete, Cancel.
+  for (const status of ["assigned", "confirmed"]) {
+    assert.deepEqual(rowActions(row(status), sup), ["view", "autoComplete", "cancel"], status);
+    assert.deepEqual(rowActions(row(status), admin), ["view", "autoComplete"], status);
+  }
+  // A doctor and Pending: Auto complete does not work yet, so it is not shown.
+  assert.deepEqual(rowActions(row("pending"), sup), ["view", "cancel"]);
+  // Complete: View, Reactivate. Cancelled: View only. Cancel is never offered on a closed booking.
+  assert.deepEqual(rowActions(row("complete"), sup), ["view", "reactivate"]);
+  assert.deepEqual(rowActions(row("complete"), admin), ["view", "reactivate"]);
+  assert.deepEqual(rowActions(row("complete", null), sup), ["view"]);
+  assert.deepEqual(rowActions(row("cancelled"), sup), ["view"]);
 });
 
 test("there is no admin Confirm helper any more", () => {

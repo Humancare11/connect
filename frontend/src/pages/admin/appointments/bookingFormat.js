@@ -32,8 +32,9 @@ export const STATUS_META = {
 
 export const isClosed = (status) => status === "complete" || status === "cancelled";
 
-// "Assigned by" is empty until a doctor is assigned, so the Upcoming tab has no use for it.
-export const showAssignedByColumn = (tab) => tab !== "upcoming";
+// The list switches from a table to one card per booking when the table area is narrower than this (px). The stylesheet's
+// @container rule uses the same number. The area is the page minus the sidebar, so it is about 260px less than the window.
+export const CARD_BELOW = 1000;
 
 export const tabFromParam = (value) => (TAB_ORDER.includes(value) ? value : DEFAULT_TAB);
 
@@ -130,7 +131,16 @@ export const canReactivate = (row) => hasDoctor(row) && row.status === "complete
 export const canAutoComplete = (row) => hasDoctor(row) && ["assigned", "confirmed"].includes(row.status);
 export const canCancel = (row) => !isClosed(row.status);
 
-export const AUTO_COMPLETE_HINT = "Only assigned or confirmed bookings can be auto completed";
+// The buttons a row shows, in order. Only the ones that work for that row: a button that could not be used is left out
+// rather than greyed. View always; then Auto complete (a booking with a doctor that is Assigned or Confirmed) or
+// Reactivate (a Complete booking with a doctor); then Cancel, for super admins only.
+export function rowActions(row, { isSuperAdmin = false } = {}) {
+  const out = ["view"];
+  if (canAutoComplete(row)) out.push("autoComplete");
+  if (canReactivate(row)) out.push("reactivate");
+  if (isSuperAdmin && canCancel(row)) out.push("cancel");
+  return out;
+}
 
 // <input type="time"> uses "17:30"; bookings store "05:30 PM".
 export function toTime12(value) {

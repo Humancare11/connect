@@ -27,6 +27,10 @@ const SCREENS = [
   { name: "superadmin", drawer: true, phoneOnly: true, note: "Admin panel as a super admin on a phone with the menu drawer open" },
   { name: "superadmin", note: "Admin panel, signed in as a super admin" },
   { name: "paymentadmin", note: "Admin panel, signed in as a payment admin" },
+  { name: "adminpage-dashboard", note: "Admin Dashboard page (not the Appointments page)" },
+  { name: "adminpage-users", note: "Manage Users page" },
+  { name: "adminpage-tickets", note: "Support Tickets page" },
+  { name: "adminpage-doctors", note: "Our Doctors page" },
   { name: "portal", note: "Super Admin Portal (/superadmin-dashboard)" },
   { name: "employee", note: "Employee admin layout" },
   { name: "partner", note: "Partner layout" },
@@ -162,7 +166,10 @@ if (compareDir) {
 } else {
   const out = path.resolve(arg("--out") || "../docs/ui-baseline");
   const { hashes, errors } = await render(out, only);
-  fs.writeFileSync(path.join(out, "hashes.json"), JSON.stringify(hashes, null, 2) + "\n");
+  // With --only, add to the hashes already saved instead of replacing them.
+  const hashFile = path.join(out, "hashes.json");
+  const kept = only && fs.existsSync(hashFile) ? JSON.parse(fs.readFileSync(hashFile, "utf8")) : {};
+  fs.writeFileSync(hashFile, JSON.stringify({ ...kept, ...hashes }, null, 2) + "\n");
   console.log(`saved ${Object.keys(hashes).length} screenshots to ${out}`);
   if (errors.length) console.log("page errors:\n" + errors.join("\n"));
 }

@@ -2,6 +2,7 @@
 // (see stubContexts), the API is answered by the browser-side route handler in capture.mjs, and the page content is a
 // fixed placeholder except for the admin screens, which show the real Appointments page.
 //   ?screen=admin|superadmin|paymentadmin|portal|employee|partner|doctor|patient
+//   &path=/admin-dashboard/appointments?tab=all   (URL-encoded) start on another URL than the screen's default
 //   &adminCss=1   also loads the admin stylesheets first (the worst case for a leak into doctor/patient screens)
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -44,6 +45,18 @@ const screens = {
     return () => <Layout><Placeholder title="Patient page" /></Layout>;
   } },
 };
+// Other admin pages inside the admin layout, to show a change to the Appointments page leaves them as they were.
+const adminPage = (path, loadPage) => ({
+  path,
+  load: async () => {
+    const [{ default: Layout }, { default: Page }] = await Promise.all([import("../../../src/pages/admin/AdminLayout.jsx"), loadPage()]);
+    return () => <Layout><Page /></Layout>;
+  },
+});
+screens["adminpage-dashboard"] = adminPage("/admin-dashboard", () => import("../../../src/pages/admin/AdminDashboard.jsx"));
+screens["adminpage-users"] = adminPage("/admin-dashboard/manage-users", () => import("../../../src/pages/admin/ManageUsers.jsx"));
+screens["adminpage-tickets"] = adminPage("/admin-dashboard/tickets", () => import("../../../src/pages/admin/SupportTickets.jsx"));
+screens["adminpage-doctors"] = adminPage("/admin-dashboard/our-doctors", () => import("../../../src/pages/admin/OurDoctors.jsx"));
 screens.superadmin = screens.admin;
 screens.paymentadmin = { ...screens.admin, path: "/admin-dashboard/manual-invoices" };
 
@@ -59,7 +72,7 @@ async function main() {
   createRoot(document.getElementById("root")).render(
     <ToastProvider>
       <ConfirmProvider>
-        <MemoryRouter initialEntries={[spec.path]}>
+        <MemoryRouter initialEntries={[params.get("path") || spec.path]}>
           <Routes>
             <Route path="*" element={<Screen />} />
           </Routes>

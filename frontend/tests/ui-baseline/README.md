@@ -26,3 +26,17 @@ rounded translucent boxes) move by 1-16 levels out of 255 between two renders of
 reported **identical** when its hash matches, or when no pixel moved by more than 24 levels and at most 150 pixels moved
 by more than 2. A real change moves hundreds or thousands of pixels. The tool prints the noise it ignored, and a swapped
 image is reported DIFFERENT (checked).
+
+## Appointments table checks
+
+```bash
+node tests/ui-baseline/appointmentsTable.mjs     # screenshots in docs/ui-after/appointments-table + the checks below
+```
+
+Draws the Appointments page inside the real admin layout (made-up rows) as an admin and a super admin at 1920, 1440, 1280,
+1100 and 390px, and fails if a width has sideways scroll, a clipped date, fee, status, booking ID or action cell, a row whose
+buttons wrap onto two lines, a fixed column that is not its set width, or Patient, Doctor and Category that are not equal.
+`tableChecks.mjs` holds the measurements; the Appointments browser tests use it too. `measure.mjs` prints where the page
+content sits at several widths.
+
+The `adminpage-*` screens (Dashboard, Manage Users, Support Tickets, Our Doctors) are other admin pages, there to show a change to the Appointments page leaves them alone.

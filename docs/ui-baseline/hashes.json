@@ -20,5 +20,13 @@
   "doctor+admincss-1440": "de512de82d6701fe620595e953d3c2626c78f31573e4460db64e71afb9797b27",
   "doctor+admincss-390": "d527abb937e07024a6984d1caacdaf22104305cb694125cbfdcd7933e922dcef",
   "patient+admincss-1440": "01d7cd0bfba39d5f3f0666f0f927d760f68756f41706d4e3bd1af8539d12d1a7",
-  "patient+admincss-390": "f3fdf30d9d443b81d3edd3bf29f667d12066c507d66546b2197279421a49a151"
+  "patient+admincss-390": "f3fdf30d9d443b81d3edd3bf29f667d12066c507d66546b2197279421a49a151",
+  "adminpage-dashboard-1440": "010fa14f7a958d78e504a108641093e65ef230a558d849b8e35b62998b2f242f",
+  "adminpage-dashboard-390": "cb9cb553d3b0f30a7f6baf33bc27741c370f6af424159f0709aaf56dffb454cb",
+  "adminpage-users-1440": "fb84a8c22f2ae9744bcf0d34e6cf782684e63ab1258901182ac8b14f16fa55ac",
+  "adminpage-users-390": "b7d411f647cc460a73f0ba877bfcedfdf64a8574e4e0a029269bc21f96f2193d",
+  "adminpage-tickets-1440": "2f3278bc7a8a1948ccf58ad1ebb9f1b2b0b9e1cc516b7673ceb4e05b523d6ace",
+  "adminpage-tickets-390": "b6aa0d7c38ee96756ddd0da279e74b8b436711e7ae6bd5458dcd63de8e072044",
+  "adminpage-doctors-1440": "2a87e2da4cfa43e822fb654fc1a9f8f3da5be787c89596b779baa810a2905e85",
+  "adminpage-doctors-390": "debbd08e94cbad93d801419fcb1d1ee53392a917bd48c058a6cc09ac98879f28"
 }

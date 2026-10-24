@@ -8,8 +8,8 @@ import BulkBar from "./BulkBar";
 import { copyText } from "./copyText";
 import { assignUrl } from "./assignPageLogic";
 import {
-  AUTO_COMPLETE_HINT, assignedByHint, canAlternate, canAssign, canAutoComplete, canCancel, canReactivate, formatBookedOn, formatConsultation,
-  formatFee, isClosed, originalDoctorHint, rowNumber, shortBookingId, showAssignedByColumn,
+  CARD_BELOW, assignedByHint, canAlternate, canAssign, formatBookedOn, formatConsultation, formatFee, originalDoctorHint, rowActions, rowNumber,
+  shortBookingId,
 } from "./bookingFormat";
 
 function getCountryName(value) {
@@ -80,7 +80,7 @@ function DoctorCell({ row, busy }) {
   }
   return (
     <div className="adp-bk-doctor" title={originalDoctorHint(row) || undefined}>
-      <strong>{row.doctorName}</strong>
+      <strong title={row.doctorName}>{row.doctorName}</strong>
       <DoctorLink row={row} busy={busy} allowed={canAlternate(row)} className="adp-bk-alt">
         Alternate doctor
       </DoctorLink>
@@ -88,54 +88,51 @@ function DoctorCell({ row, busy }) {
   );
 }
 
-function AssignedByCell({ row }) {
-  if (!row.doctorName) return "—";
-  if (row.assignedBy) {
-    return (
-      <span className="adp-bk-by" title={row.assignedBy}>
-        {row.assignedBy}
-      </span>
-    );
-  }
+// The status pill, and under it who assigned the doctor (only once the booking has a doctor). Bookings assigned
+// before the assigner was recorded show "by —" with the reason on hover.
+function StatusCell({ row }) {
   return (
-    <span className="adp-bk-by" title={assignedByHint(row)}>
-      —
-    </span>
+    <div className="adp-bk-statusbox">
+      <StatusPill status={row.status} />
+      {row.doctorName && (
+        <span className={`adp-bk-by${row.assignedBy ? "" : " adp-bk-by--none"}`} title={row.assignedBy ? `Assigned by ${row.assignedBy}` : assignedByHint(row)}>
+          by {row.assignedBy || "—"}
+        </span>
+      )}
+    </div>
   );
 }
 
-// View, then Reactivate (a Complete booking) or Auto complete, then Cancel (super admins only).
+// Only the buttons that work for this row (see rowActions): View, then Auto complete or Reactivate, then Cancel (super
+// admins only).
 function ActionsCell({ row, actions, busy, isSuperAdmin }) {
   const { handlers } = actions;
-  const complete = row.status === "complete";
+  const shown = rowActions(row, { isSuperAdmin });
   return (
     <div className="adp-bk-actions">
-      <Link className="adp-bk-btn" to={`/admin-dashboard/appointments/${row.id}`}>
-        View
-      </Link>
-      {complete ? (
+      {shown.includes("view") && (
+        <Link className="adp-bk-btn" to={`/admin-dashboard/appointments/${row.id}`}>
+          View
+        </Link>
+      )}
+      {shown.includes("autoComplete") && (
+        <button type="button" className="adp-bk-btn adp-bk-btn--ok" disabled={busy} onClick={() => handlers.autoComplete(row)}>
+          Auto complete
+        </button>
+      )}
+      {shown.includes("reactivate") && (
         <button
           type="button"
           className="adp-bk-btn adp-bk-btn--ok"
-          disabled={busy || !canReactivate(row)}
-          title={canReactivate(row) ? "Move this booking back to Confirmed" : "A booking with no doctor can't be reactivated"}
+          disabled={busy}
+          title="Move this booking back to Confirmed"
           onClick={() => handlers.reactivate(row)}
         >
           Reactivate
         </button>
-      ) : (
-        <button
-          type="button"
-          className="adp-bk-btn adp-bk-btn--ok"
-          disabled={busy || !canAutoComplete(row)}
-          title={!canAutoComplete(row) && !isClosed(row.status) ? AUTO_COMPLETE_HINT : undefined}
-          onClick={() => handlers.autoComplete(row)}
-        >
-          Auto complete
-        </button>
       )}
-      {isSuperAdmin && (
-        <button type="button" className="adp-bk-btn" disabled={busy || !canCancel(row)} onClick={() => handlers.cancel(row)}>
+      {shown.includes("cancel") && (
+        <button type="button" className="adp-bk-btn adp-bk-btn--cancel" disabled={busy} onClick={() => handlers.cancel(row)}>
           Cancel
         </button>
       )}
@@ -144,8 +141,8 @@ function ActionsCell({ row, actions, busy, isSuperAdmin }) {
 }
 
 // True while the table area is narrow enough that the rows are shown as cards (the table header, and with it the
-// header checkbox, is hidden then). Same width the stylesheet switches layout at.
-function useIsNarrow(ref, max = 900) {
+// header checkbox, is hidden then). The stylesheet switches layout at the same width (CARD_BELOW).
+function useIsNarrow(ref, max = CARD_BELOW) {
   const [narrow, setNarrow] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -157,8 +154,7 @@ function useIsNarrow(ref, max = 900) {
   return narrow;
 }
 
-export default function BookingsTable({ rows, tab, page, actions, selection, bulk, isSuperAdmin = false }) {
-  const showAssignedBy = showAssignedByColumn(tab);
+export default function BookingsTable({ rows, page, actions, selection, bulk, isSuperAdmin = false }) {
   const block = useRef(null);
   const narrow = useIsNarrow(block);
 
@@ -174,6 +170,19 @@ export default function BookingsTable({ rows, tab, page, actions, selection, bul
       )}
       <div className="adp-table-wrap adp-bk-wrap">
         <table className={`adp-flow-table adp-bk${selection.selecting ? " adp-bk--selecting" : ""}`}>
+          {/* Fixed widths for the small columns; Patient, Doctor and Category have none and share the rest equally. */}
+          <colgroup>
+            <col className="adp-bk-col-num" />
+            <col className="adp-bk-col-id" />
+            <col />
+            <col />
+            <col className="adp-bk-c-cat" />
+            <col className="adp-bk-col-booked" />
+            <col className="adp-bk-col-consult" />
+            <col className="adp-bk-col-fee" />
+            <col className="adp-bk-col-status" />
+            <col className="adp-bk-col-actions" />
+          </colgroup>
           <thead>
             <tr>
               <th className="adp-bk-num adp-bk-headcell">
@@ -182,12 +191,11 @@ export default function BookingsTable({ rows, tab, page, actions, selection, bul
               <th>Booking ID</th>
               <th>Patient</th>
               <th>Doctor</th>
-              <th>Category</th>
-              <th>Booking date</th>
-              <th>Consultation date</th>
+              <th className="adp-bk-c-cat">Category</th>
+              <th>Booked</th>
+              <th>Consultation</th>
               <th className="adp-bk-fee">Fee</th>
-              <th>Status</th>
-              {showAssignedBy && <th>Assigned by</th>}
+              <th className="adp-bk-status">Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -196,11 +204,12 @@ export default function BookingsTable({ rows, tab, page, actions, selection, bul
               const busy = actions.busyId === row.id;
               const consultation = formatConsultation(row.consultation);
               const country = getCountryName(row.patient?.country);
+              const patientName = row.patient?.name || "Unknown patient";
               const classes = [selection.isSelected(row.id) && "adp-bk-row--selected", row.isTesting && "adp-bk-row--testing", row.status === "cancelled" && "adp-bk-row--cancelled", busy && "adp-bk-row--busy"].filter(Boolean).join(" ");
               return (
                 <tr key={`${row.kind}:${row.id}`} className={classes || undefined} aria-busy={busy || undefined}>
                   <td className="adp-sr-cell adp-bk-num" data-label="#">
-                    {selection.selecting && (
+                    {selection.selecting ? (
                       <input
                         type="checkbox"
                         className="adp-bk-rowcheck"
@@ -208,20 +217,23 @@ export default function BookingsTable({ rows, tab, page, actions, selection, bul
                         onChange={() => selection.toggle(row.id)}
                         aria-label={`Select booking ${shortBookingId(row)}`}
                       />
+                    ) : (
+                      <span className="adp-bk-rownum">{rowNumber(page, index)}</span>
                     )}
-                    <span className="adp-bk-rownum">{rowNumber(page, index)}</span>
                   </td>
                   <td data-label="Booking ID"><BookingIdCell row={row} /></td>
-                  <td data-label="Patient">
+                  <td data-label="Patient" className="adp-bk-cut">
                     <div className="adp-patient-cell">
-                      <strong>{row.patient?.name || "Unknown patient"}</strong>
+                      <strong title={patientName}>{patientName}</strong>
                       <span>{country || "—"}</span>
                     </div>
                   </td>
-                  <td data-label="Doctor"><DoctorCell row={row} busy={busy} /></td>
-                  <td data-label="Category">{row.category || "—"}</td>
-                  <td data-label="Booking date" className="adp-bk-nowrap">{formatBookedOn(row.bookedAt)}</td>
-                  <td data-label="Consultation date" className="adp-bk-nowrap">
+                  <td data-label="Doctor" className="adp-bk-cut"><DoctorCell row={row} busy={busy} /></td>
+                  <td data-label="Category" className="adp-bk-cut adp-bk-c-cat">
+                    <span className="adp-bk-cat" title={row.category || undefined}>{row.category || "—"}</span>
+                  </td>
+                  <td data-label="Booked" className="adp-bk-nowrap adp-bk-date">{formatBookedOn(row.bookedAt)}</td>
+                  <td data-label="Consultation" className="adp-bk-nowrap adp-bk-date">
                     {consultation ? (
                       <span className="adp-bk-when">
                         {consultation.day}
@@ -232,8 +244,7 @@ export default function BookingsTable({ rows, tab, page, actions, selection, bul
                     )}
                   </td>
                   <td data-label="Fee" className="adp-bk-fee">{formatFee(row.fee)}</td>
-                  <td data-label="Status"><StatusPill status={row.status} /></td>
-                  {showAssignedBy && <td data-label="Assigned by" className="adp-bk-bycell"><AssignedByCell row={row} /></td>}
+                  <td data-label="Status" className="adp-bk-status"><StatusCell row={row} /></td>
                   <td data-label="Actions" className="adp-bk-actions-cell"><ActionsCell row={row} actions={actions} busy={busy} isSuperAdmin={isSuperAdmin} /></td>
                 </tr>
               );

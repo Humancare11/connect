@@ -9,6 +9,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { createHelpers, findBrowser } from "./helpers.mjs";
+import { FIXED_WIDTHS, measureTable } from "../../ui-baseline/tableChecks.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const frontendRoot = path.resolve(here, "..", "..", "..");
@@ -85,13 +86,14 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
 
   // ── The list itself ───────────────────────────────────────────────────────
 
-  test("the eight tabs, in order, with the columns the spec asks for (the first header is the selection checkbox); Assigned by is hidden on Upcoming", async () => {
+  test("the eight tabs, in order, with the columns the spec asks for (the first header is the selection checkbox); no separate Assigned by column", async () => {
     assert.deepEqual((await h.tabs()).map((t) => t.replace(/\s*[\d–]+$/, "")), ["All", "Upcoming", "Assigned", "Pending", "Confirmed", "Complete", "Cancelled", "Testing"]);
     await page.click('[role="tab"]:has-text("Upcoming")');
-    await h.until(async () => !(await h.headers()).includes("Assigned by") && (await h.rowsLocator().count()) > 0, "the Upcoming tab");
+    const pills = () => page.$$eval("table.adp-bk tbody .adp-status-pill", (els) => els.map((e) => e.textContent.trim()));
+    await h.until(async () => { const p = await pills(); return p.length > 0 && p.every((t) => t === "Upcoming"); }, "the Upcoming tab");
     await page.click('[role="tab"]:has-text("All")');
-    await h.until(async () => (await h.headers()).includes("Assigned by"), "the All tab");
-    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Category", "Booking date", "Consultation date", "Fee", "Status", "Assigned by", "Actions"]);
+    await h.until(async () => { const p = await pills(); return p.length === 25 && p.some((t) => t !== "Upcoming"); }, "the All tab");
+    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Category", "Booked", "Consultation", "Fee", "Status", "Actions"]);
     assert.equal(await h.rowsLocator().count(), 25);
     const text = await page.locator("table.adp-bk").innerText();
     assert.ok(text.includes("TESTING") && text.includes("Not scheduled") && text.includes("Alternate doctor") && text.includes("Not assigned"));
@@ -111,7 +113,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       if (tab === "All" || tab === "Testing") continue;
       const pills = () => page.$$eval("table.adp-bk tbody .adp-status-pill", (els) => els.map((e) => [e.textContent.trim(), getComputedStyle(e).backgroundColor]));
       await h.until(async () => { const p = await pills(); return p.length > 0 && p.every(([text, bg]) => text === tab && bg === rgb(pill[tab])); }, `${tab} pills in the reference color`);
-      assert.equal((await h.headers()).includes("Assigned by"), tab !== "Upcoming");
+      assert.equal((await h.headers()).includes("Assigned by"), false);
     }
     await page.click("[role=tab]:has-text(\"All\")");
   });
@@ -153,8 +155,9 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.until(async () => (await h.rowsLocator().count()) === 25, "rows back");
   });
 
-  test("no sideways page scroll from phone to wide desktop; cards below about 900px, a table above", async () => {
-    for (const [width, cards] of [[1500, false], [1280, false], [1040, false], [900, true], [390, true]]) {
+  test("no sideways page scroll from phone to wide desktop; cards below 1000px of table width, a table above", async () => {
+    // (This page alone has 24px of margin each side, so its table area is the window minus about 48px.)
+    for (const [width, cards] of [[1500, false], [1280, false], [1100, false], [1040, true], [900, true], [390, true]]) {
       await page.setViewportSize({ width, height: 900 });
       await h.open("/admin-dashboard/appointments?tab=all");
       const info = await page.evaluate(() => ({
@@ -164,6 +167,50 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       assert.equal(info.isCards, cards, `${width}px`);
       assert.ok(info.overflow <= 1, `${width}px scrolls sideways by ${info.overflow}px`);
     }
+    await page.setViewportSize({ width: 1500, height: 1000 });
+    await h.open("/admin-dashboard/appointments?tab=all");
+  });
+
+  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Category dropped below 1180px", async () => {
+    await h.reset();
+    await h.make({ status: "confirmed", doctor: 0, name: "A Very Long Patient Name That Cannot Possibly Fit In A Column", assignedBy: "administrator.on.duty@humancareconnect.co" });
+    await h.make({ status: "upcoming", name: "Row Upcoming" });
+    await h.make({ status: "complete", doctor: 1, name: "Row Complete" });
+    await h.make({ status: "cancelled", doctor: 1, name: "Row Cancelled" });
+    for (const [width, withCategory] of [[1500, true], [1200, false]]) {
+      await page.setViewportSize({ width, height: 900 });
+      await h.open("/admin-dashboard/appointments?tab=all");
+      const m = await measureTable(page);
+      assert.equal(m.layout, "table", `${width}px`);
+      assert.ok(m.docOverflow <= 1 && m.wrapOverflow <= 1, `${width}px scrolls sideways (${m.docOverflow}, ${m.wrapOverflow})`);
+      const names = m.columns.map((c) => c.name);
+      assert.equal(names.includes("Category"), withCategory, `${width}px: Category`);
+      for (const c of m.columns) if (FIXED_WIDTHS[c.name]) assert.ok(Math.abs(c.width - FIXED_WIDTHS[c.name]) <= 1, `${width}px: ${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
+      const shared = m.columns.filter((c) => ["Patient", "Doctor", "Category"].includes(c.name)).map((c) => c.width);
+      assert.ok(Math.max(...shared) - Math.min(...shared) <= 1, `${width}px: Patient, Doctor and Category share equally (${shared})`);
+      assert.deepEqual(m.clipped, [], `${width}px clipped cells`);
+      assert.deepEqual(m.multiLine, [], `${width}px: actions on one line`);
+      assert.deepEqual(m.cutCells, ["Patient", "Doctor", ...(withCategory ? ["Category"] : [])]);
+    }
+    // The long name is cut with an ellipsis and keeps its full text as the hover text.
+    const strong = page.locator("td[data-label=\"Patient\"] strong", { hasText: "A Very Long Patient" });
+    assert.equal(await strong.evaluate((el) => getComputedStyle(el).textOverflow), "ellipsis");
+    assert.equal(await strong.evaluate((el) => el.scrollWidth > el.clientWidth), true);
+    assert.match(await strong.getAttribute("title"), /Cannot Possibly Fit/);
+    // Fee is right-aligned with the status 18px away from its column edge; status text sits under the pill
+    const align = await page.evaluate(() => ({
+      fee: getComputedStyle(document.querySelector("td.adp-bk-fee")).textAlign,
+      feeHead: getComputedStyle(document.querySelector("th.adp-bk-fee")).textAlign,
+      statusPad: getComputedStyle(document.querySelector("td.adp-bk-status")).paddingLeft,
+      font: getComputedStyle(document.querySelector("td.adp-bk-fee")).fontSize,
+    }));
+    assert.deepEqual(align, { fee: "right", feeHead: "right", statusPad: "18px", font: "13.5px" });
+    // Buttons: only those that work for the row
+    const buttons = async (name) => (await h.row(name).locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts()).map((t) => t.trim());
+    assert.deepEqual(await buttons("Row Upcoming"), ["View", "Cancel"]);
+    assert.deepEqual(await buttons("A Very Long"), ["View", "Auto complete", "Cancel"]);
+    assert.deepEqual(await buttons("Row Complete"), ["View", "Reactivate"]);
+    assert.deepEqual(await buttons("Row Cancelled"), ["View"]);
     await page.setViewportSize({ width: 1500, height: 1000 });
     await h.open("/admin-dashboard/appointments?tab=all");
   });
@@ -401,7 +448,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.deepEqual(await h.calls(), []);
   });
 
-  test("auto complete asks first, completes Assigned/Confirmed only, and disables everything on a Complete row", async () => {
+  test("auto complete asks first and completes Assigned/Confirmed only; a Complete row offers Reactivate and nothing else but View", async () => {
     const id = await h.make({ status: "confirmed", doctor: 0, name: "Ava Auto" });
     await h.search("Ava Auto");
     await h.row("Ava Auto").locator("button", { hasText: "Auto complete" }).click();
@@ -415,14 +462,12 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.confirmDialog().locator("button", { hasText: "Mark complete" }).click();
     await h.until(async () => /Complete/.test(await h.rowText("Ava Auto")), "row Complete");
     assert.equal((await h.doc(id)).status, "complete");
-    const state = await h.row("Ava Auto").locator(".adp-bk-actions button, td[data-label=\"Doctor\"] button").evaluateAll((els) => els.map((e) => [e.textContent.trim(), e.disabled]));
-    assert.deepEqual(state, [["Alternate doctor", true], ["Reactivate", false], ["Cancel", true]], "a Complete row offers Reactivate in place of Auto complete");
+    const state = await h.row("Ava Auto").locator(".adp-bk-actions button, .adp-bk-actions a, td[data-label=\"Doctor\"] button").evaluateAll((els) => els.map((e) => [e.textContent.trim(), Boolean(e.disabled)]));
+    assert.deepEqual(state, [["Alternate doctor", true], ["View", false], ["Reactivate", false]], "a Complete row offers View and Reactivate (no Auto complete, no Cancel)");
 
     await h.make({ status: "pending", doctor: 1, name: "Pam Pending" });
     await h.search("Pam Pending");
-    const auto = h.row("Pam Pending").locator("button", { hasText: "Auto complete" });
-    assert.equal(await auto.isDisabled(), true);
-    assert.match(await auto.getAttribute("title"), /assigned or confirmed/);
+    assert.equal(await h.row("Pam Pending").locator("button", { hasText: "Auto complete" }).count(), 0, "a Pending booking can't be auto completed, so the button is not offered");
   });
 
   test("cancel: a reason is required, a paid booking names its gateway, and the result is recorded", async () => {
@@ -782,7 +827,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.equal(await page.locator(".adp-bk-rownum").first().isVisible(), false);
     const card = await page.evaluate(() => {
       const num = document.querySelector("td.adp-bk-num");
-      const by = [...document.querySelectorAll('td[data-label="Assigned by"]')].find((td) => td.textContent.trim().length > 3);
+      const by = [...document.querySelectorAll('td[data-label="Status"] .adp-bk-by')].find((el) => el.textContent.trim().length > 6);
       const id = [...document.querySelectorAll("td[data-label=\"Booking ID\"]")].find((td) => td.querySelector(".adp-bk-tag"));
       return {
         numCaption: getComputedStyle(num, "::before").display,
@@ -791,7 +836,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       };
     });
     assert.equal(card.numCaption, "none", "no stray # caption above the tick box");
-    assert.ok(card.assignedByWidth > 150, `Assigned by is not squeezed (${card.assignedByWidth}px)`);
+    assert.ok(card.assignedByWidth > 100, `Assigned by is not squeezed (${card.assignedByWidth}px)`);
     assert.equal(card.idCellChildren, 1, "the TESTING tag stays with the booking id");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     assert.ok(overflow <= 1, `sideways scroll ${overflow}px`);
@@ -881,7 +926,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     for (const [kind, name] of [["appointment", "React Appointment"], ["category", "React Category"]]) {
       await h.search(name);
       const labels = await h.row(name).locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts();
-      assert.deepEqual(labels.map((t) => t.trim()), ["View", "Reactivate", "Cancel"], `${name}: Reactivate replaces Auto complete`);
+      assert.deepEqual(labels.map((t) => t.trim()), ["View", "Reactivate"], `${name}: Reactivate replaces Auto complete, and a closed booking has no Cancel`);
       await h.row(name).locator("button", { hasText: "Reactivate" }).click();
       await h.confirmDialog().waitFor();
       assert.match(await h.confirmDialog().innerText(), /goes from Complete back to Confirmed/);
@@ -904,7 +949,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.equal(names.filter((n) => n === "push:Appointment reopened").length >= 0, true);
   });
 
-  test("Reactivate for a testing booking sends nothing; one with no doctor is disabled with the reason", async () => {
+  test("Reactivate for a testing booking sends nothing; a Complete booking with no doctor has no Reactivate button", async () => {
     await h.reset();
     const id = await h.make({ status: "complete", doctor: 3, name: "React Testing", testing: true });
     await h.search("React Testing");
@@ -916,9 +961,8 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
 
     await h.make({ status: "complete", name: "React NoDoctor" });
     await h.search("React NoDoctor");
-    const button = h.row("React NoDoctor").locator("button", { hasText: "Reactivate" });
-    assert.equal(await button.isDisabled(), true);
-    assert.match(await button.getAttribute("title"), /no doctor/);
+    assert.equal(await h.row("React NoDoctor").locator("button", { hasText: "Reactivate" }).count(), 0, "it would be refused (no doctor), so it is not offered");
+    assert.deepEqual((await h.row("React NoDoctor").locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts()).map((t) => t.trim()), ["View"]);
   });
 
   test("Cancel is for super admins: an ordinary admin sees no Cancel button on rows or in the bulk bar", async () => {
@@ -937,16 +981,18 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.equal(await h.row("Role Case").locator("button", { hasText: /^Cancel$/ }).count(), 1, "a super admin does");
   });
 
-  test("Assigned by: a long email is cut with an ellipsis (never broken mid-word) and shown in full on hover; old rows get an explanation", async () => {
+  test("Assigned by sits under the status pill: a long email is cut with an ellipsis and shown in full on hover; old rows say by — with an explanation", async () => {
     await page.setViewportSize({ width: 1500, height: 1000 });
     await h.open("/admin-dashboard/appointments?tab=all");
     const email = "administrator.on.duty@humancareconnect.co";
     await h.make({ status: "assigned", doctor: 0, name: "By Longemail", assignedBy: email });
     await h.make({ status: "assigned", doctor: 1, name: "By Oldrow", assignedBy: null });
     await h.make({ status: "confirmed", doctor: 2, name: "By Direct", assignedBy: null });
+    await h.make({ status: "upcoming", name: "By Nodoctor" });
     await h.search("By Longemail");
     const by = h.row("By Longemail").locator(".adp-bk-by");
-    assert.equal(await by.getAttribute("title"), email, "the full value on hover");
+    assert.equal(await by.getAttribute("title"), `Assigned by ${email}`, "the full value on hover");
+    assert.equal((await by.innerText()).trim(), `by ${email}`);
     const metrics = await by.evaluate((el) => ({
       oneLine: el.getBoundingClientRect().height < parseFloat(getComputedStyle(el).fontSize) * 2,
       overflows: el.scrollWidth > el.clientWidth,
@@ -958,10 +1004,12 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.equal(metrics.overflows, true, "it is cut, not wrapped");
     assert.ok(metrics.oneLine, `one line (${JSON.stringify(metrics)})`);
     await h.shot("assigned-by-ellipsis");
+    await h.search("By Nodoctor");
+    assert.equal(await h.row("By Nodoctor").locator(".adp-bk-by").count(), 0, "no 'by' line when the booking has no doctor");
 
     await h.search("By Oldrow");
     const old = h.row("By Oldrow").locator(".adp-bk-by");
-    assert.equal((await old.innerText()).trim(), "\u2014");
+    assert.equal((await old.innerText()).trim(), "by \u2014");
     assert.equal(await old.getAttribute("title"), "Assigned before tracking started");
     await h.search("By Direct");
     assert.match(await h.row("By Direct").locator(".adp-bk-by").getAttribute("title"), /booked directly with the doctor, or assigned before tracking started/);
@@ -972,7 +1020,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.search("By Longemail");
     const card = await h.row("By Longemail").locator(".adp-bk-by").evaluate((el) => ({ cut: el.scrollWidth > el.clientWidth + 1, text: el.textContent }));
     assert.equal(card.cut, false);
-    assert.equal(card.text, email);
+    assert.equal(card.text, `by ${email}`);
     await page.setViewportSize({ width: 1500, height: 1000 });
     await h.open("/admin-dashboard/appointments?tab=all");
   });

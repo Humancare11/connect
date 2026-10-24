@@ -71,7 +71,7 @@ export default function AdminAppointments() {
   }, [loading, data]);
 
   return (
-    <div className="adp-page">
+    <div className="adp-page adp-bk-page">
       <section className="adp-card adp-bk-card">
         <div className="adp-card-header">
           <BookingTabs
@@ -118,7 +118,7 @@ export default function AdminAppointments() {
                 {error} <RetryButton onRetry={reload} />
               </div>
             )}
-            <BookingsTable rows={rows} tab={tab} page={page} actions={actions} selection={selection} bulk={bulk} isSuperAdmin={isSuperAdmin} />
+            <BookingsTable rows={rows} page={page} actions={actions} selection={selection} bulk={bulk} isSuperAdmin={isSuperAdmin} />
             <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}
