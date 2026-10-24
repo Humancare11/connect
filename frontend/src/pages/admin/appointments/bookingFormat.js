@@ -96,7 +96,9 @@ export const shortBookingId = (row) => `…${row.shortId || String(row.id).slice
 // Hover text for an empty "Assigned by" next to a doctor: older bookings were assigned before the admin was recorded.
 export function assignedByHint(row) {
   if (!row.doctorName || row.assignedBy) return "";
-  return row.status === "assigned"
+  // A category consultation never has its doctor chosen by the patient, so with no recorded assigner it was
+  // assigned before the assigner was tracked. An Assigned booking was assigned by an admin, so the same applies.
+  return row.status === "assigned" || row.kind === "category"
     ? "Assigned before tracking started"
     : "No admin assignment recorded: booked directly with the doctor, or assigned before tracking started";
 }

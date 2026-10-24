@@ -127,6 +127,7 @@ test("there is no admin Confirm helper any more", () => {
 test("an empty 'Assigned by' next to a doctor explains itself on hover", () => {
   assert.equal(assignedByHint({ doctorName: "Dr X", assignedBy: null, status: "assigned" }), "Assigned before tracking started");
   assert.match(assignedByHint({ doctorName: "Dr X", assignedBy: null, status: "confirmed" }), /booked directly with the doctor, or assigned before tracking started/);
+  assert.equal(assignedByHint({ doctorName: "Dr X", assignedBy: null, status: "complete", kind: "category" }), "Assigned before tracking started", "a category booking was never booked directly with a doctor");
   assert.equal(assignedByHint({ doctorName: "Dr X", assignedBy: "Super Admin", status: "assigned" }), "");
   assert.equal(assignedByHint({ doctorName: null, assignedBy: null, status: "upcoming" }), "");
 });

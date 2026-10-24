@@ -37,24 +37,23 @@ Satish's answers to the first report, done in commit `728cced2` and the sibling 
 6. **Assigned by** no longer breaks an email mid-word: one line, ellipsis, full value on hover (cards on a phone show it all).
 7. **Assigned rows with a doctor but no recorded assigner** show "—" with the tooltip "Assigned before tracking started" (for other statuses the tooltip also covers bookings made directly with the doctor).
 
-**The two counts (not run: the only configured database is Atlas, and the local MongoDB on this machine has no booking data).** Read-only queries to run against the dev database yourself:
+**The two counts, run read-only against the configured UAT/local Atlas database (`authDB`; 107 appointments, 50 category consultations, 44 doctors, 44 enrollments).** Satish clarified that this Atlas account is the UAT/local one, not production. Only `find` and `countDocuments` were used; nothing was written.
 
-```js
-// 2. Assigned (or any open status) with no doctor, or a doctor that no longer exists
-db.appointments.countDocuments({ status: { $nin: ["complete", "completed", "cancelled"] }, $or: [{ doctorId: null }, { doctorId: { $exists: false } }] })
-db.categoryconsultations.countDocuments({ status: { $in: ["Assigned", "Confirmed"] }, $or: [{ assignedDoctorId: null }, { assignedDoctorId: { $exists: false } }] })
-// ...and Assigned ones whose doctor was deleted (dangling reference): list their doctor ids, then look them up
-db.appointments.find({ status: "assigned", doctorId: { $ne: null } }, { doctorId: 1 })   // check each id exists in db.doctors
-db.categoryconsultations.find({ status: "Assigned", assignedDoctorId: { $ne: null } }, { assignedDoctorId: 1 }) // check in db.enrollments
+**Count 1: open bookings with no doctor, or whose doctor no longer exists: 3.** All three are appointments with status **Assigned** whose doctor was deleted afterwards:
 
-// 7. Assigned with a doctor but no recorded assigner
-db.appointments.countDocuments({ status: "assigned", doctorId: { $ne: null }, $or: [{ "assignedBy.name": { $in: [null, ""] } }, { "assignedBy.name": { $exists: false } }], "assignedBy.email": { $in: [null, ""] } })
-db.categoryconsultations.countDocuments({ status: "Assigned", assignedDoctorId: { $ne: null }, "assignedBy.name": { $in: [null, ""] }, "assignedBy.email": { $in: [null, ""] } })
-```
+| Booking id | Booked | Assigned by | Doctor |
+|---|---|---|---|
+| `6a2a5d286918f3fb53ac1588` (…53AC1588) | 2026-06-11 | admin@gmail.com | no Doctor account and no enrollment |
+| `6a2a94049d9ad21b50e43207` (…50E43207) | 2026-06-11 | admin@gmail.com | no Doctor account and no enrollment |
+| `6a2d30014193e6621459abbd` (…1459ABBD) | 2026-06-13 | admin@gmail.com | no Doctor account and no enrollment |
 
-**How bookings got "Assigned with no doctor" (from the code, not from data):** (a) the old Category Consultations `PATCH /:id/status` accepted "Assigned" with no doctor, which is how a status can be set without ever picking one; (b) a doctor's account or enrollment deleted later leaves the booking pointing at nothing (the list shows "Not assigned" because the reference no longer resolves, while the stored status stays Assigned); (c) the old appointment assign paths set the status and the doctor in one write, so they were not a cause. **Assigned with a doctor but no assigner** is data from before the `assignedBy` field existed on category consultations (it was added in this branch), and any booking whose doctor was set by the patient at booking time.
+So they are not "Assigned with no doctor" from the old status route: an admin did assign a doctor in June, and that doctor (account and enrollment) was deleted later, leaving the booking pointing at nothing. The page shows "Not assigned" while the stored status stays Assigned, and the old rule (Assign only on Upcoming/Pending) disabled the button. There are no Assigned or Confirmed bookings with an empty doctor field, and no category consultation with a missing doctor. (For reference: 57 open bookings with no doctor are Upcoming or Pending, which is normal: they are waiting for an assignment.) With round 3 these three can be given a new doctor from the Doctor column.
 
+**Count 2: Assigned rows with a doctor but no assignedBy: 0 right now** (3 Assigned appointments have a doctor reference, none of them without an assigner; no Assigned category consultation exists). **`…03A4B6DD` is `6a70838ba634cef703a4b6dd`, a category consultation, now status Completed** (updated 2026-10-24 04:07: it was Assigned when seen in the local test, and was completed afterwards). It has a doctor and no `assignedBy`, because category consultations had no `assignedBy` field before this branch. It is not alone: across all statuses, **31 bookings have a doctor and no recorded assigner, all of them category consultations (7 Confirmed, 23 Completed, 1 Cancelled)**, and no appointment is like that. So the "Assigned before tracking started" tooltip now applies to any category booking with a doctor and no assigner (not only Assigned-status ones), and the 7 Confirmed ones show it on the Confirmed tab.
 
+Nothing was changed in the database; the three deleted-doctor bookings were left as they are (they can be reassigned from the page).
+
+## 2. Step 3 in brief
 
 Commit `0ff240c4` (16 files). Header checkbox opens a menu (Select this page / Select one by one / Clear selection / Exit selection, only what applies); row tick boxes while selecting; a navy bar "N selected on this page" with Auto complete, Cancel (one required reason; paid bookings counted by gateway), Mark/Unmark testing, Done; no bulk Confirm; a result list (done / skipped with reason / failed) then the list and counts reload.
 Tests at that commit: backend relevant suites 188 pass; frontend 228 of 229 (one live-chat flake, passes alone); browser 22 of 22.
