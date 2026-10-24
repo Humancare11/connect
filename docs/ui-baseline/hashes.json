@@ -28,5 +28,19 @@
   "adminpage-tickets-1440": "2f3278bc7a8a1948ccf58ad1ebb9f1b2b0b9e1cc516b7673ceb4e05b523d6ace",
   "adminpage-tickets-390": "b6aa0d7c38ee96756ddd0da279e74b8b436711e7ae6bd5458dcd63de8e072044",
   "adminpage-doctors-1440": "2a87e2da4cfa43e822fb654fc1a9f8f3da5be787c89596b779baa810a2905e85",
-  "adminpage-doctors-390": "debbd08e94cbad93d801419fcb1d1ee53392a917bd48c058a6cc09ac98879f28"
+  "adminpage-doctors-390": "debbd08e94cbad93d801419fcb1d1ee53392a917bd48c058a6cc09ac98879f28",
+  "admin-1440+content": "f73a9108e48c96e81921ceb17120b0d1a9d476f43a044705b26555afc2794d44",
+  "admin-390+content": "cd3f43c9367970fd7cece1da618c6b2246fbaa04d17abf8f8529c7ab7b394f13",
+  "superadmin-1440+content": "2662e7e4eb56c40fcb8fbafc8204b7a9d728a9a67f7f2dcba910750643d4b6cd",
+  "superadmin-390+content": "cd3f43c9367970fd7cece1da618c6b2246fbaa04d17abf8f8529c7ab7b394f13",
+  "paymentadmin-1440+content": "2662e7e4eb56c40fcb8fbafc8204b7a9d728a9a67f7f2dcba910750643d4b6cd",
+  "paymentadmin-390+content": "cd3f43c9367970fd7cece1da618c6b2246fbaa04d17abf8f8529c7ab7b394f13",
+  "adminpage-dashboard-1440+content": "8668cd48b55c83d1d86cf442016d797a60f50c4542d29f2d4cca6ef84d5ef7c7",
+  "adminpage-dashboard-390+content": "ee7492bf5aef50413360232db044632226db7786db9b04dea6c0454bfbd179e4",
+  "adminpage-users-1440+content": "fdf1a50469614cf77de995a0c3b85043c52adff34d9b12a5b01fb6af2f91d2a8",
+  "adminpage-users-390+content": "4cf9b5481aab4f40efe44433a7659e0c4f0273cbbad45b06ca2dd25c492328b3",
+  "adminpage-tickets-1440+content": "4127660e19b755558843c6ecf47b26427cd13050dfcfd37a317bebd50b154549",
+  "adminpage-tickets-390+content": "01b33f33680f0dd8eb222e8f040a6a96b10a258f84f6d736ab82ab10c4030fe7",
+  "adminpage-doctors-1440+content": "d28cc9364d4c4198554530e70f3fb6352ce86c1afe3c77a44b78c4a4d0b2ac18",
+  "adminpage-doctors-390+content": "f7816bd315307fb371f4569e323ac7b18d35891cb88d0bfe6af35512c0fe6463"
 }

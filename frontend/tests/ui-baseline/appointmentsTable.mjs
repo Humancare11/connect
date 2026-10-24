@@ -11,6 +11,7 @@ import { createServer } from "vite";
 import { findBrowser } from "../e2e/adminAppointments/helpers.mjs";
 import stubContexts from "./stubContexts.mjs";
 import { FIXED_WIDTHS, measureTable } from "./tableChecks.mjs";
+import { items, counts } from "./appointmentFixtures.mjs";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright-core");
@@ -18,41 +19,14 @@ const frontendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 const outArg = process.argv.indexOf("--out");
 const outDir = path.resolve(outArg > 0 ? process.argv[outArg + 1] : "../docs/ui-after/appointments-table");
 fs.mkdirSync(outDir, { recursive: true });
+// --content-out DIR also saves the page-content area alone (no sidebar, no top bar), for before/after comparisons.
+const contentArg = process.argv.indexOf("--content-out");
+const contentDir = contentArg > 0 ? path.resolve(process.argv[contentArg + 1]) : null;
+if (contentDir) fs.mkdirSync(contentDir, { recursive: true });
 
 const ROLES = ["admin", "superadmin"];
 const WIDTHS = [1920, 1440, 1280, 1100, 390];
 
-const hex = (n) => `6a2d30014193e6621459${(0xabbd + n).toString(16)}`;
-const R = (n, status, patient, country, doctorName, category, booked, date, time, fee, assignedBy, extra = {}) => ({
-  id: hex(n),
-  shortId: hex(n).slice(-8).toUpperCase(),
-  kind: extra.kind || "appointment",
-  status,
-  patient: { name: patient, country },
-  doctorName,
-  category,
-  bookedAt: booked,
-  consultation: date ? { date, time, timezone: "" } : null,
-  fee,
-  assignedBy: doctorName ? assignedBy : null,
-  isTesting: Boolean(extra.testing),
-  originalDoctorName: extra.original || null,
-});
-const items = [
-  R(1, "upcoming", "Test Sujal", "IN", null, "Children & Family", "2026-10-16T08:00:00Z", "2026-10-23", "1:30 AM", 10, null),
-  R(2, "upcoming", "kedar", "IN", null, "Chronic Care & Expert Opinion", "2026-10-06T08:00:00Z", "2026-10-06", "1:30 PM", 60, null, { testing: true }),
-  R(3, "upcoming", "Priya Nair", "AE", null, "Women's Health", "2026-10-09T08:00:00Z", null, "", 49, null, { kind: "category" }),
-  R(4, "assigned", "UatT PatientT ShizukaA", "IN", "TestT Shizuka DoctorR", "Children & Family", "2026-08-03T08:00:00Z", "2026-08-03", "5:40 PM", 110, null),
-  R(5, "assigned", "Narayan Mestry", "IN", "Satish Dalvi", "Skin & Hair", "2026-06-13T08:00:00Z", "2026-06-20", "8:30 AM", 100, "admin@gmail.com", { original: "Dr Ananya Rao" }),
-  R(6, "assigned", "A Patient With A Really Long Full Name Here", "United Arab Emirates", "Satish Dalvi Technical Team Lead", "General & Everyday Care & Wellbeing Checkups", "2026-06-11T08:00:00Z", "2026-06-26", "8:30 AM", 1499, "administrator.on.duty@humancareconnect.co"),
-  R(7, "confirmed", "Rohan Mehta", "IN", "Dr Ananya Rao", "Mental Wellbeing", "2026-10-05T08:00:00Z", "2026-10-28", "11:00 AM", 25, "admin@gmail.com"),
-  R(8, "confirmed", "Rachel Secemski", "US", "Martin Perlin", "Travel & Global Care", "2026-10-10T08:00:00Z", "2026-10-16", "9:00 AM", 99, "superadmin@humancare.com"),
-  R(9, "pending", "Pam Pending", "IN", "Dr Hidayat Khan", "Children & Family", "2026-10-12T08:00:00Z", "2026-10-30", "4:00 PM", 40, "admin@gmail.com"),
-  R(10, "complete", "Satish Dalvi", "IN", "satish dalvi", "Children & Family", "2026-10-01T08:00:00Z", "2026-10-02", "3:30 PM", 1234.5, "admin@gmail.com", { testing: true }),
-  R(11, "complete", "Piyush Y.", "GB", "Dr Hidayat Khan", "Children & Family", "2026-09-28T08:00:00Z", "2026-09-30", "7:00 PM", 5, null),
-  R(12, "cancelled", "Mahek Test", "IN", "Dr Hidayat Khan", "Chronic Care & Expert Opinion", "2026-09-10T08:00:00Z", "2026-09-10", "4:30 PM", 60, "admin@gmail.com"),
-];
-const counts = { all: items.length, upcoming: 3, assigned: 3, pending: 1, confirmed: 2, complete: 2, cancelled: 1, testing: 2 };
 
 const vite = await createServer({
   root: frontendRoot,
@@ -108,6 +82,7 @@ try {
       }
       const file = path.join(outDir, `${role}-${width}.png`);
       await page.screenshot({ path: file });
+      if (contentDir) await page.locator(".ad-content").screenshot({ path: path.join(contentDir, `${role}-${width}.png`) });
       const sharedWidths = m?.columns.filter((c) => ["Patient", "Doctor", "Category"].includes(c.name)).map((c) => Math.round(c.width));
       lines.push(`${role.padEnd(10)} ${String(width).padStart(4)}px  ${(m?.layout || "-").padEnd(5)}  table area ${m?.wrapWidth}px  ${sharedWidths?.length ? `Patient/Doctor${sharedWidths.length === 3 ? "/Category" : ""} ${sharedWidths[0]}px each` : ""}  ${problems.length ? "FAIL " + problems.join(" | ") : "ok"}`);
       if (problems.length) failures.push(`${role} ${width}px: ${problems.join(" | ")}`);

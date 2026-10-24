@@ -40,3 +40,16 @@ buttons wrap onto two lines, a fixed column that is not its set width, or Patien
 content sits at several widths.
 
 The `adminpage-*` screens (Dashboard, Manage Users, Support Tickets, Our Doctors) are other admin pages, there to show a change to the Appointments page leaves them alone.
+
+## Admin sidebar and top bar checks
+
+```bash
+node tests/ui-baseline/adminShell.mjs                 # screenshots in docs/ui-after/shell-v2 + behaviour checks
+node tests/ui-baseline/sidebarItems.mjs --compare ../docs/ui-baseline/sidebar-items.json   # the menu is exactly what it was
+node tests/ui-baseline/capture.mjs --content-only --compare ../docs/ui-baseline --only admin,superadmin,paymentadmin,adminpage-dashboard,adminpage-users,adminpage-tickets,adminpage-doctors
+node tests/ui-baseline/compareImages.mjs <folderBefore> <folderAfter>
+```
+
+`sidebar-items.json` is the menu as drawn before the redesign (every entry, submenu entry, link target and order, per role, with
+and without Live Chat). `adminNav.test.mjs` holds the same lists as plain data. `--content-only` compares just the page-content
+area of admin pages, so a change to the sidebar or top bar can be shown to leave the pages alone.

@@ -51,7 +51,7 @@ test("the old URLs redirect: the list to Appointments (All tab), a category book
 });
 
 test("the sidebar has one Appointments entry and no Category Consultations", () => {
-  const nav = read("pages", "admin", "AdminLayout.jsx");
+  const nav = read("pages", "admin", "adminNav.js");
   assert.doesNotMatch(nav, /category-consultations|Category Consultations/);
   assert.match(nav, /key: "appointments", label: "Appointments", path: "\/admin-dashboard\/appointments"/);
   assert.doesNotMatch(read("seo", "routes.js"), /category-consultations/);

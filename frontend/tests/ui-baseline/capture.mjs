@@ -3,6 +3,7 @@
 //
 //   node tests/ui-baseline/capture.mjs --out ../docs/ui-baseline            save screenshots + hashes.json
 //   node tests/ui-baseline/capture.mjs --out ../docs/ui-after
+//   --content-only   save/compare only the page-content area of admin pages (the "+content" shots), not the full screens
 //   node tests/ui-baseline/capture.mjs --compare ../docs/ui-baseline [--only doctor,patient,...]
 //       renders into a temp folder and exits 1 if any of the chosen screens differs from the saved hashes
 //
@@ -45,6 +46,7 @@ const WIDTHS = [
 ];
 const fileKey = (s, w) => `${s.name}${s.adminCss ? "+admincss" : ""}${s.drawer ? "+drawer" : ""}-${w.label}`;
 
+const CONTENT_ONLY = process.argv.includes("--content-only");
 const arg = (flag) => {
   const i = process.argv.indexOf(flag);
   return i >= 0 ? process.argv[i + 1] : undefined;
@@ -98,8 +100,17 @@ async function render(outDir, only) {
         await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(400);
         const file = path.join(outDir, `${fileKey(screen, w)}.png`);
-        await page.screenshot({ path: file });
-        hashes[fileKey(screen, w)] = crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+        const hashOf = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+        if (!CONTENT_ONLY) {
+          await page.screenshot({ path: file });
+          hashes[fileKey(screen, w)] = hashOf(file);
+        }
+        // The page-content area on its own (admin pages), so a change to the sidebar or top bar can be shown to leave it alone.
+        if (!screen.drawer && /^(admin|superadmin|paymentadmin)/.test(screen.name) && (await page.locator(".ad-content").count()) === 1) {
+          const contentFile = path.join(outDir, `${fileKey(screen, w)}+content.png`);
+          await page.locator(".ad-content").screenshot({ path: contentFile });
+          hashes[`${fileKey(screen, w)}+content`] = hashOf(contentFile);
+        }
         await context.close();
       }
     }
