@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { bookingAdminFields } = require("../utils/bookingAdminFields");
+const { bookingEntryFields } = require("../utils/bookingEntry");
 
 
 const consultationSchema = new mongoose.Schema(
@@ -107,6 +108,8 @@ const consultationSchema = new mongoose.Schema(
       default: null,
     },
     ...bookingAdminFields(),
+    // Appointment entries: the doctor fee / payout record typed in by an admin (see utils/bookingEntry.js).
+    ...bookingEntryFields(),
     medicalReports: [
       {
         url: { type: String },

@@ -375,4 +375,5 @@ module.exports = {
   loadAdminBookingRowById,
   toAppointmentRow,
   toCategoryRow,
+  feeOf,
 };
