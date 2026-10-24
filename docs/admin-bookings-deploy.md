@@ -71,7 +71,8 @@ Admin (use an admin and a super admin):
 - [ ] The booking's View page: a super admin sees **Delete** on a category consultation (with a confirmation), an ordinary admin does not; a regular appointment has no Delete.
 - [ ] User profile > consultations: a category consultation link opens its booking page.
 - [ ] Overview counts exclude testing bookings.
-- [ ] Old endpoints answer 410 with a pointer (e.g. `PUT /api/appointments/<id>/change-doctor`).
+- [ ] Old endpoints answer 410 with a pointer (`PUT /api/appointments/<id>/change-doctor`, `GET /api/appointments/admin/all`, the admin `/api/category-consultation` routes).
+- [ ] Mark testing / Unmark testing run at once and show a toast with **Undo**; Undo restores exactly what changed. Fees show two decimals.
 
 Patient web:
 

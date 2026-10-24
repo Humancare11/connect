@@ -13,6 +13,17 @@ Deploy order, rollback and the smoke checklist are in `docs/admin-bookings-deplo
 | 6 (full browser check) | Done | `ec650fdf`. 24 of 24. |
 | 7 (deploy notes) | Done | `docs/admin-bookings-deploy.md`. |
 
+### Follow-up round (after the first report)
+
+Satish's answers to the first report, done in commit `728cced2` and the sibling repos:
+
+- Mark/Unmark testing now needs no confirmation: a toast with an **Undo** that reverses only the bookings that really changed (one already in the target state is left alone). (`728cced2`)
+- `GET /api/appointments/admin/all` retired with 410, handler deleted. (`728cced2`)
+- Fees always show two decimals ($99.00). (`728cced2`)
+- doctorapp (own `admin` branch, commit `589b8fd`, nothing pushed): row 7, B1 and R1 of `docs/video/COMPATIBILITY.md` updated; new `docs/video/ADMIN_BACKEND_RETEST.md` manual checklist. `doctor-app.html` untouched.
+- connect-mobile: **not started, waiting for Satish's OK** on the base branch (`main` was chosen; its 4 local commits are listed for him first). The pre-existing `pubspec.yaml` change stays out of any commit.
+- **Follow-up (not now, as decided):** make the web, mobile and doctor clients ignore call events whose `appointmentId` is not the call they are in. The server now tags every call event, and no longer sends them across calls, so this is a second line of defence.
+
 ## 2. Step 3 in brief
 
 Commit `0ff240c4` (16 files). Header checkbox opens a menu (Select this page / Select one by one / Clear selection / Exit selection, only what applies); row tick boxes while selecting; a navy bar "N selected on this page" with Auto complete, Cancel (one required reason; paid bookings counted by gateway), Mark/Unmark testing, Done; no bulk Confirm; a result list (done / skipped with reason / failed) then the list and counts reload.
@@ -31,7 +42,7 @@ Searched `connect/backend`, `connect/frontend/src`, `connect-mobile/lib`, `docto
 | `GET /:id`, `PATCH /:id/status`, `DELETE /:id` on `/api/category-consultation` (admin) | `AdminCategoryConsultationDetails.jsx` and the old list (deleted). None elsewhere. | Retired: 410, handlers deleted |
 
 The 410 answers `{ msg, code: "endpoint_retired", use }` after the normal admin auth (an anonymous caller still gets 401). Kept untouched: `POST /api/category-consultation` (patient booking), `GET /mine`, `GET /doctor/mine`. Because no mobile or doctor app calls any retired endpoint, nothing had to be kept.
-Not on the list but noticed: `GET /api/appointments/admin/all` now has no callers anywhere (the old page used it). Left in place, see decisions.
+Not on the list but noticed: `GET /api/appointments/admin/all` had no callers anywhere (the old page used it). Retired with 410 in the follow-up round (`728cced2`).
 
 ## 4. Commits (oldest first)
 
@@ -41,9 +52,9 @@ See `docs/admin-bookings-deploy.md` section 5 for the full list with one line ea
 
 | Suite | Result |
 |---|---|
-| Backend (`npm test`) | 2037 of 2038 pass. The one failure is the known, unrelated `searchTaxonomy/applyPreflight` "plan integrity" check (fails identically on a clean `uat`). |
-| Frontend (`node --test` of `src/**/*.test.mjs` and `tests/*.test.mjs`) | 240 of 240 pass |
-| Browser harness (`npm run test:e2e:appointments`) | 24 of 24 pass (real Chromium, real page, real API code, in-memory MongoDB, notifications recorded not sent) |
+| Backend (`npm test`) | 2035 of 2038 pass. The 3 failures are unrelated and fail identically on a clean `uat` (checked in a separate worktree): `searchTaxonomy/applyPreflight` "plan integrity", and two date-dependent live-chat tests in `liveChatTrash.test.js` (a day-window check that began failing when the calendar date moved on; they passed in this branch's earlier runs). |
+| Frontend (`node --test` of `src/**/*.test.mjs` and `tests/*.test.mjs`) | 236 of 237 pass; the one failure is a live-chat static test that fails only under full-run load and passes 10 of 10 alone |
+| Browser harness (`npm run test:e2e:appointments`) | 25 of 25 pass (real Chromium, real page, real API code, in-memory MongoDB, notifications recorded not sent; includes the Undo toast) |
 | Call lock tests (`appointmentRoomAccess.test.js`) | 15 of 15, re-run after the socket change |
 | Socket tests (`appointmentRoomState.test.js`) | 11 of 11 |
 | CSS prefix check | passes |
@@ -62,23 +73,16 @@ Files: `backend/utils/appointmentRoomState.js` (new), `backend/server.js` (wirin
 
 ## 7. Needs Satish's decision
 
-1. **Confirmation for Mark/Unmark testing.** They currently run immediately (as the reference does). Add a confirm? (Needs a business call.)
-2. **`GET /api/appointments/admin/all`** has no callers any more. Retire it (410) in the same release, or keep it? Left as is.
-3. **connect-mobile fix** (`lib/screens/appointments_screen.dart:110-113` and `:129`, see `docs/mobile-next-task-assigned-join.md`): not done (read-only repo). Until released, mobile patients see Join on an Assigned booking and get the clear refusal message.
-4. **Client use of `appointmentId`:** the server now tags call events, but the web, mobile and doctor clients do not yet use it to ignore events for another call. Not needed for the fix (the server no longer sends them cross-call) but is a cheap second line of defence. Needs client changes, so not done.
-5. **Doctor app retest** against the new backend before release (the checklist is in the deploy notes). `doctorapp/docs/video/COMPATIBILITY.md` row 7 ("pending/assigned allowed") is out of date; I did not edit that repo.
-6. **Fee format:** the reference shows two decimals always ($99.00); the page shows $99 for whole dollars and $12.50 when it has cents.
+Answered in the follow-up round: 1 (testing confirmation: no, Undo toast), 2 (retire admin/all: done), 3 (mobile fix: waiting on his OK for the base branch), 4 (client use of appointmentId: later, listed as a follow-up above), 5 (doctor app: checklist and doc update done), 6 (two-decimal fees: done). Still open:
+
 7. **Overview counts vs the All tab** differ by design (the overview counts regular appointments only, minus testing); as agreed earlier, left that way.
 8. **No automatic refunds** on cancel (as agreed); the warning names Stripe or PayPal.
 9. **Optional `isTesting` backfill:** not run, not needed. Your call whether to run it later.
 10. **Remove the 410 stubs** after one release (they are in `routes/categoryConsultation.js`, `routes/appointments.js` and `middleware/retiredEndpoint.js`).
-11. **Pre-existing changes in the two read-only repos** that are not mine (see section 8): a modified `connect-mobile/pubspec.yaml` and an untracked `doctorapp/doctor-app.html`.
+11. **Pre-existing changes in the two sibling repos** that are not mine: a modified `connect-mobile/pubspec.yaml` and an untracked `doctorapp/doctor-app.html`; both are left out of every commit.
 
 ## 8. Confirmations
 
-- **Nothing was pushed, merged, rebased onto `uat`, or deployed.** All work is on the local `admin` branch.
-- **Atlas and any production database, server or secret were not touched.** The only `MONGO_URI` in `backend/.env` is Atlas and was never loaded; every test and browser run used `mongodb-memory-server`. The repo's browser harness refuses to start unless its database address is local.
-- **connect-mobile/ and doctorapp/ were only read.** `git status` (read-only, no optional locks) at the end:
-  - `connect-mobile`: ` M pubspec.yaml` (a change that was already there; I never edited that repo). Last commit `6596b69`.
-  - `doctorapp`: `?? doctor-app.html` (untracked, already there). Last commit `8bd0246`.
-- `connect` working tree: clean apart from this report once committed.
+- **Nothing was merged or deployed.** The `admin` branch of this repo is pushed and has a pull request into `uat` (not merged), at Satish's request. The sibling repos have nothing pushed.
+- **Atlas and any production database, server or secret were not touched.** Every test and browser run used `mongodb-memory-server`; the repo's browser harness refuses to start unless its database address is local.
+- **doctorapp:** a new local `admin` branch with one docs commit (`589b8fd`); `doctor-app.html` untouched. **connect-mobile:** no branch or commit yet (waiting for Satish's OK); `pubspec.yaml` untouched.
