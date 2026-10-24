@@ -4,9 +4,10 @@ import {
   DEFAULT_TAB, PAGE_SIZE, STATUS_META, TAB_LABELS, TAB_ORDER,
   formatBookedOn, formatConsultation, formatFee, isClosed, originalDoctorHint, pageFromParam, pageWindow,
   rangeText, rowNumber, shortBookingId, showAssignedByColumn, tabFromParam,
-  AUTO_COMPLETE_HINT, CANCEL_REASONS, refundWarning, canAlternate, canAssign, canAutoComplete, canCancel, canConfirm,
+  AUTO_COMPLETE_HINT, CANCEL_REASONS, refundWarning, canAlternate, assignedByHint, canAssign, canAutoComplete, canCancel, canReactivate,
   explainActionError, filterDoctors, needsAppointmentTime, toTime12, toTime24,
 } from "./bookingFormat.js";
+import * as formatModule from "./bookingFormat.js";
 
 test("tabs are in the agreed order and every one has a label", () => {
   assert.deepEqual(TAB_ORDER, ["all", "upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "testing"]);
@@ -87,34 +88,47 @@ test("the five cancel reasons and the paid warning are as agreed", () => {
 });
 
 test("buttons follow the server rules for every status, with and without a doctor", () => {
-  for (const status of ["upcoming", "pending"]) {
+  // No doctor: any open booking can be assigned one (older data has Assigned and Confirmed bookings with no doctor).
+  for (const status of ["upcoming", "pending", "assigned", "confirmed"]) {
     const r = row(status, null);
     assert.equal(canAssign(r), true, `assign ${status}`);
     assert.equal(canAlternate(r), false, `alternate ${status}`);
-    assert.equal(canConfirm(r), false);
-    assert.equal(canAutoComplete(r), false);
-    assert.equal(canCancel(r), true);
+    assert.equal(canAutoComplete(r), false, `complete ${status}`);
+    assert.equal(canReactivate(r), false);
+    assert.equal(canCancel(r), true, `cancel ${status}`);
   }
   const withDoctor = {
-    pending: { alternate: true, confirm: false, complete: false, cancel: true },
-    assigned: { alternate: true, confirm: true, complete: true, cancel: true },
-    confirmed: { alternate: true, confirm: false, complete: true, cancel: true },
-    complete: { alternate: false, confirm: false, complete: false, cancel: false },
-    cancelled: { alternate: false, confirm: false, complete: false, cancel: false },
+    pending: { alternate: true, complete: false, reactivate: false, cancel: true },
+    assigned: { alternate: true, complete: true, reactivate: false, cancel: true },
+    confirmed: { alternate: true, complete: true, reactivate: false, cancel: true },
+    complete: { alternate: false, complete: false, reactivate: true, cancel: false },
+    cancelled: { alternate: false, complete: false, reactivate: false, cancel: false },
   };
   for (const [status, want] of Object.entries(withDoctor)) {
     const r = row(status);
     assert.equal(canAssign(r), false, `assign ${status}`);
     assert.equal(canAlternate(r), want.alternate, `alternate ${status}`);
-    assert.equal(canConfirm(r), want.confirm, `confirm ${status}`);
     assert.equal(canAutoComplete(r), want.complete, `complete ${status}`);
+    assert.equal(canReactivate(r), want.reactivate, `reactivate ${status}`);
     assert.equal(canCancel(r), want.cancel, `cancel ${status}`);
   }
-  // Complete / Cancelled rows with no doctor can't be assigned or cancelled either.
+  // Complete / Cancelled rows with no doctor can't be assigned or cancelled, and a Complete one can't be reactivated.
   for (const status of ["complete", "cancelled"]) {
     assert.equal(canAssign(row(status, null)), false);
     assert.equal(canCancel(row(status, null)), false);
+    assert.equal(canReactivate(row(status, null)), false);
   }
+});
+
+test("there is no admin Confirm helper any more", () => {
+  assert.equal(formatModule.canConfirm, undefined);
+});
+
+test("an empty 'Assigned by' next to a doctor explains itself on hover", () => {
+  assert.equal(assignedByHint({ doctorName: "Dr X", assignedBy: null, status: "assigned" }), "Assigned before tracking started");
+  assert.match(assignedByHint({ doctorName: "Dr X", assignedBy: null, status: "confirmed" }), /booked directly with the doctor, or assigned before tracking started/);
+  assert.equal(assignedByHint({ doctorName: "Dr X", assignedBy: "Super Admin", status: "assigned" }), "");
+  assert.equal(assignedByHint({ doctorName: null, assignedBy: null, status: "upcoming" }), "");
 });
 
 test("only a category booking with no time yet needs one", () => {

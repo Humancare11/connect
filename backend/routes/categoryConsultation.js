@@ -38,7 +38,7 @@ router.patch(
   "/:id/status",
   verifyAdminToken,
   adminOnly,
-  retiredEndpoint("POST /api/admin/bookings/:id/confirm, /cancel or /auto-complete"),
+  retiredEndpoint("POST /api/admin/bookings/:id/cancel (super admin) or /auto-complete"),
 );
 router.delete("/:id", verifyAdminToken, adminOnly, retiredEndpoint("DELETE /api/admin/bookings/:id (super admin only)"));
 router.patch(

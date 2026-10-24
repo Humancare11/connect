@@ -17,7 +17,7 @@ const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
-const { LifecycleError, ACTIVE_DOCTOR_STATUSES, loadAppointmentAny, completeLoaded } = require("./appointmentLifecycle");
+const { LifecycleError, ACTIVE_DOCTOR_STATUSES, loadAppointmentAny, completeLoaded, reopenLoaded } = require("./appointmentLifecycle");
 const { unifiedStatus } = require("./adminBookingList");
 const { CANCEL_REASONS } = require("./bookingAdminFields");
 // Called through the module objects (not destructured) so tests can replace them.
@@ -52,6 +52,15 @@ const statusOf = ({ kind, doc }) => unifiedStatus(kind, doc.status, Boolean(curr
 const isClosed = (loaded) => ["complete", "cancelled"].includes(statusOf(loaded));
 
 const fullName = (enrollment) => `${enrollment?.firstName || ""} ${enrollment?.surname || ""}`.trim();
+
+// True only if the booking points at a doctor that still exists. A reference to a deleted doctor or enrollment
+// counts as "no doctor" (the list shows it as Not assigned), so the booking can be assigned a new one.
+async function hasLiveDoctor(loaded) {
+  const key = currentDoctorKey(loaded);
+  if (!key) return false;
+  const found = loaded.kind === "category" ? await Enrollment.exists({ _id: key }) : await Doctor.exists({ _id: key });
+  return Boolean(found);
+}
 
 // ── Doctors ──────────────────────────────────────────────────────────────────
 
@@ -238,12 +247,13 @@ async function assignDoctor(app, id, { doctorId, appointmentTime } = {}, actor) 
   const loaded = await loadBooking(id);
   const { kind, doc } = loaded;
 
-  if (currentDoctorKey(loaded)) {
+  // Any open booking with no doctor can be given one, whatever its status (old data has Assigned, Confirmed
+  // and Pending bookings with no doctor). Complete and Cancelled ones are closed.
+  if (await hasLiveDoctor(loaded)) {
     throw new LifecycleError(409, "This booking already has a doctor. Use Alternate doctor to change it.");
   }
-  const status = statusOf(loaded);
-  if (!["upcoming", "pending"].includes(status)) {
-    throw new LifecycleError(409, `Only upcoming bookings can be assigned a doctor. This one is ${status}.`);
+  if (isClosed(loaded)) {
+    throw new LifecycleError(409, `A ${statusOf(loaded)} booking can't be assigned a doctor.`);
   }
 
   const target = await resolveDoctor(doctorId);
@@ -322,39 +332,18 @@ async function swapDoctor(app, id, { doctorId, revert = false } = {}, actor) {
 const alternateDoctor = (app, id, body, actor) => swapDoctor(app, id, { doctorId: body?.doctorId }, actor);
 const revertDoctor = (app, id, actor) => swapDoctor(app, id, { revert: true }, actor);
 
-// Admin confirms on the doctor's behalf: Assigned -> Confirmed, call enabled, and
-// who confirmed (role "admin") and when is recorded. The patient gets the same push
-// and live update as with the doctor's own confirm; the doctor, who did not act
-// here, is told by socket event and email. Nothing is sent for testing bookings.
-async function confirmBooking(app, id, actor) {
-  const loaded = await loadBooking(id);
-  const { kind, doc } = loaded;
-  if (statusOf(loaded) !== "assigned" || !currentDoctorKey(loaded)) {
-    throw new LifecycleError(409, `Only assigned bookings can be confirmed. This one is ${statusOf(loaded)}.`);
+// Complete -> Confirmed again (admins and super admins). Uses the shared reopen: it checks the doctor is free at that
+// time, lets the doctor and patient back into the call room, records who and when, pushes the patient and tells the
+// doctor, and sends nothing for a testing booking. 409 if the booking is no longer Complete.
+async function reactivateBooking(app, id, actor) {
+  const full = await loadAppointmentAny(id);
+  if (!full) throw new LifecycleError(404, "Appointment not found.");
+  const complete = ["complete", "completed"].includes(String(full.doc.status || "").toLowerCase());
+  if (!complete) {
+    throw new LifecycleError(409, `Only completed bookings can be reactivated. This one is ${unifiedStatus(full.isCategory ? "category" : "appointment", full.doc.status, true)}.`, "changed");
   }
-  const doctor = await currentDoctor(loaded);
-
-  const updated = await conditionalUpdate(loaded, {
-    status: kind === "category" ? "Confirmed" : "confirmed",
-    ...(kind === "appointment" ? { sessionStarted: true } : {}),
-    confirmedBy: { id: actor?.id || null, name: actor?.name || "Admin", email: actor?.email || "", role: "admin" },
-    confirmedAt: new Date(),
-  });
-
-  emitBookingUpdate(app, updated, kind);
-  const io = app.get("io");
-  if (io && doctor.userId) {
-    io.to(`doctor_${doctor.userId}`).emit("appointment-updated", { appointmentId: updated._id, status: "confirmed" });
-  }
-  if (updated.isTesting !== true) {
-    push.sendPushToUser(updated.patientId, {
-      title: "Appointment confirmed",
-      body: "Your doctor has confirmed your appointment.",
-      data: { type: "appointment", appointmentId: String(updated._id) },
-    });
-    quiet(notify.notifyDoctorBookingConfirmed({ booking: updated, isCategory: kind === "category" }));
-  }
-  return { kind, id: String(doc._id), paid: updated.paymentStatus === "paid" };
+  const { appointment } = await reopenLoaded(app, full, actor);
+  return { kind: full.isCategory ? "category" : "appointment", id: String(appointment._id), paid: appointment.paymentStatus === "paid" };
 }
 
 // Cancels any open booking. The reason is recorded and nothing is refunded:
@@ -518,7 +507,7 @@ module.exports = {
   assignDoctor,
   alternateDoctor,
   revertDoctor,
-  confirmBooking,
+  reactivateBooking,
   cancelBooking,
   deleteBooking,
   autoCompleteBooking,

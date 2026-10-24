@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAdmin } from "../../context/AdminContext";
 import "./AdminAppointments.css";
 import RetryButton from "../../components/ui/RetryButton";
 import BookingTabs from "./appointments/BookingTabs";
@@ -32,6 +33,8 @@ export default function AdminAppointments() {
 
   const { data, loading, error, reload } = useAdminBookings({ status: tab, hideTesting, q, page, limit: PAGE_SIZE });
   const actions = useBookingActions({ reload });
+  // Cancelling bookings is for super admins only (the server enforces it too).
+  const isSuperAdmin = useAdmin()?.admin?.role === "superadmin";
 
   // Writes the view to the URL, leaving out values that are the default.
   const setView = (next) => {
@@ -115,7 +118,7 @@ export default function AdminAppointments() {
                 {error} <RetryButton onRetry={reload} />
               </div>
             )}
-            <BookingsTable rows={rows} tab={tab} page={page} actions={actions} selection={selection} bulk={bulk} />
+            <BookingsTable rows={rows} tab={tab} page={page} actions={actions} selection={selection} bulk={bulk} isSuperAdmin={isSuperAdmin} />
             <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}

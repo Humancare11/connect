@@ -72,14 +72,14 @@ export default function useBookingActions({ reload }) {
       setModalError("");
       setModal({ type: "cancel", row });
     },
-    confirm: async (row) => {
+    reactivate: async (row) => {
       const ok = await confirm({
-        title: "Confirm this booking?",
-        message: `Booking ${label(row)} will be confirmed on behalf of ${row.doctorName}. The doctor and the patient are told, and the video call opens for both.`,
-        confirmText: "Confirm booking",
+        title: "Reactivate this appointment?",
+        message: `Booking ${label(row)} with ${row.doctorName} goes from Complete back to Confirmed. The doctor and the patient are told it is active again, and the video call opens for both.`,
+        confirmText: "Reactivate",
         className: ADMIN_CONFIRM,
       });
-      if (ok) perform(row, () => bookingApi.confirmBooking(row.id), () => toast.success(`Booking ${label(row)} confirmed.`));
+      if (ok) perform(row, () => bookingApi.reactivateBooking(row.id), () => toast.success(`Booking ${label(row)} reactivated.`));
     },
     autoComplete: async (row) => {
       const ok = await confirm({

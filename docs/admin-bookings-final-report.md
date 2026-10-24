@@ -27,7 +27,34 @@ Satish's answers to the first report, done in commit `728cced2` and the sibling 
   1. Make the web, mobile and doctor clients ignore call events whose `appointmentId` is not the call they are in. The server now tags every call event, and no longer sends them across calls, so this is a second line of defence.
   2. Make the dashboard overview match the All tab (today the overview counts regular appointments only, minus testing).
 
-## 2. Step 3 in brief
+### Round 3 (changes after Satish's local test)
+
+1. **Copy booking ID:** clicking the ID copies the full id, toast "Booking ID copied", copy cursor and tooltip; if the clipboard is refused the full id is selected and the toast says to press Ctrl+C.
+2. **Assign doctor** moved to the Doctor column (under "Not assigned") and out of Actions. The server now assigns **any open booking with no doctor, whatever its status**, and treats a reference to a deleted doctor as "no doctor". The disabled-button bug (e.g. `…1459ABBD`, `…50E43207`) was the old rule: Assign was only allowed on Upcoming/Pending.
+3. **Admin Confirm removed** completely (button, `POST /:id/confirm`, handler, its email, tests, docs, doctor-app checklist item M-ADMIN-3). Only the doctor confirms; the doctor's own confirm still records `confirmedBy` (role doctor).
+4. **Cancel is super admin only**: hidden for admins (row and bulk bar); `POST /:id/cancel` and bulk cancel answer 403 for anyone else.
+5. **Reactivate** on Complete rows (admins and super admins): confirmation, Complete -> Confirmed through the shared reopen logic, records `reactivatedBy {id,name,email}` and `reactivatedAt`, 409 if it is no longer Complete (or the doctor is busy then, `slot_taken`), doctor and patient told, nothing for testing bookings.
+6. **Assigned by** no longer breaks an email mid-word: one line, ellipsis, full value on hover (cards on a phone show it all).
+7. **Assigned rows with a doctor but no recorded assigner** show "—" with the tooltip "Assigned before tracking started" (for other statuses the tooltip also covers bookings made directly with the doctor).
+
+**The two counts (not run: the only configured database is Atlas, and the local MongoDB on this machine has no booking data).** Read-only queries to run against the dev database yourself:
+
+```js
+// 2. Assigned (or any open status) with no doctor, or a doctor that no longer exists
+db.appointments.countDocuments({ status: { $nin: ["complete", "completed", "cancelled"] }, $or: [{ doctorId: null }, { doctorId: { $exists: false } }] })
+db.categoryconsultations.countDocuments({ status: { $in: ["Assigned", "Confirmed"] }, $or: [{ assignedDoctorId: null }, { assignedDoctorId: { $exists: false } }] })
+// ...and Assigned ones whose doctor was deleted (dangling reference): list their doctor ids, then look them up
+db.appointments.find({ status: "assigned", doctorId: { $ne: null } }, { doctorId: 1 })   // check each id exists in db.doctors
+db.categoryconsultations.find({ status: "Assigned", assignedDoctorId: { $ne: null } }, { assignedDoctorId: 1 }) // check in db.enrollments
+
+// 7. Assigned with a doctor but no recorded assigner
+db.appointments.countDocuments({ status: "assigned", doctorId: { $ne: null }, $or: [{ "assignedBy.name": { $in: [null, ""] } }, { "assignedBy.name": { $exists: false } }], "assignedBy.email": { $in: [null, ""] } })
+db.categoryconsultations.countDocuments({ status: "Assigned", assignedDoctorId: { $ne: null }, "assignedBy.name": { $in: [null, ""] }, "assignedBy.email": { $in: [null, ""] } })
+```
+
+**How bookings got "Assigned with no doctor" (from the code, not from data):** (a) the old Category Consultations `PATCH /:id/status` accepted "Assigned" with no doctor, which is how a status can be set without ever picking one; (b) a doctor's account or enrollment deleted later leaves the booking pointing at nothing (the list shows "Not assigned" because the reference no longer resolves, while the stored status stays Assigned); (c) the old appointment assign paths set the status and the doctor in one write, so they were not a cause. **Assigned with a doctor but no assigner** is data from before the `assignedBy` field existed on category consultations (it was added in this branch), and any booking whose doctor was set by the patient at booking time.
+
+
 
 Commit `0ff240c4` (16 files). Header checkbox opens a menu (Select this page / Select one by one / Clear selection / Exit selection, only what applies); row tick boxes while selecting; a navy bar "N selected on this page" with Auto complete, Cancel (one required reason; paid bookings counted by gateway), Mark/Unmark testing, Done; no bulk Confirm; a result list (done / skipped with reason / failed) then the list and counts reload.
 Tests at that commit: backend relevant suites 188 pass; frontend 228 of 229 (one live-chat flake, passes alone); browser 22 of 22.

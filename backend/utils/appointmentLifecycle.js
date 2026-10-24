@@ -111,7 +111,8 @@ async function assertSlotStillFree(loaded) {
   const conflictError = new LifecycleError(
     409,
     "This appointment can't be reopened: the doctor already has another active appointment at the same date and time. " +
-      "Resolve or reassign the other appointment first."
+      "Resolve or reassign the other appointment first.",
+    "slot_taken"
   );
 
   if (!isCategory) {
@@ -176,6 +177,9 @@ async function reopenLoaded(app, loaded, actor) {
         status: isCategory ? "Confirmed" : "confirmed",
         ...(isCategory ? {} : { sessionStarted: true }),
         reopenedByAdmin: { id: actor?.id || null, name: actor?.name || "Admin", at: new Date() },
+        // Same event, in the admin bookings fields: who reactivated the booking and when.
+        reactivatedBy: { id: actor?.id || null, name: actor?.name || "Admin", email: actor?.email || "" },
+        reactivatedAt: new Date(),
       },
     },
     { new: true }

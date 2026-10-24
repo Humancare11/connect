@@ -10,9 +10,12 @@ import { ToastProvider } from "../../../../src/components/ui/Toast.jsx";
 import { ConfirmProvider } from "../../../../src/components/ui/ConfirmDialog.jsx";
 import AdminAppointments from "../../../../src/pages/admin/AdminAppointments.jsx";
 import { legacyAdminRedirects } from "../../../../src/pages/admin/legacyRedirects.jsx";
+import { AdminContext } from "../../../../src/context/AdminContext.jsx";
 
 const params = new URLSearchParams(window.location.search);
 const start = params.get("start") || "/admin-dashboard/appointments";
+// Which admin is signed in: ?role=admin hides Cancel (super admins only); the default is a super admin.
+const admin = { name: "Test Admin", role: params.get("role") || "superadmin" };
 
 function Landed() {
   const { pathname, search } = useLocation();
@@ -35,7 +38,9 @@ const app =
 createRoot(document.getElementById("root")).render(
   <ToastProvider>
     <ConfirmProvider>
-      <MemoryRouter initialEntries={[start]}>{app}</MemoryRouter>
+      <AdminContext.Provider value={{ admin, loading: false }}>
+        <MemoryRouter initialEntries={[start]}>{app}</MemoryRouter>
+      </AdminContext.Provider>
     </ConfirmProvider>
   </ToastProvider>,
 );

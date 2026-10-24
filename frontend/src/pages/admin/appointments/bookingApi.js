@@ -8,7 +8,7 @@ export const assignDoctor = (id, { doctorId, appointmentTime }) =>
   post(id, "assign-doctor", { doctorId, ...(appointmentTime ? { appointmentTime } : {}) });
 export const alternateDoctor = (id, { doctorId }) => post(id, "alternate-doctor", { doctorId });
 export const revertDoctor = (id) => post(id, "revert-doctor");
-export const confirmBooking = (id) => post(id, "confirm");
+export const reactivateBooking = (id) => post(id, "reactivate");
 export const autoCompleteBooking = (id) => post(id, "auto-complete");
 export const cancelBooking = (id, { reason }) => post(id, "cancel", { reason });
 

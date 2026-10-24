@@ -51,8 +51,8 @@ function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdm
 
   // Runs one action and answers with the booking's new list row. `paid` lets the
   // UI warn that a paid booking needs a manual refund.
-  const action = (name, message, run) => [
-    ...guard,
+  const action = (name, message, run, who = guard) => [
+    ...who,
     async (req, res) => {
       try {
         const actor = await actorOf(req);
@@ -86,8 +86,9 @@ function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdm
   router.post("/:id/revert-doctor", ...action("ADMIN_REVERT_DOCTOR", "Original doctor restored.",
     (req, actor) => actions.revertDoctor(req.app, req.params.id, actor)));
 
-  router.post("/:id/confirm", ...action("ADMIN_CONFIRM_BOOKING", "Booking confirmed.",
-    (req, actor) => actions.confirmBooking(req.app, req.params.id, actor)));
+  // Complete -> Confirmed again (admins and super admins). The doctor is the only one who confirms a booking.
+  router.post("/:id/reactivate", ...action("ADMIN_REACTIVATE_BOOKING", "Booking reactivated.",
+    (req, actor) => actions.reactivateBooking(req.app, req.params.id, actor)));
 
   // Assigned or Confirmed -> Complete.
   router.post("/:id/auto-complete", ...action("ADMIN_AUTO_COMPLETE_BOOKING", "Booking marked complete.",
@@ -97,6 +98,10 @@ function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdm
   // Answers per id (ok / not_found / conflict / error). There is no bulk confirm.
   router.post("/bulk", ...guard, async (req, res) => {
     try {
+      // Cancelling is for super admins only, in bulk as much as one by one.
+      if (req.body?.action === "cancel" && req.user?.role !== "superadmin") {
+        return res.status(403).json({ msg: "Only a super admin can cancel bookings." });
+      }
       const actor = await actorOf(req);
       const outcome = await actions.bulkAction(req.app, req.body, actor);
       await recordActivity(req, {
@@ -117,8 +122,9 @@ function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdm
   });
 
   // body: { reason: one of the five cancel reasons }. No refund: `paid` says whether one is due.
+  // Super admin only (an ordinary admin gets 403).
   router.post("/:id/cancel", ...action("ADMIN_CANCEL_BOOKING", "Booking cancelled.",
-    (req, actor) => actions.cancelBooking(req.app, req.params.id, req.body, actor)));
+    (req, actor) => actions.cancelBooking(req.app, req.params.id, req.body, actor), superGuard));
 
   // body: { ids: [up to 100], value: true | false }. Answers per id.
   router.patch("/testing", ...guard, async (req, res) => {

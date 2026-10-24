@@ -447,32 +447,6 @@ async function notifyDoctorBookingCancelled({ booking, isCategory }) {
   });
 }
 
-// An admin confirmed the booking on the doctor's behalf. Goes to the assigned doctor
-// only: the patient hears about it through the same push a doctor's own confirm sends.
-async function notifyDoctorBookingConfirmed({ booking, isCategory }) {
-  await safely("doctor confirmed-by-admin email", async () => {
-    const patient = await fetchPatient(booking.patientId);
-    const { to, doctorName, when, category } = await doctorContactFor({ booking, isCategory });
-    if (!to) {
-      console.warn("[booking-notify] confirmed email skipped: doctor has no email address.");
-      return;
-    }
-    await mailer.sendBookingNotificationEmail(to, {
-      subject: "Humancare Connect — Appointment confirmed for you",
-      badge: "Appointment Confirmed",
-      greeting: doctorName ? `Hello Dr. ${doctorName},` : "Hello Doctor,",
-      intro: "The Humancare Connect team has confirmed this appointment on your behalf. It appears under Confirmed in your appointments, and you can join the consultation at the scheduled time.",
-      rows: [
-        ["Patient", patientLabel(patient)],
-        ["Date / time", when],
-        ["Category", category],
-      ],
-      ctaUrl: `${frontendBase()}/doctor-dashboard/appointments`,
-      ctaLabel: "Go to your dashboard",
-    });
-  });
-}
-
 // An admin reopened a completed appointment. `appointment` is the loaded
 // Appointment (doctorId = Doctor _id) or CategoryConsultation (assignedDoctorId
 // populated with its Enrollment).
@@ -524,7 +498,6 @@ module.exports = {
   notifyConsultationDoctorChanged,
   notifyPatientDoctorChanged,
   notifyDoctorBookingCancelled,
-  notifyDoctorBookingConfirmed,
   // exported for tests
   _internals: { whenText, adminRecipients, patientLabel },
 };

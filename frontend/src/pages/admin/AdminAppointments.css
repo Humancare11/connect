@@ -1500,12 +1500,51 @@
 .adp-bk .adp-status-pill {
   white-space: nowrap;
 }
-/* Keeps the column narrow in the table. */
-.adp-bk td[data-label="Assigned by"] {
-  max-width: 116px;
-  overflow-wrap: anywhere;
+/* "Assigned by" stays on one line: a long email is cut with an ellipsis (the full value is the hover text), never broken
+   in the middle of a word. */
+.adp-bk .adp-bk-bycell {
+  max-width: 150px;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.adp-bk-by {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The booking id: click to copy. */
+.adp-bk-idcopy {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: copy;
+  text-align: left;
+}
+.adp-bk-idcopy:hover .adp-booking-id {
+  color: #0f766e;
+  text-decoration: underline dotted;
+}
+.adp-bk-idcopy:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* The full id, kept only so it can be selected when the browser will not copy; not shown. */
+.adp-bk-fullid {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .adp-bk-idcell {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2045,8 +2084,12 @@
   .adp-bk td[data-label="#"]::before {
     display: none;
   }
-  .adp-bk td[data-label="Assigned by"] {
+  .adp-bk .adp-bk-bycell {
     max-width: none;
+  }
+  .adp-bk-by {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
   /* The row number means nothing on a card; while selecting, the tick box is all that shows of that cell. */
   .adp-bk .adp-bk-num {

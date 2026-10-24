@@ -32,7 +32,7 @@ const run = (handler) => {
 const RETIRED = [
   { router: categoryRouter, method: "GET", path: "/", use: "GET /api/admin/bookings" },
   { router: categoryRouter, method: "GET", path: "/:id", use: "GET /api/admin/bookings/:id" },
-  { router: categoryRouter, method: "PATCH", path: "/:id/status", use: "POST /api/admin/bookings/:id/confirm, /cancel or /auto-complete" },
+  { router: categoryRouter, method: "PATCH", path: "/:id/status", use: "POST /api/admin/bookings/:id/cancel (super admin) or /auto-complete" },
   { router: categoryRouter, method: "DELETE", path: "/:id", use: "DELETE /api/admin/bookings/:id (super admin only)" },
   { router: categoryRouter, method: "PATCH", path: "/:id/assign-doctor", use: "POST /api/admin/bookings/:id/assign-doctor (or /alternate-doctor)" },
   { router: appointmentsRouter, method: "GET", path: "/admin/all", use: "GET /api/admin/bookings" },
@@ -58,9 +58,10 @@ test("each retired admin endpoint is still mounted, behind the real admin auth, 
 test("the replacement endpoints the 410 messages point to really exist", () => {
   const bookings = require("../routes/adminBookings");
   const table = routesOf(bookings).map((r) => `${r.method} ${r.path}`);
-  for (const expected of ["GET /", "GET /:id", "DELETE /:id", "POST /:id/assign-doctor", "POST /:id/alternate-doctor", "POST /:id/confirm", "POST /:id/cancel", "POST /:id/auto-complete", "POST /bulk", "PATCH /testing"]) {
+  for (const expected of ["GET /", "GET /:id", "DELETE /:id", "POST /:id/assign-doctor", "POST /:id/alternate-doctor", "POST /:id/reactivate", "POST /:id/cancel", "POST /:id/auto-complete", "POST /bulk", "PATCH /testing"]) {
     assert.ok(table.includes(expected), expected);
   }
+  assert.ok(!table.includes("POST /:id/confirm"), "there is no admin confirm");
 });
 
 test("the patient and doctor routes of category consultations are untouched", () => {

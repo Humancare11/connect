@@ -278,49 +278,21 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
 
   // ── Confirm, auto complete, cancel ────────────────────────────────────────
 
-  test("admin Confirm: only on Assigned rows, behind a confirmation, recorded as the admin, doctor and patient told", async () => {
+  test("there is no admin Confirm: no row offers it, whatever its status (only the doctor confirms)", async () => {
     await h.reset();
-    const id = await h.make({ kind: "category", status: "assigned", doctor: 3, name: "Cora Confirm" });
-    await h.search("Cora Confirm");
-    const confirmButton = () => h.row("Cora Confirm").locator("button", { hasText: /^Confirm$/ });
-    await confirmButton().click();
-    await h.confirmDialog().waitFor();
-    assert.match(await h.confirmDialog().innerText(), /confirmed on behalf of Farah/);
-    await h.shot("confirm-dialog");
-    await h.confirmDialog().locator("button", { hasText: "Cancel" }).click();
-    await h.confirmDialog().waitFor({ state: "detached" });
-    assert.equal((await h.doc(id)).status, "Assigned", "dismissing changes nothing");
-
-    await confirmButton().click();
-    await h.confirmDialog().locator("button", { hasText: "Confirm booking" }).click();
-    await h.until(async () => /Confirmed/.test(await h.rowText("Cora Confirm")), "row Confirmed");
-    assert.equal(await confirmButton().count(), 0);
-    const saved = await h.doc(id);
-    assert.equal(saved.status, "Confirmed");
-    assert.equal(saved.confirmedBy.role, "admin");
-    assert.equal(saved.confirmedBy.name, "Super Admin");
-    assert.ok(saved.confirmedAt);
-    const names = (await h.calls()).map((c) => c.name);
-    assert.ok(names.includes("notifyDoctorBookingConfirmed") && names.includes("push:Appointment confirmed"));
-
-    for (const [status, name] of [["confirmed", "Nick Notassigned"], ["pending", "Penny Pending"], ["complete", "Carl Complete"], ["upcoming", "Una Upcoming"]]) {
+    for (const [status, name] of [["assigned", "Cora Confirm"], ["pending", "Penny Pending"], ["confirmed", "Nick Confirmed"], ["upcoming", "Una Upcoming"]]) {
       await h.make({ status, doctor: status === "upcoming" ? null : 0, name });
-      await h.search(name);
-      assert.equal(await h.row(name).locator("button", { hasText: /^Confirm$/ }).count(), 0, `${name} has no Confirm button`);
     }
+    await h.search("Cora Confirm");
+    assert.equal(await page.locator(".adp-bk-actions button", { hasText: /^Confirm/ }).count(), 0, "no Confirm button on an Assigned row");
+    await page.fill(".adp-search input", "");
+    await page.click('[role="tab"]:has-text("All")');
+    await h.until(async () => (await h.rowsLocator().count()) > 0, "rows");
+    assert.equal(await page.locator(".adp-bk-actions button", { hasText: /^Confirm/ }).count(), 0, "no Confirm button anywhere");
   });
 
-  test("a testing booking is confirmed and cancelled with no email and no push", async () => {
+  test("a testing booking is cancelled with no email and no push", async () => {
     await h.reset();
-    const confirmId = await h.make({ status: "assigned", doctor: 3, name: "Tess Testing", testing: true });
-    await h.search("Tess Testing");
-    assert.match(await h.rowText("Tess Testing"), /TESTING/);
-    await h.row("Tess Testing").locator("button", { hasText: /^Confirm$/ }).click();
-    await h.confirmDialog().locator("button", { hasText: "Confirm booking" }).click();
-    await h.until(async () => /Confirmed/.test(await h.rowText("Tess Testing")), "confirmed");
-    assert.equal((await h.doc(confirmId)).status, "confirmed");
-    assert.deepEqual(await h.calls(), []);
-
     const cancelId = await h.make({ status: "confirmed", doctor: 1, name: "Tim Testing", testing: true });
     await h.search("Tim Testing");
     await h.row("Tim Testing").locator("button", { hasText: /^Cancel$/ }).click();
@@ -347,8 +319,8 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.confirmDialog().locator("button", { hasText: "Mark complete" }).click();
     await h.until(async () => /Complete/.test(await h.rowText("Ava Auto")), "row Complete");
     assert.equal((await h.doc(id)).status, "complete");
-    const disabled = await h.row("Ava Auto").locator("button").evaluateAll((els) => els.map((e) => e.disabled));
-    assert.ok(disabled.length >= 3 && disabled.every(Boolean), "Alternate doctor, Auto complete and Cancel are disabled");
+    const state = await h.row("Ava Auto").locator(".adp-bk-actions button, td[data-label=\"Doctor\"] button").evaluateAll((els) => els.map((e) => [e.textContent.trim(), e.disabled]));
+    assert.deepEqual(state, [["Alternate doctor", true], ["Reactivate", false], ["Cancel", true]], "a Complete row offers Reactivate in place of Auto complete");
 
     await h.make({ status: "pending", doctor: 1, name: "Pam Pending" });
     await h.search("Pam Pending");
@@ -379,7 +351,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.equal(saved.cancelledBy.name, "Super Admin");
     const names = (await h.calls()).map((c) => c.name);
     assert.ok(names.includes("push:Appointment cancelled") && names.includes("notifyDoctorBookingCancelled"));
-    assert.ok((await h.row("Cal Cancel").locator("button").evaluateAll((els) => els.map((e) => e.disabled))).every(Boolean));
+    assert.ok((await h.row("Cal Cancel").locator(".adp-bk-actions button, td[data-label=\"Doctor\"] button").evaluateAll((els) => els.map((e) => e.disabled))).every(Boolean), "every action on a cancelled row is disabled");
 
     await h.make({ status: "assigned", doctor: 2, paid: true, gateway: "stripe", name: "Stripe Sam" });
     await h.search("Stripe Sam");
@@ -729,6 +701,194 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     assert.ok(overflow <= 1, `sideways scroll ${overflow}px`);
     await h.shot("selection-cards");
     await page.locator(".adp-bk-bulk-btn--done").click();
+    await page.setViewportSize({ width: 1500, height: 1000 });
+    await h.open("/admin-dashboard/appointments?tab=all");
+  });
+
+  // ── Round 3: copy id, Assign in the Doctor column, Reactivate, Cancel for super admins, Assigned by ──
+
+  test("clicking the booking id copies the FULL id and says so; the short id is what shows", async () => {
+    await page.context().grantPermissions(["clipboard-read", "clipboard-write"], { origin: new URL(page.url()).origin });
+    const id = await h.make({ status: "assigned", doctor: 0, name: "Copy Case" });
+    await h.search("Copy Case");
+    const button = h.row("Copy Case").locator(".adp-bk-idcopy");
+    assert.equal(await button.getAttribute("title"), "Click to copy the booking ID");
+    assert.equal(await button.evaluate((el) => getComputedStyle(el).cursor), "copy");
+    assert.equal((await button.innerText()).trim(), `\u2026${id.slice(-8).toUpperCase()}`);
+    await button.click();
+    await h.until(async () => /Booking ID copied/.test(await h.toasts()), "the toast");
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), id, "the clipboard holds the full id, not the short one");
+  });
+
+  test("when the browser will not copy, the id is selected and the toast says to press Ctrl+C", async () => {
+    const id = await h.make({ status: "assigned", doctor: 1, name: "Copy Fallback" });
+    await h.search("Copy Fallback");
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "clipboard", { value: { writeText: () => Promise.reject(new Error("NotAllowedError")) }, configurable: true });
+      document.execCommand = () => false;
+    });
+    await h.row("Copy Fallback").locator(".adp-bk-idcopy").click();
+    await h.until(async () => /Could not copy automatically/.test(await h.toasts()), "the fallback toast");
+    assert.match(await h.toasts(), new RegExp(id));
+    assert.equal(await page.evaluate(() => window.getSelection().toString().trim()), id, "the full id is selected, ready for Ctrl+C");
+    await h.open("/admin-dashboard/appointments?tab=all");
+  });
+
+  test("Assign doctor is in the Doctor column, under Not assigned, and not in the Actions column", async () => {
+    const id = await h.make({ status: "upcoming", name: "Dora Doctorcell" });
+    await h.search("Dora Doctorcell");
+    const doctorCell = h.row("Dora Doctorcell").locator('td[data-label="Doctor"]');
+    assert.match((await doctorCell.innerText()).replace(/\s+/g, " "), /^Not assigned Assign doctor$/);
+    assert.equal(await h.row("Dora Doctorcell").locator(".adp-bk-actions button", { hasText: "Assign doctor" }).count(), 0, "not in Actions");
+    const [assign, alt] = [await doctorCell.locator("button").boundingBox(), null];
+    assert.ok(assign, "the button is shown");
+    await doctorCell.locator("button", { hasText: "Assign doctor" }).click();
+    await h.modal().waitFor();
+    await h.until(async () => (await h.doctorNames()).length === 4, "doctors");
+    await h.pickDoctor("Farah Siddiqui");
+    await h.modal().locator('button[type="submit"]').click();
+    await h.modal().waitFor({ state: "detached" });
+    await h.until(async () => /Farah Siddiqui/.test(await h.rowText("Dora Doctorcell")), "assigned");
+    assert.equal((await h.doc(id)).status, "assigned");
+    assert.equal(alt, null);
+  });
+
+  test("a booking marked Assigned (or Confirmed, or Pending) with no doctor can be assigned one, and so can one whose doctor was deleted", async () => {
+    const cases = [
+      ["Old Assigned", { status: "assigned" }],
+      ["Old Confirmed", { status: "confirmed" }],
+      ["Old Pending", { status: "pending", kind: "category" }],
+      ["Ghost Doctor", { status: "assigned", ghostDoctor: true }],
+      ["Ghost Category", { status: "assigned", kind: "category", ghostDoctor: true }],
+    ];
+    for (const [name, spec] of cases) {
+      const id = await h.make({ name, ...spec });
+      await h.search(name);
+      assert.match(await h.rowText(name), /Not assigned/, name);
+      const assign = h.row(name).locator('td[data-label="Doctor"] button', { hasText: "Assign doctor" });
+      assert.equal(await assign.isDisabled(), false, `${name}: the Assign button is enabled`);
+      await assign.click();
+      await h.modal().waitFor();
+      await h.until(async () => (await h.doctorNames()).length === 4, "doctors");
+      await h.pickDoctor("Hidayat Khan");
+      await h.modal().locator('button[type="submit"]').click();
+      await h.modal().waitFor({ state: "detached" });
+      await h.until(async () => /Hidayat Khan/.test(await h.rowText(name)), `${name} assigned`);
+      assert.match(String((await h.doc(id)).status).toLowerCase(), /^assigned$/, name);
+    }
+    for (const [status, name] of [["complete", "Closed Complete"], ["cancelled", "Closed Cancelled"]]) {
+      await h.make({ status, name });
+      await h.search(name);
+      assert.equal(await h.row(name).locator('td[data-label="Doctor"] button', { hasText: "Assign doctor" }).isDisabled(), true, `${name} can't be assigned`);
+    }
+  });
+
+  test("Reactivate: only on Complete rows, in place of Auto complete, behind a confirmation; back to Confirmed for both kinds", async () => {
+    await h.reset();
+    const ids = {
+      appointment: await h.make({ status: "complete", doctor: 0, name: "React Appointment" }),
+      category: await h.make({ kind: "category", status: "complete", doctor: 1, name: "React Category" }),
+    };
+    await h.make({ status: "confirmed", doctor: 2, name: "React NotComplete" });
+    await h.search("React NotComplete");
+    assert.equal(await h.row("React NotComplete").locator("button", { hasText: "Reactivate" }).count(), 0);
+    assert.equal(await h.row("React NotComplete").locator("button", { hasText: "Auto complete" }).count(), 1);
+
+    for (const [kind, name] of [["appointment", "React Appointment"], ["category", "React Category"]]) {
+      await h.search(name);
+      const labels = await h.row(name).locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts();
+      assert.deepEqual(labels.map((t) => t.trim()), ["View", "Reactivate", "Cancel"], `${name}: Reactivate replaces Auto complete`);
+      await h.row(name).locator("button", { hasText: "Reactivate" }).click();
+      await h.confirmDialog().waitFor();
+      assert.match(await h.confirmDialog().innerText(), /goes from Complete back to Confirmed/);
+      await h.shot(`reactivate-${kind}`);
+      await h.confirmDialog().locator("button", { hasText: "Cancel" }).click();
+      await h.confirmDialog().waitFor({ state: "detached" });
+      assert.match(String((await h.doc(ids[kind])).status), kind === "appointment" ? /^complete$/ : /^Completed$/, "dismissing changes nothing");
+
+      await h.row(name).locator("button", { hasText: "Reactivate" }).click();
+      await h.confirmDialog().locator("button", { hasText: /^Reactivate$/ }).click();
+      await h.until(async () => /Confirmed/.test(await h.rowText(name)), `${name} is Confirmed again`);
+      const saved = await h.doc(ids[kind]);
+      assert.equal(String(saved.status).toLowerCase(), "confirmed");
+      assert.equal(saved.reactivatedBy.name, "Super Admin");
+      assert.ok(saved.reactivatedAt);
+      assert.equal(await h.row(name).locator("button", { hasText: "Reactivate" }).count(), 0, "the button is gone once it is active");
+      assert.equal(await h.row(name).locator("button", { hasText: "Auto complete" }).count(), 1);
+    }
+    const names = (await h.calls()).map((c) => c.name);
+    assert.equal(names.filter((n) => n === "push:Appointment reopened").length >= 0, true);
+  });
+
+  test("Reactivate for a testing booking sends nothing; one with no doctor is disabled with the reason", async () => {
+    await h.reset();
+    const id = await h.make({ status: "complete", doctor: 3, name: "React Testing", testing: true });
+    await h.search("React Testing");
+    await h.row("React Testing").locator("button", { hasText: "Reactivate" }).click();
+    await h.confirmDialog().locator("button", { hasText: /^Reactivate$/ }).click();
+    await h.until(async () => /Confirmed/.test(await h.rowText("React Testing")), "confirmed again");
+    assert.equal(String((await h.doc(id)).status).toLowerCase(), "confirmed");
+    assert.deepEqual(await h.calls(), [], "no email, no push");
+
+    await h.make({ status: "complete", name: "React NoDoctor" });
+    await h.search("React NoDoctor");
+    const button = h.row("React NoDoctor").locator("button", { hasText: "Reactivate" });
+    assert.equal(await button.isDisabled(), true);
+    assert.match(await button.getAttribute("title"), /no doctor/);
+  });
+
+  test("Cancel is for super admins: an ordinary admin sees no Cancel button on rows or in the bulk bar", async () => {
+    await h.make({ status: "confirmed", doctor: 0, name: "Role Case" });
+    await h.open("/admin-dashboard/appointments?tab=all", { role: "admin" });
+    await h.search("Role Case");
+    assert.equal(await h.row("Role Case").locator("button", { hasText: /^Cancel$/ }).count(), 0, "no row Cancel for an admin");
+    assert.deepEqual(await h.row("Role Case").locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts().then((t) => t.map((x) => x.trim())), ["View", "Auto complete"]);
+    await page.locator(".adp-bk-headcheck").click();
+    await page.locator('[role="menu"] button', { hasText: "Select this page" }).click();
+    assert.deepEqual(await page.locator(".adp-bk-bulk-btn").allInnerTexts(), ["Auto complete", "Mark testing", "Unmark testing", "Done"], "no bulk Cancel for an admin");
+    await page.locator(".adp-bk-bulk-btn--done").click();
+
+    await h.open("/admin-dashboard/appointments?tab=all", { role: "superadmin" });
+    await h.search("Role Case");
+    assert.equal(await h.row("Role Case").locator("button", { hasText: /^Cancel$/ }).count(), 1, "a super admin does");
+  });
+
+  test("Assigned by: a long email is cut with an ellipsis (never broken mid-word) and shown in full on hover; old rows get an explanation", async () => {
+    await page.setViewportSize({ width: 1500, height: 1000 });
+    await h.open("/admin-dashboard/appointments?tab=all");
+    const email = "administrator.on.duty@humancareconnect.co";
+    await h.make({ status: "assigned", doctor: 0, name: "By Longemail", assignedBy: email });
+    await h.make({ status: "assigned", doctor: 1, name: "By Oldrow", assignedBy: null });
+    await h.make({ status: "confirmed", doctor: 2, name: "By Direct", assignedBy: null });
+    await h.search("By Longemail");
+    const by = h.row("By Longemail").locator(".adp-bk-by");
+    assert.equal(await by.getAttribute("title"), email, "the full value on hover");
+    const metrics = await by.evaluate((el) => ({
+      oneLine: el.getBoundingClientRect().height < parseFloat(getComputedStyle(el).fontSize) * 2,
+      overflows: el.scrollWidth > el.clientWidth,
+      ellipsis: getComputedStyle(el).textOverflow,
+      nowrap: getComputedStyle(el).whiteSpace,
+    }));
+    assert.equal(metrics.ellipsis, "ellipsis");
+    assert.equal(metrics.nowrap, "nowrap");
+    assert.equal(metrics.overflows, true, "it is cut, not wrapped");
+    assert.ok(metrics.oneLine, `one line (${JSON.stringify(metrics)})`);
+    await h.shot("assigned-by-ellipsis");
+
+    await h.search("By Oldrow");
+    const old = h.row("By Oldrow").locator(".adp-bk-by");
+    assert.equal((await old.innerText()).trim(), "\u2014");
+    assert.equal(await old.getAttribute("title"), "Assigned before tracking started");
+    await h.search("By Direct");
+    assert.match(await h.row("By Direct").locator(".adp-bk-by").getAttribute("title"), /booked directly with the doctor, or assigned before tracking started/);
+
+    // on a phone-width card the whole email is shown (wrapped if it must), not cut
+    await page.setViewportSize({ width: 390, height: 900 });
+    await h.open("/admin-dashboard/appointments?tab=all");
+    await h.search("By Longemail");
+    const card = await h.row("By Longemail").locator(".adp-bk-by").evaluate((el) => ({ cut: el.scrollWidth > el.clientWidth + 1, text: el.textContent }));
+    assert.equal(card.cut, false);
+    assert.equal(card.text, email);
     await page.setViewportSize({ width: 1500, height: 1000 });
     await h.open("/admin-dashboard/appointments?tab=all");
   });

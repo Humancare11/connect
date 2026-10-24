@@ -70,7 +70,12 @@ Admin (use an admin and a super admin):
 - [ ] Old URLs redirect: `/admin-dashboard/category-consultations` opens Appointments (All tab); `/admin-dashboard/category-consultations/<id>` and `/admin-dashboard/appointments/<id>/assign` open that booking. The sidebar has one Appointments item.
 - [ ] **Assign doctor** on an Upcoming booking: it becomes **Assigned** (not Confirmed); the doctor and patient get one email each; the video call does **not** open yet.
 - [ ] A Next Available category booking asks for a time when assigning.
-- [ ] **Confirm** on an Assigned row: it becomes Confirmed; the doctor gets an email, the patient a push; the call now opens for both.
+- [ ] There is **no Confirm button** for admins. Only the doctor confirms: from their dashboard or the doctor app, an Assigned booking becomes Confirmed, the patient gets a push, and the call now opens for both.
+- [ ] **Reactivate** on a Complete row (admin and super admin) replaces Auto complete: it asks first, then the booking is Confirmed again; the doctor is emailed, the patient pushed, the call opens. Not offered on a Complete booking with no doctor.
+- [ ] **Cancel** is shown to super admins only (row and bulk bar). Sign in as an ordinary admin: no Cancel anywhere; calling `POST /api/admin/bookings/<id>/cancel` or a bulk cancel returns 403.
+- [ ] **Assign doctor** sits under "Not assigned" in the Doctor column, for any open booking with no doctor, including old ones whose status says Assigned or Confirmed. It is no longer in the Actions column.
+- [ ] Click a booking ID: the full ID is copied and a "Booking ID copied" toast shows (if the browser refuses, the ID is selected and the toast says to press Ctrl+C).
+- [ ] "Assigned by": a long email shows with an ellipsis and the full value on hover; an Assigned row with a doctor but no recorded assigner shows "—" with the tooltip "Assigned before tracking started".
 - [ ] **Alternate doctor** on a Confirmed booking: it returns to Assigned, the old doctor is told and removed from the call; "Go back to <original>" restores the first doctor.
 - [ ] **Cancel** asks for one of the five reasons; a paid booking shows "Refund it in Stripe/PayPal"; the doctor gets an email; the patient a push.
 - [ ] **Auto complete** asks first; works on Assigned/Confirmed, is disabled on others.

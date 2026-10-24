@@ -28,9 +28,13 @@ const bookingAdminFields = () => ({
   // Set once (never overwritten by a later alternate) and cleared by "Go back".
   originalDoctorName: { type: String, default: "" },
 
-  // Who confirmed the booking and when, recorded when an admin confirms on the doctor's behalf.
+  // Who confirmed the booking and when. Only the doctor confirms (role "doctor"); older records may say "admin".
   confirmedBy: { ...adminActorFields(), role: { type: String, default: "" } },
   confirmedAt: { type: Date, default: null },
+
+  // Who moved a Complete booking back to Confirmed, and when.
+  reactivatedBy: adminActorFields(),
+  reactivatedAt: { type: Date, default: null },
 
   cancelReason: { type: String, enum: [...CANCEL_REASONS, ""], default: "" },
   cancelledBy: adminActorFields(),

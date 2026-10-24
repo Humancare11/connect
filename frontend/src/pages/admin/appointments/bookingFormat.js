@@ -93,6 +93,14 @@ export function formatFee(value) {
 // The last 8 characters of the booking id, shown as "...ABCD1234".
 export const shortBookingId = (row) => `…${row.shortId || String(row.id).slice(-8).toUpperCase()}`;
 
+// Hover text for an empty "Assigned by" next to a doctor: older bookings were assigned before the admin was recorded.
+export function assignedByHint(row) {
+  if (!row.doctorName || row.assignedBy) return "";
+  return row.status === "assigned"
+    ? "Assigned before tracking started"
+    : "No admin assignment recorded: booked directly with the doctor, or assigned before tracking started";
+}
+
 // Hover text for the doctor cell when the doctor was swapped.
 export const originalDoctorHint = (row) => (row.originalDoctorName ? `Originally with ${row.originalDoctorName}` : "");
 
@@ -112,9 +120,11 @@ export function refundWarning(row) {
 
 const hasDoctor = (row) => Boolean(row.doctorName);
 
-export const canAssign = (row) => !hasDoctor(row) && ["upcoming", "pending"].includes(row.status);
+// Any open booking with no doctor can be given one, whatever its status (older data has Assigned bookings with no doctor).
+export const canAssign = (row) => !hasDoctor(row) && !isClosed(row.status);
 export const canAlternate = (row) => hasDoctor(row) && !isClosed(row.status);
-export const canConfirm = (row) => hasDoctor(row) && row.status === "assigned";
+// A Complete booking with a doctor can be moved back to Confirmed. (Only the doctor confirms a new booking.)
+export const canReactivate = (row) => hasDoctor(row) && row.status === "complete";
 export const canAutoComplete = (row) => hasDoctor(row) && ["assigned", "confirmed"].includes(row.status);
 export const canCancel = (row) => !isClosed(row.status);
 

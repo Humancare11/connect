@@ -38,7 +38,7 @@ export async function startApiServer() {
 
   // Emails and push are recorded, never sent.
   const calls = [];
-  for (const name of ["notifyAppointmentDoctorChanged", "notifyConsultationDoctorChanged", "notifyPatientDoctorChanged", "notifyDoctorBookingCancelled", "notifyDoctorBookingConfirmed"]) {
+  for (const name of ["notifyAppointmentDoctorChanged", "notifyConsultationDoctorChanged", "notifyPatientDoctorChanged", "notifyDoctorBookingCancelled", "notifyDoctorAppointmentReopened"]) {
     notify[name] = async (a) => { calls.push({ name, booking: String((a.booking || a.appointment || a.consultation)?._id) }); };
   }
   push.sendPushToUser = (userId, payload) => { calls.push({ name: `push:${payload.title}` }); };
@@ -66,7 +66,10 @@ export async function startApiServer() {
     return `2027-${String(1 + Math.floor(dayCounter / 28)).padStart(2, "0")}-${String(1 + (dayCounter % 28)).padStart(2, "0")}`;
   };
 
-  async function make({ kind = "appointment", status = "upcoming", doctor = null, paid = false, gateway = "", testing = false, nextAvailable = false, name = "Seed Patient", time = "10:00 AM", date, original = "" }) {
+  // `assignedBy`: a name or email, `null` for an older booking that has none recorded, or left out for "Super Admin".
+  const byField = (assignedBy) => (assignedBy === null ? {} : { assignedBy: { name: assignedBy === undefined ? "Super Admin" : assignedBy } });
+
+  async function make({ kind = "appointment", status = "upcoming", doctor = null, paid = false, gateway = "", testing = false, nextAvailable = false, name = "Seed Patient", time = "10:00 AM", date, original = "", assignedBy, ghostDoctor = false }) {
     const p = await patientNamed(name);
     const doc = doctor === null ? null : docs[doctor];
     const day = date || nextDay();
@@ -82,14 +85,16 @@ export async function startApiServer() {
         concern: "x", severity: "mild", supportType: "chat", urgency: nextAvailable ? "next" : "flexible",
         appointmentType: nextAvailable ? "NEXT_AVAILABLE" : "FLEXIBLE_TIME", date: day, slot: nextAvailable ? null : time,
         patientId: p._id, categoryName: "Women's Health", status: STORED_CATEGORY_STATUS[status],
-        ...(doc ? { assignedDoctorId: doc.e._id, assignedDoctorName: doc.e.firstName, assignedBy: { name: "Super Admin" } } : {}),
+        ...(doc ? { assignedDoctorId: doc.e._id, assignedDoctorName: doc.e.firstName, ...byField(assignedBy) } : {}),
+        ...(ghostDoctor ? { assignedDoctorId: new mongoose.Types.ObjectId() } : {}),
         ...common,
       });
       return String(c._id);
     }
     const a = await Appointment.create({
       patientId: p._id, date: day, time, status, category: "General & Everyday Care", bookedAt: new Date(),
-      ...(doc ? { doctorId: doc.d._id, assignedBy: { name: "Super Admin" } } : {}),
+      ...(doc ? { doctorId: doc.d._id, ...byField(assignedBy) } : {}),
+      ...(ghostDoctor ? { doctorId: new mongoose.Types.ObjectId() } : {}),
       ...common,
     });
     return String(a._id);
@@ -110,8 +115,9 @@ export async function startApiServer() {
 
   const app = express();
   app.use(express.json());
-  const guard = [(req, res, next) => { req.user = { id: String(admin._id), role: "admin" }; next(); }];
-  app.use("/api/admin/bookings", adminBookings.create({ guard }));
+  // No login: every call is a super admin (the page itself is shown as admin or super admin with ?role=).
+  const guard = [(req, res, next) => { req.user = { id: String(admin._id), role: "superadmin" }; next(); }];
+  app.use("/api/admin/bookings", adminBookings.create({ guard, superGuard: guard }));
   app.get("/api/doctor/approved", async (req, res) => {
     const list = await Enrollment.find({ approvalStatus: "approved" }).lean();
     res.json(list.map((e) => ({ id: e._id, name: `Dr. ${e.firstName} ${e.surname}`, specialty: e.specialization, country: e.country, city: e.city, location: `${e.city}, ${e.country}` })));

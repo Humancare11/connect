@@ -68,8 +68,8 @@ export function createHelpers({ page, api, harnessUrl }) {
     throw new Error(`timed out waiting for ${what}${last instanceof Error ? `: ${last.message}` : ""}`);
   };
 
-  const open = async (start = "/admin-dashboard/appointments?tab=all") => {
-    await page.goto(`${harnessUrl}/tests/e2e/adminAppointments/harness/index.html?start=${encodeURIComponent(start)}`);
+  const open = async (start = "/admin-dashboard/appointments?tab=all", { role } = {}) => {
+    await page.goto(`${harnessUrl}/tests/e2e/adminAppointments/harness/index.html?start=${encodeURIComponent(start)}${role ? `&role=${role}` : ""}`);
     await page.waitForSelector("table.adp-bk tbody tr, .adp-empty");
   };
 

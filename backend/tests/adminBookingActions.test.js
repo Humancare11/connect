@@ -23,7 +23,6 @@ const { decideAppointmentAccess } = require("../utils/appointmentRoomAccess");
 // The real implementation, kept before the recorders below replace it.
 const realNotifyPatient = notify.notifyPatientDoctorChanged;
 const realNotifyCancelled = notify.notifyDoctorBookingCancelled;
-const realNotifyConfirmed = notify.notifyDoctorBookingConfirmed;
 
 const KINDS = ["appointment", "category"];
 
@@ -44,7 +43,8 @@ describe("admin booking actions", () => {
     next();
   };
 
-  const post = async (path, body = {}, role = "admin") => {
+  // Cancelling is for super admins only, so a plain cancel call is made as one by default; tests of the rule pass a role.
+  const post = async (path, body = {}, role = path.endsWith("/cancel") ? "superadmin" : "admin") => {
     const res = await fetch(`${base}${path}`, {
       method: "POST",
       headers: { "content-type": "application/json", ...(role ? { "x-test-role": role } : {}) },
@@ -77,6 +77,12 @@ describe("admin booking actions", () => {
           ...(doctor ? { assignedDoctorId: doctor.e._id, assignedDoctorName: doctor.name } : {}), ...extra,
         });
 
+  // What the doctor's own Confirm does to the booking (the admin has no Confirm).
+  const doctorConfirms = (kind, id) =>
+    (kind === "appointment" ? Appointment : CategoryConsultation).updateOne(
+      { _id: id },
+      { $set: { status: STORED[kind].confirmed, ...(kind === "appointment" ? { sessionStarted: true } : {}) } }
+    );
   const fresh = (kind, id) => (kind === "appointment" ? Appointment : CategoryConsultation).findById(id).lean();
   const keyOf = (kind, D) => String(kind === "appointment" ? D.d._id : D.e._id);
   const doctorKeyOf = (kind, doc) => String(kind === "appointment" ? doc.doctorId : doc.assignedDoctorId);
@@ -106,7 +112,6 @@ describe("admin booking actions", () => {
     notify.notifyConsultationDoctorChanged = async (a) => { calls.push({ name: "doctorChanged", kind: "category", ...a }); };
     notify.notifyPatientDoctorChanged = async (a) => { calls.push({ name: "patientChanged", ...a }); };
     notify.notifyDoctorBookingCancelled = async (a) => { calls.push({ name: "doctorCancelled", ...a }); };
-    notify.notifyDoctorBookingConfirmed = async (a) => { calls.push({ name: "doctorConfirmed", ...a }); };
     push.sendPushToUser = (userId, payload) => { pushes.push({ userId: String(userId), ...payload }); };
   });
   after(async () => {
@@ -126,7 +131,7 @@ describe("admin booking actions", () => {
 
   test("every action is admin-only", async () => {
     const b = await make("appointment", "upcoming");
-    for (const path of ["assign-doctor", "alternate-doctor", "revert-doctor", "confirm"]) {
+    for (const path of ["assign-doctor", "alternate-doctor", "revert-doctor", "reactivate", "cancel"]) {
       assert.equal((await post(`/${b._id}/${path}`, {}, "")).status, 401, path);
       assert.equal((await post(`/${b._id}/${path}`, {}, "user")).status, 403, path);
       assert.equal((await post(`/${b._id}/${path}`, {}, "doctor")).status, 403, path);
@@ -382,7 +387,7 @@ describe("admin booking actions", () => {
       test("restores the original, clears the record, and applies Confirmed -> Assigned", async () => {
         const b = await make(kind, "assigned", { doctor: D1 });
         await post(`/${b._id}/alternate-doctor`, { doctorId: String(D2.e._id) });
-        await post(`/${b._id}/confirm`);
+        await doctorConfirms(kind, b._id); // the new doctor confirms
         calls = []; evicted = [];
 
         const res = await post(`/${b._id}/revert-doctor`);
@@ -442,95 +447,6 @@ describe("admin booking actions", () => {
         const b = await make(kind, "assigned", { doctor: D1, isTesting: true });
         await post(`/${b._id}/alternate-doctor`, { doctorId: String(D2.e._id) });
         assert.equal((await post(`/${b._id}/revert-doctor`)).status, 200);
-        nothingSent();
-      });
-    });
-
-    describe(`${kind}: confirm`, () => {
-      test("Assigned -> Confirmed, call enabled, patient told as the doctor's confirm does", async () => {
-        const b = await make(kind, "assigned", { doctor: D1 });
-        const res = await post(`/${b._id}/confirm`);
-        assert.equal(res.status, 200);
-        assert.equal(res.body.booking.status, "confirmed");
-        const doc = await fresh(kind, b._id);
-        assert.equal(doc.status, STORED[kind].confirmed);
-        if (kind === "appointment") assert.equal(doc.sessionStarted, true);
-
-        assert.equal(pushes.length, 1);
-        assert.equal(pushes[0].userId, String(patient._id));
-        assert.equal(pushes[0].title, "Appointment confirmed");
-        assert.ok(emitted.some((e) => e.ev === "appointment-updated" && e.room === "admin_room" && e.payload.status === "confirmed"));
-      });
-
-      test("records who confirmed (role admin) and when", async () => {
-        const b = await make(kind, "assigned", { doctor: D1 });
-        const before = Date.now();
-        await post(`/${b._id}/confirm`);
-        const doc = await fresh(kind, b._id);
-        assert.equal(String(doc.confirmedBy.id), String(admin._id));
-        assert.equal(doc.confirmedBy.name, "Super Admin");
-        assert.equal(doc.confirmedBy.email, "sa@x.co");
-        assert.equal(doc.confirmedBy.role, "admin");
-        assert.ok(doc.confirmedAt && doc.confirmedAt.getTime() >= before - 1000);
-      });
-
-      test("the doctor is told (event and email) and so is the patient (push)", async () => {
-        const b = await make(kind, "assigned", { doctor: D1 });
-        await post(`/${b._id}/confirm`);
-        assert.equal(pushes.length, 1);
-        assert.equal(pushes[0].userId, String(patient._id));
-        const sent = calls.filter((c) => c.name === "doctorConfirmed");
-        assert.equal(sent.length, 1);
-        assert.equal(sent[0].isCategory, kind === "category");
-        assert.equal(String(sent[0].booking._id), String(b._id));
-        assert.equal(calls.length, 1, "no other emails");
-        assert.ok(emitted.some((e) => e.room === `doctor_${D1.d._id}` && e.ev === "appointment-updated" && e.payload.status === "confirmed"));
-      });
-
-      test("after an admin confirm the booking opens the call room for its patient and its doctor, and not before", async () => {
-        const b = await make(kind, "assigned", { doctor: D1 });
-        const asPatient = { userId: String(patient._id), role: "user" };
-        const asDoctor = { userId: String(D1.d._id), role: "doctor" };
-        assert.equal((await decideAppointmentAccess(asPatient, String(b._id))).reason, "not_confirmed");
-        assert.equal((await decideAppointmentAccess(asDoctor, String(b._id))).reason, "not_confirmed");
-
-        assert.equal((await post(`/${b._id}/confirm`)).status, 200);
-        assert.equal((await decideAppointmentAccess(asPatient, String(b._id))).allowed, true);
-        assert.equal((await decideAppointmentAccess(asDoctor, String(b._id))).allowed, true);
-      });
-
-      test("assigning or changing the doctor never leaves the booking Confirmed", async () => {
-        const up = await make(kind, "upcoming");
-        await post(`/${up._id}/assign-doctor`, { doctorId: String(D1.e._id) });
-        assert.equal((await fresh(kind, up._id)).status, STORED[kind].assigned);
-        await post(`/${up._id}/confirm`);
-        await post(`/${up._id}/alternate-doctor`, { doctorId: String(D2.e._id) });
-        assert.equal((await fresh(kind, up._id)).status, STORED[kind].assigned);
-        await post(`/${up._id}/confirm`);
-        await post(`/${up._id}/revert-doctor`);
-        assert.equal((await fresh(kind, up._id)).status, STORED[kind].assigned);
-      });
-
-      test("409 on any other status", async () => {
-        for (const status of ["upcoming", "pending", "confirmed", "complete", "cancelled"]) {
-          const b = await make(kind, status, status === "upcoming" ? {} : { doctor: D1 });
-          const res = await post(`/${b._id}/confirm`);
-          assert.equal(res.status, 409, status);
-          assert.equal((await fresh(kind, b._id)).status, STORED[kind][status]);
-        }
-        assert.deepEqual(pushes, []);
-      });
-
-      test("two admins confirming at once: exactly one wins, the other gets 409", async () => {
-        const b = await make(kind, "assigned", { doctor: D1 });
-        const results = await Promise.all([post(`/${b._id}/confirm`), post(`/${b._id}/confirm`)]);
-        assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
-        assert.equal(pushes.length, 1);
-      });
-
-      test("a testing booking is confirmed with no push", async () => {
-        const b = await make(kind, "assigned", { doctor: D1, isTesting: true });
-        assert.equal((await post(`/${b._id}/confirm`)).status, 200);
         nothingSent();
       });
     });
@@ -730,7 +646,7 @@ describe("admin booking actions", () => {
   }
 
   describe("bulk actions", () => {
-    const bulk = (body, role = "admin") => post("/bulk", body, role);
+    const bulk = (body, role = body?.action === "cancel" ? "superadmin" : "admin") => post("/bulk", body, role);
     const byId = (res) => Object.fromEntries(res.body.results.map((r) => [r.id, r]));
     let evictions;
     beforeEach(() => {
@@ -1099,10 +1015,26 @@ describe("admin booking actions", () => {
       });
     }
 
-    test("the admin's confirm says role admin, so the two can be told apart", async () => {
+    for (const kind of KINDS) {
+      test(`${kind}: after the doctor confirms, the room opens for the patient and the doctor, and not before`, async () => {
+        const b = await make(kind, "assigned", { doctor: D1 });
+        const asPatient = { userId: String(patient._id), role: "user" };
+        const asDoctor = { userId: String(D1.d._id), role: "doctor" };
+        assert.equal((await decideAppointmentAccess(asPatient, String(b._id))).reason, "not_confirmed");
+        assert.equal((await decideAppointmentAccess(asDoctor, String(b._id))).reason, "not_confirmed");
+        assert.equal((await confirmAs(D1.d._id, b._id)).code, 200);
+        assert.equal((await decideAppointmentAccess(asPatient, String(b._id))).allowed, true);
+        assert.equal((await decideAppointmentAccess(asDoctor, String(b._id))).allowed, true);
+      });
+    }
+
+    test("there is no admin confirm: the route is gone", async () => {
       const b = await make("appointment", "assigned", { doctor: D1 });
-      await post(`/${b._id}/confirm`);
-      assert.equal((await fresh("appointment", b._id)).confirmedBy.role, "admin");
+      const res = await fetch(`${base}/${b._id}/confirm`, { method: "POST", headers: { "x-test-role": "superadmin" } });
+      assert.equal(res.status, 404);
+      assert.equal((await fresh("appointment", b._id)).status, "assigned");
+      assert.equal(typeof require("../utils/adminBookingActions").confirmBooking, "undefined");
+      assert.equal(typeof notify.notifyDoctorBookingConfirmed, "undefined");
     });
   });
 
@@ -1173,6 +1105,185 @@ describe("admin booking actions", () => {
     });
   });
 
+  describe("assign a doctor to any open booking that has none", () => {
+    for (const kind of KINDS) {
+      test(`${kind}: Upcoming, Pending, Assigned and Confirmed bookings with no doctor can all be assigned (it ends Assigned)`, async () => {
+        for (const status of ["upcoming", "pending", "assigned", "confirmed"]) {
+          const b = await make(kind, status);
+          const res = await post(`/${b._id}/assign-doctor`, { doctorId: String(D1.e._id) });
+          assert.equal(res.status, 200, status);
+          assert.equal(res.body.booking.status, "assigned", status);
+          assert.equal(res.body.booking.doctorName, "Martin Perlin", status);
+          const doc = await fresh(kind, b._id);
+          assert.equal(doc.status, STORED[kind].assigned, status);
+          assert.equal(doc.assignedBy.name, "Super Admin", status);
+          await (kind === "appointment" ? Appointment : CategoryConsultation).deleteOne({ _id: b._id }); // free the slot for the next status
+        }
+      });
+
+      test(`${kind}: a reference to a doctor that no longer exists counts as no doctor, and the booking can be assigned`, async () => {
+        const ghost = new mongoose.Types.ObjectId();
+        const b = await (kind === "appointment"
+          ? Appointment.create({ patientId: patient._id, date: "2026-11-01", time: "10:00 AM", status: "assigned", doctorId: ghost })
+          : CategoryConsultation.create({
+              concern: "x", severity: "mild", supportType: "chat", urgency: "flexible", appointmentType: "FLEXIBLE_TIME", date: "2026-11-01",
+              slot: "10:00 AM", patientId: patient._id, categoryName: "Women's Health", status: "Assigned", assignedDoctorId: ghost,
+            }));
+        const list = await (await fetch(`${base}/${b._id}`, { headers: { "x-test-role": "admin" } })).json();
+        assert.equal(list.booking.doctorName, null, "the page shows Not assigned");
+        const res = await post(`/${b._id}/assign-doctor`, { doctorId: String(D2.e._id) });
+        assert.equal(res.status, 200);
+        assert.equal(doctorKeyOf(kind, await fresh(kind, b._id)), keyOf(kind, D2));
+      });
+
+      test(`${kind}: a booking whose doctor still exists is refused (use Alternate doctor), and Complete / Cancelled ones are closed`, async () => {
+        const has = await make(kind, "assigned", { doctor: D1 });
+        const refused = await post(`/${has._id}/assign-doctor`, { doctorId: String(D2.e._id) });
+        assert.equal(refused.status, 409);
+        assert.match(refused.body.msg, /already has a doctor/);
+        for (const status of ["complete", "cancelled"]) {
+          const closed = await make(kind, status);
+          const res = await post(`/${closed._id}/assign-doctor`, { doctorId: String(D2.e._id) });
+          assert.equal(res.status, 409, status);
+          assert.match(res.body.msg, new RegExp(status));
+        }
+      });
+    }
+  });
+
+  describe("cancelling is for super admins only", () => {
+    for (const kind of KINDS) {
+      test(`${kind}: an ordinary admin gets 403 on cancel and nothing changes; a super admin can cancel`, async () => {
+        const b = await make(kind, "confirmed", { doctor: D1 });
+        const denied = await post(`/${b._id}/cancel`, { reason: "Patient requested" }, "admin");
+        assert.equal(denied.status, 403);
+        assert.equal((await fresh(kind, b._id)).status, STORED[kind].confirmed);
+        assert.deepEqual(calls, []);
+        assert.deepEqual(pushes, []);
+        assert.equal((await post(`/${b._id}/cancel`, { reason: "Patient requested" }, "superadmin")).status, 200);
+      });
+    }
+
+    test("bulk cancel is 403 for an ordinary admin (nothing is touched), while the other bulk actions still work for them", async () => {
+      const a = await make("appointment", "confirmed", { doctor: D1 });
+      const c = await make("category", "assigned", { doctor: D2 });
+      const ids = [String(a._id), String(c._id)];
+      const denied = await post("/bulk", { action: "cancel", ids, reason: "Duplicate booking" }, "admin");
+      assert.equal(denied.status, 403);
+      assert.equal((await fresh("appointment", a._id)).status, "confirmed");
+      assert.equal((await fresh("category", c._id)).status, "Assigned");
+      assert.equal((await post("/bulk", { action: "mark-testing", ids }, "admin")).status, 200);
+      assert.equal((await post("/bulk", { action: "auto-complete", ids }, "admin")).body.summary.ok, 2);
+      const b2 = await make("appointment", "confirmed", { doctor: D3 });
+      assert.equal((await post("/bulk", { action: "cancel", ids: [String(b2._id)], reason: "Duplicate booking" }, "superadmin")).body.summary.ok, 1);
+    });
+
+    test("an unsigned or non-admin caller is 401 / 403 on cancel and bulk cancel", async () => {
+      const b = await make("appointment", "confirmed", { doctor: D1 });
+      assert.equal((await post(`/${b._id}/cancel`, { reason: "Patient requested" }, "")).status, 401);
+      assert.equal((await post(`/${b._id}/cancel`, { reason: "Patient requested" }, "user")).status, 403);
+      assert.equal((await post("/bulk", { action: "cancel", ids: [String(b._id)], reason: "Patient requested" }, "user")).status, 403);
+    });
+  });
+
+  describe("reactivate a completed booking", () => {
+    for (const kind of KINDS) {
+      test(`${kind}: Complete -> Confirmed, who and when recorded, the room open again, the patient pushed and the doctor told`, async () => {
+        const lifecycle = require("../utils/bookingNotifications");
+        const doctorEmails = [];
+        const realReopen = lifecycle.notifyDoctorAppointmentReopened;
+        lifecycle.notifyDoctorAppointmentReopened = (a) => { doctorEmails.push(a); return Promise.resolve(); };
+        const rejoined = [];
+        app.set("allowAppointmentRoomRejoin", (id) => rejoined.push(String(id)));
+        try {
+          const b = await make(kind, "complete", { doctor: D1 });
+          const before = Date.now();
+          const res = await post(`/${b._id}/reactivate`, {}, "admin");
+          assert.equal(res.status, 200);
+          assert.equal(res.body.booking.status, "confirmed");
+
+          const doc = await fresh(kind, b._id);
+          assert.equal(doc.status, STORED[kind].confirmed);
+          if (kind === "appointment") assert.equal(doc.sessionStarted, true);
+          assert.equal(String(doc.reactivatedBy.id), String(admin._id));
+          assert.equal(doc.reactivatedBy.name, "Super Admin");
+          assert.equal(doc.reactivatedBy.email, "sa@x.co");
+          assert.ok(doc.reactivatedAt && doc.reactivatedAt.getTime() >= before - 1000);
+          assert.deepEqual(rejoined, [String(b._id)], "the call room is open again");
+
+          assert.equal(pushes.filter((p) => p.userId === String(patient._id)).length, 1, "the patient is told");
+          assert.equal(doctorEmails.length, 1, "the doctor is emailed");
+          assert.ok(emitted.some((e) => e.room === "admin_room" && e.payload.status === "confirmed"));
+
+          const decision = await decideAppointmentAccess({ userId: String(patient._id), role: "user" }, String(b._id));
+          assert.equal(decision.allowed, true, "and the booking can be joined");
+        } finally {
+          lifecycle.notifyDoctorAppointmentReopened = realReopen;
+          app.set("allowAppointmentRoomRejoin", undefined);
+        }
+      });
+
+      test(`${kind}: 409 when the booking is not Complete, and when someone changed it first`, async () => {
+        for (const status of ["upcoming", "assigned", "confirmed", "cancelled"]) {
+          const b = await make(kind, status, status === "upcoming" ? {} : { doctor: D1 });
+          const res = await post(`/${b._id}/reactivate`, {}, "admin");
+          assert.equal(res.status, 409, status);
+          assert.equal((await fresh(kind, b._id)).status, STORED[kind][status], status);
+        }
+        const done = await make(kind, "complete", { doctor: D2 });
+        const Model = kind === "appointment" ? Appointment : CategoryConsultation;
+        const real = Model.findOneAndUpdate;
+        Model.findOneAndUpdate = async function (...args) {
+          Model.findOneAndUpdate = real;
+          await Model.updateOne({ _id: done._id }, { $set: { status: STORED[kind].cancelled } }); // another admin got there first
+          return real.apply(this, args);
+        };
+        try {
+          const lost = await post(`/${done._id}/reactivate`, {}, "admin");
+          assert.equal(lost.status, 409);
+          assert.equal(lost.body.code, "changed");
+        } finally {
+          Model.findOneAndUpdate = real;
+        }
+        assert.equal((await fresh(kind, done._id)).status, STORED[kind].cancelled);
+      });
+
+      test(`${kind}: two admins at once: exactly one wins`, async () => {
+        const b = await make(kind, "complete", { doctor: D1 });
+        const results = await Promise.all([post(`/${b._id}/reactivate`, {}, "admin"), post(`/${b._id}/reactivate`, {}, "superadmin")]);
+        assert.deepEqual(results.map((r) => r.status).sort(), [200, 409]);
+      });
+
+      test(`${kind}: a testing booking is reactivated with no push and no email`, async () => {
+        const b = await make(kind, "complete", { doctor: D1, isTesting: true });
+        assert.equal((await post(`/${b._id}/reactivate`, {}, "admin")).status, 200);
+        assert.equal((await fresh(kind, b._id)).status, STORED[kind].confirmed);
+        assert.equal((await fresh(kind, b._id)).reactivatedBy.name, "Super Admin");
+        nothingSent();
+      });
+
+      test(`${kind}: refused (and unchanged) when the doctor now has another booking at that time, or the booking has no doctor`, async () => {
+        const b = await make(kind, "complete", { doctor: D1 });
+        await make("appointment", "confirmed", { doctor: D1 });
+        const busy = await post(`/${b._id}/reactivate`, {}, "admin");
+        assert.equal(busy.status, 409);
+        assert.equal(busy.body.code, "slot_taken");
+        assert.equal((await fresh(kind, b._id)).status, STORED[kind].complete);
+
+        const noDoctor = await make(kind, "complete");
+        assert.equal((await post(`/${noDoctor._id}/reactivate`, {}, "admin")).status, 400);
+      });
+    }
+
+    test("both admins and super admins may reactivate; users and doctors may not", async () => {
+      const b = await make("appointment", "complete", { doctor: D1 });
+      assert.equal((await post(`/${b._id}/reactivate`, {}, "")).status, 401);
+      assert.equal((await post(`/${b._id}/reactivate`, {}, "user")).status, 403);
+      assert.equal((await post(`/${b._id}/reactivate`, {}, "doctor")).status, 403);
+      assert.equal((await post(`/${b._id}/reactivate`, {}, "superadmin")).status, 200);
+    });
+  });
+
   describe("409 codes the page relies on", () => {
     test("a busy doctor is slot_taken; a lost race is changed; other 409s carry no code", async () => {
       await make("appointment", "confirmed", { doctor: D1 });
@@ -1203,7 +1314,7 @@ describe("admin booking actions", () => {
     });
   });
 
-  describe("doctor emails for cancel and admin confirm", () => {
+  describe("doctor email for a cancel", () => {
     const withMailer = async (fn) => {
       const sent = [];
       const real = mailer.sendBookingNotificationEmail;
@@ -1212,19 +1323,6 @@ describe("admin booking actions", () => {
     };
 
     for (const kind of KINDS) {
-      test(`${kind}: confirmed-by-admin email goes to the assigned doctor, with the booking and a dashboard link`, async () => {
-        await withMailer(async (sent) => {
-          const b = await make(kind, "confirmed", { doctor: D1 });
-          await realNotifyConfirmed({ booking: b.toObject(), isCategory: kind === "category" });
-          assert.equal(sent.length, 1);
-          assert.equal(sent[0].to, kind === "category" ? "martin@enroll.co" : "martinperlin@x.co");
-          assert.match(sent[0].subject, /confirmed/i);
-          assert.match(sent[0].intro, /on your behalf/);
-          assert.ok(sent[0].rows.some(([label, value]) => label === "Patient" && /Rachel/.test(value)));
-          assert.match(sent[0].ctaUrl, /doctor-dashboard\/appointments$/);
-        });
-      });
-
       test(`${kind}: cancelled email goes to the doctor and does not include the cancel reason`, async () => {
         await withMailer(async (sent) => {
           const b = await make(kind, "cancelled", { doctor: D1, cancelReason: "Payment failed" });
@@ -1242,7 +1340,7 @@ describe("admin booking actions", () => {
         const b = await make("appointment", "confirmed", { doctor: D1 });
         const quiet = console.warn;
         console.warn = () => {};
-        try { await realNotifyConfirmed({ booking: b.toObject(), isCategory: false }); } finally { console.warn = quiet; }
+        try { await realNotifyCancelled({ booking: b.toObject(), isCategory: false }); } finally { console.warn = quiet; }
         assert.equal(sent.length, 0);
       });
     });
