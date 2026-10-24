@@ -59,6 +59,14 @@ describe("money", () => {
     assert.equal(E.PLATFORM_RATE, 0.25);
   });
 
+  test("the grey placeholder is 75% of what was PAID, with a tooltip, and nothing when nothing was paid", () => {
+    assert.deepEqual(E.doctorFeePlaceholder(9900), { cents: 7425, text: "75% · 74.25", title: "75% of $99.00 paid" });
+    assert.deepEqual(E.doctorFeePlaceholder(149900), { cents: 112425, text: "75% · 1124.25", title: "75% of $1,499.00 paid" });
+    assert.equal(E.doctorFeePlaceholder(500).title, "75% of $5.00 paid");
+    for (const nothing of [0, -1, null, undefined, NaN]) assert.equal(E.doctorFeePlaceholder(nothing), null);
+    assert.equal(E.formatUsdCents(100000000), "$1,000,000.00");
+  });
+
   test("the fee charged in cents follows the same rule as the Appointments list (price first, else payment / 100)", () => {
     assert.equal(E.dollarsToCents(feeOf({ consultationPrice: 99 })), 9900);
     assert.equal(E.dollarsToCents(feeOf({ consultationPrice: 0, paymentAmount: 500 })), 500);
@@ -206,21 +214,22 @@ describe("one edit", () => {
 
 describe("reading an entry", () => {
   test("an old booking (no entry) reads as unpaid with nothing typed, plus the grey 75% suggestion", () => {
-    const v = E.entryView(undefined, { chargedCents: 9900, doctorId: DOCTOR });
+    const v = E.entryView(undefined, { paidCents: 9900, doctorId: DOCTOR });
     assert.deepEqual(
-      { fee: v.doctorFeeCents, suggested: v.suggestedFeeCents, status: v.paidStatus, on: v.paidOn, comment: v.comment, version: v.version, changed: v.doctorChanged },
+      { fee: v.doctorFeeCents, suggested: v.placeholder?.cents ?? null, status: v.paidStatus, on: v.paidOn, comment: v.comment, version: v.version, changed: v.doctorChanged },
       { fee: null, suggested: 7425, status: "unpaid", on: "", comment: "", version: 0, changed: false },
     );
     assert.deepEqual(v.edits, { doctorFee: null, paidStatus: null, paidOn: null, comment: null });
   });
 
   test("once a fee is typed the suggestion goes away (it was never stored)", () => {
-    const v = E.entryView({ doctorFeeCents: 500, v: 3 }, { chargedCents: 9900 });
+    const v = E.entryView({ doctorFeeCents: 500, v: 3 }, { paidCents: 9900 });
     assert.equal(v.doctorFeeCents, 500);
-    assert.equal(v.suggestedFeeCents, null);
+    assert.equal(v.placeholder, null);
     assert.equal(v.version, 3);
-    assert.equal(E.entryView({ doctorFeeCents: 0 }, { chargedCents: 9900 }).suggestedFeeCents, null, "0 is a typed value");
-    assert.equal(E.entryView(undefined, { chargedCents: 0 }).suggestedFeeCents, null, "nothing charged, nothing to suggest");
+    assert.equal(E.entryView({ doctorFeeCents: 0 }, { paidCents: 9900 }).placeholder, null, "0 is a typed value");
+    assert.equal(E.entryView(undefined, { paidCents: 0 }).placeholder, null, "nothing paid, no placeholder");
+    assert.equal(E.entryView(undefined, { paidCents: 9900 }).placeholder.title, "75% of $99.00 paid");
   });
 
   test("a different doctor now than when the fee was entered raises the flag", () => {

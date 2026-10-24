@@ -94,11 +94,24 @@ function parseFeeToCents(input) {
 // 7425 -> "74.25"
 const centsToFixed = (cents) => (Number.isFinite(cents) ? (cents / 100).toFixed(2) : "");
 
-// The doctor's automatic share of what the patient was charged, in cents; null when there is nothing charged.
+// The doctor's automatic share of what the patient actually PAID (paymentAmount, in cents); null when nothing was paid.
 // Same arithmetic as getDoctorPayments: the platform keeps Math.round(25%), the doctor gets the rest.
-function defaultDoctorShareCents(chargedCents) {
-  if (!Number.isFinite(chargedCents) || chargedCents <= 0) return null;
-  return chargedCents - Math.round(chargedCents * PLATFORM_RATE);
+function defaultDoctorShareCents(paidCents) {
+  if (!Number.isFinite(paidCents) || paidCents <= 0) return null;
+  return paidCents - Math.round(paidCents * PLATFORM_RATE);
+}
+
+// 9900 -> "$99.00", 149900 -> "$1,499.00"
+const formatUsdCents = (cents) =>
+  `$${(Math.abs(cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// The grey placeholder shown while no doctor fee is typed: { cents: 7425, text: "75% · 74.25", title: "75% of $99.00 paid" },
+// or null when nothing was paid. It is only ever displayed, never saved.
+function doctorFeePlaceholder(paidCents) {
+  const cents = defaultDoctorShareCents(paidCents);
+  if (cents === null) return null;
+  const percent = Math.round((1 - PLATFORM_RATE) * 100);
+  return { cents, text: `${percent}% · ${centsToFixed(cents)}`, title: `${percent}% of ${formatUsdCents(paidCents)} paid` };
 }
 
 // Dollars (as the Appointments list shows the fee) -> cents.
@@ -120,16 +133,16 @@ const addDays = (day, n) => {
 
 // ── Reading an entry ───────────────────────────────────────────────────────────────────────────────────────────────
 
-// The stored entry (or nothing, for an old booking) as the API returns it. `chargedCents` is the fee charged to the
-// patient, used for the grey 75% placeholder shown while no fee is typed. The placeholder is never stored.
-function entryView(entry, { chargedCents = 0, doctorId = "" } = {}) {
+// The stored entry (or nothing, for an old booking) as the API returns it. `paidCents` is what the patient actually paid
+// (paymentAmount), used for the grey 75% placeholder shown while no fee is typed. The placeholder is never stored.
+function entryView(entry, { paidCents = 0, doctorId = "" } = {}) {
   const e = entry || {};
   const fee = Number.isFinite(e.doctorFeeCents) ? e.doctorFeeCents : null;
   const status = PAID_STATUSES.includes(e.paidStatus) ? e.paidStatus : "unpaid";
   const doctorNow = doctorId ? String(doctorId) : "";
   return {
     doctorFeeCents: fee,
-    suggestedFeeCents: fee === null ? defaultDoctorShareCents(chargedCents) : null,
+    placeholder: fee === null ? doctorFeePlaceholder(paidCents) : null,
     paidStatus: status,
     paidOn: typeof e.paidOn === "string" ? e.paidOn : "",
     comment: typeof e.comment === "string" ? e.comment : "",
@@ -257,6 +270,8 @@ module.exports = {
   centsToFixed,
   dollarsToCents,
   defaultDoctorShareCents,
+  doctorFeePlaceholder,
+  formatUsdCents,
   isCalendarDay,
   entryView,
   paidStatusMatch,
