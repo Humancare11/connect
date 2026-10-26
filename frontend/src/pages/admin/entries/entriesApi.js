@@ -13,6 +13,3 @@ export const deleteManualEntry = (id) => api.delete(`/api/admin/entries/manual/$
 
 // The CSV of everything the filters match (no paging), as a file.
 export const exportEntriesCsv = (params) => api.get("/api/admin/entries/export.csv", { params, responseType: "blob" });
-
-// Approved doctors for the manual-entry form (Enrollment records, the same ids the doctor filter uses).
-export const listApprovedDoctors = () => api.get("/api/admin/approved-doctors");

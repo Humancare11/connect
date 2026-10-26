@@ -103,32 +103,112 @@ test("download name: from the header, else dated", () => {
   assert.equal(F.downloadName("", "2026-10-27"), "entries-2026-10-27.csv");
 });
 
-test("the manual form: checks, and the bodies for add and edit", () => {
-  const ok = { ...F.EMPTY_FORM, patientName: " Ravi ", date: "2026-11-03", feeCharged: "$49", doctorFee: "", doctorId: "d1", comment: " hi " };
-  assert.equal(F.formProblem(ok), "");
-  assert.match(F.formProblem({ ...ok, patientName: " " }), /name/);
-  assert.match(F.formProblem({ ...ok, date: "" }), /date/);
-  assert.match(F.formProblem({ ...ok, feeCharged: "" }), /fee charged/i);
-  assert.match(F.formProblem({ ...ok, feeCharged: "x" }), /fee charged/i);
-  assert.equal(F.formProblem({ ...ok, feeCharged: "0" }), "");
-  assert.match(F.formProblem({ ...ok, doctorFee: "1.234" }), /Doctor fee/);
-  assert.deepEqual(F.createBody(ok), { patientName: "Ravi", country: "", doctorId: "d1", date: "2026-11-03", time: "10:00", feeCharged: "49", doctorFee: "", comment: "hi" });
-  assert.deepEqual(F.editBody(ok, 3), { version: 3, patientName: "Ravi", country: "", doctorId: "d1", date: "2026-11-03", time: "10:00", feeCharged: "49" });
-  assert.equal(F.createBody({ ...ok, doctorId: "" }).doctorId, null);
+const filled = (extra = {}) => ({
+  ...F.newForm("2026-10-27"), serviceProvider: "Dr Rao Clinic", patientName: "Ravi", consultationFee: "100", doctorFee: "70", ...extra,
 });
 
-test("editing a manual row starts from its own values", () => {
-  const manual = {
-    kind: "manual", patient: { name: "Ravi", country: "IN", countryName: "India" }, consultation: { date: "2026-11-03", time: "2:30 PM" },
-    feeChargedCents: 4900, manual: { doctorId: "d1" },
-  };
-  assert.deepEqual(F.formFromRow(manual), { patientName: "Ravi", country: "India", doctorId: "d1", date: "2026-11-03", time: "14:30", feeCharged: "49.00", doctorFee: "", comment: "" });
+test("a new form starts with today, Open, Pending, Not sent, Not received and Unpaid", () => {
+  const f = F.newForm("2026-10-27");
+  assert.deepEqual(
+    [f.date, f.caseStatus, f.mrStatus, f.mrSentToCompany, f.invoiceSent, f.paymentReceived, f.paymentToProvider, f.serviceType, f.paymentReceivedDate, f.paidDateToProvider],
+    ["2026-10-27", "open", "pending", "not_sent", "not_sent", "not_received", "unpaid", "", "", ""],
+  );
 });
 
-test("doctor options come from approved enrollments, sorted by name", () => {
-  const list = [{ _id: "b", firstName: "Zed", surname: "Z" }, { _id: "a", doctorId: { name: "Anna" } }];
-  assert.deepEqual(F.doctorOptions(list), [{ id: "a", name: "Anna" }, { id: "b", name: "Zed Z" }]);
-  assert.deepEqual(F.doctorOptions(null), []);
+test("the drop-downs offer exactly the agreed choices, in order", () => {
+  assert.deepEqual(F.SERVICE_TYPES.map(([, l]) => l), ["Select type", "House call", "Teleconsultation", "Others"]);
+  assert.deepEqual(F.CASE_STATUSES.map(([, l]) => l), ["Open", "In progress", "Completed", "Cancelled"]);
+  assert.deepEqual(F.MR_STATUSES.map(([, l]) => l), ["Pending", "Received"]);
+  assert.deepEqual(F.SENT_STATUSES.map(([, l]) => l), ["Not sent", "Sent"]);
+  assert.deepEqual(F.PAYMENT_RECEIVED.map(([, l]) => l), ["Not received", "Partly received", "Received"]);
+  assert.deepEqual(F.PAYMENT_TO_PROVIDER.map(([, l]) => l), ["Unpaid", "On hold", "Paid", "Not payable"]);
+});
+
+test("Calculation (our margin): consultation fee minus the doctor's fee, with the percentage; red (negative) below 0; empty until both fees are numbers", () => {
+  assert.deepEqual(F.calculation(filled()), { empty: false, text: "$30.00", percent: "30.0%", negative: false });
+  assert.deepEqual(F.calculation(filled({ consultationFee: "99", doctorFee: "74.25" })), { empty: false, text: "$24.75", percent: "25.0%", negative: false });
+  assert.deepEqual(F.calculation(filled({ consultationFee: "50", doctorFee: "65" })), { empty: false, text: "-$15.00", percent: "-30.0%", negative: true });
+  assert.deepEqual(F.calculation(filled({ consultationFee: "0", doctorFee: "20" })), { empty: false, text: "-$20.00", percent: "", negative: true });
+  assert.deepEqual(F.calculation(filled({ consultationFee: "100", doctorFee: "100" })), { empty: false, text: "$0.00", percent: "0.0%", negative: false });
+  for (const extra of [{ doctorFee: "" }, { consultationFee: "" }, { doctorFee: "abc" }, { consultationFee: "1.234" }]) {
+    assert.equal(F.calculation(filled(extra)).empty, true, JSON.stringify(extra));
+  }
+  assert.equal(F.calculation(filled({ doctorFee: "" })).text, "—");
+});
+
+test("the payment dates: received or partly received defaults the date to today, not received clears it; Paid defaults its date to today", () => {
+  const f = F.newForm("2026-10-27");
+  assert.equal(F.changeField(f, "paymentReceived", "received", "2026-10-27").paymentReceivedDate, "2026-10-27");
+  assert.equal(F.changeField(f, "paymentReceived", "partly_received", "2026-10-27").paymentReceivedDate, "2026-10-27");
+  const kept = F.changeField({ ...f, paymentReceived: "received", paymentReceivedDate: "2026-10-01" }, "paymentReceived", "partly_received", "2026-10-27");
+  assert.equal(kept.paymentReceivedDate, "2026-10-01", "an existing date is kept");
+  assert.equal(F.changeField(kept, "paymentReceived", "not_received", "2026-10-27").paymentReceivedDate, "");
+  assert.equal(F.changeField(f, "paymentToProvider", "paid", "2026-10-27").paidDateToProvider, "2026-10-27");
+  assert.equal(F.changeField({ ...f, paidDateToProvider: "2026-10-05" }, "paymentToProvider", "paid", "2026-10-27").paidDateToProvider, "2026-10-05");
+  assert.equal(F.changeField(f, "paymentToProvider", "on_hold", "2026-10-27").paidDateToProvider, "");
+  assert.equal(F.changeField(f, "company", "Acme", "2026-10-27").company, "Acme");
+});
+
+test("the form checks: the required fields, Others, phone numbers, fees, and the Paid rules", () => {
+  assert.equal(F.formProblem(filled()), "");
+  assert.match(F.formProblem(filled({ date: "" })), /date/i);
+  assert.match(F.formProblem(filled({ serviceProvider: " " })), /service provider/i);
+  assert.match(F.formProblem(filled({ patientName: " " })), /patient/i);
+  assert.match(F.formProblem(filled({ consultationFee: "" })), /consultation fee/i);
+  assert.equal(F.formProblem(filled({ consultationFee: "0", doctorFee: "" })), "");
+  assert.match(F.formProblem(filled({ doctorFee: "1.234" })), /doctor's fee/i);
+  assert.match(F.formProblem(filled({ serviceType: "others" })), /other service/i);
+  assert.equal(F.formProblem(filled({ serviceType: "others", otherService: "Physio" })), "");
+  for (const good of ["", "0551234567", "+971 50 123 4567", "(022) 555-0123"]) assert.equal(F.formProblem(filled({ contactNumber: good, providerNumber: good })), "", good);
+  for (const bad of ["call me", "555.0100", "1".repeat(21)]) {
+    assert.match(F.formProblem(filled({ contactNumber: bad })), /contact number/i, bad);
+    assert.match(F.formProblem(filled({ providerNumber: bad })), /service provider number/i, bad);
+  }
+  assert.match(F.formProblem(filled({ paymentToProvider: "paid", doctorFee: "", paidDateToProvider: "2026-10-27" })), /doctor's fee above 0/i);
+  assert.match(F.formProblem(filled({ paymentToProvider: "paid", doctorFee: "0", paidDateToProvider: "2026-10-27" })), /doctor's fee above 0/i);
+  assert.match(F.formProblem(filled({ paymentToProvider: "paid", paidDateToProvider: "" })), /date/i);
+  assert.equal(F.formProblem(filled({ paymentToProvider: "paid", paidDateToProvider: "2026-10-27" })), "");
+  assert.match(F.formProblem(filled({ paymentReceived: "received", paymentReceivedDate: "" })), /received/i);
+});
+
+test("the request body: trimmed, fees as text, the margin never sent, the Other service only with Others, dates only when they apply", () => {
+  const body = F.formBody(filled({ patientName: " Ravi ", company: " Acme ", consultationFee: "$100", serviceType: "house_call", otherService: "left over", feedbackSent: " hi " }));
+  assert.deepEqual(
+    [body.patientName, body.company, body.consultationFee, body.doctorFee, body.serviceType, body.otherService, body.feedbackSent, "version" in body],
+    ["Ravi", "Acme", "100", "70", "house_call", "", "hi", false],
+  );
+  assert.equal(Object.keys(body).some((k) => /calc|margin/i.test(k)), false);
+  assert.equal(F.formBody(filled({ serviceType: "others", otherService: " Physio " })).otherService, "Physio");
+  assert.equal("paidDateToProvider" in F.formBody(filled({ paymentToProvider: "on_hold", paidDateToProvider: "2026-10-01" })), false);
+  assert.equal(F.formBody(filled({ paymentToProvider: "paid", paidDateToProvider: "2026-10-01" })).paidDateToProvider, "2026-10-01");
+  assert.equal(F.formBody(filled({ paymentReceived: "not_received", paymentReceivedDate: "2026-10-01" })).paymentReceivedDate, "");
+  assert.equal(F.formBody(filled({ paymentReceived: "received", paymentReceivedDate: "2026-10-01" })).paymentReceivedDate, "2026-10-01");
+  assert.equal(F.formBody(filled({ doctorFee: "" })).doctorFee, "");
+  assert.equal(F.formBody(filled(), 3).version, 3);
+  assert.deepEqual(Object.keys(F.formBody(filled())).sort(), [
+    "caseNumber", "caseStatus", "comment", "company", "consultationFee", "contactNumber", "country", "date", "doctorFee", "feedbackReceived", "feedbackSent",
+    "invoiceSent", "mrSentToCompany", "mrStatus", "otherService", "patientName", "paymentReceived", "paymentReceivedDate", "paymentToProvider", "providerNumber",
+    "serviceProvider", "serviceType",
+  ]);
+});
+
+test("editing starts from the row's saved values, and the locked fields are the agreed ones", () => {
+  const row = { kind: "manual", manual: { form: { ...F.newForm("2026-11-03"), patientName: "Ravi", country: "India", consultationFee: "100.00", doctorFee: "70.00", serviceProvider: "Dr Rao" } } };
+  const f = F.formFromRow(row);
+  assert.deepEqual([f.patientName, f.country, f.consultationFee, f.doctorFee, f.serviceProvider, f.date], ["Ravi", "India", "100.00", "70.00", "Dr Rao", "2026-11-03"]);
+  assert.deepEqual(F.formFromRow({ manual: {} }), F.newForm(""));
+  assert.deepEqual(
+    [...F.LOCKED_WHEN_PAID].sort(),
+    ["caseNumber", "caseStatus", "company", "consultationFee", "contactNumber", "country", "date", "doctorFee", "otherService", "patientName", "providerNumber", "serviceProvider", "serviceType"],
+  );
+  for (const open of ["mrStatus", "mrSentToCompany", "invoiceSent", "paymentReceived", "paymentReceivedDate", "feedbackSent", "feedbackReceived", "comment", "paymentToProvider", "paidDateToProvider"]) {
+    assert.equal(F.LOCKED_WHEN_PAID.includes(open), false, open);
+  }
+});
+
+test("the grey line under a manual row's patient", () => {
+  assert.equal(F.caseLine({ manual: { caseLine: "Acme · AC-1" } }), "Acme · AC-1");
+  assert.equal(F.caseLine({}), "");
 });
 
 // ── the save queue ──────────────────────────────────────────────────────────

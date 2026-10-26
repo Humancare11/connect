@@ -1,34 +1,37 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Country } from "country-state-city";
 import Modal from "../../../components/ui/Modal";
-import { createManualEntry, editManualEntry, listApprovedDoctors } from "./entriesApi";
-import { EMPTY_FORM, createBody, doctorOptions, editBody, formFromRow, formProblem, saveErrorText } from "./entriesFormat";
+import { createManualEntry, editManualEntry } from "./entriesApi";
+import {
+  CASE_STATUSES, LOCKED_WHEN_PAID, MAX_FEEDBACK, MAX_PHONE, MR_STATUSES, PAYMENT_RECEIVED, PAYMENT_TO_PROVIDER, SENT_STATUSES, SERVICE_TYPES,
+  calculation, changeField, formBody, formFromRow, formProblem, newForm, saveErrorText,
+} from "./entriesFormat";
 
 let countryNames = null;
 const allCountryNames = () => (countryNames ||= Country.getAllCountries().map((c) => c.name));
 
-// "Add manual entry" (no `row`) and "Edit" (a manual `row`): the same form. Editing changes the patient, country, doctor,
-// consultation date and time, and fee charged, and only while the row is not Paid (the server refuses otherwise). The doctor
-// fee, status, paid-on date and comment are typed in the table, as for every row.
+// Today as the date input wants it, in the browser's own time zone.
+function todayInput() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// "Add manual entry" (no `row`) and "Edit" (a manual `row`): the same big popup, seven sections. Once Payment to provider is Paid, the
+// case, service provider, patient and fee fields are locked (the server enforces it too); the medical report, invoice, payment received
+// and feedback stay editable. "Calculation (our margin)" is worked out here and never sent.
 export default function ManualEntryModal({ row, onSaved, onClose }) {
   const editing = Boolean(row);
-  const [form, setForm] = useState(() => (editing ? formFromRow(row) : { ...EMPTY_FORM, date: todayInput() }));
-  const [doctors, setDoctors] = useState([]);
-  const [doctorsError, setDoctorsError] = useState("");
+  const today = useMemo(todayInput, []);
+  const [form, setForm] = useState(() => (editing ? formFromRow(row) : newForm(today)));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let alive = true;
-    listApprovedDoctors()
-      .then((res) => alive && setDoctors(doctorOptions(res.data)))
-      .catch(() => alive && setDoctorsError("Couldn’t load the doctor list."));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
+  const locked = editing && row.entry.paidStatus === "paid";
+  const isLocked = (key) => locked && LOCKED_WHEN_PAID.includes(key);
+  const set = (key) => (event) => setForm((f) => changeField(f, key, event.target.value, today));
+  const calc = calculation(form);
+  const paidToProvider = form.paymentToProvider === "paid";
+  const received = form.paymentReceived !== "not_received";
 
   const submit = async (event) => {
     event.preventDefault();
@@ -41,9 +44,7 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
     setSaving(true);
     setError("");
     try {
-      const res = editing
-        ? await editManualEntry(row.id, editBody(form, row.entry.version))
-        : await createManualEntry(createBody(form));
+      const res = editing ? await editManualEntry(row.id, formBody(form, row.entry.version)) : await createManualEntry(formBody(form));
       onSaved(res.data.item, { added: !editing, noop: Boolean(res.data.noop) });
     } catch (err) {
       // A row that changed meanwhile (or got marked Paid) comes back with its current state.
@@ -53,89 +54,179 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
     }
   };
 
+  const text = (key, label, props = {}) => (
+    <label className={`en-field${props.wide ? " en-field--full" : ""}`}>
+      <span className={props.required ? "en-req" : undefined}>{label}</span>
+      <input
+        value={form[key]}
+        onChange={set(key)}
+        disabled={isLocked(key)}
+        required={props.required}
+        maxLength={props.maxLength}
+        placeholder={props.placeholder}
+        inputMode={props.inputMode}
+        list={props.list}
+        type={props.type}
+        autoFocus={props.autoFocus}
+      />
+      {props.list === "en-countries" && (
+        <datalist id="en-countries">
+          {allCountryNames().map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+      )}
+    </label>
+  );
+  const choice = (key, label, options) => (
+    <label className="en-field">
+      <span>{label}</span>
+      <select value={form[key]} onChange={set(key)} disabled={isLocked(key)}>
+        {options.map(([value, text]) => (
+          <option key={value} value={value}>
+            {text}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
   return (
     <Modal
       open
       onClose={onClose}
       dismissible={!saving}
-      title={editing ? "Edit manual entry" : "Add manual entry"}
+      title={editing ? `Edit manual entry · ${row.shortId}` : "Add manual entry"}
       description={
         editing
-          ? "You can change these while the row is not Paid. Every change is recorded."
-          : "For a consultation that wasn’t booked through the website or app, such as one arranged by phone or through a partner. It shows with a “Manual” label."
+          ? "Every change is recorded."
+          : "For a case that wasn’t booked through the website or app, such as a house call or teleconsultation arranged for a company. It shows with a “Manual” label."
       }
-      className="en-modal"
+      className="en-modal en-modal--wide"
     >
-      <form onSubmit={submit} noValidate className="en-form">
-        <label className="en-field en-field--full">
-          <span>Patient name</span>
-          <input value={form.patientName} onChange={set("patientName")} maxLength={80} placeholder="e.g. Ravi Sharma" autoFocus required />
-        </label>
-        <label className="en-field">
-          <span>Country</span>
-          <input value={form.country} onChange={set("country")} maxLength={60} placeholder="India" list="en-countries" />
-          <datalist id="en-countries">
-            {allCountryNames().map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
-        </label>
-        <label className="en-field">
-          <span>Doctor</span>
-          <select value={form.doctorId} onChange={set("doctorId")}>
-            <option value="">Not assigned</option>
-            {doctors.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-          {doctorsError && <small className="en-field-hint">{doctorsError}</small>}
-        </label>
-        <label className="en-field">
-          <span>Consultation date</span>
-          <input type="date" value={form.date} onChange={set("date")} required />
-        </label>
-        <label className="en-field">
-          <span>Time</span>
-          <input type="time" value={form.time} onChange={set("time")} />
-        </label>
-        <label className="en-field">
-          <span>Fee charged ($)</span>
-          <input value={form.feeCharged} onChange={set("feeCharged")} inputMode="decimal" placeholder="49.00" required />
-        </label>
-        {!editing && (
-          <label className="en-field">
-            <span>Doctor fee ($)</span>
-            <input value={form.doctorFee} onChange={set("doctorFee")} inputMode="decimal" placeholder="optional" />
-          </label>
-        )}
-        {!editing && (
-          <label className="en-field en-field--full">
-            <span>Comment</span>
-            <input value={form.comment} onChange={set("comment")} maxLength={500} placeholder="e.g. Booked by phone, paid by bank transfer" />
-          </label>
-        )}
-        {error && (
-          <p className="en-form-error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="hc-modal__actions">
-          <button type="button" className="en-btn" onClick={onClose} disabled={saving}>
-            Cancel
-          </button>
-          <button type="submit" className="en-btn en-btn--primary" disabled={saving}>
-            {saving ? "Saving…" : editing ? "Save changes" : "Add entry"}
-          </button>
+      <form onSubmit={submit} noValidate className="en-bigform">
+        <div className="en-sections">
+          {locked && (
+            <p className="en-lock-note" role="note">
+              Payment to provider is <b>Paid</b>, so the case, service provider, patient and fee fields are locked. The medical report, invoice,
+              payment received and feedback can still change. To change the rest, set Payment to provider back first.
+            </p>
+          )}
+
+          <fieldset className="en-section">
+            <legend>1 · Case</legend>
+            <div className="en-grid en-grid--3">
+              {text("date", "Date", { type: "date", required: true })}
+              {text("company", "Company", { maxLength: 120, placeholder: "e.g. Acme Assist" })}
+              {text("caseNumber", "Case number", { maxLength: 60, placeholder: "e.g. AC-1042" })}
+              {choice("serviceType", "Type of service", SERVICE_TYPES)}
+              {choice("caseStatus", "Status", CASE_STATUSES)}
+              {form.serviceType === "others" && text("otherService", "Other service", { required: true, maxLength: 120, placeholder: "Describe the service" })}
+            </div>
+          </fieldset>
+
+          <fieldset className="en-section">
+            <legend>2 · Service provider</legend>
+            <div className="en-grid en-grid--2">
+              {text("serviceProvider", "Service provider", { required: true, maxLength: 120, placeholder: "Doctor, clinic or company", autoFocus: !editing })}
+              {text("providerNumber", "Service provider number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+971 50 123 4567" })}
+            </div>
+          </fieldset>
+
+          <fieldset className="en-section">
+            <legend>3 · Patient</legend>
+            <div className="en-grid en-grid--3">
+              {text("patientName", "Patient name", { required: true, maxLength: 80, placeholder: "e.g. Ravi Sharma" })}
+              {text("country", "Patient country", { maxLength: 60, placeholder: "India", list: "en-countries" })}
+              {text("contactNumber", "Contact number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+91 98765 43210" })}
+            </div>
+          </fieldset>
+
+          <fieldset className="en-section">
+            <legend>4 · Fees</legend>
+            <div className="en-grid en-grid--3">
+              {text("consultationFee", "Consultation fee ($)", { inputMode: "decimal", placeholder: "49.00", required: true })}
+              {text("doctorFee", "Doctor’s fee ($)", { inputMode: "decimal", placeholder: "36.75" })}
+              <div className="en-field">
+                <span>Calculation (our margin)</span>
+                <output className={`en-calc${calc.negative ? " en-calc--neg" : ""}`} aria-live="polite" data-testid="calculation">
+                  <b>{calc.text}</b>
+                  {calc.percent && <small>{calc.percent} of the consultation fee</small>}
+                </output>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="en-section">
+            <legend>5 · Medical report &amp; invoice</legend>
+            <div className="en-grid en-grid--3">
+              {choice("mrStatus", "MR status from provider", MR_STATUSES)}
+              {choice("mrSentToCompany", "MR sent to the company", SENT_STATUSES)}
+              {choice("invoiceSent", "Invoice sent", SENT_STATUSES)}
+            </div>
+            <p className="en-hint">MR = medical report.</p>
+          </fieldset>
+
+          <fieldset className="en-section">
+            <legend>6 · Payments</legend>
+            <div className="en-pay">
+              <div className="en-paybox">
+                <h4>From the company</h4>
+                {choice("paymentReceived", "Payment received", PAYMENT_RECEIVED)}
+                <label className="en-field">
+                  <span>Payment received date</span>
+                  <input type="date" value={received ? form.paymentReceivedDate : ""} onChange={set("paymentReceivedDate")} disabled={!received} />
+                </label>
+              </div>
+              <div className="en-paybox">
+                <h4>To the provider</h4>
+                {choice("paymentToProvider", "Payment to provider", PAYMENT_TO_PROVIDER)}
+                <label className="en-field">
+                  <span>Paid date to the provider</span>
+                  <input type="date" value={paidToProvider ? form.paidDateToProvider : ""} onChange={set("paidDateToProvider")} disabled={!paidToProvider} />
+                </label>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset className="en-section">
+            <legend>7 · Feedback</legend>
+            <div className="en-grid en-grid--2">
+              <label className="en-field">
+                <span>Feedback message sent</span>
+                <textarea value={form.feedbackSent} onChange={set("feedbackSent")} maxLength={MAX_FEEDBACK} rows={4} />
+                <small className="en-count">
+                  {form.feedbackSent.length} / {MAX_FEEDBACK}
+                </small>
+              </label>
+              <label className="en-field">
+                <span>Feedback received</span>
+                <textarea value={form.feedbackReceived} onChange={set("feedbackReceived")} maxLength={MAX_FEEDBACK} rows={4} />
+                <small className="en-count">
+                  {form.feedbackReceived.length} / {MAX_FEEDBACK}
+                </small>
+              </label>
+            </div>
+            {text("comment", "Comment", { wide: true, maxLength: 500, placeholder: "e.g. Booked by phone, paid by bank transfer" })}
+          </fieldset>
+        </div>
+
+        <div className="en-popup-foot">
+          {error && (
+            <p className="en-form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="en-popup-buttons">
+            <button type="button" className="en-btn" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
+            <button type="submit" className="en-btn en-btn--primary" disabled={saving}>
+              {saving ? "Saving…" : editing ? "Save changes" : "Add entry"}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>
   );
-}
-
-// Today as the date input wants it, in the browser's own time zone.
-function todayInput() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

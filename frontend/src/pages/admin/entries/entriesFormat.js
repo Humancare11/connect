@@ -146,62 +146,121 @@ export function downloadName(header, fallbackDay = "") {
 
 // ── The manual-entry form ────────────────────────────────────────────────────
 
-export const EMPTY_FORM = { patientName: "", country: "", doctorId: "", date: "", time: "10:00", feeCharged: "", doctorFee: "", comment: "" };
+// The choices of the form's drop-downs, [value, label].
+export const SERVICE_TYPES = [["", "Select type"], ["house_call", "House call"], ["teleconsultation", "Teleconsultation"], ["others", "Others"]];
+export const CASE_STATUSES = [["open", "Open"], ["in_progress", "In progress"], ["completed", "Completed"], ["cancelled", "Cancelled"]];
+export const MR_STATUSES = [["pending", "Pending"], ["received", "Received"]];
+export const SENT_STATUSES = [["not_sent", "Not sent"], ["sent", "Sent"]];
+export const PAYMENT_RECEIVED = [["not_received", "Not received"], ["partly_received", "Partly received"], ["received", "Received"]];
+export const PAYMENT_TO_PROVIDER = [["unpaid", "Unpaid"], ["on_hold", "On hold"], ["paid", "Paid"], ["not_payable", "Not payable"]];
 
-// The form's starting values for editing a manual row.
-export function formFromRow(row) {
+export const MAX_FEEDBACK = 1000;
+export const MAX_PHONE = 20;
+
+// Once Payment to provider is Paid these cannot change (the server enforces the same list).
+export const LOCKED_WHEN_PAID = [
+  "date", "company", "caseNumber", "serviceType", "otherService", "caseStatus",
+  "serviceProvider", "providerNumber", "patientName", "country", "contactNumber", "consultationFee", "doctorFee",
+];
+
+// A blank form, with today as the date (the day as "YYYY-MM-DD").
+export const newForm = (today) => ({
+  date: today, company: "", caseNumber: "", serviceType: "", otherService: "", caseStatus: "open",
+  serviceProvider: "", providerNumber: "",
+  patientName: "", country: "", contactNumber: "",
+  consultationFee: "", doctorFee: "",
+  mrStatus: "pending", mrSentToCompany: "not_sent", invoiceSent: "not_sent",
+  paymentReceived: "not_received", paymentReceivedDate: "", paymentToProvider: "unpaid", paidDateToProvider: "",
+  feedbackSent: "", feedbackReceived: "", comment: "",
+});
+
+// The form's starting values for editing a manual row: what the server saved, as text.
+export const formFromRow = (row) => ({ ...newForm(""), ...(row.manual?.form || {}) });
+
+// A field's new value, plus what follows from it: the payment dates default to today when they become usable, and a payment received date
+// goes when nothing was received.
+export function changeField(form, key, value, today) {
+  const next = { ...form, [key]: value };
+  if (key === "paymentReceived") {
+    next.paymentReceivedDate = value === "not_received" ? "" : form.paymentReceivedDate || today;
+  }
+  if (key === "paymentToProvider" && value === "paid" && !form.paidDateToProvider) next.paidDateToProvider = today;
+  return next;
+}
+
+export const phoneOk = (text) => text.length <= MAX_PHONE && /^[0-9 +\-()]*$/.test(text);
+
+const cents = (text) => {
+  const clean = cleanFeeInput(text);
+  return clean.ok && clean.value !== "" ? Math.round(Number(clean.value) * 100) : null;
+};
+
+// "Calculation (our margin)": consultation fee minus the doctor's fee, and that as a percentage of the consultation fee. Never saved.
+// { empty: true } until both fees are numbers; { text: "$30.00", percent: "30.0%", negative } otherwise (no percent for a 0 fee).
+export function calculation(form) {
+  const consult = cents(form.consultationFee);
+  const doctor = cents(form.doctorFee);
+  if (consult === null || doctor === null) return { empty: true, text: "—", percent: "", negative: false };
+  const margin = consult - doctor;
+  const sign = margin < 0 ? "-" : "";
   return {
-    patientName: row.patient?.name || "",
-    country: row.patient?.countryName || row.patient?.country || "",
-    doctorId: row.manual?.doctorId || "",
-    date: row.consultation?.date || "",
-    time: timeToInput(row.consultation?.time),
-    feeCharged: centsToInput(row.feeChargedCents),
-    doctorFee: "",
-    comment: "",
+    empty: false,
+    text: `${sign}${formatMoney(Math.abs(margin))}`,
+    percent: consult > 0 ? `${(Math.round((margin / consult) * 1000) / 10).toFixed(1)}%` : "",
+    negative: margin < 0,
   };
 }
 
 // First problem with the form, as a sentence, or "". The server checks the same things again.
 export function formProblem(form) {
+  if (!form.date) return "Enter the date of the case.";
+  if (form.serviceType === "others" && !form.otherService.trim()) return "Describe the other service.";
+  if (!form.serviceProvider.trim()) return "Enter the service provider.";
+  if (!phoneOk(form.providerNumber.trim())) return "The service provider number can have digits, spaces and + - ( ) only, up to 20 characters.";
   if (!form.patientName.trim()) return "Enter the patient's name.";
-  if (!form.date) return "Enter the consultation date.";
-  const fee = cleanFeeInput(form.feeCharged);
-  if (!fee.ok || fee.value === "") return "Enter the fee charged as a number, like 49.00 (0 is fine).";
-  if (!cleanFeeInput(form.doctorFee).ok) return "Doctor fee must be a number, like 36.75.";
+  if (!phoneOk(form.contactNumber.trim())) return "The contact number can have digits, spaces and + - ( ) only, up to 20 characters.";
+  const fee = cleanFeeInput(form.consultationFee);
+  if (!fee.ok || fee.value === "") return "Enter the consultation fee as a number, like 49.00 (0 is fine).";
+  if (!cleanFeeInput(form.doctorFee).ok) return "The doctor's fee must be a number, like 36.75.";
+  if (form.paymentToProvider === "paid") {
+    if (!(cents(form.doctorFee) > 0)) return "Enter a doctor's fee above 0 before marking this Paid.";
+    if (!form.paidDateToProvider) return "Enter the date it was paid to the provider.";
+  }
+  if (form.paymentReceived !== "not_received" && !form.paymentReceivedDate) return "Enter the date the payment was received.";
   return "";
 }
 
-// The body for POST /manual.
-export function createBody(form) {
-  return {
+// The body for POST /manual and (with `version`) PATCH /manual/:id/details. The Other service text only goes with "Others", the received
+// date only with a payment received, and the Paid date only when Paid.
+export function formBody(form, version) {
+  const body = {
+    date: form.date,
+    company: form.company.trim(),
+    caseNumber: form.caseNumber.trim(),
+    serviceType: form.serviceType,
+    otherService: form.serviceType === "others" ? form.otherService.trim() : "",
+    caseStatus: form.caseStatus,
+    serviceProvider: form.serviceProvider.trim(),
+    providerNumber: form.providerNumber.trim(),
     patientName: form.patientName.trim(),
     country: form.country.trim(),
-    doctorId: form.doctorId || null,
-    date: form.date,
-    time: form.time,
-    feeCharged: cleanFeeInput(form.feeCharged).value,
+    contactNumber: form.contactNumber.trim(),
+    consultationFee: cleanFeeInput(form.consultationFee).value,
     doctorFee: cleanFeeInput(form.doctorFee).value,
+    mrStatus: form.mrStatus,
+    mrSentToCompany: form.mrSentToCompany,
+    invoiceSent: form.invoiceSent,
+    paymentReceived: form.paymentReceived,
+    paymentReceivedDate: form.paymentReceived === "not_received" ? "" : form.paymentReceivedDate,
+    paymentToProvider: form.paymentToProvider,
+    feedbackSent: form.feedbackSent.trim(),
+    feedbackReceived: form.feedbackReceived.trim(),
     comment: form.comment.trim(),
   };
+  if (form.paymentToProvider === "paid") body.paidDateToProvider = form.paidDateToProvider;
+  if (version !== undefined) body.version = version;
+  return body;
 }
 
-// The body for PATCH /manual/:id/details (Edit): the fields of the form that Edit can change, plus the version the page saw.
-export function editBody(form, version) {
-  return {
-    version,
-    patientName: form.patientName.trim(),
-    country: form.country.trim(),
-    doctorId: form.doctorId || null,
-    date: form.date,
-    time: form.time,
-    feeCharged: cleanFeeInput(form.feeCharged).value,
-  };
-}
-
-// An approved doctor (an Enrollment from /api/admin/approved-doctors) as a dropdown option, sorted by name.
-export function doctorOptions(enrollments) {
-  return (enrollments || [])
-    .map((e) => ({ id: String(e._id), name: e.doctorId?.name || `${e.firstName || ""} ${e.surname || ""}`.trim() || "Doctor" }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
+// The Company and Case number line under a manual row's patient name.
+export const caseLine = (row) => row.manual?.caseLine || "";

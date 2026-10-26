@@ -1,5 +1,5 @@
 import { CommentCell, FeeCell, PaidOnCell, StatusCell } from "./EntryCells";
-import { feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
+import { caseLine, feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
 
 // The Appointment entries table. A full table while the window is wide; below 1360px each row becomes a card with labelled fields
 // (see AdminEntries.css). The first four columns come from the booking; the green ones are typed by an admin and saved as you go.
@@ -83,8 +83,7 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
               type="button"
               className="en-link"
               onClick={() => onEdit(row)}
-              disabled={row.manual?.locked}
-              title={row.manual?.locked ? "This row is Paid, so its details are locked. Change the status first." : "Edit this manual entry"}
+              title={row.manual?.locked ? "Payment to provider is Paid, so most details are locked. Open it to see what can still change." : "Edit this manual entry"}
             >
               Edit
             </button>
@@ -116,6 +115,11 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
       <td data-l="Patient" className="en-nm">
         <b title={row.patient?.name}>{row.patient?.name || "—"}</b>
         <span>{countryText}</span>
+        {manual && caseLine(row) && (
+          <span className="en-caseline" title={caseLine(row)}>
+            {caseLine(row)}
+          </span>
+        )}
       </td>
       <td data-l="Doctor" className="en-nm">
         {row.doctorName ? <b title={row.doctorName}>{row.doctorName}</b> : <b className="en-na">Not assigned</b>}
@@ -130,7 +134,7 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
         {fee.paid && <small>{fee.paid}</small>}
       </td>
       <td data-l="Doctor fee ($)" className="en-ed">
-        <FeeCell row={row} save={save} />
+        <FeeCell row={row} save={save} disabled={manual && row.manual?.locked} />
       </td>
       <td data-l="Paid status" className="en-ed">
         <StatusCell row={row} save={save} />

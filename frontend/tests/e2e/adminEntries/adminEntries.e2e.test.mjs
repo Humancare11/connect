@@ -422,138 +422,350 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     assert.match(await page.locator(".en-state").innerText(), /No entries match this view/);
   });
 
-  // ── Manual entries ────────────────────────────────────────────────────────
+  // ── Manual entries (the big popup) ────────────────────────────────────────
 
-  test("Add manual entry: the form checks the name and the fee, then the row appears labelled Manual with an M- id and the right counts", async () => {
-    await open("/admin-dashboard/appointment-entries?month=2027-08");
-    const before = await tabCount("All");
+  const popup = () => page.locator(".en-modal--wide");
+  // A form field by its label text (a label that wraps a drop-down also carries the option names, so match the label's own text).
+  const field = (label) => popup().locator(`label:has(> span:text-is("${label}"))`).locator("input, select, textarea");
+  const doctorsFee = () => field("Doctor’s fee ($)");
+  const pick = (label, option) => field(label).selectOption({ label: option });
+  const openAdd = async () => {
     await page.click('button:has-text("Add manual entry")');
-    await page.waitForSelector(".en-modal form");
-    await page.click('.en-modal button:has-text("Add entry")');
-    assert.match(await page.locator(".en-form-error").innerText(), /patient's name/);
-    const name = unique("Manual Patient");
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', name);
-    await page.click('.en-modal button:has-text("Add entry")');
-    assert.match(await page.locator(".en-form-error").innerText(), /fee charged/i);
-    await page.fill('.en-modal input[placeholder="India"]', "India");
-    await page.selectOption(".en-modal select", { label: "Martin Perlin" });
-    await page.fill('.en-modal input[type="date"]', "2027-08-12");
-    await page.fill('.en-modal input[type="time"]', "14:30");
-    await page.fill('.en-modal input[placeholder="49.00"]', "49");
-    await page.fill('.en-modal input[placeholder="optional"]', "36.75");
-    await page.fill('.en-modal input[placeholder^="e.g. Booked by phone"]', "Booked by phone");
-    await page.click('.en-modal button:has-text("Add entry")');
-    await until(async () => (await row(name).count()) === 1, "the new row");
-    const text = (await row(name).innerText()).replace(/\s+/g, " ");
-    assert.match(text, /M-[0-9A-F]{4}/);
-    assert.ok(text.includes("Manual") && text.includes("India") && text.includes("Martin Perlin") && text.includes("12 Aug 2027") && text.includes("2:30 PM") && text.includes("$49.00"), text);
-    assert.equal(await feeBox(name).inputValue(), "36.75");
-    assert.equal(await commentBox(name).inputValue(), "Booked by phone");
-    assert.ok(await row(name).locator(".en-src--manual").count());
-    assert.ok((await toasts()).includes("Manual entry added"));
-    await until(async () => (await tabCount("All")) === before + 1, "the All count to grow");
-    const manual = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
-    assert.deepEqual([manual.createdBy.role, manual.log[0].action, manual.entry.doctorFeeCents, manual.deletedAt], ["superadmin", "created", 3675, null]);
-    await shot("manual-added");
+    await popup().waitFor();
+  };
+  const press = (name) => popup().locator(`button:has-text("${name}")`).click();
+  const formError = async () => (await popup().locator(".en-form-error").innerText().catch(() => "")).trim();
+  // The smallest valid form.
+  const fillMinimum = async ({ name, provider = "Dr Rao Clinic", date = "2027-05-04", fee = "100" } = {}) => {
+    await field("Date").fill(date);
+    await field("Service provider").fill(provider);
+    await field("Patient name").fill(name);
+    await field("Consultation fee ($)").fill(fee);
+  };
+  // Adds a row through the API (quick), for the tests that are not about the form itself.
+  const addViaApi = async (extra = {}) => {
+    const r = await call("POST", "/api/admin/entries/manual", { date: "2027-06-04", serviceProvider: "Dr Rao Clinic", patientName: unique("Api Manual"), consultationFee: "50", ...extra });
+    assert.equal(r.status, 201, JSON.stringify(r.body));
+    return r.body.item;
+  };
+
+  test("Add manual entry opens a large popup with the seven sections in order, and the starting values", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05");
+    await openAdd();
+    assert.deepEqual(await popup().locator("legend").allTextContents(), [
+      "1 · Case", "2 · Service provider", "3 · Patient", "4 · Fees", "5 · Medical report & invoice", "6 · Payments", "7 · Feedback",
+    ]);
+    await sleep(500);
+    const box = await popup().boundingBox();
+    assert.ok(box.width > 900 && box.width <= 1021, `a large popup: ${box.width}`);
+    const today = await field("Date").inputValue();
+    assert.match(today, /^\d{4}-\d{2}-\d{2}$/);
+    assert.deepEqual(
+      [await field("Status").inputValue(), await field("MR status from provider").inputValue(), await field("MR sent to the company").inputValue(), await field("Invoice sent").inputValue(),
+        await field("Payment received").inputValue(), await field("Payment to provider").inputValue(), await field("Type of service").inputValue()],
+      ["open", "pending", "not_sent", "not_sent", "not_received", "unpaid", ""],
+    );
+    assert.deepEqual(await field("Type of service").locator("option").allInnerTexts(), ["Select type", "House call", "Teleconsultation", "Others"]);
+    assert.deepEqual(await field("Status").locator("option").allInnerTexts(), ["Open", "In progress", "Completed", "Cancelled"]);
+    assert.deepEqual(await field("Payment received").locator("option").allInnerTexts(), ["Not received", "Partly received", "Received"]);
+    assert.deepEqual(await field("Payment to provider").locator("option").allInnerTexts(), ["Unpaid", "On hold", "Paid", "Not payable"]);
+    assert.equal(await field("Other service").count(), 0, "Other service only shows for Others");
+    assert.equal(await field("Payment received date").isDisabled(), true);
+    assert.equal(await field("Paid date to the provider").isDisabled(), true);
+    assert.equal(await page.getByTestId("calculation").innerText(), "—");
+    assert.equal(await popup().locator("textarea").count(), 2);
+    await shot("popup-add");
   });
 
-  test("the doctor list in the form is the approved doctors only; a fee charged of 0 is accepted and shows no 75% suggestion", async () => {
-    await open("/admin-dashboard/appointment-entries?month=2027-08");
-    await page.click('button:has-text("Add manual entry")');
-    await page.waitForSelector(".en-modal form");
-    await until(async () => (await page.locator(".en-modal select option").count()) > 1, "the doctors");
-    const options = await page.$$eval(".en-modal select option", (els) => els.map((e) => e.textContent.trim()));
-    assert.deepEqual(options, ["Not assigned", "Farah Siddiqui", "Hidayat Khan", "Martin Perlin"]);
+  test("Calculation (our margin) is live: consultation fee minus the doctor's fee with its percentage, red when negative, and never sent", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05");
+    await openAdd();
+    const calc = page.getByTestId("calculation");
+    await field("Consultation fee ($)").fill("100");
+    await doctorsFee().fill("70");
+    await until(async () => /\$30\.00/.test(await calc.innerText()) && /30\.0%/.test(await calc.innerText()), "the margin");
+    assert.equal(await calc.evaluate((el) => getComputedStyle(el.querySelector("b")).color), "rgb(15, 23, 42)");
+    await field("Consultation fee ($)").fill("50");
+    await doctorsFee().fill("65");
+    await until(async () => /-\$15\.00/.test(await calc.innerText()) && /-30\.0%/.test(await calc.innerText()), "the negative margin");
+    assert.equal(await calc.evaluate((el) => getComputedStyle(el.querySelector("b")).color), "rgb(185, 28, 28)", "red when negative");
+    await doctorsFee().fill("");
+    await until(async () => (await calc.innerText()) === "—", "empty without a doctor's fee");
+    assert.equal(await calc.locator("input").count(), 0, "read-only");
+  });
+
+  test("Type of service Others shows a required 'Other service' box; the other types hide it", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05");
+    await openAdd();
+    const name = unique("Others Case");
+    await fillMinimum({ name });
+    await pick("Type of service", "Others");
+    await field("Other service").waitFor();
+    await press("Add entry");
+    assert.match(await formError(), /Describe the other service/);
+    await field("Other service").fill("Physio at home");
+    await pick("Type of service", "House call");
+    assert.equal(await field("Other service").count(), 0);
+    await pick("Type of service", "Others");
+    assert.equal(await field("Other service").inputValue(), "Physio at home", "what was typed is still there");
+    await press("Add entry");
+    await until(async () => (await row(name).count()) === 1, "the new row");
+    const stored = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
+    assert.deepEqual([stored.serviceType, stored.otherService], ["others", "Physio at home"]);
+  });
+
+  test("the two payment dates are usable only when they apply, and default to today", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05");
+    await openAdd();
+    const today = await field("Date").inputValue();
+    await pick("Payment received", "Partly received");
+    assert.equal(await field("Payment received date").isDisabled(), false);
+    assert.equal(await field("Payment received date").inputValue(), today);
+    await pick("Payment received", "Not received");
+    assert.equal(await field("Payment received date").isDisabled(), true);
+    assert.equal(await field("Payment received date").inputValue(), "");
+    await pick("Payment received", "Received");
+    assert.equal(await field("Payment received date").inputValue(), today);
+    await pick("Payment to provider", "Paid");
+    assert.equal(await field("Paid date to the provider").isDisabled(), false);
+    assert.equal(await field("Paid date to the provider").inputValue(), today);
+    await pick("Payment to provider", "On hold");
+    assert.equal(await field("Paid date to the provider").isDisabled(), true);
+    await pick("Payment to provider", "Unpaid");
+    assert.equal(await field("Paid date to the provider").isDisabled(), true);
+  });
+
+  test("the form says what is wrong: provider, patient, phone numbers, fees, and Paid needs a doctor's fee above 0", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05");
+    await openAdd();
+    await press("Add entry");
+    assert.match(await formError(), /service provider/i);
+    await field("Service provider").fill("Dr Rao Clinic");
+    await press("Add entry");
+    assert.match(await formError(), /patient/i);
+    await field("Patient name").fill("Validation Case");
+    await press("Add entry");
+    assert.match(await formError(), /consultation fee/i);
+    await field("Consultation fee ($)").fill("100");
+    await field("Contact number").fill("call me");
+    await press("Add entry");
+    assert.match(await formError(), /contact number/i);
+    await field("Contact number").fill("+971 50 123-4567");
+    await field("Service provider number").fill("555-0100 ext 5");
+    await press("Add entry");
+    assert.match(await formError(), /service provider number/i);
+    await field("Service provider number").fill("(04) 555 0100");
+    await doctorsFee().fill("1.234");
+    await press("Add entry");
+    assert.match(await formError(), /doctor's fee must be a number/i);
+    await doctorsFee().fill("");
+    await pick("Payment to provider", "Paid");
+    await press("Add entry");
+    assert.match(await formError(), /doctor's fee above 0/i);
+    assert.equal((await call("GET", "/__manual")).body.some((m) => m.patientName === "Validation Case"), false, "nothing was saved");
+  });
+
+  test("a fee of 0 is fine; the row shows no 75% suggestion", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05");
+    await openAdd();
     const name = unique("Free Visit");
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', name);
-    await page.selectOption(".en-modal select", { label: "Farah Siddiqui" });
-    await page.fill('.en-modal input[type="date"]', "2027-08-13");
-    await page.fill('.en-modal input[placeholder="49.00"]', "0");
-    await page.click('.en-modal button:has-text("Add entry")');
+    await fillMinimum({ name, fee: "0" });
+    await press("Add entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
     assert.ok((await row(name).innerText()).includes("$0.00"));
     assert.equal(await feeBox(name).getAttribute("placeholder"), "0.00");
   });
 
-  test("a manual row has the same editable cells and rules; a manual row can't be Paid without a doctor or a fee", async () => {
-    await open("/admin-dashboard/appointment-entries?month=2027-08");
-    const name = unique("Manual Rules");
-    await page.click('button:has-text("Add manual entry")');
-    await page.waitForSelector(".en-modal form");
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', name);
-    await page.fill('.en-modal input[type="date"]', "2027-08-14");
-    await page.fill('.en-modal input[placeholder="49.00"]', "50");
-    await page.click('.en-modal button:has-text("Add entry")');
+  test("fill the whole form, save, see the row, edit it, mark it Paid, see the locks, and export it", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-07");
+    await openAdd();
+    const name = unique("Full Form");
+    await field("Date").fill("2027-07-08");
+    await field("Company").fill("Acme Assist");
+    await field("Case number").fill("AC-1042");
+    await pick("Type of service", "Teleconsultation");
+    await pick("Status", "In progress");
+    await field("Service provider").fill("Sunrise Home Care");
+    await field("Service provider number").fill("+971 4 555 0100");
+    await field("Patient name").fill(name);
+    await field("Patient country").fill("India");
+    await field("Contact number").fill("(022) 5550 1234");
+    await field("Consultation fee ($)").fill("100");
+    await doctorsFee().fill("65");
+    await pick("MR status from provider", "Received");
+    await pick("MR sent to the company", "Sent");
+    await pick("Invoice sent", "Sent");
+    await pick("Payment received", "Partly received");
+    await field("Payment received date").fill("2026-10-20");
+    await field("Feedback message sent").fill("Please rate our service");
+    await field("Feedback received").fill("Great, thank you");
+    await field("Comment").fill("Booked by phone");
+    await press("Add entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
-    assert.equal(await feeBox(name).getAttribute("placeholder"), "75% · 37.50");
-    await feeBox(name).fill("30");
-    await feeBox(name).press("Enter");
-    await until(async () => (await row(name).locator(".en-st--saved").count()) === 1, "Saved");
-    await statusBox(name).selectOption("paid");
-    await until(async () => (await toasts()).includes("Assign a doctor"), "the doctor toast (the manual row has none)");
-    assert.equal(await statusBox(name).inputValue(), "unpaid");
+
+    // The row in the table: Manual label, M- id, Company · Case number under the patient, the provider in the Doctor column.
+    const text = (await row(name).innerText()).replace(/\s+/g, " ");
+    assert.match(text, /M-[0-9A-F]{4}/);
+    assert.ok(text.includes("Manual") && text.includes("Acme Assist · AC-1042") && text.includes("Sunrise Home Care") && text.includes("India") && text.includes("8 Jul 2027") && text.includes("$100.00"), text);
+    assert.equal(await row(name).locator(".en-caseline").innerText(), "Acme Assist · AC-1042");
+    assert.ok(await row(name).locator(".en-src--manual").count());
+    assert.equal(await feeBox(name).inputValue(), "65.00");
+    assert.equal(await commentBox(name).inputValue(), "Booked by phone");
+    let manual = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
+    assert.deepEqual(
+      [manual.company, manual.caseNumber, manual.serviceType, manual.caseStatus, manual.doctorName, manual.providerNumber, manual.contactNumber, manual.country, manual.feeChargedCents, manual.entry.doctorFeeCents],
+      ["Acme Assist", "AC-1042", "teleconsultation", "in_progress", "Sunrise Home Care", "+971 4 555 0100", "(022) 5550 1234", "IN", 10000, 6500],
+    );
+    assert.deepEqual(
+      [manual.mrStatus, manual.mrSentToCompany, manual.invoiceSent, manual.paymentReceived, manual.paymentReceivedDate, manual.feedbackSent, manual.feedbackReceived, manual.entry.comment],
+      ["received", "sent", "sent", "partly_received", "2026-10-20", "Please rate our service", "Great, thank you", "Booked by phone"],
+    );
+    assert.equal(manual.log[0].action, "created");
+
+    // Edit: the popup opens with the saved values.
+    await row(name).locator('button:has-text("Edit")').click();
+    await popup().waitFor();
+    assert.match(await popup().locator(".hc-modal__title").innerText(), /^Edit manual entry · M-/);
+    assert.deepEqual(
+      [await field("Company").inputValue(), await field("Case number").inputValue(), await field("Type of service").inputValue(), await field("Status").inputValue(),
+        await field("Service provider").inputValue(), await field("Patient name").inputValue(), await field("Patient country").inputValue(), await field("Consultation fee ($)").inputValue(),
+        await doctorsFee().inputValue(), await field("Payment received").inputValue(), await field("Payment received date").inputValue(),
+        await field("Feedback message sent").inputValue(), await field("Comment").inputValue()],
+      ["Acme Assist", "AC-1042", "teleconsultation", "in_progress", "Sunrise Home Care", name, "India", "100.00", "65.00", "partly_received", "2026-10-20", "Please rate our service", "Booked by phone"],
+    );
+    assert.equal(await popup().locator(".en-lock-note").count(), 0);
+    await field("Company").fill("Beta Assist");
+    await pick("Status", "Completed");
+    await doctorsFee().fill("70");
+    await pick("Payment received", "Received");
+    await field("Feedback received").fill("Great, thank you very much");
+    await press("Save changes");
+    await until(async () => (await row(name).locator(".en-caseline").innerText()) === "Beta Assist · AC-1042", "the edited row");
+    assert.equal(await feeBox(name).inputValue(), "70.00");
+    manual = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
+    assert.equal(manual.log.slice(1).every((l) => l.action === "edited" && l.by.name === "Test Admin"), true);
+    assert.deepEqual(
+      ["company", "caseStatus", "doctorFee", "paymentReceived", "feedbackReceived"].map((f) => manual.log.some((l) => l.field === f)),
+      [true, true, true, true, true],
+    );
+    assert.deepEqual([manual.company, manual.caseStatus, manual.paymentReceived, manual.entry.doctorFeeCents], ["Beta Assist", "completed", "received", 7000]);
+
+    // Mark it Paid to the provider from the popup.
+    await row(name).locator('button:has-text("Edit")').click();
+    await popup().waitFor();
+    await pick("Payment to provider", "Paid");
+    assert.equal(await field("Paid date to the provider").isDisabled(), false);
+    await field("Paid date to the provider").fill("2026-10-21");
+    await press("Save changes");
+    await until(async () => (await row(name).locator("select[aria-label='Paid status']").inputValue()) === "paid", "Paid");
+    assert.equal(await paidOnBox(name).inputValue(), "2026-10-21");
+    // Locked in the table: the doctor's fee box and Delete.
+    assert.equal(await feeBox(name).isDisabled(), true);
+    assert.equal(await row(name).locator('button:has-text("Delete")').isDisabled(), true);
+
+    // Locked in the popup: case, provider, patient and fees; the rest can still change.
+    await row(name).locator('button:has-text("Edit")').click();
+    await popup().waitFor();
+    assert.match(await popup().locator(".en-lock-note").innerText(), /Paid.*locked/);
+    for (const label of ["Date", "Company", "Case number", "Type of service", "Status", "Service provider", "Service provider number", "Patient name", "Patient country", "Contact number", "Consultation fee ($)"]) {
+      assert.equal(await field(label).isDisabled(), true, `${label} is locked`);
+    }
+    assert.equal(await doctorsFee().isDisabled(), true, "the doctor's fee is locked");
+    for (const label of ["MR status from provider", "MR sent to the company", "Invoice sent", "Payment received", "Payment received date", "Payment to provider", "Paid date to the provider", "Feedback message sent", "Feedback received", "Comment"]) {
+      assert.equal(await field(label).isDisabled(), false, `${label} stays editable`);
+    }
+    await shot("popup-locked");
+    await pick("MR status from provider", "Pending");
+    await field("Feedback message sent").fill("Updated message while Paid");
+    await press("Save changes");
+    await until(async () => (await (await call("GET", "/__manual")).body.find((m) => m.patientName === name)).feedbackSent === "Updated message while Paid", "the feedback to save");
+    manual = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
+    assert.deepEqual([manual.mrStatus, manual.company, manual.entry.doctorFeeCents, manual.entry.paidStatus], ["pending", "Beta Assist", 7000, "paid"]);
+    // The server refuses a locked change even if a stale page sends it.
+    const refused = await call("PATCH", `/api/admin/entries/manual/${manual._id}/details`, { version: manual.entry.v, patientName: "Sneaky" });
+    assert.deepEqual([refused.status, refused.body.code], [409, "locked_paid"]);
+
+    // Export it.
+    const [download] = await Promise.all([page.waitForEvent("download"), page.click('button:has-text("Export CSV")')]);
+    const csv = fs.readFileSync(await download.path(), "utf8").replace(/^﻿/, "");
+    const lines = csv.trim().split("\r\n");
+    const head = lines[0].split(",");
+    for (const column of ["Company", "Case number", "Type of service", "Other service", "Case status", "Service provider number", "Contact number", "Calculation (our margin)", "Calculation (% of consultation fee)", "MR status", "MR sent to company", "Invoice sent", "Payment received", "Payment received date", "Feedback message sent", "Feedback received"]) {
+      assert.ok(head.includes(column), `the CSV has a ${column} column`);
+    }
+    const line = lines.find((l) => l.includes(name));
+    assert.ok(line.includes("Beta Assist,AC-1042,Teleconsultation,,Completed,'+971 4 555 0100,(022) 5550 1234,30.00,30.0,Pending,Sent,Sent,Received,"), line);
+    assert.ok(line.includes("Updated message while Paid") && line.includes("Great, thank you very much") && line.includes("Sunrise Home Care") && line.includes(",70.00,Paid,2026-10-21,"), line);
   });
 
-  test("Edit a manual row: the form starts from its values, changes are saved and logged, and a Paid row is locked", async () => {
-    const name = unique("Manual Edit");
-    await open("/admin-dashboard/appointment-entries?month=2027-09");
-    await page.click('button:has-text("Add manual entry")');
-    await page.waitForSelector(".en-modal form");
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', name);
-    await page.selectOption(".en-modal select", { label: "Martin Perlin" });
-    await page.fill('.en-modal input[type="date"]', "2027-09-02");
-    await page.fill('.en-modal input[type="time"]', "09:15");
-    await page.fill('.en-modal input[placeholder="49.00"]', "50");
-    await page.click('.en-modal button:has-text("Add entry")');
+  test("the popup on a phone is full screen with the sections stacked in one column, and Save stays in reach", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05", { width: 390, height: 844 });
+    await openAdd();
+    await sleep(500);
+    const box = await popup().boundingBox();
+    assert.deepEqual([Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height)], [0, 0, 390, 844], "full screen");
+    const layout = await popup().evaluate((el) => {
+      const lefts = (selector) => [...el.querySelectorAll(selector)].map((n) => Math.round(n.getBoundingClientRect().left));
+      const textareas = [...el.querySelectorAll("textarea")].map((n) => n.getBoundingClientRect());
+      const foot = el.querySelector(".en-popup-foot").getBoundingClientRect();
+      return {
+        overflow: el.scrollWidth - el.clientWidth,
+        sectionsOverflow: el.querySelector(".en-sections").scrollWidth - el.querySelector(".en-sections").clientWidth,
+        fieldLefts: [...new Set(lefts(".en-section .en-grid > .en-field"))],
+        payLefts: [...new Set(lefts(".en-paybox"))],
+        feedbackStacked: textareas[1].top > textareas[0].bottom - 1 && Math.abs(textareas[0].left - textareas[1].left) < 2,
+        footBottom: Math.round(foot.bottom),
+        footVisible: foot.top >= 0 && foot.bottom <= window.innerHeight + 1,
+      };
+    });
+    assert.equal(layout.overflow <= 0 && layout.sectionsOverflow <= 0, true, JSON.stringify(layout));
+    assert.equal(layout.fieldLefts.length, 1, `one column: ${JSON.stringify(layout.fieldLefts)}`);
+    assert.equal(layout.payLefts.length, 1, "the two payment boxes stack");
+    assert.equal(layout.feedbackStacked, true, "the two feedback boxes stack");
+    assert.equal(layout.footVisible, true, "the buttons stay on screen");
+    await shot("popup-390");
+    // The whole form can be used on the phone.
+    const name = unique("Phone Case");
+    await fillMinimum({ name });
+    await press("Add entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
+  });
 
-    await row(name).locator('button:has-text("Edit")').click();
-    await page.waitForSelector('.en-modal:has-text("Edit manual entry")');
-    assert.equal(await page.inputValue('.en-modal input[placeholder="e.g. Ravi Sharma"]'), name);
-    assert.equal(await page.inputValue('.en-modal input[type="date"]'), "2027-09-02");
-    assert.equal(await page.inputValue('.en-modal input[type="time"]'), "09:15");
-    assert.equal(await page.inputValue('.en-modal input[placeholder="49.00"]'), "50.00");
-    assert.equal(await page.locator('.en-modal input[placeholder="optional"]').count(), 0, "the doctor fee is typed in the table, not in Edit");
-    const renamed = `${name} Jr`;
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', renamed);
-    await page.selectOption(".en-modal select", { label: "Hidayat Khan" });
-    await page.fill('.en-modal input[type="date"]', "2027-09-05");
-    await page.fill('.en-modal input[placeholder="49.00"]', "60");
-    await page.click('.en-modal button:has-text("Save changes")');
-    await until(async () => (await row(renamed).count()) === 1, "the renamed row");
-    const text = (await row(renamed).innerText()).replace(/\s+/g, " ");
-    assert.ok(text.includes("Hidayat Khan") && text.includes("5 Sep 2027") && text.includes("$60.00"), text);
-    const manual = (await call("GET", "/__manual")).body.find((m) => m.patientName === renamed);
-    assert.deepEqual(manual.log.map((l) => `${l.action}:${l.field}`), ["created:", "edited:patientName", "edited:doctor", "edited:date", "edited:fee"]);
-    assert.ok(manual.log.slice(1).every((l) => l.by.name === "Test Admin" && l.by.role === "superadmin"));
+  test("the popup on a big window: three columns of fields, the two payment boxes side by side, the two feedback boxes side by side", async () => {
+    await open("/admin-dashboard/appointment-entries?month=2027-05", { width: 1500, height: 1000 });
+    await openAdd();
+    const layout = await popup().evaluate((el) => {
+      const rect = (selector) => el.querySelector(selector).getBoundingClientRect();
+      const boxes = [...el.querySelectorAll(".en-paybox")].map((n) => n.getBoundingClientRect());
+      const tas = [...el.querySelectorAll("textarea")].map((n) => n.getBoundingClientRect());
+      const caseFields = [...el.querySelectorAll(".en-section:first-of-type .en-grid > .en-field")].slice(0, 3).map((n) => Math.round(n.getBoundingClientRect().top));
+      return {
+        payside: boxes[1].left > boxes[0].right - 1 && Math.abs(boxes[0].top - boxes[1].top) < 2,
+        feedbackSide: tas[1].left > tas[0].right - 1 && Math.abs(tas[0].top - tas[1].top) < 2,
+        threeAcross: new Set(caseFields).size === 1,
+        height: Math.round(rect(".en-bigform").height),
+      };
+    });
+    assert.deepEqual([layout.payside, layout.feedbackSide, layout.threeAcross], [true, true, true], JSON.stringify(layout));
+    assert.ok((await popup().boundingBox()).height <= 1000 * 0.93, "the popup fits the window (its body scrolls)");
+    await shot("popup-1500");
+  });
 
-    // Once Paid, the details are locked: Edit is disabled with the reason, and Delete too.
-    await feeBox(renamed).fill("40");
-    await feeBox(renamed).press("Enter");
-    await until(async () => (await row(renamed).locator(".en-st--saved").count()) === 1, "the fee to save");
-    await statusBox(renamed).selectOption("paid");
-    await until(async () => (await row(renamed).locator('button:has-text("Edit")').isDisabled()), "Edit to lock");
-    assert.match(await row(renamed).locator('button:has-text("Edit")').getAttribute("title"), /locked/);
-    assert.equal(await row(renamed).locator('button:has-text("Delete")').isDisabled(), true);
-    // The server says the same if the page is stale: it refuses to change a Paid row's details.
-    const id = manual._id;
-    const refused = await call("PATCH", `/api/admin/entries/manual/${id}/details`, { version: 99, patientName: "Sneaky" });
-    assert.equal(refused.status, 409);
-    assert.equal(refused.body.code, "locked_paid");
-    await shot("manual-locked");
+  test("the Doctor filter finds a manual row by its service provider's exact name", async () => {
+    const exact = await addViaApi({ date: "2027-01-09", serviceProvider: "Martin Perlin", patientName: unique("Exact Name") });
+    const longer = await addViaApi({ date: "2027-01-10", serviceProvider: "Martin Perlin Clinic", patientName: unique("Longer Name") });
+    await open("/admin-dashboard/appointment-entries?month=2027-01");
+    await until(async () => (await row(longer.patient.name).count()) === 1 && (await row(exact.patient.name).count()) === 1, "both rows before the filter");
+    await page.selectOption('select[aria-label="Doctor"]', { label: "Martin Perlin" });
+    await until(async () => (await row(longer.patient.name).count()) === 0, "the longer name to drop out");
+    assert.equal(await row(exact.patient.name).count(), 1);
+    assert.ok((await row("Background").count()) >= 1, "the doctor's bookings are there too");
   });
 
   test("Delete a manual row: a confirmation first (Keep it changes nothing), then it is gone; a Paid row can't be deleted; booking rows have no Delete", async () => {
-    const name = unique("Manual Delete");
+    const item = await addViaApi({ date: "2027-10-02" });
+    const name = item.patient.name;
     await open("/admin-dashboard/appointment-entries?month=2027-10");
-    await page.click('button:has-text("Add manual entry")');
-    await page.waitForSelector(".en-modal form");
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', name);
-    await page.fill('.en-modal input[type="date"]', "2027-10-02");
-    await page.fill('.en-modal input[placeholder="49.00"]', "25");
-    await page.click('.en-modal button:has-text("Add entry")');
-    await until(async () => (await row(name).count()) === 1, "the new row");
-
     await row(name).locator('button:has-text("Delete")').click();
     await page.waitForSelector('[role="alertdialog"]');
     assert.match(await page.locator('[role="alertdialog"]').innerText(), /Delete this manual entry\?[\s\S]*Only manual entries can be deleted/);
@@ -578,27 +790,19 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
 
   test("Export CSV downloads a real file with the filtered rows, the source columns and the manual rows", async () => {
     const name = unique("Csv Booking");
-    const id = await make({ name, doctor: 0, date: "2027-07-05", fee: 70, entry: { doctorFeeCents: 4000 }, source: { platform: "android", appVersion: "1.0.0+16", sourceType: "home" } });
-    await open("/admin-dashboard/appointment-entries?month=2027-07");
-    await page.click('button:has-text("Add manual entry")');
-    await page.waitForSelector(".en-modal form");
-    const manualName = unique("Csv Manual");
-    await page.fill('.en-modal input[placeholder="e.g. Ravi Sharma"]', manualName);
-    await page.fill('.en-modal input[type="date"]', "2027-07-06");
-    await page.fill('.en-modal input[placeholder="49.00"]', "15");
-    await page.click('.en-modal button:has-text("Add entry")');
-    await until(async () => (await row(manualName).count()) === 1, "the manual row");
-
+    const id = await make({ name, doctor: 0, date: "2027-08-05", fee: 70, entry: { doctorFeeCents: 4000 }, source: { platform: "android", appVersion: "1.0.0+16", sourceType: "home" } });
+    const manualItem = await addViaApi({ date: "2027-08-06", patientName: unique("Csv Manual"), company: "Acme", consultationFee: "15" });
+    await open("/admin-dashboard/appointment-entries?month=2027-08");
     const [download] = await Promise.all([page.waitForEvent("download"), page.click('button:has-text("Export CSV")')]);
     assert.equal(download.suggestedFilename(), `entries-${istToday()}.csv`);
     const text = fs.readFileSync(await download.path(), "utf8").replace(/^﻿/, "");
     const lines = text.trim().split("\r\n");
     assert.match(lines[0], /^Booking ID,Source,Platform,Source page type,Source page name,Clicked on,Booked \(UTC\),Consultation date,/);
-    assert.equal(lines.length, 3, "header + the two rows of July 2027");
+    assert.equal(lines.length, 3, "header + the two rows of August 2027");
     const booking = lines.find((l) => l.startsWith(id));
     assert.ok(booking.includes(",App,Android (v1.0.0+16),Home,") && booking.includes(name) && booking.includes(",40.00,"), booking);
-    const manual = lines.find((l) => l.includes(manualName));
-    assert.ok(manual.startsWith("M-") && manual.includes(",Manual,"), manual);
+    const manual = lines.find((l) => l.includes(manualItem.patient.name));
+    assert.ok(manual.startsWith("M-") && manual.includes(",Manual,") && manual.includes(",Acme,"), manual);
     await until(async () => (await toasts()).includes("Exported 2 rows"), "the export toast");
   });
 
@@ -621,14 +825,14 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
 
   test("every entries route is 403 for the payment admin and other roles, 200 for admin and super admin", async () => {
     const id = await make({ name: unique("Access"), doctor: 0, date: "2029-02-01", fee: 10 });
-    const manual = (await call("POST", "/api/admin/entries/manual", { patientName: "Access Manual", date: "2027-02-02", feeCharged: "5" })).body.item;
+    const manual = (await call("POST", "/api/admin/entries/manual", { patientName: "Access Manual", date: "2027-02-02", serviceProvider: "Dr X", consultationFee: "5" })).body.item;
     const as = (role) => ({ "x-test-role": role });
     const calls = [
       ["GET", "/api/admin/entries"],
       ["GET", "/api/admin/entries/export.csv"],
       ["PATCH", `/api/admin/entries/appointment/${id}`, { field: "comment", value: "x", version: 0 }],
       ["PATCH", `/api/admin/entries/manual/${manual.id}/details`, { version: 0, patientName: "Y" }],
-      ["POST", "/api/admin/entries/manual", { patientName: "Z", date: "2027-02-03", feeCharged: "5" }],
+      ["POST", "/api/admin/entries/manual", { patientName: "Z", date: "2027-02-03", serviceProvider: "Dr X", consultationFee: "5" }],
       ["DELETE", `/api/admin/entries/manual/${manual.id}`],
     ];
     for (const role of ["paymentadmin", "user", "doctor", "employeeadmin", "partner"]) {
