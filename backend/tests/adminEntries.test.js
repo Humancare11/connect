@@ -86,10 +86,10 @@ describe("appointment entries list", () => {
   });
 
   describe("access", () => {
-    test("no token is 401; admin, super admin and payment admin may look; anyone else is 403", async () => {
+    test("no token is 401; admin and super admin may look; the payment admin and anyone else is 403", async () => {
       assert.equal((await get("", "")).status, 401);
-      for (const role of ["admin", "superadmin", "paymentadmin"]) assert.equal((await get("", role)).status, 200, role);
-      for (const role of ["user", "doctor", "employeeadmin", "partner", "somethingelse"]) assert.equal((await get("", role)).status, 403, role);
+      for (const role of ["admin", "superadmin"]) assert.equal((await get("", role)).status, 200, role);
+      for (const role of ["paymentadmin", "user", "doctor", "employeeadmin", "partner", "somethingelse"]) assert.equal((await get("", role)).status, 403, role);
     });
 
     test("the real route is mounted with the real token check and the viewer guard", () => {

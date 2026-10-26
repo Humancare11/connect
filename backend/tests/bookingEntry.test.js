@@ -77,20 +77,24 @@ describe("money", () => {
 });
 
 describe("who can do what", () => {
-  test("admin, super admin and payment admin can look; only super admin and payment admin can edit", () => {
-    for (const role of ["admin", "superadmin", "paymentadmin"]) assert.equal(E.canViewEntries(role), true, role);
-    for (const role of ["superadmin", "paymentadmin"]) assert.equal(E.canEditEntries(role), true, role);
-    for (const role of ["admin", "employeeadmin", "partner", "doctor", "user", "", undefined]) {
+  test("only admin and super admin can look, and both can edit; the payment admin has no access", () => {
+    for (const role of ["admin", "superadmin"]) {
+      assert.equal(E.canViewEntries(role), true, role);
+      assert.equal(E.canEditEntries(role), true, role);
+    }
+    for (const role of ["paymentadmin", "employeeadmin", "partner", "doctor", "user", "", undefined]) {
+      assert.equal(E.canViewEntries(role), false, String(role));
       assert.equal(E.canEditEntries(role), false, String(role));
     }
-    for (const role of ["employeeadmin", "partner", "doctor", "user", "", undefined]) assert.equal(E.canViewEntries(role), false, String(role));
   });
 
-  test("an edit by an admin is refused (the server checks it too, not just the screen)", () => {
-    const r = edit("comment", "hello", undefined, { actor: ADMIN });
+  test("an edit by the payment admin or anyone else is refused (the server checks it too, not just the screen)", () => {
+    const r = edit("comment", "hello", undefined, { actor: PAYMENT });
     assert.deepEqual([r.ok, r.status, r.code], [false, 403, "forbidden"]);
     assert.equal(edit("comment", "hello", undefined, { actor: null }).status, 403);
-    assert.equal(edit("comment", "hello", undefined, { actor: PAYMENT }).ok, true);
+    assert.equal(edit("comment", "hello", undefined, { actor: { ...SUPER, role: "doctor" } }).status, 403);
+    assert.equal(edit("comment", "hello", undefined, { actor: ADMIN }).ok, true);
+    assert.equal(edit("comment", "hello", undefined, { actor: SUPER }).ok, true);
   });
 });
 

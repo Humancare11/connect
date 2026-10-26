@@ -19,9 +19,9 @@ const MAX_HISTORY = 50;
 // The doctor's automatic share when no fee is typed: what is left after the platform's 25% (the rule getDoctorPayments uses).
 const PLATFORM_RATE = 0.25;
 
-// Roles. Everyone who can open the admin panel's money pages may look; only the finance roles may type.
-const VIEW_ROLES = ["admin", "superadmin", "paymentadmin"];
-const EDIT_ROLES = ["superadmin", "paymentadmin"];
+// Roles. Only the admin and the super admin can open this page, and both can type. The payment admin has no access.
+const VIEW_ROLES = ["admin", "superadmin"];
+const EDIT_ROLES = ["admin", "superadmin"];
 const canViewEntries = (role) => VIEW_ROLES.includes(role);
 const canEditEntries = (role) => EDIT_ROLES.includes(role);
 
@@ -177,7 +177,7 @@ const fail = (status, code, msg) => ({ ok: false, status, code, msg });
 // Failure: { ok: false, status, code, msg }  (status is the HTTP status the route should answer with)
 function applyEntryEdit(current, edit, ctx) {
   const { hasDoctor = false, doctorId = "", today, actor = {}, now = new Date() } = ctx || {};
-  if (!actor || !canEditEntries(actor.role)) return fail(403, "forbidden", "Only a super admin or payment admin can change these.");
+  if (!actor || !canEditEntries(actor.role)) return fail(403, "forbidden", "Only an admin or super admin can change these.");
   if (!edit || !ENTRY_FIELDS.includes(edit.field)) return fail(400, "bad_field", "That field can't be edited.");
   if (!isCalendarDay(today || "")) return fail(500, "bad_today", "No valid date for today.");
 
