@@ -236,6 +236,7 @@ const SPECIALTY_DATA = {
     {
       Icon: FiCompass,
       name: "Skin Rashes",
+      path: "/skin-and-hair-care/dermatology/skin-rash",
       description: "Red, itchy, irritated skin",
     },
     {
