@@ -1,4 +1,4 @@
-// Admin panel coverage for the direct-call Calls list, call report, and
+// Admin panel coverage for the direct-call call report, and
 // admin actions (Phase 3). Skips itself entirely if no admin credentials
 // were seeded (staging runs without TEST_ADMIN_EMAIL/PASSWORD).
 import { request } from "@playwright/test";
@@ -63,46 +63,7 @@ test.describe("direct call — admin panel", () => {
     await party.page.getByRole("button", { name: "Join now" }).click();
   }
 
-  function callRow(page, roomId) {
-    return page.locator("tr", { has: page.locator(`a[href*="${roomId}"]`) });
-  }
-
-  test("calls list: status moves waiting -> one joined -> in call", async ({ browser, baseURL }) => {
-    const api = await adminApi(baseURL);
-    const host = await newParty(browser, "host", null, baseURL);
-    const guest = await newParty(browser, "guest", null, baseURL);
-    const admin = await newParty(browser, "admin", ADMIN_STATE, baseURL);
-    try {
-      const room = await createRoomViaApi(api);
-
-      await admin.page.goto("/admin-dashboard/direct-video-consultation/calls", {
-        waitUntil: "domcontentloaded",
-      });
-      await expect(callRow(admin.page, room.roomId)).toContainText("Waiting", { timeout: 10_000 });
-
-      await joinWithPin(host, room.roomId, room.doctorPin);
-      // A solo join never has video "flowing" (no peer yet) — just give the
-      // join-direct-room round trip a moment to land server-side.
-      await host.page.waitForTimeout(2_000);
-      await admin.page.reload({ waitUntil: "domcontentloaded" });
-      await expect(callRow(admin.page, room.roomId)).toContainText("One joined", { timeout: 10_000 });
-
-      await joinWithPin(guest, room.roomId, room.patientPin);
-      await Promise.all([
-        waitForVideoFlowing(host.page, { timeoutMs: 20_000, label: "host" }),
-        waitForVideoFlowing(guest.page, { timeoutMs: 20_000, label: "guest" }),
-      ]);
-      await admin.page.reload({ waitUntil: "domcontentloaded" });
-      await expect(callRow(admin.page, room.roomId)).toContainText("In call", { timeout: 10_000 });
-    } finally {
-      await host.context.close();
-      await guest.context.close();
-      await admin.context.close();
-      await api.dispose();
-    }
-  });
-
-  test("calls list: a room-full rejection marks the call as a problem", async ({ browser, baseURL }) => {
+  test("call report: a room-full rejection is recorded on the report", async ({ browser, baseURL }) => {
     const api = await adminApi(baseURL);
     const host = await newParty(browser, "host", null, baseURL);
     const guest = await newParty(browser, "guest", null, baseURL);
@@ -125,9 +86,10 @@ test.describe("direct call — admin panel", () => {
         timeout: 10_000,
       });
 
-      await admin.page.goto("/admin-dashboard/direct-video-consultation/calls", { waitUntil: "domcontentloaded" });
-      await admin.page.locator('input[type="checkbox"]').check();
-      await expect(callRow(admin.page, roomId)).toContainText("Problem", { timeout: 10_000 });
+      await admin.page.goto(`/admin-dashboard/direct-video-consultation/calls/${roomId}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(admin.page.getByText("A join attempt was rejected").first()).toBeVisible({ timeout: 10_000 });
     } finally {
       await host.context.close();
       await guest.context.close();

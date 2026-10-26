@@ -12,6 +12,7 @@
 const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const Enrollment = require("../models/Enrollment");
+const { classifyAppointmentLookupError } = require("./roomDenyReason");
 
 // Compared case-insensitively ("complete"/"cancelled" vs "Completed"/"Cancelled").
 const TERMINAL_APPOINTMENT_STATUSES = new Set(["complete", "completed", "cancelled"]);
@@ -31,6 +32,8 @@ async function decideAppointmentAccess(identity, appointmentId) {
   const userId = String(identity.userId);
   let appointment = null;
   let allowed = false;
+  // Which kind of booking the id is, for the call report.
+  let kind = "appointment";
 
   try {
     appointment = await Appointment.findById(appointmentId)
@@ -48,6 +51,7 @@ async function decideAppointmentAccess(identity, appointmentId) {
 
       if (cc) {
         appointment = cc;
+        kind = "category_consultation";
 
         if (identity.role === "user") {
           allowed = String(cc.patientId) === userId;
@@ -57,23 +61,26 @@ async function decideAppointmentAccess(identity, appointmentId) {
         }
       }
     }
-  } catch {
-    return { allowed: false, reason: "invalid_appointment" };
+  } catch (err) {
+    // Only a malformed id is permanent; a DB error must not read as "invalid".
+    const reason = classifyAppointmentLookupError(err);
+    if (reason === "server_error") console.error("[socket] appointment lookup failed:", err?.message);
+    return { allowed: false, reason };
   }
 
   if (!appointment) return { allowed: false, reason: "appointment_not_found" };
 
   const status = String(appointment.status || "").toLowerCase();
   if (TERMINAL_APPOINTMENT_STATUSES.has(status)) {
-    return { allowed: false, reason: "appointment_ended", identity, appointment };
+    return { allowed: false, reason: "appointment_ended", identity, appointment, kind };
   }
 
   // Not on this booking: say nothing about its status.
-  if (!allowed) return { allowed: false, reason: "not_participant", identity, appointment };
+  if (!allowed) return { allowed: false, reason: "not_participant", identity, appointment, kind };
 
-  if (status !== "confirmed") return { allowed: false, reason: "not_confirmed", identity, appointment };
+  if (status !== "confirmed") return { allowed: false, reason: "not_confirmed", identity, appointment, kind };
 
-  return { allowed: true, reason: "participant", identity, appointment };
+  return { allowed: true, reason: "participant", identity, appointment, kind };
 }
 
 module.exports = {

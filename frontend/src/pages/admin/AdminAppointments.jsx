@@ -13,6 +13,7 @@ import BulkResultModal from "./appointments/BulkResultModal";
 import useBookingActions from "./appointments/useBookingActions";
 import useBulkActions from "./appointments/useBulkActions";
 import useSelection from "./appointments/useSelection";
+import useCallSummaries from "./appointments/useCallSummaries";
 import { DEFAULT_TAB, PAGE_SIZE, SOURCE_FILTERS, TAB_LABELS, pageFromParam, sourceFromParam, tabFromParam } from "./appointments/bookingFormat";
 
 const SEARCH_DELAY_MS = 300;
@@ -57,6 +58,7 @@ export default function AdminAppointments() {
   };
 
   const rows = data?.items || [];
+  const callSummaries = useCallSummaries(rows);
   const firstLoad = loading && !data;
 
   // Ticked rows are of this page only: a new tab, filter, search or page starts again.
@@ -132,7 +134,7 @@ export default function AdminAppointments() {
                 {error} <RetryButton onRetry={reload} />
               </div>
             )}
-            <BookingsTable rows={rows} page={page} actions={actions} selection={selection} bulk={bulk} isSuperAdmin={isSuperAdmin} />
+            <BookingsTable rows={rows} page={page} callSummaries={callSummaries} actions={actions} selection={selection} bulk={bulk} isSuperAdmin={isSuperAdmin} />
             <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}

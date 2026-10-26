@@ -123,8 +123,17 @@ describe("appointment call room access", () => {
     assert.match(source, /return decideAppointmentAccess\(identity, appointmentId\);/);
     assert.match(
       source,
-      /socket\.emit\("room-access-denied", \{\s*msg: deniedMessage\(access\.reason, access\.identity\?\.role\),\s*reason: access\.reason,\s*\}\);/
+      /socket\.emit\("room-access-denied", \{\s*msg: deniedMessage\(access\.reason, access\.identity\?\.role\),\s*reason: normalizeDenyReason\(access\.reason\),\s*\}\);/
     );
+  });
+
+  test("merged with the call report: the decision says which kind of booking it was, and not_confirmed is a final reason, not a retryable server_error", () => {
+    const { normalizeDenyReason } = require("../utils/roomDenyReason");
+    assert.equal(normalizeDenyReason("not_confirmed"), "not_confirmed");
+    assert.equal(normalizeDenyReason("something_new"), "server_error");
+    const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "utils", "appointmentRoomAccess.js"), "utf8");
+    assert.match(source, /kind = "category_consultation"/);
+    assert.match(source, /classifyAppointmentLookupError/);
   });
 
   test("the denial text is clear for not_confirmed and generic otherwise", () => {

@@ -790,6 +790,7 @@ const AdminAppointmentDetails = lazy(
 const AdminDirectVideoConsultation = lazy(
   () => import("./pages/admin/AdminDirectVideoConsultation"),
 );
+const AdminAppointmentCallReport = lazy(() => import("./pages/admin/AdminAppointmentCallReport"));
 const AdminDirectVideoCallDetail = lazy(
   () => import("./pages/admin/AdminDirectVideoCallDetail"),
 );
@@ -1961,6 +1962,16 @@ export function AppLayout() {
             }
           />
           {legacyAdminRedirects}
+          <Route
+            path="/admin-dashboard/appointments/:id/call-report"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAppointmentCallReport />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/admin-dashboard/appointments/:id/assign"
             element={

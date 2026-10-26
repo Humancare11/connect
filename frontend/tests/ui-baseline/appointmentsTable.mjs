@@ -53,6 +53,15 @@ try {
         if (url.pathname === "/api/admin/bookings") {
           return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ items, counts, total: items.length, totalPages: 1, page: 1 }) });
         }
+        if (url.pathname === "/api/call-reports/summaries") {
+          // the Call column: a few bookings with a recorded call, the rest none
+          const summaries = {
+            [items[3].id]: { connected: true, durationLabel: "12m 4s", hasProblem: false, problemCount: 0 },
+            [items[4].id]: { connected: true, durationLabel: "3m 10s", hasProblem: true, problemCount: 2, firstProblem: "Video froze" },
+            [items[6].id]: { connected: false, durationLabel: "0s", hasProblem: false, problemCount: 0 },
+          };
+          return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ summaries }) });
+        }
         if (url.pathname.startsWith("/api/")) return route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
         return route.continue();
       });
@@ -78,6 +87,8 @@ try {
           for (const c of m.columns) if (FIXED_WIDTHS[c.name] && Math.abs(c.width - FIXED_WIDTHS[c.name]) > 1) problems.push(`${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
           const hasSource = m.columns.some((c) => c.name === "Source page");
           if (!hasSource) problems.push(`Source page column hidden at a table area of ${m.wrapWidth}px`);
+          const hasCall = m.columns.some((c) => c.name === "Call");
+          if (hasCall !== m.wrapWidth >= 1280) problems.push(`Call column ${hasCall ? "shown" : "hidden"} at a table area of ${m.wrapWidth}px`);
           const hasBooked = m.columns.some((c) => c.name === "Booked");
           if (hasBooked !== m.wrapWidth >= 1180) problems.push(`Booked column ${hasBooked ? "shown" : "hidden"} at a table area of ${m.wrapWidth}px`);
           const shared = m.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => c.width);

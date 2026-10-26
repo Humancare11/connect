@@ -1583,6 +1583,9 @@
 .adp-bk-col-status {
   width: 132px;
 }
+.adp-bk-col-call {
+  width: 112px;
+}
 .adp-bk-col-actions {
   width: 248px;
 }
@@ -1723,6 +1726,33 @@
 .adp-bk-src--none {
   color: #94a3b8;
   font-size: 13px;
+}
+/* Call column (admin call report): duration, connected or not, problems. */
+.adp-bk-call {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.adp-bk-call--none {
+  color: #9ca3af;
+}
+.adp-bk-call--ok {
+  color: #15803d;
+}
+.adp-bk-call--idle {
+  color: #6b7280;
+}
+.adp-bk-call--problem {
+  color: #b45309;
+}
+.adp-bk-call-warn {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
 }
 /* Web / App / Unknown label under the booking id. */
 .adp-bk-plat {
@@ -2216,8 +2246,14 @@ a.adp-bk-alt {
   line-height: 1;
 }
 
-/* Narrow table area (the page without the sidebar): the Booked column goes under 1180px. The Source page column stays
+/* Narrow table area (the page without the sidebar): the Call column goes first, under 1280px, then the Booked column
+   under 1180px. The Source page column stays
    for as long as the list is a table (down to 1000px, where it becomes cards). */
+@container (max-width: 1279px) {
+  .adp-bk .adp-bk-c-call {
+    display: none;
+  }
+}
 @container (max-width: 1179px) {
   .adp-bk .adp-bk-c-booked {
     display: none;
@@ -2227,7 +2263,8 @@ a.adp-bk-alt {
 /* Table area under 1000px (CARD_BELOW in bookingFormat.js): one card per booking. */
 @container (max-width: 999px) {
   .adp-bk .adp-bk-c-src,
-  .adp-bk .adp-bk-c-booked {
+  .adp-bk .adp-bk-c-booked,
+  .adp-bk .adp-bk-c-call {
     display: block;
   }
   .adp-bk,

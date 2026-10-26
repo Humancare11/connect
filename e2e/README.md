@@ -95,3 +95,52 @@ minutes**.
   `VITE_RETRY_DEBUG=true` for the Vite dev server it starts. If you point the
   suite at some other server, that build needs the same variable, or those
   tests will fail on their log assertions by design.
+
+## Resilience specs (real faults, automatic recovery)
+
+`tests/resilience-appointment.spec.js` and `tests/resilience-direct.spec.js` break
+the network, the signaling socket, the backend process, the local camera/mic
+and (optionally) the TURN relay, and assert that the call recovers **without
+anyone clicking anything** (real inbound frames on both sides, sendrecv
+negotiated, no error screen, socket reconnected, no page errors). The
+unrecoverable cases (ended appointment, closed/expired/invalid link) must show a
+clear message and a working button, never a blank screen.
+
+```bash
+cd connect/e2e
+npx playwright test tests/resilience-appointment.spec.js tests/resilience-direct.spec.js
+npx playwright test tests/resilience-appointment.spec.js --repeat-each=3   # flakiness check
+```
+
+How faults are injected (nothing in the app is modified):
+
+| Fault | How |
+|---|---|
+| network drop / flapping | `context.setOffline()` |
+| server closes the socket | `socket.io.engine.close()` on the app's own socket module (dev server) |
+| server replies `room_full` / `server_error` / `closed` | the next N emits of an event are swallowed and answered locally |
+| backend restart | `helpers/resilience.js` kills the process listening on :5000 and starts a fresh one against the same throwaway DB |
+| tab hidden / frozen | `visibilityState` override + offline + socket drop |
+| camera / mic unplugged | `track.stop()` on the page's captured tracks |
+| real media outage, packet loss, latency | a local TURN relay that the test starts/stops (see below) |
+
+### Relay / TURN scenarios
+
+These need a local TURN server and are skipped unless `E2E_TURN_DIR` points at a
+folder containing `turn-server.js` and a `node_modules/node-turn` (it is not a repo
+dependency):
+
+```bash
+mkdir turn && cd turn && npm init -y && npm i node-turn
+cp ../e2e/helpers/turn-server.js .
+E2E_TURN_DIR=$PWD RTC_TURN_URLS="turn:127.0.0.1:3478?transport=udp" TURN_STATIC_AUTH_SECRET=e2e-turn-secret npx playwright test tests/resilience-*.spec.js
+```
+
+`RTC_TURN_URLS` / `TURN_STATIC_AUTH_SECRET` must be set in the environment you start
+Playwright from (the backend refuses to boot without them); the test TURN server
+signs/accepts the same coturn-style REST credentials the backend mints.
+
+### Token-expiry scenario
+
+Run with a short access-token lifetime so a token really expires mid-call:
+`ACCESS_TOKEN_TTL=20s npx playwright test tests/resilience-token.spec.js`.

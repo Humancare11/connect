@@ -93,7 +93,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.until(async () => { const p = await pills(); return p.length > 0 && p.every((t) => t === "Upcoming"); }, "the Upcoming tab");
     await page.click('[role="tab"]:has-text("All")');
     await h.until(async () => { const p = await pills(); return p.length === 25 && p.some((t) => t !== "Upcoming"); }, "the All tab");
-    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Source page", "Booked", "Consultation", "Fee", "Status", "Actions"]);
+    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Source page", "Booked", "Consultation", "Fee", "Status", "Call", "Actions"]);
     assert.equal(await h.rowsLocator().count(), 25);
     const text = await page.locator("table.adp-bk").innerText();
     assert.ok(text.includes("TESTING") && text.includes("Not scheduled") && text.includes("Alternate doctor") && text.includes("Not assigned"));
@@ -249,7 +249,26 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "App"), "the App filter from the URL");
   });
 
-  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Booked dropped below 1180px, Source page kept", async () => {
+  test("Call column (from the call report): a recorded call shows its duration, whether it connected and any problem, and links to the report", async () => {
+    await h.reset();
+    await page.setViewportSize({ width: 1500, height: 900 });
+    const withCall = await h.make({ name: "Call Yes", status: "confirmed", doctor: 0 });
+    const withProblem = await h.make({ name: "Call Problem", kind: "category", status: "confirmed", doctor: 1 });
+    await h.make({ name: "Call None", status: "upcoming" });
+    await h.call("POST", "/__call", { id: withCall, summary: { connected: true, durationLabel: "12m 4s", hasProblem: false, problemCount: 0 } });
+    await h.call("POST", "/__call", { id: withProblem, summary: { connected: true, durationLabel: "3m 10s", hasProblem: true, problemCount: 2, firstProblem: "Video froze" } });
+    await h.open("/admin-dashboard/appointments?tab=all");
+    const cell = (name) => h.row(name).locator('td[data-label="Call"]');
+    await h.until(async () => (await cell("Call Yes").innerText()).includes("12m 4s"), "the call badge");
+    assert.match((await cell("Call Yes").innerText()).replace(/\s+/g, " "), /12m 4s Connected/);
+    assert.equal(await cell("Call Yes").locator("a").getAttribute("href"), `/admin-dashboard/appointments/${withCall}/call-report`);
+    assert.match(await cell("Call Problem").innerText(), /⚠ 2/);
+    assert.equal(await cell("Call Problem").locator("a").getAttribute("href"), `/admin-dashboard/appointments/${withProblem}/call-report`, "a category booking uses the same report URL");
+    assert.equal(await cell("Call Problem").locator("a").getAttribute("title"), "Video froze");
+    assert.equal((await cell("Call None").innerText()).trim(), "-");
+  });
+
+  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Call dropped below 1280px, Booked below 1180px, Source page kept", async () => {
     await h.reset();
     await h.make({ status: "confirmed", doctor: 0, name: "A Very Long Patient Name That Cannot Possibly Fit In A Column", assignedBy: "administrator.on.duty@humancareconnect.co" });
     await h.make({ status: "upcoming", name: "Row Upcoming" });
@@ -266,6 +285,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       const withBooked = m.wrapWidth >= 1180;
       assert.equal(names.includes("Source page"), withSource, `${width}px (table area ${m.wrapWidth}px): Source page`);
       assert.equal(names.includes("Booked"), withBooked, `${width}px (table area ${m.wrapWidth}px): Booked`);
+      assert.equal(names.includes("Call"), m.wrapWidth >= 1280, `${width}px (table area ${m.wrapWidth}px): Call`);
       for (const c of m.columns) if (FIXED_WIDTHS[c.name]) assert.ok(Math.abs(c.width - FIXED_WIDTHS[c.name]) <= 1, `${width}px: ${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
       const shared = m.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => c.width);
       assert.ok(Math.max(...shared) - Math.min(...shared) <= 1, `${width}px: Patient, Doctor and Source page share equally (${shared})`);

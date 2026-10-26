@@ -264,6 +264,12 @@ export default function AdminAppointmentDetails() {
           <Link className="adp-back-button" to="/admin-dashboard/appointments">
             Back to Appointments
           </Link>
+          <Link
+            className="adp-alt-btn"
+            to={`/admin-dashboard/appointments/${appointment._id}/call-report`}
+          >
+            View call report
+          </Link>
           {/* Assigning or changing the doctor happens in the Appointments list. */}
           {admin?.role === "superadmin" && appointment.isCategoryConsultation && (
             <button type="button" className="adp-alt-btn" disabled={deleting} onClick={deleteBooking}>

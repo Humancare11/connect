@@ -128,7 +128,16 @@ export async function startApiServer() {
   const { getAppointmentById } = load("controllers/appointmentController.js");
   app.get("/api/appointments/:id", (req, res, next) => { req.user = { id: String(admin._id), role: "admin" }; next(); }, getAppointmentById);
 
+  // The Call column: summaries for the ids a test registered with /__call (none by default).
+  const callSummaries = new Map();
+  app.post("/api/call-reports/summaries", (req, res) => {
+    const summaries = {};
+    for (const id of req.body?.ids || []) if (callSummaries.has(id)) summaries[id] = callSummaries.get(id);
+    res.json({ summaries });
+  });
+
   // Control endpoints for the tests.
+  app.post("/__call", (req, res) => { callSummaries.set(req.body.id, req.body.summary); res.json({}); });
   app.post("/__make", async (req, res) => res.json({ id: await make(req.body) }));
   app.get("/__calls", (req, res) => res.json(calls));
   app.post("/__reset", (req, res) => { calls.length = 0; res.json({}); });

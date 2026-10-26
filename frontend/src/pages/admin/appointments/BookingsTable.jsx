@@ -5,6 +5,7 @@ import { useToast } from "../../../components/ui/Toast";
 import StatusPill from "./StatusPill";
 import SelectionMenu from "./SelectionMenu";
 import BulkBar from "./BulkBar";
+import CallBadge from "./CallBadge";
 import { copyText } from "./copyText";
 import { assignUrl } from "./assignPageLogic";
 import {
@@ -186,7 +187,7 @@ function useIsNarrow(ref, max = CARD_BELOW) {
   return narrow;
 }
 
-export default function BookingsTable({ rows, page, actions, selection, bulk, isSuperAdmin = false }) {
+export default function BookingsTable({ rows, page, callSummaries = {}, actions, selection, bulk, isSuperAdmin = false }) {
   const block = useRef(null);
   const narrow = useIsNarrow(block);
 
@@ -213,6 +214,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
             <col className="adp-bk-col-consult" />
             <col className="adp-bk-col-fee" />
             <col className="adp-bk-col-status" />
+            <col className="adp-bk-col-call adp-bk-c-call" />
             <col className="adp-bk-col-actions" />
           </colgroup>
           <thead>
@@ -228,6 +230,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
               <th>Consultation</th>
               <th className="adp-bk-fee">Fee</th>
               <th className="adp-bk-status">Status</th>
+              <th className="adp-bk-c-call">Call</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -277,6 +280,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
                   </td>
                   <td data-label="Fee" className="adp-bk-fee">{formatFee(row.fee)}</td>
                   <td data-label="Status" className="adp-bk-status"><StatusCell row={row} /></td>
+                  <td data-label="Call" className="adp-bk-c-call"><CallBadge summary={callSummaries[row.id]} row={row} /></td>
                   <td data-label="Actions" className="adp-bk-actions-cell"><ActionsCell row={row} actions={actions} busy={busy} isSuperAdmin={isSuperAdmin} /></td>
                 </tr>
               );

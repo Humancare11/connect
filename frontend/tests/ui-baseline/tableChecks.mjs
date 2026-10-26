@@ -51,4 +51,4 @@ export async function measureTable(page) {
 }
 
 // The widths the spec fixes, by header text.
-export const FIXED_WIDTHS = { "#": 40, "Booking ID": 88, Booked: 104, Consultation: 112, Fee: 92, Status: 132, Actions: 248 };
+export const FIXED_WIDTHS = { "#": 40, "Booking ID": 88, Booked: 104, Consultation: 112, Fee: 92, Status: 132, Call: 112, Actions: 248 };
