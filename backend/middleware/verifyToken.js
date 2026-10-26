@@ -307,8 +307,8 @@ const manualInvoiceAccess = (req, res, next) => {
   next();
 };
 
-// Appointment entries (doctor fee and payout record): admin, superadmin and paymentadmin can look. Typing is narrower
-// (superadmin and paymentadmin) and is checked where the edit is made. The roles live in utils/bookingEntry.js.
+// Appointment entries (doctor fee and payout record): admin and superadmin only, and both can edit. The payment admin
+// gets 403 on every entries route. The roles live in utils/bookingEntry.js.
 const entriesViewAccess = (req, res, next) => {
   if (!canViewEntries(req.user?.role)) {
     recordSecurityEvent(req, {
@@ -316,7 +316,7 @@ const entriesViewAccess = (req, res, next) => {
       severity: "high",
       title: "Unauthorized role attempted appointment-entries access",
       resource: req.originalUrl,
-      metadata: { requiredRole: "admin/paymentadmin/superadmin", actualRole: req.user?.role || "anonymous" },
+      metadata: { requiredRole: "admin/superadmin", actualRole: req.user?.role || "anonymous" },
     });
     return res.status(403).json({ msg: "Access denied." });
   }

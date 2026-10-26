@@ -42,6 +42,11 @@
         "newTab": false
       },
       {
+        "label": "Appointment entries",
+        "href": "/admin-dashboard/appointment-entries",
+        "newTab": false
+      },
+      {
         "label": "Direct Video Consultation",
         "href": "/admin-dashboard/direct-video-consultation",
         "newTab": false
@@ -126,6 +131,11 @@
       {
         "label": "Appointments",
         "href": "/admin-dashboard/appointments",
+        "newTab": false
+      },
+      {
+        "label": "Appointment entries",
+        "href": "/admin-dashboard/appointment-entries",
         "newTab": false
       },
       {
@@ -240,6 +250,11 @@
         "newTab": false
       },
       {
+        "label": "Appointment entries",
+        "href": "/admin-dashboard/appointment-entries",
+        "newTab": false
+      },
+      {
         "label": "Direct Video Consultation",
         "href": "/admin-dashboard/direct-video-consultation",
         "newTab": false
@@ -319,6 +334,11 @@
       {
         "label": "Appointments",
         "href": "/admin-dashboard/appointments",
+        "newTab": false
+      },
+      {
+        "label": "Appointment entries",
+        "href": "/admin-dashboard/appointment-entries",
         "newTab": false
       },
       {

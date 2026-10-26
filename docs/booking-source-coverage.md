@@ -15,7 +15,7 @@ Every public route (no params, not noindex/private) and what the resolver names 
 | private (never named) | 0 |
 | **Public routes** | **307** |
 
-Not counted: 76 private/noindex routes (dashboards, login, payment, booking steps) and 30 routes with params (below).
+Not counted: 77 private/noindex routes (dashboards, login, payment, booking steps) and 30 routes with params (below).
 
 By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9, home 1, symptom 1.
 

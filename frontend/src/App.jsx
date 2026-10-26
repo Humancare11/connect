@@ -783,6 +783,7 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
 const AdminDeletionRequests = lazy(() => import("./pages/admin/AdminDeletionRequests"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
+const AdminEntries = lazy(() => import("./pages/admin/AdminEntries"));
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
@@ -1930,6 +1931,19 @@ export function AppLayout() {
                   <>
                   <PageH1>Appointments</PageH1>
                   <AdminAppointments />
+                </>
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/appointment-entries"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <>
+                  <PageH1>Appointment entries</PageH1>
+                  <AdminEntries />
                 </>
                 </AdminLayout>
               </PrivateRoute>
