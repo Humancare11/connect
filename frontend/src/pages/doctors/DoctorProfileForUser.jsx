@@ -7,6 +7,7 @@ import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import { Country, State } from "country-state-city";
 import SEO from "../../components/Seo";
 import { usePrerendered } from "../../seo/prerenderData";
+import { setPageHints } from "../../utils/bookingSource";
 import "./DoctorProfile.css";
 
 // Helper functions to convert ISO codes to display names
@@ -326,6 +327,12 @@ export default function DoctorProfileForUser({
         .finally(() => setLoading(false));
     }
   }, [id, slug, legacyId, attempt]);
+
+  // Tell the booking source this doctor's name, so "Doctor profile: <name>" is recorded when Book is pressed.
+  const doctorName = doctor?.name;
+  useEffect(() => {
+    if (doctorName) setPageHints(window.location.pathname, { doctorName });
+  }, [doctorName]);
 
   const handleBook = () => {
     if (!user) {

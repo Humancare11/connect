@@ -15,6 +15,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import api from "../api";
+import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
 import { useAuth } from "../context/AuthContext";
@@ -907,7 +908,7 @@ export default function AppointmentBookingForm() {
       };
       if (gateway === "paypal") body.paypalOrderId = paymentRef;
       else body.paymentIntentId = paymentRef;
-      await api.post("/api/appointments", body);
+      await api.post("/api/appointments", withBookingSource(body));
       sessionStorage.removeItem(BOOKING_PENDING_KEY);
       sessionStorage.removeItem(BOOKING_RESUME_KEY);
       setStage("success");

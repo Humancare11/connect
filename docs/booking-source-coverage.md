@@ -17,7 +17,7 @@ Every public route (no params, not noindex/private) and what the resolver names 
 
 Not counted: 76 private/noindex routes (dashboards, login, payment, booking steps) and 29 routes with params (below).
 
-By type: condition 220, speciality 30, unknown 20, blog 14, category 12, service 9, home 1, symptom 1.
+By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9, home 1, symptom 1.
 
 ## Fall back to the path (review these)
 
@@ -53,37 +53,37 @@ By type: condition 220, speciality 30, unknown 20, blog 14, category 12, service
 
 | Route | Type | Name |
 | --- | --- | --- |
-| `/about-us` | unknown | About Humancare Connect |
-| `/accessibility-statement` | unknown | Accessibility Statement |
-| `/account-deletion-policy` | unknown | Account Deletion Policy |
+| `/about-us` | page | About Humancare Connect |
+| `/accessibility-statement` | page | Accessibility Statement |
+| `/account-deletion-policy` | page | Account Deletion Policy |
 | `/are-online-doctors-real-doctors` | blog | Are Online Doctors Real Doctors? |
-| `/blogs` | unknown | Healthcare & Wellness |
-| `/burnout` | unknown | Burnout Support Online |
-| `/california-privacy-rights-notice` | unknown | California Privacy Rights Notice |
-| `/career` | unknown | Doctor Careers |
-| `/chronic-medication-management` | unknown | Chronic Medication Management Online |
+| `/blogs` | page | Healthcare & Wellness |
+| `/burnout` | page | Burnout Support Online |
+| `/california-privacy-rights-notice` | page | California Privacy Rights Notice |
+| `/career` | page | Doctor Careers |
+| `/chronic-medication-management` | page | Chronic Medication Management Online |
 | `/conditions-treated-through-telemedicine` | blog | How to Choose the Best Telemedicine Provider: 10 Key Factors |
-| `/contact-us` | unknown | Telemedicine Services Support |
-| `/cookie-policy` | unknown | Cookie Policy |
-| `/corporates` | unknown | Corporate Telemedicine Services |
+| `/contact-us` | page | Telemedicine Services Support |
+| `/cookie-policy` | page | Cookie Policy |
+| `/corporates` | page | Corporate Telemedicine Services |
 | `/future-of-telemedicine` | blog | Future of Telemedicine |
-| `/hipaa-notice-of-privacy-practices` | unknown | HIPAA Notice of Privacy Practices |
+| `/hipaa-notice-of-privacy-practices` | page | HIPAA Notice of Privacy Practices |
 | `/how-does-a-telemedicine-appointment-work` | blog | How Does a Telemedicine Appointment Work? Step-by-Step Guide |
 | `/is-telemedicine-safe` | blog | Is Telemedicine Safe? |
-| `/medical-services` | unknown | Online Healthcare Services |
+| `/medical-services` | page | Online Healthcare Services |
 | `/migraine-vs-headache-symptoms-causes-differences-and-treatment-options` | blog | Migraine vs Headache: Symptoms, Causes & Treatment |
 | `/online-doctor-consultation` | blog | Online Doctor Consultation Guide |
-| `/privacy-policy` | unknown | Privacy Policy |
-| `/provider-terms-of-service` | unknown | Provider Terms of Service |
-| `/refund-cancellation-policy` | unknown | Refund and Cancellation Policy |
-| `/service-areas` | unknown | Service Areas |
-| `/support-center` | unknown | Telemedicine & Online Doctor Support |
+| `/privacy-policy` | page | Privacy Policy |
+| `/provider-terms-of-service` | page | Provider Terms of Service |
+| `/refund-cancellation-policy` | page | Refund and Cancellation Policy |
+| `/service-areas` | page | Service Areas |
+| `/support-center` | page | Telemedicine & Online Doctor Support |
 | `/telehealth-for-hypertension` | blog | Telehealth for Hypertension: Treat High Blood Pressure Online |
-| `/telehealth-informed-consent` | unknown | Telehealth Informed Consent |
+| `/telehealth-informed-consent` | page | Telehealth Informed Consent |
 | `/telemedicine-cost-usa` | blog | Telemedicine Cost USA |
 | `/telemedicine-services` | blog | Telemedicine Services |
 | `/telemedicine-vs-in-person-doctor-visits` | blog | Telemedicine vs In-Person Doctor Visits |
-| `/terms-of-service` | unknown | Terms of Service |
+| `/terms-of-service` | page | Terms of Service |
 | `/top-telemedicine-platforms-providers` | blog | Top Telemedicine Platforms & Providers |
 | `/uti-symptoms-causes-treatment-&-when-to-see-a-doctor` | blog | UTI Symptoms, Causes, Treatment & When to See a Doctor |
 | `/what-is-telemedicine` | blog | What Is Telemedicine? |
@@ -358,12 +358,20 @@ By type: condition 220, speciality 30, unknown 20, blog 14, category 12, service
 | `/doctors/martin-perlin` | — | doctor_profile | Martin Perlin | path |
 | `/doctor/64b0000000000000000000d1` | — | doctor_profile | — | path |
 | `/travelling-with-asthma` | `{"blogTitle":"Travelling with asthma | Humancare Connect"}` | blog | Travelling with asthma | seo |
-| `/travelling-with-asthma` | — | unknown | Travelling with Asthma | path |
+| `/travelling-with-asthma` | — | page | Travelling with Asthma | path |
 | `/doctors-note` | — | condition | Doctor's Note | hand |
 | `/user/dashboard` | — | patient_dashboard | Patient dashboard | hand |
 | `/pay/abc123def456ghi789jkl012` | — | unknown | — | none |
 | `/login` | — | unknown | — | none |
 
+## Follow-ups
+
+- **66 searchIndex entries point at routes App.jsx doesn't define** (listed below). They never match a real page, so they are harmless for the booking source, but the search index itself links to pages that do not exist.
+- **25 path-only names** (the first table) are typed correctly from the URL but named from the slug; hand-name any that read badly in `pageIdentity.js`.
+- Show the stored referrer, campaign (utm) and page path on the booking's View page (they are stored on every new booking but not shown anywhere yet).
+- `pages/Findadoctor.jsx` is not routed anywhere in `App.jsx`; `find_doctor` stays in the type list for when it is.
+- Blog posts made in Super Admin only show as `blog` because `BlogPost.jsx` passes its title (`setPageHints`); a new page of that kind must do the same.
+
 ## searchIndex routes that do not exist in App.jsx
 
-66 entries in `src/data/searchIndex.js` point at a route that App.jsx does not define (its own NOTES block lists known gaps). They never match a real page, so they are harmless here: `/acne`, `/altitude-sickness`, `/bacterial-vaginosis`, `/binge-eating`, `/birth-control-consultation`, `/categories-sexual-health`, `/cholesterol-lowering-diet`, `/cold-sores`, `/cross-border-consultation`, `/dermatology`, `/diabetic-diet`, `/diet-exercise-planning`, `/eczema`, `/export-medical-opinion`, `/food-intolerance-planning`, `/food-poisoning-while-traveling`, `/fungal-skin-infection`, `/global-cross-border-care`, `/healthy-habit-coaching`, `/heart-disease`, `/hives`, `/hormone-imblance`, `/international-medical-assistance`, `/irregular-periods`, `/lactation-consulting`, `/latch-problems`, `/lifestyle-medicine`, `/low-milk-supply`, `/malaria-prevention`, `/men-health`, `/menopause-care`, `/menopause-symptoms`, `/menstrual-cramps`, `/mole-skin-checks`, `/nail-problems`, `/nipple-pain`, `/nutrition-and-dietetics`, `/obesity`, `/obstetrics-and-gynaecology`, `/pcos`, `/pelvic-pain`, `/perinatal-anxiety`, `/pmdd`, `/post-travel-symptoms`, `/postnatal-depression`, `/pre-travel-vaccinations`, `/pregnancy-nutrition`, `/prenatal-consultation`, `/psoriasis`, `/psychiatry`, `/psychology-counseling`, `/referral-coordination-overseas`, `/rosacea`, `/skin-rash`, `/sleep-hygiene`, `/speciality-sexual-health`, `/sports-nutrition`, `/travel-global-care`, `/travel-medicine`, `/travel-related-fever`, `/travelers-diarrhea`, `/warts`, `/weaning-guidance`, `/weight-loss-planning`, `/weight-management`, `/women-mental-health`.
+`/acne`, `/altitude-sickness`, `/bacterial-vaginosis`, `/binge-eating`, `/birth-control-consultation`, `/categories-sexual-health`, `/cholesterol-lowering-diet`, `/cold-sores`, `/cross-border-consultation`, `/dermatology`, `/diabetic-diet`, `/diet-exercise-planning`, `/eczema`, `/export-medical-opinion`, `/food-intolerance-planning`, `/food-poisoning-while-traveling`, `/fungal-skin-infection`, `/global-cross-border-care`, `/healthy-habit-coaching`, `/heart-disease`, `/hives`, `/hormone-imblance`, `/international-medical-assistance`, `/irregular-periods`, `/lactation-consulting`, `/latch-problems`, `/lifestyle-medicine`, `/low-milk-supply`, `/malaria-prevention`, `/men-health`, `/menopause-care`, `/menopause-symptoms`, `/menstrual-cramps`, `/mole-skin-checks`, `/nail-problems`, `/nipple-pain`, `/nutrition-and-dietetics`, `/obesity`, `/obstetrics-and-gynaecology`, `/pcos`, `/pelvic-pain`, `/perinatal-anxiety`, `/pmdd`, `/post-travel-symptoms`, `/postnatal-depression`, `/pre-travel-vaccinations`, `/pregnancy-nutrition`, `/prenatal-consultation`, `/psoriasis`, `/psychiatry`, `/psychology-counseling`, `/referral-coordination-overseas`, `/rosacea`, `/skin-rash`, `/sleep-hygiene`, `/speciality-sexual-health`, `/sports-nutrition`, `/travel-global-care`, `/travel-medicine`, `/travel-related-fever`, `/travelers-diarrhea`, `/warts`, `/weaning-guidance`, `/weight-loss-planning`, `/weight-management`, `/women-mental-health`

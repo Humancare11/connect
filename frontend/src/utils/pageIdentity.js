@@ -10,6 +10,7 @@
 //   "hand"  a hand-written table entry (services, home, dashboard, fixed pages)
 //   "data"  matched against src/data/searchIndex.js (categories, specialities, conditions)
 //   "seo"   the page title in src/seo/routes.js
+//   (type "page" = a generic site page: About us, Contact, legal, Corporates, the Blogs index)
 //   "path"  worked out from the URL itself (prettified slug); the least reliable
 //   "none"  a private page (login, dashboards, payment): never named
 //
@@ -23,7 +24,7 @@ export const MAX_NAME_LENGTH = 120;
 // The backend's fixed list (backend/utils/bookingSource.js). A test keeps the two equal.
 export const SOURCE_TYPES = [
   "condition", "service", "speciality", "category", "doctor_profile", "blog", "home", "symptom",
-  "find_doctor", "patient_dashboard", "my_appointments", "header", "footer", "direct", "unknown",
+  "find_doctor", "patient_dashboard", "my_appointments", "page", "header", "footer", "direct", "unknown",
 ];
 
 // ── Names are display text and must never carry patient data ───────────────────
@@ -202,14 +203,14 @@ function resolve(pathname, hints) {
 
   const seo = seoNameOf(path);
   if (BLOG_PATHS.has(path)) return seo ? result("blog", seo, "seo") : result("blog", prettifySlug(parts[0]), "path");
-  if (seo) return result("unknown", seo, "seo");
+  if (seo) return result("page", seo, "seo");
 
   // A blog post created in Super Admin (the /:slug route) says so itself; any other unknown page is just "unknown".
   if (parts.length === 1) {
     const title = safeName(String(hints.blogTitle || "").replace(/\s*\|\s*Humancare Connect\s*$/i, "").split(" | ")[0]);
     if (title) return result("blog", title, "seo");
   }
-  return result("unknown", prettifySlug(parts[parts.length - 1]), "path");
+  return result("page", prettifySlug(parts[parts.length - 1]), "path");
 }
 
 // A page of a known type: the data title if there is one, else the table name, else the prettified slug.

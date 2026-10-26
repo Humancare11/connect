@@ -24,6 +24,7 @@ const SOURCE_TYPES = [
   "find_doctor",
   "patient_dashboard",
   "my_appointments",
+  "page",
   "header",
   "footer",
   "direct",
@@ -131,7 +132,8 @@ function cleanReferrer(value) {
   const text = cleanText(value, 1000);
   if (!text) return "";
   try {
-    const url = new URL(text);
+    // The website sends "host/path" already; a full URL is accepted too.
+    const url = new URL(/^[a-z0-9.-]+(\/|$)/i.test(text) ? `https://${text}` : text);
     if (url.protocol !== "http:" && url.protocol !== "https:") return "";
     const path = url.pathname === "/" ? "" : url.pathname;
     return (url.hostname.toLowerCase() + path).slice(0, MAX_REFERRER_LENGTH);
@@ -228,6 +230,7 @@ const TYPE_LABELS = {
   find_doctor: "Find a doctor",
   patient_dashboard: "Patient dashboard",
   my_appointments: "My appointments",
+  page: "Page",
   header: "Header",
   footer: "Footer",
   direct: "Direct",

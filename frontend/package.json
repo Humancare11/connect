@@ -19,6 +19,7 @@
     "serve:dist": "node scripts/serve-dist.mjs",
     "lint": "eslint .",
     "test:e2e": "node --test tests/e2e/liveChatWidget.e2e.test.mjs",
+    "test:e2e:booking-source": "node --test tests/e2e/bookingSource/bookingSource.e2e.test.mjs",
     "test:e2e:appointments": "node --test tests/e2e/adminAppointments/adminAppointments.e2e.test.mjs"
   },
   "dependencies": {

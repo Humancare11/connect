@@ -108,9 +108,17 @@ export function buildReport() {
     "| --- | --- | --- | --- | --- |",
     ...dynamicRows,
     "",
+    "## Follow-ups",
+    "",
+    `- **${staleIndex.length} searchIndex entries point at routes App.jsx doesn't define** (listed below). They never match a real page, so they are harmless for the booking source, but the search index itself links to pages that do not exist.`,
+    `- **${groups.path.length} path-only names** (the first table) are typed correctly from the URL but named from the slug; hand-name any that read badly in \`pageIdentity.js\`.`,
+    "- Show the stored referrer, campaign (utm) and page path on the booking's View page (they are stored on every new booking but not shown anywhere yet).",
+    "- `pages/Findadoctor.jsx` is not routed anywhere in `App.jsx`; `find_doctor` stays in the type list for when it is.",
+    "- Blog posts made in Super Admin only show as `blog` because `BlogPost.jsx` passes its title (`setPageHints`); a new page of that kind must do the same.",
+    "",
     "## searchIndex routes that do not exist in App.jsx",
     "",
-    `${staleIndex.length} entries in \`src/data/searchIndex.js\` point at a route that App.jsx does not define (its own NOTES block lists known gaps). They never match a real page, so they are harmless here: ${staleIndex.length ? "`" + staleIndex.join("`, `") + "`" : "none"}.`,
+    `${staleIndex.length ? "`" + staleIndex.join("`, `") + "`" : "None."}`,
     "",
   ];
   return lines.join("\n");

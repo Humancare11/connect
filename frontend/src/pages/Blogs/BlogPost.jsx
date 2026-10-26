@@ -5,6 +5,7 @@ import { fetchBlog, blogImageSrc } from "../../api/blogApi";
 import BlogArticle from "./BlogArticle";
 import { usableFaqs, faqAnswerText } from "../../utils/blogContent";
 import { usePrerendered } from "../../seo/prerenderData";
+import { setPageHints } from "../../utils/bookingSource";
 import { DEFAULT_OG_IMAGE } from "../../seo/routes";
 
 const NotFound = lazy(() => import("../../components/NotFound"));
@@ -42,6 +43,12 @@ export default function BlogPost() {
 
   // A result for a previous slug counts as "still loading".
   const state = result.slug === slug ? result : { status: "loading", blog: null };
+
+  // Tell the booking source this page's title, so "Blog: <title>" is recorded if a booking starts here.
+  const blogTitle = state.status === "ready" && !state.blog?.isLegacy ? state.blog?.title : "";
+  useEffect(() => {
+    if (blogTitle) setPageHints(`/${slug}`, { blogTitle });
+  }, [slug, blogTitle]);
 
   if (state.status === "notfound") return <NotFound />;
   if (state.status === "error") {

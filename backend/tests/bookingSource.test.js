@@ -124,6 +124,10 @@ describe("path, referrer and campaign", () => {
     assert.equal(S.cleanReferrer("http://t.co/abc"), "t.co/abc");
     assert.equal(S.cleanReferrer("javascript:alert(1)"), "");
     assert.equal(S.cleanReferrer("not a url"), "");
+    // the website already sends host/path
+    assert.equal(S.cleanReferrer("www.google.com/search"), "www.google.com/search");
+    assert.equal(S.cleanReferrer("t.co"), "t.co");
+    assert.equal(S.cleanReferrer("t.co/abc?x=1"), "t.co/abc");
     assert.equal(S.cleanReferrer(""), "");
     assert.ok(S.cleanReferrer("https://a.com/" + "p".repeat(500)).length <= 200);
   });
@@ -214,6 +218,15 @@ describe("labels for the admin list", () => {
       S.sourcePageLabel({ sourceType: "footer", sourceName: "Book Appointment", clickedOnType: "blog", clickedOnName: "Travelling with asthma" }).clickedOn,
       "Blog: Travelling with asthma"
     );
+  });
+
+  test("a generic site page is 'Page: About Us', and can be the page a button was clicked on", () => {
+    assert.deepEqual(S.sourcePageLabel({ sourceType: "page", sourceName: "About Us" }), { type: "Page", name: "About Us", clickedOn: "" });
+    assert.equal(
+      S.sourcePageLabel({ sourceType: "header", sourceName: "Book Appointment", clickedOnType: "page", clickedOnName: "About Us" }).clickedOn,
+      "Page: About Us"
+    );
+    assert.equal(build({}, { sourceType: "header", sourceName: "Book", clickedOnType: "page", clickedOnName: "Contact" }).clickedOnType, "page");
   });
 
   test("a page with no type of its own shows just its name after 'on'", () => {

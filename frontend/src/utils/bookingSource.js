@@ -10,8 +10,10 @@
 // storage is blocked or throws, the value lives in memory for the current tab instead. Names are display text and never
 // patient data (pageIdentity.safeName); the server cleans everything again and decides the platform itself.
 //
-// Nothing here runs by itself: the click handler and landing capture are installed by the app (step 4).
+// Nothing here runs by itself: <BookingSourceTracker/> (components/BookingSourceTracker.jsx) installs the click handler and
+// landing capture once, and reports route changes.
 import { resolvePage, safeName, MAX_NAME_LENGTH } from "./pageIdentity.js";
+import { normalizePath } from "../seo/routes.js";
 
 export const CLICK_KEY = "hc.bookingSource.click";
 export const TOUCH_KEY = "hc.bookingSource.touch";
@@ -20,6 +22,10 @@ export const TOUCH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Links that start a booking.
 export const BOOKING_PATHS = ["/appointment-booking", "/book-appointment", "/category-consultant", "/service-consultant"];
+export const isBookingPath = (pathname) => {
+  const p = normalizePath(pathname || "/");
+  return BOOKING_PATHS.some((b) => p === b || p.startsWith(b + "/"));
+};
 // data-source="header" | "footer" | "home" on a link marks a site-wide button.
 export const BUTTON_SOURCES = ["header", "footer", "home"];
 
@@ -61,7 +67,28 @@ export function createStore(getStorage = () => globalThis.localStorage) {
 let defaultStore = null;
 const store = () => (defaultStore ||= createStore());
 // For tests: forget everything held in memory.
-export const _resetMemory = () => memory.clear();
+export const _resetMemory = () => {
+  memory.clear();
+  pageHints.clear();
+};
+
+// Display text a page knows about itself ({ doctorName } on a doctor profile, { blogTitle } on a Super Admin blog post),
+// keyed by its path. Read when a booking starts there; kept in memory only.
+const pageHints = new Map();
+export function setPageHints(pathname, hints) {
+  try {
+    pageHints.set(normalizePath(pathname), { ...(pageHints.get(normalizePath(pathname)) || {}), ...hints });
+  } catch {
+    /* ignore */
+  }
+}
+export function getPageHints(pathname) {
+  try {
+    return pageHints.get(normalizePath(pathname)) || undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function load(st, key, ttl, now) {
   const raw = st.read(key);
@@ -222,15 +249,72 @@ export function createClickHandler({ getCurrent, ownOrigin = "", now = () => Dat
       if (ownOrigin && url.origin !== new URL(ownOrigin).origin) return;
       const pathname = url.pathname.toLowerCase().replace(/\/+$/, "") || "/";
       if (!BOOKING_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))) return;
+      const current = getCurrent();
+      // Already inside the booking flow: links between its steps are not where the booking came from.
+      if (isBookingPath(current?.pathname)) return;
       const link = {
         pathname,
         text: anchor.textContent,
         source: anchor.dataset?.source,
         sourceName: anchor.dataset?.sourceName,
       };
-      recordClick(buildClickSource(link, getCurrent()), { now: now(), st });
+      recordClick(buildClickSource(link, current), { now: now(), st });
     } catch {
       /* never get in the way of the click */
     }
   };
+}
+
+// ── Wiring used by <BookingSourceTracker/> ─────────────────────────────────────
+
+export const FRESH_CLICK_MS = 3000;
+let installed = false;
+
+// Attaches the one document-level click handler and captures the landing (campaign / outside referrer). Safe to call any
+// number of times: it only ever does it once. Browser only; returns false where there is no document.
+export function installBookingSource(win = globalThis.window) {
+  try {
+    if (installed || !win?.document) return installed;
+    installed = true;
+    const loc = win.location;
+    captureTouch({ search: loc.search, referrer: win.document.referrer, ownHost: loc.hostname });
+    const onClick = createClickHandler({
+      getCurrent: () => ({ pathname: win.location.pathname, hints: getPageHints(win.location.pathname) }),
+      ownOrigin: loc.origin,
+    });
+    // Capture phase, passive: it only reads, so it can never hold up or cancel the navigation.
+    win.document.addEventListener("click", onClick, { capture: true, passive: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+export const _resetInstalled = () => {
+  installed = false;
+};
+
+// A page's own button that calls navigate() (no link to read) still starts a booking. When the route changes from an
+// ordinary page into the booking flow and no link click was recorded a moment ago, the page just left is the source.
+export function onRouteChange(prevPath, nextPath, { now = Date.now(), st = store() } = {}) {
+  try {
+    if (!prevPath || !isBookingPath(nextPath) || isBookingPath(prevPath)) return;
+    const from = resolvePage(prevPath, getPageHints(prevPath));
+    if (from.via === "none") return; // login, payment...: keep what is already recorded
+    const click = load(st, CLICK_KEY, CLICK_TTL_MS, now);
+    if (click && now - click.at < FRESH_CLICK_MS) return;
+    recordClick(buildPageSource({ pathname: prevPath, hints: getPageHints(prevPath) }), { now, st });
+  } catch {
+    /* never get in the way of navigation */
+  }
+}
+
+// The booking request body with the source added. If anything about the source is missing or broken the body is returned
+// unchanged, so a booking never fails because of it.
+export function withBookingSource(body) {
+  try {
+    const source = getBookingSource();
+    return source ? { ...body, source } : body;
+  } catch {
+    return body;
+  }
 }

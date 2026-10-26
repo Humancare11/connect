@@ -2,7 +2,8 @@ import { test, describe, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import {
   CLICK_KEY, TOUCH_KEY, CLICK_TTL_MS, TOUCH_TTL_MS, createStore, buildClickSource, buildPageSource, recordClick, captureTouch,
-  getBookingSource, createClickHandler, cleanPath, cleanReferrer, _resetMemory,
+  getBookingSource, createClickHandler, cleanPath, cleanReferrer, _resetMemory, setPageHints, getPageHints, isBookingPath,
+  installBookingSource, _resetInstalled, onRouteChange, withBookingSource, FRESH_CLICK_MS,
 } from "./bookingSource.js";
 
 const T0 = Date.UTC(2026, 9, 26, 10, 0, 0);
@@ -262,5 +263,150 @@ describe("the click handler (installed on document in step 4)", () => {
   test("it never throws, even if reading the page fails", () => {
     const onClick = createClickHandler({ getCurrent: () => { throw new Error("boom"); }, ownOrigin: "https://humancareconnect.co" });
     assert.doesNotThrow(() => onClick(eventFor(anchor("/appointment-booking"))));
+  });
+});
+
+describe("page hints", () => {
+  test("a page's own display text is remembered by path (case and slash insensitive) and used when a booking starts there", () => {
+    setPageHints("/Doctors/Martin-Perlin/", { doctorName: "Martin Perlin" });
+    assert.deepEqual(getPageHints("/doctors/martin-perlin"), { doctorName: "Martin Perlin" });
+    const s = buildPageSource({ pathname: "/doctors/martin-perlin", hints: getPageHints("/doctors/martin-perlin") });
+    assert.deepEqual([s.sourceType, s.sourceName], ["doctor_profile", "Martin Perlin"]);
+    setPageHints("/travelling-with-asthma", { blogTitle: "Travelling with asthma" });
+    assert.equal(getPageHints("/travelling-with-asthma").blogTitle, "Travelling with asthma");
+    assert.equal(getPageHints("/nothing-here"), undefined);
+    assert.doesNotThrow(() => setPageHints(undefined, { a: 1 }));
+  });
+});
+
+describe("a page's own navigate() button (route change into the booking flow)", () => {
+  test("which paths are the booking flow", () => {
+    for (const p of ["/appointment-booking", "/appointment-booking/mental-health/psychiatry/anxiety", "/book-appointment", "/category-consultant", "/service-consultant", "/Appointment-Booking/"]) {
+      assert.equal(isBookingPath(p), true, p);
+    }
+    for (const p of ["/", "/appointment-bookings", "/about-us", "/user/appointments", undefined]) assert.equal(isBookingPath(p), false, String(p));
+  });
+
+  test("with no recent link click, the page just left is recorded as the source", () => {
+    const st = newStore();
+    onRouteChange("/mental-health", "/appointment-booking", { now: T0, st });
+    const s = getBookingSource({ now: T0 + MIN, st });
+    assert.deepEqual([s.sourceType, s.sourceName, s.pagePath], ["category", "Mental Health", "/mental-health"]);
+  });
+
+  test("doctor profile: Book is a navigate() with the doctor's name from the page", () => {
+    setPageHints("/doctors/martin-perlin", { doctorName: "Martin Perlin" });
+    const st = newStore();
+    onRouteChange("/doctors/martin-perlin", "/book-appointment", { now: T0, st });
+    const s = getBookingSource({ now: T0, st });
+    assert.deepEqual([s.sourceType, s.sourceName], ["doctor_profile", "Martin Perlin"]);
+  });
+
+  test("a link click recorded a moment ago (header button) is kept", () => {
+    const st = newStore();
+    recordClick({ sourceType: "header", sourceName: "Book Appointment", clickedOnType: "condition", clickedOnName: "Fever" }, { now: T0, st });
+    onRouteChange("/women-health/obstetrics-and-gynaecology/pcos", "/appointment-booking", { now: T0 + FRESH_CLICK_MS - 1, st });
+    assert.equal(getBookingSource({ now: T0 + FRESH_CLICK_MS, st }).sourceType, "header");
+  });
+
+  test("an old click does not hide where this navigation came from", () => {
+    const st = newStore();
+    recordClick({ sourceType: "header", sourceName: "Book Appointment" }, { now: T0, st });
+    onRouteChange("/mental-health", "/appointment-booking", { now: T0 + 10 * MIN, st });
+    assert.equal(getBookingSource({ now: T0 + 10 * MIN, st }).sourceType, "category");
+  });
+
+  test("moving inside the flow, arriving from a private page (login), or landing with no previous page records nothing", () => {
+    for (const [from, to] of [["/appointment-booking", "/appointment-booking/mental-health"], ["/login", "/book-appointment"], [null, "/appointment-booking"], ["/mental-health", "/about-us"]]) {
+      const st = newStore();
+      onRouteChange(from, to, { now: T0, st });
+      assert.equal(getBookingSource({ now: T0, st }).sourceType, "direct", `${from} -> ${to}`);
+    }
+  });
+
+  test("it never throws", () => {
+    const evil = { read() { throw new Error("x"); }, write() { throw new Error("x"); }, remove() { throw new Error("x"); } };
+    assert.doesNotThrow(() => onRouteChange("/mental-health", "/appointment-booking", { now: T0, st: evil }));
+    assert.doesNotThrow(() => onRouteChange({}, [], { now: T0 }));
+  });
+});
+
+describe("the handler ignores links between the booking steps", () => {
+  test("a click on a booking link while already inside the flow records nothing", () => {
+    const st = newStore();
+    const onClick = createClickHandler({ getCurrent: () => ({ pathname: "/appointment-booking/mental-health" }), ownOrigin: "https://humancareconnect.co", now: () => T0, st });
+    onClick({ target: { closest: () => ({ getAttribute: () => "/appointment-booking/mental-health/psychiatry", textContent: "x", dataset: {} }) } });
+    assert.equal(getBookingSource({ now: T0, st }).sourceType, "direct");
+  });
+});
+
+describe("installBookingSource: once, passive, never in the way", () => {
+  const fakeWindow = (search = "", referrer = "") => {
+    const listeners = [];
+    return {
+      listeners,
+      location: { search, hostname: "humancareconnect.co", origin: "https://humancareconnect.co", pathname: "/" },
+      document: { referrer, addEventListener: (type, fn, opts) => listeners.push({ type, fn, opts }) },
+    };
+  };
+  const withLocalStorage = (value, run) => {
+    const real = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", { value, configurable: true });
+    try {
+      run();
+    } finally {
+      if (real) Object.defineProperty(globalThis, "localStorage", real);
+      else delete globalThis.localStorage;
+      _resetInstalled();
+    }
+  };
+
+  test("attached exactly once however many times it is called (route changes, StrictMode)", () => {
+    _resetInstalled();
+    const win = fakeWindow();
+    withLocalStorage(fakeStorage(), () => {
+      for (let i = 0; i < 5; i += 1) installBookingSource(win);
+    });
+    assert.equal(win.listeners.length, 1);
+    assert.equal(win.listeners[0].type, "click");
+    assert.deepEqual(win.listeners[0].opts, { capture: true, passive: true });
+  });
+
+  test("the landing campaign is captured when it installs", () => {
+    _resetInstalled();
+    const storage = fakeStorage();
+    withLocalStorage(storage, () => {
+      installBookingSource(fakeWindow("?utm_source=google&utm_campaign=spring", "https://www.google.com/"));
+      assert.equal(getBookingSource({ now: Date.now() }).utm.campaign, "spring");
+    });
+    assert.ok([...storage.data.keys()].some((k) => k.includes("touch")));
+  });
+
+  test("no document (server rendering) or a broken window: nothing happens, nothing throws", () => {
+    _resetInstalled();
+    assert.equal(installBookingSource(undefined), false);
+    assert.equal(installBookingSource({}), false);
+    assert.doesNotThrow(() => installBookingSource({ document: { addEventListener() { throw new Error("x"); } }, location: {} }));
+    _resetInstalled();
+  });
+});
+
+describe("withBookingSource", () => {
+  test("adds the source to the booking body and keeps every other field", () => {
+    const out = withBookingSource({ date: "2027-01-01", problem: "x" });
+    assert.equal(out.date, "2027-01-01");
+    assert.equal(out.source.sourceType, "direct");
+  });
+
+  test("a booking body is never lost: even if storage throws on access, it is sent with or without the source", () => {
+    const real = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+    Object.defineProperty(globalThis, "localStorage", { get() { throw new Error("blocked"); }, configurable: true });
+    try {
+      const out = withBookingSource({ date: "2027-01-01" });
+      assert.equal(out.date, "2027-01-01");
+    } finally {
+      if (real) Object.defineProperty(globalThis, "localStorage", real);
+      else delete globalThis.localStorage;
+    }
   });
 });

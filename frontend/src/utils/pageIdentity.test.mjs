@@ -151,15 +151,20 @@ describe("resolvePage", () => {
 
   test("a blog post made in Super Admin says so itself; any other unknown page is not called a blog", () => {
     assert.deepEqual(resolvePage("/travelling-with-asthma", { blogTitle: "Travelling with asthma | Humancare Connect" }), { type: "blog", name: "Travelling with asthma", via: "seo" });
-    assert.equal(resolvePage("/travelling-with-asthma").type, "unknown");
-    assert.equal(resolvePage("/travelling-with-asthma", { blogTitle: "jane@x.org" }).type, "unknown");
+    assert.equal(resolvePage("/travelling-with-asthma").type, "page");
+    assert.equal(resolvePage("/travelling-with-asthma", { blogTitle: "jane@x.org" }).type, "page");
   });
 
-  test("a generic page (About us, Contact) is unknown-typed but named from its SEO title", () => {
-    const r = resolvePage("/about-us");
-    assert.equal(r.type, "unknown");
-    assert.equal(r.via, "seo");
-    assert.ok(r.name.length > 0);
+  test("a generic page (About us, Contact, legal, Corporates, the Blogs index) is a 'page', named from its SEO title", () => {
+    for (const p of ["/about-us", "/contact-us", "/privacy-policy", "/corporates", "/blogs", "/terms-of-service"]) {
+      const r = resolvePage(p);
+      assert.equal(r.type, "page", p);
+      assert.equal(r.via, "seo", p);
+      assert.ok(r.name.length > 0, p);
+    }
+    assert.equal(resolvePage("/about-us").name, "About Humancare Connect");
+    // no SEO entry: still a page, named from the URL
+    assert.deepEqual(resolvePage("/patient-privacy-notice"), { type: "page", name: "Patient Privacy Notice", via: "path" });
   });
 
   test("never throws, always returns a listed type and a safe name", () => {

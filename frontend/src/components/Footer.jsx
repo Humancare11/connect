@@ -85,7 +85,7 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Navigation </h5>
           <a href="/about-us">About Us</a>
-          <Link to="/appointment-booking">Book Appointment</Link>
+          <Link to="/appointment-booking" data-source="footer">Book Appointment</Link>
           <a href="/corporates">Corporates</a>
           <a href="/blogs">Blogs</a>
         </div>
@@ -94,7 +94,7 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Services </h5>
           <a href="/online-prescription-refills">Online Prescription Refill</a>
-          <Link to="/appointment-booking" state={{ tab: "spec" }}>
+          <Link to="/appointment-booking" state={{ tab: "spec" }} data-source="footer">
             Online Doctor Consultation
           </Link>
           <a href="/doctors-note">Sick Notes</a>
