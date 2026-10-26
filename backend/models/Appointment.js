@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { bookingAdminFields } = require("../utils/bookingAdminFields");
 const { bookingEntryFields } = require("../utils/bookingEntry");
+const { bookingSourceFields } = require("../utils/bookingSource");
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -68,6 +69,8 @@ const appointmentSchema = new mongoose.Schema(
     ...bookingAdminFields(),
     // Appointment entries: the doctor fee / payout record typed in by an admin (see utils/bookingEntry.js).
     ...bookingEntryFields(),
+    // Booking source: platform, app version and the page the booking started from (see utils/bookingSource.js).
+    ...bookingSourceFields(),
     sessionStarted: { type: Boolean, default: false },
     // Set when an admin reopens a completed appointment; cleared again on completion.
     // Lets the doctor's list show a "Reopened by admin" note.
