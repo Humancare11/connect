@@ -171,12 +171,13 @@ const fail = (status, code, msg) => ({ ok: false, status, code, msg });
 // Checks one edit against the rules and works out exactly what to write. Pure: the caller does the (versioned) write.
 //   current  the stored `entry` (or undefined for an old booking)
 //   edit     { field: "doctorFee" | "paidStatus" | "paidOn" | "comment", value }
-//   ctx      { hasDoctor, doctorId, today: "YYYY-MM-DD", actor: { id, name, email, role }, now?: Date }
+//   ctx      { hasDoctor, doctorId, today: "YYYY-MM-DD", actor: { id, name, email, role }, now?: Date, noDoctorMessage? }
+//            (`noDoctorMessage` words the "no doctor" refusal for rows whose doctor is a free-text service provider)
 // Success: { ok: true, noop, changes: [{ field, from, to }], set: { "entry.x": v }, history: [...], entry }
 //   (`entry` is the view of the entry after the edit; `set` and `history` are what to write, without the version bump).
 // Failure: { ok: false, status, code, msg }  (status is the HTTP status the route should answer with)
 function applyEntryEdit(current, edit, ctx) {
-  const { hasDoctor = false, doctorId = "", today, actor = {}, now = new Date() } = ctx || {};
+  const { hasDoctor = false, doctorId = "", today, actor = {}, now = new Date(), noDoctorMessage = "Assign a doctor before marking this Paid." } = ctx || {};
   if (!actor || !canEditEntries(actor.role)) return fail(403, "forbidden", "Only an admin or super admin can change these.");
   if (!edit || !ENTRY_FIELDS.includes(edit.field)) return fail(400, "bad_field", "That field can't be edited.");
   if (!isCalendarDay(today || "")) return fail(500, "bad_today", "No valid date for today.");
@@ -207,7 +208,7 @@ function applyEntryEdit(current, edit, ctx) {
   } else if (field === "paidStatus") {
     if (!PAID_STATUSES.includes(value)) return fail(400, "invalid_status", "Pick Unpaid, Paid, On hold or Not payable.");
     if (value === "paid") {
-      if (!hasDoctor) return fail(409, "doctor_required", "Assign a doctor before marking this Paid.");
+      if (!hasDoctor) return fail(409, "doctor_required", noDoctorMessage);
       if (!(before.doctorFeeCents > 0)) return fail(409, "fee_required", "Enter a doctor fee above 0 before marking this Paid.");
       if (!before.paidOn) {
         after.paidOn = today;

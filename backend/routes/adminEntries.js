@@ -4,13 +4,12 @@ const { verifyAdminToken, entriesViewAccess } = require("../middleware/verifyTok
 const { EntryListQueryError, listBookingEntries, listAllEntryRows, loadEntryRow } = require("../utils/bookingEntryList");
 const { buildEntriesCsv } = require("../utils/bookingEntryCsv");
 const { MAX_HISTORY, applyEntryEdit } = require("../utils/bookingEntry");
-const { toManualRow, validateManualCreate, buildManualDocument, applyManualDetailsEdit, checkManualDelete, manualDeleteWrite, newCode } = require("../utils/manualEntry");
+const { toManualRow, validateManualCreate, buildManualDocument, applyManualFormEdit, checkManualDelete, manualDeleteWrite, newCode } = require("../utils/manualEntry");
 const { istDayKey } = require("../services/liveChat/istDay");
 const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const ManualEntry = require("../models/ManualEntry");
 const User = require("../models/User");
-const Enrollment = require("../models/Enrollment");
 
 const KINDS = ["appointment", "category", "manual"];
 
@@ -32,8 +31,9 @@ const versionMatch = (version) =>
 // Loads what one edit needs to know about the stored row, or null when the row is not one the page lists.
 async function loadForEdit(kind, id) {
   if (kind === "manual") {
-    const doc = await ManualEntry.findOne({ _id: id, deletedAt: null }).select("entry doctorEnrollmentId").lean();
-    return doc && { Model: ManualEntry, doc, hasDoctor: Boolean(doc.doctorEnrollmentId), doctorId: doc.doctorEnrollmentId || "" };
+    // A manual row's "doctor" is its free-text service provider.
+    const doc = await ManualEntry.findOne({ _id: id, deletedAt: null }).select("entry doctorName").lean();
+    return doc && { Model: ManualEntry, doc, hasDoctor: Boolean(String(doc.doctorName || "").trim()), doctorId: "", manual: true };
   }
   if (kind === "category") {
     const doc = await CategoryConsultation.findOne({ _id: id, paymentStatus: "paid" }).select("entry assignedDoctorId").lean();
@@ -50,15 +50,6 @@ const rowOf = async (kind, id) => {
   }
   return loadEntryRow(kind, id);
 };
-
-// The approved doctor a manual entry points at: { enrollmentId, name }, or null when the id is not an approved doctor.
-async function approvedDoctor(id) {
-  if (!mongoose.isValidObjectId(id) || !/^[0-9a-f]{24}$/i.test(String(id))) return null;
-  const enrollment = await Enrollment.findOne({ _id: id, approvalStatus: "approved" }).select("firstName surname doctorId").populate("doctorId", "name").lean();
-  if (!enrollment) return null;
-  const name = enrollment.doctorId?.name || `${enrollment.firstName || ""} ${enrollment.surname || ""}`.trim() || "Doctor";
-  return { enrollmentId: enrollment._id, name };
-}
 
 const sendError = (res, r) => res.status(r.status).json({ msg: r.msg, code: r.code });
 
@@ -114,7 +105,14 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
       if (!loaded) return res.status(404).json({ msg: "That entry was not found." });
 
       const actor = await actorOf(req);
-      const result = applyEntryEdit(loaded.doc.entry, { field, value }, { hasDoctor: loaded.hasDoctor, doctorId: loaded.doctorId, today: istDayKey(now()), actor, now: new Date(now()) });
+      // Once a manual row is Paid to the provider its doctor's fee is locked too (the status, the date and the comment are not).
+      if (loaded.manual && field === "doctorFee" && loaded.doc.entry?.paidStatus === "paid") {
+        return res.status(409).json({ msg: "This row is Paid to the provider, so its doctor's fee is locked. Change the status first.", code: "locked_paid", item: await rowOf(kind, id) });
+      }
+      const result = applyEntryEdit(loaded.doc.entry, { field, value }, {
+        hasDoctor: loaded.hasDoctor, doctorId: loaded.doctorId, today: istDayKey(now()), actor, now: new Date(now()),
+        ...(loaded.manual ? { noDoctorMessage: "Add a service provider before marking this Paid." } : {}),
+      });
       if (!result.ok) return sendError(res, result);
       if (result.noop) return res.status(200).json({ item: await rowOf(kind, id), noop: true });
 
@@ -136,21 +134,22 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
     }
   });
 
-  // POST /api/admin/entries/manual   { patientName, country, doctorId, date, time, feeCharged, doctorFee, comment }
+  // POST /api/admin/entries/manual   the form: { date, company, caseNumber, serviceType, otherService, caseStatus, serviceProvider,
+  //   providerNumber, patientName, country, contactNumber, consultationFee, doctorFee, mrStatus, mrSentToCompany, invoiceSent,
+  //   paymentReceived, paymentReceivedDate, paymentToProvider, paidDateToProvider, feedbackSent, feedbackReceived, comment }
+  // The date, service provider, patient name and consultation fee are required.
   router.post("/manual", ...guard, async (req, res) => {
     try {
-      const check = validateManualCreate(req.body, { today: istDayKey(now()) });
+      const today = istDayKey(now());
+      const check = validateManualCreate(req.body, { today });
       if (!check.ok) return sendError(res, check);
-      let doctor = null;
-      if (check.value.doctorId) {
-        doctor = await approvedDoctor(check.value.doctorId);
-        if (!doctor) return res.status(400).json({ msg: "Pick a doctor from the approved list.", code: "invalid_doctor" });
-      }
       const actor = await actorOf(req);
       // The short code is 4 random characters with a unique index; on the rare clash, try another.
       for (let attempt = 0; attempt < 8; attempt += 1) {
+        const built = buildManualDocument(check.value, { actor, code: newCode(), now: new Date(now()), today });
+        if (!built.ok) return sendError(res, built);
         try {
-          const created = await ManualEntry.create(buildManualDocument(check.value, { actor, doctor, code: newCode(), now: new Date(now()) }));
+          const created = await ManualEntry.create(built.doc);
           return res.status(201).json({ item: toManualRow(created.toObject()) });
         } catch (error) {
           if (!(error?.code === 11000 && error.keyPattern?.code)) throw error;
@@ -163,8 +162,9 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
     }
   });
 
-  // PATCH /api/admin/entries/manual/:id/details   { version, patientName?, country?, doctorId?, date?, time?, feeCharged? }
-  // Edit: only while the row is not Paid. Every change goes in the row's log.
+  // PATCH /api/admin/entries/manual/:id/details   { version, ...any keys of the form }
+  // Edit (the big popup). Once Payment to provider is Paid the case, provider, patient and fee fields are locked (409); the rest can
+  // still change. One versioned write for the whole save, and every change goes in the row's log.
   router.patch("/manual/:id/details", ...guard, async (req, res) => {
     try {
       const { id } = req.params;
@@ -175,27 +175,24 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
       const doc = await ManualEntry.findOne({ _id: id, deletedAt: null }).lean();
       if (!doc) return res.status(404).json({ msg: "That entry was not found." });
 
-      let doctor;
-      if ("doctorId" in fields && fields.doctorId) {
-        doctor = await approvedDoctor(fields.doctorId);
-        if (!doctor) return res.status(400).json({ msg: "Pick a doctor from the approved list.", code: "invalid_doctor" });
-      }
       const actor = await actorOf(req);
-      const result = applyManualDetailsEdit(doc, fields, { actor, today: istDayKey(now()), doctor, now: new Date(now()) });
+      const result = applyManualFormEdit(doc, fields, { actor, today: istDayKey(now()), now: new Date(now()) });
       // A locked row comes back with its current state so the page can show it as locked.
       if (!result.ok) return result.code === "locked_paid" ? res.status(result.status).json({ msg: result.msg, code: result.code, item: toManualRow(doc) }) : sendError(res, result);
       if (result.noop) return res.status(200).json({ item: toManualRow(doc), noop: true });
 
       const written = await ManualEntry.findOneAndUpdate(
-        { _id: id, deletedAt: null, "entry.paidStatus": { $ne: "paid" }, ...versionMatch(version) },
-        { $set: { ...result.set, "entry.v": version + 1 }, $push: { log: { $each: result.log } } },
+        { _id: id, deletedAt: null, ...versionMatch(version) },
+        {
+          $set: { ...result.set, "entry.v": version + 1 },
+          $push: { log: { $each: result.log }, ...(result.history.length ? { "entry.history": { $each: result.history, $slice: -MAX_HISTORY } } : {}) },
+        },
         { new: true },
       ).lean();
       if (!written) {
-        // Changed since the page loaded it (or marked Paid, which locks the details): hand back the current row.
+        // Changed since the page loaded it: hand back the current row.
         const current = await ManualEntry.findOne({ _id: id, deletedAt: null }).lean();
         if (!current) return res.status(404).json({ msg: "That entry was not found." });
-        if (current.entry?.paidStatus === "paid") return res.status(409).json({ msg: "This row is Paid, so its details are locked. Change the status first.", code: "locked_paid", item: toManualRow(current) });
         return res.status(409).json({ msg: "Someone else changed this row. It has been refreshed.", code: "stale", item: toManualRow(current) });
       }
       res.status(200).json({ item: toManualRow(written), noop: false });

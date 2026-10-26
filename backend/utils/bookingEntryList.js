@@ -110,22 +110,29 @@ function monthRange(month) {
 }
 
 // The doctor filter. The page's doctor list uses the doctor's Enrollment id (as the assign page does); an Appointment points at
-// the Doctor record and a category consultation at the Enrollment, so one id has to become one filter for each.
+// the Doctor record and a category consultation at the Enrollment, so one id has to become one filter for each. A manual entry has no
+// doctor record: its service provider is free text, so it matches when that text is exactly the doctor's name.
 async function doctorFilters(id) {
   if (!id) return null;
-  const enrollment = await Enrollment.findById(id).select("_id doctorId").lean();
+  const byName = (...names) => ({ doctorName: { $in: names.filter(Boolean) } });
+  const enrollmentName = (e) => `${e.firstName || ""} ${e.surname || ""}`.trim();
+  const enrollment = await Enrollment.findById(id).select("_id doctorId firstName surname").lean();
   if (enrollment) {
+    const doctor = enrollment.doctorId ? await Doctor.findById(enrollment.doctorId).select("name").lean() : null;
     return {
       appointment: enrollment.doctorId ? { doctorId: enrollment.doctorId } : { _id: { $in: [] } },
       category: { assignedDoctorId: enrollment._id },
-      manual: { doctorEnrollmentId: enrollment._id },
+      manual: byName(doctor?.name, enrollmentName(enrollment)),
     };
   }
-  const doctor = await Doctor.findById(id).select("_id").lean();
+  const doctor = await Doctor.findById(id).select("_id name").lean();
   if (doctor) {
-    const enrollments = await Enrollment.find({ doctorId: doctor._id }).select("_id").lean();
-    const enrollmentIds = enrollments.map((e) => e._id);
-    return { appointment: { doctorId: doctor._id }, category: { assignedDoctorId: { $in: enrollmentIds } }, manual: { doctorEnrollmentId: { $in: enrollmentIds } } };
+    const enrollments = await Enrollment.find({ doctorId: doctor._id }).select("_id firstName surname").lean();
+    return {
+      appointment: { doctorId: doctor._id },
+      category: { assignedDoctorId: { $in: enrollments.map((e) => e._id) } },
+      manual: byName(doctor.name, ...enrollments.map(enrollmentName)),
+    };
   }
   const nobody = { _id: { $in: [] } };
   return { appointment: nobody, category: nobody, manual: nobody };
@@ -168,11 +175,12 @@ async function searchFilters(q) {
   const apptDoctorIds = [...doctors.map((d) => d._id), ...enrollments.map((e) => e.doctorId).filter(Boolean)];
   const categoryDoctorIds = [...enrollments.map((e) => e._id), ...doctorEnrollments.map((e) => e._id)];
 
-  // A manual entry: patient name, doctor name, country (name or code), its "M-1A2B" code (any part, with or without "M-") or its id.
+  // A manual entry: patient name, service provider, company, case number, country (name or code), its "M-1A2B" code (any part, with
+  // or without "M-") or its id.
   const code = codeSearchText(q);
   const codeClause = /^[0-9A-F]+$/.test(code) ? [{ code: new RegExp(escapeRegex(code)) }] : [];
   return {
-    manual: { $or: [...idClause, ...codeClause, { patientName: rx }, { doctorName: rx }, { country: { $in: countryValues } }] },
+    manual: { $or: [...idClause, ...codeClause, { patientName: rx }, { doctorName: rx }, { company: rx }, { caseNumber: rx }, { country: { $in: countryValues } }] },
     appointment: {
       $or: [...idClause, { patientId: { $in: patientIds } }, { doctorId: { $in: apptDoctorIds } }, { "patientDetails.country": { $in: countryValues } }],
     },
@@ -232,17 +240,16 @@ function keysPipeline(filter, sort, need, bookedExpr) {
 // The doctors and consultation months that have rows (with the include flags applied, but not the tab, search, doctor or month).
 async function loadChoices(filter) {
   const months = { $group: { _id: { $substrCP: [{ $convert: { input: "$date", to: "string", onError: "", onNull: "" } }, 0, 7] } } };
-  const [apptDoctors, catDoctors, manualDoctors, apptMonths, catMonths, manualMonths] = await Promise.all([
+  const [apptDoctors, catDoctors, apptMonths, catMonths, manualMonths] = await Promise.all([
     Appointment.aggregate([{ $match: combine(filter.appointment, { doctorId: { $ne: null } }) }, { $group: { _id: "$doctorId" } }]),
     CategoryConsultation.aggregate([{ $match: combine(filter.category, { assignedDoctorId: { $ne: null } }) }, { $group: { _id: "$assignedDoctorId" } }]),
-    ManualEntry.aggregate([{ $match: combine(filter.manual, { doctorEnrollmentId: { $ne: null } }) }, { $group: { _id: "$doctorEnrollmentId" } }]),
     Appointment.aggregate([{ $match: filter.appointment }, months]),
     CategoryConsultation.aggregate([{ $match: filter.category }, months]),
     ManualEntry.aggregate([{ $match: filter.manual }, months]),
   ]);
 
   const doctorIds = apptDoctors.map((r) => r._id);
-  const enrollmentIds = [...catDoctors, ...manualDoctors].map((r) => r._id);
+  const enrollmentIds = catDoctors.map((r) => r._id);
   const [doctors, enrollments] = await Promise.all([
     Doctor.find({ _id: { $in: doctorIds } }).select("name").lean(),
     Enrollment.find({ $or: [{ _id: { $in: enrollmentIds } }, { doctorId: { $in: doctorIds } }] }).select("firstName surname doctorId").lean(),
