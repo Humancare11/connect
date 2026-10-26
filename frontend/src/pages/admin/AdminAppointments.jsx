@@ -1,317 +1,149 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { Country } from "country-state-city";
-import api from "../../api";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useAdmin } from "../../context/AdminContext";
 import "./AdminAppointments.css";
 import RetryButton from "../../components/ui/RetryButton";
+import BookingTabs from "./appointments/BookingTabs";
+import BookingsTable from "./appointments/BookingsTable";
+import BookingsPager from "./appointments/BookingsPager";
+import BookingActionModals from "./appointments/BookingActionModals";
+import useAdminBookings from "./appointments/useAdminBookings";
+import BulkCancelModal from "./appointments/BulkCancelModal";
+import BulkResultModal from "./appointments/BulkResultModal";
+import useBookingActions from "./appointments/useBookingActions";
+import useBulkActions from "./appointments/useBulkActions";
+import useSelection from "./appointments/useSelection";
+import useCallSummaries from "./appointments/useCallSummaries";
+import { DEFAULT_TAB, PAGE_SIZE, SOURCE_FILTERS, TAB_LABELS, pageFromParam, sourceFromParam, tabFromParam } from "./appointments/bookingFormat";
 
-function getCountryName(isoCode) {
-  if (!isoCode) return "";
-  const country = Country.getCountryByCode(isoCode);
-  return country?.name || isoCode;
-}
+const SEARCH_DELAY_MS = 300;
 
-// Admin-only list cell: did a video call happen, how long, did it connect, was
-// anything wrong. Links to the call report.
-function CallBadge({ summary, id }) {
-  if (!summary) return <span style={{ color: "#9ca3af" }}>-</span>;
-  const color = summary.hasProblem ? "#b45309" : summary.connected ? "#15803d" : "#6b7280";
-  return (
-    <Link
-      to={`/admin-dashboard/appointments/${id}/call-report`}
-      title={summary.firstProblem || (summary.connected ? "Call connected" : "Joined, but never connected")}
-      style={{ color, textDecoration: "none", fontSize: 12, whiteSpace: "nowrap" }}
-    >
-      <span aria-hidden="true">📞</span> {summary.durationLabel || "0s"}
-      {summary.inProgress ? " · live" : ""}
-      <br />
-      {summary.connected ? "Connected" : "Not connected"}
-      {summary.hasProblem && (
-        <span style={{ marginLeft: 6, background: "#fef3c7", color: "#92400e", borderRadius: 8, padding: "1px 6px" }}>
-          ⚠ {summary.problemCount}
-        </span>
-      )}
-    </Link>
-  );
-}
-
-const STATUS_ORDER = ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "all"];
-
-const STATUS_META = {
-  upcoming: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
-  requested: { label: "Upcoming", bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe" },
-  assigned: { label: "Assigned", bg: "#f0fdfa", color: "#0f766e", border: "#99f6e4" },
-  pending: { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fed7aa" },
-  confirmed: { label: "Confirmed", bg: "#ecfdf5", color: "#047857", border: "#a7f3d0" },
-  complete: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
-  completed: { label: "Complete", bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" },
-  cancelled: { label: "Cancelled", bg: "#fef2f2", color: "#dc2626", border: "#fecaca" },
-};
-
-function canonicalStatus(status) {
-  if (status === "requested") return "upcoming";
-  if (status === "completed") return "complete";
-  return status || "upcoming";
-}
-
-function formatMoney(value) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount) || amount <= 0) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function patientCountry(appointment) {
-  return appointment.patientDetails?.country || appointment.patientId?.country || "-";
-}
-
-function patientGender(appointment) {
-  return appointment.patientDetails?.gender || appointment.patientId?.gender || "-";
-}
-
-function assignedBy(appointment) {
-  return appointment.assignedBy?.name || appointment.assignedBy?.email || "-";
-}
-
-function doctorCountry(appointment) {
-  return appointment.doctorMeta?.country || appointment.doctorId?.country || "-";
-}
-
-function hasAssignedDoctor(appointment) {
-  return Boolean(appointment.doctorId?._id || appointment.doctorId);
-}
-
-function StatusPill({ status }) {
-  const meta = STATUS_META[status] || STATUS_META[canonicalStatus(status)] || STATUS_META.upcoming;
-  return (
-    <span
-      className="adp-status-pill"
-      style={{ background: meta.bg, color: meta.color, borderColor: meta.border }}
-    >
-      {meta.label}
-    </span>
-  );
-}
-
+// Appointments and category consultations in one list. The tab, the Source filter, "Hide testing" and
+// the page live in the URL (so a reload or a shared link keeps the view); the search
+// text does not.
 export default function AdminAppointments() {
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
+  const tab = tabFromParam(searchParams.get("tab"));
+  const hideTesting = searchParams.get("hideTesting") === "1";
+  const source = sourceFromParam(searchParams.get("source"));
+  const page = pageFromParam(searchParams.get("page"));
 
-  const [attempt, setAttempt] = useState(0);
-  const initialFilter = canonicalStatus(searchParams.get("tab"));
-  const [filter, setFilter] = useState(STATUS_ORDER.includes(initialFilter) ? initialFilter : "upcoming");
+  const [searchText, setSearchText] = useState("");
+  const [q, setQ] = useState("");
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
-  useEffect(() => {
-    let alive = true;
+  const { data, loading, error, reload } = useAdminBookings({ status: tab, source, hideTesting, q, page, limit: PAGE_SIZE });
+  const actions = useBookingActions({ reload });
+  // Cancelling bookings is for super admins only (the server enforces it too).
+  const isSuperAdmin = useAdmin()?.admin?.role === "superadmin";
 
-    async function loadAppointments() {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await api.get("/api/appointments/admin/all");
-        if (alive) setAppointments(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("Failed to load appointments", err);
-        if (alive) setError(err.response?.data?.msg || "Failed to load appointments.");
-      } finally {
-        if (alive) setLoading(false);
-      }
-    }
-
-    loadAppointments();
-    return () => {
-      alive = false;
-    };
-  }, [attempt]);
-
-  const counts = useMemo(() => {
-    const base = { all: appointments.length, upcoming: 0, assigned: 0, pending: 0, confirmed: 0, complete: 0, cancelled: 0 };
-    appointments.forEach((appointment) => {
-      const key = canonicalStatus(appointment.status);
-      if (base[key] !== undefined) base[key] += 1;
-    });
-    return base;
-  }, [appointments]);
-
-  const displayed = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return appointments.filter((appointment) => {
-      const status = canonicalStatus(appointment.status);
-      const matchesFilter = filter === "all" || status === filter;
-      if (!matchesFilter) return false;
-      if (!q) return true;
-
-      return [
-        appointment._id,
-        appointment.patientId?.name,
-        appointment.patientId?.email,
-        appointment.doctorId?.name,
-        appointment.category,
-        appointment.specialty,
-        appointment.condition,
-        patientGender(appointment),
-        patientCountry(appointment),
-        assignedBy(appointment),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-  }, [appointments, filter, search]);
-
-  // Call column (admin call report): one batch request per 100 visible rows.
-  // Best effort - the list works the same if this fails.
-  const [callSummaries, setCallSummaries] = useState({});
-  const displayedIdsKey = useMemo(() => displayed.map((a) => a._id).join(","), [displayed]);
-  useEffect(() => {
-    const ids = displayedIdsKey ? displayedIdsKey.split(",") : [];
-    if (ids.length === 0) return undefined;
-    let alive = true;
-    const chunks = [];
-    for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
-    Promise.all(chunks.map((chunk) => api.post("/api/call-reports/summaries", { ids: chunk }).then((res) => res.data?.summaries || {}).catch(() => ({}))))
-      .then((parts) => {
-        if (alive) setCallSummaries(Object.assign({}, ...parts));
-      });
-    return () => {
-      alive = false;
-    };
-  }, [displayedIdsKey]);
-
-  const setActiveFilter = (nextFilter) => {
-    setFilter(nextFilter);
-    setSearchParams(nextFilter === "upcoming" ? {} : { tab: nextFilter });
+  // Writes the view to the URL, leaving out values that are the default.
+  const setView = (next) => {
+    const view = { tab, source, hideTesting, page, ...next };
+    const params = {};
+    if (view.tab !== DEFAULT_TAB) params.tab = view.tab;
+    if (view.source !== "all") params.source = view.source;
+    if (view.hideTesting) params.hideTesting = "1";
+    if (view.page > 1) params.page = String(view.page);
+    setSearchParams(params);
   };
 
+  const onSearch = (event) => {
+    const value = event.target.value;
+    setSearchText(value);
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setQ(value.trim()), SEARCH_DELAY_MS);
+    if (page > 1) setView({ page: 1 });
+  };
+
+  const rows = data?.items || [];
+  const callSummaries = useCallSummaries(rows);
+  const firstLoad = loading && !data;
+
+  // Ticked rows are of this page only: a new tab, filter, search or page starts again.
+  const selection = useSelection({ rows, resetKey: `${tab}|${source}|${hideTesting}|${q}|${page}` });
+  const bulk = useBulkActions({ selection, reload });
+
+  // Bookings can disappear while you are on a later page (cancelled elsewhere, filtered
+  // out): go back to the last page that exists instead of showing an empty one.
+  useEffect(() => {
+    if (!loading && data && rows.length === 0 && data.total > 0 && page > 1) {
+      setView({ page: Math.max(1, data.totalPages || 1) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, data]);
+
   return (
-    <div className="adp-page">
-      <section className="adp-card adp-appts-card">
+    <div className="adp-page adp-bk-page">
+      <section className="adp-card adp-bk-card">
         <div className="adp-card-header">
-          <div className="adp-tabs" role="tablist" aria-label="Appointment status">
-            {STATUS_ORDER.map((tab) => (
-              <button
-                type="button"
-                key={tab}
-                className={`adp-tab ${filter === tab ? "active" : ""}`}
-                onClick={() => setActiveFilter(tab)}
-              >
-                {tab === "all" ? "All" : STATUS_META[tab].label}
-                <span className="adp-tab-count">{counts[tab] ?? 0}</span>
-              </button>
-            ))}
+          <BookingTabs
+            tab={tab}
+            counts={data?.counts}
+            hideTesting={hideTesting}
+            onTab={(next) => setView({ tab: next, page: 1 })}
+            onToggleHideTesting={() => setView({ hideTesting: !hideTesting, page: 1 })}
+          />
+          <div className="adp-bk-find">
+            <label className="adp-bk-source">
+              Source
+              <select value={source} onChange={(event) => setView({ source: event.target.value, page: 1 })}>
+                {SOURCE_FILTERS.map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="adp-search" aria-label="Search appointments">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                placeholder="Search patient, doctor, source page, booking ID..."
+                value={searchText}
+                maxLength={100}
+                onChange={onSearch}
+              />
+            </label>
           </div>
-          <label className="adp-search" aria-label="Search appointments">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              placeholder="Search patient, doctor, country, specialty..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </label>
         </div>
 
-        {loading ? (
+        {firstLoad ? (
           <div className="adp-loading">
             <div className="adp-spinner" />
             <p>Loading appointments...</p>
           </div>
-        ) : error ? (
+        ) : error && !data ? (
           <div className="adp-empty">
             <h3>Could not load appointments</h3>
             <p>{error}</p>
-            <RetryButton onRetry={() => setAttempt((n) => n + 1)} />
+            <RetryButton onRetry={reload} />
           </div>
-        ) : displayed.length === 0 ? (
+        ) : rows.length === 0 && !loading ? (
           <div className="adp-empty">
             <h3>No appointments found</h3>
-            <p>No appointments match this view.</p>
+            <p>{q ? "No appointments match your search." : `No ${TAB_LABELS[tab].toLowerCase()} appointments${source !== "all" ? " from this source" : ""}${hideTesting ? " (testing hidden)" : ""}.`}</p>
           </div>
         ) : (
-          <div className="adp-table-wrap adp-appts-wrap">
-            <table className="adp-flow-table adp-appts">
-              <thead>
-                <tr>
-                  <th>SR No</th>
-                  <th>Appointment Booking ID</th>
-                  <th>Patient Name</th>
-                  <th>Consultation Fee</th>
-                  <th>Doctor Country</th>
-                  <th>Status</th>
-                  <th>Assigned By</th>
-                  <th>Call</th>
-                  <th>View</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayed.map((appointment, index) => {
-                  const assigned = hasAssignedDoctor(appointment);
-
-                  return (
-                    <tr key={appointment._id}>
-                      <td className="adp-sr-cell" data-label="SR No">{index + 1}</td>
-                      <td data-label="Booking ID">
-                        <span className="adp-booking-id">{appointment._id}</span>
-                      </td>
-                      <td data-label="Patient">
-                        <div className="adp-patient-cell">
-                          <strong>{appointment.patientId?.name || "Unknown patient"}</strong>
-                          <span>{patientGender(appointment)} - {getCountryName(patientCountry(appointment))}</span>
-                        </div>
-                      </td>
-                      <td data-label="Consultation Fee">{formatMoney(appointment.consultationPrice || appointment.paymentAmount / 100)}</td>
-                      <td data-label="Doctor Country">{getCountryName(doctorCountry(appointment))}</td>
-                      <td data-label="Status">
-                        <StatusPill status={appointment.status} />
-                      </td>
-                      <td data-label="Assigned By">{assignedBy(appointment)}</td>
-                      <td data-label="Call">
-                        <CallBadge summary={callSummaries[appointment._id]} id={appointment._id} />
-                      </td>
-                      <td className="adp-col-view">
-                        <Link className="adp-view-btn" to={`/admin-dashboard/appointments/${appointment._id}`}>
-                          View
-                        </Link>
-                      </td>
-                      <td className="adp-col-actions">
-                        <div className="adp-list-actions">
-                          {assigned ? (
-                            <>
-                              <div className="adp-assigned-doctor-mini">
-                                <strong>{appointment.doctorId?.name || "Assigned doctor"}</strong>
-                                <span>{appointment.category || "-"} - {getCountryName(doctorCountry(appointment))}</span>
-                              </div>
-                              {!["complete", "completed"].includes(appointment.status) && (
-                                <Link className="adp-secondary-link" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
-                                  Alternate Doctor
-                                </Link>
-                              )}
-                            </>
-                          ) : (
-                            <Link className="adp-alt-btn" to={`/admin-dashboard/appointments/${appointment._id}/assign`}>
-                              Assign Doctor
-                            </Link>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className={loading ? "adp-bk-loading" : undefined} aria-busy={loading}>
+            {error && (
+              <div className="adp-bk-error" role="alert">
+                {error} <RetryButton onRetry={reload} />
+              </div>
+            )}
+            <BookingsTable rows={rows} page={page} callSummaries={callSummaries} actions={actions} selection={selection} bulk={bulk} isSuperAdmin={isSuperAdmin} />
+            <BookingsPager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
           </div>
         )}
       </section>
+      <BookingActionModals actions={actions} />
+      {bulk.dialog?.type === "cancel" && (
+        <BulkCancelModal rows={bulk.dialog.rows} submitting={bulk.busy} onSubmit={bulk.submitCancel} onClose={bulk.closeDialog} />
+      )}
+      {bulk.dialog?.type === "result" && <BulkResultModal result={bulk.dialog.result} onClose={bulk.closeDialog} />}
     </div>
   );
 }

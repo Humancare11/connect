@@ -1184,7 +1184,7 @@ export default function HomePage() {
             <a href="/login">
               <button className="cta-btn-w">Create Free Account</button>
             </a>
-            <Link to="/appointment-booking" state={{ tab: "spec" }}>
+            <Link to="/appointment-booking" state={{ tab: "spec" }} data-source="home" data-source-name="Get Started banner">
               <button className="cta-btn-g">Talk to a Doctor Now</button>
             </Link>
           </div>

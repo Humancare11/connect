@@ -4,7 +4,8 @@ import Button from "./Button";
 
 const ConfirmContext = createContext(null);
 
-// const ok = await confirm({ title, message, confirmText, cancelText, tone: "danger" | "default" })
+// const ok = await confirm({ title, message, confirmText, cancelText, tone: "danger" | "default", className })
+// `className` is added to the dialog frame so a page can theme it (the admin Appointments page uses it).
 // Resolves true on Confirm, false on Cancel / Escape / backdrop. Outside a provider it resolves false
 // (so a destructive action is never run by accident).
 export function useConfirm() {
@@ -39,6 +40,7 @@ export function ConfirmProvider({ children }) {
       <Modal
         open={!!state}
         role="alertdialog"
+        className={state?.className}
         title={state?.title}
         description={state?.message}
         onClose={() => settle(false)}

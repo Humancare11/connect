@@ -7,6 +7,7 @@ const DENY_REASONS = new Set([
   "invalid_appointment",
   "room_full",
   "appointment_ended",
+  "not_confirmed",
   "not_participant",
   "appointment_not_found",
   "server_error",

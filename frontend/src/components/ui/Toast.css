@@ -39,6 +39,26 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.hc-toast__action {
+  flex-shrink: 0;
+  align-self: center;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.hc-toast__action:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.hc-toast__action:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
 .hc-toast__close {
   flex-shrink: 0;
   border: 0;

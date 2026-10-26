@@ -47,7 +47,7 @@ const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
-const { normalizeDenyReason, classifyAppointmentLookupError } = require("./utils/roomDenyReason");
+const { normalizeDenyReason } = require("./utils/roomDenyReason");
 const { createGraceTimerRegistry } = require("./utils/graceTimers");
 const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
 const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
@@ -605,7 +605,9 @@ app.use("/api/admin", require("./routes/admin"));
 app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
-app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
+app.use("/api/admin/bookings", require("./routes/adminBookings"));
+app.use("/api/admin/entries", require("./routes/adminEntries"));
+app.use("/api/admin/partner-cases",require("./routes/adminPartnerCases"));
 // Registered first: signatures are private to each admin and have their own guard.
 app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
@@ -642,8 +644,8 @@ app.use("/api/rtc", require("./routes/rtc"));
 const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);
-const CategoryConsultation = require("./models/CategoryConsultation");
-const Enrollment = require("./models/Enrollment");
+const { decideAppointmentAccess, deniedMessage } = require("./utils/appointmentRoomAccess");
+const { withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -677,6 +679,7 @@ const socketUsers = new Map(); // socketId -> { userId, role }
 // (peer should renegotiate quickly) vs. an ordinary first-time join (peer
 // should not be perturbed while a normal handshake is already in progress).
 const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
+const roomState = { socketRooms, roomActivated };
 // appointmentId -> the userId whose socket just dropped, from the moment the
 // "disconnect" handler fires until either that same user rejoins (peer-socket-up)
 // or the grace period expires without them (participant-left, which also
@@ -1100,6 +1103,7 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
     if (identity?.role === "doctor" && String(identity.userId) === String(doctorUserId)) {
       callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: "doctor", how: "removed_from_appointment" });
       peerSocket.emit("appointment-access-revoked", {
+        appointmentId: String(appointmentId),
         msg: "You have been removed from this appointment.",
       });
       peerSocket.leave(room);
@@ -1107,11 +1111,6 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
     }
   }
 }
-
-// Statuses that end an appointment for good. Appointment uses lowercase
-// ("complete"/"cancelled"); CategoryConsultation uses capitalized
-// ("Completed"/"Cancelled") — compared case-insensitively below.
-const TERMINAL_APPOINTMENT_STATUSES = new Set(["complete", "completed", "cancelled"]);
 
 // Forcibly removes EVERY participant (patient + doctor) from an appointment's
 // room — used when the appointment's status itself changes to a terminal
@@ -1136,6 +1135,7 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
     const peerSocket = io.sockets.sockets.get(socketId);
     if (!peerSocket) continue;
     peerSocket.emit("appointment-access-revoked", {
+      appointmentId: String(appointmentId),
       msg: reason === "completed"
         ? "This appointment has been marked complete."
         : "This appointment has been cancelled.",
@@ -1160,61 +1160,8 @@ async function canSocketAccessAppointment(socket, appointmentId, requestedIdenti
   if (!resolved) return { allowed: false, reason: "unauthenticated" };
   const identity = { userId: String(resolved.id), role: resolved.role };
 
-  const userId = String(identity.userId);
-  let appointment = null;
-  let allowed = false;
-  let kind = "appointment";
-
-  try {
-    appointment = await Appointment.findById(appointmentId)
-      .select("patientId doctorId status")
-      .lean();
-
-    if (appointment) {
-      allowed =
-        (identity.role === "user" && String(appointment.patientId) === userId) ||
-        (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
-    } else {
-      const cc = await CategoryConsultation.findById(appointmentId)
-        .select("patientId assignedDoctorId status")
-        .lean();
-
-      if (cc) {
-        appointment = cc;
-        kind = "category_consultation";
-
-        if (identity.role === "user") {
-          allowed = String(cc.patientId) === userId;
-        } else if (identity.role === "doctor" && cc.assignedDoctorId) {
-          const enrollment = await Enrollment.findOne({ doctorId: identity.userId }).select("_id").lean();
-          allowed = !!enrollment && String(cc.assignedDoctorId) === String(enrollment._id);
-        }
-      }
-    }
-  } catch (err) {
-    // Only a malformed id is permanent; a DB error must not read as "invalid".
-    const reason = classifyAppointmentLookupError(err);
-    if (reason === "server_error") console.error("[socket] appointment lookup failed:", err?.message);
-    return { allowed: false, reason };
-  }
-
-  if (!appointment) return { allowed: false, reason: "appointment_not_found" };
-
-  // Once cancelled/completed, nobody may (re)join — this is what stops a
-  // participant evicted by evictAllFromAppointmentRoom from simply rejoining
-  // right after, since identity/ownership alone never changes on cancel or
-  // complete (unlike reassignment, where the doctorId itself changes).
-  if (TERMINAL_APPOINTMENT_STATUSES.has(String(appointment.status || "").toLowerCase())) {
-    return { allowed: false, reason: "appointment_ended", identity, appointment, kind };
-  }
-
-  return {
-    allowed,
-    reason: allowed ? "participant" : "not_participant",
-    identity,
-    appointment,
-    kind,
-  };
+  // Participant, not ended, and confirmed: see utils/appointmentRoomAccess.js.
+  return decideAppointmentAccess(identity, appointmentId);
 }
 
 // ── Direct Video Room (ad-hoc, link-based, guest access — no login required) ──
@@ -1999,6 +1946,9 @@ io.on("connection", (socket) => {
       socketId: socket.id,
       rooms: Array.from(socket.rooms),
     });
+    // The library restores socket.rooms, but socketRooms was cleared on disconnect. Rebuild it now (not only when
+    // the client re-emits join-appointment-room) so leave-appointment-room and every gated event work at once.
+    rebuildAfterRecovery(socket, roomState);
   }
 
   socket.on("user-online", async ({ userId: requestedUserId, role: requestedRole, token } = {}) => {
@@ -2069,7 +2019,7 @@ io.on("connection", (socket) => {
 
     if (!access.allowed) {
       socket.emit("room-access-denied", {
-        msg: "Access to this call room was denied.",
+        msg: deniedMessage(access.reason, access.identity?.role),
         reason: normalizeDenyReason(access.reason),
       });
       console.warn("[socket] appointment room access denied", {
@@ -2132,6 +2082,7 @@ io.on("connection", (socket) => {
     // video-offer/answer/ice-candidate and chat message is silently dropped.
     // Repair it unconditionally in both cases before returning.
     if (socket.rooms.has(room)) {
+      leaveOtherAppointmentRooms(socket, appointmentId, roomState);
       socketRooms.set(socket.id, appointmentId);
       appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, access.identity.userId));
       recordJoinForReport();
@@ -2139,7 +2090,7 @@ io.on("connection", (socket) => {
       // This same user's socket just came back from a drop — tell whoever's
       // waiting they're no longer gone. See the "disconnect" handler above.
       if (appointmentPresenceDown.clearDown(appointmentId, access.identity.userId)) {
-        socket.to(room).emit("peer-socket-up");
+        socket.to(room).emit("peer-socket-up", withAppointmentId(appointmentId));
       }
 
       const existing = io.sockets.adapter.rooms.get(room);
@@ -2151,11 +2102,13 @@ io.on("connection", (socket) => {
       // receiver's point of view: the room gets the joiner's, the joiner gets
       // the peer's (null when nobody else is present).
       socket.to(room).emit("peer-joined", {
+        appointmentId: String(appointmentId),
         resumedCall: wasActivated,
         peerCapabilities: socketCapabilities.get(socket.id),
       });
       if (peerPresent) {
         socket.emit("peer-joined", {
+          appointmentId: String(appointmentId),
           resumedCall: wasActivated,
           peerCapabilities: getPeerCapabilities(existing, access.identity.userId),
         });
@@ -2212,13 +2165,16 @@ io.on("connection", (socket) => {
       return;
     }
 
+    // One call at a time: leave any earlier appointment room, so its events (a late participant-left, ICE, ...)
+    // can never reach this call.
+    leaveOtherAppointmentRooms(socket, appointmentId, roomState);
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
     appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, socketUserId));
     recordJoinForReport();
 
     if (appointmentPresenceDown.clearDown(appointmentId, socketUserId)) {
-      socket.to(room).emit("peer-socket-up");
+      socket.to(room).emit("peer-socket-up", withAppointmentId(appointmentId));
     }
 
     ChatMessage.find({ appointmentId })
@@ -2256,11 +2212,13 @@ io.on("connection", (socket) => {
     if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
     socket.to(room).emit("peer-joined", {
+      appointmentId: String(appointmentId),
       resumedCall: wasActivated,
       peerCapabilities: socketCapabilities.get(socket.id),
     });
     if (peerPresent) {
       socket.emit("peer-joined", {
+        appointmentId: String(appointmentId),
         resumedCall: wasActivated,
         peerCapabilities: getPeerCapabilities(
           io.sockets.adapter.rooms.get(room),
@@ -2274,20 +2232,12 @@ io.on("connection", (socket) => {
     if (!appointmentId) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
-    const room = appointmentRoomName(appointmentId);
     callReportRecorder.onLeft({
       appointmentId: String(appointmentId),
       role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
       how: "explicit",
     });
-    socket.to(room).emit("participant-left");
-    socket.leave(room);
-    socketRooms.delete(socket.id);
-
-    const remaining = io.sockets.adapter.rooms.get(room);
-    if (!remaining || remaining.size === 0) {
-      roomActivated.delete(appointmentId);
-    }
+    leaveAppointmentRoom(socket, appointmentId, roomState);
   });
 
   socket.on(
@@ -2397,7 +2347,7 @@ io.on("connection", (socket) => {
     // back to the offer it's meant for (see VideoCall.jsx handleAnswer).
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-offer", { offer, offerId: sanitizeOfferId(offerId) });
+      .emit("video-offer", { appointmentId: String(appointmentId), offer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
@@ -2408,7 +2358,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-answer", { answer, offerId: sanitizeOfferId(offerId) });
+      .emit("video-answer", { appointmentId: String(appointmentId), answer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
@@ -2418,7 +2368,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("ice-candidate", { candidate });
+      .emit("ice-candidate", { appointmentId: String(appointmentId), candidate });
   });
 
   socket.on("ice-restart-request", ({ appointmentId }) => {
@@ -2428,7 +2378,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("ice-restart-request");
+      .emit("ice-restart-request", withAppointmentId(appointmentId));
   });
 
   // Native mobile stops producing frames entirely when a video track's
@@ -2511,7 +2461,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("camera-state", { isCamOff: Boolean(isCamOff) });
+      .emit("camera-state", { appointmentId: String(appointmentId), isCamOff: Boolean(isCamOff) });
   });
 
   // Asks the other participant to tear down and rebuild its own
@@ -2529,7 +2479,7 @@ io.on("connection", (socket) => {
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("request-peer-rebuild");
+      .emit("request-peer-rebuild", withAppointmentId(appointmentId));
   });
 
   socket.on("disconnect", (reason) => {
@@ -2550,7 +2500,7 @@ io.on("connection", (socket) => {
       // join-appointment-room below for where this gets resolved (peer-socket-up)
       // or the setTimeout below for where it times out (participant-left).
       if (disconnectedUserId) {
-        io.to(appointmentRoom).emit("peer-socket-down");
+        io.to(appointmentRoom).emit("peer-socket-down", withAppointmentId(appointmentId));
         appointmentPresenceDown.markDown(appointmentId, disconnectedUserId);
       }
 
@@ -2570,7 +2520,7 @@ io.on("connection", (socket) => {
 
         if (!sameUserStillInRoom) {
           callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: reportRole, how: "grace_expired" });
-          io.to(appointmentRoom).emit("participant-left");
+          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId));
           // Deliberately NOT clearing roomActivated here: this path also
           // fires when both participants drop at once (e.g. a shared
           // network outage) and later both reconnect — clearing it would

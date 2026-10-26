@@ -1,0 +1,388 @@
+{
+  "livechat": {
+    "admin": [
+      {
+        "label": "Dashboard",
+        "href": "/admin-dashboard",
+        "newTab": false
+      },
+      {
+        "label": "Doctors",
+        "children": [
+          {
+            "label": "Our Doctors",
+            "href": "/admin-dashboard/our-doctors",
+            "newTab": false
+          },
+          {
+            "label": "Manage Doctors",
+            "href": "/admin-dashboard/manage-doctors",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Users",
+        "children": [
+          {
+            "label": "Manage Users",
+            "href": "/admin-dashboard/manage-users",
+            "newTab": false
+          },
+          {
+            "label": "Deletion Requests",
+            "href": "/admin-dashboard/deletion-requests",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Appointments",
+        "href": "/admin-dashboard/appointments",
+        "newTab": false
+      },
+      {
+        "label": "Direct Video Consultation",
+        "href": "/admin-dashboard/direct-video-consultation",
+        "newTab": false
+      },
+      {
+        "label": "Documents",
+        "children": [
+          {
+            "label": "Manual Invoices",
+            "href": "/admin-dashboard/manual-invoices",
+            "newTab": false
+          },
+          {
+            "label": "Guarantee of Payment",
+            "href": "/admin-dashboard/gop",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Partner Cases",
+        "href": "/admin-dashboard/partner-cases",
+        "newTab": false
+      },
+      {
+        "label": "Email",
+        "href": "/admin-dashboard/email",
+        "newTab": false
+      },
+      {
+        "label": "Live Chat",
+        "href": "/admin-dashboard/live-chat",
+        "newTab": true
+      },
+      {
+        "label": "Search Analytics",
+        "href": "/admin-dashboard/search-analytics",
+        "newTab": false
+      },
+      {
+        "label": "Support Tickets",
+        "href": "/admin-dashboard/tickets",
+        "newTab": false
+      }
+    ],
+    "superadmin": [
+      {
+        "label": "Dashboard",
+        "href": "/admin-dashboard",
+        "newTab": false
+      },
+      {
+        "label": "Doctors",
+        "children": [
+          {
+            "label": "Our Doctors",
+            "href": "/admin-dashboard/our-doctors",
+            "newTab": false
+          },
+          {
+            "label": "Manage Doctors",
+            "href": "/admin-dashboard/manage-doctors",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Users",
+        "children": [
+          {
+            "label": "Manage Users",
+            "href": "/admin-dashboard/manage-users",
+            "newTab": false
+          },
+          {
+            "label": "Deletion Requests",
+            "href": "/admin-dashboard/deletion-requests",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Appointments",
+        "href": "/admin-dashboard/appointments",
+        "newTab": false
+      },
+      {
+        "label": "Direct Video Consultation",
+        "href": "/admin-dashboard/direct-video-consultation",
+        "newTab": false
+      },
+      {
+        "label": "Documents",
+        "children": [
+          {
+            "label": "Manual Invoices",
+            "href": "/admin-dashboard/manual-invoices",
+            "newTab": false
+          },
+          {
+            "label": "Guarantee of Payment",
+            "href": "/admin-dashboard/gop",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Partner Cases",
+        "href": "/admin-dashboard/partner-cases",
+        "newTab": false
+      },
+      {
+        "label": "Email",
+        "href": "/admin-dashboard/email",
+        "newTab": false
+      },
+      {
+        "label": "Live Chat",
+        "href": "/admin-dashboard/live-chat",
+        "newTab": true
+      },
+      {
+        "label": "Search Analytics",
+        "href": "/admin-dashboard/search-analytics",
+        "newTab": false
+      },
+      {
+        "label": "Support Tickets",
+        "href": "/admin-dashboard/tickets",
+        "newTab": false
+      }
+    ],
+    "paymentadmin": [
+      {
+        "label": "Documents",
+        "children": [
+          {
+            "label": "Manual Invoices",
+            "href": "/payment-admin/manual-invoices",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Payment Links",
+        "href": "/payment-admin/payment-links",
+        "newTab": false
+      },
+      {
+        "label": "Payment History",
+        "href": "/payment-admin/payment-history",
+        "newTab": false
+      }
+    ]
+  },
+  "nolivechat": {
+    "admin": [
+      {
+        "label": "Dashboard",
+        "href": "/admin-dashboard",
+        "newTab": false
+      },
+      {
+        "label": "Doctors",
+        "children": [
+          {
+            "label": "Our Doctors",
+            "href": "/admin-dashboard/our-doctors",
+            "newTab": false
+          },
+          {
+            "label": "Manage Doctors",
+            "href": "/admin-dashboard/manage-doctors",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Users",
+        "children": [
+          {
+            "label": "Manage Users",
+            "href": "/admin-dashboard/manage-users",
+            "newTab": false
+          },
+          {
+            "label": "Deletion Requests",
+            "href": "/admin-dashboard/deletion-requests",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Appointments",
+        "href": "/admin-dashboard/appointments",
+        "newTab": false
+      },
+      {
+        "label": "Direct Video Consultation",
+        "href": "/admin-dashboard/direct-video-consultation",
+        "newTab": false
+      },
+      {
+        "label": "Documents",
+        "children": [
+          {
+            "label": "Manual Invoices",
+            "href": "/admin-dashboard/manual-invoices",
+            "newTab": false
+          },
+          {
+            "label": "Guarantee of Payment",
+            "href": "/admin-dashboard/gop",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Partner Cases",
+        "href": "/admin-dashboard/partner-cases",
+        "newTab": false
+      },
+      {
+        "label": "Email",
+        "href": "/admin-dashboard/email",
+        "newTab": false
+      },
+      {
+        "label": "Search Analytics",
+        "href": "/admin-dashboard/search-analytics",
+        "newTab": false
+      },
+      {
+        "label": "Support Tickets",
+        "href": "/admin-dashboard/tickets",
+        "newTab": false
+      }
+    ],
+    "superadmin": [
+      {
+        "label": "Dashboard",
+        "href": "/admin-dashboard",
+        "newTab": false
+      },
+      {
+        "label": "Doctors",
+        "children": [
+          {
+            "label": "Our Doctors",
+            "href": "/admin-dashboard/our-doctors",
+            "newTab": false
+          },
+          {
+            "label": "Manage Doctors",
+            "href": "/admin-dashboard/manage-doctors",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Users",
+        "children": [
+          {
+            "label": "Manage Users",
+            "href": "/admin-dashboard/manage-users",
+            "newTab": false
+          },
+          {
+            "label": "Deletion Requests",
+            "href": "/admin-dashboard/deletion-requests",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Appointments",
+        "href": "/admin-dashboard/appointments",
+        "newTab": false
+      },
+      {
+        "label": "Direct Video Consultation",
+        "href": "/admin-dashboard/direct-video-consultation",
+        "newTab": false
+      },
+      {
+        "label": "Documents",
+        "children": [
+          {
+            "label": "Manual Invoices",
+            "href": "/admin-dashboard/manual-invoices",
+            "newTab": false
+          },
+          {
+            "label": "Guarantee of Payment",
+            "href": "/admin-dashboard/gop",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Partner Cases",
+        "href": "/admin-dashboard/partner-cases",
+        "newTab": false
+      },
+      {
+        "label": "Email",
+        "href": "/admin-dashboard/email",
+        "newTab": false
+      },
+      {
+        "label": "Search Analytics",
+        "href": "/admin-dashboard/search-analytics",
+        "newTab": false
+      },
+      {
+        "label": "Support Tickets",
+        "href": "/admin-dashboard/tickets",
+        "newTab": false
+      }
+    ],
+    "paymentadmin": [
+      {
+        "label": "Documents",
+        "children": [
+          {
+            "label": "Manual Invoices",
+            "href": "/payment-admin/manual-invoices",
+            "newTab": false
+          }
+        ]
+      },
+      {
+        "label": "Payment Links",
+        "href": "/payment-admin/payment-links",
+        "newTab": false
+      },
+      {
+        "label": "Payment History",
+        "href": "/payment-admin/payment-history",
+        "newTab": false
+      }
+    ]
+  }
+}

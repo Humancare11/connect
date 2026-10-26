@@ -34,16 +34,20 @@ test("the Approved Doctors card goes to Our Doctors", () => {
   assert.match(overview, /label: "Approved Doctors"[^}]*to: P\.ourDoctors/);
 });
 
-test("filter deep links are read by the target page", () => {
+test("filter deep links are read by the target page", async () => {
   const users = read("pages/admin/ManageUsers.jsx");
   assert.match(users, /searchParams\.get\("q"\)/);
   assert.match(users, /get\("filter"\) === "deletion_requests"/);
   assert.match(paths.usersDeletionRequests, /\?filter=deletion_requests$/);
+  // The Appointments page reads ?tab= and the tab list lives in appointments/bookingFormat.js: every
+  // status the overview can link to must open its own tab (not fall back to the default one).
   const appts = read("pages/admin/AdminAppointments.jsx");
   assert.match(appts, /searchParams\.get\("tab"\)/);
-  const order = appts.match(/STATUS_ORDER = \[([^\]]*)\]/)[1];
+  assert.match(appts, /tabFromParam\(/);
+  const { TAB_ORDER, tabFromParam } = await import("../src/pages/admin/appointments/bookingFormat.js");
   for (const status of ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "all"]) {
-    assert.ok(order.includes(`"${status}"`), status);
+    assert.ok(TAB_ORDER.includes(status), status);
+    assert.equal(tabFromParam(status), status, status);
   }
 });
 

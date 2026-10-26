@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const { bookingAdminFields } = require("../utils/bookingAdminFields");
+const { bookingEntryFields } = require("../utils/bookingEntry");
+const { bookingSourceFields, protectBookingSource } = require("../utils/bookingSource");
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -62,6 +65,12 @@ const appointmentSchema = new mongoose.Schema(
       email:      { type: String, default: "" },
       assignedAt: { type: Date, default: null },
     },
+    originalDoctorId: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+    ...bookingAdminFields(),
+    // Appointment entries: the doctor fee / payout record typed in by an admin (see utils/bookingEntry.js).
+    ...bookingEntryFields(),
+    // Booking source: platform, app version and the page the booking started from (see utils/bookingSource.js).
+    ...bookingSourceFields(),
     sessionStarted: { type: Boolean, default: false },
     // Set when an admin reopens a completed appointment; cleared again on completion.
     // Lets the doctor's list show a "Reopened by admin" note.
@@ -104,6 +113,9 @@ appointmentSchema.index({ patientId: 1, createdAt: -1 });
 // Doctor's appointment list (most recent first)
 appointmentSchema.index({ doctorId: 1, createdAt: -1 });
 
+// Unified admin Appointments list: newest booking first
+appointmentSchema.index({ bookedAt: -1 });
+
 // Admin: all appointments sorted by booking time
 appointmentSchema.index({ createdAt: -1 });
 
@@ -115,5 +127,8 @@ appointmentSchema.index({ appointmentDateTimeUtc: 1, status: 1 });
 
 // Doctor availability conflict check by canonical UTC instant (timezone-safe)
 appointmentSchema.index({ doctorId: 1, appointmentDateTimeUtc: 1, status: 1 });
+
+// The booking source is written once, at creation (see utils/bookingSource.js).
+protectBookingSource(appointmentSchema);
 
 module.exports = mongoose.model("Appointment", appointmentSchema);

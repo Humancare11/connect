@@ -1,0 +1,230 @@
+<title>Humancare Appointments Table</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: Portal-style indigo sidebar + white topbar; table with fixed column widths so space is shared evenly and actions stay on one line */
+:root{
+  --side:#1e1b4b; --side-fg:#e0e7ff; --side-mute:#a5b4fc; --side-active:#312e81; --badge:#7c3aed;
+  --bg:#eef0f6; --panel:#ffffff; --fg:#0f172a; --mute:#64748b; --line:#e5e7eb; --head:#f8fafc; --row-hover:#f8fafc;
+  --title:#6d28d9; --accent:#0f766e; --accent-fg:#ffffff; --accent-soft:#ccfbf1;
+  --up-bg:#e0f2fe; --up:#0369a1; --as-bg:#ede9fe; --as:#6d28d9; --pe-bg:#fef3c7; --pe:#92400e;
+  --co-bg:#dbeafe; --co:#1d4ed8; --ok-bg:#dcfce7; --ok:#15803d; --ca-bg:#fee2e2; --ca:#b91c1c;
+  --danger:#dc2626;
+  --f-ui:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100vh}
+
+/* sidebar */
+.side{background:var(--side);color:var(--side-fg);display:flex;flex-direction:column;padding:20px 16px;gap:4px}
+.who{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0 18px;border-bottom:1px solid #ffffff1a;margin-bottom:12px;text-align:center}
+.av{width:52px;height:52px;border-radius:50%;background:#4338ca;display:grid;place-items:center;font-weight:700;font-size:18px;color:#fff}
+.who b{font-size:16px;color:#fff}.who small{color:var(--side-mute);font-size:12.5px}
+.role{background:var(--badge);color:#fff;font-size:11.5px;font-weight:700;letter-spacing:.04em;border-radius:20px;padding:3px 12px}
+.nav{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;font-weight:500;font-size:15px;color:var(--side-fg)}
+.nav svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav.on{background:var(--side-active);color:#fff;font-weight:700}
+.nav .chev{margin-left:auto;opacity:.7}
+.signout{margin-top:auto;background:var(--danger);color:#fff;border:0;border-radius:10px;padding:12px;font-weight:700;display:flex;gap:8px;justify-content:center;align-items:center}
+
+/* topbar */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:16px;padding-block:14px;padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.burger{border:0;background:none;padding:6px;color:var(--mute)}
+.top h1{margin:0;font-size:21px;color:var(--title);font-weight:700}
+.top .sp{flex:1}
+.bell{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#f5f3ff;display:grid;place-items:center;color:var(--title)}
+.welcome{font-weight:600;font-size:15px}
+.content{padding:0}
+
+/* card + toolbar */
+.card{background:var(--panel);border-bottom:1px solid var(--line)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px;color:#334155}
+.tab i{font-style:normal;font-size:11.5px;font-weight:700;background:#eef2ff;color:#3730a3;border-radius:6px;padding:1px 7px;font-variant-numeric:tabular-nums}
+.tab.on{border-color:var(--accent);background:#f0fdfa;color:var(--accent);box-shadow:0 0 0 2px #99f6e4}
+.tab.on i{background:var(--accent-soft);color:var(--accent)}
+.tab.ghost{margin-left:4px}
+.tab.ghost.on{background:var(--fg);border-color:var(--fg);color:#fff;box-shadow:none}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:200px;flex:0 1 280px;color:var(--mute)}
+.search input{border:0;outline:0;background:transparent;width:100%;color:var(--fg)}
+
+/* table: fixed layout, every column has a set share */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+th{background:var(--head);text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:#475569;text-transform:uppercase;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden}
+tbody tr:hover td{background:var(--row-hover)}
+.two .lnk{white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+.c-num{width:40px}.c-id{width:88px}.c-bd{width:104px}.c-cd{width:112px}.c-fee{width:92px}.c-st{width:132px}.c-act{width:248px}
+/* Patient, Doctor, Category have no width: they share the leftover space equally */
+th:first-child,td:first-child{padding-left:max(16px,env(safe-area-inset-left,0px))}
+th:last-child,td:last-child{padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{display:flex;align-items:center;gap:10px;color:var(--mute)}
+.num input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.bid{font-family:var(--f-mono);font-size:12px;color:#334155;background:none;border:0;padding:2px 4px;margin-left:-4px;border-radius:5px;cursor:copy}
+.bid:hover{background:#f1f5f9}
+.tag{display:inline-block;margin-top:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#475569;background:#f1f5f9;border-radius:4px;padding:1px 6px}
+.two b,.two span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.two b{font-weight:600}
+.two span{color:var(--mute);font-size:12.5px;margin-top:2px}
+.two .na{font-weight:500;color:var(--mute)}
+.lnk{display:inline-block;margin-top:2px;background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:12.5px}
+.lnk:hover{text-decoration:underline}
+.cat{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.date{white-space:nowrap;font-size:13px}
+.date span{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+th.r,td.r{text-align:right}
+.fee{font-weight:700;white-space:nowrap;font-size:13.5px}
+td.st,th.st{padding-left:18px}
+.st .by{font-size:11.5px;color:var(--mute);margin-top:3px}
+.st .by.none{opacity:.8}
+.pill{display:inline-block;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-Upcoming{background:var(--up-bg);color:var(--up)}.p-Assigned{background:var(--as-bg);color:var(--as)}
+.p-Pending{background:var(--pe-bg);color:var(--pe)}.p-Confirmed{background:var(--co-bg);color:var(--co)}
+.p-Complete{background:var(--ok-bg);color:var(--ok)}.p-Cancelled{background:var(--ca-bg);color:var(--ca)}
+.by{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#334155}
+.by.none{color:var(--mute)}
+.acts{display:flex;gap:5px;flex-wrap:nowrap;align-items:center}
+.b{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 8px;font-weight:600;font-size:12px;white-space:nowrap;line-height:1.4}
+.b:hover{border-color:#94a3b8}
+.b.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.b.pri:hover{filter:brightness(1.08)}
+.b.dng{color:var(--ca)}
+.b.dng:hover{background:#fef2f2;border-color:#fca5a5}
+.empty{text-align:center;color:var(--mute);padding:40px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));color:var(--mute);font-size:13px;border-top:1px solid var(--line);flex-wrap:wrap;gap:8px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--side);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;z-index:40}
+.note{margin:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));color:var(--mute);font-size:13px;line-height:1.6;max-width:880px}
+.note b{color:var(--fg)}
+@media (max-width:1180px){.c-cat{width:0}th:nth-child(5),td:nth-child(5){display:none}}
+@media (max-width:900px){.app{grid-template-columns:1fr}.side{display:none}.search{margin-left:0;flex:1 1 100%}
+  table,tbody,tr,td{display:block;width:100%}thead,colgroup{display:none}
+  tr{padding:12px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+  td{border:0;padding:0!important}td:nth-child(5){display:block}
+  td:first-child{display:none}td.st{grid-column:2;grid-row:1;text-align:right}
+  td:nth-child(2){grid-column:1;grid-row:1}td:last-child{grid-column:1/-1;margin-top:6px}
+  td.fee{text-align:left}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="who"><div class="av">SA</div><b>Super Admin</b><small>superadmin@humancare.com</small><span class="role">SUPER ADMIN</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Doctors<span class="chev">›</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .7 3.5 2.4 3.5 5.2"/></svg>Users<span class="chev">›</span></div>
+    <div class="nav on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Appointments</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="m15.5 10 6-3.5v11l-6-3.5"/></svg>Direct Video Consultation</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5M9 12h6M9 16h6"/></svg>Documents<span class="chev">›</span></div>
+    <div class="nav"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/></svg>Partner Cases</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/></svg>Email</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4z"/></svg>Live Chat</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg>Search Analytics</div>
+    <div class="nav"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 6v12"/></svg>Support Tickets</div>
+    <button class="signout">⇥ Sign Out</button>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <button class="burger" aria-label="Menu">☰</button>
+      <h1>Appointments</h1>
+      <span class="sp"></span>
+      <span class="bell" aria-hidden="true">🔔</span>
+      <span class="welcome">Welcome, Super Admin</span>
+    </header>
+
+    <div class="content">
+      <div class="card">
+        <div class="toolbar">
+          <div class="tabs" id="tabs"></div>
+          <label class="search"><span aria-hidden="true">⌕</span><input id="q" placeholder="Search patient, doctor, category"></label>
+        </div>
+        <div class="scroll">
+          <table>
+            <colgroup id="cols"></colgroup>
+            <thead><tr id="head"></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="foot"><span id="count"></span><span>Click a booking ID to copy it</span></div>
+      </div>
+      <p class="note"><b>What changed:</b> the table fills the whole screen with no outer padding and no sideways scroll. Small columns have tight fixed widths; Patient, Doctor and Category share the rest equally and cut long text with "…" (full text on hover). "Assigned by" now sits under the status pill instead of taking its own column. Fee is right-aligned. Actions stay on one line and only show buttons that work for that row. On a phone, each booking becomes a card.</p>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const R=[
+ ["7d01a9161c4ba6","Test Sujal","India","","","Children & Family","2026-10-16","2026-10-23","1:30 AM",10,"Upcoming",""],
+ ["7d01a922c109fa33","kedar","India","","","Chronic Care & Expert Opinion","2026-10-06","2026-10-06","1:30 PM",60,"Upcoming",""],
+ ["7d01a933ff74a478","Mahek Test","India","","","Chronic Care & Expert Opinion","2026-09-10","2026-09-10","4:30 PM",60,"Upcoming",""],
+ ["7d01a944ff74a39e","Mahek Test","India","","","Children & Family","2026-09-10","2026-10-14","11:30 PM",40,"Upcoming",""],
+ ["7d01a955ddeb4456","Mahek Test","India","","","Children & Family","2026-09-10","2026-09-11","10:30 AM",40,"Upcoming",""],
+ ["6a70838ba634cef703a4b6dd","UatT PatientT ShizukaA","India","TestT Shizuka DoctorR","","Children & Family","2026-08-03","2026-08-03","5:40 PM",110,"Assigned",""],
+ ["6a2d30014193e6621459abbd","Narayan Mestry","India","","","Skin & Hair","2026-06-13","2026-06-20","8:30 AM",100,"Assigned","admin@gmail.com"],
+ ["6a2d3c01d2a1e7b64015e4eb","Patient Shizuka","India","Satish Dalvi","","Mental Health","2026-06-11","2026-06-11","5:00 PM",1499,"Assigned","admin@gmail.com"],
+ ["6a2d3c11a90b33f11318094c","Unknown patient","","Satish Dalvi Technical Team","Dr Hidayat Khan","General & Everyday Care","2026-06-11","2026-06-26","8:30 AM",499,"Assigned","admin@gmail.com"],
+ ["6a3b11aa77c2d0e9a2b4c611","Priya Nair","United Arab Emirates","Dr Hidayat Khan","","Women's Health","2026-10-02","2026-10-27","6:00 PM",49,"Confirmed","superadmin@humancare.com"],
+ ["6a3b11bb17ad44f0c02e98a2","Rohan Mehta","India","Dr Ananya Rao","","Mental Wellbeing","2026-10-05","2026-10-28","11:00 AM",25,"Confirmed","admin@gmail.com"],
+ ["6a1f0c22e8a1b9d4a4c0d6aa","Rachel Secemski","United States","Martin Perlin","","Travel & Global Care","2026-10-10","2026-10-16","9:00 AM",99,"Complete","superadmin@humancare.com"],
+ ["6a1f0c33b19d2e7f136e89bb","Satish Dalvi","India","satish dalvi","","Children & Family","2026-10-01","2026-10-02","3:30 PM",1,"Complete","admin@gmail.com",1],
+ ["6a1f0c44c7e5f2a8e62b68cc","Piyush Y.","United Kingdom","Dr Hidayat Khan","","Children & Family","2026-09-28","2026-09-30","7:00 PM",5,"Cancelled","admin@gmail.com"],
+];
+const rows=R.map(r=>({id:r[0],patient:r[1],country:r[2],doctor:r[3],orig:r[4],cat:r[5],booked:r[6],date:r[7],time:r[8],fee:r[9],status:r[10],by:r[11],test:!!r[12]}));
+let tab="Upcoming",hideTest=false,q="";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fd=d=>d?new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—";
+const money=n=>"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,1800)}
+
+function actions(d){
+  const view=`<button class="b">View</button>`;
+  if(d.status==="Cancelled")return view;
+  if(d.status==="Complete")return view+`<button class="b pri" data-a="Reactivate">Reactivate</button>`;
+  const ac=d.doctor?`<button class="b pri" data-a="Auto complete">Auto complete</button>`:"";
+  return view+ac+`<button class="b dng" data-a="Cancel">Cancel</button>`;
+}
+function render(){
+  const base=hideTest?rows.filter(d=>!d.test):rows;
+  const n=s=>base.filter(d=>d.status===s).length;
+  const T=[["All",base.length],["Upcoming",n("Upcoming")],["Assigned",n("Assigned")],["Pending",n("Pending")],["Confirmed",n("Confirmed")],["Complete",n("Complete")],["Cancelled",n("Cancelled")],["Testing",rows.filter(d=>d.test).length]];
+  $("#tabs").innerHTML=T.map(([k,c])=>`<button class="tab ${tab===k?"on":""}" data-t="${k}">${k} <i>${c}</i></button>`).join("")+
+    `<button class="tab ghost ${hideTest?"on":""}" id="hide">${hideTest?"Testing hidden":"Hide testing"}</button>`;
+  $("#cols").innerHTML=`<col class="c-num"><col class="c-id"><col class="c-pt"><col class="c-doc"><col class="c-cat"><col class="c-bd"><col class="c-cd"><col class="c-fee"><col class="c-st"><col class="c-act">`;
+  $("#head").innerHTML=`<th><span class="num"><input type="checkbox" aria-label="Selection options"></span></th><th>Booking ID</th><th>Patient</th><th>Doctor</th><th>Category</th><th>Booked</th><th>Consultation</th><th class="r">Fee</th><th class="st">Status</th><th>Actions</th>`;
+  let list=rows.filter(d=>tab==="Testing"?d.test:((!hideTest||!d.test)&&(tab==="All"||d.status===tab)));
+  if(q)list=list.filter(d=>(d.patient+d.doctor+d.cat+d.country+d.id).toLowerCase().includes(q));
+  $("#rows").innerHTML=list.length?list.map((d,i)=>`<tr>
+    <td><span class="num">${i+1}</span></td>
+    <td><button class="bid" data-copy="${d.id}" title="Click to copy ${d.id}">…${d.id.slice(-8).toUpperCase()}</button>${d.test?'<br><span class="tag">TESTING</span>':""}</td>
+    <td class="two"><b title="${esc(d.patient)}">${esc(d.patient)}</b><span>${esc(d.country)||"—"}</span></td>
+    <td class="two">${d.doctor?`<b title="${esc(d.doctor)}">${esc(d.doctor)}</b>`:`<b class="na">Not assigned</b>`}${d.status==="Complete"||d.status==="Cancelled"?"":`<button class="lnk">${d.doctor?"Alternate doctor":"Assign doctor"}</button>`}</td>
+    <td><span class="cat" title="${esc(d.cat)}">${esc(d.cat)}</span></td>
+    <td class="date">${fd(d.booked)}</td>
+    <td class="date">${d.date?fd(d.date)+`<span>${d.time}</span>`:'<span>Not scheduled</span>'}</td>
+    <td class="r fee">${money(d.fee)}</td>
+    <td class="st"><span class="pill p-${d.status}">${d.status}</span>${d.doctor?`<span class="by ${d.by?"":"none"}" title="${d.by?"Assigned by "+esc(d.by):"Assigned before tracking started"}">${d.by?"by "+esc(d.by):"by —"}</span>`:""}</td>
+    <td><div class="acts">${actions(d)}</div></td></tr>`).join(""):`<tr><td colspan="10" class="empty">No appointments match this view.</td></tr>`;
+  $("#count").textContent=`${list.length} appointment${list.length===1?"":"s"}`;
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-t]");if(t){tab=t.dataset.t;render();return}
+  if(e.target.closest("#hide")){hideTest=!hideTest;render();return}
+  const c=e.target.closest("[data-copy]");if(c){const id=c.dataset.copy;(navigator.clipboard?navigator.clipboard.writeText(id):Promise.reject()).then(()=>toast("Booking ID copied")).catch(()=>toast(id));return}
+  const a=e.target.closest("[data-a]");if(a)toast(a.dataset.a+" (demo)");
+});
+$("#q").addEventListener("input",e=>{q=e.target.value.trim().toLowerCase();render()});
+render();
+</script>

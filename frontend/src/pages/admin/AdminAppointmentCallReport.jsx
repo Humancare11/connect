@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import api from "../../api";
 import socket, { setSocketAuthRole } from "../../socket";
 import { useAdmin } from "../../context/AdminContext";
@@ -65,7 +65,6 @@ function connectedLabel(summary) {
 
 export default function AdminAppointmentCallReport() {
   const { id } = useParams();
-  const location = useLocation();
   const { admin } = useAdmin();
   const isSuperAdmin = admin?.role === "superadmin";
   const [data, setData] = useState(null);
@@ -148,8 +147,9 @@ export default function AdminAppointmentCallReport() {
 
   const { appointment, participants, timeline, summary } = data;
   const problems = data.problems || [];
-  const isConsultation = appointment.kind === "category_consultation" || location.pathname.includes("/category-consultations/");
-  const detailsPath = isConsultation ? `/admin-dashboard/category-consultations/${id}` : `/admin-dashboard/appointments/${id}`;
+  const isConsultation = appointment.kind === "category_consultation";
+  // Both kinds open on the unified Appointments pages.
+  const detailsPath = `/admin-dashboard/appointments/${id}`;
 
   return (
     <div className="dvc-page">

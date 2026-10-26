@@ -369,6 +369,7 @@ export default function Header() {
                   to={item.link}
                   state={item.state}
                   className={`nav-item ${location.pathname === item.link ? "active" : ""}`}
+                  data-source={item.link === "/appointment-booking" ? "header" : undefined}
                 >
                   {item.label}
                 </Link>
@@ -423,6 +424,7 @@ export default function Header() {
               state={item.state}
               className={`mobile-nav-item ${location.pathname === item.link ? "active" : ""}`}
               onClick={() => setMobileOpen(false)}
+              data-source={item.link === "/appointment-booking" ? "header" : undefined}
             >
               {item.label}
             </Link>

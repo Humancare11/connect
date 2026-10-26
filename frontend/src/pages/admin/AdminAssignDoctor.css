@@ -421,3 +421,41 @@
 @container aadlist (max-width: 859px) {
   .aad-search { flex: 1 1 100%; }
 }
+
+/* "Originally with X. Go back to X": shown when an alternate doctor replaced the first one. */
+.aad-original {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 18px 0;
+  padding: 8px 12px;
+  border: 0.5px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+}
+.aad-original-btn {
+  padding: 4px 12px;
+  border: 1px solid #0f766e;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f766e;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.aad-original-btn:hover:not(:disabled) {
+  background: #f0fdfa;
+}
+.aad-original-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (max-width: 640px) {
+  .aad-original {
+    margin: 10px 10px 0;
+  }
+}
