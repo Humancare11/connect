@@ -2216,15 +2216,10 @@ a.adp-bk-alt {
   line-height: 1;
 }
 
-/* Narrow table area (the page without the sidebar): the Booked column goes first, under 1180px; the Source page column
-   stays down to 1024px. */
+/* Narrow table area (the page without the sidebar): the Booked column goes under 1180px. The Source page column stays
+   for as long as the list is a table (down to 1000px, where it becomes cards). */
 @container (max-width: 1179px) {
   .adp-bk .adp-bk-c-booked {
-    display: none;
-  }
-}
-@container (max-width: 1023px) {
-  .adp-bk .adp-bk-c-src {
     display: none;
   }
 }

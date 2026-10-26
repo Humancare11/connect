@@ -249,7 +249,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "App"), "the App filter from the URL");
   });
 
-  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Booked dropped below 1180px, Source page below 1024px", async () => {
+  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Booked dropped below 1180px, Source page kept", async () => {
     await h.reset();
     await h.make({ status: "confirmed", doctor: 0, name: "A Very Long Patient Name That Cannot Possibly Fit In A Column", assignedBy: "administrator.on.duty@humancareconnect.co" });
     await h.make({ status: "upcoming", name: "Row Upcoming" });
@@ -262,7 +262,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       assert.equal(m.layout, "table", `${width}px`);
       assert.ok(m.docOverflow <= 1 && m.wrapOverflow <= 1, `${width}px scrolls sideways (${m.docOverflow}, ${m.wrapOverflow})`);
       const names = m.columns.map((c) => c.name);
-      const withSource = m.wrapWidth >= 1024;
+      const withSource = true; // shown for as long as the list is a table (down to 1000px)
       const withBooked = m.wrapWidth >= 1180;
       assert.equal(names.includes("Source page"), withSource, `${width}px (table area ${m.wrapWidth}px): Source page`);
       assert.equal(names.includes("Booked"), withBooked, `${width}px (table area ${m.wrapWidth}px): Booked`);
