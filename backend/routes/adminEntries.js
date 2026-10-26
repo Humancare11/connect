@@ -1,7 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const { verifyAdminToken, entriesViewAccess } = require("../middleware/verifyToken");
-const { EntryListQueryError, listBookingEntries, loadEntryRow } = require("../utils/bookingEntryList");
+const { EntryListQueryError, listBookingEntries, listAllEntryRows, loadEntryRow } = require("../utils/bookingEntryList");
+const { buildEntriesCsv } = require("../utils/bookingEntryCsv");
 const { MAX_HISTORY, applyEntryEdit } = require("../utils/bookingEntry");
 const { toManualRow, validateManualCreate, buildManualDocument, applyManualDetailsEdit, checkManualDelete, manualDeleteWrite, newCode } = require("../utils/manualEntry");
 const { istDayKey } = require("../services/liveChat/istDay");
@@ -75,6 +76,28 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
       if (error instanceof EntryListQueryError) return res.status(400).json({ msg: error.message });
       console.error("listBookingEntries error:", error);
       res.status(500).json({ msg: "Failed to fetch appointment entries." });
+    }
+  });
+
+  // GET /api/admin/entries/export.csv?tab=&q=&sort=&doctor=&month=&includeCancelled=&includeTesting=
+  // The same filters as the list, every matching row (no paging), as a download. Cut at MAX_EXPORT_ROWS: X-Export-Truncated says so.
+  router.get("/export.csv", ...guard, async (req, res) => {
+    try {
+      const { rows, total, truncated } = await listAllEntryRows(req.query);
+      res.set({
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="entries-${istDayKey(now())}.csv"`,
+        "Cache-Control": "no-store",
+        "X-Export-Rows": String(rows.length),
+        "X-Export-Total": String(total),
+        "X-Export-Truncated": truncated ? "true" : "false",
+        "Access-Control-Expose-Headers": "Content-Disposition, X-Export-Rows, X-Export-Total, X-Export-Truncated",
+      });
+      res.status(200).send(buildEntriesCsv(rows));
+    } catch (error) {
+      if (error instanceof EntryListQueryError) return res.status(400).json({ msg: error.message });
+      console.error("exportBookingEntries error:", error);
+      res.status(500).json({ msg: "Failed to export the entries." });
     }
   });
 

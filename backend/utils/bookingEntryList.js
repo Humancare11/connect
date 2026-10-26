@@ -25,6 +25,9 @@ const { toManualRow, codeSearchText } = require("./manualEntry");
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
 const MAX_PAGE = 1000;
+// The CSV is cut at this many rows (the response says so when it was); rows are loaded in chunks of EXPORT_CHUNK.
+const MAX_EXPORT_ROWS = 20000;
+const EXPORT_CHUNK = 500;
 // "-" = newest first (the default), no "-" = oldest first. Bookings with no consultation date always come last.
 const SORTS = {
   "-consultation": { by: "consultation", dir: -1 },
@@ -328,11 +331,10 @@ function toEntryRow(kind, doc) {
 
 // ── The list ─────────────────────────────────────────────────────────────────
 
-async function listBookingEntries(query) {
-  const params = parseEntriesQuery(query);
-  const { tab, page, limit, sort, month, doctor, includeCancelled, includeTesting, q } = params;
-  const order = SORTS[sort];
-
+// The filters of one request: which bookings are rows at all (`eligible`), after the doctor and month filters (`scoped`), and
+// after the tab and the search as well (`full`). One object per source.
+async function buildScopes(params) {
+  const { tab, month, doctor, includeCancelled, includeTesting, q } = params;
   const eligible = eligibility({ includeCancelled, includeTesting });
   const [doctorFilter, search] = await Promise.all([doctorFilters(doctor), searchFilters(q)]);
   const monthFilter = month ? { date: monthRange(month) } : null;
@@ -348,6 +350,50 @@ async function listBookingEntries(query) {
     category: combine(scoped.category, tabMatch, search?.category),
     manual: combine(scoped.manual, tabMatch, search?.manual),
   };
+  return { eligible, scoped, full };
+}
+
+// The key lists of the three sources (each already in page order) as one list in page order.
+function mergeKeys({ appointment, category, manual }, order) {
+  const time = (row) => new Date(row._booked || 0).getTime();
+  const cmp = (x, y) => {
+    if (order.by === "consultation") {
+      if (x._hasDate !== y._hasDate) return y._hasDate - x._hasDate;
+      const dx = String(x.date || "");
+      const dy = String(y.date || "");
+      if (dx !== dy) return order.dir * (dx < dy ? -1 : 1);
+    }
+    return order.dir * (time(x) - time(y)) || order.dir * String(x._id).localeCompare(String(y._id));
+  };
+  return [
+    ...appointment.map((k) => ({ ...k, kind: "appointment" })),
+    ...category.map((k) => ({ ...k, kind: "category" })),
+    ...manual.map((k) => ({ ...k, kind: "manual" })),
+  ].sort(cmp);
+}
+
+// Full rows for a list of keys, in the same order (a key whose row has gone is skipped).
+async function loadRows(keys) {
+  const idsOf = (kind) => keys.filter((k) => k.kind === kind).map((k) => k._id);
+  const [appointments, categories, manuals] = await Promise.all([
+    idsOf("appointment").length ? findAppointments(idsOf("appointment")) : [],
+    idsOf("category").length ? findCategories(idsOf("category")) : [],
+    idsOf("manual").length ? findManuals(idsOf("manual")) : [],
+  ]);
+  const rows = new Map([
+    ...appointments.map((a) => [`appointment:${a._id}`, toEntryRow("appointment", a)]),
+    ...categories.map((c) => [`category:${c._id}`, toEntryRow("category", c)]),
+    ...manuals.map((m) => [`manual:${m._id}`, toManualRow(m)]),
+  ]);
+  return keys.map((k) => rows.get(`${k.kind}:${k._id}`)).filter(Boolean);
+}
+
+async function listBookingEntries(query) {
+  const params = parseEntriesQuery(query);
+  const { tab, page, limit, sort, month, doctor, includeCancelled, includeTesting, q } = params;
+  const order = SORTS[sort];
+
+  const { eligible, scoped, full } = await buildScopes(params);
 
   const start = (page - 1) * limit;
   const need = start + limit;
@@ -360,38 +406,10 @@ async function listBookingEntries(query) {
     ManualEntry.aggregate(keysPipeline(full.manual, order, need, "$createdAt")),
   ]);
 
-  const time = (row) => new Date(row._booked || 0).getTime();
-  const cmp = (x, y) => {
-    if (order.by === "consultation") {
-      if (x._hasDate !== y._hasDate) return y._hasDate - x._hasDate;
-      const dx = String(x.date || "");
-      const dy = String(y.date || "");
-      if (dx !== dy) return order.dir * (dx < dy ? -1 : 1);
-    }
-    return order.dir * (time(x) - time(y)) || order.dir * String(x._id).localeCompare(String(y._id));
-  };
-  const pageKeys = [
-    ...appointmentKeys.map((k) => ({ ...k, kind: "appointment" })),
-    ...categoryKeys.map((k) => ({ ...k, kind: "category" })),
-    ...manualKeys.map((k) => ({ ...k, kind: "manual" })),
-  ]
-    .sort(cmp)
-    .slice(start, start + limit);
-
-  const idsOf = (kind) => pageKeys.filter((k) => k.kind === kind).map((k) => k._id);
-  const [appointments, categories, manuals] = await Promise.all([
-    idsOf("appointment").length ? findAppointments(idsOf("appointment")) : [],
-    idsOf("category").length ? findCategories(idsOf("category")) : [],
-    idsOf("manual").length ? findManuals(idsOf("manual")) : [],
-  ]);
-  const rows = new Map([
-    ...appointments.map((a) => [`appointment:${a._id}`, toEntryRow("appointment", a)]),
-    ...categories.map((c) => [`category:${c._id}`, toEntryRow("category", c)]),
-    ...manuals.map((m) => [`manual:${m._id}`, toManualRow(m)]),
-  ]);
+  const pageKeys = mergeKeys({ appointment: appointmentKeys, category: categoryKeys, manual: manualKeys }, order).slice(start, start + limit);
 
   return {
-    items: pageKeys.map((k) => rows.get(`${k.kind}:${k._id}`)).filter(Boolean),
+    items: await loadRows(pageKeys),
     counts,
     summary,
     totals,
@@ -442,6 +460,24 @@ async function loadCounts(scoped) {
   return { counts, summary };
 }
 
+// Every row the filters match (the page and limit are ignored), for the CSV: at most `cap` of them, in the list's order.
+// Returns { rows, total, truncated }.
+async function listAllEntryRows(query, cap = MAX_EXPORT_ROWS) {
+  const params = parseEntriesQuery(query);
+  const order = SORTS[params.sort];
+  const { full } = await buildScopes(params);
+  const [totals, appointmentKeys, categoryKeys, manualKeys] = await Promise.all([
+    loadTotals(full.appointment, full.category, full.manual),
+    Appointment.aggregate(keysPipeline(full.appointment, order, cap, { $ifNull: ["$bookedAt", "$createdAt"] })),
+    CategoryConsultation.aggregate(keysPipeline(full.category, order, cap, "$createdAt")),
+    ManualEntry.aggregate(keysPipeline(full.manual, order, cap, "$createdAt")),
+  ]);
+  const keys = mergeKeys({ appointment: appointmentKeys, category: categoryKeys, manual: manualKeys }, order).slice(0, cap);
+  const rows = [];
+  for (let i = 0; i < keys.length; i += EXPORT_CHUNK) rows.push(...(await loadRows(keys.slice(i, i + EXPORT_CHUNK))));
+  return { rows, total: totals.rows, truncated: totals.rows > keys.length };
+}
+
 // One row, loaded the way the list loads it (for the answer to an edit). Null when it is not a row of the list.
 async function loadEntryRow(kind, id) {
   if (kind === "appointment") {
@@ -455,4 +491,4 @@ async function loadEntryRow(kind, id) {
   return null;
 }
 
-module.exports = { EntryListQueryError, SORTS, parseEntriesQuery, listBookingEntries, loadEntryRow, toEntryRow, eligibility, FEE_CENTS };
+module.exports = { EntryListQueryError, SORTS, MAX_EXPORT_ROWS, parseEntriesQuery, listBookingEntries, listAllEntryRows, loadEntryRow, toEntryRow, eligibility, FEE_CENTS };
