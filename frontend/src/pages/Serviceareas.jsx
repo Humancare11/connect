@@ -5,13 +5,13 @@ import SEO from "../components/Seo";
 // import HeroImg from "../assets/your-about-hero-image.webp";
 const HERO_IMG = null; // e.g. HeroImg
 
-const UNAVAILABLE = ["California", "Massachusetts", "Rhode Island", "Vermont"];
+const UNAVAILABLE = ["Alaska", "California", "Massachusetts", "Mississippi", "Rhode Island", "Vermont"];
 
 const ALL_STATES = [
-  "Alabama", "Arizona", "Arkansas", "California", "Colorado",
+  "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
   "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
   "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine",
-  "Maryland", "Massachusetts", "Michigan", "Minnesota",
+  "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
   "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
   "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio",
   "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina",
