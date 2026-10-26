@@ -249,20 +249,23 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "App"), "the App filter from the URL");
   });
 
-  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Source page dropped below 1180px", async () => {
+  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Booked dropped below 1180px, Source page below 1024px", async () => {
     await h.reset();
     await h.make({ status: "confirmed", doctor: 0, name: "A Very Long Patient Name That Cannot Possibly Fit In A Column", assignedBy: "administrator.on.duty@humancareconnect.co" });
     await h.make({ status: "upcoming", name: "Row Upcoming" });
     await h.make({ status: "complete", doctor: 1, name: "Row Complete" });
     await h.make({ status: "cancelled", doctor: 1, name: "Row Cancelled" });
-    for (const [width, withSource] of [[1500, true], [1200, false]]) {
+    for (const width of [1500, 1200, 1100]) {
       await page.setViewportSize({ width, height: 900 });
       await h.open("/admin-dashboard/appointments?tab=all");
       const m = await measureTable(page);
       assert.equal(m.layout, "table", `${width}px`);
       assert.ok(m.docOverflow <= 1 && m.wrapOverflow <= 1, `${width}px scrolls sideways (${m.docOverflow}, ${m.wrapOverflow})`);
       const names = m.columns.map((c) => c.name);
-      assert.equal(names.includes("Source page"), withSource, `${width}px: Source page`);
+      const withSource = m.wrapWidth >= 1024;
+      const withBooked = m.wrapWidth >= 1180;
+      assert.equal(names.includes("Source page"), withSource, `${width}px (table area ${m.wrapWidth}px): Source page`);
+      assert.equal(names.includes("Booked"), withBooked, `${width}px (table area ${m.wrapWidth}px): Booked`);
       for (const c of m.columns) if (FIXED_WIDTHS[c.name]) assert.ok(Math.abs(c.width - FIXED_WIDTHS[c.name]) <= 1, `${width}px: ${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
       const shared = m.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => c.width);
       assert.ok(Math.max(...shared) - Math.min(...shared) <= 1, `${width}px: Patient, Doctor and Source page share equally (${shared})`);

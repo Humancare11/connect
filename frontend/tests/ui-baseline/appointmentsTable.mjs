@@ -77,7 +77,9 @@ try {
         if (m.layout === "table") {
           for (const c of m.columns) if (FIXED_WIDTHS[c.name] && Math.abs(c.width - FIXED_WIDTHS[c.name]) > 1) problems.push(`${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
           const hasSource = m.columns.some((c) => c.name === "Source page");
-          if (hasSource !== width - 260 >= 1180) problems.push(`Source page column ${hasSource ? "shown" : "hidden"} at ${width}px`);
+          if (hasSource !== m.wrapWidth >= 1024) problems.push(`Source page column ${hasSource ? "shown" : "hidden"} at a table area of ${m.wrapWidth}px`);
+          const hasBooked = m.columns.some((c) => c.name === "Booked");
+          if (hasBooked !== m.wrapWidth >= 1180) problems.push(`Booked column ${hasBooked ? "shown" : "hidden"} at a table area of ${m.wrapWidth}px`);
           const shared = m.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => c.width);
           if (Math.max(...shared) - Math.min(...shared) > 1) problems.push(`shared columns unequal: ${shared}`);
         }

@@ -209,7 +209,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
             <col />
             <col />
             <col className="adp-bk-c-src" />
-            <col className="adp-bk-col-booked" />
+            <col className="adp-bk-col-booked adp-bk-c-booked" />
             <col className="adp-bk-col-consult" />
             <col className="adp-bk-col-fee" />
             <col className="adp-bk-col-status" />
@@ -224,7 +224,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
               <th>Patient</th>
               <th>Doctor</th>
               <th className="adp-bk-c-src">Source page</th>
-              <th>Booked</th>
+              <th className="adp-bk-c-booked">Booked</th>
               <th>Consultation</th>
               <th className="adp-bk-fee">Fee</th>
               <th className="adp-bk-status">Status</th>
@@ -264,7 +264,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
                   <td data-label="Source page" className="adp-bk-cut adp-bk-c-src">
                     <SourcePageCell row={row} />
                   </td>
-                  <td data-label="Booked" className="adp-bk-nowrap adp-bk-date">{formatBookedOn(row.bookedAt)}</td>
+                  <td data-label="Booked" className="adp-bk-nowrap adp-bk-date adp-bk-c-booked">{formatBookedOn(row.bookedAt)}</td>
                   <td data-label="Consultation" className="adp-bk-nowrap adp-bk-date">
                     {consultation ? (
                       <span className="adp-bk-when">

@@ -2216,8 +2216,14 @@ a.adp-bk-alt {
   line-height: 1;
 }
 
-/* Table area under 1180px: the Source page column goes. (The area is the page without the sidebar.) */
+/* Narrow table area (the page without the sidebar): the Booked column goes first, under 1180px; the Source page column
+   stays down to 1024px. */
 @container (max-width: 1179px) {
+  .adp-bk .adp-bk-c-booked {
+    display: none;
+  }
+}
+@container (max-width: 1023px) {
   .adp-bk .adp-bk-c-src {
     display: none;
   }
@@ -2225,7 +2231,8 @@ a.adp-bk-alt {
 
 /* Table area under 1000px (CARD_BELOW in bookingFormat.js): one card per booking. */
 @container (max-width: 999px) {
-  .adp-bk .adp-bk-c-src {
+  .adp-bk .adp-bk-c-src,
+  .adp-bk .adp-bk-c-booked {
     display: block;
   }
   .adp-bk,
