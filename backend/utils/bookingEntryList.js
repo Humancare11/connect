@@ -390,4 +390,17 @@ async function loadCounts(scoped) {
   return counts;
 }
 
-module.exports = { EntryListQueryError, SORTS, parseEntriesQuery, listBookingEntries, toEntryRow, eligibility, FEE_CENTS };
+// One row, loaded the way the list loads it (for the answer to an edit). Null when it is not a row of the list.
+async function loadEntryRow(kind, id) {
+  if (kind === "appointment") {
+    const [doc] = await findAppointments([id]);
+    return doc ? toEntryRow("appointment", doc) : null;
+  }
+  if (kind === "category") {
+    const [doc] = await findCategories([id]);
+    return doc && doc.paymentStatus === "paid" ? toEntryRow("category", doc) : null;
+  }
+  return null;
+}
+
+module.exports = { EntryListQueryError, SORTS, parseEntriesQuery, listBookingEntries, loadEntryRow, toEntryRow, eligibility, FEE_CENTS };
