@@ -14,6 +14,7 @@ const SHARED = [
   { label: "Doctors", children: [["Our Doctors", "/admin-dashboard/our-doctors"], ["Manage Doctors", "/admin-dashboard/manage-doctors"]] },
   { label: "Users", children: [["Manage Users", "/admin-dashboard/manage-users"], ["Deletion Requests", "/admin-dashboard/deletion-requests"]] },
   { label: "Appointments", to: "/admin-dashboard/appointments", newTab: false },
+  { label: "Appointment entries", to: "/admin-dashboard/appointment-entries", newTab: false },
   { label: "Direct Video Consultation", to: "/admin-dashboard/direct-video-consultation", newTab: false },
   { label: "Documents", children: [["Manual Invoices", "/admin-dashboard/manual-invoices"], ["Guarantee of Payment", "/admin-dashboard/gop"]] },
   { label: "Partner Cases", to: "/admin-dashboard/partner-cases", newTab: false },
@@ -25,7 +26,7 @@ const TAIL = [
 ];
 const LIVE = { label: "Live Chat", to: "/admin-dashboard/live-chat", newTab: true };
 
-test("admin and super admin: the same eleven entries in the same order, Live Chat (new tab) only in live-chat builds", () => {
+test("admin and super admin: the same twelve entries in the same order, Live Chat (new tab) only in live-chat builds", () => {
   for (const role of ["admin", "superadmin"]) {
     assert.deepEqual(shape(role, true), [...SHARED, LIVE, ...TAIL], role);
     assert.deepEqual(shape(role, false), [...SHARED, ...TAIL], `${role} without live chat`);

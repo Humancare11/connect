@@ -27,6 +27,8 @@ export const NAV_ITEMS = [
   },
   // One list for doctor appointments and category consultations.
   { key: "appointments", label: "Appointments", path: "/admin-dashboard/appointments", icon: "calendar" },
+  // The doctor-fee and payout record for every booking (and manual entries). Admin and super admin only; the payment admin has no access.
+  { key: "entries", label: "Appointment entries", path: "/admin-dashboard/appointment-entries", roles: ["admin", "superadmin"], icon: "document" },
   { key: "direct-video", label: "Direct Video Consultation", path: "/admin-dashboard/direct-video-consultation", icon: "video" },
   {
     key: "documents",
