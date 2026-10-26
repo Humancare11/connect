@@ -4,7 +4,7 @@ import api from "../../../api";
 // Loads one page of the unified admin Appointments list. The previous page's data
 // stays on screen while the next one loads (so the tab counts do not flicker), and
 // a response that arrives after the filters changed again is ignored.
-export default function useAdminBookings({ status, hideTesting, q, page, limit }) {
+export default function useAdminBookings({ status, source = "all", hideTesting, q, page, limit }) {
   const [state, setState] = useState({ data: null, loading: true, error: "" });
   const [attempt, setAttempt] = useState(0);
 
@@ -13,7 +13,7 @@ export default function useAdminBookings({ status, hideTesting, q, page, limit }
     setState((s) => ({ ...s, loading: true, error: "" }));
 
     api
-      .get("/api/admin/bookings", { params: { status, hideTesting, page, limit, ...(q ? { q } : {}) } })
+      .get("/api/admin/bookings", { params: { status, hideTesting, page, limit, ...(q ? { q } : {}), ...(source !== "all" ? { source } : {}) } })
       .then((res) => {
         if (alive) setState({ data: res.data, loading: false, error: "" });
       })
@@ -25,7 +25,7 @@ export default function useAdminBookings({ status, hideTesting, q, page, limit }
     return () => {
       alive = false;
     };
-  }, [status, hideTesting, q, page, limit, attempt]);
+  }, [status, source, hideTesting, q, page, limit, attempt]);
 
   return { ...state, reload: () => setAttempt((n) => n + 1) };
 }

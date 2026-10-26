@@ -9,12 +9,43 @@ import { copyText } from "./copyText";
 import { assignUrl } from "./assignPageLogic";
 import {
   CARD_BELOW, assignedByHint, canAlternate, canAssign, formatBookedOn, formatConsultation, formatFee, originalDoctorHint, rowActions, rowNumber,
-  shortBookingId,
+  shortBookingId, sourcePageText,
 } from "./bookingFormat";
 
 function getCountryName(value) {
   if (!value) return "";
   return Country.getCountryByCode(value)?.name || value;
+}
+
+// "Web" (indigo) or "App" (green) under the booking id; android, ios and the app are all "App", the exact platform and
+// version are the hover text. Bookings made before tracking started are "Unknown" (grey).
+function SourceLabel({ row }) {
+  const group = row.sourceGroup === "Web" || row.sourceGroup === "App" ? row.sourceGroup : "Unknown";
+  return (
+    <span className={`adp-bk-plat adp-bk-plat--${group.toLowerCase()}`} title={row.sourceDetail || undefined}>
+      {group}
+    </span>
+  );
+}
+
+// The page the booking started from: type in bold, name under it, and for a header/footer/home button the page the
+// patient was on, in grey. Old bookings: "Not recorded". Long text is cut with an ellipsis; the hover has all of it.
+function SourcePageCell({ row }) {
+  const page = row.sourcePage;
+  if (!page) {
+    return (
+      <div className="adp-bk-src adp-bk-src--none" title="Not recorded: this booking was made before source tracking started">
+        Not recorded
+      </div>
+    );
+  }
+  return (
+    <div className="adp-bk-src" title={sourcePageText(page)}>
+      <b>{page.name ? `${page.type}:` : page.type}</b>
+      {page.name && <span>{page.name}</span>}
+      {page.clickedOn && <small>on {page.clickedOn}</small>}
+    </div>
+  );
 }
 
 // The booking id is shown short; clicking it copies the FULL id. If the browser refuses, the full id (kept in a
@@ -43,6 +74,7 @@ function BookingIdCell({ row }) {
       <button type="button" className="adp-bk-idcopy" title="Click to copy the booking ID" aria-label={`Copy booking ID ${row.id}`} onClick={copy}>
         <span className="adp-booking-id">{shortBookingId(row)}</span>
       </button>
+      <SourceLabel row={row} />
       <span ref={fullId} className="adp-bk-fullid">{row.id}</span>
       {row.isTesting && <span className="adp-bk-tag">TESTING</span>}
     </div>
@@ -170,13 +202,13 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
       )}
       <div className="adp-table-wrap adp-bk-wrap">
         <table className={`adp-flow-table adp-bk${selection.selecting ? " adp-bk--selecting" : ""}`}>
-          {/* Fixed widths for the small columns; Patient, Doctor and Category have none and share the rest equally. */}
+          {/* Fixed widths for the small columns; Patient, Doctor and Source page have none and share the rest equally. */}
           <colgroup>
             <col className="adp-bk-col-num" />
             <col className="adp-bk-col-id" />
             <col />
             <col />
-            <col className="adp-bk-c-cat" />
+            <col className="adp-bk-c-src" />
             <col className="adp-bk-col-booked" />
             <col className="adp-bk-col-consult" />
             <col className="adp-bk-col-fee" />
@@ -191,7 +223,7 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
               <th>Booking ID</th>
               <th>Patient</th>
               <th>Doctor</th>
-              <th className="adp-bk-c-cat">Category</th>
+              <th className="adp-bk-c-src">Source page</th>
               <th>Booked</th>
               <th>Consultation</th>
               <th className="adp-bk-fee">Fee</th>
@@ -229,8 +261,8 @@ export default function BookingsTable({ rows, page, actions, selection, bulk, is
                     </div>
                   </td>
                   <td data-label="Doctor" className="adp-bk-cut"><DoctorCell row={row} busy={busy} /></td>
-                  <td data-label="Category" className="adp-bk-cut adp-bk-c-cat">
-                    <span className="adp-bk-cat" title={row.category || undefined}>{row.category || "—"}</span>
+                  <td data-label="Source page" className="adp-bk-cut adp-bk-c-src">
+                    <SourcePageCell row={row} />
                   </td>
                   <td data-label="Booked" className="adp-bk-nowrap adp-bk-date">{formatBookedOn(row.bookedAt)}</td>
                   <td data-label="Consultation" className="adp-bk-nowrap adp-bk-date">

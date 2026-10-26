@@ -93,7 +93,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.until(async () => { const p = await pills(); return p.length > 0 && p.every((t) => t === "Upcoming"); }, "the Upcoming tab");
     await page.click('[role="tab"]:has-text("All")');
     await h.until(async () => { const p = await pills(); return p.length === 25 && p.some((t) => t !== "Upcoming"); }, "the All tab");
-    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Category", "Booked", "Consultation", "Fee", "Status", "Actions"]);
+    assert.deepEqual(await h.headers(), ["", "Booking ID", "Patient", "Doctor", "Source page", "Booked", "Consultation", "Fee", "Status", "Actions"]);
     assert.equal(await h.rowsLocator().count(), 25);
     const text = await page.locator("table.adp-bk").innerText();
     assert.ok(text.includes("TESTING") && text.includes("Not scheduled") && text.includes("Alternate doctor") && text.includes("Not assigned"));
@@ -171,26 +171,104 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.open("/admin-dashboard/appointments?tab=all");
   });
 
-  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Category dropped below 1180px", async () => {
+  test("Source page column, the Web / App label under the booking id, the Source filter and the search", async () => {
+    await h.reset();
+    await page.setViewportSize({ width: 1500, height: 900 });
+    const web = { platform: "web", sourceType: "header", sourceName: "Book Appointment", clickedOnType: "service", clickedOnName: "Fit to fly" };
+    const condition = { platform: "web", sourceType: "condition", sourceName: "Fever" };
+    const android = { platform: "android", appVersion: "1.0.0+16", sourceType: "service", sourceName: "Online Prescription Refills" };
+    const ios = { platform: "ios", appVersion: "1.0.0+16" };
+    await h.make({ name: "Src Header", source: web });
+    await h.make({ name: "Src Fever", source: condition });
+    await h.make({ name: "Src Android", source: android });
+    await h.make({ name: "Src Ios", source: ios });
+    await h.make({ name: "Src Old", kind: "category" });
+    await h.open("/admin-dashboard/appointments?tab=all");
+
+    // Source page: TYPE in bold with a colon, the name under it, and the page a header button was clicked on in grey.
+    const cell = (name) => h.row(name).locator('td[data-label="Source page"]');
+    assert.equal((await cell("Src Header").innerText()).replace(/\s+/g, " ").trim(), "Header: Book Appointment on Service: Fit to fly");
+    assert.equal(await cell("Src Header").locator("b").innerText(), "Header:");
+    assert.equal(await cell("Src Header").locator("small").innerText(), "on Service: Fit to fly");
+    assert.equal((await cell("Src Fever").innerText()).replace(/\s+/g, " ").trim(), "Condition: Fever");
+    assert.equal((await cell("Src Android").innerText()).replace(/\s+/g, " ").trim(), "Service: Online Prescription Refills");
+    // an old booking, and an app booking before the app sends a page: "Not recorded" in grey
+    for (const name of ["Src Old", "Src Ios"]) {
+      assert.equal((await cell(name).innerText()).trim(), "Not recorded", name);
+      assert.equal(await cell(name).locator(".adp-bk-src--none").count(), 1, name);
+    }
+    // the hover text has all of it
+    assert.equal(await cell("Src Header").locator(".adp-bk-src").getAttribute("title"), "Header: Book Appointment (clicked on Service: Fit to fly)");
+
+    // Under the booking id: Web (indigo), App (green), Unknown (grey), the exact platform and version on hover.
+    const label = (name) => h.row(name).locator(".adp-bk-plat");
+    assert.equal((await label("Src Header").innerText()).trim(), "Web");
+    assert.equal(await label("Src Header").getAttribute("title"), "Website");
+    for (const name of ["Src Android", "Src Ios"]) assert.equal((await label(name).innerText()).trim(), "App", name);
+    assert.equal(await label("Src Android").getAttribute("title"), "Android · v1.0.0+16");
+    assert.equal(await label("Src Ios").getAttribute("title"), "iOS · v1.0.0+16");
+    assert.equal((await label("Src Old").innerText()).trim(), "Unknown");
+    assert.equal(await label("Src Old").getAttribute("title"), "Booked before source tracking started");
+    const colour = (name) => label(name).evaluate((el) => getComputedStyle(el).color);
+    assert.equal(await colour("Src Header"), "rgb(55, 48, 163)");
+    assert.equal(await colour("Src Android"), "rgb(22, 101, 52)");
+    assert.equal(await colour("Src Old"), "rgb(148, 163, 184)");
+    await h.shot("list-source");
+
+    // The Source dropdown: All / Web / App / Unknown, before the search box; the tab counts follow it.
+    assert.deepEqual(await page.locator(".adp-bk-source option").allInnerTexts(), ["All", "Web", "App", "Unknown"]);
+    const order = await page.evaluate(() => [...document.querySelector(".adp-bk-find").children].map((e) => e.className));
+    assert.deepEqual(order, ["adp-bk-source", "adp-search"]);
+    const names = async () => (await page.$$eval("table.adp-bk tbody tr td[data-label=\"Patient\"] strong", (els) => els.map((e) => e.textContent.trim()))).filter((n) => n.startsWith("Src "));
+    const labels = async () => (await page.$$eval("table.adp-bk tbody .adp-bk-plat", (els) => els.map((e) => e.textContent.trim())));
+    const total = await h.tabCount("All");
+    await page.selectOption(".adp-bk-source select", "web");
+    await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "Web"), "the Web filter");
+    assert.deepEqual((await names()).sort(), ["Src Fever", "Src Header"]);
+    assert.ok((await h.tabCount("All")) < total, "the tab counts follow the filter");
+    await page.selectOption(".adp-bk-source select", "app");
+    await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "App"), "the App filter");
+    assert.deepEqual((await names()).sort(), ["Src Android", "Src Ios"]);
+    await page.selectOption(".adp-bk-source select", "unknown");
+    await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "Unknown"), "the Unknown filter");
+    assert.ok((await names()).includes("Src Old"));
+    // search matches the source page type and name, also with the filter on
+    await page.selectOption(".adp-bk-source select", "all");
+    await h.until(async () => (await h.tabCount("All")) === total, "back to All");
+    await h.search("Fit to fly");
+    assert.deepEqual(await names(), ["Src Header"]);
+    await h.search("Online Prescription");
+    assert.deepEqual(await names(), ["Src Android"]);
+    await h.search("Condition");
+    assert.deepEqual(await names(), ["Src Fever"]);
+    await page.fill(".adp-search input", "");
+
+    // The URL keeps the filter (a reload or a shared link keeps the view).
+    await h.open("/admin-dashboard/appointments?tab=all&source=app");
+    assert.equal(await page.locator(".adp-bk-source select").inputValue(), "app");
+    await h.until(async () => (await labels()).length > 0 && (await labels()).every((l) => l === "App"), "the App filter from the URL");
+  });
+
+  test("table layout: fixed widths for the small columns, the other three equal, nothing clipped, actions on one line, Source page dropped below 1180px", async () => {
     await h.reset();
     await h.make({ status: "confirmed", doctor: 0, name: "A Very Long Patient Name That Cannot Possibly Fit In A Column", assignedBy: "administrator.on.duty@humancareconnect.co" });
     await h.make({ status: "upcoming", name: "Row Upcoming" });
     await h.make({ status: "complete", doctor: 1, name: "Row Complete" });
     await h.make({ status: "cancelled", doctor: 1, name: "Row Cancelled" });
-    for (const [width, withCategory] of [[1500, true], [1200, false]]) {
+    for (const [width, withSource] of [[1500, true], [1200, false]]) {
       await page.setViewportSize({ width, height: 900 });
       await h.open("/admin-dashboard/appointments?tab=all");
       const m = await measureTable(page);
       assert.equal(m.layout, "table", `${width}px`);
       assert.ok(m.docOverflow <= 1 && m.wrapOverflow <= 1, `${width}px scrolls sideways (${m.docOverflow}, ${m.wrapOverflow})`);
       const names = m.columns.map((c) => c.name);
-      assert.equal(names.includes("Category"), withCategory, `${width}px: Category`);
+      assert.equal(names.includes("Source page"), withSource, `${width}px: Source page`);
       for (const c of m.columns) if (FIXED_WIDTHS[c.name]) assert.ok(Math.abs(c.width - FIXED_WIDTHS[c.name]) <= 1, `${width}px: ${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
-      const shared = m.columns.filter((c) => ["Patient", "Doctor", "Category"].includes(c.name)).map((c) => c.width);
-      assert.ok(Math.max(...shared) - Math.min(...shared) <= 1, `${width}px: Patient, Doctor and Category share equally (${shared})`);
+      const shared = m.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => c.width);
+      assert.ok(Math.max(...shared) - Math.min(...shared) <= 1, `${width}px: Patient, Doctor and Source page share equally (${shared})`);
       assert.deepEqual(m.clipped, [], `${width}px clipped cells`);
       assert.deepEqual(m.multiLine, [], `${width}px: actions on one line`);
-      assert.deepEqual(m.cutCells, ["Patient", "Doctor", ...(withCategory ? ["Category"] : [])]);
+      assert.deepEqual(m.cutCells, ["Patient", "Doctor", ...(withSource ? ["Source page"] : [])]);
     }
     // The long name is cut with an ellipsis and keeps its full text as the hover text.
     const strong = page.locator("td[data-label=\"Patient\"] strong", { hasText: "A Very Long Patient" });

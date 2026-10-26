@@ -25,7 +25,9 @@ const contentDir = contentArg > 0 ? path.resolve(process.argv[contentArg + 1]) :
 if (contentDir) fs.mkdirSync(contentDir, { recursive: true });
 
 const ROLES = ["admin", "superadmin"];
-const WIDTHS = [1920, 1440, 1280, 1100, 390];
+// --widths 1920,1440,1280,390 limits the widths (default: all five).
+const widthsArg = process.argv.indexOf("--widths");
+const WIDTHS = widthsArg > 0 ? process.argv[widthsArg + 1].split(",").map(Number) : [1920, 1440, 1280, 1100, 390];
 
 
 const vite = await createServer({
@@ -74,17 +76,17 @@ try {
         if (m.multiLine.length && m.layout === "table") problems.push(`actions on two lines: ${m.multiLine.join("; ")}`);
         if (m.layout === "table") {
           for (const c of m.columns) if (FIXED_WIDTHS[c.name] && Math.abs(c.width - FIXED_WIDTHS[c.name]) > 1) problems.push(`${c.name} is ${c.width}px, wanted ${FIXED_WIDTHS[c.name]}`);
-          const hasCategory = m.columns.some((c) => c.name === "Category");
-          if (hasCategory !== width - 260 >= 1180) problems.push(`Category column ${hasCategory ? "shown" : "hidden"} at ${width}px`);
-          const shared = m.columns.filter((c) => ["Patient", "Doctor", "Category"].includes(c.name)).map((c) => c.width);
+          const hasSource = m.columns.some((c) => c.name === "Source page");
+          if (hasSource !== width - 260 >= 1180) problems.push(`Source page column ${hasSource ? "shown" : "hidden"} at ${width}px`);
+          const shared = m.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => c.width);
           if (Math.max(...shared) - Math.min(...shared) > 1) problems.push(`shared columns unequal: ${shared}`);
         }
       }
       const file = path.join(outDir, `${role}-${width}.png`);
       await page.screenshot({ path: file });
       if (contentDir) await page.locator(".ad-content").screenshot({ path: path.join(contentDir, `${role}-${width}.png`) });
-      const sharedWidths = m?.columns.filter((c) => ["Patient", "Doctor", "Category"].includes(c.name)).map((c) => Math.round(c.width));
-      lines.push(`${role.padEnd(10)} ${String(width).padStart(4)}px  ${(m?.layout || "-").padEnd(5)}  table area ${m?.wrapWidth}px  ${sharedWidths?.length ? `Patient/Doctor${sharedWidths.length === 3 ? "/Category" : ""} ${sharedWidths[0]}px each` : ""}  ${problems.length ? "FAIL " + problems.join(" | ") : "ok"}`);
+      const sharedWidths = m?.columns.filter((c) => ["Patient", "Doctor", "Source page"].includes(c.name)).map((c) => Math.round(c.width));
+      lines.push(`${role.padEnd(10)} ${String(width).padStart(4)}px  ${(m?.layout || "-").padEnd(5)}  table area ${m?.wrapWidth}px  ${sharedWidths?.length ? `Patient/Doctor${sharedWidths.length === 3 ? "/Source page" : ""} ${sharedWidths[0]}px each` : ""}  ${problems.length ? "FAIL " + problems.join(" | ") : "ok"}`);
       if (problems.length) failures.push(`${role} ${width}px: ${problems.join(" | ")}`);
       await context.close();
     }

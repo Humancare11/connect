@@ -1,5 +1,27 @@
 // Made-up bookings (the approved reference's rows plus a few long ones) for the screenshot scripts.
 const hex = (n) => `6a2d30014193e6621459${(0xabbd + n).toString(16)}`;
+// What the API sends for the source of each row (sourceGroup, the tooltip and the Source page cell).
+const WEB = "Website";
+const UNKNOWN = { sourceGroup: "Unknown", sourceDetail: "Booked before source tracking started", sourcePage: null };
+const page = (type, name, clickedOn = "") => ({ type, name, clickedOn });
+const SOURCES = {
+  1: { sourceGroup: "Web", sourceDetail: WEB, sourcePage: page("Condition", "Fever") },
+  2: { sourceGroup: "App", sourceDetail: "Android · v1.0.0+16", sourcePage: page("Service", "Fit to fly") },
+  3: { sourceGroup: "Web", sourceDetail: WEB, sourcePage: page("Header", "Book Appointment", "Service: Fit to fly") },
+  4: UNKNOWN,
+  5: { sourceGroup: "Web", sourceDetail: WEB, sourcePage: page("Speciality", "Adolescent Medicine") },
+  6: {
+    sourceGroup: "Web",
+    sourceDetail: WEB,
+    sourcePage: page("Footer", "Book Appointment", "Blog: Travelling with asthma, jet lag, altitude and everything else you should know before you fly"),
+  },
+  7: { sourceGroup: "App", sourceDetail: "iOS · v1.0.0+16", sourcePage: page("Service", "Online Prescription Refills") },
+  8: { sourceGroup: "Web", sourceDetail: WEB, sourcePage: page("Doctor profile", "Martin Perlin") },
+  9: { sourceGroup: "Web", sourceDetail: WEB, sourcePage: page("Header", "Book Appointment", "Home page") },
+  10: { sourceGroup: "App", sourceDetail: "Android · v1.0.0+16", sourcePage: page("Home", "Book appointment card") },
+  11: { sourceGroup: "App", sourceDetail: "iOS · v1.0.0+16", sourcePage: null },
+  12: { sourceGroup: "Web", sourceDetail: WEB, sourcePage: page("Category", "Mental Health") },
+};
 const R = (n, status, patient, country, doctorName, category, booked, date, time, fee, assignedBy, extra = {}) => ({
   id: hex(n),
   shortId: hex(n).slice(-8).toUpperCase(),
@@ -14,6 +36,7 @@ const R = (n, status, patient, country, doctorName, category, booked, date, time
   assignedBy: doctorName ? assignedBy : null,
   isTesting: Boolean(extra.testing),
   originalDoctorName: extra.original || null,
+  ...(SOURCES[n] || UNKNOWN),
 });
 export const items = [
   R(1, "upcoming", "Test Sujal", "IN", null, "Children & Family", "2026-10-16T08:00:00Z", "2026-10-23", "1:30 AM", 10, null),

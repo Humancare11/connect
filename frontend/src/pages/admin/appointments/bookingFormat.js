@@ -36,6 +36,22 @@ export const isClosed = (status) => status === "complete" || status === "cancell
 // @container rule uses the same number. The area is the page minus the sidebar, so it is about 260px less than the window.
 export const CARD_BELOW = 1000;
 
+// The Source dropdown: value (also the ?source= in the page URL and the API) and label. "all" is the default and is left out of the URL.
+export const SOURCE_FILTERS = [
+  ["all", "All"],
+  ["web", "Web"],
+  ["app", "App"],
+  ["unknown", "Unknown"],
+];
+export const sourceFromParam = (value) => (SOURCE_FILTERS.some(([key]) => key === value) ? value : "all");
+
+// The full text of a row's Source page cell, for the hover: "Header: Book Appointment (clicked on Service: Fit to fly)".
+export function sourcePageText(page) {
+  if (!page) return "Not recorded";
+  const head = page.name ? `${page.type}: ${page.name}` : page.type;
+  return page.clickedOn ? `${head} (clicked on ${page.clickedOn})` : head;
+}
+
 export const tabFromParam = (value) => (TAB_ORDER.includes(value) ? value : DEFAULT_TAB);
 
 export function pageFromParam(value) {

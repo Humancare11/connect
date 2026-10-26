@@ -198,3 +198,18 @@ test("the refund reminder names the gateway the booking was paid through", () =>
   }
   assert.equal(refundWarning(null), "This booking was paid. Refund it with the payment provider.");
 });
+
+test("the Source filter: All, Web, App, Unknown; anything else is All", async () => {
+  const { SOURCE_FILTERS, sourceFromParam } = await import("./bookingFormat.js");
+  assert.deepEqual(SOURCE_FILTERS, [["all", "All"], ["web", "Web"], ["app", "App"], ["unknown", "Unknown"]]);
+  for (const key of ["web", "app", "unknown", "all"]) assert.equal(sourceFromParam(key), key);
+  for (const bad of [null, undefined, "", "android", "WEB", "<script>"]) assert.equal(sourceFromParam(bad), "all");
+});
+
+test("the Source page hover text", async () => {
+  const { sourcePageText } = await import("./bookingFormat.js");
+  assert.equal(sourcePageText(null), "Not recorded");
+  assert.equal(sourcePageText({ type: "Condition", name: "Fever", clickedOn: "" }), "Condition: Fever");
+  assert.equal(sourcePageText({ type: "Header", name: "Book Appointment", clickedOn: "Home page" }), "Header: Book Appointment (clicked on Home page)");
+  assert.equal(sourcePageText({ type: "Direct", name: "", clickedOn: "" }), "Direct");
+});

@@ -69,7 +69,7 @@ export async function startApiServer() {
   // `assignedBy`: a name or email, `null` for an older booking that has none recorded, or left out for "Super Admin".
   const byField = (assignedBy) => (assignedBy === null ? {} : { assignedBy: { name: assignedBy === undefined ? "Super Admin" : assignedBy } });
 
-  async function make({ kind = "appointment", status = "upcoming", doctor = null, paid = false, gateway = "", testing = false, nextAvailable = false, name = "Seed Patient", time = "10:00 AM", date, original = "", assignedBy, ghostDoctor = false }) {
+  async function make({ source, kind = "appointment", status = "upcoming", doctor = null, paid = false, gateway = "", testing = false, nextAvailable = false, name = "Seed Patient", time = "10:00 AM", date, original = "", assignedBy, ghostDoctor = false }) {
     const p = await patientNamed(name);
     const doc = doctor === null ? null : docs[doctor];
     const day = date || nextDay();
@@ -79,6 +79,7 @@ export async function startApiServer() {
       ...(paid && gateway ? { paymentGateway: gateway } : {}),
       consultationPrice: 49,
       ...(original ? { originalDoctorName: original } : {}),
+      ...(source ? { source } : {}),
     };
     if (kind === "category") {
       const c = await CategoryConsultation.create({

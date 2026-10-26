@@ -1490,8 +1490,43 @@
 .adp-bk-card .adp-search {
   flex: 0 1 280px;
   min-width: 200px;
-  margin-left: auto;
+  margin-left: 0;
   padding: 7px 10px;
+}
+/* The Source dropdown and the search box stay together (one unit, pushed to the right; it drops to its own row when the tabs need the room). */
+.adp-bk-find {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;
+}
+.adp-bk-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 34px;
+  padding: 0 8px 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-source select {
+  padding: 6px 2px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
+  cursor: pointer;
+}
+.adp-bk-source:focus-within {
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 .adp-bk-tabs {
   display: flex;
@@ -1587,7 +1622,9 @@
 }
 .adp-bk-cut strong,
 .adp-bk-cut span,
-.adp-bk-cat {
+.adp-bk-src b,
+.adp-bk-src span,
+.adp-bk-src small {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1667,6 +1704,48 @@
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
   white-space: nowrap;
+}
+/* Source page cell: type in bold, name under it, the page a button was clicked on in grey. */
+.adp-bk-src b {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+.adp-bk-src span {
+  margin-top: 1px;
+  color: #0f172a;
+}
+.adp-bk-src small {
+  margin-top: 1px;
+  color: #64748b;
+  font-size: 11.5px;
+}
+.adp-bk-src--none {
+  color: #94a3b8;
+  font-size: 13px;
+}
+/* Web / App / Unknown label under the booking id. */
+.adp-bk-plat {
+  display: block;
+  width: max-content;
+  margin-top: 4px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.adp-bk-plat--web {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.adp-bk-plat--app {
+  background: #dcfce7;
+  color: #166534;
+}
+.adp-bk-plat--unknown {
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-weight: 600;
 }
 .adp-bk-idcell {
   position: relative;
@@ -2137,16 +2216,16 @@ a.adp-bk-alt {
   line-height: 1;
 }
 
-/* Table area under 1180px: the Category column goes. (The area is the page without the sidebar.) */
+/* Table area under 1180px: the Source page column goes. (The area is the page without the sidebar.) */
 @container (max-width: 1179px) {
-  .adp-bk .adp-bk-c-cat {
+  .adp-bk .adp-bk-c-src {
     display: none;
   }
 }
 
 /* Table area under 1000px (CARD_BELOW in bookingFormat.js): one card per booking. */
 @container (max-width: 999px) {
-  .adp-bk .adp-bk-c-cat {
+  .adp-bk .adp-bk-c-src {
     display: block;
   }
   .adp-bk,
@@ -2194,7 +2273,9 @@ a.adp-bk-alt {
   }
   .adp-bk-cut strong,
   .adp-bk-cut span,
-  .adp-bk-cat,
+  .adp-bk-src b,
+  .adp-bk-src span,
+  .adp-bk-src small,
   .adp-bk-doctor strong,
   .adp-bk-nodoc {
     overflow: visible;
@@ -2257,8 +2338,13 @@ a.adp-bk-alt {
 }
 
 @media (max-width: 760px) {
-  .adp-bk-card .adp-search {
+  .adp-bk-find {
     flex: 1 1 100%;
+    margin-left: 0;
+  }
+  .adp-bk-card .adp-search {
+    flex: 1 1 0;
+    min-width: 0;
     max-width: none;
     margin-left: 0;
   }
