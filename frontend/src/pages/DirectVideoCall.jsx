@@ -15,6 +15,12 @@ import "./videocall.css";
 import "./directvideocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
 import { retryDebugLog, retryDebugPollInboundVideoStats } from "../utils/retryDebug";
+import { isRetryableDirectCode, nextJoinRetryDelay } from "../utils/roomDenyRetry";
+import { iceRecoveryBudgetRefilled } from "../utils/iceRecoveryBudget";
+import { probeSocketAlive } from "../utils/socketLiveness";
+import { useSlowConnectNotice } from "../utils/slowConnectNotice";
+import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
+import { createPinActionRunner } from "../utils/directPinRunner";
 import { extractDtlsFingerprint } from "../utils/webrtcSdp";
 import { MEDIA_ACQUIRE_TIMEOUT_MS, mediaAcquireTimedOut } from "../utils/mediaTimeout";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
@@ -814,6 +820,20 @@ export default function DirectVideoCall() {
   // finished).
   const networkRecoveryInProgressRef = useRef(false);
   const [reconnectStalled, setReconnectStalled] = useState(false);
+  // null | "retrying" | "failed" — a refused join (room full / server error)
+  // being retried with backoff while the call UI and local media stay up.
+  const [joinRetryPhase, setJoinRetryPhase] = useState(null);
+  // null | { phase: "recovering" | "failed" } - local camera/mic died mid-call.
+  const [mediaRecovery, setMediaRecovery] = useState(null);
+  const localMediaRecoveryRef = useRef(null);
+  const pinRunnerRef = useRef(null);
+  const joinDenyAttemptRef = useRef(0);
+  // True once this page has been let into the room at least once. Only then is a
+  // "full" refusal plausibly our OWN stale seat still being released (worth
+  // retrying); for a first join it means a third person and is final at once.
+  const joinedOnceRef = useRef(false);
+  const joinRetryTimerRef = useRef(null);
+  const rejoinRoomRef = useRef(() => {});
   // The stall banner reads "Waiting for the other person to reconnect…"
   // instead of the generic text — set immediately on the server's
   // peer-socket-down event (this side's own connection is fine, only the
@@ -898,6 +918,13 @@ export default function DirectVideoCall() {
       // so use it to kick an immediate recovery check (and reconnect the
       // socket right away rather than waiting out its backoff delay).
       if (!socket.connected) socket.connect();
+      else {
+        void probeSocketAlive(socket).then((alive) => {
+          if (alive) return;
+          socket.disconnect();
+          socket.connect();
+        });
+      }
       kickIceRecoveryRef.current();
       // Also give the remote-video renderer a chance to recover in case the
       // PeerConnection never actually left "connected" throughout — see
@@ -987,6 +1014,7 @@ export default function DirectVideoCall() {
     if (stage !== "pin") return;
 
     const handlePinOk = ({ role: grantedRole, sessionToken: token } = {}) => {
+      pinRunnerRef.current?.done();
       setPinVerifying(false);
       setTakingOver(false);
       setPinConflictRole("");
@@ -996,7 +1024,10 @@ export default function DirectVideoCall() {
       storeSessionToken(roomId, token || "");
       setStage("prejoin");
     };
-    const handlePinError = ({ msg, blocked } = {}) => {
+    const handlePinError = ({ msg, blocked, code } = {}) => {
+      // Transient server error: keep the spinner and retry with the same PIN.
+      if (code === "server_error" && pinRunnerRef.current?.serverError()) return;
+      pinRunnerRef.current?.done();
       setPinVerifying(false);
       setTakingOver(false);
       setPinBlocked(Boolean(blocked));
@@ -1004,6 +1035,7 @@ export default function DirectVideoCall() {
       if (!blocked) setPinDigits("");
     };
     const handlePinConflict = ({ role: conflictRole } = {}) => {
+      pinRunnerRef.current?.done();
       setPinVerifying(false);
       setPinError("");
       setPinConflictRole(conflictRole || "");
@@ -1021,6 +1053,37 @@ export default function DirectVideoCall() {
     };
   }, [stage, roomId]);
 
+  // One runner per page: retries a PIN request that got no answer, or got a
+  // transient server_error, instead of leaving the form stuck on "Verifying...".
+  const getPinRunner = useCallback(() => {
+    if (!pinRunnerRef.current) {
+      pinRunnerRef.current = createPinActionRunner({
+        emit: (action) => {
+          if (!socket.connected) socket.connect();
+          if (action.type === "takeover") {
+            socket.emit("direct-session-takeover", {
+              roomId,
+              pin: action.pin,
+              guestId: guestIdRef.current,
+              role: action.role,
+            });
+          } else {
+            socket.emit("verify-direct-pin", { roomId, pin: action.pin, guestId: guestIdRef.current });
+          }
+        },
+        onGiveUp: () => {
+          console.warn("[direct-video-call] PIN request got no usable answer after retries");
+          setPinVerifying(false);
+          setTakingOver(false);
+          setPinError("We couldn't reach the meeting service. Check your connection and press Verify again.");
+        },
+      });
+    }
+    return pinRunnerRef.current;
+  }, [roomId]);
+
+  useEffect(() => () => pinRunnerRef.current?.done(), []);
+
   const submitPin = useCallback(
     (event) => {
       event?.preventDefault();
@@ -1029,10 +1092,9 @@ export default function DirectVideoCall() {
       setPinBlocked(false);
       setPinConflictRole("");
       setPinVerifying(true);
-      if (!socket.connected) socket.connect();
-      socket.emit("verify-direct-pin", { roomId, pin: pinDigits, guestId: guestIdRef.current });
+      getPinRunner().start({ type: "verify", pin: pinDigits });
     },
-    [pinVerifying, pinDigits, roomId],
+    [pinVerifying, pinDigits, getPinRunner],
   );
 
   const confirmTakeover = useCallback(() => {
@@ -1040,13 +1102,8 @@ export default function DirectVideoCall() {
     setPinError("");
     setPinVerifying(true);
     setTakingOver(true);
-    socket.emit("direct-session-takeover", {
-      roomId,
-      pin: pinDigits,
-      guestId: guestIdRef.current,
-      role: pinConflictRole,
-    });
-  }, [pinConflictRole, pinDigits, pinVerifying, roomId]);
+    getPinRunner().start({ type: "takeover", pin: pinDigits, role: pinConflictRole });
+  }, [pinConflictRole, pinDigits, pinVerifying, getPinRunner]);
 
   const cancelTakeover = useCallback(() => {
     setPinConflictRole("");
@@ -2711,15 +2768,24 @@ export default function DirectVideoCall() {
         // connection stuck in "disconnected" may never fire again.
         if (typeof navigator === "undefined" || navigator.onLine !== false) {
           const now = Date.now();
-          if (now - lastIceRecoveryAtRef.current > ICE_RECOVERY_COOLDOWN_MS) {
+          // Compared against the last REAL attempt (stamped below), not this
+          // tick: stamping every tick kept the cooldown from ever elapsing
+          // while the loop ran, so an exhausted budget never refilled.
+          if (
+            iceRecoveryBudgetRefilled(
+              now,
+              lastIceRecoveryAtRef.current,
+              ICE_RECOVERY_COOLDOWN_MS,
+            )
+          ) {
             iceRecoveryAttemptsRef.current = 0;
           }
-          lastIceRecoveryAtRef.current = now;
 
           if (iceRecoveryAttemptsRef.current >= ICE_MAX_RECOVERY_ATTEMPTS) {
             requestPeerIceRestart();
           } else {
             iceRecoveryAttemptsRef.current += 1;
+            lastIceRecoveryAtRef.current = now;
             if (isInitiatorRef.current) {
               await createAndSendIceRestartOffer();
             } else {
@@ -3442,6 +3508,16 @@ export default function DirectVideoCall() {
         socket.connect();
         return;
       }
+      // socket.connected can stay true after the OS froze the tab / the machine
+      // slept; make sure the server still knows this socket, else reconnect
+      // (the "connect" handler re-joins the room).
+      if (!(await probeSocketAlive(socket))) {
+        if (!mountedRef.current) return;
+        console.warn("[direct-video-call] resume socket probe failed - forcing reconnect");
+        socket.disconnect();
+        socket.connect();
+        return;
+      }
       if (verifyingVisibilityRef.current) return;
       verifyingVisibilityRef.current = true;
       try {
@@ -3482,8 +3558,42 @@ export default function DirectVideoCall() {
 
     socket.on("connect", joinRoom);
     socket.io.on("reconnect", handleSocketReconnect);
-    socket.on("direct-room-joined", handleRoomJoined);
-    socket.on("direct-room-error", handleRoomError);
+    // Socket-originated refusals only: "full" and "server_error" can clear on
+    // their own (the guest's own stale socket still being evicted, a DB blip),
+    // so they are retried with backoff; every other code is final. Local
+    // failures (e.g. RTCPeerConnection construction) still go straight to
+    // handleRoomError.
+    rejoinRoomRef.current = joinRoom;
+    const handleJoinRefused = (payload = {}) => {
+      if (!mountedRef.current) return;
+      if (!isRetryableDirectCode(payload.code) || (payload.code === "full" && !joinedOnceRef.current)) {
+        handleRoomError(payload);
+        return;
+      }
+      const delay = nextJoinRetryDelay(joinDenyAttemptRef.current);
+      if (delay === null) {
+        setJoinRetryPhase("failed");
+        return;
+      }
+      joinDenyAttemptRef.current += 1;
+      setJoinRetryPhase("retrying");
+      window.clearTimeout(joinRetryTimerRef.current);
+      joinRetryTimerRef.current = window.setTimeout(() => {
+        if (!mountedRef.current) return;
+        if (socket.connected) joinRoom();
+        else socket.connect();
+      }, delay);
+    };
+    const handleJoinAccepted = (payload) => {
+      joinedOnceRef.current = true;
+      joinDenyAttemptRef.current = 0;
+      window.clearTimeout(joinRetryTimerRef.current);
+      setJoinRetryPhase(null);
+      handleRoomJoined(payload);
+    };
+
+    socket.on("direct-room-joined", handleJoinAccepted);
+    socket.on("direct-room-error", handleJoinRefused);
     socket.on("direct-peer-joined", handlePeerJoined);
     socket.on("direct-participant-left", handleParticipantLeft);
     socket.on("direct-peer-socket-down", handleDirectPeerSocketDown);
@@ -3515,8 +3625,9 @@ export default function DirectVideoCall() {
       startedRef.current = false;
       socket.off("connect", joinRoom);
       socket.io.off("reconnect", handleSocketReconnect);
-      socket.off("direct-room-joined", handleRoomJoined);
-      socket.off("direct-room-error", handleRoomError);
+      window.clearTimeout(joinRetryTimerRef.current);
+      socket.off("direct-room-joined", handleJoinAccepted);
+      socket.off("direct-room-error", handleJoinRefused);
       socket.off("direct-peer-joined", handlePeerJoined);
       socket.off("direct-participant-left", handleParticipantLeft);
       socket.off("direct-peer-socket-down", handleDirectPeerSocketDown);
@@ -3738,6 +3849,42 @@ export default function DirectVideoCall() {
     }
   }, [assignStreams, roomId, setupMutedReminderMeter]);
 
+  // Local camera/mic that ENDS mid-call (device unplugged, Bluetooth headset
+  // dropped, tab backgrounded and the OS reclaimed the camera, permission
+  // revoked): re-acquire and replaceTrack onto the existing senders - the same
+  // path as the in-call "Retry" button. Checked on a 2s poll plus devicechange
+  // and tab-visible so detection is fast even where "ended" never fires.
+  const retryInCallMediaRef = useRef(null);
+  retryInCallMediaRef.current = retryInCallMedia;
+  useEffect(() => {
+    if (stage !== "call") return undefined;
+    const recovery = createLocalMediaRecovery({
+      hasProblem: () => hasEndedTrack(localStreamRef.current),
+      recover: () => retryInCallMediaRef.current?.(),
+      isActive: () =>
+        mountedRef.current &&
+        stageRef.current === "call" &&
+        Boolean(pcRef.current) &&
+        pcRef.current.signalingState !== "closed",
+      onState: setMediaRecovery,
+      log: (event, details) => console.info(`[direct-video-call] ${event}`, details),
+    });
+    localMediaRecoveryRef.current = recovery;
+    const poll = window.setInterval(() => recovery.check("poll"), 2000);
+    const onDeviceChange = () => recovery.check("devicechange", { force: true });
+    const onVisible = () => {
+      if (document.visibilityState === "visible") recovery.check("visible", { force: true });
+    };
+    navigator.mediaDevices?.addEventListener?.("devicechange", onDeviceChange);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(poll);
+      navigator.mediaDevices?.removeEventListener?.("devicechange", onDeviceChange);
+      document.removeEventListener("visibilitychange", onVisible);
+      localMediaRecoveryRef.current = null;
+    };
+  }, [stage]);
+
   const toggleSwap = useCallback(() => {
     const next = !isSwappedRef.current;
     // Update the ref synchronously (as toggleMic/toggleCam do) so a rapid
@@ -3771,6 +3918,27 @@ export default function DirectVideoCall() {
     cleanupCall();
     setStage("ended");
   }, [cleanupCall]);
+
+  // "Still trying" notice (observational only - never touches recovery).
+  // Held back only while a join retry / manual Retry is in progress (those have
+  // their own notices). While it shows it replaces the older "Reconnection is
+  // taking longer than expected" banner (one at a time).
+  const slowConnectSuppressedRef = useRef(false);
+  slowConnectSuppressedRef.current = Boolean(manualReconnecting || joinRetryPhase);
+  const slowConnect = useSlowConnectNotice(() => {
+    const pc = pcRef.current;
+    return {
+      joined: joinedOnceRef.current || hasConnectedOnceRef.current,
+      peerPresent: peerPresentRef.current,
+      connected: Boolean(
+        pc &&
+          (pc.connectionState === "connected" ||
+            pc.iceConnectionState === "connected" ||
+            pc.iceConnectionState === "completed"),
+      ),
+      suppressed: slowConnectSuppressedRef.current,
+    };
+  });
 
   // Every path that would drop the call — the "Leave Call" button, a mobile
   // back-swipe/gesture, the hardware back button — routes through here so the
@@ -4252,6 +4420,28 @@ export default function DirectVideoCall() {
               className={`hc-vc__main-video${isSwapped ? " hc-vc__video--local" : ""}${isMainVideoPortrait ? " hc-vc__main-video--portrait" : ""}`}
             />
 
+            {mediaRecovery && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>
+                  {mediaRecovery.phase === "failed"
+                    ? "Your camera or microphone stopped and could not be restored."
+                    : "Your camera or microphone stopped - reconnecting it\u2026"}
+                </span>
+                {mediaRecovery.phase === "failed" && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={() => localMediaRecoveryRef.current?.retryNow()}
+                  >
+                    Retry
+                  </button>
+                )}
+              </div>
+            )}
+
             {localAudioMissing && (
               <div className="hc-vc__local-audio-notice">
                 <FiMicOff />
@@ -4293,11 +4483,37 @@ export default function DirectVideoCall() {
               </div>
             )}
 
+            {joinRetryPhase && (
+              <div className="hc-vc__reconnect-stalled-notice">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>
+                  {joinRetryPhase === "failed"
+                    ? "Couldn't rejoin the call."
+                    : "Reconnecting…"}
+                </span>
+                {joinRetryPhase === "failed" && (
+                  <button
+                    type="button"
+                    className="hc-vc__rx-btn-primary"
+                    onClick={() => {
+                      joinDenyAttemptRef.current = 0;
+                      setJoinRetryPhase("retrying");
+                      rejoinRoomRef.current();
+                    }}
+                  >
+                    Retry
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* Also kept up while a manual Retry is being held
                 (manualReconnecting): the tap itself clears reconnectStalled,
                 which used to make the banner — and its "Reconnecting…"
                 button — vanish the instant it was pressed. */}
-            {(reconnectStalled || manualReconnecting) && (
+            {(reconnectStalled || manualReconnecting) && !slowConnect && (
               <div className="hc-vc__reconnect-stalled-notice">
                 <span>
                   <FiAlertTriangle />
@@ -4324,6 +4540,21 @@ export default function DirectVideoCall() {
                     End Call
                   </button>
                 )}
+              </div>
+            )}
+
+            {slowConnect && (
+              <div className="hc-vc__reconnect-stalled-notice" role="status">
+                <span>
+                  <FiAlertTriangle />
+                </span>
+                <span>Connection is taking longer than usual. Still trying…</span>
+                <button type="button" className="hc-vc__rx-btn-primary" onClick={forceReconnect}>
+                  Retry
+                </button>
+                <button type="button" className="hc-vc__rx-btn-ghost" onClick={leaveCall}>
+                  Leave
+                </button>
               </div>
             )}
 

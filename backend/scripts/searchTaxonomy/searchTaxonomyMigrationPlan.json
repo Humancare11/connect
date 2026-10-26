@@ -11,7 +11,7 @@
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "65094084be2fa9177178f5a44c4ad25211b746b3a9928a47eebecd9dd319abbd",
+      "sha256": "b3f6189c1b6b9b52ee658ff1ef356e99d3a7126ac45994f1c7437468462f8a4a",
       "staticRoutes": 384,
       "duplicateDeclarations": []
     },

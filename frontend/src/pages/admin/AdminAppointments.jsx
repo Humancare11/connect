@@ -11,6 +11,30 @@ function getCountryName(isoCode) {
   return country?.name || isoCode;
 }
 
+// Admin-only list cell: did a video call happen, how long, did it connect, was
+// anything wrong. Links to the call report.
+function CallBadge({ summary, id }) {
+  if (!summary) return <span style={{ color: "#9ca3af" }}>-</span>;
+  const color = summary.hasProblem ? "#b45309" : summary.connected ? "#15803d" : "#6b7280";
+  return (
+    <Link
+      to={`/admin-dashboard/appointments/${id}/call-report`}
+      title={summary.firstProblem || (summary.connected ? "Call connected" : "Joined, but never connected")}
+      style={{ color, textDecoration: "none", fontSize: 12, whiteSpace: "nowrap" }}
+    >
+      <span aria-hidden="true">📞</span> {summary.durationLabel || "0s"}
+      {summary.inProgress ? " · live" : ""}
+      <br />
+      {summary.connected ? "Connected" : "Not connected"}
+      {summary.hasProblem && (
+        <span style={{ marginLeft: 6, background: "#fef3c7", color: "#92400e", borderRadius: 8, padding: "1px 6px" }}>
+          ⚠ {summary.problemCount}
+        </span>
+      )}
+    </Link>
+  );
+}
+
 const STATUS_ORDER = ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled", "all"];
 
 const STATUS_META = {
@@ -142,6 +166,25 @@ export default function AdminAppointments() {
     });
   }, [appointments, filter, search]);
 
+  // Call column (admin call report): one batch request per 100 visible rows.
+  // Best effort - the list works the same if this fails.
+  const [callSummaries, setCallSummaries] = useState({});
+  const displayedIdsKey = useMemo(() => displayed.map((a) => a._id).join(","), [displayed]);
+  useEffect(() => {
+    const ids = displayedIdsKey ? displayedIdsKey.split(",") : [];
+    if (ids.length === 0) return undefined;
+    let alive = true;
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+    Promise.all(chunks.map((chunk) => api.post("/api/call-reports/summaries", { ids: chunk }).then((res) => res.data?.summaries || {}).catch(() => ({}))))
+      .then((parts) => {
+        if (alive) setCallSummaries(Object.assign({}, ...parts));
+      });
+    return () => {
+      alive = false;
+    };
+  }, [displayedIdsKey]);
+
   const setActiveFilter = (nextFilter) => {
     setFilter(nextFilter);
     setSearchParams(nextFilter === "upcoming" ? {} : { tab: nextFilter });
@@ -205,6 +248,7 @@ export default function AdminAppointments() {
                   <th>Doctor Country</th>
                   <th>Status</th>
                   <th>Assigned By</th>
+                  <th>Call</th>
                   <th>View</th>
                   <th>Actions</th>
                 </tr>
@@ -231,6 +275,9 @@ export default function AdminAppointments() {
                         <StatusPill status={appointment.status} />
                       </td>
                       <td data-label="Assigned By">{assignedBy(appointment)}</td>
+                      <td data-label="Call">
+                        <CallBadge summary={callSummaries[appointment._id]} id={appointment._id} />
+                      </td>
                       <td className="adp-col-view">
                         <Link className="adp-view-btn" to={`/admin-dashboard/appointments/${appointment._id}`}>
                           View

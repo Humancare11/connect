@@ -72,6 +72,12 @@ if (!socket.__hcDiagnosticsInstalled) {
     console.warn("[socket] disconnected", { reason });
   });
 
+  // Server refused or failed to process one of our signaling events (not in
+  // the room, malformed payload, rate limited, handler error). Never silent.
+  socket.on("signaling-error", (info) => {
+    console.warn("[socket] signaling-error", info);
+  });
+
   socket.on("connect_error", (err) => {
     console.error("[socket] connect_error", {
       message: err?.message,
