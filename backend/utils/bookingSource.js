@@ -287,7 +287,68 @@ function sourceSearchText(source) {
   return label ? [label.type, label.name, label.clickedOn].filter(Boolean).join(" ") : "";
 }
 
+// ── Admin list: the row fields, the Source filter, search and the CSV columns ──
+
+const SOURCE_FILTERS = ["web", "app", "unknown"];
+
+// The three fields every admin row carries for a booking's `source` (undefined for an old booking).
+//   sourceGroup  "Web" | "App" | "Unknown"   (android, ios and app all count as App)
+//   sourceDetail the tooltip: "Android · v1.0.0+16", "Website", "Booked before source tracking started"
+//   sourcePage   { type, name, clickedOn } or null for "Not recorded"
+function sourceRowFields(source) {
+  return { sourceGroup: platformGroup(source), sourceDetail: platformDetail(source), sourcePage: sourcePageLabel(source) };
+}
+
+// The Source filter as a query on the stored platform. An old booking has no platform, so it is "unknown".
+function sourceFilterMatch(group) {
+  if (group === "web") return { "source.platform": "web" };
+  if (group === "app") return { "source.platform": { $in: ["android", "ios", "app"] } };
+  if (group === "unknown") return { "source.platform": { $in: [null, ""] } };
+  return null;
+}
+
+// Search clauses for the Source page column: matches the type (by its label, "Doctor profile"), the name and the
+// clicked-on page. `rx` is the already-escaped search expression.
+function sourceSearchClauses(rx) {
+  const typesMatching = (list) => list.filter((t) => rx.test(TYPE_LABELS[t]) || rx.test(t.replace(/_/g, " ")));
+  const types = typesMatching(SOURCE_TYPES);
+  return [
+    ...(types.length ? [{ "source.sourceType": { $in: types } }, { "source.clickedOnType": { $in: types } }] : []),
+    { "source.sourceName": rx },
+    { "source.clickedOnName": rx },
+  ];
+}
+
+// A spreadsheet treats a cell that starts with = + - @ (or a tab / carriage return) as a formula. Display text came from a
+// visitor's browser, so such a cell is made plain text with a leading apostrophe.
+const csvSafe = (value) => {
+  const text = String(value ?? "");
+  return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+};
+
+// The five columns the Appointment entries CSV gets. Values are formula-safe; quoting is the exporter's job.
+function sourceCsvColumns(source) {
+  const label = sourcePageLabel(source);
+  const platform = {
+    web: "Web", android: "Android", ios: "iOS", app: "App",
+  }[source?.platform] || "";
+  const version = source?.appVersion ? ` (v${source.appVersion})` : "";
+  return {
+    Source: platformGroup(source),
+    Platform: csvSafe(platform + (platform && platform !== "Web" ? version : "")),
+    "Source page type": csvSafe(label?.type || ""),
+    "Source page name": csvSafe(label?.name || ""),
+    "Clicked on": csvSafe(label?.clickedOn || ""),
+  };
+}
+
 module.exports = {
+  SOURCE_FILTERS,
+  sourceRowFields,
+  sourceFilterMatch,
+  sourceSearchClauses,
+  csvSafe,
+  sourceCsvColumns,
   SOURCE_TYPES,
   BUTTON_TYPES,
   CLICKED_ON_TYPES,

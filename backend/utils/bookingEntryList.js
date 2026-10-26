@@ -15,6 +15,7 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const { toAppointmentRow, toCategoryRow } = require("./adminBookingList");
+const { sourceCsvColumns } = require("./bookingSource");
 const { ENTRY_TABS, PAID_STATUSES, paidStatusMatch, entryView, dollarsToCents } = require("./bookingEntry");
 
 const DEFAULT_LIMIT = 25;
@@ -243,7 +244,7 @@ async function loadChoices(filter) {
 
 // ── Rows ─────────────────────────────────────────────────────────────────────
 
-const ENTRY_SELECT = "entry.doctorFeeCents entry.paidStatus entry.paidOn entry.comment entry.v entry.doctorAtEntry entry.edits";
+const ENTRY_SELECT = "entry.doctorFeeCents entry.paidStatus entry.paidOn entry.comment entry.v entry.doctorAtEntry entry.edits source";
 
 const findAppointments = (ids) =>
   Appointment.find({ _id: { $in: ids } })
@@ -295,6 +296,11 @@ function toEntryRow(kind, doc) {
     },
     placeholder: entry.placeholder,
     doctorChanged: entry.doctorChanged,
+    // Where the booking came from (the same three fields as the Appointments list) and its CSV columns.
+    sourceGroup: base.sourceGroup,
+    sourceDetail: base.sourceDetail,
+    sourcePage: base.sourcePage,
+    sourceCsv: sourceCsvColumns(doc.source),
     // A booking cancelled after its doctor was marked Paid: only visible with includeCancelled, flagged for a refund check.
     cancelledAfterPaid: base.status === "cancelled" && entry.paidStatus === "paid",
   };

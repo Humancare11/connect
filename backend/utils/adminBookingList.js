@@ -18,6 +18,7 @@ const CategoryConsultation = require("../models/CategoryConsultation");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
+const { SOURCE_FILTERS, sourceRowFields, sourceFilterMatch, sourceSearchClauses } = require("./bookingSource");
 
 const STATUS_KEYS = ["upcoming", "assigned", "pending", "confirmed", "complete", "cancelled"];
 const TAB_KEYS = ["all", ...STATUS_KEYS, "testing"];
@@ -87,8 +88,14 @@ function parseListQuery(query = {}) {
   const sort = String(query.sort || "-bookedAt");
   if (!(sort in SORTS)) throw new ListQueryError(`Invalid sort. Allowed values: ${Object.keys(SORTS).join(", ")}.`);
 
+  const source = String(query.source || "").toLowerCase();
+  if (source && source !== "all" && !SOURCE_FILTERS.includes(source)) {
+    throw new ListQueryError(`Invalid source. Allowed values: all, ${SOURCE_FILTERS.join(", ")}.`);
+  }
+
   return {
     status,
+    source: SOURCE_FILTERS.includes(source) ? source : "",
     page,
     limit: Math.min(limit, MAX_LIMIT),
     hideTesting: hideRaw === "true" || hideRaw === "1",
@@ -118,7 +125,8 @@ function statusFilters({ status, hideTesting }) {
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 // Search narrows the rows only (never the tab counts). Matches booking id (full
-// or the short form), patient name/email, doctor name and the category fields.
+// or the short form), patient name/email, doctor name, the category fields and the source page
+// (its type, its name and the page a header/footer button was clicked on).
 async function searchFilters(q) {
   if (!q) return null;
   const rx = new RegExp(escapeRegex(q), "i");
@@ -149,6 +157,7 @@ async function searchFilters(q) {
         { specialty: rx },
         { condition: rx },
         { originalDoctorName: rx },
+        ...sourceSearchClauses(rx),
       ],
     },
     category: {
@@ -163,6 +172,7 @@ async function searchFilters(q) {
         { conditionName: rx },
         { serviceName: rx },
         { pcpName: rx },
+        ...sourceSearchClauses(rx),
       ],
     },
   };
@@ -184,11 +194,14 @@ function computeCounts(groups, hideTesting) {
   return counts;
 }
 
-async function loadCountGroups() {
+// `sourceMatch`: the Source filter, when one is on (the tab counts follow it, like the testing toggle).
+async function loadCountGroups(sourceMatch = null) {
   const testing = { $eq: ["$isTesting", true] };
+  const scope = sourceMatch ? [{ $match: sourceMatch }] : [];
   const [appointments, categories] = await Promise.all([
-    Appointment.aggregate([{ $group: { _id: { status: "$status", testing }, n: { $sum: 1 } } }]),
+    Appointment.aggregate([...scope, { $group: { _id: { status: "$status", testing }, n: { $sum: 1 } } }]),
     CategoryConsultation.aggregate([
+      ...scope,
       {
         $group: {
           _id: {
@@ -243,6 +256,7 @@ function toAppointmentRow(a) {
     isTesting: a.isTesting === true,
     paid: a.paymentStatus === "paid",
     paymentGateway: a.paymentGateway || "",
+    ...sourceRowFields(a.source),
   };
 }
 
@@ -268,19 +282,20 @@ function toCategoryRow(c) {
     isTesting: c.isTesting === true,
     paid: c.paymentStatus === "paid",
     paymentGateway: c.paymentGateway || "",
+    ...sourceRowFields(c.source),
   };
 }
 
 const findAppointmentRows = (idFilter) =>
   Appointment.find({ _id: idFilter })
-    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt")
+    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt source")
     .populate("patientId", "name country")
     .populate("doctorId", "name")
     .lean();
 
 const findCategoryRows = (idFilter) =>
   CategoryConsultation.find({ _id: idFilter })
-    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt")
+    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt source")
     .populate("patientId", "name country")
     .populate("assignedDoctorId", "firstName surname")
     .lean();
@@ -309,13 +324,14 @@ const combine = (...filters) => {
 };
 
 async function listAdminBookings(query) {
-  const { status, page, limit, hideTesting, sort, q } = parseListQuery(query);
+  const { status, source, page, limit, hideTesting, sort, q } = parseListQuery(query);
   const direction = SORTS[sort];
 
   const tab = statusFilters({ status, hideTesting });
   const search = await searchFilters(q);
-  const appointmentFilter = combine(tab.appointment, search?.appointment);
-  const categoryFilter = combine(tab.category, search?.category);
+  const sourceMatch = sourceFilterMatch(source);
+  const appointmentFilter = combine(tab.appointment, sourceMatch, search?.appointment);
+  const categoryFilter = combine(tab.category, sourceMatch, search?.category);
 
   const start = (page - 1) * limit;
   const need = start + limit;
@@ -323,7 +339,7 @@ async function listAdminBookings(query) {
   const categoryOrder = { createdAt: direction, _id: direction };
 
   const [groups, appointmentTotal, categoryTotal, appointmentKeys, categoryKeys] = await Promise.all([
-    loadCountGroups(),
+    loadCountGroups(sourceMatch),
     Appointment.countDocuments(appointmentFilter),
     CategoryConsultation.countDocuments(categoryFilter),
     Appointment.find(appointmentFilter).select("_id bookedAt createdAt").sort(order).limit(need).lean(),
@@ -358,6 +374,7 @@ async function listAdminBookings(query) {
     total,
     totalPages: Math.ceil(total / limit),
     status,
+    source,
     hideTesting,
     sort,
   };

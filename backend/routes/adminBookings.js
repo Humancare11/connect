@@ -26,7 +26,7 @@ async function actorOf(req) {
 function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdminToken, superAdminOnly] } = {}) {
   const router = express.Router();
 
-  // GET /api/admin/bookings?status=&hideTesting=&q=&page=&limit=&sort=
+  // GET /api/admin/bookings?status=&source=web|app|unknown&hideTesting=&q=&page=&limit=&sort=
   router.get("/", ...guard, async (req, res) => {
     try {
       res.status(200).json(await listAdminBookings(req.query));

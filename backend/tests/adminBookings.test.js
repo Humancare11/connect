@@ -117,6 +117,7 @@ describe("admin bookings list", () => {
         category: "Travel & Global Care", bookedAt: day(5).toISOString(),
         consultation: { date: "2026-11-01", time: "10:00 AM", timezone: "" },
         fee: 99, status: "assigned", assignedBy: "Super Admin", isTesting: false, paid: true, paymentGateway: "stripe",
+        sourceGroup: "Unknown", sourceDetail: "Booked before source tracking started", sourcePage: null,
       });
 
       const cr = items.find((r) => r.kind === "category");
