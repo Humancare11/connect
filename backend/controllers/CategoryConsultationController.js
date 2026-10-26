@@ -12,6 +12,7 @@ const {
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
 const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
+const { bookingSourceFor } = require("../utils/bookingSource");
 
 // Create a new consultation
 const createCategoryConsultation = async (req, res) => {
@@ -109,6 +110,7 @@ const createCategoryConsultation = async (req, res) => {
         paymentAmount: paymentAmountFinal,
         paymentStatus,
         paymentGateway,
+        source: bookingSourceFor(req),
       });
     } catch (err) {
       // Payment was already claimed above (money was taken) but the write

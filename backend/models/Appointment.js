@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { bookingAdminFields } = require("../utils/bookingAdminFields");
 const { bookingEntryFields } = require("../utils/bookingEntry");
-const { bookingSourceFields } = require("../utils/bookingSource");
+const { bookingSourceFields, protectBookingSource } = require("../utils/bookingSource");
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -127,5 +127,8 @@ appointmentSchema.index({ appointmentDateTimeUtc: 1, status: 1 });
 
 // Doctor availability conflict check by canonical UTC instant (timezone-safe)
 appointmentSchema.index({ doctorId: 1, appointmentDateTimeUtc: 1, status: 1 });
+
+// The booking source is written once, at creation (see utils/bookingSource.js).
+protectBookingSource(appointmentSchema);
 
 module.exports = mongoose.model("Appointment", appointmentSchema);

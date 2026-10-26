@@ -28,6 +28,7 @@ const {
   reopenLoaded,
 } = require("../utils/appointmentLifecycle");
 const { notifyAppointmentBooked } = require("../utils/bookingNotifications");
+const { bookingSourceFor } = require("../utils/bookingSource");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -183,6 +184,8 @@ const createAppointment = async (req, res) => {
       patientTimezone,
     } = req.body;
     const patientId = req.user.id;
+    // Where this booking came from, read once from the patient's own request (never fails, never blocks the booking).
+    const source = bookingSourceFor(req);
 
     // ── Input validation ──────────────────────────────────────────────────────
     if (!date || !time) {
@@ -387,6 +390,7 @@ const createAppointment = async (req, res) => {
             paymentAmount: paymentAmountFinal,
             paymentStatus,
             paymentGateway,
+            source,
           },
         ],
         { session }

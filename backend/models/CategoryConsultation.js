@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { bookingAdminFields } = require("../utils/bookingAdminFields");
 const { bookingEntryFields } = require("../utils/bookingEntry");
-const { bookingSourceFields } = require("../utils/bookingSource");
+const { bookingSourceFields, protectBookingSource } = require("../utils/bookingSource");
 
 
 const consultationSchema = new mongoose.Schema(
@@ -185,6 +185,9 @@ const consultationSchema = new mongoose.Schema(
 // Looks up a patient's bookings (patient "my appointments" list and the admin
 // user-profile consultation summary).
 consultationSchema.index({ patientId: 1 });
+
+// The booking source is written once, at creation (see utils/bookingSource.js).
+protectBookingSource(consultationSchema);
 
 module.exports = mongoose.model(
   "CategoryConsultation",

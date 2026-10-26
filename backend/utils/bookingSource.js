@@ -43,7 +43,9 @@ const MAX_REFERRER_LENGTH = 200;
 const MAX_UTM_LENGTH = 100;
 const MAX_VERSION_LENGTH = 32;
 
-// Spread into a schema definition, next to bookingEntryFields().
+// Spread into a schema definition, next to bookingEntryFields(). Old bookings have no `source` in the database and read as
+// these empty defaults. (Mongoose's `immutable` option does not cover a whole nested object or a $set of it, so the
+// write-once rule is enforced by protectBookingSource() below instead.)
 const bookingSourceFields = () => ({
   source: {
     platform: { type: String, enum: [...PLATFORMS, ""], default: "" },
@@ -62,6 +64,41 @@ const bookingSourceFields = () => ({
     capturedAt: { type: Date, default: null },
   },
 });
+
+// ── Write once ─────────────────────────────────────────────────────────────────
+
+const isSourcePath = (key) => key === "source" || key.startsWith("source.");
+
+// Removes every write to `source` from an update document ($set, $unset, ... and a plain top-level key). Mutates in place.
+function stripSourceFromUpdate(update) {
+  if (!update || typeof update !== "object" || Array.isArray(update)) return update;
+  for (const key of Object.keys(update)) {
+    if (key.startsWith("$")) {
+      const operator = update[key];
+      if (operator && typeof operator === "object") {
+        for (const field of Object.keys(operator)) if (isSourcePath(field)) delete operator[field];
+        if (Object.keys(operator).length === 0) delete update[key];
+      }
+    } else if (isSourcePath(key)) {
+      delete update[key];
+    }
+  }
+  return update;
+}
+
+// Schema plugin for the two booking models: the source is set when the booking is created and never again. A later save
+// that changed it is not written; an update query that mentions it has that part removed. Nothing throws, so an admin
+// action that happens to touch the booking still works. (Not covered: bulkWrite and replaceOne, which no code uses on
+// bookings.)
+function protectBookingSource(schema) {
+  schema.pre("save", function protectSourceOnSave() {
+    if (this.isNew) return;
+    for (const path of this.modifiedPaths()) if (isSourcePath(path)) this.unmarkModified(path);
+  });
+  schema.pre(["updateOne", "updateMany", "findOneAndUpdate"], function protectSourceOnUpdate() {
+    stripSourceFromUpdate(this.getUpdate());
+  });
+}
 
 // ── Cleaning ───────────────────────────────────────────────────────────────────
 
@@ -149,18 +186,31 @@ function buildBookingSource(req, raw, now = new Date()) {
     };
   } catch (err) {
     console.warn("[bookingSource] build failed:", err.message);
-    return {
-      platform: "",
-      appVersion: "",
-      sourceType: "",
-      sourceName: "",
-      clickedOnType: "",
-      clickedOnName: "",
-      pagePath: "",
-      referrer: "",
-      utm: { source: "", medium: "", campaign: "" },
-      capturedAt: now,
-    };
+    return emptyBookingSource(now);
+  }
+}
+
+const emptyBookingSource = (now = new Date()) => ({
+  platform: "",
+  appVersion: "",
+  sourceType: "",
+  sourceName: "",
+  clickedOnType: "",
+  clickedOnName: "",
+  pagePath: "",
+  referrer: "",
+  utm: { source: "", medium: "", campaign: "" },
+  capturedAt: now,
+});
+
+// For the create endpoints: the source of a booking made by THIS request (the patient's own checkout request; the client
+// is read from this request's headers, so it must never be called from a webhook or job). Call it once, before any
+// transaction callback that may run twice. Synchronous and cheap; on any failure the booking is saved with an empty source.
+function bookingSourceFor(req) {
+  try {
+    return buildBookingSource(req, req?.body?.source);
+  } catch {
+    return emptyBookingSource();
   }
 }
 
@@ -238,6 +288,8 @@ module.exports = {
   PLATFORMS,
   MAX_NAME_LENGTH,
   bookingSourceFields,
+  protectBookingSource,
+  stripSourceFromUpdate,
   cleanText,
   cleanType,
   cleanPath,
@@ -245,6 +297,8 @@ module.exports = {
   cleanUtmValue,
   detectPlatform,
   buildBookingSource,
+  emptyBookingSource,
+  bookingSourceFor,
   platformGroup,
   platformDetail,
   sourcePageLabel,
