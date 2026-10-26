@@ -271,6 +271,9 @@ function sourcePageLabel(source) {
     const onType = TYPE_LABELS[source.clickedOnType] || "";
     const onName = source.clickedOnName || "";
     clickedOn = source.clickedOnType === "home" && !onName ? "Home page" : [onType, onName].filter(Boolean).join(": ");
+  } else if (source.clickedOnType === "unknown" && source.clickedOnName) {
+    // A page with no type of its own (About us, Contact, a legal page): just its name.
+    clickedOn = source.clickedOnName;
   }
   return { type, name: source.sourceName || "", clickedOn };
 }

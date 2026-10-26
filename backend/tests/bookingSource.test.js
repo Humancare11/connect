@@ -216,6 +216,12 @@ describe("labels for the admin list", () => {
     );
   });
 
+  test("a page with no type of its own shows just its name after 'on'", () => {
+    const label = S.sourcePageLabel({ sourceType: "header", sourceName: "Book Appointment", clickedOnType: "unknown", clickedOnName: "About Us" });
+    assert.equal(label.clickedOn, "About Us");
+    assert.equal(S.sourcePageLabel({ sourceType: "header", sourceName: "Book Appointment", clickedOnType: "unknown", clickedOnName: "" }).clickedOn, "");
+  });
+
   test("search text has type, name and the clicked-on page", () => {
     const text = S.sourceSearchText({ sourceType: "footer", sourceName: "Book Appointment", clickedOnType: "blog", clickedOnName: "Travelling with asthma" });
     for (const word of ["Footer", "Book Appointment", "Blog", "Travelling with asthma"]) assert.ok(text.includes(word), word);
