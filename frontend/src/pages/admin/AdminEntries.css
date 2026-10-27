@@ -782,11 +782,13 @@
   font-size: 11.5px;
 }
 
-/* ── The big Add / Edit popup: seven sections. Full screen on phones, sections in one column ── */
+/* ── The big Add / Edit popup (matches docs/appointment-entries-manual-form-reference.html): numbered sections with dashed dividers,
+   a 3-column grid, a teal Calculation box, two payment boxes and two feedback boxes side by side. Full screen on phones. ── */
 .hc-modal.en-modal--wide {
-  max-width: 1020px;
+  position: relative;
+  max-width: 980px;
   width: 100%;
-  max-height: 92vh;
+  max-height: calc(100vh - 32px);
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -794,12 +796,29 @@
 }
 .en-modal--wide .hc-modal__title {
   margin: 0;
-  padding: 18px 24px 4px;
+  padding: 18px 64px 0 22px;
+  font-size: 18px;
+  color: #1e1b4b;
 }
 .en-modal--wide .hc-modal__desc {
   margin: 0;
-  padding: 0 24px 12px;
+  padding: 3px 64px 14px 22px;
   border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  color: #64748b;
+}
+.en-x {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #475569;
+  font-size: 15px;
+  cursor: pointer;
 }
 .en-bigform {
   display: flex;
@@ -809,31 +828,43 @@
 }
 .en-sections {
   overflow-y: auto;
-  padding: 14px 24px;
+  padding: 6px 22px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
   min-height: 0;
   flex: 1;
 }
 .en-section {
-  margin: 0;
-  min-width: 0;
-  padding: 10px 14px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  padding: 14px 0;
+  border-bottom: 1px dashed #e5e7eb;
 }
-.en-section legend {
-  padding: 0 8px;
+.en-section:last-of-type {
+  border-bottom: 0;
+}
+.en-section h4 {
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #0f766e;
+  color: #1e1b4b;
+}
+.en-section h4 span {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4338ca;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
 }
 .en-grid {
   display: grid;
-  gap: 10px 14px;
+  gap: 12px 14px;
 }
 .en-grid--2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -841,65 +872,85 @@
 .en-grid--3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.en-req::after {
-  content: " *";
-  color: #b91c1c;
-}
-.en-section .en-field--full {
-  margin-top: 10px;
-}
-.en-field input:disabled,
-.en-field select:disabled {
-  background: #f1f5f9;
+.en-bigform label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
   color: #475569;
-  cursor: not-allowed;
+  min-width: 0;
 }
-.en-field textarea {
+.en-bigform input,
+.en-bigform select {
+  height: 38px;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 14px;
+  color: #0f172a;
+  background: #ffffff;
+}
+.en-bigform textarea {
+  width: 100%;
+  min-height: 84px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 8px 10px;
   font: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
   color: #0f172a;
   background: #ffffff;
   resize: vertical;
-  min-height: 84px;
-  width: 100%;
 }
-.en-count {
-  align-self: flex-end;
+.en-bigform input:focus,
+.en-bigform select:focus,
+.en-bigform textarea:focus {
+  outline: 0;
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px #ccfbf1;
+}
+.en-bigform input:disabled,
+.en-bigform select:disabled {
+  background: #f8fafc;
   color: #94a3b8;
-  font-weight: 500;
+  cursor: not-allowed;
 }
-.en-hint {
-  margin: 8px 0 0;
-  color: #64748b;
-  font-size: 12px;
+.en-span2 {
+  grid-column: span 2;
+}
+.en-comment {
+  margin-top: 12px;
 }
 .en-calc {
+  border-radius: 10px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 1px;
-  min-height: 36px;
-  padding: 3px 10px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #0f172a;
-}
-.en-calc b {
-  font-size: 14.5px;
-  font-variant-numeric: tabular-nums;
 }
 .en-calc small {
-  color: #64748b;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f766e;
 }
-.en-calc--neg b,
-.en-calc--neg small {
+.en-calc b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: #0f766e;
+}
+.en-calc b.en-neg {
   color: #b91c1c;
+}
+.en-calc span {
+  font-size: 12px;
+  color: #64748b;
 }
 .en-pay {
   display: grid;
@@ -907,23 +958,20 @@
   gap: 14px;
 }
 .en-paybox {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 12px;
-  align-content: start;
-  padding: 10px 12px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
   border-radius: 10px;
-  background: #f8fafc;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fcfcfd;
 }
-.en-paybox h4 {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: 12.5px;
-  color: #334155;
+.en-paybox > b {
+  font-size: 13px;
+  color: #1e1b4b;
 }
 .en-lock-note {
-  margin: 0;
+  margin: 10px 0 0;
   padding: 8px 12px;
   border: 1px solid #fde68a;
   border-radius: 8px;
@@ -933,23 +981,35 @@
 }
 .en-popup-foot {
   border-top: 1px solid #e5e7eb;
-  padding: 12px 24px calc(12px + env(safe-area-inset-bottom, 0px));
-  background: #ffffff;
+  padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: #f8fafc;
 }
 .en-popup-foot .en-form-error {
   margin: 0 0 8px;
 }
 .en-popup-buttons {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
-@media (max-width: 860px) {
-  .en-grid--3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.en-reqnote {
+  margin-right: auto;
+  color: #64748b;
+  font-size: 12.5px;
+}
+@media (max-width: 760px) {
+  .en-grid--2,
+  .en-grid--3,
+  .en-pay {
+    grid-template-columns: minmax(0, 1fr);
   }
-}
-@media (max-width: 700px) {
+  .en-span2 {
+    grid-column: auto;
+  }
+  .en-reqnote {
+    display: none;
+  }
   .hc-modal-backdrop:has(.en-modal--wide) {
     padding: 0;
   }
@@ -966,12 +1026,6 @@
   .en-popup-foot {
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-  }
-  .en-grid--2,
-  .en-grid--3,
-  .en-pay,
-  .en-paybox {
-    grid-template-columns: minmax(0, 1fr);
   }
   .en-popup-buttons .en-btn {
     flex: 1;

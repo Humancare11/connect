@@ -452,8 +452,8 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
   test("Add manual entry opens a large popup with the seven sections in order, and the starting values", async () => {
     await open("/admin-dashboard/appointment-entries?month=2027-05");
     await openAdd();
-    assert.deepEqual(await popup().locator("legend").allTextContents(), [
-      "1 · Case", "2 · Service provider", "3 · Patient", "4 · Fees", "5 · Medical report & invoice", "6 · Payments", "7 · Feedback",
+    assert.deepEqual(await popup().locator(".en-section h4").allTextContents(), [
+      "1Case", "2Service provider", "3Patient", "4Fees", "5Medical report & invoice", "6Payments", "7Feedback",
     ]);
     await sleep(500);
     const box = await popup().boundingBox();
@@ -463,16 +463,16 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     assert.deepEqual(
       [await field("Status").inputValue(), await field("MR status from provider").inputValue(), await field("MR sent to the company").inputValue(), await field("Invoice sent").inputValue(),
         await field("Payment received").inputValue(), await field("Payment to provider").inputValue(), await field("Type of service").inputValue()],
-      ["open", "pending", "not_sent", "not_sent", "not_received", "unpaid", ""],
+      ["open", "pending", "not_sent", "not_sent", "not_received", "unpaid", "teleconsultation"],
     );
-    assert.deepEqual(await field("Type of service").locator("option").allInnerTexts(), ["Select type", "House call", "Teleconsultation", "Others"]);
+    assert.deepEqual(await field("Type of service").locator("option").allInnerTexts(), ["House call", "Teleconsultation", "Others"]);
     assert.deepEqual(await field("Status").locator("option").allInnerTexts(), ["Open", "In progress", "Completed", "Cancelled"]);
     assert.deepEqual(await field("Payment received").locator("option").allInnerTexts(), ["Not received", "Partly received", "Received"]);
     assert.deepEqual(await field("Payment to provider").locator("option").allInnerTexts(), ["Unpaid", "On hold", "Paid", "Not payable"]);
     assert.equal(await field("Other service").count(), 0, "Other service only shows for Others");
     assert.equal(await field("Payment received date").isDisabled(), true);
     assert.equal(await field("Paid date to the provider").isDisabled(), true);
-    assert.equal(await page.getByTestId("calculation").innerText(), "—");
+    assert.match(await page.getByTestId("calculation").innerText(), /calculation \(our margin\)\s+—/i);
     assert.equal(await popup().locator("textarea").count(), 2);
     await shot("popup-add");
   });
@@ -484,13 +484,13 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await field("Consultation fee ($)").fill("100");
     await doctorsFee().fill("70");
     await until(async () => /\$30\.00/.test(await calc.innerText()) && /30\.0%/.test(await calc.innerText()), "the margin");
-    assert.equal(await calc.evaluate((el) => getComputedStyle(el.querySelector("b")).color), "rgb(15, 23, 42)");
+    assert.equal(await calc.evaluate((el) => getComputedStyle(el.querySelector("b")).color), "rgb(15, 118, 110)");
     await field("Consultation fee ($)").fill("50");
     await doctorsFee().fill("65");
     await until(async () => /-\$15\.00/.test(await calc.innerText()) && /-30\.0%/.test(await calc.innerText()), "the negative margin");
     assert.equal(await calc.evaluate((el) => getComputedStyle(el.querySelector("b")).color), "rgb(185, 28, 28)", "red when negative");
     await doctorsFee().fill("");
-    await until(async () => (await calc.innerText()) === "—", "empty without a doctor's fee");
+    await until(async () => (await calc.locator("b").innerText()) === "—", "empty without a doctor's fee");
     assert.equal(await calc.locator("input").count(), 0, "read-only");
   });
 
@@ -501,14 +501,14 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await fillMinimum({ name });
     await pick("Type of service", "Others");
     await field("Other service").waitFor();
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /Describe the other service/);
     await field("Other service").fill("Physio at home");
     await pick("Type of service", "House call");
     assert.equal(await field("Other service").count(), 0);
     await pick("Type of service", "Others");
     assert.equal(await field("Other service").inputValue(), "Physio at home", "what was typed is still there");
-    await press("Add entry");
+    await press("Save entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
     const stored = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
     assert.deepEqual([stored.serviceType, stored.otherService], ["others", "Physio at home"]);
@@ -538,29 +538,29 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
   test("the form says what is wrong: provider, patient, phone numbers, fees, and Paid needs a doctor's fee above 0", async () => {
     await open("/admin-dashboard/appointment-entries?month=2027-05");
     await openAdd();
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /service provider/i);
     await field("Service provider").fill("Dr Rao Clinic");
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /patient/i);
     await field("Patient name").fill("Validation Case");
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /consultation fee/i);
     await field("Consultation fee ($)").fill("100");
     await field("Contact number").fill("call me");
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /contact number/i);
     await field("Contact number").fill("+971 50 123-4567");
     await field("Service provider number").fill("555-0100 ext 5");
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /service provider number/i);
     await field("Service provider number").fill("(04) 555 0100");
     await doctorsFee().fill("1.234");
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /doctor's fee must be a number/i);
     await doctorsFee().fill("");
     await pick("Payment to provider", "Paid");
-    await press("Add entry");
+    await press("Save entry");
     assert.match(await formError(), /doctor's fee above 0/i);
     assert.equal((await call("GET", "/__manual")).body.some((m) => m.patientName === "Validation Case"), false, "nothing was saved");
   });
@@ -570,7 +570,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await openAdd();
     const name = unique("Free Visit");
     await fillMinimum({ name, fee: "0" });
-    await press("Add entry");
+    await press("Save entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
     assert.ok((await row(name).innerText()).includes("$0.00"));
     assert.equal(await feeBox(name).getAttribute("placeholder"), "0.00");
@@ -600,7 +600,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await field("Feedback message sent").fill("Please rate our service");
     await field("Feedback received").fill("Great, thank you");
     await field("Comment").fill("Booked by phone");
-    await press("Add entry");
+    await press("Save entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
 
     // The row in the table: Manual label, M- id, Company · Case number under the patient, the provider in the Doctor column.
@@ -711,7 +711,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
       return {
         overflow: el.scrollWidth - el.clientWidth,
         sectionsOverflow: el.querySelector(".en-sections").scrollWidth - el.querySelector(".en-sections").clientWidth,
-        fieldLefts: [...new Set(lefts(".en-section .en-grid > .en-field"))],
+        fieldLefts: [...new Set(lefts(".en-section .en-grid > label"))],
         payLefts: [...new Set(lefts(".en-paybox"))],
         feedbackStacked: textareas[1].top > textareas[0].bottom - 1 && Math.abs(textareas[0].left - textareas[1].left) < 2,
         footBottom: Math.round(foot.bottom),
@@ -727,7 +727,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     // The whole form can be used on the phone.
     const name = unique("Phone Case");
     await fillMinimum({ name });
-    await press("Add entry");
+    await press("Save entry");
     await until(async () => (await row(name).count()) === 1, "the new row");
   });
 
@@ -738,7 +738,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
       const rect = (selector) => el.querySelector(selector).getBoundingClientRect();
       const boxes = [...el.querySelectorAll(".en-paybox")].map((n) => n.getBoundingClientRect());
       const tas = [...el.querySelectorAll("textarea")].map((n) => n.getBoundingClientRect());
-      const caseFields = [...el.querySelectorAll(".en-section:first-of-type .en-grid > .en-field")].slice(0, 3).map((n) => Math.round(n.getBoundingClientRect().top));
+      const caseFields = [...el.querySelectorAll(".en-section:first-of-type .en-grid > label")].slice(0, 3).map((n) => Math.round(n.getBoundingClientRect().top));
       return {
         payside: boxes[1].left > boxes[0].right - 1 && Math.abs(boxes[0].top - boxes[1].top) < 2,
         feedbackSide: tas[1].left > tas[0].right - 1 && Math.abs(tas[0].top - tas[1].top) < 2,
@@ -747,7 +747,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
       };
     });
     assert.deepEqual([layout.payside, layout.feedbackSide, layout.threeAcross], [true, true, true], JSON.stringify(layout));
-    assert.ok((await popup().boundingBox()).height <= 1000 * 0.93, "the popup fits the window (its body scrolls)");
+    assert.ok((await popup().boundingBox()).height <= 1000 - 16, "the popup fits the window (its body scrolls)");
     await shot("popup-1500");
   });
 
@@ -760,6 +760,15 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await until(async () => (await row(longer.patient.name).count()) === 0, "the longer name to drop out");
     assert.equal(await row(exact.patient.name).count(), 1);
     assert.ok((await row("Background").count()) >= 1, "the doctor's bookings are there too");
+    // Service providers typed on manual rows are in the dropdown too: once each, sorted with the doctors, and picking one filters by it.
+    const one = await addViaApi({ date: "2027-01-11", serviceProvider: "Zeta Home Care", patientName: unique("Zeta One") });
+    await addViaApi({ date: "2027-01-12", serviceProvider: "Zeta Home Care", patientName: unique("Zeta Two") });
+    await open("/admin-dashboard/appointment-entries?month=2027-01");
+    const options = await page.$$eval('select[aria-label="Doctor"] option', (els) => els.map((e) => e.textContent.trim()).slice(1));
+    assert.equal(options.filter((o) => o === "Zeta Home Care").length, 1);
+    assert.deepEqual(options, [...options].sort((a, b) => a.localeCompare(b)));
+    await page.selectOption('select[aria-label="Doctor"]', { label: "Zeta Home Care" });
+    await until(async () => (await page.locator(".en-table tbody tr").count()) === 2 && (await row(one.patient.name).count()) === 1, "the two Zeta rows");
   });
 
   test("Delete a manual row: a confirmation first (Keep it changes nothing), then it is gone; a Paid row can't be deleted; booking rows have no Delete", async () => {

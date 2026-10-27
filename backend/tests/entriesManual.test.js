@@ -232,6 +232,19 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       assert.equal((await list(`doctor=${new mongoose.Types.ObjectId()}`)).total, 0);
     });
 
+    test("the Doctor dropdown also lists service providers from manual rows, once each, sorted with the doctors; picking one filters by its exact name", async () => {
+      await appt();
+      await manual({ patientName: "A", serviceProvider: "Sunrise Home Care" });
+      await manual({ patientName: "B", serviceProvider: "Sunrise Home Care" });
+      await manual({ patientName: "C", serviceProvider: "martin perlin" });
+      await manual({ patientName: "D", serviceProvider: "Alpha Clinic" });
+      const body = await list();
+      assert.deepEqual(body.doctors.map((d) => d.name), ["Alpha Clinic", "Martin Perlin", "Sunrise Home Care"]);
+      const sunrise = body.doctors.find((d) => d.name === "Sunrise Home Care");
+      assert.deepEqual(names(await list(`doctor=${encodeURIComponent(sunrise.id)}`)).sort(), ["A", "B"]);
+      assert.equal((await call("GET", "?doctor=provider:")).status, 400);
+    });
+
     test("the Doctor filter still shows bookings of that doctor together with the manual rows named like them", async () => {
       await appt();
       await manual({ serviceProvider: "Martin Perlin" });
@@ -241,14 +254,14 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       assert.equal(body.totals.rows, 2);
     });
 
-    test("the month filter uses the case date; the choices list the months of manual rows, and no doctors of their own", async () => {
+    test("the month filter uses the case date; the choices list the months of manual rows", async () => {
       await manual({ patientName: "November", date: "2026-11-20" });
       await manual({ patientName: "October", date: "2026-10-05", serviceProvider: "Sunrise Home Care" });
       assert.deepEqual(names(await list("month=2026-11")), ["November"]);
       assert.deepEqual(names(await list("month=2026-10")), ["October"]);
       const all = await list();
       assert.deepEqual(all.months, ["2026-11", "2026-10"]);
-      assert.deepEqual(all.doctors, []);
+      assert.deepEqual(all.doctors.map((d) => d.name), ["Martin Perlin", "Sunrise Home Care"]);
     });
 
     test("search finds them by patient, service provider, company, case number, country, and the M- code", async () => {

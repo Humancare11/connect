@@ -16,9 +16,10 @@ function todayInput() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// "Add manual entry" (no `row`) and "Edit" (a manual `row`): the same big popup, seven sections. Once Payment to provider is Paid, the
-// case, service provider, patient and fee fields are locked (the server enforces it too); the medical report, invoice, payment received
-// and feedback stay editable. "Calculation (our margin)" is worked out here and never sent.
+// "Add manual entry" (no `row`) and "Edit" (a manual `row`): the same big popup, seven numbered sections, laid out as in
+// docs/appointment-entries-manual-form-reference.html. Once Payment to provider is Paid, the case, service provider, patient and fee
+// fields are locked (the server enforces it too); the medical report, invoice, payment received and feedback stay editable.
+// "Calculation (our margin)" is worked out here and never sent.
 export default function ManualEntryModal({ row, onSaved, onClose }) {
   const editing = Boolean(row);
   const today = useMemo(todayInput, []);
@@ -55,7 +56,7 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
   };
 
   const text = (key, label, props = {}) => (
-    <label className={`en-field${props.wide ? " en-field--full" : ""}`}>
+    <label className={props.className}>
       <span className={props.required ? "en-req" : undefined}>{label}</span>
       <input
         value={form[key]}
@@ -79,16 +80,26 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
     </label>
   );
   const choice = (key, label, options) => (
-    <label className="en-field">
+    <label>
       <span>{label}</span>
       <select value={form[key]} onChange={set(key)} disabled={isLocked(key)}>
-        {options.map(([value, text]) => (
+        {key === "serviceType" && form.serviceType === "" && <option value="">Not set</option>}
+        {options.map(([value, optionText]) => (
           <option key={value} value={value}>
-            {text}
+            {optionText}
           </option>
         ))}
       </select>
     </label>
+  );
+  const section = (n, title, body) => (
+    <section className="en-section">
+      <h4>
+        <span>{n}</span>
+        {title}
+      </h4>
+      {body}
+    </section>
   );
 
   return (
@@ -97,13 +108,12 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
       onClose={onClose}
       dismissible={!saving}
       title={editing ? `Edit manual entry · ${row.shortId}` : "Add manual entry"}
-      description={
-        editing
-          ? "Every change is recorded."
-          : "For a case that wasn’t booked through the website or app, such as a house call or teleconsultation arranged for a company. It shows with a “Manual” label."
-      }
+      description={editing ? "Every change is recorded." : "A case that didn’t come through the website or app, for example sent by a partner company."}
       className="en-modal en-modal--wide"
     >
+      <button type="button" className="en-x" onClick={onClose} disabled={saving} aria-label="Close">
+        ✕
+      </button>
       <form onSubmit={submit} noValidate className="en-bigform">
         <div className="en-sections">
           {locked && (
@@ -113,102 +123,102 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
             </p>
           )}
 
-          <fieldset className="en-section">
-            <legend>1 · Case</legend>
+          {section(
+            1,
+            "Case",
             <div className="en-grid en-grid--3">
               {text("date", "Date", { type: "date", required: true })}
-              {text("company", "Company", { maxLength: 120, placeholder: "e.g. Acme Assist" })}
-              {text("caseNumber", "Case number", { maxLength: 60, placeholder: "e.g. AC-1042" })}
+              {text("company", "Company", { maxLength: 120, placeholder: "e.g. Allianz Care" })}
+              {text("caseNumber", "Case number", { maxLength: 60, placeholder: "e.g. ALZ-2026-10432" })}
               {choice("serviceType", "Type of service", SERVICE_TYPES)}
-              {choice("caseStatus", "Status", CASE_STATUSES)}
               {form.serviceType === "others" && text("otherService", "Other service", { required: true, maxLength: 120, placeholder: "Describe the service" })}
-            </div>
-          </fieldset>
+              {choice("caseStatus", "Status", CASE_STATUSES)}
+            </div>,
+          )}
 
-          <fieldset className="en-section">
-            <legend>2 · Service provider</legend>
-            <div className="en-grid en-grid--2">
-              {text("serviceProvider", "Service provider", { required: true, maxLength: 120, placeholder: "Doctor, clinic or company", autoFocus: !editing })}
-              {text("providerNumber", "Service provider number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+971 50 123 4567" })}
-            </div>
-          </fieldset>
-
-          <fieldset className="en-section">
-            <legend>3 · Patient</legend>
+          {section(
+            2,
+            "Service provider",
             <div className="en-grid en-grid--3">
-              {text("patientName", "Patient name", { required: true, maxLength: 80, placeholder: "e.g. Ravi Sharma" })}
-              {text("country", "Patient country", { maxLength: 60, placeholder: "India", list: "en-countries" })}
-              {text("contactNumber", "Contact number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+91 98765 43210" })}
-            </div>
-          </fieldset>
+              {text("serviceProvider", "Service provider", { required: true, maxLength: 120, placeholder: "Doctor or clinic name", autoFocus: !editing })}
+              {text("providerNumber", "Service provider number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+91 98765 43210" })}
+            </div>,
+          )}
 
-          <fieldset className="en-section">
-            <legend>4 · Fees</legend>
+          {section(
+            3,
+            "Patient",
             <div className="en-grid en-grid--3">
-              {text("consultationFee", "Consultation fee ($)", { inputMode: "decimal", placeholder: "49.00", required: true })}
-              {text("doctorFee", "Doctor’s fee ($)", { inputMode: "decimal", placeholder: "36.75" })}
-              <div className="en-field">
-                <span>Calculation (our margin)</span>
-                <output className={`en-calc${calc.negative ? " en-calc--neg" : ""}`} aria-live="polite" data-testid="calculation">
-                  <b>{calc.text}</b>
-                  {calc.percent && <small>{calc.percent} of the consultation fee</small>}
-                </output>
+              {text("patientName", "Patient name", { required: true, maxLength: 80, placeholder: "Full name" })}
+              {text("country", "Patient country", { maxLength: 60, placeholder: "e.g. United Arab Emirates", list: "en-countries" })}
+              {text("contactNumber", "Contact number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+971 50 123 4567" })}
+            </div>,
+          )}
+
+          {section(
+            4,
+            "Fees",
+            <div className="en-grid en-grid--3">
+              {text("consultationFee", "Consultation fee ($)", { inputMode: "decimal", placeholder: "0.00", required: true })}
+              {text("doctorFee", "Doctor’s fee ($)", { inputMode: "decimal", placeholder: "0.00" })}
+              <div className="en-calc" aria-live="polite" data-testid="calculation">
+                <small>Calculation (our margin)</small>
+                <b className={calc.negative ? "en-neg" : undefined}>{calc.empty ? "—" : calc.text}</b>
+                <span>{calc.percent ? `${calc.percent} of the consultation fee` : "Consultation fee − Doctor’s fee"}</span>
               </div>
-            </div>
-          </fieldset>
+            </div>,
+          )}
 
-          <fieldset className="en-section">
-            <legend>5 · Medical report &amp; invoice</legend>
+          {section(
+            5,
+            "Medical report & invoice",
             <div className="en-grid en-grid--3">
               {choice("mrStatus", "MR status from provider", MR_STATUSES)}
               {choice("mrSentToCompany", "MR sent to the company", SENT_STATUSES)}
               {choice("invoiceSent", "Invoice sent", SENT_STATUSES)}
-            </div>
-            <p className="en-hint">MR = medical report.</p>
-          </fieldset>
+            </div>,
+          )}
 
-          <fieldset className="en-section">
-            <legend>6 · Payments</legend>
+          {section(
+            6,
+            "Payments",
             <div className="en-pay">
               <div className="en-paybox">
-                <h4>From the company</h4>
+                <b>From the company</b>
                 {choice("paymentReceived", "Payment received", PAYMENT_RECEIVED)}
-                <label className="en-field">
+                <label>
                   <span>Payment received date</span>
                   <input type="date" value={received ? form.paymentReceivedDate : ""} onChange={set("paymentReceivedDate")} disabled={!received} />
                 </label>
               </div>
               <div className="en-paybox">
-                <h4>To the provider</h4>
+                <b>To the provider</b>
                 {choice("paymentToProvider", "Payment to provider", PAYMENT_TO_PROVIDER)}
-                <label className="en-field">
+                <label>
                   <span>Paid date to the provider</span>
                   <input type="date" value={paidToProvider ? form.paidDateToProvider : ""} onChange={set("paidDateToProvider")} disabled={!paidToProvider} />
                 </label>
               </div>
-            </div>
-          </fieldset>
+            </div>,
+          )}
 
-          <fieldset className="en-section">
-            <legend>7 · Feedback</legend>
-            <div className="en-grid en-grid--2">
-              <label className="en-field">
-                <span>Feedback message sent</span>
-                <textarea value={form.feedbackSent} onChange={set("feedbackSent")} maxLength={MAX_FEEDBACK} rows={4} />
-                <small className="en-count">
-                  {form.feedbackSent.length} / {MAX_FEEDBACK}
-                </small>
-              </label>
-              <label className="en-field">
-                <span>Feedback received</span>
-                <textarea value={form.feedbackReceived} onChange={set("feedbackReceived")} maxLength={MAX_FEEDBACK} rows={4} />
-                <small className="en-count">
-                  {form.feedbackReceived.length} / {MAX_FEEDBACK}
-                </small>
-              </label>
-            </div>
-            {text("comment", "Comment", { wide: true, maxLength: 500, placeholder: "e.g. Booked by phone, paid by bank transfer" })}
-          </fieldset>
+          {section(
+            7,
+            "Feedback",
+            <>
+              <div className="en-grid en-grid--2">
+                <label>
+                  <span>Feedback message sent</span>
+                  <textarea value={form.feedbackSent} onChange={set("feedbackSent")} maxLength={MAX_FEEDBACK} rows={3} placeholder="The message sent to the patient asking for feedback" />
+                </label>
+                <label>
+                  <span>Feedback received</span>
+                  <textarea value={form.feedbackReceived} onChange={set("feedbackReceived")} maxLength={MAX_FEEDBACK} rows={3} placeholder="What the patient or company replied" />
+                </label>
+              </div>
+              <div className="en-comment">{text("comment", "Comment", { maxLength: 500, placeholder: "Optional internal note" })}</div>
+            </>,
+          )}
         </div>
 
         <div className="en-popup-foot">
@@ -218,11 +228,12 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
             </p>
           )}
           <div className="en-popup-buttons">
+            <span className="en-reqnote">Patient name and service provider are required.</span>
             <button type="button" className="en-btn" onClick={onClose} disabled={saving}>
               Cancel
             </button>
             <button type="submit" className="en-btn en-btn--primary" disabled={saving}>
-              {saving ? "Saving…" : editing ? "Save changes" : "Add entry"}
+              {saving ? "Saving…" : editing ? "Save changes" : "Save entry"}
             </button>
           </div>
         </div>

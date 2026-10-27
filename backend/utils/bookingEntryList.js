@@ -73,7 +73,11 @@ function parseEntriesQuery(query = {}) {
   let doctor = "";
   if (query.doctor !== undefined && query.doctor !== "") {
     doctor = String(query.doctor);
-    if (!mongoose.isValidObjectId(doctor) || !/^[0-9a-f]{24}$/i.test(doctor)) throw new EntryListQueryError("doctor must be a doctor id.");
+    // A doctor id, or "provider:<name>" for a service provider typed on manual entries.
+    const providerName = doctor.startsWith("provider:") ? doctor.slice(9).trim() : "";
+    if (doctor.startsWith("provider:") ? !providerName || providerName.length > 120 : !mongoose.isValidObjectId(doctor) || !/^[0-9a-f]{24}$/i.test(doctor)) {
+      throw new EntryListQueryError("doctor must be a doctor id.");
+    }
   }
 
   for (const key of ["q", "tab", "sort", "month", "doctor"]) {
@@ -114,6 +118,10 @@ function monthRange(month) {
 // doctor record: its service provider is free text, so it matches when that text is exactly the doctor's name.
 async function doctorFilters(id) {
   if (!id) return null;
+  if (id.startsWith("provider:")) {
+    const nobody = { _id: { $in: [] } };
+    return { appointment: nobody, category: nobody, manual: { doctorName: id.slice(9).trim() } };
+  }
   const byName = (...names) => ({ doctorName: { $in: names.filter(Boolean) } });
   const enrollmentName = (e) => `${e.firstName || ""} ${e.surname || ""}`.trim();
   const enrollment = await Enrollment.findById(id).select("_id doctorId firstName surname").lean();
@@ -240,9 +248,10 @@ function keysPipeline(filter, sort, need, bookedExpr) {
 // The doctors and consultation months that have rows (with the include flags applied, but not the tab, search, doctor or month).
 async function loadChoices(filter) {
   const months = { $group: { _id: { $substrCP: [{ $convert: { input: "$date", to: "string", onError: "", onNull: "" } }, 0, 7] } } };
-  const [apptDoctors, catDoctors, apptMonths, catMonths, manualMonths] = await Promise.all([
+  const [apptDoctors, catDoctors, manualProviders, apptMonths, catMonths, manualMonths] = await Promise.all([
     Appointment.aggregate([{ $match: combine(filter.appointment, { doctorId: { $ne: null } }) }, { $group: { _id: "$doctorId" } }]),
     CategoryConsultation.aggregate([{ $match: combine(filter.category, { assignedDoctorId: { $ne: null } }) }, { $group: { _id: "$assignedDoctorId" } }]),
+    ManualEntry.aggregate([{ $match: combine(filter.manual, { doctorName: { $nin: [null, ""] } }) }, { $group: { _id: "$doctorName" } }]),
     Appointment.aggregate([{ $match: filter.appointment }, months]),
     CategoryConsultation.aggregate([{ $match: filter.category }, months]),
     ManualEntry.aggregate([{ $match: filter.manual }, months]),
@@ -265,6 +274,14 @@ async function loadChoices(filter) {
     list.set(String(e._id), { id: String(e._id), name });
   }
   for (const d of doctors) if (!covered.has(String(d._id))) list.set(String(d._id), { id: String(d._id), name: d.name || "Doctor" });
+
+  // Service providers typed on manual entries join the list, once each; a name that is already a doctor above is not repeated.
+  const seen = new Set([...list.values()].map((d) => d.name.toLowerCase()));
+  for (const { _id: name } of manualProviders) {
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    list.set(`provider:${name}`, { id: `provider:${name}`, name });
+  }
 
   const monthList = [...new Set([...apptMonths, ...catMonths, ...manualMonths].map((r) => r._id).filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort().reverse();
   return { doctors: [...list.values()].sort((x, y) => x.name.localeCompare(y.name)), months: monthList };

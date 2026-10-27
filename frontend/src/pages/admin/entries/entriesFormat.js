@@ -9,7 +9,8 @@ export const STATUS_OPTIONS = TAB_ORDER.filter((key) => key !== "all").map((key)
 
 export const tabFromParam = (value) => (TAB_ORDER.includes(value) ? value : "all");
 export const monthFromParam = (value) => (/^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") ? value : "");
-export const doctorFromParam = (value) => (/^[0-9a-f]{24}$/i.test(value || "") ? value : "");
+// A doctor id, or "provider:<name>" for a service provider typed on manual entries.
+export const doctorFromParam = (value) => (/^[0-9a-f]{24}$/i.test(value || "") || /^provider:.{1,120}$/.test(value || "") ? value : "");
 
 export function pageFromParam(value) {
   const n = Number(value);
@@ -147,7 +148,7 @@ export function downloadName(header, fallbackDay = "") {
 // ── The manual-entry form ────────────────────────────────────────────────────
 
 // The choices of the form's drop-downs, [value, label].
-export const SERVICE_TYPES = [["", "Select type"], ["house_call", "House call"], ["teleconsultation", "Teleconsultation"], ["others", "Others"]];
+export const SERVICE_TYPES = [["house_call", "House call"], ["teleconsultation", "Teleconsultation"], ["others", "Others"]];
 export const CASE_STATUSES = [["open", "Open"], ["in_progress", "In progress"], ["completed", "Completed"], ["cancelled", "Cancelled"]];
 export const MR_STATUSES = [["pending", "Pending"], ["received", "Received"]];
 export const SENT_STATUSES = [["not_sent", "Not sent"], ["sent", "Sent"]];
@@ -165,7 +166,7 @@ export const LOCKED_WHEN_PAID = [
 
 // A blank form, with today as the date (the day as "YYYY-MM-DD").
 export const newForm = (today) => ({
-  date: today, company: "", caseNumber: "", serviceType: "", otherService: "", caseStatus: "open",
+  date: today, company: "", caseNumber: "", serviceType: "teleconsultation", otherService: "", caseStatus: "open",
   serviceProvider: "", providerNumber: "",
   patientName: "", country: "", contactNumber: "",
   consultationFee: "", doctorFee: "",

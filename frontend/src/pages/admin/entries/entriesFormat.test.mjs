@@ -16,6 +16,8 @@ test("the tabs, filters and page in the URL: junk falls back to the default, def
   assert.equal(F.monthFromParam("2026-13"), "");
   assert.equal(F.doctorFromParam("64b0000000000000000000e1"), "64b0000000000000000000e1");
   assert.equal(F.doctorFromParam("x"), "");
+  assert.equal(F.doctorFromParam("provider:Sunrise Home Care"), "provider:Sunrise Home Care");
+  assert.equal(F.doctorFromParam("provider:"), "");
   assert.equal(F.pageFromParam("3"), 3);
   assert.equal(F.pageFromParam("0"), 1);
   assert.equal(F.pageFromParam("1.5"), 1);
@@ -111,12 +113,12 @@ test("a new form starts with today, Open, Pending, Not sent, Not received and Un
   const f = F.newForm("2026-10-27");
   assert.deepEqual(
     [f.date, f.caseStatus, f.mrStatus, f.mrSentToCompany, f.invoiceSent, f.paymentReceived, f.paymentToProvider, f.serviceType, f.paymentReceivedDate, f.paidDateToProvider],
-    ["2026-10-27", "open", "pending", "not_sent", "not_sent", "not_received", "unpaid", "", "", ""],
+    ["2026-10-27", "open", "pending", "not_sent", "not_sent", "not_received", "unpaid", "teleconsultation", "", ""],
   );
 });
 
 test("the drop-downs offer exactly the agreed choices, in order", () => {
-  assert.deepEqual(F.SERVICE_TYPES.map(([, l]) => l), ["Select type", "House call", "Teleconsultation", "Others"]);
+  assert.deepEqual(F.SERVICE_TYPES.map(([, l]) => l), ["House call", "Teleconsultation", "Others"]);
   assert.deepEqual(F.CASE_STATUSES.map(([, l]) => l), ["Open", "In progress", "Completed", "Cancelled"]);
   assert.deepEqual(F.MR_STATUSES.map(([, l]) => l), ["Pending", "Received"]);
   assert.deepEqual(F.SENT_STATUSES.map(([, l]) => l), ["Not sent", "Sent"]);
