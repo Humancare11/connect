@@ -1,0 +1,900 @@
+<title>Humancare Appointment Entries</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: collapsible indigo sidebar (grouped nav, profile at the foot) + sticky white topbar (breadcrumb, search, bell, profile menu); approved table below */
+:root{
+  --side:#1e1b4b; --side-fg:#e0e7ff; --side-mute:#a5b4fc; --side-active:#312e81; --badge:#7c3aed;
+  --bg:#eef0f6; --panel:#ffffff; --fg:#0f172a; --mute:#64748b; --line:#e5e7eb; --head:#f8fafc; --row-hover:#f8fafc;
+  --title:#6d28d9; --accent:#0f766e; --accent-fg:#ffffff; --accent-soft:#ccfbf1;
+  --up-bg:#e0f2fe; --up:#0369a1; --as-bg:#ede9fe; --as:#6d28d9; --pe-bg:#fef3c7; --pe:#92400e;
+  --co-bg:#dbeafe; --co:#1d4ed8; --ok-bg:#dcfce7; --ok:#15803d; --ca-bg:#fee2e2; --ca:#b91c1c;
+  --danger:#dc2626;
+  --f-ui:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:var(--sw,256px) minmax(0,1fr);min-height:100vh;transition:grid-template-columns .2s ease}
+.app.mini{--sw:76px}
+
+/* sidebar */
+.side{background:linear-gradient(180deg,#1e1b4b 0%,#1a1745 100%);color:var(--side-fg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;height:64px;padding:0 14px 0 18px;border-bottom:1px solid #ffffff12;flex:none}
+.logo{border:0;cursor:default;width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:grid;place-items:center;font-weight:800;color:#fff;flex:none;box-shadow:0 4px 12px #6366f155}
+.brand-t{min-width:0;line-height:1.15}
+.brand-t b{display:block;color:#fff;font-size:15.5px;letter-spacing:-.01em}
+.brand-t small{color:var(--side-mute);font-size:11px;letter-spacing:.08em;font-weight:600}
+.collapse{margin-left:auto;width:28px;height:28px;border-radius:7px;border:1px solid #ffffff1f;background:#ffffff0d;color:var(--side-mute);display:grid;place-items:center;flex:none}
+.collapse:hover{background:#ffffff1a;color:#fff}
+.collapse svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .2s}
+.app.mini .collapse svg{transform:rotate(180deg)}
+.navwrap{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:#ffffff22 transparent}
+.grp{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:#8b8fd1;padding:14px 10px 6px;white-space:nowrap}
+.nav{position:relative;display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border-radius:9px;font-weight:500;font-size:14px;color:#c7cbf5;background:none;border:0;text-align:left;white-space:nowrap}
+.nav:hover{background:#ffffff0f;color:#fff}
+.nav svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.nav.on{background:#ffffff17;color:#fff;font-weight:650}
+.nav.on::before{content:"";position:absolute;left:-12px;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:#a5b4fc}
+.nav .cnt{font-size:11px;font-weight:700;border-radius:20px;padding:1px 7px;background:#ffffff1a;color:#e0e7ff;font-variant-numeric:tabular-nums}
+.nav .cnt.hot{background:#f43f5e;color:#fff}
+.nav .chev{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;opacity:.6;transition:transform .2s;flex:none}
+.nav[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.sub{margin:2px 0 4px 19px;padding-left:12px;border-left:1px solid #ffffff1c;display:flex;flex-direction:column;gap:1px}
+.sub .nav{font-size:13.5px;padding:8px 10px}
+.sub .nav svg.ic{width:16px;height:16px}
+.sub .nav.on::before{left:-13px}
+.me{flex:none;border-top:1px solid #ffffff12;padding:12px;display:flex;align-items:center;gap:10px}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#818cf8,#6366f1);display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex:none}
+.me-t{min-width:0;flex:1;line-height:1.25}
+.me-t b{display:block;color:#fff;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-t small{display:block;color:var(--side-mute);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.role{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.06em;border-radius:5px;padding:2px 6px;background:#7c3aed;color:#fff}
+.role.admin{background:#0f766e}
+.foot-out{flex:none;border-top:1px solid #ffffff12;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.signout2{color:#fca5a5}
+.signout2:hover{background:#f43f5e1f;color:#fecdd3}
+.app.mini .foot-out{padding:10px 14px}
+.out{width:32px;height:32px;border-radius:8px;border:1px solid #ffffff1f;background:none;color:#fca5a5;display:grid;place-items:center;flex:none}
+.out:hover{background:#f43f5e22;color:#fecdd3;border-color:#f43f5e66}
+.out svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+/* collapsed */
+.app.mini .brand-t,.app.mini .grp,.app.mini .nav .lbl,.app.mini .nav .cnt,.app.mini .nav .chev,.app.mini .me-t,.app.mini .sub{display:none}
+.app.mini .logo{display:none}
+.app.mini .brand{justify-content:center;padding:0}
+.app.mini .collapse{margin:0;width:36px;height:36px;border-radius:9px;background:#312e81;border-color:#4338ca;color:#fff}
+.app.mini .collapse:hover{background:#4338ca}
+.app.mini .navwrap{padding:10px 14px}
+.app.mini .nav{justify-content:center;padding:10px 0}
+.app.mini .nav .dot{position:absolute;top:6px;right:10px;width:7px;height:7px;border-radius:50%;background:#f43f5e}
+.nav .dot{display:none}.app.mini .nav .dot{display:block}
+.app.mini .me{flex-direction:column;padding:12px 0}
+.app.mini .grp+.nav,.app.mini .grp{margin-top:0}
+.app.mini .navwrap .sep{display:block}
+.sep{display:none;height:1px;background:#ffffff12;margin:8px 4px}
+
+/* topbar */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;height:64px;background:#ffffffeb;backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:#fff}
+.burger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#334155;place-items:center}
+.burger svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.ttl{min-width:0}
+.crumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);font-weight:500}
+.crumb svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.ttl h1{margin:1px 0 0;font-size:18px;font-weight:700;color:#1e1b4b;letter-spacing:-.01em;white-space:nowrap}
+.top .sp{flex:1}
+.gsearch{display:flex;align-items:center;gap:8px;width:min(340px,32vw);height:38px;border:1px solid var(--line);border-radius:10px;padding:0 8px 0 12px;background:#f8fafc;color:var(--mute)}
+.gsearch:focus-within{border-color:#a5b4fc;background:#fff;box-shadow:0 0 0 3px #e0e7ff}
+.gsearch svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+.gsearch input{border:0;outline:0;background:transparent;width:100%;color:var(--fg);font-size:13.5px}
+.kbd{font-size:11px;font-weight:600;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:#fff;color:var(--mute);white-space:nowrap}
+.icobtn{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#475569;display:grid;place-items:center}
+.icobtn:hover{background:#f8fafc;color:#1e1b4b}
+.icobtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9}
+.icobtn .n{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:10px;background:#f43f5e;color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 5px;border:2px solid #fff;font-variant-numeric:tabular-nums}
+.vr{width:1px;height:28px;background:var(--line)}
+.prof{position:relative}
+.chip{display:flex;align-items:center;gap:9px;border:0;background:none;padding:4px 6px 4px 4px;border-radius:12px}
+.chip:hover{background:#f1f5f9}
+.chip .av{width:34px;height:34px;font-size:12.5px}
+.chip-t{text-align:left;line-height:1.2}
+.chip-t b{display:block;font-size:13.5px;color:var(--fg);white-space:nowrap}
+.chip-t .role{margin-top:2px}
+.chip svg{width:14px;height:14px;stroke:#64748b;fill:none;stroke-width:2}
+.menu{position:absolute;right:0;top:calc(100% + 8px);width:240px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px #0f172a24;padding:6px;z-index:20}
+.menu .mh{padding:10px 10px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.menu .mh b{display:block;font-size:14px}.menu .mh small{color:var(--mute);font-size:12px}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:9px 10px;border-radius:8px;font-size:13.5px;font-weight:500;color:#334155}
+.menu button:hover{background:#f1f5f9}
+.menu button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9}
+.menu button.dng{color:#dc2626}.menu button.dng:hover{background:#fef2f2}
+.scrim{position:fixed;inset:0;background:#0f172a66;z-index:30}
+.demo{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25;background:#0f172a;color:#fff;border-radius:12px;padding:6px;display:flex;gap:4px;align-items:center;font-size:12px;box-shadow:0 10px 30px #0f172a40}
+.demo span{padding:0 8px;color:#94a3b8;font-weight:600}
+.demo button{border:0;border-radius:8px;padding:6px 10px;background:none;color:#cbd5e1;font-weight:600;font-size:12px}
+.demo button.on{background:#fff;color:#0f172a}
+.content{padding:0}
+
+/* ---------- Appointment entries ---------- */
+.en-head{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;padding:14px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));background:var(--panel)}
+.en-head p{margin:0;color:var(--mute);font-size:13px;max-width:62ch}
+.en-sum{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:132px;background:#fff}
+.kpi small{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--mute);text-transform:uppercase}
+.kpi b{display:block;font-size:17px;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi.warn b{color:#b45309}.kpi.ok b{color:var(--ok)}
+.en-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel)}
+.en-bar .tabs{margin-right:auto}
+.fsel{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:0 8px 0 10px;height:34px;font-size:12.5px;color:var(--mute);font-weight:600;background:#fff}
+.fsel select,.fsel input{border:0;outline:0;background:transparent;font-weight:600;font-size:13px;color:var(--fg);padding:6px 2px;cursor:pointer;max-width:170px}
+.en-bar .search{margin-left:0;flex:0 1 240px;min-width:180px}
+.btn2{height:34px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:0 12px;font-weight:700;font-size:13px;color:#1e1b4b;display:inline-flex;align-items:center;gap:6px}
+.btn2:hover{border-color:#94a3b8}
+.btn2.pri2{background:var(--accent);border-color:var(--accent);color:#fff}.btn2.pri2:hover{filter:brightness(1.08)}
+.plat2.pl-man{background:#fef3c7;color:#92400e}
+.del{display:block;margin-top:3px;background:none;border:0;padding:0;color:#b91c1c;font-size:11.5px;font-weight:600}
+.del:hover{text-decoration:underline}
+.mf{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mf label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--mute)}
+.mf input,.mf select{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:13.5px;color:var(--fg);background:#fff}
+.mf .full{grid-column:1/-1}.mf .err{color:#b91c1c;font-size:12.5px;grid-column:1/-1}
+.btn2 svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.legend{display:flex;gap:18px;flex-wrap:wrap;align-items:center;color:var(--mute);font-size:12.5px;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));background:var(--panel)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+.legend i.a{background:#fff}.legend i.e{background:#ecfdf5;border-color:#a7f3d0}
+.legend .ro{margin-left:auto;display:flex;align-items:center;gap:6px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;padding:3px 9px;font-weight:600}
+.et{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums;background:#fff}
+.et th{background:var(--head);text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:#475569;text-transform:uppercase;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.et th.ed{background:#d1fae5;color:#065f46}
+.et td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden}
+.et td.ed{background:#ecfdf5;padding:5px 6px}
+.et tbody tr:hover td{background:#f8fafc}.et tbody tr:hover td.ed{background:#d1fae5}
+.et th:first-child,.et td:first-child{padding-left:max(16px,env(safe-area-inset-left,0px))}
+.et th:last-child,.et td:last-child{padding-right:max(16px,env(safe-area-inset-right,0px))}
+.et .r{text-align:right}
+.w-num{width:40px}.w-id{width:100px}.w-bk{width:100px}.w-cd{width:118px}.w-fee{width:104px}.w-df{width:118px}.w-ps{width:136px}.w-po{width:140px}
+.et .nm b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.et .nm span{display:block;color:var(--mute);font-size:12px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.et .nm .na{color:var(--mute);font-weight:500}
+.et .dt{font-size:13px;white-space:nowrap}.et .dt span{display:block;color:var(--mute);font-size:12px}
+.et .money{font-weight:700;font-size:13.5px;white-space:nowrap}
+.et .money small{display:block;font-weight:500;color:var(--mute);font-size:11.5px}
+.cell{position:relative}
+.cell input,.cell select{width:100%;height:32px;border:1px solid transparent;background:transparent;border-radius:7px;padding:0 8px;font-size:13.5px;color:var(--fg)}
+.cell input:hover,.cell select:hover{border-color:#a7f3d0;background:#fff}
+.cell input:focus,.cell select:focus{border-color:var(--accent);background:#fff;outline:0;box-shadow:0 0 0 3px #ccfbf1}
+.cell input:disabled,.cell select:disabled{color:#334155;cursor:not-allowed;opacity:1;-webkit-text-fill-color:#334155}
+.cell .fee-in{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.cell .fee-in::placeholder{color:#94a3b8;font-weight:500;font-size:12.5px}
+.cell select{font-weight:700;cursor:pointer}
+.ps-unpaid{color:#b45309!important}.ps-paid{color:var(--ok)!important}.ps-on_hold{color:#1d4ed8!important}.ps-not_payable{color:#475569!important}
+.cell .st{position:absolute;right:6px;top:-2px;font-size:10px;font-weight:700;border-radius:4px;padding:0 5px;pointer-events:none}
+.cell .st.saving{background:#e0e7ff;color:#3730a3}.cell .st.saved{background:#dcfce7;color:#166534}.cell .st.err{background:#fee2e2;color:#b91c1c}
+.flag{display:inline-flex;align-items:center;gap:4px;margin-top:2px;font-size:11px;font-weight:700;color:#b45309}
+.plat2{display:block;width:max-content;margin-top:4px;font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 6px}
+.plat2.pl-web{background:#e0e7ff;color:#3730a3}.plat2.pl-app{background:#dcfce7;color:#166534}.plat2.un{background:#f1f5f9;color:#94a3b8;font-weight:600}
+.et tfoot td{background:#f8fafc;border-top:2px solid var(--line);font-weight:700;padding:11px 8px}
+.et tfoot .lbl{color:#334155}
+.et tfoot .hint{color:var(--mute);font-weight:500;font-size:12.5px}
+.modal-s{position:fixed;inset:0;background:#0f172a66;z-index:50;display:grid;place-items:center;padding:16px}
+.modal{background:#fff;border-radius:14px;width:min(640px,100%);padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px #0f172a40}
+.modal h3{margin:0;font-size:16px;color:#1e1b4b}.modal p{margin:0;color:var(--mute);font-size:13px}
+.lockn{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12.5px;font-weight:600}
+.modal.big{width:min(980px,100%);max-height:calc(100vh - 32px);padding:0;gap:0;overflow:hidden}
+.bm-h{display:flex;align-items:flex-start;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.bm-h h3{font-size:18px}.bm-h p{margin-top:3px}
+.bm-x{margin-left:auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#475569;font-size:15px;flex:none}
+.bm-b{overflow:auto;padding:6px 22px 18px;display:flex;flex-direction:column}
+.sec{padding:14px 0;border-bottom:1px dashed var(--line)}
+.sec:last-of-type{border-bottom:0}
+.sec h4{margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1e1b4b;display:flex;align-items:center;gap:8px}
+.sec h4 span{width:20px;height:20px;border-radius:6px;background:#eef2ff;color:#4338ca;display:grid;place-items:center;font-size:11px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px}
+.g2x{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.g3 .full3{grid-column:1/-1}
+.g3 .half{grid-column:span 1}
+.sec:has(.half) .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+.modal.big textarea{height:auto;min-height:84px;font-family:var(--f-ui);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--fg);background:#fff;width:100%;resize:vertical;font-family:inherit}
+.big textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px #ccfbf1}
+.big label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:#475569;min-width:0}
+.big input,.big select{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;color:var(--fg);background:#fff;width:100%}
+.big input:focus,.big select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px #ccfbf1}
+.big input:disabled{background:#f8fafc;color:#94a3b8}
+.calc{border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;padding:8px 12px;display:flex;flex-direction:column;justify-content:center}
+.calc small{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0f766e}
+.calc b{font-size:20px;font-variant-numeric:tabular-nums;color:#0f766e}.calc b.neg{color:#b91c1c}
+.calc span{font-size:12px;color:var(--mute)}
+.pay{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:#fcfcfd}
+.pay>b{font-size:13px;color:#1e1b4b}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content}
+.seg button{border:0;background:#fff;padding:8px 16px;font-weight:600;font-size:13px;color:#475569}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:#1e1b4b;color:#fff}
+.big .err{margin:10px 0 0;color:#b91c1c;font-size:13px;font-weight:600}
+.bm-f{display:flex;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid var(--line);background:#f8fafc}
+.bm-f .req{margin-right:auto;color:var(--mute);font-size:12.5px}
+@media (max-width:760px){.g3,.g2x{grid-template-columns:1fr}.bm-f .req{display:none}.modal-s{padding:0}.modal.big{max-height:100vh;border-radius:0;height:100%}}
+.modal textarea{width:100%;height:220px;font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
+.modal .f{display:flex;justify-content:flex-end;gap:8px}
+@media (max-width:1440px){.et col.w-bk{width:0}.et th.c-bk,.et td.c-bk{padding:0!important;font-size:0;border-left:0;border-right:0;overflow:hidden;white-space:nowrap}.et td.c-bk *{display:none}}
+/* below 1360px the table becomes one card per booking: no sideways scroll, editable fields stay full size */
+@media (max-width:1360px){
+  .et,.et tbody,.et tfoot{display:block}.et colgroup,.et thead{display:none}
+  .et tbody tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+  .et tbody td{display:block;padding:0!important;border:0;background:none!important;overflow:visible}
+  .et tbody td:first-child{display:none}
+  .et tbody td[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin-bottom:3px}
+  .et tbody td.ed::before{color:#065f46}
+  .et tbody td.ed .cell{background:#ecfdf5;border-radius:8px}
+  .et tbody td.r{text-align:left}
+  .et tbody td.c-bk{display:block;font-size:13px}
+  .et tbody td[data-l="Comment"]{grid-column:1/-1}
+  .et tfoot tr{display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 16px;background:#f8fafc}
+  .et tfoot td{display:block;padding:0;border:0}
+}
+@media (max-width:700px){.et tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}.en-sum{margin-left:0}}
+
+/* view switch, month stepper, manual table */
+.en-head{align-items:center}
+.vsw{display:inline-flex;background:#eef0f6;border:1px solid var(--line);border-radius:11px;padding:4px;gap:4px}
+.vsw button{display:flex;align-items:center;gap:8px;border:0;background:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:14px;color:#475569}
+.vsw button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9}
+.vsw button i{font-style:normal;font-size:11.5px;background:#e2e8f0;color:#334155;border-radius:20px;padding:1px 8px;font-variant-numeric:tabular-nums}
+.vsw button.on{background:#fff;color:#1e1b4b;box-shadow:0 1px 3px #0f172a1f}
+.vsw button.on i{background:#e0e7ff;color:#3730a3}
+.mstep{display:flex;align-items:stretch;height:34px;border:1px solid var(--line);border-radius:8px;background:#fff;overflow:hidden}
+.mstep button{border:0;background:none;padding:0 10px;font-weight:700;color:#334155;font-size:13px}
+.mstep button:hover:not(:disabled){background:#f1f5f9}
+.mstep button:disabled{color:#cbd5e1;cursor:default}
+.mstep #m-lbl{min-width:132px;border-left:1px solid var(--line);border-right:1px solid var(--line);color:var(--fg)}
+.mt{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff;font-variant-numeric:tabular-nums}
+.mt th{background:var(--head);text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:#475569;text-transform:uppercase;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px;overflow:hidden}
+.mt th:first-child,.mt td:first-child{padding-left:max(16px,env(safe-area-inset-left,0px))}
+.mt th:last-child,.mt td:last-child{padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mt tbody tr:hover td{background:#fafbff}
+.mt .r{text-align:right}
+.m-case{width:128px}.m-st{width:100px}.m-fee{width:112px}.m-rep{width:206px}.m-pay{width:214px}.m-act{width:118px}
+.mt .l1{display:block;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt .l2{display:block;color:var(--mute);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt .code{font-family:var(--f-mono);font-size:12px;color:#334155;cursor:copy;background:none;border:0;padding:0}
+.stc{display:inline-block;font-size:11px;font-weight:700;border-radius:20px;padding:2px 8px;white-space:nowrap}
+.c-open{background:#e0f2fe;color:#0369a1}.c-prog{background:#fef3c7;color:#92400e}.c-done{background:#dcfce7;color:#15803d}.c-can{background:#fee2e2;color:#b91c1c}
+.flist{display:flex;flex-direction:column;gap:3px;font-size:12px}
+.flist span{display:flex;justify-content:space-between;gap:8px;white-space:nowrap}
+.flist b{flex:none}
+.flist em{font-style:normal;color:var(--mute)}
+.ok-t{color:#15803d;font-weight:700}.no-t{color:#b45309;font-weight:700}.mu-t{color:#64748b;font-weight:600}
+.fees b{display:block;font-size:13.5px}.fees span{display:block;font-size:12px;color:var(--mute)}.fees .mg{color:#0f766e;font-weight:700}.fees .mg.neg{color:#b91c1c}
+.fb{font-size:12px;color:#334155;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fb em{font-style:normal;font-weight:700;color:var(--mute)}
+.mt .acts2{display:flex;gap:6px}
+.mt .acts2 button{height:28px;border-radius:6px;padding:0 10px;font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff}
+.mt .acts2 .dl{color:#b91c1c;border-color:transparent;background:none}
+.mt .acts2 .dl:disabled{color:#cbd5e1;cursor:not-allowed}
+.mt tfoot td{background:#f8fafc;border-top:2px solid var(--line);font-weight:700;padding:11px 8px;vertical-align:middle}
+.mt tfoot .hint{color:var(--mute);font-weight:500;font-size:12.5px}
+@media (max-width:1500px){
+  .mt,.mt tbody,.mt tfoot{display:block}.mt colgroup,.mt thead{display:none}
+  .mt tbody tr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 18px;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+  .mt tbody td{padding:0!important;border:0;overflow:visible}
+  .mt tbody td[data-l]::before{content:attr(data-l);display:block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin-bottom:4px}
+  .mt tbody td.r{text-align:left}
+  .mt tbody td[data-l="Feedback & comment"]{grid-column:span 2}
+  .mt .fb{-webkit-line-clamp:4}
+  .mt tfoot tr{display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 16px}.mt tfoot td{border:0;padding:0}
+}
+@media (max-width:700px){.mt tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}.vsw{width:100%}.vsw button{flex:1;justify-content:center;padding:9px 8px}}
+
+/* manual entries: spreadsheet view, same columns and order as the team's sheet */
+.xs-wrap{overflow:auto;max-height:calc(100vh - 230px);border-top:1px solid #c7ccd6;background:#fff}
+.xs{border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums;table-layout:auto;width:max-content;min-width:100%}
+.xs td{overflow:visible}
+.xs th,.xs td{border-right:1px solid #d4d9e2;border-bottom:1px solid #d4d9e2;padding:6px 8px;white-space:nowrap;text-align:center;vertical-align:middle}
+.xs thead th{position:sticky;top:0;z-index:3;background:#bdd7ee;color:#0f172a;font-weight:700;font-size:12.5px;text-transform:none;letter-spacing:0;white-space:normal;line-height:1.25;min-width:84px;height:44px}
+.xs thead th.rn,.xs td.rn{background:#eef1f6;color:#64748b;font-weight:600;min-width:36px;width:36px;position:sticky;left:0;z-index:2}
+.xs thead th.rn{z-index:5}
+.xs .stick{position:sticky;z-index:2;background:#fff}
+.xs thead th.stick{z-index:4;background:#bdd7ee}
+.xs .s1{left:36px;width:96px;min-width:96px;max-width:96px}.xs .s2{left:132px;width:150px;min-width:150px;max-width:150px;overflow:hidden;text-overflow:ellipsis}.xs .s3{left:282px;width:104px;min-width:104px;max-width:104px;overflow:hidden;text-overflow:ellipsis}.xs .s4{left:386px;width:190px;min-width:190px;max-width:190px;overflow:hidden;text-overflow:ellipsis;box-shadow:2px 0 0 #9aa6b8}
+.xs thead th.rn,.xs td.rn{max-width:36px}
+.xs td.grn{background:#d5ebc9}
+.xs td.l{text-align:left}
+.xs td.nr{text-align:right}
+.xs td.w{white-space:normal;min-width:170px;max-width:240px;text-align:left}
+.xs tbody tr:hover td{background:#f5f8ff}
+.xs tbody tr:hover td.grn{background:#c6e3b6}
+.xs .pos{color:#15803d;font-weight:700}.xs .neg{color:#b91c1c;font-weight:700}
+.xs .need{color:#b45309;font-weight:700}.xs .paidc{color:#15803d;font-weight:700}
+.xs th.act,.xs td.act{position:sticky;right:0;z-index:2;background:#fff;box-shadow:-2px 0 0 #9aa6b8;min-width:118px}
+.xs thead th.act{z-index:4;background:#bdd7ee}
+.xs td.act .acts2{display:flex;gap:6px;justify-content:center}
+.xs td.act button{height:26px;border-radius:6px;padding:0 9px;font-size:12px;font-weight:600;border:1px solid var(--line);background:#fff}
+.xs td.act .dl{color:#b91c1c;border-color:transparent;background:none}
+.xs td.act .dl:disabled{color:#cbd5e1;cursor:not-allowed}
+.xs .code{font-family:var(--f-mono);font-size:11.5px;color:#334155;cursor:copy;background:none;border:0;padding:0}
+.xs tfoot td{position:sticky;bottom:0;background:#f1f5f9;font-weight:700;border-top:2px solid #9aa6b8;z-index:1}
+.xs tfoot td.rn{z-index:3}
+@media (max-width:700px){.xs .stick{position:static;box-shadow:none}}
+
+.xs tr.editing td{background:#fffbea!important;vertical-align:top}
+.xs .ie{width:100%;min-width:110px;height:30px;border:1px solid #cbd5e1;border-radius:6px;padding:0 6px;font-size:12.5px;background:#fff;color:var(--fg);font-family:inherit}
+.xs textarea.ie{height:auto;min-height:52px;padding:5px 6px;resize:vertical;min-width:170px}
+.xs .ie.nr{text-align:right;min-width:80px}
+.xs .ie:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 2px #ccfbf1}
+.xs .ie:disabled{background:#f1f5f9;color:#64748b;cursor:not-allowed}
+.xs .ie.bad{border-color:#dc2626;box-shadow:0 0 0 2px #fee2e2}
+.xs td.act .sv{background:var(--accent);border-color:var(--accent);color:#fff}
+.xs td.act .lk{font-size:10.5px;color:#92400e;margin-top:4px;white-space:normal}
+.xs td.act button i{font-style:normal;font-size:10px;background:#e0e7ff;color:#3730a3;border-radius:10px;padding:0 5px;margin-left:2px}
+.xs th.act,.xs td.act{min-width:196px}
+.modal.hist{width:min(620px,100%);max-height:calc(100vh - 40px);overflow:auto}
+.hl{display:flex;flex-direction:column;gap:12px}
+.hg{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.hw{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.av2{width:26px;height:26px;border-radius:50%;background:#e0e7ff;color:#3730a3;display:grid;place-items:center;font-size:11px;font-weight:700}
+.hw b{font-size:13.5px}.hw .rl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:#f1f5f9;color:#475569;border-radius:4px;padding:1px 6px}
+.hw time{margin-left:auto;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+.hg ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.hg li{display:flex;align-items:baseline;gap:8px;font-size:13px;flex-wrap:wrap}
+.hf{font-weight:600;color:#334155;min-width:170px}
+.ha{color:#b91c1c;text-decoration:line-through;text-decoration-color:#fca5a5}
+.arr{color:var(--mute)}.hb{color:#15803d;font-weight:600}
+
+/* card + toolbar */
+.card{background:var(--panel);border-bottom:1px solid var(--line)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px;color:#334155}
+.tab i{font-style:normal;font-size:11.5px;font-weight:700;background:#eef2ff;color:#3730a3;border-radius:6px;padding:1px 7px;font-variant-numeric:tabular-nums}
+.tab.on{border-color:var(--accent);background:#f0fdfa;color:var(--accent);box-shadow:0 0 0 2px #99f6e4}
+.tab.on i{background:var(--accent-soft);color:var(--accent)}
+.tab.ghost{margin-left:4px}
+.tab.ghost.on{background:var(--fg);border-color:var(--fg);color:#fff;box-shadow:none}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:200px;flex:0 1 280px;color:var(--mute)}
+.search input{border:0;outline:0;background:transparent;width:100%;color:var(--fg)}
+
+/* table: fixed layout, every column has a set share */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+th{background:var(--head);text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:#475569;text-transform:uppercase;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden}
+tbody tr:hover td{background:var(--row-hover)}
+.two .lnk{white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+.c-num{width:40px}.c-id{width:88px}.c-bd{width:104px}.c-cd{width:112px}.c-fee{width:92px}.c-st{width:132px}.c-act{width:248px}
+/* Patient, Doctor, Category have no width: they share the leftover space equally */
+th:first-child,td:first-child{padding-left:max(16px,env(safe-area-inset-left,0px))}
+th:last-child,td:last-child{padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{display:flex;align-items:center;gap:10px;color:var(--mute)}
+.num input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.bid{font-family:var(--f-mono);font-size:12px;color:#334155;background:none;border:0;padding:2px 4px;margin-left:-4px;border-radius:5px;cursor:copy}
+.bid:hover{background:#f1f5f9}
+.tag{display:inline-block;margin-top:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#475569;background:#f1f5f9;border-radius:4px;padding:1px 6px}
+.two b,.two span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.two b{font-weight:600}
+.two span{color:var(--mute);font-size:12.5px;margin-top:2px}
+.two .na{font-weight:500;color:var(--mute)}
+.lnk{display:inline-block;margin-top:2px;background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:12.5px}
+.lnk:hover{text-decoration:underline}
+.cat{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.date{white-space:nowrap;font-size:13px}
+.date span{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+th.r,td.r{text-align:right}
+.fee{font-weight:700;white-space:nowrap;font-size:13.5px}
+td.st,th.st{padding-left:18px}
+.st .by{font-size:11.5px;color:var(--mute);margin-top:3px}
+.st .by.none{opacity:.8}
+.pill{display:inline-block;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-Upcoming{background:var(--up-bg);color:var(--up)}.p-Assigned{background:var(--as-bg);color:var(--as)}
+.p-Pending{background:var(--pe-bg);color:var(--pe)}.p-Confirmed{background:var(--co-bg);color:var(--co)}
+.p-Complete{background:var(--ok-bg);color:var(--ok)}.p-Cancelled{background:var(--ca-bg);color:var(--ca)}
+.by{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#334155}
+.by.none{color:var(--mute)}
+.acts{display:flex;gap:5px;flex-wrap:nowrap;align-items:center}
+.b{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 8px;font-weight:600;font-size:12px;white-space:nowrap;line-height:1.4}
+.b:hover{border-color:#94a3b8}
+.b.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.b.pri:hover{filter:brightness(1.08)}
+.b.dng{color:var(--ca)}
+.b.dng:hover{background:#fef2f2;border-color:#fca5a5}
+.empty{text-align:center;color:var(--mute);padding:40px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));color:var(--mute);font-size:13px;border-top:1px solid var(--line);flex-wrap:wrap;gap:8px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--side);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;z-index:40}
+.note{margin:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));color:var(--mute);font-size:13px;line-height:1.6;max-width:880px}
+.note b{color:var(--fg)}
+@media (max-width:1100px){.gsearch{display:none}.chip-t{display:none}}
+@media (max-width:900px){.app,.app.mini{grid-template-columns:1fr}.search{margin-left:0;flex:1 1 100%}
+  .side{position:fixed;left:0;top:0;bottom:0;width:280px;z-index:40;transform:translateX(-100%);transition:transform .22s ease;padding-left:env(safe-area-inset-left,0px)}
+  .side.open{transform:none;box-shadow:20px 0 40px #0f172a40}
+  .collapse{display:none}.burger{display:grid}.vr{display:none}
+  .app.mini .brand-t,.app.mini .grp,.app.mini .nav .lbl,.app.mini .nav .cnt,.app.mini .nav .chev,.app.mini .me-t{display:revert}
+}
+</style>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="Admin navigation">
+    <div class="brand">
+      <button class="logo" id="logo" aria-label="Humancare" title="Humancare">H</button>
+      <div class="brand-t"><b>Humancare</b><small>ADMIN CONSOLE</small></div>
+      <button class="collapse" id="collapse" aria-label="Collapse sidebar" title="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
+    </div>
+    <nav class="navwrap" id="nav"></nav>
+    <div class="foot-out"><button class="nav signout2" title="Sign out"><svg class="ic" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg><span class="lbl">Sign out</span></button></div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <button class="burger" id="burger" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="ttl">
+        <div class="crumb">Workspace <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg> <span id="crumb-now">Appointments</span></div>
+        <h1 id="page-title">Appointments</h1>
+      </div>
+      <span class="sp"></span>
+      <label class="gsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="gq" placeholder="Search patients, doctors, bookings…"><span class="kbd">Ctrl K</span></label>
+      <button class="icobtn" aria-label="Notifications, 59 new" title="Notifications"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="n">59</span></button>
+      <span class="vr" aria-hidden="true"></span>
+      <div class="prof">
+        <button class="chip" id="chip" aria-haspopup="menu" aria-expanded="false"><span class="av" id="chip-av">SA</span><span class="chip-t"><b id="chip-name">Super Admin</b><span class="role" id="chip-role">SUPER ADMIN</span></span><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <div class="mh"><b id="mh-name">Super Admin</b><small id="mh-mail">superadmin@humancare.com</small></div>
+          <button role="menuitem"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>My profile</button>
+          <button role="menuitem" class="dng"><svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="en-head">
+        <div class="vsw" role="tablist" aria-label="Entry type">
+          <button role="tab" id="v-auto" class="on" aria-selected="true" data-view="auto"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11"/></svg>Auto entries<i id="vc-auto"></i></button>
+          <button role="tab" id="v-man" aria-selected="false" data-view="manual"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Manual entries<i id="vc-man"></i></button>
+        </div>
+        <div class="en-sum" id="sum"></div>
+      </div>
+      <div class="en-bar">
+        <div class="tabs" id="etabs"></div>
+        <div class="mstep" role="group" aria-label="Month"><button id="m-prev" aria-label="Previous month">‹</button><button id="m-lbl" title="Click for all time">All time</button><button id="m-next" aria-label="Next month">›</button></div>
+        <label class="search"><span aria-hidden="true">⌕</span><input id="eq" placeholder="Search patient, doctor, ID, country"></label>
+        <button class="btn2 pri2" id="add" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add manual entry</button>
+        <button class="btn2" id="exp"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Export CSV</button>
+      </div>
+      <div class="legend" id="legend"><span><i class="a"></i>Filled in automatically from the booking</span><span><i class="e"></i>You type here (saves as you go)</span><span class="ro" id="ro" hidden></span></div>
+      <div class="scroll" id="auto-wrap">
+        <table class="et">
+          <colgroup><col class="w-num"><col class="w-id"><col class="w-bk c-bk"><col class="w-cd"><col><col><col class="w-fee"><col class="w-df"><col class="w-ps"><col class="w-po"><col></colgroup>
+          <thead><tr><th>#</th><th>Booking</th><th class="c-bk">Booked</th><th>Consultation</th><th>Patient</th><th>Doctor</th><th class="r">Fee charged</th><th class="ed r">Doctor fee ($)</th><th class="ed">Paid status</th><th class="ed">Paid on</th><th class="ed">Comment</th></tr></thead>
+          <tbody id="erows"></tbody>
+          <tfoot><tr><td colspan="6" class="lbl" id="tot-l"></td><td class="r" id="tot-f"></td><td class="r" id="tot-d"></td><td colspan="3" class="hint">Totals use saved doctor fees only.</td></tr></tfoot>
+        </table>
+      </div>
+      <div class="xs-wrap" id="man-wrap" hidden>
+        <table class="xs">
+          <thead><tr id="xs-head"></tr></thead>
+          <tbody id="mrows"></tbody>
+          <tfoot><tr id="xs-foot"></tr></tfoot>
+        </table>
+      </div>
+      <p class="note"><b>Preview notes:</b> rows are made up. <b>Auto entries</b> are bookings made on the website or app: you fill in the green columns and they save as you go. <b>Manual entries</b> are cases added by hand (for example from a partner company); only that view has the <b>Add manual entry</b> button, and it shows every field in the same columns and order as your Excel sheet (scroll sideways; Date, Company, Case Number and Patient Name stay pinned on the left, Actions on the right). <b>Edit</b> turns that row into editable cells right in the table (Save or Cancel in Actions, Enter saves, Escape cancels); once "Payment to provider" is Paid, the case, provider, patient and fee cells lock. <b>History</b> shows who changed what and when. The three money boxes on top show only for Super Admin: switch the preview to Admin to see them disappear.</p>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="scrim" id="scrim" hidden></div>
+<div class="demo" role="group" aria-label="Preview role"><span>Preview as</span><button data-role="admin">Admin</button><button data-role="super" class="on">Super Admin</button></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fd=d=>d?new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—";
+const money=n=>"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2000)}
+const E=[
+ // id, booked, consult date, time, patient, country, doctor, feeCharged, paid, platform, docFee, status, paidOn, comment, doctorChanged
+ ["6a1f0c22e8a1b9d4a4c0d6aa","2026-10-10","2026-10-16","9:00 AM","Rachel Secemski","United States","Martin Perlin",99,99,"web","60","paid","2026-10-18","Sample entry",0],
+ ["6a1f0c33b19d2e7f136e89bb","2026-10-01","2026-10-02","3:30 PM","Satish Dalvi","India","satish dalvi",1,1,"web","","unpaid","","",0],
+ ["6a1f0c44c7e5f2a8e62b68cc","2026-09-28","2026-09-30","7:00 PM","Piyush Y.","United Kingdom","Dr Hidayat Khan",5,5,"app","3","unpaid","","",0],
+ ["6a2b10d2c1a9e3b7d6e39c3a","2026-10-12","2026-10-14","10:00 AM","Aisha K.","United Arab Emirates","Dr Hidayat Khan",49,49,"web","","unpaid","","",0],
+ ["6a2b10e8a4f2c1d06348b2bb","2026-10-13","2026-10-15","6:30 PM","Omar S.","Saudi Arabia","Dr Farah Siddiqui",35,35,"app","","unpaid","","",0],
+ ["6a2b10f3b7c8e2a16348afcc","2026-10-03","2026-10-05","11:30 AM","Muhammad I.","Oman","Dr Hidayat Khan",5,5,"web","3","on_hold","","Waiting for invoice",1],
+ ["6a2b1104e9d1f4c2bf8290dd","2026-10-08","2026-10-09","4:00 PM","Laura Bianchi","Italy","Nobita Mestry",99,99,"web","","unpaid","","",0],
+ ["6a2b1115c2a3d5e72c3350ee","2026-09-20","2026-09-22","1:00 PM","James O.","United Kingdom","Dr Hidayat Khan",45,45,"web","33.75","paid","2026-09-30","Paid with September batch",0],
+ ["6a2b1126d4b5e6f82c22ba11","2026-09-18","2026-09-19","5:00 PM","Fatima Z.","Oman","Shuzika Mestry",49,49,"",  "","not_payable","","Refunded in Stripe",0],
+ ["6a2b1137e6c7f8092c1e4622","2026-10-19","2026-10-24","8:00 PM","Priya Nair","United Arab Emirates","Dr Ananya Rao",25,25,"app","","unpaid","","",0],
+ ["6a2b1148f8d9a01a31290733","2026-10-20","2026-10-27","9:30 AM","Rohan Mehta","India","Dr Ananya Rao",25,25,"web","","unpaid","","",0],
+ ["6a2b1159a0e1b12b86e8b044","2026-10-21","","","Neha Kulkarni","India","",25,25,"web","","unpaid","","",0],
+];
+const H0=(by,role,at,list)=>list.map(([f,a,b])=>({by,role,at,f,a,b}));
+const MAN=[
+ {id:"man229987",date:"2026-08-15",co:"Nova Assistance",cs:"229987",svc:"House call",oth:"",cst:"Completed",prov:"Doctor Balear",pph:"",pt:"Bodyliev Alexandr",ct:"Spain",ph:"37379777262",fee:290,df:"200",mr1:"Received",mr2:"Sent",inv:"Sent",pr:"Received",prd:"2026-09-29",pp:"Unpaid",ppd:"",fs:"Yes",fr:"All 3 Reminder Sent",cm:""},
+ {id:"man230112",date:"2026-08-15",co:"Nova Assistance",cs:"230112",svc:"House call",oth:"",cst:"Completed",prov:"Doctor Balear",pph:"",pt:"IEVGENIIA MISHCHENKO",ct:"Spain",ph:"380961414979",fee:310,df:"220",mr1:"Received",mr2:"Sent",inv:"Sent",pr:"Received",prd:"2026-09-29",pp:"Paid",ppd:"2026-10-23",fs:"Yes",fr:"All 3 Reminder Sent",cm:"",hist:[{by:"Narayan Mestry",role:"Admin",at:"15 Aug 2026, 11:20",f:"Created",a:"",b:"Entry added"},...H0("Narayan Mestry","Admin","29 Sept 2026, 16:05",[["Payment received","Not received","Received"],["Payment received date","—","29 Sept 2026"]]),...H0("Super Admin","Super Admin","23 Oct 2026, 10:12",[["Payment to Provider","Need to pay","Paid"],["Paid date to the provider","—","23 Oct 2026"]])]},
+ {id:"man230190",date:"2026-08-15",co:"Nova Assistance",cs:"230190",svc:"House call",oth:"",cst:"Completed",prov:"Doctor Balear",pph:"",pt:"Catanin Covalciuc",ct:"Spain",ph:"37376777883",fee:320,df:"230",mr1:"Received",mr2:"Sent",inv:"Sent",pr:"Received",prd:"2026-09-29",pp:"Unpaid",ppd:"",fs:"Yes",fr:"All 3 Reminder Sent",cm:""},
+ {id:"man1a2b",date:"2026-10-24",co:"Allianz Care",cs:"ALZ-2026-10432",svc:"Teleconsultation",oth:"",cst:"Completed",prov:"Dr Mehta Clinic",pph:"+91 98765 43210",pt:"Ravi Sharma",ct:"United Arab Emirates",ph:"+971 50 123 4567",fee:120,df:"80",mr1:"Received",mr2:"Sent",inv:"Sent",pr:"Received",prd:"2026-10-25",pp:"Paid",ppd:"2026-10-26",fs:"Hi Ravi, how was your consultation?",fr:"Very helpful, thank you.",cm:"Paid by bank transfer"},
+ {id:"man3c4d",date:"2026-10-20",co:"AXA Global Healthcare",cs:"AXA-88213",svc:"Others",oth:"Lab report review",cst:"In progress",prov:"Apollo Home Care",pph:"+91 99880 11223",pt:"Sara Thomas",ct:"India",ph:"+91 90000 12345",fee:250,df:"180",mr1:"Pending",mr2:"Not sent",inv:"Not sent",pr:"Not received",prd:"",pp:"Unpaid",ppd:"",fs:"",fr:"",cm:"Visit done, report awaited"}
+];
+let view="auto",curRole="super",curUser="Super Admin",editId=null;
+let rows=E.map(r=>({id:r[0],booked:r[1],date:r[2],time:r[3],patient:r[4],country:r[5],doctor:r[6],fee:r[7],paid:r[8],plat:r[9],docFee:r[10],status:r[11],paidOn:r[12],note:r[13],changed:!!r[14]}));
+const ST=[["unpaid","Unpaid"],["paid","Paid"],["on_hold","On hold"],["not_payable","Not payable"]];
+let etab="all",eq="",fDoc="",fMon="",canEdit=true;
+const PMAP={"Unpaid":"unpaid","On hold":"on_hold","Paid":"paid","Not payable":"not_payable"};
+const share=p=>p>0?Math.round(p*100-Math.round(p*100*0.25))/100:null;
+function months(){return [...new Set((view==="auto"?rows.filter(r=>r.date).map(r=>r.date):MAN.map(m=>m.date)).map(d=>d.slice(0,7)))].sort().reverse()}
+const mLabel=m=>new Date(m+"-01T00:00").toLocaleDateString("en-GB",{month:"long",year:"numeric"});
+function filtersHTML(){
+  const ms=months(),i=ms.indexOf(fMon);
+  $("#m-lbl").textContent=fMon?mLabel(fMon):"All time";
+  $("#m-prev").disabled=fMon?i===ms.length-1:ms.length===0;
+  $("#m-next").disabled=!fMon;
+}
+function base(){return rows.filter(r=>!r.manual&&(!fMon||(r.date||"").startsWith(fMon)))}
+function visible(){return base().filter(r=>(etab==="all"||r.status===etab)&&(!eq||(r.patient+r.doctor+r.id+r.country).toLowerCase().includes(eq)))}
+function eRender(){
+  $("#vc-auto").textContent=rows.filter(r=>!r.manual).length;$("#vc-man").textContent=MAN.length;
+  filtersHTML();
+  if(view==="manual")return mRender();
+  const b=base(),cnt=k=>b.filter(r=>r.status===k).length;
+  $("#etabs").innerHTML=[["all","All",b.length],...ST.map(([k,l])=>[k,l,cnt(k)])].map(([k,l,c])=>`<button class="tab ${etab===k?"on":""}" data-et="${k}">${l} <i>${c}</i></button>`).join("");
+  const v=visible();
+  const owed=b.filter(r=>r.status==="unpaid"&&Number(r.docFee)>0).reduce((s,r)=>s+Number(r.docFee),0);
+  const paidSum=b.filter(r=>r.status==="paid").reduce((s,r)=>s+Number(r.docFee||0),0);
+  const noFee=b.filter(r=>r.status!=="not_payable"&&r.docFee==="").length;
+  $("#sum").innerHTML=`<div class="kpi warn"><small>To pay doctors</small><b>${money(owed)}</b></div><div class="kpi ok"><small>Paid to doctors</small><b>${money(paidSum)}</b></div>`;
+  $("#erows").innerHTML=v.length?v.map((r,i)=>{
+    const sh=share(r.paid),dis=canEdit?"":"disabled";
+    return `<tr data-id="${r.id}">
+    <td style="color:var(--mute)">${i+1}</td>
+    <td><button class="bid" data-copy="${r.id}" title="Click to copy" style="font-family:var(--f-mono);font-size:12px;color:#334155;background:none;border:0;padding:0;cursor:copy">…${r.id.slice(-8).toUpperCase()}</button>${r.plat?`<span class="plat2 pl-${r.plat}">${r.plat==="web"?"Web":"App"}</span>`:`<span class="plat2 un">Unknown</span>`}</td>
+    <td data-l="Booked" class="dt c-bk">${fd(r.booked)}</td>
+    <td data-l="Consultation" class="dt">${r.date?fd(r.date)+`<span>${r.time}</span>`:'<span>Not scheduled</span>'}</td>
+    <td data-l="Patient" class="nm"><b title="${esc(r.patient)}">${esc(r.patient)}</b><span>${esc(r.country)||"—"}</span></td>
+    <td data-l="Doctor" class="nm">${r.doctor?`<b title="${esc(r.doctor)}">${esc(r.doctor)}</b>`:`<b class="na">Not assigned</b>`}${r.changed?`<span class="flag" title="The doctor on this booking changed after the fee was entered">⚠ Doctor changed</span>`:""}</td>
+    <td data-l="Fee charged" class="r money">${money(r.fee)}${r.paid!==r.fee?`<small>paid ${money(r.paid)}</small>`:""}</td>
+    <td data-l="Doctor fee ($)" class="ed"><div class="cell"><input class="fee-in" id="df-${r.id}" data-k="docFee" inputmode="decimal" value="${esc(r.docFee)}" placeholder="0.00" aria-label="Doctor fee" ${dis}></div></td>
+    <td data-l="Paid status" class="ed"><div class="cell"><select id="ps-${r.id}" data-k="status" class="ps-${r.status}" aria-label="Paid status" ${dis}>${ST.map(([k,l])=>`<option value="${k}" ${r.status===k?"selected":""}>${l}</option>`).join("")}</select></div></td>
+    <td data-l="Paid on" class="ed"><div class="cell"><input type="date" id="po-${r.id}" data-k="paidOn" value="${esc(r.paidOn)}" aria-label="Paid on" ${dis}></div></td>
+    <td data-l="Comment" class="ed"><div class="cell"><input id="cm-${r.id}" data-k="note" value="${esc(r.note)}" placeholder="${canEdit?"Add a note":""}" maxlength="500" aria-label="Comment" ${dis}></div></td>
+  </tr>`}).join(""):`<tr><td colspan="11" style="text-align:center;color:var(--mute);padding:40px">No entries match this view.</td></tr>`;
+  $("#tot-l").textContent=`Totals for ${v.length} row${v.length===1?"":"s"}`;
+  $("#tot-f").textContent=money(v.reduce((s,r)=>s+r.fee,0));
+  $("#tot-d").textContent=money(v.reduce((s,r)=>s+Number(r.docFee||0),0));
+  $("#ro").hidden=canEdit;
+}
+const code=m=>"M-"+m.id.slice(-4).toUpperCase();
+const yes=(v,good)=>`<b class="${v===good?"ok-t":v.startsWith("Partly")?"no-t":"no-t"}">${esc(v)}</b>`;
+function mBase(){return MAN.filter(m=>!fMon||m.date.startsWith(fMon))}
+const OPT={svc:["House call","Teleconsultation","Others"],cst:["Open","In progress","Completed","Cancelled"],mr1:["Pending","Received"],mr2:["Not sent","Sent"],inv:["Not sent","Sent"],pr:["Not received","Partly received","Received"],pp:["Unpaid","On hold","Paid","Not payable"]};
+const OLBL={mr1:{Pending:"MR pending",Received:"MR received"},mr2:{"Not sent":"Not sent",Sent:"MR sent"},inv:{"Not sent":"Not sent",Sent:"Invoice sent"},pr:{"Received":"Paid"},pp:{Unpaid:"Need to pay"}};
+const LOCK=["date","co","cs","svc","oth","cst","prov","pph","pt","ct","ph","fee","df"];
+// [header, css, display, field, editor]
+const COLS=[
+ ["Date","s1",m=>fd(m.date),"date","date"],
+ ["Company","s2 l",m=>esc(m.co)||"—","co","text"],
+ ["Case Number","s3 grn",m=>esc(m.cs)||"—","cs","text"],
+ ["Patient Name","s4 grn l",m=>esc(m.pt),"pt","text"],
+ ["Type of service","",m=>esc(m.svc==="Others"?(m.oth||"Others"):m.svc),"svc","svc"],
+ ["Patient Country","",m=>esc(m.ct)||"—","ct","text"],
+ ["Service provider","l",m=>esc(m.prov),"prov","text"],
+ ["Status","",m=>esc(m.cst),"cst","sel"],
+ ["Consultation Fee","nr",m=>fmtN(m.fee),"fee","money"],
+ ["Doctor's Fee","nr",m=>m.df===""?"—":fmtN(Number(m.df)),"df","money"],
+ ["MR status from provider","",m=>OLBL.mr1[m.mr1],"mr1","sel"],
+ ["MR sent status to the companies","",m=>OLBL.mr2[m.mr2],"mr2","sel"],
+ ["Invoice sent status","",m=>OLBL.inv[m.inv],"inv","sel"],
+ ["Payment received","",m=>esc(OLBL.pr[m.pr]||m.pr),"pr","sel"],
+ ["Payment to Provider","",m=>m.pp==="Paid"?'<span class="paidc">Paid</span>':m.pp==="Unpaid"?'<span class="need">Need to pay</span>':esc(m.pp),"pp","sel"],
+ ["Payment received date","",m=>m.prd?fd(m.prd):"—","prd","date"],
+ ["Paid date to the provider","",m=>m.ppd?fd(m.ppd):"—","ppd","date"],
+ ["Contact Number","",m=>esc(m.ph)||"—","ph","text"],
+ ["Service provider number","",m=>esc(m.pph)||"—","pph","text"],
+ ["Feedback Message Sent","w",m=>esc(m.fs)||"—","fs","area"],
+ ["Feedback Received","w",m=>esc(m.fr)||"—","fr","area"],
+ ["Calculation","nr",m=>{const g=m.fee-Number(m.df||0);return `<span class="${g<0?"neg":"pos"}">${g<0?"−":""}${fmtN(Math.abs(g))}</span>`},"",""],
+ ["Comment","w",m=>esc(m.cm)||"—","cm","area"]
+];
+const FNAME=Object.fromEntries(COLS.filter(c=>c[3]).map(c=>[c[3],c[0]]));FNAME.oth="Other service";
+function editor(m,c){const [h,,,k,t]=c,v=m[k]??"",lk=m.pp==="Paid"&&LOCK.includes(k)?"disabled title=\"Locked: already paid to provider\"":"",id=`ie-${k}`;
+  if(t==="date")return `<input class="ie" type="date" id="${id}" data-f="${k}" value="${esc(v)}" ${lk} aria-label="${h}">`;
+  if(t==="money")return `<input class="ie nr" id="${id}" data-f="${k}" inputmode="decimal" value="${esc(v)}" placeholder="0.00" ${lk} aria-label="${h}">`;
+  if(t==="area")return `<textarea class="ie" id="${id}" data-f="${k}" rows="2" maxlength="1000" aria-label="${h}">${esc(v)}</textarea>`;
+  if(t==="sel")return `<select class="ie" id="${id}" data-f="${k}" ${lk} aria-label="${h}">${OPT[k].map(o=>`<option value="${o}" ${o===v?"selected":""}>${(OLBL[k]&&OLBL[k][o])||o}</option>`).join("")}</select>`;
+  if(t==="svc")return `<select class="ie" id="${id}" data-f="svc" ${lk} aria-label="${h}">${OPT.svc.map(o=>`<option ${o===v?"selected":""}>${o}</option>`).join("")}</select><input class="ie" id="ie-oth" data-f="oth" value="${esc(m.oth)}" placeholder="Other service" ${m.svc==="Others"?"":"hidden"} ${lk} style="margin-top:4px" aria-label="Other service">`;
+  return `<input class="ie" id="${id}" data-f="${k}" value="${esc(v)}" ${lk} aria-label="${h}">`;
+}
+
+const fmtN=n=>Number(n).toLocaleString("en-US",{minimumFractionDigits:Number(n)%1?2:0,maximumFractionDigits:2});
+function mRender(){
+  const b=mBase(),cnt=k=>b.filter(m=>PMAP[m.pp]===k).length;
+  $("#etabs").innerHTML=[["all","All",b.length],...ST.map(([k,l])=>[k,l,cnt(k)])].map(([k,l,c])=>`<button class="tab ${etab===k?"on":""}" data-et="${k}">${l} <i>${c}</i></button>`).join("");
+  const v=b.filter(m=>(etab==="all"||PMAP[m.pp]===etab)&&(!eq||Object.values(m).join(" ").toLowerCase().includes(eq)));
+  const recv=b.filter(m=>m.pr!=="Not received").reduce((s,m)=>s+m.fee,0);
+  const owe=b.filter(m=>m.pp==="Unpaid").reduce((s,m)=>s+Number(m.df||0),0);
+  const margin=b.reduce((s,m)=>s+m.fee-Number(m.df||0),0);
+  $("#sum").innerHTML=curRole==="super"?`<div class="kpi ok"><small>Received from companies</small><b>${money(recv)}</b></div><div class="kpi warn"><small>To pay providers</small><b>${money(owe)}</b></div><div class="kpi"><small>Our margin</small><b>${money(margin)}</b></div>`:"";
+  const stk=c=>/s[1-4]/.test(c)?"stick "+c:c;
+  $("#xs-head").innerHTML=`<th class="rn">#</th>`+COLS.map(([h,c])=>`<th class="${stk(c).replace(/\b(grn|l|nr|w)\b/g,"")}">${h}</th>`).join("")+`<th class="act">Actions</th>`;
+  $("#mrows").innerHTML=v.length?v.map((m,i)=>{const ed=editId===m.id;return `<tr data-mid="${m.id}" class="${ed?"editing":""}"><td class="rn"><button class="code" data-copy="${code(m)}" title="${code(m)} · click to copy">${i+1}</button></td>`+
+    COLS.map(c=>`<td class="${stk(c[1])}" title="${ed?"":c[0]}">${ed&&c[3]?editor(m,c):c[2](m)}</td>`).join("")+
+    `<td class="act">${ed?`<div class="acts2"><button class="sv" data-msave="${m.id}">Save</button><button data-mcancel>Cancel</button></div>${m.pp==="Paid"?'<div class="lk">Paid: some fields locked</div>':""}`
+      :`<div class="acts2"><button data-medit="${m.id}" ${editId?"disabled":""}>Edit</button><button data-mhist="${m.id}" title="See who changed what">History${m.hist&&m.hist.length?` <i>${m.hist.length}</i>`:""}</button><button class="dl" data-mdel="${m.id}" ${m.pp==="Paid"?'disabled title="Change Payment to provider from Paid before deleting"':""}>Delete</button></div>`}</td></tr>`}).join("")
+    :`<tr><td colspan="${COLS.length+2}" style="text-align:left;color:var(--mute);padding:30px 16px">No manual entries yet. Use <b>Add manual entry</b> to add one.</td></tr>`;
+  const tot=v.reduce((s,m)=>s+m.fee,0),tdf=v.reduce((s,m)=>s+Number(m.df||0),0);
+  $("#xs-foot").innerHTML=`<td class="rn"></td>`+COLS.map(([h,c])=>{
+    const k=stk(c).replace(/\bgrn\b/,"");
+    if(h==="Date")return `<td class="${k}" style="text-align:left" colspan="1">Total</td>`;
+    if(h==="Company")return `<td class="${k} l">${v.length} entr${v.length===1?"y":"ies"}</td>`;
+    if(h==="Consultation Fee")return `<td class="nr">${fmtN(tot)}</td>`;
+    if(h==="Doctor's Fee")return `<td class="nr">${fmtN(tdf)}</td>`;
+    if(h==="Calculation")return `<td class="nr"><span class="${tot-tdf<0?"neg":"pos"}">${fmtN(tot-tdf)}</span></td>`;
+    return `<td class="${k}"></td>`}).join("")+`<td class="act"></td>`;
+}
+function saveRow(m){
+  const tr=document.querySelector(`tr[data-mid="${m.id}"]`),val={};
+  tr.querySelectorAll(".ie").forEach(el=>val[el.dataset.f]=el.value.trim());
+  const bad=x=>x!==""&&!/^\d{1,7}(\.\d{1,2})?$/.test(x.replace(/^\$/,""));
+  const fail=(t,f)=>{toast(t);const el=tr.querySelector(`[data-f="${f}"]`);if(el){el.classList.add("bad");el.focus()}};
+  if("pt" in val&&!val.pt)return fail("Enter the patient's name.","pt");
+  if("prov" in val&&!val.prov)return fail("Enter the service provider.","prov");
+  if(val.svc==="Others"&&!val.oth)return fail("Describe the service, since you chose Others.","oth");
+  if(bad(val.fee||""))return fail("Consultation fee must be a number, like 49.00.","fee");
+  if(bad(val.df||""))return fail("Doctor's fee must be a number, like 36.75.","df");
+  const df=val.df!==undefined?val.df:m.df;
+  if(val.pp==="Paid"&&!(Number(df)>0))return fail("Paid to provider needs a doctor's fee above 0.","df");
+  if(val.pp==="Paid"&&!val.ppd)val.ppd=today();
+  if(val.pr&&val.pr!=="Not received"&&!val.prd)val.prd=today();
+  if(val.pr==="Not received")val.prd="";
+  if(val.pp&&val.pp!=="Paid")val.ppd="";
+  if(val.svc&&val.svc!=="Others")val.oth="";
+  if("fee" in val)val.fee=Number(val.fee||0);
+  const show=(k,x)=>x===""||x==null?"—":k==="fee"||k==="df"?fmtN(Number(x)):(k==="date"||k==="prd"||k==="ppd")?fd(x):(OLBL[k]&&OLBL[k][x])||x;
+  const ch=[];for(const k in val){if(String(val[k])!==String(m[k]??"")){ch.push({by:curUser,role:curRole==="super"?"Super Admin":"Admin",at:new Date().toLocaleString("en-GB",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),f:FNAME[k]||k,a:show(k,m[k]),b:show(k,val[k])});m[k]=val[k]}}
+  editId=null;
+  if(ch.length){m.hist=(m.hist||[]).concat(ch);toast(`Saved ${ch.length} change${ch.length>1?"s":""}`)}else toast("No changes");
+  eRender();
+}
+function showHist(m){
+  const h=(m.hist||[]).slice().reverse();
+  const groups=[];h.forEach(x=>{const g=groups.find(y=>y.by===x.by&&y.at===x.at);g?g.items.push(x):groups.push({by:x.by,role:x.role,at:x.at,items:[x]})});
+  const d=document.createElement("div");d.className="modal-s";
+  d.innerHTML=`<div class="modal hist" role="dialog" aria-modal="true" aria-labelledby="h-t"><div class="bm-h" style="padding:0 0 12px"><div><h3 id="h-t">History · ${code(m)}</h3><p>${esc(m.pt)} · ${esc(m.co)||"No company"} · case ${esc(m.cs)||"—"}</p></div><button class="bm-x" data-close aria-label="Close">✕</button></div>
+   <div class="hl">${groups.length?groups.map(g=>`<div class="hg"><div class="hw"><span class="av2">${g.by.split(" ").map(w=>w[0]).join("").slice(0,2)}</span><b>${esc(g.by)}</b><span class="rl">${esc(g.role)}</span><time>${esc(g.at)}</time></div>
+     <ul>${g.items.map(x=>x.f==="Created"?`<li><span class="hf">Created the entry</span></li>`:`<li><span class="hf">${esc(x.f)}</span><span class="ha">${esc(x.a)}</span><span class="arr">→</span><span class="hb">${esc(x.b)}</span></li>`).join("")}</ul></div>`).join(""):'<p style="color:var(--mute)">No changes yet. Edits made here will be listed with who made them and when.</p>'}</div></div>`;
+  document.body.appendChild(d);d.querySelector(".bm-x").focus();
+  d.addEventListener("click",ev=>{if(ev.target===d||ev.target.closest("[data-close]"))d.remove()});
+  d.addEventListener("keydown",ev=>{if(ev.key==="Escape")d.remove()});
+}
+document.addEventListener("change",e=>{if(e.target.matches&&e.target.matches('.ie[data-f="svc"]')){const o=document.getElementById("ie-oth");if(o){o.hidden=e.target.value!=="Others";if(!o.hidden)o.focus()}}});
+document.addEventListener("keydown",e=>{if(!e.target.closest)return;const tr=e.target.closest("tr.editing");if(!tr)return;
+  if(e.key==="Escape"){editId=null;eRender()}
+  if(e.key==="Enter"&&e.target.tagName!=="TEXTAREA"){e.preventDefault();saveRow(MAN.find(x=>x.id===tr.dataset.mid))}});
+function setView(v){view=v;etab="all";fMon="";editId=null;
+  document.querySelectorAll(".vsw button").forEach(b=>{const on=b.dataset.view===v;b.classList.toggle("on",on);b.setAttribute("aria-selected",String(on))});
+  $("#auto-wrap").hidden=v!=="auto";$("#man-wrap").hidden=v!=="manual";$("#legend").hidden=v!=="auto";$("#add").hidden=v!=="manual";
+  $("#eq").placeholder=v==="auto"?"Search patient, doctor, ID, country":"Search case, company, patient, provider";
+  eRender()}
+function flash(el,cls,txt){const c=el.closest(".cell");c.querySelector(".st")?.remove();const s=document.createElement("span");s.className="st "+cls;s.textContent=txt;c.appendChild(s);if(cls!=="err")setTimeout(()=>s.remove(),1500)}
+function commit(el){
+  const id=el.closest("tr").dataset.id,r=rows.find(x=>x.id===id),k=el.dataset.k;let v=el.value.trim();
+  if(k==="docFee"){
+    v=v.replace(/^\$/,"");
+    if(v!==""&&!/^\d{1,7}(\.\d{1,2})?$/.test(v)){flash(el,"err","Use a number like 74.25");return}
+    if(v===r.docFee)return;
+    if(r.status==="paid"&&!(Number(v)>0)){el.value=r.docFee;toast("A Paid row needs a fee. Change the status first.");return}
+    r.docFee=v;
+  } else if(k==="status"){
+    if(v==="paid"){
+      if(!r.doctor){el.value=r.status;toast("Assign a doctor before marking Paid.");return}
+      if(!(Number(r.docFee)>0)){el.value=r.status;toast("Add a doctor fee before marking Paid.");return}
+      if(!r.paidOn)r.paidOn=today();
+    }
+    r.status=v;
+  } else if(k==="paidOn"){
+    if(r.status==="paid"&&!v){el.value=r.paidOn;toast("A Paid row needs a date.");return}
+    r.paidOn=v;
+  } else {if(v===r.note)return;r.note=v}
+  flash(el,"saving","Saving…");
+  setTimeout(()=>{eRender();const ne=document.getElementById(el.id);if(ne)flash(ne,"saved","Saved")},350);
+}
+document.addEventListener("change",e=>{if(e.target.dataset&&e.target.dataset.k&&(e.target.tagName==="SELECT"||e.target.type==="date"))commit(e.target)});
+document.addEventListener("focusout",e=>{if(e.target.dataset&&(e.target.dataset.k==="docFee"||e.target.dataset.k==="note"))commit(e.target)});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.dataset&&(e.target.dataset.k==="docFee"||e.target.dataset.k==="note")){e.preventDefault();e.target.blur()}});
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-et]");if(t){etab=t.dataset.et;eRender();return}
+  if(e.target.closest("#add")){openAdd();return}
+  const vb=e.target.closest(".vsw button");if(vb){setView(vb.dataset.view);return}
+  if(e.target.closest("#m-prev")){const ms=months(),i=ms.indexOf(fMon);fMon=fMon?ms[i+1]:ms[0];eRender();return}
+  if(e.target.closest("#m-next")){const ms=months(),i=ms.indexOf(fMon);fMon=i>0?ms[i-1]:"";eRender();return}
+  if(e.target.closest("#m-lbl")){fMon="";eRender();return}
+  const cp=e.target.closest("[data-copy]");if(cp){const t=cp.dataset.copy;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Booking ID copied")).catch(()=>toast("Press Ctrl+C to copy "+t));return}
+  const me=e.target.closest("[data-medit]");if(me){editId=me.dataset.medit;eRender();const f=document.querySelector("tr.editing .ie:not(:disabled)");if(f)f.focus();return}
+  if(e.target.closest("[data-mcancel]")){editId=null;eRender();return}
+  const ms=e.target.closest("[data-msave]");if(ms){saveRow(MAN.find(x=>x.id===ms.dataset.msave));return}
+  const mh=e.target.closest("[data-mhist]");if(mh){showHist(MAN.find(x=>x.id===mh.dataset.mhist));return}
+  const md=e.target.closest("[data-mdel]");if(md){const r=MAN.find(x=>x.id===md.dataset.mdel);
+    const mm=document.createElement("div");mm.className="modal-s";mm.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Delete manual entry"><h3>Delete ${code(r)}?</h3><p>${esc(r.pt)} · ${esc(r.prov)} · ${money(r.fee)}. It's removed from this list but kept in the audit log.</p><div class="f"><button class="btn2" data-close>Keep it</button><button class="btn2" data-yes style="color:#b91c1c">Delete entry</button></div></div>`;
+    document.body.appendChild(mm);mm.addEventListener("click",ev=>{if(ev.target.closest("[data-yes]")){MAN.splice(MAN.indexOf(r),1);mm.remove();eRender();toast("Manual entry deleted")}else if(ev.target===mm||ev.target.closest("[data-close]"))mm.remove()});return}
+  const dl=e.target.closest("[data-del]");if(dl){const r=rows.find(x=>x.id===dl.dataset.del);
+    const m=document.createElement("div");m.className="modal-s";m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Delete manual entry"><h3>Delete this manual entry?</h3><p>${esc(r.patient)} · ${esc(r.doctor)} · ${money(r.fee)}. Only manual entries can be deleted. Rows from real bookings can't.</p><div class="f"><button class="btn2" data-close>Keep it</button><button class="btn2" data-yes style="color:#b91c1c">Delete entry</button></div></div>`;
+    document.body.appendChild(m);m.addEventListener("click",ev=>{if(ev.target.closest("[data-yes]")){rows=rows.filter(x=>x.id!==r.id);m.remove();filtersHTML();eRender();toast("Manual entry deleted")}else if(ev.target===m||ev.target.closest("[data-close]"))m.remove()});return}
+  if(e.target.closest("#exp")){
+    const q=x=>{x=String(x??"");if(/^[=+\-@]/.test(x))x="'"+x;return `"${x.replace(/"/g,'""')}"`};
+    const csv=["Booking ID,Booked,Consultation,Patient,Country,Doctor,Fee charged,Doctor fee,Paid status,Paid on,Comment,Source"].concat(visible().map(r=>[r.id,r.booked,r.date,r.patient,r.country,r.doctor||"Not assigned",r.fee.toFixed(2),r.docFee,ST.find(s=>s[0]===r.status)[1],r.paidOn,r.note,r.plat?(r.plat==="web"?"Web":"App"):"Unknown"].map(q).join(","))).join("\n");
+    const m=document.createElement("div");m.className="modal-s";m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Export CSV"><h3>Export CSV</h3><p>In the real app this downloads entries-${today()}.csv. Here's what it contains (${visible().length} rows).</p><textarea readonly>${esc(csv)}</textarea><div class="f"><button class="btn2" data-close>Close</button></div></div>`;
+    document.body.appendChild(m);m.addEventListener("click",ev=>{if(ev.target===m||ev.target.closest("[data-close]"))m.remove()});return}
+});
+const COMPANIES=["Allianz Care","AXA Global Healthcare","Cigna Global","Bupa Global","GeoBlue","Direct (no company)"];
+const SERVICES=["Video consultation","Second opinion","Medical report review","Prescription","Fit to fly certificate","Follow-up consultation"];
+function openAdd(ed){
+  const docs=[...new Set(rows.map(r=>r.doctor).filter(Boolean))].sort();
+  const opt=(arr,sel)=>arr.map(x=>`<option ${x===sel?"selected":""}>${esc(x)}</option>`).join("");
+  const yn=(id,a,b)=>`<div class="seg" role="radiogroup" id="${id}"><button type="button" role="radio" aria-checked="true" class="on" data-v="${a}">${a}</button><button type="button" role="radio" aria-checked="false" data-v="${b}">${b}</button></div>`;
+  const m=document.createElement("div");m.className="modal-s";
+  m.innerHTML=`<form class="modal big" role="dialog" aria-modal="true" aria-labelledby="bm-t" novalidate>
+    <div class="bm-h"><div><h3 id="bm-t">${ed?"Edit "+code(ed):"Add manual entry"}</h3><p>A case that didn't come through the website or app, for example sent by a partner company.</p></div><button type="button" class="bm-x" data-close aria-label="Close">✕</button></div>
+    <div class="bm-b">
+      <section class="sec"><h4><span>1</span>Case</h4><div class="g3">
+        <label>Date<input type="date" id="b-date" value="${today()}"></label>
+        <label>Company<input id="b-co" maxlength="80" placeholder="e.g. Allianz Care"></label>
+        <label>Case number<input id="b-case" maxlength="40" placeholder="e.g. ALZ-2026-10432"></label>
+        <label>Type of service<select id="b-svc">${opt(["House call","Teleconsultation","Others"],"Teleconsultation")}</select></label>
+        <label id="b-oth-l" hidden>Other service<input id="b-oth" maxlength="80" placeholder="Describe the service"></label>
+        <label>Status<select id="b-st">${opt(["Open","In progress","Completed","Cancelled"],"Open")}</select></label>
+      </div></section>
+      <section class="sec"><h4><span>2</span>Service provider</h4><div class="g3">
+        <label>Service provider<input id="b-doc" maxlength="80" placeholder="Doctor or clinic name" required></label>
+        <label>Service provider number<input id="b-dph" inputmode="tel" maxlength="20" placeholder="+91 98765 43210"></label>
+      </div></section>
+      <section class="sec"><h4><span>3</span>Patient</h4><div class="g3">
+        <label class="s2">Patient name<input id="b-pt" maxlength="80" placeholder="Full name" required></label>
+        <label>Patient country<input id="b-ct" maxlength="60" placeholder="e.g. United Arab Emirates" list="b-cts"></label>
+        <datalist id="b-cts"><option>India</option><option>United Arab Emirates</option><option>Oman</option><option>Saudi Arabia</option><option>Qatar</option><option>United Kingdom</option><option>United States</option></datalist>
+        <label>Contact number<input id="b-ph" inputmode="tel" maxlength="20" placeholder="+971 50 123 4567"></label>
+      </div></section>
+      <section class="sec"><h4><span>4</span>Fees</h4><div class="g3">
+        <label>Consultation fee ($)<input id="b-fee" inputmode="decimal" placeholder="0.00"></label>
+        <label>Doctor's fee ($)<input id="b-df" inputmode="decimal" placeholder="0.00"></label>
+        <div class="calc" aria-live="polite"><small>Calculation (our margin)</small><b id="b-calc">$0.00</b><span id="b-pct">Consultation fee − Doctor's fee</span></div>
+      </div></section>
+      <section class="sec"><h4><span>5</span>Medical report &amp; invoice</h4><div class="g3">
+        <label>MR status from provider<select id="b-mr1">${opt(["Pending","Received"])}</select></label>
+        <label>MR sent to the company<select id="b-mr2">${opt(["Not sent","Sent"])}</select></label>
+        <label>Invoice sent<select id="b-inv">${opt(["Not sent","Sent"])}</select></label>
+      </div></section>
+      <section class="sec"><h4><span>6</span>Payments</h4><div class="g2x">
+        <div class="pay"><b>From the company</b>
+          <label>Payment received<select id="b-pr">${opt(["Not received","Partly received","Received"])}</select></label>
+          <label>Payment received date<input type="date" id="b-prd" disabled></label></div>
+        <div class="pay"><b>To the provider</b>
+          <label>Payment to provider<select id="b-pp">${opt(["Unpaid","On hold","Paid","Not payable"])}</select></label>
+          <label>Paid date to the provider<input type="date" id="b-ppd" disabled></label></div>
+      </div></section>
+      <section class="sec"><h4><span>7</span>Feedback</h4><div class="g3">
+        <label class="half">Feedback message sent<textarea id="b-fs" maxlength="1000" rows="3" placeholder="The message sent to the patient asking for feedback"></textarea></label>
+        <label class="half">Feedback received<textarea id="b-fr" maxlength="1000" rows="3" placeholder="What the patient or company replied"></textarea></label>
+        <label class="full3">Comment<input id="b-cm" maxlength="500" placeholder="Optional internal note"></label>
+      </div></section>
+      <p class="err" id="b-err" hidden></p>
+    </div>
+    <div class="bm-f"><span class="req">Patient name and service provider are required.</span><button type="button" class="btn2" data-close>Cancel</button><button type="submit" class="btn2 pri2">Save entry</button></div>
+  </form>`;
+  document.body.appendChild(m);m.querySelector("#b-pt").focus();
+  const $m=q=>m.querySelector(q);
+  if(ed){const set=(q,v)=>{$m(q).value=v??""};
+    set("#b-date",ed.date);set("#b-co",ed.co);set("#b-case",ed.cs);set("#b-svc",ed.svc);set("#b-oth",ed.oth);$m("#b-oth-l").hidden=ed.svc!=="Others";set("#b-st",ed.cst);
+    set("#b-doc",ed.prov);set("#b-dph",ed.pph);set("#b-pt",ed.pt);set("#b-ct",ed.ct);set("#b-ph",ed.ph);set("#b-fee",ed.fee);set("#b-df",ed.df);
+    set("#b-mr1",ed.mr1);set("#b-mr2",ed.mr2);set("#b-inv",ed.inv);set("#b-pr",ed.pr);set("#b-prd",ed.prd);$m("#b-prd").disabled=ed.pr==="Not received";
+    set("#b-pp",ed.pp);set("#b-ppd",ed.ppd);$m("#b-ppd").disabled=ed.pp!=="Paid";set("#b-fs",ed.fs);set("#b-fr",ed.fr);set("#b-cm",ed.cm);
+    if(ed.pp==="Paid"){["#b-date","#b-co","#b-case","#b-svc","#b-oth","#b-st","#b-doc","#b-dph","#b-pt","#b-ct","#b-ph","#b-fee","#b-df"].forEach(q=>$m(q).disabled=true);
+      const n=document.createElement("p");n.className="lockn";n.textContent="Paid to provider: case, provider, patient and fees are locked. Reports, payments and feedback can still be changed.";$m(".bm-b").prepend(n)}
+  }
+  const num=v=>{v=String(v).trim().replace(/^\$/,"");return v===""?0:(/^\d{1,7}(\.\d{1,2})?$/.test(v)?Number(v):NaN)};
+  function calc(){const f=num($m("#b-fee").value),d=num($m("#b-df").value);
+    if(isNaN(f)||isNaN(d)){$m("#b-calc").textContent="—";$m("#b-pct").textContent="Enter fees as numbers, like 49.00";return}
+    const mg=f-d;$m("#b-calc").textContent=(mg<0?"−":"")+money(Math.abs(mg));$m("#b-calc").className=mg<0?"neg":"";
+    $m("#b-pct").textContent=f>0?`${Math.round(mg/f*100)}% of the consultation fee`:"Consultation fee − Doctor's fee"}
+  $m("#b-svc").addEventListener("change",()=>{const o=$m("#b-svc").value==="Others";$m("#b-oth-l").hidden=!o;if(o)$m("#b-oth").focus();else $m("#b-oth").value=""});
+  $m("#b-fee").addEventListener("input",calc);$m("#b-df").addEventListener("input",calc);
+  const link=(sel,date,ok)=>$m(sel).addEventListener("change",()=>{const on=ok.includes($m(sel).value);$m(date).disabled=!on;if(on&&!$m(date).value)$m(date).value=today();if(!on)$m(date).value=""});
+  link("#b-pr","#b-prd",["Received","Partly received"]);link("#b-pp","#b-ppd",["Paid"]);
+  m.querySelectorAll(".seg").forEach(g=>g.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;g.querySelectorAll("button").forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",String(x===b))})}));
+  m.addEventListener("click",ev=>{if(ev.target===m||ev.target.closest("[data-close]"))m.remove()});
+  m.addEventListener("keydown",ev=>{if(ev.key==="Escape")m.remove()});
+  $m("form").addEventListener("submit",ev=>{ev.preventDefault();
+    const err=$m("#b-err"),fail=t=>{err.hidden=false;err.textContent=t;err.scrollIntoView({block:"nearest"})};
+    const g=q=>$m(q).value.trim();
+    if(!g("#b-pt"))return fail("Enter the patient's name.");
+    if(!g("#b-doc"))return fail("Enter the service provider.");
+    if(g("#b-svc")==="Others"&&!g("#b-oth"))return fail("Describe the service, since you chose Others.");
+    const fee=num(g("#b-fee")),df=num(g("#b-df"));
+    if(isNaN(fee)||isNaN(df))return fail("Fees must be numbers, like 49.00.");
+    if(g("#b-pp")==="Paid"&&!(df>0))return fail("A provider marked Paid needs a doctor's fee above 0.");
+    const rec={date:g("#b-date"),co:g("#b-co"),cs:g("#b-case"),svc:g("#b-svc"),oth:g("#b-oth"),cst:g("#b-st"),prov:g("#b-doc"),pph:g("#b-dph"),pt:g("#b-pt"),ct:g("#b-ct"),ph:g("#b-ph"),
+      fee,df:g("#b-df")?String(df):"",mr1:g("#b-mr1"),mr2:g("#b-mr2"),inv:g("#b-inv"),pr:g("#b-pr"),prd:g("#b-prd"),pp:g("#b-pp"),ppd:g("#b-ppd"),fs:g("#b-fs"),fr:g("#b-fr"),cm:g("#b-cm")};
+    if(ed)Object.assign(ed,rec);else MAN.unshift({id:"man"+Math.random().toString(16).slice(2,6),...rec});
+    m.remove();if(view!=="manual")setView("manual");else eRender();toast(ed?"Changes saved":"Manual entry saved");
+  });
+}
+$("#eq").addEventListener("input",e=>{eq=e.target.value.trim().toLowerCase();eRender()});
+eRender();
+
+/* ---------- sidebar + topbar ---------- */
+const I={
+ dash:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ video:'<rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="m15.5 10 6-3.5v11l-6-3.5"/>',
+ brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+ chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/>',
+ doc:'<circle cx="12" cy="7.5" r="3.5"/><path d="M5 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/><path d="M17 4v4M15 6h4"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .7 3.5 2.4 3.5 5.2"/>',
+ file:'<path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5M9 12h6M9 16h6"/>',
+ chart:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+ ledger:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+ ticket:'<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12"/>'
+};
+const NAV=[{g:"",items:[
+ {k:"dash",l:"Dashboard",i:"dash"},
+ {k:"doctors",l:"Doctors",i:"doc",sub:[{k:"ourdocs",l:"Our Doctors",i:"doc"},{k:"mandocs",l:"Manage Doctors",i:"users",n:27}]},
+ {k:"users",l:"Users",i:"users",sub:[{k:"manusers",l:"Manage Users",i:"users"},{k:"del",l:"Deletion Requests",i:"file"}]},
+ {k:"appts",l:"Appointments",i:"cal",n:57},
+ {k:"entries",l:"Appointment entries",i:"ledger"},
+ {k:"dvc",l:"Direct Video Consultation",i:"video"},
+ {k:"docs",l:"Documents",i:"file",sub:[{k:"inv",l:"Manual Invoices",i:"file",n:5},{k:"gop",l:"Guarantee of Payment",i:"file"}]},
+ {k:"partner",l:"Partner Cases",i:"brief"},
+ {k:"email",l:"Email",i:"mail",n:4,hot:1},
+ {k:"chat",l:"Live Chat",i:"chat",n:3,hot:1},
+ {k:"search",l:"Search Analytics",i:"chart"},
+ {k:"tickets",l:"Support Tickets",i:"ticket",n:6}
+]}];
+let active="entries",open=new Set(["doctors"]);
+const chev='<svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>';
+function navHTML(){
+  return NAV.map(g=>g.items.map(it=>{
+    const has=!!it.sub, isOn=active===it.k||(has&&it.sub.some(s=>s.k===active)), ex=open.has(it.k);
+    const cnt=it.n?`<span class="cnt ${it.hot?"hot":""}">${it.n}</span><span class="dot"></span>`:"";
+    const btn=`<button class="nav ${isOn&&!has?"on":""}" data-nav="${it.k}" title="${it.l}" ${has?`aria-expanded="${ex}"`:""} ${isOn&&!has?'aria-current="page"':""}><svg class="ic" viewBox="0 0 24 24">${I[it.i]}</svg><span class="lbl">${it.l}</span>${cnt}${has?chev:""}</button>`;
+    const sub=has&&ex?`<div class="sub">${it.sub.map(s=>`<button class="nav ${active===s.k?"on":""}" data-nav="${s.k}" title="${s.l}"><svg class="ic" viewBox="0 0 24 24">${I[s.i]}</svg><span class="lbl">${s.l}</span>${s.n?`<span class="cnt">${s.n}</span>`:""}</button>`).join("")}</div>`:"";
+    return btn+sub}).join("")).join("");
+}
+function findLabel(k){for(const g of NAV)for(const it of g.items){if(it.k===k)return it.l;if(it.sub)for(const s of it.sub)if(s.k===k)return s.l}return""}
+function shell(){
+  $("#nav").innerHTML=navHTML();
+  const l=findLabel(active);$("#page-title").textContent=l;$("#crumb-now").textContent=l;
+  document.querySelector(".content").style.opacity=active==="entries"?"1":".35";
+}
+const ROLES={pay:{name:"Finance Team",mail:"payments@humancare.com",av:"FT",role:"PAYMENT ADMIN",cls:"admin",label:"Payment Admin"},super:{name:"Super Admin",mail:"superadmin@humancare.com",av:"SA",role:"SUPER ADMIN",cls:"",label:"Super Admin"},admin:{name:"Narayan Mestry",mail:"na5mestry0709@gmail.com",av:"NM",role:"ADMIN",cls:"admin",label:"Admin"}};
+function setRole(r){const x=ROLES[r];
+  $("#chip-av").textContent=x.av;$("#chip-name").textContent=x.name;$("#mh-name").textContent=x.name;
+  $("#mh-mail").textContent=x.mail;$("#chip-role").textContent=x.role;$("#chip-role").className="role "+x.cls;
+  document.querySelectorAll("[data-role]").forEach(b=>b.classList.toggle("on",b.dataset.role===r));
+  canEdit=true;curRole=r;curUser=x.name;editId=null;if(typeof eRender==="function")eRender();
+}
+const app=document.querySelector(".app"),side=$("#side");
+function closeDrawer(){side.classList.remove("open");$("#scrim").hidden=true}
+document.addEventListener("click",e=>{
+  const n=e.target.closest("[data-nav]");
+  if(n){const k=n.dataset.nav;let item=null;NAV.forEach(g=>g.items.forEach(it=>{if(it.k===k)item=it}));
+    if(item&&item.sub){if(app.classList.contains("mini")){app.classList.remove("mini");open.add(k)}else open.has(k)?open.delete(k):open.add(k)}
+    else{active=k;closeDrawer();if(k!=="entries")toast(findLabel(k)+" opens here (demo)")}
+    shell();return}
+  if(e.target.closest("#collapse")){app.classList.toggle("mini");const m=app.classList.contains("mini");$("#collapse").setAttribute("aria-label",m?"Expand sidebar":"Collapse sidebar");$("#collapse").title=m?"Expand sidebar":"Collapse sidebar";return}
+  if(e.target.closest("#burger")){side.classList.add("open");$("#scrim").hidden=false;return}
+  if(e.target.id==="scrim"){closeDrawer();return}
+  const c=e.target.closest("#chip");if(c){const m=$("#menu");m.hidden=!m.hidden;c.setAttribute("aria-expanded",String(!m.hidden));return}
+  if(!e.target.closest("#menu"))$("#menu").hidden=true;
+  const r=e.target.closest("[data-role]");if(r)setRole(r.dataset.role);
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeDrawer();$("#menu").hidden=true}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#gq").focus()}
+});
+shell();setRole("super");
+</script>

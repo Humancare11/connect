@@ -5,24 +5,28 @@ import RetryButton from "../../components/ui/RetryButton";
 import { useToast } from "../../components/ui/Toast";
 import EntriesSummary from "./entries/EntriesSummary";
 import EntriesTable from "./entries/EntriesTable";
+import ManualSheet from "./entries/ManualSheet";
+import HistoryDialog from "./entries/HistoryDialog";
+import MonthPicker from "./entries/MonthPicker";
 import ManualEntryModal from "./entries/ManualEntryModal";
 import DeleteManualModal from "./entries/DeleteManualModal";
 import useEntries from "./entries/useEntries";
 import { exportEntriesCsv } from "./entries/entriesApi";
 import {
-  PAGE_SIZE, TAB_LABELS, TAB_ORDER, doctorFromParam, downloadName, formatMonth, monthFromParam, pageFromParam, rangeText, tabFromParam, viewToParams,
+  PAGE_SIZE, TAB_LABELS, TAB_ORDER, downloadName, monthFromParam, pageFromParam, rangeText, tabFromParam, viewFromParam, viewToParams,
 } from "./entries/entriesFormat";
 
 const SEARCH_DELAY_MS = 300;
 
-// Appointment entries: the doctor-payout record. One row per booking (and per manual entry); the green columns are typed by an
-// admin and saved as they go. Admin and super admin only (the server enforces it too). The tab, Doctor, Month and page live in
-// the URL; the search text does not.
+// Appointment entries, in two views: "Auto entries" (bookings made on the website or app: the green columns are typed by an admin and
+// save as they go) and "Manual entries" (cases added by hand, shown like the team's Excel sheet with inline edit and History).
+// Admin and super admin only (the server enforces it too); the money boxes are for a super admin only, and the server sends them to
+// nobody else. The view, tab, month and page live in the URL; the search text does not.
 export default function AdminEntries() {
   const toast = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const view = viewFromParam(searchParams.get("view"));
   const tab = tabFromParam(searchParams.get("tab"));
-  const doctor = doctorFromParam(searchParams.get("doctor"));
   const month = monthFromParam(searchParams.get("month"));
   const page = pageFromParam(searchParams.get("page"));
 
@@ -31,19 +35,21 @@ export default function AdminEntries() {
   const timer = useRef(null);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const entries = useEntries({ tab, doctor, month, q, page });
+  const entries = useEntries({ view, tab, month, q, page });
   const { data, loading, error, reload } = entries;
-  const rows = data?.items || [];
-  const firstLoad = loading && !data;
+  // The answer on screen may still be the other view's while the new one loads: don't draw it with the wrong table.
+  const ready = Boolean(data) && data.view === view;
+  const rows = ready ? data.items : [];
+  const firstLoad = !ready && loading;
 
-  const [modal, setModal] = useState(null); // { type: "add" } | { type: "edit", row } | { type: "delete", row }
+  const [modal, setModal] = useState(null); // { type: "add" } | { type: "delete", row } | { type: "history", row }
   const [exporting, setExporting] = useState(false);
 
   // The view as the address says it is. `latest` also remembers a change made a moment ago whose render has not happened yet, so two
-  // quick changes (pick a doctor, then a month) keep each other instead of the second one undoing the first.
-  const latest = useRef({ tab, doctor, month, page });
-  latest.current = { tab, doctor, month, page };
-  const setView = (next) => {
+  // quick changes (pick a month, then a tab) keep each other instead of the second one undoing the first.
+  const latest = useRef({ view, tab, month, page });
+  latest.current = { view, tab, month, page };
+  const setParams = (next) => {
     latest.current = { ...latest.current, ...next };
     setSearchParams(viewToParams(latest.current));
   };
@@ -53,7 +59,7 @@ export default function AdminEntries() {
     setSearchText(value);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setQ(value.trim()), SEARCH_DELAY_MS);
-    if (page > 1) setView({ page: 1 });
+    if (page > 1) setParams({ page: 1 });
   };
 
   // A failed save also says why in a toast (the cell itself only shows "Couldn't save").
@@ -69,18 +75,23 @@ export default function AdminEntries() {
 
   // Rows can disappear while you are on a later page (deleted, or moved to another tab by a save): go back to the last page that exists.
   useEffect(() => {
-    if (!loading && data && rows.length === 0 && data.total > 0 && page > 1) setView({ page: Math.max(1, data.totalPages || 1) });
+    if (!loading && ready && rows.length === 0 && data.total > 0 && page > 1) setParams({ page: Math.max(1, data.totalPages || 1) });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, data]);
 
-  const onManualSaved = (item, meta = {}) => {
+  // A new manual entry lives in the Manual view: go there to see it.
+  const onAdded = (item) => {
     entries.putRow(item);
-    if (meta.conflict) {
-      entries.refresh();
-      return;
-    }
     setModal(null);
-    toast.success(meta.added ? "Manual entry added" : meta.noop ? "Nothing changed" : "Manual entry updated");
+    toast.success("Manual entry added");
+    if (view !== "manual") setParams({ view: "manual", tab: "all", page: 1 });
+    else entries.refresh();
+  };
+
+  // A row saved in the sheet (inline edit): swap it in, say what happened, and refresh the counts and boxes.
+  const onRowSaved = (item, message) => {
+    entries.putRow(item);
+    if (message) toast.success(message);
     entries.refresh();
   };
 
@@ -94,7 +105,7 @@ export default function AdminEntries() {
     if (exporting) return;
     setExporting(true);
     try {
-      const res = await exportEntriesCsv({ tab, ...(doctor ? { doctor } : {}), ...(month ? { month } : {}), ...(q ? { q } : {}) });
+      const res = await exportEntriesCsv({ view, tab, ...(month ? { month } : {}), ...(q ? { q } : {}) });
       const url = URL.createObjectURL(res.data);
       const link = document.createElement("a");
       link.href = url;
@@ -117,61 +128,69 @@ export default function AdminEntries() {
     }
   };
 
-  const counts = data?.counts;
+  const counts = ready ? data.counts : null;
+  const views = data?.views;
+  const switchView = (next) => {
+    if (next !== view) {
+      setSearchText("");
+      setQ("");
+      setParams({ view: next, tab: "all", page: 1 });
+    }
+  };
+
   return (
     <div className="en-page">
       <section className="en-card">
         <div className="en-head">
-          <p>The doctor fee and payout record for every booking. The green columns are yours to fill in; they save as you go.</p>
-          <EntriesSummary summary={data?.summary} busy={loading} />
+          <div className="vsw" role="tablist" aria-label="Entry type">
+            <button type="button" role="tab" aria-selected={view === "auto"} className={view === "auto" ? "on" : ""} onClick={() => switchView("auto")}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 4h16v16H4z" />
+                <path d="M4 9h16M9 9v11" />
+              </svg>
+              Auto entries<i>{views ? views.auto : "–"}</i>
+            </button>
+            <button type="button" role="tab" aria-selected={view === "manual"} className={view === "manual" ? "on" : ""} onClick={() => switchView("manual")}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 20h4L19 9l-4-4L4 16z" />
+                <path d="M13 7l4 4" />
+              </svg>
+              Manual entries<i>{views ? views.manual : "–"}</i>
+            </button>
+          </div>
+          {ready && <EntriesSummary view={view} summary={data.summary} busy={loading} />}
         </div>
 
         <div className="en-bar">
-          <div className="en-tabs" role="tablist" aria-label="Paid status">
+          <div className="en-tabs" role="tablist" aria-label="Payout status">
             {TAB_ORDER.map((key) => (
-              <button key={key} type="button" role="tab" aria-selected={tab === key} className={`en-tab${tab === key ? " is-on" : ""}`} onClick={() => setView({ tab: key, page: 1 })}>
+              <button key={key} type="button" role="tab" aria-selected={tab === key} className={`en-tab${tab === key ? " is-on" : ""}`} onClick={() => setParams({ tab: key, page: 1 })}>
                 {TAB_LABELS[key]}
                 <i>{counts ? counts[key] : "–"}</i>
               </button>
             ))}
           </div>
-          <label className="en-fsel">
-            Doctor
-            <select value={doctor} onChange={(event) => setView({ doctor: event.target.value, page: 1 })} aria-label="Doctor">
-              <option value="">All doctors</option>
-              {(data?.doctors || []).map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-              {doctor && !(data?.doctors || []).some((d) => d.id === doctor) && <option value={doctor}>Selected doctor</option>}
-            </select>
-          </label>
-          <label className="en-fsel">
-            Month
-            <select value={month} onChange={(event) => setView({ month: event.target.value, page: 1 })} aria-label="Month">
-              <option value="">All months</option>
-              {(data?.months || []).map((m) => (
-                <option key={m} value={m}>
-                  {formatMonth(m)}
-                </option>
-              ))}
-              {month && !(data?.months || []).includes(month) && <option value={month}>{formatMonth(month)}</option>}
-            </select>
-          </label>
+          <MonthPicker month={month} withEntries={ready ? data.months || [] : []} onChange={(value) => setParams({ month: value, page: 1 })} />
           <label className="en-search" aria-label="Search entries">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <input placeholder="Search patient, doctor, ID, country" value={searchText} maxLength={100} onChange={onSearch} />
+            <input
+              placeholder={view === "auto" ? "Search patient, doctor, ID, country" : "Search case, company, patient, provider"}
+              value={searchText}
+              maxLength={100}
+              onChange={onSearch}
+            />
           </label>
-          <button type="button" className="en-btn en-btn--primary" onClick={() => setModal({ type: "add" })}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Add manual entry
-          </button>
+          {view === "manual" && (
+            <button type="button" className="en-btn en-btn--primary" onClick={() => setModal({ type: "add" })}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Add manual entry
+            </button>
+          )}
           <button type="button" className="en-btn" onClick={exportCsv} disabled={exporting}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
@@ -180,56 +199,67 @@ export default function AdminEntries() {
           </button>
         </div>
 
-        <div className="en-legend">
-          <span>
-            <i className="en-legend-auto" />
-            Filled in automatically from the booking
-          </span>
-          <span>
-            <i className="en-legend-edit" />
-            You type here (saves as you go)
-          </span>
-        </div>
+        {view === "auto" && (
+          <div className="en-legend">
+            <span>
+              <i className="en-legend-auto" />
+              Filled in automatically from the booking
+            </span>
+            <span>
+              <i className="en-legend-edit" />
+              You type here (saves as you go)
+            </span>
+          </div>
+        )}
 
         {firstLoad ? (
           <div className="en-state">
             <div className="en-spinner" />
             <p>Loading entries…</p>
           </div>
-        ) : error && !data ? (
+        ) : error && !ready ? (
           <div className="en-state">
             <h3>Could not load the entries</h3>
             <p>{error}</p>
             <RetryButton onRetry={reload} />
           </div>
-        ) : rows.length === 0 && !loading ? (
+        ) : ready && rows.length === 0 && !loading ? (
           <div className="en-state">
-            <h3>No entries match this view</h3>
-            <p>{q ? "Nothing matches your search." : "Try another tab, doctor or month."}</p>
+            <h3>{view === "manual" ? "No manual entries match this view" : "No entries match this view"}</h3>
+            <p>{q ? "Nothing matches your search." : view === "manual" ? "Try another tab or month, or use Add manual entry." : "Try another tab or month."}</p>
           </div>
-        ) : (
+        ) : ready ? (
           <div className={loading ? "en-loading" : undefined} aria-busy={loading}>
             {error && (
               <div className="en-error" role="alert">
                 {error} <RetryButton onRetry={reload} />
               </div>
             )}
-            <EntriesTable
-              rows={rows}
-              page={page}
-              totals={data?.totals}
-              save={save}
-              onEdit={(row) => setModal({ type: "edit", row })}
-              onDelete={(row) => setModal({ type: "delete", row })}
-            />
-            <Pager page={page} totalPages={data?.totalPages || 1} shown={rows.length} total={data?.total || 0} onPage={(next) => setView({ page: next })} />
+            {view === "manual" ? (
+              <ManualSheet
+                rows={rows}
+                page={page}
+                totals={data.totals}
+                onRowSaved={onRowSaved}
+                onDelete={(row) => setModal({ type: "delete", row })}
+                onHistory={(row) => setModal({ type: "history", row })}
+              />
+            ) : (
+              <EntriesTable rows={rows} page={page} totals={data.totals} save={save} />
+            )}
+            <Pager page={page} totalPages={data.totalPages || 1} shown={rows.length} total={data.total || 0} onPage={(next) => setParams({ page: next })} />
+          </div>
+        ) : (
+          <div className="en-state">
+            <div className="en-spinner" />
+            <p>Loading entries…</p>
           </div>
         )}
       </section>
 
-      {modal?.type === "add" && <ManualEntryModal onSaved={onManualSaved} onClose={() => setModal(null)} />}
-      {modal?.type === "edit" && <ManualEntryModal row={modal.row} onSaved={onManualSaved} onClose={() => setModal(null)} />}
+      {modal?.type === "add" && <ManualEntryModal onSaved={(item) => onAdded(item)} onClose={() => setModal(null)} />}
       {modal?.type === "delete" && <DeleteManualModal row={modal.row} onDeleted={onDeleted} onClose={() => setModal(null)} />}
+      {modal?.type === "history" && <HistoryDialog row={modal.row} onClose={() => setModal(null)} />}
     </div>
   );
 }

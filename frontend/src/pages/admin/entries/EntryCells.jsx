@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { cleanFeeInput, centsToInput, feePlaceholder, sameFee, STATUS_OPTIONS } from "./entriesFormat";
+import { cleanFeeInput, centsToInput, FEE_PLACEHOLDER, sameFee, STATUS_OPTIONS } from "./entriesFormat";
 
 const SAVED_SHOWN_MS = 1500;
 
@@ -106,15 +106,13 @@ export function FeeCell({ row, save, disabled }) {
     cell.commit(clean.value);
   };
   const invalid = !cleanFeeInput(cell.draft).ok;
-  const placeholder = feePlaceholder(row);
   return (
     <div className="en-cell">
       <input
         className="en-fee-in"
         inputMode="decimal"
         value={cell.draft}
-        placeholder={placeholder}
-        title={row.placeholder && cell.draft === "" && row.entry.paidStatus !== "not_payable" ? row.placeholder.title : undefined}
+        placeholder={FEE_PLACEHOLDER}
         aria-label="Doctor fee"
         aria-invalid={invalid || undefined}
         disabled={disabled}

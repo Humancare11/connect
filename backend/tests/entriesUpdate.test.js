@@ -51,11 +51,9 @@ describe("appointment entries: editing a row (PATCH /:kind/:id)", () => {
       assignedDoctorId: enrollment._id, ...extra,
     });
   const manual = async (entry = {}, extra = {}) => {
-    const built = M.buildManualDocument(
-      M.validateManualCreate({ patientName: "Ravi Sharma", country: "IN", date: "2026-10-30", time: "14:30", feeCharged: "49" }, { today: TODAY }).value,
-      { actor: { id: adminUser._id, name: "An Admin", role: "admin" }, doctor: { enrollmentId: enrollment._id, name: "Martin Perlin" }, code: M.newCode() },
-    );
-    return ManualEntry.create({ ...built, ...extra, entry: { ...built.entry, ...entry } });
+    const v = M.validateManualCreate({ patientName: "Ravi Sharma", country: "IN", date: "2026-10-30", serviceProvider: "Martin Perlin", consultationFee: "49" }, { today: TODAY });
+    const built = M.buildManualDocument(v.value, { actor: { id: adminUser._id, name: "An Admin", role: "admin" }, code: M.newCode(), today: TODAY });
+    return ManualEntry.create({ ...built.doc, ...extra, entry: { ...built.doc.entry, ...entry } });
   };
   const fee = (id, value, version = 0, kind = "appointment") => patch(kind, id, { field: "doctorFee", value, version });
 

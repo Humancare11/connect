@@ -1,34 +1,33 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Country } from "country-state-city";
 import Modal from "../../../components/ui/Modal";
-import { createManualEntry, editManualEntry, listApprovedDoctors } from "./entriesApi";
-import { EMPTY_FORM, createBody, doctorOptions, editBody, formFromRow, formProblem, saveErrorText } from "./entriesFormat";
+import { createManualEntry } from "./entriesApi";
+import {
+  CASE_STATUSES, MAX_FEEDBACK, MAX_PHONE, MR_STATUSES, PAYMENT_RECEIVED, PAYMENT_TO_PROVIDER, SENT_STATUSES, SERVICE_TYPES,
+  calculation, changeField, formBody, formProblem, newForm, saveErrorText,
+} from "./entriesFormat";
 
 let countryNames = null;
 const allCountryNames = () => (countryNames ||= Country.getAllCountries().map((c) => c.name));
 
-// "Add manual entry" (no `row`) and "Edit" (a manual `row`): the same form. Editing changes the patient, country, doctor,
-// consultation date and time, and fee charged, and only while the row is not Paid (the server refuses otherwise). The doctor
-// fee, status, paid-on date and comment are typed in the table, as for every row.
-export default function ManualEntryModal({ row, onSaved, onClose }) {
-  const editing = Boolean(row);
-  const [form, setForm] = useState(() => (editing ? formFromRow(row) : { ...EMPTY_FORM, date: todayInput() }));
-  const [doctors, setDoctors] = useState([]);
-  const [doctorsError, setDoctorsError] = useState("");
+// Today as the date input wants it, in the browser's own time zone.
+function todayInput() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// "Add manual entry": a big popup with seven numbered sections, laid out as in docs/appointment-entries-manual-form-reference.html.
+// "Calculation (our margin)" is worked out here and never sent. Editing an entry is done in place in the Manual entries sheet, not here.
+export default function ManualEntryModal({ onSaved, onClose }) {
+  const today = useMemo(todayInput, []);
+  const [form, setForm] = useState(() => newForm(today));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    let alive = true;
-    listApprovedDoctors()
-      .then((res) => alive && setDoctors(doctorOptions(res.data)))
-      .catch(() => alive && setDoctorsError("Couldn’t load the doctor list."));
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  const set = (key) => (event) => setForm((f) => ({ ...f, [key]: event.target.value }));
+  const set = (key) => (event) => setForm((f) => changeField(f, key, event.target.value, today));
+  const calc = calculation(form);
+  const paidToProvider = form.paymentToProvider === "paid";
+  const received = form.paymentReceived !== "not_received";
 
   const submit = async (event) => {
     event.preventDefault();
@@ -41,101 +40,188 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
     setSaving(true);
     setError("");
     try {
-      const res = editing
-        ? await editManualEntry(row.id, editBody(form, row.entry.version))
-        : await createManualEntry(createBody(form));
-      onSaved(res.data.item, { added: !editing, noop: Boolean(res.data.noop) });
+      const res = await createManualEntry(formBody(form));
+      onSaved(res.data.item);
     } catch (err) {
-      // A row that changed meanwhile (or got marked Paid) comes back with its current state.
-      if (err.response?.data?.item) onSaved(err.response.data.item, { conflict: true });
       setError(saveErrorText(err));
       setSaving(false);
     }
   };
+
+  const text = (key, label, props = {}) => (
+    <label className={props.className}>
+      <span className={props.required ? "en-req" : undefined}>{label}</span>
+      <input
+        value={form[key]}
+        onChange={set(key)}
+        required={props.required}
+        maxLength={props.maxLength}
+        placeholder={props.placeholder}
+        inputMode={props.inputMode}
+        list={props.list}
+        type={props.type}
+        autoFocus={props.autoFocus}
+      />
+      {props.list === "en-countries" && (
+        <datalist id="en-countries">
+          {allCountryNames().map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+      )}
+    </label>
+  );
+  const choice = (key, label, options) => (
+    <label>
+      <span>{label}</span>
+      <select value={form[key]} onChange={set(key)}>
+        {options.map(([value, optionText]) => (
+          <option key={value} value={value}>
+            {optionText}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+  const section = (n, title, body) => (
+    <section className="en-section">
+      <h4>
+        <span>{n}</span>
+        {title}
+      </h4>
+      {body}
+    </section>
+  );
 
   return (
     <Modal
       open
       onClose={onClose}
       dismissible={!saving}
-      title={editing ? "Edit manual entry" : "Add manual entry"}
-      description={
-        editing
-          ? "You can change these while the row is not Paid. Every change is recorded."
-          : "For a consultation that wasn’t booked through the website or app, such as one arranged by phone or through a partner. It shows with a “Manual” label."
-      }
-      className="en-modal"
+      title="Add manual entry"
+      description="A case that didn’t come through the website or app, for example sent by a partner company."
+      className="en-modal en-modal--wide"
     >
-      <form onSubmit={submit} noValidate className="en-form">
-        <label className="en-field en-field--full">
-          <span>Patient name</span>
-          <input value={form.patientName} onChange={set("patientName")} maxLength={80} placeholder="e.g. Ravi Sharma" autoFocus required />
-        </label>
-        <label className="en-field">
-          <span>Country</span>
-          <input value={form.country} onChange={set("country")} maxLength={60} placeholder="India" list="en-countries" />
-          <datalist id="en-countries">
-            {allCountryNames().map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
-        </label>
-        <label className="en-field">
-          <span>Doctor</span>
-          <select value={form.doctorId} onChange={set("doctorId")}>
-            <option value="">Not assigned</option>
-            {doctors.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-          {doctorsError && <small className="en-field-hint">{doctorsError}</small>}
-        </label>
-        <label className="en-field">
-          <span>Consultation date</span>
-          <input type="date" value={form.date} onChange={set("date")} required />
-        </label>
-        <label className="en-field">
-          <span>Time</span>
-          <input type="time" value={form.time} onChange={set("time")} />
-        </label>
-        <label className="en-field">
-          <span>Fee charged ($)</span>
-          <input value={form.feeCharged} onChange={set("feeCharged")} inputMode="decimal" placeholder="49.00" required />
-        </label>
-        {!editing && (
-          <label className="en-field">
-            <span>Doctor fee ($)</span>
-            <input value={form.doctorFee} onChange={set("doctorFee")} inputMode="decimal" placeholder="optional" />
-          </label>
-        )}
-        {!editing && (
-          <label className="en-field en-field--full">
-            <span>Comment</span>
-            <input value={form.comment} onChange={set("comment")} maxLength={500} placeholder="e.g. Booked by phone, paid by bank transfer" />
-          </label>
-        )}
-        {error && (
-          <p className="en-form-error" role="alert">
-            {error}
-          </p>
-        )}
-        <div className="hc-modal__actions">
-          <button type="button" className="en-btn" onClick={onClose} disabled={saving}>
-            Cancel
-          </button>
-          <button type="submit" className="en-btn en-btn--primary" disabled={saving}>
-            {saving ? "Saving…" : editing ? "Save changes" : "Add entry"}
-          </button>
+      <button type="button" className="en-x" onClick={onClose} disabled={saving} aria-label="Close">
+        ✕
+      </button>
+      <form onSubmit={submit} noValidate className="en-bigform">
+        <div className="en-sections">
+          {section(
+            1,
+            "Case",
+            <div className="en-grid en-grid--3">
+              {text("date", "Date", { type: "date", required: true })}
+              {text("company", "Company", { maxLength: 120, placeholder: "e.g. Allianz Care" })}
+              {text("caseNumber", "Case number", { maxLength: 60, placeholder: "e.g. ALZ-2026-10432" })}
+              {choice("serviceType", "Type of service", SERVICE_TYPES)}
+              {form.serviceType === "others" && text("otherService", "Other service", { required: true, maxLength: 120, placeholder: "Describe the service" })}
+              {choice("caseStatus", "Status", CASE_STATUSES)}
+            </div>,
+          )}
+
+          {section(
+            2,
+            "Service provider",
+            <div className="en-grid en-grid--3">
+              {text("serviceProvider", "Service provider", { required: true, maxLength: 120, placeholder: "Doctor or clinic name", autoFocus: true })}
+              {text("providerNumber", "Service provider number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+91 98765 43210" })}
+            </div>,
+          )}
+
+          {section(
+            3,
+            "Patient",
+            <div className="en-grid en-grid--3">
+              {text("patientName", "Patient name", { required: true, maxLength: 80, placeholder: "Full name" })}
+              {text("country", "Patient country", { maxLength: 60, placeholder: "e.g. United Arab Emirates", list: "en-countries" })}
+              {text("contactNumber", "Contact number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+971 50 123 4567" })}
+            </div>,
+          )}
+
+          {section(
+            4,
+            "Fees",
+            <div className="en-grid en-grid--3">
+              {text("consultationFee", "Consultation fee ($)", { inputMode: "decimal", placeholder: "0.00", required: true })}
+              {text("doctorFee", "Doctor’s fee ($)", { inputMode: "decimal", placeholder: "0.00" })}
+              <div className="en-calc" aria-live="polite" data-testid="calculation">
+                <small>Calculation (our margin)</small>
+                <b className={calc.negative ? "en-neg" : undefined}>{calc.empty ? "—" : calc.text}</b>
+                <span>{calc.percent ? `${calc.percent} of the consultation fee` : "Consultation fee − Doctor’s fee"}</span>
+              </div>
+            </div>,
+          )}
+
+          {section(
+            5,
+            "Medical report & invoice",
+            <div className="en-grid en-grid--3">
+              {choice("mrStatus", "MR status from provider", MR_STATUSES)}
+              {choice("mrSentToCompany", "MR sent to the company", SENT_STATUSES)}
+              {choice("invoiceSent", "Invoice sent", SENT_STATUSES)}
+            </div>,
+          )}
+
+          {section(
+            6,
+            "Payments",
+            <div className="en-pay">
+              <div className="en-paybox">
+                <b>From the company</b>
+                {choice("paymentReceived", "Payment received", PAYMENT_RECEIVED)}
+                <label>
+                  <span>Payment received date</span>
+                  <input type="date" value={received ? form.paymentReceivedDate : ""} onChange={set("paymentReceivedDate")} disabled={!received} />
+                </label>
+              </div>
+              <div className="en-paybox">
+                <b>To the provider</b>
+                {choice("paymentToProvider", "Payment to provider", PAYMENT_TO_PROVIDER)}
+                <label>
+                  <span>Paid date to the provider</span>
+                  <input type="date" value={paidToProvider ? form.paidDateToProvider : ""} onChange={set("paidDateToProvider")} disabled={!paidToProvider} />
+                </label>
+              </div>
+            </div>,
+          )}
+
+          {section(
+            7,
+            "Feedback",
+            <>
+              <div className="en-grid en-grid--2">
+                <label>
+                  <span>Feedback message sent</span>
+                  <textarea value={form.feedbackSent} onChange={set("feedbackSent")} maxLength={MAX_FEEDBACK} rows={3} placeholder="The message sent to the patient asking for feedback" />
+                </label>
+                <label>
+                  <span>Feedback received</span>
+                  <textarea value={form.feedbackReceived} onChange={set("feedbackReceived")} maxLength={MAX_FEEDBACK} rows={3} placeholder="What the patient or company replied" />
+                </label>
+              </div>
+              <div className="en-comment">{text("comment", "Comment", { maxLength: 500, placeholder: "Optional internal note" })}</div>
+            </>,
+          )}
+        </div>
+
+        <div className="en-popup-foot">
+          {error && (
+            <p className="en-form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="en-popup-buttons">
+            <span className="en-reqnote">Patient name and service provider are required.</span>
+            <button type="button" className="en-btn" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
+            <button type="submit" className="en-btn en-btn--primary" disabled={saving}>
+              {saving ? "Saving…" : "Save entry"}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>
   );
-}
-
-// Today as the date input wants it, in the browser's own time zone.
-function todayInput() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
