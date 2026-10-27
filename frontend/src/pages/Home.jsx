@@ -889,6 +889,7 @@ export default function HomePage() {
                   className="search-suggestions"
                   id="search-suggestions"
                   ref={suggestionsRef}
+                  data-lenis-prevent
                   role={!isSearching && !noResults && filteredSuggestions.length > 0 ? "listbox" : undefined}
                 >
                   {/* Loading state */}
