@@ -7,6 +7,10 @@ export const TAB_ORDER = ["all", "unpaid", "paid", "on_hold", "not_payable"];
 export const TAB_LABELS = { all: "All", unpaid: "Unpaid", paid: "Paid", on_hold: "On hold", not_payable: "Not payable" };
 export const STATUS_OPTIONS = TAB_ORDER.filter((key) => key !== "all").map((key) => [key, TAB_LABELS[key]]);
 
+// The two views: Auto entries (bookings from the website and app) and Manual entries. Auto is the default and is left out of the address.
+export const VIEWS = ["auto", "manual"];
+export const viewFromParam = (value) => (VIEWS.includes(value) ? value : "auto");
+
 export const tabFromParam = (value) => (TAB_ORDER.includes(value) ? value : "all");
 export const monthFromParam = (value) => (/^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") ? value : "");
 export function pageFromParam(value) {
@@ -15,12 +19,29 @@ export function pageFromParam(value) {
 }
 
 // The page state as the query string of the page's own URL: values that are the default are left out.
-export function viewToParams({ tab, month, page }) {
+export function viewToParams({ view, tab, month, page }) {
   const params = {};
+  if (view && view !== "auto") params.view = view;
   if (tab && tab !== "all") params.tab = tab;
   if (month) params.month = month;
   if (page > 1) params.page = String(page);
   return params;
+}
+
+// ── The money boxes (a super admin only) ───
+
+// A margin can be negative: "-$15.00" rather than "$-15.00".
+export const formatSigned = (cents) => `${cents < 0 ? "-" : ""}${formatMoney(Math.abs(cents))}`;
+
+// The boxes of a view, from the server's `summary` (which only a super admin gets). No summary, no boxes.
+export function summaryBoxes(view, summary) {
+  if (!summary) return [];
+  const manual = view === "manual";
+  return [
+    { key: "received", label: manual ? "Received from companies" : "Received from patients", text: formatMoney(summary.receivedCents), tone: "ok" },
+    { key: "toPay", label: "To pay providers", text: formatMoney(summary.toPayCents), tone: "warn" },
+    { key: "margin", label: "Our margin", text: formatSigned(summary.marginCents), tone: summary.marginCents < 0 ? "neg" : "" },
+  ];
 }
 
 // ── Money ────────────────────────────────────────────────────────────────────

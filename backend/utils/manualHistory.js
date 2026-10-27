@@ -87,6 +87,7 @@ function buildHistory(doc) {
     return groups.get(key);
   };
   const logged = new Set();
+  const createdAt = new Set((doc?.log || []).filter((l) => l.action === "created").map((l) => timeOf(l.at)));
 
   for (const line of doc?.log || []) {
     if (line.action === "created") {
@@ -100,7 +101,8 @@ function buildHistory(doc) {
   // Table-cell edits of older rows that were not written to the log.
   for (const change of doc?.entry?.history || []) {
     const label = fieldLabel(change.field);
-    if (logged.has(`${timeOf(change.at)}|${label}`)) continue;
+    // What was typed on the add form is part of the creation, not a change.
+    if (createdAt.has(timeOf(change.at)) || logged.has(`${timeOf(change.at)}|${label}`)) continue;
     group(change.by, change.at).items.push({ field: label, from: displayValue(label, change.from), to: displayValue(label, change.to) });
   }
 

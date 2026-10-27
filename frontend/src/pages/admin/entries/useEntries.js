@@ -11,7 +11,7 @@ const REFRESH_AFTER_SAVE_MS = 700;
 // After a save the row is swapped for the server's copy at once; a moment later the list is read again quietly (no spinner) so the
 // tab counts, the three boxes, the totals and the row's place in the tab are right. A cell the person is still typing in is not
 // overwritten: each cell keeps its own draft.
-export default function useEntries({ tab, month, q, page }) {
+export default function useEntries({ view, tab, month, q, page }) {
   const [state, setState] = useState({ data: null, loading: true, error: "" });
   const [attempt, setAttempt] = useState(0);
   const requestId = useRef(0);
@@ -19,8 +19,8 @@ export default function useEntries({ tab, month, q, page }) {
   const refreshTimer = useRef(null);
 
   const params = useMemo(
-    () => ({ tab, page, limit: PAGE_SIZE, ...(month ? { month } : {}), ...(q ? { q } : {}) }),
-    [tab, month, q, page],
+    () => ({ view, tab, page, limit: PAGE_SIZE, ...(month ? { month } : {}), ...(q ? { q } : {}) }),
+    [view, tab, month, q, page],
   );
 
   const load = useCallback(
