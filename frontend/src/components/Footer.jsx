@@ -80,15 +80,22 @@ export default function Footer() {
               </a>
             </div>
             <div>
-              <img
-              src={legit}
-              alt="LegitScript Logo"
-              className="legit-logo"
-              width="600"
-              height="600"
-              loading="lazy"
-              decoding="async"
-            />
+            <a
+  href="https://www.legitscript.com/websites/?checker_keywords=humancareconnect.co"
+  target="_blank"
+  rel="noopener noreferrer"
+  title="Verify LegitScript Approval for www.humancareconnect.co"
+>
+  <img
+    src="https://static.legitscript.com/seals/51191758.png"
+    alt="Verify Approval for www.humancareconnect.co"
+    className="legit-logo"
+    width="73"
+    height="79"
+    loading="lazy"
+    decoding="async"
+  />
+</a>
               </div>
           </div>
         </div>
