@@ -12,6 +12,8 @@ import "../../../../src/App.css";
 
 const params = new URLSearchParams(window.location.search);
 window.__HARNESS_ROLE = params.get("role") || "admin";
+// The test API takes the signed-in role from this header (the real token check is replaced there).
+const roleHeader = window.__HARNESS_ROLE === "superadmin" ? "superadmin" : "admin";
 const start = params.get("start") || "/admin-dashboard/appointment-entries";
 
 // Records the page address (a memory router has no browser address), so a test can check what the page keeps in it.
@@ -21,6 +23,8 @@ function TrackLocation() {
 }
 
 async function main() {
+  const { default: api } = await import("../../../../src/api.js");
+  api.defaults.headers.common["x-test-role"] = roleHeader;
   const [{ default: Layout }, { default: Page }, { ToastProvider }, { ConfirmProvider }] = await Promise.all([
     import("../../../../src/pages/admin/AdminLayout.jsx"),
     import("../../../../src/pages/admin/AdminEntries.jsx"),

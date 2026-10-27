@@ -4,10 +4,10 @@ import { copyText } from "../appointments/copyText";
 import { CommentCell, FeeCell, PaidOnCell, StatusCell } from "./EntryCells";
 import { feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
 
-// The Appointment entries table. A full table while the window is wide; below 1360px each row becomes a card with labelled fields
-// (see AdminEntries.css). The first columns come from the booking; the green ones are typed by an admin and saved as you go; the last
-// one (Actions) has Edit and Delete for manual entries only.
-export default function EntriesTable({ rows, page, totals, save, onEdit, onDelete }) {
+// The Auto entries table (bookings from the website and app). A full table while the window is wide; below 1360px each row becomes a
+// card with labelled fields (see AdminEntries.css). The first columns come from the booking; the green ones are typed by an admin and
+// saved as you go. There is no Actions column: these rows cannot be edited as a whole or deleted here.
+export default function EntriesTable({ rows, page, totals, save }) {
   return (
     <div className="en-scroll">
       <table className="en-table">
@@ -22,8 +22,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
           <col className="en-w-df" />
           <col className="en-w-ps" />
           <col className="en-w-po" />
-          <col className="en-w-cm" />
-          <col className="en-w-act" />
+          <col />
         </colgroup>
         <thead>
           <tr>
@@ -38,12 +37,11 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
             <th className="en-ed">Paid status</th>
             <th className="en-ed">Paid on</th>
             <th className="en-ed">Comment</th>
-            <th className="en-act-h">Actions</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <EntryRow key={rowKey(row)} row={row} number={rowNumber(page, index)} save={save} onEdit={onEdit} onDelete={onDelete} />
+            <EntryRow key={rowKey(row)} row={row} number={rowNumber(page, index)} save={save} />
           ))}
         </tbody>
         <tfoot>
@@ -57,7 +55,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
             <td className="en-r" data-l="Doctor fee">
               {formatMoney(totals?.doctorFeeCents)}
             </td>
-            <td colSpan={4} className="en-hint">
+            <td colSpan={3} className="en-hint">
               Totals cover every matching row, on all pages. Only saved doctor fees are added up.
             </td>
           </tr>
@@ -67,7 +65,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
   );
 }
 
-function EntryRow({ row, number, save, onEdit, onDelete }) {
+function EntryRow({ row, number, save }) {
   const label = sourceLabel(row);
   const fee = feeCharged(row);
   const manual = isManual(row);
@@ -122,33 +120,6 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
       </td>
       <td data-l="Comment" className="en-ed">
         <CommentCell row={row} save={save} />
-      </td>
-      <td className={`en-act${manual ? "" : " en-act--none"}`}>
-        {manual ? (
-          <span className="en-acts">
-            <button
-              type="button"
-              className="en-abtn"
-              onClick={() => onEdit(row)}
-              title={row.manual?.locked ? "Payment to provider is Paid, so most details are locked. Open it to see what can still change." : "Edit this manual entry"}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="en-abtn en-abtn--danger"
-              onClick={() => onDelete(row)}
-              disabled={!row.manual?.canDelete}
-              title={row.manual?.canDelete ? "Delete this manual entry" : "Change Payment to provider from Paid before deleting"}
-            >
-              Delete
-            </button>
-          </span>
-        ) : (
-          <span className="en-none" title="Rows from real bookings can’t be edited or deleted here">
-            —
-          </span>
-        )}
       </td>
     </tr>
   );
