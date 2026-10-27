@@ -14,15 +14,11 @@ test("the tabs, filters and page in the URL: junk falls back to the default, def
   assert.equal(F.tabFromParam("nope"), "all");
   assert.equal(F.monthFromParam("2026-10"), "2026-10");
   assert.equal(F.monthFromParam("2026-13"), "");
-  assert.equal(F.doctorFromParam("64b0000000000000000000e1"), "64b0000000000000000000e1");
-  assert.equal(F.doctorFromParam("x"), "");
-  assert.equal(F.doctorFromParam("provider:Sunrise Home Care"), "provider:Sunrise Home Care");
-  assert.equal(F.doctorFromParam("provider:"), "");
   assert.equal(F.pageFromParam("3"), 3);
   assert.equal(F.pageFromParam("0"), 1);
   assert.equal(F.pageFromParam("1.5"), 1);
-  assert.deepEqual(F.viewToParams({ tab: "all", doctor: "", month: "", page: 1 }), {});
-  assert.deepEqual(F.viewToParams({ tab: "paid", doctor: "d1", month: "2026-10", page: 2 }), { tab: "paid", doctor: "d1", month: "2026-10", page: "2" });
+  assert.deepEqual(F.viewToParams({ tab: "all", month: "", page: 1 }), {});
+  assert.deepEqual(F.viewToParams({ tab: "paid", month: "2026-10", page: 2 }), { tab: "paid", month: "2026-10", page: "2" });
 });
 
 test("money: cents to dollars with a thousands comma, and to the text of an input", () => {
@@ -281,4 +277,21 @@ test("save queue: an error comes back as a result, not a throw; a stale answer h
   assert.deepEqual(seen, [current]);
   const after = await queue.save(row(), "paidStatus", "paid");
   assert.equal(after.ok, false, "the queue keeps working after a failure");
+});
+
+test("month helpers: stepping across years, the month names, the arrows from a month and from All time", () => {
+  assert.equal(F.stepMonth("2026-12", 1), "2027-01");
+  assert.equal(F.stepMonth("2026-01", -1), "2025-12");
+  assert.equal(F.stepMonth("2026-10", 0), "2026-10");
+  assert.equal(F.monthOf(2026, 3), "2026-04");
+  assert.deepEqual(F.MONTHS_SHORT.length, 12);
+  assert.equal(F.thisMonth(new Date(2026, 9, 27)), "2026-10");
+  const ctx = { months: ["2026-10", "2026-08", "2027-03"], now: "2026-10" };
+  assert.equal(F.arrowTarget("2026-08", -1, ctx), "2026-07");
+  assert.equal(F.arrowTarget("2026-08", 1, ctx), "2026-09");
+  assert.equal(F.arrowTarget("2026-10", 1, ctx), null, "› stops at the current month");
+  assert.equal(F.arrowTarget("", 1, ctx), null, "› does nothing on All time");
+  assert.equal(F.arrowTarget("", -1, ctx), "2026-10", "‹ on All time goes to the latest month with entries, never a future one");
+  assert.equal(F.arrowTarget("", -1, { months: ["2027-03"], now: "2026-10" }), "2026-10");
+  assert.equal(F.arrowTarget("", -1, { months: [], now: "2026-10" }), "2026-10");
 });

@@ -1,8 +1,12 @@
+import { useRef } from "react";
+import { useToast } from "../../../components/ui/Toast";
+import { copyText } from "../appointments/copyText";
 import { CommentCell, FeeCell, PaidOnCell, StatusCell } from "./EntryCells";
-import { caseLine, feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
+import { feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
 
 // The Appointment entries table. A full table while the window is wide; below 1360px each row becomes a card with labelled fields
-// (see AdminEntries.css). The first four columns come from the booking; the green ones are typed by an admin and saved as you go.
+// (see AdminEntries.css). The first columns come from the booking; the green ones are typed by an admin and saved as you go; the last
+// one (Actions) has Edit and Delete for manual entries only.
 export default function EntriesTable({ rows, page, totals, save, onEdit, onDelete }) {
   return (
     <div className="en-scroll">
@@ -18,7 +22,8 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
           <col className="en-w-df" />
           <col className="en-w-ps" />
           <col className="en-w-po" />
-          <col />
+          <col className="en-w-cm" />
+          <col className="en-w-act" />
         </colgroup>
         <thead>
           <tr>
@@ -33,6 +38,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
             <th className="en-ed">Paid status</th>
             <th className="en-ed">Paid on</th>
             <th className="en-ed">Comment</th>
+            <th className="en-act-h">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -51,7 +57,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
             <td className="en-r" data-l="Doctor fee">
               {formatMoney(totals?.doctorFeeCents)}
             </td>
-            <td colSpan={3} className="en-hint">
+            <td colSpan={4} className="en-hint">
               Totals cover every matching row, on all pages. Saved doctor fees only: grey 75% suggestions aren&rsquo;t counted.
             </td>
           </tr>
@@ -71,33 +77,10 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
     <tr data-kind={row.kind} data-id={row.id}>
       <td className="en-num">{number}</td>
       <td data-l="Booking ID">
-        <span className="en-bid" title={manual ? `Manual entry ${row.shortId}` : row.id}>
-          {idText(row)}
-        </span>
+        <IdCopy row={row} />
         <span className={`en-src en-src--${label.tone}`} title={label.title}>
           {label.text}
         </span>
-        {manual && (
-          <span className="en-manual-acts">
-            <button
-              type="button"
-              className="en-link"
-              onClick={() => onEdit(row)}
-              title={row.manual?.locked ? "Payment to provider is Paid, so most details are locked. Open it to see what can still change." : "Edit this manual entry"}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="en-link en-link--danger"
-              onClick={() => onDelete(row)}
-              disabled={!row.manual?.canDelete}
-              title={row.manual?.canDelete ? "Delete this manual entry" : "A Paid row can't be deleted. Change the status first."}
-            >
-              Delete
-            </button>
-          </span>
-        )}
       </td>
       <td data-l="Booked" className="en-dt en-c-bk">
         {formatBooked(row.bookedAt)}
@@ -115,11 +98,6 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
       <td data-l="Patient" className="en-nm">
         <b title={row.patient?.name}>{row.patient?.name || "—"}</b>
         <span>{countryText}</span>
-        {manual && caseLine(row) && (
-          <span className="en-caseline" title={caseLine(row)}>
-            {caseLine(row)}
-          </span>
-        )}
       </td>
       <td data-l="Doctor" className="en-nm">
         {row.doctorName ? <b title={row.doctorName}>{row.doctorName}</b> : <b className="en-na">Not assigned</b>}
@@ -145,6 +123,65 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
       <td data-l="Comment" className="en-ed">
         <CommentCell row={row} save={save} />
       </td>
+      <td className={`en-act${manual ? "" : " en-act--none"}`}>
+        {manual ? (
+          <span className="en-acts">
+            <button
+              type="button"
+              className="en-abtn"
+              onClick={() => onEdit(row)}
+              title={row.manual?.locked ? "Payment to provider is Paid, so most details are locked. Open it to see what can still change." : "Edit this manual entry"}
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              className="en-abtn en-abtn--danger"
+              onClick={() => onDelete(row)}
+              disabled={!row.manual?.canDelete}
+              title={row.manual?.canDelete ? "Delete this manual entry" : "Change Payment to provider from Paid before deleting"}
+            >
+              Delete
+            </button>
+          </span>
+        ) : (
+          <span className="en-none" title="Rows from real bookings can’t be edited or deleted here">
+            —
+          </span>
+        )}
+      </td>
     </tr>
+  );
+}
+
+// The id is shown short; clicking it copies the FULL id (for a manual entry, its M- code), like the Appointments page. If the browser
+// refuses, the full text (kept in a visually hidden span) is selected so Ctrl+C works, and the toast says so.
+function IdCopy({ row }) {
+  const toast = useToast();
+  const full = useRef(null);
+  const text = isManual(row) ? row.shortId : row.id;
+  const copy = async () => {
+    const result = await copyText(text, {
+      select: () => {
+        const range = document.createRange();
+        range.selectNodeContents(full.current);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      },
+      execCopy: () => document.execCommand("copy"),
+    });
+    if (result === "copied") toast.success("Booking ID copied");
+    else toast.info(`Could not copy automatically. The ID is selected, press Ctrl+C: ${text}`);
+  };
+  return (
+    <>
+      <button type="button" className="en-idcopy" title="Click to copy" aria-label={`Copy booking ID ${text}`} onClick={copy}>
+        <span className="en-bid">{idText(row)}</span>
+      </button>
+      <span ref={full} className="en-fullid">
+        {text}
+      </span>
+    </>
   );
 }

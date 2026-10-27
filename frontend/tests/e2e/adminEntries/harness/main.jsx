@@ -5,7 +5,7 @@
 //   &start=/admin-dashboard/appointment-entries?tab=paid   the first URL
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import "../../../../src/fonts.css";
 import "../../../../src/index.css";
 import "../../../../src/App.css";
@@ -13,6 +13,12 @@ import "../../../../src/App.css";
 const params = new URLSearchParams(window.location.search);
 window.__HARNESS_ROLE = params.get("role") || "admin";
 const start = params.get("start") || "/admin-dashboard/appointment-entries";
+
+// Records the page address (a memory router has no browser address), so a test can check what the page keeps in it.
+function TrackLocation() {
+  window.__loc = useLocation().search;
+  return null;
+}
 
 async function main() {
   const [{ default: Layout }, { default: Page }, { ToastProvider }, { ConfirmProvider }] = await Promise.all([
@@ -29,9 +35,12 @@ async function main() {
             <Route
               path="*"
               element={
-                <Layout>
-                  <Page />
-                </Layout>
+                <>
+                  <TrackLocation />
+                  <Layout>
+                    <Page />
+                  </Layout>
+                </>
               }
             />
           </Routes>

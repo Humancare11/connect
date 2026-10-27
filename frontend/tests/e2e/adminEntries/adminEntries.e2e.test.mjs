@@ -111,13 +111,13 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
   };
 
   // Everything that matters about the layout at the current window width.
-  const layout = () =>
-    page.evaluate(() => {
+  const layout = (rowSelector = "tbody tr") =>
+    page.evaluate((rowSelector) => {
       const visible = (el) => Boolean(el) && getComputedStyle(el).display !== "none" && el.getBoundingClientRect().width > 0;
       const de = document.documentElement;
       const table = document.querySelector(".en-table");
       const head = (name) => [...table.querySelectorAll("th")].find((th) => th.textContent.trim() === name);
-      const firstRow = table.querySelector("tbody tr");
+      const firstRow = table.querySelector(rowSelector);
       const label = (td) => getComputedStyle(td, "::before").content.replace(/^"|"$/g, "");
       const cells = [...firstRow.querySelectorAll("td")];
       // Cells that must never lose text. Names and the comment may end in an ellipsis by design.
@@ -135,8 +135,24 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
         minInput: Math.min(...inputs),
         tableWidth: Math.round(table.getBoundingClientRect().width),
         sidebar: Math.round(document.querySelector(".ash-sidebar, aside")?.getBoundingClientRect().width || 0),
+        actions: (() => {
+          const cell = firstRow.querySelector("td.en-act");
+          const buttons = [...firstRow.querySelectorAll(".en-abtn")];
+          if (!cell || !buttons.length) return null;
+          const rects = buttons.map((b) => b.getBoundingClientRect());
+          const cellRect = cell.getBoundingClientRect();
+          return {
+            visible: visible(cell),
+            oneLine: new Set(rects.map((r) => Math.round(r.top))).size === 1,
+            inside: rects.every((r) => r.left >= cellRect.left - 1 && r.right <= cellRect.right + 1),
+            last: cell === cells.filter((td) => visible(td)).at(-1),
+            bottom: Math.round(cellRect.bottom),
+            rowBottom: Math.round(firstRow.getBoundingClientRect().bottom),
+            others: Math.max(...cells.filter((td) => td !== cell && visible(td)).map((td) => Math.round(td.getBoundingClientRect().bottom))),
+          };
+        })(),
       };
-    });
+    }, rowSelector);
 
   before(async () => {
     api = await startApiServer();
@@ -158,7 +174,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await vite.listen();
     harnessUrl = vite.resolvedUrls.local[0].replace(/\/$/, "");
     browser = await chromium.launch({ executablePath: findBrowser(), headless: true, args: ["--disable-lcd-text", "--force-color-profile=srgb"] });
-    context = await browser.newContext({ viewport: { width: 1500, height: 1000 }, acceptDownloads: true });
+    context = await browser.newContext({ viewport: { width: 1500, height: 1000 }, acceptDownloads: true, permissions: ["clipboard-read", "clipboard-write"] });
     page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(String(error)));
     page.on("console", (message) => {
@@ -187,7 +203,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     assert.deepEqual(Object.keys(await summary()), ["To pay doctors", "Paid to doctors", "Fee not entered"]);
     assert.deepEqual(
       await page.$$eval(".en-table thead th", (els) => els.map((e) => e.textContent.trim())),
-      ["#", "Booking ID", "Booked", "Consultation", "Patient", "Doctor", "Fee charged", "Doctor fee ($)", "Paid status", "Paid on", "Comment"],
+      ["#", "Booking ID", "Booked", "Consultation", "Patient", "Doctor", "Fee charged", "Doctor fee ($)", "Paid status", "Paid on", "Comment", "Actions"],
     );
     assert.equal(await page.locator(".en-table tbody tr").count(), 25);
     assert.equal((await page.locator(".en-table tfoot .en-lbl").innerText()).trim(), `Totals for ${fromApi.totals.rows} rows`);
@@ -378,37 +394,41 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
 
   // ── Filters ───────────────────────────────────────────────────────────────
 
-  test("tabs, Doctor, Month and search narrow the list, the counts and the boxes; the view is kept in the page address", async () => {
+  test("tabs, Month and search narrow the list, the counts and the boxes", async () => {
     const a = unique("Filter A");
     const b = unique("Filter B");
     await make({ name: a, doctor: 2, date: "2028-07-03", fee: 60, entry: { doctorFeeCents: 2000 } });
     await make({ name: b, doctor: 2, date: "2028-08-03", fee: 60, entry: { paidStatus: "on_hold" } });
-    await open("/admin-dashboard/appointment-entries");
-    await page.selectOption('select[aria-label="Doctor"]', { label: "Farah Siddiqui" });
-    await page.selectOption('select[aria-label="Month"]', { label: "July 2028" });
-    // Two changes in quick succession keep each other: the doctor is still chosen after the month is.
-    await until(async () => (await page.locator('select[aria-label="Doctor"] option:checked').innerText()) === "Farah Siddiqui", "the doctor to stay chosen");
+    await open("/admin-dashboard/appointment-entries?month=2028-07");
     await until(async () => (await page.locator(".en-table tbody tr").count()) === 1, "one row");
     assert.ok((await row(a).innerText()).includes(a));
     assert.deepEqual(await summary(), { "To pay doctors": "$20.00", "Paid to doctors": "$0.00", "Fee not entered": "0 rows" });
-    await page.selectOption('select[aria-label="Month"]', { label: "All months" });
-    await clickTab("On hold");
+    await open("/admin-dashboard/appointment-entries?month=2028-08&tab=on_hold");
     await until(async () => (await page.locator(".en-table tbody tr").count()) === 1 && (await row(b).count()) === 1, "the On hold row");
     await clickTab("All");
-    await until(async () => (await row(a).count()) === 1 && (await row(b).count()) === 1, "both rows");
-    await search(a);
+    await until(async () => (await row(b).count()) === 1, "the All tab of that month");
+    await search(b);
     assert.equal(await page.locator(".en-table tbody tr").count(), 1);
   });
 
-  test("the page opens on the view in its address (tab, doctor, month)", async () => {
+  test("there is no Doctor filter any more, and search still finds rows by doctor or provider name", async () => {
+    await open("/admin-dashboard/appointment-entries");
+    assert.equal(await page.locator('select[aria-label="Doctor"]').count(), 0);
+    assert.equal(await page.getByText("All doctors").count(), 0);
+    const item = await addViaApi({ date: "2027-01-13", serviceProvider: "Quasar Home Care", patientName: unique("Provider Search") });
+    await search("Quasar Home Care");
+    assert.equal(await row(item.patient.name).count(), 1);
+    await search("Perlin");
+    assert.ok((await page.locator(".en-table tbody tr").count()) >= 1);
+  });
+
+  test("the page opens on the view in its address (tab, month)", async () => {
     const name = unique("Deep Link");
     await make({ name, doctor: 1, date: "2028-09-03", fee: 60, entry: { paidStatus: "not_payable" } });
-    const docId = doctors[1].enrollmentId;
-    await open(`/admin-dashboard/appointment-entries?tab=not_payable&doctor=${docId}&month=2028-09`);
+    await open("/admin-dashboard/appointment-entries?tab=not_payable&month=2028-09");
     await until(async () => (await row(name).count()) === 1, "the row");
     assert.equal(await page.locator('.en-tab[aria-selected="true"]').innerText().then((t) => t.replace(/\s*\d+$/, "")), "Not payable");
-    assert.equal(await page.locator('select[aria-label="Doctor"] option:checked').innerText(), "Hidayat Khan");
-    assert.equal(await page.locator('select[aria-label="Month"] option:checked').innerText(), "September 2028");
+    assert.equal((await page.locator(".en-mp-label").innerText()).replace("▾", "").trim(), "September 2028");
   });
 
   test("25 rows a page, a pager that moves, and an empty view says so", async () => {
@@ -606,8 +626,9 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     // The row in the table: Manual label, M- id, Company · Case number under the patient, the provider in the Doctor column.
     const text = (await row(name).innerText()).replace(/\s+/g, " ");
     assert.match(text, /M-[0-9A-F]{4}/);
-    assert.ok(text.includes("Manual") && text.includes("Acme Assist · AC-1042") && text.includes("Sunrise Home Care") && text.includes("India") && text.includes("8 Jul 2027") && text.includes("$100.00"), text);
-    assert.equal(await row(name).locator(".en-caseline").innerText(), "Acme Assist · AC-1042");
+    assert.ok(text.includes("Manual") && !text.includes("Acme Assist") && text.includes("Sunrise Home Care") && text.includes("India") && text.includes("8 Jul 2027") && text.includes("$100.00"), text);
+    assert.equal(await row(name).locator(".en-caseline").count(), 0);
+    assert.ok(!(await row(name).locator("td").nth(4).innerText()).includes("Acme"), "no company line in the Patient cell");
     assert.ok(await row(name).locator(".en-src--manual").count());
     assert.equal(await feeBox(name).inputValue(), "65.00");
     assert.equal(await commentBox(name).inputValue(), "Booked by phone");
@@ -640,8 +661,8 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await pick("Payment received", "Received");
     await field("Feedback received").fill("Great, thank you very much");
     await press("Save changes");
-    await until(async () => (await row(name).locator(".en-caseline").innerText()) === "Beta Assist · AC-1042", "the edited row");
-    assert.equal(await feeBox(name).inputValue(), "70.00");
+    await until(async () => (await (await call("GET", "/__manual")).body.find((m) => m.patientName === name))?.company === "Beta Assist", "the edited row");
+    await until(async () => (await feeBox(name).inputValue()) === "70.00", "the table to show the new doctor's fee");
     manual = (await call("GET", "/__manual")).body.find((m) => m.patientName === name);
     assert.equal(manual.log.slice(1).every((l) => l.action === "edited" && l.by.name === "Test Admin"), true);
     assert.deepEqual(
@@ -701,7 +722,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
   test("the popup on a phone is full screen with the sections stacked in one column, and Save stays in reach", async () => {
     await open("/admin-dashboard/appointment-entries?month=2027-05", { width: 390, height: 844 });
     await openAdd();
-    await sleep(500);
+    await until(async () => Math.round((await popup().boundingBox()).y) === 0, "the popup to settle");
     const box = await popup().boundingBox();
     assert.deepEqual([Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height)], [0, 0, 390, 844], "full screen");
     const layout = await popup().evaluate((el) => {
@@ -751,26 +772,6 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await shot("popup-1500");
   });
 
-  test("the Doctor filter finds a manual row by its service provider's exact name", async () => {
-    const exact = await addViaApi({ date: "2027-01-09", serviceProvider: "Martin Perlin", patientName: unique("Exact Name") });
-    const longer = await addViaApi({ date: "2027-01-10", serviceProvider: "Martin Perlin Clinic", patientName: unique("Longer Name") });
-    await open("/admin-dashboard/appointment-entries?month=2027-01");
-    await until(async () => (await row(longer.patient.name).count()) === 1 && (await row(exact.patient.name).count()) === 1, "both rows before the filter");
-    await page.selectOption('select[aria-label="Doctor"]', { label: "Martin Perlin" });
-    await until(async () => (await row(longer.patient.name).count()) === 0, "the longer name to drop out");
-    assert.equal(await row(exact.patient.name).count(), 1);
-    assert.ok((await row("Background").count()) >= 1, "the doctor's bookings are there too");
-    // Service providers typed on manual rows are in the dropdown too: once each, sorted with the doctors, and picking one filters by it.
-    const one = await addViaApi({ date: "2027-01-11", serviceProvider: "Zeta Home Care", patientName: unique("Zeta One") });
-    await addViaApi({ date: "2027-01-12", serviceProvider: "Zeta Home Care", patientName: unique("Zeta Two") });
-    await open("/admin-dashboard/appointment-entries?month=2027-01");
-    const options = await page.$$eval('select[aria-label="Doctor"] option', (els) => els.map((e) => e.textContent.trim()).slice(1));
-    assert.equal(options.filter((o) => o === "Zeta Home Care").length, 1);
-    assert.deepEqual(options, [...options].sort((a, b) => a.localeCompare(b)));
-    await page.selectOption('select[aria-label="Doctor"]', { label: "Zeta Home Care" });
-    await until(async () => (await page.locator(".en-table tbody tr").count()) === 2 && (await row(one.patient.name).count()) === 1, "the two Zeta rows");
-  });
-
   test("Delete a manual row: a confirmation first (Keep it changes nothing), then it is gone; a Paid row can't be deleted; booking rows have no Delete", async () => {
     const item = await addViaApi({ date: "2027-10-02" });
     const name = item.patient.name;
@@ -792,7 +793,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     const booking = unique("Booking Nodelete");
     await make({ name: booking, doctor: 0, date: "2027-10-03", fee: 40 });
     await search(booking);
-    assert.equal(await row(booking).locator("button").count(), 0, "a booking row has no Edit or Delete");
+    assert.equal(await row(booking).locator(".en-acts").count(), 0, "a booking row has no Edit or Delete");
   });
 
   // ── CSV ───────────────────────────────────────────────────────────────────
@@ -813,6 +814,311 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     const manual = lines.find((l) => l.includes(manualItem.patient.name));
     assert.ok(manual.startsWith("M-") && manual.includes(",Manual,") && manual.includes(",Acme,"), manual);
     await until(async () => (await toasts()).includes("Exported 2 rows"), "the export toast");
+  });
+
+  // ── The month picker ──────────────────────────────────────────────────────
+
+  const monthName = (m) => new Date(Number(m.slice(0, 4)), Number(m.slice(5)) - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
+  const stepM = (m, d) => {
+    const i = Number(m.slice(0, 4)) * 12 + Number(m.slice(5)) - 1 + d;
+    return `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, "0")}`;
+  };
+  const nowMonth = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const pickerLabel = async () => (await page.locator(".en-mp-label").innerText()).replace("▾", "").trim();
+  // The page's own address (the harness records it: a memory router has no browser address).
+  const labelIs = (text) => until(async () => (await pickerLabel()) === text, `the month label "${text}"`);
+  const urlIs = (m) => until(async () => (await urlMonth()) === m, `the address month "${m}"`);
+  const urlMonth = async () => new URLSearchParams(await page.evaluate(() => window.__loc || "")).get("month") || "";
+  const tableTotal = async () => Number(/\d+/.exec(await page.locator(".en-table tfoot .en-lbl").innerText())[0]);
+  const apiTotal = async (month) => (await call("GET", `/api/admin/entries?limit=1${month ? `&month=${month}` : ""}`)).body.total;
+
+  test("the month control is one compact control the same height as the other toolbar controls, and there is no native select for it", async () => {
+    await open("/admin-dashboard/appointment-entries");
+    assert.equal(await page.locator('select[aria-label="Month"]').count(), 0);
+    const heights = await page.evaluate(() => ({
+      mp: Math.round(document.querySelector(".en-mp-ctl").getBoundingClientRect().height),
+      search: Math.round(document.querySelector(".en-search").getBoundingClientRect().height),
+      btn: Math.round(document.querySelector(".en-bar .en-btn").getBoundingClientRect().height),
+      mpBorder: getComputedStyle(document.querySelector(".en-mp-ctl")).borderTopWidth,
+      radius: getComputedStyle(document.querySelector(".en-mp-ctl")).borderTopLeftRadius,
+      searchRadius: getComputedStyle(document.querySelector(".en-search")).borderTopLeftRadius,
+    }));
+    assert.deepEqual([heights.mp, heights.search, heights.btn], [34, 34, 34]);
+    assert.deepEqual([heights.mpBorder, heights.radius], ["1px", heights.searchRadius]);
+    await labelIs("All time");
+  });
+
+  test("the arrows step one month; from All time, ‹ goes to the latest month that has entries and › is off; › stops at this month", async () => {
+    const nowM = nowMonth();
+    const m1 = stepM(nowM, -1);
+    const m3 = stepM(nowM, -3);
+    await make({ name: unique("Arrow Now"), date: `${nowM}-05`, fee: 30 });
+    await make({ name: unique("Arrow M1"), date: `${m1}-05`, fee: 30 });
+    await open("/admin-dashboard/appointment-entries");
+    assert.equal(await page.getByRole("button", { name: "Next month" }).isDisabled(), true, "› is off on All time");
+    const months = (await call("GET", "/api/admin/entries?limit=1")).body.months.filter((m) => m <= nowM);
+    const latest = months.sort().at(-1);
+    await page.getByRole("button", { name: "Previous month" }).click();
+    await until(async () => (await pickerLabel()) === monthName(latest), "the latest month with entries");
+    await urlIs(latest);
+    await until(async () => (await tableTotal()) === (await apiTotal(latest)), "the table to follow the month");
+    // Step back and forward from a month.
+    await open(`/admin-dashboard/appointment-entries?month=${m3}`);
+    await labelIs(monthName(m3));
+    await page.getByRole("button", { name: "Previous month" }).click();
+    await labelIs(monthName(stepM(m3, -1)));
+    await page.getByRole("button", { name: "Next month" }).click();
+    await page.getByRole("button", { name: "Next month" }).click();
+    await labelIs(monthName(stepM(m3, 1)));
+    await open(`/admin-dashboard/appointment-entries?month=${nowM}`);
+    assert.equal(await page.getByRole("button", { name: "Next month" }).isDisabled(), true, "› stops at this month");
+    await page.getByRole("button", { name: "Previous month" }).click();
+    await urlIs(m1);
+    await open("/admin-dashboard/appointment-entries?month=2026-01");
+    await page.getByRole("button", { name: "Previous month" }).click();
+    await labelIs("December 2025");
+  });
+
+  test("the popover: year row, 4x3 months, selected / this month / no-entries / future states, picking closes it, the table and boxes follow", async () => {
+    const nowM = nowMonth();
+    const m1 = stepM(nowM, -1);
+    const m3 = stepM(nowM, -3);
+    const a = unique("Pick M3");
+    const b = unique("Pick M1");
+    await make({ name: a, date: `${m3}-06`, fee: 40, entry: { doctorFeeCents: 1500 } });
+    await make({ name: b, date: `${m1}-06`, fee: 40 });
+    await open(`/admin-dashboard/appointment-entries?month=${m1}`);
+    await until(async () => (await row(b).count()) === 1, "the m1 row");
+    await page.locator(".en-mp-label").click();
+    const pop = page.locator(".en-mp-pop");
+    await pop.waitFor();
+    assert.equal(await pop.locator(".en-mp-year b").innerText(), m1.slice(0, 4));
+    assert.deepEqual(await pop.locator(".en-mp-m").allInnerTexts(), ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]);
+    const cols = await pop.locator(".en-mp-m").evaluateAll((els) => [...new Set(els.map((e) => Math.round(e.getBoundingClientRect().left)))].length);
+    assert.equal(cols, 4);
+    assert.ok((await pop.locator(`[data-month="${m1}"]`).getAttribute("class")).includes("is-selected"));
+    const cs = await pop.locator(`[data-month="${m1}"]`).evaluate((el) => getComputedStyle(el).backgroundColor);
+    assert.equal(cs, "rgb(15, 118, 110)", "the selected month is filled teal");
+    if (nowM.slice(0, 4) === m1.slice(0, 4)) {
+      assert.ok((await pop.locator(`[data-month="${nowM}"]`).getAttribute("class")).includes("is-now"));
+      assert.equal(await pop.locator(`[data-month="${nowM}"]`).evaluate((el) => getComputedStyle(el).borderTopColor), "rgb(15, 118, 110)", "this month has a teal outline");
+    }
+    const next = stepM(nowM, 1);
+    if (next.slice(0, 4) === nowM.slice(0, 4)) assert.equal(await pop.locator(`[data-month="${next}"]`).isDisabled(), true, "future months are disabled");
+    assert.equal(await pop.getByRole("button", { name: "Next year" }).isDisabled(), true, "no year after this one");
+    // A month with no entries is greyed but clickable.
+    const withEntries = (await call("GET", "/api/admin/entries?limit=1")).body.months;
+    const empty = Array.from({ length: 12 }, (_, i) => `${nowM.slice(0, 4)}-${String(i + 1).padStart(2, "0")}`).find((m) => m <= nowM && !withEntries.includes(m));
+    if (empty) {
+      assert.ok((await pop.locator(`[data-month="${empty}"]`).getAttribute("class")).includes("is-empty"));
+      assert.equal(await pop.locator(`[data-month="${empty}"]`).isDisabled(), false);
+    }
+    // Years.
+    await pop.getByRole("button", { name: "Previous year" }).click();
+    assert.equal(await pop.locator(".en-mp-year b").innerText(), String(Number(nowM.slice(0, 4)) - 1));
+    await pop.getByRole("button", { name: "Next year" }).click();
+    // Pick m3: the popover closes, the table, totals, boxes and the address follow.
+    await shot("month-popover-1500");
+    const before = await summary();
+    await pop.locator(`[data-month="${m3}"]`).click();
+    await pop.waitFor({ state: "detached" });
+    await labelIs(monthName(m3));
+    await urlIs(m3);
+    await until(async () => (await row(a).count()) === 1 && (await row(b).count()) === 0, "the m3 rows");
+    await until(async () => (await tableTotal()) === (await apiTotal(m3)), "the totals row");
+    assert.notDeepEqual(await summary(), before);
+    // This month / All time.
+    await page.locator(".en-mp-label").click();
+    await page.getByRole("button", { name: "This month" }).click();
+    await labelIs(monthName(nowM));
+    await urlIs(nowM);
+    await page.locator(".en-mp-label").click();
+    await page.getByRole("button", { name: "All time" }).click();
+    await labelIs("All time");
+    await urlIs("");
+    await until(async () => (await tableTotal()) === (await apiTotal("")), "all rows");
+  });
+
+  test("the popover closes on Escape and on a click outside; the arrow keys move in the grid and Enter picks", async () => {
+    const nowM = nowMonth();
+    const m3 = stepM(nowM, -3);
+    await open(`/admin-dashboard/appointment-entries?month=${nowM}`);
+    const pop = page.locator(".en-mp-pop");
+    await page.locator(".en-mp-label").click();
+    await pop.waitFor();
+    await page.keyboard.press("Escape");
+    await pop.waitFor({ state: "detached" });
+    assert.equal(await page.evaluate(() => document.activeElement?.className), "en-mp-label", "focus goes back to the control");
+    await page.locator(".en-mp-label").click();
+    await pop.waitFor();
+    await page.locator(".en-head").click({ position: { x: 5, y: 5 } });
+    await pop.waitFor({ state: "detached" });
+    await urlIs(nowM);
+
+    await page.locator(".en-mp-label").click();
+    await pop.waitFor();
+    const focused = () => page.evaluate(() => document.activeElement?.dataset?.month || "");
+    await until(async () => (await focused()) === nowM, "focus on the current month");
+    await page.keyboard.press("ArrowLeft");
+    assert.equal(await focused(), stepM(nowM, -1));
+    await page.keyboard.press("ArrowUp");
+    assert.equal(await focused(), stepM(nowM, -4));
+    await page.keyboard.press("ArrowDown");
+    assert.equal(await focused(), stepM(nowM, -1));
+    await page.keyboard.press("ArrowRight");
+    assert.equal(await focused(), nowM);
+    await page.keyboard.press("ArrowRight");
+    assert.equal(await focused(), nowM, "it does not move into the future");
+    for (let i = 0; i < 3; i += 1) await page.keyboard.press("ArrowLeft");
+    assert.equal(await focused(), m3);
+    await page.keyboard.press("Enter");
+    await pop.waitFor({ state: "detached" });
+    await labelIs(monthName(m3));
+    await urlIs(m3);
+  });
+
+  test("the picked month survives a reload (it is in the address), and the CSV follows it", async () => {
+    const m3 = stepM(nowMonth(), -3);
+    const name = unique("Reload Month");
+    await make({ name, date: `${m3}-08`, fee: 20 });
+    await open(`/admin-dashboard/appointment-entries?month=${m3}`);
+    await until(async () => (await row(name).count()) === 1, "the row");
+    await page.reload();
+    await page.waitForSelector(".en-table tbody tr");
+    await labelIs(monthName(m3));
+    await until(async () => (await row(name).count()) === 1, "the row after a reload");
+    const [download] = await Promise.all([page.waitForEvent("download"), page.click('button:has-text("Export CSV")')]);
+    const lines = fs.readFileSync(await download.path(), "utf8").replace(/^﻿/, "").trim().split("\r\n");
+    assert.equal(lines.length - 1, await apiTotal(m3));
+    assert.ok(lines.some((l) => l.includes(name)));
+  });
+
+  test("on a phone the month popover is as wide as the control, right under it", async () => {
+    await open(`/admin-dashboard/appointment-entries?month=${stepM(nowMonth(), -1)}`, { width: 390, height: 844 });
+    await page.locator(".en-mp-label").click();
+    await page.locator(".en-mp-pop").waitFor();
+    const m = await page.evaluate(() => {
+      const c = document.querySelector(".en-mp-ctl").getBoundingClientRect();
+      const p = document.querySelector(".en-mp-pop").getBoundingClientRect();
+      return { cw: Math.round(c.width), pw: Math.round(p.width), left: Math.round(p.left - c.left), gap: Math.round(p.top - c.bottom), over: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    });
+    assert.ok(Math.abs(m.pw - m.cw) <= 2 && Math.abs(m.left) <= 1, JSON.stringify(m));
+    assert.ok(m.gap >= 0 && m.gap <= 12 && m.over <= 0, JSON.stringify(m));
+    await shot("month-popover-390");
+  });
+
+  // ── Copy the booking ID ───────────────────────────────────────────────────
+
+  test("clicking a booking ID copies the FULL id with a 'Booking ID copied' toast; the hover says Click to copy and the cursor is copy", async () => {
+    const name = unique("Copy Booking");
+    const id = await make({ name, doctor: 0, date: "2027-02-06", fee: 40 });
+    await open("/admin-dashboard/appointment-entries?month=2027-02");
+    await search(name);
+    const button = row(name).locator(".en-idcopy");
+    assert.equal(await button.getAttribute("title"), "Click to copy");
+    assert.equal(await button.evaluate((el) => getComputedStyle(el).cursor), "copy");
+    assert.ok((await button.innerText()).length < id.length, "the id is shown short");
+    await button.click();
+    await until(async () => (await toasts()).includes("Booking ID copied"), "the toast");
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), id);
+  });
+
+  test("clicking a manual row's id copies its M- code", async () => {
+    const item = await addViaApi({ date: "2027-02-07", patientName: unique("Copy Manual") });
+    await open("/admin-dashboard/appointment-entries?month=2027-02");
+    await search(item.patient.name);
+    await row(item.patient.name).locator(".en-idcopy").click();
+    await until(async () => (await toasts()).includes("Booking ID copied"), "the toast");
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), item.shortId);
+    assert.match(item.shortId, /^M-[0-9A-F]{4}$/);
+  });
+
+  test("if the clipboard is refused, the text is selected and the toast says to press Ctrl+C", async () => {
+    const name = unique("Copy Refused");
+    const id = await make({ name, doctor: 0, date: "2027-02-08", fee: 40 });
+    await open("/admin-dashboard/appointment-entries?month=2027-02");
+    await search(name);
+    await page.evaluate(() => {
+      Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: () => Promise.reject(new Error("blocked")) } });
+      document.execCommand = () => false;
+    });
+    await row(name).locator(".en-idcopy").click();
+    await until(async () => (await toasts()).includes("press Ctrl+C"), "the Ctrl+C toast");
+    assert.equal(await page.evaluate(() => window.getSelection().toString()), id);
+  });
+
+  // ── The Actions column ────────────────────────────────────────────────────
+
+  test("Actions is the last column: Edit (outline) and Delete (red text) on one line for manual rows, '—' for booking rows, nothing in the Booking ID cell", async () => {
+    const item = await addViaApi({ date: "2027-03-02", patientName: unique("Actions Manual"), company: "Acme Assist", caseNumber: "AC-9" });
+    const booking = unique("Actions Booking");
+    await make({ name: booking, doctor: 0, date: "2027-03-03", fee: 40 });
+    await open("/admin-dashboard/appointment-entries?month=2027-03");
+    await until(async () => (await row(item.patient.name).count()) === 1 && (await row(booking).count()) === 1, "both rows");
+    const heads = await page.$$eval(".en-table thead th", (els) => els.map((e) => e.textContent.trim()));
+    assert.equal(heads.at(-1), "Actions");
+    const m = row(item.patient.name);
+    const idCell = await m.locator("td").nth(1).innerText();
+    assert.ok(!/Edit|Delete/.test(idCell) && /M-[0-9A-F]{4}/.test(idCell) && idCell.includes("Manual"), idCell);
+    const act = m.locator("td.en-act");
+    assert.deepEqual(await act.locator(".en-abtn").allInnerTexts(), ["Edit", "Delete"]);
+    const style = await act.evaluate((el) => {
+      const [edit, del] = [...el.querySelectorAll(".en-abtn")].map((b) => getComputedStyle(b));
+      const tops = [...el.querySelectorAll(".en-abtn")].map((b) => Math.round(b.getBoundingClientRect().top));
+      return { editBorder: edit.borderTopColor, delColor: del.color, same: tops[0] === tops[1], last: !el.nextElementSibling };
+    });
+    assert.equal(style.same && style.last, true);
+    assert.equal(style.delColor, "rgb(185, 28, 28)");
+    assert.notEqual(style.editBorder, "rgba(0, 0, 0, 0)");
+    // The patient cell is the name and country only.
+    const patient = (await m.locator("td.en-nm").first().innerText()).split("\n").map((t) => t.trim()).filter(Boolean);
+    assert.equal(patient.length, 2, `name and country only: ${patient}`);
+    assert.ok(!patient.join(" ").includes("Acme") && !patient.join(" ").includes("AC-9"));
+    // A booking row: a grey dash, no buttons.
+    const b = row(booking);
+    assert.equal(await b.locator("td.en-act .en-abtn").count(), 0);
+    assert.equal((await b.locator("td.en-act").innerText()).trim(), "—");
+    // Edit opens the popup, which still has the company and case number.
+    await m.locator("td.en-act").getByRole("button", { name: "Edit" }).click();
+    await popup().waitFor();
+    assert.equal(await field("Company").inputValue(), "Acme Assist");
+    assert.equal(await field("Case number").inputValue(), "AC-9");
+    await press("Cancel");
+    await popup().waitFor({ state: "detached" });
+    // Delete asks first.
+    await m.locator("td.en-act").getByRole("button", { name: "Delete" }).click();
+    await page.waitForSelector('[role="alertdialog"]');
+    await page.click('[role="alertdialog"] button:has-text("Keep it")');
+  });
+
+  test("Delete is disabled on a Paid manual row with the tooltip 'Change Payment to provider from Paid before deleting'", async () => {
+    const item = await addViaApi({ date: "2027-03-04", patientName: unique("Actions Paid"), doctorFee: "30", paymentToProvider: "paid" });
+    await open("/admin-dashboard/appointment-entries?month=2027-03");
+    await search(item.patient.name);
+    const del = row(item.patient.name).locator("td.en-act").getByRole("button", { name: "Delete" });
+    assert.equal(await del.isDisabled(), true);
+    assert.equal(await del.getAttribute("title"), "Change Payment to provider from Paid before deleting");
+    assert.equal(await row(item.patient.name).locator("td.en-act").getByRole("button", { name: "Edit" }).isDisabled(), false);
+  });
+
+  test("on a card (below 1360px) a manual row has Edit and Delete as a row of buttons at the bottom; a booking card has none", async () => {
+    const item = await addViaApi({ date: "2027-03-05", patientName: unique("Card Actions") });
+    const booking = unique("Card Booking");
+    await make({ name: booking, doctor: 0, date: "2027-03-06", fee: 40 });
+    await open("/admin-dashboard/appointment-entries?month=2027-03", { width: 390, height: 844 });
+    const m = row(item.patient.name);
+    const box = await m.evaluate((tr) => {
+      const act = tr.querySelector("td.en-act").getBoundingClientRect();
+      const others = [...tr.querySelectorAll("td")].filter((td) => !td.classList.contains("en-act") && getComputedStyle(td).display !== "none").map((td) => td.getBoundingClientRect().bottom);
+      const buttons = [...tr.querySelectorAll(".en-abtn")].map((b) => Math.round(b.getBoundingClientRect().top));
+      return { below: act.top >= Math.max(...others) - 1, oneLine: new Set(buttons).size === 1, count: buttons.length };
+    });
+    assert.deepEqual(box, { below: true, oneLine: true, count: 2 });
+    assert.equal(await row(booking).locator("td.en-act").isVisible(), false);
+    await shot("table-390");
   });
 
   // ── Access ────────────────────────────────────────────────────────────────
@@ -858,7 +1164,8 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
 
   test("layout at 1920, 1440, 1366, 1280 and 390: no sideways scroll, Booked only above 1440px, one card per booking below 1360px, nothing clipped", async () => {
     const name = unique("Layout Check");
-    await make({ name, country: "AE", doctor: 2, date: "2029-03-04", time: "11:30 AM", fee: 99, paid: 45, entry: { doctorFeeCents: 1234, comment: "A fairly long comment that must not widen the page" } });
+    await make({ name, country: "AE", doctor: 2, date: "2027-04-04", time: "11:30 AM", fee: 99, paid: 45, entry: { doctorFeeCents: 1234, comment: "A fairly long comment that must not widen the page" } });
+    await addViaApi({ date: "2027-04-05", patientName: `${name} manual`, company: "Acme Assist", caseNumber: "AC-1", serviceProvider: "A Fairly Long Provider Name Ltd", comment: "A fairly long comment that must not widen the page" });
     for (const [width, expected] of [
       [1920, { cards: false, booked: true }],
       [1440, { cards: false, booked: false }],
@@ -866,10 +1173,17 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
       [1280, { cards: true }],
       [390, { cards: true }],
     ]) {
-      await open("/admin-dashboard/appointment-entries?month=2029-03", { width, height: width < 500 ? 844 : 1000 });
+      await open("/admin-dashboard/appointment-entries?month=2027-04", { width, height: width < 500 ? 844 : 1000 });
       await search(name);
-      const m = await layout();
+      const m = await layout("tbody tr[data-kind=appointment]");
+      const mm = await layout("tbody tr[data-kind=manual]");
       const at = `${width}px ${JSON.stringify(m)}`;
+      assert.equal(m.actions, null, `a booking row has no buttons: ${at}`);
+      assert.deepEqual(mm.clipped, [], `a manual row: nothing clipped: ${width}px ${JSON.stringify(mm)}`);
+      assert.equal(mm.scrollerOverflow <= 0 && mm.pageOverflow <= 0, true, `a manual row: no sideways scroll: ${width}px`);
+      assert.ok(mm.actions?.oneLine && mm.actions.inside, `Edit and Delete on one line inside their cell: ${width}px ${JSON.stringify(mm.actions)}`);
+      if (!expected.cards) assert.ok(mm.actions.last, `Actions is the last column: ${width}px`);
+      else assert.ok(mm.actions.bottom >= mm.actions.others, `the buttons sit at the bottom of the card: ${width}px ${JSON.stringify(mm.actions)}`);
       assert.equal(m.pageOverflow <= 0, true, `no sideways scroll on the page: ${at}`);
       assert.equal(m.scrollerOverflow <= 0, true, `no sideways scroll in the table: ${at}`);
       assert.equal(m.cards, expected.cards, `cards or table: ${at}`);
@@ -888,8 +1202,8 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
 
   test("on a card, every editable box works the same: type a fee, change the status", async () => {
     const name = unique("Card Edit");
-    const id = await make({ name, doctor: 0, date: "2029-03-05", fee: 100 });
-    await open("/admin-dashboard/appointment-entries?month=2029-03", { width: 390, height: 844 });
+    const id = await make({ name, doctor: 0, date: "2027-04-05", fee: 100 });
+    await open("/admin-dashboard/appointment-entries?month=2027-04", { width: 390, height: 844 });
     await search(name);
     await feeBox(name).fill("45");
     await feeBox(name).press("Enter");

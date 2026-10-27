@@ -9,19 +9,15 @@ export const STATUS_OPTIONS = TAB_ORDER.filter((key) => key !== "all").map((key)
 
 export const tabFromParam = (value) => (TAB_ORDER.includes(value) ? value : "all");
 export const monthFromParam = (value) => (/^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") ? value : "");
-// A doctor id, or "provider:<name>" for a service provider typed on manual entries.
-export const doctorFromParam = (value) => (/^[0-9a-f]{24}$/i.test(value || "") || /^provider:.{1,120}$/.test(value || "") ? value : "");
-
 export function pageFromParam(value) {
   const n = Number(value);
   return Number.isInteger(n) && n >= 1 ? n : 1;
 }
 
 // The page state as the query string of the page's own URL: values that are the default are left out.
-export function viewToParams({ tab, doctor, month, page }) {
+export function viewToParams({ tab, month, page }) {
   const params = {};
   if (tab && tab !== "all") params.tab = tab;
-  if (doctor) params.doctor = doctor;
   if (month) params.month = month;
   if (page > 1) params.page = String(page);
   return params;
@@ -48,6 +44,34 @@ export function cleanFeeInput(text) {
 export function sameFee(typed, cents) {
   if (typed === "") return cents === null || cents === undefined;
   return Number.isFinite(cents) && Math.round(Number(typed) * 100) === cents;
+}
+
+// ── Months (the month picker) ───
+
+export const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// The month the browser's clock is in, as "YYYY-MM".
+export const thisMonth = (now = new Date()) => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+// "2026-12" + 1 -> "2027-01"; "2026-01" - 1 -> "2025-12"
+export function stepMonth(month, delta) {
+  const [y, m] = month.split("-").map(Number);
+  const index = y * 12 + (m - 1) + delta;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
+
+// "2026" + 3 -> "2026-04" (a month of the year, by its 0-based index)
+export const monthOf = (year, index) => `${year}-${String(index + 1).padStart(2, "0")}`;
+
+// What the ‹ and › arrows do. From "All time" ‹ goes to the latest month that has entries (never one in the future) and › does
+// nothing; from a month they step by one, and › stops at the current month. Returns the new month, or null when the arrow has nowhere to go.
+export function arrowTarget(month, direction, { months = [], now = thisMonth() } = {}) {
+  if (!month) {
+    if (direction > 0) return null;
+    return [...months].filter((m) => m <= now).sort().at(-1) || now;
+  }
+  const next = stepMonth(month, direction);
+  return next > now ? null : next;
 }
 
 // ── Dates ────────────────────────────────────────────────────────────────────
