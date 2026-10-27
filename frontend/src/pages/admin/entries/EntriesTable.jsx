@@ -58,7 +58,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
               {formatMoney(totals?.doctorFeeCents)}
             </td>
             <td colSpan={4} className="en-hint">
-              Totals cover every matching row, on all pages. Saved doctor fees only: grey 75% suggestions aren&rsquo;t counted.
+              Totals cover every matching row, on all pages. Only saved doctor fees are added up.
             </td>
           </tr>
         </tfoot>

@@ -126,12 +126,8 @@ export function feeCharged(row) {
   return { main: formatMoney(charged), paid: paid !== charged ? `paid ${formatMoney(paid)}` : "" };
 }
 
-// The grey text in an empty doctor fee box: "75% · 74.25" (never on a Not payable row), else "0.00". Never saved.
-export function feePlaceholder(row) {
-  if (row.entry.doctorFeeCents !== null && row.entry.doctorFeeCents !== undefined) return "0.00";
-  if (row.entry.paidStatus === "not_payable" || !row.placeholder) return "0.00";
-  return row.placeholder.text;
-}
+// The grey text in an empty doctor fee box. Only a placeholder: nothing is saved until someone types.
+export const FEE_PLACEHOLDER = "0.00";
 
 export const totalsText = (rows) => `Totals for ${rows} row${rows === 1 ? "" : "s"}`;
 

@@ -66,11 +66,9 @@ test("fee charged shows 'paid $X' only when the patient paid a different amount"
   assert.deepEqual(F.feeCharged(row({ feeChargedCents: 9900, amountPaidCents: 4500 })), { main: "$99.00", paid: "paid $45.00" });
 });
 
-test("the grey placeholder: 75% text while no fee is saved, none on Not payable rows or once a fee is saved", () => {
-  assert.equal(F.feePlaceholder(row()), "75% · 74.25");
-  assert.equal(F.feePlaceholder(row({ entry: { ...row().entry, paidStatus: "not_payable" } })), "0.00");
-  assert.equal(F.feePlaceholder(row({ entry: { ...row().entry, doctorFeeCents: 3000 } })), "0.00");
-  assert.equal(F.feePlaceholder(row({ placeholder: null })), "0.00");
+test("the empty doctor fee box shows a grey 0.00 placeholder, and there is no 75% suggestion", () => {
+  assert.equal(F.FEE_PLACEHOLDER, "0.00");
+  assert.equal("feePlaceholder" in F, false, "the 75% suggestion is gone");
 });
 
 test("totals and range text", () => {

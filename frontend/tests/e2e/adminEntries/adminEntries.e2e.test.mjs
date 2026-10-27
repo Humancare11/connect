@@ -131,6 +131,8 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
         bookedColumn: visible(head("Booked")),
         bookedCell: visible(firstRow.querySelector("td.en-c-bk")),
         labels: cells.filter((td) => td.dataset.l && visible(td)).map(label),
+        headClipped: [...table.querySelectorAll("th")].filter((th) => visible(th) && th.scrollWidth > th.clientWidth + 1).map((th) => th.textContent.trim()),
+        headFee: head("Doctor fee ($)")?.textContent.trim() || null,
         clipped,
         minInput: Math.min(...inputs),
         tableWidth: Math.round(table.getBoundingClientRect().width),
@@ -200,7 +202,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     const fromApi = (await call("GET", "/api/admin/entries?limit=1")).body;
     assert.equal(await tabCount("All"), fromApi.counts.all);
     assert.equal(await tabCount("Unpaid"), fromApi.counts.unpaid);
-    assert.deepEqual(Object.keys(await summary()), ["To pay doctors", "Paid to doctors", "Fee not entered"]);
+    assert.deepEqual(Object.keys(await summary()), ["To pay doctors", "Paid to doctors"]);
     assert.deepEqual(
       await page.$$eval(".en-table thead th", (els) => els.map((e) => e.textContent.trim())),
       ["#", "Booking ID", "Booked", "Consultation", "Patient", "Doctor", "Fee charged", "Doctor fee ($)", "Paid status", "Paid on", "Comment", "Actions"],
@@ -233,7 +235,8 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     const id = await make({ name, doctor: 0, date: "2028-04-05", fee: 100 });
     await open("/admin-dashboard/appointment-entries?month=2028-04");
     await search(name);
-    assert.equal(await feeBox(name).getAttribute("placeholder"), "75% · 75.00");
+    assert.equal(await feeBox(name).getAttribute("placeholder"), "0.00");
+    assert.equal(await feeBox(name).getAttribute("title"), null, "no tooltip with a 75% suggestion");
     const before = await summary();
     await feeBox(name).fill("60");
     await page.locator("body").click({ position: { x: 5, y: 400 } });
@@ -379,7 +382,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     assert.ok(!(await row(fine).innerText()).includes("Doctor changed"));
   });
 
-  test("a Not payable row shows no 75% suggestion; an empty fee on an Unpaid row shows it in grey", async () => {
+  test("an empty doctor fee shows a grey 0.00 placeholder on every row, saves nothing, and no 75% text is anywhere on the page", async () => {
     const np = unique("NotPayable");
     await make({ name: np, doctor: 0, date: "2028-06-01", fee: 100, entry: { paidStatus: "not_payable" } });
     const up = unique("UnpaidGrey");
@@ -388,8 +391,13 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await search(np);
     assert.equal(await feeBox(np).getAttribute("placeholder"), "0.00");
     await search(up);
-    assert.equal(await feeBox(up).getAttribute("placeholder"), "75% · 74.25");
+    assert.equal(await feeBox(up).getAttribute("placeholder"), "0.00");
     assert.equal(await feeBox(up).inputValue(), "");
+    assert.equal(await feeBox(up).evaluate((el) => getComputedStyle(el, "::placeholder").color), "rgb(148, 163, 184)", "the placeholder is grey");
+    assert.equal(await page.evaluate(() => /75\s*%/.test(document.body.innerText + [...document.querySelectorAll("[placeholder],[title]")].map((e) => (e.getAttribute("placeholder") || "") + (e.title || "")).join(" "))), false);
+    // Still only a placeholder: nothing was saved, and Paid still needs a saved fee.
+    await statusBox(up).selectOption("paid");
+    await until(async () => (await toasts()).includes("doctor fee above 0"), "the Paid refusal");
   });
 
   // ── Filters ───────────────────────────────────────────────────────────────
@@ -402,7 +410,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await open("/admin-dashboard/appointment-entries?month=2028-07");
     await until(async () => (await page.locator(".en-table tbody tr").count()) === 1, "one row");
     assert.ok((await row(a).innerText()).includes(a));
-    assert.deepEqual(await summary(), { "To pay doctors": "$20.00", "Paid to doctors": "$0.00", "Fee not entered": "0 rows" });
+    assert.deepEqual(await summary(), { "To pay doctors": "$20.00", "Paid to doctors": "$0.00" });
     await open("/admin-dashboard/appointment-entries?month=2028-08&tab=on_hold");
     await until(async () => (await page.locator(".en-table tbody tr").count()) === 1 && (await row(b).count()) === 1, "the On hold row");
     await clickTab("All");
@@ -585,7 +593,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     assert.equal((await call("GET", "/__manual")).body.some((m) => m.patientName === "Validation Case"), false, "nothing was saved");
   });
 
-  test("a fee of 0 is fine; the row shows no 75% suggestion", async () => {
+  test("a fee of 0 is fine; the row shows the 0.00 placeholder", async () => {
     await open("/admin-dashboard/appointment-entries?month=2027-05");
     await openAdd();
     const name = unique("Free Visit");
@@ -1188,6 +1196,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
       assert.equal(m.scrollerOverflow <= 0, true, `no sideways scroll in the table: ${at}`);
       assert.equal(m.cards, expected.cards, `cards or table: ${at}`);
       assert.deepEqual(m.clipped, [], `nothing clipped: ${at}`);
+      if (!expected.cards) assert.deepEqual(m.headClipped, [], `no column header is cut off (Doctor fee ($) in full): ${at}`);
       if (!expected.cards) {
         assert.equal(m.bookedColumn, expected.booked, `Booked column: ${at}`);
         assert.ok(m.minInput >= 60, `the editable boxes keep a usable width: ${at}`);
