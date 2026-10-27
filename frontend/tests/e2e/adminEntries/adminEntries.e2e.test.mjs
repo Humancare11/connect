@@ -1263,6 +1263,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     await dialog.waitFor();
     assert.match(await dialog.locator(".hc-modal__title").innerText(), /^History · M-[0-9A-F]{4}$/);
     const groups = dialog.locator(".hg");
+    await until(async () => (await groups.count()) === 3, "the history to load");
     assert.equal(await groups.count(), 3, "two saves and the creation");
     const who = await groups.evaluateAll((els) => els.map((g) => ({ name: g.querySelector(".hw b").textContent, role: g.querySelector(".rl")?.textContent, time: g.querySelector("time").textContent, items: [...g.querySelectorAll("li")].map((li) => li.innerText.replace(/\s+/g, " ").trim()) })));
     assert.equal(who[0].role, "Super Admin", "newest first");
