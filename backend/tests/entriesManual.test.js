@@ -41,7 +41,8 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
     try { json = JSON.parse(text); } catch { /* not JSON */ }
     return { status: res.status, body: json };
   };
-  const list = async (query = "") => (await call("GET", query ? `?${query}` : "")).body;
+  const list = async (query = "", role = "admin") => (await call("GET", query ? `?${query}` : "", undefined, role)).body;
+  const listAsSuper = (query = "") => list(query, "superadmin");
   const names = (body) => body.items.map((r) => r.patient.name);
 
   const appt = (extra = {}) =>
@@ -280,7 +281,7 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       assert.equal((await list("q=zzzzzz")).total, 0);
     });
 
-    test("the three summary boxes: to pay (saved fees on Unpaid), paid, and rows with no fee (Not payable left out)", async () => {
+    test("the money boxes (to pay, paid, rows with no fee) are only sent to a super admin, and follow the month but not the tab or the search", async () => {
       await appt();
       await appt({ entry: { doctorFeeCents: 3000, paidStatus: "unpaid" } });
       await appt({ entry: { doctorFeeCents: 4000, paidStatus: "paid", paidOn: "2026-10-20", doctorAtEntry: String(doctor._id) } });
@@ -288,10 +289,10 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       await manual({}, {});
       await manual({}, { paidStatus: "not_payable" });
       await manual({}, { paidStatus: "on_hold", doctorFeeCents: 999 });
-      const body = await list();
-      assert.deepEqual(body.summary, { toPayCents: 3000 + 1500, paidCents: 4000, feeNotEnteredCount: 2 });
-      assert.deepEqual((await list("tab=paid")).summary, body.summary);
-      assert.deepEqual((await list("q=nobody-called-this")).summary, body.summary);
+      const body = await listAsSuper();
+      assert.deepEqual([body.summary.toPayCents, body.summary.paidCents, body.summary.feeNotEnteredCount], [3000 + 1500, 4000, 2]);
+      assert.deepEqual((await listAsSuper("tab=paid")).summary, body.summary);
+      assert.deepEqual((await listAsSuper("q=nobody-called-this")).summary, body.summary);
     });
 
     test("the totals row: fee charged and saved doctor fee follow the tab and the search", async () => {
@@ -355,8 +356,8 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       assert.equal(row.manual.caseLine, "Beta Assist · AC-1042");
       const stored = await ManualEntry.findById(m._id).lean();
       assert.ok(stored.log.slice(1).every((l) => l.action === "edited" && l.by.name === "An Admin" && l.by.role === "admin" && l.at instanceof Date));
-      assert.ok(["patientName", "company", "serviceType", "otherService", "caseStatus", "serviceProvider", "consultationFee", "doctorFee", "mrStatus", "invoiceSent", "paymentReceived", "paymentReceivedDate", "feedbackSent", "feedbackReceived", "comment"].every((f) => stored.log.some((l) => l.field === f)));
-      assert.deepEqual([stored.log.find((l) => l.field === "consultationFee").from, stored.log.find((l) => l.field === "consultationFee").to], ["100.00", "120.00"]);
+      assert.ok(["Patient Name", "Company", "Type of service", "Other service", "Status", "Service provider", "Consultation Fee", "Doctor's Fee", "MR status from provider", "Invoice sent status", "Payment received", "Payment received date", "Feedback Message Sent", "Feedback Received", "Comment"].every((f) => stored.log.some((l) => l.field === f)));
+      assert.deepEqual([stored.log.find((l) => l.field === "Consultation Fee").from, stored.log.find((l) => l.field === "Consultation Fee").to], ["100.00", "120.00"]);
       assert.deepEqual(stored.entry.history.map((h) => h.field), ["doctorFee", "comment"]);
       assert.equal(stored.paymentReceivedDate, TODAY);
     });

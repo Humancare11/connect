@@ -211,13 +211,10 @@ describe("manual entry: editing", () => {
       ["received", "sent", "sent", "partly_received", "2026-10-25", "Please rate us", "Great"],
     );
     assert.deepEqual([r.set["entry.doctorFeeCents"], r.set["entry.comment"]], [8000, "all good"]);
-    assert.deepEqual(r.log.map((l) => l.field), [
-      "date", "company", "caseNumber", "serviceType", "otherService", "caseStatus", "serviceProvider", "providerNumber", "patientName", "country",
-      "contactNumber", "consultationFee", "mrStatus", "mrSentToCompany", "invoiceSent", "paymentReceived", "paymentReceivedDate", "feedbackSent",
-      "feedbackReceived", "doctorFee", "comment",
-    ]);
+    // The log names each field like its column header in the manual sheet.
+    assert.deepEqual(r.log.map((l) => l.field), ["Date", "Company", "Case Number", "Type of service", "Other service", "Status", "Service provider", "Service provider number", "Patient Name", "Patient Country", "Contact Number", "Consultation Fee", "MR status from provider", "MR sent status to the companies", "Invoice sent status", "Payment received", "Payment received date", "Feedback Message Sent", "Feedback Received", "Doctor's Fee", "Comment"]);
     assert.ok(r.log.every((l) => l.action === "edited" && l.by.name === "An Admin" && l.by.role === "admin" && l.at === NOW));
-    assert.deepEqual(r.log.find((l) => l.field === "consultationFee"), { action: "edited", field: "consultationFee", from: "100.00", to: "120.00", by: r.log[0].by, at: NOW });
+    assert.deepEqual(r.log.find((l) => l.field === "Consultation Fee"), { action: "edited", field: "Consultation Fee", from: "100.00", to: "120.00", by: r.log[0].by, at: NOW });
     assert.deepEqual(r.history.map((h) => h.field), ["doctorFee", "comment"], "the entry fields are in entry.history as for a booking");
   });
 
@@ -283,7 +280,7 @@ describe("manual entry: editing", () => {
       feedbackSent: "sent text", feedbackReceived: "got text", comment: "note", paidDateToProvider: "2026-10-20",
     });
     assert.equal(r.ok, true, r.msg);
-    assert.deepEqual(r.log.map((l) => l.field), ["mrStatus", "mrSentToCompany", "invoiceSent", "paymentReceived", "paymentReceivedDate", "feedbackSent", "feedbackReceived", "paidDateToProvider", "comment"]);
+    assert.deepEqual(r.log.map((l) => l.field), ["MR status from provider", "MR sent status to the companies", "Invoice sent status", "Payment received", "Payment received date", "Feedback Message Sent", "Feedback Received", "Paid date to the provider", "Comment"]);
     assert.equal(r.set["entry.paidOn"], "2026-10-20");
   });
 

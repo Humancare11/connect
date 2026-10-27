@@ -11,6 +11,7 @@
 // not while Paid), plus the row shape the page gets. It does not touch the database: the routes do the (versioned) writes.
 const crypto = require("node:crypto");
 const { Country } = require("country-state-city");
+const { fieldLabel, buildHistory } = require("./manualHistory");
 const {
   MAX_COMMENT_LENGTH,
   canEditEntries,
@@ -512,7 +513,8 @@ function applyManualFormEdit(doc, body, ctx) {
 
   if (!changes.length) return { ok: true, noop: true, changes, set: {}, history: [], log: [] };
   const by = actorOf(actor);
-  const log = changes.map((c) => ({ action: "edited", field: c.field, from: String(c.from), to: String(c.to), by, at: now }));
+  // The log names each field like its column header in the manual sheet ("Payment to Provider"), so the History reads like the sheet.
+  const log = changes.map((c) => ({ action: "edited", field: fieldLabel(c.field), from: String(c.from), to: String(c.to), by, at: now }));
   return { ok: true, noop: false, changes, set, history: composed.history, log };
 }
 
@@ -587,6 +589,7 @@ function toManualRow(doc) {
       locked,
       canDelete: !locked,
       form: formView(doc),
+      historyCount: buildHistory(doc).count,
       calculation: calc,
       // For the CSV: the new fields by their column values.
       csv: {

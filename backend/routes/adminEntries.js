@@ -4,6 +4,7 @@ const { verifyAdminToken, entriesViewAccess } = require("../middleware/verifyTok
 const { EntryListQueryError, listBookingEntries, listAllEntryRows, loadEntryRow } = require("../utils/bookingEntryList");
 const { buildEntriesCsv } = require("../utils/bookingEntryCsv");
 const { MAX_HISTORY, applyEntryEdit } = require("../utils/bookingEntry");
+const { buildHistory, fieldLabel } = require("../utils/manualHistory");
 const { toManualRow, validateManualCreate, buildManualDocument, applyManualFormEdit, checkManualDelete, manualDeleteWrite, newCode } = require("../utils/manualEntry");
 const { istDayKey } = require("../services/liveChat/istDay");
 const Appointment = require("../models/Appointment");
@@ -62,7 +63,7 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
   // GET /api/admin/entries?tab=&q=&page=&limit=&sort=&doctor=&month=&includeCancelled=&includeTesting=
   router.get("/", ...guard, async (req, res) => {
     try {
-      res.status(200).json(await listBookingEntries(req.query));
+      res.status(200).json(await listBookingEntries(req.query, { role: req.user?.role }));
     } catch (error) {
       if (error instanceof EntryListQueryError) return res.status(400).json({ msg: error.message });
       console.error("listBookingEntries error:", error);
@@ -74,7 +75,7 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
   // The same filters as the list, every matching row (no paging), as a download. Cut at MAX_EXPORT_ROWS: X-Export-Truncated says so.
   router.get("/export.csv", ...guard, async (req, res) => {
     try {
-      const { rows, total, truncated } = await listAllEntryRows(req.query);
+      const { rows, total, truncated, view } = await listAllEntryRows(req.query);
       res.set({
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="entries-${istDayKey(now())}.csv"`,
@@ -84,7 +85,7 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
         "X-Export-Truncated": truncated ? "true" : "false",
         "Access-Control-Expose-Headers": "Content-Disposition, X-Export-Rows, X-Export-Total, X-Export-Truncated",
       });
-      res.status(200).send(buildEntriesCsv(rows));
+      res.status(200).send(buildEntriesCsv(rows, view));
     } catch (error) {
       if (error instanceof EntryListQueryError) return res.status(400).json({ msg: error.message });
       console.error("exportBookingEntries error:", error);
@@ -118,7 +119,14 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
 
       const written = await loaded.Model.findOneAndUpdate(
         { _id: id, ...(kind === "manual" ? { deletedAt: null } : {}), ...versionMatch(version) },
-        { $set: { ...result.set, "entry.v": version + 1 }, $push: { "entry.history": { $each: result.history, $slice: -MAX_HISTORY } } },
+        {
+          $set: { ...result.set, "entry.v": version + 1 },
+          $push: {
+            "entry.history": { $each: result.history, $slice: -MAX_HISTORY },
+            // A manual entry's History is read from its log, so a cell edit goes there too (under the column header).
+            ...(kind === "manual" ? { log: { $each: result.history.map((h) => ({ action: "edited", field: fieldLabel(h.field), from: h.from, to: h.to, by: h.by, at: h.at })) } } : {}),
+          },
+        },
         // A payout edit is not a change to the booking: leave its updatedAt alone.
         { new: true, timestamps: false, projection: { _id: 1 } },
       ).lean();
@@ -199,6 +207,20 @@ function create({ guard = [verifyAdminToken, entriesViewAccess], now = () => Dat
     } catch (error) {
       console.error("editManualEntry error:", error);
       res.status(500).json({ msg: "Failed to save the change." });
+    }
+  });
+
+  // GET /api/admin/entries/manual/:id/history   Who changed what and when, newest first, one group per save (see utils/manualHistory.js).
+  router.get("/manual/:id/history", ...guard, async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!mongoose.isValidObjectId(id)) return res.status(404).json({ msg: "That entry was not found." });
+      const doc = await ManualEntry.findOne({ _id: id, deletedAt: null }).select("code log entry.history").lean();
+      if (!doc) return res.status(404).json({ msg: "That entry was not found." });
+      res.status(200).json({ id, ...buildHistory(doc) });
+    } catch (error) {
+      console.error("manualEntryHistory error:", error);
+      res.status(500).json({ msg: "Failed to load the history." });
     }
   });
 
