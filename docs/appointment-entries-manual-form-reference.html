@@ -187,6 +187,40 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .modal-s{position:fixed;inset:0;background:#0f172a66;z-index:50;display:grid;place-items:center;padding:16px}
 .modal{background:#fff;border-radius:14px;width:min(640px,100%);padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:0 20px 50px #0f172a40}
 .modal h3{margin:0;font-size:16px;color:#1e1b4b}.modal p{margin:0;color:var(--mute);font-size:13px}
+.modal.big{width:min(980px,100%);max-height:calc(100vh - 32px);padding:0;gap:0;overflow:hidden}
+.bm-h{display:flex;align-items:flex-start;gap:12px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.bm-h h3{font-size:18px}.bm-h p{margin-top:3px}
+.bm-x{margin-left:auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#475569;font-size:15px;flex:none}
+.bm-b{overflow:auto;padding:6px 22px 18px;display:flex;flex-direction:column}
+.sec{padding:14px 0;border-bottom:1px dashed var(--line)}
+.sec:last-of-type{border-bottom:0}
+.sec h4{margin:0 0 10px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1e1b4b;display:flex;align-items:center;gap:8px}
+.sec h4 span{width:20px;height:20px;border-radius:6px;background:#eef2ff;color:#4338ca;display:grid;place-items:center;font-size:11px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 14px}
+.g2x{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.g3 .full3{grid-column:1/-1}
+.g3 .half{grid-column:span 1}
+.sec:has(.half) .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
+.modal.big textarea{height:auto;min-height:84px;font-family:var(--f-ui);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;color:var(--fg);background:#fff;width:100%;resize:vertical;font-family:inherit}
+.big textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px #ccfbf1}
+.big label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:#475569;min-width:0}
+.big input,.big select{height:38px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font-size:14px;color:var(--fg);background:#fff;width:100%}
+.big input:focus,.big select:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px #ccfbf1}
+.big input:disabled{background:#f8fafc;color:#94a3b8}
+.calc{border-radius:10px;background:#f0fdfa;border:1px solid #99f6e4;padding:8px 12px;display:flex;flex-direction:column;justify-content:center}
+.calc small{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#0f766e}
+.calc b{font-size:20px;font-variant-numeric:tabular-nums;color:#0f766e}.calc b.neg{color:#b91c1c}
+.calc span{font-size:12px;color:var(--mute)}
+.pay{border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px;background:#fcfcfd}
+.pay>b{font-size:13px;color:#1e1b4b}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;width:max-content}
+.seg button{border:0;background:#fff;padding:8px 16px;font-weight:600;font-size:13px;color:#475569}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:#1e1b4b;color:#fff}
+.big .err{margin:10px 0 0;color:#b91c1c;font-size:13px;font-weight:600}
+.bm-f{display:flex;align-items:center;gap:8px;padding:14px 22px;border-top:1px solid var(--line);background:#f8fafc}
+.bm-f .req{margin-right:auto;color:var(--mute);font-size:12.5px}
+@media (max-width:760px){.g3,.g2x{grid-template-columns:1fr}.bm-f .req{display:none}.modal-s{padding:0}.modal.big{max-height:100vh;border-radius:0;height:100%}}
 .modal textarea{width:100%;height:220px;font-family:var(--f-mono);font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}
 .modal .f{display:flex;justify-content:flex-end;gap:8px}
 @media (max-width:1440px){.et col.w-bk{width:0}.et th.c-bk,.et td.c-bk{padding:0!important;font-size:0;border-left:0;border-right:0;overflow:hidden;white-space:nowrap}.et td.c-bk *{display:none}}
@@ -440,35 +474,89 @@ document.addEventListener("click",e=>{
     const m=document.createElement("div");m.className="modal-s";m.innerHTML=`<div class="modal" role="dialog" aria-modal="true" aria-label="Export CSV"><h3>Export CSV</h3><p>In the real app this downloads entries-${today()}.csv. Here's what it contains (${visible().length} rows).</p><textarea readonly>${esc(csv)}</textarea><div class="f"><button class="btn2" data-close>Close</button></div></div>`;
     document.body.appendChild(m);m.addEventListener("click",ev=>{if(ev.target===m||ev.target.closest("[data-close]"))m.remove()});return}
 });
+const COMPANIES=["Allianz Care","AXA Global Healthcare","Cigna Global","Bupa Global","GeoBlue","Direct (no company)"];
+const SERVICES=["Video consultation","Second opinion","Medical report review","Prescription","Fit to fly certificate","Follow-up consultation"];
 function openAdd(){
   const docs=[...new Set(rows.map(r=>r.doctor).filter(Boolean))].sort();
+  const opt=(arr,sel)=>arr.map(x=>`<option ${x===sel?"selected":""}>${esc(x)}</option>`).join("");
+  const yn=(id,a,b)=>`<div class="seg" role="radiogroup" id="${id}"><button type="button" role="radio" aria-checked="true" class="on" data-v="${a}">${a}</button><button type="button" role="radio" aria-checked="false" data-v="${b}">${b}</button></div>`;
   const m=document.createElement("div");m.className="modal-s";
-  m.innerHTML=`<form class="modal" role="dialog" aria-modal="true" aria-label="Add manual entry" novalidate>
-    <h3>Add manual entry</h3><p>For a consultation that wasn't booked through the website or app, e.g. arranged by phone or through a partner. It shows with a "Manual" label.</p>
-    <div class="mf">
-      <label class="full">Patient name<input id="m-pt" required maxlength="80" placeholder="e.g. Ravi Sharma"></label>
-      <label>Country<input id="m-ct" maxlength="60" placeholder="India"></label>
-      <label>Doctor<select id="m-doc">${docs.map(d=>`<option>${esc(d)}</option>`).join("")}</select></label>
-      <label>Consultation date<input type="date" id="m-dt" value="${today()}"></label>
-      <label>Time<input type="time" id="m-tm" value="10:00"></label>
-      <label>Fee charged ($)<input id="m-fee" inputmode="decimal" placeholder="49.00"></label>
-      <label>Doctor fee ($)<input id="m-df" inputmode="decimal" placeholder="optional"></label>
-      <label class="full">Comment<input id="m-cm" maxlength="500" placeholder="e.g. Booked by phone, paid by bank transfer"></label>
-      <div class="err" id="m-err" hidden></div>
+  m.innerHTML=`<form class="modal big" role="dialog" aria-modal="true" aria-labelledby="bm-t" novalidate>
+    <div class="bm-h"><div><h3 id="bm-t">Add manual entry</h3><p>A case that didn't come through the website or app, for example sent by a partner company.</p></div><button type="button" class="bm-x" data-close aria-label="Close">✕</button></div>
+    <div class="bm-b">
+      <section class="sec"><h4><span>1</span>Case</h4><div class="g3">
+        <label>Date<input type="date" id="b-date" value="${today()}"></label>
+        <label>Company<input id="b-co" maxlength="80" placeholder="e.g. Allianz Care"></label>
+        <label>Case number<input id="b-case" maxlength="40" placeholder="e.g. ALZ-2026-10432"></label>
+        <label>Type of service<select id="b-svc">${opt(["House call","Teleconsultation","Others"],"Teleconsultation")}</select></label>
+        <label id="b-oth-l" hidden>Other service<input id="b-oth" maxlength="80" placeholder="Describe the service"></label>
+        <label>Status<select id="b-st">${opt(["Open","In progress","Completed","Cancelled"],"Open")}</select></label>
+      </div></section>
+      <section class="sec"><h4><span>2</span>Service provider</h4><div class="g3">
+        <label>Service provider<input id="b-doc" maxlength="80" placeholder="Doctor or clinic name" required></label>
+        <label>Service provider number<input id="b-dph" inputmode="tel" maxlength="20" placeholder="+91 98765 43210"></label>
+      </div></section>
+      <section class="sec"><h4><span>3</span>Patient</h4><div class="g3">
+        <label class="s2">Patient name<input id="b-pt" maxlength="80" placeholder="Full name" required></label>
+        <label>Patient country<input id="b-ct" maxlength="60" placeholder="e.g. United Arab Emirates" list="b-cts"></label>
+        <datalist id="b-cts"><option>India</option><option>United Arab Emirates</option><option>Oman</option><option>Saudi Arabia</option><option>Qatar</option><option>United Kingdom</option><option>United States</option></datalist>
+        <label>Contact number<input id="b-ph" inputmode="tel" maxlength="20" placeholder="+971 50 123 4567"></label>
+      </div></section>
+      <section class="sec"><h4><span>4</span>Fees</h4><div class="g3">
+        <label>Consultation fee ($)<input id="b-fee" inputmode="decimal" placeholder="0.00"></label>
+        <label>Doctor's fee ($)<input id="b-df" inputmode="decimal" placeholder="0.00"></label>
+        <div class="calc" aria-live="polite"><small>Calculation (our margin)</small><b id="b-calc">$0.00</b><span id="b-pct">Consultation fee − Doctor's fee</span></div>
+      </div></section>
+      <section class="sec"><h4><span>5</span>Medical report &amp; invoice</h4><div class="g3">
+        <label>MR status from provider<select id="b-mr1">${opt(["Pending","Received"])}</select></label>
+        <label>MR sent to the company<select id="b-mr2">${opt(["Not sent","Sent"])}</select></label>
+        <label>Invoice sent<select id="b-inv">${opt(["Not sent","Sent"])}</select></label>
+      </div></section>
+      <section class="sec"><h4><span>6</span>Payments</h4><div class="g2x">
+        <div class="pay"><b>From the company</b>
+          <label>Payment received<select id="b-pr">${opt(["Not received","Partly received","Received"])}</select></label>
+          <label>Payment received date<input type="date" id="b-prd" disabled></label></div>
+        <div class="pay"><b>To the provider</b>
+          <label>Payment to provider<select id="b-pp">${opt(["Unpaid","On hold","Paid","Not payable"])}</select></label>
+          <label>Paid date to the provider<input type="date" id="b-ppd" disabled></label></div>
+      </div></section>
+      <section class="sec"><h4><span>7</span>Feedback</h4><div class="g3">
+        <label class="half">Feedback message sent<textarea id="b-fs" maxlength="1000" rows="3" placeholder="The message sent to the patient asking for feedback"></textarea></label>
+        <label class="half">Feedback received<textarea id="b-fr" maxlength="1000" rows="3" placeholder="What the patient or company replied"></textarea></label>
+        <label class="full3">Comment<input id="b-cm" maxlength="500" placeholder="Optional internal note"></label>
+      </div></section>
+      <p class="err" id="b-err" hidden></p>
     </div>
-    <div class="f"><button type="button" class="btn2" data-close>Cancel</button><button type="submit" class="btn2 pri2">Add entry</button></div></form>`;
-  document.body.appendChild(m);m.querySelector("#m-pt").focus();
+    <div class="bm-f"><span class="req">Patient name and service provider are required.</span><button type="button" class="btn2" data-close>Cancel</button><button type="submit" class="btn2 pri2">Save entry</button></div>
+  </form>`;
+  document.body.appendChild(m);m.querySelector("#b-pt").focus();
+  const $m=q=>m.querySelector(q);
+  const num=v=>{v=String(v).trim().replace(/^\$/,"");return v===""?0:(/^\d{1,7}(\.\d{1,2})?$/.test(v)?Number(v):NaN)};
+  function calc(){const f=num($m("#b-fee").value),d=num($m("#b-df").value);
+    if(isNaN(f)||isNaN(d)){$m("#b-calc").textContent="—";$m("#b-pct").textContent="Enter fees as numbers, like 49.00";return}
+    const mg=f-d;$m("#b-calc").textContent=(mg<0?"−":"")+money(Math.abs(mg));$m("#b-calc").className=mg<0?"neg":"";
+    $m("#b-pct").textContent=f>0?`${Math.round(mg/f*100)}% of the consultation fee`:"Consultation fee − Doctor's fee"}
+  $m("#b-svc").addEventListener("change",()=>{const o=$m("#b-svc").value==="Others";$m("#b-oth-l").hidden=!o;if(o)$m("#b-oth").focus();else $m("#b-oth").value=""});
+  $m("#b-fee").addEventListener("input",calc);$m("#b-df").addEventListener("input",calc);
+  const link=(sel,date,ok)=>$m(sel).addEventListener("change",()=>{const on=ok.includes($m(sel).value);$m(date).disabled=!on;if(on&&!$m(date).value)$m(date).value=today();if(!on)$m(date).value=""});
+  link("#b-pr","#b-prd",["Received","Partly received"]);link("#b-pp","#b-ppd",["Paid"]);
+  m.querySelectorAll(".seg").forEach(g=>g.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;g.querySelectorAll("button").forEach(x=>{x.classList.toggle("on",x===b);x.setAttribute("aria-checked",String(x===b))})}));
   m.addEventListener("click",ev=>{if(ev.target===m||ev.target.closest("[data-close]"))m.remove()});
-  m.querySelector("form").addEventListener("submit",ev=>{ev.preventDefault();
-    const g=id=>m.querySelector(id).value.trim(),err=m.querySelector("#m-err");
-    const fee=g("#m-fee").replace(/^\$/,""),df=g("#m-df").replace(/^\$/,"");
-    const bad=x=>x!==""&&!/^\d{1,7}(\.\d{1,2})?$/.test(x);
-    if(!g("#m-pt")){err.hidden=false;err.textContent="Enter the patient's name.";return}
-    if(!fee||bad(fee)){err.hidden=false;err.textContent="Enter the fee charged as a number, like 49.00.";return}
-    if(bad(df)){err.hidden=false;err.textContent="Doctor fee must be a number, like 36.75.";return}
-    let tm="";if(g("#m-tm")){const [h,mi]=g("#m-tm").split(":").map(Number);tm=`${(h%12)||12}:${String(mi).padStart(2,"0")} ${h<12?"AM":"PM"}`}
-    rows.unshift({id:"man"+Math.random().toString(16).slice(2,8),manual:true,addedBy:"Super Admin",booked:today(),date:g("#m-dt"),time:tm,patient:g("#m-pt"),country:g("#m-ct"),doctor:g("#m-doc"),fee:Number(fee),paid:Number(fee),plat:"",docFee:df,status:"unpaid",paidOn:"",note:g("#m-cm"),changed:false});
-    m.remove();filtersHTML();eRender();toast("Manual entry added");
+  m.addEventListener("keydown",ev=>{if(ev.key==="Escape")m.remove()});
+  $m("form").addEventListener("submit",ev=>{ev.preventDefault();
+    const err=$m("#b-err"),fail=t=>{err.hidden=false;err.textContent=t;err.scrollIntoView({block:"nearest"})};
+    const g=q=>$m(q).value.trim();
+    if(!g("#b-pt"))return fail("Enter the patient's name.");
+    if(!g("#b-doc"))return fail("Enter the service provider.");
+    if(g("#b-svc")==="Others"&&!g("#b-oth"))return fail("Describe the service, since you chose Others.");
+    const fee=num(g("#b-fee")),df=num(g("#b-df"));
+    if(isNaN(fee)||isNaN(df))return fail("Fees must be numbers, like 49.00.");
+    if(g("#b-pp")==="Paid"&&!(df>0))return fail("A provider marked Paid needs a doctor's fee above 0.");
+    const map={"Unpaid":"unpaid","On hold":"on_hold","Paid":"paid","Not payable":"not_payable"};
+    rows.unshift({id:"man"+Math.random().toString(16).slice(2,8),manual:true,addedBy:"Super Admin",booked:today(),date:g("#b-date"),time:"",
+      patient:g("#b-pt"),country:g("#b-ct"),doctor:g("#b-doc"),fee,paid:fee,plat:"",docFee:g("#b-df")?String(df):"",
+      status:map[g("#b-pp")],paidOn:g("#b-ppd"),note:[g("#b-co"),g("#b-case")].filter(Boolean).join(" · ")+(g("#b-cm")?" · "+g("#b-cm"):""),changed:false});
+    m.remove();filtersHTML();eRender();toast("Manual entry saved");
   });
 }
 $("#eq").addEventListener("input",e=>{eq=e.target.value.trim().toLowerCase();eRender()});
