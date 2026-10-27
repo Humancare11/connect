@@ -15,6 +15,7 @@ import { FaThreads } from "react-icons/fa6";
 import { FaXTwitter } from "react-icons/fa6";
 // import logo from "../assets/HC-Logo.webp";
 import logo from "../assets/final-footer-logo.webp";
+import legit from "../assets/legitscript.png";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
@@ -36,10 +37,10 @@ export default function Footer() {
             />
           </Link>
 
-          <p className="footer-tagline">
+          {/* <p className="footer-tagline">
             Connecting patients with trusted healthcare professionals anytime
             through secure and affordable digital healthcare solutions.
-          </p>
+          </p> */}
 
           {/* COMPLIANCE BADGES */}
 
@@ -78,6 +79,17 @@ export default function Footer() {
                 support@humancareconnect.co
               </a>
             </div>
+            <div>
+              <img
+              src={legit}
+              alt="LegitScript Logo"
+              className="legit-logo"
+              width="600"
+              height="600"
+              loading="lazy"
+              decoding="async"
+            />
+              </div>
           </div>
         </div>
 

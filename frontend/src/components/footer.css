@@ -506,3 +506,10 @@ a.footer-contact-text::after {
   position: absolute;
   inset: -8px -4px;
 }
+.legit-logo{
+  width: 120px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+  vertical-align: top;
+}
