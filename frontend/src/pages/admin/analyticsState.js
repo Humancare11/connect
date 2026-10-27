@@ -25,9 +25,9 @@ export const AI_STATUS_FILTERS = Object.freeze([
 export const OUTCOME_HELP =
   "Shows searches where no relevant dedicated page was found. This does not mean the AI service failed.";
 export const TOP_TERMS_PRIVACY_HELP =
-  "A search term appears here only after at least 3 searches, and once it has passed the privacy filters. Searches the filters reject (for example ones containing contact details or personal identifiers) are never recorded, and a stored term is checked again before it is shown. Equivalent spellings (such as singular and plural) are counted together. A term's Trend needs at least 3 searches on a single UTC day.";
+  "A search term can appear here after a single search, once it has passed the privacy filters. Searches the filters reject (for example ones containing contact details or personal identifiers) are never recorded, and a stored term is checked again before it is shown. Equivalent spellings (such as singular and plural) are counted together. A term's Trend needs at least 3 searches on a single UTC day.";
 export const DAILY_TERMS_PRIVACY_HELP =
-  "Dates are UTC days. A search term is listed for a day only with at least 3 searches that day, and once it has passed the privacy filters. Searches the filters reject are never recorded, and a stored term that no longer passes them is only counted under \"Other\" for that day, never shown.";
+  "Dates are UTC days. A search term is listed for a day from its first search on a day, once it has passed the privacy filters. Searches the filters reject are never recorded, and a stored term that no longer passes them is only counted under \"Other\" for that day, never shown.";
 export const TREND_UNAVAILABLE_HELP =
   "Not enough data for a trend: this term has not been searched 3 times on any single UTC day, and trends only cover such days.";
 

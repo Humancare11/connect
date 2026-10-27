@@ -256,11 +256,16 @@ test("admin queries are read-only: aggregate / find only, never a write", () => 
   ]);
   assert.ok(!/\.(updateOne|updateMany|insertOne|insertMany|create|deleteOne|deleteMany|bulkWrite|replaceOne|findOneAndUpdate|findOneAndDelete|findOneAndReplace|save|remove|drop|createIndex|collection)\b/.test(src));
   assert.ok(!/[{,]\s*\$(out|merge)\s*:/.test(src), "no aggregation stage may write");
-  // The 3-interaction privacy floor lives in the data layer: on every term-day cell, and on the term total.
-  // The floor is the caller's visibleFrom, clamped inside every loader so it can be raised but never lowered below 3.
+  // The minimum lives in the data layer: on every term-day cell, and on the term total. It is the caller's visibleFrom
+  // (the term lists pass 1, /gaps passes nothing and gets MIN_TERM_INTERACTIONS = 3), clamped inside every loader so it can
+  // never go below 1.
   assert.ok(src.includes("const cellFloor = { cell: { $gte: visibleFrom } };"));
   assert.ok(src.includes("{ $match: { n: { $gte: visibleFrom }, _id: { $nin: excludeTermKeys } } }"));
-  assert.ok(src.includes("Math.max(MIN_TERM_INTERACTIONS,"));
+  assert.ok(src.includes("Number.isFinite(n) ? Math.max(1, Math.floor(n)) : MIN_TERM_INTERACTIONS"));
+  assert.ok(src.includes("visibleFrom = MIN_TERM_INTERACTIONS"), "the default stays 3, for /gaps");
+  const controller = read("controllers/searchAnalyticsAdminController.js");
+  assert.ok(controller.includes("listOptions: { excludeTermKeys: check.keys, visibleFrom: 1 }"), "terms, daily terms and summary list from the first search");
+  assert.ok(controller.includes("gapOptions: { excludeTermKeys: check.keys },"), "/gaps passes no visibleFrom: it keeps the minimum of 3");
   assert.equal((src.match(/visibleFrom = termFloor\(visibleFrom\);/g) || []).length, 3, "loadWindowTerms, loadSummary and loadDailyTerms all clamp");
   // /trend is budgeted: every database operation goes through the budget.
   assert.ok(src.includes("budget.run("));

@@ -4,8 +4,7 @@ const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const mongoose = require("mongoose");
-const { sendEmail, buildBookingNotificationHTML } = require("../utils/sendEmail");
-const { recordSecurityEvent } = require("../utils/securityMonitor");
+const { sendEmail } = require("../utils/sendEmail");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { getS3ObjectUrl } = require("../config/s3");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
@@ -28,10 +27,8 @@ const {
   completeLoaded,
   reopenLoaded,
 } = require("../utils/appointmentLifecycle");
-const {
-  notifyAppointmentBooked,
-  notifyAppointmentDoctorChanged,
-} = require("../utils/bookingNotifications");
+const { notifyAppointmentBooked } = require("../utils/bookingNotifications");
+const { bookingSourceFor } = require("../utils/bookingSource");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -187,6 +184,8 @@ const createAppointment = async (req, res) => {
       patientTimezone,
     } = req.body;
     const patientId = req.user.id;
+    // Where this booking came from, read once from the patient's own request (never fails, never blocks the booking).
+    const source = bookingSourceFor(req);
 
     // ── Input validation ──────────────────────────────────────────────────────
     if (!date || !time) {
@@ -391,6 +390,7 @@ const createAppointment = async (req, res) => {
             paymentAmount: paymentAmountFinal,
             paymentStatus,
             paymentGateway,
+            source,
           },
         ],
         { session }
@@ -664,6 +664,15 @@ const confirmAppointment = async (req, res) => {
       appointment.status = "confirmed";
       appointment.sessionStarted = true;
     }
+    // Who confirmed and when, as for an admin's confirm (role tells them apart).
+    const confirmingDoctor = await Doctor.findById(req.user.id).select("name email").lean();
+    appointment.confirmedBy = {
+      id: req.user.id,
+      name: confirmingDoctor?.name || "",
+      email: confirmingDoctor?.email || "",
+      role: "doctor",
+    };
+    appointment.confirmedAt = new Date();
     await appointment.save();
 
     const io = req.app.get("io");
@@ -683,11 +692,14 @@ const confirmAppointment = async (req, res) => {
       });
     }
 
-    sendPushToUser(appointment.patientId, {
-      title: "Appointment confirmed",
-      body: "Your doctor has confirmed your appointment.",
-      data: { type: "appointment", appointmentId: String(appointment._id) },
-    });
+    // Testing bookings never message anyone.
+    if (appointment.isTesting !== true) {
+      sendPushToUser(appointment.patientId, {
+        title: "Appointment confirmed",
+        body: "Your doctor has confirmed your appointment.",
+        data: { type: "appointment", appointmentId: String(appointment._id) },
+      });
+    }
 
     res.status(200).json({ msg: "Appointment confirmed.", appointment });
   } catch (error) {
@@ -824,235 +836,6 @@ const cancelAppointment = async (req, res) => {
   } catch (error) {
     console.error("cancelAppointment error:", error);
     res.status(500).json({ msg: "Failed to cancel appointment." });
-  }
-};
-
-// Appointment date/time as the patient booked it. Returns "" (row omitted)
-// unless there is a usable value: the UTC instant shown in the patient's own
-// timezone when both are valid, otherwise the stored date/time strings.
-const patientAppointmentWhen = ({ date, time, appointmentDateTimeUtc, patientTimezone }) => {
-  const instant = appointmentDateTimeUtc ? new Date(appointmentDateTimeUtc) : null;
-  if (instant && !Number.isNaN(instant.getTime()) && patientTimezone) {
-    try {
-      const formatted = new Intl.DateTimeFormat("en-US", {
-        timeZone: patientTimezone,
-        dateStyle: "medium",
-        timeStyle: "short",
-      }).format(instant);
-      return `${formatted} (${patientTimezone})`;
-    } catch {
-      // invalid timezone: fall through to the stored strings
-    }
-  }
-  const base = [date, time].filter(Boolean).join(" ").trim();
-  if (!base) return "";
-  return patientTimezone ? `${base} (${patientTimezone})` : base;
-};
-
-const reassignAppointmentDoctor = async (req, res) => {
-  try {
-    const { doctorId } = req.body;
-    if (!doctorId) {
-      return res.status(400).json({ msg: "A new doctorId is required." });
-    }
-
-    const appointment = await Appointment.findById(req.params.id);
-    if (!appointment) {
-      return res.status(404).json({ msg: "Appointment not found." });
-    }
-    // A completed appointment must be reopened first: that path runs the slot
-    // check and notifies everyone. Changing the doctor here would otherwise
-    // silently set it back to confirmed (including the same-doctor branch below).
-    if (isCompleteStatus(appointment.status)) {
-      return res.status(409).json({
-        msg: "This appointment is completed. Reopen it before changing the doctor.",
-      });
-    }
-    const previousDoctorId = appointment.doctorId ? String(appointment.doctorId) : null;
-
-    // Find the new doctor by numeric doctorId
-    const newDoctor = await Doctor.findOne({ doctorId });
-    if (!newDoctor) {
-      return res.status(404).json({ msg: "Alternate doctor not found." });
-    }
-
-    if (appointment.doctorId?.toString() === newDoctor._id.toString()) {
-      const statusChanged = appointment.status !== "confirmed";
-      if (appointment.status !== "confirmed") {
-        appointment.status = "confirmed";
-        appointment.sessionStarted = true;
-        await appointment.save();
-      }
-      if (statusChanged) {
-        const io = req.app.get("io");
-        if (io) {
-          const payload = {
-            appointmentId: appointment._id,
-            status: appointment.status,
-            doctorId: appointment.doctorId,
-          };
-          io.to(`patient_${appointment.patientId}`).emit("appointment-updated", payload);
-          io.to(`appointment_${appointment._id}`).emit("appointment-updated", payload);
-          io.to("admin_room").emit("appointment-updated", payload);
-        }
-      }
-      return res.status(200).json({ msg: "Appointment already assigned to this doctor.", appointment });
-    }
-
-    const conflict = await Appointment.findOne({
-      _id: { $ne: appointment._id },
-      doctorId: newDoctor._id,
-      date: appointment.date,
-      time: appointment.time,
-      status: { $in: ACTIVE_DOCTOR_STATUSES },
-    });
-    if (conflict) {
-      return res.status(409).json({ msg: "The selected doctor is already booked for this slot." });
-    }
-
-    const wasRequested = ["upcoming", "requested"].includes(appointment.status) || !appointment.doctorId;
-    const assigningAdmin = req.user?.id
-      ? await User.findById(req.user.id).select("name email").lean()
-      : null;
-    const assignedDoctorEnrollment = await Enrollment.findOne({ doctorId: newDoctor._id })
-      .select("timezone")
-      .lean();
-
-    appointment.doctorId = newDoctor._id;
-    appointment.status = "confirmed";
-    appointment.sessionStarted = true;
-    appointment.doctorTimezone = assignedDoctorEnrollment?.timezone || appointment.doctorTimezone || "";
-    appointment.assignedBy = {
-      id: req.user?.id || null,
-      name: assigningAdmin?.name || req.user?.name || req.user?.email || "Admin",
-      email: assigningAdmin?.email || req.user?.email || "",
-      assignedAt: new Date(),
-    };
-    await appointment.save();
-
-    // Fire-and-forget: email the new doctor (and the previous one, if any).
-    // The same-doctor case returned early above, so this only runs on a real change.
-    notifyAppointmentDoctorChanged({ appointment, newDoctor, previousDoctorId });
-
-    const patient = await User.findById(appointment.patientId).select("name email");
-    if (patient?.email) {
-      const patientName = patient.name || "Patient";
-      const isNew = wasRequested;
-      const subject = isNew
-        ? "Your appointment has been confirmed — Humancare Connect"
-        : "Appointment update — Doctor reassigned";
-      const bodyText = isNew
-        ? "Your appointment request has been reviewed and a doctor has been assigned to your appointment."
-        : "Your assigned doctor has changed due to unavailability. Your appointment time remains the same, and a new doctor has been assigned to ensure you receive the best care.";
-      const html = buildBookingNotificationHTML({
-        badge: isNew ? "Doctor Assigned" : "Doctor Reassigned",
-        greeting: `Hello ${patientName},`,
-        intro: bodyText,
-        rows: [
-          ["Doctor", newDoctor.name ? `Dr. ${newDoctor.name}` : ""],
-          ["Date / time", patientAppointmentWhen(appointment)],
-        ],
-        footnote:
-          "If you have any questions, please contact our support team at support@humancareconnect.co. Thank you for choosing Humancare Connect.",
-      });
-      try {
-        await sendEmail({ to: patient.email, subject, html, text: bodyText });
-      } catch (mailErr) {
-        console.error("Appointment notification email failed (non-fatal):", mailErr.message);
-      }
-    }
-
-    const populatedAppointment = await Appointment.findById(appointment._id)
-      .populate("patientId", "patientId name email gender city country")
-      .populate("doctorId", "name email doctorId")
-      .lean();
-
-    const io = req.app.get("io");
-    if (io) {
-      io.to(`patient_${appointment.patientId}`).emit("appointment-updated", {
-        appointmentId: appointment._id,
-        status: appointment.status,
-        doctorId: appointment.doctorId,
-      });
-      io.to("admin_room").emit("appointment-updated", {
-        appointmentId: appointment._id,
-        status: appointment.status,
-        doctorId: appointment.doctorId,
-      });
-      io.to(`doctor_${newDoctor._id}`).emit("new-appointment", {
-        appointmentId: appointment._id,
-        patientId: appointment.patientId,
-        status: appointment.status,
-        date: appointment.date,
-        time: appointment.time,
-      });
-    }
-
-    if (previousDoctorId && previousDoctorId !== String(newDoctor._id)) {
-      req.app.get("evictDoctorFromAppointmentRoom")?.(appointment._id, previousDoctorId);
-    }
-
-    res.status(200).json({
-      msg: wasRequested ? "Appointment confirmed and doctor assigned successfully." : "Doctor reassigned successfully.",
-      appointment: populatedAppointment,
-    });
-  } catch (error) {
-    console.error("reassignAppointmentDoctor error:", error);
-    res.status(500).json({ msg: "Failed to reassign doctor." });
-  }
-};
-
-const getAllAppointments = async (req, res) => {
-  try {
-    const appointments = await Appointment.find()
-      .populate("patientId", "patientId name email gender dob city country")
-      .populate("doctorId", "name email doctorId")
-      .sort({ createdAt: -1 })
-      .lean();
-
-    const doctorIds = appointments
-      .map((appt) => appt.doctorId?._id?.toString() || appt.doctorId?.toString())
-      .filter(Boolean);
-
-    const enrollments = await Enrollment.find({ doctorId: { $in: doctorIds } }).lean();
-    const enrollmentByDoctor = new Map(
-      enrollments.map((e) => [e.doctorId.toString(), e])
-    );
-
-    const enhancedAppointments = appointments.map((appt) => {
-      const doctorId = appt.doctorId?._id?.toString() || appt.doctorId?.toString();
-      const enrollment = doctorId ? enrollmentByDoctor.get(doctorId) : null;
-      return {
-        ...appt,
-        doctorMeta: {
-          specialty: enrollment?.specialization || "—",
-          city: enrollment?.city || "—",
-          country: enrollment?.country || "—",
-          experience: enrollment?.experience || "—",
-          price: enrollment?.consultantFees || null,
-          languages: enrollment?.languagesKnown || [],
-          address: enrollment?.clinicAddress || enrollment?.address || "—",
-          timezone: enrollment?.timezone || "",
-          phoneNumber: enrollment?.phoneNumber || "",
-          countryCode: enrollment?.countryCode || "",
-        },
-      };
-    });
-
-    if (enhancedAppointments.length >= 100) {
-      await recordSecurityEvent(req, {
-        type: "large_data_export",
-        severity: "medium",
-        title: "Large appointment dataset accessed",
-        resource: "Appointment",
-        metadata: { count: enhancedAppointments.length, endpoint: req.originalUrl },
-      });
-    }
-
-    res.status(200).json(await withPresignedMedicalReports(enhancedAppointments));
-  } catch (error) {
-    console.error("getAllAppointments error:", error);
-    res.status(500).json({ msg: "Failed to fetch appointments." });
   }
 };
 
@@ -1227,8 +1010,6 @@ module.exports = {
   adminCompleteAppointment,
   reopenAppointment,
   cancelAppointment,
-  reassignAppointmentDoctor,
-  getAllAppointments,
   getAppointmentById,
   getDoctorOwnAppointment,
   getPatientOwnAppointment,

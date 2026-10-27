@@ -21,11 +21,13 @@
   --gop-blue-soft: #eaf1fa;
   --gop-danger: #b42318;
   --gop-danger-soft: #fdf0f0;
+  --gop-teal: #0f766e;
+  --gop-teal-dark: #115e59;
   --gop-radius: 4px;
   --gop-shadow:
     0 1px 2px rgba(26, 26, 26, 0.05), 0 10px 30px rgba(26, 26, 26, 0.07);
 
-  max-width: 1000px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 32px 20px 96px;
   box-sizing: border-box;
@@ -95,7 +97,7 @@
   border: 1px solid var(--gop-line);
   border-radius: var(--gop-radius);
   box-shadow: var(--gop-shadow);
-  padding: 44px 56px 36px;
+  padding: 40px 40px 32px;
   margin-bottom: 28px;
 }
 
@@ -245,7 +247,7 @@
 }
 
 .gop-table th {
-  width: 190px;
+  width: 150px;
   padding: 9px 12px;
   background: var(--gop-blue-soft);
   text-align: left;
@@ -381,21 +383,6 @@
 
 /* --------------------------------------------------------------- foot ---- */
 
-.gop-doc__actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  padding-top: 22px;
-  margin-top: 10px;
-  border-top: 1px solid var(--gop-line);
-}
-
-.gop-doc__actions .gop-hint {
-  margin-top: 0;
-}
-
 .gop-doc__foot {
   padding-top: 18px;
   margin-top: 26px;
@@ -461,6 +448,27 @@
 .gop-btn--sm {
   padding: 7px 14px;
   font-size: 13px;
+}
+
+.gop-btn--generate {
+  background: var(--gop-teal);
+  border-color: var(--gop-teal);
+  color: #fff;
+}
+
+.gop-btn--generate:hover:not(:disabled) {
+  background: var(--gop-teal-dark);
+  border-color: var(--gop-teal-dark);
+}
+
+.gop-btn--outline {
+  background: #fff;
+  border-color: var(--gop-blue);
+  color: var(--gop-blue);
+}
+
+.gop-btn--outline:hover:not(:disabled) {
+  background: var(--gop-blue-soft);
 }
 
 .gop-btn--link {
@@ -610,7 +618,7 @@
 
 .gop-card__head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
@@ -628,12 +636,14 @@
 
 /* -------------------------------------------------- search & filter bar -- */
 
-.gop-history-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
+.gop-card__head .gop-search {
+  flex: 1 1 280px;
+  max-width: 520px;
+  margin-left: auto;
+}
+
+.gop-card__refresh {
+  flex: none;
 }
 
 .gop-search {
@@ -871,160 +881,500 @@
 
 .gop-actions {
   display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+/* ------------------------------------------- two-column form & bottom ---- */
+
+/* Two independent stacks (sections 1-3 | 4-6), each as tall as its own
+   content, so one column never leaves gaps because the other is longer. */
+.gop-doc__cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 40px;
+  align-items: start;
+}
+
+.gop-doc__col {
+  min-width: 0;
+}
+
+/* Section 7 (Issuer) on the left, hint + Generate GOP on the right. */
+.gop-doc__bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 40px;
+  align-items: end;
+  margin-top: 6px;
+}
+
+.gop-doc__actions {
+  display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 7px;
+  gap: 12px;
+  margin: 26px 0;
+  text-align: right;
+}
+
+.gop-doc__actions .gop-hint {
+  max-width: 48ch;
+  margin-top: 0;
+}
+
+.gop-doc__actions .gop-alert {
+  width: 100%;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+/* ---------------------------------------------------- accordion rows ----- */
+
+.gop-sec--acc {
+  margin: 0 0 10px;
+  background: #fff;
+  border: 1px solid #c9d3e0;
+  border-radius: var(--gop-radius);
+}
+
+.gop-sec--acc .gop-sec__body {
+  padding: 14px 12px 10px;
+  border-top: 1px solid var(--gop-line);
+}
+
+.gop-acc__heading {
+  margin: 0;
+  font: inherit;
+}
+
+.gop-acc__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--gop-navy);
+  text-align: left;
+  background: var(--gop-blue-soft);
+  border: 0;
+  border-radius: calc(var(--gop-radius) - 1px);
+  cursor: pointer;
+}
+
+.gop-acc__btn:focus-visible {
+  outline: 2px solid var(--gop-blue);
+  outline-offset: -2px;
+}
+
+.gop-acc__chevron {
+  flex: none;
+  transition: transform var(--duration-fast) ease;
+}
+
+.gop-acc__btn[aria-expanded="true"] .gop-acc__chevron {
+  transform: rotate(180deg);
+}
+
+/* ------------------------------------------------------- ⋮ action menu --- */
+
+.gop-menu-wrap {
+  position: relative;
+  flex: none;
+}
+
+.gop-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--gop-ink-soft);
+  background: #fff;
+  border: 1px solid #d2d6dd;
+  border-radius: var(--gop-radius);
+  cursor: pointer;
+}
+
+.gop-menu-btn:hover {
+  background: #f6f7f9;
+}
+
+.gop-menu-btn:focus-visible,
+.gop-menu__item:focus-visible {
+  outline: 2px solid var(--gop-blue);
+  outline-offset: 2px;
+}
+
+.gop-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 180px;
+  padding: 4px;
+  background: #fff;
+  border: 1px solid var(--gop-line);
+  border-radius: var(--gop-radius);
+  box-shadow: var(--gop-shadow);
+}
+
+.gop-menu__item {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--gop-blue);
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.gop-menu__item:hover:not(:disabled),
+.gop-menu__item:focus-visible {
+  background: var(--gop-blue-soft);
+}
+
+.gop-menu__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gop-card-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.gop-card-actions__status {
+  min-width: 0;
+  text-align: left;
+}
+
+.gop-email-flag__reason {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
 }
 
 /* --------------------------------------------------------- responsive ---- */
 
-@media (max-width: 900px) {
-  .gop-doc {
-    padding: 32px 24px 28px;
-  }
+/* The layout tier (wide / mid / narrow / xs) is measured from this page's own
+   width in GOP.jsx (useGopLayout) and applied as a .gop-page--* class, so it
+   follows the space the admin shell leaves, not just the viewport. Wide is the
+   default styling above. */
 
-  .gop-doc__title {
-    font-size: 20px;
-  }
-
-  .gop-card {
-    padding: 24px 20px;
-  }
-
-  .gop-table th {
-    width: 150px;
-  }
+/* mid: desktop sidebar showing, 700-959px of page width */
+.gop-page--mid .gop-doc {
+  padding: 32px 28px 28px;
 }
 
-@media (max-width: 820px) {
-  .gop-page {
-    padding: 20px 14px 72px;
-  }
-
-  .gop-table th {
-    width: 130px;
-    font-size: 10.5px;
-  }
-
-  .gop-history-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .gop-pagination {
-    justify-content: center;
-  }
-
-  .gop-pagination__controls {
-    width: 100%;
-  }
-
-  .gop-pagination__controls .gop-btn {
-    flex: 1;
-  }
-
-  /* History table becomes stacked cards; each cell prints its own header. */
-  .gop-table-wrap {
-    overflow-x: visible;
-  }
-
-  .gop-history-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .gop-history-table tbody tr {
-    display: block;
-    margin-bottom: 12px;
-    border: 1px solid var(--gop-line);
-    border-radius: var(--gop-radius);
-  }
-
-  .gop-history-table tbody td {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 10px 14px;
-    text-align: right;
-  }
-
-  .gop-history-table tbody tr td:last-child {
-    border-bottom: 0;
-  }
-
-  .gop-history-table tbody tr:hover td {
-    background: transparent;
-  }
-
-  .gop-history-table tbody td::before {
-    content: attr(data-label);
-    flex: none;
-    padding-top: 3px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--gop-caption);
-    text-align: left;
-  }
-
-  .gop-person {
-    align-items: flex-end;
-  }
-
-  .gop-person span {
-    max-width: 100%;
-    text-align: right;
-  }
-
-  .gop-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 14px;
-  }
-
-  .gop-banner {
-    flex-wrap: wrap;
-  }
+.gop-page--mid .gop-doc__cols {
+  column-gap: 24px;
 }
 
-@media (max-width: 520px) {
-  .gop-doc {
-    padding: 24px 16px 24px;
-  }
+.gop-page--mid .gop-doc__col {
+  display: contents;
+}
 
-  .gop-doc__title {
-    font-size: 18px;
-  }
+.gop-page--mid .gop-doc__section {
+  grid-column: 1 / -1;
+  margin: 12px 0;
+}
 
-  .gop-table th,
-  .gop-table td {
-    display: block;
-    width: 100%;
-  }
+.gop-page--mid .gop-doc__section[data-gop-section="1"] {
+  grid-column: 1;
+  grid-row: 1;
+}
 
-  .gop-table th {
-    border-bottom: 0;
-  }
+.gop-page--mid .gop-doc__section[data-gop-section="4"] {
+  grid-column: 2;
+  grid-row: 1;
+}
 
-  .gop-amount-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
+.gop-page--mid .gop-doc__section[data-gop-section="2"] {
+  grid-row: 2;
+}
 
-  .gop-amount {
-    width: 100%;
-  }
+.gop-page--mid .gop-doc__section[data-gop-section="3"] {
+  grid-row: 3;
+}
 
-  .gop-doc__actions .gop-btn--primary {
-    width: 100%;
-  }
+.gop-page--mid .gop-doc__section[data-gop-section="5"] {
+  grid-row: 4;
+}
+
+.gop-page--mid .gop-doc__section[data-gop-section="6"] {
+  grid-row: 5;
+}
+
+.gop-page--mid .gop-table th {
+  width: 108px;
+  padding: 8px 8px;
+  font-size: 11px;
+  white-space: normal;
+}
+
+.gop-page--mid .gop-table td {
+  padding: 5px 6px;
+}
+
+.gop-page--mid .gop-card {
+  padding: 24px 20px;
+}
+
+.gop-page--mid .gop-history-table thead th,
+.gop-page--mid .gop-history-table tbody td {
+  padding: 10px 8px;
+  font-size: 12.5px;
+}
+
+.gop-page--mid .gop-cell-muted {
+  white-space: normal;
+}
+
+.gop-page--mid .gop-person span {
+  max-width: 120px;
+}
+
+.gop-page--mid .gop-actions {
+  gap: 10px;
+}
+
+/* mid and compact: the search moves to its own row under the heading */
+.gop-page--mid .gop-card__head .gop-search,
+.gop-page--compact .gop-card__head .gop-search {
+  order: 3;
+  flex: 1 1 100%;
+  max-width: none;
+  margin-left: 0;
+}
+
+.gop-page--mid .gop-card__title,
+.gop-page--compact .gop-card__title {
+  flex: 1;
+}
+
+/* compact: narrow (<700px, or the phone drawer) and xs (<520px) */
+.gop-page--compact {
+  padding: 16px 12px 72px;
+}
+
+.gop-page--compact .gop-doc {
+  padding: 24px 16px 20px;
+}
+
+.gop-page--compact .gop-doc__cols,
+.gop-page--compact .gop-doc__bottom {
+  display: block;
+}
+
+.gop-page--compact .gop-doc__masthead {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.gop-page--compact .gop-doc__logo {
+  height: 44px;
+}
+
+.gop-page--compact .gop-doc__title {
+  font-size: 17px;
+}
+
+.gop-page--compact .gop-doc__subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: 6px;
+}
+
+.gop-page--compact .gop-input--inline {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  font-style: normal;
+}
+
+.gop-page--compact .gop-doc__section {
+  margin: 0 0 10px;
+}
+
+.gop-page--compact .gop-table th {
+  width: 120px;
+  font-size: 11.5px;
+  white-space: normal;
+}
+
+.gop-page--compact .gop-doc__issuer-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Touch-friendly controls; 16px text stops iOS zooming on focus. */
+.gop-page--compact .gop-input,
+.gop-page--compact .gop-search__input {
+  min-height: 44px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 16px;
+}
+
+.gop-page--compact .gop-search__input {
+  padding-left: 34px;
+}
+
+.gop-page--compact .gop-textarea {
+  min-height: 96px;
+}
+
+.gop-page--compact .gop-btn {
+  min-height: 44px;
+}
+
+.gop-page--compact .gop-amount-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.gop-page--compact .gop-amount,
+.gop-page--compact .gop-amount__currency {
+  width: 100%;
+}
+
+.gop-page--compact .gop-doc__actions {
+  align-items: stretch;
+  margin: 16px 0 0;
+  text-align: left;
+}
+
+.gop-page--compact .gop-btn--generate {
+  width: 100%;
+}
+
+.gop-page--compact .gop-banner {
+  flex-wrap: wrap;
+}
+
+.gop-page--compact .gop-card {
+  padding: 20px 14px;
+}
+
+.gop-page--compact .gop-pagination {
+  justify-content: center;
+}
+
+.gop-page--compact .gop-pagination__controls {
+  width: 100%;
+}
+
+.gop-page--compact .gop-pagination__controls .gop-btn {
+  flex: 1;
+}
+
+/* History table becomes stacked cards; each cell prints its own header. */
+.gop-page--compact .gop-table-wrap {
+  overflow-x: visible;
+}
+
+.gop-page--compact .gop-history-table thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.gop-page--compact .gop-history-table tbody tr {
+  display: block;
+  margin-bottom: 12px;
+  border: 1px solid var(--gop-line);
+  border-radius: var(--gop-radius);
+}
+
+.gop-page--compact .gop-history-table tbody td {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  text-align: right;
+}
+
+.gop-page--compact .gop-history-table tbody tr td:last-child {
+  border-bottom: 0;
+}
+
+.gop-page--compact .gop-history-table tbody tr:hover td {
+  background: transparent;
+}
+
+.gop-page--compact .gop-history-table tbody td::before {
+  content: attr(data-label);
+  flex: none;
+  padding-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--gop-caption);
+  text-align: left;
+}
+
+.gop-page--compact .gop-history-table tbody td.gop-col-actions::before {
+  content: none;
+}
+
+.gop-page--compact .gop-cell-muted {
+  white-space: normal;
+}
+
+.gop-page--compact .gop-person {
+  align-items: flex-end;
+  min-width: 0;
+}
+
+/* Full provider email on touch screens — no hover tooltip needed. */
+.gop-page--compact .gop-person span {
+  max-width: 100%;
+  text-align: right;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.gop-page--compact .gop-email-flag {
+  margin-top: 0;
+  text-align: left;
+}
+
+/* xs: label over value in the fact tables */
+.gop-page--xs .gop-table th,
+.gop-page--xs .gop-table td {
+  display: block;
+  width: 100%;
+}
+
+.gop-page--xs .gop-table th {
+  border-bottom: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -565,3 +565,165 @@
     justify-content: center;
   }
 }
+
+/* ── Generated Rooms: responsive (rules scoped to .dvc-history / .dvc-form / .dvc-table--rooms) ──
+   The table needs 760px. Whenever the History card is narrower than that — which depends on the sidebar and shell
+   padding, so it is true up to ~1113px viewports, not only on phones — each row becomes a card instead of scrolling.
+   Rows stay real <tr> elements. Desktop (card >= 760px) is unchanged. */
+.dvc-history {
+  container: dvc-history / inline-size;
+}
+
+.dvc-history__head,
+.dvc-history__actions {
+  flex-wrap: wrap;
+}
+
+.dvc-history .dvc-link-btn:focus-visible,
+.dvc-history .dvc-secondary:focus-visible,
+.dvc-form .dvc-primary:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+@container dvc-history (width < 760px) {
+  .dvc-table--rooms {
+    min-width: 0;
+  }
+
+  .dvc-table--rooms thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .dvc-table--rooms,
+  .dvc-table--rooms tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .dvc-table--rooms tbody tr:not(.dvc-pin-panel-row) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 12px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .dvc-table--rooms td {
+    display: block;
+    min-width: 0;
+    padding: 6px 0;
+    border-bottom: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .dvc-table--rooms td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* Created / Doctor / Expires / Note / Status: label on the left, value on the right, full card width. */
+  .dvc-table--rooms tr:not(.dvc-pin-panel-row) > td:nth-child(-n + 5) {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+  }
+
+  .dvc-table--rooms tr:not(.dvc-pin-panel-row) > td:nth-child(-n + 5)::before {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  /* Copy / View PINs / Report / End: two per row, each control the full width of its half. */
+  .dvc-table--rooms tr:not(.dvc-pin-panel-row) > td:nth-child(n + 6) {
+    padding-top: 10px;
+  }
+
+  .dvc-table--rooms .dvc-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  /* The expanded PIN panel is the row that follows its card. */
+  .dvc-table--rooms tbody tr.dvc-pin-panel-row {
+    display: block;
+    margin: -6px 0 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .dvc-table--rooms .dvc-pin-panel-row td {
+    padding: 12px;
+    background: transparent;
+  }
+
+  .dvc-table--rooms .dvc-pin-panel-row td::before {
+    content: none;
+  }
+
+  .dvc-table--rooms .dvc-pin-panel {
+    margin-top: 0;
+  }
+
+  .dvc-table--rooms .dvc-pin-row__head {
+    flex-wrap: wrap;
+  }
+
+  .dvc-table--rooms .dvc-pin-regen__actions {
+    flex-wrap: wrap;
+  }
+
+  .dvc-table--rooms .dvc-pin-regen__actions > * {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dvc-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dvc-form,
+  .dvc-history {
+    padding: 16px;
+  }
+
+  .dvc-form .dvc-primary {
+    width: 100%;
+    min-height: 48px;
+  }
+
+  .dvc-history .dvc-secondary {
+    min-height: 44px;
+  }
+
+  /* Leaves room for the floating support/chat launcher below the last card. */
+  .dvc-history {
+    margin-bottom: 72px;
+  }
+}

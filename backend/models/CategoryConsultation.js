@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const { bookingAdminFields } = require("../utils/bookingAdminFields");
+const { bookingEntryFields } = require("../utils/bookingEntry");
+const { bookingSourceFields, protectBookingSource } = require("../utils/bookingSource");
 
 
 const consultationSchema = new mongoose.Schema(
@@ -90,6 +93,26 @@ const consultationSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    // Which admin assigned the doctor (Appointment has the same object).
+    assignedBy: {
+      id:         { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+      name:       { type: String, default: "" },
+      email:      { type: String, default: "" },
+      assignedAt: { type: Date, default: null },
+    },
+
+    // Enrollment of the first doctor, kept when an admin swaps in an alternate.
+    originalDoctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Enrollment",
+      default: null,
+    },
+    ...bookingAdminFields(),
+    // Appointment entries: the doctor fee / payout record typed in by an admin (see utils/bookingEntry.js).
+    ...bookingEntryFields(),
+    // Booking source: platform, app version and the page the booking started from (see utils/bookingSource.js).
+    ...bookingSourceFields(),
     medicalReports: [
       {
         url: { type: String },
@@ -162,6 +185,9 @@ const consultationSchema = new mongoose.Schema(
 // Looks up a patient's bookings (patient "my appointments" list and the admin
 // user-profile consultation summary).
 consultationSchema.index({ patientId: 1 });
+
+// The booking source is written once, at creation (see utils/bookingSource.js).
+protectBookingSource(consultationSchema);
 
 module.exports = mongoose.model(
   "CategoryConsultation",

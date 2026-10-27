@@ -47,6 +47,14 @@ const { ensureBucketCors } = require("./config/s3");
 const { encryptChatText, decryptChatText } = require("./utils/chatCrypto");
 const { recordSecurityEvent } = require("./utils/securityMonitor");
 const { makeSocketLimiter } = require("./utils/socketRateLimit");
+const { normalizeDenyReason } = require("./utils/roomDenyReason");
+const { createGraceTimerRegistry } = require("./utils/graceTimers");
+const { createGracefulShutdown, registerShutdownSignals } = require("./utils/gracefulShutdown");
+const { installSocketErrorGuard } = require("./utils/socketErrorGuard");
+const { createPresenceDownTracker } = require("./utils/presenceDown");
+const CallReport = require("./models/CallReport");
+const { createCallReportRecorder } = require("./utils/callReportRecorder");
+const { describeJoinClient, describeClientLabel } = require("./utils/clientDescriptor");
 const { parseTrustProxy } = require("./utils/clientIp");
 const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
@@ -597,7 +605,9 @@ app.use("/api/admin", require("./routes/admin"));
 app.use("/api/superadmin", require("./routes/superadmin"));
 app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
-app.use("/api/admin/partner-cases", require("./routes/adminPartnerCases"));
+app.use("/api/admin/bookings", require("./routes/adminBookings"));
+app.use("/api/admin/entries", require("./routes/adminEntries"));
+app.use("/api/admin/partner-cases",require("./routes/adminPartnerCases"));
 // Registered first: signatures are private to each admin and have their own guard.
 app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));
@@ -605,6 +615,7 @@ app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));
+app.use("/api/call-reports", require("./routes/callReports"));
 app.use("/api/upload", require("./routes/upload"));
 app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
@@ -633,8 +644,8 @@ app.use("/api/rtc", require("./routes/rtc"));
 const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);
-const CategoryConsultation = require("./models/CategoryConsultation");
-const Enrollment = require("./models/Enrollment");
+const { decideAppointmentAccess, deniedMessage } = require("./utils/appointmentRoomAccess");
+const { withAppointmentId, rebuildAfterRecovery, leaveAppointmentRoom, leaveOtherAppointmentRooms } = require("./utils/appointmentRoomState");
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -668,13 +679,27 @@ const socketUsers = new Map(); // socketId -> { userId, role }
 // (peer should renegotiate quickly) vs. an ordinary first-time join (peer
 // should not be perturbed while a normal handshake is already in progress).
 const roomActivated = new Map(); // appointmentId -> lastActivatedAt (ms epoch)
+const roomState = { socketRooms, roomActivated };
 // appointmentId -> the userId whose socket just dropped, from the moment the
 // "disconnect" handler fires until either that same user rejoins (peer-socket-up)
 // or the grace period expires without them (participant-left, which also
 // clears this). Lets the still-connected side distinguish "the peer's network
 // just dropped" from its own connection trouble well before the
 // SOCKET_LEAVE_GRACE_MS grace period would otherwise tell it anything.
-const appointmentSocketDown = new Map();
+// Which participants of each appointment currently have a dropped socket - a
+// SET per appointment (a single slot was overwritten when the second
+// participant dropped too, losing the first one's "peer is back" signal).
+const appointmentPresenceDown = createPresenceDownTracker();
+// One pending "did they really leave?" grace timer per (appointmentId, userId).
+// A rejoin cancels it and a fresh disconnect restarts it, so an old timer can
+// never emit participant-left for someone who is connected - or who only
+// dropped again moments ago. See the "disconnect" handler.
+const appointmentLeaveTimers = createGraceTimerRegistry();
+const appointmentLeaveKey = (appointmentId, userId) => `${String(appointmentId)}:${String(userId)}`;
+// Admin-only call report (models/CallReport.js), built from the events below.
+const callReportRecorder = createCallReportRecorder({ CallReport });
+// socket role ("user" | "doctor") -> report role
+const callReportRole = (role) => (role === "doctor" ? "doctor" : role === "user" ? "patient" : null);
 // Entries persist across a room's transient auto-eviction (see the
 // disconnect grace-timeout handler below) so a simultaneous-drop-and-
 // reconnect still counts as a resume, not a first join — but that means
@@ -705,9 +730,13 @@ const chatMessageLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // handshake was being silently dropped, wedging the call at "connecting".
 // 6 keeps headroom for that burst while still capping well below a flood.
 const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
-const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
+const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
+const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
+// call-stats: every 30s normally, every ~3s while an admin watches the report.
+const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
+const callWatchLimiter = makeSocketLimiter({ windowMs: 5000, max: 10 });
 // A rebuild request is a rare recovery signal (the client side already caps
 // itself at a few automatic rebuilds per minute) — 3 per 10s is ample headroom
 // for a legitimate manual-Retry + automatic-watchdog overlap while still
@@ -726,7 +755,7 @@ const directChatLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // "connecting" forever. 6 keeps comfortable headroom for that burst while
 // still capping well below anything a real flood needs.
 const directSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
-const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 20 });
+const directIceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const directIceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // Matches cameraStateLimiter above — same event shape, same room-scoped relay.
 const directMediaStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
@@ -743,7 +772,21 @@ const directCallStatsLimiter = makeSocketLimiter({ windowMs: 1200, max: 2 });
 // the handlers themselves.
 const directPinVerifyLimiter = makeSocketLimiter({ windowMs: 10000, max: 8 });
 
+// Signaling events that are refused (not in the room, malformed, rate limited)
+// used to be dropped silently, which made a wedged call impossible to explain.
+// Log the reason server-side and tell the sender, capped so a flooding client
+// can't turn the replies into amplification.
+const signalingErrorLimiter = makeSocketLimiter({ windowMs: 1000, max: 3 });
+function rejectSignal(socket, event, code) {
+  console.warn("[socket] signaling event rejected", { event, code, socketId: socket.id });
+  if (!signalingErrorLimiter.allow(socket.id)) return undefined;
+  socket.emit("signaling-error", { event, code, msg: "That request was not accepted (" + code + ")." });
+  return undefined;
+}
+
 const SOCKET_LIMITERS = [
+  callConnectedLimiter,
+  signalingErrorLimiter,
   chatMessageLimiter,
   videoSdpLimiter,
   iceCandidateLimiter,
@@ -810,8 +853,12 @@ const io = new Server(server, {
   },
   transports: ["polling", "websocket"],
   connectTimeout: Number(process.env.SOCKET_CONNECT_TIMEOUT_MS || 45000),
-  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 25000),
-  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 30000),
+  // Dead-peer detection: a peer whose network vanished is noticed after at
+  // most pingInterval + pingTimeout (25s) instead of the old 25s + 30s = 55s.
+  // 15s of silence on an already-open socket is still generous enough not to
+  // false-disconnect slow mobile links (pongs are tiny).
+  pingInterval: Number(process.env.SOCKET_PING_INTERVAL_MS || 10000),
+  pingTimeout: Number(process.env.SOCKET_PING_TIMEOUT_MS || 15000),
   connectionStateRecovery: {
     maxDisconnectionDuration: Math.min(
       Number(process.env.SOCKET_STATE_RECOVERY_MS || SOCKET_LEAVE_GRACE_MS),
@@ -822,6 +869,7 @@ const io = new Server(server, {
 });
 
 app.set("io", io);
+app.set("callReportRecorder", callReportRecorder);
 app.set("evictDoctorFromAppointmentRoom", evictDoctorFromAppointmentRoom);
 app.set("evictAllFromAppointmentRoom", evictAllFromAppointmentRoom);
 // Reopening a completed appointment must lift the "terminated" block set by
@@ -1053,7 +1101,9 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
     if (!peerSocket) continue;
     const identity = getSocketIdentity(peerSocket);
     if (identity?.role === "doctor" && String(identity.userId) === String(doctorUserId)) {
+      callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: "doctor", how: "removed_from_appointment" });
       peerSocket.emit("appointment-access-revoked", {
+        appointmentId: String(appointmentId),
         msg: "You have been removed from this appointment.",
       });
       peerSocket.leave(room);
@@ -1061,11 +1111,6 @@ function evictDoctorFromAppointmentRoom(appointmentId, doctorUserId) {
     }
   }
 }
-
-// Statuses that end an appointment for good. Appointment uses lowercase
-// ("complete"/"cancelled"); CategoryConsultation uses capitalized
-// ("Completed"/"Cancelled") — compared case-insensitively below.
-const TERMINAL_APPOINTMENT_STATUSES = new Set(["complete", "completed", "cancelled"]);
 
 // Forcibly removes EVERY participant (patient + doctor) from an appointment's
 // room — used when the appointment's status itself changes to a terminal
@@ -1080,6 +1125,8 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
   terminatedAppointmentRooms.add(idStr);
   setTimeout(() => terminatedAppointmentRooms.delete(idStr), 5 * 60 * 1000).unref();
 
+  callReportRecorder.onCallEnded({ appointmentId: idStr, reason });
+
   const room = appointmentRoomName(appointmentId);
   const socketIds = io.sockets.adapter.rooms.get(room);
   if (!socketIds) return;
@@ -1088,6 +1135,7 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
     const peerSocket = io.sockets.sockets.get(socketId);
     if (!peerSocket) continue;
     peerSocket.emit("appointment-access-revoked", {
+      appointmentId: String(appointmentId),
       msg: reason === "completed"
         ? "This appointment has been marked complete."
         : "This appointment has been cancelled.",
@@ -1101,59 +1149,19 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
 async function canSocketAccessAppointment(socket, appointmentId, requestedIdentity = {}) {
   if (!appointmentId) return { allowed: false, reason: "missing_appointment" };
 
-  const resolved = await resolveSocketIdentity(socket, requestedIdentity);
+  let resolved;
+  try {
+    resolved = await resolveSocketIdentity(socket, requestedIdentity);
+  } catch (err) {
+    // Session/token lookup hit the DB and failed — transient, not "unauthenticated".
+    console.error("[socket] identity resolution failed:", err?.message);
+    return { allowed: false, reason: "server_error" };
+  }
   if (!resolved) return { allowed: false, reason: "unauthenticated" };
   const identity = { userId: String(resolved.id), role: resolved.role };
 
-  const userId = String(identity.userId);
-  let appointment = null;
-  let allowed = false;
-
-  try {
-    appointment = await Appointment.findById(appointmentId)
-      .select("patientId doctorId status")
-      .lean();
-
-    if (appointment) {
-      allowed =
-        (identity.role === "user" && String(appointment.patientId) === userId) ||
-        (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
-    } else {
-      const cc = await CategoryConsultation.findById(appointmentId)
-        .select("patientId assignedDoctorId status")
-        .lean();
-
-      if (cc) {
-        appointment = cc;
-
-        if (identity.role === "user") {
-          allowed = String(cc.patientId) === userId;
-        } else if (identity.role === "doctor" && cc.assignedDoctorId) {
-          const enrollment = await Enrollment.findOne({ doctorId: identity.userId }).select("_id").lean();
-          allowed = !!enrollment && String(cc.assignedDoctorId) === String(enrollment._id);
-        }
-      }
-    }
-  } catch {
-    return { allowed: false, reason: "invalid_appointment" };
-  }
-
-  if (!appointment) return { allowed: false, reason: "appointment_not_found" };
-
-  // Once cancelled/completed, nobody may (re)join — this is what stops a
-  // participant evicted by evictAllFromAppointmentRoom from simply rejoining
-  // right after, since identity/ownership alone never changes on cancel or
-  // complete (unlike reassignment, where the doctorId itself changes).
-  if (TERMINAL_APPOINTMENT_STATUSES.has(String(appointment.status || "").toLowerCase())) {
-    return { allowed: false, reason: "appointment_ended", identity, appointment };
-  }
-
-  return {
-    allowed,
-    reason: allowed ? "participant" : "not_participant",
-    identity,
-    appointment,
-  };
+  // Participant, not ended, and confirmed: see utils/appointmentRoomAccess.js.
+  return decideAppointmentAccess(identity, appointmentId);
 }
 
 // ── Direct Video Room (ad-hoc, link-based, guest access — no login required) ──
@@ -1167,7 +1175,10 @@ const directRoomSockets = new Map(); // socketId -> { roomId, guestId, name }
 // roomId -> the guestId whose socket just dropped — the direct-room analogue
 // of appointmentSocketDown above (same purpose: an immediate, pre-grace-period
 // "it's the peer, not you" signal for the still-connected side).
-const directRoomSocketDown = new Map();
+const directPresenceDown = createPresenceDownTracker();
+// Direct-room analogue of appointmentLeaveTimers, keyed (roomId, guestId).
+const directLeaveTimers = createGraceTimerRegistry();
+const directLeaveKey = (roomId, guestId) => `${String(roomId)}:${String(guestId)}`;
 // roomId -> {
 //   initiatorGuestId,          // stable impolite-peer assignment (see below)
 //   participantGuestIds: Set,  // every guestId ever seen in this room
@@ -1295,6 +1306,12 @@ const DIRECT_CLIENT_REPORTABLE_REASONS = new Set([
 function isAdminSocket(socket) {
   return socket.userRole === "admin" || socket.userRole === "superadmin";
 }
+
+// Admin call report, live view: appointmentId -> Set(admin socket ids). Watchers
+// join callMonitorRoomName(...) which participants never join, so live stats
+// reach admins only. Participants are told only that the sampling rate may go up.
+const appointmentCallWatchers = new Map();
+const callMonitorRoomName = (appointmentId) => `call_monitor_${appointmentId}`;
 
 // Phase 4: admin alerts (email + in-app). See utils/directCallAlerts.js for
 // the flag/debounce/trigger logic — this just wires the real Mongo model,
@@ -1660,9 +1677,9 @@ async function handlePinRoomJoin(socket, roomDoc, { roomId, guestId, sessionToke
   slots[role] = { guestId, socketId: socket.id, sessionId, lastTakeoverAt: current?.lastTakeoverAt || 0 };
   directRoomSockets.set(socket.id, { roomId, guestId, name: roleDisplayName(role), role });
   socket.join(room);
+  directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
 
-  if (directRoomSocketDown.get(roomId) === guestId) {
-    directRoomSocketDown.delete(roomId);
+  if (directPresenceDown.clearDown(roomId, guestId)) {
     socket.to(room).emit("direct-peer-socket-up");
   }
 
@@ -1911,6 +1928,16 @@ app.set("recordExpectedDisconnectReason", (guestId, reason) => {
 });
 
 io.on("connection", (socket) => {
+  // Contain any handler error (null payload, DB failure, ...) to this socket.
+  installSocketErrorGuard(socket);
+
+  // Liveness probe: clients ack-ping after a resume/wake to find out whether
+  // their socket is really still connected to this server.
+  socket.on("hc-ping", (...args) => {
+    const ack = args[args.length - 1];
+    if (typeof ack === "function") ack({ ok: true, t: Date.now() });
+  });
+
   // Socket.IO restored socket.rooms/socket.data from a prior session within
   // connectionStateRecovery's window — see the join-appointment-room repair
   // below for why our own bookkeeping still needs to be rebuilt on top of it.
@@ -1919,6 +1946,9 @@ io.on("connection", (socket) => {
       socketId: socket.id,
       rooms: Array.from(socket.rooms),
     });
+    // The library restores socket.rooms, but socketRooms was cleared on disconnect. Rebuild it now (not only when
+    // the client re-emits join-appointment-room) so leave-appointment-room and every gated event work at once.
+    rebuildAfterRecovery(socket, roomState);
   }
 
   socket.on("user-online", async ({ userId: requestedUserId, role: requestedRole, token } = {}) => {
@@ -1978,14 +2008,20 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token, capabilities } = {}) => {
-    if (!appointmentId) return;
+  socket.on("join-appointment-room", async ({ appointmentId, userId, role, token, capabilities, clientInfo } = {}) => {
+    if (!appointmentId) {
+      socket.emit("room-access-denied", { msg: "No appointment was specified.", reason: "invalid_appointment" });
+      return;
+    }
 
     const room = appointmentRoomName(appointmentId);
     const access = await canSocketAccessAppointment(socket, appointmentId, { userId, role, token });
 
     if (!access.allowed) {
-      socket.emit("room-access-denied", { msg: "Access to this call room was denied." });
+      socket.emit("room-access-denied", {
+        msg: deniedMessage(access.reason, access.identity?.role),
+        reason: normalizeDenyReason(access.reason),
+      });
       console.warn("[socket] appointment room access denied", {
         socketId: socket.id,
         appointmentId,
@@ -1993,8 +2029,38 @@ io.on("connection", (socket) => {
         userId: access.identity?.userId || socket.userId || null,
         role: access.identity?.role || socket.userRole || null,
       });
+      // Only for a report that already exists and a known participant: a refused
+      // stranger must never be able to create (or write to) a report.
+      if (access.identity && ["server_error", "appointment_ended"].includes(normalizeDenyReason(access.reason))) {
+        callReportRecorder.onJoinDenied({
+          appointmentId: String(appointmentId),
+          role: callReportRole(access.identity.role),
+          reason: normalizeDenyReason(access.reason),
+        });
+      }
       return;
     }
+
+    // Admin call report: where this participant joined from. Declared by the
+    // client, reconciled with the User-Agent the server observed (see
+    // utils/clientDescriptor.js) - informational only.
+    const recordJoinForReport = () => {
+      try {
+        const client = describeJoinClient({ declared: clientInfo, userAgent: socket.handshake?.headers?.["user-agent"] });
+        client.label = describeClientLabel(client);
+        if (appointmentCallWatchers.has(String(appointmentId))) socket.emit("call-monitoring-active", true);
+        callReportRecorder.onJoin({
+          appointmentId: String(appointmentId),
+          kind: access.kind,
+          role: callReportRole(access.identity.role),
+          userId: access.identity.userId,
+          client,
+          maskedIp: resolveMaskedIp(socket),
+        });
+      } catch (err) {
+        console.warn("[call-report] join not recorded:", err.message);
+      }
+    };
 
     // Recorded on every (re)join, including the already-in-room / recovered
     // branch below — a client that stops announcing (an older build) reads
@@ -2016,13 +2082,15 @@ io.on("connection", (socket) => {
     // video-offer/answer/ice-candidate and chat message is silently dropped.
     // Repair it unconditionally in both cases before returning.
     if (socket.rooms.has(room)) {
+      leaveOtherAppointmentRooms(socket, appointmentId, roomState);
       socketRooms.set(socket.id, appointmentId);
+      appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, access.identity.userId));
+      recordJoinForReport();
 
       // This same user's socket just came back from a drop — tell whoever's
       // waiting they're no longer gone. See the "disconnect" handler above.
-      if (appointmentSocketDown.get(appointmentId) === access.identity.userId) {
-        appointmentSocketDown.delete(appointmentId);
-        socket.to(room).emit("peer-socket-up");
+      if (appointmentPresenceDown.clearDown(appointmentId, access.identity.userId)) {
+        socket.to(room).emit("peer-socket-up", withAppointmentId(appointmentId));
       }
 
       const existing = io.sockets.adapter.rooms.get(room);
@@ -2034,11 +2102,13 @@ io.on("connection", (socket) => {
       // receiver's point of view: the room gets the joiner's, the joiner gets
       // the peer's (null when nobody else is present).
       socket.to(room).emit("peer-joined", {
+        appointmentId: String(appointmentId),
         resumedCall: wasActivated,
         peerCapabilities: socketCapabilities.get(socket.id),
       });
       if (peerPresent) {
         socket.emit("peer-joined", {
+          appointmentId: String(appointmentId),
           resumedCall: wasActivated,
           peerCapabilities: getPeerCapabilities(existing, access.identity.userId),
         });
@@ -2091,16 +2161,20 @@ io.on("connection", (socket) => {
     }
 
     if (uniqueUsersInRoom.size >= 2 && !alreadyInRoom) {
-      socket.emit("room-access-denied", { msg: "This call room is full." });
+      socket.emit("room-access-denied", { msg: "This call room is full.", reason: "room_full" });
       return;
     }
 
+    // One call at a time: leave any earlier appointment room, so its events (a late participant-left, ICE, ...)
+    // can never reach this call.
+    leaveOtherAppointmentRooms(socket, appointmentId, roomState);
     socket.join(room);
     socketRooms.set(socket.id, appointmentId);
+    appointmentLeaveTimers.cancel(appointmentLeaveKey(appointmentId, socketUserId));
+    recordJoinForReport();
 
-    if (appointmentSocketDown.get(appointmentId) === socketUserId) {
-      appointmentSocketDown.delete(appointmentId);
-      socket.to(room).emit("peer-socket-up");
+    if (appointmentPresenceDown.clearDown(appointmentId, socketUserId)) {
+      socket.to(room).emit("peer-socket-up", withAppointmentId(appointmentId));
     }
 
     ChatMessage.find({ appointmentId })
@@ -2138,11 +2212,13 @@ io.on("connection", (socket) => {
     if (peerPresent) roomActivated.set(appointmentId, Date.now());
 
     socket.to(room).emit("peer-joined", {
+      appointmentId: String(appointmentId),
       resumedCall: wasActivated,
       peerCapabilities: socketCapabilities.get(socket.id),
     });
     if (peerPresent) {
       socket.emit("peer-joined", {
+        appointmentId: String(appointmentId),
         resumedCall: wasActivated,
         peerCapabilities: getPeerCapabilities(
           io.sockets.adapter.rooms.get(room),
@@ -2156,15 +2232,12 @@ io.on("connection", (socket) => {
     if (!appointmentId) return;
     if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
 
-    const room = appointmentRoomName(appointmentId);
-    socket.to(room).emit("participant-left");
-    socket.leave(room);
-    socketRooms.delete(socket.id);
-
-    const remaining = io.sockets.adapter.rooms.get(room);
-    if (!remaining || remaining.size === 0) {
-      roomActivated.delete(appointmentId);
-    }
+    callReportRecorder.onLeft({
+      appointmentId: String(appointmentId),
+      role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
+      how: "explicit",
+    });
+    leaveAppointmentRoom(socket, appointmentId, roomState);
   });
 
   socket.on(
@@ -2260,52 +2333,52 @@ io.on("connection", (socket) => {
   });
 
   socket.on("video-offer", ({ appointmentId, offer, offerId }) => {
-    if (!appointmentId || !offer) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
+    if (!appointmentId || !offer) return rejectSignal(socket, "video-offer", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "video-offer", "not_in_room");
     // Refuse to relay anything that isn't a well-formed offer (malformed /
     // oversized SDP can only crash or spam the peer). Checked before the rate
     // limiter so junk payloads don't burn a legitimate participant's budget —
     // mirrors the direct-room relay.
-    if (!isValidSessionDescription(offer, "offer")) return;
-    if (!videoSdpLimiter.allow(socket.id)) return;
+    if (!isValidSessionDescription(offer, "offer")) return rejectSignal(socket, "video-offer", "invalid_payload");
+    if (!videoSdpLimiter.allow(socket.id)) return rejectSignal(socket, "video-offer", "rate_limited");
 
     // offerId is opaque to the server — sanitized (any non-plausible value
     // becomes undefined) and relayed so the two peers can correlate an answer
     // back to the offer it's meant for (see VideoCall.jsx handleAnswer).
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-offer", { offer, offerId: sanitizeOfferId(offerId) });
+      .emit("video-offer", { appointmentId: String(appointmentId), offer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("video-answer", ({ appointmentId, answer, offerId }) => {
-    if (!appointmentId || !answer) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!isValidSessionDescription(answer, "answer")) return;
-    if (!videoSdpLimiter.allow(socket.id)) return;
+    if (!appointmentId || !answer) return rejectSignal(socket, "video-answer", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "video-answer", "not_in_room");
+    if (!isValidSessionDescription(answer, "answer")) return rejectSignal(socket, "video-answer", "invalid_payload");
+    if (!videoSdpLimiter.allow(socket.id)) return rejectSignal(socket, "video-answer", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("video-answer", { answer, offerId: sanitizeOfferId(offerId) });
+      .emit("video-answer", { appointmentId: String(appointmentId), answer, offerId: sanitizeOfferId(offerId) });
   });
 
   socket.on("ice-candidate", ({ appointmentId, candidate }) => {
-    if (!appointmentId || !candidate) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!iceCandidateLimiter.allow(socket.id)) return;
+    if (!appointmentId || !candidate) return rejectSignal(socket, "ice-candidate", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "ice-candidate", "not_in_room");
+    if (!iceCandidateLimiter.allow(socket.id)) return rejectSignal(socket, "ice-candidate", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("ice-candidate", { candidate });
+      .emit("ice-candidate", { appointmentId: String(appointmentId), candidate });
   });
 
   socket.on("ice-restart-request", ({ appointmentId }) => {
-    if (!appointmentId) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!iceRestartLimiter.allow(socket.id)) return;
+    if (!appointmentId) return rejectSignal(socket, "ice-restart-request", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "ice-restart-request", "not_in_room");
+    if (!iceRestartLimiter.allow(socket.id)) return rejectSignal(socket, "ice-restart-request", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("ice-restart-request");
+      .emit("ice-restart-request", withAppointmentId(appointmentId));
   });
 
   // Native mobile stops producing frames entirely when a video track's
@@ -2313,14 +2386,82 @@ io.on("connection", (socket) => {
   // frames per spec), so the peer can't tell "camera off" from "frozen"
   // by inspecting the media alone — the mobile client explicitly signals
   // it. Relayed the same way as the other simple call-signaling events.
+  // The participant's own RTCPeerConnection reached "connected" (the server
+  // alone cannot tell "both in the room" from "media actually flowing").
+  socket.on("call-connected", ({ appointmentId } = {}) => {
+    if (!appointmentId) return rejectSignal(socket, "call-connected", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "call-connected", "not_in_room");
+    if (!callConnectedLimiter.allow(socket.id)) return undefined;
+    callReportRecorder.onConnected({
+      appointmentId: String(appointmentId),
+      role: callReportRole(socketUsers.get(socket.id)?.role || socket.userRole),
+    });
+    return undefined;
+  });
+
+  // Quality sample from a participant (admin call report). The recorder
+  // validates and range-checks every field (unknown fields are ignored); the
+  // sanitised sample is relayed live only to admins watching this call.
+  socket.on("call-stats", (payload = {}) => {
+    const appointmentId = payload && payload.appointmentId;
+    if (!appointmentId) return rejectSignal(socket, "call-stats", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "call-stats", "not_in_room");
+    if (!callStatsLimiter.allow(socket.id)) return undefined;
+    const id = String(appointmentId);
+    const role = callReportRole(socketUsers.get(socket.id)?.role || socket.userRole);
+    const sample = callReportRecorder.onStats({ appointmentId: id, role, sample: payload, final: payload.final === true });
+    const watchers = appointmentCallWatchers.get(id);
+    if (sample && watchers && watchers.size > 0) {
+      io.to(callMonitorRoomName(id)).emit("call-live-stats", { appointmentId: id, role, at: Date.now(), ...sample });
+    }
+    return undefined;
+  });
+
+  // Admin-only live watch. Anyone else is ignored silently: no error, no
+  // security event - the report endpoints are the audited surface.
+  socket.on("admin-watch-call", ({ appointmentId } = {}) => {
+    if (!isAdminSocket(socket) || !appointmentId) return;
+    if (!callWatchLimiter.allow(socket.id)) return;
+    const id = String(appointmentId);
+    if (!/^[a-f0-9]{24}$/i.test(id)) return;
+    let watchers = appointmentCallWatchers.get(id);
+    if (!watchers) {
+      watchers = new Set();
+      appointmentCallWatchers.set(id, watchers);
+    }
+    const wasEmpty = watchers.size === 0;
+    watchers.add(socket.id);
+    socket.join(callMonitorRoomName(id));
+    if (wasEmpty) io.to(appointmentRoomName(id)).emit("call-monitoring-active", true);
+  });
+
+  const stopWatchingCall = (id) => {
+    const watchers = appointmentCallWatchers.get(id);
+    if (!watchers || !watchers.has(socket.id)) return;
+    watchers.delete(socket.id);
+    socket.leave(callMonitorRoomName(id));
+    if (watchers.size === 0) {
+      appointmentCallWatchers.delete(id);
+      io.to(appointmentRoomName(id)).emit("call-monitoring-active", false);
+    }
+  };
+
+  socket.on("admin-unwatch-call", ({ appointmentId } = {}) => {
+    if (appointmentId) stopWatchingCall(String(appointmentId));
+  });
+
+  socket.on("disconnect", () => {
+    for (const id of [...appointmentCallWatchers.keys()]) stopWatchingCall(id);
+  });
+
   socket.on("camera-state", ({ appointmentId, isCamOff }) => {
-    if (!appointmentId) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!cameraStateLimiter.allow(socket.id)) return;
+    if (!appointmentId) return rejectSignal(socket, "camera-state", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "camera-state", "not_in_room");
+    if (!cameraStateLimiter.allow(socket.id)) return rejectSignal(socket, "camera-state", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("camera-state", { isCamOff: Boolean(isCamOff) });
+      .emit("camera-state", { appointmentId: String(appointmentId), isCamOff: Boolean(isCamOff) });
   });
 
   // Asks the other participant to tear down and rebuild its own
@@ -2332,13 +2473,13 @@ io.on("connection", (socket) => {
   // event simply ignore it, and the requester falls back to rebuilding alone
   // after its own timeout.
   socket.on("request-peer-rebuild", ({ appointmentId } = {}) => {
-    if (!appointmentId) return;
-    if (!isSocketInAppointmentRoom(socket, appointmentId)) return;
-    if (!peerRebuildRequestLimiter.allow(socket.id)) return;
+    if (!appointmentId) return rejectSignal(socket, "request-peer-rebuild", "invalid_payload");
+    if (!isSocketInAppointmentRoom(socket, appointmentId)) return rejectSignal(socket, "request-peer-rebuild", "not_in_room");
+    if (!peerRebuildRequestLimiter.allow(socket.id)) return rejectSignal(socket, "request-peer-rebuild", "rate_limited");
 
     socket
       .to(appointmentRoomName(appointmentId))
-      .emit("request-peer-rebuild");
+      .emit("request-peer-rebuild", withAppointmentId(appointmentId));
   });
 
   socket.on("disconnect", (reason) => {
@@ -2349,6 +2490,8 @@ io.on("connection", (socket) => {
       const liveIdentity = socketUsers.get(socket.id);
       const disconnectedUserId = liveIdentity?.userId || socket.userId || "";
       const appointmentRoom = `appointment_${appointmentId}`;
+      const reportRole = callReportRole(liveIdentity?.role || socket.userRole);
+      callReportRecorder.onDrop({ appointmentId: String(appointmentId), role: reportRole, reason });
 
       // Immediate, pre-grace-period signal: tell whoever's left in the room
       // that the OTHER side just dropped, so they can show "waiting for the
@@ -2357,11 +2500,11 @@ io.on("connection", (socket) => {
       // join-appointment-room below for where this gets resolved (peer-socket-up)
       // or the setTimeout below for where it times out (participant-left).
       if (disconnectedUserId) {
-        io.to(appointmentRoom).emit("peer-socket-down");
-        appointmentSocketDown.set(appointmentId, disconnectedUserId);
+        io.to(appointmentRoom).emit("peer-socket-down", withAppointmentId(appointmentId));
+        appointmentPresenceDown.markDown(appointmentId, disconnectedUserId);
       }
 
-      setTimeout(() => {
+      appointmentLeaveTimers.schedule(appointmentLeaveKey(appointmentId, disconnectedUserId), SOCKET_LEAVE_GRACE_MS, () => {
         const sameUserStillInRoom = Array.from(socketRooms.entries()).some(([sid, roomAppointmentId]) => {
           if (String(roomAppointmentId) !== String(appointmentId)) return false;
           const peerSocket = io.sockets.sockets.get(sid);
@@ -2371,14 +2514,13 @@ io.on("connection", (socket) => {
           return disconnectedUserId && String(peerUserId) === String(disconnectedUserId);
         });
 
-        // Only clear an entry this same disconnect set — a second, unrelated
-        // disconnect for a different user may have overwritten it since.
-        if (appointmentSocketDown.get(appointmentId) === disconnectedUserId) {
-          appointmentSocketDown.delete(appointmentId);
-        }
+        // The grace period is over either way - this user is no longer merely
+        // "dropped": they either rejoined (already cleared) or are declared gone.
+        appointmentPresenceDown.clearDown(appointmentId, disconnectedUserId);
 
         if (!sameUserStillInRoom) {
-          io.to(appointmentRoom).emit("participant-left");
+          callReportRecorder.onLeft({ appointmentId: String(appointmentId), role: reportRole, how: "grace_expired" });
+          io.to(appointmentRoom).emit("participant-left", withAppointmentId(appointmentId));
           // Deliberately NOT clearing roomActivated here: this path also
           // fires when both participants drop at once (e.g. a shared
           // network outage) and later both reconnect — clearing it would
@@ -2388,7 +2530,7 @@ io.on("connection", (socket) => {
           // cleared on a real, intentional departure — see the explicit
           // leave-appointment-room handler above, which already does this.
         }
-      }, SOCKET_LEAVE_GRACE_MS);
+      });
 
       socketRooms.delete(socket.id);
     }
@@ -2450,7 +2592,7 @@ io.on("connection", (socket) => {
       roomDoc = await DirectVideoRoom.findOne({ roomId });
     } catch (err) {
       console.error("[direct-room] pin lookup error:", err.message);
-      socket.emit("direct-pin-error", { msg: "Could not verify this meeting. Please try again." });
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
       return;
     }
     if (!roomDoc || !roomDoc.doctorPinEncrypted) {
@@ -2504,7 +2646,13 @@ io.on("connection", (socket) => {
     // Slot free — grant it outright.
     const sessionId = randomUUID();
     roomDoc[sessionField] = { sessionId, guestId, startedAt: new Date() };
-    await roomDoc.save();
+    try {
+      await roomDoc.save();
+    } catch (err) {
+      console.error("[direct-room] pin session save error:", err.message);
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
     socket.emit("direct-pin-ok", { role, sessionToken: signSessionToken({ roomId, role, sessionId }) });
   });
 
@@ -2543,7 +2691,7 @@ io.on("connection", (socket) => {
       roomDoc = await DirectVideoRoom.findOne({ roomId });
     } catch (err) {
       console.error("[direct-room] takeover lookup error:", err.message);
-      socket.emit("direct-pin-error", { msg: "Could not verify this meeting. Please try again." });
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
       return;
     }
     if (!roomDoc || !roomDoc.doctorPinEncrypted || roomDoc.status !== "active") {
@@ -2595,7 +2743,13 @@ io.on("connection", (socket) => {
     const sessionId = randomUUID();
     const sessionField = role === "doctor" ? "doctorSession" : "patientSession";
     roomDoc[sessionField] = { sessionId, guestId, startedAt: new Date() };
-    await roomDoc.save();
+    try {
+      await roomDoc.save();
+    } catch (err) {
+      console.error("[direct-room] takeover session save error:", err.message);
+      socket.emit("direct-pin-error", { code: "server_error", msg: "Could not verify this meeting. Please try again." });
+      return;
+    }
     slots[role] = { guestId, socketId: null, sessionId, lastTakeoverAt: Date.now() };
 
     logDirectRoom("session_taken_over", { roomId, guestId, socketId: socket.id, role });
@@ -2674,8 +2828,8 @@ io.on("connection", (socket) => {
       // checks it — so repair it here, keep the seat reservation fresh, and
       // nudge the peer to renegotiate before returning.
       directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
-      if (directRoomSocketDown.get(roomId) === guestId) {
-        directRoomSocketDown.delete(roomId);
+      directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
+      if (directPresenceDown.clearDown(roomId, guestId)) {
         socket.to(room).emit("direct-peer-socket-up");
       }
       const recoveredEntry = getDirectRoomEntry(roomId);
@@ -2816,8 +2970,8 @@ io.on("connection", (socket) => {
 
     socket.join(room);
     directRoomSockets.set(socket.id, { roomId, guestId, name: guestName });
-    if (directRoomSocketDown.get(roomId) === guestId) {
-      directRoomSocketDown.delete(roomId);
+    directLeaveTimers.cancel(directLeaveKey(roomId, guestId));
+    if (directPresenceDown.clearDown(roomId, guestId)) {
       socket.to(room).emit("direct-peer-socket-up");
     }
     roomEntry.seats.set(guestId, Date.now());
@@ -2919,14 +3073,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("direct-video-offer", ({ roomId, offer, offerId } = {}) => {
-    if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
-    if (!isValidSessionDescription(offer, "offer")) return;
+    if (!roomId) return rejectSignal(socket, "direct-video-offer", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-video-offer", "not_in_room");
+    if (!isValidSessionDescription(offer, "offer")) return rejectSignal(socket, "direct-video-offer", "invalid_payload");
     if (!directSdpLimiter.allow(socket.id)) {
       // A dropped offer/answer wedges the peer in "have-local-offer" until
       // its ~8s watchdog — log it so a real glare-storm is visible rather
       // than silently degrading the call.
       console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — offer dropped`);
-      return;
+      return rejectSignal(socket, "direct-video-offer", "rate_limited");
     }
     // offerId is opaque to the server — relayed unchanged so the two peers can
     // correlate an answer back to the offer it belongs to. DirectVideoCall.jsx
@@ -2938,11 +3093,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("direct-video-answer", ({ roomId, answer, offerId } = {}) => {
-    if (!roomId || !isSocketInDirectRoom(socket, roomId)) return;
-    if (!isValidSessionDescription(answer, "answer")) return;
+    if (!roomId) return rejectSignal(socket, "direct-video-answer", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-video-answer", "not_in_room");
+    if (!isValidSessionDescription(answer, "answer")) return rejectSignal(socket, "direct-video-answer", "invalid_payload");
     if (!directSdpLimiter.allow(socket.id)) {
       console.warn(`[direct-room] SDP rate limit hit (${socket.id}) — answer dropped`);
-      return;
+      return rejectSignal(socket, "direct-video-answer", "rate_limited");
     }
     socket
       .to(directRoomName(roomId))
@@ -2950,16 +3106,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("direct-ice-candidate", ({ roomId, candidate } = {}) => {
-    if (!roomId || !candidate) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directIceCandidateLimiter.allow(socket.id)) return;
+    if (!roomId || !candidate) return rejectSignal(socket, "direct-ice-candidate", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-ice-candidate", "not_in_room");
+    if (!directIceCandidateLimiter.allow(socket.id)) return rejectSignal(socket, "direct-ice-candidate", "rate_limited");
     socket.to(directRoomName(roomId)).emit("direct-ice-candidate", { candidate });
   });
 
   socket.on("direct-ice-restart-request", ({ roomId } = {}) => {
-    if (!roomId) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directIceRestartLimiter.allow(socket.id)) return;
+    if (!roomId) return rejectSignal(socket, "direct-ice-restart-request", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-ice-restart-request", "not_in_room");
+    if (!directIceRestartLimiter.allow(socket.id)) return rejectSignal(socket, "direct-ice-restart-request", "rate_limited");
     const meta = directRoomSockets.get(socket.id);
     // The client-visible signal that a Retry/reconnect is under way — a
     // manual "Retry" tap (forceReconnect) asks the polite peer to restart
@@ -2978,9 +3134,9 @@ io.on("connection", (socket) => {
   // don't listen for it ignore the relayed event by default (Socket.IO
   // doesn't error on an unhandled event) — safe in both directions.
   socket.on("direct-media-state", ({ roomId, isMicOff, isCamOff } = {}) => {
-    if (!roomId) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directMediaStateLimiter.allow(socket.id)) return;
+    if (!roomId) return rejectSignal(socket, "direct-media-state", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-media-state", "not_in_room");
+    if (!directMediaStateLimiter.allow(socket.id)) return rejectSignal(socket, "direct-media-state", "rate_limited");
 
     const meta = directRoomSockets.get(socket.id);
     logDirectRoom("media_state_changed", {
@@ -3132,9 +3288,9 @@ io.on("connection", (socket) => {
   // room has no association with any Appointment/ChatMessage record and no
   // authenticated identity to attribute a stored message to.
   socket.on("direct-room-message", ({ roomId, text } = {}) => {
-    if (!roomId || !text) return;
-    if (!isSocketInDirectRoom(socket, roomId)) return;
-    if (!directChatLimiter.allow(socket.id)) return;
+    if (!roomId || !text) return rejectSignal(socket, "direct-room-message", "invalid_payload");
+    if (!isSocketInDirectRoom(socket, roomId)) return rejectSignal(socket, "direct-room-message", "not_in_room");
+    if (!directChatLimiter.allow(socket.id)) return rejectSignal(socket, "direct-room-message", "rate_limited");
 
     const meta = directRoomSockets.get(socket.id);
     socket.to(directRoomName(roomId)).emit("direct-room-message", {
@@ -3159,7 +3315,7 @@ io.on("connection", (socket) => {
     // and both join-direct-room branches below) or timed out by
     // direct-participant-left in the setTimeout further down.
     io.to(room).emit("direct-peer-socket-down");
-    directRoomSocketDown.set(roomId, guestId);
+    directPresenceDown.markDown(roomId, guestId);
 
     // disconnect_reason: prefer a fresh client/beacon hint (best-effort —
     // may not exist), then Socket.IO's own reason where it's unambiguous
@@ -3210,23 +3366,19 @@ io.on("connection", (socket) => {
       });
     }
 
-    setTimeout(() => {
+    directLeaveTimers.schedule(directLeaveKey(roomId, guestId), DIRECT_ROOM_LEAVE_GRACE_MS, () => {
       const sameGuestStillInRoom = Array.from(directRoomSockets.values()).some(
         (m) => String(m.roomId) === String(roomId) && m.guestId === guestId
       );
 
-      // Only clear an entry this same disconnect set — a second, unrelated
-      // disconnect for a different guest may have overwritten it since.
-      if (directRoomSocketDown.get(roomId) === guestId) {
-        directRoomSocketDown.delete(roomId);
-      }
+      directPresenceDown.clearDown(roomId, guestId);
 
       if (!sameGuestStillInRoom) {
         io.to(room).emit("direct-participant-left");
         const remaining = io.sockets.adapter.rooms.get(room);
         if (!remaining || remaining.size === 0) scheduleDirectRoomRolesCleanup(roomId);
       }
-    }, DIRECT_ROOM_LEAVE_GRACE_MS);
+    });
   });
 
 }); // end io.on("connection")
@@ -3272,46 +3424,19 @@ startServer()
 // Without this, SIGTERM (e.g. a container orchestrator redeploying/scaling
 // down) kills the process immediately — mid-request HTTP calls get dropped
 // and active video-call sockets disconnect without a clean close frame.
-let shuttingDown = false;
-async function gracefulShutdown(signal) {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  console.log(`\n[shutdown] ${signal} received — closing server...`);
-
-  // Most orchestrators (Docker, ECS, k8s) SIGKILL shortly after SIGTERM
-  // anyway if the process hasn't exited — this just makes that deterministic
-  // and logged instead of the process hanging silently on a stuck close.
-  const forceExitTimer = setTimeout(() => {
-    console.error("[shutdown] Graceful shutdown timed out — forcing exit.");
-    process.exit(1);
-  }, 10000);
-  forceExitTimer.unref();
-
-  try {
-    // Disconnects all Socket.IO clients (active video-call signaling
-    // connections included) before the HTTP server stops — closing the raw
-    // HTTP server first would otherwise hang waiting for those long-lived
-    // websocket connections to end on their own.
-    await new Promise((resolve) => io.close(resolve));
-    console.log("[shutdown] Socket.IO closed.");
-
-    await new Promise((resolve, reject) => {
-      server.close((err) => (err ? reject(err) : resolve()));
-    });
-    console.log("[shutdown] HTTP server closed.");
-
-    await mongoose.connection.close();
-    console.log("[shutdown] MongoDB connection closed.");
-
-    clearTimeout(forceExitTimer);
-    console.log("[shutdown] Graceful shutdown complete.");
-    process.exit(0);
-  } catch (err) {
-    console.error("[shutdown] Error during graceful shutdown:", err);
-    clearTimeout(forceExitTimer);
-    process.exit(1);
-  }
-}
-
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+// io.close() also closes the attached HTTP server, so it is closed exactly once
+// (see utils/gracefulShutdown.js); the handlers are registered once per process.
+const gracefulShutdown = createGracefulShutdown({
+  io,
+  server,
+  closeDatabase: async () => {
+    // Pending call-quality aggregates would otherwise be lost on a redeploy.
+    try {
+      await callReportRecorder.flush();
+    } catch (err) {
+      console.warn("[call-report] shutdown flush failed:", err.message);
+    }
+    return mongoose.connection.close();
+  },
+});
+registerShutdownSignals(process, gracefulShutdown);

@@ -10,6 +10,7 @@ import {
 import { MotionConfig } from "framer-motion";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
+import BookingSourceTracker from "./components/BookingSourceTracker";
 import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import "./App.css";
 
@@ -43,6 +44,7 @@ const VideoCall = lazy(() => import("./pages/VideoCall"));
 const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
 const Serviceareas = lazy(() => import("./pages/Serviceareas"));
 import { useAdmin } from "./context/AdminContext";
+import { legacyAdminRedirects } from "./pages/admin/legacyRedirects";
 import { useAuth } from "./context/AuthContext";
 import { useEmployeeAdmin } from "./context/EmployeeAdminContext";
 import { usePartner } from "./context/PartnerContext";
@@ -724,12 +726,10 @@ const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
 // import DoctorNote from "./pages/NewServices/DoctorNote";
 // Services
 
-const AdminAssignCategoryDoctor = lazy(() => import("./pages/admin/AdminAssignCategoryDoctor"));
 const ServicesPrices = lazy(() => import("./pages/admin/ServicesPrices"));
 
 const CategoryConsultant = lazy(() => import("./pages/CategoryConsultant"));
 const CategoryAppointmentConfirm = lazy(() => import("./pages/CategoryAppointmentConfirm"));
-const AdminCategoryConsultationDetails = lazy(() => import("./pages/admin/AdminCategoryConsultationDetails"));
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -783,21 +783,19 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
 const AdminDeletionRequests = lazy(() => import("./pages/admin/AdminDeletionRequests"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
+const AdminEntries = lazy(() => import("./pages/admin/AdminEntries"));
+const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const AdminAppointmentDetails = lazy(
   () => import("./pages/admin/AdminAppointmentDetails"),
-);
-const AdminCategoryConsultations = lazy(
-  () => import("./pages/admin/AdminCategoryConsultations"),
 );
 const AdminDirectVideoConsultation = lazy(
   () => import("./pages/admin/AdminDirectVideoConsultation"),
 );
-const AdminDirectVideoCalls = lazy(() => import("./pages/admin/AdminDirectVideoCalls"));
+const AdminAppointmentCallReport = lazy(() => import("./pages/admin/AdminAppointmentCallReport"));
 const AdminDirectVideoCallDetail = lazy(
   () => import("./pages/admin/AdminDirectVideoCallDetail"),
 );
 
-const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
 const PaymentLinks = lazy(() => import("./pages/admin/PaymentLinks"));
 const PaymentLinkHistory = lazy(
   () => import("./pages/admin/PaymentLinkHistory"),
@@ -1218,6 +1216,7 @@ export function AppLayout() {
       <SkipLink />
       <ScrollToTop />
       <RouteSeo />
+      <BookingSourceTracker />
       <SessionTimeoutManager />
       {/* The Text widget is replaced by our own chat when VITE_LIVECHAT_ENABLED=true (removed for good in Phase 5). */}
       {import.meta.env.VITE_LIVECHAT_ENABLED !== "true" && (
@@ -1499,19 +1498,6 @@ export function AppLayout() {
             element={<PricingManagement />}
           /> */}
           <Route path="/employee-login" element={<EmployeeAdminLogin />} />
-          <Route
-            path="/admin-dashboard/category-consultations/assign-doctor/:id"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>Assign doctor to category consultation</PageH1>
-                  <AdminAssignCategoryDoctor />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
           <Route
             path="/employee-dashboard"
             element={
@@ -1951,13 +1937,13 @@ export function AppLayout() {
             }
           />
           <Route
-            path="/admin-dashboard/category-consultations"
+            path="/admin-dashboard/appointment-entries"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <>
-                  <PageH1>Category consultations</PageH1>
-                  <AdminCategoryConsultations />
+                  <PageH1>Appointment entries</PageH1>
+                  <AdminEntries />
                 </>
                 </AdminLayout>
               </PrivateRoute>
@@ -1974,14 +1960,10 @@ export function AppLayout() {
             }
           />
           <Route
+            // The calls list page was removed; keep old bookmarks working.
+            // Individual reports (/calls/:roomId) are a separate route below.
             path="/admin-dashboard/direct-video-consultation/calls"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDirectVideoCalls />
-                </AdminLayout>
-              </PrivateRoute>
-            }
+            element={<Navigate to="/admin-dashboard/direct-video-consultation" replace />}
           />
           <Route
             path="/admin-dashboard/direct-video-consultation/calls/:roomId"
@@ -1993,14 +1975,25 @@ export function AppLayout() {
               </PrivateRoute>
             }
           />
+          {legacyAdminRedirects}
           <Route
-            path="/admin-dashboard/category-consultations/:id"
+            path="/admin-dashboard/appointments/:id/call-report"
+            element={
+              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                <AdminLayout>
+                  <AdminAppointmentCallReport />
+                </AdminLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/admin-dashboard/appointments/:id/assign"
             element={
               <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                 <AdminLayout>
                   <>
-                  <PageH1>Category consultation details</PageH1>
-                  <AdminCategoryConsultationDetails />
+                  <PageH1>Assign doctor</PageH1>
+                  <AdminAssignDoctor />
                 </>
                 </AdminLayout>
               </PrivateRoute>
@@ -2014,19 +2007,6 @@ export function AppLayout() {
                   <>
                   <PageH1>Appointment details</PageH1>
                   <AdminAppointmentDetails />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/appointments/:id/assign"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>Assign doctor</PageH1>
-                  <AdminAssignDoctor />
                 </>
                 </AdminLayout>
               </PrivateRoute>

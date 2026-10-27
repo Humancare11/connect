@@ -1,0 +1,467 @@
+<title>Humancare Booking Source</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: collapsible indigo sidebar (grouped nav, profile at the foot) + sticky white topbar (breadcrumb, search, bell, profile menu); approved table below */
+:root{
+  --side:#1e1b4b; --side-fg:#e0e7ff; --side-mute:#a5b4fc; --side-active:#312e81; --badge:#7c3aed;
+  --bg:#eef0f6; --panel:#ffffff; --fg:#0f172a; --mute:#64748b; --line:#e5e7eb; --head:#f8fafc; --row-hover:#f8fafc;
+  --title:#6d28d9; --accent:#0f766e; --accent-fg:#ffffff; --accent-soft:#ccfbf1;
+  --up-bg:#e0f2fe; --up:#0369a1; --as-bg:#ede9fe; --as:#6d28d9; --pe-bg:#fef3c7; --pe:#92400e;
+  --co-bg:#dbeafe; --co:#1d4ed8; --ok-bg:#dcfce7; --ok:#15803d; --ca-bg:#fee2e2; --ca:#b91c1c;
+  --danger:#dc2626;
+  --f-ui:"Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:var(--sw,256px) minmax(0,1fr);min-height:100vh;transition:grid-template-columns .2s ease}
+.app.mini{--sw:76px}
+
+/* sidebar */
+.side{background:linear-gradient(180deg,#1e1b4b 0%,#1a1745 100%);color:var(--side-fg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:hidden}
+.brand{display:flex;align-items:center;gap:10px;height:64px;padding:0 14px 0 18px;border-bottom:1px solid #ffffff12;flex:none}
+.logo{border:0;cursor:default;width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:grid;place-items:center;font-weight:800;color:#fff;flex:none;box-shadow:0 4px 12px #6366f155}
+.brand-t{min-width:0;line-height:1.15}
+.brand-t b{display:block;color:#fff;font-size:15.5px;letter-spacing:-.01em}
+.brand-t small{color:var(--side-mute);font-size:11px;letter-spacing:.08em;font-weight:600}
+.collapse{margin-left:auto;width:28px;height:28px;border-radius:7px;border:1px solid #ffffff1f;background:#ffffff0d;color:var(--side-mute);display:grid;place-items:center;flex:none}
+.collapse:hover{background:#ffffff1a;color:#fff}
+.collapse svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;transition:transform .2s}
+.app.mini .collapse svg{transform:rotate(180deg)}
+.navwrap{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:#ffffff22 transparent}
+.grp{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:#8b8fd1;padding:14px 10px 6px;white-space:nowrap}
+.nav{position:relative;display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border-radius:9px;font-weight:500;font-size:14px;color:#c7cbf5;background:none;border:0;text-align:left;white-space:nowrap}
+.nav:hover{background:#ffffff0f;color:#fff}
+.nav svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.nav.on{background:#ffffff17;color:#fff;font-weight:650}
+.nav.on::before{content:"";position:absolute;left:-12px;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:#a5b4fc}
+.nav .cnt{font-size:11px;font-weight:700;border-radius:20px;padding:1px 7px;background:#ffffff1a;color:#e0e7ff;font-variant-numeric:tabular-nums}
+.nav .cnt.hot{background:#f43f5e;color:#fff}
+.nav .chev{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;opacity:.6;transition:transform .2s;flex:none}
+.nav[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.sub{margin:2px 0 4px 19px;padding-left:12px;border-left:1px solid #ffffff1c;display:flex;flex-direction:column;gap:1px}
+.sub .nav{font-size:13.5px;padding:8px 10px}
+.sub .nav svg.ic{width:16px;height:16px}
+.sub .nav.on::before{left:-13px}
+.me{flex:none;border-top:1px solid #ffffff12;padding:12px;display:flex;align-items:center;gap:10px}
+.av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#818cf8,#6366f1);display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex:none}
+.me-t{min-width:0;flex:1;line-height:1.25}
+.me-t b{display:block;color:#fff;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me-t small{display:block;color:var(--side-mute);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.role{display:inline-block;margin-top:4px;font-size:10px;font-weight:700;letter-spacing:.06em;border-radius:5px;padding:2px 6px;background:#7c3aed;color:#fff}
+.role.admin{background:#0f766e}
+.foot-out{flex:none;border-top:1px solid #ffffff12;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.signout2{color:#fca5a5}
+.signout2:hover{background:#f43f5e1f;color:#fecdd3}
+.app.mini .foot-out{padding:10px 14px}
+.out{width:32px;height:32px;border-radius:8px;border:1px solid #ffffff1f;background:none;color:#fca5a5;display:grid;place-items:center;flex:none}
+.out:hover{background:#f43f5e22;color:#fecdd3;border-color:#f43f5e66}
+.out svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+/* collapsed */
+.app.mini .brand-t,.app.mini .grp,.app.mini .nav .lbl,.app.mini .nav .cnt,.app.mini .nav .chev,.app.mini .me-t,.app.mini .sub{display:none}
+.app.mini .logo{display:none}
+.app.mini .brand{justify-content:center;padding:0}
+.app.mini .collapse{margin:0;width:36px;height:36px;border-radius:9px;background:#312e81;border-color:#4338ca;color:#fff}
+.app.mini .collapse:hover{background:#4338ca}
+.app.mini .navwrap{padding:10px 14px}
+.app.mini .nav{justify-content:center;padding:10px 0}
+.app.mini .nav .dot{position:absolute;top:6px;right:10px;width:7px;height:7px;border-radius:50%;background:#f43f5e}
+.nav .dot{display:none}.app.mini .nav .dot{display:block}
+.app.mini .me{flex-direction:column;padding:12px 0}
+.app.mini .grp+.nav,.app.mini .grp{margin-top:0}
+.app.mini .navwrap .sep{display:block}
+.sep{display:none;height:1px;background:#ffffff12;margin:8px 4px}
+
+/* topbar */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;height:64px;background:#ffffffeb;backdrop-filter:saturate(1.4) blur(8px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:#fff}
+.burger{display:none;width:36px;height:36px;border-radius:9px;border:1px solid var(--line);background:#fff;color:#334155;place-items:center}
+.burger svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.ttl{min-width:0}
+.crumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mute);font-weight:500}
+.crumb svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.ttl h1{margin:1px 0 0;font-size:18px;font-weight:700;color:#1e1b4b;letter-spacing:-.01em;white-space:nowrap}
+.top .sp{flex:1}
+.gsearch{display:flex;align-items:center;gap:8px;width:min(340px,32vw);height:38px;border:1px solid var(--line);border-radius:10px;padding:0 8px 0 12px;background:#f8fafc;color:var(--mute)}
+.gsearch:focus-within{border-color:#a5b4fc;background:#fff;box-shadow:0 0 0 3px #e0e7ff}
+.gsearch svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;flex:none}
+.gsearch input{border:0;outline:0;background:transparent;width:100%;color:var(--fg);font-size:13.5px}
+.kbd{font-size:11px;font-weight:600;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:#fff;color:var(--mute);white-space:nowrap}
+.icobtn{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#475569;display:grid;place-items:center}
+.icobtn:hover{background:#f8fafc;color:#1e1b4b}
+.icobtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9}
+.icobtn .n{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:10px;background:#f43f5e;color:#fff;font-size:10.5px;font-weight:700;display:grid;place-items:center;padding:0 5px;border:2px solid #fff;font-variant-numeric:tabular-nums}
+.vr{width:1px;height:28px;background:var(--line)}
+.prof{position:relative}
+.chip{display:flex;align-items:center;gap:9px;border:0;background:none;padding:4px 6px 4px 4px;border-radius:12px}
+.chip:hover{background:#f1f5f9}
+.chip .av{width:34px;height:34px;font-size:12.5px}
+.chip-t{text-align:left;line-height:1.2}
+.chip-t b{display:block;font-size:13.5px;color:var(--fg);white-space:nowrap}
+.chip-t .role{margin-top:2px}
+.chip svg{width:14px;height:14px;stroke:#64748b;fill:none;stroke-width:2}
+.menu{position:absolute;right:0;top:calc(100% + 8px);width:240px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 40px #0f172a24;padding:6px;z-index:20}
+.menu .mh{padding:10px 10px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.menu .mh b{display:block;font-size:14px}.menu .mh small{color:var(--mute);font-size:12px}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:9px 10px;border-radius:8px;font-size:13.5px;font-weight:500;color:#334155}
+.menu button:hover{background:#f1f5f9}
+.menu button svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9}
+.menu button.dng{color:#dc2626}.menu button.dng:hover{background:#fef2f2}
+.scrim{position:fixed;inset:0;background:#0f172a66;z-index:30}
+.demo{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:25;background:#0f172a;color:#fff;border-radius:12px;padding:6px;display:flex;gap:4px;align-items:center;font-size:12px;box-shadow:0 10px 30px #0f172a40}
+.demo span{padding:0 8px;color:#94a3b8;font-weight:600}
+.demo button{border:0;border-radius:8px;padding:6px 10px;background:none;color:#cbd5e1;font-weight:600;font-size:12px}
+.demo button.on{background:#fff;color:#0f172a}
+.content{padding:0}
+
+/* card + toolbar */
+.card{background:var(--panel);border-bottom:1px solid var(--line)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:6px 10px;font-weight:600;font-size:13px;color:#334155}
+.tab i{font-style:normal;font-size:11.5px;font-weight:700;background:#eef2ff;color:#3730a3;border-radius:6px;padding:1px 7px;font-variant-numeric:tabular-nums}
+.tab.on{border-color:var(--accent);background:#f0fdfa;color:var(--accent);box-shadow:0 0 0 2px #99f6e4}
+.tab.on i{background:var(--accent-soft);color:var(--accent)}
+.tab.ghost{margin-left:4px}
+.tab.ghost.on{background:var(--fg);border-color:var(--fg);color:#fff;box-shadow:none}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:200px;flex:0 1 280px;color:var(--mute)}
+.search input{border:0;outline:0;background:transparent;width:100%;color:var(--fg)}
+
+/* table: fixed layout, every column has a set share */
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-variant-numeric:tabular-nums}
+th{background:var(--head);text-align:left;font-size:11px;font-weight:700;letter-spacing:.05em;color:#475569;text-transform:uppercase;padding:10px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden}
+tbody tr:hover td{background:var(--row-hover)}
+.two .lnk{white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+.c-num{width:40px}.c-id{width:104px}.c-bd{width:104px}.c-cd{width:112px}.c-fee{width:92px}.c-st{width:132px}.c-act{width:248px}
+/* Patient, Doctor, Category have no width: they share the leftover space equally */
+th:first-child,td:first-child{padding-left:max(16px,env(safe-area-inset-left,0px))}
+th:last-child,td:last-child{padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{display:flex;align-items:center;gap:10px;color:var(--mute)}
+.num input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.bid{font-family:var(--f-mono);font-size:12px;color:#334155;background:none;border:0;padding:2px 4px;margin-left:-4px;border-radius:5px;cursor:copy}
+.bid:hover{background:#f1f5f9}
+.plat2{display:block;width:max-content;margin-top:4px;font-size:11px;font-weight:700;border-radius:5px;padding:1px 7px}
+.plat2.pl-web{background:#e0e7ff;color:#3730a3}.plat2.pl-app{background:#dcfce7;color:#166534}.plat2.un{background:#f1f5f9;color:#94a3b8;font-weight:600}
+.sp2 b{display:block;font-size:13px;font-weight:700;color:#334155}
+.sp2 span{display:block;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.sp2 small{display:block;color:var(--mute);font-size:11.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp2.none{color:var(--mute);font-size:13px}
+.src{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src i{flex:none;width:14px;height:14px;border-radius:4px;display:grid;place-items:center;font-style:normal;font-size:9px;font-weight:800;color:#fff}
+.src .pw{background:#4f46e5}.src .pa{background:#16a34a}.src .pi{background:#0f172a}.src .pu{background:#cbd5e1;color:#475569}
+.src.un{color:#94a3b8}
+.srcsel{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:8px;padding:0 8px 0 10px;height:34px;font-size:13px;color:#334155;font-weight:600;background:#fff}
+.srcsel select{border:0;outline:0;background:transparent;font-weight:600;font-size:13px;color:var(--fg);padding:6px 2px;cursor:pointer}
+/* detail drawer */
+.dscrim{position:fixed;inset:0;background:#0f172a55;z-index:45}
+.det{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:#fff;z-index:46;box-shadow:-20px 0 50px #0f172a30;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-right,0px)}
+.det-h{display:flex;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.det-h h2{margin:0;font-size:17px;color:#1e1b4b}
+.det-h small{color:var(--mute);font-family:var(--f-mono);font-size:12px}
+.det-h .x{margin-left:auto;width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:16px;color:#475569}
+.det-b{overflow:auto;padding:16px 20px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.box{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.box h3{margin:0;padding:11px 14px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#475569;background:var(--head);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.box h3 .new{margin-left:auto;text-transform:none;letter-spacing:0;font-size:11px;background:#ede9fe;color:#6d28d9;border-radius:20px;padding:2px 8px}
+.kv{display:grid;grid-template-columns:140px minmax(0,1fr);gap:0}
+.kv div{padding:9px 14px;border-bottom:1px solid #f1f5f9;font-size:13.5px;min-width:0;overflow-wrap:anywhere}
+.kv div:nth-child(odd){color:var(--mute);font-weight:500}
+.kv div:nth-last-child(-n+2){border-bottom:0}
+.kv code{font-family:var(--f-mono);font-size:12px;background:#f1f5f9;border-radius:4px;padding:1px 5px}
+.plat{display:inline-flex;align-items:center;gap:6px;font-weight:700}
+.empty-src{padding:14px;font-size:13.5px;color:#475569;line-height:1.55}
+.hint{margin:0 14px 14px;padding:10px 12px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12.5px;line-height:1.5}
+
+.tag{display:inline-block;margin-top:3px;font-size:10px;font-weight:700;letter-spacing:.08em;color:#475569;background:#f1f5f9;border-radius:4px;padding:1px 6px}
+.two b,.two span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.two b{font-weight:600}
+.two span{color:var(--mute);font-size:12.5px;margin-top:2px}
+.two .na{font-weight:500;color:var(--mute)}
+.lnk{display:inline-block;margin-top:2px;background:none;border:0;padding:0;color:var(--accent);font-weight:600;font-size:12.5px}
+.lnk:hover{text-decoration:underline}
+.cat{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.date{white-space:nowrap;font-size:13px}
+.date span{display:block;color:var(--mute);font-size:12.5px;margin-top:2px}
+th.r,td.r{text-align:right}
+.fee{font-weight:700;white-space:nowrap;font-size:13.5px}
+td.st,th.st{padding-left:18px}
+.st .by{font-size:11.5px;color:var(--mute);margin-top:3px}
+.st .by.none{opacity:.8}
+.pill{display:inline-block;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.p-Upcoming{background:var(--up-bg);color:var(--up)}.p-Assigned{background:var(--as-bg);color:var(--as)}
+.p-Pending{background:var(--pe-bg);color:var(--pe)}.p-Confirmed{background:var(--co-bg);color:var(--co)}
+.p-Complete{background:var(--ok-bg);color:var(--ok)}.p-Cancelled{background:var(--ca-bg);color:var(--ca)}
+.by{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#334155}
+.by.none{color:var(--mute)}
+.acts{display:flex;gap:5px;flex-wrap:nowrap;align-items:center}
+.b{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:4px 8px;font-weight:600;font-size:12px;white-space:nowrap;line-height:1.4}
+.b:hover{border-color:#94a3b8}
+.b.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.b.pri:hover{filter:brightness(1.08)}
+.b.dng{color:var(--ca)}
+.b.dng:hover{background:#fef2f2;border-color:#fca5a5}
+.empty{text-align:center;color:var(--mute);padding:40px}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));color:var(--mute);font-size:13px;border-top:1px solid var(--line);flex-wrap:wrap;gap:8px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--side);color:#fff;padding:10px 16px;border-radius:8px;font-weight:600;z-index:40}
+.note{margin:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));color:var(--mute);font-size:13px;line-height:1.6;max-width:880px}
+.note b{color:var(--fg)}
+@media (max-width:1180px){.c-cat{width:0}th:nth-child(5),td:nth-child(5){display:none}}
+@media (max-width:1100px){.gsearch{display:none}.chip-t{display:none}}
+@media (max-width:900px){.app,.app.mini{grid-template-columns:1fr}.search{margin-left:0;flex:1 1 100%}
+  .side{position:fixed;left:0;top:0;bottom:0;width:280px;z-index:40;transform:translateX(-100%);transition:transform .22s ease;padding-left:env(safe-area-inset-left,0px)}
+  .side.open{transform:none;box-shadow:20px 0 40px #0f172a40}
+  .collapse{display:none}.burger{display:grid}.vr{display:none}
+  .app.mini .brand-t,.app.mini .grp,.app.mini .nav .lbl,.app.mini .nav .cnt,.app.mini .nav .chev,.app.mini .me-t{display:revert}
+  table,tbody,tr,td{display:block;width:100%}thead,colgroup{display:none}
+  tr{padding:12px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+  td{border:0;padding:0!important}td:nth-child(5){display:block}
+  td:first-child{display:none}td.st{grid-column:2;grid-row:1;text-align:right}
+  td:nth-child(2){grid-column:1;grid-row:1}td:last-child{grid-column:1/-1;margin-top:6px}
+  td.fee{text-align:left}}
+</style>
+
+<div class="app">
+  <aside class="side" id="side" aria-label="Admin navigation">
+    <div class="brand">
+      <button class="logo" id="logo" aria-label="Humancare" title="Humancare">H</button>
+      <div class="brand-t"><b>Humancare</b><small>ADMIN CONSOLE</small></div>
+      <button class="collapse" id="collapse" aria-label="Collapse sidebar" title="Collapse sidebar"><svg viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></svg></button>
+    </div>
+    <nav class="navwrap" id="nav"></nav>
+    <div class="foot-out"><button class="nav signout2" title="Sign out"><svg class="ic" viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg><span class="lbl">Sign out</span></button></div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <button class="burger" id="burger" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="ttl">
+        <div class="crumb">Workspace <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg> <span id="crumb-now">Appointments</span></div>
+        <h1 id="page-title">Appointments</h1>
+      </div>
+      <span class="sp"></span>
+      <label class="gsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="gq" placeholder="Search patients, doctors, bookings…"><span class="kbd">Ctrl K</span></label>
+      <button class="icobtn" aria-label="Notifications, 59 new" title="Notifications"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="n">59</span></button>
+      <span class="vr" aria-hidden="true"></span>
+      <div class="prof">
+        <button class="chip" id="chip" aria-haspopup="menu" aria-expanded="false"><span class="av" id="chip-av">SA</span><span class="chip-t"><b id="chip-name">Super Admin</b><span class="role" id="chip-role">SUPER ADMIN</span></span><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="menu" id="menu" role="menu" hidden>
+          <div class="mh"><b id="mh-name">Super Admin</b><small id="mh-mail">superadmin@humancare.com</small></div>
+          <button role="menuitem"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>My profile</button>
+          <button role="menuitem" class="dng"><svg viewBox="0 0 24 24"><path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10"/></svg>Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="card">
+        <div class="toolbar">
+          <div class="tabs" id="tabs"></div>
+          <label class="srcsel" for="srcf">Source<select id="srcf"><option value="all">All</option><option value="web">Web</option><option value="app">App</option><option value="unknown">Unknown</option></select></label>
+          <label class="search"><span aria-hidden="true">⌕</span><input id="q" placeholder="Search patient, doctor, source page"></label>
+        </div>
+        <div class="scroll">
+          <table>
+            <colgroup id="cols"></colgroup>
+            <thead><tr id="head"></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="foot"><span id="count"></span><span>Click a booking ID to copy it</span></div>
+      </div>
+      <p class="note"><b>What's new:</b> the Category column is replaced by <b>Source page</b>: the page the patient booked from, as type and name (Condition: Fever, Service: Fit to fly, Speciality: Adolescent Medicine). When the booking starts from the <b>header Book Appointment button</b> (or the footer), it shows "Header: Book Appointment" with the page the patient was on underneath in grey, for example "on Service: Fit to fly" or "on Home page". Under each Booking ID there's only <b>Web</b> or <b>App</b>. Bookings made before tracking started show "Unknown" and "Not recorded". The Source dropdown filters Web, App or Unknown, and search also finds source pages. The data is made up for this preview.</p>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+<div class="dscrim" id="dscrim" hidden></div>
+<aside class="det" id="det" role="dialog" aria-modal="true" aria-labelledby="det-t" hidden></aside>
+<div class="scrim" id="scrim" hidden></div>
+<div class="demo" role="group" aria-label="Preview role"><span>Preview as</span><button data-role="admin">Admin</button><button data-role="super" class="on">Super Admin</button></div>
+
+<script>
+const R=[
+ ["7d01a9161c4ba6","Test Sujal","India","","","Children & Family","2026-10-16","2026-10-23","1:30 AM",10,"Upcoming",""],
+ ["7d01a922c109fa33","kedar","India","","","Chronic Care & Expert Opinion","2026-10-06","2026-10-06","1:30 PM",60,"Upcoming",""],
+ ["7d01a933ff74a478","Mahek Test","India","","","Chronic Care & Expert Opinion","2026-09-10","2026-09-10","4:30 PM",60,"Upcoming",""],
+ ["7d01a944ff74a39e","Mahek Test","India","","","Children & Family","2026-09-10","2026-10-14","11:30 PM",40,"Upcoming",""],
+ ["7d01a955ddeb4456","Mahek Test","India","","","Children & Family","2026-09-10","2026-09-11","10:30 AM",40,"Upcoming",""],
+ ["6a70838ba634cef703a4b6dd","UatT PatientT ShizukaA","India","TestT Shizuka DoctorR","","Children & Family","2026-08-03","2026-08-03","5:40 PM",110,"Assigned",""],
+ ["6a2d30014193e6621459abbd","Narayan Mestry","India","","","Skin & Hair","2026-06-13","2026-06-20","8:30 AM",100,"Assigned","admin@gmail.com"],
+ ["6a2d3c01d2a1e7b64015e4eb","Patient Shizuka","India","Satish Dalvi","","Mental Health","2026-06-11","2026-06-11","5:00 PM",1499,"Assigned","admin@gmail.com"],
+ ["6a2d3c11a90b33f11318094c","Unknown patient","","Satish Dalvi Technical Team","Dr Hidayat Khan","General & Everyday Care","2026-06-11","2026-06-26","8:30 AM",499,"Assigned","admin@gmail.com"],
+ ["6a3b11aa77c2d0e9a2b4c611","Priya Nair","United Arab Emirates","Dr Hidayat Khan","","Women's Health","2026-10-02","2026-10-27","6:00 PM",49,"Confirmed","superadmin@humancare.com"],
+ ["6a3b11bb17ad44f0c02e98a2","Rohan Mehta","India","Dr Ananya Rao","","Mental Wellbeing","2026-10-05","2026-10-28","11:00 AM",25,"Confirmed","admin@gmail.com"],
+ ["6a1f0c22e8a1b9d4a4c0d6aa","Rachel Secemski","United States","Martin Perlin","","Travel & Global Care","2026-10-10","2026-10-16","9:00 AM",99,"Complete","superadmin@humancare.com"],
+ ["6a1f0c33b19d2e7f136e89bb","Satish Dalvi","India","satish dalvi","","Children & Family","2026-10-01","2026-10-02","3:30 PM",1,"Complete","admin@gmail.com",1],
+ ["6a1f0c44c7e5f2a8e62b68cc","Piyush Y.","United Kingdom","Dr Hidayat Khan","","Children & Family","2026-09-28","2026-09-30","7:00 PM",5,"Cancelled","admin@gmail.com"],
+];
+const SRC={
+ "7d01a9161c4ba6":{p:"web",t:"Condition",n:"Doctor's Note"},
+ "7d01a922c109fa33":{p:"app",t:"Service",n:"Fit to fly"},
+ "7d01a933ff74a478":{p:"web",t:"Speciality",n:"Adolescent Medicine"},
+ "7d01a944ff74a39e":{p:"web",t:"Header",n:"Book Appointment",on:"Service: Fit to fly"},
+ "7d01a955ddeb4456":{p:"app",t:"Condition",n:"Fever"},
+ "6a70838ba634cef703a4b6dd":{p:"web",t:"Service",n:"Online Prescription Refills"},
+ "6a2d3c01d2a1e7b64015e4eb":{p:"web",t:"Category",n:"Mental Health"},
+ "6a3b11aa77c2d0e9a2b4c611":{p:"web",t:"Header",n:"Book Appointment",on:"Home page"},
+ "6a3b11bb17ad44f0c02e98a2":{p:"app",t:"Home",n:"Book appointment card"},
+ "6a1f0c22e8a1b9d4a4c0d6aa":{p:"web",t:"Doctor profile",n:"Martin Perlin"},
+ "6a1f0c33b19d2e7f136e89bb":{p:"web",t:"Footer",n:"Book Appointment",on:"Blog: Travelling with asthma"}
+};
+let srcF="all";
+const rows=R.map(r=>({id:r[0],patient:r[1],country:r[2],doctor:r[3],orig:r[4],cat:r[5],booked:r[6],date:r[7],time:r[8],fee:r[9],status:r[10],by:r[11],test:!!r[12]}));
+let tab="Upcoming",hideTest=false,q="";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fd=d=>d?new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"—";
+const money=n=>"$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,1800)}
+
+function actions(d){
+  const view=`<button class="b" data-a="View">View</button>`;
+  if(d.status==="Cancelled")return view;
+  if(d.status==="Complete")return view+`<button class="b pri" data-a="Reactivate">Reactivate</button>`;
+  const ac=d.doctor?`<button class="b pri" data-a="Auto complete">Auto complete</button>`:"";
+  return view+ac+`<button class="b dng" data-a="Cancel">Cancel</button>`;
+}
+function render(){
+  const base=hideTest?rows.filter(d=>!d.test):rows;
+  const n=s=>base.filter(d=>d.status===s).length;
+  const T=[["All",base.length],["Upcoming",n("Upcoming")],["Assigned",n("Assigned")],["Pending",n("Pending")],["Confirmed",n("Confirmed")],["Complete",n("Complete")],["Cancelled",n("Cancelled")],["Testing",rows.filter(d=>d.test).length]];
+  $("#tabs").innerHTML=T.map(([k,c])=>`<button class="tab ${tab===k?"on":""}" data-t="${k}">${k} <i>${c}</i></button>`).join("")+
+    `<button class="tab ghost ${hideTest?"on":""}" id="hide">${hideTest?"Testing hidden":"Hide testing"}</button>`;
+  $("#cols").innerHTML=`<col class="c-num"><col class="c-id"><col class="c-pt"><col class="c-doc"><col class="c-cat"><col class="c-bd"><col class="c-cd"><col class="c-fee"><col class="c-st"><col class="c-act">`;
+  $("#head").innerHTML=`<th><span class="num"><input type="checkbox" aria-label="Selection options"></span></th><th>Booking ID</th><th>Patient</th><th>Doctor</th><th>Source page</th><th>Booked</th><th>Consultation</th><th class="r">Fee</th><th class="st">Status</th><th>Actions</th>`;
+  let list=rows.filter(d=>tab==="Testing"?d.test:((!hideTest||!d.test)&&(tab==="All"||d.status===tab)));
+  if(srcF!=="all")list=list.filter(d=>srcF==="unknown"?!SRC[d.id]:SRC[d.id]&&SRC[d.id].p===srcF);
+  if(q)list=list.filter(d=>(d.patient+d.doctor+d.cat+d.country+d.id+(SRC[d.id]?SRC[d.id].t+SRC[d.id].n:"")).toLowerCase().includes(q));
+  $("#rows").innerHTML=list.length?list.map((d,i)=>`<tr>
+    <td><span class="num">${i+1}</span></td>
+    <td><button class="bid" data-copy="${d.id}" title="Click to copy ${d.id}">…${d.id.slice(-8).toUpperCase()}</button>${SRC[d.id]?`<span class="plat2 pl-${SRC[d.id].p}">${SRC[d.id].p==="web"?"Web":"App"}</span>`:`<span class="plat2 un" title="Booked before source tracking started">Unknown</span>`}${d.test?'<span class="tag">TESTING</span>':""}</td>
+    <td class="two"><b title="${esc(d.patient)}">${esc(d.patient)}</b><span>${esc(d.country)||"—"}</span></td>
+    <td class="two">${d.doctor?`<b title="${esc(d.doctor)}">${esc(d.doctor)}</b>`:`<b class="na">Not assigned</b>`}${d.status==="Complete"||d.status==="Cancelled"?"":`<button class="lnk">${d.doctor?"Alternate doctor":"Assign doctor"}</button>`}</td>
+    <td>${SRC[d.id]?`<div class="sp2" title="${esc(SRC[d.id].t+": "+SRC[d.id].n+(SRC[d.id].on?" (clicked on "+SRC[d.id].on+")":""))}"><b>${esc(SRC[d.id].t)}:</b><span>${esc(SRC[d.id].n)}</span>${SRC[d.id].on?`<small>on ${esc(SRC[d.id].on)}</small>`:""}</div>`:`<div class="sp2 none" title="Booked before source tracking started">Not recorded</div>`}</td>
+    <td class="date">${fd(d.booked)}</td>
+    <td class="date">${d.date?fd(d.date)+`<span>${d.time}</span>`:'<span>Not scheduled</span>'}</td>
+    <td class="r fee">${money(d.fee)}</td>
+    <td class="st"><span class="pill p-${d.status}">${d.status}</span>${d.doctor?`<span class="by ${d.by?"":"none"}" title="${d.by?"Assigned by "+esc(d.by):"Assigned before tracking started"}">${d.by?"by "+esc(d.by):"by —"}</span>`:""}</td>
+    <td><div class="acts">${actions(d)}</div></td></tr>`).join(""):`<tr><td colspan="10" class="empty">No appointments match this view.</td></tr>`;
+  $("#count").textContent=`${list.length} appointment${list.length===1?"":"s"}`;
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-t]");if(t){tab=t.dataset.t;render();return}
+  if(e.target.closest("#hide")){hideTest=!hideTest;render();return}
+  const c=e.target.closest("[data-copy]");if(c){const id=c.dataset.copy;(navigator.clipboard?navigator.clipboard.writeText(id):Promise.reject()).then(()=>toast("Booking ID copied")).catch(()=>toast(id));return}
+  const vw=e.target.closest("[data-view]");if(vw){openDet(vw.dataset.view);return}
+  if(e.target.closest("#det .x")||e.target.id==="dscrim"){closeDet();return}
+  const a=e.target.closest("[data-a]");if(a)toast(a.dataset.a+" (demo)");
+});
+$("#q").addEventListener("input",e=>{q=e.target.value.trim().toLowerCase();render()});
+$("#srcf").addEventListener("change",e=>{srcF=e.target.value;render()});
+function openDet(id){
+  const d=rows.find(r=>r.id===id),x=SRC[id];
+  const kv=(k,v)=>`<div>${k}</div><div>${v}</div>`;
+  const src=x?`<div class="kv">
+      ${kv("Platform",`<span class="plat"><span class="src" style="margin:0"><i class="${PL[x.p][1]}">${PL[x.p][0]}</i></span>${PL[x.p][2]}</span>`)}
+      ${x.v?kv("App version",`<code>${esc(x.v)}</code>`):""}
+      ${kv("Entry point",esc(x.e))}
+      ${x.path?kv("Page",`<code>${esc(x.path)}</code>`):""}
+      ${x.p==="web"?kv("Came from",x.ref?esc(x.ref):'<span style="color:var(--mute)">Direct (typed the address or a bookmark)</span>'):""}
+      ${x.utm?kv("Campaign",`${esc(x.utm[0])} / ${esc(x.utm[1])} / ${esc(x.utm[2])}<br><small style="color:var(--mute)">utm source / medium / campaign</small>`):""}
+      ${kv("Recorded at",esc(x.at))}
+    </div>`:`<div class="empty-src"><b>Not recorded.</b> This booking was made before source tracking started, so the website or app it came from isn't known.</div>${SIGNUP[id]?`<p class="hint"><b>Signup info, not booking source:</b> this patient created their account on the ${SIGNUP[id]}.</p>`:""}`;
+  $("#det").innerHTML=`<div class="det-h"><div><h2 id="det-t">${esc(d.patient)}</h2><small>${d.id}</small></div><button class="x" aria-label="Close">✕</button></div>
+   <div class="det-b">
+    <section class="box"><h3>Booking</h3><div class="kv">
+      ${kv("Status",`<span class="pill p-${d.status}">${d.status}</span>`)}${kv("Doctor",d.doctor?esc(d.doctor):"Not assigned")}${kv("Category",esc(d.cat))}
+      ${kv("Booked",fd(d.booked))}${kv("Consultation",d.date?fd(d.date)+" · "+d.time:"Not scheduled")}${kv("Fee",money(d.fee))}</div></section>
+    <section class="box"><h3>Source <span class="new">New</span></h3>${src}</section>
+   </div>`;
+  $("#det").hidden=false;$("#dscrim").hidden=false;$("#det .x").focus();
+}
+function closeDet(){$("#det").hidden=true;$("#dscrim").hidden=true}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDet()});
+render();
+
+/* ---------- sidebar + topbar ---------- */
+const I={
+ dash:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ video:'<rect x="2.5" y="6" width="13" height="12" rx="2"/><path d="m15.5 10 6-3.5v11l-6-3.5"/>',
+ brief:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+ chat:'<path d="M4 5h16v11H9l-5 4z"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/>',
+ doc:'<circle cx="12" cy="7.5" r="3.5"/><path d="M5 21c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/><path d="M17 4v4M15 6h4"/>',
+ users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .7 3.5 2.4 3.5 5.2"/>',
+ file:'<path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5M9 12h6M9 16h6"/>',
+ chart:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+ ticket:'<path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12"/>'
+};
+const NAV=[{g:"",items:[
+ {k:"dash",l:"Dashboard",i:"dash"},
+ {k:"doctors",l:"Doctors",i:"doc",sub:[{k:"ourdocs",l:"Our Doctors",i:"doc"},{k:"mandocs",l:"Manage Doctors",i:"users",n:27}]},
+ {k:"users",l:"Users",i:"users",sub:[{k:"manusers",l:"Manage Users",i:"users"},{k:"del",l:"Deletion Requests",i:"file"}]},
+ {k:"appts",l:"Appointments",i:"cal",n:57},
+ {k:"dvc",l:"Direct Video Consultation",i:"video"},
+ {k:"docs",l:"Documents",i:"file",sub:[{k:"inv",l:"Manual Invoices",i:"file",n:5},{k:"gop",l:"Guarantee of Payment",i:"file"}]},
+ {k:"partner",l:"Partner Cases",i:"brief"},
+ {k:"email",l:"Email",i:"mail",n:4,hot:1},
+ {k:"chat",l:"Live Chat",i:"chat",n:3,hot:1},
+ {k:"search",l:"Search Analytics",i:"chart"},
+ {k:"tickets",l:"Support Tickets",i:"ticket",n:6}
+]}];
+let active="appts",open=new Set(["doctors"]);
+const chev='<svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>';
+function navHTML(){
+  return NAV.map(g=>g.items.map(it=>{
+    const has=!!it.sub, isOn=active===it.k||(has&&it.sub.some(s=>s.k===active)), ex=open.has(it.k);
+    const cnt=it.n?`<span class="cnt ${it.hot?"hot":""}">${it.n}</span><span class="dot"></span>`:"";
+    const btn=`<button class="nav ${isOn&&!has?"on":""}" data-nav="${it.k}" title="${it.l}" ${has?`aria-expanded="${ex}"`:""} ${isOn&&!has?'aria-current="page"':""}><svg class="ic" viewBox="0 0 24 24">${I[it.i]}</svg><span class="lbl">${it.l}</span>${cnt}${has?chev:""}</button>`;
+    const sub=has&&ex?`<div class="sub">${it.sub.map(s=>`<button class="nav ${active===s.k?"on":""}" data-nav="${s.k}" title="${s.l}"><svg class="ic" viewBox="0 0 24 24">${I[s.i]}</svg><span class="lbl">${s.l}</span>${s.n?`<span class="cnt">${s.n}</span>`:""}</button>`).join("")}</div>`:"";
+    return btn+sub}).join("")).join("");
+}
+function findLabel(k){for(const g of NAV)for(const it of g.items){if(it.k===k)return it.l;if(it.sub)for(const s of it.sub)if(s.k===k)return s.l}return""}
+function shell(){
+  $("#nav").innerHTML=navHTML();
+  const l=findLabel(active);$("#page-title").textContent=l;$("#crumb-now").textContent=l;
+  document.querySelector(".content").style.opacity=active==="appts"?"1":".35";
+}
+const ROLES={super:{name:"Super Admin",mail:"superadmin@humancare.com",av:"SA",role:"SUPER ADMIN",cls:"",label:"Super Admin"},admin:{name:"Narayan Mestry",mail:"na5mestry0709@gmail.com",av:"NM",role:"ADMIN",cls:"admin",label:"Admin"}};
+function setRole(r){const x=ROLES[r];
+  $("#chip-av").textContent=x.av;$("#chip-name").textContent=x.name;$("#mh-name").textContent=x.name;
+  $("#mh-mail").textContent=x.mail;$("#chip-role").textContent=x.role;$("#chip-role").className="role "+x.cls;
+  document.querySelectorAll("[data-role]").forEach(b=>b.classList.toggle("on",b.dataset.role===r));
+}
+const app=document.querySelector(".app"),side=$("#side");
+function closeDrawer(){side.classList.remove("open");$("#scrim").hidden=true}
+document.addEventListener("click",e=>{
+  const n=e.target.closest("[data-nav]");
+  if(n){const k=n.dataset.nav;let item=null;NAV.forEach(g=>g.items.forEach(it=>{if(it.k===k)item=it}));
+    if(item&&item.sub){if(app.classList.contains("mini")){app.classList.remove("mini");open.add(k)}else open.has(k)?open.delete(k):open.add(k)}
+    else{active=k;closeDrawer();if(k!=="appts")toast(findLabel(k)+" opens here (demo)")}
+    shell();return}
+  if(e.target.closest("#collapse")){app.classList.toggle("mini");const m=app.classList.contains("mini");$("#collapse").setAttribute("aria-label",m?"Expand sidebar":"Collapse sidebar");$("#collapse").title=m?"Expand sidebar":"Collapse sidebar";return}
+  if(e.target.closest("#burger")){side.classList.add("open");$("#scrim").hidden=false;return}
+  if(e.target.id==="scrim"){closeDrawer();return}
+  const c=e.target.closest("#chip");if(c){const m=$("#menu");m.hidden=!m.hidden;c.setAttribute("aria-expanded",String(!m.hidden));return}
+  if(!e.target.closest("#menu"))$("#menu").hidden=true;
+  const r=e.target.closest("[data-role]");if(r)setRole(r.dataset.role);
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){closeDrawer();$("#menu").hidden=true}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();$("#gq").focus()}
+});
+shell();setRole("super");
+</script>

@@ -42,14 +42,23 @@ const GROUPS = [
 ];
 
 // Service pages (not health topics), asked for by name, so they are safe to add on the server:
-// a sick-note question gets the Doctor's note page, a price question the Pricing page.
+// a sick-note question gets the Doctor's note page, a refill question the refills page, a price question the Pricing page.
+// The first matching group wins, so the order is the priority (specific services before Pricing).
 const SERVICE_GROUPS = [
   { terms: ["sick note", "sick notes", "doctor's note", "doctors note", "doctor note", "doctor notes", "medical certificate", "work note", "note for work", "fit note", "excuse note", "nota medica", "justificante medico"], title: "Doctor's note (sick note)" },
+  { terms: ["prescription", "prescriptions", "refill", "refills", "prescription refill", "medication refill", "renew my prescription", "receta", "recetas", "receta medica", "renovar receta", "prescription chahiye", "dawai ki parchi", "प्रिस्क्रिप्शन", "रिफिल", "पर्चा"], title: "Online prescription refills" },
+  { terms: ["second opinion", "another opinion", "segunda opinion", "dusri raay", "doosri raay", "दूसरी राय"], title: "Online second medical opinion" },
+  { terms: ["lab requisition", "lab requisitions", "lab order", "requisicion de laboratorio", "orden de laboratorio", "लैब रिक्विजिशन"], title: "Lab requisitions" },
+  // Pricing stays LAST: a specific service in the same message wins ("prescription refill price" -> the refills page).
   { terms: ["price", "prices", "pricing", "cost", "costs", "how much", "fee", "fees", "charge", "charges", "rates", "kitna", "kitne", "kimat", "precio", "precios", "cuanto cuesta", "कीमत", "कितना", "फीस"], title: "Pricing" },
 ];
 
-// Service topics with no page of their own: the reply still ends with a Book button.
-const BOOKING_TOPICS = ["prescription", "prescriptions", "refill", "refills", "lab requisition", "lab requisitions", "lab test", "second opinion", "consultation", "consultations", "appointment", "appointments", "book", "booking", "visit", "doctor visit", "telehealth", "fit to fly", "certificate", "receta", "cita", "consulta", "reservar"];
+// Service topics with no page of their own (a consultation, a certificate ...): with no page to point at, the chat offers the
+// live-agent button. Topics that have a page (refills, sick note, second opinion, lab, price) are in SERVICE_GROUPS.
+const SERVICE_TOPICS = ["lab test", "consultation", "consultations", "visit", "doctor visit", "telehealth", "fit to fly", "certificate", "consulta"];
+
+// The patient explicitly asks to book: only then does the chat show the Book button.
+const BOOK_TERMS = ["book", "booking", "book a doctor", "schedule", "appointment", "appointments", "make an appointment", "reservar", "reserva", "cita", "agendar", "agendar cita", "book karna", "appointment lena", "appointment book", "बुक", "बुकिंग", "अपॉइंटमेंट", "अपॉइन्टमेंट"];
 
 // Lower case, accents removed, punctuation to spaces; Devanagari letters are kept.
 const foldHint = (text) =>
@@ -62,7 +71,8 @@ const foldHint = (text) =>
 
 const prep = (list) => list.map((t) => foldHint(t)).filter(Boolean);
 const prepared = GROUPS.map((g) => ({ terms: prep(g.terms), not: prep(g.not || []), targets: g.targets }));
-const preparedBooking = prep(BOOKING_TOPICS);
+const preparedServiceTopics = prep(SERVICE_TOPICS);
+const preparedBookTerms = prep(BOOK_TERMS);
 const preparedServices = SERVICE_GROUPS.map((g) => ({ terms: prep(g.terms), title: g.title }));
 
 const has = (hay, t) => hay.includes(` ${t} `) || hay.includes(` ${t}s `); // also the plural (headaches)
@@ -85,10 +95,16 @@ function serviceTitleFor(text) {
   return "";
 }
 
-// True when the message is about a service we sell (refill, consultation, booking ...): the reply offers Book.
+// True when the message is about a service we sell that has no page of its own (consultation, certificate ...).
 function isServiceTopic(text) {
   const hay = ` ${foldHint(text)} `;
-  return preparedBooking.some((t) => has(hay, t));
+  return preparedServiceTopics.some((t) => has(hay, t));
 }
 
-module.exports = { titlesFor, serviceTitleFor, isServiceTopic, GROUPS, SERVICE_GROUPS, foldHint };
+// True when the patient explicitly asks to book or schedule ("book", "appointment", "reservar cita" ...).
+function isExplicitBooking(text) {
+  const hay = ` ${foldHint(text)} `;
+  return preparedBookTerms.some((t) => has(hay, t));
+}
+
+module.exports = { titlesFor, serviceTitleFor, isServiceTopic, isExplicitBooking, GROUPS, SERVICE_GROUPS, foldHint };

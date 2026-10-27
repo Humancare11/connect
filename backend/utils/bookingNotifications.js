@@ -349,6 +349,104 @@ async function notifyConsultationDoctorChanged({ consultation, newEnrollment, pr
   });
 }
 
+// Tells the patient a doctor was assigned (`reassigned: false`) or swapped
+// (`reassigned: true`). `booking` is an Appointment or CategoryConsultation
+// (`isCategory`). The time is unchanged either way.
+async function notifyPatientDoctorChanged({ booking, isCategory, doctorName, reassigned }) {
+  await safely("patient doctor-changed email", async () => {
+    const patient = await User.findById(booking.patientId).select("name email").lean();
+    if (!patient?.email) return;
+
+    const when = isCategory
+      ? consultationWhen(booking)
+      : whenText({
+          date: booking.date,
+          time: booking.time,
+          utc: booking.appointmentDateTimeUtc,
+          patientTimezone: booking.patientTimezone,
+          targetTimezone: booking.patientTimezone,
+        });
+    // No name, no Doctor row (never a bare "Dr.").
+    const label = !doctorName ? "" : /^dr\.?\s/i.test(doctorName) ? doctorName : `Dr. ${doctorName}`;
+    const intro = reassigned
+      ? "Your assigned doctor has changed due to unavailability. Your appointment time remains the same, and a new doctor has been assigned to ensure you receive the best care."
+      : "A doctor has been assigned to your appointment. We will let you know once they have confirmed.";
+    const subject = reassigned
+      ? "Appointment update — Doctor reassigned"
+      : "A doctor has been assigned to your appointment — Humancare Connect";
+
+    await mailer.sendEmail({
+      to: patient.email,
+      subject,
+      text: intro,
+      html: mailer.buildBookingNotificationHTML({
+        badge: reassigned ? "Doctor Reassigned" : "Doctor Assigned",
+        greeting: `Hello ${patient.name || "Patient"},`,
+        intro,
+        rows: [
+          ["Doctor", label],
+          ["Date / time", when],
+        ],
+        footnote:
+          "If you have any questions, please contact our support team at support@humancareconnect.co. Thank you for choosing Humancare Connect.",
+      }),
+    });
+  });
+}
+
+// The assigned doctor's address and the booking's details, as the doctor should
+// see them. `booking` is an Appointment, or a CategoryConsultation when `isCategory`.
+async function doctorContactFor({ booking, isCategory }) {
+  if (isCategory) {
+    const enrollment = await Enrollment.findById(booking.assignedDoctorId).select("firstName surname email doctorId").lean();
+    return {
+      to: await enrollmentEmail(enrollment),
+      doctorName: doctorFullName(enrollment),
+      when: consultationWhen(booking),
+      category: booking.categoryName,
+    };
+  }
+  const [doctor, enrollment] = await Promise.all([
+    Doctor.findById(booking.doctorId).select("name email").lean(),
+    Enrollment.findOne({ doctorId: booking.doctorId }).select("timezone").lean(),
+  ]);
+  return {
+    to: doctor?.email,
+    doctorName: doctor?.name,
+    when: whenText({
+      date: booking.date,
+      time: booking.time,
+      utc: booking.appointmentDateTimeUtc,
+      patientTimezone: booking.patientTimezone,
+      targetTimezone: booking.doctorTimezone || enrollment?.timezone,
+    }),
+    category: booking.category,
+  };
+}
+
+// An admin cancelled the booking. Goes to the assigned doctor only.
+async function notifyDoctorBookingCancelled({ booking, isCategory }) {
+  await safely("doctor cancelled email", async () => {
+    const patient = await fetchPatient(booking.patientId);
+    const { to, doctorName, when, category } = await doctorContactFor({ booking, isCategory });
+    if (!to) {
+      console.warn("[booking-notify] cancelled email skipped: doctor has no email address.");
+      return;
+    }
+    await mailer.sendBookingNotificationEmail(to, {
+      subject: "Humancare Connect — Appointment cancelled",
+      badge: "Appointment Cancelled",
+      greeting: doctorName ? `Hello Dr. ${doctorName},` : "Hello Doctor,",
+      intro: "The appointment below has been cancelled by the Humancare Connect team. No further action is needed on your part.",
+      rows: [
+        ["Patient", patientLabel(patient)],
+        ["Date / time", when],
+        ["Category", category],
+      ],
+    });
+  });
+}
+
 // An admin reopened a completed appointment. `appointment` is the loaded
 // Appointment (doctorId = Doctor _id) or CategoryConsultation (assignedDoctorId
 // populated with its Enrollment).
@@ -398,6 +496,8 @@ module.exports = {
   notifyCategoryConsultationBooked,
   notifyAppointmentDoctorChanged,
   notifyConsultationDoctorChanged,
+  notifyPatientDoctorChanged,
+  notifyDoctorBookingCancelled,
   // exported for tests
   _internals: { whenText, adminRecipients, patientLabel },
 };

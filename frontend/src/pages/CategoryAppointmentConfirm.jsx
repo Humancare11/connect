@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, Navigate, Link } from "react-router-dom";
 import api from "../api";
+import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
 import { PaymentStage } from "./AppointmentBookingForm";
 import { useAuth } from "../context/AuthContext";
@@ -199,7 +200,7 @@ export default function CategoryAppointmentConfirm() {
         };
         if (gateway === "paypal") body.paypalOrderId = paymentRef;
         else body.paymentIntentId = paymentRef;
-        await api.post("/api/category-consultation", body);
+        await api.post("/api/category-consultation", withBookingSource(body));
       } else {
         const body = {
           category: selection.catLabel,
@@ -216,7 +217,7 @@ export default function CategoryAppointmentConfirm() {
         };
         if (gateway === "paypal") body.paypalOrderId = paymentRef;
         else body.paymentIntentId = paymentRef;
-        await api.post("/api/appointments", body);
+        await api.post("/api/appointments", withBookingSource(body));
       }
       clearPendingBooking();
       setStage("success");

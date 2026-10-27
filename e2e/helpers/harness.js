@@ -420,7 +420,12 @@ export const test = base.extend({
       patient,
       appointmentId,
       async joinBoth({ flowTimeoutMs = 30_000 } = {}) {
-        await Promise.all([doctor.page.goto(url), patient.page.goto(url)]);
+        // domcontentloaded, not "load": the load event can stay pending for a call page
+        // (long-lived media/websocket resources) and is irrelevant - we wait for real video next.
+        await Promise.all([
+          doctor.page.goto(url, { waitUntil: "domcontentloaded" }),
+          patient.page.goto(url, { waitUntil: "domcontentloaded" }),
+        ]);
         await Promise.all([
           waitForVideoFlowing(doctor.page, { timeoutMs: flowTimeoutMs, label: "doctor" }),
           waitForVideoFlowing(patient.page, { timeoutMs: flowTimeoutMs, label: "patient" }),

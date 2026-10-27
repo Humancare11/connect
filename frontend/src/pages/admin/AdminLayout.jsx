@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react"; // useState still used for sideOpen
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import "./AdminDashboard.css";
+import "./AdminShell.css";
 import { useAdmin } from "../../context/AdminContext";
 import DirectCallAlertsBell from "./DirectCallAlertsBell";
 import { LiveChatAdminProvider } from "./livechat/LiveChatAdminProvider";
+import { NAV_ITEMS, buildNav, pathMatches, targetOf } from "./adminNav";
 
 const svg = (children) => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -100,106 +101,60 @@ const ICONS = {
   ),
 };
 
-// Flat sidebar. An entry with `children` is a parent that opens a submenu; an
-// entry with a `path` is a plain link. `roles` limits who sees an item (as before);
-// `title` overrides the topbar title when it differs from the menu label.
-// Parents are visible whenever at least one child is.
-const NAV_ITEMS = [
-  { key: "dashboard", label: "Dashboard", path: "/admin-dashboard", exact: true, icon: ICONS.dashboard },
-  {
-    key: "doctors",
-    label: "Doctors",
-    icon: ICONS.ourDoctors,
-    children: [
-      { path: "/admin-dashboard/our-doctors", label: "Our Doctors", icon: ICONS.ourDoctors },
-      { path: "/admin-dashboard/manage-doctors", label: "Manage Doctors", icon: ICONS.users },
-    ],
-  },
-  {
-    key: "users",
-    label: "Users",
-    icon: ICONS.users,
-    children: [
-      { path: "/admin-dashboard/manage-users", label: "Manage Users", icon: ICONS.users },
-      { path: "/admin-dashboard/deletion-requests", label: "Deletion Requests", icon: ICONS.document },
-    ],
-  },
-  {
-    key: "appointments",
-    label: "Appointments",
-    icon: ICONS.calendar,
-    children: [
-      { path: "/admin-dashboard/appointments", label: "Appointments", icon: ICONS.calendar },
-      { path: "/admin-dashboard/category-consultations", label: "Category Consultations", icon: ICONS.calendar },
-    ],
-  },
-  { key: "direct-video", label: "Direct Video Consultation", path: "/admin-dashboard/direct-video-consultation", icon: ICONS.video },
-  {
-    key: "documents",
-    label: "Documents",
-    icon: ICONS.document,
-    children: [
-      {
-        path: "/admin-dashboard/manual-invoices",
-        paymentAdminPath: "/payment-admin/manual-invoices",
-        label: "Manual Invoices",
-        roles: ["paymentadmin", "admin", "superadmin"],
-        icon: ICONS.document,
-      },
-      { path: "/admin-dashboard/gop", label: "Guarantee of Payment", roles: ["admin", "superadmin"], icon: ICONS.shield },
-    ],
-  },
-  // Payment-admin-only pages. They aren't part of the requested menu order;
-  // kept here (visible only to the payment admin role) until they get a home.
-  {
-    key: "payment-links",
-    path: "/admin-dashboard/payment-links",
-    paymentAdminPath: "/payment-admin/payment-links",
-    label: "Payment Links",
-    roles: ["paymentadmin"],
-    icon: ICONS.link,
-  },
-  {
-    key: "payment-history",
-    path: "/admin-dashboard/payment-link-history",
-    paymentAdminPath: "/payment-admin/payment-history",
-    label: "Payment History",
-    roles: ["paymentadmin"],
-    icon: ICONS.chart,
-  },
-  { key: "partner-cases", label: "Partner Cases", path: "/admin-dashboard/partner-cases", roles: ["admin", "superadmin"], icon: ICONS.partners },
-  // Shared company mailboxes (support@, tech@). Same visibility rule as the
-  // other admin pages: admin + superadmin, never the payment admin.
-  { key: "email", label: "Email", path: "/admin-dashboard/email", roles: ["admin", "superadmin"], icon: ICONS.email },
-  // Live Chat (admin + superadmin only; employeeadmin is not a live agent). It has its own menu and opens in its own
-  // browser tab (see liveChatTabs.js). The module itself is switched on and off by LIVECHAT_ENABLED on the server.
-  {
-    key: "live-chat",
-    label: "Live Chat",
-    path: "/admin-dashboard/live-chat",
-    external: true,
-    roles: ["admin", "superadmin"],
-    icon: ICONS.chat,
-  },
-  { key: "search-analytics", label: "Search Analytics", path: "/admin-dashboard/search-analytics", roles: ["admin", "superadmin"], icon: ICONS.chart },
-  { key: "tickets", label: "Support Tickets", path: "/admin-dashboard/tickets", icon: ICONS.ticket },
-];
-
-// Same visibility rules as before: the payment admin only sees items that name
-// that role; everyone else sees items without `roles` or whose `roles` include theirs.
-const isVisibleTo = (item, role) => {
-  if (role === "paymentadmin") return Boolean(item.roles?.includes("paymentadmin"));
-  if (item.roles) return item.roles.includes(role);
-  return !item.superadminOnly || role === "superadmin";
+// Extra icons used only by the shell itself.
+const SHELL_ICONS = {
+  chevronRight: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  ),
+  chevronLeft: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m15 6-6 6 6 6" />
+    </svg>
+  ),
+  chevronDown: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  ),
+  burger: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  ),
+  signOut: (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10" />
+    </svg>
+  ),
 };
 
-// A page belongs to a menu item when it is that item's page or any page under it
-// (detail pages, assign-doctor pages, …). The dashboard only matches itself.
-const pathMatches = (target, pathname, exact) =>
-  pathname === target || (!exact && pathname.startsWith(`${target}/`));
+const COLLAPSE_KEY = "hc-admin-sidebar-collapsed";
 
-const CLOSE_DELAY_MS = 200;
-const FLYOUT_GAP_PX = 4;
+// Whether the sidebar is shrunk to icons, remembered per browser. Storage can be missing or blocked: then it is just not remembered.
+const readCollapsed = () => {
+  try {
+    return window.localStorage.getItem(COLLAPSE_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+const saveCollapsed = (value) => {
+  try {
+    window.localStorage.setItem(COLLAPSE_KEY, value ? "1" : "0");
+  } catch {
+    /* not remembered */
+  }
+};
+
+// Counts shown on the right of a menu entry (and as a dot when the sidebar is collapsed). The menu has no counts today, so
+// this is empty; an entry with a number here shows it (grey, or red for Email and Live Chat).
+const NAV_COUNTS = {};
+const HOT_KEYS = new Set(["email", "live-chat"]);
+
+const ROLE_LABELS = { superadmin: "Super Admin", paymentadmin: "Payment Admin", admin: "Admin" };
+const ROLE_CLASSES = { superadmin: "ash-role--super", paymentadmin: "ash-role--payment", admin: "ash-role--admin" };
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
@@ -212,226 +167,143 @@ function useMediaQuery(query) {
   return matches;
 }
 
-// A parent entry with a submenu: a flyout to the right of the sidebar on
-// desktop (hover, click, or keyboard), an inline accordion in the phone drawer.
+function NavCount({ itemKey }) {
+  const count = NAV_COUNTS[itemKey];
+  if (!count) return null;
+  return (
+    <>
+      <span className={`ash-nav-count${HOT_KEYS.has(itemKey) ? " ash-nav-count--hot" : ""}`}>{count}</span>
+      <span className="ash-nav-dot" aria-hidden="true" />
+    </>
+  );
+}
+
 // "Live Chat": a plain anchor that opens the Live Chat dashboard in a new tab on every click. No onClick, no script, no
 // window features, no badge, no unread count.
-function LiveChatNavLink({ item }) {
+function LiveChatNavLink({ item, mini }) {
   return (
-    <a href={item.path} target="_blank" rel="noopener" className="ad-nav-item" title="Opens in a new tab">
-      <span className="ad-nav-icon">{item.icon}</span>
-      {item.label}
+    <a href={item.path} target="_blank" rel="noopener" className="ash-nav-item" title={mini ? `${item.label} (opens in a new tab)` : "Opens in a new tab"}>
+      <span className="ash-nav-icon">{ICONS[item.icon]}</span>
+      <span className="ash-nav-label">{item.label}</span>
+      <NavCount itemKey={item.key} />
     </a>
   );
 }
 
-function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChange, onNavigate }) {
-  const buttonRef = useRef(null);
-  const flyoutRef = useRef(null);
-  const closeTimer = useRef(null);
-  const pinned = useRef(false); // opened / kept open by a click or key, not just by hovering
-  const focusFirstOnOpen = useRef(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+// A parent entry with a submenu: the submenu expands in place under its parent (click or keyboard) and pushes the entries
+// below it down. When the sidebar is collapsed to icons, clicking a parent expands the sidebar and opens it.
+function NavGroup({ item, links, active, isLinkActive, open, mini, onToggle, onNavigate }) {
   const menuId = `ad-submenu-${item.key}`;
-
-  const cancelClose = () => clearTimeout(closeTimer.current);
-  const close = () => {
-    cancelClose();
-    pinned.current = false;
-    onOpenChange(null);
-  };
-  const scheduleClose = () => {
-    if (inline || pinned.current) return;
-    cancelClose();
-    closeTimer.current = setTimeout(close, CLOSE_DELAY_MS);
-  };
-  const show = () => {
-    if (!inline && buttonRef.current) {
-      const button = buttonRef.current.getBoundingClientRect();
-      const sidebar = buttonRef.current.closest(".ad-sidebar").getBoundingClientRect();
-      setPosition({ top: button.top, left: sidebar.right + FLYOUT_GAP_PX });
-    }
-    onOpenChange(item.key);
-  };
-
-  const onMouseEnter = () => {
-    if (inline) return;
-    cancelClose();
-    if (!open) show();
-  };
-
-  const onClick = (event) => {
-    cancelClose();
-    if (!open) {
-      pinned.current = true;
-      focusFirstOnOpen.current = event.detail === 0; // opened with Enter / Space
-      show();
-    } else if (!inline && !pinned.current) {
-      pinned.current = true; // opened by hover, clicked: keep it open
-    } else {
-      close();
-    }
-  };
-
-  const focusItem = (index) => {
-    const items = flyoutRef.current?.querySelectorAll('[role="menuitem"]');
-    if (items?.length) items[(index + items.length) % items.length].focus();
-  };
-
-  // After a keyboard open, move focus into the submenu once it is rendered.
-  useEffect(() => {
-    if (open && focusFirstOnOpen.current) {
-      focusFirstOnOpen.current = false;
-      focusItem(0);
-    }
-  });
-
-  // Close on an outside click, and when the page scrolls or resizes under the flyout.
-  useEffect(() => {
-    if (!open || inline) return undefined;
-    const onPointerDown = (event) => {
-      if (buttonRef.current?.contains(event.target) || flyoutRef.current?.contains(event.target)) return;
-      close();
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("resize", close);
-    const nav = buttonRef.current?.closest(".ad-nav");
-    nav?.addEventListener("scroll", close);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      window.removeEventListener("resize", close);
-      nav?.removeEventListener("scroll", close);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, inline]);
-
-  useEffect(() => () => clearTimeout(closeTimer.current), []);
-
   const onButtonKeyDown = (event) => {
     if (event.key === "Escape" && open) {
       event.preventDefault();
-      close();
-    } else if ((event.key === "ArrowRight" || event.key === "ArrowDown") && !inline) {
-      event.preventDefault();
-      if (!open) {
-        pinned.current = true;
-        focusFirstOnOpen.current = true;
-        show();
-      } else focusItem(0);
-    } else if (event.key === "Tab" && !event.shiftKey && open && !inline) {
-      event.preventDefault();
-      focusItem(0);
+      onToggle(item.key, false);
     }
-  };
-
-  const onMenuKeyDown = (event) => {
-    const items = [...(flyoutRef.current?.querySelectorAll('[role="menuitem"]') || [])];
-    const index = items.indexOf(document.activeElement);
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-      buttonRef.current?.focus();
-    } else if (event.key === "ArrowDown") {
-      event.preventDefault();
-      focusItem(index + 1);
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      focusItem(index - 1);
-    } else if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      buttonRef.current?.focus();
-    } else if (event.key === "Tab") {
-      if (event.shiftKey && index === 0) {
-        event.preventDefault();
-        buttonRef.current?.focus();
-      } else if (!event.shiftKey && index === items.length - 1) {
-        // Leave the submenu: close it and continue with the next sidebar entry.
-        event.preventDefault();
-        close();
-        const focusables = [
-          ...document.querySelectorAll(".ad-nav > a.ad-nav-item, .ad-nav > .ad-nav-group > .ad-nav-parent, .ad-logout-btn"),
-        ];
-        const at = focusables.indexOf(buttonRef.current);
-        (focusables[at + 1] || buttonRef.current)?.focus();
-      }
-    }
-  };
-
-  const linkClass = (link) => `ad-nav-item ad-flyout-item${isLinkActive(link) ? " active" : ""}`;
-  const handleNavigate = () => {
-    close();
-    onNavigate();
   };
 
   return (
-    <div className="ad-nav-group">
+    <div className="ash-nav-group">
       <button
-        ref={buttonRef}
         type="button"
-        className={`ad-nav-item ad-nav-parent${active ? " active" : ""}${open ? " open" : ""}`}
-        aria-haspopup="true"
+        className={`ash-nav-item ash-nav-parent${active ? " within" : ""}${open ? " open" : ""}`}
         aria-expanded={open}
         aria-controls={menuId}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={scheduleClose}
-        onClick={onClick}
+        title={mini ? item.label : undefined}
+        onClick={() => onToggle(item.key, !open)}
         onKeyDown={onButtonKeyDown}
       >
-        <span className="ad-nav-icon">{item.icon}</span>
-        {item.label}
-        {item.badge && (
-          <span
-            style={{
-              marginLeft: 8,
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: "0.06em",
-              background: "#22c55e",
-              color: "#062814",
-              borderRadius: 6,
-              padding: "2px 6px",
-            }}
-          >
-            {item.badge}
-          </span>
-        )}
-        <span className="ad-nav-arrow" aria-hidden="true">›</span>
+        <span className="ash-nav-icon">{ICONS[item.icon]}</span>
+        <span className="ash-nav-label">{item.label}</span>
+        <NavCount itemKey={item.key} />
+        <span className="ash-nav-arrow" aria-hidden="true">{SHELL_ICONS.chevronRight}</span>
       </button>
 
-      {open && inline && (
-        <div className="ad-subnav" id={menuId}>
-          {links.map((link) => (
-            <Link key={link.target} to={link.target} className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`} onClick={handleNavigate}>
-              <span className="ad-nav-icon">{link.icon}</span>
-              {link.label}
-            </Link>
-          ))}
+      {/* Always rendered so aria-controls resolves; `hidden` keeps it out of the layout and the tab order. */}
+      <div className="ash-subnav" id={menuId} hidden={!open || mini}>
+        {links.map((link) => (
+          <Link
+            key={link.target}
+            to={link.target}
+            className={`ash-nav-item${isLinkActive(link) ? " active" : ""}`}
+            aria-current={isLinkActive(link) ? "page" : undefined}
+            onClick={onNavigate}
+          >
+            <span className="ash-nav-icon">{ICONS[link.icon]}</span>
+            <span className="ash-nav-label">{link.label}</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// The person at the right of the top bar: initials, name, role badge. Clicking opens a small menu (name, email, Sign out).
+function ProfileMenu({ user, onSignOut }) {
+  const [open, setOpen] = useState(false);
+  const root = useRef(null);
+  const chip = useRef(null);
+  const first = useRef(null);
+  const initials = (user.name || "").split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "A";
+  const roleLabel = ROLE_LABELS[user.role] || "Admin";
+
+  useEffect(() => {
+    if (!open) return undefined;
+    first.current?.focus();
+    const onKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      chip.current?.focus();
+    };
+    const onPointerDown = (event) => {
+      if (root.current && !root.current.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onPointerDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onPointerDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="ash-prof" ref={root}>
+      <button
+        ref={chip}
+        type="button"
+        className="ash-chip"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`${user.name || "Account"}, ${roleLabel}. Account menu`}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span className="ash-avatar">{initials}</span>
+        <span className="ash-chip-text">
+          <b>{user.name}</b>
+          <span className={`ash-role ${ROLE_CLASSES[user.role] || "ash-role--admin"}`}>{roleLabel.toUpperCase()}</span>
+        </span>
+        <span className="ash-chip-caret" aria-hidden="true">{SHELL_ICONS.chevronDown}</span>
+      </button>
+      {open && (
+        <div className="ash-menu" role="menu">
+          <div className="ash-menu-head">
+            <b>{user.name}</b>
+            {user.email && <small>{user.email}</small>}
+          </div>
+          <button
+            ref={first}
+            type="button"
+            role="menuitem"
+            className="ash-menu-item ash-menu-item--danger"
+            onClick={() => {
+              setOpen(false);
+              onSignOut();
+            }}
+          >
+            {SHELL_ICONS.signOut}
+            Sign out
+          </button>
         </div>
       )}
-
-      {open &&
-        !inline &&
-        createPortal(
-          <div
-            ref={flyoutRef}
-            id={menuId}
-            className="ad-flyout"
-            role="menu"
-            aria-label={item.label}
-            style={{ top: position.top, left: position.left }}
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
-            onKeyDown={onMenuKeyDown}
-          >
-            {links.map((link) => (
-              <Link key={link.target} to={link.target} role="menuitem" className={linkClass(link)} onClick={handleNavigate}>
-                <span className="ad-nav-icon">{link.icon}</span>
-                {link.label}
-              </Link>
-            ))}
-          </div>,
-          document.body
-        )}
     </div>
   );
 }
@@ -439,12 +311,15 @@ function NavGroup({ item, links, active, isLinkActive, open, inline, onOpenChang
 export default function AdminLayout({ children }) {
   const { admin: user, loading, logout: contextLogout } = useAdmin();
   const [sideOpen, setSideOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   // Which submenu is open (a NavItem key), or undefined = "not chosen yet" (the
   // phone drawer then shows the group containing the current page).
   const [openKey, setOpenKey] = useState(undefined);
-  const isPhone = useMediaQuery("(max-width: 768px)");
+  const isPhone = useMediaQuery("(max-width: 900px)");
+  const burgerRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const mini = collapsed && !isPhone;
 
   useEffect(() => {
     if (
@@ -455,6 +330,21 @@ export default function AdminLayout({ children }) {
     }
   }, [user, loading, navigate]);
 
+  // The drawer only exists on phones: drop its open state when the desktop sidebar takes over.
+  if (!isPhone && sideOpen) setSideOpen(false);
+
+  // Escape closes the phone drawer and returns focus to the toggle.
+  useEffect(() => {
+    if (!sideOpen || !isPhone) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      setSideOpen(false);
+      burgerRef.current?.focus();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [sideOpen, isPhone]);
+
   const logout = async () => {
     await contextLogout();
     navigate(
@@ -464,21 +354,7 @@ export default function AdminLayout({ children }) {
 
   if (loading || !user) return null;
 
-  const initials = user.name
-    ? user.name
-      .split(" ")
-      .map((w) => w[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase()
-    : "AD";
-
   const pathname = location.pathname;
-  const targetOf = (link) =>
-    user.role === "paymentadmin" && link.paymentAdminPath ? link.paymentAdminPath : link.path;
-  const withTarget = (link) => ({ ...link, target: targetOf(link) });
-
-  // Leaves = every page-level entry (children of parents, or plain items).
   const leavesOf = (item) => (item.children ? item.children : [item]);
 
   // Topbar title: the best (longest) match among ALL pages, either route variant —
@@ -487,29 +363,29 @@ export default function AdminLayout({ children }) {
     "/payment-admin/payment-links": "Payment Links",
   };
   let titleLeaf = null;
+  let titleParent = null;
   let titleLength = -1;
-  NAV_ITEMS.flatMap(leavesOf).forEach((leaf) => {
-    [leaf.path, leaf.paymentAdminPath].filter(Boolean).forEach((candidate) => {
-      if (pathMatches(candidate, pathname, leaf.exact) && candidate.length > titleLength) {
-        titleLeaf = leaf;
-        titleLength = candidate.length;
-      }
+  NAV_ITEMS.forEach((item) => {
+    leavesOf(item).forEach((leaf) => {
+      [leaf.path, leaf.paymentAdminPath].filter(Boolean).forEach((candidate) => {
+        if (pathMatches(candidate, pathname, leaf.exact) && candidate.length > titleLength) {
+          titleLeaf = leaf;
+          titleParent = item.children ? item.label : null;
+          titleLength = candidate.length;
+        }
+      });
     });
   });
   const pageTitle = (titleLeaf && (titleLeaf.title || titleLeaf.label)) || EXTRA_TITLES[pathname] || "Admin";
+  const crumbParent = titleParent || "Workspace";
 
-  // Menu entries this role can see. Parents need at least one visible child.
-  // The Live Chat group exists only in builds with VITE_LIVECHAT_ENABLED=true (otherwise the panel is as before).
-  const visibleItems = NAV_ITEMS.filter((item) => item.key !== "live-chat" || import.meta.env.VITE_LIVECHAT_ENABLED === "true").map((item) =>
-    item.children
-      ? { ...item, links: item.children.filter((c) => isVisibleTo(c, user.role)).map(withTarget) }
-      : item
-  ).filter((item) => (item.children ? item.links.length > 0 : isVisibleTo(item, user.role)));
+  // Menu entries this role can see (see adminNav.js).
+  const visibleItems = buildNav(user.role, { liveChat: import.meta.env.VITE_LIVECHAT_ENABLED === "true" });
 
   // Highlight the best (longest) match among the visible pages, so exactly one
   // page — and its parent — is active.
   let activeTarget = null;
-  visibleItems.flatMap((item) => (item.links ? item.links : [withTarget(item)])).forEach((leaf) => {
+  visibleItems.flatMap((item) => (item.links ? item.links : [{ ...item, target: targetOf(item, user.role) }])).forEach((leaf) => {
     if (pathMatches(leaf.target, pathname, leaf.exact) && leaf.target.length > (activeTarget?.length ?? -1)) {
       activeTarget = leaf.target;
     }
@@ -517,49 +393,59 @@ export default function AdminLayout({ children }) {
   const isLinkActive = (link) => link.target === activeTarget;
 
   const closeDrawer = () => setSideOpen(false);
+  const toggleCollapsed = () => {
+    setCollapsed((value) => {
+      saveCollapsed(!value);
+      return !value;
+    });
+  };
+  // A parent was clicked: open or close its submenu. In the collapsed sidebar there is no room for it, so expand first.
+  const toggleGroup = (key, open) => {
+    if (mini) {
+      setCollapsed(false);
+      saveCollapsed(false);
+      setOpenKey(key);
+      return;
+    }
+    setOpenKey(open ? key : null);
+  };
 
   return (
-    <div className="ad-root">
+    <div className={`ad-root ash-root${mini ? " ash-mini" : ""}`}>
       {/* Live chat: one shared connection for every admin page (unread badges, toasts). Admin + superadmin only. */}
       <LiveChatAdminProvider user={user} />
-      {sideOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,.4)",
-            zIndex: 199,
-          }}
-          onClick={() => setSideOpen(false)}
-        />
-      )}
+      {sideOpen && isPhone && <div className="ash-scrim" onClick={() => setSideOpen(false)} />}
 
       {/* ── Sidebar ── */}
-      <aside className={`ad-sidebar${sideOpen ? " open" : ""}`}>
-        {/* <div className="ad-brand">
-          <div className="ad-brand-mark">H</div>
-          <span className="ad-brand-name">Humancare</span>
-        </div> */}
-
-        <div className="ad-profile">
-          <div className="ad-profile-avatar">{initials}</div>
-          <div className="ad-profile-info">
-            <div className="ad-profile-name">{user.name}</div>
-            <div className="ad-profile-role">
-              {user.role === "superadmin"
-                ? "Super Admin"
-                : user.role === "paymentadmin"
-                  ? "Payment Admin"
-                  : "Admin"}
-            </div>
+      {/* inert: a closed phone drawer is off-screen, so keep its links out of the tab order */}
+      <aside
+        id="ad-sidebar"
+        className={`ash-sidebar${sideOpen ? " open" : ""}`}
+        aria-label="Admin navigation"
+        inert={isPhone && !sideOpen}
+      >
+        <div className="ash-brand">
+          <span className="ash-logo" aria-hidden="true">H</span>
+          <div className="ash-brand-text">
+            <b>Humancare</b>
+            <small>ADMIN CONSOLE</small>
           </div>
+          <button
+            type="button"
+            className="ash-collapse"
+            aria-label={mini ? "Expand sidebar" : "Collapse sidebar"}
+            title={mini ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={toggleCollapsed}
+          >
+            {SHELL_ICONS.chevronLeft}
+          </button>
         </div>
 
-        <nav className="ad-nav">
+        <nav className="ash-nav" aria-label="Main">
           {visibleItems.map((item) => {
             if (item.links) {
               const active = item.links.some(isLinkActive);
-              const open = openKey === item.key || (openKey === undefined && isPhone && active);
+              const open = openKey === item.key || (openKey === undefined && active);
               return (
                 <NavGroup
                   key={item.key}
@@ -568,68 +454,67 @@ export default function AdminLayout({ children }) {
                   active={active}
                   isLinkActive={isLinkActive}
                   open={open}
-                  inline={isPhone}
-                  onOpenChange={setOpenKey}
+                  mini={mini}
+                  onToggle={toggleGroup}
                   onNavigate={closeDrawer}
                 />
               );
             }
-            if (item.external) return <LiveChatNavLink key={item.key} item={item} />;
-            const link = withTarget(item);
+            if (item.external) return <LiveChatNavLink key={item.key} item={item} mini={mini} />;
+            const target = targetOf(item, user.role);
+            const active = target === activeTarget;
             return (
               <Link
-                key={link.target}
-                to={link.target}
-                className={`ad-nav-item${isLinkActive(link) ? " active" : ""}`}
+                key={target}
+                to={target}
+                className={`ash-nav-item${active ? " active" : ""}`}
+                aria-current={active ? "page" : undefined}
+                title={mini ? item.label : undefined}
                 onClick={closeDrawer}
               >
-                <span className="ad-nav-icon">{link.icon}</span>
-                {link.label}
+                <span className="ash-nav-icon">{ICONS[item.icon]}</span>
+                <span className="ash-nav-label">{item.label}</span>
+                <NavCount itemKey={item.key} />
               </Link>
             );
           })}
         </nav>
 
-        <div className="ad-sidebar-footer">
-          <button className="ad-logout-btn" onClick={logout}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Sign Out
+        <div className="ash-foot">
+          <button type="button" className="ash-nav-item ash-signout" title="Sign out" onClick={logout}>
+            <span className="ash-nav-icon">{SHELL_ICONS.signOut}</span>
+            <span className="ash-nav-label">Sign out</span>
           </button>
         </div>
       </aside>
 
       {/* ── Main ── */}
-      <main className="ad-main" id="main-content" tabIndex={-1}>
-        <header className="ad-topbar">
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <button
-              onClick={() => setSideOpen((p) => !p)}
-              style={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                display: "flex",
-                color: "#64748b",
-                padding: 4,
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-            <div className="ad-topbar-title">{pageTitle}</div>
+      <main className="ad-main ash-main" id="main-content" tabIndex={-1}>
+        <header className="ash-topbar">
+          <button
+            ref={burgerRef}
+            type="button"
+            className="ad-menu-btn ash-menu-btn"
+            aria-label={sideOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-controls="ad-sidebar"
+            aria-expanded={sideOpen}
+            onClick={() => setSideOpen((p) => !p)}
+          >
+            {SHELL_ICONS.burger}
+          </button>
+          <div className="ash-ttl">
+            <div className="ash-crumb">
+              {crumbParent}
+              <span className="ash-crumb-sep" aria-hidden="true">{SHELL_ICONS.chevronRight}</span>
+              <span>{pageTitle}</span>
+            </div>
+            <div className="ash-topbar-title">{pageTitle}</div>
           </div>
-          <div className="ad-topbar-right">
+          <span className="ash-topbar-sp" />
+          <div className="ash-topbar-right">
             <DirectCallAlertsBell />
-            <span className="ad-topbar-user">
-              👋 {user.name?.split(" ")[0]}
-            </span>
+            <span className="ash-vr" aria-hidden="true" />
+            <ProfileMenu user={user} onSignOut={logout} />
           </div>
         </header>
 

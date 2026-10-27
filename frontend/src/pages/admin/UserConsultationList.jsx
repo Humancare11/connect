@@ -18,7 +18,7 @@ const STATUS_OPTIONS = [
 // The existing admin detail pages, opened as they are (in a new tab).
 const DETAIL_ROUTES = {
   appointment: (id) => `/admin-dashboard/appointments/${id}`,
-  category: (id) => `/admin-dashboard/category-consultations/${id}`,
+  category: (id) => `/admin-dashboard/appointments/${id}`,
 };
 
 const KIND_LABELS = { appointment: "Doctor", category: "Category" };
@@ -189,12 +189,12 @@ export default function UserConsultationList({ userId }) {
             <tbody>
               {data.items.map((item, index) => (
                 <tr key={`${item.kind}:${item.id}`}>
-                  <td className="mu-col-sr">{(page - 1) * PAGE_SIZE + index + 1}</td>
-                  <td>
+                  <td className="mu-col-sr" data-label="Sr. No">{(page - 1) * PAGE_SIZE + index + 1}</td>
+                  <td data-label="Date">
                     <div className="mu-cell-main">{formatDay(item.date) || "Not provided"}</div>
                     {item.time && <div className="mu-cell-sub">{item.time}</div>}
                   </td>
-                  <td>
+                  <td data-label="App. ID" className="mu-cell-id">
                     <div className="mu-cell-main mu-mono" title={item.id}>
                       {item.shortId}
                     </div>

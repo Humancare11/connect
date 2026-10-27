@@ -1,15 +1,65 @@
 /* Admin → Deletion Requests. Builds on the shared adp-* admin styles. */
 
+/* Page heading: mirrors Our Doctors. Scoped to .adr-page because AdminAppointments.css makes every .adp-header a flex row. */
+.adr-page .adp-header {
+  display: block;
+  padding: 0;
+  margin-bottom: 24px;
+}
+.adr-page .adp-eyebrow {
+  display: inline;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0e6ceb;
+}
+.adr-page .adp-title {
+  margin: 4px 0 2px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: normal;
+  color: #0b0443;
+  text-align: left;
+}
+.adr-page .adp-sub {
+  margin: 0;
+  max-width: none;
+  font-size: 14px;
+  line-height: normal;
+  color: #6b7ca3;
+}
+
+/* Mobile-first: below 1200px the tabs get their own row and the dropdown + search a second row that fills the width. */
 .adr-toolbar {
   flex-wrap: wrap;
   gap: 12px;
+  min-width: 0;
+}
+.adr-toolbar .adp-tabs {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.adr-wrap {
+  container-type: inline-size;
 }
 
 .adr-filters {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1 1 100%;
   flex-wrap: wrap;
+  min-width: 0;
+}
+.adr-filters .adp-search {
+  flex: 1 1 220px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  height: 38px;
 }
 
 .adr-select {
@@ -21,6 +71,54 @@
   color: #0f172a;
   font-size: 13px;
   font-family: inherit;
+}
+
+/* Desktop: tabs left, dropdown + search together on the right in ONE row. The shared .adp-search min-width (360px)
+   made tabs + controls wider than the card, so the controls dropped to a second row. */
+@media (min-width: 1200px) {
+  .adr-toolbar {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  .adr-toolbar .adp-tabs {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .adr-filters {
+    flex: 0 1 auto;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+  .adr-select {
+    flex: none;
+  }
+  .adr-filters .adp-search {
+    flex: 0 1 220px;
+    min-width: 140px;
+  }
+}
+
+.adr-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.adr-avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 14px;
+  font-weight: 800;
+}
+.adr-who {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .adr-name {
@@ -40,7 +138,7 @@
 }
 
 .adr-reason {
-  max-width: 280px;
+  max-width: 200px;
   font-size: 13px;
   color: #334155;
   line-height: 1.45;
@@ -107,6 +205,30 @@
 .adr-pager-buttons {
   display: flex;
   gap: 8px;
+  max-width: 100%;
+}
+
+/* ManageUsers.css (loaded with this page) styles every .adp-btn for its modals; size and colour the row buttons here. */
+.adr-table .adp-btn,
+.adr-pager .adp-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-decoration: none;
+}
+.adr-table .adp-btn--reject {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  box-shadow: none;
+}
+.adr-table th,
+.adr-table td {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.adr-table td:first-child {
+  min-width: 190px;
 }
 
 .adr-table .adp-btn:disabled,
@@ -115,49 +237,103 @@
   cursor: not-allowed;
 }
 
-/* Phones: one card per request instead of a wide table. */
-@media (max-width: 760px) {
-  .adr-table thead {
-    display: none;
-  }
+/* The layout follows the width of the table area, not the viewport: the sidebar takes a different share at each breakpoint.
+   Below ~900px the 8 columns no longer fit, so each request becomes a card (2 columns, then 1 on phones). */
+@container (max-width: 899px) {
   .adr-table,
   .adr-table tbody,
   .adr-table tr,
   .adr-table td {
     display: block;
-    width: 100%;
-    box-sizing: border-box;
+  }
+  .adr-table thead {
+    display: none;
   }
   .adr-table tr {
-    margin: 0 0 12px;
-    padding: 6px 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+    margin: 12px;
+    padding: 14px;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 14px;
     background: #fff;
   }
   .adr-table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 8px 0;
+    padding: 0;
     border: 0;
-    text-align: right;
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
   .adr-table td::before {
     content: attr(data-label);
-    flex: none;
+    display: block;
+    margin-bottom: 2px;
     color: #94a3b8;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .adr-table td:first-child,
+  .adr-table td[data-label="Reason"],
+  .adr-table td[data-label="Actions"] {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+  .adr-table td:first-child::before,
+  .adr-table td[data-label="Actions"]::before {
+    display: none;
   }
   .adr-reason {
     max-width: none;
   }
-  .adr-actions {
-    justify-content: flex-end;
+  .adr-actions .adp-btn {
+    flex: 1 1 0;
+    text-align: center;
+  }
+}
+
+@container (max-width: 559px) {
+  .adr-table tr {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .adr-table td:not(:first-child):not([data-label="Actions"]) {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .adr-table td::before {
+    margin: 0;
+  }
+  .adr-table td > * {
+    grid-column: 2;
+  }
+  .adr-table td .adr-badge {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 767px) {
+  .adr-select,
+  .adr-filters .adp-search {
+    flex: 1 1 100%;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .adr-table .adp-btn,
+  .adr-pager .adp-btn {
+    min-height: 40px;
+  }
+  .adr-pager {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+  .adr-pager-buttons {
+    width: 100%;
+  }
+  .adr-pager-buttons .adp-btn {
+    flex: 1 1 0;
   }
 }

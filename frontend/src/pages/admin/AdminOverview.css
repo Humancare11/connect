@@ -1,0 +1,441 @@
+/* AdminOverview.css — /admin-dashboard only. Prefix: adx-. Nothing here targets shared .ad-*, .adp-* or .ado-* selectors. */
+
+.adx-page {
+  --adx-navy: #01164a;
+  --adx-ink: #0f1f3d;
+  --adx-muted: #52627f;
+  --adx-border: #e2e8f0;
+  --adx-card: #ffffff;
+  --adx-blue: #0e6ceb;
+  --adx-green: #047857;
+  --adx-amber: #b45309;
+  --adx-red: #b91c1c;
+  max-width: 1480px;
+  margin-inline: auto;
+  padding-bottom: 96px; /* keeps the last row clear of the floating support/chat widget */
+  color: var(--adx-ink);
+}
+
+.adx-page *,
+.adx-page *::before,
+.adx-page *::after {
+  box-sizing: border-box;
+}
+
+.adx-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Header ── */
+.adx-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px 20px;
+  margin-bottom: 18px;
+}
+
+.adx-heading {
+  min-width: 0;
+}
+
+.adx-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--adx-blue);
+}
+
+.adx-title {
+  margin: 4px 0 2px;
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.adx-sub {
+  margin: 0;
+  font-size: 14px;
+  color: var(--adx-muted);
+}
+
+.adx-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.adx-search {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.adx-search input {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--adx-border);
+  border-radius: 10px;
+  background: var(--adx-card);
+  color: var(--adx-ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.adx-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--adx-navy);
+  border-radius: 10px;
+  background: var(--adx-navy);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.adx-btn--ghost {
+  background: var(--adx-card);
+  color: var(--adx-navy);
+  border-color: var(--adx-border);
+}
+
+.adx-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.adx-page a:focus-visible,
+.adx-page button:focus-visible,
+.adx-page input:focus-visible {
+  outline: 3px solid var(--adx-blue);
+  outline-offset: 2px;
+}
+
+/* ── Errors ── */
+.adx-load-error,
+.adx-section-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.adx-load-error {
+  margin-bottom: 14px;
+}
+
+/* ── Summary cards ── */
+.adx-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.adx-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 16px 18px;
+  border: 1px solid var(--adx-border);
+  border-left: 4px solid var(--adx-blue);
+  border-radius: 12px;
+  background: var(--adx-card);
+  box-shadow: 0 1px 2px rgba(15, 31, 61, 0.06);
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.adx-stat--green { border-left-color: var(--adx-green); }
+.adx-stat--amber { border-left-color: var(--adx-amber); }
+.adx-stat--red { border-left-color: var(--adx-red); }
+
+.adx-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--adx-muted);
+  overflow-wrap: anywhere;
+}
+
+.adx-stat-value {
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .adx-stat:hover,
+  .adx-metric:hover,
+  .adx-status:hover {
+    box-shadow: 0 4px 14px rgba(15, 31, 61, 0.12);
+    border-color: #c3cfe2;
+  }
+}
+
+/* ── Attention banner ── */
+.adx-attention {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  background: #fff7ed;
+  color: #7c2d12;
+  font-size: 14px;
+}
+
+.adx-attention--clear {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #065f46;
+}
+
+.adx-attention-title {
+  flex: 0 0 auto;
+}
+
+.adx-attention-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+}
+
+.adx-attention-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.adx-attention-count {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Section cards ── */
+.adx-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.adx-card {
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 18px;
+  border: 1px solid var(--adx-border);
+  border-radius: 14px;
+  background: var(--adx-card);
+  box-shadow: 0 1px 2px rgba(15, 31, 61, 0.06);
+}
+
+.adx-grid-2 > .adx-card {
+  margin-bottom: 0;
+}
+
+.adx-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 14px;
+}
+
+.adx-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.adx-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--adx-blue);
+  text-decoration: none;
+}
+
+.adx-link:hover {
+  text-decoration: underline;
+}
+
+.adx-link--block {
+  margin-top: 6px;
+}
+
+.adx-muted {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--adx-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ── Metrics & status tiles ── */
+.adx-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 10px;
+}
+
+.adx-metric,
+.adx-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 12px 14px;
+  border: 1px solid var(--adx-border);
+  border-radius: 10px;
+  background: #f8fafc;
+  color: inherit;
+  text-decoration: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.adx-metric-value,
+.adx-status-value {
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.adx-metric--amber .adx-metric-value { color: var(--adx-amber); }
+.adx-metric--red .adx-metric-value { color: var(--adx-red); }
+
+.adx-metric-label,
+.adx-status-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--adx-muted);
+  overflow-wrap: anywhere;
+}
+
+.adx-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
+  gap: 10px;
+}
+
+.adx-status-meter {
+  display: block;
+  height: 4px;
+  margin-top: 4px;
+  border-radius: 2px;
+  background: var(--adx-border);
+  overflow: hidden;
+}
+
+.adx-status-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--adx-blue);
+}
+
+/* ── Analytics bars ── */
+.adx-bar + .adx-bar {
+  margin-top: 12px;
+}
+
+.adx-bar-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.adx-bar-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.adx-bar-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.adx-bar-track {
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 4px;
+  background: var(--adx-border);
+  overflow: hidden;
+}
+
+.adx-bar-fill {
+  height: 100%;
+  background: var(--adx-blue);
+}
+
+/* ── Wider screens ── */
+@media (min-width: 1000px) {
+  .adx-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .adx-summary {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .adx-card { padding: 14px; }
+  .adx-stat { padding: 14px; }
+  .adx-search { flex-basis: 100%; }
+  .adx-tools { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adx-stat,
+  .adx-metric,
+  .adx-status {
+    transition: none;
+  }
+}

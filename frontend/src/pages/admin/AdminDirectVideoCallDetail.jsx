@@ -4,35 +4,22 @@ import api from "../../api";
 import socket, { setSocketAuthRole } from "../../socket";
 import { useAdmin } from "../../context/AdminContext";
 import "./AdminDirectVideoConsultation.css";
+import { formatDate, roleLabel } from "./callReport/reportUtils";
+import ProblemsCard from "./callReport/ProblemsCard";
+import ParticipantsCard from "./callReport/ParticipantsCard";
+import LiveCard from "./callReport/LiveCard";
+import TimelineCard from "./callReport/TimelineCard";
 
-const CONNECTION_STATE_COLORS = {
-  connected: "#16a34a",
-  connecting: "#d97706",
-  new: "#6b7280",
-  disconnected: "#dc2626",
-  failed: "#dc2626",
-  closed: "#6b7280",
-};
-
-function formatDate(value) {
-  if (!value) return "-";
-  return new Date(value).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-}
-
-function roleLabel(role) {
-  if (role === "doctor") return "Doctor";
-  if (role === "patient") return "Patient";
-  if (role === "initiator") return "Host";
-  if (role === "guest") return "Guest";
-  return "Participant";
-}
+const DIRECT_PARTICIPANT_COLUMNS = [
+  { header: "Role", render: (p) => roleLabel(p.role) },
+  { header: "Device", render: (p) => [p.device, p.browser, p.os].filter(Boolean).join(", ") || "-" },
+  { header: "Joined", render: (p) => formatDate(p.joinedAt) },
+  { header: "Last seen", render: (p) => formatDate(p.lastSeenAt) },
+  { header: "Connection", render: (p) => p.connectionState },
+  { header: "Mic", render: (p) => (p.isMicOff === null ? "-" : p.isMicOff ? "Off" : "On") },
+  { header: "Camera", render: (p) => (p.isCamOff === null ? "-" : p.isCamOff ? "Off" : "On") },
+  { header: "IP (masked)", render: (p) => p.maskedIp || "-" },
+];
 
 export default function AdminDirectVideoCallDetail() {
   const { roomId } = useParams();
@@ -44,7 +31,6 @@ export default function AdminDirectVideoCallDetail() {
   const [actionBusy, setActionBusy] = useState("");
   const [actionNotice, setActionNotice] = useState("");
   const [confirmForceEnd, setConfirmForceEnd] = useState(false);
-  const [confirmDeleteTimeline, setConfirmDeleteTimeline] = useState(false);
 
   // Live view — automatic for as long as this report page is open, no
   // button. Samples are keyed by guestId; never persisted anywhere, just
@@ -66,7 +52,7 @@ export default function AdminDirectVideoCallDetail() {
     socket.off("direct-call-stats", handleLiveSample);
   }, [roomId, handleLiveSample]);
 
-  const startWatching = useCallback(async () => {
+  const startWatching = useCallback(async (isCancelled = () => false) => {
     // This admin socket has typically never connected before this report
     // page mounted — no other admin page uses it. If the admin's access
     // token has since expired (e.g. they had this report open, idle, past
@@ -76,6 +62,12 @@ export default function AdminDirectVideoCallDetail() {
     // (isAdminSocket() fails closed on the server for an unauthenticated
     // socket).
     await api.post("/api/auth/refresh", null, { authRole: "admin", skipAuthRefresh: true }).catch(() => {});
+    // The refresh is async: if the page unmounted (or the room changed, or
+    // StrictMode re-ran this effect) while it was in flight, stopWatching()
+    // already ran as a no-op because nothing was watching yet. Continuing
+    // would join the watcher room after the admin left, with nothing left
+    // to ever leave it.
+    if (isCancelled()) return;
     setSocketAuthRole("admin");
     if (socket.connected) {
       // Already connected under a possibly-stale identity (e.g. connected
@@ -96,8 +88,12 @@ export default function AdminDirectVideoCallDetail() {
   // telemetry cadence and only the current page's lifetime controls that,
   // never leaving it thinking a closed page is still watching.
   useEffect(() => {
-    startWatching();
-    return () => stopWatching();
+    let cancelled = false;
+    startWatching(() => cancelled);
+    return () => {
+      cancelled = true;
+      stopWatching();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
@@ -107,7 +103,12 @@ export default function AdminDirectVideoCallDetail() {
     api
       .get(`/api/direct-video-room/${roomId}/events`)
       .then((res) => setData(res.data))
-      .catch(() => setError("Failed to load this call's report."))
+      .catch((err) => {
+        const status = err.response?.status;
+        if (status === 404) setError("This call could not be found. It may have been removed.");
+        else if (status === 401 || status === 403) setError("You don't have access to this call's report.");
+        else setError("Failed to load this call's report.");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -142,14 +143,24 @@ export default function AdminDirectVideoCallDetail() {
       setActionNotice(err.response?.data?.msg || "Failed to delete the timeline.");
     } finally {
       setActionBusy("");
-      setConfirmDeleteTimeline(false);
     }
   };
 
   if (loading) return <div className="dvc-page dvc-empty">Loading call report…</div>;
-  if (error || !data) return <div className="dvc-page dvc-error">{error || "Not found."}</div>;
+  if (error || !data || !data.room) {
+    return (
+      <div className="dvc-page">
+        <div className="dvc-error">{error || "Not found."}</div>
+        <Link to="/admin-dashboard/direct-video-consultation" className="dvc-secondary">
+          ← Back to Direct Video Consultation
+        </Link>
+      </div>
+    );
+  }
 
-  const { room, participants, timeline } = data;
+  const { room } = data;
+  const participants = data.participants || [];
+  const timeline = data.timeline || [];
   const problems = data.problems || [];
 
   return (
@@ -163,43 +174,12 @@ export default function AdminDirectVideoCallDetail() {
             {formatDate(room.createdAt)} · Expires {formatDate(room.expiresAt)}
           </p>
         </div>
-        <Link to="/admin-dashboard/direct-video-consultation/calls" className="dvc-secondary">
-          ← Back to Calls
+        <Link to="/admin-dashboard/direct-video-consultation" className="dvc-secondary">
+          ← Back to Direct Video Consultation
         </Link>
       </div>
 
-      {problems.length > 0 && (
-        <div className="dvc-card dvc-problems">
-          <div className="dvc-form__title">
-            <h2>Problems</h2>
-            <p>
-              Things that went wrong during this call. Some causes are self-reported by the device
-              right before it disconnects and aren't always caught in time — see each item's
-              reliability note.
-            </p>
-          </div>
-          <ul className="dvc-problems__list">
-            {problems.map((p, i) => (
-              <li key={i}>
-                <div className="dvc-problems__head">
-                  <span className="dvc-problems__label">
-                    {p.who}: {p.label}
-                  </span>
-                  <span className={`dvc-problems__detectable dvc-problems__detectable--${p.detectable}`}>
-                    {p.detectable === "server"
-                      ? "Reliable"
-                      : p.detectable === "best-effort"
-                        ? "Best-effort"
-                        : "Not reliably detectable"}
-                  </span>
-                </div>
-                <p className="dvc-problems__suggestion">{p.suggestion}</p>
-                <span className="dvc-problems__time">{formatDate(p.at)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ProblemsCard problems={problems} />
 
       <div className="dvc-card">
         <div className="dvc-form__title">
@@ -255,157 +235,26 @@ export default function AdminDirectVideoCallDetail() {
         </div>
       </div>
 
-      <div className="dvc-card">
-        <div className="dvc-form__title">
-          <h2>Participants</h2>
-        </div>
-        {participants.length === 0 ? (
-          <div className="dvc-empty">Nobody has joined this room yet.</div>
-        ) : (
-          <div className="dvc-table-wrap">
-            <table className="dvc-table">
-              <thead>
-                <tr>
-                  <th>Role</th>
-                  <th>Device</th>
-                  <th>Joined</th>
-                  <th>Last seen</th>
-                  <th>Connection</th>
-                  <th>Mic</th>
-                  <th>Camera</th>
-                  <th>IP (masked)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {participants.map((p) => (
-                  <tr key={p.guestId}>
-                    <td>{roleLabel(p.role)}</td>
-                    <td>{[p.device, p.browser, p.os].filter(Boolean).join(", ") || "-"}</td>
-                    <td>{formatDate(p.joinedAt)}</td>
-                    <td>{formatDate(p.lastSeenAt)}</td>
-                    <td>{p.connectionState}</td>
-                    <td>{p.isMicOff === null ? "-" : p.isMicOff ? "Off" : "On"}</td>
-                    <td>{p.isCamOff === null ? "-" : p.isCamOff ? "Off" : "On"}</td>
-                    <td>{p.maskedIp || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <ParticipantsCard
+        participants={participants}
+        rowKey={(p) => p.guestId}
+        emptyText="Nobody has joined this room yet."
+        columns={DIRECT_PARTICIPANT_COLUMNS}
+      />
 
-      <div className="dvc-card">
-        <div className="dvc-form__title">
-          <h2>Live</h2>
-          <p>
-            Technical connection data only — mic/camera on-off, connection state, network quality.
-            Never audio, video, or an audio level. Updates automatically while this page is open, no
-            action needed.
-          </p>
-        </div>
-        {!liveOpen ? (
-          <div className="dvc-empty">Connecting…</div>
-        ) : participants.filter((p) => p.connectionState !== "left").length === 0 ? (
-          <div className="dvc-empty">Waiting for a participant to be in the call…</div>
-        ) : (
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            {participants
-              .filter((p) => p.connectionState !== "left")
-              .map((p) => {
-                const sample = liveSamples[p.guestId];
-                const stale = sample && Date.now() - sample.at > 6000;
-                return (
-                  <div
-                    key={p.guestId}
-                    style={{
-                      minWidth: 220,
-                      flex: "1 1 240px",
-                      border: "1px solid #e5e7eb",
-                      borderRadius: 12,
-                      padding: 14,
-                      opacity: stale ? 0.5 : 1,
-                    }}
-                  >
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "#0a1f44", marginBottom: 8 }}>
-                      {roleLabel(p.role)}
-                    </div>
-                    {!sample ? (
-                      <div style={{ fontSize: 12, color: "#9ca3af" }}>No samples yet…</div>
-                    ) : (
-                      <>
-                        <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#374151", flexWrap: "wrap" }}>
-                          <span>Mic: {sample.micOn ? "On" : "Off"}</span>
-                          <span>Camera: {sample.camOn ? "On" : "Off"}</span>
-                          <span style={{ color: CONNECTION_STATE_COLORS[sample.connectionState] || "#374151" }}>
-                            {sample.connectionState || "unknown"}
-                          </span>
-                        </div>
-                        <div style={{ display: "flex", gap: 10, fontSize: 12, color: "#6b7280", marginTop: 6, flexWrap: "wrap" }}>
-                          <span>RTT: {typeof sample.rtt === "number" ? `${sample.rtt}ms` : "-"}</span>
-                          <span>
-                            Loss: {typeof sample.packetLoss === "number" ? `${(sample.packetLoss * 100).toFixed(1)}%` : "-"}
-                          </span>
-                          <span>Jitter: {typeof sample.jitter === "number" ? `${sample.jitter}ms` : "-"}</span>
-                        </div>
-                        {stale && <div style={{ fontSize: 11, color: "#d97706", marginTop: 6 }}>No recent samples</div>}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-          </div>
-        )}
-      </div>
+      <LiveCard
+        liveOpen={liveOpen}
+        participants={participants}
+        liveSamples={liveSamples}
+        participantKey={(p) => p.guestId}
+      />
 
-      <div className="dvc-card">
-        <div className="dvc-form__title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2>Timeline</h2>
-          {isSuperAdmin && timeline.length > 0 && (
-            !confirmDeleteTimeline ? (
-              <button
-                type="button"
-                className="dvc-link-btn"
-                disabled={!!actionBusy}
-                onClick={() => setConfirmDeleteTimeline(true)}
-                style={{ borderColor: "#fecaca", background: "#fee2e2", color: "#991b1b" }}
-              >
-                Delete timeline data
-              </button>
-            ) : (
-              <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#991b1b" }}>
-                  Permanently deletes all {timeline.length} event(s). Are you sure?
-                </span>
-                <button
-                  type="button"
-                  className="dvc-link-btn"
-                  disabled={!!actionBusy}
-                  onClick={deleteTimeline}
-                  style={{ borderColor: "#fecaca", background: "#fee2e2", color: "#991b1b" }}
-                >
-                  {actionBusy === "deleteTimeline" ? "Deleting…" : "Yes, delete it"}
-                </button>
-                <button type="button" className="dvc-link-btn" onClick={() => setConfirmDeleteTimeline(false)}>
-                  Cancel
-                </button>
-              </span>
-            )
-          )}
-        </div>
-        {timeline.length === 0 ? (
-          <div className="dvc-empty">No events recorded yet.</div>
-        ) : (
-          <ul className="dvc-timeline">
-            {timeline.map((event, i) => (
-              <li key={i}>
-                <span className="dvc-timeline__time">{formatDate(event.at)}</span>
-                <span className="dvc-timeline__summary">{event.summary}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      <TimelineCard
+        timeline={timeline}
+        isSuperAdmin={isSuperAdmin}
+        actionBusy={actionBusy}
+        onDelete={deleteTimeline}
+      />
     </div>
   );
 }

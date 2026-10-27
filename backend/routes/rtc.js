@@ -65,11 +65,20 @@ router.get("/ice-servers", verifyToken, (req, res) => {
     ttlSeconds = ttlSeconds === null ? creds.ttlSeconds : Math.min(ttlSeconds, creds.ttlSeconds);
   }
 
-  if (!TURN_REGIONS.length) {
-    console.warn("[rtc] No TURN region is configured — serving STUN-only ICE config.");
+  // No relay credential could be minted (no region configured, or every
+  // configured region is missing its secret): calls across strict NATs / mobile
+  // carriers will fail. Tell the client so it can log/show it instead of
+  // silently spinning on "Connecting...".
+  const turnAdded = ttlSeconds !== null;
+  if (!turnAdded) {
+    console.warn("[rtc] No usable TURN region - serving STUN-only ICE config.");
   }
 
-  res.json({ iceServers, ttlSeconds: ttlSeconds || 0 });
+  res.json({
+    iceServers,
+    ttlSeconds: ttlSeconds || 0,
+    ...(turnAdded ? {} : { warning: "no_turn" }),
+  });
 });
 
 module.exports = router;

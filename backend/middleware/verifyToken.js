@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Partner = require("../models/Partner");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
+const { canViewEntries } = require("../utils/bookingEntry");
 
 // Test-only override so the e2e suite can exercise the refresh flow in
 // seconds instead of waiting out the real 15-minute window. Accepts a plain
@@ -306,6 +307,22 @@ const manualInvoiceAccess = (req, res, next) => {
   next();
 };
 
+// Appointment entries (doctor fee and payout record): admin and superadmin only, and both can edit. The payment admin
+// gets 403 on every entries route. The roles live in utils/bookingEntry.js.
+const entriesViewAccess = (req, res, next) => {
+  if (!canViewEntries(req.user?.role)) {
+    recordSecurityEvent(req, {
+      type: "unauthorized_access",
+      severity: "high",
+      title: "Unauthorized role attempted appointment-entries access",
+      resource: req.originalUrl,
+      metadata: { requiredRole: "admin/superadmin", actualRole: req.user?.role || "anonymous" },
+    });
+    return res.status(403).json({ msg: "Access denied." });
+  }
+  next();
+};
+
 const employeeAdminOnly = (req, res, next) => {
   if (req.user?.role !== "employeeadmin") {
     recordSecurityEvent(req, {
@@ -403,6 +420,7 @@ module.exports = {
   LIVE_CHAT_AGENT_ROLES,
   paymentAdminOnly,
   manualInvoiceAccess,
+  entriesViewAccess,
   employeeAdminOnly,
   partnerOnly,
   attachPartnerCompany,

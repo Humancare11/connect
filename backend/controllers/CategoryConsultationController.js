@@ -2,8 +2,6 @@ const CategoryConsultation = require("../models/CategoryConsultation");
 
 const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
-const { keyFromStoredValue } = require("../utils/uploadStorage");
-const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const {
   PaymentVerificationError,
   resolveCategoryFeeCents,
@@ -13,48 +11,8 @@ const {
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
-const {
-  notifyCategoryConsultationBooked,
-  notifyConsultationDoctorChanged,
-} = require("../utils/bookingNotifications");
-
-async function withPresignedMedicalReportUrls(consultation) {
-  if (!consultation) return consultation;
-
-  const plainConsultation =
-    typeof consultation.toObject === "function"
-      ? consultation.toObject()
-      : consultation;
-  const reports = Array.isArray(plainConsultation.medicalReports)
-    ? plainConsultation.medicalReports
-    : [];
-
-  if (!reports.length) return plainConsultation;
-
-  const medicalReports = await Promise.all(
-    reports.map(async (report) => {
-      const key = keyFromStoredValue(report?.key || report?.url);
-      if (!key) return report;
-
-      const signed = await createS3PresignedGetUrl(key);
-      // Only the short-lived presigned URL is returned to clients — a raw
-      // getS3ObjectUrl() would be a permanent, unauthenticated link to a PHI
-      // document (medical report) that keeps working even if the bucket's
-      // ACL is ever loosened, unlike a presigned URL which expires.
-      return {
-        ...report,
-        url: signed.url,
-        urlExpiresAt: signed.expiresAt,
-      };
-    })
-  );
-
-  return {
-    ...plainConsultation,
-    medicalReports,
-  };
-}
-
+const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
+const { bookingSourceFor } = require("../utils/bookingSource");
 
 // Create a new consultation
 const createCategoryConsultation = async (req, res) => {
@@ -152,6 +110,7 @@ const createCategoryConsultation = async (req, res) => {
         paymentAmount: paymentAmountFinal,
         paymentStatus,
         paymentGateway,
+        source: bookingSourceFor(req),
       });
     } catch (err) {
       // Payment was already claimed above (money was taken) but the write
@@ -207,28 +166,6 @@ const createCategoryConsultation = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Something went wrong.",
-      error: error.message,
-    });
-  }
-};
-
-// Get all consultations (admin)
-const getAllCategoryConsultations = async (req, res) => {
-  try {
-    const consultations = await CategoryConsultation.find()
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: consultations.length,
-      data: consultations,
-    });
-  } catch (error) {
-    console.error("Get Consultation Error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch consultations.",
       error: error.message,
     });
   }
@@ -306,236 +243,8 @@ const getDoctorCategoryConsultations = async (req, res) => {
   }
 };
 
-// Get Single Consultation
-const getCategoryConsultationById = async (req, res) => {
-  try {
-    const consultation = await CategoryConsultation.findById(req.params.id)
-      .populate(
-        "patientId",
-        "name email mobile gender country state dob"
-      )
-      .populate(
-        "assignedDoctorId",
-        "firstName surname email phoneNumber specialization qualification city state country"
-      );
-
-    if (!consultation) {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
-
-    res.json({
-      success: true,
-      data: await withPresignedMedicalReportUrls(consultation),
-    });
-  } catch (error) {
-    console.error("GET CATEGORY CONSULTATION ERROR:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message,
-    });
-  }
-};
-
-// Update Consultation Status
-// Statuses an admin may set directly. Completing and reopening are not
-// among them: they must go through PUT /api/appointments/:id/admin-complete
-// and /reopen, which run the shared lifecycle logic (slot check, socket
-// events, room eviction, notifications).
-const DIRECT_STATUS_VALUES = ["Pending", "Assigned", "Confirmed", "Cancelled"];
-
-const updateCategoryConsultationStatus = async (req, res) => {
-  try {
-    const requested = String(req.body?.status || "").trim().toLowerCase();
-    const status = DIRECT_STATUS_VALUES.find((value) => value.toLowerCase() === requested);
-
-    if (!status) {
-      const message = ["completed", "complete"].includes(requested)
-        ? "Use the Complete action (PUT /api/appointments/:id/admin-complete) to complete a consultation."
-        : `Invalid status. Allowed values: ${DIRECT_STATUS_VALUES.join(", ")}.`;
-      return res.status(400).json({ success: false, message });
-    }
-
-    const consultation = await CategoryConsultation.findById(req.params.id);
-
-    if (!consultation) {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
-
-    if (consultation.status === "Completed") {
-      return res.status(409).json({
-        success: false,
-        message: "This consultation is completed. Use the Reopen action (PUT /api/appointments/:id/reopen) first.",
-      });
-    }
-
-    consultation.status = status;
-
-    await consultation.save();
-
-    res.json({
-      success: true,
-      message: "Status updated successfully",
-      data: consultation,
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
-
-// Delete Consultation
-const deleteCategoryConsultation = async (req, res) => {
-  try {
-    const consultation = await CategoryConsultation.findById(req.params.id);
-
-    if (!consultation) {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
-
-    await consultation.deleteOne();
-
-    res.json({
-      success: true,
-      message: "Consultation deleted successfully",
-    });
-  } catch (error) {
-    console.error("Delete Consultation Error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
-
-const assignDoctor = async (req, res) => {
-  try {
-    const { doctorId, appointmentTime } = req.body;
-
-    if (!doctorId) {
-      return res.status(400).json({
-        success: false,
-        message: "Doctor ID is required",
-      });
-    }
-
-    // Peek at appointmentType (read-only) to decide whether to stamp
-    // assignedSlot — this doesn't mutate anything, so it's safe outside
-    // the atomic update below. Checked first to preserve the original
-    // "Consultation not found" vs "Doctor not found" precedence.
-    const existing = await CategoryConsultation.findById(req.params.id)
-      .select("appointmentType assignedDoctorId status")
-      .lean();
-
-    if (!existing) {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
-
-    // A completed consultation must be reopened first: that path runs the slot
-    // check and notifies everyone. Assigning here would otherwise silently set
-    // it back to Assigned.
-    if (existing.status === "Completed") {
-      return res.status(409).json({
-        success: false,
-        message: "This consultation is completed. Reopen it before changing the doctor.",
-      });
-    }
-
-    const doctor = await Enrollment.findById(doctorId);
-
-    if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
-    }
-
-    const update = {
-      assignedDoctorId: doctor._id,
-      assignedDoctorName: `${doctor.firstName} ${doctor.surname}`.trim(),
-      assignedAt: new Date(),
-      status: "Assigned",
-    };
-
-    // NEXT_AVAILABLE bookings have no patient-chosen slot, so the admin
-    // supplies the actual appointment time being assigned here. Ignored for
-    // FLEXIBLE_TIME bookings, which already have their slot set.
-    if (existing.appointmentType === "NEXT_AVAILABLE" && appointmentTime) {
-      update.assignedSlot = appointmentTime;
-    }
-
-    // Atomic $set-by-_id instead of the previous find → mutate 4 fields on
-    // the in-memory document → .save() pattern. .save() on a Mongoose
-    // document re-persists the whole document as it was loaded, so if
-    // another request (e.g. a payment webhook, or another admin) changed an
-    // unrelated field in between, that concurrent change could be silently
-    // clobbered. Scoping the write to $set on just these fields removes
-    // that lost-update window while still allowing intentional reassignment
-    // (the UI explicitly supports assigning a different doctor later).
-    const consultation = await CategoryConsultation.findOneAndUpdate(
-      { _id: req.params.id },
-      { $set: update },
-      { new: true }
-    );
-
-    if (!consultation) {
-      return res.status(404).json({
-        success: false,
-        message: "Consultation not found",
-      });
-    }
-
-    // Only when the doctor actually changed — re-assigning the same doctor
-    // must not re-email them. Fire-and-forget; never throws or rejects.
-    const previousEnrollmentId = existing.assignedDoctorId || null;
-    if (!previousEnrollmentId || String(previousEnrollmentId) !== String(doctor._id)) {
-      notifyConsultationDoctorChanged({
-        consultation,
-        newEnrollment: doctor,
-        previousEnrollmentId,
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "Doctor assigned successfully",
-      data: consultation,
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
-  }
-};
-
 module.exports = {
   createCategoryConsultation,
-  getAllCategoryConsultations,
   getMyCategoryConsultations,
   getDoctorCategoryConsultations,
-  getCategoryConsultationById,
-  updateCategoryConsultationStatus,
-  deleteCategoryConsultation,
-  assignDoctor,
 };

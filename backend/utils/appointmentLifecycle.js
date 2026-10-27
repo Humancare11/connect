@@ -12,17 +12,21 @@
 const mongoose = require("mongoose");
 const Appointment = require("../models/Appointment");
 const CategoryConsultation = require("../models/CategoryConsultation");
-const { sendPushToUser } = require("./pushNotifications");
-const { notifyDoctorAppointmentReopened } = require("./bookingNotifications");
+// Called through the module objects so tests can replace them.
+const push = require("./pushNotifications");
+const notifications = require("./bookingNotifications");
 
 // Same set the booking flow uses to decide whether a doctor's slot is taken.
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 const ACTIVE_CATEGORY_STATUSES = ["Assigned", "Confirmed"];
 
+// `code` is an optional machine-readable reason ("changed": another admin changed the
+// booking first; "slot_taken": the doctor is busy then) so a client can tell the 409s apart.
 class LifecycleError extends Error {
-  constructor(statusCode, message) {
+  constructor(statusCode, message, code = "") {
     super(message);
     this.statusCode = statusCode;
+    this.code = code;
   }
 }
 
@@ -79,17 +83,20 @@ async function completeLoaded(app, loaded) {
     // Lost a race: someone changed the status after we read it.
     const fresh = await Model.findById(doc._id).select("status").lean();
     if (fresh && isCompleteStatus(fresh.status)) return { appointment: doc, alreadyComplete: true };
-    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.");
+    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.", "changed");
   }
 
   emitStatus(app, loaded, "complete");
   app.get("evictAllFromAppointmentRoom")?.(doc._id, { reason: "completed" });
 
-  sendPushToUser(doc.patientId, {
-    title: "Appointment completed",
-    body: "Your appointment has been marked as complete.",
-    data: { type: "appointment", appointmentId: String(doc._id) },
-  });
+  // Testing bookings never message anyone.
+  if (doc.isTesting !== true) {
+    push.sendPushToUser(doc.patientId, {
+      title: "Appointment completed",
+      body: "Your appointment has been marked as complete.",
+      data: { type: "appointment", appointmentId: String(doc._id) },
+    });
+  }
 
   return { appointment: updated, alreadyComplete: false };
 }
@@ -104,7 +111,8 @@ async function assertSlotStillFree(loaded) {
   const conflictError = new LifecycleError(
     409,
     "This appointment can't be reopened: the doctor already has another active appointment at the same date and time. " +
-      "Resolve or reassign the other appointment first."
+      "Resolve or reassign the other appointment first.",
+    "slot_taken"
   );
 
   if (!isCategory) {
@@ -169,34 +177,40 @@ async function reopenLoaded(app, loaded, actor) {
         status: isCategory ? "Confirmed" : "confirmed",
         ...(isCategory ? {} : { sessionStarted: true }),
         reopenedByAdmin: { id: actor?.id || null, name: actor?.name || "Admin", at: new Date() },
+        // Same event, in the admin bookings fields: who reactivated the booking and when.
+        reactivatedBy: { id: actor?.id || null, name: actor?.name || "Admin", email: actor?.email || "" },
+        reactivatedAt: new Date(),
       },
     },
     { new: true }
   );
   if (!updated) {
-    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.");
+    throw new LifecycleError(409, "The appointment status just changed. Please refresh and try again.", "changed");
   }
 
   // Lift the post-completion block so the doctor and patient can rejoin now.
   app.get("allowAppointmentRoomRejoin")?.(doc._id);
   emitStatus(app, loaded, "confirmed", { reopened: true });
 
-  const data = { type: "appointment", appointmentId: String(doc._id) };
-  sendPushToUser(doc.patientId, {
-    title: "Appointment reopened",
-    body: "Your appointment has been reopened by our team.",
-    data,
-  });
-  // Doctors authenticate from the Doctor collection; push tokens are stored on
-  // User, so this is a no-op unless the doctor also has a registered device.
-  sendPushToUser(doctorUserIdOf(loaded), {
-    title: "Appointment reopened",
-    body: "An appointment has been reopened by an admin.",
-    data,
-  });
+  // Testing bookings never message anyone.
+  if (doc.isTesting !== true) {
+    const data = { type: "appointment", appointmentId: String(doc._id) };
+    push.sendPushToUser(doc.patientId, {
+      title: "Appointment reopened",
+      body: "Your appointment has been reopened by our team.",
+      data,
+    });
+    // Doctors authenticate from the Doctor collection; push tokens are stored on
+    // User, so this is a no-op unless the doctor also has a registered device.
+    push.sendPushToUser(doctorUserIdOf(loaded), {
+      title: "Appointment reopened",
+      body: "An appointment has been reopened by an admin.",
+      data,
+    });
 
-  // Email fallback for the doctor (never throws or rejects).
-  notifyDoctorAppointmentReopened({ appointment: doc, isCategory });
+    // Email fallback for the doctor (never throws or rejects).
+    notifications.notifyDoctorAppointmentReopened({ appointment: doc, isCategory });
+  }
 
   return { appointment: updated };
 }

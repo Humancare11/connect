@@ -368,7 +368,28 @@ function wasUpdatedAfterCreation(createdAt, updatedAt) {
 }
 
 // ─── Shared display sub-components ───────────────────────────────────────────
-function Section({ icon, title, children, accent }) {
+// Phones/tablets: lower sections collapse into tap-to-expand rows (see responsive reference). Desktop: always open.
+const NARROW_QUERY = "(max-width: 1023px)";
+function useIsNarrow() {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia(NARROW_QUERY).matches,
+  );
+  useEffect(() => {
+    if (!window.matchMedia) return undefined;
+    const mq = window.matchMedia(NARROW_QUERY);
+    const onChange = () => setNarrow(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return narrow;
+}
+
+function Section({ icon, title, children, accent, collapsible }) {
+  const narrow = useIsNarrow();
+  const [open, setOpen] = useState(false);
+  const canCollapse = Boolean(collapsible) && narrow;
+  const show = !canCollapse || open;
+  const Head = canCollapse ? "button" : "div";
   return (
     <div
       style={{
@@ -379,10 +400,11 @@ function Section({ icon, title, children, accent }) {
         marginBottom: 20,
       }}
     >
-      <div
+      <Head
+        className={`adp-dp-sec-head${canCollapse ? " adp-dp-sec-head--btn" : ""}`}
+        {...(canCollapse ? { type: "button", "aria-expanded": open, onClick: () => setOpen((v) => !v) } : {})}
         style={{
-          padding: "14px 22px",
-          borderBottom: "1px solid #f1f5f9",
+          borderBottom: show ? "1px solid #f1f5f9" : "0",
           display: "flex",
           alignItems: "center",
           gap: 10,
@@ -415,8 +437,23 @@ function Section({ icon, title, children, accent }) {
             EDITING
           </span>
         )}
-      </div>
-      <div style={{ padding: "18px 22px" }}>{children}</div>
+        {canCollapse && (
+          <span
+            aria-hidden="true"
+            style={{
+              marginLeft: "auto",
+              fontSize: 18,
+              lineHeight: 1,
+              color: "#64748b",
+              transform: open ? "rotate(90deg)" : "none",
+              transition: "transform 0.15s",
+            }}
+          >
+            ›
+          </span>
+        )}
+      </Head>
+      {show && <div className="adp-dp-sec-body">{children}</div>}
     </div>
   );
 }
@@ -428,6 +465,7 @@ function Field({ label, value, full }) {
         flexDirection: "column",
         gap: 3,
         gridColumn: full ? "1/-1" : undefined,
+        minWidth: 0,
       }}
     >
       <span
@@ -446,6 +484,7 @@ function Field({ label, value, full }) {
           fontSize: 14,
           color: value ? "#0f172a" : "#cbd5e1",
           fontStyle: value ? "normal" : "italic",
+          overflowWrap: "anywhere",
         }}
       >
         {value || "—"}
@@ -527,18 +566,9 @@ function ProfileChangeSummary({ changes = [], requestedAt }) {
               {change.label || change.field}
             </div>
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 0,
-              }}
+              className="adp-dp-diff"
             >
-              <div
-                style={{
-                  padding: "12px 14px",
-                  borderRight: "1px solid #f1f5f9",
-                }}
-              >
+              <div className="adp-dp-diff-before">
                 <div
                   style={{
                     fontSize: 11,
@@ -1807,7 +1837,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
   };
   const G2 = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))",
     gap: "16px 20px",
   };
 
@@ -2397,7 +2427,7 @@ function AdminEditForm({ enrollment, onSaved, onCancel, showToast }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 280px), 1fr))",
             gap: 14,
           }}
         >
@@ -2967,12 +2997,66 @@ export default function AdminDoctorProfile() {
     (e.approvalStatus !== "approved" && progress.completedSteps >= 5);
 
   return (
-    <div style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 40 }}>
+    <div className="adp-dp" style={{ maxWidth: 980, margin: "0 auto", paddingBottom: 40 }}>
       <style>
         {`
           @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.4; }
+          }
+          .adp-dp-sec-head { padding: 14px 22px; }
+          .adp-dp-sec-head--btn { width: 100%; border: 0; font: inherit; text-align: left; cursor: pointer; }
+          .adp-dp-sec-body { padding: 18px 22px; container-type: inline-size; }
+          .adp-dp-fields { display: grid; gap: 16px 24px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+          .adp-dp-docs { display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+          .adp-dp-days { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr)); }
+          @container (max-width: 799px) {
+            .adp-dp-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .adp-dp-docs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          }
+          @container (max-width: 519px) {
+            .adp-dp-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+          }
+          @container (max-width: 419px) {
+            .adp-dp-docs { grid-template-columns: minmax(0, 1fr); }
+          }
+          @container (max-width: 279px) {
+            .adp-dp-fields { grid-template-columns: minmax(0, 1fr); }
+          }
+          .adp-dp-badges { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+          .adp-dp-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 18px 22px; }
+          .adp-dp-bar-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+          .adp-dp-bar-btn { padding: 9px 20px; }
+          @media (max-width: 560px) {
+            .adp-dp-badges { width: 100%; align-items: center; }
+            .adp-dp-bar { padding: 12px; }
+            .adp-dp-bar-btn { padding: 9px 12px; }
+            .adp-dp-bar-actions { gap: 8px; }
+          }
+          .adp-dp-split { grid-template-columns: minmax(0, 1fr) auto; }
+          .adp-dp-diff { display: grid; grid-template-columns: 1fr 1fr; }
+          .adp-dp-diff-before { border-right: 1px solid #f1f5f9; }
+          .adp-dp-diff > div { min-width: 0; padding: 12px 14px; }
+          .adp-dp input:focus-visible,
+          .adp-dp select:focus-visible,
+          .adp-dp textarea:focus-visible {
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+            border-color: #2563eb;
+          }
+          @media (max-width: 700px) {
+            .adp-dp-split { grid-template-columns: minmax(0, 1fr); }
+          }
+          @media (max-width: 520px) {
+            .adp-dp-diff { grid-template-columns: minmax(0, 1fr); }
+            .adp-dp-diff-before { border-right: 0; border-bottom: 1px solid #f1f5f9; }
+          }
+          @media (max-width: 480px) {
+            .adp-dp-sec-head { padding: 12px 14px; }
+            .adp-dp-sec-body { padding: 14px; }
+          }
+          @media (max-width: 768px) {
+            .adp-dp-nav button,
+            .adp-dp-split button { min-height: 40px; }
           }
         `}
       </style>
@@ -2987,11 +3071,13 @@ export default function AdminDoctorProfile() {
 
       {/* ── Top nav ── */}
       <div
+        className="adp-dp-nav"
         style={{
           display: "flex",
           alignItems: "center",
           gap: 14,
           marginBottom: 24,
+          minWidth: 0,
         }}
       >
         <button
@@ -3012,7 +3098,7 @@ export default function AdminDoctorProfile() {
         >
           ← Back
         </button>
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, color: "#94a3b8", fontWeight: 600 }}>
             DOCTOR PROFILE{" "}
             {editMode && <span style={{ color: "#2563eb" }}>· EDIT MODE</span>}
@@ -3023,6 +3109,7 @@ export default function AdminDoctorProfile() {
               fontSize: 20,
               fontWeight: 800,
               color: "#0f172a",
+              overflowWrap: "anywhere",
             }}
           >
             {fullName}
@@ -3075,7 +3162,7 @@ export default function AdminDoctorProfile() {
             </span>
           )}
         </div>
-        <div style={{ flex: 1, minWidth: 200 }}>
+        <div style={{ flex: 1, minWidth: "min(200px, 100%)", overflowWrap: "anywhere" }}>
           <div
             style={{
               fontSize: 22,
@@ -3125,14 +3212,7 @@ export default function AdminDoctorProfile() {
             </div>
           )}
         </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-            alignItems: "flex-end",
-          }}
-        >
+        <div className="adp-dp-badges">
           <span
             style={{
               background: statusMeta.bg,
@@ -3202,9 +3282,9 @@ export default function AdminDoctorProfile() {
 
       {/* ── Progress & Actions ── */}
       <div
+        className="adp-dp-split"
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr auto",
           gap: 20,
           marginBottom: 24,
           alignItems: "start",
@@ -3239,7 +3319,7 @@ export default function AdminDoctorProfile() {
             display: "flex",
             flexDirection: "column",
             gap: 10,
-            minWidth: 190,
+            minWidth: "min(190px, 100%)",
           }}
         >
           <div
@@ -3470,11 +3550,7 @@ export default function AdminDoctorProfile() {
               </div>
             )}
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
-                gap: "16px 24px",
-              }}
+              className="adp-dp-fields"
             >
               <Field label="First Name" value={e.firstName} />
               <Field label="Surname" value={e.surname} />
@@ -3493,11 +3569,7 @@ export default function AdminDoctorProfile() {
           {/* ── Location ── */}
           <Section icon="📍" title="Location">
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
-                gap: "16px 24px",
-              }}
+              className="adp-dp-fields"
             >
               <Field label="Country" value={getCountryName(e.country)} />
               <Field label="State" value={getStateName(e.state, e.country)} />
@@ -3508,13 +3580,9 @@ export default function AdminDoctorProfile() {
           </Section>
 
           {/* ── Professional ── */}
-          <Section icon="🩺" title="Professional Details">
+          <Section collapsible icon="🩺" title="Professional Details">
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
-                gap: "16px 24px",
-              }}
+              className="adp-dp-fields"
             >
               <Field label="Specialization" value={e.specialization} />
               <Field label="Sub-Specialization" value={e.subSpecialization} />
@@ -3560,11 +3628,7 @@ export default function AdminDoctorProfile() {
                   Clinic / Practice
                 </div>
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
-                    gap: "16px 24px",
-                  }}
+                  className="adp-dp-fields"
                 >
                   <Field label="Clinic Name" value={e.clinicName} />
                   <Field label="Clinic Address" value={e.clinicAddress} full />
@@ -3704,13 +3768,9 @@ export default function AdminDoctorProfile() {
           </Section>
 
           {/* ── Documents ── */}
-          <Section icon="📋" title="Submitted Documents">
+          <Section collapsible icon="📋" title="Submitted Documents">
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(280px,1fr))",
-                gap: 14,
-              }}
+              className="adp-dp-docs"
             >
               <DocItem
                 label="Government ID / Nationality Proof"
@@ -3740,7 +3800,7 @@ export default function AdminDoctorProfile() {
           </Section>
 
           {/* ── Availability ── */}
-          <Section icon="🗓️" title="Availability Schedule">
+          <Section collapsible icon="🗓️" title="Availability Schedule">
             {e.timezone && (
               <div
                 style={{
@@ -3765,11 +3825,7 @@ export default function AdminDoctorProfile() {
               typeof e.availability === "object" &&
               Object.keys(e.availability).length > 0 ? (
               <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
-                  gap: 10,
-                }}
+                className="adp-dp-days"
               >
                 {DAYS.map((day) => {
                   const dayData = e.availability[day];
@@ -3789,6 +3845,8 @@ export default function AdminDoctorProfile() {
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: 4,
                           marginBottom: dayData.enabled ? 8 : 0,
                         }}
                       >
@@ -3843,13 +3901,9 @@ export default function AdminDoctorProfile() {
           </Section>
 
           {/* ── Payout ── */}
-          <Section icon="💳" title="Payout Information">
+          <Section collapsible icon="💳" title="Payout Information">
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
-                gap: "16px 24px",
-              }}
+              className="adp-dp-fields"
             >
               <Field label="Bank Name" value={e.bankName} />
               {/* <Field label="Account Holder" value={e.accountHolderName} /> */}
@@ -3885,7 +3939,7 @@ export default function AdminDoctorProfile() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 200px), 1fr))",
                     gap: "12px 24px",
                   }}
                 >
@@ -3905,23 +3959,20 @@ export default function AdminDoctorProfile() {
 
           {/* ── Bottom action bar ── */}
           <div
+            className="adp-dp-bar"
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "18px 22px",
               background: "#fff",
               border: "1px solid #e2e8f0",
               borderRadius: 14,
             }}
           >
             <button
+              className="adp-dp-bar-btn"
               onClick={() => navigate(backPath)}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "9px 20px",
                 borderRadius: 8,
                 border: "1.5px solid #e2e8f0",
                 background: "#fff",
@@ -3933,11 +3984,11 @@ export default function AdminDoctorProfile() {
             >
               ← Back to List
             </button>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="adp-dp-bar-actions">
               <button
+                className="adp-dp-bar-btn"
                 onClick={() => setEditMode(true)}
                 style={{
-                  padding: "9px 20px",
                   borderRadius: 8,
                   border: "1.5px solid #2563eb",
                   background: "#eff6ff",

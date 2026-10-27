@@ -3,7 +3,7 @@
    navy rule, FROM / BILL TO columns, meta strip, navy service table, Total Due
    block, STATUS band and TERMS footer, matching the issued PDF. */
 
-.mi-page {
+.mi-inv-page {
   --mi-bg: #eceff3;
   --mi-sheet: #ffffff;
   --mi-ink: #1a1a1a;
@@ -21,12 +21,14 @@
   --mi-due: #9a5b00;
   --mi-danger: #b42318;
   --mi-danger-soft: #fdf0f0;
+  --mi-teal: #0f766e;
+  --mi-teal-dark: #115e59;
   --mi-radius: 3px;
   --mi-shadow:
     0 1px 2px rgba(26, 26, 26, 0.05), 0 10px 30px rgba(26, 26, 26, 0.07);
   --mi-serif: var(--font-secondary);
 
-  max-width: 1000px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 32px 20px 96px;
   box-sizing: border-box;
@@ -37,9 +39,9 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.mi-page *,
-.mi-page *::before,
-.mi-page *::after {
+.mi-inv-page *,
+.mi-inv-page *::before,
+.mi-inv-page *::after {
   box-sizing: border-box;
 }
 
@@ -103,7 +105,7 @@
   border: 1px solid var(--mi-line);
   border-radius: var(--mi-radius);
   box-shadow: var(--mi-shadow);
-  padding: 52px 60px 36px;
+  padding: 44px 48px 32px;
   margin-bottom: 28px;
 }
 
@@ -617,7 +619,7 @@
 
 .mi-btn:focus-visible,
 .mi-icon-btn:focus-visible,
-.mi-check input:focus-visible {
+.mi-inv-check input:focus-visible {
   outline: 2px solid var(--mi-blue);
   outline-offset: 2px;
 }
@@ -802,7 +804,7 @@
 
 /* --------------------------------------------------------- history card -- */
 
-.mi-card {
+.mi-inv-card {
   background: var(--mi-sheet);
   border: 1px solid var(--mi-line);
   border-radius: var(--mi-radius);
@@ -810,7 +812,7 @@
   padding: 28px 32px 32px;
 }
 
-.mi-card__head {
+.mi-inv-card__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -821,7 +823,7 @@
   border-bottom: 3px solid var(--mi-navy);
 }
 
-.mi-card__title h2 {
+.mi-inv-card__title h2 {
   margin: 6px 0 0;
   font-family: var(--font-primary);
   font-size: 24px;
@@ -1129,7 +1131,7 @@
   color: var(--mi-paid);
 }
 
-.mi-actions {
+.mi-inv-actions {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1138,7 +1140,7 @@
 
 /* -------------------------------------------------------------- modal ---- */
 
-.mi-modal {
+.mi-inv-modal {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -1156,7 +1158,7 @@
   }
 }
 
-.mi-modal__panel {
+.mi-inv-modal__panel {
   width: min(460px, 100%);
   max-height: 90vh;
   overflow-y: auto;
@@ -1169,7 +1171,7 @@
   box-shadow: 0 24px 64px rgba(26, 26, 26, 0.3);
 }
 
-.mi-modal__head {
+.mi-inv-modal__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -1178,7 +1180,7 @@
   border-bottom: 3px solid var(--mi-navy);
 }
 
-.mi-modal__head h3 {
+.mi-inv-modal__head h3 {
   margin: 6px 0 0;
   font-size: 18px;
   font-weight: 700;
@@ -1206,7 +1208,7 @@
   font-weight: 700;
 }
 
-.mi-check {
+.mi-inv-check {
   display: flex;
   align-items: flex-start;
   gap: 11px;
@@ -1217,7 +1219,7 @@
   cursor: pointer;
 }
 
-.mi-check input {
+.mi-inv-check input {
   margin-top: 2px;
   width: 16px;
   height: 16px;
@@ -1226,7 +1228,7 @@
   cursor: pointer;
 }
 
-.mi-check span {
+.mi-inv-check span {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -1234,14 +1236,14 @@
   min-width: 0;
 }
 
-.mi-check small {
+.mi-inv-check small {
   font-weight: 400;
   font-size: 12.5px;
   color: var(--mi-ink-soft);
   overflow-wrap: anywhere;
 }
 
-.mi-modal__note {
+.mi-inv-modal__note {
   margin: 0;
   padding: 14px;
   background: var(--mi-blue-soft);
@@ -1253,258 +1255,656 @@
   overflow-wrap: anywhere;
 }
 
-.mi-modal__buttons {
+.mi-inv-modal__buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
+/* ----------------------------------------------- Bill To field grid ------- */
+
+.mi-bill {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas:
+    "partner ."
+    "company email"
+    "contact address";
+  gap: 6px 16px;
+}
+
+.mi-bill .mi-line {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.mi-line--partner {
+  grid-area: partner;
+}
+
+.mi-line--company {
+  grid-area: company;
+}
+
+.mi-line--email {
+  grid-area: email;
+}
+
+.mi-line--contact {
+  grid-area: contact;
+}
+
+.mi-line--address {
+  grid-area: address;
+}
+
+/* The label is 11px / readable grey (was 9px #b0b0b0, about 2.1:1). */
+.mi-line__label,
+.mi-items__mlabel {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* ------------------------------------------------- accordion sections ---- */
+
+.mi-sec__body[hidden] {
+  display: none;
+}
+
+.mi-sec--acc {
+  margin: 0 0 12px;
+  background: #fff;
+  border: 1px solid #c9d3e0;
+  border-radius: var(--mi-radius);
+}
+
+.mi-sec--acc .mi-sec__body {
+  padding: 14px 12px 12px;
+  border-top: 1px solid var(--mi-line);
+}
+
+.mi-acc__heading {
+  margin: 0;
+  font: inherit;
+}
+
+.mi-acc__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mi-navy);
+  text-align: left;
+  background: var(--mi-blue-soft);
+  border: 0;
+  border-radius: calc(var(--mi-radius) - 1px);
+  cursor: pointer;
+}
+
+.mi-acc__btn:focus-visible {
+  outline: 2px solid var(--mi-blue);
+  outline-offset: -2px;
+}
+
+.mi-acc__chevron {
+  flex: none;
+  transition: transform var(--duration-fast) ease;
+}
+
+.mi-acc__btn[aria-expanded="true"] .mi-acc__chevron {
+  transform: rotate(180deg);
+}
+
+/* Inside an accordion the blocks sit in the body, so drop their own margins. */
+.mi-sec--acc .mi-doc__block:last-child {
+  margin-bottom: 0;
+}
+
+.mi-sec--acc .mi-items__add {
+  margin: 12px 0 0;
+}
+
+/* --------------------------------------------------- buttons & flags ----- */
+
+.mi-btn--generate {
+  background: var(--mi-teal);
+  border-color: var(--mi-teal);
+  color: #fff;
+}
+
+.mi-btn--generate:hover:not(:disabled) {
+  background: var(--mi-teal-dark);
+  border-color: var(--mi-teal-dark);
+}
+
+.mi-btn--outline {
+  background: #fff;
+  border-color: var(--mi-blue);
+  color: var(--mi-blue);
+}
+
+.mi-btn--outline:hover:not(:disabled) {
+  background: var(--mi-blue-soft);
+}
+
+.mi-email-flag__reason {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.mi-inv-page--wide .mi-email-flag__reason {
+  max-width: 190px;
+}
+
+/* Keep the 7-column table inside the card at ~1000px of page width. */
+.mi-inv-page--wide .mi-table thead th,
+.mi-inv-page--wide .mi-table tbody td {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.mi-inv-page--wide .mi-cell-muted {
+  white-space: normal;
+  min-width: 92px;
+}
+
+.mi-inv-page--wide .mi-desc {
+  max-width: 190px;
+}
+
+.mi-inv-page--wide .mi-person span {
+  max-width: 180px;
+}
+
+.mi-items-foot {
+  display: block;
+}
+
+/* ------------------------------------------------------- ⋮ row menu ----- */
+
+.mi-rowmenu-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.mi-rowmenu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: var(--mi-ink-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--mi-radius);
+  cursor: pointer;
+}
+
+.mi-rowmenu-btn:hover,
+.mi-rowmenu-btn[aria-expanded="true"] {
+  background: #f1f3f6;
+  border-color: #d7dbe3;
+}
+
+.mi-rowmenu-btn:focus-visible,
+.mi-rowmenu__item:focus-visible {
+  outline: 2px solid var(--mi-blue);
+  outline-offset: 2px;
+}
+
+.mi-rowmenu {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  z-index: 30;
+  min-width: 188px;
+  padding: 4px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--mi-line);
+  border-radius: var(--mi-radius);
+  box-shadow: var(--mi-shadow);
+}
+
+.mi-rowmenu__item {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--mi-blue);
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.mi-rowmenu__item:hover:not(:disabled),
+.mi-rowmenu__item:focus-visible {
+  background: var(--mi-blue-soft);
+}
+
+.mi-rowmenu__item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* --------------------------------------------------------- responsive ---- */
 
-@media (max-width: 900px) {
-  .mi-doc {
-    padding: 34px 26px 28px;
-  }
+/* The layout tier (wide / mid / compact / xs) is measured from this page's own
+   width in ManualInvoices.jsx (useInvoiceLayout) and applied as a
+   .mi-inv-page--* class, so it follows the space the shell leaves.
+   Wide is the default styling above. --stack = everything below wide. */
 
-  .mi-doc__title {
-    font-size: 28px;
-  }
-
-  .mi-doc__logo {
-    height: 50px;
-  }
-
-  .mi-card {
-    padding: 24px 20px;
-  }
-
-  .mi-items__head,
-  .mi-items__row {
-    grid-template-columns: minmax(0, 1fr) 64px 88px 118px 28px;
-    gap: 10px;
-  }
+/* Wide: dense, side-by-side. */
+.mi-inv-page--wide .mi-doc__parties {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
 }
 
-@media (max-width: 820px) {
-  .mi-page {
-    padding: 20px 14px 72px;
-  }
-
-  .mi-doc__parties {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
-  }
-
-  /* Meta strip stacks two-up rather than squeezing four columns. */
-  .mi-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* With three cells, let the last one span the row instead of leaving a gap. */
-  .mi-meta--3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .mi-meta--3 .mi-meta__cell:last-child {
-    grid-column: 1 / -1;
-  }
-
-  .mi-meta__cell {
-    padding: 10px 8px 12px;
-  }
-
-  /* Service lines stack into label/value pairs. */
-  .mi-items__head {
-    display: none;
-  }
-
-  .mi-items__row {
-    grid-template-columns: 92px minmax(0, 1fr);
-    gap: 8px 12px;
-    padding: 16px 12px;
-    position: relative;
-    align-items: center;
-    border-bottom: 1px solid #e6e6e6;
-  }
-
-  .mi-items__mlabel {
-    display: block;
-  }
-
-  .mi-items__row .mi-input--num,
-  .mi-items__row .mi-input--center {
-    text-align: left;
-  }
-
-  .mi-items__row .mi-icon-btn {
-    position: absolute;
-    top: 8px;
-    right: 6px;
-  }
-
-  .mi-total__box {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .mi-statusbar__control .mi-input {
-    width: 100%;
-    min-width: 0;
-  }
-
-  /* History table becomes stacked cards; each cell prints its own header. */
-  .mi-table-wrap {
-    overflow-x: visible;
-  }
-
-  .mi-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
-
-  .mi-table tbody tr {
-    display: block;
-    margin-bottom: 12px;
-    border: 1px solid var(--mi-line);
-    border-radius: var(--mi-radius);
-  }
-
-  .mi-table tbody td {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 10px 14px;
-    text-align: right;
-  }
-
-  .mi-table tbody tr td:last-child {
-    border-bottom: 0;
-  }
-
-  .mi-table tbody tr:hover td {
-    background: transparent;
-  }
-
-  .mi-table tbody td::before {
-    content: attr(data-label);
-    flex: none;
-    padding-top: 3px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--mi-caption);
-    text-align: left;
-  }
-
-  .mi-person {
-    align-items: flex-end;
-  }
-
-  .mi-person span,
-  .mi-desc {
-    max-width: 100%;
-    text-align: right;
-  }
-
-  .mi-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 14px;
-  }
-
-  .mi-banner {
-    flex-wrap: wrap;
-  }
-
-  .mi-history-controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .mi-filter {
-    justify-content: space-between;
-  }
-
-  .mi-filter__select {
-    flex: 1;
-  }
-
-  .mi-pagination {
-    justify-content: center;
-  }
-
-  .mi-pagination__controls {
-    width: 100%;
-  }
-
-  .mi-pagination__controls .mi-btn {
-    flex: 1;
-  }
+.mi-inv-page--wide .mi-doc__actions {
+  align-items: center;
 }
 
-@media (max-width: 520px) {
-  .mi-doc {
-    padding: 24px 16px 24px;
-  }
+/* Stack: single-column sheet. */
+.mi-inv-page--stack {
+  padding: 20px 14px 72px;
+}
 
-  .mi-doc__masthead {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-  }
+.mi-inv-page--stack .mi-doc {
+  padding: 32px 28px 28px;
+}
 
-  .mi-doc__meta {
-    align-items: flex-start;
-    text-align: left;
-  }
+.mi-inv-page--stack .mi-doc__title {
+  font-size: 28px;
+}
 
-  .mi-doc__title {
-    font-size: 26px;
-  }
+.mi-inv-page--stack .mi-doc__logo {
+  height: 50px;
+}
 
-  .mi-meta {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.mi-inv-page--stack .mi-doc__parties {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  padding: 24px 0 18px;
+}
 
-  .mi-total__box {
-    font-size: 15px;
-  }
+.mi-inv-page--stack .mi-bill {
+  grid-template-areas:
+    "partner partner"
+    "company company"
+    "contact email"
+    "address address";
+}
 
-  .mi-statusbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
+.mi-inv-page--stack .mi-meta,
+.mi-inv-page--stack .mi-meta--3 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  border: 0;
+}
 
-  .mi-statusbar__control {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-  }
+.mi-inv-page--stack .mi-meta--3 .mi-meta__cell:last-child {
+  grid-column: 1 / -1;
+}
 
-  .mi-doc__actions .mi-btn--primary {
-    width: 100%;
-  }
+.mi-inv-page--stack .mi-meta__cell {
+  padding: 0;
+}
 
-  .mi-modal {
-    padding: 12px;
-  }
+.mi-inv-page--stack .mi-items-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
 
-  .mi-modal__panel {
-    padding: 20px;
-  }
+.mi-inv-page--stack .mi-items-foot .mi-items__add {
+  margin: 0;
+}
+
+.mi-inv-page--stack .mi-items-foot .mi-total {
+  margin: 0 0 0 auto;
+}
+
+.mi-inv-page--stack .mi-doc__actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.mi-inv-page--stack .mi-btn--generate {
+  width: 100%;
+}
+
+/* Mid: item table stays a table, with tighter columns. */
+.mi-inv-page--mid .mi-items__head,
+.mi-inv-page--mid .mi-items__row {
+  grid-template-columns: minmax(0, 1fr) 56px 96px 104px 28px;
+  gap: 10px;
+}
+
+.mi-inv-page--mid .mi-history-controls {
+  flex-wrap: nowrap;
+}
+
+/* Compact: phone. */
+.mi-inv-page--compact {
+  padding: 16px 12px 72px;
+}
+
+.mi-inv-page--compact .mi-doc {
+  padding: 24px 14px 20px;
+}
+
+.mi-inv-page--compact .mi-doc__masthead {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.mi-inv-page--compact .mi-doc__meta {
+  align-items: flex-end;
+  align-self: flex-end;
+}
+
+.mi-inv-page--compact .mi-doc__title {
+  font-size: 26px;
+}
+
+.mi-inv-page--compact .mi-bill {
+  display: block;
+}
+
+.mi-inv-page--compact .mi-bill .mi-line {
+  margin-bottom: 8px;
+}
+
+.mi-inv-page--xs .mi-meta,
+.mi-inv-page--xs .mi-meta--3 {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Line items become label/value rows. */
+.mi-inv-page--compact .mi-items__head {
+  display: none;
+}
+
+.mi-inv-page--compact .mi-items__row {
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px 12px;
+  padding: 16px 12px;
+  position: relative;
+  align-items: center;
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.mi-inv-page--compact .mi-items__mlabel {
+  display: block;
+}
+
+.mi-inv-page--compact .mi-items__row .mi-input--num,
+.mi-inv-page--compact .mi-items__row .mi-input--center {
+  text-align: left;
+}
+
+.mi-inv-page--compact .mi-items__row .mi-icon-btn {
+  position: absolute;
+  top: 8px;
+  right: 6px;
+}
+
+.mi-inv-page--compact .mi-items-foot {
+  display: block;
+}
+
+.mi-inv-page--compact .mi-total__box {
+  width: 100%;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.mi-inv-page--compact .mi-statusbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.mi-inv-page--compact .mi-statusbar__control {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.mi-inv-page--compact .mi-statusbar__control .mi-input {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Touch-friendly controls; 16px text stops iOS zooming on focus. */
+.mi-inv-page--compact .mi-input,
+.mi-inv-page--compact .mi-search__input {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.mi-inv-page--compact .mi-search__input {
+  padding-left: 34px;
+}
+
+.mi-inv-page--compact .mi-textarea {
+  min-height: 96px;
+}
+
+.mi-inv-page--compact .mi-btn {
+  min-height: 44px;
+}
+
+.mi-inv-page--compact .mi-icon-btn {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.mi-inv-page--compact .mi-banner {
+  flex-wrap: wrap;
+}
+
+/* Toolbar: two metric cards on phones. */
+.mi-inv-page--compact .mi-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.mi-inv-page--compact .mi-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mi-inv-page--compact .mi-metric {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--mi-sheet);
+  border: 1px solid var(--mi-line);
+  border-radius: var(--mi-radius);
+}
+
+.mi-inv-page--compact .mi-metric__value {
+  font-size: 26px;
+}
+
+/* History: toolbar rows. */
+.mi-inv-page--stack .mi-inv-card {
+  padding: 22px 18px;
+}
+
+.mi-inv-page--compact .mi-inv-card {
+  padding: 18px 12px;
+}
+
+.mi-inv-page--compact .mi-history-controls {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.mi-inv-page--compact .mi-filter {
+  justify-content: space-between;
+}
+
+.mi-inv-page--compact .mi-filter__select {
+  flex: 1;
+}
+
+.mi-inv-page--compact .mi-pagination {
+  justify-content: center;
+}
+
+.mi-inv-page--compact .mi-pagination__controls {
+  width: 100%;
+}
+
+.mi-inv-page--compact .mi-pagination__controls .mi-btn {
+  flex: 1;
+}
+
+/* History: every row becomes a compact card below the wide layout. The ⋮ menu
+   sits top-right; the card has no overflow clip, so the popup is never cut. */
+.mi-inv-page--stack .mi-table-wrap {
+  overflow: visible;
+}
+
+.mi-inv-page--stack .mi-table thead {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mi-inv-page--stack .mi-table,
+.mi-inv-page--stack .mi-table tbody {
+  display: block;
+}
+
+.mi-inv-page--stack .mi-table tbody tr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 44px;
+  grid-template-areas:
+    "number amount menu"
+    "created created menu"
+    "client client client"
+    "desc desc desc"
+    "status status status";
+  column-gap: 12px;
+  row-gap: 2px;
+  margin-bottom: 12px;
+  padding: 12px 8px 14px 14px;
+  background: #fff;
+  border: 1px solid var(--mi-line);
+  border-radius: var(--mi-radius);
+}
+
+.mi-inv-page--stack .mi-table tbody td {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  white-space: normal;
+}
+
+.mi-inv-page--stack .mi-table tbody tr:hover td {
+  background: transparent;
+}
+
+.mi-inv-page--stack .mi-td--number {
+  grid-area: number;
+  align-self: center;
+  font-size: 15px;
+}
+
+.mi-inv-page--stack .mi-td--amount {
+  grid-area: amount;
+  align-self: center;
+  text-align: right;
+  font-size: 15px;
+}
+
+.mi-inv-page--stack .mi-td--created {
+  grid-area: created;
+}
+
+.mi-inv-page--stack .mi-td--actions {
+  grid-area: menu;
+  grid-row: 1 / span 2;
+  align-self: start;
+  justify-self: end;
+}
+
+.mi-inv-page--stack .mi-td--client {
+  grid-area: client;
+  margin-top: 8px;
+}
+
+.mi-inv-page--stack .mi-td--desc {
+  grid-area: desc;
+  margin-top: 4px;
+}
+
+.mi-inv-page--stack .mi-td--status {
+  grid-area: status;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-top: 8px;
+}
+
+.mi-inv-page--stack .mi-td--status .mi-email-flag {
+  margin-top: 0;
+}
+
+.mi-inv-page--stack .mi-td--status .mi-email-flag__reason {
+  flex-basis: 100%;
+}
+
+.mi-inv-page--stack .mi-person {
+  align-items: flex-start;
+}
+
+/* Full client email on touch screens — no hover tooltip needed. */
+.mi-inv-page--stack .mi-person span,
+.mi-inv-page--stack .mi-desc {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.mi-inv-page--compact .mi-inv-modal__panel {
+  padding: 20px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mi-page *,
-  .mi-modal {
+  .mi-inv-page *,
+  .mi-inv-modal {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -1514,4 +1914,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+}
+/* Stacked history controls: the search keeps its natural height (its desktop
+   flex-basis would otherwise become a 260px-tall box in a column). */
+.mi-inv-page--compact .mi-history-controls .mi-search {
+  flex: none;
+  width: 100%;
+  min-width: 0;
 }

@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Country } from "country-state-city";
 import api from "../../api";
 import AdminAppointmentStatusActions from "../../components/AdminAppointmentStatusActions";
+import { useAdmin } from "../../context/AdminContext";
+import { useConfirm } from "../../components/ui/ConfirmDialog";
+import { useToast } from "../../components/ui/Toast";
 import "./AdminAppointments.css";
 
 function getCountryName(isoCode) {
@@ -131,6 +134,11 @@ export default function AdminAppointmentDetails() {
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const { admin } = useAdmin();
+  const confirm = useConfirm();
+  const toast = useToast();
+  const navigate = useNavigate();
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -155,6 +163,27 @@ export default function AdminAppointmentDetails() {
       alive = false;
     };
   }, [id]);
+
+  // Super admin only, and only for a category consultation (a regular appointment is cancelled, never deleted).
+  const deleteBooking = async () => {
+    const ok = await confirm({
+      title: "Delete this consultation?",
+      message:
+        "It is removed for good. Nothing is refunded and nobody is notified. To keep a record, cancel it from the Appointments list instead.",
+      confirmText: "Delete",
+      tone: "danger",
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/api/admin/bookings/${id}`);
+      toast.success("Consultation deleted.");
+      navigate("/admin-dashboard/appointments?tab=all", { replace: true });
+    } catch (err) {
+      toast.error(err.response?.data?.msg || "Could not delete the consultation.");
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -187,11 +216,6 @@ export default function AdminAppointmentDetails() {
     : [];
   const currentStatus = canonicalStatus(appointment.status);
   const currentStepIndex = FLOW.findIndex((step) => step.key === currentStatus);
-  const assignmentLabel =
-    ["upcoming", "requested"].includes(appointment.status) ||
-      !appointment.doctorId
-      ? "Assign Doctor"
-      : "Alternate Doctor";
   const instant = appointmentInstant(appointment);
   const patientTimezone = appointment.patientTimezone || "UTC";
   const doctorTimezone =
@@ -240,14 +264,17 @@ export default function AdminAppointmentDetails() {
           <Link className="adp-back-button" to="/admin-dashboard/appointments">
             Back to Appointments
           </Link>
-          {/* A completed appointment must be reopened before its doctor can change. */}
-          {currentStatus !== "complete" && (
-            <Link
-              className="adp-alt-btn"
-              to={`/admin-dashboard/appointments/${appointment._id}/assign`}
-            >
-              {assignmentLabel}
-            </Link>
+          <Link
+            className="adp-alt-btn"
+            to={`/admin-dashboard/appointments/${appointment._id}/call-report`}
+          >
+            View call report
+          </Link>
+          {/* Assigning or changing the doctor happens in the Appointments list. */}
+          {admin?.role === "superadmin" && appointment.isCategoryConsultation && (
+            <button type="button" className="adp-alt-btn" disabled={deleting} onClick={deleteBooking}>
+              {deleting ? "Deleting..." : "Delete"}
+            </button>
           )}
           <AdminAppointmentStatusActions
             appointmentId={appointment._id}

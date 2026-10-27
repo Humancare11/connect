@@ -1418,3 +1418,979 @@
     width: 100%;
   }
 }
+
+/* ── Admin Appointments list (AdminAppointments.jsx, components in ./appointments). Appointments and category consultations
+   in one table. Everything is scoped to .adp-bk*. The layout follows the width of the table area, not the viewport (the
+   sidebar takes a different share at each breakpoint): a full table when the columns fit, otherwise one card per booking.
+   Colors are the admin ones: navy/white/slate, the teal accent (#0f766e), and the status pills from the reference. ── */
+/* The page runs edge to edge under the top bar: no outer padding, a 16px gutter inside the toolbar, table and footer.
+   Scoped to this page with :has(), so the shared .ad-content / .ad-main padding of every other admin page is untouched. */
+.ad-main.ash-main:has(.adp-bk-page) {
+  padding: 0;
+}
+.ash-main:has(.adp-bk-page) .ash-topbar {
+  margin: 0;
+}
+.ash-main:has(.adp-bk-page) .ad-content {
+  padding: 0;
+}
+.adp-bk-page {
+  gap: 0;
+}
+.adp-bk-card {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: none;
+}
+.adp-bk-card .adp-card-header {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #ffffff;
+}
+.adp-bk-card .adp-tabs {
+  gap: 6px;
+}
+.adp-bk-card .adp-tab {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 600;
+}
+.adp-bk-card .adp-tab:hover {
+  background: #f8fafc;
+}
+.adp-bk-card .adp-tab.active {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  color: #0f766e;
+  box-shadow: 0 0 0 2px #99f6e4;
+}
+.adp-bk-card .adp-tab-count {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.adp-bk-card .adp-tab.active .adp-tab-count {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.adp-bk-card .adp-bk-hide.active {
+  border-color: #0f172a;
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: none;
+}
+.adp-bk-card .adp-search {
+  flex: 0 1 280px;
+  min-width: 200px;
+  margin-left: 0;
+  padding: 7px 10px;
+}
+/* The Source dropdown and the search box stay together (one unit, pushed to the right; it drops to its own row when the tabs need the room). */
+.adp-bk-find {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;
+}
+.adp-bk-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 34px;
+  padding: 0 8px 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-source select {
+  padding: 6px 2px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0f172a;
+  font: inherit;
+  cursor: pointer;
+}
+.adp-bk-source:focus-within {
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.adp-bk-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.adp-bk-hide {
+  margin-left: 4px;
+}
+.adp-bk-wrap {
+  container-type: inline-size;
+  overflow-x: auto;
+}
+.adp-bk-loading {
+  opacity: 0.6;
+  transition: opacity 0.12s;
+}
+.adp-bk-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  border-bottom: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #b4372f;
+  font-size: 13px;
+}
+/* Fixed layout, no minimum width: the small columns have set widths, Patient, Doctor and Category (no width) share the rest
+   equally, so the table never scrolls sideways. Long text in those three is cut with an ellipsis (full text on hover). */
+.adp-bk {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.adp-bk-col-num {
+  width: 40px;
+}
+.adp-bk-col-id {
+  width: 88px;
+}
+.adp-bk-col-booked {
+  width: 104px;
+}
+.adp-bk-col-consult {
+  width: 112px;
+}
+.adp-bk-col-fee {
+  width: 92px;
+}
+.adp-bk-col-status {
+  width: 132px;
+}
+.adp-bk-col-call {
+  width: 112px;
+}
+.adp-bk-col-actions {
+  width: 248px;
+}
+.adp-bk th {
+  padding: 10px 8px;
+  background: #f8fafc;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.adp-bk td {
+  padding: 9px 8px;
+  font-size: 13px;
+  overflow: hidden;
+}
+.adp-bk th:first-child,
+.adp-bk td:first-child {
+  padding-left: 16px;
+  padding-right: 0;
+}
+.adp-bk th:last-child,
+.adp-bk td:last-child {
+  padding-right: 16px;
+}
+.adp-bk tbody tr:last-child td {
+  border-bottom: 0;
+}
+/* The row number can be three digits wide; let it spill into the next cell's padding rather than be cut. */
+.adp-bk td.adp-bk-num {
+  overflow: visible;
+}
+.adp-bk-rownum {
+  font-size: 12.5px;
+}
+.adp-bk-cut {
+  min-width: 0;
+}
+.adp-bk-cut strong,
+.adp-bk-cut span,
+.adp-bk-src b,
+.adp-bk-src span,
+.adp-bk-src small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adp-bk .adp-patient-cell {
+  gap: 2px;
+}
+.adp-bk .adp-patient-cell span {
+  font-size: 12.5px;
+}
+.adp-bk-date {
+  font-size: 13px;
+}
+.adp-bk-when,
+.adp-bk-statusbox {
+  display: block;
+}
+.adp-bk .adp-bk-status {
+  padding-left: 18px;
+}
+.adp-bk .adp-patient-cell strong {
+  font-size: 14px;
+}
+.adp-bk .adp-booking-id {
+  max-width: none;
+  display: block;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.adp-bk .adp-status-pill {
+  white-space: nowrap;
+}
+/* "Assigned by" stays on one line: a long email is cut with an ellipsis (the full value is the hover text), never broken
+   in the middle of a word. */
+/* Who assigned the doctor: small muted text under the status pill, on one line (a long email is cut with an ellipsis; the
+   full value is the hover text). */
+.adp-bk-by {
+  display: block;
+  max-width: 100%;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adp-bk-by--none {
+  opacity: 0.8;
+}
+/* The booking id: click to copy. */
+.adp-bk-idcopy {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: copy;
+  text-align: left;
+}
+.adp-bk-idcopy:hover .adp-booking-id {
+  color: #0f766e;
+  text-decoration: underline dotted;
+}
+.adp-bk-idcopy:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* The full id, kept only so it can be selected when the browser will not copy; not shown. */
+.adp-bk-fullid {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Source page cell: type in bold, name under it, the page a button was clicked on in grey. */
+.adp-bk-src b {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+.adp-bk-src span {
+  margin-top: 1px;
+  color: #0f172a;
+}
+.adp-bk-src small {
+  margin-top: 1px;
+  color: #64748b;
+  font-size: 11.5px;
+}
+.adp-bk-src--none {
+  color: #94a3b8;
+  font-size: 13px;
+}
+/* Call column (admin call report): duration, connected or not, problems. */
+.adp-bk-call {
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.adp-bk-call--none {
+  color: #9ca3af;
+}
+.adp-bk-call--ok {
+  color: #15803d;
+}
+.adp-bk-call--idle {
+  color: #6b7280;
+}
+.adp-bk-call--problem {
+  color: #b45309;
+}
+.adp-bk-call-warn {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #fef3c7;
+  color: #92400e;
+}
+/* Web / App / Unknown label under the booking id. */
+.adp-bk-plat {
+  display: block;
+  width: max-content;
+  margin-top: 4px;
+  padding: 1px 7px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.adp-bk-plat--web {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+.adp-bk-plat--app {
+  background: #dcfce7;
+  color: #166534;
+}
+.adp-bk-plat--unknown {
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.adp-bk-idcell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.adp-bk-num {
+  white-space: nowrap;
+}
+.adp-bk-fee {
+  text-align: right;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.adp-bk th.adp-bk-fee {
+  text-align: right;
+}
+.adp-bk td.adp-bk-fee {
+  text-align: right;
+  font-size: 13.5px;
+}
+.adp-bk-nowrap {
+  white-space: nowrap;
+}
+.adp-bk-time,
+.adp-bk-muted {
+  display: block;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 12.5px;
+}
+.adp-bk-muted {
+  display: inline;
+  margin-top: 0;
+  font-size: 13px;
+}
+.adp-bk-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.adp-bk-row--testing {
+  background: #fcfdfe;
+}
+.adp-bk-row--cancelled td:not(.adp-bk-actions-cell) {
+  opacity: 0.6;
+}
+.adp-bk-doctor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.adp-bk-doctor strong,
+.adp-bk-nodoc {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+}
+.adp-bk-alt {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px dashed #cbd5e1;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+a.adp-bk-alt {
+  display: inline-block;
+  text-decoration: none;
+}
+.adp-bk-alt:hover:not(:disabled) {
+  border-bottom-color: #0f766e;
+}
+.adp-bk-alt:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+/* Always one line, in the 248px column. */
+.adp-bk-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 5px;
+}
+.adp-bk-doctor {
+  min-width: 0;
+  max-width: 100%;
+}
+.adp-bk-doctor strong,
+.adp-bk-nodoc {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* "Alternate doctor" is wider than a narrow Doctor column: it wraps onto a second line rather than being cut off. */
+.adp-bk-alt {
+  text-align: left;
+  line-height: 1.25;
+}
+.adp-bk-doctor .adp-bk-nodoc {
+  color: #64748b;
+  font-weight: 500;
+}
+.adp-bk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  line-height: 1.4;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.adp-bk-btn:hover:not(:disabled) {
+  border-color: #64748b;
+}
+.adp-bk-btn--ok {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+.adp-bk-btn--ok:hover:not(:disabled) {
+  border-color: #0f766e;
+  filter: brightness(1.08);
+}
+.adp-bk-btn--cancel {
+  color: #b91c1c;
+}
+.adp-bk-btn--cancel:hover:not(:disabled) {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+.adp-bk-btn--outline-ok {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+.adp-bk-btn--outline-ok:hover:not(:disabled) {
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+.adp-bk-btn--danger {
+  border-color: #b4372f;
+  background: #b4372f;
+  color: #ffffff;
+}
+.adp-bk-btn--danger:hover:not(:disabled) {
+  border-color: #b4372f;
+  filter: brightness(1.08);
+}
+.adp-bk-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: none;
+}
+.adp-bk-row--busy td {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── Selecting rows and bulk actions ── */
+.adp-bk-seltools {
+  padding: 10px 16px 0;
+}
+.adp-bk-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 16px 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #01164a;
+  color: #ffffff;
+}
+.adp-bk-bulk-count {
+  margin-right: auto;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-bulk-btn {
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 7px;
+  background: transparent;
+  color: #ffffff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.adp-bk-bulk-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+}
+.adp-bk-bulk-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.adp-bk-bulk-btn--done {
+  border-color: #0f766e;
+  background: #0f766e;
+}
+.adp-bk-headcheck,
+.adp-bk-rowcheck {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #0f766e;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.adp-bk-rowcheck {
+  margin-right: 0;
+}
+.adp-bk-headcell {
+  white-space: nowrap;
+}
+.adp-bk-row--selected,
+.adp-bk tbody tr.adp-bk-row--selected:hover {
+  background: #f0fdfa;
+}
+.adp-bk-menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 172px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid #dbe7ef;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}
+.adp-bk-menu button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: #0f172a;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.adp-bk-menu button:hover,
+.adp-bk-menu button:focus-visible {
+  background: #f1f5f9;
+  outline: none;
+}
+
+/* ── Bulk result dialog ── */
+.adp-bk-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+.adp-bk-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.adp-bk-result-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.adp-bk-result--done .adp-bk-result-tag {
+  background: #dcfce7;
+  color: #15803d;
+}
+.adp-bk-result--skipped .adp-bk-result-tag {
+  background: #fff2d6;
+  color: #9a6200;
+}
+.adp-bk-result--failed .adp-bk-result-tag {
+  background: #fde7e4;
+  color: #b4372f;
+}
+.adp-bk-result-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.adp-bk-result-main b {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-result-main small {
+  color: #64748b;
+  font-size: 12px;
+}
+.adp-bk-done summary {
+  margin-bottom: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── The shared confirmation dialog, themed in the admin teal. Opt-in: only a confirm() call that passes
+   className "adp-confirm" (this page's) gets it, so the dialog looks as before everywhere else. ── */
+.hc-modal.adp-confirm .hc-ui-btn--primary {
+  background: #0f766e;
+  box-shadow: none;
+}
+.hc-modal.adp-confirm .hc-ui-btn--primary:hover:not(:disabled) {
+  background: #0f766e;
+  filter: brightness(1.1);
+}
+.hc-modal.adp-confirm .hc-ui-btn--secondary {
+  border-color: #0f766e;
+  color: #0f766e;
+}
+.hc-modal.adp-confirm .hc-ui-btn--secondary:hover:not(:disabled) {
+  background: #f0fdfa;
+}
+.hc-modal.adp-confirm .hc-ui-btn:focus-visible {
+  outline-color: #0f766e;
+}
+
+/* ── Row action dialogs (assign / alternate doctor, cancel). The frame is the shared Modal. ── */
+.hc-modal.adp-bk-modal {
+  max-width: 520px;
+}
+.adp-bk-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adp-bk-modal-text {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.adp-bk-modal-text b {
+  color: #0f172a;
+}
+.adp-bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-field input,
+.adp-bk-field select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #dbe7ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 400;
+}
+.adp-bk-field input:focus-visible,
+.adp-bk-field select:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 1px;
+}
+.adp-bk-field small {
+  color: #64748b;
+  font-weight: 400;
+}
+.adp-bk-modal-warning {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff2d6;
+  color: #9a6200;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-bk-modal-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b4372f;
+  font-size: 13px;
+}
+.adp-bk-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+}
+.adp-bk-pager {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.adp-bk-pager-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #dbe7ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.adp-bk-pager-btn:hover:not(:disabled):not(.adp-bk-pager-btn--active) {
+  background: #f1f5f9;
+}
+.adp-bk-pager-btn--active {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+}
+.adp-bk-pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.adp-bk-pager-gap {
+  padding: 0 4px;
+  color: #94a3b8;
+}
+.adp-bk-pager-chev {
+  display: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Narrow table area (the page without the sidebar): the Call column goes first, under 1280px, then the Booked column
+   under 1180px. The Source page column stays
+   for as long as the list is a table (down to 1000px, where it becomes cards). */
+@container (max-width: 1279px) {
+  .adp-bk .adp-bk-c-call {
+    display: none;
+  }
+}
+@container (max-width: 1179px) {
+  .adp-bk .adp-bk-c-booked {
+    display: none;
+  }
+}
+
+/* Table area under 1000px (CARD_BELOW in bookingFormat.js): one card per booking. */
+@container (max-width: 999px) {
+  .adp-bk .adp-bk-c-src,
+  .adp-bk .adp-bk-c-booked,
+  .adp-bk .adp-bk-c-call {
+    display: block;
+  }
+  .adp-bk,
+  .adp-bk tbody,
+  .adp-bk tr,
+  .adp-bk td {
+    display: block;
+  }
+  .adp-bk thead {
+    display: none;
+  }
+  .adp-bk tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+    margin: 12px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+  }
+  .adp-bk td {
+    padding: 0;
+    border: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .adp-bk td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .adp-bk td[data-label="Patient"]::before,
+  .adp-bk td[data-label="#"]::before {
+    display: none;
+  }
+  .adp-bk-by {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .adp-bk-cut strong,
+  .adp-bk-cut span,
+  .adp-bk-src b,
+  .adp-bk-src span,
+  .adp-bk-src small,
+  .adp-bk-doctor strong,
+  .adp-bk-nodoc {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .adp-bk .adp-bk-status,
+  .adp-bk td,
+  .adp-bk td:first-child,
+  .adp-bk td:last-child {
+    padding-left: 0;
+    padding-right: 0;
+    overflow: visible;
+  }
+  .adp-bk .adp-bk-actions {
+    flex-wrap: wrap;
+  }
+  /* The row number means nothing on a card; while selecting, the tick box is all that shows of that cell. */
+  .adp-bk .adp-bk-num {
+    display: none;
+  }
+  .adp-bk--selecting td.adp-bk-num {
+    display: block;
+    grid-column: 1 / -1;
+    order: -2;
+  }
+  .adp-bk--selecting .adp-bk-rownum {
+    display: none;
+  }
+  .adp-bk td[data-label="Patient"],
+  .adp-bk td.adp-bk-actions-cell {
+    grid-column: 1 / -1;
+  }
+  .adp-bk td[data-label="Patient"] {
+    order: -1;
+  }
+  .adp-bk th.adp-bk-fee,
+  .adp-bk td.adp-bk-fee {
+    text-align: left;
+  }
+  .adp-bk tbody tr:hover {
+    background: #ffffff;
+  }
+}
+
+@container (max-width: 479px) {
+  .adp-bk tr {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .adp-bk td[data-label]:not([data-label="Patient"]):not([data-label="#"]) {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+  }
+  .adp-bk td[data-label]::before {
+    margin: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .adp-bk-find {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+  .adp-bk-card .adp-search {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    margin-left: 0;
+  }
+  .adp-bk-pager-text {
+    display: none;
+  }
+  .adp-bk-pager-chev {
+    display: inline;
+  }
+}

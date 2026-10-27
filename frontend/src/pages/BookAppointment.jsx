@@ -10,6 +10,7 @@ import {
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import "./Appointment.css";
 import api from "../api";
+import { withBookingSource } from "../utils/bookingSource";
 import { notifyUserActivityUpdated } from "../utils/activityEvents";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { useAuth } from "../context/AuthContext";
@@ -687,7 +688,7 @@ export default function BookAppointment() {
       if (gateway === "paypal") body.paypalOrderId = paymentRef;
       else body.paymentIntentId = paymentRef;
 
-      const res = await api.post("/api/appointments", body);
+      const res = await api.post("/api/appointments", withBookingSource(body));
       setAppointment(res.data.appointment);
       if (amt) setPaymentAmount(amt);
       setStage("success");

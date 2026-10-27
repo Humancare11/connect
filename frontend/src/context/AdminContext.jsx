@@ -3,7 +3,8 @@ import api, { clearUserAuthToken, setActiveAuthRole } from "../api";
 import { clearClientSession, dispatchSessionActivity } from "../utils/session";
 import { broadcastLogout, startSessionSync } from "../utils/crossTab";
 
-const AdminContext = createContext(null);
+// Exported for the browser tests, which mount a page with a chosen admin; the app uses useAdmin().
+export const AdminContext = createContext(null);
 
 export function AdminProvider({ children }) {
   const [admin, setAdmin] = useState(null);

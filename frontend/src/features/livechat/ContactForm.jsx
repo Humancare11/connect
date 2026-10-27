@@ -20,7 +20,7 @@ function validate({ name, email, phone }) {
 // Where "Privacy Policy" points: the website-chat section of the policy.
 const PRIVACY_URL = "/privacy-policy#website-chat";
 
-export default function ContactForm({ onSubmit, aiName, reply = false, showNotice = false }) {
+export default function ContactForm({ onSubmit, aiName, reply = false, showNotice = false, heldText = "" }) {
   const [values, setValues] = useState({ name: "", email: "", phone: "" });
   const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState({});
@@ -64,6 +64,12 @@ export default function ContactForm({ onSubmit, aiName, reply = false, showNotic
 
   return (
     <form className="lcw-cform" onSubmit={submit} noValidate>
+      {heldText && (
+        <div className="lcw-held" role="note">
+          <span className="lcw-held-text">{heldText}</span>
+          <small>Waiting to send. Your message is sent as soon as you start the chat.</small>
+        </div>
+      )}
       <h3>{reply ? "Reply to Humancare Connect" : "Welcome to Humancare Connect 👋"}</h3>
       <p>
         {reply
