@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { Country } from "country-state-city";
 import Modal from "../../../components/ui/Modal";
-import { createManualEntry, editManualEntry } from "./entriesApi";
+import { createManualEntry } from "./entriesApi";
 import {
-  CASE_STATUSES, LOCKED_WHEN_PAID, MAX_FEEDBACK, MAX_PHONE, MR_STATUSES, PAYMENT_RECEIVED, PAYMENT_TO_PROVIDER, SENT_STATUSES, SERVICE_TYPES,
-  calculation, changeField, formBody, formFromRow, formProblem, newForm, saveErrorText,
+  CASE_STATUSES, MAX_FEEDBACK, MAX_PHONE, MR_STATUSES, PAYMENT_RECEIVED, PAYMENT_TO_PROVIDER, SENT_STATUSES, SERVICE_TYPES,
+  calculation, changeField, formBody, formProblem, newForm, saveErrorText,
 } from "./entriesFormat";
 
 let countryNames = null;
@@ -16,19 +16,14 @@ function todayInput() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// "Add manual entry" (no `row`) and "Edit" (a manual `row`): the same big popup, seven numbered sections, laid out as in
-// docs/appointment-entries-manual-form-reference.html. Once Payment to provider is Paid, the case, service provider, patient and fee
-// fields are locked (the server enforces it too); the medical report, invoice, payment received and feedback stay editable.
-// "Calculation (our margin)" is worked out here and never sent.
-export default function ManualEntryModal({ row, onSaved, onClose }) {
-  const editing = Boolean(row);
+// "Add manual entry": a big popup with seven numbered sections, laid out as in docs/appointment-entries-manual-form-reference.html.
+// "Calculation (our margin)" is worked out here and never sent. Editing an entry is done in place in the Manual entries sheet, not here.
+export default function ManualEntryModal({ onSaved, onClose }) {
   const today = useMemo(todayInput, []);
-  const [form, setForm] = useState(() => (editing ? formFromRow(row) : newForm(today)));
+  const [form, setForm] = useState(() => newForm(today));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const locked = editing && row.entry.paidStatus === "paid";
-  const isLocked = (key) => locked && LOCKED_WHEN_PAID.includes(key);
   const set = (key) => (event) => setForm((f) => changeField(f, key, event.target.value, today));
   const calc = calculation(form);
   const paidToProvider = form.paymentToProvider === "paid";
@@ -45,11 +40,9 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
     setSaving(true);
     setError("");
     try {
-      const res = editing ? await editManualEntry(row.id, formBody(form, row.entry.version)) : await createManualEntry(formBody(form));
-      onSaved(res.data.item, { added: !editing, noop: Boolean(res.data.noop) });
+      const res = await createManualEntry(formBody(form));
+      onSaved(res.data.item);
     } catch (err) {
-      // A row that changed meanwhile (or got marked Paid) comes back with its current state.
-      if (err.response?.data?.item) onSaved(err.response.data.item, { conflict: true });
       setError(saveErrorText(err));
       setSaving(false);
     }
@@ -61,7 +54,6 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
       <input
         value={form[key]}
         onChange={set(key)}
-        disabled={isLocked(key)}
         required={props.required}
         maxLength={props.maxLength}
         placeholder={props.placeholder}
@@ -82,8 +74,7 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
   const choice = (key, label, options) => (
     <label>
       <span>{label}</span>
-      <select value={form[key]} onChange={set(key)} disabled={isLocked(key)}>
-        {key === "serviceType" && form.serviceType === "" && <option value="">Not set</option>}
+      <select value={form[key]} onChange={set(key)}>
         {options.map(([value, optionText]) => (
           <option key={value} value={value}>
             {optionText}
@@ -107,8 +98,8 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
       open
       onClose={onClose}
       dismissible={!saving}
-      title={editing ? `Edit manual entry · ${row.shortId}` : "Add manual entry"}
-      description={editing ? "Every change is recorded." : "A case that didn’t come through the website or app, for example sent by a partner company."}
+      title="Add manual entry"
+      description="A case that didn’t come through the website or app, for example sent by a partner company."
       className="en-modal en-modal--wide"
     >
       <button type="button" className="en-x" onClick={onClose} disabled={saving} aria-label="Close">
@@ -116,13 +107,6 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
       </button>
       <form onSubmit={submit} noValidate className="en-bigform">
         <div className="en-sections">
-          {locked && (
-            <p className="en-lock-note" role="note">
-              Payment to provider is <b>Paid</b>, so the case, service provider, patient and fee fields are locked. The medical report, invoice,
-              payment received and feedback can still change. To change the rest, set Payment to provider back first.
-            </p>
-          )}
-
           {section(
             1,
             "Case",
@@ -140,7 +124,7 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
             2,
             "Service provider",
             <div className="en-grid en-grid--3">
-              {text("serviceProvider", "Service provider", { required: true, maxLength: 120, placeholder: "Doctor or clinic name", autoFocus: !editing })}
+              {text("serviceProvider", "Service provider", { required: true, maxLength: 120, placeholder: "Doctor or clinic name", autoFocus: true })}
               {text("providerNumber", "Service provider number", { maxLength: MAX_PHONE, inputMode: "tel", placeholder: "+91 98765 43210" })}
             </div>,
           )}
@@ -233,7 +217,7 @@ export default function ManualEntryModal({ row, onSaved, onClose }) {
               Cancel
             </button>
             <button type="submit" className="en-btn en-btn--primary" disabled={saving}>
-              {saving ? "Saving…" : editing ? "Save changes" : "Save entry"}
+              {saving ? "Saving…" : "Save entry"}
             </button>
           </div>
         </div>
