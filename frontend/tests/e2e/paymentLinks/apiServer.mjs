@@ -66,6 +66,28 @@ export async function startApiServer() {
   app.get("/__invoices", async (req, res) => res.json(await ManualInvoice.find({}).lean()));
   app.get("/__links", async (req, res) => res.json(await PaymentLink.find({}).lean()));
   app.get("/__mails", (req, res) => res.json(mails));
+  // A link as an older version of the app stored it: no customer, no invoice. (Created straight in the database.)
+  app.post("/__legacy-link", async (req, res) => {
+    const link = await PaymentLink.collection.insertOne({
+      token: `legacy${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+      amountPaise: req.body.amountPaise || 5000,
+      currency: "usd",
+      note: req.body.note || "",
+      status: req.body.status || "pending",
+      invoiceError: req.body.invoiceError || "",
+      createdBy: new mongoose.Types.ObjectId("000000000000000000000001"),
+      createdAt: new Date(req.body.createdAt || Date.now()),
+      updatedAt: new Date(),
+    });
+    res.json({ id: String(link.insertedId) });
+  });
+  // Empties the data so a test starts from a clean table.
+  app.post("/__reset", async (req, res) => {
+    await PaymentLink.deleteMany({});
+    await ManualInvoice.deleteMany({});
+    mails.length = 0;
+    res.json({ ok: true });
+  });
 
   const server = http.createServer(app);
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));

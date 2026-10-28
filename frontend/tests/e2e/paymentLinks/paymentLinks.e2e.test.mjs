@@ -212,6 +212,131 @@ describe("Payment Links form (Individual / B2C) in a real browser", { skip: skip
     assert.equal(res.body.msg, "Business payment links are not enabled yet.");
   });
 
+  // ---- Recent Payments table ----
+  const postJson = (route, body) =>
+    page.evaluate(
+      async ([route, body]) => {
+        const res = await fetch(route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+        return res.json();
+      },
+      [route, body],
+    );
+  const makeLink = (extra = {}) =>
+    postJson("/api/payments/admin/payment-links", {
+      customerType: "b2c", name: "Rahul Mehta", email: "rahul.mehta@gmail.com", note: "na", currency: "USD",
+      items: [{ description: "tele consultation", amount: 100 }], ...extra,
+    });
+  const control = (route, body = {}) =>
+    fetch(`${api.url}${route}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const refresh = async () => {
+    await page.locator(".pl-history .pl-secondary", { hasText: "Refresh" }).click();
+    await page.waitForSelector(".pl-table--recent tbody tr");
+  };
+  const cells = (row) => page.locator(".pl-table--recent tbody tr").nth(row).locator("td");
+
+  test("Recent Payments: the nine columns are in the requested order", async () => {
+    await control("/__reset");
+    await open();
+    await makeLink();
+    await refresh();
+    // textContent: the headers are shown in capitals by CSS, the words themselves are mixed-case.
+    const headers = await page.$$eval(".pl-table--recent thead th", (els) => els.map((e) => e.textContent));
+    assert.deepEqual(headers.map((h) => h.trim()), ["Sr No", "Case Number", "Name", "Created", "Amount", "Status", "Note", "Invoice", "Link"]);
+  });
+
+  test("Recent Payments: a row shows case number, name over email, date over time, amount, status, note, and only the e-mail state and buttons in Invoice", async () => {
+    await control("/__reset");
+    await open();
+    const link = await makeLink();
+    await refresh();
+    const row = cells(0);
+    assert.match(link.invoice.invoiceNumber, /^HC\d{2}-\d{4}$/);
+    assert.equal((await row.nth(0).innerText()).trim(), "1");
+    assert.equal((await row.nth(1).innerText()).trim(), link.invoice.invoiceNumber);
+    assert.equal((await row.nth(2).locator(".pl-recent__name").innerText()).trim(), "Rahul Mehta");
+    assert.equal((await row.nth(2).locator(".pl-recent__email").innerText()).trim(), "rahul.mehta@gmail.com");
+    assert.match((await row.nth(3).locator("div").first().innerText()).trim(), /^\d{1,2} \w{3} \d{4}$/);
+    assert.match((await row.nth(3).locator(".pl-recent__time").innerText()).trim(), /^\d{1,2}:\d{2} [ap]m$/i);
+    assert.equal((await row.nth(4).innerText()).trim(), "$100.00");
+    assert.equal((await row.nth(5).innerText()).trim(), "Pending");
+    assert.equal((await row.nth(6).innerText()).trim(), "na");
+    const invoiceCell = (await row.nth(7).innerText()).replace(/\s+/g, " ").trim();
+    assert.equal(invoiceCell, "Email not sent Download Send Email");
+    assert.ok(!invoiceCell.includes(link.invoice.invoiceNumber) && !invoiceCell.includes("Due") && !invoiceCell.includes("Rahul"), "no number, pill or name in Invoice");
+    assert.equal((await row.nth(8).innerText()).trim(), "Copy");
+  });
+
+  test("Recent Payments: Download, Send Email and Copy still work", async () => {
+    await control("/__reset");
+    await open();
+    const link = await makeLink();
+    await refresh();
+    const row = cells(0);
+
+    await page.route("**/api/admin/manual-invoices/*/download", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url: "about:blank", invoiceNumber: link.invoice.invoiceNumber }) }),
+    );
+    const [download] = await Promise.all([
+      page.waitForRequest((r) => r.url().endsWith(`/api/admin/manual-invoices/${link.invoice._id}/download`)),
+      row.nth(7).getByRole("button", { name: "Download" }).click(),
+    ]);
+    assert.equal(download.method(), "GET");
+
+    await row.nth(7).getByRole("button", { name: "Send Email" }).click();
+    await page.waitForFunction(() => document.querySelector(".pl-table--recent tbody tr")?.innerText.includes("✓ Email sent"));
+    assert.equal((await row.nth(7).innerText()).replace(/\s+/g, " ").trim(), "✓ Email sent Download Resend Email");
+    const mails = await getJson("/__mails");
+    assert.equal(mails.length, 1);
+    assert.equal(mails[0].to, "rahul.mehta@gmail.com");
+
+    await row.nth(8).getByRole("button", { name: "Copy" }).click();
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), link.url);
+  });
+
+  test("Recent Payments: an old link with no invoice and no customer shows dashes and does not crash the page", async () => {
+    await control("/__reset");
+    await open();
+    await control("/__legacy-link", { note: "" });
+    await control("/__legacy-link", { invoiceError: "S3 down", note: "failed one" });
+    await refresh();
+    assert.equal(await page.locator(".pl-table--recent tbody tr").count(), 2);
+
+    const plain = page.locator(".pl-table--recent tbody tr").filter({ hasNotText: "failed one" }).first().locator("td");
+    assert.equal((await plain.nth(1).innerText()).trim(), "-", "Case Number");
+    assert.equal((await plain.nth(2).innerText()).trim(), "-", "Name");
+    assert.equal(await plain.nth(2).locator(".pl-recent__email").count(), 0);
+    assert.equal((await plain.nth(6).innerText()).trim(), "-", "Note");
+    assert.equal((await plain.nth(7).innerText()).trim(), "-", "Invoice");
+    assert.equal((await plain.nth(4).innerText()).trim(), "$50.00");
+    assert.equal(await plain.nth(8).getByRole("button", { name: "Copy" }).count(), 1);
+
+    const failed = page.locator(".pl-table--recent tbody tr", { hasText: "failed one" });
+    assert.equal((await failed.locator("td").nth(1).innerText()).trim(), "-");
+    assert.equal(await failed.getByRole("button", { name: "Retry invoice" }).count(), 1, "the existing retry button stays");
+  });
+
+  test("Recent Payments: on a phone the table scrolls inside its box, the page does not, and a long email does not widen it", async () => {
+    await control("/__reset");
+    await open();
+    await makeLink({ email: "a.very.long.email.address.that.keeps.going.and.going.and.going.on.forever@some-extremely-long-domain-name-example.com" });
+    await page.setViewportSize({ width: 390, height: 800 });
+    await refresh();
+    const m = await page.evaluate(() => {
+      const wrap = document.querySelector(".pl-history .pl-table-wrap");
+      const table = document.querySelector(".pl-table--recent");
+      return {
+        pageOverflow: document.documentElement.scrollWidth - window.innerWidth,
+        wrapScrolls: wrap.scrollWidth > wrap.clientWidth,
+        tableWidth: table.offsetWidth,
+        email: document.querySelector(".pl-recent__email").getBoundingClientRect().width,
+      };
+    });
+    assert.ok(m.pageOverflow <= 0, `the page itself has no horizontal scroll (overflow ${m.pageOverflow}px)`);
+    assert.ok(m.wrapScrolls, "the table scrolls inside its card");
+    assert.ok(m.tableWidth < 1250, `a long email does not stretch the table (${m.tableWidth}px)`);
+    assert.ok(m.email <= 241, `the email wraps inside its column (${m.email}px)`);
+  });
+
   // ---- B2B disabled for now: these drive the Customer type toggle, which is commented out in PaymentLinks.jsx ----
   test.skip("B2B: switching to Business (B2B) shows the unchanged business form, and back again", async () => {
     await open();

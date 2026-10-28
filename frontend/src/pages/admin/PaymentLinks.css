@@ -732,6 +732,72 @@
   word-break: break-all;
 }
 
+/* ══ Recent Payments table (Payment Links page only) ═══════ */
+.pl-table--recent {
+  min-width: 980px;
+}
+.pl-table--recent th {
+  white-space: nowrap;
+}
+.pl-recent__sr {
+  width: 56px;
+  color: #64748b !important;
+  font-variant-numeric: tabular-nums;
+}
+.pl-recent__case {
+  font-family: ui-monospace, Consolas, "Cascadia Mono", monospace;
+  font-size: 12.5px !important;
+  font-weight: 700;
+  color: #0f172a !important;
+  white-space: nowrap;
+}
+.pl-recent__name {
+  color: #0f172a;
+  font-weight: 700;
+}
+.pl-recent__email {
+  max-width: 240px;
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.pl-recent__date {
+  white-space: nowrap;
+}
+.pl-recent__time {
+  margin-top: 2px;
+  color: #64748b;
+  font-size: 12.5px;
+}
+.pl-recent__amount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.pl-recent__note {
+  max-width: 160px;
+  color: #64748b !important;
+  overflow-wrap: anywhere;
+}
+.pl-recent__inv {
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+}
+.pl-recent__mail {
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pl-recent__mail--yes { color: #166534; }
+.pl-recent__mail--no { color: #b45309; }
+.pl-recent__mail--bad { color: #b91c1c; }
+.pl-recent__send {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  color: #0f766e;
+}
+
 /* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
 @media (max-width: 1024px) {
   .pl-admin__grid { grid-template-columns: 1fr; }

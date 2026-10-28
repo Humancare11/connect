@@ -8,7 +8,8 @@ import { computeItemAmountCents } from "./invoiceForm";
 //   dueDateForTerms,
 //   termsLine,
 // } from "./invoiceForm";
-import { InvoiceCell, InvoiceStatusPill } from "./PaymentLinkInvoice";
+import { InvoiceStatusPill } from "./PaymentLinkInvoice";
+import { personOf, splitDateTime } from "./recentPayments";
 import { emailStatusLabel, useInvoiceActions } from "./paymentLinkInvoiceActions";
 import "./PaymentLinks.css";
 
@@ -74,6 +75,56 @@ const serviceCents = (service) => computeItemAmountCents({ quantity: "1", rate: 
 
 function statusLabel(status) {
   return status === "paid" ? "Paid" : status === "expired" ? "Expired" : "Pending";
+}
+
+// The Invoice column of the Recent Payments table: just the e-mail state and the
+// invoice buttons (the invoice number is the "Case Number" column, the payment
+// status is the "Status" column, the customer is the "Name" column). Same
+// actions as everywhere else on this page; nothing is emailed unless Send Email
+// is pressed.
+function RecentInvoiceCell({ link, actions }) {
+  const invoice = link.invoice;
+  if (!invoice) {
+    // An older link with no invoice: the existing retry button stays when the
+    // invoice step had failed, otherwise there is nothing to show.
+    return link.invoiceError ? (
+      <div className="pl-recent__inv">
+        <span className="pl-recent__mail pl-recent__mail--bad" title={link.invoiceError}>Invoice failed</span>
+        <div className="pl-inline-actions">
+          <button className="pl-link-btn" type="button" disabled={Boolean(actions.busy)} onClick={() => actions.retryInvoice(link)}>
+            {actions.busy === `retry:${link._id}` ? "Retrying…" : "Retry invoice"}
+          </button>
+        </div>
+      </div>
+    ) : (
+      "-"
+    );
+  }
+
+  const mailClass = invoice.emailed ? "yes" : invoice.emailError ? "bad" : "no";
+  return (
+    <div className="pl-recent__inv">
+      <span className={`pl-recent__mail pl-recent__mail--${mailClass}`} title={invoice.emailError || undefined}>
+        {invoice.emailed ? "✓ Email sent" : invoice.emailError ? "Email failed — try again" : "Email not sent"}
+      </span>
+      {link.invoiceError && (
+        <span className="pl-recent__mail pl-recent__mail--bad" title={link.invoiceError}>Receipt not generated</span>
+      )}
+      <div className="pl-inline-actions">
+        <button className="pl-link-btn" type="button" disabled={Boolean(actions.busy)} onClick={() => actions.download(invoice)}>
+          {actions.busy === `dl:${invoice._id}` ? "Preparing…" : "Download"}
+        </button>
+        <button className="pl-link-btn pl-recent__send" type="button" disabled={Boolean(actions.busy)} onClick={() => actions.sendEmail(link)}>
+          {actions.busy === `mail:${link._id}` ? "Sending…" : invoice.emailed ? "Resend Email" : "Send Email"}
+        </button>
+        {link.invoiceError && (
+          <button className="pl-link-btn" type="button" disabled={Boolean(actions.busy)} onClick={() => actions.retryInvoice(link)}>
+            {actions.busy === `retry:${link._id}` ? "Retrying…" : "Retry receipt"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function PaymentLinks() {
@@ -519,9 +570,12 @@ export default function PaymentLinks() {
           <div className="pl-empty">No payment links generated yet.</div>
         ) : (
           <div className="pl-table-wrap">
-            <table className="pl-table">
+            <table className="pl-table pl-table--recent">
               <thead>
                 <tr>
+                  <th>Sr No</th>
+                  <th>Case Number</th>
+                  <th>Name</th>
                   <th>Created</th>
                   <th>Amount</th>
                   <th>Status</th>
@@ -531,20 +585,33 @@ export default function PaymentLinks() {
                 </tr>
               </thead>
               <tbody>
-                {history.slice(0, 8).map((link) => (
-                  <tr key={link._id || link.token}>
-                    <td>{formatDate(link.createdAt)}</td>
-                    <td className="pl-strong">{formatMoney(link.amountPaise, link.currency)}</td>
-                    <td><span className={`pl-status pl-status--${link.status}`}>{statusLabel(link.status)}</span></td>
-                    <td>{link.note || "-"}</td>
-                    <td><InvoiceCell link={link} actions={actions} /></td>
-                    <td>
-                      <button className="pl-link-btn" type="button" onClick={() => copyHistoryLink(link.url)}>
-                        Copy
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {history.slice(0, 8).map((link, index) => {
+                  const person = personOf(link);
+                  const created = splitDateTime(formatDate(link.createdAt));
+                  return (
+                    <tr key={link._id || link.token}>
+                      <td className="pl-recent__sr">{index + 1}</td>
+                      <td className="pl-recent__case">{link.invoice?.invoiceNumber || "-"}</td>
+                      <td>
+                        <div className="pl-recent__name">{person.name}</div>
+                        {person.email && <div className="pl-recent__email">{person.email}</div>}
+                      </td>
+                      <td className="pl-recent__date">
+                        <div>{created.date}</div>
+                        {created.time && <div className="pl-recent__time">{created.time}</div>}
+                      </td>
+                      <td className="pl-strong pl-recent__amount">{formatMoney(link.amountPaise, link.currency)}</td>
+                      <td><span className={`pl-status pl-status--${link.status}`}>{statusLabel(link.status)}</span></td>
+                      <td className="pl-recent__note">{link.note || "-"}</td>
+                      <td><RecentInvoiceCell link={link} actions={actions} /></td>
+                      <td>
+                        <button className="pl-link-btn" type="button" onClick={() => copyHistoryLink(link.url)}>
+                          Copy
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
