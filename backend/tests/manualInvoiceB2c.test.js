@@ -5,6 +5,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 const { extractText } = require("./helpers/pdfText");
+const { parseItems } = require("../utils/manualInvoiceValidation");
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_not_used";
@@ -149,6 +150,26 @@ describe("B2C manual invoices", () => {
     const { body } = await create(b2c({ note: "paid in cash at the clinic" }));
     assert.equal(body.invoice.description, "paid in cash at the clinic");
     assert.ok(!(await pdfText(body.invoice._id)).includes("paid in cash"));
+  });
+
+  // Reported: POST /api/admin/manual-invoices answered 400 "Each item needs a valid, non-negative rate." for
+  // this exact B2C payload. That message comes from parseItems (the business validator, which wants
+  // { quantity, rate }), and only a server still running the code from before B2C manual invoices
+  // validates a B2C body with it. The current route reads it with parseB2cBody (rate = amount).
+  // Everything below is the real route and the real validation; only S3, e-mail and login are stand-ins.
+  test("the exact payload the page sends (name test, 1 service amount 11, Due, a note) creates the invoice: 201", async () => {
+    const payload = {
+      customerType: "b2c", name: "test", email: "tech@humancareconnect.co", status: "due", note: "xbffbxfbx xbxf", currency: "USD",
+      items: [{ description: "consultation", quantity: 1, amount: 11 }],
+    };
+    assert.match(parseItems(payload.items).error, /valid, non-negative rate/, "the business validator cannot read this shape: it must never see a B2C body");
+    const { status, body } = await create(payload);
+    assert.equal(status, 201, JSON.stringify(body));
+    assert.equal(body.invoice.status, "due");
+    assert.equal(body.invoice.amountCents, 1100);
+    assert.equal(body.invoice.description, "xbffbxfbx xbxf");
+    const stored = await ManualInvoice.findById(body.invoice._id);
+    assert.deepEqual(stored.items.map((i) => [i.quantity, i.rate, i.amountCents]), [[1, 11, 1100]]);
   });
 
   test("validation: name, email and services are required", async () => {

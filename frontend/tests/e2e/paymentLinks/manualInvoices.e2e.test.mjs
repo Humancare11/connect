@@ -139,6 +139,30 @@ describe("Manual Invoices page (Individual / B2C) in a real browser", { skip: sk
     assert.deepEqual([invoice.status, invoice.source, invoice.customerType, invoice.emailedAt], ["due", "manual", "b2c", null]);
   });
 
+  // Reported: 400 "Each item needs a valid, non-negative rate." for this data. The request body the page really
+  // sends is checked here, and the real server (real validation) must answer 201.
+  test("name test, email tech@humancareconnect.co, 1 service amount 11, Issue as Due, a note: the request body is right and the server says 201", async () => {
+    await control("/__reset");
+    await open();
+    await fill("Rahul Mehta", "test");
+    await fill("name@gmail.com", "tech@humancareconnect.co");
+    await fill("Tele Consultation", "consultation");
+    await fill("0.00", "11");
+    await fill("Optional internal note", "xbffbxfbx xbxf");
+    const [request, response] = await Promise.all([
+      page.waitForRequest((r) => r.method() === "POST" && r.url().endsWith("/api/admin/manual-invoices")),
+      page.waitForResponse((r) => r.request().method() === "POST" && r.url().endsWith("/api/admin/manual-invoices")),
+      page.locator(".pl-primary").click(),
+    ]);
+    assert.deepEqual(request.postDataJSON(), {
+      customerType: "b2c", name: "test", email: "tech@humancareconnect.co", status: "due", note: "xbffbxfbx xbxf", currency: "USD",
+      items: [{ description: "consultation", quantity: 1, amount: 11 }],
+    });
+    assert.equal(response.status(), 201, await response.text());
+    await page.waitForSelector(".pl-result");
+    assert.equal(await page.locator(".pl-error").count(), 0);
+  });
+
   test("Issue as Paid creates a paid invoice (a receipt)", async () => {
     await control("/__reset");
     await open();
