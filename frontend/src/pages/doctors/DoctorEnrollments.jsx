@@ -627,8 +627,8 @@ h1,h2,h3,h4,h5,h6 {
 /* ─── Form ─── */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow: visible;  }
 .form-grid .full-width { grid-column: 1 / -1; }
-.location-row { display: -webkit-inline-box; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; }
-.location-row .field-group { width: 64.5%; min-width: 0; }
+.location-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; width: 100%; box-sizing: border-box; }
+.location-row .field-group { width: 100%; min-width: 0; }
 .field-group {
   display: flex; flex-direction: column; gap: 6px;
   position: relative;
