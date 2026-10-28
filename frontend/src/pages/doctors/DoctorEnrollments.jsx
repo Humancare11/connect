@@ -627,8 +627,9 @@ h1,h2,h3,h4,h5,h6 {
 /* ─── Form ─── */
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow: visible;  }
 .form-grid .full-width { grid-column: 1 / -1; }
-.location-row { display: -webkit-inline-box; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; }
-.location-row .field-group { width: 64.5%; min-width: 0; }
+.location-row { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; width: calc(100% - 12px); margin-left: 12px; } /* spans both form-grid columns; 12px matches .field-group margin so it aligns with Country */
+.location-row .field-group { width: 100%; min-width: 0; margin-left: 0; }
+.location-row .field-input, .location-row .field-select { width: 100%; min-width: 0; box-sizing: border-box; }
 .field-group {
   display: flex; flex-direction: column; gap: 6px;
   position: relative;
@@ -863,12 +864,12 @@ h1,h2,h3,h4,h5,h6 {
 @media (max-width: 900px) {
   .de-step-card { padding: 0 16px; }
   .progress-section { padding: 0 16px; }
-  .location-row { grid-template-columns: repeat(2, 1fr); }
+  .location-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 720px) {
   .form-grid { grid-template-columns: 1fr; }
-  .location-row { grid-template-columns: 1fr; }
+  .location-row { grid-template-columns: minmax(0, 1fr); }
   .de-card-body { padding: 22px 18px 28px; }
   .de-card-header { padding: 20px 18px 16px; }
   .de-card-header h2 { font-size: 19px; }
@@ -2672,8 +2673,7 @@ export default function DoctorOnboardingWizard({
             <div
               style={{ fontSize: 12, color: "var(--gray-500)", marginTop: 4 }}
             >
-              🔒 Verified via OTP — contact support to change your account
-              email.
+              🔒 Verified via OTP — this is your login email.
             </div>
           </div>
           <div className="field-group">
