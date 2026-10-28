@@ -514,7 +514,9 @@
 }
 
 .pl-form-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* B2B: disabled for now, re-enable later. Do not delete.
 .pl-form-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+*/
 
 .pl-items {
   display: grid;
@@ -533,11 +535,13 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+/* B2B: disabled for now, re-enable later. Do not delete. (B2B Quantity / Rate / Amount row)
 .pl-item-row__amount {
   color: #0f172a;
   font-weight: 800;
   text-align: right;
 }
+*/
 .pl-item-row__remove {
   width: 36px;
   height: 36px;
@@ -677,7 +681,8 @@
   .pl-totals { min-width: 0; width: 100%; }
 }
 
-/* ══ B2C / B2B toggle ═════════════════════════════════════ */
+/* ══ Customer type toggle (Individual / Business) ═══════════ */
+/* B2B: disabled for now, re-enable later. Do not delete.
 .pl-ctype {
   display: flex;
   align-items: center;
@@ -719,6 +724,7 @@
   outline: 2px solid var(--primary, #2563eb);
   outline-offset: 2px;
 }
+*/
 .pl-item-row--service {
   grid-template-columns: minmax(0, 2.4fr) 140px 36px;
 }

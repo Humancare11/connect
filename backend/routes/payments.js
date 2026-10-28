@@ -24,6 +24,9 @@ const {
 } = require("../utils/paymentLinkInvoice");
 
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
+// B2B (business) payment links are switched off for now: only individual (B2C)
+// links can be created. Nothing B2B was removed — flip this to true to allow them.
+const B2B_PAYMENT_LINKS_ENABLED = false; // TODO: enable B2B later
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
 
 const FEE_NOT_CONFIGURED_MSG = "Consultation fee not configured. Please contact support.";
@@ -42,10 +45,11 @@ function fromFilterAmount(amount, currency) {
   return Math.round(Number(amount) * currencyFactor(currency || "usd"));
 }
 
-// "b2c" (an individual) or "b2b"; anything else, including a missing value
-// from an older client, is b2b.
+// "b2b" only when asked for explicitly; a new link without a customerType is
+// "b2c". (A link stored before B2C existed has no customerType and is read as
+// "b2b" by the model default — see PaymentLink.customerType and serializePaymentLink.)
 function customerTypeOf(body) {
-  return body?.customerType === "b2c" ? "b2c" : "b2b";
+  return body?.customerType === "b2b" ? "b2b" : "b2c";
 }
 
 // The invoice half of the Payment Links form. B2B: same fields and validation
@@ -217,6 +221,10 @@ router.post("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (r
     const currency = String(req.body.currency || "USD").trim().toLowerCase();
     if (!SUPPORTED_PAYMENT_LINK_CURRENCIES.includes(currency)) {
       return res.status(400).json({ msg: "Unsupported currency." });
+    }
+
+    if (customerTypeOf(req.body) === "b2b" && !B2B_PAYMENT_LINKS_ENABLED) {
+      return res.status(400).json({ msg: "Business payment links are not enabled yet." });
     }
 
     const parsed = parseInvoiceBody(req.body);

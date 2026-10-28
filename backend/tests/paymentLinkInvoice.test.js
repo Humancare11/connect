@@ -24,6 +24,10 @@ const emails = [];
 sendEmail.sendManualInvoiceEmail = async (to, payload) => {
   emails.push({ to, ...payload });
 };
+// B2C invoices are emailed with the patient-style template (sendInvoiceEmail).
+sendEmail.sendInvoiceEmail = async (to, payload) => {
+  emails.push({ to, ...payload });
+};
 
 // Stripe: the confirm route retrieves the PaymentIntent we hand it here.
 const stripeState = { intent: null };
@@ -52,7 +56,24 @@ const manualInvoicesRouter = require("../routes/manualInvoices");
 const ADMIN_A = "000000000000000000000001";
 const ADMIN_B = "000000000000000000000002";
 
+// The default payload is an individual (B2C) link: B2B payment links are
+// disabled for now (B2B_PAYMENT_LINKS_ENABLED in routes/payments.js), so the
+// generic behaviour covered here (confirm, permissions, e-mail, list) runs on B2C.
 const body = (extra = {}) => ({
+  customerType: "b2c",
+  name: "Rahul Mehta",
+  email: "Rahul.Mehta@Gmail.com",
+  items: [
+    { description: "Tele Consultation", amount: 150 },
+    { description: "Follow-up report", amount: 49.5 },
+  ],
+  note: "internal",
+  ...extra,
+});
+
+// B2B disabled for now: the business payload, kept for the skipped B2B tests below.
+const b2bBody = (extra = {}) => ({
+  customerType: "b2b",
   name: "Nova Assistance",
   email: "Accounts@Example.com",
   companyName: "Nova LTD",
@@ -122,8 +143,9 @@ describe("payment link invoices", () => {
     stripeState.intent = null;
   });
 
-  test("create: the link amount is the items total, the invoice is due, and nothing is emailed", async () => {
-    const { status, body: out } = await create();
+  // B2B disabled for now (see B2B_PAYMENT_LINKS_ENABLED in routes/payments.js): re-enable with the flag.
+  test.skip("B2B: create: the link amount is the items total, the invoice is due, and nothing is emailed", async () => {
+    const { status, body: out } = await create(b2bBody());
     assert.equal(status, 201);
     assert.equal(out.amountPaise, 34950); // 2 x 150.00 + 49.50, not the client's "amount: 1"
     assert.equal(out.invoice.status, "due");
@@ -173,7 +195,7 @@ describe("payment link invoices", () => {
     assert.equal(sent.status, 200);
     assert.equal(sent.body.invoice.emailed, true);
     assert.equal(emails.length, 1);
-    assert.equal(emails[0].to, "accounts@example.com");
+    assert.equal(emails[0].to, "rahul.mehta@gmail.com");
     assert.equal(emails[0].status, "due");
     assert.equal(emails[0].payUrl, `https://app.test/pay/${out.token}`);
 
@@ -311,7 +333,7 @@ describe("payment link invoices", () => {
 
   test("manual-invoices: the existing create flow is unchanged (no email, source manual, mark-paid works)", async () => {
     const created = await call("POST", "/api/admin/manual-invoices", {
-      json: { ...body(), status: "due", currency: "usd" },
+      json: { ...b2bBody(), status: "due", currency: "usd" },
     });
     assert.equal(created.status, 201);
     assert.equal(created.body.invoice.source, "manual");
@@ -322,7 +344,7 @@ describe("payment link invoices", () => {
     assert.equal(mark.status, 200);
     assert.equal(mark.body.invoice.status, "paid");
 
-    const bad = await call("POST", "/api/admin/manual-invoices", { json: { ...body(), email: "bad" } });
+    const bad = await call("POST", "/api/admin/manual-invoices", { json: { ...b2bBody(), email: "bad" } });
     assert.equal(bad.status, 400);
   });
 });

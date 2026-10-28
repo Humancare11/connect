@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../api";
-import {
-  PAYMENT_TERMS_OPTIONS,
-  DEFAULT_PAYMENT_TERMS,
-  computeItemAmountCents,
-  dueDateForTerms,
-  termsLine,
-} from "./invoiceForm";
+import { computeItemAmountCents } from "./invoiceForm";
+// B2B: disabled for now, re-enable later. Do not delete.
+// import {
+//   PAYMENT_TERMS_OPTIONS,
+//   DEFAULT_PAYMENT_TERMS,
+//   dueDateForTerms,
+//   termsLine,
+// } from "./invoiceForm";
 import { InvoiceCell, InvoiceStatusPill } from "./PaymentLinkInvoice";
 import { emailStatusLabel, useInvoiceActions } from "./paymentLinkInvoiceActions";
 import "./PaymentLinks.css";
@@ -14,15 +15,20 @@ import "./PaymentLinks.css";
 const ZERO_DECIMAL_CURRENCIES = new Set(["JPY"]);
 const CURRENCY = "USD";
 
-const EMPTY_CLIENT = {
-  name: "",
-  email: "",
-  companyName: "",
-  registrationNumber: "",
-  country: "",
-  postalCode: "",
-  address: "",
-};
+const B2B_ENABLED = false; // TODO: enable B2B later
+// While B2B is off, every link this page creates is an individual (B2C) one.
+const CUSTOMER_TYPE = "b2c";
+
+// B2B: disabled for now, re-enable later. Do not delete.
+// const EMPTY_CLIENT = {
+//   name: "",
+//   email: "",
+//   companyName: "",
+//   registrationNumber: "",
+//   country: "",
+//   postalCode: "",
+//   address: "",
+// };
 
 function currencyFactor(currency) {
   return ZERO_DECIMAL_CURRENCIES.has(String(currency).toUpperCase()) ? 1 : 100;
@@ -48,18 +54,20 @@ function formatDate(value) {
   });
 }
 
-// "Sep 19, 2026" from a "YYYY-MM-DD" date-input value.
-function formatDueDate(value) {
-  const d = new Date(`${value}T00:00:00`);
-  return value && !Number.isNaN(d.getTime())
-    ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-    : "-";
-}
+// B2B: disabled for now, re-enable later. Do not delete.
+// // "Sep 19, 2026" from a "YYYY-MM-DD" date-input value.
+// function formatDueDate(value) {
+//   const d = new Date(`${value}T00:00:00`);
+//   return value && !Number.isNaN(d.getTime())
+//     ? d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+//     : "-";
+// }
 
 // YYMM, the suffix of every invoice number (HCnn-YYMM).
 const invoicePeriod = `${String(new Date().getFullYear()).slice(-2)}${String(new Date().getMonth() + 1).padStart(2, "0")}`;
 
-const newItem = (id) => ({ id, description: "", quantity: "1", rate: "" });
+// B2B: disabled for now, re-enable later. Do not delete.
+// const newItem = (id) => ({ id, description: "", quantity: "1", rate: "" });
 // A B2C service line: just a description and an amount (quantity is always 1).
 const newService = (id) => ({ id, description: "", amount: "" });
 const serviceCents = (service) => computeItemAmountCents({ quantity: "1", rate: service.amount });
@@ -69,19 +77,21 @@ function statusLabel(status) {
 }
 
 export default function PaymentLinks() {
+  // B2B: disabled for now, re-enable later. Do not delete.
   // "b2c" = an individual (name, email, services); "b2b" = the full business
-  // form. Each keeps its own state, so switching back and forth loses nothing.
-  const [customerType, setCustomerType] = useState("b2c");
-  const isB2c = customerType === "b2c";
+  // form. Each kept its own state, so switching back and forth lost nothing.
+  // const [customerType, setCustomerType] = useState("b2c");
+  // const isB2c = customerType === "b2c";
   const [person, setPerson] = useState({ name: "", email: "" });
   const [services, setServices] = useState([newService(1)]);
   const nextServiceId = useRef(2);
-  const [client, setClient] = useState(EMPTY_CLIENT);
-  const [paymentTerms, setPaymentTerms] = useState(DEFAULT_PAYMENT_TERMS.value);
-  const [dueDate, setDueDate] = useState(() => dueDateForTerms(DEFAULT_PAYMENT_TERMS.value));
-  const [items, setItems] = useState([newItem(1)]);
-  const nextItemId = useRef(2);
-  const [description, setDescription] = useState("");
+  // B2B: disabled for now, re-enable later. Do not delete.
+  // const [client, setClient] = useState(EMPTY_CLIENT);
+  // const [paymentTerms, setPaymentTerms] = useState(DEFAULT_PAYMENT_TERMS.value);
+  // const [dueDate, setDueDate] = useState(() => dueDateForTerms(DEFAULT_PAYMENT_TERMS.value));
+  // const [items, setItems] = useState([newItem(1)]);
+  // const nextItemId = useRef(2);
+  // const [description, setDescription] = useState("");
   const [note, setNote] = useState("");
   const [created, setCreated] = useState(null);
   const [error, setError] = useState("");
@@ -90,16 +100,21 @@ export default function PaymentLinks() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
-  const setClientField = (key) => (event) => setClient((prev) => ({ ...prev, [key]: event.target.value }));
+  // B2B: disabled for now, re-enable later. Do not delete.
+  // const setClientField = (key) => (event) => setClient((prev) => ({ ...prev, [key]: event.target.value }));
 
   // The payer is charged the invoice total — there is no separate amount.
-  const subtotal = useMemo(
-    () => (isB2c ? services.reduce((sum, service) => sum + serviceCents(service), 0) : items.reduce((sum, item) => sum + computeItemAmountCents(item), 0)),
-    [isB2c, services, items],
-  );
-  const itemCount = isB2c
-    ? services.filter((service) => serviceCents(service) > 0).length
-    : items.filter((item) => computeItemAmountCents(item) > 0).length;
+  const subtotal = useMemo(() => services.reduce((sum, service) => sum + serviceCents(service), 0), [services]);
+  const itemCount = services.filter((service) => serviceCents(service) > 0).length;
+  // B2B: disabled for now, re-enable later. Do not delete.
+  // (with B2B on, subtotal/itemCount also depended on the customer type:)
+  // const subtotal = useMemo(
+  //   () => (isB2c ? services.reduce((sum, service) => sum + serviceCents(service), 0) : items.reduce((sum, item) => sum + computeItemAmountCents(item), 0)),
+  //   [isB2c, services, items],
+  // );
+  // const itemCount = isB2c
+  //   ? services.filter((service) => serviceCents(service) > 0).length
+  //   : items.filter((item) => computeItemAmountCents(item) > 0).length;
   const awaitingPayment = useMemo(
     () => history.filter((link) => link.invoice?.status === "due").length,
     [history],
@@ -124,18 +139,19 @@ export default function PaymentLinks() {
     fetchHistory();
   });
 
-  // Picking terms re-anchors Due Date to today + N days; the field stays
-  // editable afterward for a one-off exception.
-  const applyPaymentTerms = (value) => {
-    setPaymentTerms(value);
-    const due = dueDateForTerms(value);
-    if (due) setDueDate(due);
-  };
-
-  const updateItem = (id, key, value) =>
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [key]: value } : item)));
-  const addItem = () => setItems((prev) => [...prev, newItem(nextItemId.current++)]);
-  const removeItem = (id) => setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
+  // B2B: disabled for now, re-enable later. Do not delete.
+  // // Picking terms re-anchors Due Date to today + N days; the field stays
+  // // editable afterward for a one-off exception.
+  // const applyPaymentTerms = (value) => {
+  //   setPaymentTerms(value);
+  //   const due = dueDateForTerms(value);
+  //   if (due) setDueDate(due);
+  // };
+  //
+  // const updateItem = (id, key, value) =>
+  //   setItems((prev) => prev.map((item) => (item.id === id ? { ...item, [key]: value } : item)));
+  // const addItem = () => setItems((prev) => [...prev, newItem(nextItemId.current++)]);
+  // const removeItem = (id) => setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
 
   const updateService = (id, key, value) =>
     setServices((prev) => prev.map((service) => (service.id === id ? { ...service, [key]: value } : service)));
@@ -146,12 +162,13 @@ export default function PaymentLinks() {
     setPerson({ name: "", email: "" });
     nextServiceId.current = 2;
     setServices([newService(1)]);
-    setClient(EMPTY_CLIENT);
-    setPaymentTerms(DEFAULT_PAYMENT_TERMS.value);
-    setDueDate(dueDateForTerms(DEFAULT_PAYMENT_TERMS.value));
-    nextItemId.current = 2;
-    setItems([newItem(1)]);
-    setDescription("");
+    // B2B: disabled for now, re-enable later. Do not delete.
+    // setClient(EMPTY_CLIENT);
+    // setPaymentTerms(DEFAULT_PAYMENT_TERMS.value);
+    // setDueDate(dueDateForTerms(DEFAULT_PAYMENT_TERMS.value));
+    // nextItemId.current = 2;
+    // setItems([newItem(1)]);
+    // setDescription("");
     setNote("");
   };
 
@@ -162,28 +179,32 @@ export default function PaymentLinks() {
     setCreated(null);
     setLoading(true);
     try {
-      const payload = isB2c
-        ? {
-            customerType,
-            ...person,
-            note,
-            currency: CURRENCY,
-            items: services.map((service) => ({ description: service.description, amount: Number(service.amount) })),
-          }
-        : {
-            customerType,
-            ...client,
-            paymentTerms,
-            dueDate,
-            description,
-            note,
-            currency: CURRENCY,
-            items: items.map((item) => ({
-              description: item.description,
-              quantity: Number(item.quantity),
-              rate: Number(item.rate),
-            })),
-          };
+      // A B2C service has no quantity field, so it is always 1 — sent explicitly
+      // (the server also forces it).
+      const payload = {
+        customerType: CUSTOMER_TYPE,
+        ...person,
+        note,
+        currency: CURRENCY,
+        items: services.map((service) => ({ description: service.description, quantity: 1, amount: Number(service.amount) })),
+      };
+      // B2B: disabled for now, re-enable later. Do not delete.
+      // const payload = isB2c
+      //   ? { ...the B2C payload above, with customerType }
+      //   : {
+      //       customerType,
+      //       ...client,
+      //       paymentTerms,
+      //       dueDate,
+      //       description,
+      //       note,
+      //       currency: CURRENCY,
+      //       items: items.map((item) => ({
+      //         description: item.description,
+      //         quantity: Number(item.quantity),
+      //         rate: Number(item.rate),
+      //       })),
+      //     };
       const res = await api.post("/api/payments/admin/payment-links", payload);
       setCreated(res.data);
       resetForm();
@@ -233,6 +254,7 @@ export default function PaymentLinks() {
             <p>Invoice ke items ka Total hi customer ka payment amount banega ({CURRENCY}).</p>
           </div>
 
+          {/* // B2B: disabled for now, re-enable later. Do not delete.
           <div className="pl-ctype" role="radiogroup" aria-label="Customer type">
             <span className="pl-ctype__label">Customer type</span>
             <div className="pl-seg">
@@ -246,9 +268,8 @@ export default function PaymentLinks() {
               </label>
             </div>
           </div>
+          */}
 
-          {isB2c ? (
-            <>
           <section className="pl-section">
             <h3 className="pl-section__title">Customer</h3>
             <div className="pl-form-grid pl-form-grid--2">
@@ -296,9 +317,8 @@ export default function PaymentLinks() {
             </dl>
           </section>
 
-            </>
-          ) : (
-            <>
+          {/* // B2B: disabled for now, re-enable later. Do not delete.
+          [ the else-branch of `isB2c ? (...B2C...) : (...)`: ]
           <section className="pl-section">
             <h3 className="pl-section__title">Bill to</h3>
             <div className="pl-form-grid pl-form-grid--2">
@@ -404,9 +424,7 @@ export default function PaymentLinks() {
             </label>
             <p className="pl-terms">{termsLine(paymentTerms)}</p>
           </section>
-
-            </>
-          )}
+          */}
 
           <label className="pl-field">
             <span>Note</span>
@@ -430,21 +448,16 @@ export default function PaymentLinks() {
           <span className="pl-preview__label pl-preview__label--invoice">Invoice preview</span>
           <dl className="pl-invoice-preview">
             <div><dt>Invoice no.</dt><dd>Auto (HCnn-{invoicePeriod})</dd></div>
-            {isB2c ? (
-              <>
-                <div><dt>Name</dt><dd>{person.name || "-"}</dd></div>
-                <div><dt>Email</dt><dd className="pl-invoice-preview__wrap">{person.email || "-"}</dd></div>
-                <div><dt>Services</dt><dd>{itemCount}</dd></div>
-              </>
-            ) : (
-              <>
-                <div><dt>Bill to</dt><dd>{client.name || "-"}</dd></div>
-                <div><dt>Items</dt><dd>{itemCount}</dd></div>
-                <div><dt>Due date</dt><dd>{formatDueDate(dueDate)}</dd></div>
-                <div><dt>Subtotal</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
-                <div><dt>Tax (0%)</dt><dd>{formatMoney(0, CURRENCY)}</dd></div>
-              </>
-            )}
+            <div><dt>Name</dt><dd>{person.name || "-"}</dd></div>
+            <div><dt>Email</dt><dd className="pl-invoice-preview__wrap">{person.email || "-"}</dd></div>
+            <div><dt>Services</dt><dd>{itemCount}</dd></div>
+            {/* // B2B: disabled for now, re-enable later. Do not delete.
+            <div><dt>Bill to</dt><dd>{client.name || "-"}</dd></div>
+            <div><dt>Items</dt><dd>{itemCount}</dd></div>
+            <div><dt>Due date</dt><dd>{formatDueDate(dueDate)}</dd></div>
+            <div><dt>Subtotal</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
+            <div><dt>Tax (0%)</dt><dd>{formatMoney(0, CURRENCY)}</dd></div>
+            */}
             <div className="pl-invoice-preview__total"><dt>Total</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
           </dl>
         </div>

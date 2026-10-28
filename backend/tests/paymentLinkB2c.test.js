@@ -5,6 +5,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 const { extractText } = require("./helpers/pdfText");
+const { normalizeB2cItems } = require("../utils/manualInvoiceValidation");
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_not_used";
@@ -175,23 +176,73 @@ describe("B2C payment link invoices", () => {
     assert.equal(await PaymentLink.countDocuments(), 0);
   });
 
-  test("create: a client-sent amount or quantity cannot change what is charged", async () => {
-    const { body } = await create(b2c({ amount: 1, items: [{ description: "x", amount: 10, quantity: 99 }] }));
-    assert.equal(body.amountPaise, 1000);
+  // The reported bug: "Each item needs a quantity greater than zero." on a B2C link. A B2C service has
+  // no quantity field, so the request carries none; the server must treat every service as quantity 1.
+  test("create: a service with no quantity is accepted (quantity 1, rate = amount) and the invoice is due", async () => {
+    const { status, body } = await create({
+      customerType: "b2c", name: "Rahul Mehta", email: "rahul@example.com", note: "na", currency: "USD",
+      items: [{ description: "tele consultation", amount: 100 }],
+    });
+    assert.equal(status, 201);
+    assert.equal(body.invoice.status, "due");
+    assert.equal(body.amountPaise, 10000);
+    const invoice = await ManualInvoice.findById(body.invoice._id);
+    assert.deepEqual(invoice.items.map((i) => [i.description, i.quantity, i.rate, i.amountCents]), [["tele consultation", 1, 100, 10000]]);
   });
 
-  test("customerType missing or unknown falls back to the existing b2b flow", async () => {
+  test("create: a client-sent quantity is ignored — it stays 1 and the amount is the rate", async () => {
+    const { status, body } = await create(b2c({ amount: 1, items: [{ description: "x", amount: 10, quantity: 5 }, { description: "y", amount: 2.5, quantity: 0 }] }));
+    assert.equal(status, 201);
+    assert.equal(body.amountPaise, 1250);
+    const invoice = await ManualInvoice.findById(body.invoice._id);
+    assert.deepEqual(invoice.items.map((i) => [i.quantity, i.rate, i.amountCents]), [[1, 10, 1000], [1, 2.5, 250]]);
+  });
+
+  test("normalizeB2cItems: quantity 1 and rate = amount, whatever the client sent", () => {
+    assert.deepEqual(normalizeB2cItems([{ description: "a", amount: 7, quantity: 9, rate: 99 }, { description: "b", amount: 3 }]), [
+      { description: "a", quantity: 1, rate: 7 },
+      { description: "b", quantity: 1, rate: 3 },
+    ]);
+    assert.deepEqual(normalizeB2cItems(undefined), []);
+  });
+
+  test("a B2C request with no services, or a bad amount, is still rejected", async () => {
+    assert.equal((await create(b2c({ items: undefined }))).status, 400);
+    assert.equal((await create(b2c({ items: [{ description: "x" }] }))).status, 400);
+    assert.equal((await create(b2c({ items: [{ description: "x", amount: "abc" }] }))).status, 400);
+  });
+
+  // ---- B2B is switched off (B2B_PAYMENT_LINKS_ENABLED = false in routes/payments.js) ----
+  test("a new link without a customerType is a B2C link", async () => {
+    const { customerType, ...noType } = b2c();
+    const { status, body } = await create(noType);
+    assert.equal(status, 201);
+    assert.equal(body.customerType, "b2c");
+    assert.equal(body.invoice.customerType, "b2c");
+    assert.equal((await create(b2c({ customerType: "something-else" }))).body.customerType, "b2c");
+  });
+
+  test("customerType b2b is refused with 400 while B2B is disabled, and nothing is created", async () => {
+    const { status, body } = await create(b2c({ customerType: "b2b" }));
+    assert.equal(status, 400);
+    assert.equal(body.msg, "Business payment links are not enabled yet.");
+    assert.equal(await PaymentLink.countDocuments(), 0);
+    assert.equal(await ManualInvoice.countDocuments(), 0);
+
+    const bizPayload = { customerType: "b2b", name: "Nova", email: "n@example.com", paymentTerms: "Net 30 Days", items: [{ description: "House call", quantity: 2, rate: 150 }] };
+    assert.equal((await create(bizPayload)).status, 400);
+  });
+
+  // B2B disabled for now (see B2B_PAYMENT_LINKS_ENABLED in routes/payments.js): re-enable with the flag.
+  test.skip("B2B: customerType b2b keeps the business form's own layout", async () => {
     const b2b = {
-      name: "Nova", email: "n@example.com", paymentTerms: "Net 30 Days", dueDate: "2026-12-01",
+      customerType: "b2b", name: "Nova", email: "n@example.com", paymentTerms: "Net 30 Days", dueDate: "2026-12-01",
       items: [{ description: "House call", quantity: 2, rate: 150 }],
     };
-    const { body } = await call("POST", "/api/payments/admin/payment-links", { json: b2b });
+    const { body } = await create(b2b);
     assert.equal(body.customerType, "b2b");
-    assert.equal(body.invoice.customerType, "b2b");
     const text = await pdfText(body.invoice._id);
     assert.ok(text.includes("QTY") && text.includes("PAYMENT TERMS"), "B2B keeps its own layout");
-    const weird = await call("POST", "/api/payments/admin/payment-links", { json: { ...b2b, customerType: "other" } });
-    assert.equal(weird.body.customerType, "b2b");
   });
 
   test("send email: patient-style email, Pay now on the due invoice, escaped, only on request", async () => {

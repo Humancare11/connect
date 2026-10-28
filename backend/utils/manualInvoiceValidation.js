@@ -125,14 +125,24 @@ function parseBillingDetails(body = {}) {
 // send — company, address, country, postal code, registration number, terms,
 // due date, notes — is ignored, never validated and never stored. Returns the
 // same shape as the B2B pieces: { details, items, amountCents, dueDate }.
+// A B2C service has no quantity: it is always 1, and rate = amount. This is
+// applied BEFORE validation, and whatever quantity a client sent is ignored —
+// parseItems requires a quantity, so a service sent as just { description,
+// amount } would otherwise be rejected with "Each item needs a quantity
+// greater than zero."
+function normalizeB2cItems(rawServices) {
+  return (Array.isArray(rawServices) ? rawServices : []).map((service) => ({
+    description: service?.description,
+    quantity: 1,
+    rate: service?.amount ?? service?.rate,
+  }));
+}
+
 function parseB2cBody(body = {}) {
   const { details: person, error: detailsError } = parseBillingDetails({ name: body.name, email: body.email });
   if (detailsError) return { error: detailsError };
 
-  const rawServices = Array.isArray(body.items) ? body.items : [];
-  const { items, amountCents, error: itemsError } = parseItems(
-    rawServices.map((service) => ({ description: service?.description, quantity: 1, rate: service?.amount ?? service?.rate }))
-  );
+  const { items, amountCents, error: itemsError } = parseItems(normalizeB2cItems(body.items));
   if (itemsError) return { error: itemsError };
   if (amountCents > MAX_AMOUNT_CENTS) return { error: "Amount is too large. Please double-check the value." };
 
@@ -155,6 +165,7 @@ function parseB2cBody(body = {}) {
 }
 
 module.exports = {
+  normalizeB2cItems,
   parseB2cBody,
   EMAIL_RE,
   ALLOWED_CURRENCIES,
