@@ -1,5 +1,8 @@
 // The "Appointment entries" list: one row per booked appointment, read from the two booking collections as one list.
 //
+// Two views (`view`): "auto" is the bookings from the website and app, "manual" the manual entries, "all" (the default, as the API was
+// first built) both. Everything below (rows, tab counts, totals, the boxes, the months) follows the view.
+//
 // Rows: every Appointment, and only the PAID CategoryConsultations (an unpaid or refunded one has nothing to pay a doctor
 // for). Cancelled and testing bookings are left out unless asked for (includeCancelled / includeTesting). Manual entries
 // (their own collection, no booking behind them) are rows too; the include flags do not apply to them, and a soft-deleted
@@ -38,6 +41,8 @@ const SORTS = {
 
 class EntryListQueryError extends Error {}
 
+const VIEWS = ["all", "auto", "manual"];
+
 // ── Query parsing ────────────────────────────────────────────────────────────
 
 const parseInteger = (raw, name, fallback) => {
@@ -64,6 +69,9 @@ function parseEntriesQuery(query = {}) {
   const sort = String(query.sort || "-consultation");
   if (!(sort in SORTS)) throw new EntryListQueryError(`Invalid sort. Allowed values: ${Object.keys(SORTS).join(", ")}.`);
 
+  const view = String(query.view || "all").toLowerCase();
+  if (!VIEWS.includes(view)) throw new EntryListQueryError(`Invalid view. Allowed values: ${VIEWS.join(", ")}.`);
+
   let month = "";
   if (query.month !== undefined && query.month !== "") {
     month = String(query.month);
@@ -73,15 +81,20 @@ function parseEntriesQuery(query = {}) {
   let doctor = "";
   if (query.doctor !== undefined && query.doctor !== "") {
     doctor = String(query.doctor);
-    if (!mongoose.isValidObjectId(doctor) || !/^[0-9a-f]{24}$/i.test(doctor)) throw new EntryListQueryError("doctor must be a doctor id.");
+    // A doctor id, or "provider:<name>" for a service provider typed on manual entries.
+    const providerName = doctor.startsWith("provider:") ? doctor.slice(9).trim() : "";
+    if (doctor.startsWith("provider:") ? !providerName || providerName.length > 120 : !mongoose.isValidObjectId(doctor) || !/^[0-9a-f]{24}$/i.test(doctor)) {
+      throw new EntryListQueryError("doctor must be a doctor id.");
+    }
   }
 
-  for (const key of ["q", "tab", "sort", "month", "doctor"]) {
+  for (const key of ["q", "tab", "sort", "month", "doctor", "view"]) {
     if (Array.isArray(query[key])) throw new EntryListQueryError(`${key} must be given once.`);
   }
 
   return {
     tab,
+    view,
     page,
     limit: Math.min(limit, MAX_LIMIT),
     sort,
@@ -110,22 +123,33 @@ function monthRange(month) {
 }
 
 // The doctor filter. The page's doctor list uses the doctor's Enrollment id (as the assign page does); an Appointment points at
-// the Doctor record and a category consultation at the Enrollment, so one id has to become one filter for each.
+// the Doctor record and a category consultation at the Enrollment, so one id has to become one filter for each. A manual entry has no
+// doctor record: its service provider is free text, so it matches when that text is exactly the doctor's name.
 async function doctorFilters(id) {
   if (!id) return null;
-  const enrollment = await Enrollment.findById(id).select("_id doctorId").lean();
+  if (id.startsWith("provider:")) {
+    const nobody = { _id: { $in: [] } };
+    return { appointment: nobody, category: nobody, manual: { doctorName: id.slice(9).trim() } };
+  }
+  const byName = (...names) => ({ doctorName: { $in: names.filter(Boolean) } });
+  const enrollmentName = (e) => `${e.firstName || ""} ${e.surname || ""}`.trim();
+  const enrollment = await Enrollment.findById(id).select("_id doctorId firstName surname").lean();
   if (enrollment) {
+    const doctor = enrollment.doctorId ? await Doctor.findById(enrollment.doctorId).select("name").lean() : null;
     return {
       appointment: enrollment.doctorId ? { doctorId: enrollment.doctorId } : { _id: { $in: [] } },
       category: { assignedDoctorId: enrollment._id },
-      manual: { doctorEnrollmentId: enrollment._id },
+      manual: byName(doctor?.name, enrollmentName(enrollment)),
     };
   }
-  const doctor = await Doctor.findById(id).select("_id").lean();
+  const doctor = await Doctor.findById(id).select("_id name").lean();
   if (doctor) {
-    const enrollments = await Enrollment.find({ doctorId: doctor._id }).select("_id").lean();
-    const enrollmentIds = enrollments.map((e) => e._id);
-    return { appointment: { doctorId: doctor._id }, category: { assignedDoctorId: { $in: enrollmentIds } }, manual: { doctorEnrollmentId: { $in: enrollmentIds } } };
+    const enrollments = await Enrollment.find({ doctorId: doctor._id }).select("_id firstName surname").lean();
+    return {
+      appointment: { doctorId: doctor._id },
+      category: { assignedDoctorId: { $in: enrollments.map((e) => e._id) } },
+      manual: byName(doctor.name, ...enrollments.map(enrollmentName)),
+    };
   }
   const nobody = { _id: { $in: [] } };
   return { appointment: nobody, category: nobody, manual: nobody };
@@ -168,11 +192,12 @@ async function searchFilters(q) {
   const apptDoctorIds = [...doctors.map((d) => d._id), ...enrollments.map((e) => e.doctorId).filter(Boolean)];
   const categoryDoctorIds = [...enrollments.map((e) => e._id), ...doctorEnrollments.map((e) => e._id)];
 
-  // A manual entry: patient name, doctor name, country (name or code), its "M-1A2B" code (any part, with or without "M-") or its id.
+  // A manual entry: patient name, service provider, company, case number, country (name or code), its "M-1A2B" code (any part, with
+  // or without "M-") or its id.
   const code = codeSearchText(q);
   const codeClause = /^[0-9A-F]+$/.test(code) ? [{ code: new RegExp(escapeRegex(code)) }] : [];
   return {
-    manual: { $or: [...idClause, ...codeClause, { patientName: rx }, { doctorName: rx }, { country: { $in: countryValues } }] },
+    manual: { $or: [...idClause, ...codeClause, { patientName: rx }, { doctorName: rx }, { company: rx }, { caseNumber: rx }, { country: { $in: countryValues } }] },
     appointment: {
       $or: [...idClause, { patientId: { $in: patientIds } }, { doctorId: { $in: apptDoctorIds } }, { "patientDetails.country": { $in: countryValues } }],
     },
@@ -232,17 +257,17 @@ function keysPipeline(filter, sort, need, bookedExpr) {
 // The doctors and consultation months that have rows (with the include flags applied, but not the tab, search, doctor or month).
 async function loadChoices(filter) {
   const months = { $group: { _id: { $substrCP: [{ $convert: { input: "$date", to: "string", onError: "", onNull: "" } }, 0, 7] } } };
-  const [apptDoctors, catDoctors, manualDoctors, apptMonths, catMonths, manualMonths] = await Promise.all([
+  const [apptDoctors, catDoctors, manualProviders, apptMonths, catMonths, manualMonths] = await Promise.all([
     Appointment.aggregate([{ $match: combine(filter.appointment, { doctorId: { $ne: null } }) }, { $group: { _id: "$doctorId" } }]),
     CategoryConsultation.aggregate([{ $match: combine(filter.category, { assignedDoctorId: { $ne: null } }) }, { $group: { _id: "$assignedDoctorId" } }]),
-    ManualEntry.aggregate([{ $match: combine(filter.manual, { doctorEnrollmentId: { $ne: null } }) }, { $group: { _id: "$doctorEnrollmentId" } }]),
+    ManualEntry.aggregate([{ $match: combine(filter.manual, { doctorName: { $nin: [null, ""] } }) }, { $group: { _id: "$doctorName" } }]),
     Appointment.aggregate([{ $match: filter.appointment }, months]),
     CategoryConsultation.aggregate([{ $match: filter.category }, months]),
     ManualEntry.aggregate([{ $match: filter.manual }, months]),
   ]);
 
   const doctorIds = apptDoctors.map((r) => r._id);
-  const enrollmentIds = [...catDoctors, ...manualDoctors].map((r) => r._id);
+  const enrollmentIds = catDoctors.map((r) => r._id);
   const [doctors, enrollments] = await Promise.all([
     Doctor.find({ _id: { $in: doctorIds } }).select("name").lean(),
     Enrollment.find({ $or: [{ _id: { $in: enrollmentIds } }, { doctorId: { $in: doctorIds } }] }).select("firstName surname doctorId").lean(),
@@ -258,6 +283,14 @@ async function loadChoices(filter) {
     list.set(String(e._id), { id: String(e._id), name });
   }
   for (const d of doctors) if (!covered.has(String(d._id))) list.set(String(d._id), { id: String(d._id), name: d.name || "Doctor" });
+
+  // Service providers typed on manual entries join the list, once each; a name that is already a doctor above is not repeated.
+  const seen = new Set([...list.values()].map((d) => d.name.toLowerCase()));
+  for (const { _id: name } of manualProviders) {
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    list.set(`provider:${name}`, { id: `provider:${name}`, name });
+  }
 
   const monthList = [...new Set([...apptMonths, ...catMonths, ...manualMonths].map((r) => r._id).filter((m) => /^\d{4}-\d{2}$/.test(m)))].sort().reverse();
   return { doctors: [...list.values()].sort((x, y) => x.name.localeCompare(y.name)), months: monthList };
@@ -334,10 +367,21 @@ function toEntryRow(kind, doc) {
 // The filters of one request: which bookings are rows at all (`eligible`), after the doctor and month filters (`scoped`), and
 // after the tab and the search as well (`full`). One object per source.
 async function buildScopes(params) {
-  const { tab, month, doctor, includeCancelled, includeTesting, q } = params;
+  const { tab, view = "all", month, doctor, includeCancelled, includeTesting, q } = params;
   const eligible = eligibility({ includeCancelled, includeTesting });
   const [doctorFilter, search] = await Promise.all([doctorFilters(doctor), searchFilters(q)]);
   const monthFilter = month ? { date: monthRange(month) } : null;
+
+  // What each source looks like without the view: used for the two counts on the view switch.
+  const unrestricted = {
+    appointment: combine(eligible.appointment, monthFilter, doctorFilter?.appointment),
+    category: combine(eligible.category, monthFilter, doctorFilter?.category),
+    manual: combine(eligible.manual, monthFilter, doctorFilter?.manual),
+  };
+  // A view leaves out the other kind of row altogether (a filter nothing matches).
+  const nobody = { _id: { $in: [] } };
+  if (view === "manual") eligible.appointment = eligible.category = nobody;
+  if (view === "auto") eligible.manual = nobody;
 
   const scoped = {
     appointment: combine(eligible.appointment, monthFilter, doctorFilter?.appointment),
@@ -350,7 +394,7 @@ async function buildScopes(params) {
     category: combine(scoped.category, tabMatch, search?.category),
     manual: combine(scoped.manual, tabMatch, search?.manual),
   };
-  return { eligible, scoped, full };
+  return { eligible, scoped, full, unrestricted };
 }
 
 // The key lists of the three sources (each already in page order) as one list in page order.
@@ -388,22 +432,24 @@ async function loadRows(keys) {
   return keys.map((k) => rows.get(`${k.kind}:${k._id}`)).filter(Boolean);
 }
 
-async function listBookingEntries(query) {
+// `role` decides whether the money boxes are sent: only a super admin gets `summary`. For anyone else it is left out of the answer.
+async function listBookingEntries(query, { role = "" } = {}) {
   const params = parseEntriesQuery(query);
-  const { tab, page, limit, sort, month, doctor, includeCancelled, includeTesting, q } = params;
+  const { tab, view, page, limit, sort, month, doctor, includeCancelled, includeTesting, q } = params;
   const order = SORTS[sort];
 
-  const { eligible, scoped, full } = await buildScopes(params);
+  const { eligible, scoped, full, unrestricted } = await buildScopes(params);
 
   const start = (page - 1) * limit;
   const need = start + limit;
-  const [{ counts, summary }, totals, choices, appointmentKeys, categoryKeys, manualKeys] = await Promise.all([
+  const [{ counts, summary }, totals, choices, appointmentKeys, categoryKeys, manualKeys, viewCounts] = await Promise.all([
     loadCounts(scoped),
     loadTotals(full.appointment, full.category, full.manual),
     loadChoices(eligible),
     Appointment.aggregate(keysPipeline(full.appointment, order, need, { $ifNull: ["$bookedAt", "$createdAt"] })),
     CategoryConsultation.aggregate(keysPipeline(full.category, order, need, "$createdAt")),
     ManualEntry.aggregate(keysPipeline(full.manual, order, need, "$createdAt")),
+    loadViewCounts(unrestricted),
   ]);
 
   const pageKeys = mergeKeys({ appointment: appointmentKeys, category: categoryKeys, manual: manualKeys }, order).slice(start, start + limit);
@@ -411,7 +457,8 @@ async function listBookingEntries(query) {
   return {
     items: await loadRows(pageKeys),
     counts,
-    summary,
+    views: viewCounts,
+    ...(role === "superadmin" ? { summary } : {}),
     totals,
     doctors: choices.doctors,
     months: choices.months,
@@ -420,18 +467,33 @@ async function listBookingEntries(query) {
     total: totals.rows,
     totalPages: Math.ceil(totals.rows / limit),
     tab,
+    view,
     sort,
     filters: { doctor, month, includeCancelled, includeTesting },
   };
 }
 
-// The count for each tab, and the three boxes at the top (what is still owed to doctors, what has been paid, rows with no doctor
-// fee yet): the include flags and the doctor and month filters apply, the search text and the tab do not.
-//   toPayCents          saved doctor fees on Unpaid rows
+// How many rows each view has (the month and include flags apply; the tab and the search do not): the two numbers on the view switch.
+async function loadViewCounts(unrestricted) {
+  const [a, c, m] = await Promise.all([
+    Appointment.countDocuments(unrestricted.appointment),
+    CategoryConsultation.countDocuments(unrestricted.category),
+    ManualEntry.countDocuments(unrestricted.manual),
+  ]);
+  return { auto: a + c, manual: m };
+}
+
+// The count for each tab, and the money for the boxes at the top (only a super admin is sent them): the include flags, the view and the
+// month apply, the search text and the tab do not.
+//   toPayCents          saved doctor fees on Unpaid rows ("To pay providers")
 //   paidCents           saved doctor fees on Paid rows
 //   feeNotEnteredCount  rows with no saved doctor fee, not counting Not payable rows
+//   receivedCents       what came in: for bookings what the patients paid; for manual entries the consultation fee of every entry whose
+//                       payment from the company is not "Not received"
+//   marginCents         what we keep: received minus the saved doctor fees (for manual entries, ALL consultation fees minus all doctor's fees)
 async function loadCounts(scoped) {
-  const group = (filter) => [
+  const paid = { $convert: { input: "$paymentAmount", to: "double", onError: 0, onNull: 0 } };
+  const group = (filter, received, billed) => [
     { $match: filter },
     {
       $group: {
@@ -439,16 +501,21 @@ async function loadCounts(scoped) {
         n: { $sum: 1 },
         feeCents: { $sum: { $ifNull: ["$entry.doctorFeeCents", 0] } },
         noFee: { $sum: { $cond: [{ $eq: [{ $ifNull: ["$entry.doctorFeeCents", null] }, null] }, 1, 0] } },
+        received: { $sum: received },
+        billed: { $sum: billed },
       },
     },
   ];
+  const consult = { $ifNull: ["$feeChargedCents", 0] };
   const [a, c, m] = await Promise.all([
-    Appointment.aggregate(group(scoped.appointment)),
-    CategoryConsultation.aggregate(group(scoped.category)),
-    ManualEntry.aggregate(group(scoped.manual)),
+    Appointment.aggregate(group(scoped.appointment, paid, paid)),
+    CategoryConsultation.aggregate(group(scoped.category, paid, paid)),
+    ManualEntry.aggregate(
+      group(scoped.manual, { $cond: [{ $in: [{ $ifNull: ["$paymentReceived", "not_received"] }, ["received", "partly_received"]] }, consult, 0] }, consult),
+    ),
   ]);
   const counts = emptyCounts();
-  const summary = { toPayCents: 0, paidCents: 0, feeNotEnteredCount: 0 };
+  const summary = { toPayCents: 0, paidCents: 0, feeNotEnteredCount: 0, receivedCents: 0, marginCents: 0 };
   for (const row of [...a, ...c, ...m]) {
     const key = PAID_STATUSES.includes(row._id) ? row._id : "unpaid";
     counts[key] += row.n;
@@ -456,7 +523,11 @@ async function loadCounts(scoped) {
     if (key === "unpaid") summary.toPayCents += row.feeCents;
     if (key === "paid") summary.paidCents += row.feeCents;
     if (key !== "not_payable") summary.feeNotEnteredCount += row.noFee;
+    summary.receivedCents += Math.round(row.received);
+    summary.marginCents += Math.round(row.billed) - row.feeCents;
   }
+  // For bookings the margin is what was received minus the fees; for manual entries it is the consultation fees minus the doctor's fees
+  // (the same number whether or not the company has paid yet). `billed` is the right base for each.
   return { counts, summary };
 }
 
@@ -475,7 +546,7 @@ async function listAllEntryRows(query, cap = MAX_EXPORT_ROWS) {
   const keys = mergeKeys({ appointment: appointmentKeys, category: categoryKeys, manual: manualKeys }, order).slice(0, cap);
   const rows = [];
   for (let i = 0; i < keys.length; i += EXPORT_CHUNK) rows.push(...(await loadRows(keys.slice(i, i + EXPORT_CHUNK))));
-  return { rows, total: totals.rows, truncated: totals.rows > keys.length };
+  return { rows, total: totals.rows, truncated: totals.rows > keys.length, view: params.view };
 }
 
 // One row, loaded the way the list loads it (for the answer to an edit). Null when it is not a row of the list.

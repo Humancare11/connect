@@ -7,23 +7,41 @@ export const TAB_ORDER = ["all", "unpaid", "paid", "on_hold", "not_payable"];
 export const TAB_LABELS = { all: "All", unpaid: "Unpaid", paid: "Paid", on_hold: "On hold", not_payable: "Not payable" };
 export const STATUS_OPTIONS = TAB_ORDER.filter((key) => key !== "all").map((key) => [key, TAB_LABELS[key]]);
 
+// The two views: Auto entries (bookings from the website and app) and Manual entries. Auto is the default and is left out of the address.
+export const VIEWS = ["auto", "manual"];
+export const viewFromParam = (value) => (VIEWS.includes(value) ? value : "auto");
+
 export const tabFromParam = (value) => (TAB_ORDER.includes(value) ? value : "all");
 export const monthFromParam = (value) => (/^\d{4}-(0[1-9]|1[0-2])$/.test(value || "") ? value : "");
-export const doctorFromParam = (value) => (/^[0-9a-f]{24}$/i.test(value || "") ? value : "");
-
 export function pageFromParam(value) {
   const n = Number(value);
   return Number.isInteger(n) && n >= 1 ? n : 1;
 }
 
 // The page state as the query string of the page's own URL: values that are the default are left out.
-export function viewToParams({ tab, doctor, month, page }) {
+export function viewToParams({ view, tab, month, page }) {
   const params = {};
+  if (view && view !== "auto") params.view = view;
   if (tab && tab !== "all") params.tab = tab;
-  if (doctor) params.doctor = doctor;
   if (month) params.month = month;
   if (page > 1) params.page = String(page);
   return params;
+}
+
+// ── The money boxes (a super admin only) ───
+
+// A margin can be negative: "-$15.00" rather than "$-15.00".
+export const formatSigned = (cents) => `${cents < 0 ? "-" : ""}${formatMoney(Math.abs(cents))}`;
+
+// The boxes of a view, from the server's `summary` (which only a super admin gets). No summary, no boxes.
+export function summaryBoxes(view, summary) {
+  if (!summary) return [];
+  const manual = view === "manual";
+  return [
+    { key: "received", label: manual ? "Received from companies" : "Received from patients", text: formatMoney(summary.receivedCents), tone: "ok" },
+    { key: "toPay", label: "To pay providers", text: formatMoney(summary.toPayCents), tone: "warn" },
+    { key: "margin", label: "Our margin", text: formatSigned(summary.marginCents), tone: summary.marginCents < 0 ? "neg" : "" },
+  ];
 }
 
 // ── Money ────────────────────────────────────────────────────────────────────
@@ -47,6 +65,34 @@ export function cleanFeeInput(text) {
 export function sameFee(typed, cents) {
   if (typed === "") return cents === null || cents === undefined;
   return Number.isFinite(cents) && Math.round(Number(typed) * 100) === cents;
+}
+
+// ── Months (the month picker) ───
+
+export const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// The month the browser's clock is in, as "YYYY-MM".
+export const thisMonth = (now = new Date()) => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+// "2026-12" + 1 -> "2027-01"; "2026-01" - 1 -> "2025-12"
+export function stepMonth(month, delta) {
+  const [y, m] = month.split("-").map(Number);
+  const index = y * 12 + (m - 1) + delta;
+  return `${Math.floor(index / 12)}-${String((index % 12) + 1).padStart(2, "0")}`;
+}
+
+// "2026" + 3 -> "2026-04" (a month of the year, by its 0-based index)
+export const monthOf = (year, index) => `${year}-${String(index + 1).padStart(2, "0")}`;
+
+// What the ‹ and › arrows do. From "All time" ‹ goes to the latest month that has entries (never one in the future) and › does
+// nothing; from a month they step by one, and › stops at the current month. Returns the new month, or null when the arrow has nowhere to go.
+export function arrowTarget(month, direction, { months = [], now = thisMonth() } = {}) {
+  if (!month) {
+    if (direction > 0) return null;
+    return [...months].filter((m) => m <= now).sort().at(-1) || now;
+  }
+  const next = stepMonth(month, direction);
+  return next > now ? null : next;
 }
 
 // ── Dates ────────────────────────────────────────────────────────────────────
@@ -101,12 +147,8 @@ export function feeCharged(row) {
   return { main: formatMoney(charged), paid: paid !== charged ? `paid ${formatMoney(paid)}` : "" };
 }
 
-// The grey text in an empty doctor fee box: "75% · 74.25" (never on a Not payable row), else "0.00". Never saved.
-export function feePlaceholder(row) {
-  if (row.entry.doctorFeeCents !== null && row.entry.doctorFeeCents !== undefined) return "0.00";
-  if (row.entry.paidStatus === "not_payable" || !row.placeholder) return "0.00";
-  return row.placeholder.text;
-}
+// The grey text in an empty doctor fee box. Only a placeholder: nothing is saved until someone types.
+export const FEE_PLACEHOLDER = "0.00";
 
 export const totalsText = (rows) => `Totals for ${rows} row${rows === 1 ? "" : "s"}`;
 
@@ -146,62 +188,121 @@ export function downloadName(header, fallbackDay = "") {
 
 // ── The manual-entry form ────────────────────────────────────────────────────
 
-export const EMPTY_FORM = { patientName: "", country: "", doctorId: "", date: "", time: "10:00", feeCharged: "", doctorFee: "", comment: "" };
+// The choices of the form's drop-downs, [value, label].
+export const SERVICE_TYPES = [["house_call", "House call"], ["teleconsultation", "Teleconsultation"], ["others", "Others"]];
+export const CASE_STATUSES = [["open", "Open"], ["in_progress", "In progress"], ["completed", "Completed"], ["cancelled", "Cancelled"]];
+export const MR_STATUSES = [["pending", "Pending"], ["received", "Received"]];
+export const SENT_STATUSES = [["not_sent", "Not sent"], ["sent", "Sent"]];
+export const PAYMENT_RECEIVED = [["not_received", "Not received"], ["partly_received", "Partly received"], ["received", "Received"]];
+export const PAYMENT_TO_PROVIDER = [["unpaid", "Unpaid"], ["on_hold", "On hold"], ["paid", "Paid"], ["not_payable", "Not payable"]];
 
-// The form's starting values for editing a manual row.
-export function formFromRow(row) {
+export const MAX_FEEDBACK = 1000;
+export const MAX_PHONE = 20;
+
+// Once Payment to provider is Paid these cannot change (the server enforces the same list).
+export const LOCKED_WHEN_PAID = [
+  "date", "company", "caseNumber", "serviceType", "otherService", "caseStatus",
+  "serviceProvider", "providerNumber", "patientName", "country", "contactNumber", "consultationFee", "doctorFee",
+];
+
+// A blank form, with today as the date (the day as "YYYY-MM-DD").
+export const newForm = (today) => ({
+  date: today, company: "", caseNumber: "", serviceType: "teleconsultation", otherService: "", caseStatus: "open",
+  serviceProvider: "", providerNumber: "",
+  patientName: "", country: "", contactNumber: "",
+  consultationFee: "", doctorFee: "",
+  mrStatus: "pending", mrSentToCompany: "not_sent", invoiceSent: "not_sent",
+  paymentReceived: "not_received", paymentReceivedDate: "", paymentToProvider: "unpaid", paidDateToProvider: "",
+  feedbackSent: "", feedbackReceived: "", comment: "",
+});
+
+// The form's starting values for editing a manual row: what the server saved, as text.
+export const formFromRow = (row) => ({ ...newForm(""), ...(row.manual?.form || {}) });
+
+// A field's new value, plus what follows from it: the payment dates default to today when they become usable, and a payment received date
+// goes when nothing was received.
+export function changeField(form, key, value, today) {
+  const next = { ...form, [key]: value };
+  if (key === "paymentReceived") {
+    next.paymentReceivedDate = value === "not_received" ? "" : form.paymentReceivedDate || today;
+  }
+  if (key === "paymentToProvider" && value === "paid" && !form.paidDateToProvider) next.paidDateToProvider = today;
+  return next;
+}
+
+export const phoneOk = (text) => text.length <= MAX_PHONE && /^[0-9 +\-()]*$/.test(text);
+
+const cents = (text) => {
+  const clean = cleanFeeInput(text);
+  return clean.ok && clean.value !== "" ? Math.round(Number(clean.value) * 100) : null;
+};
+
+// "Calculation (our margin)": consultation fee minus the doctor's fee, and that as a percentage of the consultation fee. Never saved.
+// { empty: true } until both fees are numbers; { text: "$30.00", percent: "30.0%", negative } otherwise (no percent for a 0 fee).
+export function calculation(form) {
+  const consult = cents(form.consultationFee);
+  const doctor = cents(form.doctorFee);
+  if (consult === null || doctor === null) return { empty: true, text: "—", percent: "", negative: false };
+  const margin = consult - doctor;
+  const sign = margin < 0 ? "-" : "";
   return {
-    patientName: row.patient?.name || "",
-    country: row.patient?.countryName || row.patient?.country || "",
-    doctorId: row.manual?.doctorId || "",
-    date: row.consultation?.date || "",
-    time: timeToInput(row.consultation?.time),
-    feeCharged: centsToInput(row.feeChargedCents),
-    doctorFee: "",
-    comment: "",
+    empty: false,
+    text: `${sign}${formatMoney(Math.abs(margin))}`,
+    percent: consult > 0 ? `${(Math.round((margin / consult) * 1000) / 10).toFixed(1)}%` : "",
+    negative: margin < 0,
   };
 }
 
 // First problem with the form, as a sentence, or "". The server checks the same things again.
 export function formProblem(form) {
+  if (!form.date) return "Enter the date of the case.";
+  if (form.serviceType === "others" && !form.otherService.trim()) return "Describe the other service.";
+  if (!form.serviceProvider.trim()) return "Enter the service provider.";
+  if (!phoneOk(form.providerNumber.trim())) return "The service provider number can have digits, spaces and + - ( ) only, up to 20 characters.";
   if (!form.patientName.trim()) return "Enter the patient's name.";
-  if (!form.date) return "Enter the consultation date.";
-  const fee = cleanFeeInput(form.feeCharged);
-  if (!fee.ok || fee.value === "") return "Enter the fee charged as a number, like 49.00 (0 is fine).";
-  if (!cleanFeeInput(form.doctorFee).ok) return "Doctor fee must be a number, like 36.75.";
+  if (!phoneOk(form.contactNumber.trim())) return "The contact number can have digits, spaces and + - ( ) only, up to 20 characters.";
+  const fee = cleanFeeInput(form.consultationFee);
+  if (!fee.ok || fee.value === "") return "Enter the consultation fee as a number, like 49.00 (0 is fine).";
+  if (!cleanFeeInput(form.doctorFee).ok) return "The doctor's fee must be a number, like 36.75.";
+  if (form.paymentToProvider === "paid") {
+    if (!(cents(form.doctorFee) > 0)) return "Enter a doctor's fee above 0 before marking this Paid.";
+    if (!form.paidDateToProvider) return "Enter the date it was paid to the provider.";
+  }
+  if (form.paymentReceived !== "not_received" && !form.paymentReceivedDate) return "Enter the date the payment was received.";
   return "";
 }
 
-// The body for POST /manual.
-export function createBody(form) {
-  return {
+// The body for POST /manual and (with `version`) PATCH /manual/:id/details. The Other service text only goes with "Others", the received
+// date only with a payment received, and the Paid date only when Paid.
+export function formBody(form, version) {
+  const body = {
+    date: form.date,
+    company: form.company.trim(),
+    caseNumber: form.caseNumber.trim(),
+    serviceType: form.serviceType,
+    otherService: form.serviceType === "others" ? form.otherService.trim() : "",
+    caseStatus: form.caseStatus,
+    serviceProvider: form.serviceProvider.trim(),
+    providerNumber: form.providerNumber.trim(),
     patientName: form.patientName.trim(),
     country: form.country.trim(),
-    doctorId: form.doctorId || null,
-    date: form.date,
-    time: form.time,
-    feeCharged: cleanFeeInput(form.feeCharged).value,
+    contactNumber: form.contactNumber.trim(),
+    consultationFee: cleanFeeInput(form.consultationFee).value,
     doctorFee: cleanFeeInput(form.doctorFee).value,
+    mrStatus: form.mrStatus,
+    mrSentToCompany: form.mrSentToCompany,
+    invoiceSent: form.invoiceSent,
+    paymentReceived: form.paymentReceived,
+    paymentReceivedDate: form.paymentReceived === "not_received" ? "" : form.paymentReceivedDate,
+    paymentToProvider: form.paymentToProvider,
+    feedbackSent: form.feedbackSent.trim(),
+    feedbackReceived: form.feedbackReceived.trim(),
     comment: form.comment.trim(),
   };
+  if (form.paymentToProvider === "paid") body.paidDateToProvider = form.paidDateToProvider;
+  if (version !== undefined) body.version = version;
+  return body;
 }
 
-// The body for PATCH /manual/:id/details (Edit): the fields of the form that Edit can change, plus the version the page saw.
-export function editBody(form, version) {
-  return {
-    version,
-    patientName: form.patientName.trim(),
-    country: form.country.trim(),
-    doctorId: form.doctorId || null,
-    date: form.date,
-    time: form.time,
-    feeCharged: cleanFeeInput(form.feeCharged).value,
-  };
-}
-
-// An approved doctor (an Enrollment from /api/admin/approved-doctors) as a dropdown option, sorted by name.
-export function doctorOptions(enrollments) {
-  return (enrollments || [])
-    .map((e) => ({ id: String(e._id), name: e.doctorId?.name || `${e.firstName || ""} ${e.surname || ""}`.trim() || "Doctor" }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-}
+// The Company and Case number line under a manual row's patient name.
+export const caseLine = (row) => row.manual?.caseLine || "";

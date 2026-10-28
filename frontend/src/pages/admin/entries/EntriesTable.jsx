@@ -1,9 +1,13 @@
+import { useRef } from "react";
+import { useToast } from "../../../components/ui/Toast";
+import { copyText } from "../appointments/copyText";
 import { CommentCell, FeeCell, PaidOnCell, StatusCell } from "./EntryCells";
 import { feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
 
-// The Appointment entries table. A full table while the window is wide; below 1360px each row becomes a card with labelled fields
-// (see AdminEntries.css). The first four columns come from the booking; the green ones are typed by an admin and saved as you go.
-export default function EntriesTable({ rows, page, totals, save, onEdit, onDelete }) {
+// The Auto entries table (bookings from the website and app). A full table while the window is wide; below 1360px each row becomes a
+// card with labelled fields (see AdminEntries.css). The first columns come from the booking; the green ones are typed by an admin and
+// saved as you go. There is no Actions column: these rows cannot be edited as a whole or deleted here.
+export default function EntriesTable({ rows, page, totals, save }) {
   return (
     <div className="en-scroll">
       <table className="en-table">
@@ -37,7 +41,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <EntryRow key={rowKey(row)} row={row} number={rowNumber(page, index)} save={save} onEdit={onEdit} onDelete={onDelete} />
+            <EntryRow key={rowKey(row)} row={row} number={rowNumber(page, index)} save={save} />
           ))}
         </tbody>
         <tfoot>
@@ -52,7 +56,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
               {formatMoney(totals?.doctorFeeCents)}
             </td>
             <td colSpan={3} className="en-hint">
-              Totals cover every matching row, on all pages. Saved doctor fees only: grey 75% suggestions aren&rsquo;t counted.
+              Totals cover every matching row, on all pages. Only saved doctor fees are added up.
             </td>
           </tr>
         </tfoot>
@@ -61,7 +65,7 @@ export default function EntriesTable({ rows, page, totals, save, onEdit, onDelet
   );
 }
 
-function EntryRow({ row, number, save, onEdit, onDelete }) {
+function EntryRow({ row, number, save }) {
   const label = sourceLabel(row);
   const fee = feeCharged(row);
   const manual = isManual(row);
@@ -71,34 +75,10 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
     <tr data-kind={row.kind} data-id={row.id}>
       <td className="en-num">{number}</td>
       <td data-l="Booking ID">
-        <span className="en-bid" title={manual ? `Manual entry ${row.shortId}` : row.id}>
-          {idText(row)}
-        </span>
+        <IdCopy row={row} />
         <span className={`en-src en-src--${label.tone}`} title={label.title}>
           {label.text}
         </span>
-        {manual && (
-          <span className="en-manual-acts">
-            <button
-              type="button"
-              className="en-link"
-              onClick={() => onEdit(row)}
-              disabled={row.manual?.locked}
-              title={row.manual?.locked ? "This row is Paid, so its details are locked. Change the status first." : "Edit this manual entry"}
-            >
-              Edit
-            </button>
-            <button
-              type="button"
-              className="en-link en-link--danger"
-              onClick={() => onDelete(row)}
-              disabled={!row.manual?.canDelete}
-              title={row.manual?.canDelete ? "Delete this manual entry" : "A Paid row can't be deleted. Change the status first."}
-            >
-              Delete
-            </button>
-          </span>
-        )}
       </td>
       <td data-l="Booked" className="en-dt en-c-bk">
         {formatBooked(row.bookedAt)}
@@ -130,7 +110,7 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
         {fee.paid && <small>{fee.paid}</small>}
       </td>
       <td data-l="Doctor fee ($)" className="en-ed">
-        <FeeCell row={row} save={save} />
+        <FeeCell row={row} save={save} disabled={manual && row.manual?.locked} />
       </td>
       <td data-l="Paid status" className="en-ed">
         <StatusCell row={row} save={save} />
@@ -142,5 +122,37 @@ function EntryRow({ row, number, save, onEdit, onDelete }) {
         <CommentCell row={row} save={save} />
       </td>
     </tr>
+  );
+}
+
+// The id is shown short; clicking it copies the FULL id (for a manual entry, its M- code), like the Appointments page. If the browser
+// refuses, the full text (kept in a visually hidden span) is selected so Ctrl+C works, and the toast says so.
+function IdCopy({ row }) {
+  const toast = useToast();
+  const full = useRef(null);
+  const text = isManual(row) ? row.shortId : row.id;
+  const copy = async () => {
+    const result = await copyText(text, {
+      select: () => {
+        const range = document.createRange();
+        range.selectNodeContents(full.current);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      },
+      execCopy: () => document.execCommand("copy"),
+    });
+    if (result === "copied") toast.success("Booking ID copied");
+    else toast.info(`Could not copy automatically. The ID is selected, press Ctrl+C: ${text}`);
+  };
+  return (
+    <>
+      <button type="button" className="en-idcopy" title="Click to copy" aria-label={`Copy booking ID ${text}`} onClick={copy}>
+        <span className="en-bid">{idText(row)}</span>
+      </button>
+      <span ref={full} className="en-fullid">
+        {text}
+      </span>
+    </>
   );
 }

@@ -61,11 +61,9 @@ describe("appointment entries: the CSV", () => {
       paymentStatus: "paid", paymentAmount: 9900, consultationPrice: 99, ...extra,
     });
   const manual = (form = {}, entry = {}, extra = {}) => {
-    const built = M.buildManualDocument(
-      M.validateManualCreate({ patientName: "Ravi Sharma", country: "India", date: "2026-11-03", time: "14:30", feeCharged: "49", ...form }, { today: "2026-10-27" }).value,
-      { actor: { id: adminUser._id, name: "An Admin", role: "admin" }, doctor: { enrollmentId: enrollment._id, name: "Martin Perlin" }, code: M.newCode(), now: new Date(NOW) },
-    );
-    return ManualEntry.create({ ...built, ...extra, entry: { ...built.entry, ...entry } });
+    const v = M.validateManualCreate({ patientName: "Ravi Sharma", country: "India", date: "2026-11-03", serviceProvider: "Martin Perlin", consultationFee: "49", ...form }, { today: "2026-10-27" });
+    const built = M.buildManualDocument(v.value, { actor: { id: adminUser._id, name: "An Admin", role: "admin" }, code: M.newCode(), now: new Date(NOW), today: "2026-10-27" });
+    return ManualEntry.create({ ...built.doc, ...extra, entry: { ...built.doc.entry, ...entry } });
   };
 
   before(async () => {
@@ -130,7 +128,37 @@ describe("appointment entries: the CSV", () => {
     assert.equal(records.length, 1);
     const r = records[0];
     assert.deepEqual([r["Booking ID"], r.Source, r.Platform, r["Source page type"], r["Booking status"], r["Paid status"], r["Doctor fee"], r["Fee charged"]], [`M-${m.code}`, "Manual", "", "", "Manual", "On hold", "36.75", "49.00"]);
-    assert.deepEqual([r.Patient, r.Country, r.Doctor, r["Consultation date"], r["Consultation time"]], ["Ravi Sharma", "India", "Martin Perlin", "2026-11-03", "2:30 PM"]);
+    assert.deepEqual([r.Patient, r.Country, r.Doctor, r["Consultation date"], r["Consultation time"]], ["Ravi Sharma", "India", "Martin Perlin", "2026-11-03", ""]);
+  });
+
+  test("a manual line carries every new field of the form as its own column, with the margin worked out", async () => {
+    await manual({
+      company: "Acme Assist", caseNumber: "AC-1042", serviceType: "others", otherService: "Physio at home", caseStatus: "in_progress",
+      providerNumber: "+91 98765 43210", contactNumber: "(022) 5550 1234", consultationFee: "100", doctorFee: "65", mrStatus: "received",
+      mrSentToCompany: "sent", invoiceSent: "sent", paymentReceived: "partly_received", paymentReceivedDate: "2026-10-20",
+      feedbackSent: "Please rate" + String.fromCharCode(10) + "us", feedbackReceived: "Great, thanks", comment: "note",
+    });
+    const { records } = await csv();
+    const r = records[0];
+    assert.deepEqual(
+      [r.Company, r["Case number"], r["Type of service"], r["Other service"], r["Case status"], r["Service provider number"], r["Contact number"]],
+      ["Acme Assist", "AC-1042", "Others", "Physio at home", "In progress", "'+91 98765 43210", "(022) 5550 1234"],
+    );
+    assert.deepEqual([r["Fee charged"], r["Doctor fee"], r["Calculation (our margin)"], r["Calculation (% of consultation fee)"], r.Comment], ["100.00", "65.00", "35.00", "35.0", "note"]);
+    assert.deepEqual(
+      [r["MR status"], r["MR sent to company"], r["Invoice sent"], r["Payment received"], r["Payment received date"], r["Feedback message sent"], r["Feedback received"]],
+      ["Received", "Sent", "Sent", "Partly received", "2026-10-20", "Please rate" + String.fromCharCode(10) + "us", "Great, thanks"],
+    );
+  });
+
+  test("a negative margin comes out negative, and a booking line has the new columns empty", async () => {
+    await manual({ consultationFee: "40", doctorFee: "55" });
+    await appt();
+    const { records } = await csv("sort=-bookedAt");
+    const manualLine = records.find((r) => r.Source === "Manual");
+    assert.deepEqual([manualLine["Calculation (our margin)"], manualLine["Calculation (% of consultation fee)"]], ["-15.00", "-37.5"]);
+    const booking = records.find((r) => r.Source !== "Manual");
+    for (const column of COLUMNS.slice(COLUMNS.indexOf("Company"))) assert.equal(booking[column], "", column);
   });
 
   test("it follows the list's tab, search, doctor and month filters, and leaves deleted manual rows out", async () => {
