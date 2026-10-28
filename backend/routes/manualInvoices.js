@@ -14,7 +14,13 @@ const {
   parseItems,
   parseDueDate,
   parseBillingDetails,
+  parseB2cBody,
 } = require("../utils/manualInvoiceValidation");
+
+// B2B (business) manual invoices are switched off for now: only individual (B2C)
+// invoices can be created. The B2B code below was not removed — flip this to true
+// to allow it again.
+const B2B_MANUAL_INVOICES_ENABLED = false; // TODO: enable B2B later
 
 function serializeManualInvoice(doc) {
   const creator = doc.createdBy && typeof doc.createdBy === "object" ? doc.createdBy : null;
@@ -53,12 +59,44 @@ function serializeManualInvoice(doc) {
 }
 
 /* POST /api/admin/manual-invoices
-   Creates a manual B2B invoice and its PDF. Does NOT email the client — that
+   Creates a manual invoice and its PDF: an individual (B2C) one by default (name, email and
+   services — see parseB2cBody), drawn with the patient-invoice layout. A "b2b" request is
+   refused while B2B_MANUAL_INVOICES_ENABLED is false. Does NOT email the client — that
    is a separate, explicit per-invoice action (POST :id/resend-email). Open
    to superadmin, admin, and paymentadmin (see manualInvoiceAccess). Runs
    synchronously: the admin is waiting on the result of "Generate Invoice". */
 router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
+    const customerType = req.body.customerType === "b2b" ? "b2b" : "b2c";
+    if (customerType === "b2b" && !B2B_MANUAL_INVOICES_ENABLED) {
+      return res.status(400).json({ msg: "Business invoices are not enabled yet." });
+    }
+
+    if (customerType === "b2c") {
+      // Only a name, an email, services and due/paid are read; company, address, terms, due date,
+      // partner and currency are ignored. No payment link is created.
+      const parsed = parseB2cBody(req.body);
+      if (parsed.error) return res.status(400).json({ msg: parsed.error });
+      const status = req.body.status === "paid" ? "paid" : "due";
+      const invoice = await createManualInvoice({
+        createdBy: req.user.id,
+        partner: null,
+        ...parsed.details,
+        // The optional internal note, kept in `description`; the consultation layout does not print it.
+        description: String(req.body.note || "").trim().slice(0, 250),
+        dueDate: null,
+        items: parsed.items,
+        amountCents: parsed.amountCents,
+        currency: "usd",
+        status,
+        paymentMethod: status === "paid" ? "Received" : "",
+        source: "manual",
+        customerType: "b2c",
+      });
+      return res.status(201).json({ invoice: serializeManualInvoice(invoice) });
+    }
+
+    // B2B: disabled for now, re-enable later. Do not delete.
     const { details, error: detailsError } = parseBillingDetails(req.body);
     if (detailsError) {
       return res.status(400).json({ msg: detailsError });

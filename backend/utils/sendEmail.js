@@ -175,7 +175,9 @@ const buildInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description
   const intro = !forLinkPayer
     ? `Thank you for your payment to Humancare Connect. Your invoice is attached to this email as a PDF, and is always available for download from your account under <strong>Payment History</strong>.`
     : isDue
-      ? "Please find your invoice attached to this email as a PDF. You can complete your payment using the secure payment link below."
+      ? (/^https?:\/\//i.test(payUrl)
+        ? "Please find your invoice attached to this email as a PDF. You can complete your payment using the secure payment link below."
+        : "Please find your invoice attached to this email as a PDF. If you have any questions about it, please contact us.")
       : "Thank you for your payment to Humancare Connect. Your invoice is attached to this email as a PDF.";
   const payButton = isDue && /^https?:\/\//i.test(payUrl)
     ? `

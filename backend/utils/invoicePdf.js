@@ -201,6 +201,9 @@ function buildInvoicePdfBuffer({
   items,
   dueDate,
   paymentTerms,
+  // Consultation layout, status "due" only: replaces the default DUE sentence (which points at a
+  // payment link) for an invoice that has no link, e.g. a manual one.
+  dueStatusText,
 }) {
   return new Promise((resolve, reject) => {
     try {
@@ -245,6 +248,7 @@ function buildInvoicePdfBuffer({
         paymentTerms,
         left,
         isManual,
+        dueStatusText,
       });
       doc.end();
     } catch (err) {
@@ -262,7 +266,7 @@ function buildInvoicePdfBuffer({
 // All values are drawn via pdfkit's text API, never interpolated into
 // markup, so there is no injection surface here.
 function drawInvoiceDocument(doc, ctx) {
-  const { invoiceNumber, issuedAt, billTo, description, amountDisplay, currency, status, items, hasItems, dueDate, paymentTerms, left, isManual } = ctx;
+  const { invoiceNumber, issuedAt, billTo, description, amountDisplay, currency, status, items, hasItems, dueDate, paymentTerms, left, isManual, dueStatusText } = ctx;
 
   const isPaid = status === "paid";
 
@@ -460,7 +464,7 @@ function drawInvoiceDocument(doc, ctx) {
     ? "STATUS: PAID — Payment received in full. No balance outstanding."
     : isManual
       ? "STATUS: UNPAID — Payment is outstanding and due."
-      : "STATUS: DUE — Please complete payment using the secure payment link sent with this invoice.";
+      : dueStatusText || "STATUS: DUE — Please complete payment using the secure payment link sent with this invoice.";
   const bandH = 30;
   doc.rect(left, y, CONTENT_WIDTH, bandH).fill(bandBg);
   doc.rect(left, y, 4, bandH).fill(bandColor);

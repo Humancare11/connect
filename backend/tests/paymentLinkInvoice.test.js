@@ -331,7 +331,9 @@ describe("payment link invoices", () => {
     assert.equal(list.body.invoices[0].source, "payment_link");
   });
 
-  test("manual-invoices: the existing create flow is unchanged (no email, source manual, mark-paid works)", async () => {
+  // B2B disabled for now: POST /api/admin/manual-invoices refuses b2b (B2B_MANUAL_INVOICES_ENABLED). The B2C
+  // equivalent (no email, source manual, mark-paid works) is in manualInvoiceB2c.test.js.
+  test.skip("B2B: manual-invoices: the existing create flow is unchanged (no email, source manual, mark-paid works)", async () => {
     const created = await call("POST", "/api/admin/manual-invoices", {
       json: { ...b2bBody(), status: "due", currency: "usd" },
     });

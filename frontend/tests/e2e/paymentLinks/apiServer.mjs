@@ -47,7 +47,7 @@ export async function startApiServer() {
   };
   const verifyToken = load("middleware/verifyToken.js");
   verifyToken.verifyAdminToken = (req, res, next) => {
-    req.user = { id: "000000000000000000000001", role: "paymentadmin" };
+    req.user = { id: "000000000000000000000001", role: req.headers["x-test-role"] || "paymentadmin" };
     next();
   };
 
@@ -80,6 +80,25 @@ export async function startApiServer() {
       updatedAt: new Date(),
     });
     res.json({ id: String(link.insertedId) });
+  });
+  // A business (B2B) manual invoice as the old page stored it, created straight in the database.
+  app.post("/__legacy-invoice", async (req, res) => {
+    const invoice = await ManualInvoice.create({
+      invoiceNumber: req.body.invoiceNumber || "HC01-2601",
+      clientName: "Nova Assistance",
+      clientEmail: "accounts@nova.example",
+      companyName: "Nova LTD",
+      paymentTerms: "Net 30 Days",
+      dueDate: new Date("2026-12-01"),
+      items: [{ description: "House call", quantity: 2, rate: 150, amountCents: 30000 }],
+      description: "Quarterly package",
+      amountCents: 30000,
+      currency: "usd",
+      status: "due",
+      pdfKey: "manual-invoices/HC01-2601.pdf",
+      createdBy: new mongoose.Types.ObjectId("000000000000000000000001"),
+    });
+    res.json({ id: String(invoice._id) });
   });
   // Empties the data so a test starts from a clean table.
   app.post("/__reset", async (req, res) => {

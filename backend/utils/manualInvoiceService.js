@@ -27,6 +27,7 @@ async function generateManualInvoicePdfAndUpload({
   currency,
   status,
   customerType = "b2b",
+  source = "manual",
 }) {
   // A B2C invoice (an individual's payment link) is drawn with the same
   // consultation layout as a patient's booking invoice — name + email, a
@@ -41,6 +42,8 @@ async function generateManualInvoicePdfAndUpload({
     documentType: "consultation",
     status,
     items,
+    // A manual invoice has no payment link to point at; a payment-link one keeps the default sentence.
+    dueStatusText: source === "manual" ? "STATUS: DUE — Payment pending. Please contact us to complete payment." : undefined,
   } : {
     invoiceNumber,
     issuedAt,
@@ -141,6 +144,7 @@ async function createManualInvoice({
     currency,
     status,
     customerType,
+    source,
   });
 
   const invoice = await ManualInvoice.create({
@@ -209,6 +213,7 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod, gatewayReferenc
     currency: invoice.currency,
     status: "paid",
     customerType: invoice.customerType,
+    source: invoice.source,
   });
 
   invoice.status = "paid";
