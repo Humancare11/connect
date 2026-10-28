@@ -337,6 +337,21 @@ describe("Payment Links form (Individual / B2C) in a real browser", { skip: skip
     assert.ok(m.email <= 241, `the email wraps inside its column (${m.email}px)`);
   });
 
+  test("Recent Payments: on a phone the title stays on one line and Refresh is only as wide as its text", async () => {
+    await control("/__reset");
+    await open();
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.waitForSelector(".pl-history__head");
+    const m = await page.evaluate(() => {
+      const title = document.querySelector(".pl-history__head h2");
+      const button = document.querySelector(".pl-history__head .pl-secondary");
+      const lineHeight = parseFloat(getComputedStyle(title).lineHeight) || parseFloat(getComputedStyle(title).fontSize) * 1.3;
+      return { titleHeight: title.getBoundingClientRect().height, lineHeight, button: button.getBoundingClientRect().width };
+    });
+    assert.ok(m.titleHeight <= m.lineHeight * 1.5, `Recent Payments is on one line (height ${m.titleHeight}px)`);
+    assert.ok(m.button < 140, `Refresh is not stretched (${m.button}px)`);
+  });
+
   // ---- B2B disabled for now: these drive the Customer type toggle, which is commented out in PaymentLinks.jsx ----
   test.skip("B2B: switching to Business (B2B) shows the unchanged business form, and back again", async () => {
     await open();

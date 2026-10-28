@@ -269,6 +269,16 @@
   font-size: 18px;
 }
 
+/* Narrow screens: the title stays on one line and the Refresh button keeps its
+   own width (the 420px rule below makes every .pl-secondary full width). */
+.pl-history__head h2 {
+  white-space: nowrap;
+}
+.pl-history__head .pl-secondary {
+  width: auto;
+  flex: none;
+}
+
 .pl-empty {
   padding: 22px;
   text-align: center;
