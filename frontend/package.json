@@ -21,7 +21,9 @@
     "test:e2e": "node --test tests/e2e/liveChatWidget.e2e.test.mjs",
     "test:e2e:booking-source": "node --test tests/e2e/bookingSource/bookingSource.e2e.test.mjs",
     "test:e2e:appointments": "node --test tests/e2e/adminAppointments/adminAppointments.e2e.test.mjs",
-    "test:e2e:entries": "node --test tests/e2e/adminEntries/adminEntries.e2e.test.mjs"
+    "test:e2e:entries": "node --test tests/e2e/adminEntries/adminEntries.e2e.test.mjs",
+    "test:e2e:payment-links": "node --test tests/e2e/paymentLinks/paymentLinks.e2e.test.mjs",
+    "test:e2e:manual-invoices": "node --test tests/e2e/paymentLinks/manualInvoices.e2e.test.mjs"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
