@@ -60,6 +60,10 @@ const manualInvoiceSchema = new mongoose.Schema(
     // utils/paymentLinkInvoice.js); it is settled by the Stripe payment, never
     // by the manual "Mark as Paid" action.
     source: { type: String, enum: ["manual", "payment_link"], default: "manual" },
+    // "b2c" invoices (payment links for an individual) are drawn with the
+    // patient consultation layout and emailed with the patient-style template;
+    // everything else is "b2b".
+    customerType: { type: String, enum: ["b2c", "b2b"], default: "b2b" },
     paymentLink: { type: mongoose.Schema.Types.ObjectId, ref: "PaymentLink", default: null },
     // Stripe PaymentIntent id once a payment-link invoice has been paid.
     gatewayReference: { type: String, default: "" },

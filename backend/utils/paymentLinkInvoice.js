@@ -27,6 +27,7 @@ function serializeLinkInvoice(invoice) {
     _id: invoice._id,
     invoiceNumber: invoice.invoiceNumber,
     status: invoice.status,
+    customerType: invoice.customerType || "b2b",
     clientName: invoice.clientName,
     clientEmail: invoice.clientEmail,
     amountCents: invoice.amountCents,
@@ -41,6 +42,7 @@ function serializeLinkInvoice(invoice) {
 // concurrent call (unique partial index on ManualInvoice.paymentLink) falls
 // back to the winner's invoice.
 async function createInvoiceForPaymentLink(link, { details, items, amountCents, dueDate, createdBy }) {
+  const customerType = link.customerType === "b2c" ? "b2c" : "b2b";
   const existing = await ManualInvoice.findOne({ paymentLink: link._id });
   if (existing) return existing;
 
@@ -57,6 +59,7 @@ async function createInvoiceForPaymentLink(link, { details, items, amountCents, 
       status: "due",
       source: "payment_link",
       paymentLink: link._id,
+      customerType,
     });
   } catch (err) {
     if (err?.code === 11000) {

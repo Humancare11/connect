@@ -1,7 +1,7 @@
 const ManualInvoice = require("../models/ManualInvoice");
 const { buildInvoicePdfBuffer, formatAmount, defaultManualNotes } = require("./invoicePdf");
 const { storeUploadInS3, getUploadBuffer } = require("./uploadStorage");
-const { sendManualInvoiceEmail } = require("./sendEmail");
+const { sendManualInvoiceEmail, sendInvoiceEmail } = require("./sendEmail");
 const { nextInvoiceNumber } = require("./billing");
 
 // Builds the PDF and uploads it to the private S3 bucket under a key
@@ -26,8 +26,22 @@ async function generateManualInvoicePdfAndUpload({
   amountCents,
   currency,
   status,
+  customerType = "b2b",
 }) {
-  const pdfBuffer = await buildInvoicePdfBuffer({
+  // A B2C invoice (an individual's payment link) is drawn with the same
+  // consultation layout as a patient's booking invoice — name + email, a
+  // description/amount row per service, "Amount Due" / "Total Paid" — rather
+  // than the B2B template.
+  const pdfBuffer = await buildInvoicePdfBuffer(customerType === "b2c" ? {
+    invoiceNumber,
+    issuedAt,
+    billTo: { name: clientName, email: clientEmail },
+    amountCents,
+    currency,
+    documentType: "consultation",
+    status,
+    items,
+  } : {
     invoiceNumber,
     issuedAt,
     billTo: {
@@ -101,6 +115,7 @@ async function createManualInvoice({
   paymentMethod,
   source = "manual",
   paymentLink = null,
+  customerType = "b2b",
 }) {
   const invoiceNumber = await nextInvoiceNumber();
   const issuedAt = new Date();
@@ -125,6 +140,7 @@ async function createManualInvoice({
     amountCents,
     currency,
     status,
+    customerType,
   });
 
   const invoice = await ManualInvoice.create({
@@ -150,6 +166,7 @@ async function createManualInvoice({
     createdBy,
     source,
     paymentLink,
+    customerType,
   });
 
   // No email is sent automatically. The invoice and its PDF exist and are
@@ -191,6 +208,7 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod, gatewayReferenc
     amountCents: invoice.amountCents,
     currency: invoice.currency,
     status: "paid",
+    customerType: invoice.customerType,
   });
 
   invoice.status = "paid";
@@ -224,14 +242,25 @@ async function resendManualInvoiceEmail({ invoiceId, payUrl = "" }) {
 
   try {
     const pdfBuffer = await getUploadBuffer(invoice.pdfKey);
-    await sendManualInvoiceEmail(invoice.clientEmail, {
+    const common = {
       name: invoice.clientName,
       invoiceNumber: invoice.invoiceNumber,
       amountDisplay: formatAmount(invoice.amountCents, invoice.currency),
       status: invoice.status,
       payUrl: invoice.status === "due" ? payUrl : "",
       pdfBuffer,
-    });
+    };
+    if (invoice.customerType === "b2c") {
+      // Same email as a patient's invoice (sendInvoiceEmail), in its
+      // payment-link variant.
+      await sendInvoiceEmail(invoice.clientEmail, {
+        ...common,
+        description: (invoice.items || []).map((item) => item.description).join(", "),
+        forLinkPayer: true,
+      });
+    } else {
+      await sendManualInvoiceEmail(invoice.clientEmail, common);
+    }
     invoice.emailedAt = new Date();
     invoice.emailError = "";
   } catch (err) {

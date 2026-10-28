@@ -44,6 +44,7 @@ function serializeManualInvoice(doc) {
     paymentMethod: doc.paymentMethod,
     paidAt: doc.paidAt,
     source: doc.source || "manual",
+    customerType: doc.customerType || "b2b",
     emailed: Boolean(doc.emailedAt),
     emailError: doc.emailError || undefined,
     createdBy: creator ? { name: creator.name, email: creator.email } : undefined,

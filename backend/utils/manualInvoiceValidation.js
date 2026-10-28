@@ -120,7 +120,42 @@ function parseBillingDetails(body = {}) {
   return { details };
 }
 
+// B2C (individual) payment link: only a name, an email and flat services
+// (description + amount, quantity always 1). Everything else a client might
+// send — company, address, country, postal code, registration number, terms,
+// due date, notes — is ignored, never validated and never stored. Returns the
+// same shape as the B2B pieces: { details, items, amountCents, dueDate }.
+function parseB2cBody(body = {}) {
+  const { details: person, error: detailsError } = parseBillingDetails({ name: body.name, email: body.email });
+  if (detailsError) return { error: detailsError };
+
+  const rawServices = Array.isArray(body.items) ? body.items : [];
+  const { items, amountCents, error: itemsError } = parseItems(
+    rawServices.map((service) => ({ description: service?.description, quantity: 1, rate: service?.amount ?? service?.rate }))
+  );
+  if (itemsError) return { error: itemsError };
+  if (amountCents > MAX_AMOUNT_CENTS) return { error: "Amount is too large. Please double-check the value." };
+
+  return {
+    details: {
+      clientName: person.clientName,
+      clientEmail: person.clientEmail,
+      companyName: "",
+      registrationNumber: "",
+      address: "",
+      country: "",
+      postalCode: "",
+      paymentTerms: "Due on Receipt",
+      description: "",
+    },
+    items,
+    amountCents,
+    dueDate: null,
+  };
+}
+
 module.exports = {
+  parseB2cBody,
   EMAIL_RE,
   ALLOWED_CURRENCIES,
   MAX_LENGTHS,

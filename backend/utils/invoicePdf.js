@@ -224,10 +224,12 @@ function buildInvoicePdfBuffer({
       const amountDisplay = formatAmount(amountCents, currency);
       const hasItems = Array.isArray(items) && items.length > 0;
 
-      // A consultation invoice is only ever built after a verified payment
-      // (see billing.js), so there is no "due" consultation invoice — it
-      // always renders as paid. A manual invoice honors whatever status the
-      // admin chose ("due" or "paid").
+      // A patient's consultation invoice is only ever built after a verified
+      // payment (see billing.js) and never passes a status, so it always
+      // renders as paid. A manual invoice honors whatever status the admin
+      // chose. The one other caller is a B2C payment-link invoice (see
+      // manualInvoiceService.js): it uses this same consultation layout and
+      // passes status "due" until the link is paid.
       drawInvoiceDocument(doc, {
         invoiceNumber,
         issuedAt,
@@ -236,7 +238,7 @@ function buildInvoicePdfBuffer({
         amountCents,
         amountDisplay,
         currency,
-        status: isManual ? status : "paid",
+        status: isManual ? status : status === "due" ? "due" : "paid",
         items,
         hasItems,
         dueDate,
@@ -414,8 +416,10 @@ function drawInvoiceDocument(doc, ctx) {
     for (const item of items) {
       drawRow({
         descText: item.description || "",
-        qtyText: formatQuantity(item.quantity),
-        rateText: formatAmount(Math.round((Number(item.rate) || 0) * 100), currency),
+        // A consultation-layout invoice has no QTY/RATE columns (its header
+        // draws none), so a multi-service one lists just description + amount.
+        qtyText: isManual ? formatQuantity(item.quantity) : null,
+        rateText: isManual ? formatAmount(Math.round((Number(item.rate) || 0) * 100), currency) : null,
         amountText: formatAmount(item.amountCents, currency),
         boldDesc: false,
       });
@@ -444,14 +448,19 @@ function drawInvoiceDocument(doc, ctx) {
     y = PAGE_MARGIN;
   }
   doc.rect(totalBoxX, y, totalBoxW, totalBoxH).fill(MAN_GREY_BAND);
-  doc.font("Times-Roman").fontSize(10).fillColor(MAN_INK).text(isPaid ? "Total Paid:" : "Total Due:", totalBoxX + 14, y + 11, { lineBreak: false });
+  const totalLabel = isPaid ? "Total Paid:" : isManual ? "Total Due:" : "Amount Due:";
+  doc.font("Times-Roman").fontSize(10).fillColor(MAN_INK).text(totalLabel, totalBoxX + 14, y + 11, { lineBreak: false });
   rightAlignedSegments(doc, [{ text: amountDisplay, size: 13, color: MAN_NAVY, font: "Times-Bold" }], y + 9, totalBoxX + totalBoxW - 14);
   y += totalBoxH + 20;
 
   // ── Status band ──
   const bandColor = isPaid ? MAN_GREEN : MAN_RED;
   const bandBg = isPaid ? MAN_GREEN_BG : MAN_RED_BG;
-  const bandText = isPaid ? "STATUS: PAID — Payment received in full. No balance outstanding." : "STATUS: UNPAID — Payment is outstanding and due.";
+  const bandText = isPaid
+    ? "STATUS: PAID — Payment received in full. No balance outstanding."
+    : isManual
+      ? "STATUS: UNPAID — Payment is outstanding and due."
+      : "STATUS: DUE — Please complete payment using the secure payment link sent with this invoice.";
   const bandH = 30;
   doc.rect(left, y, CONTENT_WIDTH, bandH).fill(bandBg);
   doc.rect(left, y, 4, bandH).fill(bandColor);
@@ -506,7 +515,7 @@ function drawInvoiceDocument(doc, ctx) {
   // print the same text twice, so only a manual invoice's closing note
   // (paired with a real item table) echoes it; a consultation invoice gets
   // the brand's standard thank-you line instead.
-  const closingText = hasItems
+  const closingText = hasItems && isManual
     ? description && String(description).trim()
       ? String(description).trim()
       : "Thank you for your business."

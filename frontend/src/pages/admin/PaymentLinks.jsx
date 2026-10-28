@@ -60,12 +60,22 @@ function formatDueDate(value) {
 const invoicePeriod = `${String(new Date().getFullYear()).slice(-2)}${String(new Date().getMonth() + 1).padStart(2, "0")}`;
 
 const newItem = (id) => ({ id, description: "", quantity: "1", rate: "" });
+// A B2C service line: just a description and an amount (quantity is always 1).
+const newService = (id) => ({ id, description: "", amount: "" });
+const serviceCents = (service) => computeItemAmountCents({ quantity: "1", rate: service.amount });
 
 function statusLabel(status) {
   return status === "paid" ? "Paid" : status === "expired" ? "Expired" : "Pending";
 }
 
 export default function PaymentLinks() {
+  // "b2c" = an individual (name, email, services); "b2b" = the full business
+  // form. Each keeps its own state, so switching back and forth loses nothing.
+  const [customerType, setCustomerType] = useState("b2c");
+  const isB2c = customerType === "b2c";
+  const [person, setPerson] = useState({ name: "", email: "" });
+  const [services, setServices] = useState([newService(1)]);
+  const nextServiceId = useRef(2);
   const [client, setClient] = useState(EMPTY_CLIENT);
   const [paymentTerms, setPaymentTerms] = useState(DEFAULT_PAYMENT_TERMS.value);
   const [dueDate, setDueDate] = useState(() => dueDateForTerms(DEFAULT_PAYMENT_TERMS.value));
@@ -83,8 +93,13 @@ export default function PaymentLinks() {
   const setClientField = (key) => (event) => setClient((prev) => ({ ...prev, [key]: event.target.value }));
 
   // The payer is charged the invoice total — there is no separate amount.
-  const subtotal = useMemo(() => items.reduce((sum, item) => sum + computeItemAmountCents(item), 0), [items]);
-  const itemCount = items.filter((item) => computeItemAmountCents(item) > 0).length;
+  const subtotal = useMemo(
+    () => (isB2c ? services.reduce((sum, service) => sum + serviceCents(service), 0) : items.reduce((sum, item) => sum + computeItemAmountCents(item), 0)),
+    [isB2c, services, items],
+  );
+  const itemCount = isB2c
+    ? services.filter((service) => serviceCents(service) > 0).length
+    : items.filter((item) => computeItemAmountCents(item) > 0).length;
   const awaitingPayment = useMemo(
     () => history.filter((link) => link.invoice?.status === "due").length,
     [history],
@@ -122,7 +137,15 @@ export default function PaymentLinks() {
   const addItem = () => setItems((prev) => [...prev, newItem(nextItemId.current++)]);
   const removeItem = (id) => setItems((prev) => (prev.length > 1 ? prev.filter((item) => item.id !== id) : prev));
 
+  const updateService = (id, key, value) =>
+    setServices((prev) => prev.map((service) => (service.id === id ? { ...service, [key]: value } : service)));
+  const addService = () => setServices((prev) => [...prev, newService(nextServiceId.current++)]);
+  const removeService = (id) => setServices((prev) => (prev.length > 1 ? prev.filter((service) => service.id !== id) : prev));
+
   const resetForm = () => {
+    setPerson({ name: "", email: "" });
+    nextServiceId.current = 2;
+    setServices([newService(1)]);
     setClient(EMPTY_CLIENT);
     setPaymentTerms(DEFAULT_PAYMENT_TERMS.value);
     setDueDate(dueDateForTerms(DEFAULT_PAYMENT_TERMS.value));
@@ -139,19 +162,29 @@ export default function PaymentLinks() {
     setCreated(null);
     setLoading(true);
     try {
-      const res = await api.post("/api/payments/admin/payment-links", {
-        ...client,
-        paymentTerms,
-        dueDate,
-        description,
-        note,
-        currency: CURRENCY,
-        items: items.map((item) => ({
-          description: item.description,
-          quantity: Number(item.quantity),
-          rate: Number(item.rate),
-        })),
-      });
+      const payload = isB2c
+        ? {
+            customerType,
+            ...person,
+            note,
+            currency: CURRENCY,
+            items: services.map((service) => ({ description: service.description, amount: Number(service.amount) })),
+          }
+        : {
+            customerType,
+            ...client,
+            paymentTerms,
+            dueDate,
+            description,
+            note,
+            currency: CURRENCY,
+            items: items.map((item) => ({
+              description: item.description,
+              quantity: Number(item.quantity),
+              rate: Number(item.rate),
+            })),
+          };
+      const res = await api.post("/api/payments/admin/payment-links", payload);
       setCreated(res.data);
       resetForm();
       fetchHistory();
@@ -200,6 +233,72 @@ export default function PaymentLinks() {
             <p>Invoice ke items ka Total hi customer ka payment amount banega ({CURRENCY}).</p>
           </div>
 
+          <div className="pl-ctype" role="radiogroup" aria-label="Customer type">
+            <span className="pl-ctype__label">Customer type</span>
+            <div className="pl-seg">
+              <label className={isB2c ? "is-on" : ""}>
+                <input type="radio" name="customerType" value="b2c" checked={isB2c} onChange={() => setCustomerType("b2c")} />
+                <span>Individual (B2C)</span>
+              </label>
+              <label className={!isB2c ? "is-on" : ""}>
+                <input type="radio" name="customerType" value="b2b" checked={!isB2c} onChange={() => setCustomerType("b2b")} />
+                <span>Business (B2B)</span>
+              </label>
+            </div>
+          </div>
+
+          {isB2c ? (
+            <>
+          <section className="pl-section">
+            <h3 className="pl-section__title">Customer</h3>
+            <div className="pl-form-grid pl-form-grid--2">
+              <label className="pl-field">
+                <span>Full name *</span>
+                <input className="pl-input" type="text" maxLength={120} required value={person.name}
+                  onChange={(event) => setPerson((prev) => ({ ...prev, name: event.target.value }))} placeholder="Rahul Mehta" />
+              </label>
+              <label className="pl-field">
+                <span>Email *</span>
+                <input className="pl-input" type="email" maxLength={254} required value={person.email}
+                  onChange={(event) => setPerson((prev) => ({ ...prev, email: event.target.value }))} placeholder="name@gmail.com" />
+              </label>
+            </div>
+            <p className="pl-hint">Invoice pe sirf naam aur email chhapenge, jaise abhi ke consultation invoice me.</p>
+          </section>
+
+          <section className="pl-section">
+            <h3 className="pl-section__title">Payment</h3>
+            <p className="pl-terms">Due on Receipt: customer link khulte hi pay karega. Invoice pe &quot;Payment due immediately on receipt&quot; chhapega.</p>
+          </section>
+
+          <section className="pl-section">
+            <h3 className="pl-section__title">Services</h3>
+            <div className="pl-items">
+              <div className="pl-item-row pl-item-row--service pl-item-row--head" aria-hidden="true">
+                <span>Description</span><span>Amount ({CURRENCY})</span><span />
+              </div>
+              {services.map((service) => (
+                <div className="pl-item-row pl-item-row--service" key={service.id}>
+                  <input className="pl-input" type="text" maxLength={200} required value={service.description}
+                    onChange={(event) => updateService(service.id, "description", event.target.value)}
+                    placeholder="Tele Consultation" aria-label="Description" />
+                  <input className="pl-input" type="number" min="0.01" step="0.01" required value={service.amount}
+                    onChange={(event) => updateService(service.id, "amount", event.target.value)}
+                    placeholder="0.00" aria-label="Amount" />
+                  <button className="pl-item-row__remove" type="button" disabled={services.length === 1}
+                    onClick={() => removeService(service.id)} aria-label="Remove service">×</button>
+                </div>
+              ))}
+              <button className="pl-link-btn pl-items__add" type="button" onClick={addService}>+ Add Item</button>
+            </div>
+            <dl className="pl-totals">
+              <div className="pl-totals__total"><dt>Total</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
+            </dl>
+          </section>
+
+            </>
+          ) : (
+            <>
           <section className="pl-section">
             <h3 className="pl-section__title">Bill to</h3>
             <div className="pl-form-grid pl-form-grid--2">
@@ -306,6 +405,9 @@ export default function PaymentLinks() {
             <p className="pl-terms">{termsLine(paymentTerms)}</p>
           </section>
 
+            </>
+          )}
+
           <label className="pl-field">
             <span>Note</span>
             <textarea rows={2} maxLength={250} value={note}
@@ -328,11 +430,21 @@ export default function PaymentLinks() {
           <span className="pl-preview__label pl-preview__label--invoice">Invoice preview</span>
           <dl className="pl-invoice-preview">
             <div><dt>Invoice no.</dt><dd>Auto (HCnn-{invoicePeriod})</dd></div>
-            <div><dt>Bill to</dt><dd>{client.name || "-"}</dd></div>
-            <div><dt>Items</dt><dd>{itemCount}</dd></div>
-            <div><dt>Due date</dt><dd>{formatDueDate(dueDate)}</dd></div>
-            <div><dt>Subtotal</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
-            <div><dt>Tax (0%)</dt><dd>{formatMoney(0, CURRENCY)}</dd></div>
+            {isB2c ? (
+              <>
+                <div><dt>Name</dt><dd>{person.name || "-"}</dd></div>
+                <div><dt>Email</dt><dd className="pl-invoice-preview__wrap">{person.email || "-"}</dd></div>
+                <div><dt>Services</dt><dd>{itemCount}</dd></div>
+              </>
+            ) : (
+              <>
+                <div><dt>Bill to</dt><dd>{client.name || "-"}</dd></div>
+                <div><dt>Items</dt><dd>{itemCount}</dd></div>
+                <div><dt>Due date</dt><dd>{formatDueDate(dueDate)}</dd></div>
+                <div><dt>Subtotal</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
+                <div><dt>Tax (0%)</dt><dd>{formatMoney(0, CURRENCY)}</dd></div>
+              </>
+            )}
             <div className="pl-invoice-preview__total"><dt>Total</dt><dd>{formatMoney(subtotal, CURRENCY)}</dd></div>
           </dl>
         </div>

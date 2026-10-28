@@ -12,7 +12,7 @@ const { toCents } = require("../utils/currency");
 const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const ManualInvoice = require("../models/ManualInvoice");
-const { MAX_AMOUNT_CENTS, parseItems, parseDueDate, parseBillingDetails } = require("../utils/manualInvoiceValidation");
+const { MAX_AMOUNT_CENTS, parseItems, parseDueDate, parseBillingDetails, parseB2cBody } = require("../utils/manualInvoiceValidation");
 const { resendManualInvoiceEmail } = require("../utils/manualInvoiceService");
 const {
   paymentLinkUrl,
@@ -42,9 +42,17 @@ function fromFilterAmount(amount, currency) {
   return Math.round(Number(amount) * currencyFactor(currency || "usd"));
 }
 
-// The invoice half of the Payment Links form (same fields and validation as
-// Manual Invoices). Returns { details, items, amountCents, dueDate } or { error }.
+// "b2c" (an individual) or "b2b"; anything else, including a missing value
+// from an older client, is b2b.
+function customerTypeOf(body) {
+  return body?.customerType === "b2c" ? "b2c" : "b2b";
+}
+
+// The invoice half of the Payment Links form. B2B: same fields and validation
+// as Manual Invoices. B2C: name, email and flat services only.
+// Returns { details, items, amountCents, dueDate } or { error }.
 function parseInvoiceBody(body) {
+  if (customerTypeOf(body) === "b2c") return parseB2cBody(body);
   const { details, error: detailsError } = parseBillingDetails(body);
   if (detailsError) return { error: detailsError };
 
@@ -81,6 +89,7 @@ function serializePaymentLink(req, paymentLink) {
     paidAt: paymentLink.paidAt,
     createdAt: paymentLink.createdAt,
     updatedAt: paymentLink.updatedAt,
+    customerType: paymentLink.customerType || "b2b",
     customerName: paymentLink.customerName || "",
     customerEmail: paymentLink.customerEmail || "",
     invoice: serializeLinkInvoice(paymentLink.manualInvoice),
@@ -223,6 +232,7 @@ router.post("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (r
       amountPaise: amountCents,
       currency,
       note: String(req.body.note || "").slice(0, 250),
+      customerType: customerTypeOf(req.body),
       customerName: details.clientName,
       customerEmail: details.clientEmail,
       createdBy: req.user.id,
@@ -304,7 +314,7 @@ router.get("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (re
 
     const links = await PaymentLink.find(query)
       .populate("createdBy", "name email role")
-      .populate("manualInvoice", "invoiceNumber status clientName clientEmail amountCents dueDate emailedAt emailError")
+      .populate("manualInvoice", "invoiceNumber status customerType clientName clientEmail amountCents dueDate emailedAt emailError")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -569,7 +579,8 @@ router.post("/admin/payment-links/:id/invoice", verifyAdminToken, paymentAdminOn
     if (!paymentLink) return res.status(404).json({ msg: "Payment link not found." });
 
     if (!paymentLink.manualInvoice) {
-      const parsed = parseInvoiceBody(req.body);
+      // An existing link's type is fixed; only its invoice is being created.
+      const parsed = parseInvoiceBody({ ...req.body, customerType: paymentLink.customerType });
       if (parsed.error) return res.status(400).json({ msg: parsed.error });
       await createInvoiceForPaymentLink(paymentLink, { ...parsed, createdBy: req.user.id });
     }

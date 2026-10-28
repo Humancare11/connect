@@ -19,6 +19,9 @@ const paymentLinkSchema = new mongoose.Schema(
     paidAt: { type: Date, default: null },
     // Who the invoice is addressed to (Bill to), and the invoice created with
     // the link. invoiceError holds the last failure while creating/settling it.
+    // "b2c" = an individual (name + email, flat services), "b2b" = a business
+    // with the full Bill to block. Links created before B2C existed are b2b.
+    customerType: { type: String, enum: ["b2c", "b2b"], default: "b2b" },
     customerName: { type: String, default: "", trim: true },
     customerEmail: { type: String, default: "", trim: true, lowercase: true },
     manualInvoice: { type: mongoose.Schema.Types.ObjectId, ref: "ManualInvoice", default: null },
