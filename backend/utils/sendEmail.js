@@ -169,37 +169,70 @@ const sendEmail = async ({ to, subject, text, html, replyTo, attachments }) => {
   });
 };
 
-const buildInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description }) => {
+// clientName/description here are admin-typed free text about a third party
+// (not validated internal data like the fields above), so — unlike
+// buildInvoiceEmailHTML — this escapes them before HTML interpolation.
+// Same escaping contact.js already uses for its user-submitted fields.
+const escapeHtml = (value) =>
+  String(value).replace(/[&<>"']/g, (char) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]
+  ));
+
+// The patient receipt email. `forLinkPayer` is the payment-link B2C variant:
+// the customer has no account here (so no "Payment History" line), may still
+// owe the amount (`status: "due"`, with a Pay now button via `payUrl`), and
+// the values are admin-typed free text, so they are escaped. Called without
+// options it renders the patient email exactly as it always has.
+const buildInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description, status = "paid", payUrl = "", forLinkPayer = false }) => {
+  const isDue = status === "due";
+  const text = forLinkPayer ? escapeHtml : (value) => value;
+  name = text(name || "");
+  invoiceNumber = text(invoiceNumber);
+  amountDisplay = text(amountDisplay);
+  description = description ? text(description) : description;
   const greeting = name ? `Hello ${name},` : `Hello,`;
+  const badge = isDue ? "Invoice" : "Payment Receipt";
+  const amountLabel = isDue ? "Amount Due" : "Amount Paid";
+  const intro = !forLinkPayer
+    ? `Thank you for your payment to Humancare Connect. Your invoice is attached to this email as a PDF, and is always available for download from your account under <strong>Payment History</strong>.`
+    : isDue
+      ? (/^https?:\/\//i.test(payUrl)
+        ? "Please find your invoice attached to this email as a PDF. You can complete your payment using the secure payment link below."
+        : "Please find your invoice attached to this email as a PDF. If you have any questions about it, please contact us.")
+      : "Thank you for your payment to Humancare Connect. Your invoice is attached to this email as a PDF.";
+  const payButton = isDue && /^https?:\/\//i.test(payUrl)
+    ? `
+    <p style="text-align:center;margin:0 0 18px;"><a href="${escapeHtml(payUrl)}" style="display:inline-block;background:#0a1f44;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:10px;">Pay now</a></p>`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Payment Receipt — Humancare Connect</title>
+<title>${badge} — Humancare Connect</title>
 </head>
 <body style="margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff; padding: 10px 10px;">
 <div style="max-width:680px;margin:24px auto;background:#fff;border-radius:16px;overflow:hidden; border: 1px solid #0a1f44">
 
   <div style="background:#dcebff;padding:20px 32px;text-align:center;border-radius: 16px 16px 0 0;">
     <img src="https://humancareconnect.co/logo-email.png" alt="Humancare Connect" style="display:block;margin:0 auto 12px;object-fit:contain; width:220px; height:72px;"/>
-    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">Payment Receipt</span>
+    <span style="display:inline-block;background:rgba(255,255,255,0.18);color: #0a1f44;font-size:11px;font-weight:600;letter-spacing:0.8px;text-transform:uppercase;padding:5px 14px;border-radius:20px; border: 1px solid #0a1f44">${badge}</span>
   </div>
 
   <div style="padding:24px 32px;">
     <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 12px;">${greeting}</p>
     <p style="color:#374151;font-size:15px;line-height:1.7;margin:0 0 20px;">
-      Thank you for your payment to Humancare Connect. Your invoice is attached to this email as a PDF, and is always available for download from your account under <strong>Payment History</strong>.
+      ${intro}
     </p>
 
     <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Invoice Number</td><td style="font-size:13px;color:#1e1b4b;font-weight:700;text-align:right;padding:4px 0;">${invoiceNumber}</td></tr>
         <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Description</td><td style="font-size:13px;color:#1e1b4b;text-align:right;padding:4px 0;">${description || "Consultation booking fee"}</td></tr>
-        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">Amount Paid</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${amountDisplay}</td></tr>
+        <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">${amountLabel}</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${amountDisplay}</td></tr>
       </table>
-    </div>
+    </div>${payButton}
   </div>
 
   <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
@@ -227,12 +260,14 @@ const buildInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, description
 </html>`;
 };
 
-const sendInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, description, pdfBuffer }) => {
+const sendInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, description, status, payUrl, forLinkPayer, pdfBuffer }) => {
   await sendMail({
     from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
-    subject: `Humancare Connect — Payment Receipt (${invoiceNumber})`,
-    html: buildInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, description }),
+    subject: status === "due"
+      ? `Humancare Connect — Invoice ${invoiceNumber}`
+      : `Humancare Connect — Payment Receipt (${invoiceNumber})`,
+    html: buildInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, description, status, payUrl, forLinkPayer }),
     attachments: [
       {
         filename: `${invoiceNumber}.pdf`,
@@ -243,16 +278,12 @@ const sendInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, descri
   });
 };
 
-// clientName/description here are admin-typed free text about a third party
-// (not validated internal data like the fields above), so — unlike
-// buildInvoiceEmailHTML — this escapes them before HTML interpolation.
-// Same escaping contact.js already uses for its user-submitted fields.
-const escapeHtml = (value) =>
-  String(value).replace(/[&<>"']/g, (char) => (
-    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]
-  ));
 
-const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, status }) => {
+const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, status, payUrl }) => {
+  // Only an unpaid invoice that was issued with a payment link gets a button.
+  const payButton = status !== "paid" && /^https?:\/\//i.test(payUrl || "")
+    ? `<p style="text-align:center;margin:0 0 18px;"><a href="${escapeHtml(payUrl)}" style="display:inline-block;background:#0a1f44;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:10px;">Pay now</a></p>`
+    : "";
   const greeting = name ? `Hello ${escapeHtml(name)},` : `Hello,`;
   const isPaid = status === "paid";
   const badgeText = isPaid ? "Payment Receipt" : "Invoice";
@@ -286,6 +317,7 @@ const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, statu
         <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">${amountRowLabel}</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${escapeHtml(amountDisplay)}</td></tr>
       </table>
     </div>
+    ${payButton}
   </div>
 
   <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
@@ -315,14 +347,14 @@ const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, statu
 
 // status: "due" (bill — not yet paid) or "paid" (receipt). Recipient is an
 // admin-entered client address, not necessarily a registered platform user.
-const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, status, pdfBuffer }) => {
+const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, status, payUrl, pdfBuffer }) => {
   await sendMail({
     from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject: status === "paid"
       ? `Humancare Connect — Payment Receipt (${invoiceNumber})`
       : `Humancare Connect — Invoice ${invoiceNumber}`,
-    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, status }),
+    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, status, payUrl }),
     attachments: [
       {
         filename: `${invoiceNumber}.pdf`,
@@ -612,6 +644,7 @@ module.exports = {
   sendEmailChangeOTPEmail,
   sendEmail,
   sendInvoiceEmail,
+  buildInvoiceEmailHTML,
   sendManualInvoiceEmail,
   sendGopEmail,
   sendDoctorApprovalEmail,

@@ -1,7 +1,7 @@
 const ManualInvoice = require("../models/ManualInvoice");
 const { buildInvoicePdfBuffer, formatAmount, defaultManualNotes } = require("./invoicePdf");
 const { storeUploadInS3, getUploadBuffer } = require("./uploadStorage");
-const { sendManualInvoiceEmail } = require("./sendEmail");
+const { sendManualInvoiceEmail, sendInvoiceEmail } = require("./sendEmail");
 const { nextInvoiceNumber } = require("./billing");
 
 // Builds the PDF and uploads it to the private S3 bucket under a key
@@ -26,8 +26,25 @@ async function generateManualInvoicePdfAndUpload({
   amountCents,
   currency,
   status,
+  customerType = "b2b",
+  source = "manual",
 }) {
-  const pdfBuffer = await buildInvoicePdfBuffer({
+  // A B2C invoice (an individual's payment link) is drawn with the same
+  // consultation layout as a patient's booking invoice — name + email, a
+  // description/amount row per service, "Amount Due" / "Total Paid" — rather
+  // than the B2B template.
+  const pdfBuffer = await buildInvoicePdfBuffer(customerType === "b2c" ? {
+    invoiceNumber,
+    issuedAt,
+    billTo: { name: clientName, email: clientEmail },
+    amountCents,
+    currency,
+    documentType: "consultation",
+    status,
+    items,
+    // A manual invoice has no payment link to point at; a payment-link one keeps the default sentence.
+    dueStatusText: source === "manual" ? "STATUS: DUE — Payment pending. Please contact us to complete payment." : undefined,
+  } : {
     invoiceNumber,
     issuedAt,
     billTo: {
@@ -99,6 +116,9 @@ async function createManualInvoice({
   currency,
   status,
   paymentMethod,
+  source = "manual",
+  paymentLink = null,
+  customerType = "b2b",
 }) {
   const invoiceNumber = await nextInvoiceNumber();
   const issuedAt = new Date();
@@ -123,6 +143,8 @@ async function createManualInvoice({
     amountCents,
     currency,
     status,
+    customerType,
+    source,
   });
 
   const invoice = await ManualInvoice.create({
@@ -146,6 +168,9 @@ async function createManualInvoice({
     paidAt: status === "paid" ? issuedAt : null,
     pdfKey: key,
     createdBy,
+    source,
+    paymentLink,
+    customerType,
   });
 
   // No email is sent automatically. The invoice and its PDF exist and are
@@ -159,7 +184,7 @@ async function createManualInvoice({
 // alongside the receipt). No email is sent here — the admin decides whether
 // to email the updated receipt afterward via resendManualInvoiceEmail
 // ("Send Invoice Email").
-async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
+async function markManualInvoicePaid({ invoiceId, paymentMethod, gatewayReference = "" }) {
   const invoice = await ManualInvoice.findById(invoiceId);
   if (!invoice) return null;
   if (invoice.status === "paid") return invoice; // idempotent no-op
@@ -187,11 +212,14 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
     amountCents: invoice.amountCents,
     currency: invoice.currency,
     status: "paid",
+    customerType: invoice.customerType,
+    source: invoice.source,
   });
 
   invoice.status = "paid";
   invoice.paymentMethod = normalizedPaymentMethod;
   invoice.paidAt = paidAt;
+  if (gatewayReference) invoice.gatewayReference = gatewayReference;
   // pdfKey is unchanged — generateManualInvoicePdfAndUpload always writes to
   // the same deterministic key for this invoiceNumber.
 
@@ -211,19 +239,33 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
 // what the client receives is guaranteed identical to what's on file. Used
 // for invoices where the original send failed (e.g. an SMTP outage) — see
 // invoice.emailError — or simply hasn't been attempted yet.
-async function resendManualInvoiceEmail({ invoiceId }) {
+// payUrl (optional) adds a "Pay now" button to a still-unpaid payment-link
+// invoice; callers that don't have one simply omit it.
+async function resendManualInvoiceEmail({ invoiceId, payUrl = "" }) {
   const invoice = await ManualInvoice.findById(invoiceId);
   if (!invoice) return null;
 
   try {
     const pdfBuffer = await getUploadBuffer(invoice.pdfKey);
-    await sendManualInvoiceEmail(invoice.clientEmail, {
+    const common = {
       name: invoice.clientName,
       invoiceNumber: invoice.invoiceNumber,
       amountDisplay: formatAmount(invoice.amountCents, invoice.currency),
       status: invoice.status,
+      payUrl: invoice.status === "due" ? payUrl : "",
       pdfBuffer,
-    });
+    };
+    if (invoice.customerType === "b2c") {
+      // Same email as a patient's invoice (sendInvoiceEmail), in its
+      // payment-link variant.
+      await sendInvoiceEmail(invoice.clientEmail, {
+        ...common,
+        description: (invoice.items || []).map((item) => item.description).join(", "),
+        forLinkPayer: true,
+      });
+    } else {
+      await sendManualInvoiceEmail(invoice.clientEmail, common);
+    }
     invoice.emailedAt = new Date();
     invoice.emailError = "";
   } catch (err) {
