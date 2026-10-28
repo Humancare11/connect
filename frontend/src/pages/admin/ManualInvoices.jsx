@@ -315,7 +315,7 @@ export default function ManualInvoices() {
         <form className="pl-card pl-form" onSubmit={submit}>
           <div className="pl-form__title">
             <h2>Invoice Details</h2>
-            <p>Invoice ke services ka Total hi invoice ka amount banega ({CURRENCY}).</p>
+            <p>The invoice amount is the total of the services ({CURRENCY}).</p>
           </div>
 
           {/* B2B: disabled for now, re-enable later. Do not delete. The business form (Company, Personal
@@ -337,7 +337,7 @@ export default function ManualInvoices() {
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
-                <span className="pl-hint">Due = abhi payment baaki hai. Paid = payment pehle hi mil chuka hai, invoice receipt ban jayegi.</span>
+                <span className="pl-hint">Due: payment is still pending. Paid: payment is already received, so the invoice is issued as a receipt.</span>
               </label>
             </section>
           </B2cInvoiceFields>
@@ -353,7 +353,7 @@ export default function ManualInvoices() {
           <button className="pl-primary" type="submit" disabled={submitting || !subtotal}>
             {submitting ? "Generating..." : "Generate Invoice"}
           </button>
-          <p className="pl-hint">Email apne aap nahi jayega. Invoice banne ke baad Send Email button se bhejiye.</p>
+          <p className="pl-hint">The email is not sent automatically. Use the Send Email button after the invoice is created.</p>
         </form>
 
         <div className="pl-card pl-preview">
@@ -382,7 +382,7 @@ export default function ManualInvoices() {
                 <span className={`pl-status pl-status--${created.status === "paid" ? "paid" : "pending"}`}>{statusLabel(created.status)}</span>
               </div>
               <span className={`pl-email-flag${created.emailed ? " pl-email-flag--sent" : ""}`}>
-                {created.emailed ? `✓ Emailed to ${created.clientEmail}` : "Email abhi nahi bheja gaya"}
+                {created.emailed ? `✓ Emailed to ${created.clientEmail}` : "Email not sent yet"}
               </span>
             </div>
             <div className="pl-inline-actions">

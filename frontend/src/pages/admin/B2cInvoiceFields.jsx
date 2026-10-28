@@ -22,7 +22,7 @@ export default function B2cInvoiceFields({ person, onPersonChange, serviceState,
               onChange={(event) => onPersonChange("email", event.target.value)} placeholder="name@gmail.com" />
           </label>
         </div>
-        <p className="pl-hint">Invoice pe sirf naam aur email chhapenge, jaise abhi ke consultation invoice me.</p>
+        <p className="pl-hint">Only the name and email are printed on the invoice.</p>
       </section>
 
       {children}
