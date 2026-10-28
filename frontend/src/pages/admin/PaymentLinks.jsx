@@ -297,7 +297,7 @@ export default function PaymentLinks() {
         <form className="pl-card pl-form" onSubmit={createLink}>
           <div className="pl-form__title">
             <h2>Payment Details</h2>
-            <p>Invoice ke items ka Total hi customer ka payment amount banega ({CURRENCY}).</p>
+            <p>The customer pays the total of the services ({CURRENCY}).</p>
           </div>
 
           {/* // B2B: disabled for now, re-enable later. Do not delete.
@@ -325,7 +325,7 @@ export default function PaymentLinks() {
           >
             <section className="pl-section">
               <h3 className="pl-section__title">Payment</h3>
-              <p className="pl-terms">Due on Receipt: customer link khulte hi pay karega. Invoice pe &quot;Payment due immediately on receipt&quot; chhapega.</p>
+              <p className="pl-terms">Due on receipt. The customer pays as soon as they open the link.</p>
             </section>
           </B2cInvoiceFields>
 
@@ -392,7 +392,7 @@ export default function PaymentLinks() {
                 <select className="pl-select" value="due" disabled>
                   <option value="due">Bill — not yet paid</option>
                 </select>
-                <span className="pl-hint">Payment link ke saath hamesha "Bill" banega. Customer pay karega to apne aap "Paid" ho jayega.</span>
+                <span className="pl-hint">A payment link is always issued as a Bill. When the customer pays, it becomes Paid automatically.</span>
               </label>
             </div>
           </section>
@@ -449,7 +449,7 @@ export default function PaymentLinks() {
           <button className="pl-primary" type="submit" disabled={loading || !subtotal}>
             {loading ? "Generating..." : "Generate Link & Invoice"}
           </button>
-          <p className="pl-hint">Email apne aap nahi jayega. Link banne ke baad Send Email button se bhejiye.</p>
+          <p className="pl-hint">The email is not sent automatically. Use the Send Email button after the link is created.</p>
         </form>
 
         <div className="pl-card pl-preview">
@@ -498,7 +498,7 @@ export default function PaymentLinks() {
                 <span className={`pl-email-flag${created.invoice.emailed ? " pl-email-flag--sent" : ""}`}>
                   {created.invoice.emailed || created.invoice.emailError
                     ? emailStatusLabel(created.invoice)
-                    : "Email abhi nahi bheja gaya"}
+                    : "Email not sent yet"}
                 </span>
               </div>
               <div className="pl-inline-actions">

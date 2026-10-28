@@ -107,7 +107,7 @@ describe("Manual Invoices page (Individual / B2C) in a real browser", { skip: sk
     assert.deepEqual(await page.locator(".pl-form select option").allInnerTexts(), ["Due — not yet paid", "Paid — already received"]);
     assert.equal(await page.locator('.pl-form [aria-label="Quantity"]').count(), 0);
     assert.equal(await page.locator(".pl-primary").innerText(), "Generate Invoice");
-    assert.match(await form.innerText(), /Email apne aap nahi jayega\. Invoice banne ke baad Send Email button se bhejiye\./);
+    assert.match(await form.innerText(), /The email is not sent automatically\. Use the Send Email button after the invoice is created\./);
     assert.equal(await page.getByText("payment link", { exact: false }).filter({ hasText: /Generate|Copy Link/ }).count(), 0, "no payment link UI");
   });
 
@@ -132,7 +132,7 @@ describe("Manual Invoices page (Individual / B2C) in a real browser", { skip: sk
     const result = (await page.locator(".pl-invoice-box").innerText()).replace(/\s+/g, " ");
     assert.match(result, /HC\d{2}-\d{4}/);
     assert.match(result, /Due/);
-    assert.match(result, /Email abhi nahi bheja gaya/);
+    assert.match(result, /Email not sent yet/);
     assert.equal((await getJson("/__links")).length, 0, "no payment link was created");
     assert.equal((await getJson("/__mails")).length, 0, "nothing was emailed");
     const [invoice] = await getJson("/__invoices");

@@ -97,7 +97,7 @@ describe("Payment Links form (Individual / B2C) in a real browser", { skip: skip
     }
     assert.equal(await page.locator(".pl-form select").count(), 0, "no terms / issue-as selects");
     assert.equal(await page.locator('.pl-form input[type="date"]').count(), 0, "no due date");
-    assert.match(await page.locator(".pl-form").innerText(), /Due on Receipt/);
+    assert.match(await page.locator(".pl-form").innerText(), /Due on receipt\. The customer pays as soon as they open the link\./);
     assert.ok(await visible("Note"), "the internal note stays");
     assert.equal(await page.locator('.pl-form [aria-label="Quantity"]').count(), 0, "a service has no quantity field");
     assert.equal(await page.locator(".pl-primary").innerText(), "Generate Link & Invoice");
@@ -148,7 +148,7 @@ describe("Payment Links form (Individual / B2C) in a real browser", { skip: skip
     const result = await page.locator(".pl-invoice-box").innerText();
     assert.match(result, /HC\d{2}-\d{4}/);
     assert.match(result, /Due/);
-    assert.match(result, /Email abhi nahi bheja gaya/);
+    assert.match(result, /Email not sent yet/);
     assert.equal(await page.locator(".pl-invoice-box").getByRole("button", { name: "Download PDF" }).count(), 1);
     assert.equal(await page.locator(".pl-invoice-box").getByRole("button", { name: "Send Email" }).count(), 1);
     assert.equal((await getJson("/__mails")).length, 0, "nothing is emailed by creating a link");
