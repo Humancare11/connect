@@ -11,6 +11,17 @@ const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = requi
 const { toCents } = require("../utils/currency");
 const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
+const ManualInvoice = require("../models/ManualInvoice");
+const { MAX_AMOUNT_CENTS, parseItems, parseDueDate, parseBillingDetails } = require("../utils/manualInvoiceValidation");
+const { resendManualInvoiceEmail } = require("../utils/manualInvoiceService");
+const {
+  paymentLinkUrl,
+  payUrlForInvoice,
+  serializeLinkInvoice,
+  createInvoiceForPaymentLink,
+  settlePaymentLinkInvoice,
+  recordInvoiceError,
+} = require("../utils/paymentLinkInvoice");
 
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
 const ZERO_DECIMAL_CURRENCIES = new Set(["jpy"]);
@@ -27,17 +38,24 @@ function currencyFactor(currency) {
   return ZERO_DECIMAL_CURRENCIES.has(String(currency).toLowerCase()) ? 1 : 100;
 }
 
-function toMinorUnits(amount, currency) {
-  return Math.round(Number(amount) * currencyFactor(currency));
-}
-
 function fromFilterAmount(amount, currency) {
   return Math.round(Number(amount) * currencyFactor(currency || "usd"));
 }
 
-function paymentLinkUrl(req, token) {
-  const origin = process.env.FRONTEND_URL || `${req.protocol}://${req.get("host")}`;
-  return `${origin.replace(/\/+$/, "")}/pay/${token}`;
+// The invoice half of the Payment Links form (same fields and validation as
+// Manual Invoices). Returns { details, items, amountCents, dueDate } or { error }.
+function parseInvoiceBody(body) {
+  const { details, error: detailsError } = parseBillingDetails(body);
+  if (detailsError) return { error: detailsError };
+
+  const { items, amountCents, error: itemsError } = parseItems(body.items);
+  if (itemsError) return { error: itemsError };
+  if (amountCents > MAX_AMOUNT_CENTS) return { error: "Amount is too large. Please double-check the value." };
+
+  const { dueDate, error: dueDateError } = parseDueDate(body.dueDate);
+  if (dueDateError) return { error: dueDateError };
+
+  return { details, items, amountCents, dueDate };
 }
 
 function serializePaymentLink(req, paymentLink) {
@@ -63,6 +81,10 @@ function serializePaymentLink(req, paymentLink) {
     paidAt: paymentLink.paidAt,
     createdAt: paymentLink.createdAt,
     updatedAt: paymentLink.updatedAt,
+    customerName: paymentLink.customerName || "",
+    customerEmail: paymentLink.customerEmail || "",
+    invoice: serializeLinkInvoice(paymentLink.manualInvoice),
+    invoiceError: paymentLink.invoiceError || undefined,
     createdBy,
   };
 }
@@ -183,31 +205,49 @@ router.get("/admin/intent/:id", verifyAdminToken, adminOnly, async (req, res) =>
 
 router.post("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (req, res) => {
   try {
-    const amount = Number(req.body.amount);
     const currency = String(req.body.currency || "USD").trim().toLowerCase();
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).json({ msg: "Enter a valid amount." });
-    }
     if (!SUPPORTED_PAYMENT_LINK_CURRENCIES.includes(currency)) {
       return res.status(400).json({ msg: "Unsupported currency." });
     }
 
-    const amountPaise = toMinorUnits(amount, currency);
-    if (amountPaise < 1) {
-      return res.status(400).json({ msg: `Minimum amount is ${currency.toUpperCase()} 1.` });
-    }
+    const parsed = parseInvoiceBody(req.body);
+    if (parsed.error) return res.status(400).json({ msg: parsed.error });
+    const { details, items, amountCents, dueDate } = parsed;
 
+    // The payer is charged exactly the invoice total, computed here from the
+    // items — an amount sent by the client is ignored. (Every supported
+    // currency is a 2-decimal one, so cents are the link's minor units.)
     const token = crypto.randomBytes(18).toString("hex");
     const paymentLink = await PaymentLink.create({
       token,
-      amountPaise,
+      amountPaise: amountCents,
       currency,
       note: String(req.body.note || "").slice(0, 250),
+      customerName: details.clientName,
+      customerEmail: details.clientEmail,
       createdBy: req.user.id,
     });
 
+    let invoice;
+    try {
+      invoice = await createInvoiceForPaymentLink(paymentLink, {
+        details,
+        items,
+        amountCents,
+        dueDate,
+        createdBy: req.user.id,
+      });
+    } catch (err) {
+      // A link without its invoice would charge for something never billed;
+      // drop it so the admin can simply submit the form again.
+      await PaymentLink.deleteOne({ _id: paymentLink._id }).catch(() => {});
+      console.error("create payment link invoice error:", err.message);
+      return res.status(500).json({ msg: "Failed to generate the invoice. No payment link was created — please try again." });
+    }
+
     res.status(201).json({
       ...serializePaymentLink(req, paymentLink),
+      invoice: serializeLinkInvoice(invoice),
     });
   } catch (err) {
     console.error("create payment link error:", err.message);
@@ -217,7 +257,7 @@ router.post("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (r
 
 router.get("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (req, res) => {
   try {
-    const { createdBy, status, currency, startDate, endDate, amountMin, amountMax, q } = req.query;
+    const { createdBy, status, currency, startDate, endDate, amountMin, amountMax, q, emailStatus } = req.query;
     const query = {};
 
     if (req.user.role === "paymentadmin") {
@@ -252,8 +292,19 @@ router.get("/admin/payment-links", verifyAdminToken, paymentAdminOnly, async (re
       ];
     }
 
+    // Email filter: "sent" / "unsent" look at the linked invoice's e-mail
+    // state; links without an invoice match neither.
+    if (emailStatus === "sent" || emailStatus === "unsent") {
+      const ids = await ManualInvoice.distinct("paymentLink", {
+        source: "payment_link",
+        emailedAt: emailStatus === "sent" ? { $ne: null } : null,
+      });
+      query._id = { $in: ids };
+    }
+
     const links = await PaymentLink.find(query)
       .populate("createdBy", "name email role")
+      .populate("manualInvoice", "invoiceNumber status clientName clientEmail amountCents dueDate emailedAt emailError")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -402,8 +453,8 @@ router.post("/payment-links/:token/confirm", async (req, res) => {
     const { paymentIntentId } = req.body;
     if (!paymentIntentId) return res.status(400).json({ msg: "paymentIntentId is required." });
 
-    const paymentLink = await PaymentLink.findOne({ token: req.params.token });
-    if (!paymentLink) return res.status(404).json({ msg: "Payment link not found." });
+    const existingLink = await PaymentLink.findOne({ token: req.params.token });
+    if (!existingLink) return res.status(404).json({ msg: "Payment link not found." });
 
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
       expand: ["payment_method"],
@@ -411,15 +462,23 @@ router.post("/payment-links/:token/confirm", async (req, res) => {
     if (paymentIntent.status !== "succeeded") {
       return res.status(402).json({ msg: "Payment is not completed." });
     }
-    if (paymentIntent.amount !== paymentLink.amountPaise || paymentIntent.currency !== paymentLink.currency) {
+    // The intent must have been created for THIS link, not merely match its amount.
+    if (paymentIntent.metadata?.paymentLinkId !== String(existingLink._id)) {
+      return res.status(400).json({ msg: "This payment does not belong to this link." });
+    }
+    if (paymentIntent.amount !== existingLink.amountPaise || paymentIntent.currency !== existingLink.currency) {
       return res.status(400).json({ msg: "Payment amount does not match this link." });
     }
 
-    paymentLink.status = "paid";
-    paymentLink.paymentIntentId = paymentIntent.id;
     const paymentMethod = paymentIntent.payment_method;
+    const paidFields = {
+      status: "paid",
+      paymentIntentId: paymentIntent.id,
+      paidAt: new Date(),
+      payerEmail: String(paymentIntent.receipt_email || paymentMethod?.billing_details?.email || "").trim().toLowerCase(),
+    };
     if (paymentMethod?.card) {
-      paymentLink.cardDetails = {
+      paidFields.cardDetails = {
         maskedNumber: `**** **** **** ${paymentMethod.card.last4 || ""}`.trim(),
         brand: paymentMethod.card.brand || "",
         cardType: paymentMethod.card.funding || paymentMethod.type || "card",
@@ -428,8 +487,31 @@ router.post("/payment-links/:token/confirm", async (req, res) => {
         country: paymentMethod.card.country || "",
       };
     }
-    paymentLink.paidAt = new Date();
-    await paymentLink.save();
+
+    // Atomic pending -> paid: of two concurrent confirms only one wins.
+    let paymentLink = await PaymentLink.findOneAndUpdate(
+      { _id: existingLink._id, status: "pending" },
+      { $set: paidFields },
+      { returnDocument: "after" }
+    );
+    if (!paymentLink) {
+      // Already paid. The same intent confirming again is a harmless repeat
+      // (and gets another go at the invoice below); anything else is refused.
+      paymentLink = await PaymentLink.findById(existingLink._id);
+      if (paymentLink.status !== "paid" || paymentLink.paymentIntentId !== paymentIntent.id) {
+        return res.status(400).json({ msg: "This payment link is no longer payable." });
+      }
+    }
+
+    // The money has moved, so a failure here must not fail the payer's
+    // request: record it (the admin can retry from the history) and carry on.
+    // No e-mail is sent — that is the admin's explicit "Send Email" action.
+    try {
+      await settlePaymentLinkInvoice(paymentLink, paymentIntent);
+    } catch (err) {
+      console.error(`settle payment link invoice error (${paymentLink._id}):`, err.message);
+      await recordInvoiceError(paymentLink, err);
+    }
 
     res.json({
       status: paymentLink.status,
@@ -441,6 +523,65 @@ router.post("/payment-links/:token/confirm", async (req, res) => {
   } catch (err) {
     console.error("confirm payment link error:", err.message);
     res.status(500).json({ msg: "Failed to confirm payment." });
+  }
+});
+
+// A paymentadmin only reaches links they created; superadmin reaches all
+// (same scoping as the history list).
+async function findScopedLink(req) {
+  if (!mongoose.isValidObjectId(req.params.id)) return null;
+  const query = { _id: req.params.id };
+  if (req.user.role === "paymentadmin") query.createdBy = req.user.id;
+  return PaymentLink.findOne(query);
+}
+
+/* POST /api/payments/admin/payment-links/:id/invoice/send-email
+   Emails the link's invoice (the bill while unpaid, the receipt once paid).
+   Never automatic — only this explicit action sends. Safe to repeat. */
+router.post("/admin/payment-links/:id/invoice/send-email", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+  try {
+    const paymentLink = await findScopedLink(req);
+    if (!paymentLink) return res.status(404).json({ msg: "Payment link not found." });
+    if (!paymentLink.manualInvoice) return res.status(404).json({ msg: "This payment link has no invoice." });
+
+    const current = await ManualInvoice.findById(paymentLink.manualInvoice).select("paymentLink").lean();
+    if (!current) return res.status(404).json({ msg: "Invoice not found." });
+
+    const invoice = await resendManualInvoiceEmail({
+      invoiceId: paymentLink.manualInvoice,
+      payUrl: await payUrlForInvoice(req, current),
+    });
+    res.json({ invoice: serializeLinkInvoice(invoice) });
+  } catch (err) {
+    console.error("payment link invoice email error:", err.message);
+    // 502: the request was valid, the downstream e-mail send failed.
+    res.status(502).json({ msg: err.message || "Failed to send the email. Please try again." });
+  }
+});
+
+/* POST /api/payments/admin/payment-links/:id/invoice
+   Retry for a link whose invoice step failed. A paid link whose invoice is
+   still "due" is settled again; a link with no invoice at all (created before
+   this feature) gets one from the posted invoice form fields. */
+router.post("/admin/payment-links/:id/invoice", verifyAdminToken, paymentAdminOnly, async (req, res) => {
+  try {
+    const paymentLink = await findScopedLink(req);
+    if (!paymentLink) return res.status(404).json({ msg: "Payment link not found." });
+
+    if (!paymentLink.manualInvoice) {
+      const parsed = parseInvoiceBody(req.body);
+      if (parsed.error) return res.status(400).json({ msg: parsed.error });
+      await createInvoiceForPaymentLink(paymentLink, { ...parsed, createdBy: req.user.id });
+    }
+    if (paymentLink.status === "paid") {
+      await settlePaymentLinkInvoice(paymentLink, { id: paymentLink.paymentIntentId });
+    }
+
+    const invoice = await ManualInvoice.findOne({ paymentLink: paymentLink._id }).lean();
+    res.json({ invoice: serializeLinkInvoice(invoice) });
+  } catch (err) {
+    console.error("payment link invoice retry error:", err.message);
+    res.status(500).json({ msg: "Failed to generate the invoice. Please try again." });
   }
 });
 

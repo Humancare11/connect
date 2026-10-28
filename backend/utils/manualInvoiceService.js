@@ -99,6 +99,8 @@ async function createManualInvoice({
   currency,
   status,
   paymentMethod,
+  source = "manual",
+  paymentLink = null,
 }) {
   const invoiceNumber = await nextInvoiceNumber();
   const issuedAt = new Date();
@@ -146,6 +148,8 @@ async function createManualInvoice({
     paidAt: status === "paid" ? issuedAt : null,
     pdfKey: key,
     createdBy,
+    source,
+    paymentLink,
   });
 
   // No email is sent automatically. The invoice and its PDF exist and are
@@ -159,7 +163,7 @@ async function createManualInvoice({
 // alongside the receipt). No email is sent here — the admin decides whether
 // to email the updated receipt afterward via resendManualInvoiceEmail
 // ("Send Invoice Email").
-async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
+async function markManualInvoicePaid({ invoiceId, paymentMethod, gatewayReference = "" }) {
   const invoice = await ManualInvoice.findById(invoiceId);
   if (!invoice) return null;
   if (invoice.status === "paid") return invoice; // idempotent no-op
@@ -192,6 +196,7 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
   invoice.status = "paid";
   invoice.paymentMethod = normalizedPaymentMethod;
   invoice.paidAt = paidAt;
+  if (gatewayReference) invoice.gatewayReference = gatewayReference;
   // pdfKey is unchanged — generateManualInvoicePdfAndUpload always writes to
   // the same deterministic key for this invoiceNumber.
 
@@ -211,7 +216,9 @@ async function markManualInvoicePaid({ invoiceId, paymentMethod }) {
 // what the client receives is guaranteed identical to what's on file. Used
 // for invoices where the original send failed (e.g. an SMTP outage) — see
 // invoice.emailError — or simply hasn't been attempted yet.
-async function resendManualInvoiceEmail({ invoiceId }) {
+// payUrl (optional) adds a "Pay now" button to a still-unpaid payment-link
+// invoice; callers that don't have one simply omit it.
+async function resendManualInvoiceEmail({ invoiceId, payUrl = "" }) {
   const invoice = await ManualInvoice.findById(invoiceId);
   if (!invoice) return null;
 
@@ -222,6 +229,7 @@ async function resendManualInvoiceEmail({ invoiceId }) {
       invoiceNumber: invoice.invoiceNumber,
       amountDisplay: formatAmount(invoice.amountCents, invoice.currency),
       status: invoice.status,
+      payUrl: invoice.status === "due" ? payUrl : "",
       pdfBuffer,
     });
     invoice.emailedAt = new Date();

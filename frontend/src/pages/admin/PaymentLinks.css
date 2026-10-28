@@ -468,6 +468,213 @@
   }
 }
 
+/* ══ INVOICE FORM / INVOICE COLUMN ═══════════════════════ */
+.pl-section {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pl-section__title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 15px;
+}
+.pl-preview__from {
+  margin-top: 10px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+.pl-preview__label--invoice {
+  margin: 22px 0 0;
+}
+.pl-invoice-preview {
+  margin-top: 8px !important;
+}
+
+.pl-input {
+  width: 100%;
+  height: 46px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+}
+.pl-input:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
+.pl-select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.pl-form-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pl-form-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.pl-items {
+  display: grid;
+  gap: 10px;
+}
+.pl-item-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2.4fr) 90px 120px 110px 36px;
+  gap: 10px;
+  align-items: center;
+}
+.pl-item-row--head {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.pl-item-row__amount {
+  color: #0f172a;
+  font-weight: 800;
+  text-align: right;
+}
+.pl-item-row__remove {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.pl-item-row__remove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.pl-items__add {
+  justify-self: start;
+}
+
+.pl-totals {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  margin-left: auto;
+  min-width: 240px;
+}
+.pl-totals div,
+.pl-invoice-preview div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+.pl-totals dt { color: #64748b; font-weight: 700; }
+.pl-totals dd { margin: 0; color: #0f172a; font-weight: 800; }
+.pl-totals__total {
+  padding-top: 8px;
+  border-top: 1px solid #cbd5e1;
+  font-size: 16px;
+}
+
+.pl-terms {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.pl-hint {
+  margin: -8px 0 0;
+  color: #64748b;
+  font-size: 12.5px;
+}
+
+.pl-header-metrics {
+  display: flex;
+  gap: 28px;
+}
+
+.pl-invoice-preview {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(203, 213, 225, 0.3);
+  font-size: 13px;
+}
+.pl-invoice-preview dt { color: #94a3b8; }
+.pl-invoice-preview dd { margin: 0; color: #fff; font-weight: 700; text-align: right; }
+.pl-invoice-preview__total {
+  padding-top: 8px;
+  border-top: 1px solid rgba(203, 213, 225, 0.3);
+}
+
+.pl-result--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+.pl-result__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+}
+.pl-invoice-box {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.pl-invoice-cell {
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+}
+.pl-invoice-cell__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pl-invoice-cell__client {
+  color: #64748b;
+  font-size: 12px;
+}
+.pl-inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pl-email-flag {
+  justify-self: start;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pl-email-flag--sent { color: #166534; }
+.pl-email-flag--bad { color: #b91c1c; }
+
+@media (max-width: 760px) {
+  .pl-form-grid--2,
+  .pl-form-grid--3 {
+    grid-template-columns: 1fr;
+  }
+  .pl-item-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pl-item-row--head { display: none; }
+  .pl-item-row > :first-child { grid-column: 1 / -1; }
+  .pl-header-metrics { gap: 18px; }
+  .pl-result__row { flex-direction: column; align-items: stretch; }
+  .pl-totals { min-width: 0; width: 100%; }
+}
+
 /* ══ RESPONSIVE — extra breakpoints ══════════════════════ */
 @media (max-width: 1024px) {
   .pl-admin__grid { grid-template-columns: 1fr; }

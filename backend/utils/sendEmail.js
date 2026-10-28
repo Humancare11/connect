@@ -231,7 +231,11 @@ const escapeHtml = (value) =>
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]
   ));
 
-const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, status }) => {
+const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, status, payUrl }) => {
+  // Only an unpaid invoice that was issued with a payment link gets a button.
+  const payButton = status !== "paid" && /^https?:\/\//i.test(payUrl || "")
+    ? `<p style="text-align:center;margin:0 0 18px;"><a href="${escapeHtml(payUrl)}" style="display:inline-block;background:#0a1f44;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:10px;">Pay now</a></p>`
+    : "";
   const greeting = name ? `Hello ${escapeHtml(name)},` : `Hello,`;
   const isPaid = status === "paid";
   const badgeText = isPaid ? "Payment Receipt" : "Invoice";
@@ -265,6 +269,7 @@ const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, statu
         <tr><td style="font-size:12px;color:#6b7280;padding:4px 0;">${amountRowLabel}</td><td style="font-size:16px;color:#0a1f44;font-weight:800;text-align:right;padding:4px 0;">${escapeHtml(amountDisplay)}</td></tr>
       </table>
     </div>
+    ${payButton}
   </div>
 
   <div style="background:#f8f9ff;padding:16px 28px;border-top:1px solid #e5e7eb;">
@@ -294,14 +299,14 @@ const buildManualInvoiceEmailHTML = ({ name, invoiceNumber, amountDisplay, statu
 
 // status: "due" (bill — not yet paid) or "paid" (receipt). Recipient is an
 // admin-entered client address, not necessarily a registered platform user.
-const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, status, pdfBuffer }) => {
+const sendManualInvoiceEmail = async (to, { name, invoiceNumber, amountDisplay, status, payUrl, pdfBuffer }) => {
   await sendMail({
     from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject: status === "paid"
       ? `Humancare Connect — Payment Receipt (${invoiceNumber})`
       : `Humancare Connect — Invoice ${invoiceNumber}`,
-    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, status }),
+    html: buildManualInvoiceEmailHTML({ name, invoiceNumber, amountDisplay, status, payUrl }),
     attachments: [
       {
         filename: `${invoiceNumber}.pdf`,

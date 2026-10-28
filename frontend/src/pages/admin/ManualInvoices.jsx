@@ -4,6 +4,12 @@ import { ChevronDown, EllipsisVertical, FileText, RefreshCw } from "lucide-react
 import api from "../../api";
 import "./ManualInvoices.css";
 import { useToast } from "../../components/ui/Toast";
+import {
+  PAYMENT_TERMS_OPTIONS,
+  toDateInputValue,
+  computeItemAmountCents,
+  termsLine as termsLineFor,
+} from "./invoiceForm";
 
 // Replace this with the real asset path (or an imported file) later.
 const LOGO_SRC = "/humancare-logo.png";
@@ -29,16 +35,6 @@ const CURRENCY_OPTIONS = [
   { code: "GBP", label: "GBP (£)", symbol: "£" },
 ];
 
-// value/days pairs drive the "Payment Terms" select below — picking one
-// recomputes the Due Date field to today + days, while the Due Date itself
-// stays freely editable afterward for a one-off exception.
-const PAYMENT_TERMS_OPTIONS = [
-  { value: "Due on Receipt", days: 0 },
-  { value: "Net 15 Days", days: 15 },
-  { value: "Net 30 Days", days: 30 },
-  { value: "Net 60 Days", days: 60 },
-];
-
 // Recent Invoices list: how many rows load per page.
 const HISTORY_PAGE_SIZE = 8;
 
@@ -47,26 +43,6 @@ const STATUS_FILTER_OPTIONS = [
   { value: "due", label: "Due" },
   { value: "paid", label: "Paid" },
 ];
-
-function toDateInputValue(date) {
-  const d = new Date(date);
-  const offset = d.getTimezoneOffset();
-  return new Date(d.getTime() - offset * 60000).toISOString().slice(0, 10);
-}
-
-function computeItemAmountCents(item) {
-  const quantity = Number(item.quantity);
-  const rate = Number(item.rate);
-  if (
-    !Number.isFinite(quantity) ||
-    quantity <= 0 ||
-    !Number.isFinite(rate) ||
-    rate < 0
-  )
-    return 0;
-  const rateCents = Math.round(rate * 100);
-  return Math.round(quantity * rateCents);
-}
 
 function formatMoney(amountCents, currency = "USD") {
   const code = String(currency || "USD").toUpperCase();
@@ -278,7 +254,7 @@ function InvoiceRowMenu({ invoice, open, setOpenId, onDownload, onMarkPaid, onSe
           >
             {downloading ? "Preparing…" : "Download"}
           </button>
-          {invoice.status === "due" && (
+          {invoice.status === "due" && invoice.source !== "payment_link" && (
             <button
               type="button"
               role="menuitem"
@@ -653,13 +629,7 @@ export default function ManualInvoices() {
 
   const isPaid = status === "paid";
   const issueDateLabel = formatDocDate(Date.now());
-  const termsLine =
-    paymentTerms === "Due on Receipt"
-      ? "Payment is due immediately on receipt of this invoice. Please remit payment for the amount above without delay."
-      : `Payment is due within ${paymentTerms.replace(/\D/g, "")} days from the invoice date (${paymentTerms.replace(
-          " Days",
-          "",
-        )}). Please remit payment for the amount above by the due date indicated.`;
+  const termsLine = termsLineFor(paymentTerms);
 
   const isCompact = layout === "compact" || layout === "xs";
   const isStack = layout !== "wide";
@@ -1263,6 +1233,14 @@ export default function ManualInvoices() {
                         <span title={invoice.clientEmail}>
                           {invoice.clientEmail}
                         </span>
+                        {invoice.source === "payment_link" && (
+                          <span
+                            className="mi-email-flag mi-email-flag--sent"
+                            title="Created with a payment link; settled automatically when it is paid"
+                          >
+                            Payment link
+                          </span>
+                        )}
                         {invoice.partner && (
                           <span
                             className="mi-email-flag mi-email-flag--sent"
@@ -1320,7 +1298,7 @@ export default function ManualInvoices() {
                             )}
                             Download
                           </button>
-                          {invoice.status === "due" && (
+                          {invoice.status === "due" && invoice.source !== "payment_link" && (
                             <button
                               className="mi-btn mi-btn--link mi-btn--accent"
                               type="button"
