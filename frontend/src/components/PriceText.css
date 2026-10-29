@@ -21,3 +21,14 @@
 @media (prefers-reduced-motion: reduce) {
   .pt-skeleton { animation: none; }
 }
+/* Skeleton that carries the USD price in its text (prerendered pages): the text is there for crawlers, invisible to the visitor. */
+.pt-skeleton--text {
+  width: auto;
+  min-width: 3.2ch;
+  overflow: hidden;
+}
+.pt-hidden-text {
+  color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}

@@ -127,3 +127,18 @@ export async function fetchBlogIndexPage(env) {
   const { data } = await getJson(base, `/api/blogs?page=1&limit=${BLOG_LIST_CARDS}`);
   return data;
 }
+
+// The USD price of every category, for the static HTML of the condition / specialty / category pages (crawlers read it there).
+// Only the USD amount is kept: the page the browser shows is in the visitor's currency, decided after it loads.
+// Returns { [pricingSlug]: { price } }.
+export async function fetchUsdPricing(env) {
+  const base = apiBase(env);
+  if (!base) throw new Error("VITE_API_URL (or PRERENDER_API_URL) is not set, cannot fetch category prices");
+  const { data } = await getJson(base, "/api/pricing");
+  const out = {};
+  for (const [slug, record] of Object.entries(data || {})) {
+    const price = Number(record?.price);
+    if (Number.isFinite(price) && price > 0) out[slug] = { price };
+  }
+  return out;
+}

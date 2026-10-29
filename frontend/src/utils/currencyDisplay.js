@@ -49,10 +49,11 @@ export function resolveCategoryPrice(record, currency = DEFAULT_CURRENCY) {
   return usd ? { amount: usd, currency: "USD" } : null;
 }
 
-// What a price slot shows: a skeleton while the currency or the prices are loading (never "$" first and then "€"), a
+// What a price slot shows: a skeleton while the currency or the prices are loading (never "$" first and then "€"; the USD price, when
+// known, stays in the markup behind the skeleton for crawlers - see PriceText), a
 // "price unavailable" state when there is no price, otherwise the formatted price.
 export function priceTextState(info) {
-  if (!info || info.loading) return { kind: "skeleton", text: "" };
+  if (!info || info.loading) return { kind: "skeleton", text: formatPrice(info?.usdAmount, "USD") };
   const text = formatPrice(info.amount, info.currency);
   if (!text) return { kind: "unavailable", text: "Price unavailable" };
   return { kind: "price", text };

@@ -8,7 +8,12 @@ import "./PriceText.css";
 export default function PriceText({ info }) {
   const state = priceTextState(info);
   if (state.kind === "skeleton") {
-    return <span className="pt-skeleton" role="status" aria-busy="true" aria-label="Loading price" />;
+    // The USD price (when known: prerendered pages) is in the markup but not visible; the visitor sees the skeleton.
+    return (
+      <span className={`pt-skeleton${state.text ? " pt-skeleton--text" : ""}`} role="status" aria-busy="true" aria-label="Loading price">
+        {state.text ? <span className="pt-hidden-text">{state.text}</span> : null}
+      </span>
+    );
   }
   if (state.kind === "unavailable") return <span className="pt-unavailable">{state.text}</span>;
   return <>{state.text}</>;

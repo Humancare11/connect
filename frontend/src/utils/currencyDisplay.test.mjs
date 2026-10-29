@@ -49,6 +49,9 @@ test("resolveCategoryPrice: the visitor currency, falling back to the USD price 
 test("priceTextState: skeleton while loading, unavailable without a price, else the formatted price - never a made-up $49", () => {
   assert.deepEqual(priceTextState({ loading: true }), { kind: "skeleton", text: "" });
   assert.deepEqual(priceTextState(null), { kind: "skeleton", text: "" });
+  // a prerendered page: the USD price stays in the markup behind the skeleton (for crawlers)
+  assert.deepEqual(priceTextState({ loading: true, usdAmount: 49 }), { kind: "skeleton", text: "$49" });
+  assert.deepEqual(priceTextState({ loading: true, usdAmount: null }), { kind: "skeleton", text: "" });
   assert.deepEqual(priceTextState({ amount: null, currency: "USD", loading: false, unavailable: true }), { kind: "unavailable", text: "Price unavailable" });
   assert.deepEqual(priceTextState({ amount: 45, currency: "EUR", loading: false }), { kind: "price", text: "€45" });
   assert.deepEqual(priceTextState({ amount: 49, currency: "USD", loading: false }), { kind: "price", text: "$49" });

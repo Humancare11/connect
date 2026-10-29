@@ -43,7 +43,7 @@ test("the condition pages show the price through PriceText", () => {
     const s = fs.readFileSync(f, "utf8");
     if (!s.includes("useCategoryPriceInfo")) continue;
     n += 1;
-    assert.ok(s.includes("<PriceText") || s.includes("priceInfo={priceInfo}"), path.relative(SRC, f));
+    assert.ok(s.includes("<PriceText") || s.includes("priceInfo={priceInfo}") || s.includes(".usdAmount"), path.relative(SRC, f));
   }
   assert.ok(n >= 250, `expected the codemod to reach 250+ pages, found ${n}`);
 });
@@ -74,4 +74,20 @@ test("the Entries table header no longer says ($); Manage Users has a plain-text
   const users = read("pages", "admin", "ManageUsers.jsx");
   assert.ok(/>\s*Country changed\s*</.test(users));
   assert.equal(users.includes("🌍"), false);
+});
+
+test("prerender: the USD category prices are embedded in every prerendered page and read back by the price hook", () => {
+  const script = fs.readFileSync(path.join(SRC, "..", "scripts", "prerender.mjs"), "utf8");
+  assert.ok(script.includes("fetchUsdPricing") && script.includes('"pricing:usd"'));
+  const data = fs.readFileSync(path.join(SRC, "..", "scripts", "prerender-data.mjs"), "utf8");
+  assert.ok(/export async function fetchUsdPricing/.test(data));
+  assert.equal(/priceEur|priceGbp/.test(data.slice(data.indexOf("fetchUsdPricing"))), false, "only USD goes into the static HTML");
+  assert.ok(read("hooks", "useCategoryPriceInfo.js").includes('usePrerendered("pricing:usd")'));
+});
+
+test("CategoryConsultant has no made-up 49 and no price fetch of its own for a category", () => {
+  const src = read("pages", "CategoryConsultant.jsx");
+  assert.equal(/49/.test(src), false);
+  assert.equal(src.includes("/api/appointment-tree"), false);
+  assert.ok(src.includes("useCategoryPriceInfo(categoryId)"));
 });
