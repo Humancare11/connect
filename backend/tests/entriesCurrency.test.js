@@ -108,7 +108,9 @@ describe("entries and bookings lists carry each booking's currency", () => {
       assert.equal(title("usd"), "75% of $30.00 paid");
       assert.equal(doctorFeePlaceholder(3000).title, "75% of $30.00 paid"); // default stays USD
       assert.equal(formatMoneyCents(2550, "gbp"), "£25.50");
-      assert.equal(formatMoneyCents(2550, "inr"), "$25.50"); // anything else is shown as USD
+      assert.equal(formatMoneyCents(2550, "inr"), "₹25.50");
+      assert.equal(formatMoneyCents(10000000, "inr"), "₹1,00,000.00", "rupees use Indian digit grouping");
+      assert.equal(formatMoneyCents(2550, "jpy"), "$25.50"); // anything else is shown as USD
     });
   });
 
@@ -128,6 +130,7 @@ describe("entries and bookings lists carry each booking's currency", () => {
         usd: { feeChargedCents: 1000 + 5000, doctorFeeCents: 750 + 4000 },
         eur: { feeChargedCents: 3000 + 3000, doctorFeeCents: 2250 },
         gbp: { feeChargedCents: 2500, doctorFeeCents: 1800 },
+        inr: { feeChargedCents: 0, doctorFeeCents: 0 },
       });
       // Nothing carries a mixed number: no bucket equals the sum of the others.
       const all = Object.values(totals.byCurrency).reduce((sum, b) => sum + b.feeChargedCents, 0);
@@ -167,6 +170,50 @@ describe("entries and bookings lists carry each booking's currency", () => {
       const { totals, summary } = await listBookingEntries({ limit: "100" }, { role: "superadmin" });
       assert.deepEqual(totals.byCurrency.usd, { feeChargedCents: 0, doctorFeeCents: 0 });
       assert.deepEqual(summary.byCurrency.usd, { toPayCents: 0, paidCents: 0, receivedCents: 0, marginCents: 0 });
+    });
+  });
+
+  describe("INR is its own bucket and is never added to anything", () => {
+    beforeEach(async () => {
+      await appt(1, "usd", 10, { entry: { doctorFeeCents: 750 } }); // $10, doctor $7.50
+      await appt(2, "inr", 999, { paymentGateway: "razorpay", entry: { doctorFeeCents: 74925 } }); // Rs 999, doctor Rs 749.25
+      await cat(3, "inr", 1499, { paymentGateway: "razorpay" }); // Rs 1,499, no doctor fee yet
+    });
+
+    test("rows are INR with the rupee amount, and the old USD row is untouched", async () => {
+      const body = await listBookingEntries({ limit: "100" }, { role: "superadmin" });
+      const inr = body.items.filter((r) => r.currency === "inr");
+      assert.equal(inr.length, 2);
+      assert.deepEqual(inr.map((r) => r.feeChargedCents).sort((a, b) => a - b), [99900, 149900]);
+      assert.equal(body.items.filter((r) => r.currency === "usd").length, 1);
+      assert.ok(body.items.every((r) => ["usd", "eur", "gbp", "inr"].includes(r.currency)));
+      assert.equal(body.items.find((r) => r.feeChargedCents === 149900).placeholder.title, "75% of ₹1,499.00 paid"); // no doctor fee typed yet
+    });
+
+    test("totals and the money boxes keep an INR bucket; the USD figures do not move", async () => {
+      const { totals, summary } = await listBookingEntries({ limit: "100" }, { role: "superadmin" });
+      assert.deepEqual(totals.byCurrency.inr, { feeChargedCents: 99900 + 149900, doctorFeeCents: 74925 });
+      assert.deepEqual(totals.byCurrency.usd, { feeChargedCents: 1000, doctorFeeCents: 750 });
+      assert.equal(totals.feeChargedCents, 1000, "the flat total is USD only");
+      assert.equal(totals.rows, 3);
+      assert.deepEqual(summary.byCurrency.inr, { toPayCents: 74925, paidCents: 0, receivedCents: 99900 + 149900, marginCents: 99900 + 149900 - 74925 });
+      assert.deepEqual(summary.byCurrency.usd, { toPayCents: 750, paidCents: 0, receivedCents: 1000, marginCents: 1000 - 750 });
+      const all = Object.values(totals.byCurrency).reduce((sum, b) => sum + b.feeChargedCents, 0);
+      for (const bucket of Object.values(totals.byCurrency)) assert.notEqual(bucket.feeChargedCents, all);
+    });
+
+    test("the CSV names INR and keeps plain numbers", async () => {
+      const all = parseCsv(buildEntriesCsv((await listAllEntryRows({})).rows));
+      const inr = all.records.filter((r) => r["Currency"] === "INR");
+      assert.equal(inr.length, 2);
+      const withFee = inr.find((r) => r["Doctor fee"] === "749.25");
+      assert.deepEqual([withFee["Fee charged"], withFee["Amount paid"]], ["999.00", "999.00"]);
+      assert.equal(all.head[all.head.length - 1], "Currency");
+    });
+
+    test("the Appointments list carries the INR currency", async () => {
+      const { items } = await listAdminBookings({ limit: "50" });
+      assert.deepEqual(items.map((r) => [r.fee, r.currency]).sort(), [[10, "usd"], [1499, "inr"], [999, "inr"]]);
     });
   });
 

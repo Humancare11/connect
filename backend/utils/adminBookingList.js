@@ -231,10 +231,10 @@ const feeOf = (doc) => {
   return Number.isFinite(paid) && paid > 0 ? paid / 100 : 0;
 };
 
-// The currency a booking was paid in ("usd" / "eur" / "gbp"). Bookings made before multi-currency have none stored: USD.
+// The currency a booking was paid in ("usd" / "eur" / "gbp" / "inr"). Bookings made before multi-currency have none stored: USD.
 const currencyOf = (doc) => {
   const code = String(doc.paymentCurrency || "usd").toLowerCase();
-  return ["usd", "eur", "gbp"].includes(code) ? code : "usd";
+  return ["usd", "eur", "gbp", "inr"].includes(code) ? code : "usd";
 };
 
 const assignedByName = (doc) => doc.assignedBy?.name || doc.assignedBy?.email || null;

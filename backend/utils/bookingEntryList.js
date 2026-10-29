@@ -223,7 +223,7 @@ const FEE_CENTS = {
 // The currency a booking was paid in. Old bookings have none stored: USD. Manual entries are always USD.
 const CURRENCY_OF = { $ifNull: ["$paymentCurrency", "usd"] };
 const MANUAL_CURRENCY = { $literal: "usd" };
-const CURRENCIES = ["usd", "eur", "gbp"];
+const CURRENCIES = ["usd", "eur", "gbp", "inr"];
 
 // Money is never added across currencies: every money total is kept per currency. "usd" is always present (zeros when there
 // is nothing), so a screen with only USD bookings looks exactly as it always did.
@@ -232,7 +232,7 @@ const currencyKey = (value) => (CURRENCIES.includes(value) ? value : "usd");
 
 const emptyCounts = () => ({ all: 0, ...Object.fromEntries(PAID_STATUSES.map((s) => [s, 0])) });
 
-// { rows, byCurrency: { usd: { feeChargedCents, doctorFeeCents }, eur: {...}, gbp: {...} } }. `rows` is a count; the money is per currency.
+// { rows, byCurrency: { usd: { feeChargedCents, doctorFeeCents }, eur: {...}, gbp: {...}, inr: {...} } }. `rows` is a count; the money is per currency.
 async function loadTotals(appointmentFilter, categoryFilter, manualFilter) {
   const group = (filter, fee = FEE_CENTS, currency = CURRENCY_OF) => [
     { $match: filter },

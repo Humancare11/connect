@@ -22,6 +22,23 @@ try {
   console.warn(`[invoice] Logo not found at ${LOGO_PATH} — rendering text wordmark instead.`);
 }
 
+// pdfkit's built-in fonts (Times / Helvetica) have no rupee sign, so an INR invoice swaps them, by name, for DejaVu Serif, which does
+// (backend/assets/fonts, with its licence). Every other currency keeps the built-in fonts exactly as before.
+const RUPEE_FONT_DIR = path.join(__dirname, "..", "assets", "fonts");
+const RUPEE_FONTS = {
+  "Times-Roman": "DejaVuSerif.ttf",
+  "Times-Bold": "DejaVuSerif-Bold.ttf",
+  "Times-Italic": "DejaVuSerif-Italic.ttf",
+  Helvetica: "DejaVuSerif.ttf",
+};
+
+function useRupeeFonts(doc) {
+  const files = Object.entries(RUPEE_FONTS).map(([name, file]) => [name, path.join(RUPEE_FONT_DIR, file)]);
+  // Missing files (a bad deploy of this asset) must never break invoice generation: keep the built-in fonts.
+  if (!files.every(([, file]) => fs.existsSync(file))) return;
+  for (const [name, file] of files) doc.registerFont(name, file);
+}
+
 // Brand palette — same tokens as the prescription letterhead
 // (frontend/src/components/RxSlip.css) so every document a patient
 // receives reads as one consistent brand, plus a lighter blue-tinted panel
@@ -53,9 +70,10 @@ const RIGHT = PAGE_MARGIN + CONTENT_WIDTH;
 function formatAmount(amountCents, currency = "usd") {
   const amount = (Number(amountCents) || 0) / 100;
   try {
-    return new Intl.NumberFormat("en-US", {
+    const code = String(currency || "usd").toUpperCase();
+    return new Intl.NumberFormat(code === "INR" ? "en-IN" : "en-US", {
       style: "currency",
-      currency: String(currency || "usd").toUpperCase(),
+      currency: code,
       minimumFractionDigits: 2,
     }).format(amount);
   } catch {
@@ -219,6 +237,7 @@ function buildInvoicePdfBuffer({
       doc.on("data", (chunk) => chunks.push(chunk));
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
+      if (String(currency || "").toUpperCase() === "INR") useRupeeFonts(doc);
 
       const left = PAGE_MARGIN;
       const amountDisplay = formatAmount(amountCents, currency);

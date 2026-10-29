@@ -1,6 +1,6 @@
 // Live chat prices for visitors who are not priced in USD.
 //
-// The chat's canned replies and the AI's price list are written in USD. A visitor whose country is priced in EUR or GBP (by the
+// The chat's canned replies and the AI's price list are written in USD. A visitor whose country is priced in EUR, GBP or INR (by the
 // same country list the website uses, see utils/currencyConfig) must not be quoted a dollar amount that is not what they will be
 // charged, and the chat has no way to know the exact EUR / GBP price of each service. So for them the chat never quotes an
 // amount: it says the price is shown at booking, before they pay, and points to the booking page. USD visitors, visitors whose
@@ -9,8 +9,9 @@ const { isMultiCurrencyEnabled, currencyForCountryName } = require("../../utils/
 
 const PRICE_AT_BOOKING = "The exact price is shown when you book, before you pay.";
 
-// A money amount in a sentence: a symbol before a number ($49, €30, £25) or a number with a currency word (49 USD, 30 euros).
-const AMOUNT = /[$€£]\s?\d|\d[\d.,]*\s?(?:usd|eur|gbp|dollars?|euros?|pounds?)\b|\b(?:usd|eur|gbp)\s?\d/i;
+// A money amount in a sentence: a symbol before a number ($49, €30, £25, ₹999) or a number with a currency word (49 USD, 30 euros,
+// 999 rupees, Rs. 999).
+const AMOUNT = /[$€£₹]\s?\d|\d[\d.,]*\s?(?:usd|eur|gbp|inr|dollars?|euros?|pounds?|rupees?)\b|\b(?:usd|eur|gbp|inr)\s?\d|\brs\.?\s?\d/i;
 
 const hasAmount = (text) => AMOUNT.test(String(text || ""));
 

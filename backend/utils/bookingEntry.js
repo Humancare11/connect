@@ -105,11 +105,12 @@ function defaultDoctorShareCents(paidCents) {
 const formatUsdCents = (cents) =>
   `$${(Math.abs(cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-// 9900, "eur" -> "€99.00" (symbol first; USD, EUR and GBP only - anything else is shown as USD).
+// 9900, "eur" -> "€99.00" (symbol first; USD, EUR, GBP and INR only - anything else is shown as USD).
+// INR uses Indian digit grouping: 499900 -> "₹4,999.00", 10000000 -> "₹1,00,000.00".
 const formatMoneyCents = (cents, currency = "usd") => {
-  const code = ["USD", "EUR", "GBP"].includes(String(currency).toUpperCase()) ? String(currency).toUpperCase() : "USD";
-  const symbol = { USD: "$", EUR: "€", GBP: "£" }[code];
-  return `${symbol}${(Math.abs(cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const code = ["USD", "EUR", "GBP", "INR"].includes(String(currency).toUpperCase()) ? String(currency).toUpperCase() : "USD";
+  const symbol = { USD: "$", EUR: "€", GBP: "£", INR: "₹" }[code];
+  return `${symbol}${(Math.abs(cents) / 100).toLocaleString(code === "INR" ? "en-IN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // The grey placeholder shown while no doctor fee is typed: { cents: 7425, text: "75% · 74.25", title: "75% of $99.00 paid" },
