@@ -1,6 +1,7 @@
 // components/booking/BookingCard.jsx
 import { Link } from "react-router-dom";
 import { FiShield, FiCheckCircle } from "react-icons/fi";
+import PriceText from "../PriceText";
 
 const DEFAULT_FEATURES = [
   "Board-certified physician",
@@ -9,9 +10,13 @@ const DEFAULT_FEATURES = [
   "HIPAA secure session",
 ];
 
+// A category page passes priceInfo ({ amount, currency, loading, unavailable } from useCategoryPriceInfo): the price is shown in the
+// visitor currency, with a skeleton while it loads and "Price unavailable" when there is none. The older price / priceLoading pair
+// (service pages) is USD only and unchanged.
 function BookingCard({
   price,
   priceLoading,
+  priceInfo,
   ctaHref,
   ctaLabel = "Book Appointment →",
   features = DEFAULT_FEATURES,
@@ -26,7 +31,9 @@ function BookingCard({
 
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
-          {priceLoading ? (
+          {priceInfo ? (
+            <PriceText info={priceInfo} />
+          ) : priceLoading ? (
             <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
           ) : price !== null && price !== undefined && Number(price) > 0 ? (
             `$${price}`
