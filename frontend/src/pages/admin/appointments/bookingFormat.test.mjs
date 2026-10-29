@@ -213,3 +213,23 @@ test("the Source page hover text", async () => {
   assert.equal(sourcePageText({ type: "Header", name: "Book Appointment", clickedOn: "Home page" }), "Header: Book Appointment (clicked on Home page)");
   assert.equal(sourcePageText({ type: "Direct", name: "", clickedOn: "" }), "Direct");
 });
+
+test("the fee is shown in the booking's own currency; USD when none is given", async () => {
+  const B = await import("./bookingFormat.js");
+  assert.equal(B.formatFee(30, "eur"), "€30.00");
+  assert.equal(B.formatFee(30, "gbp"), "£30.00");
+  assert.equal(B.formatFee(30, "usd"), "$30.00");
+  assert.equal(B.formatFee(30), "$30.00");
+  assert.equal(B.formatFee(30, "inr"), "$30.00");
+  assert.equal(B.formatFee(0, "eur"), "—");
+});
+
+test("the refund reminder names the amount and currency of a EUR / GBP booking; a USD booking reads as before", async () => {
+  const B = await import("./bookingFormat.js");
+  assert.equal(B.refundWarning({ paymentGateway: "stripe", currency: "eur", fee: 30 }), "This booking was paid (€30.00). Refund it in Stripe.");
+  assert.equal(B.refundWarning({ paymentGateway: "paypal", currency: "gbp", fee: 25 }), "This booking was paid (£25.00). Refund it in PayPal.");
+  assert.equal(B.refundWarning({ paymentGateway: "stripe", currency: "eur" }), "This booking was paid (EUR). Refund it in Stripe.");
+  assert.equal(B.refundWarning({ currency: "gbp", fee: 25 }), "This booking was paid (£25.00). Refund it with the payment provider.");
+  assert.equal(B.refundWarning({ paymentGateway: "stripe", currency: "usd", fee: 99 }), "This booking was paid. Refund it in Stripe.");
+  assert.equal(B.refundWarning({ paymentGateway: "stripe", fee: 99 }), "This booking was paid. Refund it in Stripe.");
+});

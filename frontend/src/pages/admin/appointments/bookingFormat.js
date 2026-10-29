@@ -100,11 +100,17 @@ export function formatConsultation(consultation) {
   return { day: d.toLocaleDateString("en-GB", DAY_FORMAT), time: consultation.time || "" };
 }
 
-export function formatFee(value) {
+// A booking's currency for display: "USD", "EUR" or "GBP" (anything else, or none, is USD like bookings made before EUR / GBP).
+export const currencyCode = (currency) => {
+  const code = String(currency || "usd").toUpperCase();
+  return ["USD", "EUR", "GBP"].includes(code) ? code : "USD";
+};
+
+export function formatFee(value, currency = "usd") {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "—";
-  // Always two decimals, as in the reference design: $99.00, $12.50.
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  // Always two decimals, as in the reference design: $99.00, €12.50, £12.50.
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: currencyCode(currency), minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 }
 
 // The last 8 characters of the booking id, shown as "...ABCD1234".
@@ -131,10 +137,13 @@ export const CANCEL_REASONS = ["Patient requested", "Doctor unavailable", "Payme
 
 const GATEWAY_NAMES = { stripe: "Stripe", paypal: "PayPal" };
 
-// Cancelling does not refund. The reminder names where the money was taken.
+// Cancelling does not refund. The reminder names where the money was taken and, for a EUR / GBP booking, the amount and currency
+// to refund (a USD booking reads exactly as it always did).
 export function refundWarning(row) {
   const name = GATEWAY_NAMES[String(row?.paymentGateway || "").toLowerCase()];
-  return name ? `This booking was paid. Refund it in ${name}.` : "This booking was paid. Refund it with the payment provider.";
+  const code = currencyCode(row?.currency);
+  const paid = code !== "USD" ? ` (${Number(row?.fee) > 0 ? formatFee(row.fee, code) : code})` : "";
+  return name ? `This booking was paid${paid}. Refund it in ${name}.` : `This booking was paid${paid}. Refund it with the payment provider.`;
 }
 
 const hasDoctor = (row) => Boolean(row.doctorName);

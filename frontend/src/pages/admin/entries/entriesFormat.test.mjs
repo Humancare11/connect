@@ -293,3 +293,53 @@ test("month helpers: stepping across years, the month names, the arrows from a m
   assert.equal(F.arrowTarget("", -1, { months: ["2027-03"], now: "2026-10" }), "2026-10");
   assert.equal(F.arrowTarget("", -1, { months: [], now: "2026-10" }), "2026-10");
 });
+
+test("money in EUR and GBP: symbol first, USD when no currency is given", () => {
+  assert.equal(F.formatMoney(3000, "eur"), "€30.00");
+  assert.equal(F.formatMoney(3000, "gbp"), "£30.00");
+  assert.equal(F.formatMoney(3000, "usd"), "$30.00");
+  assert.equal(F.formatMoney(3000), "$30.00");
+  assert.equal(F.formatMoney(3000, "inr"), "$30.00");
+  assert.equal(F.formatMoney(123456, "eur"), "€1,234.56");
+  assert.equal(F.formatSigned(-1500, "gbp"), "-£15.00");
+});
+
+test("the Fee charged cell uses the row's own currency", () => {
+  assert.deepEqual(F.feeCharged(row({ currency: "eur", feeChargedCents: 3000, amountPaidCents: 3000 })), { main: "€30.00", paid: "" });
+  assert.deepEqual(F.feeCharged(row({ currency: "gbp", feeChargedCents: 3000, amountPaidCents: 2500 })), { main: "£30.00", paid: "paid £25.00" });
+  assert.deepEqual(F.feeCharged(row()), { main: "$99.00", paid: "" }); // no currency on the row: USD
+  assert.equal(F.currencyOf({ currency: "EUR" }), "eur");
+  assert.equal(F.currencyOf({ currency: "xyz" }), "usd");
+  assert.equal(F.currencyOf({}), "usd");
+});
+
+test("totals are shown per currency and never added across currencies", () => {
+  const usdOnly = { rows: 2, byCurrency: { usd: { feeChargedCents: 120000, doctorFeeCents: 90000 }, eur: { feeChargedCents: 0, doctorFeeCents: 0 }, gbp: { feeChargedCents: 0, doctorFeeCents: 0 } } };
+  assert.equal(F.totalsMoney(usdOnly, "feeChargedCents"), "$1,200.00"); // exactly what the page always showed
+  const mixed = { rows: 4, byCurrency: { usd: { feeChargedCents: 120000, doctorFeeCents: 90000 }, eur: { feeChargedCents: 30000, doctorFeeCents: 0 }, gbp: { feeChargedCents: 0, doctorFeeCents: 0 } } };
+  assert.equal(F.totalsMoney(mixed, "feeChargedCents"), "USD $1,200.00 · EUR €300.00");
+  assert.equal(F.totalsMoney(mixed, "doctorFeeCents"), "USD $900.00 · EUR €0.00");
+  assert.equal(F.totalsMoney(undefined, "feeChargedCents"), "$0.00");
+  assert.equal(F.totalsMoney({ rows: 1, byCurrency: { gbp: { feeChargedCents: 2500, doctorFeeCents: 0 } } }, "feeChargedCents"), "USD $0.00 · GBP £25.00");
+});
+
+test("the money boxes are per currency; a negative margin in any currency marks the box", () => {
+  const summary = {
+    feeNotEnteredCount: 1,
+    byCurrency: {
+      usd: { receivedCents: 120000, toPayCents: 90000, paidCents: 0, marginCents: 30000 },
+      eur: { receivedCents: 30000, toPayCents: 25000, paidCents: 0, marginCents: -1500 },
+      gbp: { receivedCents: 0, toPayCents: 0, paidCents: 0, marginCents: 0 },
+    },
+  };
+  const boxes = F.summaryBoxes("auto", summary);
+  assert.deepEqual(boxes.map((b) => b.text), ["USD $1,200.00 · EUR €300.00", "USD $900.00 · EUR €250.00", "USD $300.00 · EUR -€15.00"]);
+  assert.equal(boxes[2].tone, "neg");
+  assert.equal(F.summaryBoxes("auto", { feeNotEnteredCount: 0, byCurrency: { usd: { receivedCents: 100, toPayCents: 0, marginCents: 100 } } })[0].text, "$1.00");
+});
+
+test("manual entries keep the flat USD totals the manual sheet expects", () => {
+  const totals = { rows: 3, byCurrency: { usd: { feeChargedCents: 500, doctorFeeCents: 200 }, eur: { feeChargedCents: 900, doctorFeeCents: 100 } } };
+  assert.deepEqual(F.usdTotals(totals), { rows: 3, feeChargedCents: 500, doctorFeeCents: 200 });
+  assert.equal(F.usdTotals(undefined), undefined);
+});

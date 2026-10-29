@@ -231,6 +231,12 @@ const feeOf = (doc) => {
   return Number.isFinite(paid) && paid > 0 ? paid / 100 : 0;
 };
 
+// The currency a booking was paid in ("usd" / "eur" / "gbp"). Bookings made before multi-currency have none stored: USD.
+const currencyOf = (doc) => {
+  const code = String(doc.paymentCurrency || "usd").toLowerCase();
+  return ["usd", "eur", "gbp"].includes(code) ? code : "usd";
+};
+
 const assignedByName = (doc) => doc.assignedBy?.name || doc.assignedBy?.email || null;
 
 const patientOf = (doc) => ({
@@ -251,6 +257,7 @@ function toAppointmentRow(a) {
     bookedAt: a.bookedAt || a.createdAt || null,
     consultation: a.date ? { date: a.date, time: a.time || "", timezone: a.patientTimezone || "" } : null,
     fee: feeOf(a),
+    currency: currencyOf(a),
     status: unifiedStatus("appointment", a.status, hasDoctor),
     assignedBy: hasDoctor ? assignedByName(a) : null,
     isTesting: a.isTesting === true,
@@ -277,6 +284,7 @@ function toCategoryRow(c) {
     bookedAt: c.createdAt || null,
     consultation: c.date && time ? { date: c.date, time, timezone: "" } : null,
     fee: feeOf(c),
+    currency: currencyOf(c),
     status: unifiedStatus("category", c.status, hasDoctor),
     assignedBy: hasDoctor ? assignedByName(c) : null,
     isTesting: c.isTesting === true,
@@ -288,14 +296,14 @@ function toCategoryRow(c) {
 
 const findAppointmentRows = (idFilter) =>
   Appointment.find({ _id: idFilter })
-    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt source")
+    .select("patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentCurrency paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt source")
     .populate("patientId", "name country")
     .populate("doctorId", "name")
     .lean();
 
 const findCategoryRows = (idFilter) =>
   CategoryConsultation.find({ _id: idFilter })
-    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt source")
+    .select("patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentCurrency paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt source")
     .populate("patientId", "name country")
     .populate("assignedDoctorId", "firstName surname")
     .lean();

@@ -405,7 +405,7 @@ describe("manual entry: the CSV cells", () => {
     assert.deepEqual([c["Company"], c["Feedback message sent"], c["Feedback received"], c["Case number"]], ["'=HYPERLINK(\"x\")", "'+cmd", "'@home", "'-1"]);
     const booking = { kind: "appointment", id: "abc", entry: { paidStatus: "unpaid" }, patient: {}, sourceCsv: {} };
     const tail = csvCells(booking).slice(COLUMNS.indexOf("Company"));
-    assert.deepEqual(tail, Array(16).fill(""));
+    assert.deepEqual(tail, [...Array(16).fill(""), "USD"]); // the 16 manual-only columns, then Currency (last)
     assert.equal(csvCells(booking).length, COLUMNS.length);
     assert.equal(csvCells(manualRow()).length, COLUMNS.length);
   });

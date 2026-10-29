@@ -20,6 +20,10 @@ const M = require("../utils/manualEntry");
 const { buildHistory, displayValue } = require("../utils/manualHistory");
 const { MANUAL_COLUMNS, AUTO_COLUMNS } = require("../utils/bookingEntryCsv");
 
+// Money totals are kept per currency (never added across them); these tests only use USD bookings.
+const usdTotals = (t) => ({ rows: t.rows, ...t.byCurrency.usd });
+const usdSummary = (s) => ({ feeNotEnteredCount: s.feeNotEnteredCount, ...s.byCurrency.usd });
+
 const NOW = Date.UTC(2026, 9, 26, 22, 0); // already 2026-10-27 in India
 const TODAY = "2026-10-27";
 
@@ -126,7 +130,7 @@ describe("appointment entries: Auto and Manual views, money boxes by role, Histo
       assert.deepEqual([man.counts.all, man.counts.unpaid, man.counts.on_hold, man.counts.paid], [3, 1, 1, 1]);
       assert.deepEqual(man.months, ["2026-12", "2026-11"], "the months of the manual rows only");
       assert.deepEqual(names(await list("view=manual&tab=on_hold")), ["Held"]);
-      assert.deepEqual((await list("view=manual&tab=paid")).totals, { rows: 1, feeChargedCents: 1000, doctorFeeCents: 400 });
+      assert.deepEqual(usdTotals((await list("view=manual&tab=paid")).totals), { rows: 1, feeChargedCents: 1000, doctorFeeCents: 400 });
       const auto = await list("view=auto");
       assert.deepEqual([auto.counts.all, auto.counts.paid, auto.months], [1, 1, ["2026-11"]]);
     });
@@ -141,7 +145,7 @@ describe("appointment entries: Auto and Manual views, money boxes by role, Histo
         assert.equal("summary" in asAdmin, false, view);
         assert.equal(JSON.stringify(asAdmin).includes("receivedCents") || JSON.stringify(asAdmin).includes("marginCents") || JSON.stringify(asAdmin).includes("toPayCents"), false, `${view}: no box money anywhere in the admin's answer`);
         const asSuper = await list(`view=${view}`, "superadmin");
-        assert.deepEqual(Object.keys(asSuper.summary).sort(), ["feeNotEnteredCount", "marginCents", "paidCents", "receivedCents", "toPayCents"]);
+        assert.deepEqual(Object.keys(asSuper.summary).sort(), ["byCurrency", "feeNotEnteredCount"]);
       }
     });
 
@@ -150,7 +154,7 @@ describe("appointment entries: Auto and Manual views, money boxes by role, Histo
       await appt({ paymentAmount: 5000, entry: { doctorFeeCents: 3000, paidStatus: "paid", paidOn: "2026-10-20", doctorAtEntry: String(doctor._id) } });
       await appt({ paymentAmount: 2000 }); // no fee saved yet
       await manual({ consultationFee: "999" }, { doctorFeeCents: 1 }); // a manual row is not part of Auto
-      const s = (await list("view=auto", "superadmin")).summary;
+      const s = usdSummary((await list("view=auto", "superadmin")).summary);
       assert.deepEqual([s.receivedCents, s.toPayCents, s.paidCents, s.marginCents], [17000, 6000, 3000, 17000 - 9000]);
     });
 
@@ -160,7 +164,7 @@ describe("appointment entries: Auto and Manual views, money boxes by role, Histo
       await manual({ consultationFee: "50", paymentReceived: "partly_received" }, { doctorFeeCents: 2000, paidStatus: "paid", paidOn: "2026-10-20" });
       await manual({ consultationFee: "70", paymentReceived: "not_received" }, { doctorFeeCents: 4000, paidStatus: "unpaid" });
       await manual({ consultationFee: "30" }, {});
-      const s = (await list("view=manual", "superadmin")).summary;
+      const s = usdSummary((await list("view=manual", "superadmin")).summary);
       assert.equal(s.receivedCents, 15000, "100 + 50 (partly received counts, not received does not)");
       assert.equal(s.toPayCents, 10000, "60 + 40 on Unpaid rows");
       assert.equal(s.marginCents, (100 + 50 + 70 + 30) * 100 - (6000 + 2000 + 4000), "all fees minus all doctor's fees");
@@ -169,10 +173,10 @@ describe("appointment entries: Auto and Manual views, money boxes by role, Histo
     test("they follow the month, not the tab or the search", async () => {
       await manual({ date: "2026-11-02", consultationFee: "100", paymentReceived: "received" }, { doctorFeeCents: 6000 });
       await manual({ date: "2026-10-02", consultationFee: "40", paymentReceived: "received", patientName: "October" }, { doctorFeeCents: 1000 });
-      const all = (await list("view=manual", "superadmin")).summary;
+      const all = usdSummary((await list("view=manual", "superadmin")).summary);
       assert.equal(all.receivedCents, 14000);
-      assert.equal((await list("view=manual&month=2026-10", "superadmin")).summary.receivedCents, 4000);
-      assert.deepEqual((await list("view=manual&tab=paid&q=zzz", "superadmin")).summary, all);
+      assert.equal((await list("view=manual&month=2026-10", "superadmin")).summary.byCurrency.usd.receivedCents, 4000);
+      assert.deepEqual(usdSummary((await list("view=manual&tab=paid&q=zzz", "superadmin")).summary), all);
     });
   });
 

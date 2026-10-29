@@ -20,6 +20,10 @@ const { entriesViewAccess } = require("../middleware/verifyToken");
 const { parseEntriesQuery, EntryListQueryError } = require("../utils/bookingEntryList");
 const { feeOf } = require("../utils/adminBookingList");
 
+// Money totals are kept per currency (never added across them); these tests only use USD bookings.
+const usdTotals = (t) => ({ rows: t.rows, ...t.byCurrency.usd });
+const usdSummary = (s) => ({ feeNotEnteredCount: s.feeNotEnteredCount, ...s.byCurrency.usd });
+
 describe("appointment entries list", () => {
   let mongod, server, base, patient, other, doctor, doctor2, enrollment, enrollment2;
 
@@ -441,7 +445,7 @@ describe("appointment entries list", () => {
 
     test("fee charged, the SAVED doctor fee only (placeholders never count), and the number of rows", async () => {
       const body = await list();
-      assert.deepEqual(body.totals, { rows: 4, feeChargedCents: 9900 + 500 + 1050 + 4900, doctorFeeCents: 7425 + 300 + 3675 });
+      assert.deepEqual(usdTotals(body.totals), { rows: 4, feeChargedCents: 9900 + 500 + 1050 + 4900, doctorFeeCents: 7425 + 300 + 3675 });
       assert.equal(body.total, 4);
     });
 
@@ -450,22 +454,22 @@ describe("appointment entries list", () => {
       const body = await list("limit=5");
       assert.equal(body.items.length, 5);
       assert.equal(body.totals.rows, 34);
-      assert.equal(body.totals.feeChargedCents, 9900 + 500 + 1050 + 4900 + 30 * 1000);
-      assert.equal(body.totals.doctorFeeCents, 7425 + 300 + 3675 + 30 * 100);
+      assert.equal(body.totals.byCurrency.usd.feeChargedCents, 9900 + 500 + 1050 + 4900 + 30 * 1000);
+      assert.equal(body.totals.byCurrency.usd.doctorFeeCents, 7425 + 300 + 3675 + 30 * 100);
       const paid = await list("tab=paid");
-      assert.deepEqual(paid.totals, { rows: 2, feeChargedCents: 9900 + 4900, doctorFeeCents: 7425 + 3675 });
+      assert.deepEqual(usdTotals(paid.totals), { rows: 2, feeChargedCents: 9900 + 4900, doctorFeeCents: 7425 + 3675 });
     });
 
     test("they equal the sum of the rows over every page", async () => {
       const everything = await list("limit=100");
-      assert.equal(everything.totals.feeChargedCents, everything.items.reduce((sum, r) => sum + r.feeChargedCents, 0));
-      assert.equal(everything.totals.doctorFeeCents, everything.items.reduce((sum, r) => sum + (r.entry.doctorFeeCents ?? 0), 0));
+      assert.equal(everything.totals.byCurrency.usd.feeChargedCents, everything.items.reduce((sum, r) => sum + r.feeChargedCents, 0));
+      assert.equal(everything.totals.byCurrency.usd.doctorFeeCents, everything.items.reduce((sum, r) => sum + (r.entry.doctorFeeCents ?? 0), 0));
     });
 
     test("they follow the filters", async () => {
       assert.equal((await list("q=zzz")).totals.rows, 0);
-      assert.deepEqual((await list("q=zzz")).totals, { rows: 0, feeChargedCents: 0, doctorFeeCents: 0 });
-      assert.equal((await list("tab=on_hold")).totals.doctorFeeCents, 300);
+      assert.deepEqual(usdTotals((await list("q=zzz")).totals), { rows: 0, feeChargedCents: 0, doctorFeeCents: 0 });
+      assert.equal((await list("tab=on_hold")).totals.byCurrency.usd.doctorFeeCents, 300);
       assert.equal((await list("tab=unpaid")).totals.rows, 1);
     });
 

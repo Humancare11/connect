@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useToast } from "../../../components/ui/Toast";
 import { copyText } from "../appointments/copyText";
 import { CommentCell, FeeCell, PaidOnCell, StatusCell } from "./EntryCells";
-import { feeCharged, formatBooked, formatDay, formatMoney, idText, isManual, rowKey, rowNumber, sourceLabel, totalsText } from "./entriesFormat";
+import { currencyOf, feeCharged, formatBooked, formatDay, idText, isManual, rowKey, rowNumber, sourceLabel, totalsMoney, totalsText } from "./entriesFormat";
 
 // The Auto entries table (bookings from the website and app). A full table while the window is wide; below 1360px each row becomes a
 // card with labelled fields (see AdminEntries.css). The first columns come from the booking; the green ones are typed by an admin and
@@ -50,13 +50,13 @@ export default function EntriesTable({ rows, page, totals, save }) {
               {totalsText(totals?.rows ?? rows.length)}
             </td>
             <td className="en-r" data-l="Fee charged">
-              {formatMoney(totals?.feeChargedCents)}
+              {totalsMoney(totals, "feeChargedCents")}
             </td>
             <td className="en-r" data-l="Doctor fee">
-              {formatMoney(totals?.doctorFeeCents)}
+              {totalsMoney(totals, "doctorFeeCents")}
             </td>
             <td colSpan={3} className="en-hint">
-              Totals cover every matching row, on all pages. Only saved doctor fees are added up.
+              Totals cover every matching row, on all pages. Only saved doctor fees are added up. Amounts in different currencies are never added together.
             </td>
           </tr>
         </tfoot>
@@ -111,6 +111,11 @@ function EntryRow({ row, number, save }) {
       </td>
       <td data-l="Doctor fee ($)" className="en-ed">
         <FeeCell row={row} save={save} disabled={manual && row.manual?.locked} />
+        {currencyOf(row) !== "usd" && (
+          <small className="en-cur" title={`The doctor fee for this booking is in ${currencyOf(row).toUpperCase()}`}>
+            {currencyOf(row).toUpperCase()}
+          </small>
+        )}
       </td>
       <td data-l="Paid status" className="en-ed">
         <StatusCell row={row} save={save} />

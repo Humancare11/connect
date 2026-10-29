@@ -31,24 +31,56 @@ export function viewToParams({ view, tab, month, page }) {
 // ── The money boxes (a super admin only) ───
 
 // A margin can be negative: "-$15.00" rather than "$-15.00".
-export const formatSigned = (cents) => `${cents < 0 ? "-" : ""}${formatMoney(Math.abs(cents))}`;
+export const formatSigned = (cents, currency = "usd") => `${cents < 0 ? "-" : ""}${formatMoney(Math.abs(cents), currency)}`;
+
+// Money is never added across currencies, so the server sends every total per currency ({ usd: {...}, eur: {...}, gbp: {...} }).
+// This shows one figure of such a set: just "$1,200.00" when only USD has anything (what the page always showed), otherwise one
+// part per currency, like "USD $1,200.00 · EUR €300.00". USD is always counted as present.
+export function moneyByCurrency(byCurrency, pick, { signed = false } = {}) {
+  const buckets = byCurrency || {};
+  const shown = MONEY_CURRENCIES.filter((c) => c === "usd" || Object.values(buckets[c] || {}).some((v) => Number(v)));
+  const one = (c) => {
+    const cents = Number(pick(buckets[c] || {})) || 0;
+    return signed ? formatSigned(cents, c) : formatMoney(cents, c);
+  };
+  return shown.length === 1 ? one("usd") : shown.map((c) => `${c.toUpperCase()} ${one(c)}`).join(" · ");
+}
+
+// The footer figure of the entries table: "fee charged" or "doctor fee" over every matching row, per currency.
+export const totalsMoney = (totals, key) => moneyByCurrency(totals?.byCurrency, (bucket) => bucket[key]);
+
+// The USD part of the totals in the old flat shape { rows, feeChargedCents, doctorFeeCents } (manual entries are USD only).
+export const usdTotals = (totals) => (totals ? { rows: totals.rows, ...(totals.byCurrency?.usd || {}) } : totals);
 
 // The boxes of a view, from the server's `summary` (which only a super admin gets). No summary, no boxes.
 export function summaryBoxes(view, summary) {
   if (!summary) return [];
   const manual = view === "manual";
+  const by = summary.byCurrency || {};
+  const negativeMargin = MONEY_CURRENCIES.some((c) => Number(by[c]?.marginCents) < 0);
   return [
-    { key: "received", label: manual ? "Received from companies" : "Received from patients", text: formatMoney(summary.receivedCents), tone: "ok" },
-    { key: "toPay", label: "To pay providers", text: formatMoney(summary.toPayCents), tone: "warn" },
-    { key: "margin", label: "Our margin", text: formatSigned(summary.marginCents), tone: summary.marginCents < 0 ? "neg" : "" },
+    { key: "received", label: manual ? "Received from companies" : "Received from patients", text: moneyByCurrency(by, (b) => b.receivedCents), tone: "ok" },
+    { key: "toPay", label: "To pay providers", text: moneyByCurrency(by, (b) => b.toPayCents), tone: "warn" },
+    { key: "margin", label: "Our margin", text: moneyByCurrency(by, (b) => b.marginCents, { signed: true }), tone: negativeMargin ? "neg" : "" },
   ];
 }
 
 // ── Money ────────────────────────────────────────────────────────────────────
 
-// 9900 -> "$99.00", 149900 -> "$1,499.00"
-export const formatMoney = (cents) =>
-  `$${((Number.isFinite(cents) ? cents : 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export const MONEY_CURRENCIES = ["usd", "eur", "gbp"];
+const CURRENCY_SYMBOLS = { usd: "$", eur: "€", gbp: "£" };
+
+// A booking's currency as one of "usd" / "eur" / "gbp" (anything missing or unknown is USD, like old bookings).
+export const currencyOf = (row) => {
+  const code = String(row?.currency || "usd").toLowerCase();
+  return MONEY_CURRENCIES.includes(code) ? code : "usd";
+};
+
+// 9900 -> "$99.00", 149900 -> "$1,499.00"; 3000 with "eur" -> "€30.00", with "gbp" -> "£30.00". USD when no currency is given.
+export const formatMoney = (cents, currency = "usd") => {
+  const code = MONEY_CURRENCIES.includes(String(currency).toLowerCase()) ? String(currency).toLowerCase() : "usd";
+  return `${CURRENCY_SYMBOLS[code]}${((Number.isFinite(cents) ? cents : 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
 
 // 7425 -> "74.25"; null -> ""
 export const centsToInput = (cents) => (Number.isFinite(cents) ? (cents / 100).toFixed(2) : "");
@@ -144,7 +176,8 @@ export function sourceLabel(row) {
 export function feeCharged(row) {
   const charged = row.feeChargedCents ?? 0;
   const paid = row.amountPaidCents ?? 0;
-  return { main: formatMoney(charged), paid: paid !== charged ? `paid ${formatMoney(paid)}` : "" };
+  const currency = currencyOf(row);
+  return { main: formatMoney(charged, currency), paid: paid !== charged ? `paid ${formatMoney(paid, currency)}` : "" };
 }
 
 // The grey text in an empty doctor fee box. Only a placeholder: nothing is saved until someone types.

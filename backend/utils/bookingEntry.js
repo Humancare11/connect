@@ -105,13 +105,20 @@ function defaultDoctorShareCents(paidCents) {
 const formatUsdCents = (cents) =>
   `$${(Math.abs(cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+// 9900, "eur" -> "€99.00" (symbol first; USD, EUR and GBP only - anything else is shown as USD).
+const formatMoneyCents = (cents, currency = "usd") => {
+  const code = ["USD", "EUR", "GBP"].includes(String(currency).toUpperCase()) ? String(currency).toUpperCase() : "USD";
+  const symbol = { USD: "$", EUR: "€", GBP: "£" }[code];
+  return `${symbol}${(Math.abs(cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 // The grey placeholder shown while no doctor fee is typed: { cents: 7425, text: "75% · 74.25", title: "75% of $99.00 paid" },
 // or null when nothing was paid. It is only ever displayed, never saved.
-function doctorFeePlaceholder(paidCents) {
+function doctorFeePlaceholder(paidCents, currency = "usd") {
   const cents = defaultDoctorShareCents(paidCents);
   if (cents === null) return null;
   const percent = Math.round((1 - PLATFORM_RATE) * 100);
-  return { cents, text: `${percent}% · ${centsToFixed(cents)}`, title: `${percent}% of ${formatUsdCents(paidCents)} paid` };
+  return { cents, text: `${percent}% · ${centsToFixed(cents)}`, title: `${percent}% of ${formatMoneyCents(paidCents, currency)} paid` };
 }
 
 // Dollars (as the Appointments list shows the fee) -> cents.
@@ -135,14 +142,14 @@ const addDays = (day, n) => {
 
 // The stored entry (or nothing, for an old booking) as the API returns it. `paidCents` is what the patient actually paid
 // (paymentAmount), used for the grey 75% placeholder shown while no fee is typed. The placeholder is never stored.
-function entryView(entry, { paidCents = 0, doctorId = "" } = {}) {
+function entryView(entry, { paidCents = 0, doctorId = "", currency = "usd" } = {}) {
   const e = entry || {};
   const fee = Number.isFinite(e.doctorFeeCents) ? e.doctorFeeCents : null;
   const status = PAID_STATUSES.includes(e.paidStatus) ? e.paidStatus : "unpaid";
   const doctorNow = doctorId ? String(doctorId) : "";
   return {
     doctorFeeCents: fee,
-    placeholder: fee === null ? doctorFeePlaceholder(paidCents) : null,
+    placeholder: fee === null ? doctorFeePlaceholder(paidCents, currency) : null,
     paidStatus: status,
     paidOn: typeof e.paidOn === "string" ? e.paidOn : "",
     comment: typeof e.comment === "string" ? e.comment : "",
@@ -273,6 +280,7 @@ module.exports = {
   defaultDoctorShareCents,
   doctorFeePlaceholder,
   formatUsdCents,
+  formatMoneyCents,
   isCalendarDay,
   entryView,
   paidStatusMatch,

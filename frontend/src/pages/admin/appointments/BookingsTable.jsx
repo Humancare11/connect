@@ -278,7 +278,7 @@ export default function BookingsTable({ rows, page, callSummaries = {}, actions,
                       <span className="adp-bk-muted">Not scheduled</span>
                     )}
                   </td>
-                  <td data-label="Fee" className="adp-bk-fee">{formatFee(row.fee)}</td>
+                  <td data-label="Fee" className="adp-bk-fee">{formatFee(row.fee, row.currency)}</td>
                   <td data-label="Status" className="adp-bk-status"><StatusCell row={row} /></td>
                   <td data-label="Call" className="adp-bk-c-call"><CallBadge summary={callSummaries[row.id]} row={row} /></td>
                   <td data-label="Actions" className="adp-bk-actions-cell"><ActionsCell row={row} actions={actions} busy={busy} isSuperAdmin={isSuperAdmin} /></td>

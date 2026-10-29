@@ -1,6 +1,6 @@
 // Plain helpers for selecting rows and running bulk actions (no React), tested with `node --test`
 // (see selectionLogic.test.mjs). Selection is always of the rows on the current page.
-import { canAutoComplete, canCancel, shortBookingId } from "./bookingFormat.js";
+import { canAutoComplete, canCancel, currencyCode, formatFee, shortBookingId } from "./bookingFormat.js";
 
 export const BULK_ACTIONS = {
   "auto-complete": { label: "Auto complete", title: "Auto complete" },
@@ -61,7 +61,10 @@ export function bulkRefundNote(rows, noun = "selected") {
   if (paid.length === 0) return "";
   if (paid.length === 1) {
     const name = gatewayName(paid[0]);
-    return `1 of the ${noun} bookings was paid and is not refunded automatically. Refund it ${name ? `in ${name}` : "with the payment provider"}.`;
+    // A EUR / GBP booking also names the amount and currency to refund; a USD one reads as it always did.
+    const code = currencyCode(paid[0].currency);
+    const amount = code === "USD" ? "" : ` (${Number(paid[0].fee) > 0 ? formatFee(paid[0].fee, code) : code})`;
+    return `1 of the ${noun} bookings was paid and is not refunded automatically. Refund it ${name ? `in ${name}` : "with the payment provider"}${amount}.`;
   }
   const counts = new Map();
   for (const r of paid) {
@@ -70,7 +73,13 @@ export function bulkRefundNote(rows, noun = "selected") {
   }
   const order = ["Stripe", "PayPal", "other"].filter((name) => counts.has(name));
   const list = order.map((name) => `${name} (${counts.get(name)})`).join(", ");
-  return `${paid.length} of the ${noun} bookings were paid and are not refunded automatically. Refund them: ${list}.`;
+  // Different currencies are named, never added: "Currencies: EUR (2), USD (1)."
+  const currencies = new Map();
+  for (const r of paid) currencies.set(currencyCode(r.currency), (currencies.get(currencyCode(r.currency)) || 0) + 1);
+  const currencyNote = currencies.size === 1 && currencies.has("USD")
+    ? ""
+    : ` Currencies: ${["USD", "EUR", "GBP"].filter((c) => currencies.has(c)).map((c) => `${c} (${currencies.get(c)})`).join(", ")}.`;
+  return `${paid.length} of the ${noun} bookings were paid and are not refunded automatically. Refund them: ${list}.${currencyNote}`;
 }
 
 // How many of the selected rows the action can apply to, by the same rules the server uses

@@ -49,6 +49,8 @@ const COLUMNS = [
   "Payment received date",
   "Feedback message sent",
   "Feedback received",
+  // Added last so no existing column moves: the currency of Fee charged, Amount paid and Doctor fee (manual entries are USD).
+  "Currency",
 ];
 
 // A CSV field: quoted when it holds a comma, quote or line break.
@@ -119,12 +121,16 @@ function csvCells(row) {
     manual ? "Manual" : row.status || "",
     yesNo(row.isTesting),
     ...manualCells(row),
+    String(row.currency || "usd").toUpperCase(),
   ];
 }
 
 // The Auto entries view: bookings only, so the manual-only columns are left off.
-const AUTO_COLUMNS = COLUMNS.slice(0, COLUMNS.indexOf("Company"));
-const autoCells = (row) => csvCells(row).slice(0, AUTO_COLUMNS.length);
+const AUTO_COLUMNS = [...COLUMNS.slice(0, COLUMNS.indexOf("Company")), "Currency"];
+const autoCells = (row) => {
+  const cells = csvCells(row);
+  return [...cells.slice(0, COLUMNS.indexOf("Company")), cells[cells.length - 1]];
+};
 
 // The Manual entries view: the same columns, in the same order, as the manual table (the team's sheet), with the same words
 // ("MR received", "Need to pay", "Paid" for a payment received...). Numbers are plain; text is made formula-safe.

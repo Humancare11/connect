@@ -121,8 +121,8 @@ test("the view in the address: Auto is the default and is left out; the money bo
   assert.deepEqual(F.viewToParams({ view: "auto", tab: "all", month: "", page: 1 }), {});
   assert.deepEqual(F.viewToParams({ view: "manual", tab: "paid", month: "2026-10", page: 2 }), { view: "manual", tab: "paid", month: "2026-10", page: "2" });
   assert.deepEqual(F.summaryBoxes("auto", undefined), []);
-  const summary = { receivedCents: 17000, toPayCents: 6000, marginCents: 8000 };
+  const summary = { feeNotEnteredCount: 0, byCurrency: { usd: { receivedCents: 17000, toPayCents: 6000, marginCents: 8000 } } };
   assert.deepEqual(F.summaryBoxes("auto", summary).map((b) => [b.label, b.text]), [["Received from patients", "$170.00"], ["To pay providers", "$60.00"], ["Our margin", "$80.00"]]);
   assert.equal(F.summaryBoxes("manual", summary)[0].label, "Received from companies");
-  assert.equal(F.summaryBoxes("manual", { ...summary, marginCents: -1500 })[2].text, "-$15.00");
+  assert.equal(F.summaryBoxes("manual", { ...summary, byCurrency: { usd: { ...summary.byCurrency.usd, marginCents: -1500 } } })[2].text, "-$15.00");
 });

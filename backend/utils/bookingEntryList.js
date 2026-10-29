@@ -220,23 +220,35 @@ const FEE_CENTS = {
   },
 };
 
+// The currency a booking was paid in. Old bookings have none stored: USD. Manual entries are always USD.
+const CURRENCY_OF = { $ifNull: ["$paymentCurrency", "usd"] };
+const MANUAL_CURRENCY = { $literal: "usd" };
+const CURRENCIES = ["usd", "eur", "gbp"];
+
+// Money is never added across currencies: every money total is kept per currency. "usd" is always present (zeros when there
+// is nothing), so a screen with only USD bookings looks exactly as it always did.
+const moneyBuckets = (make) => Object.fromEntries(CURRENCIES.map((c) => [c, make()]));
+const currencyKey = (value) => (CURRENCIES.includes(value) ? value : "usd");
+
 const emptyCounts = () => ({ all: 0, ...Object.fromEntries(PAID_STATUSES.map((s) => [s, 0])) });
 
+// { rows, byCurrency: { usd: { feeChargedCents, doctorFeeCents }, eur: {...}, gbp: {...} } }. `rows` is a count; the money is per currency.
 async function loadTotals(appointmentFilter, categoryFilter, manualFilter) {
-  const group = (filter, fee = FEE_CENTS) => [
+  const group = (filter, fee = FEE_CENTS, currency = CURRENCY_OF) => [
     { $match: filter },
-    { $group: { _id: null, rows: { $sum: 1 }, feeChargedCents: { $sum: fee }, doctorFeeCents: { $sum: { $ifNull: ["$entry.doctorFeeCents", 0] } } } },
+    { $group: { _id: currency, rows: { $sum: 1 }, feeChargedCents: { $sum: fee }, doctorFeeCents: { $sum: { $ifNull: ["$entry.doctorFeeCents", 0] } } } },
   ];
   const [a, c, m] = await Promise.all([
     Appointment.aggregate(group(appointmentFilter)),
     CategoryConsultation.aggregate(group(categoryFilter)),
-    ManualEntry.aggregate(group(manualFilter, { $ifNull: ["$feeChargedCents", 0] })),
+    ManualEntry.aggregate(group(manualFilter, { $ifNull: ["$feeChargedCents", 0] }, MANUAL_CURRENCY)),
   ]);
-  const totals = { rows: 0, feeChargedCents: 0, doctorFeeCents: 0 };
+  const totals = { rows: 0, byCurrency: moneyBuckets(() => ({ feeChargedCents: 0, doctorFeeCents: 0 })) };
   for (const row of [...a, ...c, ...m]) {
+    const bucket = totals.byCurrency[currencyKey(row._id)];
     totals.rows += row.rows;
-    totals.feeChargedCents += row.feeChargedCents;
-    totals.doctorFeeCents += row.doctorFeeCents;
+    bucket.feeChargedCents += row.feeChargedCents;
+    bucket.doctorFeeCents += row.doctorFeeCents;
   }
   return totals;
 }
@@ -302,14 +314,14 @@ const ENTRY_SELECT = "entry.doctorFeeCents entry.paidStatus entry.paidOn entry.c
 
 const findAppointments = (ids) =>
   Appointment.find({ _id: { $in: ids } })
-    .select(`patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt ${ENTRY_SELECT}`)
+    .select(`patientId patientDetails doctorId category date time patientTimezone consultationPrice paymentAmount paymentCurrency paymentStatus paymentGateway status assignedBy originalDoctorName isTesting bookedAt createdAt ${ENTRY_SELECT}`)
     .populate("patientId", "name country")
     .populate("doctorId", "name")
     .lean();
 
 const findCategories = (ids) =>
   CategoryConsultation.find({ _id: { $in: ids } })
-    .select(`patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt ${ENTRY_SELECT}`)
+    .select(`patientId assignedDoctorId assignedDoctorName categoryName date slot assignedSlot appointmentType urgency consultationPrice paymentAmount paymentCurrency paymentStatus paymentGateway status assignedBy originalDoctorName isTesting createdAt ${ENTRY_SELECT}`)
     .populate("patientId", "name country")
     .populate("assignedDoctorId", "firstName surname")
     .lean();
@@ -329,7 +341,7 @@ function toEntryRow(kind, doc) {
   const base = kind === "category" ? toCategoryRow(doc) : toAppointmentRow(doc);
   const paidCents = paidCentsOf(doc);
   const doctorKey = kind === "category" ? doc.assignedDoctorId?._id : doc.doctorId?._id;
-  const entry = entryView(doc.entry, { paidCents, doctorId: base.doctorName ? doctorKey || "" : "" });
+  const entry = entryView(doc.entry, { paidCents, doctorId: base.doctorName ? doctorKey || "" : "", currency: base.currency });
   return {
     kind,
     id: base.id,
@@ -340,6 +352,8 @@ function toEntryRow(kind, doc) {
     doctorName: base.doctorName,
     feeChargedCents: dollarsToCents(base.fee),
     amountPaidCents: paidCents,
+    // The currency of both amounts above (and of the doctor fee typed against this row).
+    currency: base.currency,
     status: base.status,
     isTesting: base.isTesting,
     entry: {
@@ -427,7 +441,7 @@ async function loadRows(keys) {
   const rows = new Map([
     ...appointments.map((a) => [`appointment:${a._id}`, toEntryRow("appointment", a)]),
     ...categories.map((c) => [`category:${c._id}`, toEntryRow("category", c)]),
-    ...manuals.map((m) => [`manual:${m._id}`, toManualRow(m)]),
+    ...manuals.map((m) => [`manual:${m._id}`, { ...toManualRow(m), currency: "usd" }]),
   ]);
   return keys.map((k) => rows.get(`${k.kind}:${k._id}`)).filter(Boolean);
 }
@@ -484,7 +498,8 @@ async function loadViewCounts(unrestricted) {
 }
 
 // The count for each tab, and the money for the boxes at the top (only a super admin is sent them): the include flags, the view and the
-// month apply, the search text and the tab do not.
+// month apply, the search text and the tab do not. The money is returned per currency (summary.byCurrency): amounts in different
+// currencies are never added together.
 //   toPayCents          saved doctor fees on Unpaid rows ("To pay providers")
 //   paidCents           saved doctor fees on Paid rows
 //   feeNotEnteredCount  rows with no saved doctor fee, not counting Not payable rows
@@ -493,11 +508,11 @@ async function loadViewCounts(unrestricted) {
 //   marginCents         what we keep: received minus the saved doctor fees (for manual entries, ALL consultation fees minus all doctor's fees)
 async function loadCounts(scoped) {
   const paid = { $convert: { input: "$paymentAmount", to: "double", onError: 0, onNull: 0 } };
-  const group = (filter, received, billed) => [
+  const group = (filter, received, billed, currency = CURRENCY_OF) => [
     { $match: filter },
     {
       $group: {
-        _id: { $ifNull: ["$entry.paidStatus", "unpaid"] },
+        _id: { status: { $ifNull: ["$entry.paidStatus", "unpaid"] }, currency },
         n: { $sum: 1 },
         feeCents: { $sum: { $ifNull: ["$entry.doctorFeeCents", 0] } },
         noFee: { $sum: { $cond: [{ $eq: [{ $ifNull: ["$entry.doctorFeeCents", null] }, null] }, 1, 0] } },
@@ -511,20 +526,25 @@ async function loadCounts(scoped) {
     Appointment.aggregate(group(scoped.appointment, paid, paid)),
     CategoryConsultation.aggregate(group(scoped.category, paid, paid)),
     ManualEntry.aggregate(
-      group(scoped.manual, { $cond: [{ $in: [{ $ifNull: ["$paymentReceived", "not_received"] }, ["received", "partly_received"]] }, consult, 0] }, consult),
+      group(scoped.manual, { $cond: [{ $in: [{ $ifNull: ["$paymentReceived", "not_received"] }, ["received", "partly_received"]] }, consult, 0] }, consult, MANUAL_CURRENCY),
     ),
   ]);
   const counts = emptyCounts();
-  const summary = { toPayCents: 0, paidCents: 0, feeNotEnteredCount: 0, receivedCents: 0, marginCents: 0 };
+  // The tab counts and "fee not entered" are counts of rows; every amount is kept per currency and never added across them.
+  const summary = {
+    feeNotEnteredCount: 0,
+    byCurrency: moneyBuckets(() => ({ toPayCents: 0, paidCents: 0, receivedCents: 0, marginCents: 0 })),
+  };
   for (const row of [...a, ...c, ...m]) {
-    const key = PAID_STATUSES.includes(row._id) ? row._id : "unpaid";
+    const key = PAID_STATUSES.includes(row._id.status) ? row._id.status : "unpaid";
+    const money = summary.byCurrency[currencyKey(row._id.currency)];
     counts[key] += row.n;
     counts.all += row.n;
-    if (key === "unpaid") summary.toPayCents += row.feeCents;
-    if (key === "paid") summary.paidCents += row.feeCents;
+    if (key === "unpaid") money.toPayCents += row.feeCents;
+    if (key === "paid") money.paidCents += row.feeCents;
     if (key !== "not_payable") summary.feeNotEnteredCount += row.noFee;
-    summary.receivedCents += Math.round(row.received);
-    summary.marginCents += Math.round(row.billed) - row.feeCents;
+    money.receivedCents += Math.round(row.received);
+    money.marginCents += Math.round(row.billed) - row.feeCents;
   }
   // For bookings the margin is what was received minus the fees; for manual entries it is the consultation fees minus the doctor's fees
   // (the same number whether or not the company has paid yet). `billed` is the right base for each.
