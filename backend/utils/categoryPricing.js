@@ -30,7 +30,7 @@ const CATEGORY_NAME_TO_ID = {
 // for several categories at a time (e.g. the appointment tree), so the
 // lookup is O(1) per category instead of one query each.
 async function buildCategoryPricingLookup() {
-  const records = await CategoryPricing.find({}, "categoryId price priceEur priceGbp").lean();
+  const records = await CategoryPricing.find({}, "categoryId price priceEur priceGbp priceInr").lean();
   return new Map(records.map((record) => [record.categoryId, record]));
 }
 
@@ -65,7 +65,7 @@ function logFallbackPriceUsage(category, reason) {
   );
 }
 
-// Logs every time a EUR/GBP price was wanted but the category has none yet, so
+// Logs every time a EUR/GBP/INR price was wanted but the category has none yet, so
 // the customer is shown (and charged) the USD price instead. Expected only
 // until every category has been priced in all three currencies.
 function logCurrencyFallback(category, wantedCurrency) {
@@ -75,8 +75,8 @@ function logCurrencyFallback(category, wantedCurrency) {
   );
 }
 
-// `wantedCurrency` (USD / EUR / GBP, default USD) selects which of the
-// category's prices is returned. A EUR/GBP price that isn't set (or isn't
+// `wantedCurrency` (USD / EUR / GBP / INR, default USD) selects which of the
+// category's prices is returned. A EUR/GBP/INR price that isn't set (or isn't
 // positive) falls back to the USD price and the result says `currency: "USD"`,
 // so the caller always knows what it actually got - amounts are never
 // converted between currencies.
@@ -97,11 +97,11 @@ async function resolveEffectiveCategoryPrice(category, pricingLookup, wantedCurr
   const record = pricingLookup
     ? pricingLookup.get(pricingSlug)
     : await CategoryPricing.findOne({ categoryId: pricingSlug })
-        .select("price priceEur priceGbp")
+        .select("price priceEur priceGbp priceInr")
         .lean();
 
   if (wanted !== "USD") {
-    const nativePrice = Number(wanted === "EUR" ? record?.priceEur : record?.priceGbp);
+    const nativePrice = Number({ EUR: record?.priceEur, GBP: record?.priceGbp, INR: record?.priceInr }[wanted]);
     if (Number.isFinite(nativePrice) && nativePrice > 0) {
       return { price: nativePrice, currency: wanted };
     }

@@ -1,7 +1,7 @@
-// Read-only go-live check for multi-currency pricing: lists every category that still has no EUR price or no GBP price.
+// Read-only go-live check for multi-currency pricing: lists every category that still has no EUR, GBP or INR price.
 //
-// A category with no EUR / GBP price is charged in USD to EUR / GBP customers (with a [CURRENCY_FALLBACK_USED] log), so before
-// MULTI_CURRENCY_ENABLED is switched on every category should be priced in all three currencies. Exits 1 when any category is
+// A category with no EUR / GBP / INR price is charged in USD to EUR / GBP / Indian customers (with a [CURRENCY_FALLBACK_USED] log),
+// so before MULTI_CURRENCY_ENABLED is switched on every category should be priced in all four currencies. Exits 1 when any category is
 // missing a price, 0 when every category is fully priced. It never writes anything.
 //
 // Usage (from backend/): node scripts/checkCategoryCurrencyCoverage.js
@@ -13,10 +13,10 @@ const { CategoryPricing } = require("../models/CategoryPricing");
 
 const isPrice = (value) => Number.isFinite(Number(value)) && Number(value) > 0 && value !== null;
 
-// Reads only. Returns { total, complete, missing: [{ name, id, isActive, pricingSlug, missingEur, missingGbp, noPricingRow }] }.
+// Reads only. Returns { total, complete, missing: [{ name, id, isActive, pricingSlug, missingEur, missingGbp, missingInr, noPricingRow }] }.
 async function findCategoriesMissingCurrencyPrices() {
   const categories = await HealthcareCategory.find().select("name isActive pricingSlug").sort({ name: 1 }).lean();
-  const records = await CategoryPricing.find({}, "categoryId priceEur priceGbp").lean();
+  const records = await CategoryPricing.find({}, "categoryId priceEur priceGbp priceInr").lean();
   const bySlug = new Map(records.map((r) => [r.categoryId, r]));
 
   const missing = [];
@@ -24,7 +24,8 @@ async function findCategoriesMissingCurrencyPrices() {
     const record = category.pricingSlug ? bySlug.get(category.pricingSlug) : undefined;
     const missingEur = !isPrice(record?.priceEur);
     const missingGbp = !isPrice(record?.priceGbp);
-    if (missingEur || missingGbp) {
+    const missingInr = !isPrice(record?.priceInr);
+    if (missingEur || missingGbp || missingInr) {
       missing.push({
         name: category.name,
         id: String(category._id),
@@ -32,6 +33,7 @@ async function findCategoriesMissingCurrencyPrices() {
         pricingSlug: category.pricingSlug || "",
         missingEur,
         missingGbp,
+        missingInr,
         noPricingRow: !record,
       });
     }
@@ -50,16 +52,16 @@ async function main() {
   const { total, complete, missing } = await findCategoriesMissingCurrencyPrices();
   console.log(`\nCategory currency coverage - ${new Date().toISOString()}`);
   console.log(`Environment: ${process.env.NODE_ENV || "development"}   Database: ${mongoose.connection.name} on ${mongoose.connection.host}`);
-  console.log(`Categories: ${total}   fully priced (USD + EUR + GBP): ${complete}   missing a price: ${missing.length}`);
+  console.log(`Categories: ${total}   fully priced (USD + EUR + GBP + INR): ${complete}   missing a price: ${missing.length}`);
 
   if (missing.length === 0) {
-    console.log("\nOK: every category has a EUR and a GBP price.");
+    console.log("\nOK: every category has a EUR, a GBP and an INR price.");
     return 0;
   }
 
   console.log("\nCategories missing a price (fill them in Super Admin > Healthcare Management > Categories > Edit):");
   for (const c of missing) {
-    const what = [c.missingEur && "EUR", c.missingGbp && "GBP"].filter(Boolean).join(" + ");
+    const what = [c.missingEur && "EUR", c.missingGbp && "GBP", c.missingInr && "INR"].filter(Boolean).join(" + ");
     console.log(
       `  - "${c.name}" (${c.id}) ${c.isActive ? "active" : "inactive"}  missing: ${what}` +
         (c.noPricingRow ? "  [no CategoryPricing row at all]" : ""),

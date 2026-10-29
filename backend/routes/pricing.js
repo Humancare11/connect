@@ -3,19 +3,21 @@ const router = express.Router();
 const { CategoryPricing } = require("../models/CategoryPricing");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { recordActivity } = require("../utils/activityLogger");
-const { parsePrice, isMultiCurrencyEnabled } = require("../utils/currencyConfig");
+const { parsePrice, isMultiCurrencyEnabled, isInrEnabled, maxPriceFor } = require("../utils/currencyConfig");
 
 // GET /api/pricing - public, returns all category prices keyed by categoryId:
 //   { general: { price, label, currency }, mental: {...}, ... }
 // `price` is always the USD price. While MULTI_CURRENCY_ENABLED is off the
 // response is exactly the shape it has always had; once on, `priceEur` and
 // `priceGbp` are added (null = not set yet, so the site falls back to USD).
+// `priceInr` is added only while INR is active (flag on AND Razorpay keys set).
 router.get("/", async (req, res) => {
   try {
     const multi = isMultiCurrencyEnabled();
+    const inr = isInrEnabled();
     const records = await CategoryPricing.find(
       {},
-      `categoryId label price currency${multi ? " priceEur priceGbp" : ""}`,
+      `categoryId label price currency${multi ? " priceEur priceGbp" : ""}${inr ? " priceInr" : ""}`,
     ).lean();
     const map = {};
     records.forEach((r) => {
@@ -24,6 +26,7 @@ router.get("/", async (req, res) => {
         map[r.categoryId].priceEur = r.priceEur ?? null;
         map[r.categoryId].priceGbp = r.priceGbp ?? null;
       }
+      if (inr) map[r.categoryId].priceInr = r.priceInr ?? null;
     });
     res.json(map);
   } catch (err) {
@@ -52,19 +55,20 @@ router.get("/all", verifyAdminToken, superAdminOnly, async (req, res) => {
 // - no longer a fixed list, so the shape is validated here and existence is
 // enforced by the lookup below returning null for an unknown id.
 //
-// Body: any of { price (USD), priceEur, priceGbp }, at least one. Every price
-// sent must be a number > 0, at most 100,000, at most 2 decimals.
+// Body: any of { price (USD), priceEur, priceGbp, priceInr }, at least one. Every
+// price sent must be a number > 0, at most 100,000 (INR: 10,00,000), at most 2 decimals.
 //   - USD always exists, so it can be changed but never emptied.
-//   - EUR / GBP that are NOT set yet may be left out (or sent as null / "" =
+//   - EUR / GBP / INR that are NOT set yet may be left out (or sent as null / "" =
 //     "still not set"): older categories only have a USD price and are filled
 //     in over time.
-//   - EUR / GBP that ARE set can be changed but never cleared: null, "" and 0
+//   - EUR / GBP / INR that ARE set can be changed but never cleared: null, "" and 0
 //     are rejected, so a price once entered stays.
 // Nothing is converted between currencies.
 const PRICE_FIELDS = [
   { key: "price", label: "USD price", always: true },
   { key: "priceEur", label: "EUR price" },
   { key: "priceGbp", label: "GBP price" },
+  { key: "priceInr", label: "INR price", max: maxPriceFor("INR") },
 ];
 
 router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) => {
@@ -82,7 +86,7 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
     }
 
     const set = {};
-    for (const { key, label, always } of PRICE_FIELDS) {
+    for (const { key, label, always, max } of PRICE_FIELDS) {
       const raw = body[key];
       if (raw === undefined) continue;
 
@@ -95,7 +99,7 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
         continue; // not set yet and still not set: nothing to do
       }
 
-      const parsed = parsePrice(raw);
+      const parsed = parsePrice(raw, max);
       if (parsed.error) {
         return res.status(400).json({ msg: `${label} ${parsed.error}` });
       }
@@ -103,7 +107,7 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
     }
 
     if (Object.keys(set).length === 0) {
-      return res.status(400).json({ msg: "Provide at least one price (USD, EUR or GBP) to update." });
+      return res.status(400).json({ msg: "Provide at least one price (USD, EUR, GBP or INR) to update." });
     }
 
     const updated = await CategoryPricing.findOneAndUpdate(

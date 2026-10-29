@@ -133,29 +133,31 @@ describe("multi-currency go-live scripts", () => {
     });
 
     test("every category fully priced: nothing missing", async () => {
-      await category("A", "a"); await pricing("a", { priceEur: 9, priceGbp: 8 });
-      await category("B", "b", false); await pricing("b", { priceEur: 9, priceGbp: 8 });
+      await category("A", "a"); await pricing("a", { priceEur: 9, priceGbp: 8, priceInr: 799 });
+      await category("B", "b", false); await pricing("b", { priceEur: 9, priceGbp: 8, priceInr: 799 });
       assert.deepEqual(await findCategoriesMissingCurrencyPrices(), { total: 2, complete: 2, missing: [] });
     });
 
-    test("lists what is missing: EUR only, GBP only, both, no pricing row, no slug", async () => {
-      await category("Full", "full"); await pricing("full", { priceEur: 9, priceGbp: 8 });
-      await category("No EUR", "no-eur"); await pricing("no-eur", { priceGbp: 8 });
-      await category("No GBP", "no-gbp", false); await pricing("no-gbp", { priceEur: 9 });
+    test("lists what is missing: EUR only, GBP only, INR only, all, no pricing row, no slug", async () => {
+      await category("Full", "full"); await pricing("full", { priceEur: 9, priceGbp: 8, priceInr: 799 });
+      await category("No EUR", "no-eur"); await pricing("no-eur", { priceGbp: 8, priceInr: 799 });
+      await category("No GBP", "no-gbp", false); await pricing("no-gbp", { priceEur: 9, priceInr: 799 });
+      await category("No INR", "no-inr"); await pricing("no-inr", { priceEur: 9, priceGbp: 8 });
       await category("Neither", "neither"); await pricing("neither");
       await category("No row", "no-row");
       await HealthcareCategory.collection.insertOne({ name: "No slug", price: 5, isActive: true });
 
       const result = await findCategoriesMissingCurrencyPrices();
-      assert.equal(result.total, 6);
+      assert.equal(result.total, 7);
       assert.equal(result.complete, 1);
-      const by = Object.fromEntries(result.missing.map((m) => [m.name, [m.missingEur, m.missingGbp, m.noPricingRow, m.isActive]]));
+      const by = Object.fromEntries(result.missing.map((m) => [m.name, [m.missingEur, m.missingGbp, m.missingInr, m.noPricingRow, m.isActive]]));
       assert.deepEqual(by, {
-        "No EUR": [true, false, false, true],
-        "No GBP": [false, true, false, false],
-        Neither: [true, true, false, true],
-        "No row": [true, true, true, true],
-        "No slug": [true, true, true, true],
+        "No EUR": [true, false, false, false, true],
+        "No GBP": [false, true, false, false, false],
+        "No INR": [false, false, true, false, true],
+        Neither: [true, true, true, false, true],
+        "No row": [true, true, true, true, true],
+        "No slug": [true, true, true, true, true],
       });
     });
 
@@ -178,12 +180,13 @@ describe("multi-currency go-live scripts", () => {
       let r = run();
       assert.equal(r.status, 1, r.stderr);
       assert.match(r.stdout, /FAILED: 1 category is not fully priced/);
-      assert.match(r.stdout, /"Neither".*missing: EUR \+ GBP/);
 
-      await CategoryPricing.updateOne({ categoryId: "neither" }, { priceEur: 9, priceGbp: 8 });
+      assert.match(r.stdout, /"Neither".*missing: EUR \+ GBP \+ INR/);
+
+      await CategoryPricing.updateOne({ categoryId: "neither" }, { priceEur: 9, priceGbp: 8, priceInr: 799 });
       r = run();
       assert.equal(r.status, 0, r.stderr + r.stdout);
-      assert.match(r.stdout, /OK: every category has a EUR and a GBP price/);
+      assert.match(r.stdout, /OK: every category has a EUR, a GBP and an INR price/);
     });
   });
 });

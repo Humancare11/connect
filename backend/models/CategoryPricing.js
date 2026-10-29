@@ -69,6 +69,14 @@ const categoryPricingSchema = new mongoose.Schema(
         message: "GBP price must be greater than 0.",
       },
     },
+    // Rupees, for India only, paid through Razorpay. Same rules as EUR / GBP: optional until entered, then always > 0.
+    priceInr: {
+      type: Number,
+      validate: {
+        validator: (value) => Number.isFinite(value) && value > 0,
+        message: "INR price must be greater than 0.",
+      },
+    },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

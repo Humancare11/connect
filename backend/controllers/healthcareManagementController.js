@@ -8,7 +8,7 @@ const {
   resolveEffectiveCategoryPrice,
   generateUniquePricingSlug,
 } = require("../utils/categoryPricing");
-const { parsePrice } = require("../utils/currencyConfig");
+const { parsePrice, maxPriceFor } = require("../utils/currencyConfig");
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -55,14 +55,19 @@ function categoryPayload(body, partial = false) {
   // here on an update is silently ignored rather than written to the
   // (legacy, no-longer-authoritative) HealthcareCategory.price field.
   //
-  // A new category must be priced in all three currencies up front (each a
-  // number > 0, at most 100,000, at most 2 decimals). `price` is USD; EUR and
-  // GBP are entered by hand and never converted from it.
+  // A new category must be priced in all four currencies up front (each a
+  // number > 0, at most 100,000, at most 2 decimals; INR at most 10,00,000).
+  // `price` is USD; EUR, GBP and INR are entered by hand and never converted from it.
   let prices;
   if (!partial) {
     prices = {};
-    for (const [key, label] of [["price", "USD price"], ["priceEur", "EUR price"], ["priceGbp", "GBP price"]]) {
-      const parsed = parsePrice(body[key]);
+    for (const [key, label, max] of [
+      ["price", "USD price"],
+      ["priceEur", "EUR price"],
+      ["priceGbp", "GBP price"],
+      ["priceInr", "INR price", maxPriceFor("INR")],
+    ]) {
+      const parsed = parsePrice(body[key], max);
       if (parsed.error) return { error: `${label} ${parsed.error}` };
       prices[key] = parsed.value;
     }
@@ -147,17 +152,19 @@ async function listCategories(_req, res) {
           category,
           pricingLookup,
         );
-        // The admin Categories page also needs the EUR / GBP prices
+        // The admin Categories page also needs the EUR / GBP / INR prices
         // (null = not set yet, shown as "Not set").
         const record = category.pricingSlug ? pricingLookup.get(category.pricingSlug) : null;
         const eur = Number(record?.priceEur);
         const gbp = Number(record?.priceGbp);
+        const inr = Number(record?.priceInr);
         return {
           ...category,
           price,
           currency,
           priceEur: Number.isFinite(eur) && eur > 0 ? eur : null,
           priceGbp: Number.isFinite(gbp) && gbp > 0 ? gbp : null,
+          priceInr: Number.isFinite(inr) && inr > 0 ? inr : null,
         };
       }),
     );
@@ -199,6 +206,7 @@ async function createCategory(req, res) {
             price: payload.price,
             priceEur: prices.priceEur,
             priceGbp: prices.priceGbp,
+            priceInr: prices.priceInr,
             currency: payload.currency,
             updatedBy: req.user?.id,
           },

@@ -223,15 +223,15 @@ describe("multi-currency category pricing", () => {
 
   describe("POST /api/superadmin/healthcare/categories", () => {
     const create = (body) => call("POST", "/api/superadmin/healthcare/categories", body);
-    const valid = { name: "Dental", icon: "", description: "", price: 20, priceEur: 18, priceGbp: 16 };
+    const valid = { name: "Dental", icon: "", description: "", price: 20, priceEur: 18, priceGbp: 16, priceInr: 1499 };
 
-    test("creates the category with all three prices", async () => {
+    test("creates the category with all four prices", async () => {
       const r = await create(valid);
       assert.equal(r.status, 201, JSON.stringify(r.body));
       const category = await HealthcareCategory.findOne({ name: "Dental" }).lean();
       assert.equal(category.price, 20);
       const row = await stored(category.pricingSlug);
-      assert.deepEqual([row.price, row.priceEur, row.priceGbp, row.currency], [20, 18, 16, "USD"]);
+      assert.deepEqual([row.price, row.priceEur, row.priceGbp, row.priceInr, row.currency], [20, 18, 16, 1499, "USD"]);
     });
 
     test("each of the three prices is required", async () => {
@@ -257,11 +257,11 @@ describe("multi-currency category pricing", () => {
     });
 
     test("prices sent as numeric strings (from a form) are accepted", async () => {
-      const r = await create({ ...valid, name: "Strings", price: "20.50", priceEur: "18", priceGbp: "16.25" });
+      const r = await create({ ...valid, name: "Strings", price: "20.50", priceEur: "18", priceGbp: "16.25", priceInr: "1499.50" });
       assert.equal(r.status, 201);
       const category = await HealthcareCategory.findOne({ name: "Strings" }).lean();
       const row = await stored(category.pricingSlug);
-      assert.deepEqual([row.price, row.priceEur, row.priceGbp], [20.5, 18, 16.25]);
+      assert.deepEqual([row.price, row.priceEur, row.priceGbp, row.priceInr], [20.5, 18, 16.25, 1499.5]);
     });
 
     test("the admin category list returns EUR/GBP, null where not set", async () => {
