@@ -203,7 +203,7 @@ const SPECIALTY_DATA = {
     },
     {
       Icon: FiShield,
-      ame: "OCD",
+      name: "OCD",
       desc: "Red, itchy, irritated skin in kids",
       path: "/mental-health/psychiatry/ocd",
     },

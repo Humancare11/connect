@@ -565,8 +565,9 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                  }`}
+                className={`sp-hero__content-inner${
+                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                }`}
               >
                 <Breadcrumb tone="light" />
                 <span className="sp-hero__badge">
@@ -594,7 +595,8 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
               {/* Image column */}
               <Reveal>
                 <div className="sp-overview__img-wrap">
-                  <img decoding="async"
+                  <img
+                    decoding="async"
                     src={data.overviewImage}
                     width="562"
                     height="430"
@@ -685,7 +687,16 @@ export default function GlobalCrossBorderCare({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
+              <div
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    (() => navigate("/conditions"))(e);
+                  }
+                }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}

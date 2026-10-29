@@ -140,7 +140,9 @@
 }
 
 .dn-list {
-  overflow: auto;
+  overflow-y: auto;
+  max-height: 620px;
+  min-height: 0;
   padding: 10px;
 }
 

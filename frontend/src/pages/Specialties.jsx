@@ -301,14 +301,7 @@ const specialties = [
     tags: ["Asthma", "Cough", "Breathing"],
     link: "/chronic-care/pulmonology",
   },
-  {
-    name: "Expert Medical Opinion",
-    icon: FileSearch,
-    description:
-      "A second specialist review of your diagnosis, records, or treatment plan.",
-    tags: ["Second Opinion", "Records Review"],
-    link: "/online-second-medical-opinion",
-  },
+
   {
     name: "Ophthalmology",
     icon: Eye,
@@ -797,8 +790,8 @@ export default function Specialties() {
             <em>in under 2 minutes.</em>
           </h2>
           <p className="sp-cta__copy">
-            Search, book, and consult with a verified physician from —
-            serve any eligibility across all categories.
+            Search, book, and consult with a verified physician from — serve any
+            eligibility across all categories.
           </p>
           <div className="sp-cta__actions">
             <Link
@@ -808,7 +801,6 @@ export default function Specialties() {
             >
               Book a consultation <ArrowRight size={15} />
             </Link>
-
           </div>
         </div>
       </section>

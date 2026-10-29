@@ -125,9 +125,9 @@
   align-items: center;
   gap: 8px;
   padding: 13px 28px;
-  background: rgba(255, 255, 255, 0.14);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: #01164a;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   color: #ffffff;
   font-family: var(--font-secondary);
   font-size: 13.5px;
@@ -144,7 +144,7 @@
 }
 
 .hc-dash__book-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
+  background: #01164a;
 }
 @media (hover: hover) and (pointer: fine) {
   .hc-dash__book-btn:hover {
@@ -761,7 +761,7 @@
   align-items: center;
   gap: 6px;
   padding: 12px 26px;
-  background: linear-gradient(135deg, #083ab0, #0e6ceb);
+  background: #01164a;
   color: #fff;
   font-family: var(--font-secondary);
   font-size: 13.5px;
@@ -827,8 +827,8 @@
 }
 
 .hc-dash__page-btn--active {
-  background: linear-gradient(135deg, #083ab0, #0e6ceb);
-  border-color: #083ab0;
+  background: #01164a;
+  border-color: #01164a;
   color: #ffffff;
   font-weight: 700;
   box-shadow: 0 3px 12px rgba(8, 58, 176, 0.28);
@@ -837,7 +837,7 @@
 }
 
 .hc-dash__page-btn--active:hover:not(:disabled) {
-  background: linear-gradient(135deg, #083ab0, #0e6ceb);
+  background: #01164a;
   color: #ffffff;
 }
 

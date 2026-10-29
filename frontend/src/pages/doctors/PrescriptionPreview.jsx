@@ -1,4 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
@@ -9,6 +16,68 @@ const PrescriptionSlip = lazy(() =>
     default: module.PrescriptionSlip,
   })),
 );
+
+// ── Scale-to-fit prescription preview ─────────────────────────────────────────
+// Same approach as the medical certificate preview: the slip keeps its fixed
+// A4 layout (794px, same as the certificate) and the on-screen copy
+// is scaled down proportionally to fit narrower containers. Display-only: the
+// PDF is captured from a separate, unscaled instance.
+
+const RX_WIDTH = 794;
+
+function ScaledPrescriptionPreview({ rx, patient, doctor, doctorEnrollment }) {
+  const measureRef = useRef(null);
+  const innerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const measureEl = measureRef.current;
+    const innerEl = innerRef.current;
+    if (!measureEl || !innerEl) return undefined;
+
+    const update = () => {
+      const avail = measureEl.clientWidth;
+      if (avail > 0) setScale(Math.min(1, avail / RX_WIDTH));
+      setHeight(innerEl.offsetHeight); // layout height, unaffected by transform
+    };
+    update();
+
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(update);
+    ro.observe(measureEl);
+    ro.observe(innerEl);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={measureRef} className="dp-rx-measure">
+      <div
+        className="dp-rx-box"
+        style={{
+          width: RX_WIDTH * scale,
+          height: height ? height * scale : undefined,
+        }}
+      >
+        <div
+          ref={innerRef}
+          className="dp-rx-inner"
+          style={{ width: RX_WIDTH, transform: `scale(${scale})` }}
+        >
+          <Suspense fallback={null}>
+            <PrescriptionSlip
+              rx={rx}
+              patient={patient}
+              doctor={doctor}
+              doctorEnrollment={doctorEnrollment}
+              certStyle
+            />
+          </Suspense>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Prescription letterhead preview — dedicated page ──────────────────────────
 // Reached either from PatientPanel's "View Slip" button (which hands us the
@@ -122,17 +191,30 @@ export default function PrescriptionPreview() {
 
         <div className="dp-slip-body">
           <div className="dp-slip-body-inner">
-            <Suspense fallback={null}>
-              <PrescriptionSlip
-                rx={rx}
-                patient={patient}
-                doctor={doctor}
-                doctorEnrollment={doctorEnrollment}
-                slipRef={slipRef}
-              />
-            </Suspense>
+            <ScaledPrescriptionPreview
+              rx={rx}
+              patient={patient}
+              doctor={doctor}
+              doctorEnrollment={doctorEnrollment}
+            />
           </div>
         </div>
+
+      </div>
+
+      {/* PDF source (outside the animated modal box) — always in DOM, offscreen and never scaled, so the
+          capture ref stays valid and independent of the preview */}
+      <div className="dp-rx-offscreen dp-rx-inner" aria-hidden="true">
+        <Suspense fallback={null}>
+          <PrescriptionSlip
+            rx={rx}
+            patient={patient}
+            doctor={doctor}
+            doctorEnrollment={doctorEnrollment}
+            slipRef={slipRef}
+            certStyle
+          />
+        </Suspense>
       </div>
     </div>
   );

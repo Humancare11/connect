@@ -5,6 +5,71 @@ import useModalA11y from "../hooks/useModalA11y";
 
 import defaultClinicLogoUrl from "../assets/prescription-logo.png";
 import defaultClinicFooterLogoUrl from "../assets/prescription-footer-logo.png";
+import newFooterQrUrl from "../assets/New-Footer-QR.jpeg";
+
+import certLogoFull from "../assets/Logo.png";
+
+/* ── Certificate-style layout tokens (same as MedicalCertificateSlip) ──────── */
+const C_PRIMARY = "#12296B";
+const C_ACCENT = "#1E63D6";
+const C_LIGHT = "#EEF1F8";
+const C_SOFT = "#F6F8FC";
+const C_BORDER = "#D9DDE6";
+const C_MUTED = "#7A8194";
+const C_BODY = "#1F2433";
+const C_TAGLINE = "Global Health Passport";
+const C_SLIP_WIDTH = 794; // A4 at 96dpi
+const C_SLIP_HEIGHT = 1123; // one A4 page
+
+const C_CELL = {
+  border: `1px solid ${C_BORDER}`,
+  padding: "10px 16px",
+  verticalAlign: "top",
+  fontSize: 13,
+  color: C_BODY,
+};
+
+const C_TH = {
+  border: `1px solid ${C_PRIMARY}`,
+  padding: "9px 16px",
+  fontSize: 12,
+  fontWeight: 700,
+  color: "#fff",
+  background: C_PRIMARY,
+  textAlign: "left",
+  textTransform: "uppercase",
+  letterSpacing: 0.5,
+};
+
+function CertInfoField({ label, value }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 700,
+          color: C_PRIMARY,
+          whiteSpace: "nowrap",
+          letterSpacing: 0.3,
+        }}
+      >
+        {label} :
+      </span>
+      <span
+        style={{
+          flex: 1,
+          fontSize: 13,
+          color: C_BODY,
+          borderBottom: `1.2px solid ${C_BORDER}`,
+          paddingBottom: 2,
+          minWidth: 80,
+        }}
+      >
+        {value || " "}
+      </span>
+    </div>
+  );
+}
 
 function getCountryName(countryCode) {
   if (!countryCode) return "";
@@ -28,7 +93,7 @@ export default function RxSlip({
   // ── swap these three in your app, no code changes needed ──
   clinicLogoUrl = defaultClinicLogoUrl, // your real clinic logo, falls back to the bundled default
   footerLogoUrl = defaultClinicFooterLogoUrl, // optional: defaults to clinicLogoUrl
-  qrCodeUrl = defaultClinicFooterLogoUrl, // required: your real, functional QR image
+  qrCodeUrl = newFooterQrUrl, // footer QR image
 
   // fallback props (used only if rx/doctor aren't passed)
   date = "18 Jul 2026",
@@ -45,6 +110,9 @@ export default function RxSlip({
   clinicPhone = "+1 (302) 303-9993",
   clinicEmail = "support@humancareconnect.co",
   clinicAddress = "4 Peddlers Row #1091 Newark, DE 19702, United States",
+
+  // opt-in: render with the Medical Certificate's look (footer unchanged)
+  certStyle = false,
 }) {
   // Resolve patient details — prefers real backend data (rx), falls back to props
   const pName = rx?.patientId?.name || patient?.name || "";
@@ -100,6 +168,329 @@ export default function RxSlip({
     physician?.country ||
     "US",
   );
+
+  if (certStyle) {
+    const footer = (
+      <>
+        {/* Divider line taken from the Medical Certificate footer */}
+        <div
+          className="rx-footer"
+          style={{ marginTop: 10, borderTop: `3px solid ${C_ACCENT}` }}
+        >
+          {qrCodeUrl ? (
+            <img
+              className="rx-qr"
+              src={qrCodeUrl}
+              alt="Prescription verification QR"
+            />
+          ) : (
+            <div className="rx-qr rx-qr-placeholder" aria-hidden="true" />
+          )}
+          <div className="rx-contact-lines">
+            <span>📞 {clinicPhone}</span>
+            <span>✉️ {clinicEmail}</span>
+            <span>📍 {clinicAddress}</span>
+          </div>
+          <img
+            className="rx-footer-logo"
+            src={clinicLogoUrl}
+            alt="Clinic logo"
+          />
+        </div>
+      </>
+    );
+
+    const fieldRows = [
+      { label: "Advice :", value: adviceText },
+      { label: "Allergy :", value: allergyText },
+      { label: "Follow-up Date :", value: followUpText },
+    ];
+    const physicianFields = [
+      { label: "Doctor's Name", value: phyName },
+      { label: "Medical Reg No", value: phyRegNo },
+      { label: "Speciality", value: phySpecialization },
+      { label: "Date", value: formattedDate },
+      { label: "Country", value: phyCountry },
+    ];
+
+    return (
+      <div className="rx-slip-wrapper rx-slip-wrapper--cert">
+        <div
+          className="rx-slip rx-slip--cert"
+          ref={slipRef}
+          style={{
+            width: C_SLIP_WIDTH,
+            minHeight: C_SLIP_HEIGHT,
+            display: "flex",
+            flexDirection: "column",
+            background: "#fff",
+            boxSizing: "border-box",
+            color: C_BODY,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            {/* Top accent bar */}
+            <div
+              style={{
+                height: 6,
+                background: `linear-gradient(90deg, #0C1D4F, ${C_PRIMARY} 60%, ${C_ACCENT})`,
+              }}
+            />
+
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "18px 40px 16px",
+                borderBottom: `2px solid ${C_LIGHT}`,
+                background: "#fff",
+              }}
+            >
+              <img
+                src={certLogoFull}
+                alt="Humancare Connect"
+                style={{ height: 54, objectFit: "contain", display: "block" }}
+                crossOrigin="anonymous"
+              />
+              <div style={{ textAlign: "right" }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: C_PRIMARY,
+                    letterSpacing: 1.5,
+                    textTransform: "uppercase",
+                    marginBottom: 4,
+                  }}
+                >
+                  {C_TAGLINE}
+                </div>
+                <div
+                  style={{
+                    width: 48,
+                    height: 4,
+                    borderRadius: 2,
+                    background: C_PRIMARY,
+                    marginLeft: "auto",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Document type banner */}
+            <div
+              style={{
+                background: C_LIGHT,
+                padding: "10px 40px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                borderBottom: `1px solid ${C_BORDER}`,
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C_PRIMARY }}>
+                  Prescription
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: C_MUTED, textAlign: "right" }}>
+                <div>Date : {formattedDate}</div>
+              </div>
+            </div>
+
+            {/* Patient info */}
+            <div style={{ padding: "20px 40px 16px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px 48px",
+                }}
+              >
+                <CertInfoField label="Patient Name" value={pName} />
+                <CertInfoField label="Gender" value={pGender || "—"} />
+                <CertInfoField label="DOB" value={pDob || "—"} />
+                <CertInfoField label="Age" value={pAge || "—"} />
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div
+              style={{
+                margin: "0 40px",
+                height: 1,
+                background: `linear-gradient(90deg, ${C_PRIMARY}, transparent)`,
+              }}
+            />
+
+            <div style={{ padding: "18px 40px 0" }}>
+              {/* Diagnosis */}
+              <div
+                style={{
+                  background: C_SOFT,
+                  border: `1px solid ${C_BORDER}`,
+                  borderLeft: `4px solid ${C_PRIMARY}`,
+                  borderRadius: 6,
+                  padding: "14px 16px 14px 12px",
+                  marginBottom: 16,
+                  fontSize: 13,
+                  color: C_BODY,
+                  lineHeight: 1.7,
+                }}
+              >
+                <strong style={{ color: C_PRIMARY }}>Diagnosis :</strong>{" "}
+                {diagnosisText}
+              </div>
+
+              {/* Medications */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: 10,
+                  marginBottom: 8,
+                }}
+              >
+                <div style={{ fontSize: 14, fontWeight: 700, color: C_PRIMARY }}>
+                  Medications
+                </div>
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontStyle: "italic",
+                    fontWeight: 700,
+                    color: C_ACCENT,
+                  }}
+                >
+                  Rx
+                </div>
+              </div>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  border: `1px solid ${C_BORDER}`,
+                  marginBottom: 16,
+                }}
+              >
+                <thead>
+                  <tr>
+                    <th style={{ ...C_TH, width: 40 }}>Sr. No</th>
+                    <th style={{ ...C_TH, width: 140 }}>Medicine</th>
+                    <th style={{ ...C_TH, width: 70 }}>Dose</th>
+                    <th style={{ ...C_TH, width: 170 }}>Timing</th>
+                    <th style={{ ...C_TH, width: 80 }}>No. of Days</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(medicinesList.length > 0
+                    ? medicinesList
+                    : [{ name: "", dose: "", timing: "", days: "" }]
+                  ).map((med, idx) => (
+                    <tr key={idx} style={{ background: idx % 2 === 1 ? C_SOFT : "#fff" }}>
+                      <td style={C_CELL}>{idx + 1}</td>
+                      <td style={{ ...C_CELL, fontWeight: 500 }}>{med.name}</td>
+                      <td style={C_CELL}>{med.dose}</td>
+                      <td style={{ ...C_CELL, wordBreak: "break-word" }}>
+                        {med.timing}
+                      </td>
+                      <td style={C_CELL}>{med.days}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Advice / Allergy / Follow-up */}
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  border: `1px solid ${C_BORDER}`,
+                }}
+              >
+                <tbody>
+                  {fieldRows.map((row, i) => (
+                    <tr key={row.label} style={{ background: i % 2 === 1 ? C_SOFT : "#fff" }}>
+                      <td
+                        style={{
+                          ...C_CELL,
+                          width: "30%",
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: C_PRIMARY,
+                        }}
+                      >
+                        {row.label}
+                      </td>
+                      <td style={C_CELL}>{row.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Physician details */}
+            <div
+              style={{
+                margin: "16px 40px 0",
+                border: `1px solid ${C_BORDER}`,
+                borderRadius: 8,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  background: C_LIGHT,
+                  borderBottom: `1px solid ${C_BORDER}`,
+                  padding: "9px 16px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: C_PRIMARY,
+                  letterSpacing: 0.4,
+                }}
+              >
+                PHYSICIAN DETAILS
+              </div>
+              <div
+                style={{
+                  background: C_SOFT,
+                  padding: "14px 16px",
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px 24px",
+                }}
+              >
+                {physicianFields.map((f) => (
+                  <div
+                    key={f.label}
+                    style={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: C_PRIMARY,
+                      }}
+                    >
+                      {f.label}
+                    </span>
+                    <span style={{ fontSize: 13, color: C_BODY }}>
+                      {f.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Footer — unchanged from the prescription */}
+          {footer}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rx-slip-wrapper">
@@ -318,45 +709,14 @@ export function RxSlipModal({ open, onClose, ...rxSlipProps }) {
   );
 }
 
-// ── PDF download utility — unchanged from your original ──
+// ── PDF download utility — captures at a fixed layout width and paginates
+//    between blocks (see utils/slipPdf.js). ──
 export async function downloadPrescriptionPDF(
   element,
   filename = "prescription.pdf",
 ) {
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
-    import("jspdf"),
-  ]);
-
-  await document.fonts.ready;
-
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: "#ffffff",
-    logging: false,
-  });
-
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pdfW = pdf.internal.pageSize.getWidth();
-  const pdfH = (canvas.height * pdfW) / canvas.width;
-  const imgData = canvas.toDataURL("image/jpeg", 0.97);
-
-  // if content is taller than one A4 page, split across multiple pages
-  let heightLeft = pdfH;
-  let position = 0;
-  const pageHeight = pdf.internal.pageSize.getHeight();
-
-  pdf.addImage(imgData, "JPEG", 0, position, pdfW, pdfH);
-  heightLeft -= pageHeight;
-
-  while (heightLeft > 0) {
-    position = heightLeft - pdfH;
-    pdf.addPage();
-    pdf.addImage(imgData, "JPEG", 0, position, pdfW, pdfH);
-    heightLeft -= pageHeight;
-  }
-
-  pdf.save(filename);
+  const { renderSlipToPdf } = await import("../utils/slipPdf");
+  // The certificate-style slip is a 794px A4 page; the classic slip is 800px.
+  const slipWidth = element.classList.contains("rx-slip--cert") ? 794 : 800;
+  await renderSlipToPdf(element, filename, slipWidth);
 }

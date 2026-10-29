@@ -402,6 +402,40 @@
   margin: 0 auto;
 }
 
+/* Fit the on-screen prescription to the card width; anything that still
+   can't fit (e.g. the medication table) scrolls inside the wrapper. */
+.mr-card--rx {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mr-slip-wrap {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mr-slip-wrap .rx-slip-wrapper,
+.mr-slip-wrap .rx-slip {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* The hidden copy used for PDF capture keeps its full desktop layout. */
+.mr-slip-offscreen .rx-slip {
+  width: 800px;
+  max-width: none;
+}
+
+.mr-slip-offscreen table.rx-med-table {
+  display: table;
+  width: calc(100% - 88px);
+  max-width: none;
+}
+
 /* Scaled certificate preview (display only — see ScaledCertificatePreview) */
 .mr-cert-measure {
   width: 100%;

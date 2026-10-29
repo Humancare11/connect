@@ -1126,7 +1126,7 @@
   .hcc-booking-card {
     max-width: 560px;
     width: 100%;
-    margin: 0 auto; /* center the card once the hero stacks */
+    margin: 0;
     box-sizing: border-box;
   }
 
@@ -1209,7 +1209,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    margin: 0 auto; /* center the card once the hero stacks */
+    margin: 0;
   }
 
   .hcc-booking-price {
@@ -1368,7 +1368,7 @@
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    margin: 0 auto; /* center the card once the hero stacks */
+    margin: 0;
     overflow: hidden;
   }
 
@@ -1778,5 +1778,11 @@
   p.hcc-booking-terms,
   span.sp-condition-card__link {
     font-size: 12px;
+  }
+}
+
+@media (max-width: 765px) {
+  .hcc-booking-card {
+    max-width: 560px;
   }
 }

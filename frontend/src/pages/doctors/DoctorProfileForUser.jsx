@@ -250,7 +250,9 @@ function extractDoctorId(raw) {
 function DoctorSeo({ doctor }) {
   const name = String(doctor?.name || "").trim();
   const specialty = String(doctor?.specialty || "").trim();
-  const title = name ? `${[name, specialty].filter(Boolean).join(" | ")} | Humancare Connect` : "Doctor profile | Humancare Connect";
+  const title = name
+    ? `${[name, specialty].filter(Boolean).join(" | ")} | Humancare Connect`
+    : "Doctor profile | Humancare Connect";
   return <SEO title={title} robots="noindex, nofollow" />;
 }
 
