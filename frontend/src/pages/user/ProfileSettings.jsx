@@ -275,6 +275,20 @@ export default function ProfileSettings() {
         .ps-phone .pif-control.is-active { border-color: rgba(59,130,246,0.65); background: rgba(255,255,255,0.88); box-shadow: 0 0 0 3px rgba(59,130,246,0.13); }
         .ps-phone .pif-input { font-family: var(--font-secondary); color: #0b0443; }
         .ps-page { width: 100%; min-width: 0; }
+        .ps-form-row > * { min-width: 0; }
+        .ps-phone { width: 100%; min-width: 0; }
+        .ps-phone .pif-input { min-width: 0; }
+        @media (max-width: 760px) {
+          .ps-form-row { grid-template-columns: minmax(0, 1fr) !important; }
+        }
+        @media (max-width: 580px) {
+          /* 16px stops iOS Safari zooming in when the field is focused */
+          .ps-form-row select,
+          .ps-form-row input,
+          .ps-phone .pif-input { font-size: 16px !important; }
+          .ps-form-row select { height: 47px; text-overflow: ellipsis; }
+          .ps-phone .pif-country-trigger { min-width: 64px; padding: 0 8px; }
+        }
         @media (max-width: 860px) {
           .ps-body   { grid-template-columns: 1fr !important; }
           .ps-body   { gap: 16px !important; }
@@ -318,9 +332,9 @@ export default function ProfileSettings() {
             text-align: left !important;
             overflow-wrap: anywhere;
           }
-          .ps-avatar-card-center > p:first-of-type { grid-row: 1; }
-          .ps-avatar-card-center > p:nth-of-type(2) { grid-row: 2; }
-          .ps-avatar-card-center > span { grid-row: 3; justify-self: start; margin-top: 4px !important; }
+          .ps-avatar-card-center > h3 { grid-column: 2; grid-row: 1; text-align: left !important; overflow-wrap: anywhere; }
+          .ps-avatar-card-center > p { grid-row: 2; }
+          .ps-avatar-card-center > span { grid-row: 3; justify-self: start; margin-top: 2px !important; }
           .ps-meta-grid > div { flex-basis: 135px; }
           .ps-meta-grid > div > div { min-width: 0; }
           .ps-meta-grid > div p:last-child { overflow-wrap: anywhere; }
@@ -331,6 +345,17 @@ export default function ProfileSettings() {
           .ps-fadein { margin-left: 18px !important; margin-right: 18px !important; }
           .ps-actions { flex-direction: column-reverse !important; }
           .ps-actions > button { width: 100% !important; justify-content: center !important; }
+        }
+        @media (max-width: 320px) {
+          .ps-page { padding: 0 !important; }
+          .ps-avatar-card { padding: 14px 10px !important; }
+          .ps-avatar-card-center { grid-template-columns: 52px minmax(0, 1fr); column-gap: 8px; }
+          .ps-avatar-card-center > div:first-child { width: 52px !important; height: 52px !important; border-radius: 14px !important; }
+          .ps-avatar-card-center > div:first-child > div { width: 42px !important; height: 42px !important; font-size: 20px !important; }
+          .ps-meta-grid > div { flex-basis: 100%; }
+          .ps-form-body { padding: 16px 12px 20px !important; }
+          .ps-card-head { padding: 16px 12px 14px !important; }
+          .ps-fadein { margin-left: 12px !important; margin-right: 12px !important; }
         }
       `}</style>
 
@@ -359,7 +384,7 @@ export default function ProfileSettings() {
               }}
             >
               {/* Blue accent strip */}
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "linear-gradient(90deg, #083ab0, #3b82f6)", borderRadius: "22px 22px 0 0" }} />
+                  <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "3px", background: "#01164a", borderRadius: "22px 22px 0 0" }} />
               {/* Shine */}
               <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "1px", background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.95), transparent)", pointerEvents: "none" }} />
 
