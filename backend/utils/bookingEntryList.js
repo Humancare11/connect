@@ -250,7 +250,9 @@ async function loadTotals(appointmentFilter, categoryFilter, manualFilter) {
     bucket.feeChargedCents += row.feeChargedCents;
     bucket.doctorFeeCents += row.doctorFeeCents;
   }
-  return totals;
+  // The old flat fields are kept exactly as before and hold the USD amounts, so existing readers keep working unchanged;
+  // byCurrency is the complete picture.
+  return { rows: totals.rows, ...totals.byCurrency.usd, byCurrency: totals.byCurrency };
 }
 
 // The first `need` keys of one collection in the page order; the two lists are then merged and cut to the page.
@@ -546,9 +548,19 @@ async function loadCounts(scoped) {
     money.receivedCents += Math.round(row.received);
     money.marginCents += Math.round(row.billed) - row.feeCents;
   }
+  // The old flat fields are kept exactly as before and hold the USD amounts; byCurrency is the complete picture.
+  const usd = summary.byCurrency.usd;
+  const flat = {
+    toPayCents: usd.toPayCents,
+    paidCents: usd.paidCents,
+    feeNotEnteredCount: summary.feeNotEnteredCount,
+    receivedCents: usd.receivedCents,
+    marginCents: usd.marginCents,
+    byCurrency: summary.byCurrency,
+  };
   // For bookings the margin is what was received minus the fees; for manual entries it is the consultation fees minus the doctor's fees
   // (the same number whether or not the company has paid yet). `billed` is the right base for each.
-  return { counts, summary };
+  return { counts, summary: flat };
 }
 
 // Every row the filters match (the page and limit are ignored), for the CSV: at most `cap` of them, in the list's order.

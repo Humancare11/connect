@@ -132,7 +132,11 @@ describe("entries and bookings lists carry each booking's currency", () => {
       // Nothing carries a mixed number: no bucket equals the sum of the others.
       const all = Object.values(totals.byCurrency).reduce((sum, b) => sum + b.feeChargedCents, 0);
       for (const bucket of Object.values(totals.byCurrency)) assert.notEqual(bucket.feeChargedCents, all);
-      assert.equal(Object.hasOwn(totals, "feeChargedCents"), false, "no top-level mixed total");
+      // Old readers keep working: the flat fields are still there and hold the USD amounts (never a mixed total).
+      assert.deepEqual(Object.keys(totals).sort(), ["byCurrency", "doctorFeeCents", "feeChargedCents", "rows"]);
+      assert.equal(totals.feeChargedCents, totals.byCurrency.usd.feeChargedCents);
+      assert.equal(totals.doctorFeeCents, totals.byCurrency.usd.doctorFeeCents);
+      assert.notEqual(totals.feeChargedCents, all, "the flat total is USD only, not a mix");
     });
 
     test("the money boxes: received, to pay, paid and margin per currency (super admin only)", async () => {
@@ -141,7 +145,8 @@ describe("entries and bookings lists carry each booking's currency", () => {
       assert.deepEqual(summary.byCurrency.eur, { toPayCents: 2250, paidCents: 0, receivedCents: 6000, marginCents: 6000 - 2250 });
       assert.deepEqual(summary.byCurrency.gbp, { toPayCents: 0, paidCents: 1800, receivedCents: 2500, marginCents: 2500 - 1800 });
       assert.equal(summary.feeNotEnteredCount, 1, "the EUR category consultation has no doctor fee yet");
-      assert.equal(Object.hasOwn(summary, "toPayCents"), false, "no top-level mixed amount");
+      assert.deepEqual(Object.keys(summary).sort(), ["byCurrency", "feeNotEnteredCount", "marginCents", "paidCents", "receivedCents", "toPayCents"]);
+      for (const k of ["toPayCents", "paidCents", "receivedCents", "marginCents"]) assert.equal(summary[k], summary.byCurrency.usd[k], k + " is the USD amount");
       assert.equal(counts.all, 5, "tab counts are plain row counts");
 
       const asAdmin = await listBookingEntries({ limit: "100" }, { role: "admin" });

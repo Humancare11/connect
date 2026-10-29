@@ -145,7 +145,7 @@ describe("appointment entries: Auto and Manual views, money boxes by role, Histo
         assert.equal("summary" in asAdmin, false, view);
         assert.equal(JSON.stringify(asAdmin).includes("receivedCents") || JSON.stringify(asAdmin).includes("marginCents") || JSON.stringify(asAdmin).includes("toPayCents"), false, `${view}: no box money anywhere in the admin's answer`);
         const asSuper = await list(`view=${view}`, "superadmin");
-        assert.deepEqual(Object.keys(asSuper.summary).sort(), ["byCurrency", "feeNotEnteredCount"]);
+        assert.deepEqual(Object.keys(asSuper.summary).sort(), ["byCurrency", "feeNotEnteredCount", "marginCents", "paidCents", "receivedCents", "toPayCents"]);
       }
     });
 
