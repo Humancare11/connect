@@ -19,6 +19,10 @@ import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
 import { useAuth } from "../context/AuthContext";
+import { useSiteCurrency } from "../context/CurrencyContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
+import PriceText from "../components/PriceText";
+import { formatPrice, selectionPriceInfo, paypalProviderProps } from "../utils/currencyDisplay";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { slugify } from "../utils/slug";
 import { normalizeAppointmentTree } from "../utils/appointmentTree";
@@ -183,18 +187,11 @@ function formatDisplayDate(dateStr) {
   return `${month}/${day}/${year}`;
 }
 
-function formatPrice(amount) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return "";
-  return `$${value.toLocaleString("en-US", {
-    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
-  })}`;
-}
-
 // ─── Stripe form (inside <Elements>) ─────────────────────────────────────────
 function StripeForm({
   clientSecret,
   amount,
+  currency,
   selection,
   formData,
   uploadedReports,
@@ -301,7 +298,7 @@ function StripeForm({
             <span className="ap-spinner ap-spinner--white" /> Processing…
           </>
         ) : (
-          `Pay ${formatPrice(amount)} ->`
+          `Pay ${formatPrice(amount, currency)} ->`
         )}
       </button>
     </form>
@@ -311,6 +308,7 @@ function StripeForm({
 // ─── Payment stage ────────────────────────────────────────────────────────────
 export function PaymentStage({
   amount,
+  currency = "USD",
   selection,
   formData,
   uploadedReports,
@@ -323,6 +321,20 @@ export function PaymentStage({
   const [stripeError, setStripeError] = useState("");
   const [paypalLoading, setPaypalLoading] = useState(false);
   const [paypalError, setPaypalError] = useState("");
+  // What the server will really charge, once it has created the intent / order. The server decides the amount and the
+  // currency; this only shows them. Until then the price shown is the same one worked out from the visitor currency.
+  const [charge, setCharge] = useState(null);
+  const chargeRef = useRef(null);
+  const updateCharge = (value) => {
+    chargeRef.current = value;
+    setCharge(value);
+  };
+  const shownAmount = charge ? charge.amount : amount;
+  const shownCurrency = charge ? charge.currency : currency;
+  const chargeOf = (data) =>
+    Number.isFinite(Number(data?.amountCents)) && data?.currency
+      ? { amount: Number(data.amountCents) / 100, currency: String(data.currency).toUpperCase() }
+      : null;
 
   // The backend now resolves the charge amount itself from HealthcareCategory
   // / ServicePrice — it no longer trusts a client-supplied amount. We just
@@ -351,6 +363,7 @@ export function PaymentStage({
         priceRef,
       });
       setClientSecret(res.data.clientSecret);
+      updateCharge(chargeOf(res.data));
       setMethod("stripe");
     } catch (err) {
       setStripeError(
@@ -367,6 +380,7 @@ export function PaymentStage({
       priceType,
       priceRef,
     });
+    updateCharge(chargeOf(res.data));
     return res.data.orderId;
   };
 
@@ -378,7 +392,7 @@ export function PaymentStage({
         orderId: data.orderID,
       });
       if (res.data.status === "COMPLETED")
-        onComplete(res.data.orderId, "paypal");
+        onComplete(res.data.orderId, "paypal", chargeRef.current);
     } catch (err) {
       setPaypalError(
         err.response?.data?.msg || "PayPal payment failed. Please try again.",
@@ -388,14 +402,10 @@ export function PaymentStage({
     }
   };
 
+  // The PayPal script is loaded for one currency; a different currency mounts a new provider (key) that loads it again.
+  const paypalProps = paypalProviderProps(PAYPAL_CLIENT_ID, currency);
   return (
-    <PayPalScriptProvider
-      options={{
-        "client-id": PAYPAL_CLIENT_ID,
-        currency: "USD",
-        intent: "capture",
-      }}
-    >
+    <PayPalScriptProvider key={paypalProps.key} options={paypalProps.options}>
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg
@@ -444,7 +454,7 @@ export function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">{formatPrice(amount)}</strong>
+            <strong className="ap-pay-fee-amount">{formatPrice(shownAmount, shownCurrency)}</strong>
           </div>
         </div>
 
@@ -522,11 +532,12 @@ export function PaymentStage({
           >
             <StripeForm
               clientSecret={clientSecret}
-              amount={amount}
+              amount={shownAmount}
+              currency={shownCurrency}
               selection={selection}
               formData={formData}
               uploadedReports={uploadedReports}
-              onSuccess={(piId) => onComplete(piId, "stripe")}
+              onSuccess={(piId) => onComplete(piId, "stripe", chargeRef.current)}
             />
           </Elements>
         )}
@@ -577,8 +588,13 @@ export default function AppointmentBookingForm() {
     condition: conditionSlug,
   } = useParams();
   const { user, loading: authLoading } = useAuth();
+  const { currency: siteCurrency, loading: currencyLoading } = useSiteCurrency();
+  const prices = usePrices();
+  const { loading: pricesLoading } = usePricingMeta();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  // What the patient was really charged (the server's amount and currency), for the confirmation screen.
+  const [paidCharge, setPaidCharge] = useState(null);
 
   const [selection, setSelection] = useState(() => {
     if (state?.selection) return state.selection;
@@ -691,18 +707,25 @@ export default function AppointmentBookingForm() {
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
-  // selection.cost is already the effective price: the backend merges the
-  // CategoryPricing admin override into /api/appointment-tree's category
-  // price (see resolveEffectiveCategoryPrice), so nothing further needs to
-  // be resolved on the client.
-  const selectionAmount = Number(selection?.cost);
+  // selection.cost is the effective USD price (the backend merges the CategoryPricing admin override into
+  // /api/appointment-tree's category price). A visitor priced in EUR / GBP sees the category's price in that currency, the
+  // currency being the server's decision (CurrencyProvider). This is for display only: the server prices the payment itself.
+  const priceInfo = selectionPriceInfo({
+    selection,
+    prices,
+    currency: siteCurrency,
+    currencyLoading,
+    pricesLoading,
+  });
   const hasAppointmentPrice =
-    Number.isFinite(selectionAmount) && selectionAmount > 0;
+    !priceInfo.loading && Number.isFinite(Number(priceInfo.amount)) && Number(priceInfo.amount) > 0;
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
-    : !hasAppointmentPrice
-      ? "No valid database price is configured for this category."
-      : "";
+    : priceInfo.loading
+      ? ""
+      : !hasAppointmentPrice
+        ? "No valid database price is configured for this category."
+        : "";
 
   const availableSlots = useMemo(
     () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)),
@@ -921,7 +944,8 @@ export default function AppointmentBookingForm() {
     }
   };
 
-  const handlePaymentComplete = (paymentRef, gateway) => {
+  const handlePaymentComplete = (paymentRef, gateway, charge = null) => {
+    setPaidCharge(charge);
     createAppointment(paymentRef, gateway, form, uploadedReports);
   };
 
@@ -1024,11 +1048,11 @@ export default function AppointmentBookingForm() {
               {selection.condName}
             </span>
           </div>
-          {hasAppointmentPrice && stage === "form" && (
+          {(hasAppointmentPrice || priceInfo.loading) && stage === "form" && (
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                {formatPrice(selection.cost)}
+                <PriceText info={priceInfo} />
               </span>
             </div>
           )}
@@ -1288,7 +1312,7 @@ export default function AppointmentBookingForm() {
             <button
               className="ap-submit"
               type="button"
-              disabled={proceeding || !!pricingIssue}
+              disabled={proceeding || !!pricingIssue || priceInfo.loading}
               onClick={handleProceedClick}
             >
               {proceeding ? (
@@ -1296,7 +1320,7 @@ export default function AppointmentBookingForm() {
                   <span className="ap-spinner ap-spinner--white" /> Preparing…
                 </>
               ) : (
-                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
+                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(priceInfo.amount, priceInfo.currency)}` : ""} ->`
               )}
             </button>
 
@@ -1323,7 +1347,8 @@ export default function AppointmentBookingForm() {
         ══════════════════════════════════════ */}
         {stage === "payment" && (
           <PaymentStage
-            amount={selection.cost}
+            amount={priceInfo.amount}
+            currency={priceInfo.currency}
             selection={selection}
             formData={form}
             uploadedReports={uploadedReports}
@@ -1385,7 +1410,9 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Amount Paid</span>
                 <span className="ap-success-val ap-success-val--green">
-                  {formatPrice(selection.cost)}
+                  {paidCharge
+                    ? formatPrice(paidCharge.amount, paidCharge.currency)
+                    : formatPrice(priceInfo.amount, priceInfo.currency)}
                 </span>
               </div>
               <div className="ap-success-row">

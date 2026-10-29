@@ -52,10 +52,5 @@ export function formatDisplayDate(dateStr) {
   });
 }
 
-export function formatPrice(amount) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return "";
-  return `$${value.toLocaleString("en-US", {
-    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
-  })}`;
-}
+// formatPrice(amount, currency = "USD"): $30, €30, £30 (see utils/currencyDisplay.js).
+export { formatPrice } from "./currencyDisplay";

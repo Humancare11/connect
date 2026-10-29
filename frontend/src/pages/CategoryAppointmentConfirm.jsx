@@ -5,6 +5,10 @@ import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
 import { PaymentStage } from "./AppointmentBookingForm";
 import { useAuth } from "../context/AuthContext";
+import { useSiteCurrency } from "../context/CurrencyContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
+import PriceText from "../components/PriceText";
+import { selectionPriceInfo } from "../utils/currencyDisplay";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import {
   readPendingBooking,
@@ -35,6 +39,9 @@ function formatBytes(b) {
 
 export default function CategoryAppointmentConfirm() {
   const { user, loading: authLoading } = useAuth();
+  const { currency: siteCurrency, loading: currencyLoading } = useSiteCurrency();
+  const prices = usePrices();
+  const { loading: pricesLoading } = usePricingMeta();
   const navigate = useNavigate();
   const pending = readPendingBooking();
 
@@ -78,6 +85,16 @@ export default function CategoryAppointmentConfirm() {
     if (p?.formData?.date) setDate(p.formData.date);
     setStage("payment");
   }, [authLoading, user]);
+
+  // The price shown, in the currency the server decided for this visitor (display only: the server prices the payment itself).
+  // A service booking stays USD.
+  const priceInfo = selectionPriceInfo({
+    selection: selection ? { ...selection, cost: livePrice } : null,
+    prices,
+    currency: siteCurrency,
+    currencyLoading,
+    pricesLoading,
+  });
 
   // Always confirm the price against the DB before charging the patient
   useEffect(() => {
@@ -262,7 +279,7 @@ export default function CategoryAppointmentConfirm() {
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                {formatPrice(livePrice)}
+                <PriceText info={priceInfo} />
               </span>
             </div>
           )}
@@ -383,8 +400,9 @@ export default function CategoryAppointmentConfirm() {
               className="ap-submit"
               type="button"
               onClick={handleProceedClick}
+              disabled={priceInfo.loading}
             >
-              Proceed to Payment - {formatPrice(livePrice)} →
+              Proceed to Payment - {priceInfo.loading ? "…" : formatPrice(priceInfo.amount, priceInfo.currency)} →
             </button>
           </div>
         )}
@@ -398,7 +416,8 @@ export default function CategoryAppointmentConfirm() {
 
         {stage === "payment" && (
           <PaymentStage
-            amount={livePrice}
+            amount={priceInfo.amount}
+            currency={priceInfo.currency}
             selection={selection}
             formData={{ notes, date, time: displayTime }}
             uploadedReports={reports}

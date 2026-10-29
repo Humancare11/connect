@@ -1,6 +1,5 @@
 ﻿import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,
@@ -21,6 +20,8 @@ import "./categoriesGlobal.css";
 import skinHairHero from "../../assets/HomeImageCategories/skin-and-hair-services.webp";
 import SEO from "../../components/Seo";
 import FAQ from "../../components/FAQ/FAQ";
+import { useCategoryPriceInfo } from "../../hooks/useCategoryPriceInfo";
+import PriceText from "../../components/PriceText";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -259,48 +260,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
   const [submitted, setSubmitted] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const response = await api.get("/api/appointment-tree");
-
-        const DB_CATEGORY_NAMES = {
-          general: "General & Everyday Care",
-          mental: "Mental Health",
-          skin: "Skin & Hair",
-          women: "Women's Health",
-          men: "Men's Health",
-          family: "Children & Family",
-          weight: "Weight & Nutrition",
-          chronic: "Chronic Care & Expert Opinion",
-          eeb: "Eye, Ear & Bone",
-          sexual: "Sexual Health",
-          travel: "Travel & Global Care",
-        };
-
-        const categoryName = DB_CATEGORY_NAMES[categoryCode] || categoryCode;
-        const category = response.data.find(
-          (item) => item.name === categoryName,
-        );
-
-        if (category && category.price !== undefined) {
-          setPrice(category.price);
-        } else {
-          setPrice(49);
-        }
-      } catch (error) {
-        console.error("Failed to fetch pricing:", error);
-        setPrice(49);
-      } finally {
-        setPriceLoading(false);
-      }
-    };
-
-    fetchPrice();
-  }, [categoryCode]);
+  const priceInfo = useCategoryPriceInfo(categoryCode);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -331,11 +291,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
     <div className="hcc-booking-card">
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
-          {priceLoading ? (
-            <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
-          ) : (
-            `$${price ?? 49}`
-          )}
+          <PriceText info={priceInfo} />
         </div>
         <p className="hcc-booking-price-sub">
           <span>One-time consultation fee</span>
