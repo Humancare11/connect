@@ -22,6 +22,7 @@ export default function CertificatePreview() {
   const { doctor } = useDoctorAuth();
   const slipRef = useRef(null);
   const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState("");
 
   const initial = location.state || {};
   const [cert, setCert] = useState(initial.cert || null);
@@ -55,6 +56,11 @@ export default function CertificatePreview() {
 
   const goBack = () => navigate(-1);
 
+  const showError = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 4000);
+  };
+
   const handleDownload = async () => {
     if (!slipRef.current || busy) return;
     setBusy(true);
@@ -72,6 +78,9 @@ export default function CertificatePreview() {
         slipRef.current,
         `certificate_${name}_${date}.pdf`,
       );
+    } catch (err) {
+      console.error("Certificate PDF download failed", err);
+      showError("Could not generate the PDF. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -104,6 +113,11 @@ export default function CertificatePreview() {
 
   return (
     <div className="dp-root-mp">
+      {toast && (
+        <div className="dp-toast" role="alert" style={{ background: "#dc2626" }}>
+          {toast}
+        </div>
+      )}
       <div className="dp-modal dp-modal--slip dp-slip-modal-box">
         <div className="dp-slip-toolbar">
           <span className="dp-slip-toolbar-title">
