@@ -16,7 +16,8 @@ const { createAndSendOTP, verifyOTPCode, padToMinDuration } = require("../utils/
 const { assertPasswordAllowed, rememberPassword } = require("../utils/passwordPolicy");
 const { revokeSession, revokeUserSessions } = require("../utils/tokenRevocation");
 const { recordFailedLogin } = require("../utils/securityMonitor");
-const { loginLimiter, otpRequestLimiter, otpVerifyLimiter } = require("../middleware/rateLimiters");
+const { loginLimiter, otpRequestLimiter, otpVerifyLimiter, emailChangeRequestLimiter, emailChangeVerifyLimiter } = require("../middleware/rateLimiters");
+const { requestEmailChange, verifyEmailChange, EmailChangeError } = require("../utils/doctorEmailChange");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
 const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
@@ -456,6 +457,48 @@ router.get("/me", verifyDoctorToken, async (req, res) => {
     }
 });
 
+// ── Doctor email change (OTP-verified) ───────────────────────────────────────
+// The login email (Doctor.email) can ONLY change through these two endpoints;
+// the profile/enrollment save paths ignore any "email" value. The doctor id is
+// always taken from the verified token, never the request body.
+function sendEmailChangeError(res, err) {
+    if (err instanceof EmailChangeError) {
+        return res.status(err.status).json({
+            message: err.message,
+            ...(err.retryAfterMs != null && { retryAfterMs: err.retryAfterMs }),
+        });
+    }
+    console.error("doctor email change error:", err.message);
+    return res.status(500).json({ message: "Something went wrong. Please try again." });
+}
+
+router.post("/profile/email-change/request", verifyDoctorToken, emailChangeRequestLimiter, async (req, res) => {
+    try {
+        const result = await requestEmailChange(req, req.user.id, req.body?.newEmail);
+        return res.json({
+            message: "An OTP has been sent to your new email address. Verify it to complete the change.",
+            ...result,
+        });
+    } catch (err) {
+        return sendEmailChangeError(res, err);
+    }
+});
+
+router.post("/profile/email-change/verify", verifyDoctorToken, emailChangeVerifyLimiter, async (req, res) => {
+    try {
+        const result = await verifyEmailChange(req, req.user.id, req.body?.newEmail, req.body?.otp);
+        // Sessions were revoked; drop this browser's cookies so the doctor signs in again.
+        clearAuthCookies(res, "doctor");
+        return res.json({
+            message: "Email updated. Please sign in again with your new email.",
+            email: result.email,
+            reauthRequired: true,
+        });
+    } catch (err) {
+        return sendEmailChangeError(res, err);
+    }
+});
+
 // ── GET /api/doctor/enrollment/:doctorId ──────────────────────────────────────
 router.get("/enrollment/:doctorId", verifyDoctorToken, async (req, res) => {
     try {
@@ -677,7 +720,7 @@ router.patch("/enrollment/progress", verifyDoctorToken, async (req, res) => {
 // approvalStatus, verified, doctorId — into a step-save call.
 const STEP_FIELD_ALLOWLIST = {
     1: [
-        "firstName", "surname", "email", "countryCode", "phoneNumber", "gender",
+        "firstName", "surname", "countryCode", "phoneNumber", "gender",
         "dob", "country", "state", "city", "zip", "address", "languagesKnown",
         "profilePhoto",
     ],

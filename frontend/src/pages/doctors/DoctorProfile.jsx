@@ -6,6 +6,7 @@ import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State } from "country-state-city";
 import "./DoctorProfile.css";
+import ChangeEmailPanel from "../../components/ChangeEmailPanel";
 import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
 } from "../../components/PhoneInputField";
@@ -1606,6 +1607,8 @@ export default function DoctorProfile() {
           form.consultantFees === "" ? undefined : Number(form.consultantFees),
       };
       delete payload.customSpecialty;
+      // The email is shown here but is never saved from this form (see Change Email), so a stale copy can't be sent back.
+      delete payload.email;
       const { data } = await api.post("/api/doctor/enrollment", payload);
       setEnrollment(data?.enrollment || enrollment);
       setEditMode(false);
@@ -1954,7 +1957,27 @@ export default function DoctorProfile() {
                   {inp("surname", "Surname", "text", "family-name")}
                 </InputField>
                 <InputField label="Email">
-                  {inp("email", "Email", "email", "email")}
+                  {/* The login email never changes through this form; Change Email verifies the new address by OTP first. */}
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    value={form.email || doctor?.email || ""}
+                    readOnly
+                    aria-readonly="true"
+                    title="Use Change Email to replace your login email."
+                  />
+                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                    Your verified login email. Select Change Email to update it securely using OTP verification.
+                  </div>
+                  <ChangeEmailPanel
+                    classes={{
+                      input: "",
+                      primary: "drprofile__btn drprofile__btn-primary",
+                      secondary: "drprofile__btn drprofile__btn-secondary",
+                      error: "drprofile__field-error",
+                    }}
+                    note="Changing your email signs you out, and any unsaved profile edits on this page are lost."
+                  />
                 </InputField>
                 <InputField label="Phone">
                   <div className="de-phone-input">

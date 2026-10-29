@@ -196,7 +196,8 @@ const approveDoctor = async (req, res) => {
 
     if (isProfileUpdateRequest) {
       (enrollment.pendingProfileChanges || []).forEach((change) => {
-        if (change?.field) enrollment.set(change.field, change.newValue);
+        // email is the login identity and only changes via the OTP flow.
+        if (change?.field && change.field !== "email") enrollment.set(change.field, change.newValue);
       });
       enrollment.markModified("languagesKnown");
       enrollment.markModified("licensedStates");

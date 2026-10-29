@@ -44,11 +44,23 @@ const sendMail = async (message) => {
   }
 };
 
+const EMAIL_CHANGE_OTP_MINUTES = 5;
+
 const buildEmailHTML = (otp, type, name) => {
-  const greeting = name ? `Hello ${name},` : `Hello,`;
+  const isEmailChange = type === "email-change";
+  const greeting = name ? `Hello ${isEmailChange ? escapeHtml(name) : name},` : `Hello,`;
   const isRegister = type === "register";
-  const badgeText = isRegister ? "Email Verification" : "Password Reset";
-  const bodyText = isRegister
+  const badgeText = isRegister || isEmailChange ? "Email Verification" : "Password Reset";
+  const validMinutes = isEmailChange ? EMAIL_CHANGE_OTP_MINUTES : 10;
+  const bodyText = isEmailChange
+  ? `
+    <strong>Confirm your new email</strong>
+    <br><br>
+    You requested to change the email address associated with your Humancare Connect doctor account. Use the verification code below to confirm your new email address.
+    <br>
+    This code will expire in ${EMAIL_CHANGE_OTP_MINUTES} minutes and should not be shared with anyone. If you did not request this change, you can ignore this email &mdash; your account email will not change.
+  `
+  : isRegister
   ? `
     Thank you for choosing Humancare Connect.
     <br>
@@ -87,7 +99,7 @@ const buildEmailHTML = (otp, type, name) => {
     <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:24px 16px;text-align:center;margin:0 0 18px;">
       <p style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#6b7280;font-weight:600;margin:0 0 10px;">Your one-time secure code</p>
       <p style="font-size:44px;font-weight:800;letter-spacing:14px;color:#0b0443;font-family:monospace;margin:0 0 6px;padding-left:14px;user-select:all;">${otp}</p>
-      <span style="display:inline-block;background:#fff;border:1px solid #dde2f0;border-radius:20px;padding:5px 12px;font-size:12px;color:#4b5563;margin:0 3px;">⏱ Valid for <strong>10 minutes</strong></span>
+      <span style="display:inline-block;background:#fff;border:1px solid #dde2f0;border-radius:20px;padding:5px 12px;font-size:12px;color:#4b5563;margin:0 3px;">⏱ Valid for <strong>${validMinutes} minutes</strong></span>
       <span style="display:inline-block;background:#fff;border:1px solid #dde2f0;border-radius:20px;padding:5px 12px;font-size:12px;color:#4b5563;margin:0 3px;">🔒 Do not share this code</span>
     </div>
   </div>
@@ -133,6 +145,15 @@ const sendOTPEmail = async (to, otp, type = "register", name) => {
     to,
     subject,
     html: buildEmailHTML(otp, type, name),
+  });
+};
+
+const sendEmailChangeOTPEmail = async (to, otp, name) => {
+  await sendMail({
+    from: `"Humancare Connect" <${MAIL_FROM}>`,
+    to,
+    subject: "Humancare Connect — Confirm Your New Email Address",
+    html: buildEmailHTML(escapeHtml(otp), "email-change", name),
   });
 };
 
@@ -618,7 +639,9 @@ const sendBookingNotificationEmail = async (to, { subject, badge, greeting, intr
 };
 
 module.exports = {
+  buildEmailHTML,
   sendOTPEmail,
+  sendEmailChangeOTPEmail,
   sendEmail,
   sendInvoiceEmail,
   buildInvoiceEmailHTML,

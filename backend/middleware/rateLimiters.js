@@ -5,6 +5,8 @@ const contactStore = new Map();
 const loginStore = new Map();
 const otpRequestStore = new Map();
 const otpVerifyStore = new Map();
+const emailChangeRequestStore = new Map();
+const emailChangeVerifyStore = new Map();
 const presignStore = new Map();
 const uploadStore = new Map();
 const directVideoRoomPublicStore = new Map();
@@ -133,6 +135,22 @@ const otpVerifyLimiter = buildEmailLimiter({
   windowMs: 15 * 60 * 1000,
   max:      10,
   message:  "Too many OTP verification attempts. Please wait {min} minutes and try again.",
+});
+
+// Doctor email-change OTPs: keyed by the authenticated doctor (not the target
+// email) so one account can't be used to email-bomb arbitrary addresses.
+const emailChangeRequestLimiter = buildUserLimiter({
+  store:    emailChangeRequestStore,
+  windowMs: 15 * 60 * 1000,
+  max:      5,
+  message:  "Too many email-change requests. Please wait {min} minutes and try again.",
+});
+
+const emailChangeVerifyLimiter = buildUserLimiter({
+  store:    emailChangeVerifyStore,
+  windowMs: 15 * 60 * 1000,
+  max:      10,
+  message:  "Too many verification attempts. Please wait {min} minutes and try again.",
 });
 
 // Presign requests are cheap metadata-only calls (S3 does the actual byte
@@ -320,6 +338,8 @@ module.exports = {
   loginLimiter,
   otpRequestLimiter,
   otpVerifyLimiter,
+  emailChangeRequestLimiter,
+  emailChangeVerifyLimiter,
   presignLimiter,
   uploadLimiter,
   directVideoRoomPublicLimiter,
