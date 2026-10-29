@@ -13,6 +13,7 @@ const { newVisitorId } = require("./chatToken");
 const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish, scrubContact } = require("./languageHints");
 const safety = require("./safety");
+const priceMode = require("./priceMode");
 
 // Shown the moment a chat goes to the team, whoever is or is not at their desk.
 const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`;
@@ -855,6 +856,8 @@ function createChatService({
             pages: sitePages.pagesForPrompt({ allowContent: linkConditions }),
             pageHint: linkConditions ? sitePages.hintFor(lastPatientText).map((p) => p.title) : [],
             unansweredStreak: streakRow?.unansweredStreak || 0,
+            // A visitor priced in EUR / GBP is never quoted a dollar amount (see priceMode.js).
+            hidePrices: priceMode.hidesPrices(conv),
           }),
           deadline,
         ]);
@@ -908,9 +911,22 @@ function createChatService({
         turn.posted = true;
       } else {
         // Off-topic never hands over; from the third in a row the patient is reminded of the button.
-        const reply =
+        const withReminder =
           result.offTopic && offTopicStreak >= OFF_TOPIC_REMINDER_AT ? `${result.reply} ${OFF_TOPIC_REMINDER}` : result.reply;
-        await addMessage(current, "ai", reply, links.length ? { links } : {});
+        let reply = withReminder;
+        let shownLinks = links;
+        if (priceMode.hidesPrices(current)) {
+          // The model was told not to quote prices; anything that still slipped through is cut here, and the Pricing page
+          // (its prices are in USD) gives way to the booking page, where the price is shown in the visitor's currency.
+          reply = priceMode.withoutPrices(withReminder);
+          const withoutPricingPage = links.filter((l) => !/pric/i.test(`${l.title || ""} ${l.url || ""}`));
+          shownLinks = withoutPricingPage;
+          if (!shownLinks.length && (reply !== withReminder || withoutPricingPage.length !== links.length)) {
+            const booking = sitePages.bookingFor("/appointment-booking");
+            if (booking) shownLinks = [booking];
+          }
+        }
+        await addMessage(current, "ai", reply, shownLinks.length ? { links: shownLinks } : {});
         turn.posted = true;
       }
       // One "not sure" is not enough: "unanswered" hands over on the second miss in a row.
@@ -1339,8 +1355,14 @@ function createChatService({
       if (key === "live") {
         await requestAgent(fresh, { first: firstNameOf(decryptLiveChatOrEmpty(loaded.visitor.name)), settings });
       } else if (fresh.mode === "ai" && option.reply) {
-        const link = option.link ? sitePages.linkFor(option.link) : null;
-        await addMessage(fresh, "ai", option.reply, link ? { links: [link] } : {});
+        let text = option.reply;
+        let link = option.link ? sitePages.linkFor(option.link) : null;
+        if (priceMode.hidesPrices(fresh)) {
+          // EUR / GBP visitor: no exact price (the service pages show USD); the booking page shows the real one.
+          text = priceMode.withoutPrices(text);
+          link = sitePages.bookingFor("/appointment-booking") || link;
+        }
+        await addMessage(fresh, "ai", text, link ? { links: [link] } : {});
         await pushState(fresh);
       } else {
         await pushState(fresh);
