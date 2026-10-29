@@ -54,3 +54,5 @@ export function formatDisplayDate(dateStr) {
 
 // formatPrice(amount, currency = "USD"): $30, €30, £30 (see utils/currencyDisplay.js).
 export { formatPrice } from "./currencyDisplay";
+
+export { paymentFields } from "./paymentFields.js";

@@ -37,7 +37,7 @@ test("a failed request means USD, not an error and not a stuck skeleton", async 
 });
 
 test("an unsupported or missing currency from the server is USD", async () => {
-  for (const data of [{ currency: "INR" }, {}, null, { currency: "" }]) {
+  for (const data of [{ currency: "JPY" }, {}, null, { currency: "" }]) {
     const a = deferred();
     const { loader } = setup([a]);
     loader.load();
@@ -93,4 +93,13 @@ test("after dispose nothing more is published", async () => {
   a.resolve({ currency: "GBP" });
   await flush();
   assert.equal(seen.length, before);
+});
+
+test("INR from the server is kept (the server only says INR when rupees are active)", async () => {
+  const a = deferred();
+  const { loader } = setup([a]);
+  loader.load();
+  a.resolve({ currency: "INR", country: "IN", source: "profile" });
+  await flush();
+  assert.equal(loader.getState().currency, "INR");
 });

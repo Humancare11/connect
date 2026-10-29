@@ -23,6 +23,8 @@ import { useSiteCurrency } from "../context/CurrencyContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import PriceText from "../components/PriceText";
 import { formatPrice, selectionPriceInfo, paypalProviderProps } from "../utils/currencyDisplay";
+import { paymentFields } from "../utils/booking";
+import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { slugify } from "../utils/slug";
 import { normalizeAppointmentTree } from "../utils/appointmentTree";
@@ -31,6 +33,20 @@ import useModalA11y from "../hooks/useModalA11y";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
+// The server returns the public key id with every Razorpay order; this is only a fallback.
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
+
+// PayPal never takes rupees (those go through Razorpay), so for INR the PayPal SDK is not even loaded. Any other currency mounts a
+// provider keyed by it, which loads the SDK for that currency.
+function PayPalScope({ clientId, currency, children }) {
+  if (String(currency || "").toUpperCase() === "INR") return children;
+  const props = paypalProviderProps(clientId, currency);
+  return (
+    <PayPalScriptProvider key={props.key} options={props.options}>
+      {children}
+    </PayPalScriptProvider>
+  );
+}
 const BOOKING_PENDING_KEY = "hcc_booking_pending";
 const BOOKING_RESUME_KEY = "hcc_booking_resume_after_login";
 
@@ -321,6 +337,11 @@ export function PaymentStage({
   const [stripeError, setStripeError] = useState("");
   const [paypalLoading, setPaypalLoading] = useState(false);
   const [paypalError, setPaypalError] = useState("");
+  const { user: checkoutUser } = useAuth();
+  // Rupees (India) are paid through Razorpay only: Stripe and PayPal are not offered for them.
+  const isInr = String(currency || "").toUpperCase() === "INR";
+  const [razorpayBusy, setRazorpayBusy] = useState(false);
+  const [razorpayError, setRazorpayError] = useState("");
   // What the server will really charge, once it has created the intent / order. The server decides the amount and the
   // currency; this only shows them. Until then the price shown is the same one worked out from the visitor currency.
   const [charge, setCharge] = useState(null);
@@ -402,10 +423,46 @@ export function PaymentStage({
     }
   };
 
+  // Razorpay Checkout: the server creates the order (amount and currency are its decision); the window collects the payment; the
+  // three values it returns go to the booking request, where the server verifies them before anything is booked.
+  const payWithRazorpay = async () => {
+    setRazorpayError("");
+    setRazorpayBusy(true);
+    try {
+      if (!(await loadRazorpayScript())) {
+        throw new Error("Could not load the Razorpay payment window. Check your connection and try again.");
+      }
+      const res = await api.post("/api/razorpay/create-order", { priceType, priceRef });
+      updateCharge(chargeOf(res.data));
+      const checkout = new window.Razorpay(
+        buildRazorpayOptions({
+          keyId: res.data.keyId || RAZORPAY_KEY_ID,
+          order: res.data,
+          user: checkoutUser,
+          description: `${selection?.catLabel || "Consultation"} booking fee`,
+          onSuccess: (response) => {
+            setRazorpayBusy(false);
+            onComplete(response, "razorpay", chargeRef.current);
+          },
+          onDismiss: () => {
+            setRazorpayBusy(false);
+            setRazorpayError("Payment was cancelled. You have not been charged. You can try again.");
+          },
+        }),
+      );
+      checkout.on("payment.failed", (failure) => {
+        setRazorpayError(failure?.error?.description || "Payment failed. Please try again.");
+      });
+      checkout.open();
+    } catch (err) {
+      setRazorpayBusy(false);
+      setRazorpayError(err.response?.data?.msg || err.message || "Failed to start the payment. Please try again.");
+    }
+  };
+
   // The PayPal script is loaded for one currency; a different currency mounts a new provider (key) that loads it again.
-  const paypalProps = paypalProviderProps(PAYPAL_CLIENT_ID, currency);
   return (
-    <PayPalScriptProvider key={paypalProps.key} options={paypalProps.options}>
+    <PayPalScope clientId={PAYPAL_CLIENT_ID} currency={currency}>
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg
@@ -462,6 +519,19 @@ export function PaymentStage({
         <div>
           <div className="ap-pay-method-label">Choose Payment Method</div>
           <div className="ap-pay-methods">
+            {isInr ? (
+              <button
+                type="button"
+                className={`ap-pay-method-btn ap-pay-method-btn--active${razorpayBusy ? " ap-pay-method-btn--loading" : ""}`}
+                onClick={payWithRazorpay}
+                disabled={razorpayBusy}
+              >
+                {razorpayBusy ? <span className="ap-spinner" /> : <span className="ap-pay-method-icon">💳</span>}
+                <span>Pay {formatPrice(shownAmount, shownCurrency)} with Razorpay</span>
+                <span className="ap-pay-method-sub">UPI · Cards · Netbanking · Wallets</span>
+              </button>
+            ) : (
+              <>
             <button
               type="button"
               className={`ap-pay-method-btn${method === "stripe" ? " ap-pay-method-btn--active" : ""}${stripeCreating ? " ap-pay-method-btn--loading" : ""}`}
@@ -502,13 +572,20 @@ export function PaymentStage({
               <span>PayPal</span>
               <span className="ap-pay-method-sub">Fast &amp; Secure</span>
             </button>
+              </>
+            )}
           </div>
+          {isInr && razorpayError && (
+            <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
+              {razorpayError}
+            </p>
+          )}
           {stripeError && (
             <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
               {stripeError}
             </p>
           )}
-          {!PAYPAL_CLIENT_ID && (
+          {!isInr && !PAYPAL_CLIENT_ID && (
             <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
               PayPal not configured
             </p>
@@ -574,7 +651,7 @@ export function PaymentStage({
           </div>
         )}
       </div>
-    </PayPalScriptProvider>
+    </PayPalScope>
   );
 }
 
@@ -929,8 +1006,7 @@ export default function AppointmentBookingForm() {
         problem: formData.notes,
         medicalReports: reports,
       };
-      if (gateway === "paypal") body.paypalOrderId = paymentRef;
-      else body.paymentIntentId = paymentRef;
+      Object.assign(body, paymentFields(gateway, paymentRef));
       await api.post("/api/appointments", withBookingSource(body));
       sessionStorage.removeItem(BOOKING_PENDING_KEY);
       sessionStorage.removeItem(BOOKING_RESUME_KEY);

@@ -3,10 +3,14 @@
 // The server decides which currency a visitor is priced in (GET /api/geo/currency). The browser only displays it; it never
 // converts an amount, and it never tells the server which currency or amount to charge.
 
-export const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP"];
+export const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP", "INR"];
 export const DEFAULT_CURRENCY = "USD";
 
-const SYMBOLS = { USD: "$", EUR: "€", GBP: "£" };
+const SYMBOLS = { USD: "$", EUR: "€", GBP: "£", INR: "₹" };
+
+// The gateway follows the currency: rupees are paid through Razorpay only; dollars, euros and pounds through Stripe or PayPal.
+// (The server enforces the same rule; this only decides which payment buttons to show.)
+export const gatewaysForCurrency = (currency) => (normalizeCurrency(currency) === "INR" ? ["razorpay"] : ["stripe", "paypal"]);
 
 export function normalizeCurrency(value) {
   const code = String(value || "").trim().toUpperCase();
@@ -15,7 +19,8 @@ export function normalizeCurrency(value) {
 
 export const currencySymbol = (currency) => SYMBOLS[normalizeCurrency(currency)];
 
-// Symbol first: $30, €30, £30. A whole amount has no decimals; a fractional one always has two ($29.50, not $29.5).
+// Symbol first: $30, €30, £30, ₹4,999 (rupees use Indian digit grouping: ₹1,00,000). A whole amount has no decimals; a fractional
+// one always has two ($29.50, not $29.5).
 // Returns "" when the amount is not a number, so a missing price never shows as "$NaN".
 export function formatPrice(amount, currency = DEFAULT_CURRENCY) {
   if (amount === null || amount === undefined || amount === "") return "";
@@ -23,7 +28,8 @@ export function formatPrice(amount, currency = DEFAULT_CURRENCY) {
   if (!Number.isFinite(value)) return "";
   const whole = Math.abs(value % 1) < 1e-9;
   const digits = whole ? 0 : 2;
-  return `${currencySymbol(currency)}${value.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
+  const locale = normalizeCurrency(currency) === "INR" ? "en-IN" : "en-US";
+  return `${currencySymbol(currency)}${value.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 }
 
 const positive = (value) => {
@@ -31,8 +37,8 @@ const positive = (value) => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
-// One category's price in the visitor's currency, from its /api/pricing entry ({ price, priceEur, priceGbp }).
-// A EUR / GBP price that is not set falls back to the USD price, labelled USD - the same rule the server charges by, so what is
+// One category's price in the visitor's currency, from its /api/pricing entry ({ price, priceEur, priceGbp, priceInr }).
+// A EUR / GBP / INR price that is not set falls back to the USD price, labelled USD - the same rule the server charges by, so what is
 // shown is what is charged. Returns null when there is no usable price at all.
 export function resolveCategoryPrice(record, currency = DEFAULT_CURRENCY) {
   if (!record) return null;
@@ -44,6 +50,10 @@ export function resolveCategoryPrice(record, currency = DEFAULT_CURRENCY) {
   if (wanted === "GBP") {
     const gbp = positive(record.priceGbp);
     if (gbp) return { amount: gbp, currency: "GBP" };
+  }
+  if (wanted === "INR") {
+    const inr = positive(record.priceInr);
+    if (inr) return { amount: inr, currency: "INR" };
   }
   const usd = positive(record.price);
   return usd ? { amount: usd, currency: "USD" } : null;

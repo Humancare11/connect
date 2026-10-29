@@ -8,6 +8,7 @@ import {
   priceTextState,
   selectionPriceInfo,
   paypalProviderProps,
+  gatewaysForCurrency,
 } from "./currencyDisplay.js";
 
 test("formatPrice: symbol first, whole amounts without decimals", () => {
@@ -27,7 +28,7 @@ test("formatPrice: fractional amounts always show two decimals", () => {
 
 test("formatPrice: USD when no currency or an unsupported one; empty for a missing amount", () => {
   assert.equal(formatPrice(30), "$30");
-  assert.equal(formatPrice(30, "inr"), "$30");
+  assert.equal(formatPrice(30, "jpy"), "$30");
   assert.equal(formatPrice(30, "eur"), "€30");
   for (const bad of [null, undefined, "", "abc", NaN, Infinity]) assert.equal(formatPrice(bad, "USD"), "", String(bad));
   assert.equal(currencySymbol("GBP"), "£");
@@ -89,4 +90,37 @@ test("PayPal provider: a new currency gives a new key (so the provider re-mounts
   assert.equal(paypalProviderProps("cid", "EUR").key, eur.key, "same currency: same key, no needless re-mount");
   assert.deepEqual(eur.options, { "client-id": "cid", currency: "EUR", intent: "capture" });
   assert.equal(paypalProviderProps("cid", "bogus").options.currency, "USD");
+});
+
+test("INR: rupee symbol first with Indian digit grouping; a whole amount has no decimals", () => {
+  assert.equal(formatPrice(999, "INR"), "₹999");
+  assert.equal(formatPrice(4999, "inr"), "₹4,999");
+  assert.equal(formatPrice(100000, "INR"), "₹1,00,000");
+  assert.equal(formatPrice(1499.5, "INR"), "₹1,499.50");
+  assert.equal(currencySymbol("INR"), "₹");
+  assert.equal(normalizeCurrency(" inr "), "INR");
+});
+
+test("INR price from the pricing table; a missing INR price is the USD price, labelled USD (the same rule as the server)", () => {
+  const record = { price: 10, priceEur: 9, priceGbp: 8, priceInr: 799 };
+  assert.deepEqual(resolveCategoryPrice(record, "INR"), { amount: 799, currency: "INR" });
+  assert.deepEqual(resolveCategoryPrice({ price: 10, priceInr: null }, "INR"), { amount: 10, currency: "USD" });
+  assert.deepEqual(resolveCategoryPrice({ price: 10, priceInr: 0 }, "INR"), { amount: 10, currency: "USD" });
+  assert.deepEqual(resolveCategoryPrice({ price: 10 }, "INR"), { amount: 10, currency: "USD" });
+  assert.deepEqual(resolveCategoryPrice(record, "EUR"), { amount: 9, currency: "EUR" });
+});
+
+test("a rupee booking selection shows the INR price; a service stays USD even for an Indian customer", () => {
+  const prices = { general: { price: 10, priceInr: 799 } };
+  const category = selectionPriceInfo({ selection: { catId: "general", cost: 10 }, prices, currency: "INR" });
+  assert.deepEqual([category.amount, category.currency, category.loading], [799, "INR", false]);
+  const service = selectionPriceInfo({ selection: { isServiceBooking: true, cost: 69 }, prices, currency: "INR" });
+  assert.deepEqual([service.amount, service.currency], [69, "USD"]);
+  assert.equal(priceTextState(category).text, "₹799");
+});
+
+test("the gateway follows the currency: rupees -> Razorpay only; the others -> Stripe and PayPal", () => {
+  assert.deepEqual(gatewaysForCurrency("INR"), ["razorpay"]);
+  assert.deepEqual(gatewaysForCurrency("inr"), ["razorpay"]);
+  for (const c of ["USD", "EUR", "GBP", undefined, "", "xyz"]) assert.deepEqual(gatewaysForCurrency(c), ["stripe", "paypal"], String(c));
 });

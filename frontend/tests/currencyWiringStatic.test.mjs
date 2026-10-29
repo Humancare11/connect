@@ -50,7 +50,8 @@ test("the condition pages show the price through PriceText", () => {
 
 test("the booking form: PayPal provider is keyed by currency, no hard-coded USD, no client-sent currency", () => {
   const src = read("pages", "AppointmentBookingForm.jsx");
-  assert.ok(/<PayPalScriptProvider key=\{paypalProps\.key\} options=\{paypalProps\.options\}>/.test(src));
+  assert.ok(/<PayPalScriptProvider key=\{props\.key\} options=\{props\.options\}>/.test(src));
+  assert.ok(src.includes("paypalProviderProps(clientId, currency)"));
   assert.equal(/currency:\s*"USD"/.test(src), false);
   // the intent / order requests carry what is being booked, never a currency or an amount
   assert.ok(/create-intent-by-amount", \{\s*priceType,\s*priceRef,\s*\}\)/.test(src));
@@ -94,4 +95,44 @@ test("CategoryConsultant has no made-up 49 and no price fetch of its own for a c
 
 test("without a currency provider nothing waits for a currency (default context is USD, not loading)", () => {
   assert.ok(read("context", "CurrencyContext.jsx").includes("createContext({ currency: DEFAULT_CURRENCY, loading: false"));
+});
+
+test("rupees: Razorpay only - Stripe, PayPal and the PayPal script are not offered or loaded for INR", () => {
+  const src = read("pages", "AppointmentBookingForm.jsx");
+  // The PayPal SDK is never loaded for INR (PayPal does not take rupees).
+  assert.ok(/function PayPalScope[\s\S]*?=== "INR"\) return children;/.test(src));
+  // One Razorpay button replaces the Stripe and PayPal buttons.
+  assert.ok(/\{isInr \? \(\s*<button[\s\S]*?onClick=\{payWithRazorpay\}[\s\S]*?\) : \(\s*<>/.test(src));
+  assert.ok(src.includes("/api/razorpay/create-order"));
+  // The order request carries only what is booked: never an amount or a currency.
+  assert.ok(/api\.post\("\/api\/razorpay\/create-order", \{ priceType, priceRef \}\)/.test(src));
+  // The Razorpay script is loaded only from the click (a rupee payment about to start), not at page load.
+  assert.equal(src.includes("checkout.razorpay.com"), false);
+  assert.ok(read("utils", "razorpayCheckout.js").includes("https://checkout.razorpay.com/v1/checkout.js"));
+});
+
+test("the booking requests carry the payment through paymentFields (Razorpay sends order id, payment id and signature)", () => {
+  assert.ok(read("pages", "AppointmentBookingForm.jsx").includes("paymentFields(gateway, paymentRef)"));
+  const confirm = read("pages", "CategoryAppointmentConfirm.jsx");
+  assert.equal((confirm.match(/paymentFields\(gateway, paymentRef\)/g) || []).length, 2);
+  assert.equal(confirm.includes("body.paymentIntentId = paymentRef"), false);
+  // The doctor-fee booking is USD only and is untouched.
+  assert.equal(read("pages", "BookAppointment.jsx").includes("razorpay"), false);
+});
+
+test("the page CSP lets Razorpay Checkout load (script and frame)", () => {
+  const html = fs.readFileSync(path.join(SRC, "..", "index.html"), "utf8");
+  const csp = /Content-Security-Policy"\s+content="([^"]+)"/.exec(html)[1];
+  const directive = (name) => csp.split(";").map((d) => d.trim()).find((d) => d.startsWith(name + " ")) || "";
+  assert.ok(directive("script-src").includes("https://checkout.razorpay.com"));
+  assert.ok(directive("frame-src").includes("https://api.razorpay.com"));
+  assert.ok(directive("frame-src").includes("https://checkout.razorpay.com"));
+});
+
+test("Super Admin categories: an INR tab, an INR field and the missing banner includes INR", () => {
+  const page = read("pages", "admin", "HealthcareManagement.jsx");
+  assert.ok(page.includes("PRICE_CURRENCIES.map"), "the tabs and the fields come from the currency list");
+  assert.ok(page.includes("missing EUR/GBP/INR prices"));
+  assert.ok(page.includes("priceInr"));
+  assert.ok(read("pages", "admin", "healthcarePrices.js").includes('code: "INR"'));
 });

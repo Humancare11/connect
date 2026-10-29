@@ -19,6 +19,7 @@ import {
   toAppointmentUtc,
   formatDisplayDate,
   formatPrice,
+  paymentFields,
 } from "../utils/booking";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
@@ -215,8 +216,7 @@ export default function CategoryAppointmentConfirm() {
           serviceName: selection.serviceName || "",
           pcpName: selection.pcpName || "",
         };
-        if (gateway === "paypal") body.paypalOrderId = paymentRef;
-        else body.paymentIntentId = paymentRef;
+        Object.assign(body, paymentFields(gateway, paymentRef));
         await api.post("/api/category-consultation", withBookingSource(body));
       } else {
         const body = {
@@ -232,8 +232,7 @@ export default function CategoryAppointmentConfirm() {
           problem: notes,
           medicalReports: reports,
         };
-        if (gateway === "paypal") body.paypalOrderId = paymentRef;
-        else body.paymentIntentId = paymentRef;
+        Object.assign(body, paymentFields(gateway, paymentRef));
         await api.post("/api/appointments", withBookingSource(body));
       }
       clearPendingBooking();
