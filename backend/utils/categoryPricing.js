@@ -1,6 +1,7 @@
 const { CategoryPricing } = require("../models/CategoryPricing");
 const HealthcareCategory = require("../models/HealthcareCategory");
 const { slugify } = require("./slugify");
+const { normalizeCurrency } = require("./currencyConfig");
 
 // Maps the 11 legacy category display names to the short CategoryPricing id
 // they've always used. Price resolution itself now goes through
@@ -29,7 +30,7 @@ const CATEGORY_NAME_TO_ID = {
 // for several categories at a time (e.g. the appointment tree), so the
 // lookup is O(1) per category instead of one query each.
 async function buildCategoryPricingLookup() {
-  const records = await CategoryPricing.find({}, "categoryId price").lean();
+  const records = await CategoryPricing.find({}, "categoryId price priceEur priceGbp").lean();
   return new Map(records.map((record) => [record.categoryId, record]));
 }
 
@@ -64,23 +65,48 @@ function logFallbackPriceUsage(category, reason) {
   );
 }
 
-async function resolveEffectiveCategoryPrice(category, pricingLookup) {
+// Logs every time a EUR/GBP price was wanted but the category has none yet, so
+// the customer is shown (and charged) the USD price instead. Expected only
+// until every category has been priced in all three currencies.
+function logCurrencyFallback(category, wantedCurrency) {
+  console.warn(
+    `[CURRENCY_FALLBACK_USED] wanted=${wantedCurrency} used=USD categoryId=${category?._id} ` +
+      `name="${category?.name}" pricingSlug=${category?.pricingSlug || "(none)"}`,
+  );
+}
+
+// `wantedCurrency` (USD / EUR / GBP, default USD) selects which of the
+// category's prices is returned. A EUR/GBP price that isn't set (or isn't
+// positive) falls back to the USD price and the result says `currency: "USD"`,
+// so the caller always knows what it actually got - amounts are never
+// converted between currencies.
+async function resolveEffectiveCategoryPrice(category, pricingLookup, wantedCurrency = "USD") {
   const fallbackPrice = Number.isFinite(Number(category?.price))
     ? Number(category.price)
     : 0;
   const currency = category?.currency || "USD";
+  const wanted = normalizeCurrency(wantedCurrency);
 
   const pricingSlug = category?.pricingSlug;
   if (!pricingSlug) {
     logFallbackPriceUsage(category, "no_pricing_slug");
+    if (wanted !== "USD") logCurrencyFallback(category, wanted);
     return { price: fallbackPrice, currency };
   }
 
   const record = pricingLookup
     ? pricingLookup.get(pricingSlug)
     : await CategoryPricing.findOne({ categoryId: pricingSlug })
-        .select("price")
+        .select("price priceEur priceGbp")
         .lean();
+
+  if (wanted !== "USD") {
+    const nativePrice = Number(wanted === "EUR" ? record?.priceEur : record?.priceGbp);
+    if (Number.isFinite(nativePrice) && nativePrice > 0) {
+      return { price: nativePrice, currency: wanted };
+    }
+    logCurrencyFallback(category, wanted);
+  }
 
   const overridePrice = Number(record?.price);
   if (Number.isFinite(overridePrice) && overridePrice > 0) {

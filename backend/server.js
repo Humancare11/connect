@@ -607,6 +607,7 @@ app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/bookings", require("./routes/adminBookings"));
 app.use("/api/admin/entries", require("./routes/adminEntries"));
+app.use("/api/admin/country-changes", require("./routes/adminCountryChanges"));
 app.use("/api/admin/partner-cases",require("./routes/adminPartnerCases"));
 // Registered first: signatures are private to each admin and have their own guard.
 app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
@@ -625,6 +626,7 @@ app.use("/api/admin/manual-invoices", require("./routes/manualInvoices"));
 app.use("/api/admin/gop", require("./routes/gop"));
 app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
+app.use("/api/geo", require("./routes/geo"));
 app.use("/api/services", require("./routes/services"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/superadmin/blogs", require("./routes/superadminBlogs"));
