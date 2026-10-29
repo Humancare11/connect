@@ -9,7 +9,14 @@ const { toCents } = require("./currency");
 const { resolveEffectiveCategoryPrice } = require("./categoryPricing");
 const User = require("../models/User");
 const { getClientIp } = require("./clientIp");
-const { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY, resolveRequestCurrency } = require("./currencyConfig");
+const {
+  SUPPORTED_CURRENCIES,
+  DEFAULT_CURRENCY,
+  resolveRequestCurrency,
+  gatewayAllowsCurrency,
+  isRazorpayConfigured,
+} = require("./currencyConfig");
+const { verifyPaymentSignature, fetchRazorpayOrder, fetchRazorpayPayment } = require("./razorpay");
 
 // Thrown whenever a payment fails verification (wrong/missing amount, not
 // completed, already used elsewhere). Controllers catch this and respond
@@ -78,6 +85,18 @@ function assertAllowedCurrency(currency) {
     throw new PaymentVerificationError("Unsupported payment currency.");
   }
   return code;
+}
+
+// The gateway follows the currency: INR is taken by Razorpay only, USD / EUR / GBP by Stripe or PayPal only. Anything else is a
+// mismatch and is refused (before a gateway is called when creating, and after it answers when verifying).
+function assertGatewayCurrency(gateway, currency) {
+  const code = assertAllowedCurrency(currency);
+  if (gatewayAllowsCurrency(gateway, code)) return code;
+  throw new PaymentVerificationError(
+    code === "INR"
+      ? "INR payments must be made through Razorpay."
+      : "Razorpay only takes INR payments. Please restart checkout.",
+  );
 }
 
 // The currency this logged-in customer is charged in, decided on the server
@@ -160,7 +179,7 @@ function checkStripeIntent(pi, { expectedCents, expectedCurrency = DEFAULT_CURRE
       402,
     );
   }
-  const currency = assertAllowedCurrency(pi.currency);
+  const currency = assertGatewayCurrency("stripe", pi.currency);
   const expected = assertAllowedCurrency(expectedCurrency);
   const metaCurrency = pi.metadata?.currency;
   if (metaCurrency && String(metaCurrency).toUpperCase() !== currency) {
@@ -201,7 +220,7 @@ function checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrenc
     throw new PaymentVerificationError("PayPal payment not completed.", 402);
   }
   const captureData = order.purchase_units?.[0]?.payments?.captures?.[0];
-  const currency = assertAllowedCurrency(captureData?.amount?.currency_code);
+  const currency = assertGatewayCurrency("paypal", captureData?.amount?.currency_code);
   const expected = assertAllowedCurrency(expectedCurrency);
   if (currency !== expected) {
     throw new PaymentVerificationError(
@@ -232,6 +251,75 @@ async function verifyPaypalOrder({ paypalOrderId, expectedCents, expectedCurrenc
   return checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrency });
 }
 
+// Razorpay ids are `order_XXXX` / `pay_XXXX`. Anything else (an object from a NoSQL-style payload, a long string) is refused outright.
+const RAZORPAY_ORDER_ID = /^order_[A-Za-z0-9]{6,40}$/;
+const RAZORPAY_PAYMENT_ID = /^pay_[A-Za-z0-9]{6,40}$/;
+
+// Verifies a Razorpay payment for an INR booking, after the customer has paid:
+//   1. Razorpay is configured, and the expected currency is INR (a Razorpay payment can never fund a USD / EUR / GBP booking);
+//   2. razorpay_signature = HMAC_SHA256(order_id|payment_id, key secret), compared in constant time;
+//   3. the payment AND its order are fetched from Razorpay itself (the browser's word is never taken): the payment is captured,
+//      belongs to that order, is in INR, for exactly the expected amount, and not refunded;
+//   4. the order was created for THIS customer (notes.userId), so another customer's paid order cannot be reused.
+// Replay protection (one payment = one booking) is claimPaymentOnce, done by the caller in the booking's transaction.
+async function verifyRazorpayPayment({
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature,
+  expectedCents,
+  expectedCurrency = "INR",
+  patientId,
+}) {
+  if (!isRazorpayConfigured()) {
+    throw new PaymentVerificationError("Razorpay payments are not available right now.", 503);
+  }
+  if (String(expectedCurrency || "").toUpperCase() !== "INR") {
+    throw new PaymentVerificationError("Razorpay only takes INR payments. Please restart checkout.");
+  }
+  if (typeof razorpayOrderId !== "string" || !RAZORPAY_ORDER_ID.test(razorpayOrderId)
+    || typeof razorpayPaymentId !== "string" || !RAZORPAY_PAYMENT_ID.test(razorpayPaymentId)) {
+    throw new PaymentVerificationError("Invalid Razorpay payment reference.");
+  }
+  if (!verifyPaymentSignature({ orderId: razorpayOrderId, paymentId: razorpayPaymentId, signature: razorpaySignature })) {
+    throw new PaymentVerificationError("Payment signature is invalid.", 400);
+  }
+
+  let payment;
+  let order;
+  try {
+    [payment, order] = await Promise.all([fetchRazorpayPayment(razorpayPaymentId), fetchRazorpayOrder(razorpayOrderId)]);
+  } catch {
+    throw new PaymentVerificationError("Invalid Razorpay payment reference.");
+  }
+
+  if (!payment || payment.id !== razorpayPaymentId || payment.order_id !== razorpayOrderId || !order || order.id !== razorpayOrderId) {
+    throw new PaymentVerificationError("Payment does not belong to this order.");
+  }
+  if (payment.status !== "captured") {
+    throw new PaymentVerificationError("Razorpay payment not completed. Please complete payment first.", 402);
+  }
+  if (String(payment.currency || "").toUpperCase() !== "INR" || String(order.currency || "").toUpperCase() !== "INR") {
+    throw new PaymentVerificationError("Razorpay only takes INR payments. Please restart checkout.");
+  }
+  if (Number(payment.amount_refunded || 0) > 0 || payment.refund_status) {
+    throw new PaymentVerificationError("This payment has been refunded.");
+  }
+  if (Number.isFinite(expectedCents) && (payment.amount !== expectedCents || order.amount !== expectedCents)) {
+    throw new PaymentVerificationError("Payment amount does not match the current price. Please restart checkout.");
+  }
+  if (!patientId || String(order.notes?.userId || "") !== String(patientId)) {
+    throw new PaymentVerificationError("This payment was made by a different account.", 403);
+  }
+  return {
+    ref: payment.id,
+    amountCents: payment.amount,
+    currency: "INR",
+    gateway: "razorpay",
+    razorpayOrderId,
+    razorpayPaymentId: payment.id,
+  };
+}
+
 // Verifies the payment behind a CATEGORY booking, after the customer has paid.
 // The payment itself says which currency it was taken in (it was created by
 // this server, in the currency this server decided); that currency must be an
@@ -243,18 +331,44 @@ async function verifyPaypalOrder({ paypalOrderId, expectedCents, expectedCurrenc
 async function verifyCategoryPayment({
   paymentIntentId,
   paypalOrderId,
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature,
+  patientId,
   priceRef,
   requireActive = false,
   unrecognizedMessage = "Unrecognized category. Please reselect and try again.",
 }) {
+  const references = [paymentIntentId, paypalOrderId, razorpayPaymentId || razorpayOrderId].filter(Boolean).length;
+  if (references !== 1) {
+    throw new PaymentVerificationError("Send exactly one payment reference.");
+  }
+
+  // Razorpay: INR only. The category's INR price must exist (a category without one is charged in USD, which Razorpay never takes).
+  if (razorpayPaymentId || razorpayOrderId) {
+    const inrFee = await resolveCategoryFeeCents(priceRef, { requireActive, currency: "INR" });
+    if (!inrFee || !Number.isFinite(inrFee.amountMinor) || inrFee.amountMinor <= 0) {
+      throw new PaymentVerificationError(unrecognizedMessage, 400);
+    }
+    return verifyRazorpayPayment({
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      expectedCents: inrFee.amountMinor,
+      expectedCurrency: inrFee.currency,
+      patientId,
+    });
+  }
+
   let payment;
   let paidCurrency;
   if (paymentIntentId) {
     payment = await retrieveStripeIntent(paymentIntentId);
-    paidCurrency = assertAllowedCurrency(payment.currency);
+    paidCurrency = assertGatewayCurrency("stripe", payment.currency);
   } else {
     payment = await retrievePaypalOrder(paypalOrderId);
-    paidCurrency = assertAllowedCurrency(
+    paidCurrency = assertGatewayCurrency(
+      "paypal",
       payment.purchase_units?.[0]?.payments?.captures?.[0]?.amount?.currency_code,
     );
   }
@@ -314,6 +428,7 @@ async function claimPaymentOnce({ gateway, ref, consumedFor, resourceId, patient
 module.exports = {
   PaymentVerificationError,
   assertAllowedCurrency,
+  assertGatewayCurrency,
   decidePaymentCurrency,
   resolveDoctorFeeCents,
   logOrphanedPayment,
@@ -321,6 +436,7 @@ module.exports = {
   resolveServiceFeeCents,
   verifyStripePaymentIntent,
   verifyPaypalOrder,
+  verifyRazorpayPayment,
   verifyCategoryPayment,
   resolveChargeForSelection,
   claimPaymentOnce,

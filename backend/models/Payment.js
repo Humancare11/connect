@@ -25,12 +25,18 @@ const paymentSchema = new mongoose.Schema(
       ref: "CategoryConsultation",
       default: null,
     },
-    gateway: { type: String, enum: ["stripe", "paypal"], required: true },
+    gateway: { type: String, enum: ["stripe", "paypal", "razorpay"], required: true },
     // Stripe PaymentIntent id or PayPal order id. Never exposed to the
     // frontend directly — see the /mine and /:id/invoice-url routes.
     gatewayReference: { type: String, required: true },
     amountCents: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "usd" },
+    // Set only for a Razorpay payment (gatewayReference then holds the same razorpayPaymentId).
+    razorpayOrderId: { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
+    // Filled by the Razorpay webhook when the money is refunded in the Razorpay dashboard.
+    refundedAmountCents: { type: Number, default: 0, min: 0 },
+    refundedAt: { type: Date, default: null },
     status: { type: String, enum: ["succeeded"], default: "succeeded" },
     description: { type: String, default: "", trim: true },
     invoice: {

@@ -160,6 +160,9 @@ const createAppointment = async (req, res) => {
   // reconcilable error instead of silently losing their payment).
   let paymentRef = "";
   let paymentGateway = "";
+  // Razorpay only (INR category bookings): the order and payment ids of the verified payment.
+  let paymentRazorpayOrderId = "";
+  let paymentRazorpayPaymentId = "";
   let paymentAmountFinal = 0;
   // Currency of paymentAmountFinal, as verified with the gateway (lower-case).
   // Doctor bookings are always USD; category bookings can be USD / EUR / GBP.
@@ -177,6 +180,9 @@ const createAppointment = async (req, res) => {
       medicalReports,
       paymentIntentId,
       paypalOrderId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
       category,
       categoryId,
       specialty,
@@ -294,7 +300,7 @@ const createAppointment = async (req, res) => {
 
     // Category-based booking (no specific doctor) — payment required
     if (!resolvedDoctorId) {
-      if (!paymentIntentId && !paypalOrderId) {
+      if (!paymentIntentId && !paypalOrderId && !razorpayPaymentId && !razorpayOrderId) {
         return res.status(400).json({ msg: "Payment is required to submit an appointment request." });
       }
 
@@ -316,12 +322,18 @@ const createAppointment = async (req, res) => {
       const verified = await verifyCategoryPayment({
         paymentIntentId,
         paypalOrderId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        patientId,
         priceRef: categoryId || category,
         requireActive: false,
       });
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
+      paymentRazorpayOrderId = verified.razorpayOrderId || "";
+      paymentRazorpayPaymentId = verified.razorpayPaymentId || "";
       paymentAmountFinal = verified.amountCents;
       paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
@@ -406,6 +418,8 @@ const createAppointment = async (req, res) => {
             paymentCurrency,
             paymentStatus,
             paymentGateway,
+            razorpayOrderId: paymentRazorpayOrderId,
+            razorpayPaymentId: paymentRazorpayPaymentId,
             source,
           },
         ],
@@ -464,6 +478,8 @@ const createAppointment = async (req, res) => {
         appointmentId: appointment._id,
         gateway: paymentGateway,
         gatewayReference: paymentRef,
+        razorpayOrderId: paymentRazorpayOrderId,
+        razorpayPaymentId: paymentRazorpayPaymentId,
         amountCents: paymentAmountFinal,
         currency: paymentCurrency,
         description: paymentDescription,

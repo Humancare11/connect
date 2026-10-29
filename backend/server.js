@@ -366,6 +366,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Razorpay signs the RAW body, so its webhook gets the bytes untouched (before express.json parses and discards them).
+app.post("/api/razorpay/webhook", express.raw({ type: "*/*", limit: "1mb" }), require("./routes/razorpay").webhookHandler);
 app.use(express.json());
 app.use(require("cookie-parser")());
 
@@ -625,6 +627,7 @@ app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin/manual-invoices", require("./routes/manualInvoices"));
 app.use("/api/admin/gop", require("./routes/gop"));
 app.use("/api/paypal", require("./routes/paypal"));
+app.use("/api/razorpay", require("./routes/razorpay"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/geo", require("./routes/geo"));
 app.use("/api/services", require("./routes/services"));

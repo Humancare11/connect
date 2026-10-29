@@ -9,7 +9,7 @@ const PaymentLink = require("../models/PaymentLink");
 const Payment = require("../models/Payment");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
 const { toCents } = require("../utils/currency");
-const { resolveChargeForSelection, assertAllowedCurrency } = require("../utils/paymentVerification");
+const { resolveChargeForSelection, assertGatewayCurrency, PaymentVerificationError } = require("../utils/paymentVerification");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 
 const SUPPORTED_PAYMENT_LINK_CURRENCIES = ["usd"];
@@ -329,7 +329,8 @@ router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
         msg: "Could not determine a valid price for this selection. Please reselect and try again.",
       });
     }
-    const currency = assertAllowedCurrency(charge.currency);
+    // Stripe never takes INR (Razorpay does): refused before Stripe is called.
+    const currency = assertGatewayCurrency("stripe", charge.currency);
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: charge.amountMinor,
@@ -347,7 +348,8 @@ router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
     res.json({ clientSecret: paymentIntent.client_secret, amountCents: charge.amountMinor, currency });
   } catch (err) {
     console.error("create-intent-by-amount error:", err.message);
-    res.status(500).json({ msg: err.message || "Failed to create payment intent." });
+    // A gateway / currency mismatch is the caller's mistake (400), not a server failure.
+    res.status(err instanceof PaymentVerificationError ? err.status : 500).json({ msg: err.message || "Failed to create payment intent." });
   }
 });
 

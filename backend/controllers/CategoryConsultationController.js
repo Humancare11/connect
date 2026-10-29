@@ -23,10 +23,19 @@ const createCategoryConsultation = async (req, res) => {
       req.body.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
     const isFlexible = appointmentType === "FLEXIBLE_TIME";
 
-    const { paymentIntentId, paypalOrderId, serviceName, categoryName, categoryId } = req.body;
+    const {
+      paymentIntentId,
+      paypalOrderId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      serviceName,
+      categoryName,
+      categoryId,
+    } = req.body;
 
     // Payment validation
-    if (!paymentIntentId && !paypalOrderId) {
+    if (!paymentIntentId && !paypalOrderId && !razorpayPaymentId && !razorpayOrderId) {
       return res.status(400).json({
         success: false,
         message: "Payment is required to submit a consultation request.",
@@ -35,6 +44,9 @@ const createCategoryConsultation = async (req, res) => {
 
     let paymentRef = "";
     let paymentGateway = "";
+    // Razorpay only (INR category bookings): the order and payment ids of the verified payment.
+    let paymentRazorpayOrderId = "";
+    let paymentRazorpayPaymentId = "";
     let paymentAmountFinal = 0;
     // Currency of paymentAmountFinal, as verified with the gateway (lower-case).
     let paymentCurrency = "usd";
@@ -66,6 +78,10 @@ const createCategoryConsultation = async (req, res) => {
         if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
           return res.status(400).json({ success: false, message: unrecognized });
         }
+        // A service is always USD, and Razorpay only takes INR: refused, never converted.
+        if (razorpayPaymentId || razorpayOrderId) {
+          return res.status(400).json({ success: false, message: "Razorpay only takes INR payments. Please restart checkout." });
+        }
         verified = paymentIntentId
           ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
           : await verifyPaypalOrder({ paypalOrderId, expectedCents });
@@ -73,6 +89,10 @@ const createCategoryConsultation = async (req, res) => {
         verified = await verifyCategoryPayment({
           paymentIntentId,
           paypalOrderId,
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature,
+          patientId: req.user.id,
           priceRef: categoryId || categoryName,
           requireActive: false,
           unrecognizedMessage: unrecognized,
@@ -81,6 +101,8 @@ const createCategoryConsultation = async (req, res) => {
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
+      paymentRazorpayOrderId = verified.razorpayOrderId || "";
+      paymentRazorpayPaymentId = verified.razorpayPaymentId || "";
       paymentAmountFinal = verified.amountCents;
       paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
@@ -125,6 +147,8 @@ const createCategoryConsultation = async (req, res) => {
         paymentCurrency,
         paymentStatus,
         paymentGateway,
+        razorpayOrderId: paymentRazorpayOrderId,
+        razorpayPaymentId: paymentRazorpayPaymentId,
         source: bookingSourceFor(req),
       });
     } catch (err) {
@@ -166,6 +190,8 @@ const createCategoryConsultation = async (req, res) => {
             categoryConsultationId: consultation._id,
             gateway: paymentGateway,
             gatewayReference: paymentRef,
+            razorpayOrderId: paymentRazorpayOrderId,
+            razorpayPaymentId: paymentRazorpayPaymentId,
             amountCents: paymentAmountFinal,
             currency: paymentCurrency,
             description: `${req.body.categoryName || req.body.serviceName || "Category"} consultation booking`,

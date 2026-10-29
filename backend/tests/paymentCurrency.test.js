@@ -169,7 +169,7 @@ describe("category payments in USD / EUR / GBP", () => {
       assert.equal(pv.assertAllowedCurrency("GBP"), "GBP");
     });
     test("throws for anything else", () => {
-      for (const bad of ["INR", "JPY", "btc", "", null, undefined, 5, "US", "USDD"]) {
+      for (const bad of ["JPY", "KRW", "btc", "", null, undefined, 5, "US", "USDD"]) {
         assert.throws(() => pv.assertAllowedCurrency(bad), pv.PaymentVerificationError, String(bad));
       }
     });
@@ -349,10 +349,10 @@ describe("category payments in USD / EUR / GBP", () => {
     });
 
     test("Stripe: a currency outside USD/EUR/GBP is refused whatever is expected", async () => {
-      pi("pi_inr", { currency: "inr", amount: 3000 });
+      pi("pi_inr", { currency: "jpy", amount: 3000 });
       await rejects(pv.verifyStripePaymentIntent({ paymentIntentId: "pi_inr", expectedCents: 3000, expectedCurrency: "EUR" }), /Unsupported payment currency/);
       await rejects(pv.verifyStripePaymentIntent({ paymentIntentId: "pi_inr", expectedCents: 3000 }), /Unsupported payment currency/);
-      await assert.rejects(pv.verifyStripePaymentIntent({ paymentIntentId: "pi_inr", expectedCents: 3000, expectedCurrency: "INR" }), pv.PaymentVerificationError);
+      await assert.rejects(pv.verifyStripePaymentIntent({ paymentIntentId: "pi_inr", expectedCents: 3000, expectedCurrency: "JPY" }), pv.PaymentVerificationError);
     });
 
     test("Stripe: an unfinished payment is refused with 402; an unknown reference is refused", async () => {
@@ -383,7 +383,7 @@ describe("category payments in USD / EUR / GBP", () => {
     });
 
     test("PayPal: a currency outside USD/EUR/GBP, an amount mismatch and an unfinished order are refused", async () => {
-      order("O_inr", { currency: "INR", value: "30.00" });
+      order("O_inr", { currency: "JPY", value: "30.00" });
       await rejects(pv.verifyPaypalOrder({ paypalOrderId: "O_inr", expectedCents: 3000, expectedCurrency: "EUR" }), /Unsupported payment currency/);
       order("O_low", { currency: "EUR", value: "1.00" });
       await rejects(pv.verifyPaypalOrder({ paypalOrderId: "O_low", expectedCents: 3000, expectedCurrency: "EUR" }), /amount does not match/);
@@ -427,7 +427,7 @@ describe("category payments in USD / EUR / GBP", () => {
     });
 
     test("a currency outside USD/EUR/GBP is refused", async () => {
-      pi("pi_inr", { currency: "inr", amount: 3000 });
+      pi("pi_inr", { currency: "jpy", amount: 3000 });
       await rejects(verify({ paymentIntentId: "pi_inr" }), /Unsupported payment currency/);
     });
 
@@ -508,7 +508,7 @@ describe("category payments in USD / EUR / GBP", () => {
 
     test("category consultation: a wrong amount or currency is refused and nothing is created", async () => {
       pi("pi_bad1", { currency: "eur", amount: 1000 }); // the USD amount, paid in EUR
-      pi("pi_bad2", { currency: "inr", amount: 3000 });
+      pi("pi_bad2", { currency: "jpy", amount: 3000 });
       for (const id of ["pi_bad1", "pi_bad2"]) {
         const res = makeRes();
         await createCategoryConsultation(reqFor(eurUser, consultationBody({ paymentIntentId: id })), res);
@@ -573,7 +573,7 @@ describe("category payments in USD / EUR / GBP", () => {
       await createAppointment(reqFor(gbpUser, appointmentBody({ paymentIntentId: "pi_a3" })), res);
       assert.equal(res.statusCode, 409);
 
-      pi("pi_a4", { currency: "inr", amount: 2500 });
+      pi("pi_a4", { currency: "jpy", amount: 2500 });
       res = makeRes();
       await createAppointment(reqFor(gbpUser, appointmentBody({ paymentIntentId: "pi_a4" })), res);
       assert.equal(res.statusCode, 400);

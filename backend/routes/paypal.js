@@ -6,7 +6,7 @@ const Enrollment = require("../models/Enrollment");
 const Doctor     = require("../models/Doctor");
 const { paypalFetch } = require("../utils/paypal");
 const { convertAmount } = require("../utils/currency");
-const { resolveChargeForSelection, assertAllowedCurrency } = require("../utils/paymentVerification");
+const { resolveChargeForSelection, assertGatewayCurrency, PaymentVerificationError } = require("../utils/paymentVerification");
 
 async function resolveDoctorId(value) {
   if (!value) return null;
@@ -80,7 +80,8 @@ router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
         msg: "Could not determine a valid price for this selection. Please reselect and try again.",
       });
     }
-    const currency = assertAllowedCurrency(charge.currency);
+    // PayPal never takes INR (Razorpay does): refused before PayPal is called.
+    const currency = assertGatewayCurrency("paypal", charge.currency);
 
     const order = await paypalFetch("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",
@@ -95,7 +96,8 @@ router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
     res.json({ orderId: order.id, amountCents: charge.amountMinor, currency });
   } catch (err) {
     console.error("paypal/create-order-by-amount:", err.message);
-    res.status(500).json({ msg: err.message || "Failed to create PayPal order." });
+    // A gateway / currency mismatch is the caller's mistake (400), not a server failure.
+    res.status(err instanceof PaymentVerificationError ? err.status : 500).json({ msg: err.message || "Failed to create PayPal order." });
   }
 });
 

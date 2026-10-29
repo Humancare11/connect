@@ -7,8 +7,8 @@ const mongoose = require("mongoose");
 // consumes it. Insert failing with a duplicate-key error IS the replay check.
 const consumedPaymentSchema = new mongoose.Schema(
   {
-    gateway: { type: String, required: true, enum: ["stripe", "paypal"] },
-    ref: { type: String, required: true }, // paymentIntentId or paypalOrderId
+    gateway: { type: String, required: true, enum: ["stripe", "paypal", "razorpay"] },
+    ref: { type: String, required: true }, // paymentIntentId, paypalOrderId or razorpayPaymentId
     consumedFor: { type: String, default: "" }, // e.g. "appointment", "categoryConsultation" — informational only
     resourceId: { type: mongoose.Schema.Types.ObjectId, default: null }, // the booking this payment funded
     patientId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

@@ -170,7 +170,7 @@ const consultationSchema = new mongoose.Schema(
     // multi-currency existed have none stored and read as "usd".
     paymentCurrency: {
       type: String,
-      enum: ["usd", "eur", "gbp"],
+      enum: ["usd", "eur", "gbp", "inr"],
       default: "usd",
     },
     paymentStatus: {
@@ -180,9 +180,12 @@ const consultationSchema = new mongoose.Schema(
     },
     paymentGateway: {
       type: String,
-      enum: ["", "stripe", "paypal"],
+      enum: ["", "stripe", "paypal", "razorpay"],
       default: "",
     },
+    // Set only for a Razorpay payment (paymentIntentId then holds the same razorpayPaymentId).
+    razorpayOrderId: { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
   },
   {
     timestamps: true,

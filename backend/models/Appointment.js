@@ -97,9 +97,12 @@ const appointmentSchema = new mongoose.Schema(
     paymentAmount:    { type: Number, default: 0 },
     // Currency of paymentAmount / consultationPrice. Bookings made before
     // multi-currency existed have none stored and read as "usd".
-    paymentCurrency:  { type: String, enum: ["usd", "eur", "gbp"], default: "usd" },
+    paymentCurrency:  { type: String, enum: ["usd", "eur", "gbp", "inr"], default: "usd" },
     paymentStatus:    { type: String, enum: ["unpaid", "paid"], default: "unpaid", index: true },
-    paymentGateway:   { type: String, enum: ["stripe", "paypal", ""], default: "" },
+    paymentGateway:   { type: String, enum: ["stripe", "paypal", "razorpay", ""], default: "" },
+    // Set only for a Razorpay payment (paymentIntentId then holds the same razorpayPaymentId).
+    razorpayOrderId:  { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
     doctorPayoutStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
     doctorPayoutDate:   { type: Date },
     doctorPayoutRef:    { type: String, default: "" },
