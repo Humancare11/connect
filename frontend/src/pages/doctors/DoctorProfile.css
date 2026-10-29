@@ -323,6 +323,12 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 640px) {
+  .dpfu-vdivider {
+    display: none;
+  }
+}
+
 .dpfu-specialty-tags {
   display: flex;
   align-items: center;

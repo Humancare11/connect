@@ -1,4 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
@@ -9,6 +16,71 @@ const MedicalCertificateSlip = lazy(() =>
     default: module.MedicalCertificateSlip,
   })),
 );
+
+// ── Scale-to-fit certificate preview ──────────────────────────────────────────
+// The certificate is a fixed 794px (A4) document. On narrower screens the
+// on-screen preview is scaled down proportionally to fit the container.
+// Display-only: the PDF is captured from a separate, unscaled instance.
+
+const CERT_WIDTH = 794;
+
+function ScaledCertificatePreview({
+  cert,
+  patient,
+  doctor,
+  doctorEnrollment,
+}) {
+  const measureRef = useRef(null);
+  const innerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+  const [height, setHeight] = useState(0);
+
+  useLayoutEffect(() => {
+    const measureEl = measureRef.current;
+    const innerEl = innerRef.current;
+    if (!measureEl || !innerEl) return undefined;
+
+    const update = () => {
+      const avail = measureEl.clientWidth;
+      if (avail > 0) setScale(Math.min(1, avail / CERT_WIDTH));
+      setHeight(innerEl.offsetHeight); // layout height, unaffected by transform
+    };
+    update();
+
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(update);
+    ro.observe(measureEl);
+    ro.observe(innerEl);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <div ref={measureRef} className="dp-cert-measure">
+      <div
+        className="dp-cert-box"
+        style={{
+          width: CERT_WIDTH * scale,
+          height: height ? height * scale : undefined,
+        }}
+      >
+        <div
+          ref={innerRef}
+          className="dp-cert-inner"
+          style={{ width: CERT_WIDTH, transform: `scale(${scale})` }}
+        >
+          <Suspense fallback={null}>
+            <MedicalCertificateSlip
+              cert={cert}
+              patient={patient}
+              doctor={doctor}
+              doctorEnrollment={doctorEnrollment}
+            />
+          </Suspense>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Medical certificate letterhead preview — dedicated page ───────────────────
 // Mirrors PrescriptionPreview.jsx: uses navigation state when available (from
@@ -139,16 +211,27 @@ export default function CertificatePreview() {
 
         <div className="dp-slip-body">
           <div className="dp-slip-body-inner">
-            <Suspense fallback={null}>
-              <MedicalCertificateSlip
-                cert={cert}
-                patient={patient}
-                doctor={doctor}
-                doctorEnrollment={doctorEnrollment}
-                slipRef={slipRef}
-              />
-            </Suspense>
+            <ScaledCertificatePreview
+              cert={cert}
+              patient={patient}
+              doctor={doctor}
+              doctorEnrollment={doctorEnrollment}
+            />
           </div>
+        </div>
+
+        {/* PDF source — always in DOM, offscreen and never scaled, so the
+            capture ref stays valid and independent of the preview */}
+        <div className="dp-cert-offscreen" aria-hidden="true">
+          <Suspense fallback={null}>
+            <MedicalCertificateSlip
+              cert={cert}
+              patient={patient}
+              doctor={doctor}
+              doctorEnrollment={doctorEnrollment}
+              slipRef={slipRef}
+            />
+          </Suspense>
         </div>
       </div>
     </div>

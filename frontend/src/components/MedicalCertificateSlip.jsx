@@ -12,9 +12,9 @@
  *   slipRef          — ref forwarded to root div for PDF capture
  */
 
-import { useEffect, useState } from "react";
 import logoFull from "../assets/Logo.png";
-import logoIcon from "../assets/single-logo.png";
+import footerQr from "../assets/New-Footer-QR.jpeg";
+import footerLogo from "../assets/prescription-logo.png";
 
 /* ── Shared design tokens (identical to PrescriptionSlip) ─────────────────── */
 const PRIMARY = "#12296B"; // navy
@@ -35,7 +35,6 @@ const COMPANY = {
 
 const SLIP_WIDTH = 794; // A4 at 96dpi — matches the slip root width
 const SLIP_HEIGHT = 1123; // one A4 page
-const SLIP_CAPTURE_WINDOW_WIDTH = 1200;
 
 /* ── Helpers ──────────────────────────────────────────────────────────────── */
 function calcAge(dob) {
@@ -89,76 +88,28 @@ function InfoField({ label, value, style = {} }) {
   );
 }
 
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-
-/* Real, scannable QR (black on white, error correction H) with the logo in a
-   small white box in the centre. Returned as a data URL so html2canvas can
-   capture it without any cross-origin issues. */
-function useQrDataUrl(text) {
-  const [url, setUrl] = useState("");
-
-  useEffect(() => {
-    let live = true;
-    (async () => {
-      try {
-        const [{ default: QR }, logo] = await Promise.all([
-          import("qrcode"),
-          loadImage(logoIcon),
-        ]);
-        const size = 256;
-        const canvas = document.createElement("canvas");
-        await QR.toCanvas(canvas, text, {
-          errorCorrectionLevel: "H",
-          margin: 1,
-          width: size,
-          color: { dark: "#000000", light: "#ffffff" },
-        });
-        const ctx = canvas.getContext("2d");
-        const box = Math.round(canvas.width * 0.25);
-        const x = Math.round((canvas.width - box) / 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(x, x, box, box);
-        const pad = Math.round(box * 0.12);
-        const inner = box - pad * 2;
-        const ratio = Math.min(inner / logo.width, inner / logo.height);
-        const w = logo.width * ratio;
-        const h = logo.height * ratio;
-        ctx.drawImage(logo, x + (box - w) / 2, x + (box - h) / 2, w, h);
-        if (live) setUrl(canvas.toDataURL("image/png"));
-      } catch {
-        /* leave the QR blank rather than break the certificate */
-      }
-    })();
-    return () => {
-      live = false;
-    };
-  }, [text]);
-
-  return url;
-}
-
-function CertificateQR({ text }) {
-  const url = useQrDataUrl(text);
-  const box = { width: 64, height: 64, display: "block", flexShrink: 0 };
-  // The QR's own 1-module quiet zone is blank, so pull it left by that much
-  // to line the code up with the footer's left edge.
-  return url ? (
+// Footer QR — same image as the prescription footer.
+function CertificateQR() {
+  return (
     <img
-      src={url}
-      alt="Certificate QR code"
-      width={64}
-      height={64}
-      style={{ ...box, marginLeft: -1 }}
+      src={footerQr}
+      alt="Humancare Connect QR code"
+      width={100}
+      height={100}
+      style={{
+        width: 100,
+        height: 100,
+        display: "block",
+        flexShrink: 0,
+        boxSizing: "border-box",
+        objectFit: "contain",
+        border: "1px solid var(--line, #dde2ea)",
+        borderRadius: 6,
+        padding: 4,
+        background: "#fff",
+      }}
+      crossOrigin="anonymous"
     />
-  ) : (
-    <div style={{ ...box, background: "#fff", marginLeft: -1 }} />
   );
 }
 
@@ -180,32 +131,6 @@ function VerifiedTick() {
     </svg>
   );
 }
-
-const FOOTER_ICONS = {
-  phone: (
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="#12296B">
-      <path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z" />
-    </svg>
-  ),
-  email: (
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="#12296B">
-      <rect x="2" y="5" width="20" height="14" rx="2" />
-      <path
-        d="M4.5 7.5l7.5 5.5 7.5-5.5"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  ),
-  address: (
-    <svg viewBox="0 0 24 24" width="15" height="15" fill="#12296B">
-      <path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
-    </svg>
-  ),
-};
 
 /* ── Details table cells ─────────────────────────────────────────────────── */
 const CELL = {
@@ -273,9 +198,6 @@ export function MedicalCertificateSlip({
   const hasRestPeriod = cert?.restFromDate || cert?.restToDate;
   const issued = fmtDate(cert?.issuedDate || cert?.createdAt);
 
-  // No verification page exists (the Prescription QR is just a static image),
-  // so the QR carries the certificate details as plain text.
-  const qrText = `Humancare Connect Medical Certificate | ID: ${certId} | Patient: ${patient?.name || "—"} | Issued: ${issued}`;
 
   const detailRows = [
     { label: "Diagnosis / Condition", value: cert?.diagnosis || "—" },
@@ -456,7 +378,11 @@ export function MedicalCertificateSlip({
             </thead>
             <tbody>
               {detailRows.map((row, i) => (
-                <DetailRow key={row.label} label={row.label} shaded={i % 2 === 1}>
+                <DetailRow
+                  key={row.label}
+                  label={row.label}
+                  shaded={i % 2 === 1}
+                >
                   {row.value}
                 </DetailRow>
               ))}
@@ -592,69 +518,51 @@ export function MedicalCertificateSlip({
         </div>
       </div>
 
-      {/* ── Footer — pinned to the bottom of the page ──────────────── */}
+      {/* ── Footer — same layout as the prescription footer, pinned to the
+           bottom of the page; keeps the certificate's own divider line ── */}
       <div
         style={{
           marginTop: 10,
-          background: LIGHT,
+          background: "var(--panel, #f7f9fc)",
           borderTop: `3px solid ${ACCENT}`,
-          padding: "12px 40px",
+          padding: "10px 30px",
           display: "flex",
           alignItems: "center",
+          justifyContent: "space-between",
           gap: 20,
         }}
       >
-        <CertificateQR text={qrText} />
+        <CertificateQR />
 
         <div
           style={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            gap: 5,
+            fontSize: 13,
+            lineHeight: 1.9,
+            color: "var(--muted, #667085)",
           }}
         >
           {[
-            { icon: FOOTER_ICONS.phone, text: COMPANY.phone },
-            { icon: FOOTER_ICONS.email, text: COMPANY.email },
-            { icon: FOOTER_ICONS.address, text: COMPANY.address },
-          ].map(({ icon, text }) => (
-            <div
-              key={text}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 11,
-                color: FOOT_TEXT,
-              }}
+            `📞 ${COMPANY.phone}`,
+            `✉️ ${COMPANY.email}`,
+            `📍 ${COMPANY.address}`,
+          ].map((line) => (
+            <span
+              key={line}
+              style={{ display: "flex", alignItems: "center", gap: 7 }}
             >
-              <span
-                style={{
-                  width: 15,
-                  height: 15,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                {icon}
-              </span>
-              <span>{text}</span>
-            </div>
+              {line}
+            </span>
           ))}
         </div>
 
         <img
-          src={logoIcon}
-          alt=""
+          src={footerLogo}
+          alt="Clinic logo"
           style={{
-            height: 52,
-            objectFit: "contain",
-            display: "block",
+            maxHeight: 100,
+            width: "auto",
             flexShrink: 0,
-            opacity: 0.9,
+            opacity: 0.85,
           }}
           crossOrigin="anonymous"
         />
@@ -663,79 +571,11 @@ export function MedicalCertificateSlip({
   );
 }
 
-/* ── PDF download utility — same pattern as downloadPrescriptionPDF, with multi-page output ──── */
+/* ── PDF download utility — shared with the prescription (utils/slipPdf.js) ── */
 export async function downloadCertificatePDF(
   element,
   filename = "medical-certificate.pdf",
 ) {
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
-    import("jspdf"),
-  ]);
-
-  await document.fonts.ready;
-  // Make sure every image (including the generated QR) has loaded before capture.
-  await Promise.all(
-    [...element.querySelectorAll("img")].map((img) =>
-      img.complete ? null : img.decode().catch(() => {}),
-    ),
-  );
-
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: "#ffffff",
-    logging: false,
-    // Lay the clone out at a fixed viewport so the capture doesn't depend on
-    // the browser window size.
-    windowWidth: SLIP_CAPTURE_WINDOW_WIDTH,
-    onclone: (clonedDoc, clonedEl) => {
-      // A modal entrance animation (scale) on an ancestor is restarted in the
-      // clone and shrinks everything slightly, so the 1px divider ends up
-      // under 1px tall and html2canvas draws its gradient on a 0-height
-      // canvas (createPattern InvalidStateError). Freeze ancestors and pin
-      // the slip to its real A4 width.
-      for (let node = clonedEl.parentElement; node; node = node.parentElement) {
-        node.style.animation = "none";
-        node.style.transform = "none";
-      }
-      clonedEl.style.width = `${SLIP_WIDTH}px`;
-      clonedEl.style.maxWidth = "none";
-      clonedEl.style.transform = "none";
-
-      // Safety net: a gradient on a zero-size box crashes html2canvas, so drop
-      // the background from any such element (nothing visible to paint there).
-      const view = clonedDoc.defaultView;
-      [clonedEl, ...clonedEl.querySelectorAll("*")].forEach((node) => {
-        if (!/gradient/.test(view.getComputedStyle(node).backgroundImage)) return;
-        const { width, height } = node.getBoundingClientRect();
-        if (width < 1 || height < 1) node.style.backgroundImage = "none";
-      });
-    },
-  });
-
-  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  const pdfW = pdf.internal.pageSize.getWidth();
-  const pdfH = (canvas.height * pdfW) / canvas.width;
-  const imgData = canvas.toDataURL("image/jpeg", 0.97);
-
-  // If the content is taller than one A4 page, repeat the image on extra
-  // pages, shifted up by one page height each time.
-  const pageH = pdf.internal.pageSize.getHeight();
-  let heightLeft = pdfH;
-  let position = 0;
-
-  pdf.addImage(imgData, "JPEG", 0, position, pdfW, pdfH);
-  heightLeft -= pageH;
-
-  // 0.5mm tolerance so an exactly-one-page slip doesn't spill a blank page
-  while (heightLeft > 0.5) {
-    position = heightLeft - pdfH;
-    pdf.addPage();
-    pdf.addImage(imgData, "JPEG", 0, position, pdfW, pdfH);
-    heightLeft -= pageH;
-  }
-
-  pdf.save(filename);
+  const { renderSlipToPdf } = await import("../utils/slipPdf");
+  await renderSlipToPdf(element, filename, SLIP_WIDTH);
 }

@@ -663,7 +663,7 @@
 }
 
 .dp-slip-toolbar {
-  position: sticky;
+  /* position: sticky; */
   top: 0;
   z-index: 2;
   background: #fff;
@@ -721,6 +721,50 @@
 .dp-slip-body-inner {
   margin: 0 auto;
   max-width: 100%;
+  min-width: 0;
+}
+
+/* Scaled medical-certificate preview (display only — see
+   ScaledCertificatePreview in CertificatePreview.jsx). Certificate-only
+   classes, so the prescription preview is unaffected. */
+.dp-cert-measure {
+  width: 100%;
+  min-width: 0;
+}
+
+.dp-cert-box {
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.dp-cert-inner {
+  transform-origin: top left;
+}
+
+/* PDF source: always in the DOM, offscreen and never scaled. Keeps real
+   dimensions so html2canvas captures the original 794px certificate. */
+.dp-cert-offscreen {
+  position: absolute;
+  top: 0;
+  left: -99999px;
+  pointer-events: none;
+}
+
+.dp-slip-modal-box {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .dp-slip-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .dp-slip-body {
+    padding: 10px 6px;
+  }
 }
 
 .dp-modal-header {
@@ -1155,7 +1199,6 @@ select.dp-input {
   overflow-wrap: anywhere;
 }
 
-
 .dp-med-card {
   border: 1.5px solid var(--border);
   border-radius: 10px;
@@ -1202,4 +1245,217 @@ select.dp-input {
   background: var(--blue-soft);
   padding: 6px 10px;
   border-radius: 6px;
+}
+
+/* ── View Notes modal — tablet & mobile ── */
+.dp-notes-modal {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dp-notes-modal .dp-modal-header h2,
+.dp-notes-modal .dp-modal-patient {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .dp-modal-overlay:has(.dp-notes-modal) {
+    padding: 20px 12px;
+  }
+
+  .dp-notes-modal {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .dp-modal-overlay:has(.dp-notes-modal) {
+    padding: 0;
+  }
+
+  .dp-notes-modal {
+    max-width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .dp-notes-modal .dp-modal-header {
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 16px 14px 0;
+    position: relative;
+  }
+
+  .dp-notes-modal .dp-modal-header h2 {
+    flex: 1 1 calc(100% - 44px);
+    font-size: 16px;
+  }
+
+  .dp-notes-modal .dp-modal-patient {
+    order: 3;
+    flex: 1 0 100%;
+    font-size: 12.5px;
+  }
+
+  .dp-notes-modal .dp-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+  }
+
+  .dp-notes-modal .dp-modal-body {
+    padding: 14px 14px 20px;
+  }
+}
+
+/* The notes modal lives inside .dl-main (z-index: 1), which sits below the
+   fixed sidebar (z-index: 50) and so gets covered by it. While the modal is
+   open, lift .dl-main above the sidebar so the overlay covers everything. */
+.dl-main:has(.dp-notes-modal) {
+  z-index: 100;
+}
+
+/* 901px–1280px: the fixed sidebar (248px + 28px margin) is still visible, so
+   keep the notes modal in the content area beside it instead of under it. */
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .dp-modal-overlay:has(.dp-notes-modal) {
+    padding-left: 292px;
+    padding-right: 20px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1024px) {
+  .dp-modal-overlay:has(.dp-notes-modal) {
+    padding-left: 264px;
+    padding-right: 16px;
+  }
+}
+
+/* ── Scaled prescription preview (see ScaledPrescriptionPreview in
+   PrescriptionPreview.jsx) — mirrors the .dp-cert-* certificate preview ── */
+.dp-rx-measure {
+  width: 100%;
+  min-width: 0;
+}
+
+.dp-rx-box {
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.dp-rx-inner {
+  transform-origin: top left;
+}
+
+/* PDF source: always in the DOM, offscreen and never scaled. */
+.dp-rx-offscreen {
+  position: absolute;
+  top: 0;
+  left: -99999px;
+  width: 794px;
+  pointer-events: none;
+}
+
+/* The slip's own media queries reflow it for small viewports. Inside the
+   scaled preview (and the offscreen PDF copy) it must always keep its fixed
+   A4 desktop layout, so restore the desktop values here. */
+.dp-rx-inner .rx-slip {
+  width: 794px;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.dp-rx-inner .rx-header {
+  padding: 28px 44px 16px;
+}
+
+.dp-rx-inner .rx-logo {
+  max-height: 150px;
+  width: 150px;
+}
+
+.dp-rx-inner .rx-title-row {
+  padding: 22px 44px 18px;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0;
+}
+
+.dp-rx-inner .rx-title {
+  font-size: 21px;
+}
+
+.dp-rx-inner .rx-date-inline {
+  position: absolute;
+}
+
+.dp-rx-inner .rx-patient-panel {
+  margin: 0 44px 26px;
+}
+
+.dp-rx-inner .rx-patient-row-triple {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.dp-rx-inner .rx-patient-row-triple .rx-patient-cell {
+  border-right: 1.5px solid var(--line);
+  border-bottom: none;
+}
+
+.dp-rx-inner .rx-patient-row-triple .rx-patient-cell:last-child {
+  border-right: none;
+}
+
+.dp-rx-inner .rx-patient-cell {
+  padding: 12px 18px;
+  flex-wrap: nowrap;
+}
+
+.dp-rx-inner .rx-value,
+.dp-rx-inner .rx-field-row .value,
+.dp-rx-inner .rx-contact-lines {
+  overflow-wrap: normal;
+}
+
+.dp-rx-inner .rx-med-heading {
+  margin: 0 44px 4px;
+}
+
+.dp-rx-inner .rx-symbol {
+  margin: 0 44px 10px;
+}
+
+.dp-rx-inner .rx-field-row {
+  margin: 0 44px 12px;
+}
+
+.dp-rx-inner .rx-ribbon-wrap {
+  margin: 22px 44px 0;
+}
+
+.dp-rx-inner .rx-ribbon-underline {
+  margin: 0 44px 0;
+}
+
+.dp-rx-inner .rx-physician-grid {
+  grid-template-columns: 1fr 1fr;
+  margin: 20px 44px 0;
+}
+
+.dp-rx-inner table.rx-med-table {
+  display: table;
+  width: calc(100% - 88px);
+  max-width: none;
+  margin: 0 44px 26px;
+  overflow: hidden;
+}
+
+.dp-rx-inner .rx-footer {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  padding: 10px 30px;
 }
