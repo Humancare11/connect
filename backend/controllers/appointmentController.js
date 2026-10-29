@@ -13,7 +13,7 @@ const {
   PaymentVerificationError,
   resolveDoctorFeeCents,
   logOrphanedPayment,
-  resolveCategoryFeeCents,
+  verifyCategoryPayment,
   verifyStripePaymentIntent,
   verifyPaypalOrder,
   claimPaymentOnce,
@@ -161,6 +161,9 @@ const createAppointment = async (req, res) => {
   let paymentRef = "";
   let paymentGateway = "";
   let paymentAmountFinal = 0;
+  // Currency of paymentAmountFinal, as verified with the gateway (lower-case).
+  // Doctor bookings are always USD; category bookings can be USD / EUR / GBP.
+  let paymentCurrency = "usd";
   let paymentStatus = "unpaid";
   let paymentDescription = "";
 
@@ -271,6 +274,7 @@ const createAppointment = async (req, res) => {
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
       paymentAmountFinal = verified.amountCents;
+      paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
       paymentDescription = `Consultation with Dr. ${doctor.name}`;
 
@@ -303,18 +307,23 @@ const createAppointment = async (req, res) => {
       // CategoryConsultationController.js: this runs after the patient has
       // already been charged, so an admin deactivating/renaming the
       // category in the meantime must not strand that payment.
-      const expectedCents = await resolveCategoryFeeCents(categoryId || category, { requireActive: false });
-      if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
-        return res.status(400).json({ msg: "Unrecognized category. Please reselect and try again." });
-      }
-
-      const verified = paymentIntentId
-        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+      //
+      // The payment says which currency it was taken in (the server chose it
+      // when the payment was created); verifyCategoryPayment checks amount AND
+      // currency against the category's stored price in that currency - no
+      // conversion - and throws PaymentVerificationError (400 for an unknown
+      // category) otherwise.
+      const verified = await verifyCategoryPayment({
+        paymentIntentId,
+        paypalOrderId,
+        priceRef: categoryId || category,
+        requireActive: false,
+      });
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
       paymentAmountFinal = verified.amountCents;
+      paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
       paymentDescription = `${category || "Category"} consultation booking`;
     }
@@ -382,12 +391,19 @@ const createAppointment = async (req, res) => {
             category,
             specialty,
             condition,
-            consultationPrice: Number(consultationPrice) || 0,
+            // A EUR / GBP category booking records the amount actually charged
+            // (server-verified) rather than a price sent by the browser; USD
+            // bookings keep exactly the value they always had.
+            consultationPrice:
+              !resolvedDoctorId && paymentCurrency !== "usd"
+                ? paymentAmountFinal / 100
+                : Number(consultationPrice) || 0,
             patientDetails: safePatientDetails,
             medicalReports: normalizeMedicalReports(medicalReports),
             status: resolvedDoctorId ? "pending" : "upcoming",
             paymentIntentId: paymentRef,
             paymentAmount: paymentAmountFinal,
+            paymentCurrency,
             paymentStatus,
             paymentGateway,
             source,
@@ -449,7 +465,7 @@ const createAppointment = async (req, res) => {
         gateway: paymentGateway,
         gatewayReference: paymentRef,
         amountCents: paymentAmountFinal,
-        currency: "usd",
+        currency: paymentCurrency,
         description: paymentDescription,
       }).catch((err) => {
         console.error(`[invoice] Failed to record payment/invoice for appointment ${appointment._id}:`, err.message);
@@ -471,7 +487,7 @@ const createAppointment = async (req, res) => {
     // reference to get this reconciled instead of silently losing their payment.
     if (paymentStatus === "paid" && paymentRef) {
       console.error(
-        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
+        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal} ${paymentCurrency}) ` +
           `but appointment creation failed for patient ${req.user?.id}. Needs manual reconciliation.`
       );
       return res.status(500).json({

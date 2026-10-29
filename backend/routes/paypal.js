@@ -6,7 +6,7 @@ const Enrollment = require("../models/Enrollment");
 const Doctor     = require("../models/Doctor");
 const { paypalFetch } = require("../utils/paypal");
 const { convertAmount } = require("../utils/currency");
-const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
+const { resolveChargeForSelection, assertAllowedCurrency } = require("../utils/paymentVerification");
 
 async function resolveDoctorId(value) {
   if (!value) return null;
@@ -71,27 +71,28 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
 router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
   try {
     const { priceType, priceRef } = req.body;
-    const amountCents = priceType === "service"
-      ? await resolveServiceFeeCents(priceRef)
-      : await resolveCategoryFeeCents(priceRef);
+    // The amount AND the currency are decided here on the server (the body is
+    // never trusted for either): see resolveChargeForSelection.
+    const charge = await resolveChargeForSelection(req, { priceType, priceRef });
 
-    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    if (!charge) {
       return res.status(400).json({
         msg: "Could not determine a valid price for this selection. Please reselect and try again.",
       });
     }
+    const currency = assertAllowedCurrency(charge.currency);
 
     const order = await paypalFetch("POST", "/v2/checkout/orders", {
       intent: "CAPTURE",
       purchase_units: [{
-        amount: { currency_code: "USD", value: (amountCents / 100).toFixed(2) },
+        amount: { currency_code: currency, value: (charge.amountMinor / 100).toFixed(2) },
         description: "Consultation Booking Fee",
         custom_id: `${priceType === "service" ? "service" : "category"}:${String(priceRef || "").slice(0, 100)}`,
       }],
     });
 
     if (!order.id) throw new Error(order.message || "PayPal order creation failed");
-    res.json({ orderId: order.id });
+    res.json({ orderId: order.id, amountCents: charge.amountMinor, currency });
   } catch (err) {
     console.error("paypal/create-order-by-amount:", err.message);
     res.status(500).json({ msg: err.message || "Failed to create PayPal order." });
@@ -114,12 +115,17 @@ router.post("/capture-order", verifyUserToken, async (req, res) => {
     }
 
     const captureData = capture.purchase_units[0].payments.captures[0];
-    const amountUSD   = parseFloat(captureData.amount.value);
+    // The amount is in whatever currency the order was created in (USD for the
+    // doctor-fee and service orders, USD / EUR / GBP for categories) - report
+    // that currency alongside it, never assume USD.
+    const amount      = parseFloat(captureData.amount.value);
+    const currency    = String(captureData.amount.currency_code || "USD").toUpperCase();
 
     res.json({
       orderId:     capture.id,
       status:      "COMPLETED",
-      amountCents: Math.round(amountUSD * 100),
+      amountCents: Math.round(amount * 100),
+      currency,
     });
   } catch (err) {
     console.error("paypal/capture-order:", err.message);

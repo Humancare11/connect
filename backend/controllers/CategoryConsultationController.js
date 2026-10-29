@@ -4,7 +4,7 @@ const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const {
   PaymentVerificationError,
-  resolveCategoryFeeCents,
+  verifyCategoryPayment,
   resolveServiceFeeCents,
   verifyStripePaymentIntent,
   verifyPaypalOrder,
@@ -36,6 +36,8 @@ const createCategoryConsultation = async (req, res) => {
     let paymentRef = "";
     let paymentGateway = "";
     let paymentAmountFinal = 0;
+    // Currency of paymentAmountFinal, as verified with the gateway (lower-case).
+    let paymentCurrency = "usd";
     let paymentStatus = "unpaid";
 
     try {
@@ -52,23 +54,35 @@ const createCategoryConsultation = async (req, res) => {
       // complete it. categoryId (the stable pricingSlug/_id, when the
       // client sends one) is preferred over categoryName so a rename in
       // that window can't break the lookup either.
-      const expectedCents = serviceName
-        ? await resolveServiceFeeCents(serviceName)
-        : await resolveCategoryFeeCents(categoryId || categoryName, { requireActive: false });
-      if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Unrecognized service/category. Please reselect and try again.",
+      //
+      // A service is always USD (its stored price, checked as before). A
+      // category is checked by verifyCategoryPayment: the payment's own
+      // currency (USD / EUR / GBP) against the category's stored price in that
+      // currency - no conversion.
+      const unrecognized = "Unrecognized service/category. Please reselect and try again.";
+      let verified;
+      if (serviceName) {
+        const expectedCents = await resolveServiceFeeCents(serviceName);
+        if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
+          return res.status(400).json({ success: false, message: unrecognized });
+        }
+        verified = paymentIntentId
+          ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
+          : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+      } else {
+        verified = await verifyCategoryPayment({
+          paymentIntentId,
+          paypalOrderId,
+          priceRef: categoryId || categoryName,
+          requireActive: false,
+          unrecognizedMessage: unrecognized,
         });
       }
-
-      const verified = paymentIntentId
-        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
       paymentAmountFinal = verified.amountCents;
+      paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
 
       // Marks this payment as spent so the same reference can't fund a
@@ -108,6 +122,7 @@ const createCategoryConsultation = async (req, res) => {
         pcpName: req.body.pcpName,
         paymentIntentId: paymentRef,
         paymentAmount: paymentAmountFinal,
+        paymentCurrency,
         paymentStatus,
         paymentGateway,
         source: bookingSourceFor(req),
@@ -117,7 +132,7 @@ const createCategoryConsultation = async (req, res) => {
       // failed after that — surface a reconciliation reference instead of a
       // generic error, matching the same pattern used for doctor bookings.
       console.error(
-        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
+        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal} ${paymentCurrency}) ` +
           `but consultation creation failed for patient ${req.user?.id}. Needs manual reconciliation.`,
       );
       return res.status(500).json({
@@ -152,7 +167,7 @@ const createCategoryConsultation = async (req, res) => {
             gateway: paymentGateway,
             gatewayReference: paymentRef,
             amountCents: paymentAmountFinal,
-            currency: "usd",
+            currency: paymentCurrency,
             description: `${req.body.categoryName || req.body.serviceName || "Category"} consultation booking`,
           })
         )
