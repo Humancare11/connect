@@ -28,6 +28,7 @@ const {
   reopenLoaded,
 } = require("../utils/appointmentLifecycle");
 const { notifyAppointmentBooked } = require("../utils/bookingNotifications");
+const { notifyAdminAppointmentBooked, notifyAdminAppointmentDoctorAction, notifyAdminPaymentNeedsReconciliation } = require("../utils/adminNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
@@ -435,6 +436,10 @@ const createAppointment = async (req, res) => {
     // throws or rejects, and never delays the response sent above.
     notifyAppointmentBooked({ appointment, patient, doctor: bookedDoctor });
 
+    // Fire-and-forget in-app admin notification. The booking is committed and
+    // the response sent; this never throws and is deduplicated per appointment.
+    void notifyAdminAppointmentBooked({ appointment, doctor: bookedDoctor });
+
     // Fire-and-forget: ledgering the payment and generating/emailing its
     // invoice must never block or fail the booking response — the booking
     // and the payment have already succeeded by this point. recordPaymentAndInvoice
@@ -474,6 +479,8 @@ const createAppointment = async (req, res) => {
         `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
           `but appointment creation failed for patient ${req.user?.id}. Needs manual reconciliation.`
       );
+      // paymentStatus is only "paid" after the gateway itself confirmed it above. Never throws.
+      void notifyAdminPaymentNeedsReconciliation({ gateway: paymentGateway, ref: paymentRef, amountCents: paymentAmountFinal });
       return res.status(500).json({
         msg: "Your payment was received, but we couldn't finalize the booking due to a server error. " +
           "Please contact support with this reference so we can resolve it immediately.",
@@ -673,6 +680,7 @@ const confirmAppointment = async (req, res) => {
       role: "doctor",
     };
     appointment.confirmedAt = new Date();
+    const transitionFrom = appointment.updatedAt ? new Date(appointment.updatedAt).getTime() : 0;
     await appointment.save();
 
     const io = req.app.get("io");
@@ -702,6 +710,8 @@ const confirmAppointment = async (req, res) => {
     }
 
     res.status(200).json({ msg: "Appointment confirmed.", appointment });
+    // In-app admin notification, after the response: never throws, deduplicated per transition.
+    void notifyAdminAppointmentDoctorAction({ appointment, isCategory, doctorId: req.user.id, action: "confirmed", transitionFrom });
   } catch (error) {
     console.error("confirmAppointment error:", error);
     res.status(500).json({ msg: "Failed to confirm appointment." });
@@ -728,11 +738,18 @@ const completeAppointment = async (req, res) => {
       return res.status(403).json({ msg: "You can only complete your own appointments." });
     }
 
+    const transitionFrom = loaded.doc.updatedAt ? new Date(loaded.doc.updatedAt).getTime() : 0;
     const { appointment, alreadyComplete } = await completeLoaded(req.app, loaded);
     res.status(200).json({
       msg: alreadyComplete ? "Appointment is already completed." : "Appointment marked as completed.",
       appointment,
     });
+    // Only a real transition notifies; "already completed" is a no-op.
+    if (!alreadyComplete) {
+      void notifyAdminAppointmentDoctorAction({
+        appointment, isCategory: loaded.isCategory, doctorId: req.user.id, action: "completed", transitionFrom,
+      });
+    }
   } catch (error) {
     sendLifecycleError(res, error, "Failed to complete appointment.", "completeAppointment");
   }

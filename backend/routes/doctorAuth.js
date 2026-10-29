@@ -19,6 +19,7 @@ const { recordFailedLogin } = require("../utils/securityMonitor");
 const { loginLimiter, otpRequestLimiter, otpVerifyLimiter, emailChangeRequestLimiter, emailChangeVerifyLimiter } = require("../middleware/rateLimiters");
 const { requestEmailChange, verifyEmailChange, EmailChangeError } = require("../utils/doctorEmailChange");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
+const { notifyAdminDoctorRegistered, notifyAdminEnrollmentSubmitted, notifyAdminDoctorProfileUpdated, notifyAdminDoctorDeletionRequested } = require("../utils/adminNotifications");
 const { createS3PresignedGetUrl, DEFAULT_EXPIRY_SECONDS } = require("../utils/s3PresignedUrl");
 
 // /approved and /:id are public, unauthenticated listing endpoints (used by
@@ -252,7 +253,7 @@ router.post("/register", otpVerifyLimiter, async (req, res) => {
 
         // Auto-create a minimal enrollment so the doctor can be tracked immediately
         const nameParts = name.trim().split(/\s+/);
-        await Enrollment.create({
+        const minimalEnrollment = await Enrollment.create({
             doctorId: doctor._id,
             firstName: nameParts[0] || "",
             surname: nameParts.slice(1).join(" ") || "",
@@ -269,11 +270,14 @@ router.post("/register", otpVerifyLimiter, async (req, res) => {
 
         const session = await issueAuthCookies(res, withDoctorRole(doctor));
         const tokens = buildTokenPayload(doctor, session);
-        return res.status(201).json({
+        res.status(201).json({
             message: "Doctor registered successfully.",
             doctor: { id: doctor._id, doctorId: doctor.doctorId, name: doctor.name, email: doctor.email, isEnrolled: doctor.isEnrolled },
             ...tokens,
         });
+        // In-app admin notification, after the response: never throws, deduplicated per doctor.
+        void notifyAdminDoctorRegistered({ doctor, enrollment: minimalEnrollment });
+        return;
     } catch (err) {
         if (err.code === 11000)
             return res.status(409).json({ message: "This email is already registered. Please login." });
@@ -564,6 +568,16 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
         let enrollment = await Enrollment.findOne({ doctorId });
         let responseMessage = "Enrollment submitted successfully";
 
+        // Admin notification is for a real submission only: a first final submit, or a
+        // rejected doctor resubmitting. Approved doctors' edits (profile_update) and
+        // re-saves of an already-pending application are not new submissions.
+        const wasRejectedBefore = enrollment?.approvalStatus === "rejected";
+        const notifyAsSubmission =
+            !enrollment || (enrollment.approvalStatus !== "approved" && (!enrollment.formCompleted || wasRejectedBefore));
+        // Set below only when an approved doctor's edit actually staged changes.
+        let notifyAsProfileUpdate = false;
+        const resubmittedFrom = wasRejectedBefore ? (enrollment.updatedAt ? new Date(enrollment.updatedAt).getTime() : 0) : null;
+
         // ZIP / Postal Code is a mandatory enrollment field. Enforce it on the
         // initial submission and on resubmission after rejection (mirrors
         // validateS1() on the frontend). Approved doctors' profile edits are
@@ -625,6 +639,7 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
                 enrollment.markModified("pendingProfileChanges");
                 enrollment.markModified("profileUpdateSnapshot");
                 responseMessage = "Update request submitted and pending admin approval.";
+                notifyAsProfileUpdate = true;
             } else if (wasRejected) {
                 // A rejected doctor resubmitting must go back through full review —
                 // never silently flip straight to "approved".
@@ -664,6 +679,10 @@ router.post("/enrollment", verifyDoctorToken, async (req, res) => {
         await Doctor.findByIdAndUpdate(doctorId, { isEnrolled: enrollment.approvalStatus === "approved" });
 
         res.status(201).json({ message: responseMessage, enrollment });
+        // In-app admin notification, after the response: never throws, deduplicated per submission.
+        if (notifyAsSubmission) void notifyAdminEnrollmentSubmitted({ enrollment, doctor, resubmittedFrom });
+        // Same for an approved doctor's staged profile edit: deduplicated per update.
+        if (notifyAsProfileUpdate) void notifyAdminDoctorProfileUpdated({ enrollment, doctor });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server error" });
@@ -853,10 +872,13 @@ router.post("/profile-delete-request", verifyDoctorToken, async (req, res) => {
         enrollment.updatedAt = new Date();
         await enrollment.save();
 
-        return res.status(201).json({
+        res.status(201).json({
             message: "Profile delete request sent to admin for approval.",
             enrollment,
         });
+        // In-app admin notification, after the response: never throws, deduplicated per request.
+        void notifyAdminDoctorDeletionRequested({ enrollment, doctor });
+        return;
     } catch (err) {
         console.error("profile delete request error:", err);
         return res.status(500).json({ message: "Server error." });

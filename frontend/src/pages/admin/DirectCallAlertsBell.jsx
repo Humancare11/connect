@@ -1,47 +1,23 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api";
+import { createAdminNotificationFeed, timeAgo, unreadTotal } from "./adminNotificationFeed";
 
-const POLL_MS = 30_000;
-
-const ALERT_LABELS = {
-  room_full: "Meeting full",
-  repeated_retries: "Repeated reconnects",
-  never_connected: "Never connected",
-};
-
-function timeAgo(iso) {
-  const ms = Date.now() - new Date(iso).getTime();
-  const min = Math.floor(ms / 60000);
-  if (min < 1) return "just now";
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  return `${Math.floor(hr / 24)}d ago`;
-}
-
-// Admin-panel-only, best-effort UI (Phase 4). Polls a plain REST endpoint
-// rather than a socket — this must never depend on / interfere with the
-// call-signaling socket connection.
+// The admin top-bar bell. Despite the file name (kept so AdminLayout is untouched) it shows
+// the combined feed: shared admin notifications (bookings, doctors, partner cases, tickets)
+// plus the original direct-call alerts. All fetching, polling, read handling and race
+// protection live in adminNotificationFeed.js; this file only renders. Polls plain REST
+// endpoints, never the call-signaling socket.
 export default function DirectCallAlertsBell() {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [feed] = useState(() => createAdminNotificationFeed({ api }));
+  const state = useSyncExternalStore(feed.subscribe, feed.getState);
   const [open, setOpen] = useState(false);
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(false);
   const panelRef = useRef(null);
 
-  const refreshUnreadCount = useCallback(() => {
-    api
-      .get("/api/direct-video-room/alerts/unread-count")
-      .then((res) => setUnreadCount(res.data?.count || 0))
-      .catch(() => {});
-  }, []);
-
   useEffect(() => {
-    refreshUnreadCount();
-    const timer = setInterval(refreshUnreadCount, POLL_MS);
-    return () => clearInterval(timer);
-  }, [refreshUnreadCount]);
+    feed.start();
+    return () => feed.stop();
+  }, [feed]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -52,30 +28,20 @@ export default function DirectCallAlertsBell() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [open]);
 
-  const openPanel = () => {
-    setOpen((prev) => !prev);
-    if (!open) {
-      setLoading(true);
-      api
-        .get("/api/direct-video-room/alerts?limit=20")
-        .then((res) => setAlerts(res.data?.alerts || []))
-        .catch(() => setAlerts([]))
-        .finally(() => setLoading(false));
-    }
-  };
+  useEffect(() => {
+    feed.setPanelOpen(open);
+  }, [feed, open]);
 
-  const markRead = (alertId) => {
-    setAlerts((prev) => prev.map((a) => (a._id === alertId ? { ...a, readAt: new Date().toISOString() } : a)));
-    setUnreadCount((prev) => Math.max(0, prev - 1));
-    api.post(`/api/direct-video-room/alerts/${alertId}/read`).catch(() => {});
-  };
+  const total = unreadTotal(state);
+  const { items, status, partial, markError } = state;
 
   return (
     <div ref={panelRef} className="ad-bell">
       <button
         type="button"
-        onClick={openPanel}
-        aria-label="Direct call alerts"
+        onClick={() => setOpen((prev) => !prev)}
+        aria-label={total > 0 ? `Notifications, ${total} unread` : "Notifications"}
+        aria-expanded={open}
         className="ad-bell-btn"
         style={{
           position: "relative",
@@ -93,7 +59,7 @@ export default function DirectCallAlertsBell() {
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
-        {unreadCount > 0 && (
+        {total > 0 && (
           <span
             style={{
               position: "absolute",
@@ -112,7 +78,7 @@ export default function DirectCallAlertsBell() {
               padding: "0 4px",
             }}
           >
-            {unreadCount > 99 ? "99+" : unreadCount}
+            {total > 99 ? "99+" : total}
           </span>
         )}
       </button>
@@ -130,45 +96,90 @@ export default function DirectCallAlertsBell() {
             zIndex: 300,
           }}
         >
-          <div style={{ padding: "10px 14px", fontWeight: 700, fontSize: 13, borderBottom: "1px solid #f1f5f9", color: "#0a1f44" }}>
-            Direct call alerts
+          <div
+            style={{
+              padding: "10px 14px",
+              fontWeight: 700,
+              fontSize: 13,
+              borderBottom: "1px solid #f1f5f9",
+              color: "#0a1f44",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span>Notifications</span>
+            {state.generalUnread > 0 && (
+              <button
+                type="button"
+                onClick={feed.markAllRead}
+                title="Marks the notifications read for you. Direct call alerts are marked one by one."
+                style={{ fontSize: 12, color: "#4b5db8", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                Mark all as read
+              </button>
+            )}
           </div>
-          {loading ? (
+
+          {markError && (
+            <div role="alert" style={{ padding: "8px 14px", fontSize: 12, color: "#b91c1c", background: "#fef2f2" }}>
+              {markError}
+            </div>
+          )}
+          {partial && status === "ready" && (
+            <div role="alert" style={{ padding: "8px 14px", fontSize: 12, color: "#92400e", background: "#fffbeb" }}>
+              Some notifications couldn't be loaded.{" "}
+              <button type="button" onClick={() => feed.loadItems()} style={retryStyle}>
+                Retry
+              </button>
+            </div>
+          )}
+
+          {status === "loading" || status === "idle" ? (
             <div style={{ padding: 16, fontSize: 13, color: "#6b7280" }}>Loading…</div>
-          ) : alerts.length === 0 ? (
-            <div style={{ padding: 16, fontSize: 13, color: "#6b7280" }}>No alerts yet.</div>
+          ) : status === "error" ? (
+            <div role="alert" style={{ padding: 16, fontSize: 13, color: "#b91c1c" }}>
+              Unable to load notifications. Please try again.{" "}
+              <button type="button" onClick={() => feed.loadItems()} style={{ ...retryStyle, fontSize: 13 }}>
+                Retry
+              </button>
+            </div>
+          ) : items.length === 0 ? (
+            <div style={{ padding: 16, fontSize: 13, color: "#6b7280" }}>No notifications yet.</div>
           ) : (
-            alerts.map((alert) => (
+            items.map((item) => (
               <div
-                key={alert._id}
+                key={item.key}
                 style={{
                   padding: "10px 14px",
                   borderBottom: "1px solid #f1f5f9",
-                  background: alert.readAt ? "#fff" : "#eff6ff",
+                  background: item.read ? "#fff" : "#eff6ff",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0a1f44" }}>
-                    {ALERT_LABELS[alert.type] || alert.type}
-                  </span>
-                  <span style={{ fontSize: 11, color: "#9ca3af" }}>{timeAgo(alert.createdAt)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: "#0a1f44" }}>{item.title}</span>
+                  <span style={{ fontSize: 11, color: "#9ca3af", whiteSpace: "nowrap" }}>{timeAgo(item.createdAt)}</span>
                 </div>
-                <p style={{ margin: "4px 0", fontSize: 12.5, color: "#374151" }}>
-                  {alert.message}
-                  {alert.doctorName ? ` — Dr. ${alert.doctorName}` : ""}
-                </p>
+                {item.message && <p style={{ margin: "4px 0", fontSize: 12.5, color: "#374151" }}>{item.message}</p>}
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  <Link
-                    to={`/admin-dashboard/direct-video-consultation/calls/${alert.roomId}`}
-                    onClick={() => setOpen(false)}
-                    style={{ fontSize: 12, color: "#4b5db8", fontWeight: 600, textDecoration: "none" }}
-                  >
-                    View call →
-                  </Link>
-                  {!alert.readAt && (
+                  {item.link && (
+                    <Link
+                      to={item.link}
+                      onClick={() => {
+                        setOpen(false);
+                        // Direct-call alerts keep their explicit "Mark as read" (one global state).
+                        if (item.source === "general") feed.markRead(item.key);
+                      }}
+                      style={{ fontSize: 12, color: "#4b5db8", fontWeight: 600, textDecoration: "none" }}
+                    >
+                      {item.linkLabel}
+                    </Link>
+                  )}
+                  {!item.read && (
                     <button
                       type="button"
-                      onClick={() => markRead(alert._id)}
+                      onClick={() => feed.markRead(item.key)}
                       style={{ fontSize: 12, color: "#6b7280", background: "none", border: "none", cursor: "pointer", padding: 0 }}
                     >
                       Mark as read
@@ -183,3 +194,5 @@ export default function DirectCallAlertsBell() {
     </div>
   );
 }
+
+const retryStyle = { fontSize: 12, color: "#4b5db8", fontWeight: 600, background: "none", border: "none", cursor: "pointer", padding: 0 };

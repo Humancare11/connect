@@ -608,6 +608,7 @@ app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/bookings", require("./routes/adminBookings"));
 app.use("/api/admin/entries", require("./routes/adminEntries"));
 app.use("/api/admin/partner-cases",require("./routes/adminPartnerCases"));
+app.use("/api/admin/notifications", require("./routes/adminNotifications"));
 // Registered first: signatures are private to each admin and have their own guard.
 app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"));
 app.use("/api/admin/email", require("./routes/adminEmail"));

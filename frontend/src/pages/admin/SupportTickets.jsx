@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import api from "../../api";
+import { ticketTabFromQuery } from "./adminNotificationLinks";
 import useModalA11y from "../../hooks/useModalA11y";
 import "./AdminDashboard.css"; // keyframes used by the resolve dialog (adp-scalein, adp-spin)
 import "./SupportTickets.css";
@@ -306,7 +308,12 @@ function TicketCard({ ticket, onResolve }) {
 }
 
 export default function SupportTickets() {
-  const [tab,            setTab]            = useState("patient");
+  // Notifications open this page as /admin-dashboard/tickets?tab=doctor|patient. Only those two
+  // values are honoured; there is no per-ticket route, so this selects a tab and nothing more.
+  const [searchParams] = useSearchParams();
+  const queryTab = ticketTabFromQuery(searchParams.get("tab"));
+  const [tab,            setTab]            = useState(queryTab || "patient");
+  useEffect(() => { if (queryTab) setTab(queryTab); }, [queryTab]);
   const [doctorTickets,  setDoctorTickets]  = useState([]);
   const [patientTickets, setPatientTickets] = useState([]);
   const [loading,        setLoading]        = useState(true);

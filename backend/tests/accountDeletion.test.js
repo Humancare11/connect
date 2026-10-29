@@ -27,6 +27,10 @@ history.removeRecord = async () => {};
 history.adminSnapshot = async () => ({ id: "a1", name: "Admin", email: "admin@example.com", role: "admin" });
 history.setEmailFlag = async (id, which, sent) => { emailFlags.push({ id, which, sent }); };
 
+// No database in this file: the admin notification write is covered, against an
+// in-memory MongoDB, in adminNotificationsAccountDeletion.test.js.
+require("../utils/adminNotifications").notifyAdminAccountDeletionRequested = async () => ({ status: "created" });
+
 const tokenRevocation = require("../utils/tokenRevocation");
 tokenRevocation.revokeUserSessions = async () => { events.push("revoke"); };
 

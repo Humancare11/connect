@@ -33,6 +33,7 @@ const { validateMobile } = require("../utils/mobileValidation");
 const { detectRegistrationClient } = require("../utils/clientInfo");
 const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
 const deletionHistory = require("../utils/accountDeletionHistory");
+const adminNotifications = require("../utils/adminNotifications");
 const { shouldSkipSignupLocation } = require("../utils/legacyAppBypass");
 const { Country, State } = require("country-state-city");
 
@@ -816,10 +817,13 @@ const requestAccountDeletion = async (req, res) => {
     });
     if (record) await deletionHistory.setEmailFlag(record._id, "requested", requestedEmailSent);
 
-    return res.status(201).json({
+    res.status(201).json({
       msg: "Account deletion request sent to admin for approval.",
       user: safeUser(user),
     });
+    // In-app admin notification, after the response: never throws, deduplicated per request.
+    void adminNotifications.notifyAdminAccountDeletionRequested({ user });
+    return;
   } catch (err) {
     console.error("requestAccountDeletion error:", err.message, err.stack);
     return res.status(500).json({ msg: "Server error. Please try again." });
