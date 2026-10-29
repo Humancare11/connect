@@ -149,7 +149,12 @@ describe("live chat: admin workspace (lists, take over, notes, assignment, panel
       assert.equal(lc.ai.calls.length, 1, "the AI turn is in flight");
 
       const takeover = rest("POST", `/conversations/${chat.id}/takeover`, A);
-      await sleep(50);
+      // Release the AI answer only once the takeover has really happened (a fixed delay was a race on a busy machine).
+      for (let i = 0; i < 100; i++) {
+        const row = await lc.models.LcConversation.findOne({ conversationId: chat.id }).lean();
+        if (row && row.mode === "live") break;
+        await sleep(20);
+      }
       release();
       await pending;
       await takeover;
