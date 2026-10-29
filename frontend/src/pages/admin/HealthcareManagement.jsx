@@ -16,11 +16,19 @@ const EMPTY_FORMS = {
     name: "",
     icon: "",
     description: "",
-    price: "0",
+    // Prices in each currency, entered by hand (nothing is converted).
+    // A new category needs all three.
+    price: "",
+    priceEur: "",
+    priceGbp: "",
     isActive: true,
     // Not user-editable - carried through from the loaded record so an
     // edit's price update can target the right CategoryPricing row.
     pricingSlug: "",
+    // Not user-editable - true when the loaded category already has that
+    // price, which then can't be emptied (only changed).
+    priceEurLocked: false,
+    priceGbpLocked: false,
   },
   specialties: {
     categoryId: "",
@@ -58,13 +66,54 @@ function IconPreview({ value }) {
   );
 }
 
-function formatUsd(value) {
+const PRICE_CURRENCIES = [
+  { code: "USD", symbol: "$", field: "price" },
+  { code: "EUR", symbol: "€", field: "priceEur" },
+  { code: "GBP", symbol: "£", field: "priceGbp" },
+];
+const MAX_PRICE = 100000;
+
+// Symbol first, like the site: $30, €30, £30.50. Not set -> null.
+function formatMoney(value, currency) {
+  if (value === null || value === undefined || value === "") return null;
   const amount = Number(value);
-  if (!Number.isFinite(amount)) return "$0";
-  return `$${amount.toLocaleString("en-US", {
+  if (!Number.isFinite(amount)) return null;
+  const symbol = PRICE_CURRENCIES.find((c) => c.code === currency)?.symbol || "$";
+  return `${symbol}${amount.toLocaleString("en-US", {
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   })}`;
+}
+
+// A category is "missing" a price when EUR or GBP has not been entered yet.
+const isMissingForeignPrice = (category) =>
+  category.priceEur === null || category.priceEur === undefined ||
+  category.priceGbp === null || category.priceGbp === undefined;
+
+// Same rules as the server (which is the real check): a number above 0, at
+// most 100,000, at most 2 decimals. USD is always required. On create all
+// three are required; on edit a EUR / GBP price that was already set can be
+// changed but not emptied, and one that was never set may stay empty.
+function checkCategoryPrices(form, creating) {
+  const fields = [
+    { field: "price", label: "USD price", required: true },
+    { field: "priceEur", label: "EUR price", required: creating || form.priceEurLocked },
+    { field: "priceGbp", label: "GBP price", required: creating || form.priceGbpLocked },
+  ];
+  for (const { field, label, required } of fields) {
+    const text = String(form[field] ?? "").trim();
+    if (!text) {
+      if (!required) continue;
+      return creating || field === "price"
+        ? `${label} is required.`
+        : `${label} cannot be cleared once it is set.`;
+    }
+    const value = Number(text);
+    if (!/^\d+(\.\d+)?$/.test(text) || !(value > 0)) return `${label} must be greater than 0.`;
+    if (value > MAX_PRICE) return `${label} must not be more than ${MAX_PRICE.toLocaleString("en-US")}.`;
+    if (!/^\d+(\.\d{1,2})?$/.test(text)) return `${label} can have at most 2 decimal places.`;
+  }
+  return "";
 }
 
 export default function HealthcareManagement() {
@@ -78,6 +127,10 @@ export default function HealthcareManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  // Which currency's price the Categories table shows, and whether it lists
+  // only the categories still missing a EUR / GBP price.
+  const [priceTab, setPriceTab] = useState("USD");
+  const [missingOnly, setMissingOnly] = useState(false);
 
   const filteredSpecialties = useMemo(() => {
     if (!form.categoryId) return specialties;
@@ -150,9 +203,13 @@ export default function HealthcareManagement() {
         name: item.name || "",
         icon: item.icon || "",
         description: item.description || "",
-        price: String(item.price ?? 0),
+        price: item.price === null || item.price === undefined ? "" : String(item.price),
+        priceEur: item.priceEur === null || item.priceEur === undefined ? "" : String(item.priceEur),
+        priceGbp: item.priceGbp === null || item.priceGbp === undefined ? "" : String(item.priceGbp),
         isActive: Boolean(item.isActive),
         pricingSlug: item.pricingSlug || "",
+        priceEurLocked: item.priceEur !== null && item.priceEur !== undefined,
+        priceGbpLocked: item.priceGbp !== null && item.priceGbp !== undefined,
       });
       return;
     }
@@ -186,16 +243,33 @@ export default function HealthcareManagement() {
       const payload = { ...form };
       if (active === "conditions") delete payload.categoryId;
 
+      if (active === "categories") {
+        const problem = checkCategoryPrices(form, !editing);
+        if (problem) {
+          setMessage({ type: "error", text: problem });
+          return;
+        }
+      }
+
       let res;
       if (active === "categories" && editing) {
-        // An existing category's price is managed exclusively through
-        // CategoryPricing (PUT /api/pricing/:pricingSlug) - it's never part
+        // An existing category's prices are managed exclusively through
+        // CategoryPricing (PUT /api/pricing/:pricingSlug) - they're never part
         // of the category's own update payload, so the two are saved as
         // separate requests here even though they look like one form.
-        const { price, pricingSlug, ...categoryFields } = payload;
+        // EUR / GBP are only sent when filled in: a category that was never
+        // priced in them can be saved without (and keeps showing "Not set").
+        const {
+          price, priceEur, priceGbp, pricingSlug,
+          priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked,
+          ...categoryFields
+        } = payload;
         res = await api.put(`${endpoint}/${editing}`, categoryFields);
         try {
-          await api.put(`/api/pricing/${pricingSlug}`, { price: Number(price) });
+          const prices = { price: Number(price) };
+          if (String(priceEur).trim()) prices.priceEur = Number(priceEur);
+          if (String(priceGbp).trim()) prices.priceGbp = Number(priceGbp);
+          await api.put(`/api/pricing/${pricingSlug}`, prices);
         } catch (priceErr) {
           await loadAll();
           resetForm();
@@ -207,6 +281,19 @@ export default function HealthcareManagement() {
           });
           return;
         }
+      } else if (active === "categories") {
+        // New category: all three prices go with it.
+        const {
+          price, priceEur, priceGbp,
+          pricingSlug: _slug, priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked,
+          ...categoryFields
+        } = payload;
+        res = await api.post(endpoint, {
+          ...categoryFields,
+          price: Number(price),
+          priceEur: Number(priceEur),
+          priceGbp: Number(priceGbp),
+        });
       } else {
         res = editing
           ? await api.put(`${endpoint}/${editing}`, payload)
@@ -246,6 +333,8 @@ export default function HealthcareManagement() {
   };
 
   const rows = active === "categories" ? categories : active === "specialties" ? specialties : conditions;
+  const missingPriceCount = categories.filter(isMissingForeignPrice).length;
+  const visibleRows = active === "categories" && missingOnly ? rows.filter(isMissingForeignPrice) : rows;
   const activeSection = SECTIONS.find((section) => section.id === active);
 
   return (
@@ -363,10 +452,38 @@ export default function HealthcareManagement() {
                   )}
 
                   {active === "categories" && (
-                    <div className="hcm-field">
-                      <label>Price (USD)</label>
-                      <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setField("price", e.target.value)} required />
-                    </div>
+                    <>
+                      <div className="hcm-field full">
+                        <p className="hcm-price-help">
+                          {editing
+                            ? "Enter each price by hand - nothing is converted. A price that is already set can be changed but not cleared; EUR / GBP that show as empty can be filled in later."
+                            : "All three prices are required (more than 0, up to 100,000, at most 2 decimals). Enter each by hand - nothing is converted."}
+                        </p>
+                      </div>
+                      {PRICE_CURRENCIES.map(({ code, symbol, field }) => {
+                        const locked = field === "priceEur" ? form.priceEurLocked : field === "priceGbp" ? form.priceGbpLocked : false;
+                        const required = !editing || field === "price" || locked;
+                        return (
+                          <div className="hcm-field" key={field}>
+                            <label htmlFor={`hcm-${field}`}>
+                              Price ({code}) {symbol}
+                              {!required && <span className="hcm-optional"> - not set</span>}
+                            </label>
+                            <input
+                              id={`hcm-${field}`}
+                              type="number"
+                              min="0.01"
+                              max={MAX_PRICE}
+                              step="0.01"
+                              inputMode="decimal"
+                              value={form[field]}
+                              onChange={(e) => setField(field, e.target.value)}
+                              required={required}
+                            />
+                          </div>
+                        );
+                      })}
+                    </>
                   )}
 
                   <div className="hcm-field">
@@ -392,14 +509,46 @@ export default function HealthcareManagement() {
             </div>
 
             <div>
-              <h3 className="hcm-panel-title">{activeSection?.label} ({rows.length})</h3>
+              <h3 className="hcm-panel-title">{activeSection?.label} ({visibleRows.length})</h3>
+
+              {active === "categories" && (
+                <>
+                  <div className="hcm-tabs hcm-price-tabs" role="tablist" aria-label="Price currency">
+                    {PRICE_CURRENCIES.map(({ code }) => (
+                      <button
+                        key={code}
+                        type="button"
+                        role="tab"
+                        aria-selected={priceTab === code}
+                        className={`hcm-tab${priceTab === code ? " active" : ""}`}
+                        onClick={() => setPriceTab(code)}
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+
+                  {missingPriceCount > 0 && (
+                    <div className="hcm-banner" role="status">
+                      <span>
+                        <strong>{missingPriceCount}</strong>{" "}
+                        {missingPriceCount === 1 ? "category is" : "categories are"} missing EUR/GBP prices.
+                      </span>
+                      <button type="button" className="hcm-banner-btn" onClick={() => setMissingOnly((v) => !v)}>
+                        {missingOnly ? "Show all categories" : "Show only these"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
               <div className="dash-table-wrap">
                 <table className="dash-table">
                   <thead>
                     <tr>
                       <th>Sr. No.</th>
                       <th>Name</th>
-                      {active === "categories" && <th>Price</th>}
+                      {active === "categories" && <th>Price ({priceTab})</th>}
                       {active !== "categories" && <th>Category</th>}
                       {active === "conditions" && <th>Specialty</th>}
                       <th>Status</th>
@@ -407,7 +556,7 @@ export default function HealthcareManagement() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.length ? rows.map((item, index) => (
+                    {visibleRows.length ? visibleRows.map((item, index) => (
                       <tr key={item._id} className={index % 2 === 0 ? "" : "alt"}>
                         <td>{index + 1}</td>
                         <td>
@@ -419,7 +568,13 @@ export default function HealthcareManagement() {
                             </div>
                           </div>
                         </td>
-                        {active === "categories" && <td className="muted">{formatUsd(item.price)}</td>}
+                        {active === "categories" && (
+                          <td className="muted">
+                            {formatMoney(item[PRICE_CURRENCIES.find((c) => c.code === priceTab).field], priceTab) || (
+                              <span className="hcm-not-set">Not set</span>
+                            )}
+                          </td>
+                        )}
                         {active === "specialties" && <td className="muted">{relationName(item.categoryId) || "-"}</td>}
                         {active === "conditions" && <td className="muted">{relationName(item.specialtyId?.categoryId) || "-"}</td>}
                         {active === "conditions" && <td className="muted">{relationName(item.specialtyId) || "-"}</td>}

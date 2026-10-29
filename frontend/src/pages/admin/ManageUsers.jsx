@@ -9,6 +9,7 @@ import {
   rejectUserDeletion,
 } from "./userAdminActions";
 import DeletionRequestsPanel from "./DeletionRequestsPanel";
+import CountryChangesPanel from "./CountryChangesPanel";
 import "./ManageUsers.css";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 
@@ -48,7 +49,12 @@ export default function ManageUsers() {
   // Search and filter are kept in the URL (?q=…&filter=…) so they survive
   // opening a profile and coming back, and the browser's Back button works.
   const search = searchParams.get("q") || "";
-  const filter = searchParams.get("filter") === "deletion_requests" ? "deletion_requests" : "all";
+  const filter =
+    searchParams.get("filter") === "deletion_requests"
+      ? "deletion_requests"
+      : searchParams.get("filter") === "country_changes"
+        ? "country_changes"
+        : "all";
   // Changing the search or the tab starts again from page 1.
   const page = Math.max(1, parseInt(searchParams.get("page"), 10) || 1);
   const updateParams = ({ q = search, filter: nextFilter = filter, page: nextPage = 1 }) => {
@@ -141,6 +147,8 @@ export default function ManageUsers() {
   };
 
   const deletionRequestCount = users.filter((u) => u.deletionRequestStatus === "pending").length;
+  // Users whose country changed after a paid booking and has not been reviewed.
+  const countryReviewCount = users.filter((u) => u.countryChangeNeedsReview).length;
 
   const filtered = users
     .filter(
@@ -185,6 +193,7 @@ export default function ManageUsers() {
             {[
               { key: "all", label: "All Users", count: users.length },
               { key: "deletion_requests", label: "Deletion Requests", count: deletionRequestCount },
+              { key: "country_changes", label: "Country Changes", count: countryReviewCount },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -217,7 +226,9 @@ export default function ManageUsers() {
           </div>
         </div>
 
-        {filter === "deletion_requests" ? (
+        {filter === "country_changes" ? (
+          <CountryChangesPanel search={search} onChanged={loadUsers} onToast={showToast} />
+        ) : filter === "deletion_requests" ? (
           // Full history (all statuses), same list as the Deletion Requests page.
           // The tab badge and the stat card above stay PENDING-only.
           <DeletionRequestsPanel search={search} onDecided={loadUsers} onToast={showToast} />
@@ -318,6 +329,23 @@ export default function ManageUsers() {
                         >
                           🗑️ Deletion Requested
                         </span>
+                      ) : u.countryChangeNeedsReview ? (
+                        <span
+                          title="Country changed after a paid booking - review it in the Country Changes tab"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 4,
+                            background: "#fef3c7",
+                            color: "#92400e",
+                            borderRadius: 20,
+                            padding: "3px 10px",
+                            fontSize: 11,
+                            fontWeight: 700,
+                          }}
+                        >
+                          🌍 Country changed
+                        </span>
                       ) : (
                         "—"
                       )}
@@ -363,7 +391,7 @@ export default function ManageUsers() {
             </table>
           </div>
         )}
-        {filter !== "deletion_requests" && !loading && filtered.length > 0 && (
+        {filter === "all" && !loading && filtered.length > 0 && (
           <div className="mu-users-foot">
             <span>
               Showing {pageStart + 1} - {pageStart + visibleUsers.length} of {filtered.length} users
