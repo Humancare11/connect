@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
+import { useCategoryPriceInfo } from "../../../hooks/useCategoryPriceInfo";
+import PriceText from "../../../components/PriceText";
 import "./Condition.css";
 import {
   Calendar,
@@ -61,7 +62,7 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 export default function Ocd() {
   const navigate = useNavigate();
-  const price = useCategoryPrice();
+  const priceInfo = useCategoryPriceInfo();
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
@@ -215,7 +216,7 @@ export default function Ocd() {
                 </div>
 
                 <div className="condition-sbc-price-block">
-                  <div className="condition-sbc-price">${price ?? 49}</div>
+                  <div className="condition-sbc-price"><PriceText info={priceInfo} /></div>
                   <p className="condition-sbc-price-sub">
                     One-time consultation fee · No subscription required
                   </p>

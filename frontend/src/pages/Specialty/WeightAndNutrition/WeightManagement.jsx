@@ -77,10 +77,10 @@ import "../../Categories/categoriesGlobal.css";
 import heroImage from "../../../assets/SpecialitiesImage/weight-management-specialist-consultation-healthy-weight-loss.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/weight-management-nutrition-counseling-lifestyle-support.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
-import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
+import { useCategoryPriceInfo } from "../../../hooks/useCategoryPriceInfo";
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -522,29 +522,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchPrice() {
-      try {
-        const res = await api.get("/api/pricing");
-        if (!cancelled) {
-          const record = res.data?.[data.categoryId];
-          setPrice(record?.price ?? null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch category pricing:", err);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-    fetchPrice();
-    return () => {
-      cancelled = true;
-    };
-  }, [data.categoryId]);
+  const priceInfo = useCategoryPriceInfo(data.categoryId);
 
   return (
     <>
@@ -579,8 +557,7 @@ export default function WeightManagement({ data = SPECIALTY_DATA }) {
               </div>
 
               <BookingCard
-                price={price}
-                priceLoading={priceLoading}
+                priceInfo={priceInfo}
                 categoryId={data.categoryId}
                 name={data.name}
               />

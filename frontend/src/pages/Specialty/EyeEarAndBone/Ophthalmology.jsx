@@ -70,10 +70,10 @@ import "../../Categories/categoriesGlobal.css";
 import heroImage from "../../../assets/HeroImageSpecialities/ophthalmology-eye-care-services.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/ophthalmologist-comprehensive-eye-examination-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
-import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
+import { useCategoryPriceInfo } from "../../../hooks/useCategoryPriceInfo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -524,29 +524,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchPrice() {
-      try {
-        const res = await api.get("/api/pricing");
-        if (!cancelled) {
-          const record = res.data?.[data.categoryId];
-          setPrice(record?.price ?? null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch category pricing:", err);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-    fetchPrice();
-    return () => {
-      cancelled = true;
-    };
-  }, [data.categoryId]);
+  const priceInfo = useCategoryPriceInfo(data.categoryId);
 
   return (
     <>
@@ -581,8 +559,7 @@ export default function Ophthalmology({ data = SPECIALTY_DATA }) {
               </div>
 
               <BookingCard
-                price={price}
-                priceLoading={priceLoading}
+                priceInfo={priceInfo}
                 categoryId={data.categoryId}
                 name={data.name}
               />

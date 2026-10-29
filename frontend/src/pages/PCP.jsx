@@ -27,8 +27,8 @@ import "./Categories/categoriesGlobal.css";
 import SEO from "../components/Seo";
 import pcpHeroBg from "../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
 import BookingCard from "../components/SpecialityBookingCard";
-import api from "../api";
 import FAQ from "../components/FAQ/FAQ";
+import { useCategoryPriceInfo } from "../hooks/useCategoryPriceInfo";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
@@ -307,36 +307,7 @@ const CTA_TRUST_POINTS = [
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function PCP() {
   const [openIndex, setOpenIndex] = useState(null);
-  const PCP_FALLBACK_PRICE = 69;
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchPrice() {
-      try {
-        const res = await api.get("/api/pricing");
-        if (!cancelled) {
-          const record = res.data?.general;
-          const fetchedPrice = Number(record?.price);
-          setPrice(
-            Number.isFinite(fetchedPrice) && fetchedPrice > 0
-              ? fetchedPrice
-              : PCP_FALLBACK_PRICE,
-          );
-        }
-      } catch (err) {
-        console.error("Failed to fetch category pricing:", err);
-        if (!cancelled) setPrice(PCP_FALLBACK_PRICE);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-    fetchPrice();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const priceInfo = useCategoryPriceInfo("general");
 
   return (
     <>
@@ -433,8 +404,7 @@ export default function PCP() {
               <div className="pcp-about__right">
                 <FadeIn direction="right" className="pcp-about__booking-slot">
                   <BookingCard
-                    price={price}
-                    priceLoading={priceLoading}
+                    priceInfo={priceInfo}
                     categoryId="general"
                     name="Primary Care"
                     isPcp

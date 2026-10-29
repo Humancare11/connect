@@ -57,7 +57,6 @@ import {
 import "../SpecialtyPage.css";
 import "../../Categories/categoriesGlobal.css";
 import BookingCard from "../../../components/SpecialityBookingCard";
-import api from "../../../api";
 
 import SEO from "../../../components/Seo";
 
@@ -65,6 +64,7 @@ import heroImage from "../../../assets/HeroImageSpecialities/adolescent-medicine
 import overviewImage from "../../../assets/SpecialitiesImage/adolescent-medicine-specialist-consultation.webp";
 import FAQ from "../../../components/FAQ/FAQ";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
+import { useCategoryPriceInfo } from "../../../hooks/useCategoryPriceInfo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -478,36 +478,13 @@ function SectionLabel({ children }) {
 export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
   const navigate = useNavigate();
   const [heroLoaded, setHeroLoaded] = useState(false);
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
+  const priceInfo = useCategoryPriceInfo(data.categoryId);
 
   useEffect(() => {
     const t = setTimeout(() => setHeroLoaded(true), 80);
     return () => clearTimeout(t);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchPrice() {
-      try {
-        const res = await api.get("/api/pricing");
-        if (!cancelled) {
-          const record = res.data?.[data.categoryId];
-          setPrice(record?.price ?? null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch category pricing:", err);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-
-    fetchPrice();
-    return () => {
-      cancelled = true;
-    };
-  }, [data.categoryId]);
 
   return (
     <div className="sp-page">
@@ -541,8 +518,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
             </div>
 
             <BookingCard
-              price={price}
-              priceLoading={priceLoading}
+              priceInfo={priceInfo}
               categoryId={data.categoryId}
               name={data.name}
             />
