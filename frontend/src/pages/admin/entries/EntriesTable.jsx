@@ -33,7 +33,7 @@ export default function EntriesTable({ rows, page, totals, save }) {
             <th>Patient</th>
             <th>Doctor</th>
             <th className="en-r">Fee charged</th>
-            <th className="en-ed en-r">Doctor fee ($)</th>
+            <th className="en-ed en-r">Doctor fee</th>
             <th className="en-ed">Paid status</th>
             <th className="en-ed">Paid on</th>
             <th className="en-ed">Comment</th>
@@ -109,7 +109,7 @@ function EntryRow({ row, number, save }) {
         {fee.main}
         {fee.paid && <small>{fee.paid}</small>}
       </td>
-      <td data-l="Doctor fee ($)" className="en-ed">
+      <td data-l="Doctor fee" className="en-ed">
         <FeeCell row={row} save={save} disabled={manual && row.manual?.locked} />
         {currencyOf(row) !== "usd" && (
           <small className="en-cur" title={`The doctor fee for this booking is in ${currencyOf(row).toUpperCase()}`}>

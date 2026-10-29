@@ -344,7 +344,7 @@ export default function ManageUsers() {
                             fontWeight: 700,
                           }}
                         >
-                          🌍 Country changed
+                          Country changed
                         </span>
                       ) : (
                         "—"

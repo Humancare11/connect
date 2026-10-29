@@ -132,7 +132,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
         bookedCell: visible(firstRow.querySelector("td.en-c-bk")),
         labels: cells.filter((td) => td.dataset.l && visible(td)).map(label),
         headClipped: [...table.querySelectorAll("th")].filter((th) => visible(th) && th.scrollWidth > th.clientWidth + 1).map((th) => th.textContent.trim()),
-        headFee: head("Doctor fee ($)")?.textContent.trim() || null,
+        headFee: head("Doctor fee")?.textContent.trim() || null,
         clipped,
         minInput: Math.min(...inputs),
         tableWidth: Math.round(table.getBoundingClientRect().width),
@@ -206,7 +206,7 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
     assert.deepEqual(Object.keys(await summary()), ["Received from patients", "To pay providers", "Our margin"]);
     assert.deepEqual(
       await page.$$eval(".en-table thead th", (els) => els.map((e) => e.textContent.trim())),
-      ["#", "Booking ID", "Booked", "Consultation", "Patient", "Doctor", "Fee charged", "Doctor fee ($)", "Paid status", "Paid on", "Comment"],
+      ["#", "Booking ID", "Booked", "Consultation", "Patient", "Doctor", "Fee charged", "Doctor fee", "Paid status", "Paid on", "Comment"],
     );
     assert.equal(await page.locator(".en-table tbody tr").count(), 25);
     assert.equal((await page.locator(".en-table tfoot .en-lbl").innerText()).trim(), `Totals for ${fromApi.totals.rows} rows`);
@@ -1488,11 +1488,11 @@ describe("admin Appointment entries page in a real browser", { skip: skipReason 
       assert.deepEqual(m.clipped, [], `nothing clipped: ${at}`);
       assert.equal(m.actions, null, `no Actions column in the Auto view: ${at}`);
       if (!expected.cards) {
-        assert.deepEqual(m.headClipped, [], `no column header is cut off (Doctor fee ($) in full): ${at}`);
+        assert.deepEqual(m.headClipped, [], `no column header is cut off (Doctor fee in full): ${at}`);
         assert.equal(m.bookedColumn, expected.booked, `Booked column: ${at}`);
         assert.ok(m.minInput >= 60, `the editable boxes keep a usable width: ${at}`);
       } else {
-        assert.ok(m.labels.includes("Patient") && m.labels.includes("Doctor fee ($)") && m.labels.includes("Paid status") && m.labels.includes("Paid on") && m.labels.includes("Comment"), `labelled fields: ${at}`);
+        assert.ok(m.labels.includes("Patient") && m.labels.includes("Doctor fee") && m.labels.includes("Paid status") && m.labels.includes("Paid on") && m.labels.includes("Comment"), `labelled fields: ${at}`);
         assert.ok(m.labels.includes("Booked"), `Booked is a labelled field on a card: ${at}`);
         assert.ok(m.minInput >= 100, `the editable boxes stay full size on a card: ${at}`);
       }
