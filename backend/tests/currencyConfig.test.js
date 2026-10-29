@@ -89,11 +89,12 @@ describe("country -> currency mapping", () => {
 });
 
 describe("normalizeCurrency", () => {
-  test("accepts the three currencies in any case, else USD", () => {
+  test("accepts the four currencies in any case, else USD", () => {
     assert.equal(cfg.normalizeCurrency("eur"), "EUR");
     assert.equal(cfg.normalizeCurrency(" gbp "), "GBP");
     assert.equal(cfg.normalizeCurrency("usd"), "USD");
-    assert.equal(cfg.normalizeCurrency("INR"), "USD");
+    assert.equal(cfg.normalizeCurrency(" inr "), "INR");
+    assert.equal(cfg.normalizeCurrency("JPY"), "USD");
     assert.equal(cfg.normalizeCurrency(undefined), "USD");
   });
 });

@@ -1,8 +1,8 @@
 // utils/currencyConfig.js
 //
-// Single source of truth for the three pricing currencies (USD / EUR / GBP):
-// which countries pay in which currency, how a request's currency is decided,
-// and how a price value is validated.
+// Single source of truth for the pricing currencies (USD / EUR / GBP, plus INR for
+// India): which countries pay in which currency, which payment gateway takes which
+// currency, how a request's currency is decided, and how a price value is validated.
 //
 // Countries are keyed by ISO 3166-1 alpha-2 code, never by name: the
 // country-state-city names differ from everyday ones ("Czech Republic",
@@ -15,12 +15,30 @@
 // Env:
 //   MULTI_CURRENCY_ENABLED  "true" / "1" turns EUR/GBP on for customers. Off by
 //                           default; while off, every customer decision is USD.
+//   RAZORPAY_KEY_ID +       INR (India only) is active ONLY when MULTI_CURRENCY_ENABLED
+//   RAZORPAY_KEY_SECRET     is on AND both Razorpay keys are set. Without them an Indian
+//                           customer is a USD customer on Stripe / PayPal, exactly as
+//                           before: the server never sends anyone to Razorpay without keys.
 const { Country } = require("country-state-city");
 
-const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP"];
+const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP", "INR"];
 const DEFAULT_CURRENCY = "USD";
 
 const MAX_PRICE = 100000;
+// INR amounts are numerically ~85x larger than the same value in USD, so the cap is higher (Rs 10,00,000).
+const MAX_PRICE_INR = 1000000;
+
+// The only gateway that may take each currency (the gateway follows the currency, never the other way round):
+// INR -> Razorpay only; USD / EUR / GBP -> Stripe or PayPal only.
+const GATEWAYS_FOR_CURRENCY = {
+  USD: ["stripe", "paypal"],
+  EUR: ["stripe", "paypal"],
+  GBP: ["stripe", "paypal"],
+  INR: ["razorpay"],
+};
+
+// India is the only country priced in rupees.
+const INR_COUNTRIES = new Set(["IN"]);
 
 // 21 euro-area members + 6 non-members that use the euro + 16 other European
 // countries priced in euros. XK (Kosovo) is not an official ISO code but is the
@@ -39,11 +57,32 @@ const EUR_COUNTRIES = new Set([
 // plus the Crown Dependencies and the UK territories that use sterling.
 const GBP_COUNTRIES = new Set(["GB", "JE", "GG", "IM", "GI", "FK", "SH"]);
 
-const SYMBOLS = { USD: "$", EUR: "€", GBP: "£" };
+const SYMBOLS = { USD: "$", EUR: "€", GBP: "£", INR: "₹" };
 
 function isMultiCurrencyEnabled() {
   const raw = String(process.env.MULTI_CURRENCY_ENABLED || "").trim().toLowerCase();
   return raw === "true" || raw === "1";
+}
+
+// True when both Razorpay keys are set (non-empty). Says nothing about the feature flag.
+function isRazorpayConfigured() {
+  return Boolean(String(process.env.RAZORPAY_KEY_ID || "").trim() && String(process.env.RAZORPAY_KEY_SECRET || "").trim());
+}
+
+// INR is active only with the flag on AND both Razorpay keys present.
+function isInrEnabled() {
+  return isMultiCurrencyEnabled() && isRazorpayConfigured();
+}
+
+// Whether `gateway` ("stripe" / "paypal" / "razorpay") may take `currency`.
+function gatewayAllowsCurrency(gateway, currency) {
+  const allowed = GATEWAYS_FOR_CURRENCY[String(currency || "").trim().toUpperCase()];
+  return Boolean(allowed && allowed.includes(String(gateway || "").trim().toLowerCase()));
+}
+
+// The highest price an admin may enter in `currency`.
+function maxPriceFor(currency) {
+  return String(currency || "").trim().toUpperCase() === "INR" ? MAX_PRICE_INR : MAX_PRICE;
 }
 
 function normalizeCurrency(value) {
@@ -51,11 +90,13 @@ function normalizeCurrency(value) {
   return SUPPORTED_CURRENCIES.includes(code) ? code : DEFAULT_CURRENCY;
 }
 
-// "EUR" for any code in the euro list, "GBP" for the sterling list, else USD.
+// "EUR" for any code in the euro list, "GBP" for the sterling list, "INR" for India
+// (only while INR is active, see isInrEnabled), else USD.
 function currencyForCountryCode(code) {
   const iso = String(code || "").trim().toUpperCase();
   if (EUR_COUNTRIES.has(iso)) return "EUR";
   if (GBP_COUNTRIES.has(iso)) return "GBP";
+  if (INR_COUNTRIES.has(iso) && isInrEnabled()) return "INR";
   return DEFAULT_CURRENCY;
 }
 
@@ -145,9 +186,10 @@ async function resolveRequestCurrency({ userCountry = "", ip = "", lookupLocatio
 
 // Validates one price value from an API body.
 // Accepts a number or a numeric string; rejects empty, booleans, arrays, NaN,
-// zero, negatives, more than two decimals and anything over MAX_PRICE.
+// zero, negatives, more than two decimals and anything over the cap (MAX_PRICE, or
+// MAX_PRICE_INR when `max` is passed, see maxPriceFor).
 // Returns { value } or { error } (error is a sentence without the field name).
-function parsePrice(raw) {
+function parsePrice(raw, max = MAX_PRICE) {
   if (typeof raw === "string") {
     if (raw.trim() === "" || !/^\d+(\.\d+)?$/.test(raw.trim())) {
       return { error: "must be a valid number greater than 0." };
@@ -157,7 +199,7 @@ function parsePrice(raw) {
   }
   const value = Number(raw);
   if (!Number.isFinite(value) || value <= 0) return { error: "must be greater than 0." };
-  if (value > MAX_PRICE) return { error: `must not be more than ${MAX_PRICE.toLocaleString("en-US")}.` };
+  if (value > max) return { error: `must not be more than ${max.toLocaleString("en-US")}.` };
   if (Math.abs(value * 100 - Math.round(value * 100)) > 1e-6) {
     return { error: "can have at most 2 decimal places." };
   }
@@ -168,10 +210,16 @@ module.exports = {
   SUPPORTED_CURRENCIES,
   DEFAULT_CURRENCY,
   MAX_PRICE,
+  MAX_PRICE_INR,
+  GATEWAYS_FOR_CURRENCY,
   EUR_COUNTRIES,
   GBP_COUNTRIES,
   SYMBOLS,
   isMultiCurrencyEnabled,
+  isRazorpayConfigured,
+  isInrEnabled,
+  gatewayAllowsCurrency,
+  maxPriceFor,
   normalizeCurrency,
   currencyForCountryCode,
   currencyForCountryName,
