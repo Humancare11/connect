@@ -95,6 +95,9 @@ const appointmentSchema = new mongoose.Schema(
     ],
     paymentIntentId:  { type: String, default: "" },
     paymentAmount:    { type: Number, default: 0 },
+    // Currency of paymentAmount / consultationPrice. Bookings made before
+    // multi-currency existed have none stored and read as "usd".
+    paymentCurrency:  { type: String, enum: ["usd", "eur", "gbp"], default: "usd" },
     paymentStatus:    { type: String, enum: ["unpaid", "paid"], default: "unpaid", index: true },
     paymentGateway:   { type: String, enum: ["stripe", "paypal", ""], default: "" },
     doctorPayoutStatus: { type: String, enum: ["pending", "paid"], default: "pending" },

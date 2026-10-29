@@ -46,12 +46,28 @@ const categoryPricingSchema = new mongoose.Schema(
       min: 0,
     },
     currency: {
-      // Locked to USD: the booking UI's price formatting is USD-only
-      // (see AppointmentBookingForm.jsx's formatPrice), so a differing
-      // currency here would silently mislabel the amount charged.
+      // The currency of `price` only (always USD). EUR and GBP prices live in
+      // their own fields below; nothing is ever converted between them.
       type: String,
       default: "USD",
       enum: ["USD"],
+    },
+    // Optional until an admin enters them (older categories only have the USD
+    // `price`). Once set they must stay a positive number: the API never
+    // clears them, and this validator rejects a null/zero that slips through.
+    priceEur: {
+      type: Number,
+      validate: {
+        validator: (value) => Number.isFinite(value) && value > 0,
+        message: "EUR price must be greater than 0.",
+      },
+    },
+    priceGbp: {
+      type: Number,
+      validate: {
+        validator: (value) => Number.isFinite(value) && value > 0,
+        message: "GBP price must be greater than 0.",
+      },
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,

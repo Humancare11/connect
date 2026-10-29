@@ -166,6 +166,13 @@ const consultationSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Currency of paymentAmount / consultationPrice. Bookings made before
+    // multi-currency existed have none stored and read as "usd".
+    paymentCurrency: {
+      type: String,
+      enum: ["usd", "eur", "gbp"],
+      default: "usd",
+    },
     paymentStatus: {
       type: String,
       enum: ["unpaid", "paid", "refunded"],
