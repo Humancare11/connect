@@ -5,7 +5,7 @@ import api from "../api";
 /**
  * Maps each public condition/specialty URL path to its parent category ID.
  */
-const URL_CATEGORY_MAP = {
+export const URL_CATEGORY_MAP = {
   "/dehydration": "general",
   "/vomiting": "general",
   "/weight-and-nutrition/lifestyle-medicine/sleep-hygiene": "mental",

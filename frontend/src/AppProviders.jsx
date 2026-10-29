@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { DoctorAuthProvider } from "./context/DoctorAuthContext";
 import { AdminProvider } from "./context/AdminContext";
 import { PricingProvider } from "./context/PricingContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
 import { EmployeeAdminProvider } from "./context/EmployeeAdminContext";
 import { PartnerProvider } from "./context/PartnerContext";
 import { ToastProvider } from "./components/ui/Toast";
@@ -33,7 +34,9 @@ export default function AppProviders({ children }) {
               <AdminProvider>
                 <EmployeeAdminProvider>
                   <PartnerProvider>
-                    <PricingProvider>{children}</PricingProvider>
+                    <CurrencyProvider>
+                      <PricingProvider>{children}</PricingProvider>
+                    </CurrencyProvider>
                   </PartnerProvider>
                 </EmployeeAdminProvider>
               </AdminProvider>
@@ -47,7 +50,9 @@ export default function AppProviders({ children }) {
           <DoctorAuthProvider>
             <AdminProvider>
               <PartnerProvider>
-                <PricingProvider>{children}</PricingProvider>
+                <CurrencyProvider>
+                  <PricingProvider>{children}</PricingProvider>
+                </CurrencyProvider>
               </PartnerProvider>
             </AdminProvider>
           </DoctorAuthProvider>

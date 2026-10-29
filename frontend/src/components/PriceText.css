@@ -1,0 +1,23 @@
+/* Placeholder for a price that is still loading. It takes the text colour of the slot (any background) and the size of a price. */
+.pt-skeleton {
+  display: inline-block;
+  width: 3.2ch;
+  height: 0.9em;
+  vertical-align: -0.1em;
+  border-radius: 4px;
+  background: currentColor;
+  opacity: 0.18;
+  animation: pt-pulse 1.2s ease-in-out infinite;
+}
+.pt-unavailable {
+  font-size: 0.6em;
+  font-weight: 500;
+  opacity: 0.85;
+}
+@keyframes pt-pulse {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.28; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pt-skeleton { animation: none; }
+}
