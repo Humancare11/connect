@@ -91,3 +91,7 @@ test("CategoryConsultant has no made-up 49 and no price fetch of its own for a c
   assert.equal(src.includes("/api/appointment-tree"), false);
   assert.ok(src.includes("useCategoryPriceInfo(categoryId)"));
 });
+
+test("without a currency provider nothing waits for a currency (default context is USD, not loading)", () => {
+  assert.ok(read("context", "CurrencyContext.jsx").includes("createContext({ currency: DEFAULT_CURRENCY, loading: false"));
+});

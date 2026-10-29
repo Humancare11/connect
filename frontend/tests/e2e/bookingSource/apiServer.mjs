@@ -39,6 +39,7 @@ export async function startApiServer() {
   // Stubs go onto the real modules' exports BEFORE the controller is loaded (it destructures them at require time).
   const pv = load("utils/paymentVerification.js");
   pv.resolveCategoryFeeCents = async () => 5000;
+  pv.verifyCategoryPayment = async ({ paymentIntentId, paypalOrderId }) => ({ ref: paymentIntentId || paypalOrderId, gateway: paymentIntentId ? "stripe" : "paypal", amountCents: 5000, currency: "USD" });
   pv.verifyStripePaymentIntent = async ({ paymentIntentId }) => ({ ref: paymentIntentId, gateway: "stripe", amountCents: 5000 });
   pv.verifyPaypalOrder = async ({ paypalOrderId }) => ({ ref: paypalOrderId, gateway: "paypal", amountCents: 5000 });
   pv.claimPaymentOnce = async () => {};

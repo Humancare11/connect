@@ -10,7 +10,8 @@ import { useAuth } from "./AuthContext";
 import { createCurrencyLoader } from "../utils/currencyLoader";
 import { DEFAULT_CURRENCY } from "../utils/currencyDisplay";
 
-const CurrencyContext = createContext({ currency: DEFAULT_CURRENCY, loading: true, source: "" });
+// Without a provider above (a page rendered on its own) the visitor is simply priced in USD and nothing waits for a currency.
+const CurrencyContext = createContext({ currency: DEFAULT_CURRENCY, loading: false, source: "" });
 
 const fetchCurrency = async () => {
   const res = await api.get("/api/geo/currency", { authRole: "user", skipAuthRefresh: true });
