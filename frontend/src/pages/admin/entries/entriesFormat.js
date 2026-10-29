@@ -33,7 +33,7 @@ export function viewToParams({ view, tab, month, page }) {
 // A margin can be negative: "-$15.00" rather than "$-15.00".
 export const formatSigned = (cents, currency = "usd") => `${cents < 0 ? "-" : ""}${formatMoney(Math.abs(cents), currency)}`;
 
-// Money is never added across currencies, so the server sends every total per currency ({ usd: {...}, eur: {...}, gbp: {...} }).
+// Money is never added across currencies, so the server sends every total per currency ({ usd: {...}, eur: {...}, gbp: {...}, inr: {...} }).
 // This shows one figure of such a set: just "$1,200.00" when only USD has anything (what the page always showed), otherwise one
 // part per currency, like "USD $1,200.00 · EUR €300.00". USD is always counted as present.
 export function moneyByCurrency(byCurrency, pick, { signed = false } = {}) {
@@ -67,19 +67,20 @@ export function summaryBoxes(view, summary) {
 
 // ── Money ────────────────────────────────────────────────────────────────────
 
-export const MONEY_CURRENCIES = ["usd", "eur", "gbp"];
-const CURRENCY_SYMBOLS = { usd: "$", eur: "€", gbp: "£" };
+export const MONEY_CURRENCIES = ["usd", "eur", "gbp", "inr"];
+const CURRENCY_SYMBOLS = { usd: "$", eur: "€", gbp: "£", inr: "₹" };
 
-// A booking's currency as one of "usd" / "eur" / "gbp" (anything missing or unknown is USD, like old bookings).
+// A booking's currency as one of "usd" / "eur" / "gbp" / "inr" (anything missing or unknown is USD, like old bookings).
 export const currencyOf = (row) => {
   const code = String(row?.currency || "usd").toLowerCase();
   return MONEY_CURRENCIES.includes(code) ? code : "usd";
 };
 
-// 9900 -> "$99.00", 149900 -> "$1,499.00"; 3000 with "eur" -> "€30.00", with "gbp" -> "£30.00". USD when no currency is given.
+// 9900 -> "$99.00", 149900 -> "$1,499.00"; 3000 with "eur" -> "€30.00", with "gbp" -> "£30.00"; 10000000 with "inr" -> "₹1,00,000.00"
+// (rupees use Indian digit grouping). USD when no currency is given.
 export const formatMoney = (cents, currency = "usd") => {
   const code = MONEY_CURRENCIES.includes(String(currency).toLowerCase()) ? String(currency).toLowerCase() : "usd";
-  return `${CURRENCY_SYMBOLS[code]}${((Number.isFinite(cents) ? cents : 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${CURRENCY_SYMBOLS[code]}${((Number.isFinite(cents) ? cents : 0) / 100).toLocaleString(code === "inr" ? "en-IN" : "en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // 7425 -> "74.25"; null -> ""

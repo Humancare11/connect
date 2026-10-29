@@ -193,7 +193,8 @@ test("the refund reminder names the gateway the booking was paid through", () =>
   assert.equal(refundWarning({ paymentGateway: "stripe" }), "This booking was paid. Refund it in Stripe.");
   assert.equal(refundWarning({ paymentGateway: "paypal" }), "This booking was paid. Refund it in PayPal.");
   assert.equal(refundWarning({ paymentGateway: "PayPal" }), "This booking was paid. Refund it in PayPal.");
-  for (const other of ["", "razorpay", undefined, null]) {
+  assert.equal(refundWarning({ paymentGateway: "razorpay" }), "This booking was paid. Refund it in Razorpay.");
+  for (const other of ["", "bankwire", undefined, null]) {
     assert.equal(refundWarning({ paymentGateway: other }), "This booking was paid. Refund it with the payment provider.", String(other));
   }
   assert.equal(refundWarning(null), "This booking was paid. Refund it with the payment provider.");
@@ -220,7 +221,9 @@ test("the fee is shown in the booking's own currency; USD when none is given", a
   assert.equal(B.formatFee(30, "gbp"), "£30.00");
   assert.equal(B.formatFee(30, "usd"), "$30.00");
   assert.equal(B.formatFee(30), "$30.00");
-  assert.equal(B.formatFee(30, "inr"), "$30.00");
+  assert.equal(B.formatFee(30, "inr"), "₹30.00");
+  assert.equal(B.formatFee(100000, "inr"), "₹1,00,000.00", "rupees use Indian digit grouping");
+  assert.equal(B.formatFee(30, "jpy"), "$30.00");
   assert.equal(B.formatFee(0, "eur"), "—");
 });
 
@@ -230,6 +233,9 @@ test("the refund reminder names the amount and currency of a EUR / GBP booking; 
   assert.equal(B.refundWarning({ paymentGateway: "paypal", currency: "gbp", fee: 25 }), "This booking was paid (£25.00). Refund it in PayPal.");
   assert.equal(B.refundWarning({ paymentGateway: "stripe", currency: "eur" }), "This booking was paid (EUR). Refund it in Stripe.");
   assert.equal(B.refundWarning({ currency: "gbp", fee: 25 }), "This booking was paid (£25.00). Refund it with the payment provider.");
+  // An INR booking is refunded in Razorpay, with the rupee amount.
+  assert.equal(B.refundWarning({ paymentGateway: "razorpay", currency: "inr", fee: 4999 }), "This booking was paid (₹4,999.00). Refund it in Razorpay.");
+  assert.equal(B.refundWarning({ paymentGateway: "razorpay", currency: "inr" }), "This booking was paid (INR). Refund it in Razorpay.");
   assert.equal(B.refundWarning({ paymentGateway: "stripe", currency: "usd", fee: 99 }), "This booking was paid. Refund it in Stripe.");
   assert.equal(B.refundWarning({ paymentGateway: "stripe", fee: 99 }), "This booking was paid. Refund it in Stripe.");
 });

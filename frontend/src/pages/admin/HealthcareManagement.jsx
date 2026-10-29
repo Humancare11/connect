@@ -4,6 +4,14 @@ import HealthcareIcon, { HEALTHCARE_ICON_OPTIONS } from "../../components/Health
 import "./Dashboard.css";
 import "./HealthcareManagement.css";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
+import {
+  PRICE_CURRENCIES,
+  MAX_PRICE_INR,
+  MAX_PRICE,
+  formatMoney,
+  isMissingForeignPrice,
+  checkCategoryPrices,
+} from "./healthcarePrices";
 
 const SECTIONS = [
   { id: "categories", label: "Categories", singular: "Category" },
@@ -17,10 +25,11 @@ const EMPTY_FORMS = {
     icon: "",
     description: "",
     // Prices in each currency, entered by hand (nothing is converted).
-    // A new category needs all three.
+    // A new category needs all four (USD, EUR, GBP and INR for India).
     price: "",
     priceEur: "",
     priceGbp: "",
+    priceInr: "",
     isActive: true,
     // Not user-editable - carried through from the loaded record so an
     // edit's price update can target the right CategoryPricing row.
@@ -29,6 +38,7 @@ const EMPTY_FORMS = {
     // price, which then can't be emptied (only changed).
     priceEurLocked: false,
     priceGbpLocked: false,
+    priceInrLocked: false,
   },
   specialties: {
     categoryId: "",
@@ -64,56 +74,6 @@ function IconPreview({ value }) {
       <HealthcareIcon name={value} size={18} fallback="-" />
     </span>
   );
-}
-
-const PRICE_CURRENCIES = [
-  { code: "USD", symbol: "$", field: "price" },
-  { code: "EUR", symbol: "€", field: "priceEur" },
-  { code: "GBP", symbol: "£", field: "priceGbp" },
-];
-const MAX_PRICE = 100000;
-
-// Symbol first, like the site: $30, €30, £30.50. Not set -> null.
-function formatMoney(value, currency) {
-  if (value === null || value === undefined || value === "") return null;
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return null;
-  const symbol = PRICE_CURRENCIES.find((c) => c.code === currency)?.symbol || "$";
-  return `${symbol}${amount.toLocaleString("en-US", {
-    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-// A category is "missing" a price when EUR or GBP has not been entered yet.
-const isMissingForeignPrice = (category) =>
-  category.priceEur === null || category.priceEur === undefined ||
-  category.priceGbp === null || category.priceGbp === undefined;
-
-// Same rules as the server (which is the real check): a number above 0, at
-// most 100,000, at most 2 decimals. USD is always required. On create all
-// three are required; on edit a EUR / GBP price that was already set can be
-// changed but not emptied, and one that was never set may stay empty.
-function checkCategoryPrices(form, creating) {
-  const fields = [
-    { field: "price", label: "USD price", required: true },
-    { field: "priceEur", label: "EUR price", required: creating || form.priceEurLocked },
-    { field: "priceGbp", label: "GBP price", required: creating || form.priceGbpLocked },
-  ];
-  for (const { field, label, required } of fields) {
-    const text = String(form[field] ?? "").trim();
-    if (!text) {
-      if (!required) continue;
-      return creating || field === "price"
-        ? `${label} is required.`
-        : `${label} cannot be cleared once it is set.`;
-    }
-    const value = Number(text);
-    if (!/^\d+(\.\d+)?$/.test(text) || !(value > 0)) return `${label} must be greater than 0.`;
-    if (value > MAX_PRICE) return `${label} must not be more than ${MAX_PRICE.toLocaleString("en-US")}.`;
-    if (!/^\d+(\.\d{1,2})?$/.test(text)) return `${label} can have at most 2 decimal places.`;
-  }
-  return "";
 }
 
 export default function HealthcareManagement() {
@@ -206,10 +166,12 @@ export default function HealthcareManagement() {
         price: item.price === null || item.price === undefined ? "" : String(item.price),
         priceEur: item.priceEur === null || item.priceEur === undefined ? "" : String(item.priceEur),
         priceGbp: item.priceGbp === null || item.priceGbp === undefined ? "" : String(item.priceGbp),
+        priceInr: item.priceInr === null || item.priceInr === undefined ? "" : String(item.priceInr),
         isActive: Boolean(item.isActive),
         pricingSlug: item.pricingSlug || "",
         priceEurLocked: item.priceEur !== null && item.priceEur !== undefined,
         priceGbpLocked: item.priceGbp !== null && item.priceGbp !== undefined,
+        priceInrLocked: item.priceInr !== null && item.priceInr !== undefined,
       });
       return;
     }
@@ -257,11 +219,11 @@ export default function HealthcareManagement() {
         // CategoryPricing (PUT /api/pricing/:pricingSlug) - they're never part
         // of the category's own update payload, so the two are saved as
         // separate requests here even though they look like one form.
-        // EUR / GBP are only sent when filled in: a category that was never
+        // EUR / GBP / INR are only sent when filled in: a category that was never
         // priced in them can be saved without (and keeps showing "Not set").
         const {
-          price, priceEur, priceGbp, pricingSlug,
-          priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked,
+          price, priceEur, priceGbp, priceInr, pricingSlug,
+          priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked, priceInrLocked: _inrLocked,
           ...categoryFields
         } = payload;
         res = await api.put(`${endpoint}/${editing}`, categoryFields);
@@ -269,6 +231,7 @@ export default function HealthcareManagement() {
           const prices = { price: Number(price) };
           if (String(priceEur).trim()) prices.priceEur = Number(priceEur);
           if (String(priceGbp).trim()) prices.priceGbp = Number(priceGbp);
+          if (String(priceInr).trim()) prices.priceInr = Number(priceInr);
           await api.put(`/api/pricing/${pricingSlug}`, prices);
         } catch (priceErr) {
           await loadAll();
@@ -282,10 +245,10 @@ export default function HealthcareManagement() {
           return;
         }
       } else if (active === "categories") {
-        // New category: all three prices go with it.
+        // New category: all four prices go with it.
         const {
-          price, priceEur, priceGbp,
-          pricingSlug: _slug, priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked,
+          price, priceEur, priceGbp, priceInr,
+          pricingSlug: _slug, priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked, priceInrLocked: _inrLocked,
           ...categoryFields
         } = payload;
         res = await api.post(endpoint, {
@@ -293,6 +256,7 @@ export default function HealthcareManagement() {
           price: Number(price),
           priceEur: Number(priceEur),
           priceGbp: Number(priceGbp),
+          priceInr: Number(priceInr),
         });
       } else {
         res = editing
@@ -456,12 +420,12 @@ export default function HealthcareManagement() {
                       <div className="hcm-field full">
                         <p className="hcm-price-help">
                           {editing
-                            ? "Enter each price by hand - nothing is converted. A price that is already set can be changed but not cleared; EUR / GBP that show as empty can be filled in later."
-                            : "All three prices are required (more than 0, up to 100,000, at most 2 decimals). Enter each by hand - nothing is converted."}
+                            ? "Enter each price by hand - nothing is converted. A price that is already set can be changed but not cleared; EUR / GBP / INR that show as empty can be filled in later."
+                            : "All four prices are required (more than 0, at most 2 decimals; up to 100,000, and up to 10,00,000 for INR). Enter each by hand - nothing is converted. INR is what customers in India pay, through Razorpay."}
                         </p>
                       </div>
-                      {PRICE_CURRENCIES.map(({ code, symbol, field }) => {
-                        const locked = field === "priceEur" ? form.priceEurLocked : field === "priceGbp" ? form.priceGbpLocked : false;
+                      {PRICE_CURRENCIES.map(({ code, symbol, field, lockField }) => {
+                        const locked = lockField ? form[lockField] : false;
                         const required = !editing || field === "price" || locked;
                         return (
                           <div className="hcm-field" key={field}>
@@ -473,7 +437,7 @@ export default function HealthcareManagement() {
                               id={`hcm-${field}`}
                               type="number"
                               min="0.01"
-                              max={MAX_PRICE}
+                              max={code === "INR" ? MAX_PRICE_INR : MAX_PRICE}
                               step="0.01"
                               inputMode="decimal"
                               value={form[field]}
@@ -532,7 +496,7 @@ export default function HealthcareManagement() {
                     <div className="hcm-banner" role="status">
                       <span>
                         <strong>{missingPriceCount}</strong>{" "}
-                        {missingPriceCount === 1 ? "category is" : "categories are"} missing EUR/GBP prices.
+                        {missingPriceCount === 1 ? "category is" : "categories are"} missing EUR/GBP/INR prices.
                       </span>
                       <button type="button" className="hcm-banner-btn" onClick={() => setMissingOnly((v) => !v)}>
                         {missingOnly ? "Show all categories" : "Show only these"}

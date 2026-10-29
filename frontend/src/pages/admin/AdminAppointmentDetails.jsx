@@ -14,14 +14,15 @@ function getCountryName(isoCode) {
   return country?.name || isoCode;
 }
 
-// `currency` is the booking paymentCurrency ("usd" / "eur" / "gbp"); a booking without one is USD.
+// `currency` is the booking paymentCurrency ("usd" / "eur" / "gbp" / "inr"); a booking without one is USD.
 function formatMoney(value, currency = "usd") {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "-";
   const code = String(currency || "usd").toUpperCase();
-  return new Intl.NumberFormat("en-US", {
+  const shown = ["USD", "EUR", "GBP", "INR"].includes(code) ? code : "USD";
+  return new Intl.NumberFormat(shown === "INR" ? "en-IN" : "en-US", {
     style: "currency",
-    currency: ["USD", "EUR", "GBP"].includes(code) ? code : "USD",
+    currency: shown,
     maximumFractionDigits: 0,
   }).format(amount);
 }

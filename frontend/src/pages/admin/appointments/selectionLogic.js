@@ -49,7 +49,7 @@ export function pruneSelection(selected, rows) {
 
 // ── Bulk actions ─────────────────────────────────────────────────────────────
 
-const gatewayName = (row) => ({ stripe: "Stripe", paypal: "PayPal" })[String(row.paymentGateway || "").toLowerCase()] || "";
+const gatewayName = (row) => ({ stripe: "Stripe", paypal: "PayPal", razorpay: "Razorpay" })[String(row.paymentGateway || "").toLowerCase()] || "";
 
 // The refund reminder for a group of bookings (""  when none was paid). Cancelling never refunds, so the
 // admin is told how many were paid and where the money was taken.
@@ -61,7 +61,7 @@ export function bulkRefundNote(rows, noun = "selected") {
   if (paid.length === 0) return "";
   if (paid.length === 1) {
     const name = gatewayName(paid[0]);
-    // A EUR / GBP booking also names the amount and currency to refund; a USD one reads as it always did.
+    // A EUR / GBP / INR booking also names the amount and currency to refund; a USD one reads as it always did.
     const code = currencyCode(paid[0].currency);
     const amount = code === "USD" ? "" : ` (${Number(paid[0].fee) > 0 ? formatFee(paid[0].fee, code) : code})`;
     return `1 of the ${noun} bookings was paid and is not refunded automatically. Refund it ${name ? `in ${name}` : "with the payment provider"}${amount}.`;
@@ -71,14 +71,14 @@ export function bulkRefundNote(rows, noun = "selected") {
     const name = gatewayName(r) || "other";
     counts.set(name, (counts.get(name) || 0) + 1);
   }
-  const order = ["Stripe", "PayPal", "other"].filter((name) => counts.has(name));
+  const order = ["Stripe", "PayPal", "Razorpay", "other"].filter((name) => counts.has(name));
   const list = order.map((name) => `${name} (${counts.get(name)})`).join(", ");
   // Different currencies are named, never added: "Currencies: EUR (2), USD (1)."
   const currencies = new Map();
   for (const r of paid) currencies.set(currencyCode(r.currency), (currencies.get(currencyCode(r.currency)) || 0) + 1);
   const currencyNote = currencies.size === 1 && currencies.has("USD")
     ? ""
-    : ` Currencies: ${["USD", "EUR", "GBP"].filter((c) => currencies.has(c)).map((c) => `${c} (${currencies.get(c)})`).join(", ")}.`;
+    : ` Currencies: ${["USD", "EUR", "GBP", "INR"].filter((c) => currencies.has(c)).map((c) => `${c} (${currencies.get(c)})`).join(", ")}.`;
   return `${paid.length} of the ${noun} bookings were paid and are not refunded automatically. Refund them: ${list}.${currencyNote}`;
 }
 

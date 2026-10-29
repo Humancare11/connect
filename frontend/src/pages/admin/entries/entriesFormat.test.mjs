@@ -299,7 +299,14 @@ test("money in EUR and GBP: symbol first, USD when no currency is given", () => 
   assert.equal(F.formatMoney(3000, "gbp"), "£30.00");
   assert.equal(F.formatMoney(3000, "usd"), "$30.00");
   assert.equal(F.formatMoney(3000), "$30.00");
-  assert.equal(F.formatMoney(3000, "inr"), "$30.00");
+  assert.equal(F.formatMoney(3000, "inr"), "₹30.00");
+  assert.equal(F.formatMoney(10000000, "inr"), "₹1,00,000.00", "rupees use Indian digit grouping");
+  assert.equal(F.formatMoney(3000, "jpy"), "$30.00");
+  assert.equal(F.currencyOf({ currency: "inr" }), "inr");
+  assert.deepEqual(F.MONEY_CURRENCIES, ["usd", "eur", "gbp", "inr"]);
+  // INR is its own part of a total, shown by name, never added to another currency.
+  const byCurrency = { usd: { feeChargedCents: 1000 }, inr: { feeChargedCents: 99900 } };
+  assert.equal(F.moneyByCurrency(byCurrency, (b) => b.feeChargedCents), "USD $10.00 · INR ₹999.00");
   assert.equal(F.formatMoney(123456, "eur"), "€1,234.56");
   assert.equal(F.formatSigned(-1500, "gbp"), "-£15.00");
 });
