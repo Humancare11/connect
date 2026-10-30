@@ -84,7 +84,7 @@ No real money moves in Test mode.
 - Every price: more than 0, at most 2 decimals. Maximum 100,000 for USD / EUR / GBP and **10,00,000 for INR**.
 - EUR / GBP / INR that are set can be changed but never cleared. One that was never set may stay empty (it falls back to USD).
 - Nothing is converted between currencies.
-- Recommended minimum for INR: Razorpay's own minimum order is ₹1 (100 paise), so a real price should never be below that; a sensible floor for a consultation is ₹10. The code does not enforce a minimum yet (see the open `parsePrice` tiny-value fix).
+- Minimum price: 0.01 for USD / EUR / GBP and ₹1 for INR (Razorpay's own minimum order is ₹1). Anything smaller is refused, on create and on edit. A sensible floor for a real consultation is ₹10, but the code only enforces ₹1.
 
 ## Reports
 
