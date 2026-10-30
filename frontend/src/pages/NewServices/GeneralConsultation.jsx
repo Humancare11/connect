@@ -225,7 +225,7 @@ export default function GeneralConsultation() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div className="service-page service-page--general" style={{ "--service-accent": s.accentColor }}>
         <AnimatePresence mode="wait">

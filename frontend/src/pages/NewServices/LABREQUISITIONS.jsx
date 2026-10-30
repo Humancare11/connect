@@ -121,7 +121,7 @@ export default function LABREQUISITIONS() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div className="service-page service-page--lab" style={{ "--service-accent": s.accentColor }}>
         <AnimatePresence mode="wait">

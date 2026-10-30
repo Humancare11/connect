@@ -69,7 +69,7 @@ export default function AdhdEvaluation({ categoryId } = {}) {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}

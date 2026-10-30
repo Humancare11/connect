@@ -407,6 +407,8 @@ function ConditionCard({ cond, index }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function SkinHair() {
+  // The same USD price the booking card below shows (hidden behind its skeleton), for the schema.org Offer.
+  const priceInfo = useCategoryPriceInfo("skin");
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "skin" } });
@@ -421,7 +423,7 @@ export default function SkinHair() {
         minHeight: "100vh",
       }}
     >
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       {/* ── Hero ── */}
       <section

@@ -101,6 +101,36 @@ function breadcrumb(ctx) {
   };
 }
 
+// The page's name without the site suffix: "Fit to Fly Certificate Online | Humancare Connect" -> "Fit to Fly Certificate Online".
+function offerName(title) {
+  return String(title || "").split(/\s+\|\s+/)[0].trim();
+}
+
+// A Service with one Offer: the USD price shown (hidden behind the loading skeleton) in the static HTML of a service or category page,
+// stated explicitly for crawlers. Always USD: the visitor's own currency is decided in the browser after the page loads. Only built
+// when the page really has a USD price (ctx.offer = { price }); an invented or zero price is never marked up.
+function serviceOffer(ctx) {
+  const price = Number(ctx.offer?.price);
+  const name = ctx.offer?.name || offerName(ctx.title);
+  if (!ctx.canonical || !name || !Number.isFinite(price) || price <= 0) return null;
+  return {
+    "@type": "Service",
+    "@id": `${ctx.canonical}#service`,
+    name,
+    url: ctx.canonical,
+    provider: { "@id": ORG_ID },
+    mainEntityOfPage: { "@id": `${ctx.canonical}#webpage` },
+    offers: {
+      "@type": "Offer",
+      price: price.toFixed(2),
+      priceCurrency: "USD",
+      url: ctx.canonical,
+      availability: "https://schema.org/InStock",
+      seller: { "@id": ORG_ID },
+    },
+  };
+}
+
 const BUILDERS = {
   Organization: organization,
   MedicalOrganization: organization,
@@ -108,14 +138,16 @@ const BUILDERS = {
   MedicalWebPage: (ctx) => webPage("MedicalWebPage", ctx),
   WebPage: (ctx) => webPage("WebPage", ctx),
   BreadcrumbList: breadcrumb,
+  Service: serviceOffer,
 };
 
 export const DEFAULT_SCHEMA_TYPES = ["MedicalWebPage", "BreadcrumbList"];
 
-// ctx: { path, canonical, title, description, image, types? }
+// ctx: { path, canonical, title, description, image, types?, offer? }   offer: { price (USD), name? } adds the Service + Offer node
 export function buildSchema(ctx) {
   if (!ctx || !ctx.canonical) return [];
-  const types = ctx.types || DEFAULT_SCHEMA_TYPES;
+  const types = [...(ctx.types || DEFAULT_SCHEMA_TYPES)];
+  if (ctx.offer && !types.includes("Service")) types.push("Service");
   const seen = new Set();
   const nodes = [];
   for (const t of types) {

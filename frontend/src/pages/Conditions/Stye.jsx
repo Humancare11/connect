@@ -36,7 +36,7 @@ export default function Stye({ categoryId } = {}) {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <PreloadImage src={pageData.bgImage} />

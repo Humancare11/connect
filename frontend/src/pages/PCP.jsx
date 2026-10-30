@@ -311,7 +311,7 @@ export default function PCP() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div className="pcp-root">
         {/* ───────────────────────── Hero ───────────────────────── */}

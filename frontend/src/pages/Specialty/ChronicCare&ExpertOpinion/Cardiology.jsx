@@ -515,7 +515,7 @@ export default function SpecialtyPage({ data = SPECIALTY_DATA }) {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">

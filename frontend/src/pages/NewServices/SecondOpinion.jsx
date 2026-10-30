@@ -313,7 +313,7 @@ export default function SecondOpinion() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div
         className="service-page service-page--second-opinion"

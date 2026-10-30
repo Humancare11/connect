@@ -240,7 +240,7 @@ export default function FitToFly() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div
         className="service-page service-page--fit-to-fly"

@@ -68,7 +68,7 @@ export default function Ptsd({ categoryId } = {}) {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <PreloadImage src={pageData.bgImage} />

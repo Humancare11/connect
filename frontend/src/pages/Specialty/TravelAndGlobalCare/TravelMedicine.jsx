@@ -543,7 +543,7 @@ export default function TravelMedicine({ data = SPECIALTY_DATA }) {
   return (
     <>
       <div className="sp-page">
-        <SEO />
+        <SEO usdPrice={priceInfo.usdAmount} />
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
           <div className="sp-hero__bg">

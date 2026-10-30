@@ -403,6 +403,8 @@ function ConditionCard({ cond, index }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function TravelGlobalCare() {
+  // The same USD price the booking card below shows (hidden behind its skeleton), for the schema.org Offer.
+  const priceInfo = useCategoryPriceInfo("travel");
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "travel" } });
@@ -417,7 +419,7 @@ export default function TravelGlobalCare() {
         minHeight: "100vh",
       }}
     >
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       {/* ── Hero ── */}
       <section

@@ -494,6 +494,8 @@ function ConditionCard({ cond, index }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function MentalHealth() {
+  // The same USD price the booking card below shows (hidden behind its skeleton), for the schema.org Offer.
+  const priceInfo = useCategoryPriceInfo("mental");
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "mental" } });
@@ -508,7 +510,7 @@ export default function MentalHealth() {
         minHeight: "100vh",
       }}
     >
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       {/* ── Hero ── */}
       <section

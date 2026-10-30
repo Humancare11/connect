@@ -30,7 +30,7 @@ export default function SkinRashChildren({ categoryId } = {}) {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="condition-root">
         <PreloadImage src={pageData.bgImage} />
         <section

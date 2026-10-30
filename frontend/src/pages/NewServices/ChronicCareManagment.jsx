@@ -263,7 +263,7 @@ export default function ChronicCareManagement() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div
         className="service-page service-page--chronic-care"

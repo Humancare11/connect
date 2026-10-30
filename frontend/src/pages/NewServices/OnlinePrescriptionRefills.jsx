@@ -289,7 +289,7 @@ export default function OnlinePrescriptionRefills() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div
         className="service-page service-page--prescription-refills"

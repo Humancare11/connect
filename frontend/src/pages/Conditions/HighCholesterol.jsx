@@ -42,7 +42,7 @@ export default function HighCholesterol({ categoryId } = {}) {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <PreloadImage src={pageData.bgImage} />
