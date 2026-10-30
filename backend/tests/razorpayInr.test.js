@@ -16,6 +16,27 @@ const KEY_ID = "rzp_test_unitkey";
 const KEY_SECRET = "unit_test_key_secret";
 const WEBHOOK_SECRET = "unit_test_webhook_secret";
 
+// ── Who a payment was created for ──
+// A real Stripe intent / PayPal order carries the user it was created for (metadata.userId / custom_id). These fakes give every
+// stored intent or order the customer who is currently booking (lastUser) as its owner, so the existing fixtures stay "their own
+// payment". A fixture can say otherwise: __owner: "<another user id>" is somebody else's payment, __owner: null has no owner (an
+// intent made before the owner was recorded). Direct pv.* calls (wrapped at the bottom of the requires) default to DIRECT_USER.
+const DIRECT_USER = "000000000000000000000abc";
+let lastUser = DIRECT_USER;
+function ownerOf(stored) {
+  return stored.__owner === undefined ? lastUser : stored.__owner;
+}
+function stripeView(stored) {
+  const { __owner, ...intent } = stored;
+  const owner = ownerOf(stored);
+  return { ...intent, metadata: { ...(intent.metadata || {}), ...(owner ? { userId: String(owner) } : {}) } };
+}
+function paypalView(stored) {
+  const { __owner, ...order } = stored;
+  const owner = ownerOf(stored);
+  return { ...order, purchase_units: order.purchase_units.map((u, i) => (i === 0 && owner ? { ...u, custom_id: `category:general-care:${owner}` } : u)) };
+}
+
 // ── Fakes, installed BEFORE the real modules load (they destructure at require time) ──
 const stripeCreated = [];
 const stripeIntents = {};
@@ -27,7 +48,7 @@ const fakeStripe = {
     },
     retrieve: async (id) => {
       if (!stripeIntents[id]) throw new Error("No such payment_intent");
-      return stripeIntents[id];
+      return stripeView(stripeIntents[id]);
     },
   },
 };
@@ -48,7 +69,7 @@ require("../utils/paypal").paypalFetch = async (method, path, body) => {
   const get = /^\/v2\/checkout\/orders\/([^/]+)$/.exec(path);
   if (method === "GET" && get) {
     if (!paypalOrders[get[1]]) throw new Error("not found");
-    return paypalOrders[get[1]];
+    return paypalView(paypalOrders[get[1]]);
   }
   throw new Error(`unexpected PayPal call ${method} ${path}`);
 };
@@ -83,6 +104,7 @@ verifyToken.verifyUserToken = (req, res, next) => {
   const id = req.headers["x-test-user"];
   if (!id) return res.status(401).json({ msg: "No token provided." });
   req.user = { id, role: "user" };
+  lastUser = id;
   next();
 };
 
@@ -110,6 +132,16 @@ const paymentsRouter = require("../routes/payments");
 const paypalRouter = require("../routes/paypal");
 const razorpayRouter = require("../routes/razorpay");
 const geoRouter = require("../routes/geo");
+
+// Direct calls to the verifiers get the default customer, as the controllers pass theirs. (Installed after the controllers have loaded
+// their own references, so a controller that forgets to pass patientId still fails.)
+for (const name of ["verifyStripePaymentIntent", "verifyPaypalOrder", "verifyCategoryPayment"]) {
+  const original = pv[name];
+  pv[name] = (args) => {
+    lastUser = args.patientId ? String(args.patientId) : DIRECT_USER;
+    return original({ ...args, patientId: lastUser });
+  };
+}
 
 const sign = (orderId, paymentId, secret = KEY_SECRET) => crypto.createHmac("sha256", secret).update(`${orderId}|${paymentId}`).digest("hex");
 
@@ -561,7 +593,7 @@ describe("INR through Razorpay (India only)", () => {
       res.json = (b) => { res.body = b; return res; };
       return res;
     };
-    const reqFor = (user, body) => ({ headers: {}, body, user: { id: String(user._id) }, app: { get: () => null } });
+    const reqFor = (user, body) => { lastUser = String(user._id); return { headers: {}, body, user: { id: lastUser }, app: { get: () => null } }; };
     const consultationBody = (extra) => ({
       concern: "Cough", duration: "1 week", severity: "mild", supportType: "advice", urgency: "asap", date: tomorrow(),
       categoryName: "General Care", categoryId: "general-care", specialtyName: "GP", conditionName: "Cough", ...extra,

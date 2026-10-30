@@ -170,15 +170,34 @@ async function resolveServiceFeeCents(priceRef) {
   return toCents(service.price, "USD");
 }
 
+// The payment must have been created for the customer who is booking. Stripe stores the user in metadata.userId, PayPal as the last
+// ":" part of purchase_units[0].custom_id. A payment with no owner at all (made before this was recorded) is refused too: it could
+// belong to anyone. `patientId` is always passed by the booking controllers; without it nothing can be verified, so that fails.
+function assertPaymentOwner(owner, patientId) {
+  if (!patientId || !owner) {
+    throw new PaymentVerificationError("This payment cannot be verified for this account. Please restart checkout.", 403);
+  }
+  if (String(owner) !== String(patientId)) {
+    throw new PaymentVerificationError("This payment was made by a different account.", 403);
+  }
+}
+
+function paypalOwnerOf(order) {
+  const customId = String(order?.purchase_units?.[0]?.custom_id || "");
+  const at = customId.lastIndexOf(":");
+  return at === -1 ? "" : customId.slice(at + 1);
+}
+
 // Checks one retrieved Stripe PaymentIntent: it succeeded, it was taken in an
 // allowed currency, that currency is the one expected, and the amount matches.
-function checkStripeIntent(pi, { expectedCents, expectedCurrency = DEFAULT_CURRENCY }) {
+function checkStripeIntent(pi, { expectedCents, expectedCurrency = DEFAULT_CURRENCY, patientId }) {
   if (pi.status !== "succeeded") {
     throw new PaymentVerificationError(
       "Stripe payment not completed. Please complete payment first.",
       402,
     );
   }
+  assertPaymentOwner(pi.metadata?.userId, patientId);
   const currency = assertGatewayCurrency("stripe", pi.currency);
   const expected = assertAllowedCurrency(expectedCurrency);
   const metaCurrency = pi.metadata?.currency;
@@ -208,17 +227,18 @@ async function retrieveStripeIntent(paymentIntentId) {
   }
 }
 
-async function verifyStripePaymentIntent({ paymentIntentId, expectedCents, expectedCurrency = DEFAULT_CURRENCY }) {
+async function verifyStripePaymentIntent({ paymentIntentId, expectedCents, expectedCurrency = DEFAULT_CURRENCY, patientId }) {
   const pi = await retrieveStripeIntent(paymentIntentId);
-  return checkStripeIntent(pi, { expectedCents, expectedCurrency });
+  return checkStripeIntent(pi, { expectedCents, expectedCurrency, patientId });
 }
 
 // Checks one retrieved PayPal order: it is COMPLETED, its capture was taken in
 // an allowed currency, that currency is the one expected, and the amount matches.
-function checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrency = DEFAULT_CURRENCY }) {
+function checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrency = DEFAULT_CURRENCY, patientId }) {
   if (order.status !== "COMPLETED") {
     throw new PaymentVerificationError("PayPal payment not completed.", 402);
   }
+  assertPaymentOwner(paypalOwnerOf(order), patientId);
   const captureData = order.purchase_units?.[0]?.payments?.captures?.[0];
   const currency = assertGatewayCurrency("paypal", captureData?.amount?.currency_code);
   const expected = assertAllowedCurrency(expectedCurrency);
@@ -246,9 +266,9 @@ async function retrievePaypalOrder(paypalOrderId) {
   }
 }
 
-async function verifyPaypalOrder({ paypalOrderId, expectedCents, expectedCurrency = DEFAULT_CURRENCY }) {
+async function verifyPaypalOrder({ paypalOrderId, expectedCents, expectedCurrency = DEFAULT_CURRENCY, patientId }) {
   const order = await retrievePaypalOrder(paypalOrderId);
-  return checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrency });
+  return checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrency, patientId });
 }
 
 // Razorpay ids are `order_XXXX` / `pay_XXXX`. Anything else (an object from a NoSQL-style payload, a long string) is refused outright.
@@ -378,7 +398,7 @@ async function verifyCategoryPayment({
     throw new PaymentVerificationError(unrecognizedMessage, 400);
   }
 
-  const expected = { expectedCents: fee.amountMinor, expectedCurrency: fee.currency };
+  const expected = { expectedCents: fee.amountMinor, expectedCurrency: fee.currency, patientId };
   return paymentIntentId
     ? checkStripeIntent(payment, expected)
     : checkPaypalOrder(payment, { paypalOrderId, ...expected });

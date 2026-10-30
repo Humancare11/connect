@@ -83,8 +83,8 @@ const createCategoryConsultation = async (req, res) => {
           return res.status(400).json({ success: false, message: "Razorpay only takes INR payments. Please restart checkout." });
         }
         verified = paymentIntentId
-          ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-          : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+          ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents, patientId: req.user.id })
+          : await verifyPaypalOrder({ paypalOrderId, expectedCents, patientId: req.user.id });
       } else {
         verified = await verifyCategoryPayment({
           paymentIntentId,

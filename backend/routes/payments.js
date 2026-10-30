@@ -114,6 +114,7 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
       metadata: {
         doctorId: resolvedDoctorId.toString(),
         patientId: req.user.id,
+        userId: req.user.id, // who this intent was created for: checked when the booking is verified
       },
     });
 
@@ -338,6 +339,7 @@ router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
       payment_method_types: ["card"],
       metadata: {
         patientId: req.user.id,
+        userId: req.user.id, // who this intent was created for: checked when the booking is verified
         bookingType: "category-based",
         priceType: priceType === "service" ? "service" : "category",
         priceRef: String(priceRef || "").slice(0, 120),

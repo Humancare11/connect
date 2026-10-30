@@ -11,6 +11,27 @@ const { MongoMemoryReplSet } = require("mongodb-memory-server");
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_not_used";
 
+// ── Who a payment was created for ──
+// A real Stripe intent / PayPal order carries the user it was created for (metadata.userId / custom_id). These fakes give every
+// stored intent or order the customer who is currently booking (lastUser) as its owner, so the existing fixtures stay "their own
+// payment". A fixture can say otherwise: __owner: "<another user id>" is somebody else's payment, __owner: null has no owner (an
+// intent made before the owner was recorded). Direct pv.* calls (wrapped at the bottom of the requires) default to DIRECT_USER.
+const DIRECT_USER = "000000000000000000000abc";
+let lastUser = DIRECT_USER;
+function ownerOf(stored) {
+  return stored.__owner === undefined ? lastUser : stored.__owner;
+}
+function stripeView(stored) {
+  const { __owner, ...intent } = stored;
+  const owner = ownerOf(stored);
+  return { ...intent, metadata: { ...(intent.metadata || {}), ...(owner ? { userId: String(owner) } : {}) } };
+}
+function paypalView(stored) {
+  const { __owner, ...order } = stored;
+  const owner = ownerOf(stored);
+  return { ...order, purchase_units: order.purchase_units.map((u, i) => (i === 0 && owner ? { ...u, custom_id: `category:general-care:${owner}` } : u)) };
+}
+
 // ── Fakes, installed BEFORE the real modules load (they destructure at require time) ──
 const stripeIntents = {}; // id -> PaymentIntent
 const stripeCreated = []; // args of every paymentIntents.create
@@ -22,7 +43,7 @@ const fakeStripe = {
     },
     retrieve: async (id) => {
       if (!stripeIntents[id]) throw new Error("No such payment_intent");
-      return stripeIntents[id];
+      return stripeView(stripeIntents[id]);
     },
   },
 };
@@ -46,7 +67,7 @@ require("../utils/paypal").paypalFetch = async (method, path, body) => {
   const get = /^\/v2\/checkout\/orders\/([^/]+)$/.exec(path);
   if (method === "GET" && get) {
     if (!paypalOrders[get[1]]) throw new Error("not found");
-    return paypalOrders[get[1]];
+    return paypalView(paypalOrders[get[1]]);
   }
   throw new Error(`unexpected PayPal call ${method} ${path}`);
 };
@@ -56,6 +77,7 @@ verifyToken.verifyUserToken = (req, res, next) => {
   const id = req.headers["x-test-user"];
   if (!id) return res.status(401).json({ msg: "No token provided." });
   req.user = { id, role: "user" };
+  lastUser = id;
   next();
 };
 
@@ -78,12 +100,23 @@ const { createCategoryConsultation } = require("../controllers/CategoryConsultat
 const paymentsRouter = require("../routes/payments");
 const paypalRouter = require("../routes/paypal");
 
-const pi = (id, { currency = "eur", amount = 3000, status = "succeeded", metadata } = {}) => {
-  stripeIntents[id] = { id, status, currency, amount, ...(metadata ? { metadata } : {}) };
+// Direct calls to the verifiers get the default customer, as the controllers pass theirs. (Installed after the controllers have loaded
+// their own references, so a controller that forgets to pass patientId still fails.)
+const pvRaw = { ...pv };
+for (const name of ["verifyStripePaymentIntent", "verifyPaypalOrder", "verifyCategoryPayment"]) {
+  const original = pv[name];
+  pv[name] = (args) => {
+    lastUser = args.patientId ? String(args.patientId) : DIRECT_USER;
+    return original({ ...args, patientId: lastUser });
+  };
+}
+
+const pi = (id, { currency = "eur", amount = 3000, status = "succeeded", metadata, owner } = {}) => {
+  stripeIntents[id] = { id, status, currency, amount, ...(metadata ? { metadata } : {}), ...(owner !== undefined ? { __owner: owner } : {}) };
   return id;
 };
-const order = (id, { currency = "EUR", value = "30.00", status = "COMPLETED" } = {}) => {
-  paypalOrders[id] = { id, status, purchase_units: [{ payments: { captures: [{ amount: { value, currency_code: currency } }] } }] };
+const order = (id, { currency = "EUR", value = "30.00", status = "COMPLETED", owner } = {}) => {
+  paypalOrders[id] = { id, status, ...(owner !== undefined ? { __owner: owner } : {}), purchase_units: [{ payments: { captures: [{ amount: { value, currency_code: currency } }] } }] };
   return id;
 };
 const rejects = (promise, pattern, status) =>
@@ -456,7 +489,7 @@ describe("category payments in USD / EUR / GBP", () => {
       res.json = (b) => { res.body = b; return res; };
       return res;
     };
-    const reqFor = (user, body) => ({ headers: {}, body, user: { id: String(user._id) }, app: { get: () => null } });
+    const reqFor = (user, body) => { lastUser = String(user._id); return { headers: {}, body, user: { id: lastUser }, app: { get: () => null } }; };
     const consultationBody = (extra) => ({
       concern: "Cough", duration: "1 week", severity: "mild", supportType: "advice", urgency: "asap", date: tomorrow(),
       categoryName: "General Care", categoryId: "general-care", specialtyName: "GP", conditionName: "Cough", ...extra,
@@ -589,6 +622,129 @@ describe("category payments in USD / EUR / GBP", () => {
       await createCategoryConsultation(reqFor(eurUser, consultationBody({ paymentIntentId: "pi_off" })), res);
       assert.equal(res.statusCode, 201);
       assert.equal((await CategoryConsultation.findById(res.body.data._id).lean()).paymentCurrency, "usd");
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // A payment may only fund a booking for the customer it was created for.
+  describe("payment ownership", () => {
+    const tomorrow = () => new Date(Date.now() + 36 * 3600 * 1000).toISOString().slice(0, 10);
+    const makeRes = () => {
+      const res = { statusCode: 200, body: null };
+      res.status = (c) => { res.statusCode = c; return res; };
+      res.json = (b) => { res.body = b; return res; };
+      return res;
+    };
+    const reqFor = (user, body) => { lastUser = String(user._id); return { headers: {}, body, user: { id: lastUser }, app: { get: () => null } }; };
+    const consultationBody = (extra) => ({
+      concern: "Cough", duration: "1 week", severity: "mild", supportType: "advice", urgency: "asap", date: tomorrow(),
+      categoryName: "General Care", categoryId: "general-care", specialtyName: "GP", conditionName: "Cough", ...extra,
+    });
+    const appointmentBody = (extra) => ({
+      date: tomorrow(), time: "10:00", problem: "Cough", category: "General Care", categoryId: "general-care",
+      specialty: "GP", condition: "Cough", consultationPrice: 50, patientDetails: { firstName: "T" }, ...extra,
+    });
+
+    test("a Stripe intent is created with the booking user in metadata.userId", async () => {
+      const r = await post("/api/payments/create-intent-by-amount", eurUser, { priceType: "category", priceRef: "general-care" });
+      assert.equal(r.status, 200, JSON.stringify(r.body));
+      assert.equal(stripeCreated[0].metadata.userId, String(eurUser._id));
+    });
+
+    test("a PayPal order is created with the booking user as the last part of custom_id, within the 127 characters PayPal allows", async () => {
+      let r = await post("/api/paypal/create-order-by-amount", eurUser, { priceType: "category", priceRef: "general-care" });
+      assert.equal(r.status, 200, JSON.stringify(r.body));
+      assert.equal(paypalCreated[0].purchase_units[0].custom_id, `category:general-care:${eurUser._id}`);
+      // a very long reference is cut so the user part is never lost
+      r = await post("/api/paypal/create-order-by-amount", eurUser, { priceType: "service", priceRef: "fit-to-fly" });
+      const custom = paypalCreated[1].purchase_units[0].custom_id;
+      assert.ok(custom.length <= 127);
+      assert.ok(custom.endsWith(`:${eurUser._id}`));
+    });
+
+    test("the owner's own intent / order verifies", async () => {
+      pi("pi_own", { currency: "eur", amount: 3000 });
+      assert.equal((await pv.verifyCategoryPayment({ paymentIntentId: "pi_own", priceRef: "general-care", patientId: eurUser._id })).ref, "pi_own");
+      order("O_own", { currency: "EUR", value: "30.00" });
+      assert.equal((await pv.verifyCategoryPayment({ paypalOrderId: "O_own", priceRef: "general-care", patientId: eurUser._id })).ref, "O_own");
+    });
+
+    test("another user's paid Stripe intent is rejected (403)", async () => {
+      pi("pi_other", { currency: "eur", amount: 3000, owner: String(gbpUser._id) });
+      await rejects(pv.verifyCategoryPayment({ paymentIntentId: "pi_other", priceRef: "general-care", patientId: eurUser._id }), /different account/, 403);
+      await rejects(pv.verifyStripePaymentIntent({ paymentIntentId: "pi_other", expectedCents: 3000, expectedCurrency: "EUR", patientId: eurUser._id }), /different account/, 403);
+    });
+
+    test("another user's completed PayPal order is rejected (403)", async () => {
+      order("O_other", { currency: "EUR", value: "30.00", owner: String(gbpUser._id) });
+      await rejects(pv.verifyCategoryPayment({ paypalOrderId: "O_other", priceRef: "general-care", patientId: eurUser._id }), /different account/, 403);
+      await rejects(pv.verifyPaypalOrder({ paypalOrderId: "O_other", expectedCents: 3000, expectedCurrency: "EUR", patientId: eurUser._id }), /different account/, 403);
+    });
+
+    test("an old intent / order with no owner recorded is rejected for category bookings (403)", async () => {
+      pi("pi_old", { currency: "eur", amount: 3000, owner: null, metadata: { patientId: String(eurUser._id) } });
+      await rejects(pv.verifyCategoryPayment({ paymentIntentId: "pi_old", priceRef: "general-care", patientId: eurUser._id }), /cannot be verified/, 403);
+      order("O_old", { currency: "EUR", value: "30.00", owner: null });
+      await rejects(pv.verifyCategoryPayment({ paypalOrderId: "O_old", priceRef: "general-care", patientId: eurUser._id }), /cannot be verified/, 403);
+    });
+
+    test("a PayPal custom_id without a user part is not an owner", async () => {
+      order("O_nouser", { currency: "EUR", value: "30.00", owner: null });
+      paypalOrders.O_nouser.purchase_units[0].custom_id = "category"; // no ':' at all
+      await rejects(pv.verifyPaypalOrder({ paypalOrderId: "O_nouser", expectedCents: 3000, expectedCurrency: "EUR", patientId: eurUser._id }), /cannot be verified/, 403);
+    });
+
+    test("the verifiers fail closed when no patientId reaches them", async () => {
+      pi("pi_np", { currency: "eur", amount: 3000 });
+      lastUser = DIRECT_USER;
+      await rejects(pvRaw.verifyStripePaymentIntent({ paymentIntentId: "pi_np", expectedCents: 3000, expectedCurrency: "EUR" }), /cannot be verified/, 403);
+      order("O_np", { currency: "EUR", value: "30.00" });
+      await rejects(pvRaw.verifyPaypalOrder({ paypalOrderId: "O_np", expectedCents: 3000, expectedCurrency: "EUR" }), /cannot be verified/, 403);
+    });
+
+    test("category consultation: booking with another user's paid intent / order, or an owner-less one, is refused and creates / consumes nothing", async () => {
+      pi("pi_steal", { currency: "eur", amount: 3000, owner: String(gbpUser._id) });
+      let res = makeRes();
+      await createCategoryConsultation(reqFor(eurUser, consultationBody({ paymentIntentId: "pi_steal" })), res);
+      assert.equal(res.statusCode, 403, JSON.stringify(res.body));
+      assert.match(res.body.message, /different account/);
+      order("O_steal", { currency: "EUR", value: "30.00", owner: String(gbpUser._id) });
+      res = makeRes();
+      await createCategoryConsultation(reqFor(eurUser, consultationBody({ paypalOrderId: "O_steal" })), res);
+      assert.equal(res.statusCode, 403);
+      pi("pi_oldc", { currency: "eur", amount: 3000, owner: null });
+      res = makeRes();
+      await createCategoryConsultation(reqFor(eurUser, consultationBody({ paymentIntentId: "pi_oldc" })), res);
+      assert.equal(res.statusCode, 403);
+      assert.equal(await CategoryConsultation.countDocuments({}), 0);
+      assert.equal(await ConsumedPayment.countDocuments({}), 0);
+    });
+
+    test("category appointment: booking with another user's paid intent / order, or an owner-less one, is refused and creates nothing", async () => {
+      pi("pi_steal2", { currency: "eur", amount: 3000, owner: String(gbpUser._id) });
+      let res = makeRes();
+      await createAppointment(reqFor(eurUser, appointmentBody({ paymentIntentId: "pi_steal2" })), res);
+      assert.equal(res.statusCode, 403, JSON.stringify(res.body));
+      order("O_steal2", { currency: "EUR", value: "30.00", owner: String(gbpUser._id) });
+      res = makeRes();
+      await createAppointment(reqFor(eurUser, appointmentBody({ paypalOrderId: "O_steal2" })), res);
+      assert.equal(res.statusCode, 403);
+      pi("pi_old2", { currency: "eur", amount: 3000, owner: null });
+      res = makeRes();
+      await createAppointment(reqFor(eurUser, appointmentBody({ paymentIntentId: "pi_old2" })), res);
+      assert.equal(res.statusCode, 403);
+      assert.equal(await Appointment.countDocuments({}), 0);
+      assert.equal(await ConsumedPayment.countDocuments({}), 0);
+    });
+
+    test("the real owner can still book with the intent after a thief was refused", async () => {
+      pi("pi_mine", { currency: "eur", amount: 3000, owner: String(eurUser._id) });
+      let res = makeRes();
+      await createCategoryConsultation(reqFor(gbpUser, consultationBody({ paymentIntentId: "pi_mine" })), res);
+      assert.equal(res.statusCode, 403);
+      res = makeRes();
+      await createCategoryConsultation(reqFor(eurUser, consultationBody({ paymentIntentId: "pi_mine" })), res);
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
     });
   });
 });

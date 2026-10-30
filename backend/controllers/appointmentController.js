@@ -274,8 +274,8 @@ const createAppointment = async (req, res) => {
         throw feeErr;
       }
       const verified = paymentIntentId
-        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents, patientId })
+        : await verifyPaypalOrder({ paypalOrderId, expectedCents, patientId });
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;

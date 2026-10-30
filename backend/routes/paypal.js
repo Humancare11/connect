@@ -53,6 +53,7 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
       purchase_units: [{
         amount: { currency_code: "USD", value: feeUSD },
         description: "Doctor Consultation Fee",
+        custom_id: `doctor:${req.user.id}`, // who this order was created for: checked when the booking is verified
       }],
     });
 
@@ -88,7 +89,8 @@ router.post("/create-order-by-amount", verifyUserToken, async (req, res) => {
       purchase_units: [{
         amount: { currency_code: currency, value: (charge.amountMinor / 100).toFixed(2) },
         description: "Consultation Booking Fee",
-        custom_id: `${priceType === "service" ? "service" : "category"}:${String(priceRef || "").slice(0, 100)}`,
+        // kind:ref:userId (PayPal allows 127 characters: 8 + 1 + 80 + 1 + 24 at most). The last part is who the order was created for.
+        custom_id: `${priceType === "service" ? "service" : "category"}:${String(priceRef || "").slice(0, 80)}:${req.user.id}`,
       }],
     });
 
