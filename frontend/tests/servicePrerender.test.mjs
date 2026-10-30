@@ -70,7 +70,7 @@ after(async () => {
   await vite?.close();
 });
 
-const hiddenPrice = (html) => /<div class="hcc-booking-price"><span class="pt-skeleton pt-skeleton--text"[^>]*><span class="pt-hidden-text">([^<]*)<\/span>/.exec(html)?.[1];
+const hiddenPrice = (html) => /<div class="hcc-booking-price"><span class="pt-skeleton pt-skeleton--text"[^>]*><span class="pt-hidden-text"[^>]*>([^<]*)<\/span>/.exec(html)?.[1];
 
 test("a prerendered service page has its USD price in the static HTML (hidden behind the skeleton)", { timeout: 120000 }, async () => {
   const data = { "services:usd": { "fit-to-fly": { price: 69 }, "lab-requisitions": { price: 49 }, "general-consultation": { price: 49 } } };

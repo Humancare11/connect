@@ -97,7 +97,7 @@ const faqData = [
       },
       {
         q: "What is the consultation fee if I'm uninsured?",
-        a: "Our self-pay consultation fee is $49 for a standard visit — this covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support.",
+        a: "Our self-pay consultation fee is shown on this page before you book, in your local currency. It covers the appointment, any prescriptions written, a doctor's note if needed, and 24-hour follow-up support.",
       },
       {
         q: "Are referrals and lab orders included in the fee?",

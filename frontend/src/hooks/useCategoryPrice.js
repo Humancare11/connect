@@ -1,7 +1,5 @@
-import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import api from "../api";
-
+// The category of each public condition / specialty page, by URL. useCategoryPriceInfo (the one price hook) falls back to it when a
+// page does not pass its category.
 /**
  * Maps each public condition/specialty URL path to its parent category ID.
  */
@@ -88,59 +86,3 @@ export const URL_CATEGORY_MAP = {
   "/travel-and-global-care/travel-medicine/travelers-diarrhea": "travel",
   "/sp-demo": "general",
 };
-
-/** categoryId → exact HealthcareCategory.name in the DB (must match appointment-tree's `name` field) */
-const CATEGORY_ID_TO_NAME = {
-  general: "General & Everyday Care",
-  mental: "Mental Health",
-  skin: "Skin & Hair",
-  women: "Women's Health",
-  men: "Men's Health",
-  family: "Children & Family",
-  weight: "Weight & Nutrition",
-  chronic: "Chronic Care & Expert Opinion",
-  eeb: "Eye, Ear & Bone",
-  sexual: "Sexual Health",
-  travel: "Travel & Global Care",
-};
-
-/**
- * Returns the live price (number) for the current page's category,
- * fetched directly from /api/appointment-tree — the same source
- * the category pages already use. Self-contained: no provider needed.
- */
-export function useCategoryPrice(categoryId) {
-  const location = useLocation();
-  const [price, setPrice] = useState(null);
-
-  const resolvedId = categoryId ?? URL_CATEGORY_MAP[location.pathname];
-
-  useEffect(() => {
-    if (!resolvedId) return;
-    let cancelled = false;
-
-    const fetchPrice = async () => {
-      try {
-        const res = await api.get("/api/appointment-tree");
-        const categoryName = CATEGORY_ID_TO_NAME[resolvedId];
-        const category = res.data.find((item) => item.name === categoryName);
-        if (!cancelled && category && category.price !== undefined) {
-          setPrice(category.price);
-        }
-      } catch (err) {
-        console.error("Failed to fetch pricing:", err);
-      }
-    };
-
-    fetchPrice();
-    const intervalId = window.setInterval(fetchPrice, 30000);
-    window.addEventListener("focus", fetchPrice);
-    return () => {
-      cancelled = true;
-      window.clearInterval(intervalId);
-      window.removeEventListener("focus", fetchPrice);
-    };
-  }, [resolvedId]);
-
-  return price || 49;
-}

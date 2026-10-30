@@ -14,7 +14,7 @@ import { usePrerendered } from "../seo/prerenderData";
  * `usdAmount` is always the category's USD price when it is known (the live table, or while loading the build-time data embedded in
  * a prerendered page): PriceText keeps it in the markup, hidden behind the skeleton, so crawlers and the first hydrated render see
  * the USD price; a booking selection carries it as its USD `cost`.
- * `categoryId` is the pricing slug (e.g. "general"); without it the current URL decides, as in useCategoryPrice.
+ * `categoryId` is the pricing slug (e.g. "general"); without it the current URL decides, from URL_CATEGORY_MAP.
  */
 export function useCategoryPriceInfo(categoryId) {
   const { pathname } = useLocation();

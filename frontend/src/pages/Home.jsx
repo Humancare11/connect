@@ -488,7 +488,7 @@ export default function HomePage() {
     {
       id: 2,
       quote:
-        "As someone without insurance, the flat $49 fee was a revelation. Dr. Nair took 45 full minutes with me. I felt truly heard for the first time in years.",
+        "As someone without insurance, the flat, upfront fee was a revelation. Dr. Nair took 45 full minutes with me. I felt truly heard for the first time in years.",
       name: "Jordan S.",
     },
     {

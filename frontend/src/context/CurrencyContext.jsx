@@ -1,9 +1,11 @@
 // The currency this visitor is priced in. The server decides it (GET /api/geo/currency: the logged-in user's profile country,
 // then the IP's country, else USD, and always USD while multi-currency is switched off); the browser only displays it.
 //
-// It is fetched once on load and again when the login state changes (login, logout, a changed profile country). While a load
-// is in flight `loading` is true and price slots show a skeleton, so the page never flashes "$" before "€". If the request
-// fails the visitor is simply priced in USD.
+// It is fetched once per session and again when the login state changes (login, logout, a changed profile country); the answer is
+// remembered in sessionStorage so every page and component uses the same one. While a load is in flight `loading` is true and price
+// slots show a skeleton, so the page never flashes "$" before "€". A failed request (including 429) is retried with backoff; only if
+// the server stays unreachable does the visitor see the last known currency, or USD (source "error"), until it answers.
+// See utils/currencyLoader.js.
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api from "../api";
 import { useAuth } from "./AuthContext";
@@ -18,6 +20,15 @@ const fetchCurrency = async () => {
   return res.data;
 };
 
+// sessionStorage can throw (private window, blocked site data) or not exist (server render): then nothing is remembered.
+const sessionStore = () => {
+  try {
+    return typeof window !== "undefined" ? window.sessionStorage : null;
+  } catch {
+    return null;
+  }
+};
+
 export function CurrencyProvider({ children }) {
   const auth = useAuth();
   const authLoading = auth ? auth.loading : false;
@@ -29,7 +40,7 @@ export function CurrencyProvider({ children }) {
 
   useEffect(() => {
     if (authLoading) return undefined; // wait until we know whether someone is logged in
-    const loader = createCurrencyLoader({ fetchCurrency, onChange: setState });
+    const loader = createCurrencyLoader({ fetchCurrency, onChange: setState, storage: sessionStore(), identity });
     loader.load();
     return () => loader.dispose();
   }, [authLoading, identity]);

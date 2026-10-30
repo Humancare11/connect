@@ -130,6 +130,9 @@ export function selectionPriceInfo({
     return { amount, currency: "USD", loading: false, unavailable: !amount };
   }
   if (pricesLoading && !prices) return { amount: null, currency: wanted, loading: true, unavailable: false };
+  // The price table could not be loaded at all (not "this category has no price in it"): the visitor's currency price is unknown,
+  // and showing the USD price instead would make the same page read $ and ₹ depending on a failed request.
+  if (!prices) return { amount: null, currency: wanted, loading: false, unavailable: true };
   const info = prices ? resolveCategoryPrice(priceRecordFor(selection, prices), wanted) : null;
   if (info) return { ...info, loading: false, unavailable: false };
   // No price table entry for this category: the USD price the page loaded, labelled USD (never converted).

@@ -93,7 +93,7 @@ const DATA = {
   "services:usd": { "fit-to-fly": { price: 69 }, "lab-requisitions": { price: 49 } },
 };
 const scripts = (html) => [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
-const hiddenPrices = (html) => [...html.matchAll(/<span class="pt-hidden-text">([^<]*)<\/span>/g)].map((m) => m[1]);
+const hiddenPrices = (html) => [...html.matchAll(/<span class="pt-hidden-text"[^>]*>([^<]*)<\/span>/g)].map((m) => m[1]);
 const serviceNodes = (html) => scripts(html).flatMap((s) => JSON.parse(s)["@graph"]).filter((n) => n["@type"] === "Service");
 
 for (const [route, kind, usd] of [
