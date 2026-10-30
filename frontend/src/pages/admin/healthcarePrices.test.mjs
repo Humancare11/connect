@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   PRICE_CURRENCIES,
   maxPriceFor,
+  minPriceFor,
   formatMoney,
   isMissingForeignPrice,
   missingCurrencies,
@@ -68,6 +69,19 @@ test("INR: zero, negative, text, 3 decimals are refused", () => {
   assert.match(checkCategoryPrices({ ...full, priceInr: "1e3" }, true), /INR price must be greater than 0/);
   assert.match(checkCategoryPrices({ ...full, priceInr: "10.005" }, true), /INR price can have at most 2 decimal places/);
   assert.equal(checkCategoryPrices({ ...full, priceInr: "10.5" }, true), "");
+});
+
+test("the minimum: 0.01 for USD / EUR / GBP, 1 rupee for INR; tiny values are refused", () => {
+  assert.equal(minPriceFor("INR"), 1);
+  assert.equal(minPriceFor("USD"), 0.01);
+  assert.match(checkCategoryPrices({ ...full, priceInr: "0.5" }, true), /^INR price must be at least 1.$/);
+  assert.match(checkCategoryPrices({ ...full, priceInr: "0.50" }, true), /at least 1./);
+  assert.equal(checkCategoryPrices({ ...full, priceInr: "1" }, true), "");
+  for (const field of ["price", "priceEur", "priceGbp"]) {
+    assert.match(checkCategoryPrices({ ...full, [field]: "0.004" }, true), /at least 0.01./, field);
+    assert.match(checkCategoryPrices({ ...full, [field]: "0.001" }, true), /at least 0.01./, field);
+    assert.equal(checkCategoryPrices({ ...full, [field]: "0.01" }, true), "", field);
+  }
 });
 
 test("editing: an INR price that was never set may stay empty; once set it can be changed but not cleared", () => {

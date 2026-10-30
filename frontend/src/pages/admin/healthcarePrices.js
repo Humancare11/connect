@@ -14,6 +14,11 @@ export const MAX_PRICE = 100000;
 export const MAX_PRICE_INR = 1000000;
 export const maxPriceFor = (code) => (code === "INR" ? MAX_PRICE_INR : MAX_PRICE);
 
+// The lowest price per currency: 0.01, or 1 rupee.
+export const MIN_PRICE = 0.01;
+export const MIN_PRICE_INR = 1;
+export const minPriceFor = (code) => (code === "INR" ? MIN_PRICE_INR : MIN_PRICE);
+
 const isUnset = (value) => value === null || value === undefined;
 
 // Symbol first, like the site: $30, €30, £30.50, ₹4,999 (rupees use Indian digit grouping). Not set -> null.
@@ -51,6 +56,7 @@ export function checkCategoryPrices(form, creating) {
     const value = Number(text);
     const max = maxPriceFor(code);
     if (!/^\d+(\.\d+)?$/.test(text) || !(value > 0)) return `${label} must be greater than 0.`;
+    if (value < minPriceFor(code)) return `${label} must be at least ${minPriceFor(code)}.`;
     if (value > max) return `${label} must not be more than ${max.toLocaleString(code === "INR" ? "en-IN" : "en-US")}.`;
     if (!/^\d+(\.\d{1,2})?$/.test(text)) return `${label} can have at most 2 decimal places.`;
   }
