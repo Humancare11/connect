@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleSignIn } from "../../hooks/useGoogleSignIn";
+import { googleEnabled } from "../../utils/googleAuth";
 import "../log.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
@@ -268,7 +269,7 @@ export default function DoctorAuthPage() {
   }
 
   /* ── Google ──────────────────────────────────────────────── */
-  const initiateGoogleLogin = useGoogleLogin({
+  const initiateGoogleLogin = useGoogleSignIn({
     onSuccess: async (tokenResponse) => {
       setLoading(true);
       clrErr();
@@ -712,18 +713,20 @@ export default function DoctorAuthPage() {
               Join Humancare Connect as a healthcare professional
             </p>
 
-            <div className="social-links">
-              <button
-                type="button"
-                className="google-btn"
-                onClick={() => initiateGoogleLogin()}
-              >
-                <GoogleIcon /> Continue with Google
-              </button>
-            </div>
+            {googleEnabled && (
+              <div className="social-links">
+                <button
+                  type="button"
+                  className="google-btn"
+                  onClick={() => initiateGoogleLogin()}
+                >
+                  <GoogleIcon /> Continue with Google
+                </button>
+              </div>
+            )}
 
             {formError && <p className="form-error" id="doctor-register-error" role={isRegister ? "alert" : undefined}>{formError}</p>}
-            <span>or use your email</span>
+            {googleEnabled && <span>or use your email</span>}
 
             {/* <input
               type="text"
@@ -858,15 +861,17 @@ export default function DoctorAuthPage() {
               Sign in to continue managing your patients
             </p>
 
-            <div className="social-links">
-              <button
-                type="button"
-                className="google-btn"
-                onClick={() => initiateGoogleLogin()}
-              >
-                <GoogleIcon /> Continue with Google
-              </button>
-            </div>
+            {googleEnabled && (
+              <div className="social-links">
+                <button
+                  type="button"
+                  className="google-btn"
+                  onClick={() => initiateGoogleLogin()}
+                >
+                  <GoogleIcon /> Continue with Google
+                </button>
+              </div>
+            )}
 
             {formSuccess && (
               <div
@@ -887,7 +892,7 @@ export default function DoctorAuthPage() {
               </div>
             )}
             {formError && <p className="form-error" id="doctor-login-error" role={isRegister ? undefined : "alert"}>{formError}</p>}
-            <span>or use your email</span>
+            {googleEnabled && <span>or use your email</span>}
 
             <label htmlFor="doctor-login-email" style={VISUALLY_HIDDEN}>
               Email Address

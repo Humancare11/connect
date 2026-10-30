@@ -1,6 +1,7 @@
 // The provider tree shared by the browser entry (main.jsx) and the prerender entry
 // (entry-server.jsx), so the server renders exactly what the client hydrates.
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { GOOGLE_CLIENT_ID, googleEnabled } from "./utils/googleAuth";
 import { AuthProvider } from "./context/AuthContext";
 import { DoctorAuthProvider } from "./context/DoctorAuthContext";
 import { AdminProvider } from "./context/AdminContext";
@@ -22,43 +23,33 @@ const queryClient = new QueryClient({
   },
 });
 
+// Google sign-in needs its provider only when the build has a client id; without one the app renders without it (the login pages
+// hide the Google button, see utils/googleAuth.js).
+function GoogleScope({ children }) {
+  return googleEnabled ? <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{children}</GoogleOAuthProvider> : children;
+}
+
 export default function AppProviders({ children }) {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-      <ConfirmProvider>
-      {import.meta.env.VITE_GOOGLE_CLIENT_ID ? (
-        <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-          <AuthProvider>
-            <DoctorAuthProvider>
-              <AdminProvider>
-                <EmployeeAdminProvider>
-                  <PartnerProvider>
-                    <CurrencyProvider>
-                      <PricingProvider>{children}</PricingProvider>
-                    </CurrencyProvider>
-                  </PartnerProvider>
-                </EmployeeAdminProvider>
-              </AdminProvider>
-            </DoctorAuthProvider>
-          </AuthProvider>
-        </GoogleOAuthProvider>
-      ) : (
-        // If no Google client ID is configured, render the app without the
-        // GoogleOAuthProvider to avoid runtime errors from the provider.
-        <AuthProvider>
-          <DoctorAuthProvider>
-            <AdminProvider>
-              <PartnerProvider>
-                <CurrencyProvider>
-                  <PricingProvider>{children}</PricingProvider>
-                </CurrencyProvider>
-              </PartnerProvider>
-            </AdminProvider>
-          </DoctorAuthProvider>
-        </AuthProvider>
-      )}
-      </ConfirmProvider>
+        <ConfirmProvider>
+          <GoogleScope>
+            <AuthProvider>
+              <DoctorAuthProvider>
+                <AdminProvider>
+                  <EmployeeAdminProvider>
+                    <PartnerProvider>
+                      <CurrencyProvider>
+                        <PricingProvider>{children}</PricingProvider>
+                      </CurrencyProvider>
+                    </PartnerProvider>
+                  </EmployeeAdminProvider>
+                </AdminProvider>
+              </DoctorAuthProvider>
+            </AuthProvider>
+          </GoogleScope>
+        </ConfirmProvider>
       </ToastProvider>
     </QueryClientProvider>
   );
