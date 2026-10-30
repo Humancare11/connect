@@ -3,7 +3,7 @@ const router = express.Router();
 const { CategoryPricing } = require("../models/CategoryPricing");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { recordActivity } = require("../utils/activityLogger");
-const { parsePrice, isMultiCurrencyEnabled, isInrEnabled, maxPriceFor } = require("../utils/currencyConfig");
+const { parsePrice, isMultiCurrencyEnabled, isInrEnabled, maxPriceFor, minPriceFor } = require("../utils/currencyConfig");
 
 // GET /api/pricing - public, returns all category prices keyed by categoryId:
 //   { general: { price, label, currency }, mental: {...}, ... }
@@ -68,7 +68,7 @@ const PRICE_FIELDS = [
   { key: "price", label: "USD price", always: true },
   { key: "priceEur", label: "EUR price" },
   { key: "priceGbp", label: "GBP price" },
-  { key: "priceInr", label: "INR price", max: maxPriceFor("INR") },
+  { key: "priceInr", label: "INR price", max: maxPriceFor("INR"), min: minPriceFor("INR") },
 ];
 
 router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) => {
@@ -86,7 +86,7 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
     }
 
     const set = {};
-    for (const { key, label, always, max } of PRICE_FIELDS) {
+    for (const { key, label, always, max, min } of PRICE_FIELDS) {
       const raw = body[key];
       if (raw === undefined) continue;
 
@@ -99,7 +99,7 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
         continue; // not set yet and still not set: nothing to do
       }
 
-      const parsed = parsePrice(raw, max);
+      const parsed = parsePrice(raw, max, min);
       if (parsed.error) {
         return res.status(400).json({ msg: `${label} ${parsed.error}` });
       }

@@ -27,6 +27,8 @@ const DEFAULT_CURRENCY = "USD";
 const MAX_PRICE = 100000;
 // INR amounts are numerically ~85x larger than the same value in USD, so the cap is higher (Rs 10,00,000).
 const MAX_PRICE_INR = 1000000;
+const MIN_PRICE = 0.01;
+const MIN_PRICE_INR = 1;
 
 // The only gateway that may take each currency (the gateway follows the currency, never the other way round):
 // INR -> Razorpay only; USD / EUR / GBP -> Stripe or PayPal only.
@@ -83,6 +85,11 @@ function gatewayAllowsCurrency(gateway, currency) {
 // The highest price an admin may enter in `currency`.
 function maxPriceFor(currency) {
   return String(currency || "").trim().toUpperCase() === "INR" ? MAX_PRICE_INR : MAX_PRICE;
+}
+
+// The smallest price that can be charged: 0.01 for USD / EUR / GBP, 1 rupee for INR.
+function minPriceFor(currency) {
+  return String(currency || "").trim().toUpperCase() === "INR" ? MIN_PRICE_INR : MIN_PRICE;
 }
 
 function normalizeCurrency(value) {
@@ -187,9 +194,10 @@ async function resolveRequestCurrency({ userCountry = "", ip = "", lookupLocatio
 // Validates one price value from an API body.
 // Accepts a number or a numeric string; rejects empty, booleans, arrays, NaN,
 // zero, negatives, more than two decimals and anything over the cap (MAX_PRICE, or
-// MAX_PRICE_INR when `max` is passed, see maxPriceFor).
+// MAX_PRICE_INR when `max` is passed, see maxPriceFor) and anything below the minimum
+// (`min`: 0.01, or 1 for INR, see minPriceFor), so a tiny value can never round to 0.
 // Returns { value } or { error } (error is a sentence without the field name).
-function parsePrice(raw, max = MAX_PRICE) {
+function parsePrice(raw, max = MAX_PRICE, min = MIN_PRICE) {
   if (typeof raw === "string") {
     if (raw.trim() === "" || !/^\d+(\.\d+)?$/.test(raw.trim())) {
       return { error: "must be a valid number greater than 0." };
@@ -199,6 +207,7 @@ function parsePrice(raw, max = MAX_PRICE) {
   }
   const value = Number(raw);
   if (!Number.isFinite(value) || value <= 0) return { error: "must be greater than 0." };
+  if (value < min) return { error: `must be at least ${min.toLocaleString("en-US")}.` };
   if (value > max) return { error: `must not be more than ${max.toLocaleString("en-US")}.` };
   if (Math.abs(value * 100 - Math.round(value * 100)) > 1e-6) {
     return { error: "can have at most 2 decimal places." };
@@ -220,6 +229,9 @@ module.exports = {
   isInrEnabled,
   gatewayAllowsCurrency,
   maxPriceFor,
+  minPriceFor,
+  MIN_PRICE,
+  MIN_PRICE_INR,
   normalizeCurrency,
   currencyForCountryCode,
   currencyForCountryName,

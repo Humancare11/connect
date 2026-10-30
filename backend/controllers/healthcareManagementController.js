@@ -8,7 +8,7 @@ const {
   resolveEffectiveCategoryPrice,
   generateUniquePricingSlug,
 } = require("../utils/categoryPricing");
-const { parsePrice, maxPriceFor } = require("../utils/currencyConfig");
+const { parsePrice, maxPriceFor, minPriceFor } = require("../utils/currencyConfig");
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -61,13 +61,13 @@ function categoryPayload(body, partial = false) {
   let prices;
   if (!partial) {
     prices = {};
-    for (const [key, label, max] of [
+    for (const [key, label, max, min] of [
       ["price", "USD price"],
       ["priceEur", "EUR price"],
       ["priceGbp", "GBP price"],
-      ["priceInr", "INR price", maxPriceFor("INR")],
+      ["priceInr", "INR price", maxPriceFor("INR"), minPriceFor("INR")],
     ]) {
-      const parsed = parsePrice(body[key], max);
+      const parsed = parsePrice(body[key], max, min);
       if (parsed.error) return { error: `${label} ${parsed.error}` };
       prices[key] = parsed.value;
     }
