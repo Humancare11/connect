@@ -2,8 +2,10 @@
 // in context/CurrencyContext.jsx wires it to the page, and the tests drive it with a fake fetch.
 //
 // One visitor must always see ONE currency, so:
-//   - A resolved currency is remembered for the session (sessionStorage, keyed by who the visitor is), and every later page load
-//     and every other component uses it without asking the server again. A different person / profile country asks again.
+//   - A resolved currency is remembered for the session (sessionStorage, keyed by who the visitor is) and shown at once on every later
+//     page load, so no page waits or flashes. It is re-checked with the server in the background on each page load: if the server now
+//     says something else (rupees were switched on, the profile country changed) the whole page follows it, once. A failed re-check
+//     changes nothing. A different person / profile country is not served from the memory at all.
 //   - A failed request (network error, 5xx, 429 "too many requests") is retried with backoff, honouring Retry-After. While it is
 //     being retried `loading` stays true, so price slots show a skeleton - never "$" first and then "₹".
 //   - Only when every retry has failed (the API is really down) does the visitor see the last known currency, or USD if there is
@@ -95,6 +97,16 @@ export function createCurrencyLoader({
     if (cached) {
       lastGood = cached;
       set({ ...cached, loading: false });
+      try {
+        const data = await ask();
+        if (mine !== sequence) return;
+        const fresh = { currency: normalizeCurrency(data?.currency), source: String(data?.source || "") };
+        // "default" (the server could not place the visitor this time) is never allowed to overrule a real answer
+        if (CACHEABLE_SOURCES.has(fresh.source) && (fresh.currency !== cached.currency || fresh.source !== cached.source)) accept(data);
+        else if (CACHEABLE_SOURCES.has(fresh.source)) writeCachedCurrency(storage, identity, fresh);
+      } catch {
+        // the re-check failed (429, network): keep what the session already shows
+      }
       return;
     }
 

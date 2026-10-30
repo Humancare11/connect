@@ -3,7 +3,7 @@ import { useNavigate, Navigate, Link } from "react-router-dom";
 import api from "../api";
 import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
-import { PaymentStage } from "./AppointmentBookingForm";
+import { PaymentStep } from "./AppointmentBookingForm";
 import { useAuth } from "../context/AuthContext";
 import { useSiteCurrency } from "../context/CurrencyContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
@@ -418,9 +418,8 @@ export default function CategoryAppointmentConfirm() {
         )}
 
         {stage === "payment" && (
-          <PaymentStage
-            amount={priceInfo.amount}
-            currency={priceInfo.currency}
+          <PaymentStep
+            priceInfo={priceInfo}
             selection={selection}
             formData={{ notes, date, time: displayTime }}
             uploadedReports={reports}

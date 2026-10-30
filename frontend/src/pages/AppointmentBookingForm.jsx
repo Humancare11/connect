@@ -22,12 +22,12 @@ import { useAuth } from "../context/AuthContext";
 import { useSiteCurrency } from "../context/CurrencyContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import PriceText from "../components/PriceText";
-import { formatPrice, selectionPriceInfo, paypalProviderProps } from "../utils/currencyDisplay";
+import { formatPrice, selectionPriceInfo, paypalProviderProps, paymentStepState, paymentStepKey } from "../utils/currencyDisplay";
 import { useServiceRecord } from "../hooks/useServicePrice";
 import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
-import { normalizeAppointmentTree, selectionFromUrl } from "../utils/appointmentTree";
+import { normalizeAppointmentTree, selectionFromUrl, selectionMatchesRoute } from "../utils/appointmentTree";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
 
@@ -319,6 +319,31 @@ function StripeForm({
       </button>
     </form>
   );
+}
+
+// The payment step for a price (priceInfo from selectionPriceInfo). It always follows the CURRENT server-decided currency and price:
+//   - until the currency and the price are known there are no payment buttons (a skeleton, never the Stripe / PayPal buttons of a
+//     currency that is about to change);
+//   - the step is keyed by currency + amount, so when either changes (the currency finished loading, or was re-checked after login)
+//     everything it remembered - the chosen method, a Stripe intent, a PayPal order, the amount the server confirmed - is dropped and
+//     the right gateway for the new currency is shown.
+export function PaymentStep({ priceInfo, onBack, ...rest }) {
+  const state = paymentStepState(priceInfo);
+  if (state !== "ready") {
+    return (
+      <div className="ap-pay-root">
+        <button className="ap-pay-back" type="button" onClick={onBack}>
+          Back
+        </button>
+        {state === "loading" ? (
+          <p className="ap-pay-loading" role="status" aria-busy="true">Loading your price...</p>
+        ) : (
+          <p className="ap-error" role="alert">The price is not available right now. Please go back and try again in a moment.</p>
+        )}
+      </div>
+    );
+  }
+  return <PaymentStage key={paymentStepKey(priceInfo)} amount={priceInfo.amount} currency={priceInfo.currency} onBack={onBack} {...rest} />;
 }
 
 // ─── Payment stage ────────────────────────────────────────────────────────────
@@ -673,10 +698,11 @@ export default function AppointmentBookingForm() {
   // What the patient was really charged (the server's amount and currency), for the confirmation screen.
   const [paidCharge, setPaidCharge] = useState(null);
 
-  const [selection, setSelection] = useState(() => {
-    if (state?.selection) return state.selection;
-    return readPendingBooking()?.selection || null;
-  });
+  // The selection the URL names. One left in the router state or in the sessionStorage by an earlier booking (another category, or a
+  // price from before a deploy) is ignored when it is not this page's: the page is then rebuilt from the URL, with today's prices.
+  const route = { categorySlug, specialtySlug, conditionSlug };
+  const usableSelection = (candidate) => (candidate && selectionMatchesRoute(candidate, route) ? candidate : null);
+  const [selection, setSelection] = useState(() => usableSelection(state?.selection) || usableSelection(readPendingBooking()?.selection));
 
   // Shared/refreshed link with no state and no sessionStorage: reconstruct
   // the selection straight from the category/specialty/condition URL
@@ -684,7 +710,7 @@ export default function AppointmentBookingForm() {
   // form URL is fully shareable/refresh-safe without bouncing back to the
   // picker.
   const [resolvingSelection, setResolvingSelection] = useState(() => {
-    if (state?.selection || readPendingBooking()?.selection) return false;
+    if (usableSelection(state?.selection) || usableSelection(readPendingBooking()?.selection)) return false;
     return !!(categorySlug && specialtySlug && conditionSlug);
   });
   useEffect(() => {
@@ -844,7 +870,7 @@ export default function AppointmentBookingForm() {
 
     const pending = readPendingBooking();
     sessionStorage.removeItem(BOOKING_RESUME_KEY);
-    if (!pending?.selection || !pending?.formData) return;
+    if (!pending?.selection || !pending?.formData || !usableSelection(pending.selection)) return;
 
     setSelection(pending.selection);
     setForm({
@@ -1392,9 +1418,8 @@ export default function AppointmentBookingForm() {
             Stage: payment
         ══════════════════════════════════════ */}
         {stage === "payment" && (
-          <PaymentStage
-            amount={priceInfo.amount}
-            currency={priceInfo.currency}
+          <PaymentStep
+            priceInfo={priceInfo}
             selection={selection}
             formData={form}
             uploadedReports={uploadedReports}

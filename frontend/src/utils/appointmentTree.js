@@ -30,6 +30,20 @@ export function normalizeAppointmentTree(tree) {
   }));
 }
 
+// Whether a stored selection (from the router state or the sessionStorage booking) is the one the URL names. A stale selection left by
+// an earlier booking must never be shown for another category / specialty / condition: the URL wins.
+export function selectionMatchesRoute(selection, { categorySlug, specialtySlug, conditionSlug }) {
+  if (!selection) return false;
+  if (!categorySlug || !specialtySlug || !conditionSlug) return true; // not a URL-addressed page: nothing to compare
+  if (selection.isServiceBooking) return false;
+  return (
+    slugify(selection.catLabel || "") === categorySlug &&
+    slugify(selection.specName || "") === specialtySlug &&
+    (slugify(selection.condName || "") === conditionSlug ||
+      (conditionSlug === "general-consultation" && selection.condName === "General Consultation"))
+  );
+}
+
 // The booking selection for a shared / refreshed /appointment-booking/:category/:specialty/:condition link, worked out from the
 // normalized tree (null when a segment matches nothing). `cost` is the effective USD price the tree carries; `pricingSlug` is the key of
 // the public price table, which is how the page finds the EUR / GBP / INR price for the visitor.

@@ -159,7 +159,7 @@ test("a failure after an earlier real answer keeps that currency, never USD", as
 });
 
 // ── The session remembers the answer ───────────────────────────────────────────────────────────────────────────────────
-test("the answer is remembered for the session: the next page load asks nothing and shows it at once", async () => {
+test("the answer is remembered for the session: the next page load shows it at once and only re-checks it in the background", async () => {
   const storage = memoryStorage();
   const first = setup([{ currency: "INR", country: "IN", source: "ip" }], { storage, identity: "|" });
   await first.loader.load();
@@ -168,7 +168,7 @@ test("the answer is remembered for the session: the next page load asks nothing 
   // a new page (new loader, same session) while the server would now fail with 429
   const second = setup([tooMany(60)], { storage, identity: "|" });
   await second.loader.load();
-  assert.equal(second.calls(), 0, "no request at all");
+  assert.equal(second.calls(), 1, "re-checked once, in the background; the 429 changes nothing");
   assert.deepEqual(second.loader.getState(), { currency: "INR", loading: false, source: "ip" });
 });
 

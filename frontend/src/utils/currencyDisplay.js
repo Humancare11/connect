@@ -139,6 +139,16 @@ export function selectionPriceInfo({
   return { amount: usdCost, currency: "USD", loading: false, unavailable: !usdCost };
 }
 
+// What the payment step may show for a price: "loading" until the visitor's currency and price are known (no buttons - Stripe /
+// PayPal / Razorpay depend on the currency), "unavailable" when there is no price in it, else "ready". The payment step is keyed by
+// this price (see paymentStepKey), so a currency that changes after the step opened starts it over with the right gateway.
+export function paymentStepState(info) {
+  if (!info || info.loading) return "loading";
+  const amount = Number(info.amount);
+  return Number.isFinite(amount) && amount > 0 ? "ready" : "unavailable";
+}
+export const paymentStepKey = (info) => `${normalizeCurrency(info?.currency)}:${Number(info?.amount) || 0}`;
+
 // The PayPal script is loaded for one currency and cannot change it afterwards, so the provider is keyed by the currency:
 // a different currency mounts a fresh provider that loads the SDK again for that currency.
 export function paypalProviderProps(clientId, currency) {
