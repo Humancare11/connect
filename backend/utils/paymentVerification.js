@@ -173,13 +173,39 @@ async function resolveServiceFeeCents(priceRef) {
 // The payment must have been created for the customer who is booking. Stripe stores the user in metadata.userId, PayPal as the last
 // ":" part of purchase_units[0].custom_id. A payment with no owner at all (made before this was recorded) is refused too: it could
 // belong to anyone. `patientId` is always passed by the booking controllers; without it nothing can be verified, so that fails.
-function assertPaymentOwner(owner, patientId) {
-  if (!patientId || !owner) {
+//
+// Grace rule for the deploy window: when LEGACY_PAYMENT_OWNER_CUTOFF (an ISO date, the deploy time) is set, a payment with NO owner is
+// accepted if it was created before that time AND is less than 24 hours old. Without the variable (or with an unreadable date), or
+// with no usable creation time, an owner-less payment is refused. A payment that HAS an owner is never graced: it must match.
+const LEGACY_GRACE_MS = 24 * 60 * 60 * 1000;
+function isLegacyPaymentAccepted(createdAtMs, now = Date.now()) {
+  const cutoff = Date.parse(String(process.env.LEGACY_PAYMENT_OWNER_CUTOFF || "").trim());
+  if (!Number.isFinite(cutoff) || !Number.isFinite(createdAtMs)) return false;
+  return createdAtMs < cutoff && now - createdAtMs < LEGACY_GRACE_MS;
+}
+
+function assertPaymentOwner(owner, patientId, createdAtMs) {
+  if (!patientId) {
+    throw new PaymentVerificationError("This payment cannot be verified for this account. Please restart checkout.", 403);
+  }
+  if (!owner) {
+    if (isLegacyPaymentAccepted(createdAtMs)) {
+      console.warn(`[LEGACY_PAYMENT_OWNER_GRACE] accepted an owner-less payment created ${new Date(createdAtMs).toISOString()} for patient ${patientId}`);
+      return;
+    }
     throw new PaymentVerificationError("This payment cannot be verified for this account. Please restart checkout.", 403);
   }
   if (String(owner) !== String(patientId)) {
     throw new PaymentVerificationError("This payment was made by a different account.", 403);
   }
+}
+
+// When a payment was created, in ms (NaN when unknown): Stripe `created` is unix seconds, PayPal `create_time` is ISO.
+function stripeCreatedMs(pi) {
+  return Number(pi?.created) * 1000;
+}
+function paypalCreatedMs(order) {
+  return Date.parse(order?.create_time || order?.purchase_units?.[0]?.payments?.captures?.[0]?.create_time || "");
 }
 
 function paypalOwnerOf(order) {
@@ -197,7 +223,7 @@ function checkStripeIntent(pi, { expectedCents, expectedCurrency = DEFAULT_CURRE
       402,
     );
   }
-  assertPaymentOwner(pi.metadata?.userId, patientId);
+  assertPaymentOwner(pi.metadata?.userId, patientId, stripeCreatedMs(pi));
   const currency = assertGatewayCurrency("stripe", pi.currency);
   const expected = assertAllowedCurrency(expectedCurrency);
   const metaCurrency = pi.metadata?.currency;
@@ -238,7 +264,7 @@ function checkPaypalOrder(order, { paypalOrderId, expectedCents, expectedCurrenc
   if (order.status !== "COMPLETED") {
     throw new PaymentVerificationError("PayPal payment not completed.", 402);
   }
-  assertPaymentOwner(paypalOwnerOf(order), patientId);
+  assertPaymentOwner(paypalOwnerOf(order), patientId, paypalCreatedMs(order));
   const captureData = order.purchase_units?.[0]?.payments?.captures?.[0];
   const currency = assertGatewayCurrency("paypal", captureData?.amount?.currency_code);
   const expected = assertAllowedCurrency(expectedCurrency);

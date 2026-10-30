@@ -111,12 +111,12 @@ for (const name of ["verifyStripePaymentIntent", "verifyPaypalOrder", "verifyCat
   };
 }
 
-const pi = (id, { currency = "eur", amount = 3000, status = "succeeded", metadata, owner } = {}) => {
-  stripeIntents[id] = { id, status, currency, amount, ...(metadata ? { metadata } : {}), ...(owner !== undefined ? { __owner: owner } : {}) };
+const pi = (id, { currency = "eur", amount = 3000, status = "succeeded", metadata, owner, created } = {}) => {
+  stripeIntents[id] = { id, status, currency, amount, ...(created !== undefined ? { created: Math.floor(created / 1000) } : {}), ...(metadata ? { metadata } : {}), ...(owner !== undefined ? { __owner: owner } : {}) };
   return id;
 };
-const order = (id, { currency = "EUR", value = "30.00", status = "COMPLETED", owner } = {}) => {
-  paypalOrders[id] = { id, status, ...(owner !== undefined ? { __owner: owner } : {}), purchase_units: [{ payments: { captures: [{ amount: { value, currency_code: currency } }] } }] };
+const order = (id, { currency = "EUR", value = "30.00", status = "COMPLETED", owner, created } = {}) => {
+  paypalOrders[id] = { id, status, ...(created !== undefined ? { create_time: new Date(created).toISOString() } : {}), ...(owner !== undefined ? { __owner: owner } : {}), purchase_units: [{ payments: { captures: [{ amount: { value, currency_code: currency } }] } }] };
   return id;
 };
 const rejects = (promise, pattern, status) =>
@@ -745,6 +745,96 @@ describe("category payments in USD / EUR / GBP", () => {
       res = makeRes();
       await createCategoryConsultation(reqFor(eurUser, consultationBody({ paymentIntentId: "pi_mine" })), res);
       assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+    });
+  });
+
+  // A payment with no owner recorded (made before the owner was stored) is accepted only inside the deploy-day grace window:
+  // LEGACY_PAYMENT_OWNER_CUTOFF set, created before it, and less than 24 hours old.
+  describe("legacy owner-less payments (LEGACY_PAYMENT_OWNER_CUTOFF)", () => {
+    const HOUR = 3600 * 1000;
+    const saved = process.env.LEGACY_PAYMENT_OWNER_CUTOFF;
+    const setCutoff = (ms) => { process.env.LEGACY_PAYMENT_OWNER_CUTOFF = new Date(ms).toISOString(); };
+    beforeEach(() => { delete process.env.LEGACY_PAYMENT_OWNER_CUTOFF; });
+    after(() => {
+      if (saved === undefined) delete process.env.LEGACY_PAYMENT_OWNER_CUTOFF;
+      else process.env.LEGACY_PAYMENT_OWNER_CUTOFF = saved;
+    });
+    const verifyStripe = (id) => pv.verifyCategoryPayment({ paymentIntentId: id, priceRef: "general-care", patientId: eurUser._id });
+    const verifyPaypal = (id) => pv.verifyCategoryPayment({ paypalOrderId: id, priceRef: "general-care", patientId: eurUser._id });
+
+    test("no env: an owner-less payment is rejected, even a brand new one", async () => {
+      pi("pi_l0", { currency: "eur", amount: 3000, owner: null, created: Date.now() - HOUR });
+      await rejects(verifyStripe("pi_l0"), /cannot be verified/, 403);
+      order("O_l0", { currency: "EUR", value: "30.00", owner: null, created: Date.now() - HOUR });
+      await rejects(verifyPaypal("O_l0"), /cannot be verified/, 403);
+    });
+
+    test("env set: created before the cutoff and under 24 hours old is accepted (Stripe and PayPal)", async () => {
+      setCutoff(Date.now());
+      pi("pi_l1", { currency: "eur", amount: 3000, owner: null, created: Date.now() - 2 * HOUR });
+      assert.equal((await verifyStripe("pi_l1")).ref, "pi_l1");
+      order("O_l1", { currency: "EUR", value: "30.00", owner: null, created: Date.now() - 23 * HOUR });
+      assert.equal((await verifyPaypal("O_l1")).ref, "O_l1");
+      assert.ok(warnings.some((w) => /LEGACY_PAYMENT_OWNER_GRACE/.test(w)));
+    });
+
+    test("env set: 24 hours old or more is rejected", async () => {
+      setCutoff(Date.now());
+      pi("pi_l2", { currency: "eur", amount: 3000, owner: null, created: Date.now() - 25 * HOUR });
+      await rejects(verifyStripe("pi_l2"), /cannot be verified/, 403);
+      order("O_l2", { currency: "EUR", value: "30.00", owner: null, created: Date.now() - 48 * HOUR });
+      await rejects(verifyPaypal("O_l2"), /cannot be verified/, 403);
+    });
+
+    test("env set: created after the cutoff is rejected (a new payment always has an owner)", async () => {
+      setCutoff(Date.now() - 3 * HOUR);
+      pi("pi_l3", { currency: "eur", amount: 3000, owner: null, created: Date.now() - HOUR });
+      await rejects(verifyStripe("pi_l3"), /cannot be verified/, 403);
+      order("O_l3", { currency: "EUR", value: "30.00", owner: null, created: Date.now() - HOUR });
+      await rejects(verifyPaypal("O_l3"), /cannot be verified/, 403);
+    });
+
+    test("env set: no creation time, or an unreadable cutoff, is rejected", async () => {
+      setCutoff(Date.now());
+      pi("pi_l4", { currency: "eur", amount: 3000, owner: null }); // no created
+      await rejects(verifyStripe("pi_l4"), /cannot be verified/, 403);
+      process.env.LEGACY_PAYMENT_OWNER_CUTOFF = "not a date";
+      pi("pi_l5", { currency: "eur", amount: 3000, owner: null, created: Date.now() - HOUR });
+      await rejects(verifyStripe("pi_l5"), /cannot be verified/, 403);
+    });
+
+    test("the grace never lets in a payment that HAS an owner who is someone else", async () => {
+      setCutoff(Date.now());
+      pi("pi_l6", { currency: "eur", amount: 3000, owner: String(gbpUser._id), created: Date.now() - HOUR });
+      await rejects(verifyStripe("pi_l6"), /different account/, 403);
+      order("O_l6", { currency: "EUR", value: "30.00", owner: String(gbpUser._id), created: Date.now() - HOUR });
+      await rejects(verifyPaypal("O_l6"), /different account/, 403);
+    });
+
+    test("the grace applies to a service and a doctor-fee check too (verifyStripePaymentIntent / verifyPaypalOrder)", async () => {
+      setCutoff(Date.now());
+      pi("pi_l7", { currency: "usd", amount: 6900, owner: null, created: Date.now() - HOUR });
+      assert.equal((await pv.verifyStripePaymentIntent({ paymentIntentId: "pi_l7", expectedCents: 6900, patientId: eurUser._id })).ref, "pi_l7");
+      order("O_l7", { currency: "USD", value: "69.00", owner: null, created: Date.now() - HOUR });
+      assert.equal((await pv.verifyPaypalOrder({ paypalOrderId: "O_l7", expectedCents: 6900, patientId: eurUser._id })).ref, "O_l7");
+      delete process.env.LEGACY_PAYMENT_OWNER_CUTOFF;
+      await rejects(pv.verifyStripePaymentIntent({ paymentIntentId: "pi_l7", expectedCents: 6900, patientId: eurUser._id }), /cannot be verified/, 403);
+    });
+
+    test("a booking through the controller with a graced intent succeeds once, and the payment is consumed", async () => {
+      setCutoff(Date.now());
+      pi("pi_l8", { currency: "eur", amount: 3000, owner: null, created: Date.now() - HOUR });
+      const res = { statusCode: 200, body: null, status(c) { this.statusCode = c; return this; }, json(b) { this.body = b; return this; } };
+      lastUser = String(eurUser._id);
+      const tomorrow = new Date(Date.now() + 36 * HOUR).toISOString().slice(0, 10);
+      await createCategoryConsultation(
+        { headers: {}, user: { id: lastUser }, app: { get: () => null }, body: {
+          concern: "Cough", duration: "1 week", severity: "mild", supportType: "advice", urgency: "asap", date: tomorrow,
+          categoryName: "General Care", categoryId: "general-care", specialtyName: "GP", conditionName: "Cough", paymentIntentId: "pi_l8" } },
+        res,
+      );
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+      assert.equal(await ConsumedPayment.countDocuments({ ref: "pi_l8" }), 1);
     });
   });
 });
