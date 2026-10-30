@@ -12,10 +12,10 @@ const read = (...p) => fs.readFileSync(path.join(SRC, ...p), "utf8");
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]));
 const pageFiles = walk(path.join(SRC, "pages")).filter((f) => f.endsWith(".jsx"));
 
-test("the currency provider wraps the pricing provider in both provider trees", () => {
+test("the currency provider wraps the pricing provider in the provider tree (one tree, with or without Google)", () => {
   const src = read("AppProviders.jsx");
-  assert.equal((src.match(/<CurrencyProvider>/g) || []).length, 2);
-  assert.equal((src.match(/<PricingProvider>/g) || []).length, 2);
+  assert.equal((src.match(/<CurrencyProvider>/g) || []).length, 1);
+  assert.equal((src.match(/<PricingProvider>/g) || []).length, 1);
   assert.ok(src.indexOf("<CurrencyProvider>") < src.indexOf("<PricingProvider>"));
 });
 
