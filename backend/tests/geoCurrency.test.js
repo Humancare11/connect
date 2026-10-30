@@ -127,12 +127,63 @@ describe("GET /api/geo/currency", () => {
     assert.match(r.headers.get("cache-control"), /no-store/);
   });
 
-  test("the endpoint is rate limited per IP", async () => {
-    let limited = 0;
-    for (let i = 0; i < 70; i += 1) {
-      const res = await fetch(`${base}/api/geo/currency`, { headers: { "x-forwarded-for": "203.0.113.77" } });
-      if (res.status === 429) limited += 1;
+  const hit = (ip) => fetch(`${base}/api/geo/currency`, { headers: { "x-forwarded-for": ip } });
+
+  test("the endpoint is rate limited per IP, with a Retry-After the browser honours", async () => {
+    process.env.GEO_CURRENCY_RATE_LIMIT = "5";
+    try {
+      const statuses = [];
+      let last;
+      for (let i = 0; i < 8; i += 1) {
+        last = await hit("203.0.113.77");
+        statuses.push(last.status);
+      }
+      assert.deepEqual(statuses, [200, 200, 200, 200, 200, 429, 429, 429]);
+      assert.ok(Number(last.headers.get("retry-after")) >= 1);
+      // another IP has its own allowance
+      assert.equal((await hit("203.0.113.78")).status, 200);
+    } finally {
+      delete process.env.GEO_CURRENCY_RATE_LIMIT;
     }
-    assert.ok(limited > 0, "expected some requests to be limited");
+  });
+
+  test("the default allowance is generous (300 a minute): a busy shared IP, such as an office or a mobile carrier, is not limited at 60", async () => {
+    delete process.env.GEO_CURRENCY_RATE_LIMIT;
+    const ip = "203.0.113.90";
+    for (let i = 0; i < 100; i += 1) {
+      const res = await hit(ip);
+      assert.equal(res.status, 200, `request ${i + 1}`);
+    }
+  });
+
+  test("a nonsense limit setting falls back to the default", async () => {
+    for (const bad of ["abc", "0", "-3", ""]) {
+      process.env.GEO_CURRENCY_RATE_LIMIT = bad;
+      assert.equal((await hit(`203.0.113.${100 + bad.length}`)).status, 200, bad);
+    }
+    delete process.env.GEO_CURRENCY_RATE_LIMIT;
+  });
+
+  test("a real failure is an error the browser can retry (503 + Retry-After), not a silent USD", async () => {
+    process.env.MULTI_CURRENCY_ENABLED = "true";
+    const user = await mkUser("India");
+    const original = User.findById;
+    User.findById = () => { throw new Error("database is down"); };
+    const realError = console.error;
+    console.error = () => {};
+    try {
+      const r = await get({ token: tokenFor(user) });
+      assert.equal(r.status, 503);
+      assert.equal(r.body.currency, undefined, "no currency is claimed");
+      assert.equal(r.headers.get("retry-after"), "2");
+      assert.match(r.headers.get("cache-control"), /no-store/);
+    } finally {
+      User.findById = original;
+      console.error = realError;
+    }
+    // and it recovers: the same visitor gets the right answer once the database is back
+    const ok = await get({ token: tokenFor(user) });
+    assert.equal(ok.status, 200);
+    assert.deepEqual([ok.body.country, ok.body.source], ["IN", "profile"]);
   });
 });
