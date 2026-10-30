@@ -89,3 +89,7 @@ No real money moves in Test mode.
 ## Reports
 
 INR is its own bucket in Entries, the money boxes, the Appointments list and the CSV (`Currency` = `INR`). Rupees are never added to dollars, euros or pounds. Doctor payouts and manual entries are not affected (manual entries are USD only).
+
+## Services (Fit to fly, Lab requisitions, ...)
+
+Service prices (Super Admin > Services Price) follow exactly the same rules as the categories: USD, EUR, GBP and INR, entered by hand, nothing converted. A new service needs all four prices; EUR / GBP / INR can be changed but never cleared once set; USD can never be cleared or 0. A service with no price in the customer's currency is charged its USD price (labelled `$`, logged as `[CURRENCY_FALLBACK_USED]`) on Stripe / PayPal; Razorpay is never offered for it. Fill in every service's EUR / GBP / INR price before relying on them: `node scripts/checkCategoryCurrencyCoverage.js` now lists services too.

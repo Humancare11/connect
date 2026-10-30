@@ -9,6 +9,7 @@ import { useSiteCurrency } from "../context/CurrencyContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import PriceText from "../components/PriceText";
 import { selectionPriceInfo } from "../utils/currencyDisplay";
+import { useServiceRecord } from "../hooks/useServicePrice";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import {
   readPendingBooking,
@@ -88,13 +89,16 @@ export default function CategoryAppointmentConfirm() {
   }, [authLoading, user]);
 
   // The price shown, in the currency the server decided for this visitor (display only: the server prices the payment itself).
-  // A service booking stays USD.
+  // A service booking is priced from the service's own record (its EUR / GBP / INR price), like a category from the price table.
+  const service = useServiceRecord(selection?.isServiceBooking ? selection.catId : "");
   const priceInfo = selectionPriceInfo({
     selection: selection ? { ...selection, cost: livePrice } : null,
     prices,
     currency: siteCurrency,
     currencyLoading,
     pricesLoading,
+    serviceRecord: service.record,
+    serviceLoading: service.loading,
   });
 
   // Always confirm the price against the DB before charging the patient

@@ -1,11 +1,36 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import "./Dashboard.css";
+import "./HealthcareManagement.css";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
+import {
+  PRICE_CURRENCIES,
+  MAX_PRICE,
+  MAX_PRICE_INR,
+  formatMoney,
+  isMissingForeignPrice,
+  checkCategoryPrices,
+} from "./healthcarePrices";
+
+const isSet = (value) => value !== null && value !== undefined;
+const text = (value) => (isSet(value) ? String(value) : "");
 
 function ServicesPrices() {
   const confirm = useConfirm();
-  const emptyForm = { name: "", price: "", icon: "", description: "", slug: "" };
+  const emptyForm = {
+    name: "",
+    price: "",
+    priceEur: "",
+    priceGbp: "",
+    priceInr: "",
+    // Whether a EUR / GBP / INR price was already set when the service was opened: once set it can be changed but not cleared.
+    priceEurLocked: false,
+    priceGbpLocked: false,
+    priceInrLocked: false,
+    icon: "",
+    description: "",
+    slug: "",
+  };
   const [services, setServices] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -13,11 +38,14 @@ function ServicesPrices() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  // The table shows one currency at a time (USD by default); "Not set" where a service has no price in it yet.
+  const [priceTab, setPriceTab] = useState("USD");
+  const [missingOnly, setMissingOnly] = useState(false);
 
   const loadServices = async () => {
     setLoading(true);
     try {
-      const res = await api.get("/api/services");
+      const res = await api.get("/api/services/admin");
       setServices(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       setError(err.response?.data?.msg || "Failed to load services.");
@@ -38,10 +66,17 @@ function ServicesPrices() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
     setError("");
     setMessage("");
 
+    // The same rules as the server (which is the real check): all four prices on create, nothing cleared once set on edit.
+    const problem = checkCategoryPrices(form, !editingId);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+
+    setSaving(true);
     const payload = {
       name: form.name.trim(),
       price: Number(form.price),
@@ -52,6 +87,10 @@ function ServicesPrices() {
       // one from the name automatically.
       ...(editingId && form.slug.trim() ? { slug: form.slug.trim() } : {}),
     };
+    // EUR / GBP / INR are sent when filled in; a service that was never priced in one may stay without it (shown as "Not set").
+    for (const { field } of PRICE_CURRENCIES) {
+      if (field !== "price" && String(form[field]).trim()) payload[field] = Number(form[field]);
+    }
 
     try {
       const res = editingId
@@ -59,11 +98,12 @@ function ServicesPrices() {
         : await api.post("/api/services", payload);
 
       const saved = res.data.service;
+      const shown = { ...saved, priceEur: saved.priceEur ?? null, priceGbp: saved.priceGbp ?? null, priceInr: saved.priceInr ?? null };
       setServices((prev) => {
         if (editingId) {
-          return prev.map((service) => (service._id === saved._id ? saved : service));
+          return prev.map((service) => (service._id === shown._id ? shown : service));
         }
-        return [...prev, saved].sort((a, b) => a.name.localeCompare(b.name));
+        return [...prev, shown].sort((a, b) => a.name.localeCompare(b.name));
       });
       setMessage(editingId ? "Service updated." : "Service created.");
       resetForm();
@@ -78,7 +118,13 @@ function ServicesPrices() {
     setEditingId(service._id);
     setForm({
       name: service.name || "",
-      price: service.price ?? "",
+      price: text(service.price),
+      priceEur: text(service.priceEur),
+      priceGbp: text(service.priceGbp),
+      priceInr: text(service.priceInr),
+      priceEurLocked: isSet(service.priceEur),
+      priceGbpLocked: isSet(service.priceGbp),
+      priceInrLocked: isSet(service.priceInr),
       icon: service.icon || "",
       description: service.description || "",
       slug: service.slug || "",
@@ -126,6 +172,10 @@ function ServicesPrices() {
     }
   };
 
+  const tabField = PRICE_CURRENCIES.find((c) => c.code === priceTab).field;
+  const missingCount = services.filter(isMissingForeignPrice).length;
+  const visibleServices = missingOnly ? services.filter(isMissingForeignPrice) : services;
+
   return (
     <>
       <div className="dash-section">
@@ -150,19 +200,6 @@ function ServicesPrices() {
               />
             </div>
             <div className="sa-field">
-              <label>Price</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                placeholder="25"
-                required
-                disabled={saving}
-              />
-            </div>
-            <div className="sa-field">
               <label>Icon</label>
               <input
                 type="text"
@@ -173,6 +210,41 @@ function ServicesPrices() {
                 disabled={saving}
               />
             </div>
+          </div>
+
+          <div className="sa-field">
+            <p className="hcm-price-help">
+              {editingId
+                ? "Enter each price by hand - nothing is converted. A price that is already set can be changed but not cleared; EUR / GBP / INR that show as empty can be filled in later."
+                : "All four prices are required (more than 0, at most 2 decimals; at least 0.01, or 1 for INR; up to 100,000, and up to 10,00,000 for INR). Enter each by hand - nothing is converted. INR is what customers in India pay, through Razorpay."}
+            </p>
+          </div>
+
+          <div className="sa-form-row">
+            {PRICE_CURRENCIES.map(({ code, symbol, field, lockField }) => {
+              const required = !editingId || field === "price" || Boolean(lockField && form[lockField]);
+              return (
+                <div className="sa-field" key={field}>
+                  <label htmlFor={`sp-${field}`}>
+                    Price ({code}) {symbol}
+                    {!required && <span className="hcm-optional"> - not set</span>}
+                  </label>
+                  <input
+                    id={`sp-${field}`}
+                    type="number"
+                    min={code === "INR" ? "1" : "0.01"}
+                    max={code === "INR" ? MAX_PRICE_INR : MAX_PRICE}
+                    step="0.01"
+                    inputMode="decimal"
+                    value={form[field]}
+                    onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                    placeholder={code === "INR" ? "1499" : "25"}
+                    required={required}
+                    disabled={saving}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           <div className="sa-field">
@@ -218,7 +290,33 @@ function ServicesPrices() {
       </div>
 
       <div className="dash-section" style={{ marginTop: 24 }}>
-        <h2 className="dash-section-title">All Services ({services.length})</h2>
+        <h2 className="dash-section-title">All Services ({visibleServices.length})</h2>
+
+        <div className="hcm-tabs hcm-price-tabs" role="tablist" aria-label="Price currency">
+          {PRICE_CURRENCIES.map(({ code }) => (
+            <button
+              key={code}
+              type="button"
+              role="tab"
+              aria-selected={priceTab === code}
+              className={`hcm-tab${priceTab === code ? " active" : ""}`}
+              onClick={() => setPriceTab(code)}
+            >
+              {code}
+            </button>
+          ))}
+        </div>
+
+        {missingCount > 0 && (
+          <div className="hcm-banner" role="status">
+            <span>
+              <strong>{missingCount}</strong> {missingCount === 1 ? "service is" : "services are"} missing EUR/GBP/INR prices.
+            </span>
+            <button type="button" className="hcm-banner-btn" onClick={() => setMissingOnly((v) => !v)}>
+              {missingOnly ? "Show all services" : "Show only these"}
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <p className="dash-empty">Loading services...</p>
@@ -233,12 +331,12 @@ function ServicesPrices() {
                   <th>Name</th>
                   <th>Slug</th>
                   <th>Description</th>
-                  <th>Price</th>
+                  <th>Price ({priceTab})</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {services.map((service, index) => (
+                {visibleServices.map((service, index) => (
                   <tr key={service._id} className={index % 2 === 0 ? "" : "alt"}>
                     <td>{renderIcon(service.icon)}</td>
                     <td className="bold">{service.name}</td>
@@ -252,7 +350,9 @@ function ServicesPrices() {
                       </code>
                     </td>
                     <td className="muted">{service.description}</td>
-                    <td className="muted">${Number(service.price || 0).toFixed(2)}</td>
+                    <td className="muted">
+                      {formatMoney(service[tabField], priceTab) || <span className="hcm-not-set">Not set</span>}
+                    </td>
                     <td>
                       <div className="actions-cell">
                         <button className="btn-approve" type="button" onClick={() => handleEdit(service)}>

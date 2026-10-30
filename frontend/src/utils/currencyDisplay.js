@@ -82,13 +82,42 @@ export function priceRecordFor(selection, prices) {
   return Object.values(prices).find((record) => String(record?.label || "").trim().toLowerCase() === label);
 }
 
+// One service's price slot (service pages and the services list): the same rules as useCategoryPriceInfo. `record` is a service from
+// /api/services (or /by-slug): { price, priceEur?, priceGbp?, priceInr? }. A skeleton while the currency or the record is loading,
+// "Price unavailable" when there is no price at all - never a made-up price.
+export function servicePriceInfo({ record, loading = false, currency, currencyLoading = false }) {
+  const usd = positive(record?.price);
+  if (currencyLoading || (loading && !record)) return { amount: null, currency: normalizeCurrency(currency), loading: true, unavailable: false, usdAmount: usd };
+  const info = record ? resolveCategoryPrice(record, currency) : null;
+  if (!info) return { amount: null, currency: normalizeCurrency(currency), loading: false, unavailable: true, usdAmount: usd };
+  return { ...info, loading: false, unavailable: false, usdAmount: usd };
+}
+
 // The price of a booking selection. A service booking and the doctor-fee path are always USD; a category booking is priced in the
 // visitor's currency. `selection.cost` is the USD price the booking page already loaded. The result is for display only - the
 // server prices the payment itself.
-export function selectionPriceInfo({ selection, prices, currency, currencyLoading = false, pricesLoading = false }) {
+export function selectionPriceInfo({
+  selection,
+  prices,
+  currency,
+  currencyLoading = false,
+  pricesLoading = false,
+  serviceRecord = null,
+  serviceLoading = false,
+}) {
   const usdCost = positive(selection?.cost);
   if (selection?.isServiceBooking) {
-    return { amount: usdCost, currency: "USD", loading: false, unavailable: !usdCost };
+    // A service is priced like a category: in the visitor's currency, from the service's own record (/api/services/by-slug), with the
+    // USD price (labelled USD) when it has none in that currency.
+    if (currencyLoading) return { amount: null, currency: DEFAULT_CURRENCY, loading: true, unavailable: false };
+    const wantedForService = normalizeCurrency(currency);
+    const usdService = usdCost || positive(serviceRecord?.price);
+    if (wantedForService !== "USD") {
+      if (serviceLoading && !serviceRecord) return { amount: null, currency: wantedForService, loading: true, unavailable: false };
+      const native = serviceRecord ? resolveCategoryPrice(serviceRecord, wantedForService) : null;
+      if (native && native.currency === wantedForService) return { ...native, loading: false, unavailable: false };
+    }
+    return { amount: usdService, currency: "USD", loading: false, unavailable: !usdService };
   }
   if (currencyLoading) return { amount: null, currency: DEFAULT_CURRENCY, loading: true, unavailable: false };
   const wanted = normalizeCurrency(currency);

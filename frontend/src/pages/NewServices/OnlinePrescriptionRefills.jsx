@@ -278,7 +278,7 @@ export default function OnlinePrescriptionRefills() {
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
   const bp = useBreakpoint();
-  const { price, priceLoading } = useServicePrice(s.slug);
+  const { priceInfo } = useServicePrice(s.slug);
 
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -379,8 +379,7 @@ export default function OnlinePrescriptionRefills() {
                   className="service-hero__booking"
                 >
                   <ServiceBookingCard
-                    price={price}
-                    priceLoading={priceLoading}
+                    priceInfo={priceInfo}
                     name={s.serviceName}
                     slug={s.slug}
                   />

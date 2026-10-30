@@ -217,7 +217,7 @@ export default function GeneralConsultation() {
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
   const bp = useBreakpoint();
-  const { price, priceLoading } = useServicePrice(s.slug);
+  const { priceInfo } = useServicePrice(s.slug);
 
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -249,7 +249,7 @@ export default function GeneralConsultation() {
                   <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.32 }} className="service-hero__intro">{s.intro}</motion.p>
                 </div>
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="service-hero__booking">
-                  <ServiceBookingCard price={price} priceLoading={priceLoading} name={s.serviceName} slug={s.slug} />
+                  <ServiceBookingCard priceInfo={priceInfo} name={s.serviceName} slug={s.slug} />
                 </motion.div>
               </motion.div>
             </section>

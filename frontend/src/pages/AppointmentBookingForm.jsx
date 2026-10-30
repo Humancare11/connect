@@ -23,6 +23,7 @@ import { useSiteCurrency } from "../context/CurrencyContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import PriceText from "../components/PriceText";
 import { formatPrice, selectionPriceInfo, paypalProviderProps } from "../utils/currencyDisplay";
+import { useServiceRecord } from "../hooks/useServicePrice";
 import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
@@ -752,12 +753,16 @@ export default function AppointmentBookingForm() {
   // selection.cost is the effective USD price (the backend merges the CategoryPricing admin override into
   // /api/appointment-tree's category price). A visitor priced in EUR / GBP sees the category's price in that currency, the
   // currency being the server's decision (CurrencyProvider). This is for display only: the server prices the payment itself.
+  // A service booking is priced from the service's own record (its EUR / GBP / INR price), a category booking from the price table.
+  const service = useServiceRecord(selection?.isServiceBooking ? selection.catId : "");
   const priceInfo = selectionPriceInfo({
     selection,
     prices,
     currency: siteCurrency,
     currencyLoading,
     pricesLoading,
+    serviceRecord: service.record,
+    serviceLoading: service.loading,
   });
   const hasAppointmentPrice =
     !priceInfo.loading && Number.isFinite(Number(priceInfo.amount)) && Number(priceInfo.amount) > 0;

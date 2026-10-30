@@ -10,13 +10,10 @@ const DEFAULT_FEATURES = [
   "HIPAA secure session",
 ];
 
-// A category page passes priceInfo ({ amount, currency, loading, unavailable } from useCategoryPriceInfo): the price is shown in the
-// visitor currency, with a skeleton while it loads and "Price unavailable" when there is none. The older price / priceLoading pair
-// (service pages) is USD only and unchanged.
+// Every page passes priceInfo ({ amount, currency, loading, unavailable } from useCategoryPriceInfo / useServicePrice): the price is
+// shown in the visitor currency, with a skeleton while it loads and "Price unavailable" when there is none. There is no made-up price.
 function BookingCard({
-  price,
-  priceLoading,
-  priceInfo,
+  priceInfo = { loading: true },
   ctaHref,
   ctaLabel = "Book Appointment →",
   features = DEFAULT_FEATURES,
@@ -31,15 +28,7 @@ function BookingCard({
 
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
-          {priceInfo ? (
-            <PriceText info={priceInfo} />
-          ) : priceLoading ? (
-            <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
-          ) : price !== null && price !== undefined && Number(price) > 0 ? (
-            `$${price}`
-          ) : (
-            `$49`
-          )}
+          <PriceText info={priceInfo} />
         </div>
         <p className="hcc-booking-price-sub">
           <span>One-time consultation fee</span>
