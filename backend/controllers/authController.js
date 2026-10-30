@@ -752,9 +752,9 @@ const updateProfile = async (req, res) => {
     if (!updated)
       return res.status(404).json({ msg: "User not found." });
 
-    // The country decides which currency this customer is priced in, so every
-    // change is logged (old, new, who, when) and flagged for an admin if they
-    // already have a paid booking. Best-effort: never blocks the save.
+    // Every country change is logged (old, new, who, when, from which IP) and flagged for an admin if the
+    // customer already has a paid booking. A record only (the currency follows the visitor's IP, not this).
+    // Best-effort: never blocks the save.
     if (set.country !== undefined && cleanStr(set.country) !== cleanStr(current.country)) {
       await recordCountryChange({
         userId: updated._id,
