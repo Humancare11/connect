@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 // One row each time a user's profile country changes (not the first value set
-// at signup). The country decides which currency a customer pays in, so a
-// change after a paid booking is flagged (`needsReview`) for an admin to look
-// at. This is its own collection because the generic activity logger is a
+// at signup). A change after a paid booking is flagged (`needsReview`) for an
+// admin to look at. It is a record only: the currency does not depend on the
+// profile country (the visitor's IP decides it). This is its own collection because the generic activity logger is a
 // deliberate no-op.
 const countryChangeLogSchema = new mongoose.Schema(
   {

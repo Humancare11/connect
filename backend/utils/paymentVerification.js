@@ -8,7 +8,6 @@ const { paypalFetch } = require("./paypal");
 const { toCents } = require("./currency");
 const { resolveEffectiveCategoryPrice } = require("./categoryPricing");
 const { resolveEffectiveServicePrice } = require("./servicePricing");
-const User = require("../models/User");
 const { getClientIp } = require("./clientIp");
 const {
   SUPPORTED_CURRENCIES,
@@ -100,18 +99,14 @@ function assertGatewayCurrency(gateway, currency) {
   );
 }
 
-// The currency this logged-in customer is charged in, decided on the server
-// only: their profile country first, then the IP, else USD (see
-// currencyConfig.resolveRequestCurrency). Always USD while
-// MULTI_CURRENCY_ENABLED is off. The client never sends a currency we trust.
+// The currency this customer is charged in, decided on the server only, from the IP of the request that creates the payment (see
+// currencyConfig.resolveRequestCurrency): the same rule as the price shown, and never the profile country. Unknown IP -> USD, and
+// always USD while MULTI_CURRENCY_ENABLED is off. The client never sends a currency we trust. The currency is stored on the Stripe
+// intent / PayPal order / Razorpay order; booking finalisation verifies against what the payment itself says and does not look at
+// the IP again.
 async function decidePaymentCurrency(req) {
   try {
-    let userCountry = "";
-    if (req?.user?.id) {
-      const user = await User.findById(req.user.id).select("country").lean();
-      userCountry = user?.country || "";
-    }
-    const { currency } = await resolveRequestCurrency({ userCountry, ip: getClientIp(req) });
+    const { currency } = await resolveRequestCurrency({ ip: getClientIp(req) });
     return assertAllowedCurrency(currency);
   } catch {
     return DEFAULT_CURRENCY;

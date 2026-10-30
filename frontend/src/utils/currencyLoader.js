@@ -2,10 +2,10 @@
 // in context/CurrencyContext.jsx wires it to the page, and the tests drive it with a fake fetch.
 //
 // One visitor must always see ONE currency, so:
-//   - A resolved currency is remembered for the session (sessionStorage, keyed by who the visitor is) and shown at once on every later
-//     page load, so no page waits or flashes. It is re-checked with the server in the background on each page load: if the server now
-//     says something else (rupees were switched on, the profile country changed) the whole page follows it, once. A failed re-check
-//     changes nothing. A different person / profile country is not served from the memory at all.
+//   - A resolved currency is remembered for the session (sessionStorage) and shown at once on every later page load, so no page waits
+//     or flashes. It is re-checked with the server in the background on each page load: if the server now says something else (rupees
+//     were switched on, the visitor travelled or switched network) the whole page follows it, once. A failed re-check changes nothing.
+//     Only an answer that placed the visitor by IP is remembered; the currency does not depend on who is logged in.
 //   - A failed request (network error, 5xx, 429 "too many requests") is retried with backoff, honouring Retry-After. While it is
 //     being retried `loading` stays true, so price slots show a skeleton - never "$" first and then "₹".
 //   - Only when every retry has failed (the API is really down) does the visitor see the last known currency, or USD if there is
@@ -13,7 +13,7 @@
 //   - An answer that arrives after a newer load was started (login, then logout, quickly) is ignored.
 import { DEFAULT_CURRENCY, normalizeCurrency, SUPPORTED_CURRENCIES } from "./currencyDisplay.js";
 
-export const CURRENCY_CACHE_KEY = "hc:currency:v1";
+export const CURRENCY_CACHE_KEY = "hc:currency:v2"; // v2: the currency follows the IP only (v1 entries could hold a profile-country answer)
 // Delays before retry 1..4 (so five tries in about nine seconds), then one try every BACKGROUND_RETRY_MS while the page stays open.
 export const RETRY_DELAYS_MS = [400, 1000, 2500, 5000];
 export const BACKGROUND_RETRY_MS = 20000;
@@ -24,7 +24,7 @@ const defaultWait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Only an answer that says who/where the visitor really is is remembered. "default" means the server could not place the visitor
 // (no location data yet), which may change on the next request, so it is shown but not kept.
-const CACHEABLE_SOURCES = new Set(["profile", "ip"]);
+const CACHEABLE_SOURCES = new Set(["ip"]);
 
 export function readCachedCurrency(storage, identity) {
   try {
@@ -76,11 +76,16 @@ export function createCurrencyLoader({
   };
 
   const ask = async () => {
+    let data;
     try {
-      return await Promise.resolve(fetchCurrency());
+      data = await Promise.resolve(fetchCurrency());
     } catch (err) {
       throw err || new Error("currency request failed");
     }
+    // The server answers source "error" when its own location lookup failed: that is not an answer about this visitor, so it is
+    // retried like a failed request instead of being shown (and instead of being remembered).
+    if (data?.source === "error") throw new Error("the server could not place the visitor");
+    return data;
   };
 
   function accept(data) {

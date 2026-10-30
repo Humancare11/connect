@@ -132,7 +132,6 @@ describe("resolveRequestCurrency", () => {
     delete process.env.MULTI_CURRENCY_ENABLED;
     let looked = 0;
     const r = await cfg.resolveRequestCurrency({
-      userCountry: "Germany",
       ip: "8.8.8.8",
       lookupLocation: async () => { looked += 1; return { country: "France" }; },
     });
@@ -140,37 +139,44 @@ describe("resolveRequestCurrency", () => {
     assert.equal(looked, 0);
   });
 
-  test("flag on: the profile country wins over the IP", async () => {
+  test("flag on: the IP's country decides - EUR, GBP, INR and USD", async () => {
+    process.env.MULTI_CURRENCY_ENABLED = "true";
+    process.env.RAZORPAY_KEY_ID = "rzp_test_k";
+    process.env.RAZORPAY_KEY_SECRET = "s";
+    try {
+      const at = (country) => cfg.resolveRequestCurrency({ ip: "8.8.8.8", lookupLocation: ipIn(country) });
+      assert.deepEqual(await at("France"), { currency: "EUR", country: "FR", source: "ip" });
+      assert.deepEqual(await at("Germany"), { currency: "EUR", country: "DE", source: "ip" });
+      assert.deepEqual(await at("United Kingdom"), { currency: "GBP", country: "GB", source: "ip" });
+      assert.deepEqual(await at("India"), { currency: "INR", country: "IN", source: "ip" });
+      assert.deepEqual(await at("United States"), { currency: "USD", country: "US", source: "ip" });
+    } finally {
+      delete process.env.RAZORPAY_KEY_ID;
+      delete process.env.RAZORPAY_KEY_SECRET;
+    }
+  });
+
+  test("a profile country is not an input any more: passing one changes nothing", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
     const r = await cfg.resolveRequestCurrency({ userCountry: "India", ip: "8.8.8.8", lookupLocation: ipIn("France") });
-    assert.deepEqual(r, { currency: "USD", country: "IN", source: "profile" });
-  });
-
-  test("flag on: a EUR and a GBP profile country", async () => {
-    process.env.MULTI_CURRENCY_ENABLED = "true";
-    assert.equal((await cfg.resolveRequestCurrency({ userCountry: "Germany" })).currency, "EUR");
-    assert.equal((await cfg.resolveRequestCurrency({ userCountry: "United Kingdom" })).currency, "GBP");
-  });
-
-  test("flag on: no profile country falls back to the IP country", async () => {
-    process.env.MULTI_CURRENCY_ENABLED = "true";
-    const r = await cfg.resolveRequestCurrency({ userCountry: "", ip: "8.8.8.8", lookupLocation: ipIn("France") });
     assert.deepEqual(r, { currency: "EUR", country: "FR", source: "ip" });
+    assert.equal(r.source === "profile", false);
+    const none = await cfg.resolveRequestCurrency({ userCountry: "Germany" });
+    assert.deepEqual(none, { currency: "USD", country: "", source: "default" });
   });
 
-  test("flag on: an unrecognisable profile country also falls back to the IP", async () => {
+  test("flag on: no IP, an IP the lookup cannot place, or an unknown country is USD with source default", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
-    const r = await cfg.resolveRequestCurrency({ userCountry: "Narnia", ip: "8.8.8.8", lookupLocation: ipIn("United Kingdom") });
-    assert.equal(r.currency, "GBP");
-    assert.equal(r.source, "ip");
+    assert.deepEqual(await cfg.resolveRequestCurrency({}), { currency: "USD", country: "", source: "default" });
+    assert.deepEqual(await cfg.resolveRequestCurrency({ ip: "" }), { currency: "USD", country: "", source: "default" });
+    assert.deepEqual(await cfg.resolveRequestCurrency({ ip: "8.8.8.8", lookupLocation: async () => null }), { currency: "USD", country: "", source: "default" });
+    assert.deepEqual(await cfg.resolveRequestCurrency({ ip: "8.8.8.8", lookupLocation: ipIn("Narnia") }), { currency: "USD", country: "", source: "default" });
   });
 
-  test("flag on: nothing usable (no country, no IP, lookup fails or throws) is USD", async () => {
+  test("flag on: a lookup that throws is USD with source error (never an exception)", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
-    assert.equal((await cfg.resolveRequestCurrency({})).currency, "USD");
-    assert.equal((await cfg.resolveRequestCurrency({ ip: "8.8.8.8", lookupLocation: async () => null })).currency, "USD");
     const thrown = await cfg.resolveRequestCurrency({ ip: "8.8.8.8", lookupLocation: async () => { throw new Error("boom"); } });
-    assert.deepEqual(thrown, { currency: "USD", country: "", source: "default" });
+    assert.deepEqual(thrown, { currency: "USD", country: "", source: "error" });
   });
 });
 

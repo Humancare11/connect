@@ -2,9 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api";
 
-// Profile country changes (old -> new, who, when). The country decides which
-// currency a customer is priced in, so a change by someone who already has a
-// paid booking is flagged here until an admin marks it reviewed.
+// Profile country changes (old -> new, who, when). A change by someone who already has a paid booking is flagged here until an
+// admin marks it reviewed. It is a record only: prices follow the visitor's IP location, not the profile country.
 //
 // Used as a tab of Manage Users:
 //   <CountryChangesPanel search={…} onChanged={loadUsers} onToast={showToast} />
@@ -92,7 +91,7 @@ export default function CountryChangesPanel({ search = "", onChanged, onToast })
           All changes
         </button>
         <span className="ccp-note">
-          A country change after a paid booking is flagged: the country decides the currency a customer pays in.
+          A country change after a paid booking is flagged for review. (Prices follow the visitor's location, not the profile country.)
         </span>
       </div>
 

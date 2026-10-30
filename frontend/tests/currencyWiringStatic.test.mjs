@@ -19,10 +19,12 @@ test("the currency provider wraps the pricing provider in the provider tree (one
   assert.ok(src.indexOf("<CurrencyProvider>") < src.indexOf("<PricingProvider>"));
 });
 
-test("the currency provider reloads when the login state changes and asks the server, never a third-party IP service", () => {
+test("the currency provider asks the server once per page load (the IP decides, so login changes nothing), never a third-party IP service", () => {
   const src = read("context", "CurrencyContext.jsx");
   assert.ok(src.includes("/api/geo/currency"));
-  assert.ok(/\[authLoading, identity\]/.test(src), "reloads when the user or the profile country changes");
+  assert.equal(/useAuth|authLoading/.test(src), false, "the currency does not depend on who is logged in");
+  assert.equal(/user\?\.country|profile country/.test(src.replace(/\/\/.*$/gm, "")), false, "and not on the profile country");
+  assert.ok(/\}, \[\]\);/.test(src), "the loader is created once");
   assert.equal(/country\.is|ipwho|ipapi/.test(src), false);
 });
 

@@ -169,9 +169,9 @@ const memory = (initial = {}) => {
   const data = { ...initial };
   return { getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = String(v); }, data };
 };
-const remembered = (currency, source = "profile", identity = "u1|India") => ({ [CURRENCY_CACHE_KEY]: JSON.stringify({ identity, currency, source, at: 1 }) });
+const remembered = (currency, source = "ip", identity = "ip") => ({ [CURRENCY_CACHE_KEY]: JSON.stringify({ identity, currency, source, at: 1 }) });
 
-async function run(storage, answer, identity = "u1|India") {
+async function run(storage, answer, identity = "ip") {
   const states = [];
   const loader = createCurrencyLoader({
     fetchCurrency: () => (answer instanceof Error ? Promise.reject(answer) : Promise.resolve(answer)),
@@ -187,15 +187,15 @@ async function run(storage, answer, identity = "u1|India") {
 
 test("a USD remembered earlier in the session is replaced when the server now says INR (the stale-session bug)", async () => {
   const storage = memory(remembered("USD"));
-  const { loader, states } = await run(storage, { currency: "INR", country: "IN", source: "profile" });
+  const { loader, states } = await run(storage, { currency: "INR", country: "IN", source: "ip" });
   assert.equal(states[0].currency, "USD", "shown at once from the session, no skeleton");
   assert.equal(states[0].loading, false);
-  assert.deepEqual(loader.getState(), { currency: "INR", loading: false, source: "profile" });
+  assert.deepEqual(loader.getState(), { currency: "INR", loading: false, source: "ip" });
   assert.equal(JSON.parse(storage.data[CURRENCY_CACHE_KEY]).currency, "INR", "and remembered");
 });
 
 test("the same answer changes nothing; a failed or unplaceable re-check keeps what the session shows", async () => {
-  let r = await run(memory(remembered("INR")), { currency: "INR", source: "profile" });
+  let r = await run(memory(remembered("INR")), { currency: "INR", source: "ip" });
   assert.equal(r.states.length, 1, "no second state when nothing changed");
   r = await run(memory(remembered("INR")), new Error("429"));
   assert.equal(r.loader.getState().currency, "INR");
@@ -203,8 +203,16 @@ test("the same answer changes nothing; a failed or unplaceable re-check keeps wh
   assert.equal(r.loader.getState().currency, "INR", "a 'could not place you' answer never overrules a real one");
 });
 
-test("logging in asks again: the logged-out answer is not used for the logged-in identity", async () => {
-  const storage = memory(remembered("USD", "ip", "|"));
-  const { loader } = await run(storage, { currency: "INR", country: "IN", source: "profile" }, "u1|India");
+test("logging in or out changes nothing: the provider uses one fixed key, so the same answer is used and nothing waits for the login", () => {
+  const src = read("src", "context", "CurrencyContext.jsx");
+  assert.ok(src.includes('const CURRENCY_IDENTITY = "ip";'));
+  assert.ok(src.includes("identity: CURRENCY_IDENTITY"));
+  assert.equal(/useAuth|authLoading/.test(src), false);
+});
+
+test("a remembered answer from the old profile-country rule is not used", async () => {
+  const storage = memory(remembered("USD", "profile"));
+  const { loader, states } = await run(storage, { currency: "INR", country: "IN", source: "ip" });
+  assert.equal(states[0].loading, true, "not served from the old entry: the server is asked first");
   assert.equal(loader.getState().currency, "INR");
 });

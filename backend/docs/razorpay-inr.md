@@ -24,7 +24,7 @@ If any of them is missing, an Indian customer gets exactly today's behaviour: US
 
 ## How a rupee payment works
 
-1. The server decides the currency (profile country first, then the IP). `GET /api/geo/currency` says `INR` for India.
+1. The server decides the currency from the visitor's IP location (GeoIP), logged in or not; the profile country plays no part (a patient from India who is in the UK pays the UK price). `GET /api/geo/currency` says `INR` for an Indian IP. An unknown or private IP is USD. The same rule is applied again, from the request IP, when the Stripe intent / PayPal order / Razorpay order is created; the booking is verified against the currency stored on that payment.
 2. The booking page shows ₹ prices and **only a Razorpay button** (Stripe and PayPal are hidden; the PayPal script is not loaded). The Razorpay Checkout script is loaded only when the button is clicked.
 3. `POST /api/razorpay/create-order` with `{ priceType: "category", priceRef }` only. The server looks up the category's INR price and creates the order (amount in paise, currency INR, auto-capture, `notes: { priceType, priceRef, userId }`). The browser never sends an amount or a currency.
 4. Checkout opens (name, email and phone are pre-filled). The customer pays by UPI, card, netbanking or wallet.

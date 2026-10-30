@@ -1,7 +1,5 @@
 const express = require("express");
-const jwt = require("jsonwebtoken");
 const router = express.Router();
-const User = require("../models/User");
 const { getClientIp } = require("../utils/clientIp");
 const { resolveRequestCurrency } = require("../utils/currencyConfig");
 const { lookupLocation } = require("../utils/geoIp");
@@ -34,42 +32,14 @@ function limiter(req, res, next) {
   return next();
 }
 
-// The logged-in customer's id, if any. This only decides which currency to
-// show, so a plain signature + expiry check is enough (no session bookkeeping,
-// no security event for a visitor who simply is not logged in).
-function optionalUserId(req) {
-  const header = String(req.headers?.authorization || "");
-  const bearer = /^Bearer\s+(.+)$/i.exec(header)?.[1];
-  const token = req.cookies?.userToken || bearer;
-  if (!token) return null;
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded?.type === "refresh" || decoded?.role !== "user") return null;
-    return decoded.id || null;
-  } catch {
-    return null;
-  }
-}
-
-// GET /api/geo/currency - public. Which currency this visitor should see:
-// the logged-in user's profile country first, then the IP's country, else USD.
-// Always USD while MULTI_CURRENCY_ENABLED is off. Never cached: the answer
-// depends on who is asking.
-//   -> { currency: "USD" | "EUR" | "GBP", country: "DE" | "", source }
+// GET /api/geo/currency - public. Which currency this visitor should see: decided by the IP's country (GeoIP), whether or not they
+// are logged in; the profile country plays no part. Unknown / private IP -> USD. Always USD while MULTI_CURRENCY_ENABLED is off.
+// Never cached: the answer depends on where the request comes from.
+//   -> { currency: "USD" | "EUR" | "GBP" | "INR", country: "DE" | "", source: "ip" | "default" | "error" | "disabled" }
 router.get("/currency", limiter, async (req, res) => {
   res.set("Cache-Control", "private, no-store");
   try {
-    let userCountry = "";
-    const userId = optionalUserId(req);
-    if (userId) {
-      const user = await User.findById(userId).select("country").lean();
-      userCountry = user?.country || "";
-    }
-    const result = await resolveRequestCurrency({
-      userCountry,
-      ip: getClientIp(req),
-      lookupLocation,
-    });
+    const result = await resolveRequestCurrency({ ip: getClientIp(req), lookupLocation });
     res.json(result);
   } catch (err) {
     console.error("GET /api/geo/currency error:", err.message);

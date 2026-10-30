@@ -159,23 +159,18 @@ function currencyForCountryName(name) {
   return currencyForCountryCode(isoForCountryName(name));
 }
 
-// Decides the currency for one request, on the server only.
-//   1. the logged-in user's profile country (when it is a recognisable country)
-//   2. otherwise the IP's country
-//   3. otherwise USD
-// While MULTI_CURRENCY_ENABLED is off the answer is always USD, so customers see
-// exactly what they saw before this feature existed.
+// Decides the currency for one request, on the server only, from where the request comes from: the IP's country (GeoIP), for a
+// logged-in customer and a visitor alike. The profile country plays no part - a patient from India who is in the UK consults a UK
+// doctor and pays the UK price. An IP that is unknown, private or cannot be looked up is USD.
+// While MULTI_CURRENCY_ENABLED is off the answer is always USD, so customers see exactly what they saw before this feature existed.
 //
-// `lookupLocation` is injectable for tests; it defaults to the offline GeoIP
-// lookup and never throws.
-async function resolveRequestCurrency({ userCountry = "", ip = "", lookupLocation } = {}) {
+// Returns { currency, country, source }, source being "ip" (a country was found), "default" (the IP could not be placed), "error"
+// (the lookup itself failed) or "disabled" (multi-currency is off).
+//
+// `lookupLocation` is injectable for tests; it defaults to the offline GeoIP lookup and never throws.
+async function resolveRequestCurrency({ ip = "", lookupLocation } = {}) {
   if (!isMultiCurrencyEnabled()) {
     return { currency: DEFAULT_CURRENCY, country: "", source: "disabled" };
-  }
-
-  const profileIso = isoForCountryName(userCountry);
-  if (profileIso) {
-    return { currency: currencyForCountryCode(profileIso), country: profileIso, source: "profile" };
   }
 
   try {
@@ -186,7 +181,7 @@ async function resolveRequestCurrency({ userCountry = "", ip = "", lookupLocatio
       return { currency: currencyForCountryCode(ipIso), country: ipIso, source: "ip" };
     }
   } catch {
-    // fall through to the default
+    return { currency: DEFAULT_CURRENCY, country: "", source: "error" };
   }
   return { currency: DEFAULT_CURRENCY, country: "", source: "default" };
 }

@@ -72,53 +72,93 @@ describe("GET /api/geo/currency", () => {
     assert.equal((await get()).body.currency, "USD");
   });
 
-  test("flag ON, logged in: the profile country wins over the IP", async () => {
+  test("flag ON, logged in: the IP decides too - the profile country plays no part", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
-    const india = await mkUser("India");
-    assert.deepEqual((await get({ token: tokenFor(india) })).body, { currency: "USD", country: "IN", source: "profile" });
+    process.env.RAZORPAY_KEY_ID = "rzp_test_k";
+    process.env.RAZORPAY_KEY_SECRET = "s";
+    try {
+      // profile India, but the request comes from the UK -> GBP (a patient from India who is in the UK pays the UK price)
+      geoIp._setReader(readerFor("GB"));
+      const india = await mkUser("India");
+      assert.deepEqual((await get({ token: tokenFor(india) })).body, { currency: "GBP", country: "GB", source: "ip" });
 
-    geoIp._setReader(readerFor("US"));
-    const germany = await mkUser("Germany");
-    assert.deepEqual((await get({ token: tokenFor(germany) })).body, { currency: "EUR", country: "DE", source: "profile" });
+      // profile UK, but the request comes from India -> INR
+      geoIp._setReader(readerFor("IN"));
+      const uk = await mkUser("United Kingdom");
+      assert.deepEqual((await get({ token: tokenFor(uk) })).body, { currency: "INR", country: "IN", source: "ip" });
+
+      // profile Germany, request from the US -> USD
+      geoIp._setReader(readerFor("US"));
+      const germany = await mkUser("Germany");
+      assert.deepEqual((await get({ token: tokenFor(germany) })).body, { currency: "USD", country: "US", source: "ip" });
+    } finally {
+      delete process.env.RAZORPAY_KEY_ID;
+      delete process.env.RAZORPAY_KEY_SECRET;
+    }
   });
 
-  test("flag ON, logged in with no profile country: falls back to the IP", async () => {
+  test("the same IP gives the same answer logged in and logged out, and for any profile country (or none)", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
-    const blank = await mkUser("");
-    const r = await get({ token: tokenFor(blank) });
-    assert.deepEqual(r.body, { currency: "EUR", country: "FR", source: "ip" });
+    const loggedOut = (await get()).body;
+    for (const country of ["India", "Germany", "United Kingdom", "Narnia", ""]) {
+      const user = await mkUser(country);
+      assert.deepEqual((await get({ token: tokenFor(user) })).body, loggedOut, country || "(no profile country)");
+    }
   });
 
-  test("flag ON: detection failure (no database, private IP) is USD", async () => {
+  test("the answer never says the profile decided it (source is ip, default, error or disabled)", async () => {
+    process.env.MULTI_CURRENCY_ENABLED = "true";
+    const user = await mkUser("India");
+    const seen = new Set();
+    seen.add((await get({ token: tokenFor(user) })).body.source);
+    geoIp._setReader({ get: () => null });
+    seen.add((await get({ token: tokenFor(user) })).body.source);
+    delete process.env.MULTI_CURRENCY_ENABLED;
+    seen.add((await get({ token: tokenFor(user) })).body.source);
+    assert.deepEqual([...seen].sort(), ["default", "disabled", "ip"]);
+  });
+
+  test("flag ON: an IP that cannot be placed (no data, private address) is USD", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
     geoIp._setReader({ get: () => null });
     assert.deepEqual((await get()).body, { currency: "USD", country: "", source: "default" });
     geoIp._setReader(readerFor("FR"));
-    assert.equal((await get({ ip: "10.0.0.5" })).body.currency, "USD"); // not a public IP
-  });
-
-  test("a bad, expired, refresh or non-user token is ignored (treated as logged out)", async () => {
-    process.env.MULTI_CURRENCY_ENABLED = "true";
-    const user = await mkUser("India");
-    const bad = [
-      "not-a-jwt",
-      jwt.sign({ id: String(user._id), role: "user" }, "wrong-secret"),
-      tokenFor(user, { type: "refresh" }),
-      tokenFor(user, { role: "doctor" }),
-      jwt.sign({ id: String(user._id), role: "user" }, process.env.JWT_SECRET, { expiresIn: -10 }),
-    ];
-    for (const token of bad) {
-      const r = await get({ token });
-      assert.equal(r.status, 200);
-      assert.equal(r.body.source, "ip", token.slice(0, 12));
-      assert.equal(r.body.currency, "EUR");
+    for (const ip of ["10.0.0.5", "192.168.1.20", "127.0.0.1"]) {
+      assert.deepEqual((await get({ ip })).body, { currency: "USD", country: "", source: "default" }, ip); // not public IPs
     }
   });
 
-  test("a token for a user that no longer exists falls back to the IP", async () => {
+  test("a spoofed header cannot change the answer: only the proxy-reported client address counts", async () => {
     process.env.MULTI_CURRENCY_ENABLED = "true";
-    const ghost = { _id: new mongoose.Types.ObjectId() };
-    assert.equal((await get({ token: tokenFor(ghost) })).body.source, "ip");
+    // a reader that knows two addresses: the real client (UK) and the address a visitor would like to appear from (India)
+    geoIp._setReader({
+      get: (ip) => {
+        const iso = { "81.2.69.142": "GB", "49.36.0.10": "IN" }[ip];
+        return iso ? { country: { iso_code: iso }, subdivisions: [], city: { names: { en: "X" } } } : null;
+      },
+    });
+    // a real proxy appends the address it saw to X-Forwarded-For; the left part is whatever the client sent. With one trusted hop
+    // (the production default) the last entry is the client, so the spoofed left entry is ignored.
+    const spoofApp = express();
+    spoofApp.set("trust proxy", 1);
+    spoofApp.use("/api/geo", geoRouter);
+    const spoofServer = http.createServer(spoofApp);
+    await new Promise((r) => spoofServer.listen(0, "127.0.0.1", r));
+    try {
+      const url = `http://127.0.0.1:${spoofServer.address().port}/api/geo/currency`;
+      const res = await fetch(url, {
+        headers: {
+          "x-forwarded-for": "49.36.0.10, 81.2.69.142", // client claims to be in India; the proxy saw the UK address
+          "cf-connecting-ip": "49.36.0.10", // not trusted unless USE_CLOUDFLARE_HEADERS=true
+          "x-real-ip": "49.36.0.10",
+          "x-client-ip": "49.36.0.10",
+          forwarded: "for=49.36.0.10",
+        },
+      });
+      assert.deepEqual(await res.json(), { currency: "GBP", country: "GB", source: "ip" });
+    } finally {
+      await new Promise((r) => spoofServer.close(r));
+    }
   });
 
   test("the answer is never cached", async () => {
@@ -164,26 +204,4 @@ describe("GET /api/geo/currency", () => {
     delete process.env.GEO_CURRENCY_RATE_LIMIT;
   });
 
-  test("a real failure is an error the browser can retry (503 + Retry-After), not a silent USD", async () => {
-    process.env.MULTI_CURRENCY_ENABLED = "true";
-    const user = await mkUser("India");
-    const original = User.findById;
-    User.findById = () => { throw new Error("database is down"); };
-    const realError = console.error;
-    console.error = () => {};
-    try {
-      const r = await get({ token: tokenFor(user) });
-      assert.equal(r.status, 503);
-      assert.equal(r.body.currency, undefined, "no currency is claimed");
-      assert.equal(r.headers.get("retry-after"), "2");
-      assert.match(r.headers.get("cache-control"), /no-store/);
-    } finally {
-      User.findById = original;
-      console.error = realError;
-    }
-    // and it recovers: the same visitor gets the right answer once the database is back
-    const ok = await get({ token: tokenFor(user) });
-    assert.equal(ok.status, 200);
-    assert.deepEqual([ok.body.country, ok.body.source], ["IN", "profile"]);
-  });
 });

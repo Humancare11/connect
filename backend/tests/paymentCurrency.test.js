@@ -119,6 +119,7 @@ const order = (id, { currency = "EUR", value = "30.00", status = "COMPLETED", ow
   paypalOrders[id] = { id, status, ...(created !== undefined ? { create_time: new Date(created).toISOString() } : {}), ...(owner !== undefined ? { __owner: owner } : {}), purchase_units: [{ payments: { captures: [{ amount: { value, currency_code: currency } }] } }] };
   return id;
 };
+const { ipFor, installIpReader, removeIpReader } = require("./helpers/ipCountry");
 const rejects = (promise, pattern, status) =>
   assert.rejects(promise, (err) => {
     assert.ok(err instanceof pv.PaymentVerificationError, `expected PaymentVerificationError, got ${err}`);
@@ -135,10 +136,11 @@ describe("category payments in USD / EUR / GBP", () => {
   const flag = (on) => { if (on) process.env.MULTI_CURRENCY_ENABLED = "true"; else delete process.env.MULTI_CURRENCY_ENABLED; };
 
   const mkUser = (country) => User.create({ name: country, email: `${country.replace(/\W/g, "").toLowerCase()}@x.co`, role: "user", country });
-  const post = async (path, user, body) => {
+  const post = async (path, user, body, ip) => {
     const res = await fetch(`${base}${path}`, {
       method: "POST",
-      headers: { "content-type": "application/json", ...(user ? { "x-test-user": String(user._id) } : {}) },
+      // the currency follows the IP the request comes from: a user appears to be in the country on their profile unless a test says otherwise
+      headers: { "content-type": "application/json", "x-forwarded-for": ip ?? ipFor(user?.country), ...(user ? { "x-test-user": String(user._id) } : {}) },
       body: JSON.stringify(body),
     });
     return { status: res.status, body: await res.json() };
@@ -149,7 +151,9 @@ describe("category payments in USD / EUR / GBP", () => {
     replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     await mongoose.connect(replSet.getUri());
     await Promise.all([Appointment.init(), CategoryConsultation.init(), ConsumedPayment.init(), HealthcareCategory.init()]);
+    installIpReader();
     const app = express();
+    app.set("trust proxy", true);
     app.use(express.json());
     app.use("/api/payments", paymentsRouter);
     app.use("/api/paypal", paypalRouter);
@@ -159,6 +163,7 @@ describe("category payments in USD / EUR / GBP", () => {
   });
   after(async () => {
     await new Promise((r) => server.close(r));
+    removeIpReader();
     await mongoose.disconnect();
     await replSet.stop();
     console.warn = realWarn;

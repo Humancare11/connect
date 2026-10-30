@@ -143,6 +143,7 @@ for (const name of ["verifyStripePaymentIntent", "verifyPaypalOrder", "verifyCat
   };
 }
 
+const { ipFor, installIpReader, removeIpReader } = require("./helpers/ipCountry");
 const sign = (orderId, paymentId, secret = KEY_SECRET) => crypto.createHmac("sha256", secret).update(`${orderId}|${paymentId}`).digest("hex");
 
 // A paid Razorpay order + payment, as Razorpay would report them. Returns what Checkout hands the browser.
@@ -191,17 +192,21 @@ describe("INR through Razorpay (India only)", () => {
   };
 
   const mkUser = (country) => User.create({ name: country, email: `${country.replace(/\W/g, "").toLowerCase()}@x.co`, role: "user", country });
-  const post = async (path, user, body) => {
+  const post = async (path, user, body, ip) => {
     const res = await fetch(`${base}${path}`, {
       method: "POST",
-      headers: { "content-type": "application/json", ...(user ? { "x-test-user": String(user._id) } : {}) },
+      // the currency follows the IP the request comes from: a user appears to be in the country on their profile unless a test says otherwise
+      headers: { "content-type": "application/json", "x-forwarded-for": ip ?? ipFor(user?.country), ...(user ? { "x-test-user": String(user._id) } : {}) },
       body: JSON.stringify(body),
     });
     return { status: res.status, body: await res.json() };
   };
-  const geo = async (user) => {
+  // GET /api/geo/currency as seen from `ip` (default: the country on the user's profile); a login token changes nothing
+  const geo = async (user, ip) => {
     const token = user ? jwt.sign({ id: String(user._id), role: "user" }, process.env.JWT_SECRET) : null;
-    const res = await fetch(`${base}/api/geo/currency`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
+    const res = await fetch(`${base}/api/geo/currency`, {
+      headers: { "x-forwarded-for": ip ?? ipFor(user?.country), ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    });
     return res.json();
   };
   const webhook = async (event, { secret = WEBHOOK_SECRET, id = "evt_1", signature, raw } = {}) => {
@@ -223,7 +228,9 @@ describe("INR through Razorpay (India only)", () => {
     replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     await mongoose.connect(replSet.getUri());
     await Promise.all([Appointment.init(), CategoryConsultation.init(), ConsumedPayment.init(), HealthcareCategory.init(), Payment.init(), RazorpayEvent.init()]);
+    installIpReader();
     const app = express();
+    app.set("trust proxy", 1);
     app.post("/api/razorpay/webhook", express.raw({ type: "*/*", limit: "1mb" }), razorpayRouter.webhookHandler);
     app.use(express.json());
     app.use("/api/payments", paymentsRouter);
@@ -236,6 +243,7 @@ describe("INR through Razorpay (India only)", () => {
   });
   after(async () => {
     await new Promise((r) => server.close(r));
+    removeIpReader();
     await mongoose.disconnect();
     await replSet.stop();
     console.warn = realWarn;
@@ -283,7 +291,7 @@ describe("INR through Razorpay (India only)", () => {
       assert.equal((await geo(deUser)).currency, "EUR");
       assert.equal((await geo(gbUser)).currency, "GBP");
       assert.equal((await geo(usUser)).currency, "USD");
-      assert.deepEqual(await geo(inUser), { currency: "INR", country: "IN", source: "profile" });
+      assert.deepEqual(await geo(inUser), { currency: "INR", country: "IN", source: "ip" });
     });
 
     test("only India is rupees: no other country, and the ISO code works the same", () => {
@@ -296,7 +304,7 @@ describe("INR through Razorpay (India only)", () => {
 
     test("Razorpay keys missing -> an Indian user gets exactly today's behaviour (USD, Stripe / PayPal), never Razorpay", async () => {
       keys(false);
-      assert.deepEqual(await geo(inUser), { currency: "USD", country: "IN", source: "profile" });
+      assert.deepEqual(await geo(inUser), { currency: "USD", country: "IN", source: "ip" });
       const stripe = await post("/api/payments/create-intent-by-amount", inUser, { priceType: "category", priceRef: "general-care" });
       assert.deepEqual([stripe.status, stripe.body.currency, stripe.body.amountCents], [200, "USD", 1000]);
       assert.equal(stripeCreated[0].currency, "usd");
@@ -1050,6 +1058,136 @@ describe("INR through Razorpay (India only)", () => {
       test("an unsupported currency is treated as USD", async () => {
         assert.deepEqual(await pv.resolveServiceFeeCents("lab-requisitions", { currency: "JPY" }), { amountMinor: 4000, currency: "USD" });
       });
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // The currency follows the IP the request comes from - not the profile country. A patient from India who is in the UK consults a UK
+  // doctor and pays the UK price; a UK patient who is in India pays in rupees.
+  describe("the IP decides the currency, at payment time too", () => {
+    const UK_IP = ipFor("United Kingdom");
+    const IN_IP = ipFor("India");
+    const DE_IP = ipFor("Germany");
+    const cat = { priceType: "category", priceRef: "general-care" };
+    const tomorrow = () => new Date(Date.now() + 36 * 3600 * 1000).toISOString().slice(0, 10);
+    const makeRes = () => {
+      const res = { statusCode: 200, body: null };
+      res.status = (c) => { res.statusCode = c; return res; };
+      res.json = (b) => { res.body = b; return res; };
+      return res;
+    };
+    const reqFor = (user, body) => { lastUser = String(user._id); return { headers: {}, body, user: { id: lastUser }, app: { get: () => null } }; };
+    const consultation = (extra) => ({
+      concern: "Cough", duration: "1 week", severity: "mild", supportType: "advice", urgency: "asap", date: tomorrow(),
+      categoryName: "General Care", categoryId: "general-care", specialtyName: "GP", conditionName: "Cough", ...extra,
+    });
+
+    test("profile India, request from a UK IP -> GBP, and only Stripe / PayPal (never Razorpay)", async () => {
+      // inUser's profile country is India
+      assert.deepEqual(await geo(inUser, UK_IP), { currency: "GBP", country: "GB", source: "ip" });
+      const stripe = await post("/api/payments/create-intent-by-amount", inUser, cat, UK_IP);
+      assert.deepEqual([stripe.status, stripe.body.currency, stripe.body.amountCents], [200, "GBP", 2500]);
+      assert.equal(stripeCreated.at(-1).currency, "gbp");
+      assert.equal(stripeCreated.at(-1).metadata.currency, "GBP", "the currency is stored on the intent");
+      const paypal = await post("/api/paypal/create-order-by-amount", inUser, cat, UK_IP);
+      assert.deepEqual([paypal.status, paypal.body.currency, paypal.body.amountCents], [200, "GBP", 2500]);
+      assert.equal(paypalCreated.at(-1).purchase_units[0].amount.currency_code, "GBP");
+      const rp = await post("/api/razorpay/create-order", inUser, cat, UK_IP);
+      assert.equal(rp.status, 400);
+      assert.match(rp.body.msg, /only takes INR/);
+      assert.equal(rpCreated.length, 0);
+    });
+
+    test("profile United Kingdom, request from an Indian IP -> INR, and only Razorpay", async () => {
+      assert.deepEqual(await geo(gbUser, IN_IP), { currency: "INR", country: "IN", source: "ip" });
+      const rp = await post("/api/razorpay/create-order", gbUser, cat, IN_IP);
+      assert.equal(rp.status, 200, JSON.stringify(rp.body));
+      assert.deepEqual([rp.body.currency, rp.body.amountCents], ["INR", 99900]);
+      assert.equal(rpCreated[0].currency, "INR");
+      assert.equal(rpCreated[0].notes.userId, String(gbUser._id));
+      for (const path of ["/api/payments/create-intent-by-amount", "/api/paypal/create-order-by-amount"]) {
+        const r = await post(path, gbUser, cat, IN_IP);
+        assert.equal(r.status, 400, path);
+        assert.match(r.body.msg, /through Razorpay/);
+      }
+      assert.equal(stripeCreated.length + paypalCreated.length, 0);
+    });
+
+    test("the profile country is not consulted at all: the same IP gives the same charge whatever the profile says", async () => {
+      for (const user of [inUser, deUser, gbUser, usUser]) {
+        const r = await post("/api/payments/create-intent-by-amount", user, cat, DE_IP);
+        assert.deepEqual([r.body.currency, r.body.amountCents], ["EUR", 3000], user.country);
+      }
+    });
+
+    test("a service is decided the same way (profile India from the UK -> GBP)", async () => {
+      await ServicePrice.create({ name: "Lab Requisitions", slug: "lab-requisitions", price: 40, priceEur: 36, priceGbp: 32, priceInr: 1499, icon: "i", description: "d" });
+      const r = await post("/api/payments/create-intent-by-amount", inUser, { priceType: "service", priceRef: "lab-requisitions" }, UK_IP);
+      assert.deepEqual([r.body.currency, r.body.amountCents], ["GBP", 3200]);
+    });
+
+    test("an unknown, private or unplaceable IP is USD (Stripe / PayPal), even for a profile in India", async () => {
+      for (const ip of ["10.0.0.5", "192.168.1.9", "203.0.113.44", "127.0.0.1", "8.8.4.4" /* the reader has no data for it */]) {
+        assert.deepEqual(await geo(inUser, ip), { currency: "USD", country: "", source: "default" }, ip);
+        const r = await post("/api/payments/create-intent-by-amount", inUser, cat, ip);
+        assert.deepEqual([r.status, r.body.currency, r.body.amountCents], [200, "USD", 1000], ip);
+        assert.equal((await post("/api/razorpay/create-order", inUser, cat, ip)).status, 400, ip);
+      }
+    });
+
+    test("a spoofed address cannot buy a cheaper or different currency: only the proxy-reported client address counts", async () => {
+      // one trusted proxy hop: the proxy appended the real client (the UK); the client put an Indian address in front
+      const spoofed = `${IN_IP}, ${UK_IP}`;
+      const r = await post("/api/payments/create-intent-by-amount", usUser, cat, spoofed);
+      assert.deepEqual([r.body.currency, r.body.amountCents], ["GBP", 2500]);
+      const res = await fetch(`${base}/api/payments/create-intent-by-amount`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": UK_IP,
+          "cf-connecting-ip": IN_IP,
+          "x-real-ip": IN_IP,
+          "x-client-ip": IN_IP,
+          forwarded: `for=${IN_IP}`,
+          "x-test-user": String(usUser._id),
+        },
+        body: JSON.stringify(cat),
+      });
+      assert.equal((await res.json()).currency, "GBP", "Cloudflare / other client-IP headers are not trusted by default");
+    });
+
+    test("the client cannot name a currency, a country or an amount: the body is not read", async () => {
+      const r = await post("/api/payments/create-intent-by-amount", inUser, { ...cat, currency: "INR", country: "IN", amount: 1, countryCode: "IN" }, UK_IP);
+      assert.deepEqual([r.body.currency, r.body.amountCents], ["GBP", 2500]);
+    });
+
+    test("flag off: every IP is USD, even an Indian one, and Razorpay is never offered", async () => {
+      flag(false);
+      for (const ip of [IN_IP, UK_IP, DE_IP]) {
+        const r = await post("/api/payments/create-intent-by-amount", inUser, cat, ip);
+        assert.deepEqual([r.body.currency, r.body.amountCents], ["USD", 1000], ip);
+      }
+      assert.equal((await post("/api/razorpay/create-order", inUser, cat, IN_IP)).status, 400);
+    });
+
+    test("booking finalisation verifies against the currency stored on the payment and does not look at the IP again", async () => {
+      // created while the patient was in the UK (GBP)...
+      stripeIntents.pi_uk = { id: "pi_uk", status: "succeeded", currency: "gbp", amount: 2500, metadata: { currency: "GBP" } };
+      // ...and the patient is in India by the time the booking is sent: the geo answer for them is now INR
+      assert.equal((await geo(inUser, IN_IP)).currency, "INR");
+      const res = makeRes();
+      await createCategoryConsultation(reqFor(inUser, consultation({ paymentIntentId: "pi_uk" })), res);
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+      const stored = await CategoryConsultation.findById(res.body.data._id).lean();
+      assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.paymentGateway], ["gbp", 2500, "stripe"]);
+    });
+
+    test("a payment in the wrong amount for its own currency is still refused at finalisation", async () => {
+      stripeIntents.pi_bad = { id: "pi_bad", status: "succeeded", currency: "gbp", amount: 1000, metadata: { currency: "GBP" } };
+      const res = makeRes();
+      await createCategoryConsultation(reqFor(inUser, consultation({ paymentIntentId: "pi_bad" })), res);
+      assert.equal(res.statusCode, 400);
+      assert.equal(await CategoryConsultation.countDocuments({}), 0);
     });
   });
 });

@@ -18,9 +18,9 @@ const sources = () => walk(SRC).filter((f) => /\.(jsx?|mjs)$/.test(f) && !/\.tes
 const rel = (f) => path.relative(SRC, f).replace(/\\/g, "/");
 
 // ── The provider uses the session-remembered loader ───────────────────────────────────────────────────────────────────────
-test("the currency provider remembers the answer in sessionStorage (try/catch) for this visitor identity", () => {
+test("the currency provider remembers the answer in sessionStorage (try/catch) for this browser session", () => {
   const src = read("src", "context", "CurrencyContext.jsx").replace(/\r\n/g, "\n");
-  assert.ok(src.includes("storage: sessionStore(), identity"));
+  assert.ok(src.includes("storage: sessionStore(), identity: CURRENCY_IDENTITY"));
   assert.ok(/try \{\s*return typeof window !== "undefined" \? window\.sessionStorage : null;\s*\} catch/.test(src));
 });
 

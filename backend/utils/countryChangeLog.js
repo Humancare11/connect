@@ -14,8 +14,8 @@ async function userHasPaidBooking(userId) {
 
 // Records one profile country change: who, old -> new, when (changedAt), from
 // which IP. If the user already has a paid booking the row is flagged
-// (needsReview) for an admin, because the country decides the currency they
-// are priced in.
+// (needsReview) for an admin to look at. This is a record only: the profile
+// country plays no part in the currency (the visitor's IP decides that).
 //
 // Best-effort by design: it never throws, so a logging problem can never stop
 // a customer saving their profile. A failure is logged loudly instead.

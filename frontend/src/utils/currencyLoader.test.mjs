@@ -51,9 +51,9 @@ test("starts loading (a skeleton), then shows the server currency", async () => 
   const { loader, seen } = setup([a]);
   assert.equal(loader.getState().loading, true);
   loader.load();
-  a.resolve({ currency: "EUR", source: "profile" });
+  a.resolve({ currency: "EUR", source: "ip" });
   await flush();
-  assert.deepEqual(loader.getState(), { currency: "EUR", loading: false, source: "profile" });
+  assert.deepEqual(loader.getState(), { currency: "EUR", loading: false, source: "ip" });
   assert.equal(seen.at(-1).currency, "EUR");
 });
 
@@ -175,7 +175,7 @@ test("the answer is remembered for the session: the next page load shows it at o
 test("another visitor identity (login, logout, a changed profile country) asks the server again and replaces the remembered answer", async () => {
   const storage = memoryStorage();
   await setup([{ currency: "INR", source: "ip" }], { storage, identity: "|" }).loader.load();
-  const login = setup([{ currency: "EUR", source: "profile" }], { storage, identity: "u1|Germany" });
+  const login = setup([{ currency: "EUR", source: "ip" }], { storage, identity: "u1|Germany" });
   await login.loader.load();
   assert.equal(login.calls(), 1);
   assert.equal(login.loader.getState().currency, "EUR");
@@ -222,7 +222,7 @@ test("login and logout reload: no wrong-currency flash while the new currency is
   loader.load(); // the visitor logs in (German profile)
   assert.equal(loader.getState().loading, true, "loading again: consumers show a skeleton");
   assert.equal(calls(), 2);
-  loggedIn.resolve({ currency: "EUR", source: "profile" });
+  loggedIn.resolve({ currency: "EUR", source: "ip" });
   await flush();
   assert.equal(loader.getState().currency, "EUR");
 
@@ -263,6 +263,26 @@ test("a retry that was waiting when a newer load started does nothing", async ()
   await flush();
   assert.equal(calls, 2);
   assert.equal(loader.getState().currency, "EUR");
+});
+
+test("a server answer with source error is retried like a failed request, never shown or remembered", async () => {
+  const storage = memoryStorage();
+  const { delays, wait } = recordingWait();
+  const { loader, seen, calls } = setup([{ currency: "USD", country: "", source: "error" }, { currency: "INR", country: "IN", source: "ip" }], { storage, identity: "ip", wait });
+  await loader.load();
+  assert.equal(calls(), 2);
+  assert.deepEqual(delays, [RETRY_DELAYS_MS[0]]);
+  assert.equal(loader.getState().currency, "INR");
+  assert.equal(seen.some((s) => !s.loading && s.currency === "USD"), false);
+  assert.equal(JSON.parse(storage.data[CURRENCY_CACHE_KEY]).currency, "INR");
+});
+
+test("a remembered answer from the old profile-country rule, or from an older key, is ignored", async () => {
+  const profile = memoryStorage({ [CURRENCY_CACHE_KEY]: JSON.stringify({ identity: "ip", currency: "USD", source: "profile" }) });
+  const a = setup([{ currency: "GBP", source: "ip" }], { storage: profile, identity: "ip" });
+  await a.loader.load();
+  assert.equal(a.loader.getState().currency, "GBP");
+  assert.match(CURRENCY_CACHE_KEY, /v2$/, "old v1 entries are never read");
 });
 
 test("after dispose nothing is reported", async () => {

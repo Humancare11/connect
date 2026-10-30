@@ -397,7 +397,7 @@ const getAllUsers = async (req, res) => {
     const users = (await User.find({ role: "user" }).sort({ createdAt: -1 }).lean()).map(toAdminUser);
 
     // Flag users whose profile country changed after a paid booking and has
-    // not been reviewed yet (the country decides their pricing currency).
+    // not been reviewed yet (a record for the admin; it does not affect currency).
     const flagged = await usersNeedingCountryReview(users.map((u) => u._id));
     for (const u of users) u.countryChangeNeedsReview = flagged.has(String(u._id));
 
