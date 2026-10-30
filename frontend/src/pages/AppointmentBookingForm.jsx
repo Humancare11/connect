@@ -26,8 +26,7 @@ import { formatPrice, selectionPriceInfo, paypalProviderProps } from "../utils/c
 import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
-import { slugify } from "../utils/slug";
-import { normalizeAppointmentTree } from "../utils/appointmentTree";
+import { normalizeAppointmentTree, selectionFromUrl } from "../utils/appointmentTree";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
 
@@ -361,15 +360,15 @@ export function PaymentStage({
   // / ServicePrice — it no longer trusts a client-supplied amount. We just
   // need to tell it *what* is being booked so it can look up the right price.
   //
-  // For categories, selection.catId is the stable pricingSlug (e.g.
-  // "general") — it's sent ahead of the display name so that a category
+  // For categories, selection.pricingSlug (e.g. "general"; the catId of the
+  // category-confirm flow) is the stable reference — it's sent ahead of the display name so that a category
   // getting renamed between now (payment intent creation) and the booking
   // being confirmed can't break the price lookup on the backend.
   const isServiceBooking = Boolean(selection?.isServiceBooking);
   const priceType = isServiceBooking ? "service" : "category";
   const priceRef = isServiceBooking
     ? selection?.serviceName || selection?.catId || ""
-    : selection?.catId || selection?.categoryName || selection?.catLabel || "";
+    : selection?.pricingSlug || selection?.catId || selection?.categoryName || selection?.catLabel || "";
 
   const selectStripe = async () => {
     setStripeError("");
@@ -696,45 +695,11 @@ export default function AppointmentBookingForm() {
         const res = await api.get("/api/appointment-tree");
         if (cancelled) return;
         const tree = normalizeAppointmentTree(res.data);
-        const cat = tree.find((c) => slugify(c.label) === categorySlug);
-        const spec = cat?.specialties.find(
-          (s) => slugify(s.name) === specialtySlug,
-        );
-        let condName = null;
-        let condIco = null;
-        if (spec) {
-          if (conditionSlug === "general-consultation") {
-            condName = "General Consultation";
-            condIco = "stethoscope";
-          } else {
-            const match = spec.conditions.find(
-              ([name]) => slugify(name) === conditionSlug,
-            );
-            if (match) {
-              condName = match[0];
-              condIco = match[1];
-            }
-          }
-        }
-        if (cat && spec && condName) {
-          // cat.price is already the effective price - the backend merges
-          // in the CategoryPricing admin override (see
-          // resolveEffectiveCategoryPrice server-side) before returning it
-          // via /api/appointment-tree, so no separate client-side pricing
-          // lookup is needed here.
-          const price = Number(cat.price);
-          const priceAvailable = Number.isFinite(price) && price > 0;
-          setSelection({
-            specName: spec.name,
-            specIco: spec.icon,
-            catId: cat.id,
-            catLabel: cat.label,
-            cost: priceAvailable ? price : undefined,
-            currency: cat.currency || "USD",
-            condName,
-            condIco,
-          });
-        }
+        // cat.price is already the effective price - the backend merges in the CategoryPricing admin override (see
+        // resolveEffectiveCategoryPrice server-side) before returning it via /api/appointment-tree. The visitor's own currency price
+        // is found through selection.pricingSlug in the public price table (see selectionPriceInfo).
+        const resolved = selectionFromUrl(tree, { categorySlug, specialtySlug, conditionSlug });
+        if (resolved) setSelection(resolved);
         // else: leave selection unset — the guard below redirects to
         // /appointment-booking once resolvingSelection flips to false.
       } catch {

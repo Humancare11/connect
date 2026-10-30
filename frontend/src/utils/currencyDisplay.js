@@ -69,6 +69,19 @@ export function priceTextState(info) {
   return { kind: "price", text };
 }
 
+// The pricing-table record of a selection's category. The table (/api/pricing) is keyed by the category's pricing slug, but a
+// selection built from the appointment tree carries the Mongo _id as catId, so the slug is tried first, then catId, and last the
+// category name (the table also carries each label) for a selection saved before the slug was recorded.
+export function priceRecordFor(selection, prices) {
+  if (!prices || !selection) return undefined;
+  for (const key of [selection.pricingSlug, selection.catId]) {
+    if (key && prices[key]) return prices[key];
+  }
+  const label = String(selection.catLabel || "").trim().toLowerCase();
+  if (!label) return undefined;
+  return Object.values(prices).find((record) => String(record?.label || "").trim().toLowerCase() === label);
+}
+
 // The price of a booking selection. A service booking and the doctor-fee path are always USD; a category booking is priced in the
 // visitor's currency. `selection.cost` is the USD price the booking page already loaded. The result is for display only - the
 // server prices the payment itself.
@@ -81,14 +94,12 @@ export function selectionPriceInfo({ selection, prices, currency, currencyLoadin
   const wanted = normalizeCurrency(currency);
   if (wanted === "USD") {
     // Exactly today's behaviour: the price the page already loaded, else the pricing table's USD price.
-    const slug = selection?.catId;
-    const fromTable = slug && prices ? resolveCategoryPrice(prices[slug], "USD") : null;
+    const fromTable = prices ? resolveCategoryPrice(priceRecordFor(selection, prices), "USD") : null;
     const amount = usdCost || fromTable?.amount || null;
     return { amount, currency: "USD", loading: false, unavailable: !amount };
   }
   if (pricesLoading && !prices) return { amount: null, currency: wanted, loading: true, unavailable: false };
-  const slug = selection?.catId;
-  const info = slug && prices ? resolveCategoryPrice(prices[slug], wanted) : null;
+  const info = prices ? resolveCategoryPrice(priceRecordFor(selection, prices), wanted) : null;
   if (info) return { ...info, loading: false, unavailable: false };
   // No price table entry for this category: the USD price the page loaded, labelled USD (never converted).
   return { amount: usdCost, currency: "USD", loading: false, unavailable: !usdCost };

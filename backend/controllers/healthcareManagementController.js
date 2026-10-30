@@ -414,6 +414,8 @@ async function getAppointmentTree(_req, res) {
         );
         return {
           _id: category._id,
+          // The key of the public price table (/api/pricing), so the booking page can find the category's EUR / GBP / INR price.
+          pricingSlug: category.pricingSlug || "",
           name: category.name,
           icon: category.icon,
           description: category.description,
