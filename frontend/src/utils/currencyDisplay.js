@@ -85,8 +85,10 @@ export function priceRecordFor(selection, prices) {
 // One service's price slot (service pages and the services list): the same rules as useCategoryPriceInfo. `record` is a service from
 // /api/services (or /by-slug): { price, priceEur?, priceGbp?, priceInr? }. A skeleton while the currency or the record is loading,
 // "Price unavailable" when there is no price at all - never a made-up price.
-export function servicePriceInfo({ record, loading = false, currency, currencyLoading = false }) {
-  const usd = positive(record?.price);
+// `usdFallback` is the service's USD price from the prerendered page (null elsewhere): it is used as the hidden markup behind the
+// skeleton until the record is loaded, so the static HTML and the first hydrated render both carry the USD price.
+export function servicePriceInfo({ record, loading = false, currency, currencyLoading = false, usdFallback = null }) {
+  const usd = positive(record?.price) || positive(usdFallback);
   if (currencyLoading || (loading && !record)) return { amount: null, currency: normalizeCurrency(currency), loading: true, unavailable: false, usdAmount: usd };
   const info = record ? resolveCategoryPrice(record, currency) : null;
   if (!info) return { amount: null, currency: normalizeCurrency(currency), loading: false, unavailable: true, usdAmount: usd };

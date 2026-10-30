@@ -131,6 +131,20 @@ export async function fetchBlogIndexPage(env) {
 // The USD price of every category, for the static HTML of the condition / specialty / category pages (crawlers read it there).
 // Only the USD amount is kept: the page the browser shows is in the visitor's currency, decided after it loads.
 // Returns { [pricingSlug]: { price } }.
+// The USD price of every service (Fit to fly, Lab requisitions, ...), for the static HTML of the service pages, the same way as the
+// categories. Always the USD `price`, whatever the multi-currency switch says. Returns { [slug]: { price } }.
+export async function fetchUsdServices(env) {
+  const base = apiBase(env);
+  if (!base) throw new Error("VITE_API_URL (or PRERENDER_API_URL) is not set, cannot fetch service prices");
+  const { data } = await getJson(base, "/api/services");
+  const out = {};
+  for (const service of Array.isArray(data) ? data : []) {
+    const price = Number(service?.price);
+    if (service?.slug && Number.isFinite(price) && price > 0) out[String(service.slug)] = { price };
+  }
+  return out;
+}
+
 export async function fetchUsdPricing(env) {
   const base = apiBase(env);
   if (!base) throw new Error("VITE_API_URL (or PRERENDER_API_URL) is not set, cannot fetch category prices");

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api";
 import { useSiteCurrency } from "../context/CurrencyContext";
 import { servicePriceInfo } from "../utils/currencyDisplay";
+import { usePrerendered } from "../seo/prerenderData";
 
 // One service's record from GET /api/services/by-slug/:slug ({ price, priceEur?, priceGbp?, priceInr?, ... }). An empty slug loads nothing.
 // `record` is null until it is loaded (and when the service cannot be loaded).
@@ -33,7 +34,9 @@ export function useServiceRecord(slug) {
 export function useServicePrice(slug) {
   const { currency, loading: currencyLoading } = useSiteCurrency();
   const { record, loading } = useServiceRecord(slug);
-  const priceInfo = servicePriceInfo({ record, loading, currency, currencyLoading });
+  // The USD price embedded in a prerendered page (build time): kept in the markup behind the skeleton for crawlers.
+  const prerendered = usePrerendered("services:usd");
+  const priceInfo = servicePriceInfo({ record, loading, currency, currencyLoading, usdFallback: slug ? prerendered?.[slug]?.price : null });
   const usd = Number(record?.price);
   return { priceInfo, price: Number.isFinite(usd) && usd > 0 ? usd : null, priceLoading: priceInfo.loading };
 }

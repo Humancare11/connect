@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadEnv } from "vite";
 import { SEO_ROUTES, isIndexable } from "../src/seo/routes.js";
-import { fetchBlogPages, fetchBlogIndexPage, fetchDoctorPages, fetchUsdPricing } from "./prerender-data.mjs";
+import { fetchBlogPages, fetchBlogIndexPage, fetchDoctorPages, fetchUsdPricing, fetchUsdServices } from "./prerender-data.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
@@ -170,6 +170,17 @@ if (!skipApi) {
     console.warn(`prerender: could not fetch category prices (${error.message}); pages are prerendered without a price`);
   }
 }
+// Service prices (USD) go into every page's embedded data too, so the service pages have their price in the static HTML, like the
+// categories. Same failure handling: a warning, and those pages ship a price placeholder.
+let usdServices = null;
+if (!skipApi) {
+  try {
+    usdServices = await fetchUsdServices(env);
+    if (!Object.keys(usdServices).length) usdServices = null;
+  } catch (error) {
+    console.warn(`prerender: could not fetch service prices (${error.message}); service pages are prerendered without a price`);
+  }
+}
 // The /blogs index embeds its first page of posts so the post links are in the HTML.
 if (blogIndex) {
   const index = pages.find((p) => p.route === "/blogs");
@@ -177,6 +188,7 @@ if (blogIndex) {
 }
 for (const p of dynamic) pages.push({ route: p.route, data: { [p.key]: p.record }, kind: p.kind, lastmod: p.lastmod });
 if (usdPricing) for (const page of pages) page.data = { ...(page.data || {}), "pricing:usd": usdPricing };
+if (usdServices) for (const page of pages) page.data = { ...(page.data || {}), "services:usd": usdServices };
 
 // ---- render -----------------------------------------------------------------------------------
 const failures = [];
