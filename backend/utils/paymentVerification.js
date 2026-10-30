@@ -7,6 +7,7 @@ const ConsumedPayment = require("../models/ConsumedPayment");
 const { paypalFetch } = require("./paypal");
 const { toCents } = require("./currency");
 const { resolveEffectiveCategoryPrice } = require("./categoryPricing");
+const { resolveEffectiveServicePrice } = require("./servicePricing");
 const User = require("../models/User");
 const { getClientIp } = require("./clientIp");
 const {
@@ -157,9 +158,10 @@ async function resolveCategoryFeeCents(priceRef, { requireActive = true, currenc
   };
 }
 
-// Service price, matched by slug or by name - both are unique on ServicePrice.
-// Services stay USD-only.
-async function resolveServiceFeeCents(priceRef) {
+// Service price, matched by slug or by name - both are unique on ServicePrice. Like a category, a service is priced in the
+// customer's currency: { amountMinor, currency } with the service's stored price IN THAT currency (nothing is converted), or the USD
+// price labelled USD (and [CURRENCY_FALLBACK_USED] logged) when it has none yet. Null when the service is not found.
+async function resolveServiceFeeCents(priceRef, { currency = DEFAULT_CURRENCY } = {}) {
   if (!priceRef) return null;
   const ref = String(priceRef).trim();
   if (!ref) return null;
@@ -167,7 +169,11 @@ async function resolveServiceFeeCents(priceRef) {
     $or: [{ slug: ref.toLowerCase() }, { name: ref }],
   }).lean();
   if (!service) return null;
-  return toCents(service.price, "USD");
+  const resolved = resolveEffectiveServicePrice(service, currency);
+  return {
+    amountMinor: Math.round(resolved.price * 100), // the stored price in its own currency: never converted
+    currency: assertAllowedCurrency(resolved.currency),
+  };
 }
 
 // The payment must have been created for the customer who is booking. Stripe stores the user in metadata.userId, PayPal as the last
@@ -385,6 +391,53 @@ async function verifyCategoryPayment({
   requireActive = false,
   unrecognizedMessage = "Unrecognized category. Please reselect and try again.",
 }) {
+  return verifyCatalogPayment({
+    paymentIntentId,
+    paypalOrderId,
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+    patientId,
+    unrecognizedMessage,
+    resolveFee: (currency) => resolveCategoryFeeCents(priceRef, { requireActive, currency }),
+  });
+}
+
+// The same verification for a SERVICE booking (Fit to fly, Lab requisitions, ...): the payment says which currency it was taken in,
+// and the amount must equal the service's stored price in that currency. Same gateway, ownership and replay rules.
+async function verifyServicePayment({
+  paymentIntentId,
+  paypalOrderId,
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature,
+  patientId,
+  priceRef,
+  unrecognizedMessage = "Unrecognized service/category. Please reselect and try again.",
+}) {
+  return verifyCatalogPayment({
+    paymentIntentId,
+    paypalOrderId,
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+    patientId,
+    unrecognizedMessage,
+    resolveFee: (currency) => resolveServiceFeeCents(priceRef, { currency }),
+  });
+}
+
+// `resolveFee(currency)` gives { amountMinor, currency } for what is being booked (a category or a service) or null.
+async function verifyCatalogPayment({
+  paymentIntentId,
+  paypalOrderId,
+  razorpayOrderId,
+  razorpayPaymentId,
+  razorpaySignature,
+  patientId,
+  unrecognizedMessage,
+  resolveFee,
+}) {
   const references = [paymentIntentId, paypalOrderId, razorpayPaymentId || razorpayOrderId].filter(Boolean).length;
   if (references !== 1) {
     throw new PaymentVerificationError("Send exactly one payment reference.");
@@ -392,7 +445,7 @@ async function verifyCategoryPayment({
 
   // Razorpay: INR only. The category's INR price must exist (a category without one is charged in USD, which Razorpay never takes).
   if (razorpayPaymentId || razorpayOrderId) {
-    const inrFee = await resolveCategoryFeeCents(priceRef, { requireActive, currency: "INR" });
+    const inrFee = await resolveFee("INR");
     if (!inrFee || !Number.isFinite(inrFee.amountMinor) || inrFee.amountMinor <= 0) {
       throw new PaymentVerificationError(unrecognizedMessage, 400);
     }
@@ -419,7 +472,7 @@ async function verifyCategoryPayment({
     );
   }
 
-  const fee = await resolveCategoryFeeCents(priceRef, { requireActive, currency: paidCurrency });
+  const fee = await resolveFee(paidCurrency);
   if (!fee || !Number.isFinite(fee.amountMinor) || fee.amountMinor <= 0) {
     throw new PaymentVerificationError(unrecognizedMessage, 400);
   }
@@ -433,18 +486,14 @@ async function verifyCategoryPayment({
 // What to charge, BEFORE a gateway is called, for a category or service
 // selection: { amountMinor, currency } or null when it can't be priced.
 // Everything comes from the server: the client sends only `priceType` and
-// `priceRef`. Services are always USD; a category is priced in the currency the
-// server decides for this customer (USD while MULTI_CURRENCY_ENABLED is off,
-// and USD with a logged fallback if the category has no price in that currency).
+// `priceRef`. A category or a service is priced in the currency the server decides
+// for this customer (USD while MULTI_CURRENCY_ENABLED is off, and USD with a logged
+// fallback if it has no price in that currency).
 async function resolveChargeForSelection(req, { priceType, priceRef }) {
-  if (priceType === "service") {
-    const cents = await resolveServiceFeeCents(priceRef);
-    return Number.isFinite(cents) && cents > 0
-      ? { amountMinor: cents, currency: DEFAULT_CURRENCY }
-      : null;
-  }
   const currency = await decidePaymentCurrency(req);
-  const fee = await resolveCategoryFeeCents(priceRef, { currency });
+  const fee = priceType === "service"
+    ? await resolveServiceFeeCents(priceRef, { currency })
+    : await resolveCategoryFeeCents(priceRef, { currency });
   if (!fee || !Number.isFinite(fee.amountMinor) || fee.amountMinor <= 0) return null;
   assertAllowedCurrency(fee.currency); // refuse before any gateway is called
   return fee;
@@ -484,6 +533,7 @@ module.exports = {
   verifyPaypalOrder,
   verifyRazorpayPayment,
   verifyCategoryPayment,
+  verifyServicePayment,
   resolveChargeForSelection,
   claimPaymentOnce,
 };

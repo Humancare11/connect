@@ -382,7 +382,7 @@ describe("INR through Razorpay (India only)", () => {
       assert.ok(warnings.some((w) => w.includes("CURRENCY_FALLBACK_USED") && w.includes("wanted=INR")));
     });
 
-    test("a service (USD only) cannot be paid with Razorpay", async () => {
+    test("a service with no INR price cannot be paid with Razorpay (it is charged in USD)", async () => {
       const r = await create(inUser, { priceType: "service", priceRef: "fit-to-fly" });
       assert.equal(r.status, 400);
       assert.equal(rpCreated.length, 0);
@@ -423,7 +423,7 @@ describe("INR through Razorpay (India only)", () => {
       assert.equal(paypalCreated.length, 0);
     });
 
-    test("an Indian customer can still pay a USD service with Stripe (the gateway follows the currency of the charge)", async () => {
+    test("an Indian customer can still pay a service that has no INR price (charged in USD) with Stripe (the gateway follows the currency of the charge)", async () => {
       const r = await post("/api/payments/create-intent-by-amount", inUser, { priceType: "service", priceRef: "fit-to-fly" });
       assert.deepEqual([r.status, r.body.currency, r.body.amountCents], [200, "USD", 6900]);
     });
@@ -678,7 +678,7 @@ describe("INR through Razorpay (India only)", () => {
       assert.deepEqual([invoiceCalls[0].gateway, invoiceCalls[0].currency, invoiceCalls[0].razorpayOrderId], ["razorpay", "inr", "order_TEST0001"]);
     });
 
-    test("a service booking cannot be paid with Razorpay (USD only)", async () => {
+    test("a service booking with no INR price cannot be paid with Razorpay", async () => {
       const res = makeRes();
       await createCategoryConsultation(reqFor(inUser, consultationBody({ ...paid(inUser), serviceName: "fit-to-fly" })), res);
       assert.equal(res.statusCode, 400);
@@ -818,6 +818,238 @@ describe("INR through Razorpay (India only)", () => {
       const good = sign("order_A1", "pay_B2");
       keys(false);
       assert.equal(rz.verifyPaymentSignature({ orderId: "order_A1", paymentId: "pay_B2", signature: good }), false);
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Service bookings (Fit to fly, Lab requisitions, ...) follow the same currency / gateway / ownership / replay rules as categories.
+  // "Lab Requisitions" is priced in all four currencies; "Fit to Fly" (see beforeEach) has only its USD price.
+  describe("service bookings in four currencies", () => {
+    const tomorrow = () => new Date(Date.now() + 36 * 3600 * 1000).toISOString().slice(0, 10);
+    const makeRes = () => {
+      const res = { statusCode: 200, body: null };
+      res.status = (c) => { res.statusCode = c; return res; };
+      res.json = (b) => { res.body = b; return res; };
+      return res;
+    };
+    const reqFor = (user, body) => { lastUser = String(user._id); return { headers: {}, body, user: { id: lastUser }, app: { get: () => null } }; };
+    const bookingBody = (extra) => ({
+      concern: "Letter", duration: "1 day", severity: "mild", supportType: "advice", urgency: "asap", date: tomorrow(),
+      serviceName: "lab-requisitions", categoryName: "Lab Requisitions", ...extra,
+    });
+    const book = async (user, extra) => {
+      const res = makeRes();
+      await createCategoryConsultation(reqFor(user, bookingBody(extra)), res);
+      return res;
+    };
+    const stripePi = (id, currency, amount, extra = {}) => { stripeIntents[id] = { id, status: "succeeded", currency, amount, ...extra }; return id; };
+    const paypal = (id, currency, value, extra = {}) => {
+      paypalOrders[id] = { id, status: "COMPLETED", ...extra, purchase_units: [{ payments: { captures: [{ amount: { value, currency_code: currency } }] } }] };
+      return id;
+    };
+    const svc = { priceType: "service", priceRef: "lab-requisitions" };
+
+    beforeEach(async () => {
+      await ServicePrice.create({ name: "Lab Requisitions", slug: "lab-requisitions", price: 40, priceEur: 36, priceGbp: 32, priceInr: 1499, icon: "i", description: "d" });
+    });
+
+    describe("what each customer is charged, and on which gateway", () => {
+      test("IN -> ₹1,499 (149900 paise) through Razorpay; the order is for the service and the user", async () => {
+        const r = await post("/api/razorpay/create-order", inUser, svc);
+        assert.equal(r.status, 200, JSON.stringify(r.body));
+        assert.deepEqual([r.body.amountCents, r.body.currency, r.body.keyId], [149900, "INR", KEY_ID]);
+        assert.equal(rpCreated[0].amount, 149900);
+        assert.equal(rpCreated[0].currency, "INR");
+        assert.deepEqual([rpCreated[0].notes.priceType, rpCreated[0].notes.priceRef, rpCreated[0].notes.userId], ["service", "lab-requisitions", String(inUser._id)]);
+      });
+
+      test("IN: Stripe and PayPal are refused for the service (INR must go through Razorpay), and nothing is created", async () => {
+        for (const path of ["/api/payments/create-intent-by-amount", "/api/paypal/create-order-by-amount"]) {
+          const r = await post(path, inUser, svc);
+          assert.equal(r.status, 400, path);
+          assert.match(r.body.msg, /through Razorpay/);
+        }
+        assert.equal(stripeCreated.length + paypalCreated.length, 0);
+      });
+
+      test("DE -> €36 and GB -> £32 on Stripe and PayPal; US -> $40; Razorpay is refused for all three", async () => {
+        for (const [user, currency, cents, stripeCur] of [[deUser, "EUR", 3600, "eur"], [gbUser, "GBP", 3200, "gbp"], [usUser, "USD", 4000, "usd"]]) {
+          const s = await post("/api/payments/create-intent-by-amount", user, svc);
+          assert.deepEqual([s.status, s.body.currency, s.body.amountCents], [200, currency, cents], currency);
+          assert.equal(stripeCreated.at(-1).currency, stripeCur);
+          const p = await post("/api/paypal/create-order-by-amount", user, svc);
+          assert.deepEqual([p.status, p.body.currency, p.body.amountCents], [200, currency, cents], currency);
+          assert.equal(paypalCreated.at(-1).purchase_units[0].amount.currency_code, currency);
+          const rp = await post("/api/razorpay/create-order", user, svc);
+          assert.equal(rp.status, 400, currency);
+        }
+        assert.equal(rpCreated.length, 0);
+      });
+
+      test("a service with no EUR / GBP / INR price is charged its USD price, labelled USD, with [CURRENCY_FALLBACK_USED]; Razorpay is refused", async () => {
+        const fly = { priceType: "service", priceRef: "fit-to-fly" };
+        for (const user of [deUser, gbUser, inUser]) {
+          const r = await post("/api/payments/create-intent-by-amount", user, fly);
+          assert.deepEqual([r.status, r.body.currency, r.body.amountCents], [200, "USD", 6900]);
+        }
+        assert.equal(warnings.filter((w) => /CURRENCY_FALLBACK_USED/.test(w) && /fit-to-fly/.test(w)).length, 3);
+        assert.ok(warnings.some((w) => /wanted=INR used=USD/.test(w)));
+        assert.equal((await post("/api/razorpay/create-order", inUser, fly)).status, 400);
+        assert.equal(rpCreated.length, 0);
+      });
+
+      test("flag off: every customer, Indian included, is charged USD on Stripe / PayPal and never sent to Razorpay", async () => {
+        flag(false);
+        for (const user of [inUser, deUser, gbUser]) {
+          const r = await post("/api/payments/create-intent-by-amount", user, svc);
+          assert.deepEqual([r.body.currency, r.body.amountCents], ["USD", 4000]);
+        }
+        assert.equal((await post("/api/razorpay/create-order", inUser, svc)).status, 400);
+      });
+
+      test("Razorpay keys missing: an Indian customer pays USD on Stripe", async () => {
+        keys(false);
+        const r = await post("/api/payments/create-intent-by-amount", inUser, svc);
+        assert.deepEqual([r.status, r.body.currency, r.body.amountCents], [200, "USD", 4000]);
+        assert.equal((await post("/api/razorpay/create-order", inUser, svc)).status, 503);
+      });
+
+      test("the doctor-fee Razorpay path is not opened: only category and service are accepted", async () => {
+        for (const priceType of ["doctor", "fee", undefined]) {
+          assert.equal((await post("/api/razorpay/create-order", inUser, { priceType, priceRef: "lab-requisitions" })).status, 400, String(priceType));
+        }
+      });
+    });
+
+    describe("booking: the payment must match the service price in its own currency", () => {
+      test("IN pays through Razorpay: stored as inr / razorpay with the paise and the ids, and invoiced in inr", async () => {
+        const res = await book(inUser, paid(inUser, { amount: 149900 }));
+        assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+        const stored = await CategoryConsultation.findById(res.body.data._id).lean();
+        assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.paymentGateway], ["inr", 149900, "razorpay"]);
+        assert.deepEqual([stored.razorpayOrderId, stored.razorpayPaymentId], ["order_TEST0001", "pay_TEST0001"]);
+        await new Promise((r) => setTimeout(r, 60));
+        assert.deepEqual([invoiceCalls[0].currency, invoiceCalls[0].amountCents], ["inr", 149900]);
+      });
+
+      test("DE Stripe EUR, GB PayPal GBP and US Stripe USD are stored in their own currency", async () => {
+        let res = await book(deUser, { paymentIntentId: stripePi("pi_de", "eur", 3600) });
+        assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+        let stored = await CategoryConsultation.findById(res.body.data._id).lean();
+        assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.paymentGateway], ["eur", 3600, "stripe"]);
+
+        res = await book(gbUser, { paypalOrderId: paypal("O_gb", "GBP", "32.00") });
+        assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+        stored = await CategoryConsultation.findById(res.body.data._id).lean();
+        assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.paymentGateway], ["gbp", 3200, "paypal"]);
+
+        res = await book(usUser, { paymentIntentId: stripePi("pi_us", "usd", 4000) });
+        assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+        assert.equal((await CategoryConsultation.findById(res.body.data._id).lean()).paymentCurrency, "usd");
+      });
+
+      test("a service with no foreign price is booked in USD by anyone (the fallback), and not with the foreign amount", async () => {
+        let res = await book(deUser, { serviceName: "fit-to-fly", paymentIntentId: stripePi("pi_fly", "usd", 6900) });
+        assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+        assert.equal((await CategoryConsultation.findById(res.body.data._id).lean()).paymentCurrency, "usd");
+        res = await book(deUser, { serviceName: "fit-to-fly", paymentIntentId: stripePi("pi_fly_eur", "eur", 6900) });
+        assert.equal(res.statusCode, 400, "no EUR price exists, so a EUR payment cannot be valid");
+        // and Razorpay cannot pay for it: it has no INR price
+        res = await book(inUser, { serviceName: "fit-to-fly", ...paid(inUser, { amount: 6900, paymentId: "pay_FLY00001", orderId: "order_FLY00001" }) });
+        assert.equal(res.statusCode, 400);
+      });
+
+      test("a wrong amount or the USD amount paid in another currency is refused, and nothing is created or consumed", async () => {
+        const cases = [
+          { paymentIntentId: stripePi("pi_low", "eur", 1000) }, // the USD-ish amount in EUR
+          { paymentIntentId: stripePi("pi_usd_for_de", "usd", 3600) }, // right number, but USD has price 4000
+          { paymentIntentId: stripePi("pi_jpy", "jpy", 3600) },
+          { paypalOrderId: paypal("O_low", "GBP", "1.00") },
+        ];
+        for (const extra of cases) assert.equal((await book(deUser, extra)).statusCode, 400, JSON.stringify(extra));
+        assert.equal((await book(inUser, paid(inUser, { amount: 99900 }))).statusCode, 400, "Razorpay wrong amount");
+        assert.equal(await CategoryConsultation.countDocuments({}), 0);
+        assert.equal(await ConsumedPayment.countDocuments({}), 0);
+      });
+
+      test("gateway mismatch: INR on Stripe / PayPal and a non-INR Razorpay payment are refused", async () => {
+        let res = await book(inUser, { paymentIntentId: stripePi("pi_inr", "inr", 149900) });
+        assert.equal(res.statusCode, 400);
+        assert.match(res.body.message, /through Razorpay/);
+        res = await book(inUser, { paypalOrderId: paypal("O_inr", "INR", "1499.00") });
+        assert.equal(res.statusCode, 400);
+        assert.match(res.body.message, /through Razorpay/);
+        res = await book(deUser, paid(deUser, { amount: 3600, currency: "USD", orderCurrency: "USD" }));
+        assert.equal(res.statusCode, 400);
+        assert.match(res.body.message, /only takes INR/);
+        assert.equal(await CategoryConsultation.countDocuments({}), 0);
+      });
+
+      test("another user's paid payment is refused (403): Stripe, PayPal and Razorpay", async () => {
+        let res = await book(deUser, { paymentIntentId: stripePi("pi_theirs", "eur", 3600, { __owner: String(gbUser._id) }) });
+        assert.equal(res.statusCode, 403, JSON.stringify(res.body));
+        res = await book(deUser, { paypalOrderId: paypal("O_theirs", "EUR", "36.00", { __owner: String(gbUser._id) }) });
+        assert.equal(res.statusCode, 403);
+        res = await book(inUser, paid(inUser, { amount: 149900, ownerId: String(deUser._id) }));
+        assert.equal(res.statusCode, 403);
+        res = await book(deUser, { paymentIntentId: stripePi("pi_noowner", "eur", 3600, { __owner: null }) });
+        assert.equal(res.statusCode, 403, "no owner recorded");
+        assert.equal(await CategoryConsultation.countDocuments({}), 0);
+        assert.equal(await ConsumedPayment.countDocuments({}), 0);
+      });
+
+      test("a payment cannot be used twice (409), for Stripe and Razorpay", async () => {
+        const stripeRef = stripePi("pi_once", "eur", 3600);
+        assert.equal((await book(deUser, { paymentIntentId: stripeRef })).statusCode, 201);
+        const again = await book(deUser, { paymentIntentId: stripeRef });
+        assert.equal(again.statusCode, 409);
+        const rp = paid(inUser, { amount: 149900, paymentId: "pay_ONCE0001", orderId: "order_ONCE0001" });
+        assert.equal((await book(inUser, rp)).statusCode, 201);
+        assert.equal((await book(inUser, rp)).statusCode, 409);
+        assert.equal(await CategoryConsultation.countDocuments({}), 2);
+      });
+
+      test("a Razorpay payment for a category cannot fund a service (and the other way round): the amount decides", async () => {
+        // General Care costs ₹999; the service costs ₹1,499.
+        const res = await book(inUser, paid(inUser, { amount: 99900, paymentId: "pay_CAT00001", orderId: "order_CAT00001" }));
+        assert.equal(res.statusCode, 400);
+      });
+
+      test("flag off: an Indian customer pays USD on Stripe, as before", async () => {
+        flag(false);
+        const res = await book(inUser, { paymentIntentId: stripePi("pi_off", "usd", 4000) });
+        assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+        assert.equal((await CategoryConsultation.findById(res.body.data._id).lean()).paymentCurrency, "usd");
+      });
+
+      test("an unknown service is refused with the existing message", async () => {
+        const res = await book(deUser, { serviceName: "nope", paymentIntentId: stripePi("pi_unk", "eur", 3600) });
+        assert.equal(res.statusCode, 400);
+        assert.match(res.body.message, /Unrecognized service/);
+      });
+    });
+
+    describe("resolveServiceFeeCents", () => {
+      test("returns { amountMinor, currency } in the wanted currency, by slug or name, with no conversion", async () => {
+        assert.deepEqual(await pv.resolveServiceFeeCents("lab-requisitions"), { amountMinor: 4000, currency: "USD" });
+        assert.deepEqual(await pv.resolveServiceFeeCents("lab-requisitions", { currency: "EUR" }), { amountMinor: 3600, currency: "EUR" });
+        assert.deepEqual(await pv.resolveServiceFeeCents("Lab Requisitions", { currency: "GBP" }), { amountMinor: 3200, currency: "GBP" });
+        assert.deepEqual(await pv.resolveServiceFeeCents("lab-requisitions", { currency: "INR" }), { amountMinor: 149900, currency: "INR" });
+        assert.equal(await pv.resolveServiceFeeCents("nope", { currency: "EUR" }), null);
+        assert.equal(await pv.resolveServiceFeeCents("", { currency: "EUR" }), null);
+      });
+
+      test("a missing price falls back to USD, labelled USD, and is logged", async () => {
+        warnings.length = 0;
+        assert.deepEqual(await pv.resolveServiceFeeCents("fit-to-fly", { currency: "INR" }), { amountMinor: 6900, currency: "USD" });
+        assert.ok(warnings.some((w) => /\[CURRENCY_FALLBACK_USED\] wanted=INR used=USD/.test(w)));
+        assert.deepEqual(await pv.resolveServiceFeeCents("fit-to-fly"), { amountMinor: 6900, currency: "USD" });
+        assert.equal(warnings.length, 1, "USD logs nothing");
+      });
+
+      test("an unsupported currency is treated as USD", async () => {
+        assert.deepEqual(await pv.resolveServiceFeeCents("lab-requisitions", { currency: "JPY" }), { amountMinor: 4000, currency: "USD" });
+      });
     });
   });
 });

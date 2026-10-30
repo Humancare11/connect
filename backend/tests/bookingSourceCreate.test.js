@@ -15,7 +15,7 @@ process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "sk_test_dummy_
 const pv = require("../utils/paymentVerification");
 let claims = 0;
 pv.verifyCategoryPayment = async ({ paymentIntentId, paypalOrderId }) => ({ ref: paymentIntentId || paypalOrderId, gateway: paymentIntentId ? "stripe" : "paypal", amountCents: 5000, currency: "USD" });
-pv.resolveServiceFeeCents = async () => 5000;
+pv.verifyServicePayment = async ({ paymentIntentId, paypalOrderId }) => ({ ref: paymentIntentId || paypalOrderId, gateway: paymentIntentId ? "stripe" : "paypal", amountCents: 5000, currency: "USD" });
 pv.verifyStripePaymentIntent = async ({ paymentIntentId }) => ({ ref: paymentIntentId, gateway: "stripe", amountCents: 5000 });
 pv.verifyPaypalOrder = async ({ paypalOrderId }) => ({ ref: paypalOrderId, gateway: "paypal", amountCents: 5000 });
 pv.claimPaymentOnce = async () => { claims += 1; };

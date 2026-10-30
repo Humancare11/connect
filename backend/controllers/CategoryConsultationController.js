@@ -5,9 +5,7 @@ const User = require("../models/User");
 const {
   PaymentVerificationError,
   verifyCategoryPayment,
-  resolveServiceFeeCents,
-  verifyStripePaymentIntent,
-  verifyPaypalOrder,
+  verifyServicePayment,
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
@@ -67,24 +65,23 @@ const createCategoryConsultation = async (req, res) => {
       // client sends one) is preferred over categoryName so a rename in
       // that window can't break the lookup either.
       //
-      // A service is always USD (its stored price, checked as before). A
-      // category is checked by verifyCategoryPayment: the payment's own
-      // currency (USD / EUR / GBP) against the category's stored price in that
-      // currency - no conversion.
+      // A service (verifyServicePayment) and a category (verifyCategoryPayment) are checked the same way: the payment's own
+      // currency (USD / EUR / GBP, or INR through Razorpay) against the stored price in that currency - no conversion.
       const unrecognized = "Unrecognized service/category. Please reselect and try again.";
       let verified;
       if (serviceName) {
-        const expectedCents = await resolveServiceFeeCents(serviceName);
-        if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
-          return res.status(400).json({ success: false, message: unrecognized });
-        }
-        // A service is always USD, and Razorpay only takes INR: refused, never converted.
-        if (razorpayPaymentId || razorpayOrderId) {
-          return res.status(400).json({ success: false, message: "Razorpay only takes INR payments. Please restart checkout." });
-        }
-        verified = paymentIntentId
-          ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents, patientId: req.user.id })
-          : await verifyPaypalOrder({ paypalOrderId, expectedCents, patientId: req.user.id });
+        // Priced in the currency the payment was taken in (USD / EUR / GBP, or INR through Razorpay); verifyServicePayment checks the
+        // amount against the service's stored price in that currency (no conversion), the gateway, and that it is this user's payment.
+        verified = await verifyServicePayment({
+          paymentIntentId,
+          paypalOrderId,
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature,
+          patientId: req.user.id,
+          priceRef: serviceName,
+          unrecognizedMessage: unrecognized,
+        });
       } else {
         verified = await verifyCategoryPayment({
           paymentIntentId,

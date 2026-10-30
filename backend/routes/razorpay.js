@@ -10,10 +10,10 @@ const { resolveChargeForSelection } = require("../utils/paymentVerification");
 const { createRazorpayOrder, getRazorpayKeyId, verifyWebhookSignature } = require("../utils/razorpay");
 
 /* POST /api/razorpay/create-order
-   Creates a Razorpay order for a CATEGORY consultation, in INR, for an Indian customer. Like the Stripe / PayPal endpoints, the body
+   Creates a Razorpay order for a CATEGORY or SERVICE booking, in INR, for an Indian customer. Like the Stripe / PayPal endpoints, the body
    carries only WHAT is being booked (priceType + priceRef): the amount and the currency are decided here on the server, and a
    client-sent amount or currency is never read. If the server decides this customer pays in anything other than INR (any other
-   country, a category with no INR price, a service, INR switched off), Razorpay is refused: the gateway follows the currency.
+   country, a category or service with no INR price, INR switched off), Razorpay is refused: the gateway follows the currency.
    Returns { orderId, amountCents (paise), currency: "INR", keyId } - keyId is the PUBLIC key Checkout needs. */
 router.post("/create-order", verifyUserToken, async (req, res) => {
   try {
@@ -21,9 +21,9 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
       return res.status(503).json({ msg: "Razorpay payments are not available right now." });
     }
     const { priceType, priceRef } = req.body || {};
-    // Razorpay is for category bookings only (a service is USD), and the reference must be a plain string.
-    if (priceType !== "category" || typeof priceRef !== "string" || !priceRef.trim() || priceRef.length > 120) {
-      return res.status(400).json({ msg: "Razorpay only takes INR payments for a category booking. Please restart checkout." });
+    // Razorpay is for a category or a service booking (never the doctor fee), and the reference must be a plain string.
+    if (!["category", "service"].includes(priceType) || typeof priceRef !== "string" || !priceRef.trim() || priceRef.length > 120) {
+      return res.status(400).json({ msg: "Razorpay only takes INR payments for a category or service booking. Please restart checkout." });
     }
     const charge = await resolveChargeForSelection(req, { priceType, priceRef });
     if (!charge) {
@@ -39,7 +39,7 @@ router.post("/create-order", verifyUserToken, async (req, res) => {
       amountPaise: charge.amountMinor,
       receipt: `hc_${String(req.user.id).slice(-8)}_${Date.now().toString(36)}`,
       notes: {
-        priceType: "category",
+        priceType,
         priceRef: String(priceRef || "").slice(0, 100),
         userId: String(req.user.id),
       },
