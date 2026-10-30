@@ -11,7 +11,8 @@ const { MongoMemoryServer } = require("mongodb-memory-server");
 process.env.JWT_SECRET = process.env.JWT_SECRET || "test-secret";
 
 const { backfillPaymentCurrency } = require("../scripts/backfillPaymentCurrency");
-const { findCategoriesMissingCurrencyPrices } = require("../scripts/checkCategoryCurrencyCoverage");
+const { findCategoriesMissingCurrencyPrices, findServicesMissingCurrencyPrices } = require("../scripts/checkCategoryCurrencyCoverage");
+const ServicePrice = require("../models/ServicePrice");
 const HealthcareCategory = require("../models/HealthcareCategory");
 const { CategoryPricing } = require("../models/CategoryPricing");
 
@@ -129,7 +130,7 @@ describe("multi-currency go-live scripts", () => {
     const pricing = (slug, extra = {}) => CategoryPricing.create({ categoryId: slug, label: slug, price: 10, ...extra });
 
     beforeEach(async () => {
-      await Promise.all([HealthcareCategory.deleteMany({}), CategoryPricing.deleteMany({})]);
+      await Promise.all([HealthcareCategory.deleteMany({}), CategoryPricing.deleteMany({}), ServicePrice.deleteMany({})]);
     });
 
     test("every category fully priced: nothing missing", async () => {
@@ -186,7 +187,57 @@ describe("multi-currency go-live scripts", () => {
       await CategoryPricing.updateOne({ categoryId: "neither" }, { priceEur: 9, priceGbp: 8, priceInr: 799 });
       r = run();
       assert.equal(r.status, 0, r.stderr + r.stdout);
-      assert.match(r.stdout, /OK: every category has a EUR, a GBP and an INR price/);
+      assert.match(r.stdout, /OK: every category and every service has a EUR, a GBP and an INR price/);
+    });
+
+    describe("services", () => {
+      const service = (slug, extra = {}) => ServicePrice.collection.insertOne({ name: slug, slug, price: 10, icon: "i", description: "d", ...extra });
+
+      test("lists the services missing EUR, GBP or INR; a fully priced one is complete; it never writes", async () => {
+        await service("full", { priceEur: 9, priceGbp: 8, priceInr: 799 });
+        await service("no-eur", { priceGbp: 8, priceInr: 799 });
+        await service("no-gbp", { priceEur: 9, priceInr: 799 });
+        await service("no-inr", { priceEur: 9, priceGbp: 8 });
+        await service("old");
+        await service("zero", { priceEur: 0, priceGbp: 8, priceInr: 799 }); // 0 is not a price
+        const before = JSON.stringify(await ServicePrice.find({}).sort({ slug: 1 }).lean());
+        const result = await findServicesMissingCurrencyPrices();
+        assert.equal(result.total, 6);
+        assert.equal(result.complete, 1);
+        const by = Object.fromEntries(result.missing.map((m) => [m.slug, [m.missingEur, m.missingGbp, m.missingInr]]));
+        assert.deepEqual(by, {
+          "no-eur": [true, false, false],
+          "no-gbp": [false, true, false],
+          "no-inr": [false, false, true],
+          old: [true, true, true],
+          zero: [true, false, false],
+        });
+        assert.equal(JSON.stringify(await ServicePrice.find({}).sort({ slug: 1 }).lean()), before);
+      });
+
+      test("no services: nothing missing", async () => {
+        assert.deepEqual(await findServicesMissingCurrencyPrices(), { total: 0, complete: 0, missing: [] });
+      });
+
+      test("run as a script: fully priced categories but a service missing a price still exits 1 and names the service", async () => {
+        const run = () =>
+          spawnSync(process.execPath, [path.join(__dirname, "..", "scripts", "checkCategoryCurrencyCoverage.js")], {
+            env: { ...process.env, MONGO_URI: mongod.getUri(), NODE_ENV: "test" },
+            encoding: "utf8",
+            timeout: 60000,
+          });
+        await category("A", "a"); await pricing("a", { priceEur: 9, priceGbp: 8, priceInr: 799 });
+        await service("fit-to-fly", { priceEur: 9 });
+        let r = run();
+        assert.equal(r.status, 1, r.stderr + r.stdout);
+        assert.match(r.stdout, /Services missing a price/);
+        assert.match(r.stdout, /"fit-to-fly".*missing: GBP \+ INR/);
+        assert.match(r.stdout, /FAILED: 1 service is not fully priced/);
+        await ServicePrice.collection.updateOne({ slug: "fit-to-fly" }, { $set: { priceGbp: 8, priceInr: 799 } });
+        r = run();
+        assert.equal(r.status, 0, r.stderr + r.stdout);
+        assert.match(r.stdout, /Services:   1   fully priced/);
+      });
     });
   });
 });

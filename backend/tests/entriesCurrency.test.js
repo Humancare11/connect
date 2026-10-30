@@ -217,6 +217,52 @@ describe("entries and bookings lists carry each booking's currency", () => {
     });
   });
 
+  // A service booking (Fit to fly, Lab requisitions, ...) is a paid CategoryConsultation with a serviceName; it is reported like any
+  // other booking, in the currency it was paid in.
+  describe("service bookings use their own currency bucket", () => {
+    const service = (n, currency, price, name, extra = {}) =>
+      cat(n, currency, price, { serviceName: name, categoryName: name, ...extra });
+
+    beforeEach(async () => {
+      await service(1, "usd", 40, "lab-requisitions");
+      await service(2, "eur", 36, "lab-requisitions");
+      await service(3, "gbp", 32, "lab-requisitions");
+      await service(4, "inr", 1499, "lab-requisitions", { paymentGateway: "razorpay" });
+      await service(5, "inr", 2499, "fit-to-fly", { paymentGateway: "razorpay" });
+      await cat(6, "usd", 10); // a category booking in the same list
+    });
+
+    test("every service row carries its own currency and amount", async () => {
+      const body = await listBookingEntries({ limit: "100" }, { role: "superadmin" });
+      const by = (c) => body.items.filter((r) => r.currency === c).map((r) => r.feeChargedCents).sort((a, b) => a - b);
+      assert.deepEqual(by("usd"), [1000, 4000]);
+      assert.deepEqual(by("eur"), [3600]);
+      assert.deepEqual(by("gbp"), [3200]);
+      assert.deepEqual(by("inr"), [149900, 249900]);
+    });
+
+    test("the totals are per currency and never summed across them", async () => {
+      const { totals } = await listBookingEntries({ limit: "100" }, { role: "superadmin" });
+      assert.equal(totals.rows, 6);
+      assert.equal(totals.byCurrency.usd.feeChargedCents, 5000);
+      assert.equal(totals.byCurrency.eur.feeChargedCents, 3600);
+      assert.equal(totals.byCurrency.gbp.feeChargedCents, 3200);
+      assert.equal(totals.byCurrency.inr.feeChargedCents, 149900 + 249900);
+      const all = Object.values(totals.byCurrency).reduce((sum, b) => sum + b.feeChargedCents, 0);
+      for (const bucket of Object.values(totals.byCurrency)) assert.notEqual(bucket.feeChargedCents, all);
+      assert.equal(totals.feeChargedCents, 5000, "the flat total is USD only");
+    });
+
+    test("the CSV names each service booking's currency", async () => {
+      const all = parseCsv(buildEntriesCsv((await listAllEntryRows({})).rows));
+      const fee = (currency) => all.records.filter((r) => r["Currency"] === currency).map((r) => r["Fee charged"]).sort();
+      assert.deepEqual(fee("INR"), ["1499.00", "2499.00"]);
+      assert.deepEqual(fee("EUR"), ["36.00"]);
+      assert.deepEqual(fee("GBP"), ["32.00"]);
+      assert.deepEqual(fee("USD"), ["10.00", "40.00"]);
+    });
+  });
+
   describe("CSV", () => {
     test("Currency is the LAST column of the full export, and no existing column moved", () => {
       assert.equal(COLUMNS[COLUMNS.length - 1], "Currency");

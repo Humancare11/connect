@@ -29,7 +29,8 @@ const hidesPrices = (conversation) => chatCurrencyOf(conversation) !== "USD";
 function withoutPrices(text) {
   const original = String(text || "");
   if (!hasAmount(original)) return original;
-  const kept = original.split(/(?<=[.!?])\s+/).filter((sentence) => !hasAmount(sentence));
+  // "Rs. 1499" is one amount, not two sentences, so no split after "Rs."
+  const kept = original.split(/(?<=[.!?])(?<!\b[Rr][Ss]\.)\s+/).filter((sentence) => !hasAmount(sentence));
   const rest = kept.join(" ").trim();
   return rest ? `${PRICE_AT_BOOKING} ${rest}` : PRICE_AT_BOOKING;
 }

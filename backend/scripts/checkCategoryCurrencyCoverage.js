@@ -10,6 +10,7 @@ const path = require("path");
 const mongoose = require("mongoose");
 const HealthcareCategory = require("../models/HealthcareCategory");
 const { CategoryPricing } = require("../models/CategoryPricing");
+const ServicePrice = require("../models/ServicePrice");
 
 const isPrice = (value) => Number.isFinite(Number(value)) && Number(value) > 0 && value !== null;
 
@@ -41,6 +42,22 @@ async function findCategoriesMissingCurrencyPrices() {
   return { total: categories.length, complete: categories.length - missing.length, missing };
 }
 
+// The same check for the services (Admin > Services Price). Reads only.
+// Returns { total, complete, missing: [{ name, id, slug, missingEur, missingGbp, missingInr }] }.
+async function findServicesMissingCurrencyPrices() {
+  const services = await ServicePrice.find().select("name slug priceEur priceGbp priceInr").sort({ name: 1 }).lean();
+  const missing = [];
+  for (const service of services) {
+    const missingEur = !isPrice(service.priceEur);
+    const missingGbp = !isPrice(service.priceGbp);
+    const missingInr = !isPrice(service.priceInr);
+    if (missingEur || missingGbp || missingInr) {
+      missing.push({ name: service.name, id: String(service._id), slug: service.slug, missingEur, missingGbp, missingInr });
+    }
+  }
+  return { total: services.length, complete: services.length - missing.length, missing };
+}
+
 async function main() {
   // The environment file is read only when this is run as a script (never when the functions are imported by a test).
   require("dotenv").config({
@@ -54,9 +71,24 @@ async function main() {
   console.log(`Environment: ${process.env.NODE_ENV || "development"}   Database: ${mongoose.connection.name} on ${mongoose.connection.host}`);
   console.log(`Categories: ${total}   fully priced (USD + EUR + GBP + INR): ${complete}   missing a price: ${missing.length}`);
 
-  if (missing.length === 0) {
-    console.log("\nOK: every category has a EUR, a GBP and an INR price.");
+  const services = await findServicesMissingCurrencyPrices();
+  console.log(`Services:   ${services.total}   fully priced (USD + EUR + GBP + INR): ${services.complete}   missing a price: ${services.missing.length}`);
+
+  if (services.missing.length > 0) {
+    console.log("\nServices missing a price (fill them in Super Admin > Services Price > Edit):");
+    for (const s of services.missing) {
+      const what = [s.missingEur && "EUR", s.missingGbp && "GBP", s.missingInr && "INR"].filter(Boolean).join(" + ");
+      console.log(`  - "${s.name}" (${s.slug}, ${s.id})  missing: ${what}`);
+    }
+  }
+
+  if (missing.length === 0 && services.missing.length === 0) {
+    console.log("\nOK: every category and every service has a EUR, a GBP and an INR price.");
     return 0;
+  }
+  if (missing.length === 0) {
+    console.log(`\nFAILED: ${services.missing.length} service${services.missing.length === 1 ? " is" : "s are"} not fully priced.`);
+    return 1;
   }
 
   console.log("\nCategories missing a price (fill them in Super Admin > Healthcare Management > Categories > Edit):");
@@ -68,6 +100,7 @@ async function main() {
     );
   }
   console.log(`\nFAILED: ${missing.length} categor${missing.length === 1 ? "y is" : "ies are"} not fully priced.`);
+  if (services.missing.length > 0) console.log(`        ${services.missing.length} service${services.missing.length === 1 ? " is" : "s are"} not fully priced.`);
   return 1;
 }
 
@@ -83,4 +116,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { findCategoriesMissingCurrencyPrices };
+module.exports = { findCategoriesMissingCurrencyPrices, findServicesMissingCurrencyPrices };

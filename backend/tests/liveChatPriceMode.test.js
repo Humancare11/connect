@@ -61,6 +61,67 @@ describe("live chat prices: helpers", () => {
   });
 });
 
+describe("live chat prices: service prices for EUR / GBP / INR visitors", () => {
+  const ENV = ["MULTI_CURRENCY_ENABLED", "RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"];
+  const saved = {};
+  before(() => { for (const k of ENV) saved[k] = process.env[k]; });
+  after(() => {
+    for (const k of ENV) {
+      if (saved[k] === undefined) delete process.env[k];
+      else process.env[k] = saved[k];
+    }
+  });
+  const rupees = (on) => {
+    if (on) { process.env.RAZORPAY_KEY_ID = "rzp_test_k"; process.env.RAZORPAY_KEY_SECRET = "s"; }
+    else { delete process.env.RAZORPAY_KEY_ID; delete process.env.RAZORPAY_KEY_SECRET; }
+  };
+  const serviceSentences = [
+    "Fit to fly certificates cost $69.",
+    "A Fit to fly certificate is €63.",
+    "Lab requisitions are £32.",
+    "Doctor notes & sick notes are ₹1,499.",
+    "Lab requisitions are Rs. 1499.",
+    "Fit to fly is 1499 rupees.",
+  ];
+
+  test("a service price is never quoted to a EUR, GBP or INR visitor: the price is shown at booking", () => {
+    setFlag(true);
+    rupees(true);
+    for (const country of ["Germany", "United Kingdom", "India"]) {
+      const conv = { geo: { country } };
+      assert.equal(priceMode.hidesPrices(conv), true, country);
+      for (const text of serviceSentences) {
+        assert.equal(priceMode.hasAmount(text), true, text);
+        assert.equal(priceMode.withoutPrices(text), priceMode.PRICE_AT_BOOKING, `${country}: ${text}`);
+      }
+    }
+  });
+
+  test("the AI prompt for those visitors has no service price list (Fit to fly, Lab requisitions, ...)", () => {
+    const hidden = buildSystemPrompt(DEFAULT_SETTINGS, [], { hidePrices: true });
+    for (const name of ["Fit to fly", "Lab requisitions", "Doctor notes & sick notes", "Prescription refills", "Second medical opinion"]) {
+      assert.equal(new RegExp(`${name}:? ?\$`, "i").test(hidden), false, name);
+    }
+    assert.equal(/\$\s?\d/.test(hidden), false);
+  });
+
+  test("an Indian visitor is a USD visitor (prices allowed) while Razorpay keys are missing or the flag is off", () => {
+    setFlag(true);
+    rupees(false);
+    assert.equal(priceMode.hidesPrices({ geo: { country: "India" } }), false);
+    setFlag(false);
+    rupees(true);
+    for (const country of ["India", "Germany", "United Kingdom"]) assert.equal(priceMode.hidesPrices({ geo: { country } }), false, country);
+  });
+
+  test("a USD visitor keeps the service sentences", () => {
+    setFlag(true);
+    rupees(true);
+    assert.equal(priceMode.hidesPrices({ geo: { country: "United States" } }), false);
+    assert.equal(priceMode.hidesPrices({ geo: {} }), false);
+  });
+});
+
 describe("live chat prices: in a chat", () => {
   let lc;
   before(async () => {
