@@ -16,6 +16,10 @@
 
 /* ── Page shell ───────────────────────────────────────────────── */
 .dl-page {
+  /* Horizontal space reserved for the fixed sidebar (width + gutters).
+     Shared with .dl-main's margin and with overlays that must stay clear of
+     the sidebar (e.g. the View Notes modal in DoctorPatients.css). */
+  --dl-sidebar-offset: calc(248px + 32px);
   display: flex;
   min-height: 100vh;
   background: linear-gradient(145deg, #e8eaf0 0%, #eef0f5 50%, #e4e8ef 100%);
@@ -295,7 +299,7 @@
    ═══════════════════════════════════════════════════════════════ */
 .dl-main {
   flex: 1;
-  margin-left: calc(248px + 32px);
+  margin-left: var(--dl-sidebar-offset);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -447,12 +451,16 @@
 
 /* ── Tablet landscape (1024px and below) ── */
 @media (max-width: 1024px) {
+  .dl-page {
+    --dl-sidebar-offset: calc(220px + 28px);
+  }
+
   .dl-sidebar {
     width: 220px;
   }
 
   .dl-main {
-    margin-left: calc(220px + 28px);
+    margin-left: var(--dl-sidebar-offset);
     padding: 14px 14px 14px 0;
   }
 
@@ -487,6 +495,10 @@
 
 /* ── Tablet portrait & below (900px and below) ── */
 @media (max-width: 900px) {
+  .dl-page {
+    --dl-sidebar-offset: 0px;
+  }
+
   .dl-sidebar {
     top: 10px;
     left: 10px;
@@ -506,7 +518,7 @@
   }
 
   .dl-main {
-    margin-left: 0;
+    margin-left: var(--dl-sidebar-offset);
     padding: 10px;
   }
 

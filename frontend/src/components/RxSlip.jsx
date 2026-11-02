@@ -7,7 +7,7 @@ import defaultClinicLogoUrl from "../assets/prescription-logo.png";
 import defaultClinicFooterLogoUrl from "../assets/prescription-footer-logo.png";
 import newFooterQrUrl from "../assets/New-Footer-QR.jpeg";
 
-import certLogoFull from "../assets/Logo.png";
+import SlipContactIcon from "./SlipContactIcon";
 
 /* ── Certificate-style layout tokens (same as MedicalCertificateSlip) ──────── */
 const C_PRIMARY = "#12296B";
@@ -187,9 +187,9 @@ export default function RxSlip({
             <div className="rx-qr rx-qr-placeholder" aria-hidden="true" />
           )}
           <div className="rx-contact-lines">
-            <span>📞 {clinicPhone}</span>
-            <span>✉️ {clinicEmail}</span>
-            <span>📍 {clinicAddress}</span>
+            <span><SlipContactIcon type="phone" /> {clinicPhone}</span>
+            <span><SlipContactIcon type="email" /> {clinicEmail}</span>
+            <span><SlipContactIcon type="location" /> {clinicAddress}</span>
           </div>
           <img
             className="rx-footer-logo"
@@ -249,9 +249,9 @@ export default function RxSlip({
               }}
             >
               <img
-                src={certLogoFull}
+                src={clinicLogoUrl}
                 alt="Humancare Connect"
-                style={{ height: 54, objectFit: "contain", display: "block" }}
+                style={{ height: 68, width: "auto", objectFit: "contain", display: "block" }}
                 crossOrigin="anonymous"
               />
               <div style={{ textAlign: "right" }}>
@@ -634,9 +634,9 @@ export default function RxSlip({
             <div className="rx-qr rx-qr-placeholder" aria-hidden="true" />
           )}
           <div className="rx-contact-lines">
-            <span>📞 {clinicPhone}</span>
-            <span>✉️ {clinicEmail}</span>
-            <span>📍 {clinicAddress}</span>
+            <span><SlipContactIcon type="phone" /> {clinicPhone}</span>
+            <span><SlipContactIcon type="email" /> {clinicEmail}</span>
+            <span><SlipContactIcon type="location" /> {clinicAddress}</span>
           </div>
           <img
             className="rx-footer-logo"
