@@ -54,6 +54,7 @@ const COLUMNS = {
     { header: "Email", width: 32, get: (d) => pick(d).email },
     { header: "Country", width: 20, get: (d) => locationOf(d).country },
     { header: "State", width: 22, get: (d) => locationOf(d).state },
+    { header: "Specialization", width: 22, get: (d) => d.enrollment?.specialization || "" },
   ],
   full: [
     { header: "Doctor ID", width: 10, get: (d) => d.doctorId ?? "" },

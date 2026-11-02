@@ -217,36 +217,52 @@
 
 /* ════════════════════════════════════════
    TABS
+   Selected pill = white on the grey track; count stays visible in every state.
 ════════════════════════════════════════ */
 .rt-tabs {
   display: flex; gap: 4px;
-  background: #f1f5f9;
+  background: #e8edf4;
   border-radius: 10px; padding: 4px;
-  overflow-x: auto; scrollbar-width: none;
+  max-width: 100%; min-width: 0;
 }
 
-.rt-tabs::-webkit-scrollbar { display: none; }
-
 .rt-tab {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
   padding: 6px 13px; border-radius: 7px; border: none;
   background: transparent; color: var(--rt-text-2);
   font-family: inherit; font-size: 12.5px; font-weight: 500;
-  cursor: pointer; white-space: nowrap;
-  transition: background var(--duration-fast), color var(--duration-fast);
+  cursor: pointer; white-space: nowrap; min-width: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast), color var(--duration-fast), box-shadow var(--duration-fast);
 }
 
-.rt-tab:hover { color: var(--rt-blue); background: rgba(1, 22, 74, 0.06); }
+.rt-tab:hover { color: var(--rt-blue); background: rgba(255, 255, 255, 0.55); }
 
-.rt-tab--active { background: var(--rt-blue); color: #fff; }
+/* Selected: stays white regardless of hover / focus / active / blur */
+.rt-tab--active,
+.rt-tab--active:hover,
+.rt-tab--active:focus,
+.rt-tab--active:active {
+  background: #ffffff;
+  color: var(--rt-blue);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(1, 22, 74, 0.16);
+}
+
+.rt-tab:focus { outline: none; }
+.rt-tab:focus-visible { outline: 2px solid var(--rt-blue-mid); outline-offset: 1px; }
 
 .rt-tab-count {
-  font-size: 10px; padding: 1px 6px; border-radius: 20px;
-  background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; flex-shrink: 0;
+  font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px;
+  background: #cfd8e6; color: var(--rt-text-2);
 }
 
-.rt-tab:not(.rt-tab--active) .rt-tab-count {
-  background: #e2e8f0; color: var(--rt-text-3);
+.rt-tab--active .rt-tab-count,
+.rt-tab--active:focus .rt-tab-count {
+  display: inline-flex;
+  background: var(--rt-blue); color: #ffffff;
 }
 
 /* ════════════════════════════════════════
@@ -385,77 +401,6 @@
 /* ════════════════════════════════════════
    RESPONSIVE
 ════════════════════════════════════════ */
-
-/* Tablet (1024px) */
-@media (max-width: 1024px) {
-  .rt-layout { grid-template-columns: minmax(0, 1fr) minmax(min(100%, 280px), 300px); }
-  .rt-root   { padding: 24px 20px; }
-}
-
-/* Tablet portrait (900px) */
-@media (max-width: 900px) {
-  .rt-layout { grid-template-columns: 1fr; }
-  .rt-root   { padding: 22px 18px; }
-}
-
-/* Mobile large (640px) */
-@media (max-width: 640px) {
-  .rt-root        { padding: 18px 14px; }
-  .rt-page-title  { font-size: 24px; }
-  .rt-page-head   { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .rt-list-head   { flex-direction: column; align-items: flex-start; }
-  .rt-tabs        { width: 100%; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
-  .rt-tabs::-webkit-scrollbar { display: none; }
-}
-
-/* Mobile portrait (560px) */
-@media (max-width: 560px) {
-  .rt-root        { padding: 18px 14px; }
-  .rt-page-title  { font-size: 22px; }
-  .rt-list-head   { flex-direction: column; align-items: flex-start; }
-  .rt-tabs        { width: 100%; }
-  .rt-page-head   { flex-direction: column; align-items: flex-start; gap: 12px; }
-}
-
-/* Mobile portrait (480px) */
-@media (max-width: 480px) {
-  .rt-root { padding: 14px 10px; }
-  .rt-page-title { font-size: 20px; }
-
-  /* Form fields full-width on mobile */
-  .rt-form-row {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .rt-form-group {
-    width: 100%;
-  }
-
-  /* Ticket card adjustments */
-  .rt-ticket-card {
-    padding: 14px 12px;
-  }
-
-  .rt-ticket-meta {
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-}
-
-/* Small mobile (380px) */
-@media (max-width: 380px) {
-  .rt-root { padding: 12px 8px; }
-  .rt-page-title { font-size: 18px; }
-  .rt-ticket-card { padding: 12px 10px; }
-}
-
-/* Extra small (320px) */
-@media (max-width: 320px) {
-  .rt-root { padding: 10px 6px; }
-  .rt-page-title { font-size: 16px; }
-}
-
 .rt-root,
 .rt-layout,
 .rt-form-panel,
@@ -463,23 +408,79 @@
 .rt-list-head,
 .rt-ticket,
 .rt-ticket-left,
-.rt-ticket-info {
+.rt-ticket-info,
+.rt-page-head > div {
   min-width: 0;
   max-width: 100%;
 }
 
-.rt-tabs {
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
+.rt-input { width: 100%; min-width: 0; }
 
-.rt-input {
-  width: 100%;
-  min-width: 0;
-}
-
+.rt-page-title,
 .rt-ticket-title,
-.rt-body-text {
-  overflow-wrap: anywhere;
+.rt-body-text,
+.rt-resolution p { overflow-wrap: anywhere; }
+
+@media (max-width: 1024px) {
+  .rt-layout { grid-template-columns: minmax(0, 1fr) minmax(min(100%, 280px), 300px); }
+  .rt-root   { padding: 24px 20px; }
+}
+
+@media (max-width: 900px) {
+  .rt-layout { grid-template-columns: minmax(0, 1fr); }
+  .rt-root   { padding: 22px 18px; }
+}
+
+@media (max-width: 640px) {
+  .rt-root        { padding: 16px 12px; }
+  .rt-page-title  { font-size: 22px; }
+  .rt-page-head   { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rt-head-stat   { align-items: flex-start; }
+  .rt-list-head   { flex-direction: column; align-items: stretch; padding: 16px; }
+  .rt-panel-head,
+  .rt-form        { padding: 18px 16px; }
+  .rt-tips        { margin: 0 16px 18px; }
+  .rt-ticket-top  { padding: 13px 16px; gap: 10px; }
+  .rt-ticket-left { gap: 10px; }
+  .rt-ticket-body { padding: 0 16px 16px; }
+  .rt-submit-btn  { width: 100%; }
+  .rt-toast       { left: 12px; right: 12px; top: 12px; }
+
+  /* Tabs wrap into a grid instead of scrolling sideways */
+  .rt-tabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .rt-tab { padding: 7px 4px; gap: 4px; font-size: 12px; }
+}
+
+@media (max-width: 420px) {
+  .rt-root { padding: 12px 8px; }
+  .rt-page-title { font-size: 20px; }
+  .rt-input { font-size: 16px; } /* no iOS focus zoom */
+  .rt-ticket-id { display: none; }
+  .rt-ticket-right { gap: 6px; }
+  .rt-badge { padding: 3px 8px; font-size: 11px; }
+}
+
+@media (max-width: 340px) {
+  .rt-root { padding: 10px 4px; }
+  .rt-page-title { font-size: 18px; }
+  .rt-list-head { padding: 14px 10px; }
+  .rt-panel-head, .rt-form { padding: 14px 10px; }
+  .rt-tips { margin: 0 10px 14px; }
+  .rt-panel-icon { width: 36px; height: 36px; }
+  .rt-ticket-top { padding: 10px; }
+  .rt-ticket-body { padding: 0 10px 12px; }
+  .rt-tab { padding: 7px 2px; font-size: 10.5px; gap: 3px; }
+  .rt-tab-count { min-width: 0; padding: 1px 4px; font-size: 9px; }
+}
+
+/* Narrow two-column layout: the list column is too slim for five tabs in a row */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .rt-list-head { flex-direction: column; align-items: stretch; }
+  .rt-tabs { width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+  .rt-tab { padding: 7px 4px; }
 }

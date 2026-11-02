@@ -198,7 +198,10 @@ const conditionCategories = [
         name: "Treatment-Plan Review",
         path: "/online-second-medical-opinion/treatment-plan-review",
       },
-      { name: "Second Medical Opinion", path: "/online-second-medical-opinion" },
+      {
+        name: "Second Medical Opinion",
+        path: "/online-second-medical-opinion",
+      },
       {
         name: "Acid Reflux / GERD",
         path: "/chronic-care/gastroenterology/acid-reflux-gerd",
@@ -586,7 +589,7 @@ const conditionCategories = [
       },
       {
         name: "Medication Refill While Traveling",
-        path: "travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
+        path: "/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling",
       },
       {
         name: "Referral Coordination Overseas",

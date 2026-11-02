@@ -6,84 +6,21 @@ const Partner = require("../models/Partner");
 const { verifyAdminToken, manualInvoiceAccess } = require("../middleware/verifyToken");
 const { createManualInvoice, markManualInvoicePaid, resendManualInvoiceEmail } = require("../utils/manualInvoiceService");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
+const { payUrlForInvoice } = require("../utils/paymentLinkInvoice");
+const {
+  ALLOWED_CURRENCIES,
+  MAX_LENGTHS,
+  MAX_AMOUNT_CENTS,
+  parseItems,
+  parseDueDate,
+  parseBillingDetails,
+  parseB2cBody,
+} = require("../utils/manualInvoiceValidation");
 
-const EMAIL_RE = /^\S+@\S+\.\S+$/;
-// INR intentionally excluded — only these three currencies are offered on
-// the form (ManualInvoices.jsx), validated here too so a stored/printed
-// invoice can never end up in an arbitrary client-supplied currency.
-const ALLOWED_CURRENCIES = ["usd", "eur", "gbp"];
-const MAX_LENGTHS = {
-  clientName: 120,
-  clientEmail: 254,
-  description: 500,
-  paymentMethod: 80,
-  companyName: 160,
-  registrationNumber: 60,
-  address: 200,
-  country: 100,
-  postalCode: 30,
-  paymentTerms: 40,
-  itemDescription: 200,
-};
-// $1,000,000 ceiling — guards against a fat-finger typo (e.g. a stray extra
-// digit) minting a wildly oversized invoice; not a business limit.
-const MAX_AMOUNT_CENTS = 100_000_000;
-const MAX_ITEMS = 50;
-
-// Same rounding rule the form's live preview uses (ManualInvoices.jsx's
-// computeItemAmountCents) — computed server-side here too since the client
-// total is never trusted as-is.
-function computeItemAmountCents(quantity, rate) {
-  const rateCents = Math.round(rate * 100);
-  return Math.round(quantity * rateCents);
-}
-
-// Validates and normalizes the raw items array from the request body.
-// Returns { items, amountCents } on success, or { error } on failure.
-function parseItems(rawItems) {
-  if (!Array.isArray(rawItems) || rawItems.length === 0) {
-    return { error: "Add at least one invoice item." };
-  }
-  if (rawItems.length > MAX_ITEMS) {
-    return { error: `An invoice can have at most ${MAX_ITEMS} items.` };
-  }
-
-  const items = [];
-  let amountCents = 0;
-  for (const raw of rawItems) {
-    const description = String(raw?.description || "").trim();
-    const quantity = Number(raw?.quantity);
-    const rate = Number(raw?.rate);
-
-    if (!description || description.length > MAX_LENGTHS.itemDescription) {
-      return { error: "Each item needs a description under 200 characters." };
-    }
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      return { error: "Each item needs a quantity greater than zero." };
-    }
-    if (!Number.isFinite(rate) || rate < 0) {
-      return { error: "Each item needs a valid, non-negative rate." };
-    }
-
-    const itemAmountCents = computeItemAmountCents(quantity, rate);
-    items.push({ description, quantity, rate, amountCents: itemAmountCents });
-    amountCents += itemAmountCents;
-  }
-
-  if (amountCents <= 0) {
-    return { error: "Enter a valid amount greater than zero." };
-  }
-  return { items, amountCents };
-}
-
-// dueDate arrives as a "YYYY-MM-DD" date-input string; empty/invalid input
-// is fine (dueDate is optional) but a non-empty unparsable string is not.
-function parseDueDate(raw) {
-  if (raw === undefined || raw === null || String(raw).trim() === "") return { dueDate: null };
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return { error: "Enter a valid due date." };
-  return { dueDate: parsed };
-}
+// B2B (business) manual invoices are switched off for now: only individual (B2C)
+// invoices can be created. The B2B code below was not removed — flip this to true
+// to allow it again.
+const B2B_MANUAL_INVOICES_ENABLED = false; // TODO: enable B2B later
 
 function serializeManualInvoice(doc) {
   const creator = doc.createdBy && typeof doc.createdBy === "object" ? doc.createdBy : null;
@@ -112,6 +49,8 @@ function serializeManualInvoice(doc) {
     status: doc.status,
     paymentMethod: doc.paymentMethod,
     paidAt: doc.paidAt,
+    source: doc.source || "manual",
+    customerType: doc.customerType || "b2b",
     emailed: Boolean(doc.emailedAt),
     emailError: doc.emailError || undefined,
     createdBy: creator ? { name: creator.name, email: creator.email } : undefined,
@@ -120,46 +59,64 @@ function serializeManualInvoice(doc) {
 }
 
 /* POST /api/admin/manual-invoices
-   Creates a manual B2B invoice and its PDF. Does NOT email the client — that
+   Creates a manual invoice and its PDF: an individual (B2C) one by default (name, email and
+   services — see parseB2cBody), drawn with the patient-invoice layout. A "b2b" request is
+   refused while B2B_MANUAL_INVOICES_ENABLED is false. Does NOT email the client — that
    is a separate, explicit per-invoice action (POST :id/resend-email). Open
    to superadmin, admin, and paymentadmin (see manualInvoiceAccess). Runs
    synchronously: the admin is waiting on the result of "Generate Invoice". */
 router.post("/", verifyAdminToken, manualInvoiceAccess, async (req, res) => {
   try {
-    const clientName = String(req.body.name || "").trim();
-    const clientEmail = String(req.body.email || "").trim().toLowerCase();
-    const companyName = String(req.body.companyName || "").trim();
-    const registrationNumber = String(req.body.registrationNumber || "").trim();
-    const address = String(req.body.address || "").trim();
-    const country = String(req.body.country || "").trim();
-    const postalCode = String(req.body.postalCode || "").trim();
-    const paymentTerms = String(req.body.paymentTerms || "").trim() || "Due on Receipt";
-    // description is now the optional free-text "Notes" field, not a
-    // required line-item description — the itemized lines below carry that.
-    const description = String(req.body.description || "").trim();
+    const customerType = req.body.customerType === "b2b" ? "b2b" : "b2c";
+    if (customerType === "b2b" && !B2B_MANUAL_INVOICES_ENABLED) {
+      return res.status(400).json({ msg: "Business invoices are not enabled yet." });
+    }
+
+    if (customerType === "b2c") {
+      // Only a name, an email, services and due/paid are read; company, address, terms, due date,
+      // partner and currency are ignored. No payment link is created.
+      const parsed = parseB2cBody(req.body);
+      if (parsed.error) return res.status(400).json({ msg: parsed.error });
+      const status = req.body.status === "paid" ? "paid" : "due";
+      const invoice = await createManualInvoice({
+        createdBy: req.user.id,
+        partner: null,
+        ...parsed.details,
+        // The optional internal note, kept in `description`; the consultation layout does not print it.
+        description: String(req.body.note || "").trim().slice(0, 250),
+        dueDate: null,
+        items: parsed.items,
+        amountCents: parsed.amountCents,
+        currency: "usd",
+        status,
+        paymentMethod: status === "paid" ? "Received" : "",
+        source: "manual",
+        customerType: "b2c",
+      });
+      return res.status(201).json({ invoice: serializeManualInvoice(invoice) });
+    }
+
+    // B2B: disabled for now, re-enable later. Do not delete.
+    const { details, error: detailsError } = parseBillingDetails(req.body);
+    if (detailsError) {
+      return res.status(400).json({ msg: detailsError });
+    }
+    const {
+      clientName,
+      clientEmail,
+      companyName,
+      registrationNumber,
+      address,
+      country,
+      postalCode,
+      paymentTerms,
+      description,
+    } = details;
     const status = req.body.status === "paid" ? "paid" : "due";
     const paymentMethod = String(req.body.paymentMethod || "").trim();
     const rawCurrency = String(req.body.currency || "usd").trim().toLowerCase();
     const currency = ALLOWED_CURRENCIES.includes(rawCurrency) ? rawCurrency : "usd";
-
-    if (!clientName || !clientEmail) {
-      return res.status(400).json({ msg: "Name and email are required." });
-    }
-    if (!EMAIL_RE.test(clientEmail)) {
-      return res.status(400).json({ msg: "Enter a valid client email address." });
-    }
-    if (
-      clientName.length > MAX_LENGTHS.clientName ||
-      clientEmail.length > MAX_LENGTHS.clientEmail ||
-      description.length > MAX_LENGTHS.description ||
-      paymentMethod.length > MAX_LENGTHS.paymentMethod ||
-      companyName.length > MAX_LENGTHS.companyName ||
-      registrationNumber.length > MAX_LENGTHS.registrationNumber ||
-      address.length > MAX_LENGTHS.address ||
-      country.length > MAX_LENGTHS.country ||
-      postalCode.length > MAX_LENGTHS.postalCode ||
-      paymentTerms.length > MAX_LENGTHS.paymentTerms
-    ) {
+    if (paymentMethod.length > MAX_LENGTHS.paymentMethod) {
       return res.status(400).json({ msg: "One or more fields exceed the allowed length." });
     }
 
@@ -332,8 +289,11 @@ router.patch("/:id/mark-paid", verifyAdminToken, manualInvoiceAccess, async (req
     const query = { _id: req.params.id };
     if (req.user.role === "paymentadmin") query.createdBy = req.user.id;
 
-    const existing = await ManualInvoice.findOne(query).select("_id status").lean();
+    const existing = await ManualInvoice.findOne(query).select("_id status paymentLink").lean();
     if (!existing) return res.status(404).json({ msg: "Invoice not found." });
+    if (existing.paymentLink) {
+      return res.status(400).json({ msg: "This invoice is settled automatically when the payment link is paid." });
+    }
     if (existing.status === "paid") {
       return res.status(400).json({ msg: "Invoice is already marked as paid." });
     }
@@ -359,10 +319,13 @@ router.post("/:id/resend-email", verifyAdminToken, manualInvoiceAccess, async (r
     const query = { _id: req.params.id };
     if (req.user.role === "paymentadmin") query.createdBy = req.user.id;
 
-    const existing = await ManualInvoice.findOne(query).select("_id").lean();
+    const existing = await ManualInvoice.findOne(query).select("_id paymentLink").lean();
     if (!existing) return res.status(404).json({ msg: "Invoice not found." });
 
-    const invoice = await resendManualInvoiceEmail({ invoiceId: existing._id });
+    const invoice = await resendManualInvoiceEmail({
+      invoiceId: existing._id,
+      payUrl: await payUrlForInvoice(req, existing),
+    });
     res.json({ invoice: serializeManualInvoice(invoice) });
   } catch (err) {
     console.error("resend manual invoice email error:", err.message);

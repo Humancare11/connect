@@ -50,8 +50,8 @@ describe("admin doctor export", () => {
       }
       return d;
     };
-    await mk("Old", new Date("2026-01-01"), { approvalStatus: "approved", state: "Kerala", country: "India" });
-    await mk("Newest", new Date("2026-03-01"), { approvalStatus: "approved" });
+    await mk("Old", new Date("2026-01-01"), { approvalStatus: "approved", state: "Kerala", country: "India", specialization: "Dermatology" });
+    await mk("Newest", new Date("2026-03-01"), { approvalStatus: "approved", specialization: "Cardiology" });
     await mk("Pending", new Date("2026-02-01"), { approvalStatus: "pending" });
     await mk("Disabled", new Date("2026-02-15"), { approvalStatus: "approved" }, { accountDisabled: true });
     await mk("Fresh", new Date("2026-02-20"), null);
@@ -116,13 +116,34 @@ describe("admin doctor export", () => {
     assert.deepEqual(data.map((r) => r[headers.indexOf("Name")]), ["Newest Doc", "Old Doc"]);
   });
 
-  test("basic export has exactly the 5 columns, with full country and state names", async () => {
+  test("basic export has exactly the 6 columns, with full country and state names and Specialization last", async () => {
     const { headers, data } = await sheet(await get("?type=active&fields=basic"));
-    assert.deepEqual(headers, ["Name", "Phone Number", "Email", "Country", "State"]);
-    assert.ok(data.every((r) => r.length === 5));
+    assert.deepEqual(headers, ["Name", "Phone Number", "Email", "Country", "State", "Specialization"]);
+    assert.ok(data.every((r) => r.length === 6));
     // "Newest" is stored as legacy codes IN / KL; "Old" as full names.
-    assert.deepEqual(data[0], ["Newest Doc", "+91 9876543210", "newest@x.co", "India", "Kerala"]);
-    assert.deepEqual(data[1].slice(3), ["India", "Kerala"]);
+    assert.deepEqual(data[0], ["Newest Doc", "+91 9876543210", "newest@x.co", "India", "Kerala", "Cardiology"]);
+    assert.deepEqual(data[1].slice(3), ["India", "Kerala", "Dermatology"]);
+  });
+
+  test("Specialization is exported as stored (plain text) in basic and full; blank when not set; Sub-specialization stays out of basic", async () => {
+    const mk = (name, extra) =>
+      Doctor.create({ name, email: `${name.toLowerCase()}@spec.co`, password: "x" }).then((d) =>
+        Enrollment.create({ doctorId: d._id, firstName: name, surname: "Spec", approvalStatus: "approved", ...extra }));
+    await mk("Custom", { specialization: "Sports Medicine", subSpecialization: "Knee" });
+    await mk("Blank", {});
+    for (const qs of ["?type=active&fields=basic", "?type=active&fields=full", "?type=all&fields=full"]) {
+      const { headers, data } = await sheet(await get(qs));
+      const n = headers.indexOf("Name"), s = headers.indexOf("Specialization");
+      assert.ok(s >= 0, `${qs} has a Specialization column`);
+      const by = Object.fromEntries(data.map((r) => [r[n], r[s]]));
+      assert.equal(by["Custom Spec"], "Sports Medicine", qs);
+      assert.equal(by["Newest Doc"], "Cardiology", qs);
+      assert.ok(by["Blank Spec"] == null || by["Blank Spec"] === "", qs);
+      if (qs.includes("basic")) assert.equal(headers.includes("Sub-specialization"), false);
+      else assert.equal(headers.includes("Sub-specialization"), true);
+    }
+    const basic = await sheet(await get("?type=active&fields=basic"));
+    assert.equal(basic.headers[basic.headers.length - 1], "Specialization", "last column");
   });
 
   test("state codes resolve per country, names are kept, unknown values fall back to the original", async () => {

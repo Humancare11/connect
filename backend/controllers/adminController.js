@@ -10,6 +10,7 @@ const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { recordActivity } = require("../utils/activityLogger");
 const { sendDoctorApprovalEmail } = require("../utils/sendEmail");
+const { notifyAdminDoctorDecision } = require("../utils/adminNotifications");
 const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
 const deletionHistory = require("../utils/accountDeletionHistory");
 const { randomInt } = require("crypto");
@@ -193,10 +194,12 @@ const approveDoctor = async (req, res) => {
 
     const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
     const wasApproved = enrollment.approvalStatus === "approved";
+    const decidedFrom = enrollment.updatedAt ? new Date(enrollment.updatedAt).getTime() : 0;
 
     if (isProfileUpdateRequest) {
       (enrollment.pendingProfileChanges || []).forEach((change) => {
-        if (change?.field) enrollment.set(change.field, change.newValue);
+        // email is the login identity and only changes via the OTP flow.
+        if (change?.field && change.field !== "email") enrollment.set(change.field, change.newValue);
       });
       enrollment.markModified("languagesKnown");
       enrollment.markModified("licensedStates");
@@ -258,6 +261,10 @@ const approveDoctor = async (req, res) => {
     }
 
     res.status(200).json({ msg: "Doctor approved", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
+    // In-app admin notification for a genuine first approval, after the response: never throws.
+    if (!isProfileUpdateRequest && !wasApproved) {
+      void notifyAdminDoctorDecision({ enrollment, doctor: enrollment.doctorId, decision: "approved", decidedFrom });
+    }
   } catch (error) {
     console.error("approveDoctor error:", error);
     res.status(500).json({ msg: "Failed to approve doctor" });
@@ -271,6 +278,8 @@ const rejectDoctor = async (req, res) => {
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
     const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
+    const wasRejected = enrollment.approvalStatus === "rejected";
+    const decidedFrom = enrollment.updatedAt ? new Date(enrollment.updatedAt).getTime() : 0;
     if (isProfileUpdateRequest) {
       const snapshot = enrollment.profileUpdateSnapshot || {};
       Object.entries(snapshot).forEach(([field, value]) => {
@@ -318,6 +327,10 @@ const rejectDoctor = async (req, res) => {
       msg: isProfileUpdateRequest ? "Profile update rejected. Previous approved profile restored." : "Doctor rejected",
       enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()),
     });
+    // In-app admin notification for a genuine rejection, after the response: never throws.
+    if (!isProfileUpdateRequest && !wasRejected) {
+      void notifyAdminDoctorDecision({ enrollment, decision: "rejected", decidedFrom });
+    }
   } catch (error) {
     console.error("rejectDoctor error:", error);
     res.status(500).json({ msg: "Failed to reject doctor" });
@@ -393,6 +406,26 @@ const getAllUsers = async (req, res) => {
   try {
     // The password hash is read only to tell how each account was created
     // (see utils/signupMethod.js); toAdminUser removes it before responding.
+    // Optional server-side search + paging (used by pickers such as Medical Reports): send
+    // `limit` (and optionally `page`, `q`) to get { users, total, page, totalPages } with only
+    // the fields a picker needs. Without `limit` the response is the full array, as before.
+    if (req.query.limit !== undefined) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+      const filter = { role: "user" };
+      const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
+      if (q) {
+        const pattern = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        filter.$or = [{ name: pattern }, { email: pattern }, { mobile: pattern }];
+        if (/^\d{5}$/.test(q)) filter.$or.push({ patientId: Number(q) });
+      }
+      const [rows, total] = await Promise.all([
+        User.find(filter).select("name email mobile patientId").sort({ name: 1 }).skip((page - 1) * limit).limit(limit).lean(),
+        User.countDocuments(filter),
+      ]);
+      return res.status(200).json({ users: rows, total, page, limit, totalPages: Math.ceil(total / limit) || 1 });
+    }
+
     const users = (await User.find({ role: "user" }).sort({ createdAt: -1 }).lean()).map(toAdminUser);
 
     if (users.length >= 100) {

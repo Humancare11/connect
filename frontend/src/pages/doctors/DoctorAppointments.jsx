@@ -58,6 +58,33 @@ export default function DoctorAppointments() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Opens the certificate preview/download page for this appointment's
+  // certificate. The list endpoint doesn't carry certificates, so look it up
+  // from the patient history (the same source the preview page falls back to).
+  const viewCertificate = async (appt) => {
+    const patientId = appt.patientId?._id;
+    if (!patientId) return;
+    try {
+      const res = await api.get(`/api/medical/patients/${patientId}/history`);
+      const certs = (res.data.certificates || []).filter(
+        (c) => (c.appointmentId?._id || c.appointmentId) === appt._id,
+      );
+      if (certs.length === 0) {
+        showToast("No certificate has been issued for this appointment yet.", false);
+        return;
+      }
+      navigate(`/doctor-dashboard/patients/${patientId}/certificates/${certs[0]._id}`, {
+        state: {
+          cert: certs[0],
+          patient: appt.patientId,
+          doctorEnrollment: res.data.doctorEnrollment,
+        },
+      });
+    } catch {
+      showToast("Could not load the certificate.", false);
+    }
+  };
+
   useEffect(() => {
     api
       .get("/api/appointments/doctor")
@@ -396,6 +423,20 @@ export default function DoctorAppointments() {
                                 >
                                   <FiAward aria-hidden="true" />
                                   Certificate
+                                </button>
+                            ),
+                            ["assigned", "confirmed", "complete", "completed"].includes(appt.status) && (
+                                <button
+                                  key="view-cert"
+                                  type="button"
+                                  className="da-btn da-btn--rx"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    viewCertificate(appt);
+                                  }}
+                                >
+                                  <FiAward aria-hidden="true" />
+                                  View Cert
                                 </button>
                             ),
 

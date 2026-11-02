@@ -56,11 +56,29 @@ const manualInvoiceSchema = new mongoose.Schema(
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     emailedAt: { type: Date, default: null },
     emailError: { type: String, default: "" },
+    // "payment_link" = created alongside a Payment Link (see
+    // utils/paymentLinkInvoice.js); it is settled by the Stripe payment, never
+    // by the manual "Mark as Paid" action.
+    source: { type: String, enum: ["manual", "payment_link"], default: "manual" },
+    // "b2c" invoices (payment links for an individual) are drawn with the
+    // patient consultation layout and emailed with the patient-style template;
+    // everything else is "b2b".
+    customerType: { type: String, enum: ["b2c", "b2b"], default: "b2b" },
+    paymentLink: { type: mongoose.Schema.Types.ObjectId, ref: "PaymentLink", default: null },
+    // Stripe PaymentIntent id once a payment-link invoice has been paid.
+    gatewayReference: { type: String, default: "" },
   },
   { timestamps: true }
 );
 
 manualInvoiceSchema.index({ createdBy: 1, createdAt: -1 });
+manualInvoiceSchema.index({ source: 1, createdAt: -1 });
+// One invoice per payment link; only documents that actually carry a link are
+// indexed, so the (many) manual invoices with paymentLink: null never collide.
+manualInvoiceSchema.index(
+  { paymentLink: 1 },
+  { unique: true, partialFilterExpression: { paymentLink: { $type: "objectId" } } }
+);
 manualInvoiceSchema.index({ status: 1, createdAt: -1 });
 
 module.exports = mongoose.model("ManualInvoice", manualInvoiceSchema);

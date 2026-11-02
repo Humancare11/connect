@@ -131,7 +131,7 @@ function ProgressCell({ progress }) {
 const EXPORT_OPTIONS = [
   { label: "All Doctors", type: "all", fields: "full" },
   { label: "Active Doctors → Full Data", type: "active", fields: "full" },
-  { label: "Active Doctors → Basic (Name, Number, Email, State)", type: "active", fields: "basic" },
+  { label: "Active Doctors → Basic (Name, Number, Email, Country, State, Specialization)", type: "active", fields: "basic" },
 ];
 
 // Super Admin only (the server enforces it too). Downloads an .xlsx built by the backend.

@@ -121,3 +121,26 @@
     font-size: 12px;
   }
 }
+
+.cnp-root,
+.cnp-list,
+.cnp-item {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cnp-item-date,
+.cnp-item-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .cnp-item-head {
+    align-items: flex-start;
+  }
+
+  .cnp-item-content {
+    line-height: 1.6;
+  }
+}

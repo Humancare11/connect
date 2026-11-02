@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import { useAdmin } from "../../context/AdminContext";
+import { InvoiceCell } from "./PaymentLinkInvoice";
+import { useInvoiceActions } from "./paymentLinkInvoiceActions";
 import "./PaymentLinks.css";
 
 const SUPPORTED_CURRENCIES = ["USD"];
@@ -50,6 +52,7 @@ export default function PaymentLinkHistory() {
     startDate: "",
     endDate: "",
     status: "",
+    emailStatus: "",
     createdBy: "",
     currency: "",
     amountMin: "",
@@ -92,8 +95,10 @@ export default function PaymentLinkHistory() {
   };
 
   const resetFilters = () => {
-    setFilters({ startDate: "", endDate: "", status: "", createdBy: "", currency: "", amountMin: "", amountMax: "", q: "" });
+    setFilters({ startDate: "", endDate: "", status: "", emailStatus: "", createdBy: "", currency: "", amountMin: "", amountMax: "", q: "" });
   };
+
+  const actions = useInvoiceActions(() => fetchLinks());
 
   const copyLink = async (url) => {
     await navigator.clipboard.writeText(url);
@@ -134,6 +139,14 @@ export default function PaymentLinkHistory() {
             <option value="pending">Pending</option>
             <option value="paid">Paid</option>
             <option value="expired">Expired</option>
+          </select>
+        </label>
+        <label>
+          <span>Email</span>
+          <select value={filters.emailStatus} onChange={(event) => setFilter("emailStatus", event.target.value)}>
+            <option value="">All</option>
+            <option value="sent">Sent</option>
+            <option value="unsent">Not sent</option>
           </select>
         </label>
         {isSuperAdmin && (
@@ -197,6 +210,7 @@ export default function PaymentLinkHistory() {
                   <th>Note</th>
                   <th>Payment Admin Name</th>
                   <th>Card Details</th>
+                  <th>Invoice</th>
                   <th>Payment Link</th>
                 </tr>
               </thead>
@@ -215,6 +229,7 @@ export default function PaymentLinkHistory() {
                       </div>
                     </td>
                     <td>{cardLabel(link.cardDetails)}</td>
+                    <td><InvoiceCell link={link} actions={actions} /></td>
                     <td>
                       <button className="pl-link-btn" type="button" onClick={() => copyLink(link.url)}>
                         Copy

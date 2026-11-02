@@ -5,6 +5,7 @@ const {
   getDoctorPatients, getPatientHistory,
   createPrescription, createMedicalCertificate,
   getMyPrescriptions, getMyMedicalCertificates,
+  getMyMedicalReports, downloadMyMedicalReport,
 } = require("../controllers/medicalController");
 
 // Doctor routes
@@ -16,5 +17,7 @@ router.post("/certificates",               verifyDoctorToken, createMedicalCerti
 // Patient routes
 router.get("/my-prescriptions", verifyUserToken, getMyPrescriptions);
 router.get("/my-certificates",  verifyUserToken, getMyMedicalCertificates);
+router.get("/my-reports",       verifyUserToken, getMyMedicalReports);
+router.get("/my-reports/:id/download", verifyUserToken, downloadMyMedicalReport);
 
 module.exports = router;

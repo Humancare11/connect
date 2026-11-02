@@ -1,0 +1,96 @@
+/* MedicalReports.css — Admin > Documents > Medical Report. Same navy/blue tokens as GOP.css, own namespace. */
+
+.mrp-page {
+  --mrp-ink: #1a1a1a;
+  --mrp-muted: #6b7280;
+  --mrp-line: #dcdfe5;
+  --mrp-navy: #16305e;
+  --mrp-blue: #2f6cb0;
+  --mrp-blue-soft: #eaf1fa;
+  --mrp-danger: #b42318;
+  --mrp-danger-soft: #fdf0f0;
+  --mrp-warn: #92400e;
+  --mrp-warn-soft: #fef3c7;
+  --mrp-ok: #0f766e;
+  --mrp-ok-soft: #ccfbf1;
+
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 16px 80px;
+  box-sizing: border-box;
+  color: var(--mrp-ink);
+  font-family: var(--font-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mrp-header { display: flex; gap: 12px; align-items: center; color: var(--mrp-navy); margin-bottom: 18px; }
+.mrp-title { margin: 0; font-size: 22px; }
+.mrp-sub { margin: 2px 0 0; color: var(--mrp-muted); }
+
+.mrp-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--mrp-line); margin-bottom: 16px; }
+.mrp-tab { background: none; border: 0; padding: 10px 16px; cursor: pointer; font: inherit; color: var(--mrp-muted); border-bottom: 2px solid transparent; }
+.mrp-tab.is-active { color: var(--mrp-navy); border-bottom-color: var(--mrp-navy); font-weight: 600; }
+
+.mrp-card { background: #fff; border: 1px solid var(--mrp-line); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+.mrp-label, .mrp-sublabel { font-weight: 600; color: var(--mrp-navy); margin-top: 10px; display: block; padding: 0; }
+.mrp-sublabel { font-weight: 500; font-size: 13px; margin-top: 8px; }
+.mrp-input { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid var(--mrp-line); border-radius: 4px; font: inherit; background: #fff; color: var(--mrp-ink); }
+.mrp-input:focus { outline: 2px solid var(--mrp-blue); outline-offset: 0; border-color: var(--mrp-blue); }
+.mrp-textarea { resize: vertical; min-height: 64px; }
+.mrp-row { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+.mrp-muted { color: var(--mrp-muted); font-size: 12.5px; }
+.mrp-link { background: none; border: 0; color: var(--mrp-blue); cursor: pointer; font: inherit; }
+
+.mrp-picker { position: relative; }
+.mrp-dropdown { position: absolute; z-index: 20; left: 0; right: 0; top: 100%; margin-top: 4px; background: #fff; border: 1px solid var(--mrp-line); border-radius: 4px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); max-height: 300px; overflow-y: auto; }
+.mrp-option { display: flex; flex-direction: column; width: 100%; text-align: left; padding: 9px 12px; background: none; border: 0; border-bottom: 1px solid #f0f1f4; cursor: pointer; font: inherit; }
+.mrp-option:hover, .mrp-option:focus-visible { background: var(--mrp-blue-soft); }
+.mrp-more { width: 100%; padding: 9px; background: none; border: 0; color: var(--mrp-blue); cursor: pointer; font: inherit; }
+.mrp-empty { padding: 14px; color: var(--mrp-muted); text-align: center; }
+.mrp-picked { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: var(--mrp-blue-soft); border: 1px solid #bcd3ee; border-radius: 4px; }
+
+.mrp-modes { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.mrp-mode { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--mrp-line); border-radius: 4px; cursor: pointer; }
+.mrp-mode.is-active { border-color: var(--mrp-navy); background: var(--mrp-blue-soft); }
+
+.mrp-sections { border: 0; padding: 0; margin: 6px 0 0; }
+.mrp-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.mrp-error { margin-top: 10px; padding: 10px 12px; background: var(--mrp-danger-soft); color: var(--mrp-danger); border-radius: 4px; }
+
+.mrp-btn { padding: 7px 14px; border: 1px solid var(--mrp-line); border-radius: 4px; background: #fff; color: var(--mrp-navy); cursor: pointer; font: inherit; }
+.mrp-btn:hover:not(:disabled) { background: var(--mrp-blue-soft); }
+.mrp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.mrp-btn--primary { align-self: flex-start; margin-top: 14px; padding: 10px 22px; background: var(--mrp-navy); border-color: var(--mrp-navy); color: #fff; }
+.mrp-btn--primary:hover:not(:disabled) { background: #0f2447; }
+.mrp-btn--danger { color: var(--mrp-danger); border-color: #f1c0bb; }
+.mrp-btn--danger:hover:not(:disabled) { background: var(--mrp-danger-soft); }
+
+.mrp-filters { display: grid; grid-template-columns: 2fr 1fr auto; gap: 12px; align-items: center; margin-bottom: 12px; }
+.mrp-filters .mrp-check { margin: 0; white-space: nowrap; }
+.mrp-table-wrap { overflow-x: auto; }
+.mrp-table { width: 100%; border-collapse: collapse; }
+.mrp-table th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mrp-muted); padding: 8px; border-bottom: 1px solid var(--mrp-line); }
+.mrp-table td { padding: 10px 8px; border-bottom: 1px solid #f0f1f4; vertical-align: top; }
+.mrp-table tr.is-deleted td { opacity: 0.6; }
+.mrp-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.mrp-pager { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+
+.mrp-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.mrp-badge--active { background: var(--mrp-ok-soft); color: var(--mrp-ok); }
+.mrp-badge--voided { background: var(--mrp-warn-soft); color: var(--mrp-warn); }
+.mrp-badge--deleted { background: #e5e7eb; color: #374151; }
+
+.mrp-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+.mrp-modal { background: #fff; border-radius: 8px; padding: 22px; width: 100%; max-width: 440px; }
+.mrp-modal--wide { max-width: 640px; max-height: 88vh; overflow-y: auto; }
+.mrp-detail-text { margin: 2px 0 6px; white-space: pre-wrap; }
+.mrp-table--compact td, .mrp-table--compact th { padding: 5px 6px; font-size: 13px; }
+.mrp-modal-title { margin: 0 0 8px; color: var(--mrp-navy); font-size: 18px; }
+.mrp-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+@media (max-width: 720px) {
+  .mrp-row, .mrp-filters { grid-template-columns: 1fr; }
+  .mrp-actions { justify-content: flex-start; }
+}

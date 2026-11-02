@@ -446,6 +446,25 @@ table.rx-med-table tbody tr {
   .rx-patient-panel {
     margin: 0 24px 20px;
   }
+
+  .rx-med-heading,
+  .rx-symbol,
+  .rx-field-row,
+  .rx-ribbon-wrap,
+  .rx-physician-grid {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+
+  .rx-ribbon-underline {
+    margin: 0 24px;
+  }
+
+  /* Medication table stays a normal full-width table here */
+  table.rx-med-table {
+    width: calc(100% - 48px);
+    margin: 0 24px 20px;
+  }
 }
 
 /* -- Mobile Medium (=640px) -- */
@@ -473,6 +492,67 @@ table.rx-med-table tbody tr {
   .rx-patient-panel {
     margin: 0 14px 18px;
   }
+
+  .rx-patient-row-triple {
+    grid-template-columns: 1fr;
+  }
+
+  .rx-patient-row-triple .rx-patient-cell {
+    border-right: none;
+    border-bottom: 1.5px solid var(--line);
+  }
+
+  .rx-patient-row-triple .rx-patient-cell:last-child {
+    border-bottom: none;
+  }
+
+  .rx-patient-cell {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+
+  .rx-value {
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  .rx-med-heading,
+  .rx-symbol,
+  .rx-field-row,
+  .rx-ribbon-wrap,
+  .rx-physician-grid {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+
+  .rx-ribbon-underline {
+    margin: 0 14px;
+  }
+
+  .rx-field-row .value {
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  table.rx-med-table {
+    width: calc(100% - 28px);
+    margin: 0 14px 18px;
+  }
+
+  .rx-physician-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rx-footer {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    justify-content: center;
+  }
+
+  .rx-contact-lines {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
 }
 
 /* -- Mobile Small (=420px) -- */
@@ -492,4 +572,28 @@ table.rx-med-table tbody tr {
   .rx-patient-panel {
     margin: 0 10px 14px;
   }
+}
+
+/* -- Narrow phones: the medication columns (~500px) no longer fit, so the
+   table scrolls sideways inside the slip instead of being clipped. -- */
+@media (max-width: 560px) {
+  table.rx-med-table {
+    display: block;
+    width: auto;
+    max-width: calc(100% - 28px);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Certificate-style layout (certStyle prop): fixed A4 page, no card chrome. */
+.rx-slip-wrapper--cert {
+  padding: 0;
+}
+
+.rx-slip.rx-slip--cert {
+  width: 794px;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
 }

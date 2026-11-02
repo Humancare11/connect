@@ -186,12 +186,6 @@ const SPECIALTY_DATA = {
       path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
     },
     {
-      Icon: FiWind,
-      name: "Bacterial Vaginosis",
-      desc: "Diagnosis and treatment guidance",
-      path: "/women-health/obstetrics-and-gynaecology/bacterial-vaginosis",
-    },
-    {
       Icon: FiHeart,
       name: "Menstrual Cramps",
       desc: "Relief and management of period pain",
@@ -205,12 +199,6 @@ const SPECIALTY_DATA = {
     },
     {
       Icon: FiActivity,
-      name: "Prenatal Consultation",
-      desc: "Virtual prenatal care and guidance",
-      path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",
-    },
-    {
-      Icon: FiShield,
       name: "Prenatal Consultation",
       desc: "Virtual prenatal care and guidance",
       path: "/women-health/obstetrics-and-gynaecology/prenatal-consultation",

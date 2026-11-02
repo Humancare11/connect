@@ -1,5 +1,6 @@
 const { recordActivity, getIp } = require("./activityLogger");
 const { revokeUserSessions } = require("./tokenRevocation");
+const { notifyAdminRepeatedFailedLogins, notifyAdminCriticalSecurityEvent } = require("./adminNotifications");
 
 const ALERT_RECIPIENTS = (process.env.SECURITY_ALERT_EMAILS || "")
   .split(",")
@@ -59,6 +60,11 @@ async function recordSecurityEvent(req, opts) {
       await revokeUserSessions(userId, "suspicious_activity");
     }
 
+    // In-app admin alert for critical events only. Never throws, deduplicated per type/account/hour.
+    if (severity === "critical") {
+      void notifyAdminCriticalSecurityEvent({ type, title, userId, userRole, hourBucket: Math.floor(Date.now() / (60 * 60 * 1000)) });
+    }
+
     return { type, severity, title, userId, userEmail, userRole };
   } catch (err) {
     console.error("[SecurityEvent] Failed to record security event:", err.message);
@@ -76,6 +82,11 @@ async function recordFailedLogin(req, { email, userId, userRole, portal }) {
     const attempts = failedLoginAttempts.get(key) || [];
     attempts.push(now);
     failedLoginAttempts.set(key, attempts);
+  }
+
+  // Same threshold as the "Multiple failed login attempts" severity below.
+  if (recentCount >= 4) {
+    void notifyAdminRepeatedFailedLogins({ portal, windowStart: Math.floor(now / FAILED_LOGIN_WINDOW_MS) * FAILED_LOGIN_WINDOW_MS });
   }
 
   return recordSecurityEvent(req, {

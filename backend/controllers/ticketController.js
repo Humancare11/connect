@@ -3,6 +3,7 @@ const Ticket     = require("../models/Ticket");
 const UserTicket = require("../models/UserTicket");
 const Doctor     = require("../models/Doctor");
 const User       = require("../models/User");
+const { notifyAdminSupportTicketCreated } = require("../utils/adminNotifications");
 
 // Create a ticket (for doctors)
 const createTicket = async (req, res) => {
@@ -28,6 +29,8 @@ const createTicket = async (req, res) => {
       message: "Ticket created successfully.",
       ticket,
     });
+    // In-app admin notification, after the response: never throws, deduplicated per ticket.
+    void notifyAdminSupportTicketCreated({ ticket, source: "doctor" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error." });
@@ -116,6 +119,8 @@ const createUserTicket = async (req, res) => {
     }
 
     res.status(201).json({ message: "Ticket submitted successfully.", ticket });
+    // In-app admin notification, after the response: never throws, deduplicated per ticket.
+    void notifyAdminSupportTicketCreated({ ticket, source: "patient" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error." });
