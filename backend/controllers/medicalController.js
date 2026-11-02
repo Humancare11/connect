@@ -5,6 +5,10 @@ const Enrollment         = require("../models/Enrollment");
 const CategoryConsultation = require("../models/CategoryConsultation");
 const { recordActivity }       = require("../utils/activityLogger");
 const { sendPushToUser }       = require("../utils/pushNotifications");
+const MedicalReport            = require("../models/MedicalReport");
+const mongoose                 = require("mongoose");
+const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
+const { serializeReport, logReportAccess } = require("../utils/medicalReportService");
 const { encryptPHI, decryptPHI } = require("../utils/phiCrypto");
 const { ensureDoctorAppointment } = require("../utils/doctorAppointmentAccess");
 const { loadAppointmentAny, completeLoaded } = require("../utils/appointmentLifecycle");
@@ -410,6 +414,57 @@ const getMyPrescriptions = async (req, res) => {
   }
 };
 
+// ── Patient: get own admin-issued medical reports ────────────────────────────
+// Soft-deleted reports are never returned. Voided ones are returned (flagged) so the
+// patient sees "Voided" instead of a report silently vanishing. Metadata only; the
+// clinical content is in the PDF, fetched through the download route below.
+const getMyMedicalReports = async (req, res) => {
+  try {
+    const reports = await MedicalReport.find({ patientId: req.user.id, isDeleted: { $ne: true } })
+      .sort({ reportDate: -1, createdAt: -1 })
+      .lean();
+
+    await recordActivity(req, {
+      action: "PHI_VIEW_MEDICAL_REPORTS",
+      resource: "MedicalReport",
+      patientId: req.user.id,
+      details: { count: reports.length },
+    });
+
+    res.status(200).json(reports.map((r) => serializeReport(r)));
+  } catch (err) {
+    console.error("getMyMedicalReports error:", err);
+    res.status(500).json({ msg: "Failed to fetch medical reports." });
+  }
+};
+
+// Ownership is part of the query, so another patient's id gets the same 404 as a missing one.
+const downloadMyMedicalReport = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ msg: "Report not found." });
+    const report = await MedicalReport.findOne({
+      _id: req.params.id,
+      patientId: req.user.id,
+      isDeleted: { $ne: true },
+    }).select("pdfKey status reportNumber").lean();
+    if (!report) return res.status(404).json({ msg: "Report not found." });
+    if (report.status === "voided") return res.status(403).json({ msg: "This report has been voided." });
+
+    const signed = await createS3PresignedGetUrl(report.pdfKey, { expiresIn: 300 });
+    await logReportAccess(report._id, req.user, "download");
+    await recordActivity(req, {
+      action: "PHI_DOWNLOAD_MEDICAL_REPORT",
+      resource: "MedicalReport",
+      resourceId: report._id,
+      patientId: req.user.id,
+    });
+    res.status(200).json({ url: signed.url, reportNumber: report.reportNumber, expiresAt: signed.expiresAt });
+  } catch (err) {
+    console.error("downloadMyMedicalReport error:", err);
+    res.status(500).json({ msg: "Failed to generate download link." });
+  }
+};
+
 // ── Patient: get own certificates ────────────────────────────────────────────
 const getMyMedicalCertificates = async (req, res) => {
   try {
@@ -455,4 +510,6 @@ module.exports = {
   createMedicalCertificate,
   getMyPrescriptions,
   getMyMedicalCertificates,
+  getMyMedicalReports,
+  downloadMyMedicalReport,
 };

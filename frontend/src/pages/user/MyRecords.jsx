@@ -198,6 +198,53 @@ function CertificateCard({ cert, patient }) {
   );
 }
 
+// ── Admin-issued medical report ────────────────────────────────────────────────
+// The report itself is a PDF held in private storage; the download button asks the server
+// for a short-lived link (refused for voided reports).
+
+function MedicalReportCard({ report }) {
+  const [downloading, setDownloading] = useState(false);
+  const [error,       setError]       = useState("");
+  const voided = report.status === "voided";
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError("");
+    try {
+      const res = await api.get(`/api/medical/my-reports/${report._id}/download`);
+      if (res.data?.url) window.open(res.data.url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err.response?.data?.msg || "Could not open the report. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className={`mr-card mr-card--report${voided ? " mr-card--voided" : ""}`}>
+      <div className="mr-card-top mr-card-top--static">
+        <div className="mr-card-icon">🩺</div>
+        <div className="mr-card-meta">
+          <h3 className="mr-card-title">
+            {report.title}
+            {voided && <span className="mr-voided-badge">Voided</span>}
+          </h3>
+          <p className="mr-card-sub">
+            {report.doctorName || "Humancare"} &nbsp;·&nbsp; {formatDate(report.reportDate)} &nbsp;·&nbsp; {report.reportNumber}
+          </p>
+          {voided && <p className="mr-card-sub">This report is no longer valid. A corrected report may be issued separately.</p>}
+          {error && <p className="mr-card-sub" role="alert">{error}</p>}
+        </div>
+        {!voided && (
+          <button className="mr-download-btn" onClick={handleDownload} disabled={downloading} title="View / download PDF">
+            {downloading ? "…" : "⬇ PDF"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function MyRecords() {
@@ -206,6 +253,7 @@ export default function MyRecords() {
 
   const [prescriptions,  setPrescriptions]  = useState([]);
   const [certificates,   setCertificates]   = useState([]);
+  const [reports,        setReports]        = useState([]);
   const [loading,        setLoading]        = useState(true);
   const [error,          setError]          = useState("");
   const [activeTab,      setActiveTab]      = useState("prescriptions");
@@ -214,16 +262,17 @@ export default function MyRecords() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get("tab");
-    if (tab === "certificates" || tab === "prescriptions") setActiveTab(tab);
+    if (tab === "certificates" || tab === "prescriptions" || tab === "reports") setActiveTab(tab);
   }, [location.search]);
 
   const loadRecords = useCallback(async (withLoader = false) => {
     if (withLoader) setLoading(true);
     setError("");
 
-    const [rxRes, certRes] = await Promise.allSettled([
+    const [rxRes, certRes, reportRes] = await Promise.allSettled([
       api.get("/api/medical/my-prescriptions"),
       api.get("/api/medical/my-certificates"),
+      api.get("/api/medical/my-reports"),
     ]);
 
     if (rxRes.status === "fulfilled") {
@@ -239,6 +288,8 @@ export default function MyRecords() {
     } else {
       setCertificates([]);
     }
+
+    setReports(reportRes.status === "fulfilled" && Array.isArray(reportRes.value.data) ? reportRes.value.data : []);
 
     if (withLoader) setLoading(false);
   }, []);
@@ -274,6 +325,7 @@ export default function MyRecords() {
   const tabs = [
     { key: "prescriptions", label: "Prescriptions",       icon: "💊", count: prescriptions.length },
     { key: "certificates",  label: "Medical Certificates", icon: "📄", count: certificates.length  },
+    { key: "reports",       label: "Medical Reports",      icon: "🩺", count: reports.length       },
   ];
 
   return (
@@ -297,6 +349,13 @@ export default function MyRecords() {
           <div>
             <div className="mr-summary-num">{certificates.length}</div>
             <div className="mr-summary-label">Certificates</div>
+          </div>
+        </div>
+        <div className="mr-summary-card">
+          <span className="mr-summary-icon">🩺</span>
+          <div>
+            <div className="mr-summary-num">{reports.length}</div>
+            <div className="mr-summary-label">Reports</div>
           </div>
         </div>
       </div>
@@ -330,6 +389,18 @@ export default function MyRecords() {
             {prescriptions.map((rx) => (
               <PrescriptionCard key={rx._id} rx={rx} patient={user} />
             ))}
+          </div>
+        )
+      ) : activeTab === "reports" ? (
+        reports.length === 0 ? (
+          <div className="mr-empty">
+            <div className="mr-empty-icon">🩺</div>
+            <h3>No medical reports yet</h3>
+            <p>Medical reports issued to you will appear here.</p>
+          </div>
+        ) : (
+          <div className="mr-list">
+            {reports.map((report) => <MedicalReportCard key={report._id} report={report} />)}
           </div>
         )
       ) : (

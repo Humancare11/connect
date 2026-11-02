@@ -406,6 +406,26 @@ const getAllUsers = async (req, res) => {
   try {
     // The password hash is read only to tell how each account was created
     // (see utils/signupMethod.js); toAdminUser removes it before responding.
+    // Optional server-side search + paging (used by pickers such as Medical Reports): send
+    // `limit` (and optionally `page`, `q`) to get { users, total, page, totalPages } with only
+    // the fields a picker needs. Without `limit` the response is the full array, as before.
+    if (req.query.limit !== undefined) {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+      const filter = { role: "user" };
+      const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
+      if (q) {
+        const pattern = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        filter.$or = [{ name: pattern }, { email: pattern }, { mobile: pattern }];
+        if (/^\d{5}$/.test(q)) filter.$or.push({ patientId: Number(q) });
+      }
+      const [rows, total] = await Promise.all([
+        User.find(filter).select("name email mobile patientId").sort({ name: 1 }).skip((page - 1) * limit).limit(limit).lean(),
+        User.countDocuments(filter),
+      ]);
+      return res.status(200).json({ users: rows, total, page, limit, totalPages: Math.ceil(total / limit) || 1 });
+    }
+
     const users = (await User.find({ role: "user" }).sort({ createdAt: -1 }).lean()).map(toAdminUser);
 
     if (users.length >= 100) {
