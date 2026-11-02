@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import api from "../api";
 import useModalA11y from "../hooks/useModalA11y";
 import { formatShortDate as formatDate } from "../utils/prescriptionForm";
@@ -19,6 +20,15 @@ const EMPTY_CERT = {
 export default function CertificateModal({ patient, appointments, onClose, onSaved }) {
   const certDialogRef = useRef(null);
   useModalA11y(certDialogRef, true, onClose);
+
+  // Lock the page behind the modal; restore whatever was set before on close.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
   const [form, setForm] = useState({
     ...EMPTY_CERT,
     appointmentId: appointments[0]?._id || "",
@@ -52,8 +62,11 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
     }
   };
 
-  return (
-    <div className="dp-modal-overlay" onClick={onClose}>
+  // Portalled to <body>: inside the dashboard the overlay lives in .dl-main's
+  // stacking context (z-index: 1), which is painted beneath the fixed sidebar
+  // (z-index: 50), so the sidebar covered the left of the modal.
+  return createPortal(
+    <div className="dp-modal-overlay dp-modal-overlay--fit" onClick={onClose}>
       <div ref={certDialogRef} role="dialog" aria-modal="true" aria-label="Medical certificate" className="dp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="dp-modal-header">
           <h2>Medical Certificate</h2>
@@ -63,7 +76,8 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
           </button>
         </div>
 
-        <form className="dp-modal-body" onSubmit={submit}>
+        <form className="dp-modal-form" onSubmit={submit}>
+          <div className="dp-modal-body">
           {error && <div className="dp-modal-error">{error}</div>}
 
           <label className="dp-label">Appointment</label>
@@ -125,6 +139,8 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
             rows={3}
           />
 
+          </div>
+
           <div className="dp-modal-footer">
             <button
               type="button"
@@ -143,6 +159,7 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

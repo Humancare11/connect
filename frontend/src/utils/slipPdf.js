@@ -1,9 +1,8 @@
 // Shared PDF rendering for the letterhead slips (prescription + medical
-// certificate). Captures the slip with html2canvas at a fixed layout width,
+// certificate). Captures the slip with html-to-image at a fixed layout width,
 // then lays it onto A4 pages, breaking between blocks (never through a line of
 // text or a table row) and keeping a consistent margin on every page.
 
-const CAPTURE_WINDOW_WIDTH = 1200;
 const SCALE = 2;
 const PAGE_MARGIN_PX = 24; // top/bottom margin on multi-page output (CSS px)
 const A4_RATIO = 297 / 210;
@@ -46,8 +45,8 @@ function pickBreak(blocks, from, target) {
  * @param {number} slipWidth    the slip's design width in CSS px
  */
 export async function renderSlipToPdf(element, filename, slipWidth) {
-  const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
+  const [{ toCanvas }, { default: jsPDF }] = await Promise.all([
+    import("html-to-image"),
     import("jspdf"),
   ]);
 
@@ -59,39 +58,28 @@ export async function renderSlipToPdf(element, filename, slipWidth) {
     ),
   );
 
-  let blocks = [];
+  // Page-break extents are measured on the live element. If an ancestor is
+  // scaled (preview zoom), rects are divided back down to slip CSS px.
+  const liveScale = element.getBoundingClientRect().width / slipWidth || 1;
+  const blocks = collectUnbreakable(element).map(([t, b]) => [
+    t / liveScale,
+    b / liveScale,
+  ]);
 
-  const canvas = await html2canvas(element, {
-    scale: SCALE,
-    useCORS: true,
-    allowTaint: true,
+  // html-to-image serialises the slip into an SVG <foreignObject>, so the
+  // browser's own text layout is what gets rasterised (html2canvas re-implemented
+  // text positioning and drew labels/values at inconsistent vertical offsets).
+  const canvas = await toCanvas(element, {
+    pixelRatio: SCALE,
     backgroundColor: "#ffffff",
-    logging: false,
-    // Lay the clone out at a fixed viewport so the capture doesn't depend on
-    // the browser window size (media queries, responsive reflow).
-    windowWidth: CAPTURE_WINDOW_WIDTH,
-    onclone: (clonedDoc, clonedEl) => {
-      // A modal entrance animation (scale) on an ancestor restarts in the
-      // clone and shrinks everything slightly; freeze ancestors and pin the
-      // slip to its real width.
-      for (let node = clonedEl.parentElement; node; node = node.parentElement) {
-        node.style.animation = "none";
-        node.style.transform = "none";
-      }
-      clonedEl.style.width = `${slipWidth}px`;
-      clonedEl.style.maxWidth = "none";
-      clonedEl.style.transform = "none";
-
-      // A gradient on a zero-size box crashes html2canvas; drop it there.
-      const view = clonedDoc.defaultView;
-      [clonedEl, ...clonedEl.querySelectorAll("*")].forEach((node) => {
-        if (!/gradient/.test(view.getComputedStyle(node).backgroundImage))
-          return;
-        const { width, height } = node.getBoundingClientRect();
-        if (width < 1 || height < 1) node.style.backgroundImage = "none";
-      });
-
-      blocks = collectUnbreakable(clonedEl);
+    cacheBust: false,
+    width: slipWidth,
+    style: {
+      width: `${slipWidth}px`,
+      maxWidth: "none",
+      transform: "none",
+      animation: "none",
+      margin: "0",
     },
   });
 

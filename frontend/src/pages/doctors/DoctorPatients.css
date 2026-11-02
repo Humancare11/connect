@@ -641,6 +641,56 @@
   touch-action: pan-y;
 }
 
+/* Fit-to-viewport variant (Issue Certificate): the overlay never scrolls.
+   The modal is capped to the viewport; header and footer stay put and only
+   the body scrolls, so wheel/trackpad scrolling lands on one container. */
+.dp-modal-overlay--fit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.dp-modal-overlay--fit .dp-modal {
+  margin: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dp-modal-overlay--fit .dp-modal-header {
+  flex-shrink: 0;
+}
+
+.dp-modal-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dp-modal-form .dp-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dp-modal-form .dp-modal-footer {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 16px 24px 20px;
+}
+
+@media (max-width: 640px) {
+  .dp-modal-overlay--fit {
+    padding: 10px;
+  }
+}
+
 @keyframes dp-scaleIn {
   from {
     opacity: 0;
@@ -1318,19 +1368,24 @@ select.dp-input {
   z-index: 100;
 }
 
-/* 901px–1280px: the fixed sidebar (248px + 28px margin) is still visible, so
-   keep the notes modal in the content area beside it instead of under it. */
-@media (min-width: 1025px) and (max-width: 1280px) {
+/* While the fixed sidebar is visible, keep the notes modal in the content area
+   beside it. --dl-sidebar-offset is owned by DoctorLayout.css and follows the
+   sidebar's width at every breakpoint (0px once it becomes an off-canvas
+   drawer), so no breakpoints are needed here. The modal is centred within the
+   remaining space; the dimmed backdrop still covers the whole viewport. */
+.dp-modal-overlay:has(.dp-notes-modal) {
+  padding-left: calc(var(--dl-sidebar-offset, 0px) + 12px);
+}
+
+@media (max-width: 900px) {
   .dp-modal-overlay:has(.dp-notes-modal) {
-    padding-left: 292px;
-    padding-right: 20px;
+    padding-left: 12px;
   }
 }
 
-@media (min-width: 901px) and (max-width: 1024px) {
+@media (max-width: 640px) {
   .dp-modal-overlay:has(.dp-notes-modal) {
-    padding-left: 264px;
-    padding-right: 16px;
+    padding-left: 0;
   }
 }
 

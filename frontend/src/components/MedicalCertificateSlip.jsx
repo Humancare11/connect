@@ -12,7 +12,7 @@
  *   slipRef          — ref forwarded to root div for PDF capture
  */
 
-import logoFull from "../assets/Logo.png";
+import SlipContactIcon from "./SlipContactIcon";
 import footerQr from "../assets/New-Footer-QR.jpeg";
 import footerLogo from "../assets/prescription-logo.png";
 
@@ -253,9 +253,9 @@ export function MedicalCertificateSlip({
           }}
         >
           <img
-            src={logoFull}
+            src={footerLogo}
             alt="Humancare Connect"
-            style={{ height: 54, objectFit: "contain", display: "block" }}
+            style={{ height: 68, width: "auto", objectFit: "contain", display: "block" }}
             crossOrigin="anonymous"
           />
           <div style={{ textAlign: "right" }}>
@@ -542,14 +542,15 @@ export function MedicalCertificateSlip({
           }}
         >
           {[
-            `📞 ${COMPANY.phone}`,
-            `✉️ ${COMPANY.email}`,
-            `📍 ${COMPANY.address}`,
-          ].map((line) => (
+            ["phone", COMPANY.phone],
+            ["email", COMPANY.email],
+            ["location", COMPANY.address],
+          ].map(([type, line]) => (
             <span
-              key={line}
+              key={type}
               style={{ display: "flex", alignItems: "center", gap: 7 }}
             >
+              <SlipContactIcon type={type} />
               {line}
             </span>
           ))}
