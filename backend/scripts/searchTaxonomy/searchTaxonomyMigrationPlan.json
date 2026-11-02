@@ -2,7 +2,7 @@
   "planVersion": 1,
   "dryRun": true,
   "executed": false,
-  "generatedAt": "2026-10-13T12:13:04.493Z",
+  "generatedAt": "2026-11-02T07:47:49.642Z",
   "generator": "backend/scripts/searchTaxonomy/prepareSearchTaxonomyMigration.js",
   "sources": {
     "searchIndex": {
@@ -11,8 +11,8 @@
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "b3f6189c1b6b9b52ee658ff1ef356e99d3a7126ac45994f1c7437468462f8a4a",
-      "staticRoutes": 384,
+      "sha256": "ce4b5a2f609a46146fe7ad11877185ba6bb049fd67fce9ecf1ac0b63ef4a4064",
+      "staticRoutes": 385,
       "duplicateDeclarations": []
     },
     "decisions": {
@@ -384,9 +384,9 @@
   },
   "doctors": {
     "summary": {
-      "approvedEnrollments": 34,
-      "linkedDoctorAccounts": 33,
-      "publicDoctors": 33,
+      "approvedEnrollments": 38,
+      "linkedDoctorAccounts": 37,
+      "publicDoctors": 37,
       "approvedWithoutDoctorAccount": 1,
       "disabledAccounts": 0,
       "unlinkedBySpecialization": {
@@ -396,8 +396,8 @@
     "specializationMapping": [
       {
         "specialization": "General Practice",
-        "approvedEnrollments": 14,
-        "publicDoctors": 14,
+        "approvedEnrollments": 17,
+        "publicDoctors": 17,
         "mappedSpecialty": "General Physician",
         "mappingType": "APPROVED_MAPPING",
         "specialtyStatus": "LIVE_ACTIVE"
@@ -412,8 +412,8 @@
       },
       {
         "specialization": "Cardiology",
-        "approvedEnrollments": 3,
-        "publicDoctors": 3,
+        "approvedEnrollments": 4,
+        "publicDoctors": 4,
         "mappedSpecialty": "Cardiology",
         "mappingType": "EXACT",
         "specialtyStatus": "LIVE_ACTIVE"
