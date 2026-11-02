@@ -512,7 +512,7 @@ export default function AdminLayout({ children }) {
           </div>
           <span className="ash-topbar-sp" />
           <div className="ash-topbar-right">
-            <DirectCallAlertsBell />
+            {["admin", "superadmin"].includes(user.role) && <DirectCallAlertsBell />}
             <span className="ash-vr" aria-hidden="true" />
             <ProfileMenu user={user} onSignOut={logout} />
           </div>

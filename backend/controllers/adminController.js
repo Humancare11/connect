@@ -10,6 +10,7 @@ const { paypalFetch } = require("../utils/paypal");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const { recordActivity } = require("../utils/activityLogger");
 const { sendDoctorApprovalEmail } = require("../utils/sendEmail");
+const { notifyAdminDoctorDecision } = require("../utils/adminNotifications");
 const { sendAccountDeletionEmail } = require("../utils/accountDeletionEmail");
 const deletionHistory = require("../utils/accountDeletionHistory");
 const { randomInt } = require("crypto");
@@ -193,6 +194,7 @@ const approveDoctor = async (req, res) => {
 
     const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
     const wasApproved = enrollment.approvalStatus === "approved";
+    const decidedFrom = enrollment.updatedAt ? new Date(enrollment.updatedAt).getTime() : 0;
 
     if (isProfileUpdateRequest) {
       (enrollment.pendingProfileChanges || []).forEach((change) => {
@@ -259,6 +261,10 @@ const approveDoctor = async (req, res) => {
     }
 
     res.status(200).json({ msg: "Doctor approved", enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()) });
+    // In-app admin notification for a genuine first approval, after the response: never throws.
+    if (!isProfileUpdateRequest && !wasApproved) {
+      void notifyAdminDoctorDecision({ enrollment, doctor: enrollment.doctorId, decision: "approved", decidedFrom });
+    }
   } catch (error) {
     console.error("approveDoctor error:", error);
     res.status(500).json({ msg: "Failed to approve doctor" });
@@ -272,6 +278,8 @@ const rejectDoctor = async (req, res) => {
     if (!enrollment) return res.status(404).json({ msg: "Enrollment not found" });
 
     const isProfileUpdateRequest = enrollment.pendingRequestType === "profile_update";
+    const wasRejected = enrollment.approvalStatus === "rejected";
+    const decidedFrom = enrollment.updatedAt ? new Date(enrollment.updatedAt).getTime() : 0;
     if (isProfileUpdateRequest) {
       const snapshot = enrollment.profileUpdateSnapshot || {};
       Object.entries(snapshot).forEach(([field, value]) => {
@@ -319,6 +327,10 @@ const rejectDoctor = async (req, res) => {
       msg: isProfileUpdateRequest ? "Profile update rejected. Previous approved profile restored." : "Doctor rejected",
       enrollment: normalizeEnrollmentWorkflow(enrollment.toObject()),
     });
+    // In-app admin notification for a genuine rejection, after the response: never throws.
+    if (!isProfileUpdateRequest && !wasRejected) {
+      void notifyAdminDoctorDecision({ enrollment, decision: "rejected", decidedFrom });
+    }
   } catch (error) {
     console.error("rejectDoctor error:", error);
     res.status(500).json({ msg: "Failed to reject doctor" });

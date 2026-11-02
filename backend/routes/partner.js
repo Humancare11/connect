@@ -16,6 +16,7 @@ const {
   cleanText,
 } = require("../utils/partnerCaseHelpers");
 const { generatePartnerCaseNumber } = require("../utils/idSequence");
+const { notifyAdminPartnerCaseCreated, notifyAdminPartnerCaseActivity } = require("../utils/adminNotifications");
 
 // Every route in this router is authenticated as a Partner account AND scoped
 // to that account's active Partner Company (req.partnerId).
@@ -160,6 +161,8 @@ router.post("/cases", async (req, res) => {
     });
 
     res.status(201).json(serializeCaseForPartner(created));
+    // In-app admin notification, after the response: never throws, deduplicated per case.
+    void notifyAdminPartnerCaseCreated({ partnerCase: created, partnerId: req.partnerId });
   } catch (err) {
     console.error("partner create case error:", err);
     res.status(500).json({ msg: "Server error." });
@@ -189,6 +192,8 @@ router.patch("/cases/:id/cancel", loadOwnedCase, async (req, res) => {
     doc.messages.push({ body: "Case cancelled by partner.", authorRole: "system", createdAt: new Date() });
     await doc.save();
     res.json(serializeCaseForPartner(doc));
+    // In-app admin notification, after the response: never throws, deduplicated per case.
+    void notifyAdminPartnerCaseActivity({ partnerCase: doc, partnerId: req.partnerId, action: "cancelled" });
   } catch (err) {
     console.error("partner cancel case error:", err);
     res.status(500).json({ msg: "Server error." });
@@ -210,6 +215,9 @@ router.post("/cases/:id/messages", loadOwnedCase, async (req, res) => {
     });
     await req.partnerCase.save();
     res.status(201).json(serializeCaseForPartner(req.partnerCase));
+    // In-app admin notification, after the response: never throws, deduplicated per message.
+    const posted = req.partnerCase.messages[req.partnerCase.messages.length - 1];
+    void notifyAdminPartnerCaseActivity({ partnerCase: req.partnerCase, partnerId: req.partnerId, action: "message", messageId: posted?._id });
   } catch (err) {
     console.error("partner add message error:", err);
     res.status(500).json({ msg: "Server error." });

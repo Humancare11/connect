@@ -6,6 +6,7 @@ const { hashOTP } = require("./otpUtils");
 const mailer = require("./sendEmail");
 const { revokeUserSessions } = require("./tokenRevocation");
 const { recordEmailChangeAudit } = require("./doctorEmailChangeAudit");
+const { notifyAdminDoctorProfileUpdated } = require("./adminNotifications");
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -152,10 +153,32 @@ async function requestEmailChange(req, doctorId, rawNewEmail) {
   }
 }
 
+// The email change never goes through POST /api/doctor/enrollment, so it raises the
+// admin "doctor profile updated" alert itself. Only the doctor's name is used, never
+// either address. The enrollment has no profileUpdateRequestedAt for this edit, so
+// the current time keys the alert and each completed change is its own alert.
+// Never throws: the email change has already succeeded.
+async function notifyEmailChanged(doctorId) {
+  try {
+    const [doctor, enrollment] = await Promise.all([
+      Doctor.findById(doctorId).select("name").lean(),
+      Enrollment.findOne({ doctorId }).select("_id firstName surname").lean(),
+    ]);
+    if (!enrollment) return; // nothing for the admin to open
+    await notifyAdminDoctorProfileUpdated({
+      doctor,
+      enrollment: { ...enrollment, profileUpdateRequestedAt: new Date() },
+    });
+  } catch (err) {
+    console.warn("[admin-notifications] could not raise email change notification:", err?.message);
+  }
+}
+
 async function verifyEmailChange(req, doctorId, rawNewEmail, otp) {
   try {
     const result = await verifyEmailChangeUnaudited(req, doctorId, rawNewEmail, otp);
     await recordEmailChangeAudit(req, { doctorId, action: "complete", outcome: "success" });
+    await notifyEmailChanged(doctorId);
     return result;
   } catch (err) {
     const reason = err instanceof EmailChangeError ? err.reason || "rejected" : "operational_error";

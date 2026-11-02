@@ -12,6 +12,7 @@ const {
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
 const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
+const { notifyAdminCategoryConsultationBooked, notifyAdminPaymentNeedsReconciliation } = require("../utils/adminNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
 
 // Create a new consultation
@@ -120,6 +121,8 @@ const createCategoryConsultation = async (req, res) => {
         `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
           `but consultation creation failed for patient ${req.user?.id}. Needs manual reconciliation.`,
       );
+      // Verified with the gateway above. Never throws.
+      void notifyAdminPaymentNeedsReconciliation({ gateway: paymentGateway, ref: paymentRef, amountCents: paymentAmountFinal });
       return res.status(500).json({
         success: false,
         message: "Your payment was received, but we couldn't finalize the request due to a server error. " +
@@ -137,6 +140,9 @@ const createCategoryConsultation = async (req, res) => {
 
     // Fire-and-forget: admin "new booking" email. Never throws or rejects.
     notifyCategoryConsultationBooked({ consultation });
+
+    // Fire-and-forget in-app admin notification; never throws, deduplicated per consultation.
+    void notifyAdminCategoryConsultationBooked({ consultation });
 
     // Fire-and-forget: see the matching comment in appointmentController.js —
     // the booking + payment already succeeded, so a ledger/invoice failure
