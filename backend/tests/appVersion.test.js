@@ -10,6 +10,7 @@ const requireMinAppVersion = require("../middleware/requireMinAppVersion");
 const KEYS = [
   "APP_MIN_BUILD_ANDROID", "APP_LATEST_BUILD_ANDROID", "APP_STORE_URL_ANDROID",
   "APP_MIN_BUILD_IOS", "APP_LATEST_BUILD_IOS", "APP_STORE_URL_IOS",
+  "APP_FORCE_STORE_UPDATE_ANDROID", "APP_FORCE_STORE_UPDATE_IOS",
 ];
 
 // Runs fn with exactly these APP_* env vars set (everything else cleared).
@@ -44,8 +45,8 @@ test("parseBuild reads the build number after '+'", () => {
 test("config defaults: nothing blocked, Android store URL set, iOS empty", async () => {
   await withEnv({}, () => {
     assert.deepEqual(getAppVersionConfig(), {
-      android: { minBuild: 0, latestBuild: 0, storeUrl: PLAY_STORE_URL },
-      ios: { minBuild: 0, latestBuild: 0, storeUrl: "" },
+      android: { minBuild: 0, latestBuild: 0, storeUrl: PLAY_STORE_URL, forceStoreUpdate: false },
+      ios: { minBuild: 0, latestBuild: 0, storeUrl: "", forceStoreUpdate: false },
     });
     assert.equal(PLAY_STORE_URL, "https://play.google.com/store/apps/details?id=com.humancareconnect.app");
   });
@@ -56,8 +57,8 @@ test("config reads env, ignores junk, and latest is never below min", async () =
     { APP_MIN_BUILD_ANDROID: "16", APP_LATEST_BUILD_ANDROID: "10", APP_MIN_BUILD_IOS: "abc",
       APP_LATEST_BUILD_IOS: "20", APP_STORE_URL_IOS: "https://apps.apple.com/app/id1" },
     () => {
-      assert.deepEqual(getPlatformConfig("android"), { minBuild: 16, latestBuild: 16, storeUrl: PLAY_STORE_URL });
-      assert.deepEqual(getPlatformConfig("ios"), { minBuild: 0, latestBuild: 20, storeUrl: "https://apps.apple.com/app/id1" });
+      assert.deepEqual(getPlatformConfig("android"), { minBuild: 16, latestBuild: 16, storeUrl: PLAY_STORE_URL, forceStoreUpdate: false });
+      assert.deepEqual(getPlatformConfig("ios"), { minBuild: 0, latestBuild: 20, storeUrl: "https://apps.apple.com/app/id1", forceStoreUpdate: false });
       assert.equal(getPlatformConfig("windows"), null);
     }
   );
@@ -130,11 +131,66 @@ test("GET /api/app/version serves the config, uncached", async () => {
       assert.equal(res.status, 200);
       assert.equal(res.headers.get("cache-control"), "no-store");
       assert.deepEqual(await res.json(), {
-        android: { minBuild: 16, latestBuild: 18, storeUrl: PLAY_STORE_URL },
-        ios: { minBuild: 0, latestBuild: 0, storeUrl: "" },
+        android: { minBuild: 16, latestBuild: 18, storeUrl: PLAY_STORE_URL, forceStoreUpdate: false },
+        ios: { minBuild: 0, latestBuild: 0, storeUrl: "", forceStoreUpdate: false },
       });
     });
   } finally {
     await new Promise((resolve) => server.close(resolve));
   }
+});
+
+test("forceStoreUpdate: unset -> false, 'true' -> true (any case, trimmed), anything else -> false", async () => {
+  await withEnv({}, () => {
+    assert.equal(getPlatformConfig("android").forceStoreUpdate, false);
+    assert.equal(getPlatformConfig("ios").forceStoreUpdate, false);
+  });
+  for (const value of ["true", "TRUE", " True "]) {
+    await withEnv({ APP_FORCE_STORE_UPDATE_ANDROID: value }, () => assert.equal(getPlatformConfig("android").forceStoreUpdate, true, value));
+  }
+  for (const value of ["", "false", "1", "yes", "on", "truee", "0", "abc"]) {
+    await withEnv({ APP_FORCE_STORE_UPDATE_ANDROID: value, APP_FORCE_STORE_UPDATE_IOS: value }, () => {
+      assert.equal(getPlatformConfig("android").forceStoreUpdate, false, `"${value}"`);
+      assert.equal(getPlatformConfig("ios").forceStoreUpdate, false, `"${value}"`);
+    });
+  }
+});
+
+test("forceStoreUpdate is per platform", async () => {
+  await withEnv({ APP_FORCE_STORE_UPDATE_IOS: "true" }, () => {
+    const config = getAppVersionConfig();
+    assert.equal(config.android.forceStoreUpdate, false);
+    assert.equal(config.ios.forceStoreUpdate, true);
+  });
+});
+
+test("GET /api/app/version carries forceStoreUpdate, and builds 18 and older ignore it", async () => {
+  const app = express();
+  app.use("/api/app", require("../routes/appVersion"));
+  const server = await new Promise((resolve) => { const s = app.listen(0, "127.0.0.1", () => resolve(s)); });
+  try {
+    await withEnv({ APP_MIN_BUILD_ANDROID: "16", APP_LATEST_BUILD_ANDROID: "19", APP_FORCE_STORE_UPDATE_ANDROID: "true" }, async () => {
+      const body = await (await fetch(`http://127.0.0.1:${server.address().port}/api/app/version`)).json();
+      assert.equal(body.android.forceStoreUpdate, true);
+      assert.equal(body.ios.forceStoreUpdate, false);
+
+      // What build 18's AppVersionService reads (lib/services/app_update_service.dart): platform object -> minBuild, latestBuild, storeUrl.
+      // It never looks at any other key, so the new field cannot change its decision.
+      const old = body.android;
+      assert.equal(old.minBuild, 16);
+      assert.equal(old.latestBuild, 19);
+      assert.equal(old.storeUrl, PLAY_STORE_URL);
+      const { forceStoreUpdate, ...legacyShape } = old;
+      assert.deepEqual(legacyShape, { minBuild: 16, latestBuild: 19, storeUrl: PLAY_STORE_URL });
+    });
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("the sign-up version gate ignores forceStoreUpdate (only minBuild blocks)", async () => {
+  await withEnv({ APP_MIN_BUILD_ANDROID: "16", APP_FORCE_STORE_UPDATE_ANDROID: "true" }, () => {
+    assert.equal(run({ "x-client-platform": "android", "x-app-version": "1.0.0+18" }).nextCalled, true);
+    assert.equal(run({ "x-client-platform": "android", "x-app-version": "1.0.0+15" }).status, 426);
+  });
 });

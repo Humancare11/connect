@@ -11,6 +11,10 @@
 //                         suggest an optional update.
 //   APP_STORE_URL_<P>     where the "Please update" screen sends the user.
 //                         Android defaults to the Play listing; iOS to "".
+//   APP_FORCE_STORE_UPDATE_<P>
+//                         kill switch for the store force-update (the "A new version is available" popup in app builds from +19
+//                         on). Served to the app as `forceStoreUpdate`. Only the exact value "true" (any case) turns forcing ON;
+//                         unset or anything else is false = forcing OFF. Builds before +19 never read this field.
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.humancareconnect.app";
 
 const PLATFORMS = { android: "ANDROID", ios: "IOS" };
@@ -35,7 +39,8 @@ function getPlatformConfig(platform, env = process.env) {
   const latestBuild = Math.max(toBuild(env[`APP_LATEST_BUILD_${suffix}`]), minBuild);
   const configuredUrl = env[`APP_STORE_URL_${suffix}`];
   const storeUrl = configuredUrl !== undefined ? String(configuredUrl).trim() : DEFAULT_STORE_URLS[platform];
-  return { minBuild, latestBuild, storeUrl };
+  const forceStoreUpdate = String(env[`APP_FORCE_STORE_UPDATE_${suffix}`] ?? "").trim().toLowerCase() === "true";
+  return { minBuild, latestBuild, storeUrl, forceStoreUpdate };
 }
 
 function getAppVersionConfig(env = process.env) {
