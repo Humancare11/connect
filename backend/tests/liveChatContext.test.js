@@ -60,14 +60,14 @@ describe("live chat: patient context fields, custom fields and the AI summary", 
       const chat = await liveChat();
       const put = await rest("PUT", `/visitors/${chat.visitorId}/context`, {
         ...A,
-        body: { followUpDate: "2026-11-03", preferredLanguage: "German", contactPreference: "Phone, mornings", reasonForContact: "Refill question", custom: { insurer: "Allianz" } },
+        body: { followUpDate: "2030-01-15", preferredLanguage: "German", contactPreference: "Phone, mornings", reasonForContact: "Refill question", custom: { insurer: "Allianz" } },
       });
       assert.equal(put.status, 200, JSON.stringify(put.body));
-      assert.equal(put.body.fields.followUpDate, "2026-11-03");
+      assert.equal(put.body.fields.followUpDate, "2030-01-15");
       assert.equal(put.body.fields.custom.insurer, "Allianz");
 
       const raw = JSON.stringify(await lc.models.LcVisitor.findOne({ visitorId: chat.visitorId }).lean());
-      for (const plain of ["2026-11-03", "German", "Phone, mornings", "Refill question", "Allianz"]) assert.equal(raw.includes(plain), false, `"${plain}" must be stored encrypted`);
+      for (const plain of ["2030-01-15", "German", "Phone, mornings", "Refill question", "Allianz"]) assert.equal(raw.includes(plain), false, `"${plain}" must be stored encrypted`);
 
       const panel = (await rest("GET", `/visitors/${chat.visitorId}/panel`, A)).body.panel;
       assert.equal(panel.fields.preferredLanguage, "German");
