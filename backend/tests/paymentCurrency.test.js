@@ -83,6 +83,19 @@ verifyToken.verifyUserToken = (req, res, next) => {
 
 const invoiceCalls = [];
 require("../utils/billing").recordPaymentAndInvoice = async (args) => { invoiceCalls.push(args); };
+// The invoice record is written fire-and-forget AFTER the response, so a booking made by an EARLIER test can still be pushing its call
+// when the next test has already cleared the array: `invoiceCalls[0]` is then somebody else's call. A test looks up the call of ITS OWN
+// booking (by the id of the appointment / consultation) and waits for it.
+const invoiceMatches = (call, id) => [call.appointmentId, call.categoryConsultationId].some((v) => v && String(v) === String(id));
+async function invoiceFor(id, timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const hit = invoiceCalls.find((call) => invoiceMatches(call, id));
+    if (hit) return hit;
+    if (Date.now() >= deadline) assert.fail(`no invoice record for booking ${id} within ${timeoutMs}ms`);
+    await new Promise((r) => setTimeout(r, 20));
+  }
+}
 const notify = require("../utils/bookingNotifications");
 notify.notifyAppointmentBooked = () => {};
 notify.notifyCategoryConsultationBooked = () => {};
@@ -512,9 +525,9 @@ describe("category payments in USD / EUR / GBP", () => {
       assert.equal(res.statusCode, 201, JSON.stringify(res.body));
       const stored = await CategoryConsultation.findById(res.body.data._id).lean();
       assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.consultationPrice, stored.paymentStatus], ["eur", 3000, 30, "paid"]);
-      await tick();
-      assert.equal(invoiceCalls.length, 1);
-      assert.deepEqual([invoiceCalls[0].currency, invoiceCalls[0].amountCents], ["eur", 3000]);
+      const invoice = await invoiceFor(res.body.data._id);
+      assert.equal(invoiceCalls.filter((call) => invoiceMatches(call, res.body.data._id)).length, 1);
+      assert.deepEqual([invoice.currency, invoice.amountCents], ["eur", 3000]);
     });
 
     test("category consultation: GBP via PayPal, and USD", async () => {
@@ -587,8 +600,21 @@ describe("category payments in USD / EUR / GBP", () => {
         [stored.paymentCurrency, stored.paymentAmount, stored.consultationPrice, stored.paymentStatus],
         ["eur", 3000, 30, "paid"],
       );
-      await tick();
-      assert.deepEqual([invoiceCalls[0].currency, invoiceCalls[0].amountCents], ["eur", 3000]);
+      const invoice = await invoiceFor(res.body.appointment._id);
+      assert.deepEqual([invoice.currency, invoice.amountCents], ["eur", 3000]);
+    });
+
+    // Regression: this used to read `invoiceCalls[0]`, which under load was the late invoice record of the previous test's
+    // USD 6900 service booking, so a correct EUR 3000 booking looked mis-invoiced. The stored booking was right all along.
+    test("an invoice call left by an earlier booking (late, USD 6900) does not mask this booking's EUR invoice", async () => {
+      invoiceCalls.push({ appointmentId: "000000000000000000000001", gateway: "stripe", currency: "usd", amountCents: 6900 });
+      pi("pi_a1b", { currency: "eur", amount: 3000 });
+      const res = makeRes();
+      await createAppointment(reqFor(eurUser, appointmentBody({ paymentIntentId: "pi_a1b" })), res);
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+      const invoice = await invoiceFor(res.body.appointment._id);
+      assert.deepEqual([invoice.currency, invoice.amountCents], ["eur", 3000]);
+      assert.deepEqual([invoiceCalls[0].currency, invoiceCalls[0].amountCents], ["usd", 6900]); // the stale call is still first in the array
     });
 
     test("category appointment: USD keeps the browser price exactly as before, and is stored as usd", async () => {
@@ -598,8 +624,7 @@ describe("category payments in USD / EUR / GBP", () => {
       assert.equal(res.statusCode, 201, JSON.stringify(res.body));
       const stored = await Appointment.findById(res.body.appointment._id).lean();
       assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.consultationPrice], ["usd", 1000, 50]);
-      await tick();
-      assert.equal(invoiceCalls[0].currency, "usd");
+      assert.equal((await invoiceFor(res.body.appointment._id)).currency, "usd");
     });
 
     test("category appointment: replaying a used payment still fails; a wrong currency is refused", async () => {

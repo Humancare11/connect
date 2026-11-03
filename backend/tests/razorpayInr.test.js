@@ -110,6 +110,19 @@ verifyToken.verifyUserToken = (req, res, next) => {
 
 const invoiceCalls = [];
 require("../utils/billing").recordPaymentAndInvoice = async (args) => { invoiceCalls.push(args); };
+// The invoice record is written fire-and-forget AFTER the response, so a booking made by an EARLIER test can still be pushing its call
+// when the next test has already cleared the array: `invoiceCalls[0]` is then somebody else's call. A test looks up the call of ITS OWN
+// booking (by the id of the appointment / consultation) and waits for it.
+const invoiceMatches = (call, id) => [call.appointmentId, call.categoryConsultationId].some((v) => v && String(v) === String(id));
+async function invoiceFor(id, timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const hit = invoiceCalls.find((call) => invoiceMatches(call, id));
+    if (hit) return hit;
+    if (Date.now() >= deadline) assert.fail(`no invoice record for booking ${id} within ${timeoutMs}ms`);
+    await new Promise((r) => setTimeout(r, 20));
+  }
+}
 const notify = require("../utils/bookingNotifications");
 notify.notifyAppointmentBooked = () => {};
 notify.notifyCategoryConsultationBooked = () => {};
@@ -622,9 +635,8 @@ describe("INR through Razorpay (India only)", () => {
         ["razorpay", "inr", 99900, 999, "paid", "pay_TEST0001"],
       );
       assert.deepEqual([stored.razorpayOrderId, stored.razorpayPaymentId], ["order_TEST0001", "pay_TEST0001"]);
-      await tick();
-      assert.equal(invoiceCalls.length, 1);
-      const call = invoiceCalls[0];
+      const call = await invoiceFor(res.body.data._id);
+      assert.equal(invoiceCalls.filter((c) => invoiceMatches(c, res.body.data._id)).length, 1);
       assert.deepEqual(
         [call.gateway, call.currency, call.amountCents, call.gatewayReference, call.razorpayOrderId, call.razorpayPaymentId],
         ["razorpay", "inr", 99900, "pay_TEST0001", "order_TEST0001", "pay_TEST0001"],
@@ -682,8 +694,8 @@ describe("INR through Razorpay (India only)", () => {
         ["razorpay", "inr", 99900, 999, "pay_TEST0001"],
       );
       assert.deepEqual([stored.razorpayOrderId, stored.razorpayPaymentId], ["order_TEST0001", "pay_TEST0001"]);
-      await tick();
-      assert.deepEqual([invoiceCalls[0].gateway, invoiceCalls[0].currency, invoiceCalls[0].razorpayOrderId], ["razorpay", "inr", "order_TEST0001"]);
+      const invoice = await invoiceFor(res.body.appointment._id);
+      assert.deepEqual([invoice.gateway, invoice.currency, invoice.razorpayOrderId], ["razorpay", "inr", "order_TEST0001"]);
     });
 
     test("a service booking with no INR price cannot be paid with Razorpay", async () => {
@@ -936,8 +948,8 @@ describe("INR through Razorpay (India only)", () => {
         const stored = await CategoryConsultation.findById(res.body.data._id).lean();
         assert.deepEqual([stored.paymentCurrency, stored.paymentAmount, stored.paymentGateway], ["inr", 149900, "razorpay"]);
         assert.deepEqual([stored.razorpayOrderId, stored.razorpayPaymentId], ["order_TEST0001", "pay_TEST0001"]);
-        await new Promise((r) => setTimeout(r, 60));
-        assert.deepEqual([invoiceCalls[0].currency, invoiceCalls[0].amountCents], ["inr", 149900]);
+        const invoice = await invoiceFor(res.body.data._id);
+        assert.deepEqual([invoice.currency, invoice.amountCents], ["inr", 149900]);
       });
 
       test("DE Stripe EUR, GB PayPal GBP and US Stripe USD are stored in their own currency", async () => {
