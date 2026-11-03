@@ -87,6 +87,36 @@ describe("app gate wiring", () => {
     assert.equal(gateLogs().length, 0);
   });
 
+  test("live Android build 18 (Dart User-Agent + X-App-Version 1.0.0+18) with the currency release at +20: USD, gateways unchanged", async () => {
+    process.env.APP_MIN_CURRENCY_BUILD_ANDROID = "20";
+    const live = { "user-agent": DART, "x-client-platform": "android", "x-app-version": "1.0.0+18" };
+    for (const country of ["Germany", "United Kingdom", "India"]) {
+      const r = await resolve(live, country);
+      assert.deepEqual([r.currency, r.source], ["USD", "app-gate"], country);
+    }
+    assert.match(gateLogs()[0], /reason=below-min from=local to=USD platform=android build=18 source=header suspect=false/);
+    // the video release (+19) is below the currency release too; the currency release (+20) is the first to get local prices
+    assert.equal((await resolve({ ...live, "x-app-version": "1.0.0+19" }, "Germany")).currency, "USD");
+    assert.equal((await resolve({ ...live, "x-app-version": "1.0.0+20" }, "Germany")).currency, "EUR");
+
+    // no gateway change: the currency stays USD, which Stripe and PayPal still take, and Razorpay still refuses
+    assert.equal(gatewayAllowsCurrency("stripe", "USD"), true);
+    assert.equal(gatewayAllowsCurrency("paypal", "USD"), true);
+    assert.equal(gatewayAllowsCurrency("razorpay", "USD"), false);
+  });
+
+  test("payment path: build 18 is charged in USD, +20 in EUR (min +20)", async () => {
+    process.env.APP_MIN_CURRENCY_BUILD_ANDROID = "20";
+    geoIp._setReader(readerFor("DE"));
+    try {
+      const withIp = (headers) => ({ headers: { "x-forwarded-for": "88.64.0.10", ...headers }, ip: "88.64.0.10", originalUrl: "/api/payments/create-intent-by-amount" });
+      assert.equal(await decidePaymentCurrency(withIp(appHeaders(18))), "USD");
+      assert.equal(await decidePaymentCurrency(withIp(appHeaders(20))), "EUR");
+    } finally {
+      geoIp._setReader(null);
+    }
+  });
+
   test("+18 in India: USD without the Razorpay capability, INR with it", async () => {
     const plain = await resolve(appHeaders(18), "India");
     assert.deepEqual([plain.currency, plain.source, plain.country], ["USD", "app-gate", "IN"]);
