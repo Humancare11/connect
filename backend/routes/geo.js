@@ -39,7 +39,7 @@ function limiter(req, res, next) {
 router.get("/currency", limiter, async (req, res) => {
   res.set("Cache-Control", "private, no-store");
   try {
-    const result = await resolveRequestCurrency({ ip: getClientIp(req), lookupLocation });
+    const result = await resolveRequestCurrency({ ip: getClientIp(req), lookupLocation, req });
     res.json(result);
   } catch (err) {
     console.error("GET /api/geo/currency error:", err.message);

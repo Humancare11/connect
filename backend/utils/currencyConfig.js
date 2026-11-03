@@ -20,6 +20,7 @@
 //                           customer is a USD customer on Stripe / PayPal, exactly as
 //                           before: the server never sends anyone to Razorpay without keys.
 const { Country } = require("country-state-city");
+const { evaluateAppCurrencyGate, logAppGateUsed } = require("./appCurrencyGate");
 
 const SUPPORTED_CURRENCIES = ["USD", "EUR", "GBP", "INR"];
 const DEFAULT_CURRENCY = "USD";
@@ -168,11 +169,30 @@ function currencyForCountryName(name) {
 // (the lookup itself failed) or "disabled" (multi-currency is off).
 //
 // `lookupLocation` is injectable for tests; it defaults to the offline GeoIP lookup and never throws.
-async function resolveRequestCurrency({ ip = "", lookupLocation } = {}) {
+//
+// `req` (optional) lets the app gate (utils/appCurrencyGate.js) keep mobile-app builds that cannot handle other currencies on USD:
+// source "app-gate". Web requests, and calls without a `req`, are never affected. The gate only matters while multi-currency is on.
+async function resolveRequestCurrency({ ip = "", lookupLocation, req } = {}) {
   if (!isMultiCurrencyEnabled()) {
     return { currency: DEFAULT_CURRENCY, country: "", source: "disabled" };
   }
 
+  const gate = req ? evaluateAppCurrencyGate(req) : null;
+  if (gate?.suspect) logAppGateUsed(req, gate, { from: "app-headers", to: "web-rules" });
+  if (gate?.usdOnly) {
+    logAppGateUsed(req, gate, { from: "local", to: DEFAULT_CURRENCY });
+    return { currency: DEFAULT_CURRENCY, country: "", source: "app-gate" };
+  }
+
+  const result = await resolveFromIp({ ip, lookupLocation });
+  if (gate?.noInr && result.currency === "INR") {
+    logAppGateUsed(req, gate, { from: "INR", to: DEFAULT_CURRENCY });
+    return { currency: DEFAULT_CURRENCY, country: result.country, source: "app-gate" };
+  }
+  return result;
+}
+
+async function resolveFromIp({ ip, lookupLocation }) {
   try {
     const lookup = lookupLocation || require("./geoIp").lookupLocation;
     const location = ip ? await lookup(ip) : null;

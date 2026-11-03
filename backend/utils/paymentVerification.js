@@ -106,7 +106,7 @@ function assertGatewayCurrency(gateway, currency) {
 // the IP again.
 async function decidePaymentCurrency(req) {
   try {
-    const { currency } = await resolveRequestCurrency({ ip: getClientIp(req) });
+    const { currency } = await resolveRequestCurrency({ ip: getClientIp(req), req });
     return assertAllowedCurrency(currency);
   } catch {
     return DEFAULT_CURRENCY;
