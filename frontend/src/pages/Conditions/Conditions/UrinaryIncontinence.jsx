@@ -50,7 +50,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urinary And Kidney Health",
+  badge: "Men's Health",
   heading: "Urinary Incontinence",
   description: "Loss of bladder control and leakage",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

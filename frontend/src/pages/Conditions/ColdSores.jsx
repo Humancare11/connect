@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/SkinCondition/Col
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Skin Conditions",
+  badge: "Skin & Hair Care",
   heading: "Cold Sores",
   description: "Painful blisters around the mouth",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

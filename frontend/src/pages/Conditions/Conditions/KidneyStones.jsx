@@ -50,7 +50,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urinary And Kidney Health",
+  badge: "Men's Health",
   heading: "Kidney Stones",
   description: "Hard mineral deposits cause pain",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

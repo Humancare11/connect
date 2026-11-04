@@ -19,7 +19,7 @@ import Breadcrumb from "../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Pink Eye in Children",
   description: "Red, itchy, irritated eyes in kids",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

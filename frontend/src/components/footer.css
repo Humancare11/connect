@@ -37,10 +37,16 @@
 
 .footer-logo-full {
   width: 270px;
-  height: auto;
+  max-width: 100%;
   display: block;
-  object-fit: contain;
   vertical-align: top;
+  /* The logo file is a 500x500 square with ~30% empty margin above and below
+     the artwork (it spans roughly y 155-360), which showed up as a big gap
+     in the footer. Show only the band the artwork occupies (500:240); it is
+     vertically centred in the file, so cover + centre crops the margin evenly. */
+  aspect-ratio: 500 / 240;
+  object-fit: cover;
+  object-position: 50% 52%;
 }
 
 /* ── BRAND ─────────────────────────────────── */

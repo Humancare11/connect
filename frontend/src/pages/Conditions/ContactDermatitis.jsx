@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/SkinCondition/Con
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Skin Conditions",
+  badge: "Skin & Hair Care",
   heading: "Contact Dermatitis",
   description: "Skin irritation from direct contact",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

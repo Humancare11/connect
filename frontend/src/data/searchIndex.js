@@ -187,7 +187,7 @@ export const specialties = [
 export const conditions = [
   // ── Chronic Care & Expert Opinion ──────────────────────────────────────
   {
-    id: "arthritis", title: "Arthritis", type: "condition", category: "chronic-care", route: "/eye-ear-bone/orthopedics/arthritis",
+    id: "arthritis", title: "Arthritis", type: "condition", category: "eye-ear-bone", specialty: "orthopedics", route: "/eye-ear-bone/orthopedics/arthritis",
     keywords: ["arthritis", "joint inflammation"]
   },
   {
@@ -235,7 +235,7 @@ export const conditions = [
     keywords: ["obesity", "overweight"]
   },
   {
-    id: "osteoarthritis", title: "Osteoarthritis", type: "condition", category: "chronic-care", route: "/eye-ear-bone/orthopedics/osteoarthritis",
+    id: "osteoarthritis", title: "Osteoarthritis", type: "condition", category: "eye-ear-bone", specialty: "orthopedics", route: "/eye-ear-bone/orthopedics/osteoarthritis",
     keywords: ["osteoarthritis", "joint wear"]
   },
   {
@@ -845,7 +845,7 @@ export const conditions = [
     keywords: ["sinus infection", "sinusitis"]
   },
   {
-    id: "sore-throat", title: "Sore Throat", type: "condition", category: "general-and-everyday-care", specialty: "general-physician", route: "/eye-ear-bone/ear-nose-throat/sore-throat",
+    id: "sore-throat", title: "Sore Throat", type: "condition", category: "eye-ear-bone", specialty: "ear-nose-throat", route: "/eye-ear-bone/ear-nose-throat/sore-throat",
     keywords: ["sore throat"]
   },
   {
@@ -887,7 +887,7 @@ export const conditions = [
     keywords: ["urinary incontinence"]
   },
   {
-    id: "urinary-tract-infection", title: "Urinary Tract Infection", type: "condition", category: "men-health", specialty: "urology", route: "/urinary-tract-infection",
+    id: "urinary-tract-infection", title: "Urinary Tract Infection", type: "condition", category: "men-health", specialty: "urology", route: "/mens-health/urology/urinary-tract-infection",
     keywords: ["uti", "urinary tract infection", "bladder infection"]
   },
 

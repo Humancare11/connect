@@ -1,4 +1,4 @@
-﻿﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
 import "./Condition.css";
@@ -49,7 +49,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Men's Health",
+  badge: "Skin & Hair Care",
   heading: "Hair Loss",
   description: "Thinning hair and excessive shedding",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

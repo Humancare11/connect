@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Chi
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Childhood Allergies",
   description: "Allergic reactions affecting children",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

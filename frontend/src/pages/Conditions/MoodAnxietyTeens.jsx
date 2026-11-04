@@ -19,7 +19,7 @@ import Breadcrumb from "../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Mood & Anxiety in Teens",
   description: "Support for teen emotional wellness",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

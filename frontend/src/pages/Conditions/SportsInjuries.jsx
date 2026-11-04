@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Spo
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Sports Injuries",
   description: "Care for active lifestyles",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

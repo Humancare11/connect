@@ -539,10 +539,6 @@ export default function CorporateDemo() {
         badge="FAQ"
         title="Frequently Asked Questions"
         description="Everything you need to know about our corporate telemedicine services, benefits, and implementation."
-        stats={[
-          "HIPAA  & private",
-          "Available in the U.S.",
-        ]}
         sections={CORPORATE_FAQS}
       />
     </>

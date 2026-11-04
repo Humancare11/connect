@@ -407,7 +407,7 @@ const conditionCategories = [
       { name: "Low Libido", path: "/mens-health/men-health/low-libido" },
       {
         name: "Urinary Tract Infections",
-        path: "/urinary-tract-infection",
+        path: "/mens-health/urology/urinary-tract-infection",
       },
       { name: "Kidney Stones", path: "/mens-health/urology/kidney-stones" },
       { name: "Blood in Urine", path: "/mens-health/urology/blood-in-urine" },

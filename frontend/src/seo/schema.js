@@ -11,7 +11,7 @@ const ORG_ID = `${SITE_ORIGIN}/#organization`;
 const SITE_ID = `${SITE_ORIGIN}/#website`;
 
 const SEGMENT_LABELS = {
-  "child-and-family-care": "Child & Family Care",
+  "child-and-family-care": "Children & Family Care",
   "chronic-care": "Chronic Care",
   "eye-ear-bone": "Eye, Ear & Bone",
   "general-and-everyday-care": "General & Everyday Care",

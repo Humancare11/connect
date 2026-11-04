@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Pub
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Puberty Concerns",
   description: "Guidance through developmental changes",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

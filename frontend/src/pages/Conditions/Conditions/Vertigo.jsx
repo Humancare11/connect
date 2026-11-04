@@ -50,7 +50,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "Eye, Ear & Bone Care",
   heading: "Vertigo",
   description: "Spinning sensation and balance issues",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

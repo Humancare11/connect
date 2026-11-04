@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import "./FAQPage.css";
 import SEO from "../components/Seo";
 
@@ -535,18 +535,67 @@ function PulseDivider() {
 function FAQContent() {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].id);
   const sectionRefs = useRef({});
+  const navRef = useRef(null);
+  // Set while a pill-click smooth scroll is running, so the scroll-spy below
+  // doesn't flip the highlight through every section it passes on the way.
+  const clickScrollRef = useRef(false);
+
+  // Scroll-spy: highlight the pill of the section being read. A section counts
+  // once it reaches the band between just under the sticky nav and ~45% down
+  // the viewport; when several are in the band the lowest (latest) one wins.
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return undefined;
+    const inBand = new Set();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) inBand.add(e.target.id);
+          else inBand.delete(e.target.id);
+        });
+        if (clickScrollRef.current) return;
+        const current = CATEGORIES.filter((c) => inBand.has(c.id)).pop();
+        if (current) setActiveCategory(current.id);
+      },
+      { rootMargin: "-160px 0px -55% 0px" },
+    );
+    CATEGORIES.forEach((c) => {
+      const el = sectionRefs.current[c.id];
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  // On narrow screens the pill row scrolls sideways; keep the selected pill
+  // in view inside the row (scrolls the row only, never the page).
+  useEffect(() => {
+    const nav = navRef.current;
+    const pill = nav?.querySelector(".quick-nav__pill--active");
+    if (!nav || !pill) return;
+    const left = pill.offsetLeft - (nav.clientWidth - pill.offsetWidth) / 2;
+    nav.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
+  }, [activeCategory]);
 
   const scrollToCategory = (id) => {
     setActiveCategory(id);
+    clickScrollRef.current = true;
     sectionRefs.current[id]?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+    // Release the lock once the scroll stops (scrollend), with a timeout
+    // fallback for browsers that don't fire it.
+    const release = () => {
+      clickScrollRef.current = false;
+      window.removeEventListener("scrollend", release);
+      clearTimeout(timer);
+    };
+    const timer = setTimeout(release, 1200);
+    window.addEventListener("scrollend", release, { once: true });
   };
 
   return (
     <div className="faq-content">
-      <nav className="quick-nav" aria-label="Jump to category">
+      <nav ref={navRef} className="quick-nav" aria-label="Jump to category">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}

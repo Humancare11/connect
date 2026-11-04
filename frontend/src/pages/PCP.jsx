@@ -690,12 +690,6 @@ export default function PCP() {
             badge="FAQ"
             title="Got Questions?"
             description="Everything you need to know about primary care and Humancare Connect."
-            stats={[
-              ...CTA_TRUST_POINTS.map((point) => ({
-                label: point.text,
-                icon: () => <point.icon size={16} />,
-              })),
-            ]}
             sections={[
               {
                 title: "Frequently Asked",

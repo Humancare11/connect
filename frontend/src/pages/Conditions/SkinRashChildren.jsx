@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Ski
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Skin Rash in Children",
   description: "Red, itchy, irritated skin in kids",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

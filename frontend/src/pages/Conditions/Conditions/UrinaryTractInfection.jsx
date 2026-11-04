@@ -50,7 +50,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urinary And Kidney Health",
+  badge: "Men's Health",
   heading: "Urinary Tract Infection (UTI)",
   description: "Burning pain during urination",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

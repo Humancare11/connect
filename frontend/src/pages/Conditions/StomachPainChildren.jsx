@@ -19,7 +19,7 @@ import Breadcrumb from "../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Stomach Pain in Children",
   description: "Stomach aches and digestive discomfort in kids",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

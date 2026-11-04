@@ -49,7 +49,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urgent Care",
+  badge: "Eye, Ear & Bone Care",
   heading: "Ear Infection",
   description: "Pain, pressure, or ear discomfort",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

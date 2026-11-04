@@ -39,6 +39,7 @@ function ConsultationNotesModal({ patient, onClose }) {
   return (
     <div
       className="dp-modal-overlay"
+      data-lenis-prevent
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -69,6 +70,15 @@ function ConsultationNotesModal({ patient, onClose }) {
 function PatientPanel({ entry, onClose }) {
   const panelDialogRef = useRef(null);
   useModalA11y(panelDialogRef, true, onClose);
+
+  // Lock the page behind the panel; restore whatever was set before on close.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
   const { patient } = entry;
   const navigate = useNavigate();
   const [history, setHistory] = useState(null);
@@ -106,7 +116,9 @@ function PatientPanel({ entry, onClose }) {
     ) || [];
 
   return (
-    <div className="dp-panel-overlay" onClick={onClose}>
+    // data-lenis-prevent: the app's smooth-scroll (hooks/useLenis) otherwise
+    // swallows wheel events and scrolls the page instead of this panel.
+    <div className="dp-panel-overlay" data-lenis-prevent onClick={onClose}>
       <div ref={panelDialogRef} role="dialog" aria-modal="true" aria-label={`Patient details for ${patient.name}`} className="dp-panel" onClick={(e) => e.stopPropagation()}>
         {toast && <div className="dp-toast">{toast}</div>}
 

@@ -49,7 +49,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Urinary And Kidney Health",
+  badge: "Men's Health",
   heading: "Blood in Urine",
   description: "Pink, red, or dark urine",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -87,7 +87,7 @@ export default function BloodInUrine({ categoryId } = {}) {
             <div className="condition-hero-inner">
               <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
-                ✦ Trusted {pageData.badge}
+                ✦Trusted {pageData.badge}
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">

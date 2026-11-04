@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Sor
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Sore Throat in Children",
   description: "Throat pain and irritation in kids",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

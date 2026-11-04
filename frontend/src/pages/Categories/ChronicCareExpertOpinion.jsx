@@ -20,6 +20,8 @@ import {
 import "./categoriesGlobal.css";
 import chronicCareHero from "../../assets/HomeImageCategories/chronic-care-expert-medical-opinion.webp";
 import SEO from "../../components/Seo";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import SpecialtyCard from "../../components/SpecialtyCard";
 import FAQ from "../../components/FAQ/FAQ";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
@@ -503,40 +505,6 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
-function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
-    <motion.div
-      className="hcc-specialty-card"
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: Math.min(index * 0.04, 0.4) }}
-    >
-      {sp.path ? (
-        <Link
-          to={sp.path}
-          className="hcc-specialty-link"
-          aria-label={`View ${sp.name}`}
-          style={{ display: "block", color: "inherit", textDecoration: "none" }}
-        >
-          <div className="hcc-specialty-name">{sp.name}</div>
-          <p className="hcc-specialty-desc">{sp.desc}</p>
-          <div className="hcc-specialty-arrow">
-            Learn more <FiArrowRight size={13} />
-          </div>
-        </Link>
-      ) : (
-        <>
-          <div className="hcc-specialty-name">{sp.name}</div>
-          <p className="hcc-specialty-desc">{sp.desc}</p>
-        </>
-      )}
-    </motion.div>
-  );
-}
-
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
@@ -627,6 +595,7 @@ export default function ChronicCareExpertOpinion() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
+            <Breadcrumb tone="light" />
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}
@@ -741,11 +710,6 @@ export default function ChronicCareExpertOpinion() {
             badge="FAQ"
             title="Frequently Asked Questions"
             description={`Everything you need to know about ${cat.label} care at Humancare Connect. Can't find an answer?`}
-            stats={[
-              "Avg. response in 10 min",
-              "HIPAA secure & private",
-              "Available Globally",
-            ]}
             sections={cat.faqGroups.map((group) => ({
               title: group.label,
               items: group.items.map((faq) => ({

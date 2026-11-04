@@ -43,8 +43,8 @@ map $uri $hc_redirect {
     /ent                                                                      /eye-ear-bone/ear-nose-throat;
     /mild-asthma-symptoms                                                     /chronic-care/pulmonology/asthma;
     /chronic-care/neurology/chronic-migraine                                  /chronic-care/neurology/migraine;
-    /mens-health/urology/urinary-tract-infection                              /urinary-tract-infection;
-    /bladder-infection                                                        /urinary-tract-infection;
+    /mens-health/urology/mens-health/urology/urinary-tract-infection                              /mens-health/urology/urinary-tract-infection;
+    /bladder-infection                                                        /mens-health/urology/urinary-tract-infection;
     /mens-health-men-health                                                   /mens-health/men-health;
     /weight-and-nurtrition                                                    /weight-and-nutrition;
     /weight-and-nurtrition/lifestyle-medicine                                 /weight-and-nutrition/lifestyle-medicine;

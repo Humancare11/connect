@@ -20,6 +20,8 @@ import {
 import "./categoriesGlobal.css";
 import eyeEarBoneHero from "../../assets/HomeImageCategories/eye-ear-bone-specialty-care.webp";
 import SEO from "../../components/Seo";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import SpecialtyCard from "../../components/SpecialtyCard";
 import FAQ from "../../components/FAQ/FAQ";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
@@ -443,44 +445,6 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
-function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  const content = (
-    <motion.div
-      className="hcc-specialty-card"
-      tabIndex={sp.path ? 0 : -1}
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: Math.min(index * 0.04, 0.4) }}
-      onKeyDown={(e) => {
-        if (!sp.path && (e.key === "Enter" || e.key === " ") && sp.path) {
-          e.preventDefault();
-          navigate(sp.path);
-        }
-      }}
-      style={{ cursor: sp.path ? "pointer" : "default" }}
-    >
-      <div className="hcc-specialty-name">{sp.name}</div>
-      <p className="hcc-specialty-desc">{sp.desc}</p>
-      {sp.path && (
-        <div className="hcc-specialty-footer">
-          Learn more <FiArrowRight size={13} />
-        </div>
-      )}
-    </motion.div>
-  );
-
-  return sp.path ? (
-    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
-      {content}
-    </Link>
-  ) : (
-    content
-  );
-}
-
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
@@ -575,6 +539,7 @@ export default function EyeEarBone() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
+            <Breadcrumb tone="light" />
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}

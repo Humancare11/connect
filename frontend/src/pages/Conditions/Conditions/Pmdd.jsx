@@ -43,6 +43,7 @@ import {
 import SEO from "../../../components/Seo";
 import PreloadImage from "../../../components/PreloadImage";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
+import ConditionBannerImage from "../../../assets/ConditionImages/WomensHealth/perinatal-anxiety.webp";
 
 // ─────────────────────────────────────────────────────────────────
 // DATA  (swap this out per sub-page)
@@ -52,8 +53,7 @@ const pageData = {
   heading: "Premenstrual Dysphoric Disorder (PMDD)",
   description: "Support for severe premenstrual symptoms",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
-  bgImage:
-    "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&q=80",
+  bgImage: ConditionBannerImage,
 };
 
 // ─────────────────────────────────────────────────────────────────

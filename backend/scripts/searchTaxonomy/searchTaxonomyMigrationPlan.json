@@ -4200,7 +4200,7 @@
         "kind": "condition",
         "legacyId": "urinary-tract-infection",
         "slug": "urinary-tract-infection-uti",
-        "route": "/urinary-tract-infection",
+        "route": "/mens-health/urology/urinary-tract-infection",
         "isActive": false,
         "isSearchable": true
       },
@@ -4208,7 +4208,7 @@
       "categoryName": "Men's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
-      "legacyRoute": "/urinary-tract-infection",
+      "legacyRoute": "/mens-health/urology/urinary-tract-infection",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -11711,9 +11711,9 @@
         "specialty": "Urology",
         "category": "Men's Health",
         "mergeInto": null,
-        "legacyRoute": "/urinary-tract-infection",
+        "legacyRoute": "/mens-health/urology/urinary-tract-infection",
         "routeStatus": "FOUND_IN_APP",
-        "route": "/urinary-tract-infection",
+        "route": "/mens-health/urology/urinary-tract-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "uti": [

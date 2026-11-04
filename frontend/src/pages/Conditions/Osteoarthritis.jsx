@@ -19,7 +19,7 @@ import Breadcrumb from "../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Chronic Care",
+  badge: "Eye, Ear & Bone",
   heading: "Osteoarthritis",
   description: "Joint pain and stiffness over time",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

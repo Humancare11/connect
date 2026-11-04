@@ -87,7 +87,7 @@ export default function BurningUrination({ categoryId } = {}) {
             <div className="condition-hero-inner">
               <Breadcrumb tone="light" />
               <span className="condition-badge-hero condition-hero-anim-badge">
-                ✦ Trusted {pageData.badge}
+                ✦Trusted {pageData.badge}
               </span>
 
               <h1 className="condition-h1 condition-hero-anim-h1">
@@ -273,8 +273,6 @@ export default function BurningUrination({ categoryId } = {}) {
             </aside>
           </div>
         </div>
-
-        {/* ══════════════════════ FAQ ══════════════════════ */}
       </div>
     </>
   );

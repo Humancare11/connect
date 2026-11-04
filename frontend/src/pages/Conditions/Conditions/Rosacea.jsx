@@ -50,7 +50,7 @@ import Breadcrumb from "../../../components/ui/Breadcrumb";
 // DATA  (swap this out per sub-page)
 // ─────────────────────────────────────────────────────────────────
 const pageData = {
-  badge: "Skin Conditions",
+  badge: "Skin & Hair Care",
   heading: "Ringworm",
   description: "Redness and facial skin irritation",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

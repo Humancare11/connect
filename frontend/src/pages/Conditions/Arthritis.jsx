@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/ChronicCare/Arthr
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Chronic Care",
+  badge: "Eye, Ear & Bone Care",
   heading: "Arthritis",
   description: "Joint pain, swelling, and stiffness",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

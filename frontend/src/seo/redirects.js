@@ -28,8 +28,9 @@ export const REDIRECTS = [
   // Migraine
   { from: "/chronic-care/neurology/chronic-migraine", to: "/chronic-care/neurology/migraine" },
   // UTI (gender-neutral canonical)
-  { from: "/mens-health/urology/urinary-tract-infection", to: "/urinary-tract-infection" },
-  { from: "/bladder-infection", to: "/urinary-tract-infection" },
+  { from: "/mens-health/urology/mens-health/urology/urinary-tract-infection", to: "/mens-health/urology/urinary-tract-infection" },
+  { from: "/bladder-infection", to: "/mens-health/urology/urinary-tract-infection" },
+  { from: "/urinary-tract-infection", to: "/mens-health/urology/urinary-tract-infection" },
   // Old/mistyped paths that were linked from the UI
   { from: "/contact", to: "/contact-us" },
   { from: "/specialists", to: "/specialties" },

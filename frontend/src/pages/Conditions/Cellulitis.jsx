@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/SkinCondition/Cel
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Skin Conditions",
+  badge: "Skin & Hair Care",
   heading: "Cellulitis",
   description: "Bacterial skin infection causing swelling",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],

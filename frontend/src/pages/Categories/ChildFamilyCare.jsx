@@ -19,6 +19,8 @@ import {
 } from "react-icons/fi";
 import "./categoriesGlobal.css";
 import SEO from "../../components/Seo";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import SpecialtyCard from "../../components/SpecialtyCard";
 import FAQ from "../../components/FAQ/FAQ";
 import childFamilyHero from "../../assets/HomeImageCategories/child-family-care-services.webp";
 
@@ -396,40 +398,6 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
-function SpecialtyCard({ sp, index }) {
-  const navigate = useNavigate();
-
-  return (
-    <motion.div
-      className="hcc-specialty-card"
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: Math.min(index * 0.04, 0.4) }}
-    >
-      {sp.path ? (
-        <Link
-          to={sp.path}
-          className="hcc-specialty-link"
-          aria-label={`View ${sp.name}`}
-          style={{ display: "block", color: "inherit", textDecoration: "none" }}
-        >
-          <div className="hcc-specialty-name">{sp.name}</div>
-          <p className="hcc-specialty-desc">{sp.desc}</p>
-          <div className="hcc-specialty-arrow">
-            Learn more <FiArrowRight size={13} />
-          </div>
-        </Link>
-      ) : (
-        <>
-          <div className="hcc-specialty-name">{sp.name}</div>
-          <p className="hcc-specialty-desc">{sp.desc}</p>
-        </>
-      )}
-    </motion.div>
-  );
-}
-
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
@@ -520,6 +488,7 @@ export default function ChildFamilyCare() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
+            <Breadcrumb tone="light" />
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}

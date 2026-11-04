@@ -1459,33 +1459,39 @@
   color: #334155;
   font-weight: 600;
 }
+/* Hover / active / focus all use the brand primary (--primary, --primary-hover from App.css). */
 .adp-bk-card .adp-tab:hover {
-  background: #f8fafc;
+  border-color: var(--primary, #0b57e8);
+  background: rgba(11, 87, 232, 0.06);
+  color: var(--primary, #0b57e8);
 }
 .adp-bk-card .adp-tab.active {
-  border-color: #0f766e;
-  background: #f0fdfa;
-  color: #0f766e;
-  box-shadow: 0 0 0 2px #99f6e4;
+  border-color: var(--primary, #0b57e8);
+  background: var(--primary, #0b57e8);
+  color: #ffffff;
+  box-shadow: none;
+}
+.adp-bk-card .adp-tab.active:hover {
+  border-color: var(--primary-hover, #0047cc);
+  background: var(--primary-hover, #0047cc);
+  color: #ffffff;
+}
+.adp-bk-card .adp-tab:focus-visible {
+  outline: 2px solid var(--primary, #0b57e8);
+  outline-offset: 2px;
 }
 .adp-bk-card .adp-tab-count {
   padding: 1px 7px;
   border-radius: 6px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: rgba(11, 87, 232, 0.1);
+  color: var(--primary, #0b57e8);
   font-size: 11.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .adp-bk-card .adp-tab.active .adp-tab-count {
-  background: #ccfbf1;
-  color: #0f766e;
-}
-.adp-bk-card .adp-bk-hide.active {
-  border-color: #0f172a;
-  background: #0f172a;
+  background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  box-shadow: none;
 }
 .adp-bk-card .adp-search {
   flex: 0 1 280px;
@@ -1536,6 +1542,39 @@
 }
 .adp-bk-hide {
   margin-left: 4px;
+}
+
+/* Below 1200px the eight status tabs no longer fit one row (they need ~900px) and wrapped unevenly (6 + 2, or ragged on phones).
+   Lay them out as an even grid instead - four columns, two on phones (8 tabs always fill whole rows). Each tab keeps one line,
+   with the count pinned to the right, and the "Hide testing" toggle gets its own full-width row underneath. Wider screens keep
+   the existing single row. */
+@media (max-width: 1199px) {
+  .adp-bk-card .adp-bk-tabs {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+  }
+  .adp-bk-card .adp-bk-tabs .adp-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .adp-bk-card .adp-bk-tabs .adp-tab {
+    min-width: 0;
+    min-height: 40px;
+    justify-content: space-between;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .adp-bk-card .adp-bk-tabs .adp-bk-hide {
+    margin-left: 0;
+    justify-content: center;
+  }
+}
+@media (max-width: 639px) {
+  .adp-bk-card .adp-bk-tabs .adp-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .adp-bk-wrap {
   container-type: inline-size;

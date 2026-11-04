@@ -9,7 +9,7 @@ const PAGE_TITLE = "UTI Symptoms, Causes, Treatment & When to See a Doctor";
 const PAGE_DESCRIPTION =
   "Learn about UTI symptoms, causes, treatment, antibiotics for UTIs, prevention, and when to see a doctor. Get expert online care with Humancare Connect.";
 const PAGE_URL =
-  "https://humancareconnect.co/mens-health/urology/urinary-tract-infection";
+  "https://humancareconnect.co/mens-health/urology/mens-health/urology/urinary-tract-infection";
 const PAGE_IMAGE = UTIImage;
 
 const TOC_ITEMS = [
@@ -326,7 +326,7 @@ export default function UTI() {
                     <HeadingLink id="overview" />
                   </h2>
                   <p>
-                    <a href="https://humancareconnect.co/mens-health/urology/urinary-tract-infection">
+                    <a href="https://humancareconnect.co/mens-health/urology/mens-health/urology/urinary-tract-infection">
                       UTI
                     </a>{" "}
                     is short for urinary tract infection. It’s a common
@@ -411,7 +411,7 @@ export default function UTI() {
                   <p>
                     Women are more likely to develop bladder infections because
                     of urinary anatomy, but anyone can develop a{" "}
-                    <a href="https://humancareconnect.co/mens-health/urology/urinary-tract-infection">
+                    <a href="https://humancareconnect.co/mens-health/urology/mens-health/urology/urinary-tract-infection">
                       UTI
                     </a>
                     .
@@ -775,7 +775,7 @@ export default function UTI() {
               <div className="cta-buttons">
                 <Link
                   to="/appointment-booking"
-                    state={{ tab: "spec" }}
+                  state={{ tab: "spec" }}
                   className="btn btn-primary"
                 >
                   Book Online Consultation

@@ -42,6 +42,37 @@
   min-width: 0;
 }
 
+/* Phones and tablets: the six status tabs ("All", "Pending", "Approved (deleted)", ...) have very different label lengths, so as
+   free-flowing pills they wrapped into uneven rows (5 + 1 on a tablet, ragged on a phone). Use an even grid instead: three columns
+   on tablets, two on phones, equal widths, one row height, labels that wrap inside their own tab rather than clip, and the count
+   pinned to the right. On phones each column is at least 112px, so on very narrow screens it drops to a single column instead of
+   overflowing. Scoped to .adr-toolbar so the other adp-tabs on the page are untouched. */
+@media (max-width: 1023px) {
+  .adr-toolbar .adp-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 8px;
+  }
+}
+@media (max-width: 767px) {
+  .adr-toolbar .adp-tabs {
+    grid-template-columns: repeat(auto-fit, minmax(max(112px, 45%), 1fr));
+  }
+}
+@media (max-width: 1023px) {
+  .adr-toolbar .adp-tabs .adp-tab {
+    min-width: 0;
+    justify-content: space-between;
+    padding: 8px 12px;
+    line-height: 1.25;
+    text-align: left;
+  }
+  .adr-toolbar .adp-tabs .adp-tab-count {
+    flex-shrink: 0;
+  }
+}
+
 .adr-wrap {
   container-type: inline-size;
 }

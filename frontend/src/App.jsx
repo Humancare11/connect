@@ -11,7 +11,16 @@ import { MotionConfig } from "framer-motion";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
 import BookingSourceTracker from "./components/BookingSourceTracker";
-import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  Fragment,
+  lazy,
+  Suspense,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import "./App.css";
 
 import Header from "./components/Header";
@@ -21,7 +30,7 @@ import ErrorBoundary from "./components/ui/ErrorBoundary";
 import PageH1 from "./components/ui/PageH1";
 import RouteFallback from "./components/ui/RouteFallback";
 import { HasMainContext } from "./components/ui/HasMainContext";
-import { TextWidget } from '@livechat/widget-react'
+import { TextWidget } from "@livechat/widget-react";
 import LiveChatTracker from "./features/livechat/LiveChatTracker";
 import LiveChatWidgetLoader from "./features/livechat/LiveChatWidgetLoader";
 import { isTrackablePath as isPublicPagePath } from "./features/livechat/useVisitorTracker";
@@ -64,19 +73,37 @@ const AboutPage = lazy(() => import("./pages/AboutPage")); // about us page
 
 // iNDIVIDUAL bLOG PAGES
 const Telemedicine = lazy(() => import("./pages/Blogs/Telemedicine"));
-const TelemedicineServices = lazy(() => import("./pages/Blogs/TelemedicineServices"));
-const HowTelemedicineAppointmentWork = lazy(() => import("./pages/Blogs/HowTelemedicineAppointmentWork"));
-const OnlineDoctorConsultation = lazy(() => import("./pages/Blogs/OnlineDoctorConsultation"));
+const TelemedicineServices = lazy(
+  () => import("./pages/Blogs/TelemedicineServices"),
+);
+const HowTelemedicineAppointmentWork = lazy(
+  () => import("./pages/Blogs/HowTelemedicineAppointmentWork"),
+);
+const OnlineDoctorConsultation = lazy(
+  () => import("./pages/Blogs/OnlineDoctorConsultation"),
+);
 const MedicalConditions = lazy(() => import("./pages/Blogs/MedicalConditions"));
-const TopTelemedicinePlatforms = lazy(() => import("./pages/Blogs/TopTelemedicinePlatforms"));
+const TopTelemedicinePlatforms = lazy(
+  () => import("./pages/Blogs/TopTelemedicinePlatforms"),
+);
 const TelemedicineSafe = lazy(() => import("./pages/Blogs/TelemedicineSafe"));
-const TelemedicineInPerson = lazy(() => import("./pages/Blogs/TelemedicineInPerson"));
+const TelemedicineInPerson = lazy(
+  () => import("./pages/Blogs/TelemedicineInPerson"),
+);
 const TelemedicineCost = lazy(() => import("./pages/Blogs/TelemedicineCost"));
-const OnlineDoctorRealDoctor = lazy(() => import("./pages/Blogs/OnlineDoctorsRealDoctors"));
-const FutureofTelemedicine = lazy(() => import("./pages/Blogs/FutureofTelemedicine"));
+const OnlineDoctorRealDoctor = lazy(
+  () => import("./pages/Blogs/OnlineDoctorsRealDoctors"),
+);
+const FutureofTelemedicine = lazy(
+  () => import("./pages/Blogs/FutureofTelemedicine"),
+);
 const UTI = lazy(() => import("./pages/Blogs/UTI"));
-const MigraineVsHeadache = lazy(() => import("./pages/Blogs/MigraineVsHeadache"));
-const TelehealthforHypertension = lazy(() => import("./pages/Blogs/TelehealthforHypertension"));
+const MigraineVsHeadache = lazy(
+  () => import("./pages/Blogs/MigraineVsHeadache"),
+);
+const TelehealthforHypertension = lazy(
+  () => import("./pages/Blogs/TelehealthforHypertension"),
+);
 const PCP = lazy(() => import("./pages/PCP")); // PCP Page
 const DoctorCareers = lazy(() => import("./pages/DoctorCareers")); // Career Page for Doctors
 const FAQ = lazy(() => import("./pages/FAQPage")); // FAQ page
@@ -729,7 +756,9 @@ const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
 const ServicesPrices = lazy(() => import("./pages/admin/ServicesPrices"));
 
 const CategoryConsultant = lazy(() => import("./pages/CategoryConsultant"));
-const CategoryAppointmentConfirm = lazy(() => import("./pages/CategoryAppointmentConfirm"));
+const CategoryAppointmentConfirm = lazy(
+  () => import("./pages/CategoryAppointmentConfirm"),
+);
 
 // import DoctorRegister from "./pages/doctors/DoctorRegister";
 const DoctorLogin = lazy(() => import("./pages/doctors/DoctorLogin"));
@@ -781,7 +810,9 @@ const AdminDoctorProfile = lazy(
 );
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 const AdminUserProfile = lazy(() => import("./pages/admin/AdminUserProfile"));
-const AdminDeletionRequests = lazy(() => import("./pages/admin/AdminDeletionRequests"));
+const AdminDeletionRequests = lazy(
+  () => import("./pages/admin/AdminDeletionRequests"),
+);
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const AdminEntries = lazy(() => import("./pages/admin/AdminEntries"));
 const AdminAssignDoctor = lazy(() => import("./pages/admin/AdminAssignDoctor"));
@@ -791,7 +822,9 @@ const AdminAppointmentDetails = lazy(
 const AdminDirectVideoConsultation = lazy(
   () => import("./pages/admin/AdminDirectVideoConsultation"),
 );
-const AdminAppointmentCallReport = lazy(() => import("./pages/admin/AdminAppointmentCallReport"));
+const AdminAppointmentCallReport = lazy(
+  () => import("./pages/admin/AdminAppointmentCallReport"),
+);
 const AdminDirectVideoCallDetail = lazy(
   () => import("./pages/admin/AdminDirectVideoCallDetail"),
 );
@@ -833,18 +866,38 @@ const AdminPartnerCaseDetail = lazy(
 const EmailLayout = lazy(() => import("./pages/admin/email/EmailLayout"));
 const EmailList = lazy(() => import("./pages/admin/email/EmailList"));
 const EmailThread = lazy(() => import("./pages/admin/email/EmailThread"));
-const MailIdsSettings = lazy(() => import("./pages/admin/email/MailIdsSettings"));
+const MailIdsSettings = lazy(
+  () => import("./pages/admin/email/MailIdsSettings"),
+);
 const MySignature = lazy(() => import("./pages/admin/email/MySignature"));
-const LiveChatShell = lazy(() => import("./pages/admin/livechat/LiveChatShell"));
-const AdminLiveVisitors = lazy(() => import("./pages/admin/livechat/AdminLiveVisitors"));
-const AdminLiveTeam = lazy(() => import("./pages/admin/livechat/AdminLiveTeam"));
-const AdminLiveReports = lazy(() => import("./pages/admin/livechat/AdminLiveReports"));
-const AdminLiveSettings = lazy(() => import("./pages/admin/livechat/AdminLiveSettings"));
+const LiveChatShell = lazy(
+  () => import("./pages/admin/livechat/LiveChatShell"),
+);
+const AdminLiveVisitors = lazy(
+  () => import("./pages/admin/livechat/AdminLiveVisitors"),
+);
+const AdminLiveTeam = lazy(
+  () => import("./pages/admin/livechat/AdminLiveTeam"),
+);
+const AdminLiveReports = lazy(
+  () => import("./pages/admin/livechat/AdminLiveReports"),
+);
+const AdminLiveSettings = lazy(
+  () => import("./pages/admin/livechat/AdminLiveSettings"),
+);
 const AdminAiChats = lazy(() => import("./pages/admin/livechat/AdminAiChats"));
-const AdminLiveAgentChats = lazy(() => import("./pages/admin/livechat/AdminLiveAgentChats"));
-const AdminLiveArchive = lazy(() => import("./pages/admin/livechat/AdminLiveArchive"));
-const AdminLiveTrash = lazy(() => import("./pages/admin/livechat/AdminLiveTrash"));
-const AdminLiveReview = lazy(() => import("./pages/admin/livechat/AdminLiveReview"));
+const AdminLiveAgentChats = lazy(
+  () => import("./pages/admin/livechat/AdminLiveAgentChats"),
+);
+const AdminLiveArchive = lazy(
+  () => import("./pages/admin/livechat/AdminLiveArchive"),
+);
+const AdminLiveTrash = lazy(
+  () => import("./pages/admin/livechat/AdminLiveTrash"),
+);
+const AdminLiveReview = lazy(
+  () => import("./pages/admin/livechat/AdminLiveReview"),
+);
 
 const UserLayout = lazy(() => import("./pages/user/UserLayout"));
 const Dashboard = lazy(() => import("./pages/user/Dashboard"));
@@ -914,7 +967,11 @@ function ScrollToTop() {
     // HTML) keeps the browser's position; pages that mount the anchor later scroll to it themselves.
     if (hash.length > 1) {
       let id = hash.slice(1);
-      try { id = decodeURIComponent(id); } catch { /* keep the raw id */ }
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        /* keep the raw id */
+      }
       if (document.getElementById(id)) return;
     }
     window.scrollTo(0, 0);
@@ -1070,7 +1127,7 @@ function SessionTimeoutManager() {
 
     refreshTimer = setInterval(
       () => {
-        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => { });
+        api.post("/api/auth/refresh", null, { authRole: role }).catch(() => {});
       },
       10 * 60 * 1000,
     );
@@ -1112,7 +1169,12 @@ function SessionTimeoutManager() {
   if (!warningOpen) return null;
 
   return (
-    <div className="hc-session-warning" role="dialog" aria-modal="true" aria-labelledby="hc-session-title">
+    <div
+      className="hc-session-warning"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hc-session-title"
+    >
       <div className="hc-session-warning__panel" ref={warningPanelRef}>
         <h2 id="hc-session-title">Session expiring</h2>
         <p>
@@ -1150,7 +1212,7 @@ function DoctorEnrollmentsWrapper() {
     api
       .get(`/api/doctor/enrollment/${doctorId}`)
       .then((res) => setEnrollmentData(res.data || null))
-      .catch(() => { })
+      .catch(() => {})
       .finally(() => setFetchDone(true));
   }, [doctor, loading, navigate]);
 
@@ -1181,10 +1243,15 @@ const subscribeNever = () => () => {};
 function SiteCookieBanner() {
   const { pathname } = useLocation();
   // false while prerendering and hydrating, true afterwards (no setState-in-effect needed)
-  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  const mounted = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  );
   // Part of the live chat rollout: without VITE_LIVECHAT_ENABLED=true the site behaves as before (banner only at /cookies).
   if (import.meta.env.VITE_LIVECHAT_ENABLED !== "true") return null;
-  if (!mounted || !isPublicPagePath(pathname) || pathname === "/cookies") return null;
+  if (!mounted || !isPublicPagePath(pathname) || pathname === "/cookies")
+    return null;
   return (
     <Suspense fallback={null}>
       <CookieBanner />
@@ -1209,7 +1276,8 @@ export function AppLayout() {
     location.pathname.startsWith("/direct-video-call");
 
   const MainWrap = LAYOUT_OWNS_MAIN.test(location.pathname) ? Fragment : "main";
-  const mainProps = MainWrap === Fragment ? {} : { id: "main-content", tabIndex: -1 };
+  const mainProps =
+    MainWrap === Fragment ? {} : { id: "main-content", tabIndex: -1 };
 
   return (
     <MotionConfig reducedMotion="user">
@@ -1227,2032 +1295,2151 @@ export function AppLayout() {
       <SiteCookieBanner />
       {!hideLayout && <Header />}
 
-      <Suspense
-        fallback={<RouteFallback />}
-      >
+      <Suspense fallback={<RouteFallback />}>
         <MainWrap {...mainProps}>
-        <HasMainContext.Provider value={MainWrap !== Fragment}>
-        <ErrorBoundary resetKey={location.pathname}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          {/* The Medical Q&A feature was removed. Keep old links working. */}
-          <Route path="/ask-a-question" element={<Navigate to="/" replace />} />
-          <Route path="/medical-services" element={<Services />} />
-          <Route path="/blogs" element={<Blogs />} />
-          <Route path="/corporates" element={<Corporates />} />
-          <Route path="/contact-us" element={<Contact />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/appointment-booking" element={<AppointmentBooking />} />
-                    <Route path="/service-areas" element={<Serviceareas />} />
-          <Route
-            path="/appointment-booking/:catSlug"
-            element={<AppointmentBooking />}
-          />
-          <Route
-            path="/appointment-booking/:catSlug/:specSlug"
-            element={<AppointmentBooking />}
-          />
-          {/* Canonical, deep-linkable booking form URL. */}
-          <Route
-            path="/appointment-booking/:category/:specialty/:condition"
-            element={<AppointmentBookingForm />}
-          />
-          {/* <Route path="/register" element={<Register />} /> */}
-          <Route path="/book-appointment" element={<BookAppointment />} />
-          <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
-          {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
-          <Route path="/doctors/:slug" element={<DoctorProfileForUser />} />
-          {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
-          <Route
-            path="/doctor/:id"
-            element={<DoctorProfileForUser legacyId />}
-          />
-          <Route
-            path="/user/dashboard"
-            element={
-              <UserLayout>
-                <Dashboard />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/appointments"
-            element={
-              <UserLayout>
-                <Appointments />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/medical-questions"
-            element={<Navigate to="/user/dashboard" replace />}
-          />
-          <Route
-            path="/user/favourite-doctors"
-            element={
-              <UserLayout>
-                <FavouriteDoctors />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/lab-appointments"
-            element={
-              <UserLayout>
-                <LabAppointments />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/profile-settings"
-            element={
-              <UserLayout>
-                <>
-                  <PageH1>Profile settings</PageH1>
-                  <ProfileSettings />
-                </>
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/change-password"
-            element={
-              <UserLayout>
-                <ChangePassword />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/my-records"
-            element={
-              <UserLayout>
-                <MyRecords />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/payment-history"
-            element={
-              <UserLayout>
-                <PaymentHistory />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/user/raise-ticket"
-            element={
-              <UserLayout>
-                <UserRaiseTicket />
-              </UserLayout>
-            }
-          />
-          <Route
-            path="/profile"
-            element={<Navigate to="/user/dashboard" replace />}
-          />
-          {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
-          <Route path="/doctor-login" element={<DoctorLogin />} />
-          <Route
-            path="/doctor-dashboard"
-            element={
-              <DoctorLayout>
-                <Dashbord />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/profile"
-            element={
-              <DoctorLayout>
-                <DoctorProfile />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/doctor-profile-for-patients"
-            element={
-              <DoctorLayout>
-                <DoctorProfileForUser showOwnProfile />
-              </DoctorLayout>
-            }
-          />
-          {/* Enrollment is standalone — no sidebar/header until approved */}
-          <Route
-            path="/doctor-dashboard/enrollments"
-            element={<DoctorEnrollmentsWrapper />}
-          />
-          <Route
-            path="/doctor-dashboard/appointments"
-            element={
-              <DoctorLayout>
-                <DoctorAppointments />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/patients"
-            element={
-              <DoctorLayout>
-                <DoctorPatients />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/patients/:patientId/prescription"
-            element={
-              <DoctorLayout>
-                <WritePrescription />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/appointments/:appointmentId/prescription"
-            element={
-              <DoctorLayout>
-                <WritePrescription />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/patients/:patientId/prescriptions/:rxId"
-            element={
-              <DoctorLayout>
-                <>
-                  <PageH1>Prescription preview</PageH1>
-                  <PrescriptionPreview />
-                </>
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/patients/:patientId/certificates/:certId"
-            element={
-              <DoctorLayout>
-                <>
-                  <PageH1>Medical certificate preview</PageH1>
-                  <CertificatePreview />
-                </>
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/messages"
-            element={
-              <DoctorLayout>
-                <>
-                  <PageH1>Messages</PageH1>
-                  <DoctorMessages />
-                </>
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/notes"
-            element={
-              <DoctorLayout>
-                <>
-                  <PageH1>Consultation notes</PageH1>
-                  <DoctorNotes />
-                </>
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/raise-ticket"
-            element={
-              <DoctorLayout>
-                <RaiseTicket />
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/qna"
-            element={<Navigate to="/doctor-dashboard" replace />}
-          />
-          <Route
-            path="/doctor-dashboard/analytics"
-            element={
-              <DoctorLayout>
-                <>
-                  <PageH1>Analytics</PageH1>
-                  <DoctorAnalytics />
-                </>
-              </DoctorLayout>
-            }
-          />
-          <Route
-            path="/doctor-dashboard/settings"
-            element={
-              <DoctorLayout>
-                <>
-                  <PageH1>Settings</PageH1>
-                  <DoctorSettings />
-                </>
-              </DoctorLayout>
-            }
-          />
-          <Route path="/adminauth" element={<AdminAuthPage />} />
-          <Route path="/payment-admin-login" element={<PaymentAdminLogin />} />
-          {/* <Route
+          <HasMainContext.Provider value={MainWrap !== Fragment}>
+            <ErrorBoundary resetKey={location.pathname}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                {/* The Medical Q&A feature was removed. Keep old links working. */}
+                <Route
+                  path="/ask-a-question"
+                  element={<Navigate to="/" replace />}
+                />
+                <Route path="/medical-services" element={<Services />} />
+                <Route path="/blogs" element={<Blogs />} />
+                <Route path="/corporates" element={<Corporates />} />
+                <Route path="/contact-us" element={<Contact />} />
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/appointment-booking"
+                  element={<AppointmentBooking />}
+                />
+                <Route path="/service-areas" element={<Serviceareas />} />
+                <Route
+                  path="/appointment-booking/:catSlug"
+                  element={<AppointmentBooking />}
+                />
+                <Route
+                  path="/appointment-booking/:catSlug/:specSlug"
+                  element={<AppointmentBooking />}
+                />
+                {/* Canonical, deep-linkable booking form URL. */}
+                <Route
+                  path="/appointment-booking/:category/:specialty/:condition"
+                  element={<AppointmentBookingForm />}
+                />
+                {/* <Route path="/register" element={<Register />} /> */}
+                <Route path="/book-appointment" element={<BookAppointment />} />
+                <Route path="/pay/:token" element={<PaymentLinkCheckout />} />
+                {/* SEO-friendly doctor profile: /doctors/12345-doctor-name */}
+                <Route
+                  path="/doctors/:slug"
+                  element={<DoctorProfileForUser />}
+                />
+                {/* Legacy redirect: old /doctor/:id links resolve gracefully */}
+                <Route
+                  path="/doctor/:id"
+                  element={<DoctorProfileForUser legacyId />}
+                />
+                <Route
+                  path="/user/dashboard"
+                  element={
+                    <UserLayout>
+                      <Dashboard />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/appointments"
+                  element={
+                    <UserLayout>
+                      <Appointments />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/medical-questions"
+                  element={<Navigate to="/user/dashboard" replace />}
+                />
+                <Route
+                  path="/user/favourite-doctors"
+                  element={
+                    <UserLayout>
+                      <FavouriteDoctors />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/lab-appointments"
+                  element={
+                    <UserLayout>
+                      <LabAppointments />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/profile-settings"
+                  element={
+                    <UserLayout>
+                      <>
+                        <PageH1>Profile settings</PageH1>
+                        <ProfileSettings />
+                      </>
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/change-password"
+                  element={
+                    <UserLayout>
+                      <ChangePassword />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/my-records"
+                  element={
+                    <UserLayout>
+                      <MyRecords />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/payment-history"
+                  element={
+                    <UserLayout>
+                      <PaymentHistory />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/user/raise-ticket"
+                  element={
+                    <UserLayout>
+                      <UserRaiseTicket />
+                    </UserLayout>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={<Navigate to="/user/dashboard" replace />}
+                />
+                {/* <Route path="/doctor-register" element={<DoctorRegister />} /> */}
+                <Route path="/doctor-login" element={<DoctorLogin />} />
+                <Route
+                  path="/doctor-dashboard"
+                  element={
+                    <DoctorLayout>
+                      <Dashbord />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/profile"
+                  element={
+                    <DoctorLayout>
+                      <DoctorProfile />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/doctor-profile-for-patients"
+                  element={
+                    <DoctorLayout>
+                      <DoctorProfileForUser showOwnProfile />
+                    </DoctorLayout>
+                  }
+                />
+                {/* Enrollment is standalone — no sidebar/header until approved */}
+                <Route
+                  path="/doctor-dashboard/enrollments"
+                  element={<DoctorEnrollmentsWrapper />}
+                />
+                <Route
+                  path="/doctor-dashboard/appointments"
+                  element={
+                    <DoctorLayout>
+                      <DoctorAppointments />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/patients"
+                  element={
+                    <DoctorLayout>
+                      <DoctorPatients />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/patients/:patientId/prescription"
+                  element={
+                    <DoctorLayout>
+                      <WritePrescription />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/appointments/:appointmentId/prescription"
+                  element={
+                    <DoctorLayout>
+                      <WritePrescription />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/patients/:patientId/prescriptions/:rxId"
+                  element={
+                    <DoctorLayout>
+                      <>
+                        <PageH1>Prescription preview</PageH1>
+                        <PrescriptionPreview />
+                      </>
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/patients/:patientId/certificates/:certId"
+                  element={
+                    <DoctorLayout>
+                      <>
+                        <PageH1>Medical certificate preview</PageH1>
+                        <CertificatePreview />
+                      </>
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/messages"
+                  element={
+                    <DoctorLayout>
+                      <>
+                        <PageH1>Messages</PageH1>
+                        <DoctorMessages />
+                      </>
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/notes"
+                  element={
+                    <DoctorLayout>
+                      <>
+                        <PageH1>Consultation notes</PageH1>
+                        <DoctorNotes />
+                      </>
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/raise-ticket"
+                  element={
+                    <DoctorLayout>
+                      <RaiseTicket />
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/qna"
+                  element={<Navigate to="/doctor-dashboard" replace />}
+                />
+                <Route
+                  path="/doctor-dashboard/analytics"
+                  element={
+                    <DoctorLayout>
+                      <>
+                        <PageH1>Analytics</PageH1>
+                        <DoctorAnalytics />
+                      </>
+                    </DoctorLayout>
+                  }
+                />
+                <Route
+                  path="/doctor-dashboard/settings"
+                  element={
+                    <DoctorLayout>
+                      <>
+                        <PageH1>Settings</PageH1>
+                        <DoctorSettings />
+                      </>
+                    </DoctorLayout>
+                  }
+                />
+                <Route path="/adminauth" element={<AdminAuthPage />} />
+                <Route
+                  path="/payment-admin-login"
+                  element={<PaymentAdminLogin />}
+                />
+                {/* <Route
             path="/superadmin-dashboard/pricing-management"
             element={<PricingManagement />}
           /> */}
-          <Route path="/employee-login" element={<EmployeeAdminLogin />} />
-          <Route
-            path="/employee-dashboard"
-            element={
-              <EmployeeAdminPrivateRoute>
-                <EmployeeAdminLayout>
-                  <EmployeeAdminDashboard />
-                </EmployeeAdminLayout>
-              </EmployeeAdminPrivateRoute>
-            }
-          />
-          <Route
-            path="/employee-dashboard/tasks"
-            element={<Navigate to="/employee-dashboard/my-tasks" replace />}
-          />
-          <Route
-            path="/employee-dashboard/my-tasks"
-            element={
-              <EmployeeAdminPrivateRoute>
-                <EmployeeAdminLayout>
-                  <EmployeeTasks mode="my" />
-                </EmployeeAdminLayout>
-              </EmployeeAdminPrivateRoute>
-            }
-          />
-          <Route
-            path="/employee-dashboard/my-tasks/:taskId"
-            element={
-              <EmployeeAdminPrivateRoute>
-                <EmployeeAdminLayout>
-                  <EmployeeTasks mode="detail" />
-                </EmployeeAdminLayout>
-              </EmployeeAdminPrivateRoute>
-            }
-          />
-          <Route
-            path="/employee-dashboard/assign-task"
-            element={
-              <EmployeeAdminPrivateRoute>
-                <EmployeeAdminLayout>
-                  <AssignTask />
-                </EmployeeAdminLayout>
-              </EmployeeAdminPrivateRoute>
-            }
-          />
-          {/* ── Partner Dashboard ── */}
-          <Route path="/partner-login" element={<PartnerLogin />} />
-          <Route
-            path="/partner-dashboard"
-            element={
-              <PartnerPrivateRoute>
-                <PartnerLayout>
-                  <PartnerDashboard />
-                </PartnerLayout>
-              </PartnerPrivateRoute>
-            }
-          />
-          <Route
-            path="/partner-dashboard/submit-case"
-            element={
-              <PartnerPrivateRoute>
-                <PartnerLayout>
-                  <PartnerSubmitCare />
-                </PartnerLayout>
-              </PartnerPrivateRoute>
-            }
-          />
-          <Route
-            path="/partner-dashboard/cases"
-            element={
-              <PartnerPrivateRoute>
-                <PartnerLayout>
-                  <PartnerAllCases />
-                </PartnerLayout>
-              </PartnerPrivateRoute>
-            }
-          />
-          <Route
-            path="/partner-dashboard/cases/:id"
-            element={
-              <PartnerPrivateRoute>
-                <PartnerLayout>
-                  <PartnerCaseDetail />
-                </PartnerLayout>
-              </PartnerPrivateRoute>
-            }
-          />
-          <Route
-            path="/partner-dashboard/billing"
-            element={
-              <PartnerPrivateRoute>
-                <PartnerLayout>
-                  <PartnerBilling />
-                </PartnerLayout>
-              </PartnerPrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/partner-cases"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminPartnerCases />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/partner-cases/:id"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminPartnerCaseDetail />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/email"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <EmailLayout />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          >
-            <Route index element={<Navigate to="inbox" replace />} />
-            <Route path="mail/:messageId" element={<>
-                  <PageH1>Email message</PageH1>
-                  <EmailThread />
-                </>} />
-            <Route path="box/:mailboxId/:folder" element={<EmailList />} />
-            <Route path=":folder" element={<EmailList />} />
-          </Route>
-          {/* Super Admin only: add / edit / deactivate the company mail IDs. */}
-          <Route
-            path="/admin-dashboard/email/settings/mail-ids"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <AdminLayout>
-                  <MailIdsSettings />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          {/* Every admin: their own email signatures (the server only ever returns the caller's own). */}
-          <Route
-            path="/admin-dashboard/email/settings/my-signature"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <MySignature />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          {/* Live Chat (admin + superadmin; the server module is switched by LIVECHAT_ENABLED). */}
-          <Route
-            path="/admin-dashboard/live-chat"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveVisitors />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/ai-chats"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminAiChats />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/ai-chats/:conversationId"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminAiChats />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/agent-chats"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveAgentChats />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/agent-chats/:conversationId"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveAgentChats />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/archive/:conversationId?"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveArchive />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/ai-review"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveReview />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/trash"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveTrash />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/team"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveTeam />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/reports"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveReports />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/live-chat/settings"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <LiveChatShell>
-                  <AdminLiveSettings />
-                </LiveChatShell>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/payment-admin"
-            element={<Navigate to="/payment-admin/payment-links" replace />}
-          />
-          <Route
-            path="/payment-admin/payment-links"
-            element={
-              <PrivateRoute
-                allowedRoles={["paymentadmin"]}
-                loginPath="/payment-admin-login"
-              >
-                <AdminLayout>
-                  <PaymentLinks />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/payment-admin/payment-history"
-            element={
-              <PrivateRoute
-                allowedRoles={["paymentadmin"]}
-                loginPath="/payment-admin-login"
-              >
-                <AdminLayout>
-                  <PaymentLinkHistory />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/payment-admin/manual-invoices"
-            element={
-              <PrivateRoute
-                allowedRoles={["paymentadmin"]}
-                loginPath="/payment-admin-login"
-              >
-                <AdminLayout>
-                  <ManualInvoices />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/manual-invoices"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <ManualInvoices />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/gop"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <GOP />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/services-prices"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <ServicesPrices />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-auth"
-            element={<Navigate to="/adminauth" replace />}
-          />
-          <Route
-            path="/admin-dashboard"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/our-doctors"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <OurDoctors />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/doctors/:slug"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <DoctorProfileForUser adminView />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/manage-doctors"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <ManageDoctors />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/doctor-profile/:id"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDoctorProfile />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/manage-users"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <ManageUsers />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/deletion-requests"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDeletionRequests />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/manage-users/:id"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>User profile</PageH1>
-                  <AdminUserProfile />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/appointments"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>Appointments</PageH1>
-                  <AdminAppointments />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/appointment-entries"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>Appointment entries</PageH1>
-                  <AdminEntries />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/direct-video-consultation"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDirectVideoConsultation />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            // The calls list page was removed; keep old bookmarks working.
-            // Individual reports (/calls/:roomId) are a separate route below.
-            path="/admin-dashboard/direct-video-consultation/calls"
-            element={<Navigate to="/admin-dashboard/direct-video-consultation" replace />}
-          />
-          <Route
-            path="/admin-dashboard/direct-video-consultation/calls/:roomId"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminDirectVideoCallDetail />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          {legacyAdminRedirects}
-          <Route
-            path="/admin-dashboard/appointments/:id/call-report"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <AdminAppointmentCallReport />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/appointments/:id/assign"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>Assign doctor</PageH1>
-                  <AdminAssignDoctor />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/appointments/:id"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <>
-                  <PageH1>Appointment details</PageH1>
-                  <AdminAppointmentDetails />
-                </>
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/qna"
-            element={<Navigate to="/admin-dashboard" replace />}
-          />
-          <Route
-            path="/admin-dashboard/search-analytics"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <SearchAnalytics />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard/tickets"
-            element={
-              <PrivateRoute allowedRoles={["admin", "superadmin"]}>
-                <AdminLayout>
-                  <SupportTickets />
-                </AdminLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/superadmin-dashboard"
-            element={
-              <PrivateRoute allowedRoles={["superadmin"]}>
-                <SuperAdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/video-call/:appointmentId"
-            element={
-              <>
-                <h1 className="sr-only">Video consultation</h1>
-                <CallErrorBoundary>
-                  <VideoCall />
-                </CallErrorBoundary>
-              </>
-            }
-          />
-          <Route
-            path="/direct-video-call/:roomId"
-            element={
-              <>
-                <h1 className="sr-only">Video consultation</h1>
-                <CallErrorBoundary>
-                  <DirectVideoCall />
-                </CallErrorBoundary>
-              </>
-            }
-          />
-          {/* ALL*/}
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/specialties" element={<Specialties />} />
-          <Route path="/conditions" element={<Symptoms />} />
-          {/* categories */}
-          <Route path="/child-and-family-care" element={<ChildFamilyCare />} />
-          <Route path="/chronic-care" element={<ChronicCareExpertOpinion />} />
-          <Route path="/eye-ear-bone" element={<EyeEarBone />} />
-          <Route
-            path="/general-and-everyday-care"
-            element={<GeneralEverydayCare />}
-          />
-          <Route path="/mens-health" element={<MenHealth />} />
-          <Route path="/mental-health" element={<MentalHealth />} />
-          <Route path="/sexual-health" element={<CategorySexualHealth />} />
-          <Route path="/skin-and-hair-care" element={<SkinHair />} />
-          <Route
-            path="/travel-and-global-care"
-            element={<TravelGlobalCare />}
-          />
-          <Route path="/weight-and-nutrition" element={<WeightNurtrition />} />
-          <Route path="/women-health" element={<WomenHealth />} />
-          {/* specialties */}
-          {/* <Route path="/sd" element={<SD />} /> */}
-          <Route
-            path="/child-and-family-care/adolescent-medicine"
-            element={<AdolescentMedicine />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics"
-            element={<Pediatrics />}
-          />
-          <Route path="/chronic-care/cardiology" element={<Cardiology />} />
-          <Route
-            path="/chronic-care/gastroenterology"
-            element={<Gastroenterology />}
-          />
-          <Route path="/chronic-care/neurology" element={<Neurology />} />
-          <Route path="/chronic-care/pulmonology" element={<Pulmonology />} />
-          <Route
-            path="/general-and-everyday-care/family-medicine"
-            element={<FamilyMedicine />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician"
-            element={<GeneralPhysician />}
-          />
-          <Route
-            path="/general-and-everyday-care/internal-medicine"
-            element={<InternalMedicine />}
-          />
-          <Route
-            path="/women-health/menopause-care"
-            element={<MenopauseCare />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology"
-            element={<ObstetricsGynaecology />}
-          />
-          <Route
-            path="/women-health/women-mental-health"
-            element={<WomenMentalHealth />}
-          />
-          <Route
-            path="/women-health/lactation-consulting"
-            element={<LactationConsulting />}
-          />
-          <Route path="/eye-ear-bone/ear-nose-throat" element={<Ent />} />
-          <Route
-            path="/eye-ear-bone/ophthalmology"
-            element={<Ophthalmology />}
-          />
-          <Route path="/eye-ear-bone/orthopedics" element={<Orthopedics />} />
-          <Route
-            path="/chronic-care/endocrinology"
-            element={<EndocrinologySpeciality />}
-          />
-          <Route path="/mens-health/men-health" element={<SpeMensHealth />} />
-          <Route path="/mens-health/urology" element={<Urology />} />
-          <Route
-            path="/mental-health/behavioral-health"
-            element={<BehavioralHealth />}
-          />
-          <Route path="/mental-health/psychiatry" element={<Psychiatry />} />
-          <Route
-            path="/mental-health/psychology-counseling"
-            element={<PsychologyCounseling />}
-          />
-          {/* <Route
+                <Route
+                  path="/employee-login"
+                  element={<EmployeeAdminLogin />}
+                />
+                <Route
+                  path="/employee-dashboard"
+                  element={
+                    <EmployeeAdminPrivateRoute>
+                      <EmployeeAdminLayout>
+                        <EmployeeAdminDashboard />
+                      </EmployeeAdminLayout>
+                    </EmployeeAdminPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/employee-dashboard/tasks"
+                  element={
+                    <Navigate to="/employee-dashboard/my-tasks" replace />
+                  }
+                />
+                <Route
+                  path="/employee-dashboard/my-tasks"
+                  element={
+                    <EmployeeAdminPrivateRoute>
+                      <EmployeeAdminLayout>
+                        <EmployeeTasks mode="my" />
+                      </EmployeeAdminLayout>
+                    </EmployeeAdminPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/employee-dashboard/my-tasks/:taskId"
+                  element={
+                    <EmployeeAdminPrivateRoute>
+                      <EmployeeAdminLayout>
+                        <EmployeeTasks mode="detail" />
+                      </EmployeeAdminLayout>
+                    </EmployeeAdminPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/employee-dashboard/assign-task"
+                  element={
+                    <EmployeeAdminPrivateRoute>
+                      <EmployeeAdminLayout>
+                        <AssignTask />
+                      </EmployeeAdminLayout>
+                    </EmployeeAdminPrivateRoute>
+                  }
+                />
+                {/* ── Partner Dashboard ── */}
+                <Route path="/partner-login" element={<PartnerLogin />} />
+                <Route
+                  path="/partner-dashboard"
+                  element={
+                    <PartnerPrivateRoute>
+                      <PartnerLayout>
+                        <PartnerDashboard />
+                      </PartnerLayout>
+                    </PartnerPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/partner-dashboard/submit-case"
+                  element={
+                    <PartnerPrivateRoute>
+                      <PartnerLayout>
+                        <PartnerSubmitCare />
+                      </PartnerLayout>
+                    </PartnerPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/partner-dashboard/cases"
+                  element={
+                    <PartnerPrivateRoute>
+                      <PartnerLayout>
+                        <PartnerAllCases />
+                      </PartnerLayout>
+                    </PartnerPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/partner-dashboard/cases/:id"
+                  element={
+                    <PartnerPrivateRoute>
+                      <PartnerLayout>
+                        <PartnerCaseDetail />
+                      </PartnerLayout>
+                    </PartnerPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/partner-dashboard/billing"
+                  element={
+                    <PartnerPrivateRoute>
+                      <PartnerLayout>
+                        <PartnerBilling />
+                      </PartnerLayout>
+                    </PartnerPrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/partner-cases"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminPartnerCases />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/partner-cases/:id"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminPartnerCaseDetail />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/email"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <EmailLayout />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                >
+                  <Route index element={<Navigate to="inbox" replace />} />
+                  <Route
+                    path="mail/:messageId"
+                    element={
+                      <>
+                        <PageH1>Email message</PageH1>
+                        <EmailThread />
+                      </>
+                    }
+                  />
+                  <Route
+                    path="box/:mailboxId/:folder"
+                    element={<EmailList />}
+                  />
+                  <Route path=":folder" element={<EmailList />} />
+                </Route>
+                {/* Super Admin only: add / edit / deactivate the company mail IDs. */}
+                <Route
+                  path="/admin-dashboard/email/settings/mail-ids"
+                  element={
+                    <PrivateRoute allowedRoles={["superadmin"]}>
+                      <AdminLayout>
+                        <MailIdsSettings />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                {/* Every admin: their own email signatures (the server only ever returns the caller's own). */}
+                <Route
+                  path="/admin-dashboard/email/settings/my-signature"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <MySignature />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                {/* Live Chat (admin + superadmin; the server module is switched by LIVECHAT_ENABLED). */}
+                <Route
+                  path="/admin-dashboard/live-chat"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveVisitors />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/ai-chats"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminAiChats />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/ai-chats/:conversationId"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminAiChats />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/agent-chats"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveAgentChats />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/agent-chats/:conversationId"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveAgentChats />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/archive/:conversationId?"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveArchive />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/ai-review"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveReview />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/trash"
+                  element={
+                    <PrivateRoute allowedRoles={["superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveTrash />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/team"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveTeam />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/reports"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveReports />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/live-chat/settings"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <LiveChatShell>
+                        <AdminLiveSettings />
+                      </LiveChatShell>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/payment-admin"
+                  element={
+                    <Navigate to="/payment-admin/payment-links" replace />
+                  }
+                />
+                <Route
+                  path="/payment-admin/payment-links"
+                  element={
+                    <PrivateRoute
+                      allowedRoles={["paymentadmin"]}
+                      loginPath="/payment-admin-login"
+                    >
+                      <AdminLayout>
+                        <PaymentLinks />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/payment-admin/payment-history"
+                  element={
+                    <PrivateRoute
+                      allowedRoles={["paymentadmin"]}
+                      loginPath="/payment-admin-login"
+                    >
+                      <AdminLayout>
+                        <PaymentLinkHistory />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/payment-admin/manual-invoices"
+                  element={
+                    <PrivateRoute
+                      allowedRoles={["paymentadmin"]}
+                      loginPath="/payment-admin-login"
+                    >
+                      <AdminLayout>
+                        <ManualInvoices />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/manual-invoices"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <ManualInvoices />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/gop"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <GOP />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/services-prices"
+                  element={
+                    <PrivateRoute allowedRoles={["superadmin"]}>
+                      <ServicesPrices />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-auth"
+                  element={<Navigate to="/adminauth" replace />}
+                />
+                <Route
+                  path="/admin-dashboard"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminDashboard />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/our-doctors"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <OurDoctors />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/doctors/:slug"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <DoctorProfileForUser adminView />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/manage-doctors"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <ManageDoctors />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/doctor-profile/:id"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminDoctorProfile />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/manage-users"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <ManageUsers />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/deletion-requests"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminDeletionRequests />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/manage-users/:id"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <>
+                          <PageH1>User profile</PageH1>
+                          <AdminUserProfile />
+                        </>
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/appointments"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <>
+                          <PageH1>Appointments</PageH1>
+                          <AdminAppointments />
+                        </>
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/appointment-entries"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <>
+                          <PageH1>Appointment entries</PageH1>
+                          <AdminEntries />
+                        </>
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/direct-video-consultation"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminDirectVideoConsultation />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  // The calls list page was removed; keep old bookmarks working.
+                  // Individual reports (/calls/:roomId) are a separate route below.
+                  path="/admin-dashboard/direct-video-consultation/calls"
+                  element={
+                    <Navigate
+                      to="/admin-dashboard/direct-video-consultation"
+                      replace
+                    />
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/direct-video-consultation/calls/:roomId"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminDirectVideoCallDetail />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                {legacyAdminRedirects}
+                <Route
+                  path="/admin-dashboard/appointments/:id/call-report"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <AdminAppointmentCallReport />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/appointments/:id/assign"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <>
+                          <PageH1>Assign doctor</PageH1>
+                          <AdminAssignDoctor />
+                        </>
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/appointments/:id"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <>
+                          <PageH1>Appointment details</PageH1>
+                          <AdminAppointmentDetails />
+                        </>
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/qna"
+                  element={<Navigate to="/admin-dashboard" replace />}
+                />
+                <Route
+                  path="/admin-dashboard/search-analytics"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <SearchAnalytics />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/tickets"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <SupportTickets />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/superadmin-dashboard"
+                  element={
+                    <PrivateRoute allowedRoles={["superadmin"]}>
+                      <SuperAdminDashboard />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/video-call/:appointmentId"
+                  element={
+                    <>
+                      <h1 className="sr-only">Video consultation</h1>
+                      <CallErrorBoundary>
+                        <VideoCall />
+                      </CallErrorBoundary>
+                    </>
+                  }
+                />
+                <Route
+                  path="/direct-video-call/:roomId"
+                  element={
+                    <>
+                      <h1 className="sr-only">Video consultation</h1>
+                      <CallErrorBoundary>
+                        <DirectVideoCall />
+                      </CallErrorBoundary>
+                    </>
+                  }
+                />
+                {/* ALL*/}
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/specialties" element={<Specialties />} />
+                <Route path="/conditions" element={<Symptoms />} />
+                {/* categories */}
+                <Route
+                  path="/child-and-family-care"
+                  element={<ChildFamilyCare />}
+                />
+                <Route
+                  path="/chronic-care"
+                  element={<ChronicCareExpertOpinion />}
+                />
+                <Route path="/eye-ear-bone" element={<EyeEarBone />} />
+                <Route
+                  path="/general-and-everyday-care"
+                  element={<GeneralEverydayCare />}
+                />
+                <Route path="/mens-health" element={<MenHealth />} />
+                <Route path="/mental-health" element={<MentalHealth />} />
+                <Route
+                  path="/sexual-health"
+                  element={<CategorySexualHealth />}
+                />
+                <Route path="/skin-and-hair-care" element={<SkinHair />} />
+                <Route
+                  path="/travel-and-global-care"
+                  element={<TravelGlobalCare />}
+                />
+                <Route
+                  path="/weight-and-nutrition"
+                  element={<WeightNurtrition />}
+                />
+                <Route path="/women-health" element={<WomenHealth />} />
+                {/* specialties */}
+                {/* <Route path="/sd" element={<SD />} /> */}
+                <Route
+                  path="/child-and-family-care/adolescent-medicine"
+                  element={<AdolescentMedicine />}
+                />
+                <Route
+                  path="/child-and-family-care/pediatrics"
+                  element={<Pediatrics />}
+                />
+                <Route
+                  path="/chronic-care/cardiology"
+                  element={<Cardiology />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology"
+                  element={<Gastroenterology />}
+                />
+                <Route path="/chronic-care/neurology" element={<Neurology />} />
+                <Route
+                  path="/chronic-care/pulmonology"
+                  element={<Pulmonology />}
+                />
+                <Route
+                  path="/general-and-everyday-care/family-medicine"
+                  element={<FamilyMedicine />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician"
+                  element={<GeneralPhysician />}
+                />
+                <Route
+                  path="/general-and-everyday-care/internal-medicine"
+                  element={<InternalMedicine />}
+                />
+                <Route
+                  path="/women-health/menopause-care"
+                  element={<MenopauseCare />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology"
+                  element={<ObstetricsGynaecology />}
+                />
+                <Route
+                  path="/women-health/women-mental-health"
+                  element={<WomenMentalHealth />}
+                />
+                <Route
+                  path="/women-health/lactation-consulting"
+                  element={<LactationConsulting />}
+                />
+                <Route path="/eye-ear-bone/ear-nose-throat" element={<Ent />} />
+                <Route
+                  path="/eye-ear-bone/ophthalmology"
+                  element={<Ophthalmology />}
+                />
+                <Route
+                  path="/eye-ear-bone/orthopedics"
+                  element={<Orthopedics />}
+                />
+                <Route
+                  path="/chronic-care/endocrinology"
+                  element={<EndocrinologySpeciality />}
+                />
+                <Route
+                  path="/mens-health/men-health"
+                  element={<SpeMensHealth />}
+                />
+                <Route path="/mens-health/urology" element={<Urology />} />
+                <Route
+                  path="/mental-health/behavioral-health"
+                  element={<BehavioralHealth />}
+                />
+                <Route
+                  path="/mental-health/psychiatry"
+                  element={<Psychiatry />}
+                />
+                <Route
+                  path="/mental-health/psychology-counseling"
+                  element={<PsychologyCounseling />}
+                />
+                {/* <Route
             path="/speciality-sexual-health"
             element={<SexualHealthSpeciality />}
           /> */}
-          <Route
-            path="/skin-and-hair-care/dermatology"
-            element={<Dermatology />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care"
-            element={<GlobalCrossBorderCare />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine"
-            element={<TravelMedicine />}
-          />
-          <Route
-            path="/weight-and-nutrition/weight-management"
-            element={<WeightManagement />}
-          />
-          <Route
-            path="/weight-and-nutrition/lifestyle-medicine"
-            element={<LifestyleMedicine />}
-          />
-          <Route
-            path="/weight-and-nutrition/nutrition-and-dietetics"
-            element={<NutritionAndDietetics />}
-          />
-          {/* condition pages */}
-          <Route
-            path="/eye-ear-bone/orthopedics/arthritis"
-            element={<Arthritis categoryId="eeb" />}
-          />
-          <Route
-            path="/online-second-medical-opinion/cancer-second-opinion"
-            element={<CancerSecond categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/cardiology/chest-pain"
-            element={<ChestPain categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-kidney-disease"
-            element={<ChronicKidney categoryId="chronic" />}
-          />
-          <Route
-            path="/online-second-medical-opinion/complex-diagnosis-review"
-            element={<ComplexDiagnosis categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology/fatty-liver"
-            element={<FattyLiver categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/cardiology/heart-disease-follow-up"
-            element={<HeartDisease categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/cardiology/high-blood-pressure"
-            element={<HighBloodPressure categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/cardiology/high-cholesterol"
-            element={<HighCholesterol categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/endocrinology/hormone-imbalance"
-            element={<HormoneImblance categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/neurology/memory-concerns"
-            element={<MemoryConcerns categoryId="chronic" />}
-          />
-          <Route
-            path="/weight-and-nutrition/weight-management/obesity"
-            element={<Obesity categoryId="weight" />}
-          />
-          <Route
-            path="/eye-ear-bone/orthopedics/osteoarthritis"
-            element={<Osteoarthritis categoryId="eeb" />}
-          />
-          <Route
-            path="/chronic-care/endocrinology/osteoporosis"
-            element={<Osteoporosis categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/cardiology/palpitations"
-            element={<Palpitations categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/pulmonology/post-covid-concerns"
-            element={<PostCovidConcerns categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/cardiology/pre-op-cardiac-clearance"
-            element={<PreOpCardiacClearance categoryId="chronic" />}
-          />
-          <Route
-            path="/rheumatoid-arthritis"
-            element={<RheumatoidArthritis categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/neurology/seizures-epilepsy-follow-up"
-            element={<SeizuresEpilepsyFollowUp categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/pulmonology/sleep-apnea-screening"
-            element={<SleepApnea categoryId="chronic" />}
-          />
-          <Route
-            path="/online-second-medical-opinion/surgery-second-opinion"
-            element={<SurgerySecondOpinion categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/endocrinology/thyroid-disorders"
-            element={<ThyroidDisorders categoryId="chronic" />}
-          />
-          <Route
-            path="/online-second-medical-opinion/treatment-plan-review"
-            element={<TreatmentPlanReview categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/neurology/tremor"
-            element={<Tremor categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/endocrinology/type-2-diabetes"
-            element={<TypeTwoDiabetes categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology/abdominal-pain"
-            element={<AbdominalPain categoryId="chronic" />}
-          />
-          <Route
-            path="/weight-and-nutrition/weight-management/binge-eating"
-            element={<BingeEating categoryId="weight" />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology/bloating"
-            element={<Bloating categoryId="chronic" />}
-          />
-          <Route
-            path="/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet"
-            element={<CholesterolLoweringDiet categoryId="weight" />}
-          />
-          <Route
-            path="/dehydration"
-            element={<Dehydration categoryId="chronic" />}
-          />
-          <Route
-            path="/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet"
-            element={<DiabeticDiet categoryId="weight" />}
-          />
-          <Route
-            path="/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning"
-            element={<DietExercisePlanning categoryId="weight" />}
-          />
-          <Route
-            path="/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning"
-            element={<FoodIntolerancePlanning categoryId="weight" />}
-          />
-          <Route
-            path="/gastritis"
-            element={<Gastritis categoryId="chronic" />}
-          />
-          <Route
-            path="/glp-program-eligibility"
-            element={<GlpProgramEligibility categoryId="chronic" />}
-          />
-          <Route
-            path="/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching"
-            element={<HealthyHabitCoaching categoryId="weight" />}
-          />
-          <Route
-            path="/hemorrhoids"
-            element={<Hemorrhoids categoryId="chronic" />}
-          />
-          <Route
-            path="/indigestion"
-            element={<Indigestion categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology/irritable-bowel-syndrome"
-            element={<IrritableBowelSyndrome categoryId="chronic" />}
-          />
-          <Route
-            path="/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition"
-            element={<PregnancyNutrition categoryId="weight" />}
-          />
-          <Route
-            path="/weight-and-nutrition/lifestyle-medicine/sleep-hygiene"
-            element={<SleepHygiene categoryId="weight" />}
-          />
-          <Route
-            path="/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition"
-            element={<SportNutrition categoryId="weight" />}
-          />
-          <Route
-            path="/metabolic-syndrome"
-            element={<MetabolicSyndrome categoryId="chronic" />}
-          />
-          <Route path="/vomiting" element={<Vomiting categoryId="chronic" />} />
-          <Route
-            path="/weight-and-nutrition/weight-management/weight-loss-planning"
-            element={<WeightLossPlanning categoryId="weight" />}
-          />
-          <Route
-            path="/eye-ear-bone/orthopedics/back-pain"
-            element={<BackPain categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ophthalmology/dry-eyes"
-            element={<DryEyes categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/ear-pain"
-            element={<EarPain categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ophthalmology/eye-redness"
-            element={<EyeRedness categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ophthalmology/eye-strain"
-            element={<EyeStrain categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/hoarseness"
-            element={<Hoarseness categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/orthopedics/knee-pain"
-            element={<KneePain categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/orthopedics/muscle-strain"
-            element={<MuscleStrain categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/nasal-congestion"
-            element={<NasalCongestion categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/orthopedics/neck-pain"
-            element={<NeckPain categoryId="eeb" />}
-          />
-          <Route
-            path="/chronic-care/neurology/numbness-and-tingling"
-            element={<NumbnessAndTingling categoryId="chronic" />}
-          />
-          <Route
-            path="/eye-ear-bone/ophthalmology/stye"
-            element={<Stye categoryId="eeb" />}
-          />
-          <Route
-            path="/swollen-feet-ankles"
-            element={<SwollenFeetAnkles categoryId="eeb" />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/tonsillitis"
-            element={<Tonsillitis categoryId="eeb" />}
-          />
-          <Route path="/joint-pain" element={<JointPain categoryId="eeb" />} />
-          <Route
-            path="/eye-ear-bone/ophthalmology/vision-changes"
-            element={<VisionChanges categoryId="eeb" />}
-          />
-          <Route
-            path="/childhood-allergies"
-            element={<ChildhoodAllergies categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics/ear-pain-children"
-            element={<EarPainChildren categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics/feeding-concerns"
-            element={<FeedingConcerns categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/adolescent-medicine/mood-anxiety-teens"
-            element={<MoodAnxietyTeens categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics/pediatric-cold-flu"
-            element={<PediatricColdFlu categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics/pediatric-fever"
-            element={<PediatricFever categoryId="family" />}
-          />
-          <Route
-            path="/pink-eye-children"
-            element={<PinkEyeChildren categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/adolescent-medicine/puberty-concerns"
-            element={<PubertyConcerns categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/pediatrics/skin-rash-in-children"
-            element={<SkinRashChildren categoryId="family" />}
-          />
-          <Route
-            path="/sore-throat-children"
-            element={<SoreThroatChildren categoryId="family" />}
-          />
-          <Route
-            path="/child-and-family-care/adolescent-medicine/sports-injuries"
-            element={<SportsInjuries categoryId="family" />}
-          />
-          <Route
-            path="/stomach-pain-children"
-            element={<StomachPainChildren categoryId="family" />}
-          />
-          <Route
-            path="/growth-development"
-            element={<GrowthDevelopment categoryId="family" />}
-          />
-          <Route
-            path="/vomiting-diarrhea-children"
-            element={<VomitingDiarrheaChildren categoryId="family" />}
-          />
-          <Route
-            path="/doctors-note"
-            element={<DoctorsNote categoryId="general" />}
-          />
-          <Route
-            path="/follow-up-consultation"
-            element={<FollowUpConsultation categoryId="general" />}
-          />
-          <Route
-            path="/lab-results-review"
-            element={<LabResultsReview categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/internal-medicine/medication-review"
-            element={<MedicationReview categoryId="general" />}
-          />
-          <Route
-            path="/return-to-work-clearance"
-            element={<ReturnWorkClearance categoryId="general" />}
-          />
-          <Route
-            path="/specialist-referral"
-            element={<SpecialistReferral categoryId="general" />}
-          />
-          <Route
-            path="/allergic-rhinitis"
-            element={<AllergicRhinitis categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/pulmonology/asthma"
-            element={<Asthma categoryId="chronic" />}
-          />
-          <Route
-            path="/asthma-flare-up"
-            element={<AsthmaFlareUp categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/pulmonology/copd"
-            element={<Copd categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/pulmonology/persistent-cough"
-            element={<PersistentCough categoryId="chronic" />}
-          />
-          <Route
-            path="/pneumonia-follow-up"
-            element={<PneumoniaFollowUp categoryId="chronic" />}
-          />
-          <Route
-            path="/chronic-care/pulmonology/shortness-of-breath"
-            element={<ShortnessOfBreath categoryId="chronic" />}
-          />
-          <Route
-            path="/upper-respiratory-infection"
-            element={<UpperRespiratoryInfection categoryId="chronic" />}
-          />
-          <Route path="/wheezing" element={<Wheezing categoryId="chronic" />} />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/chlamydia"
-            element={<Chlamydia categoryId="sexual" />}
-          />
-          <Route
-            path="/genital-itching"
-            element={<GenitalItching categoryId="sexual" />}
-          />
-          <Route
-            path="/genital-rash"
-            element={<GenitalRash categoryId="sexual" />}
-          />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/gonorrhea"
-            element={<Gonorrhea categoryId="sexual" />}
-          />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/herpes"
-            element={<Herpes categoryId="sexual" />}
-          />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance"
-            element={<HivPreventionGuidance categoryId="sexual" />}
-          />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/partner-exposure-concerns"
-            element={<PartnerExposureConcerns categoryId="sexual" />}
-          />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/safe-sex-counseling"
-            element={<SafeSexCounseling categoryId="sexual" />}
-          />
-          <Route
-            path="/sexual-health/sexual-health-and-wellness/sti-consultation"
-            element={<StiConsultation categoryId="sexual" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/acne"
-            element={<Acne categoryId="skin" />}
-          />
-          <Route
-            path="/athletes-foot"
-            element={<AthletesFoot categoryId="skin" />}
-          />
-          <Route
-            path="/cellulitis"
-            element={<Cellulitis categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/cold-sores"
-            element={<ColdSores categoryId="skin" />}
-          />
-          <Route
-            path="/contact-dermatitis"
-            element={<ContactDermatitis categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/eczema"
-            element={<Eczema categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/fungal-skin-infection"
-            element={<FungalSkinInfection categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/hair-loss"
-            element={<HairLoss1 categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/hives"
-            element={<Hives categoryId="skin" />}
-          />
-          <Route path="/itchy-skin" element={<ItchySkin categoryId="skin" />} />
-          <Route
-            path="/skin-and-hair-care/dermatology/mole-skin-checks"
-            element={<MoleSkinChecks categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/nail-problems"
-            element={<NailProblems categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/psoriasis"
-            element={<Psoriasis categoryId="skin" />}
-          />
-          <Route path="/ringworm" element={<Ringworm categoryId="skin" />} />
-          <Route
-            path="/skin-and-hair-care/dermatology/rosacea"
-            element={<Rosacea categoryId="skin" />}
-          />
-          <Route path="/shingles" element={<Shingles categoryId="skin" />} />
-          <Route
-            path="/skin-and-hair-care/dermatology/skin-rash"
-            element={<SkinRash categoryId="skin" />}
-          />
-          <Route
-            path="/skin-and-hair-care/dermatology/warts"
-            element={<Warts categoryId="skin" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/altitude-sickness"
-            element={<AltitudeSickness categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care/cross-border-consultation"
-            element={<CrossBorderConsultation categoryId="travel" />}
-          />
-          <Route
-            path="/emergency-teleconsultation-abroad"
-            element={<EmergencyTeleconsultationAbroad categoryId="travel" />}
-          />
-          <Route
-            path="/fitness-travel-evaluation"
-            element={<FitnessTravelEvaluation categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/food-poisoning-while-traveling"
-            element={<FoodPoisoningWhileTraveling categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care/international-medical-assistance"
-            element={<InternationalMedicalAssistance categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/malaria-prevention"
-            element={<MalariaPrevention categoryId="travel" />}
-          />
-          <Route path="/jet-lag" element={<JetLag categoryId="travel" />} />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling"
-            element={<MedicationRefillTraveling categoryId="travel" />}
-          />
-          <Route
-            path="/motion-sickness"
-            element={<MotionSickness categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/post-travel-symptoms"
-            element={<PostTravelSymptoms categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/pre-travel-vaccinations"
-            element={<PreTravelVaccinations categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/global-cross-border-care/referral-coordination-overseas"
-            element={<ReferralCoordinationOverseas categoryId="travel" />}
-          />
-          <Route
-            path="/travel-medical-certification"
-            element={<TravelMedicalCertificate categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/travel-related-fever"
-            element={<TravelRelatedFever categoryId="travel" />}
-          />
-          <Route
-            path="/travel-and-global-care/travel-medicine/travelers-diarrhea"
-            element={<TravelersDiarrhea1 categoryId="travel" />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology/acid-reflux-gerd"
-            element={<AcidRefluxGerd categoryId="chronic" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/body-aches"
-            element={<BodyAches categoryId="general" />}
-          />
-          <Route
-            path="/bronchitis"
-            element={<Bronchitis categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/cold-and-flu"
-            element={<ColdAndFlu categoryId="general" />}
-          />
-          <Route
-            path="/chronic-care/gastroenterology/constipation"
-            element={<Constipation categoryId="chronic" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/cough"
-            element={<Cough categoryId="general" />}
-          />
-          <Route path="/covid-19" element={<Covid19 categoryId="general" />} />
-          <Route path="/diarrhea" element={<Diarrhea categoryId="general" />} />
-          <Route
-            path="/chronic-care/neurology/dizziness"
-            element={<Dizziness categoryId="chronic" />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/ear-infection"
-            element={<EarInfection1 categoryId="eeb" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/fatigue"
-            element={<Fatigue categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/fever"
-            element={<Fever categoryId="general" />}
-          />
-          <Route
-            path="/food-poisoning"
-            element={<FoodPoisoning categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/headache"
-            element={<Headache categoryId="general" />}
-          />
-          <Route
-            path="/insect-bite"
-            element={<InsectBites categoryId="general" />}
-          />
-          <Route
-            path="/chronic-care/neurology/migraine"
-            element={<Migraine categoryId="chronic" />}
-          />
-          <Route
-            path="/minor-burns"
-            element={<MinorBurns categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/minor-infections"
-            element={<MinorInfections categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/internal-medicine/multi-system-complaints"
-            element={<MultiSystemComplaints categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/nausea-and-vomiting"
-            element={<NauseaAndVomiting categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/pink-eye"
-            element={<PinkEye categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/internal-medicine/preventive-screening"
-            element={<PreventiveScreening categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/family-medicine/routine-check-ups"
-            element={<RoutineCheckUps categoryId="general" />}
-          />
-          <Route
-            path="/seasonal-allergies"
-            element={<SeasonalAllergies categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/general-physician/sinus-infection"
-            element={<SinusInfection categoryId="general" />}
-          />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/sore-throat"
-            element={<SoreThroat categoryId="eeb" />}
-          />
-          <Route
-            path="/strep-throat"
-            element={<StrepThroat categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/internal-medicine/undiagnosed-symptoms"
-            element={<UndiagnosedSymptoms categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/family-medicine/vaccination-advice"
-            element={<VaccinationAdvice categoryId="general" />}
-          />
-          <Route
-            path="/general-and-everyday-care/family-medicine/whole-family-illnesses"
-            element={<WholeFamilyIllnesses categoryId="general" />}
-          />
-          <Route
-            path="/mens-health/urology/blood-in-urine"
-            element={<BloodInUrine categoryId="men" />}
-          />
-          <Route
-            path="/burning-urination"
-            element={<BurningUrination categoryId="men" />}
-          />
-          <Route
-            path="/frequent-urination"
-            element={<FrequentUrination categoryId="men" />}
-          />
-          <Route
-            path="/mens-health/urology/kidney-stones"
-            element={<KidneyStones categoryId="men" />}
-          />
-          <Route
-            path="/mens-health/urology/urinary-incontinence"
-            element={<UrinaryIncontinence categoryId="men" />}
-          />
-          <Route
-            path="/urinary-tract-infection"
-            element={<UrinaryTractInfection categoryId="men" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/bacterial-vaginosis"
-            element={<BacterialVaginosis categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/birth-control-consultation"
-            element={<BirthControlConsultation categoryId="women" />}
-          />
-          <Route
-            path="/emergency-contraception-guidance"
-            element={<EmergencyContraceptionGuidance categoryId="women" />}
-          />
-          <Route
-            path="/heavy-periods"
-            element={<HeavyPeriods categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/irregular-periods"
-            element={<IrregularPeriods categoryId="women" />}
-          />
-          <Route
-            path="/women-health/lactation-consulting/latch-problems"
-            element={<LatchProblems categoryId="women" />}
-          />
-          <Route
-            path="/women-health/lactation-consulting/low-milk-supply"
-            element={<LowMilkSupply categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/menstrual-cramps"
-            element={<MenstrualCramps categoryId="women" />}
-          />
-          <Route
-            path="/women-health/lactation-consulting/nipple-pain"
-            element={<NipplePain categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/pcos"
-            element={<Pcos categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/pelvic-pain"
-            element={<PelvicPain categoryId="women" />}
-          />
-          <Route
-            path="/women-health/women-mental-health/perinatal-anxiety"
-            element={<PerinatalAnxiety categoryId="women" />}
-          />
-          <Route
-            path="/postpartum-concerns"
-            element={<PostpartumConcerns categoryId="women" />}
-          />
-          <Route
-            path="/women-health/women-mental-health/pmdd"
-            element={<Pmdd categoryId="women" />}
-          />
-          <Route
-            path="/pregnancy-related-questions"
-            element={<PregnancyRelatedQuestions categoryId="women" />}
-          />
-          <Route
-            path="/women-health/women-mental-health/postnatal-depression"
-            element={<PostnatalDepression categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/prenatal-consultation"
-            element={<PrenatalConsultation categoryId="women" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
-            element={<VaginalYeastInfection categoryId="women" />}
-          />
-          <Route
-            path="/women-health/lactation-consulting/weaning-guidance"
-            element={<WeaningGuidance categoryId="women" />}
-          />
-          <Route
-            path="/mental-health/psychology-counseling/stress"
-            element={<Stress categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/behavioral-health/anger-management"
-            element={<AngerManagement categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/behavioral-health/adjustment-difficulties"
-            element={<AdjustmentDifficulties categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/behavioral-health/substance-use-support"
-            element={<SubstanceUseSupport categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/behavioral-health/sleep-related-anxiety"
-            element={<SleepRelatedAnxiety categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychiatry/depression"
-            element={<Depression categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychiatry/anxiety"
-            element={<Anxiety categoryId="mental" />}
-          />
-          <Route path="/burnout" element={<Burnout categoryId="mental" />} />
-          <Route
-            path="/mental-health/psychiatry/bipolar-disorder-follow-up"
-            element={<BipolarDisorderFollowUp categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychiatry/ptsd"
-            element={<PTSD categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychiatry/panic-attacks"
-            element={<PanicAttacks categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychiatry/insomnia"
-            element={<Insomnia categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychiatry/adhd-evaluation"
-            element={<AdhdEvaluation categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychology-counseling/grief-and-loss"
-            element={<GriefAndLoss categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychology-counseling/relationship-stress"
-            element={<RelationshipStress categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychology-counseling/low-self-esteem"
-            element={<LowSelfEsteem categoryId="mental" />}
-          />
-          <Route
-            path="/mental-health/psychology-counseling/trauma-support"
-            element={<TraumaSupport categoryId="mental" />}
-          />
-          <Route
-            path="/women-health/menopause-care/hot-flashes"
-            element={<HotFlashes categoryId="women" />}
-          />
-          <Route
-            path="/women-health/menopause-care/menopause-symptoms"
-            element={<MenopauseSymptoms categoryId="women" />}
-          />
-          <Route
-            path="/women-health/menopause-care/hrt-guidance"
-            element={<HrtGuidance categoryId="women" />}
-          />
-          <Route
-            path="/chronic-medication-management"
-            element={<ChronicMedicationManagement />}
-          />
-          {/* <Route path="/mens-health/urology/bladder-problems" element={<BladderProblems />} /> */}
-          {/* <Route
+                <Route
+                  path="/skin-and-hair-care/dermatology"
+                  element={<Dermatology />}
+                />
+                <Route
+                  path="/travel-and-global-care/global-cross-border-care"
+                  element={<GlobalCrossBorderCare />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine"
+                  element={<TravelMedicine />}
+                />
+                <Route
+                  path="/weight-and-nutrition/weight-management"
+                  element={<WeightManagement />}
+                />
+                <Route
+                  path="/weight-and-nutrition/lifestyle-medicine"
+                  element={<LifestyleMedicine />}
+                />
+                <Route
+                  path="/weight-and-nutrition/nutrition-and-dietetics"
+                  element={<NutritionAndDietetics />}
+                />
+                {/* condition pages */}
+                <Route
+                  path="/eye-ear-bone/orthopedics/arthritis"
+                  element={<Arthritis categoryId="eeb" />}
+                />
+                <Route
+                  path="/online-second-medical-opinion/cancer-second-opinion"
+                  element={<CancerSecond categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/cardiology/chest-pain"
+                  element={<ChestPain categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-kidney-disease"
+                  element={<ChronicKidney categoryId="chronic" />}
+                />
+                <Route
+                  path="/online-second-medical-opinion/complex-diagnosis-review"
+                  element={<ComplexDiagnosis categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology/fatty-liver"
+                  element={<FattyLiver categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/cardiology/heart-disease-follow-up"
+                  element={<HeartDisease categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/cardiology/high-blood-pressure"
+                  element={<HighBloodPressure categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/cardiology/high-cholesterol"
+                  element={<HighCholesterol categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/endocrinology/hormone-imbalance"
+                  element={<HormoneImblance categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/neurology/memory-concerns"
+                  element={<MemoryConcerns categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/weight-management/obesity"
+                  element={<Obesity categoryId="weight" />}
+                />
+                <Route
+                  path="/eye-ear-bone/orthopedics/osteoarthritis"
+                  element={<Osteoarthritis categoryId="eeb" />}
+                />
+                <Route
+                  path="/chronic-care/endocrinology/osteoporosis"
+                  element={<Osteoporosis categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/cardiology/palpitations"
+                  element={<Palpitations categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/pulmonology/post-covid-concerns"
+                  element={<PostCovidConcerns categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/cardiology/pre-op-cardiac-clearance"
+                  element={<PreOpCardiacClearance categoryId="chronic" />}
+                />
+                <Route
+                  path="/rheumatoid-arthritis"
+                  element={<RheumatoidArthritis categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/neurology/seizures-epilepsy-follow-up"
+                  element={<SeizuresEpilepsyFollowUp categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/pulmonology/sleep-apnea-screening"
+                  element={<SleepApnea categoryId="chronic" />}
+                />
+                <Route
+                  path="/online-second-medical-opinion/surgery-second-opinion"
+                  element={<SurgerySecondOpinion categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/endocrinology/thyroid-disorders"
+                  element={<ThyroidDisorders categoryId="chronic" />}
+                />
+                <Route
+                  path="/online-second-medical-opinion/treatment-plan-review"
+                  element={<TreatmentPlanReview categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/neurology/tremor"
+                  element={<Tremor categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/endocrinology/type-2-diabetes"
+                  element={<TypeTwoDiabetes categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology/abdominal-pain"
+                  element={<AbdominalPain categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/weight-management/binge-eating"
+                  element={<BingeEating categoryId="weight" />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology/bloating"
+                  element={<Bloating categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/nutrition-and-dietetics/cholesterol-lowering-diet"
+                  element={<CholesterolLoweringDiet categoryId="weight" />}
+                />
+                <Route
+                  path="/dehydration"
+                  element={<Dehydration categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/nutrition-and-dietetics/diabetic-diet"
+                  element={<DiabeticDiet categoryId="weight" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/lifestyle-medicine/diet-and-exercise-planning"
+                  element={<DietExercisePlanning categoryId="weight" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/nutrition-and-dietetics/food-intolerance-planning"
+                  element={<FoodIntolerancePlanning categoryId="weight" />}
+                />
+                <Route
+                  path="/gastritis"
+                  element={<Gastritis categoryId="chronic" />}
+                />
+                <Route
+                  path="/glp-program-eligibility"
+                  element={<GlpProgramEligibility categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/lifestyle-medicine/healthy-habit-coaching"
+                  element={<HealthyHabitCoaching categoryId="weight" />}
+                />
+                <Route
+                  path="/hemorrhoids"
+                  element={<Hemorrhoids categoryId="chronic" />}
+                />
+                <Route
+                  path="/indigestion"
+                  element={<Indigestion categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology/irritable-bowel-syndrome"
+                  element={<IrritableBowelSyndrome categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/nutrition-and-dietetics/pregnancy-nutrition"
+                  element={<PregnancyNutrition categoryId="weight" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/lifestyle-medicine/sleep-hygiene"
+                  element={<SleepHygiene categoryId="weight" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/nutrition-and-dietetics/sports-nutrition"
+                  element={<SportNutrition categoryId="weight" />}
+                />
+                <Route
+                  path="/metabolic-syndrome"
+                  element={<MetabolicSyndrome categoryId="chronic" />}
+                />
+                <Route
+                  path="/vomiting"
+                  element={<Vomiting categoryId="chronic" />}
+                />
+                <Route
+                  path="/weight-and-nutrition/weight-management/weight-loss-planning"
+                  element={<WeightLossPlanning categoryId="weight" />}
+                />
+                <Route
+                  path="/eye-ear-bone/orthopedics/back-pain"
+                  element={<BackPain categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ophthalmology/dry-eyes"
+                  element={<DryEyes categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/ear-pain"
+                  element={<EarPain categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ophthalmology/eye-redness"
+                  element={<EyeRedness categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ophthalmology/eye-strain"
+                  element={<EyeStrain categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/hoarseness"
+                  element={<Hoarseness categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/orthopedics/knee-pain"
+                  element={<KneePain categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/orthopedics/muscle-strain"
+                  element={<MuscleStrain categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/nasal-congestion"
+                  element={<NasalCongestion categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/orthopedics/neck-pain"
+                  element={<NeckPain categoryId="eeb" />}
+                />
+                <Route
+                  path="/chronic-care/neurology/numbness-and-tingling"
+                  element={<NumbnessAndTingling categoryId="chronic" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ophthalmology/stye"
+                  element={<Stye categoryId="eeb" />}
+                />
+                <Route
+                  path="/swollen-feet-ankles"
+                  element={<SwollenFeetAnkles categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/tonsillitis"
+                  element={<Tonsillitis categoryId="eeb" />}
+                />
+                <Route
+                  path="/joint-pain"
+                  element={<JointPain categoryId="eeb" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ophthalmology/vision-changes"
+                  element={<VisionChanges categoryId="eeb" />}
+                />
+                <Route
+                  path="/childhood-allergies"
+                  element={<ChildhoodAllergies categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/pediatrics/ear-pain-children"
+                  element={<EarPainChildren categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/pediatrics/feeding-concerns"
+                  element={<FeedingConcerns categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/adolescent-medicine/mood-anxiety-teens"
+                  element={<MoodAnxietyTeens categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/pediatrics/pediatric-cold-flu"
+                  element={<PediatricColdFlu categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/pediatrics/pediatric-fever"
+                  element={<PediatricFever categoryId="family" />}
+                />
+                <Route
+                  path="/pink-eye-children"
+                  element={<PinkEyeChildren categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/adolescent-medicine/puberty-concerns"
+                  element={<PubertyConcerns categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/pediatrics/skin-rash-in-children"
+                  element={<SkinRashChildren categoryId="family" />}
+                />
+                <Route
+                  path="/sore-throat-children"
+                  element={<SoreThroatChildren categoryId="family" />}
+                />
+                <Route
+                  path="/child-and-family-care/adolescent-medicine/sports-injuries"
+                  element={<SportsInjuries categoryId="family" />}
+                />
+                <Route
+                  path="/stomach-pain-children"
+                  element={<StomachPainChildren categoryId="family" />}
+                />
+                <Route
+                  path="/growth-development"
+                  element={<GrowthDevelopment categoryId="family" />}
+                />
+                <Route
+                  path="/vomiting-diarrhea-children"
+                  element={<VomitingDiarrheaChildren categoryId="family" />}
+                />
+                <Route
+                  path="/doctors-note"
+                  element={<DoctorsNote categoryId="general" />}
+                />
+                <Route
+                  path="/follow-up-consultation"
+                  element={<FollowUpConsultation categoryId="general" />}
+                />
+                <Route
+                  path="/lab-results-review"
+                  element={<LabResultsReview categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/internal-medicine/medication-review"
+                  element={<MedicationReview categoryId="general" />}
+                />
+                <Route
+                  path="/return-to-work-clearance"
+                  element={<ReturnWorkClearance categoryId="general" />}
+                />
+                <Route
+                  path="/specialist-referral"
+                  element={<SpecialistReferral categoryId="general" />}
+                />
+                <Route
+                  path="/allergic-rhinitis"
+                  element={<AllergicRhinitis categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/pulmonology/asthma"
+                  element={<Asthma categoryId="chronic" />}
+                />
+                <Route
+                  path="/asthma-flare-up"
+                  element={<AsthmaFlareUp categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/pulmonology/copd"
+                  element={<Copd categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/pulmonology/persistent-cough"
+                  element={<PersistentCough categoryId="chronic" />}
+                />
+                <Route
+                  path="/pneumonia-follow-up"
+                  element={<PneumoniaFollowUp categoryId="chronic" />}
+                />
+                <Route
+                  path="/chronic-care/pulmonology/shortness-of-breath"
+                  element={<ShortnessOfBreath categoryId="chronic" />}
+                />
+                <Route
+                  path="/upper-respiratory-infection"
+                  element={<UpperRespiratoryInfection categoryId="chronic" />}
+                />
+                <Route
+                  path="/wheezing"
+                  element={<Wheezing categoryId="chronic" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/chlamydia"
+                  element={<Chlamydia categoryId="sexual" />}
+                />
+                <Route
+                  path="/genital-itching"
+                  element={<GenitalItching categoryId="sexual" />}
+                />
+                <Route
+                  path="/genital-rash"
+                  element={<GenitalRash categoryId="sexual" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/gonorrhea"
+                  element={<Gonorrhea categoryId="sexual" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/herpes"
+                  element={<Herpes categoryId="sexual" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/hiv-prevention-guidance"
+                  element={<HivPreventionGuidance categoryId="sexual" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/partner-exposure-concerns"
+                  element={<PartnerExposureConcerns categoryId="sexual" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/safe-sex-counseling"
+                  element={<SafeSexCounseling categoryId="sexual" />}
+                />
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness/sti-consultation"
+                  element={<StiConsultation categoryId="sexual" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/acne"
+                  element={<Acne categoryId="skin" />}
+                />
+                <Route
+                  path="/athletes-foot"
+                  element={<AthletesFoot categoryId="skin" />}
+                />
+                <Route
+                  path="/cellulitis"
+                  element={<Cellulitis categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/cold-sores"
+                  element={<ColdSores categoryId="skin" />}
+                />
+                <Route
+                  path="/contact-dermatitis"
+                  element={<ContactDermatitis categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/eczema"
+                  element={<Eczema categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/fungal-skin-infection"
+                  element={<FungalSkinInfection categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/hair-loss"
+                  element={<HairLoss1 categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/hives"
+                  element={<Hives categoryId="skin" />}
+                />
+                <Route
+                  path="/itchy-skin"
+                  element={<ItchySkin categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/mole-skin-checks"
+                  element={<MoleSkinChecks categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/nail-problems"
+                  element={<NailProblems categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/psoriasis"
+                  element={<Psoriasis categoryId="skin" />}
+                />
+                <Route
+                  path="/ringworm"
+                  element={<Ringworm categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/rosacea"
+                  element={<Rosacea categoryId="skin" />}
+                />
+                <Route
+                  path="/shingles"
+                  element={<Shingles categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/skin-rash"
+                  element={<SkinRash categoryId="skin" />}
+                />
+                <Route
+                  path="/skin-and-hair-care/dermatology/warts"
+                  element={<Warts categoryId="skin" />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/altitude-sickness"
+                  element={<AltitudeSickness categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/global-cross-border-care/cross-border-consultation"
+                  element={<CrossBorderConsultation categoryId="travel" />}
+                />
+                <Route
+                  path="/emergency-teleconsultation-abroad"
+                  element={
+                    <EmergencyTeleconsultationAbroad categoryId="travel" />
+                  }
+                />
+                <Route
+                  path="/fitness-travel-evaluation"
+                  element={<FitnessTravelEvaluation categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/food-poisoning-while-traveling"
+                  element={<FoodPoisoningWhileTraveling categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/global-cross-border-care/international-medical-assistance"
+                  element={
+                    <InternationalMedicalAssistance categoryId="travel" />
+                  }
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/malaria-prevention"
+                  element={<MalariaPrevention categoryId="travel" />}
+                />
+                <Route
+                  path="/jet-lag"
+                  element={<JetLag categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/global-cross-border-care/medication-refill-while-traveling"
+                  element={<MedicationRefillTraveling categoryId="travel" />}
+                />
+                <Route
+                  path="/motion-sickness"
+                  element={<MotionSickness categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/post-travel-symptoms"
+                  element={<PostTravelSymptoms categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/pre-travel-vaccinations"
+                  element={<PreTravelVaccinations categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/global-cross-border-care/referral-coordination-overseas"
+                  element={<ReferralCoordinationOverseas categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-medical-certification"
+                  element={<TravelMedicalCertificate categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/travel-related-fever"
+                  element={<TravelRelatedFever categoryId="travel" />}
+                />
+                <Route
+                  path="/travel-and-global-care/travel-medicine/travelers-diarrhea"
+                  element={<TravelersDiarrhea1 categoryId="travel" />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology/acid-reflux-gerd"
+                  element={<AcidRefluxGerd categoryId="chronic" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/body-aches"
+                  element={<BodyAches categoryId="general" />}
+                />
+                <Route
+                  path="/bronchitis"
+                  element={<Bronchitis categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/cold-and-flu"
+                  element={<ColdAndFlu categoryId="general" />}
+                />
+                <Route
+                  path="/chronic-care/gastroenterology/constipation"
+                  element={<Constipation categoryId="chronic" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/cough"
+                  element={<Cough categoryId="general" />}
+                />
+                <Route
+                  path="/covid-19"
+                  element={<Covid19 categoryId="general" />}
+                />
+                <Route
+                  path="/diarrhea"
+                  element={<Diarrhea categoryId="general" />}
+                />
+                <Route
+                  path="/chronic-care/neurology/dizziness"
+                  element={<Dizziness categoryId="chronic" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/ear-infection"
+                  element={<EarInfection1 categoryId="eeb" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/fatigue"
+                  element={<Fatigue categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/fever"
+                  element={<Fever categoryId="general" />}
+                />
+                <Route
+                  path="/food-poisoning"
+                  element={<FoodPoisoning categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/headache"
+                  element={<Headache categoryId="general" />}
+                />
+                <Route
+                  path="/insect-bite"
+                  element={<InsectBites categoryId="general" />}
+                />
+                <Route
+                  path="/chronic-care/neurology/migraine"
+                  element={<Migraine categoryId="chronic" />}
+                />
+                <Route
+                  path="/minor-burns"
+                  element={<MinorBurns categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/minor-infections"
+                  element={<MinorInfections categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/internal-medicine/multi-system-complaints"
+                  element={<MultiSystemComplaints categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/nausea-and-vomiting"
+                  element={<NauseaAndVomiting categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/pink-eye"
+                  element={<PinkEye categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/internal-medicine/preventive-screening"
+                  element={<PreventiveScreening categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/family-medicine/routine-check-ups"
+                  element={<RoutineCheckUps categoryId="general" />}
+                />
+                <Route
+                  path="/seasonal-allergies"
+                  element={<SeasonalAllergies categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/general-physician/sinus-infection"
+                  element={<SinusInfection categoryId="general" />}
+                />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/sore-throat"
+                  element={<SoreThroat categoryId="eeb" />}
+                />
+                <Route
+                  path="/strep-throat"
+                  element={<StrepThroat categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/internal-medicine/undiagnosed-symptoms"
+                  element={<UndiagnosedSymptoms categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/family-medicine/vaccination-advice"
+                  element={<VaccinationAdvice categoryId="general" />}
+                />
+                <Route
+                  path="/general-and-everyday-care/family-medicine/whole-family-illnesses"
+                  element={<WholeFamilyIllnesses categoryId="general" />}
+                />
+                <Route
+                  path="/mens-health/urology/blood-in-urine"
+                  element={<BloodInUrine categoryId="men" />}
+                />
+                <Route
+                  path="/burning-urination"
+                  element={<BurningUrination categoryId="men" />}
+                />
+                <Route
+                  path="/frequent-urination"
+                  element={<FrequentUrination categoryId="men" />}
+                />
+                <Route
+                  path="/mens-health/urology/kidney-stones"
+                  element={<KidneyStones categoryId="men" />}
+                />
+                <Route
+                  path="/mens-health/urology/urinary-incontinence"
+                  element={<UrinaryIncontinence categoryId="men" />}
+                />
+                <Route
+                  path="/mens-health/urology/urinary-tract-infection"
+                  element={<UrinaryTractInfection categoryId="men" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/bacterial-vaginosis"
+                  element={<BacterialVaginosis categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/birth-control-consultation"
+                  element={<BirthControlConsultation categoryId="women" />}
+                />
+                <Route
+                  path="/emergency-contraception-guidance"
+                  element={
+                    <EmergencyContraceptionGuidance categoryId="women" />
+                  }
+                />
+                <Route
+                  path="/heavy-periods"
+                  element={<HeavyPeriods categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/irregular-periods"
+                  element={<IrregularPeriods categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/lactation-consulting/latch-problems"
+                  element={<LatchProblems categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/lactation-consulting/low-milk-supply"
+                  element={<LowMilkSupply categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/menstrual-cramps"
+                  element={<MenstrualCramps categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/lactation-consulting/nipple-pain"
+                  element={<NipplePain categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/pcos"
+                  element={<Pcos categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/pelvic-pain"
+                  element={<PelvicPain categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/women-mental-health/perinatal-anxiety"
+                  element={<PerinatalAnxiety categoryId="women" />}
+                />
+                <Route
+                  path="/postpartum-concerns"
+                  element={<PostpartumConcerns categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/women-mental-health/pmdd"
+                  element={<Pmdd categoryId="women" />}
+                />
+                <Route
+                  path="/pregnancy-related-questions"
+                  element={<PregnancyRelatedQuestions categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/women-mental-health/postnatal-depression"
+                  element={<PostnatalDepression categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/prenatal-consultation"
+                  element={<PrenatalConsultation categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/vaginal-yeast-infection"
+                  element={<VaginalYeastInfection categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/lactation-consulting/weaning-guidance"
+                  element={<WeaningGuidance categoryId="women" />}
+                />
+                <Route
+                  path="/mental-health/psychology-counseling/stress"
+                  element={<Stress categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/behavioral-health/anger-management"
+                  element={<AngerManagement categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/behavioral-health/adjustment-difficulties"
+                  element={<AdjustmentDifficulties categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/behavioral-health/substance-use-support"
+                  element={<SubstanceUseSupport categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/behavioral-health/sleep-related-anxiety"
+                  element={<SleepRelatedAnxiety categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/depression"
+                  element={<Depression categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/anxiety"
+                  element={<Anxiety categoryId="mental" />}
+                />
+                <Route
+                  path="/burnout"
+                  element={<Burnout categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/bipolar-disorder-follow-up"
+                  element={<BipolarDisorderFollowUp categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/ptsd"
+                  element={<PTSD categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/panic-attacks"
+                  element={<PanicAttacks categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/insomnia"
+                  element={<Insomnia categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychiatry/adhd-evaluation"
+                  element={<AdhdEvaluation categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychology-counseling/grief-and-loss"
+                  element={<GriefAndLoss categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychology-counseling/relationship-stress"
+                  element={<RelationshipStress categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychology-counseling/low-self-esteem"
+                  element={<LowSelfEsteem categoryId="mental" />}
+                />
+                <Route
+                  path="/mental-health/psychology-counseling/trauma-support"
+                  element={<TraumaSupport categoryId="mental" />}
+                />
+                <Route
+                  path="/women-health/menopause-care/hot-flashes"
+                  element={<HotFlashes categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/menopause-care/menopause-symptoms"
+                  element={<MenopauseSymptoms categoryId="women" />}
+                />
+                <Route
+                  path="/women-health/menopause-care/hrt-guidance"
+                  element={<HrtGuidance categoryId="women" />}
+                />
+                <Route
+                  path="/chronic-medication-management"
+                  element={<ChronicMedicationManagement />}
+                />
+                {/* <Route path="/mens-health/urology/bladder-problems" element={<BladderProblems />} /> */}
+                {/* <Route
             path="/mens-health/men-health/erectile-dysfunction"
             element={<ErectileDysfunction />}
           /> */}
-          <Route
-            path="/mens-health/men-health/hair-loss"
-            element={<HairLossMensHealth categoryId="men" />}
-          />
-          {/* <Route path="/mens-health/men-health/low-libido" element={<LowLibido />} /> */}
-          {/* <Route
+                <Route
+                  path="/mens-health/men-health/hair-loss"
+                  element={<HairLossMensHealth categoryId="men" />}
+                />
+                {/* <Route path="/mens-health/men-health/low-libido" element={<LowLibido />} /> */}
+                {/* <Route
             path="/mens-health/men-health/low-testosterone-symptoms"
             element={<LowTestosteroneSymptoms />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/mens-wellness-consultation"
             element={<MensWellnessConsultation />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/premature-ejaculation"
             element={<PrematureEjaculation />}
           /> */}
-          {/* <Route path="/mens-health/men-health/prostate-health" element={<ProstateHealth />} /> */}
-          {/* <Route
+                {/* <Route path="/mens-health/men-health/prostate-health" element={<ProstateHealth />} /> */}
+                {/* <Route
             path="/urinary-symptoms-men"
             element={<UrinarySymptomsMen />}
           />
           <Route path="/mental-health/psychiatry/adhd-evaluation" element={<ADHDEvaluation />} />
           <Route
           /> */}
-          <Route
-            path="/mens-health/urology/bladder-problems"
-            element={<BladderProblems1 categoryId="men" />}
-          />
-          <Route
-            path="/mens-health/men-health/erectile-dysfunction"
-            element={<ErectileDysfunction1 categoryId="men" />}
-          />
-          {/* <Route path="/skin-and-hair-care/dermatology/hair-loss" element={<HairLoss />} /> */}
-          <Route
-            path="/mens-health/men-health/low-libido"
-            element={<LowLibido1 categoryId="men" />}
-          />
-          <Route
-            path="/mens-health/men-health/low-testosterone-symptoms"
-            element={<LowTestosteroneSymptoms1 categoryId="men" />}
-          />
-          <Route
-            path="/mens-wellness-consultation"
-            element={<MensWellnessConsultation1 categoryId="men" />}
-          />
-          <Route
-            path="/premature-ejaculation"
-            element={<PrematureEjaculation1 categoryId="men" />}
-          />
-          <Route
-            path="/mens-health/men-health/prostate-health"
-            element={<ProstateHealth1 categoryId="men" />}
-          />
-          <Route
-            path="/urinary-symptoms-in-men"
-            element={<UrinarySymptomsMen1 categoryId="men" />}
-          />
-          <Route
-            path="/women-health/obstetrics-and-gynaecology/fertility-concerns"
-            element={<FertilityConcerns categoryId="women" />}
-          />
-          <Route path="/mental-health/psychiatry/ocd" element={<Ocd />} />
-          <Route
-            path="/eye-ear-bone/ophthalmology/eye-irritation"
-            element={<EyeIrritation categoryId="eeb" />}
-          />
-          {/* <Route
+                <Route
+                  path="/mens-health/urology/bladder-problems"
+                  element={<BladderProblems1 categoryId="men" />}
+                />
+                <Route
+                  path="/mens-health/men-health/erectile-dysfunction"
+                  element={<ErectileDysfunction1 categoryId="men" />}
+                />
+                {/* <Route path="/skin-and-hair-care/dermatology/hair-loss" element={<HairLoss />} /> */}
+                <Route
+                  path="/mens-health/men-health/low-libido"
+                  element={<LowLibido1 categoryId="men" />}
+                />
+                <Route
+                  path="/mens-health/men-health/low-testosterone-symptoms"
+                  element={<LowTestosteroneSymptoms1 categoryId="men" />}
+                />
+                <Route
+                  path="/mens-wellness-consultation"
+                  element={<MensWellnessConsultation1 categoryId="men" />}
+                />
+                <Route
+                  path="/premature-ejaculation"
+                  element={<PrematureEjaculation1 categoryId="men" />}
+                />
+                <Route
+                  path="/mens-health/men-health/prostate-health"
+                  element={<ProstateHealth1 categoryId="men" />}
+                />
+                <Route
+                  path="/urinary-symptoms-in-men"
+                  element={<UrinarySymptomsMen1 categoryId="men" />}
+                />
+                <Route
+                  path="/women-health/obstetrics-and-gynaecology/fertility-concerns"
+                  element={<FertilityConcerns categoryId="women" />}
+                />
+                <Route path="/mental-health/psychiatry/ocd" element={<Ocd />} />
+                <Route
+                  path="/eye-ear-bone/ophthalmology/eye-irritation"
+                  element={<EyeIrritation categoryId="eeb" />}
+                />
+                {/* <Route
             path="/mental-health/behavioral-health/adjustment-difficulties"
             element={<UrinarySymptomsMen />}
           /> */}
-          {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
-          {/* Legacy query-param URL — redirects to the path-based form URL above. */}
-          <Route
-            path="/appointment-booking/form"
-            element={<AppointmentBookingLegacyRedirect />}
-          />
-          <Route path="/primary-care-provider" element={<PCP />} /> {/* PCP */}
-          {/* Blog individual Pages */}
-          <Route path="/what-is-telemedicine" element={<Telemedicine />} />
-          <Route
-            path="/telemedicine-services"
-            element={<TelemedicineServices />}
-          />
-          <Route
-            path="/how-does-a-telemedicine-appointment-work"
-            element={<HowTelemedicineAppointmentWork />}
-          />
-          <Route
-            path="/online-doctor-consultation"
-            element={<OnlineDoctorConsultation />}
-          />
-          <Route
-            path="/conditions-treated-through-telemedicine"
-            element={<MedicalConditions />}
-          />
-          <Route
-            path="/top-telemedicine-platforms-providers"
-            element={<TopTelemedicinePlatforms />}
-          />
-          <Route path="/is-telemedicine-safe" element={<TelemedicineSafe />} />
-          <Route
-            path="/telemedicine-vs-in-person-doctor-visits"
-            element={<TelemedicineInPerson />}
-          />
-          <Route path="/telemedicine-cost-usa" element={<TelemedicineCost />} />
-          <Route
-            path="/are-online-doctors-real-doctors"
-            element={<OnlineDoctorRealDoctor />}
-          />
-          <Route
-            path="/future-of-telemedicine"
-            element={<FutureofTelemedicine />}
-          />
-          <Route
-            path="/uti-symptoms-causes-treatment-&-when-to-see-a-doctor"
-            element={<UTI />}
-          />
-          <Route
-            path="/migraine-vs-headache-symptoms-causes-differences-and-treatment-options"
-            element={<MigraineVsHeadache />}
-          />
-          <Route
-            path="/telehealth-for-hypertension"
-            element={<TelehealthforHypertension />}
-          />
-          {/* PRIVACY  */}
-          {/* <Route path="/privacy-concerns" element={<PrivacyConcerns />} /> */}
-          {/* demo */}
-          {/* <Route
+                {/* <Route path="/appointment-booking" element={<AppointmentBooking />} /> */}
+                {/* Legacy query-param URL — redirects to the path-based form URL above. */}
+                <Route
+                  path="/appointment-booking/form"
+                  element={<AppointmentBookingLegacyRedirect />}
+                />
+                <Route path="/primary-care-provider" element={<PCP />} />{" "}
+                {/* PCP */}
+                {/* Blog individual Pages */}
+                <Route
+                  path="/what-is-telemedicine"
+                  element={<Telemedicine />}
+                />
+                <Route
+                  path="/telemedicine-services"
+                  element={<TelemedicineServices />}
+                />
+                <Route
+                  path="/how-does-a-telemedicine-appointment-work"
+                  element={<HowTelemedicineAppointmentWork />}
+                />
+                <Route
+                  path="/online-doctor-consultation"
+                  element={<OnlineDoctorConsultation />}
+                />
+                <Route
+                  path="/conditions-treated-through-telemedicine"
+                  element={<MedicalConditions />}
+                />
+                <Route
+                  path="/top-telemedicine-platforms-providers"
+                  element={<TopTelemedicinePlatforms />}
+                />
+                <Route
+                  path="/is-telemedicine-safe"
+                  element={<TelemedicineSafe />}
+                />
+                <Route
+                  path="/telemedicine-vs-in-person-doctor-visits"
+                  element={<TelemedicineInPerson />}
+                />
+                <Route
+                  path="/telemedicine-cost-usa"
+                  element={<TelemedicineCost />}
+                />
+                <Route
+                  path="/are-online-doctors-real-doctors"
+                  element={<OnlineDoctorRealDoctor />}
+                />
+                <Route
+                  path="/future-of-telemedicine"
+                  element={<FutureofTelemedicine />}
+                />
+                <Route
+                  path="/uti-symptoms-causes-treatment-&-when-to-see-a-doctor"
+                  element={<UTI />}
+                />
+                <Route
+                  path="/migraine-vs-headache-symptoms-causes-differences-and-treatment-options"
+                  element={<MigraineVsHeadache />}
+                />
+                <Route
+                  path="/telehealth-for-hypertension"
+                  element={<TelehealthforHypertension />}
+                />
+                {/* PRIVACY  */}
+                {/* <Route path="/privacy-concerns" element={<PrivacyConcerns />} /> */}
+                {/* demo */}
+                {/* <Route
             path="/patient-privacy-notice"
             element={<PatientPrivacyNotice />}
           /> */}
-          {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
-          {/* <Route
+                {/* <Route path="/privacy-policy" element={<PrivacyPolicy />} /> */}
+                {/* <Route
             path="/provider-terms-of-service"
             element={<ProviderTermsofService />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/refund-and-cancellation-policy"
             element={<RefundCancellation />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/tele-health-informed-consent"
             element={<TeleHealthConsent />}
           /> */}
-          {/* <Route path="/terms-of-service" element={<TermsService />} /> */}
-          {/* <Route
+                {/* <Route path="/terms-of-service" element={<TermsService />} /> */}
+                {/* <Route
             path="/accessibility-statement"
             element={<AccessibilityStatement />}
           /> */}
-          {/* <Route path="/CCPA" element={<CCPA />} /> */}
-          {/* <Route path="/cookie-policy" element={<CookiePolicy />} /> */}
-          {/* <Route
+                {/* <Route path="/CCPA" element={<CCPA />} /> */}
+                {/* <Route path="/cookie-policy" element={<CookiePolicy />} /> */}
+                {/* <Route
             path="/notice-of-privacy-practices"
             element={<NoticePrivacy />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/patient-informed-consent-form"
             element={<PatientInformedConsentForm />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/physician-credentialing-policy"
             element={<PhysicianCredentialingPolicy />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/teleconsultation-workflow-policy"
             element={<TeleconsultationWorkflowPolicy />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/prescription-handling-policy"
             element={<PrescriptionHandlingPolicy />}
           /> */}
-          {/* <Route
+                {/* <Route
             path="/tele-health-provider-agreement"
             element={<TelehealthProviderAgreement />}
           /> */}
-          <Route path="/about-us" element={<AboutPage />} />
-          <Route path="/career" element={<DoctorCareers />} />
-          <Route path="/support-center" element={<FAQ />} />
-          {/* ---------------------Service Pages---------------------------- */}
-          <Route
-            path="/chronic-care-management"
-            element={<ChronicCareManagement />}
-          />
-          <Route
-            path="/general-consultation"
-            element={<GeneralConsultation />}
-          />
-          <Route
-            path="/online-prescription-refills"
-            element={<OnlinePrescriptionRefills />}
-          />
-          <Route path="/service-sexual-health" element={<SexualHealth />} />
-          <Route
-            path="/weight-loss-programs"
-            element={<WeightLossPrograms />}
-          />
-          <Route
-            path="/online-second-medical-opinion"
-            element={<SecondOpinion />}
-          />
-          {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
-          <Route
-            path="/sexual-health/sexual-health-and-wellness"
-            element={<SexualHealthSpeciality />}
-          />
-          <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
-          <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
-          <Route
-            path="/eye-ear-bone/ear-nose-throat/vertigo"
-            element={<Vertigo categoryId="eeb" />}
-          />
-          <Route path="/category-consultant" element={<CategoryConsultant />} />
-          <Route path="/service-consultant" element={<CategoryConsultant />} />
-          {/* New Privcay Policy Pages Start */}
-          <Route
-            path="/refund-cancellation-policy"
-            element={<Refundcancellationpolicy />}
-          />
-          <Route
-            path="/provider-terms-of-service"
-            element={<ProviderTermsOfService1 />}
-          />
-          <Route path="/privacy-policy" element={<PrivacyPolicy1 />} />
-          <Route path="/terms-of-service" element={<TermsOfService1 />} />
-          <Route
-            path="/hipaa-notice-of-privacy-practices"
-            element={<HippaNoticeOfPrivacyPractices1 />}
-          />
-          <Route
-            path="/california-privacy-rights-notice"
-            element={<CaliforniaPrivacyRightsNotice1 />}
-          />
-          <Route path="/cookie-policy" element={<CookiePolicy1 />} />
-          <Route
-            path="/accessibility-statement"
-            element={<AccessibilityStatement1 />}
-          />
-          <Route
-            path="/telehealth-informed-consent"
-            element={<TelehealthInformedConsent1 />}
-          />
-          <Route path="/account-deletion-policy" element={<DeleteAccount />} />
-          {/* New Privcay Policy Pages End */}
-          <Route
-            path="/appointment-booking/category-confirm"
-            element={<CategoryAppointmentConfirm />}
-          />
-          {/* Retired/duplicate URLs: real 301s live in render.yaml; this is the in-app safety net. */}
-          {REDIRECTS.map(({ from, to }) => (
-            <Route key={from} path={from} element={<Navigate to={to} replace />} />
-          ))}
-          {/* Super Admin blogs: after every static route so existing URLs win */}
-          <Route path="/:slug" element={<BlogPost />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </ErrorBoundary>
-        </HasMainContext.Provider>
+                <Route path="/about-us" element={<AboutPage />} />
+                <Route path="/career" element={<DoctorCareers />} />
+                <Route path="/support-center" element={<FAQ />} />
+                {/* ---------------------Service Pages---------------------------- */}
+                <Route
+                  path="/chronic-care-management"
+                  element={<ChronicCareManagement />}
+                />
+                <Route
+                  path="/general-consultation"
+                  element={<GeneralConsultation />}
+                />
+                <Route
+                  path="/online-prescription-refills"
+                  element={<OnlinePrescriptionRefills />}
+                />
+                <Route
+                  path="/service-sexual-health"
+                  element={<SexualHealth />}
+                />
+                <Route
+                  path="/weight-loss-programs"
+                  element={<WeightLossPrograms />}
+                />
+                <Route
+                  path="/online-second-medical-opinion"
+                  element={<SecondOpinion />}
+                />
+                {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
+                <Route
+                  path="/sexual-health/sexual-health-and-wellness"
+                  element={<SexualHealthSpeciality />}
+                />
+                <Route path="/fit-to-fly-certificate" element={<FittoFly />} />
+                <Route path="/lab-requisitions" element={<LABREQUISITIONS />} />
+                <Route
+                  path="/eye-ear-bone/ear-nose-throat/vertigo"
+                  element={<Vertigo categoryId="eeb" />}
+                />
+                <Route
+                  path="/category-consultant"
+                  element={<CategoryConsultant />}
+                />
+                <Route
+                  path="/service-consultant"
+                  element={<CategoryConsultant />}
+                />
+                {/* New Privcay Policy Pages Start */}
+                <Route
+                  path="/refund-cancellation-policy"
+                  element={<Refundcancellationpolicy />}
+                />
+                <Route
+                  path="/provider-terms-of-service"
+                  element={<ProviderTermsOfService1 />}
+                />
+                <Route path="/privacy-policy" element={<PrivacyPolicy1 />} />
+                <Route path="/terms-of-service" element={<TermsOfService1 />} />
+                <Route
+                  path="/hipaa-notice-of-privacy-practices"
+                  element={<HippaNoticeOfPrivacyPractices1 />}
+                />
+                <Route
+                  path="/california-privacy-rights-notice"
+                  element={<CaliforniaPrivacyRightsNotice1 />}
+                />
+                <Route path="/cookie-policy" element={<CookiePolicy1 />} />
+                <Route
+                  path="/accessibility-statement"
+                  element={<AccessibilityStatement1 />}
+                />
+                <Route
+                  path="/telehealth-informed-consent"
+                  element={<TelehealthInformedConsent1 />}
+                />
+                <Route
+                  path="/account-deletion-policy"
+                  element={<DeleteAccount />}
+                />
+                {/* New Privcay Policy Pages End */}
+                <Route
+                  path="/appointment-booking/category-confirm"
+                  element={<CategoryAppointmentConfirm />}
+                />
+                {/* Retired/duplicate URLs: real 301s live in render.yaml; this is the in-app safety net. */}
+                {REDIRECTS.map(({ from, to }) => (
+                  <Route
+                    key={from}
+                    path={from}
+                    element={<Navigate to={to} replace />}
+                  />
+                ))}
+                {/* Super Admin blogs: after every static route so existing URLs win */}
+                <Route path="/:slug" element={<BlogPost />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
+          </HasMainContext.Provider>
         </MainWrap>
 
         {!hideLayout && <Footer />}

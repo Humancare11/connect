@@ -1139,6 +1139,54 @@
   }
 }
 
+/* Mobile: the section's side padding (--side-pad) and the card's own 48px
+   padding stacked up to ~80px per side, leaving ~170px of text at 332px.
+   Tighten both so the card uses the screen, and leave room under the card
+   so the fixed chat launcher (bottom-right, ~64px + 20px offset) can scroll
+   clear of the button instead of sitting on top of it. */
+@media (max-width: 600px) {
+  .sp-cta {
+    padding: 48px 16px 104px;
+  }
+
+  .sp-cta__card {
+    max-width: 100%;
+    border-radius: 24px;
+    padding: 36px 20px;
+  }
+
+  .sp-cta__copy {
+    max-width: none;
+    margin-bottom: 24px;
+  }
+
+  .sp-cta__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sp-cta__btn {
+    width: 100%;
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .sp-cta {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .sp-cta__card {
+    padding: 32px 16px;
+  }
+
+  .sp-cta__eyebrow {
+    padding: 6px 12px;
+    letter-spacing: 0.1em;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    SPECIALTIES STRIP
 ══════════════════════════════════════════════════════════════ */

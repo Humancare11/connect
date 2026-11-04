@@ -16,7 +16,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/SkinCondition/Ath
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Skin Conditions",
+  badge: "Skin & Hair Care",
   heading: "Athlete’s Foot",
   description: "Itchy, burning fungal skin infection",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
