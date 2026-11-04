@@ -835,6 +835,7 @@ const PaymentLinkHistory = lazy(
 );
 const ManualInvoices = lazy(() => import("./pages/admin/ManualInvoices"));
 const GOP = lazy(() => import("./pages/admin/GOP"));
+const MedicalReports = lazy(() => import("./pages/admin/MedicalReports"));
 const SupportTickets = lazy(() => import("./pages/admin/SupportTickets"));
 const SuperAdminDashboard = lazy(
   () => import("./pages/admin/SuperAdminDashboard"),
@@ -1917,6 +1918,16 @@ export function AppLayout() {
                     <PrivateRoute allowedRoles={["admin", "superadmin"]}>
                       <AdminLayout>
                         <GOP />
+                      </AdminLayout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin-dashboard/medical-reports"
+                  element={
+                    <PrivateRoute allowedRoles={["admin", "superadmin"]}>
+                      <AdminLayout>
+                        <MedicalReports />
                       </AdminLayout>
                     </PrivateRoute>
                   }

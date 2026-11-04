@@ -498,3 +498,11 @@
   .mr-card { border-radius: 12px; padding: 12px; }
   .mr-slip-wrap { padding: 8px; }
 }
+
+/* Admin-issued medical reports */
+.mr-card--report { border-color: #c7d2fe; }
+.mr-card--report .mr-card-icon { background: #eef2ff; }
+.mr-card-top--static { cursor: default; }
+.mr-card-top--static:hover { background: transparent; }
+.mr-card--voided { opacity: 0.75; border-style: dashed; }
+.mr-voided-badge { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 600; vertical-align: middle; }

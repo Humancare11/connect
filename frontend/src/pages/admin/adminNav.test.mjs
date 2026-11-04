@@ -16,7 +16,7 @@ const SHARED = [
   { label: "Appointments", to: "/admin-dashboard/appointments", newTab: false },
   { label: "Appointment entries", to: "/admin-dashboard/appointment-entries", newTab: false },
   { label: "Direct Video Consultation", to: "/admin-dashboard/direct-video-consultation", newTab: false },
-  { label: "Documents", children: [["Manual Invoices", "/admin-dashboard/manual-invoices"], ["Guarantee of Payment", "/admin-dashboard/gop"]] },
+  { label: "Documents", children: [["Manual Invoices", "/admin-dashboard/manual-invoices"], ["Guarantee of Payment", "/admin-dashboard/gop"], ["Medical Report", "/admin-dashboard/medical-reports"]] },
   { label: "Partner Cases", to: "/admin-dashboard/partner-cases", newTab: false },
   { label: "Email", to: "/admin-dashboard/email", newTab: false },
 ];

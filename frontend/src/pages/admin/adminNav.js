@@ -43,6 +43,7 @@ export const NAV_ITEMS = [
         icon: "document",
       },
       { path: "/admin-dashboard/gop", label: "Guarantee of Payment", roles: ["admin", "superadmin"], icon: "shield" },
+      { path: "/admin-dashboard/medical-reports", label: "Medical Report", roles: ["admin", "superadmin"], icon: "document" },
     ],
   },
   // Payment-admin-only pages. They aren't part of the requested menu order;

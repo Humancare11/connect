@@ -624,6 +624,7 @@ app.use("/api/notes", require("./routes/consultationNotes"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin/manual-invoices", require("./routes/manualInvoices"));
 app.use("/api/admin/gop", require("./routes/gop"));
+app.use("/api/admin/medical-reports", require("./routes/adminMedicalReports"));
 app.use("/api/paypal", require("./routes/paypal"));
 app.use("/api/pricing", require("./routes/pricing"));
 app.use("/api/services", require("./routes/services"));
