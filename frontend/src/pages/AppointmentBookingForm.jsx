@@ -28,6 +28,7 @@ import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import { normalizeAppointmentTree, selectionFromUrl, selectionMatchesRoute } from "../utils/appointmentTree";
+import ReportFileList from "../components/ReportFileList";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
 
@@ -1379,28 +1380,7 @@ export default function AppointmentBookingForm() {
                 <p className="ap-upload-sub">Max 10 MB per file</p>
               </div>
 
-              {form.files.length > 0 && (
-                <div className="ap-report-list">
-                  {form.files.map((f, i) => (
-                    <div key={i} className="ap-report-item">
-                      <span className="ap-report-icon">📄</span>
-                      <div className="ap-report-meta">
-                        <span className="ap-report-name">{f.name}</span>
-                        <span className="ap-report-size">
-                          {(f.size / 1048576).toFixed(1)} MB
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ap-report-remove"
-                        onClick={() => removeFile(i)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ReportFileList files={form.files} onRemove={removeFile} />
             </div>
 
             {(pricingIssue || proceedErr) && (

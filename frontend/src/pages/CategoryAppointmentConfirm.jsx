@@ -24,20 +24,7 @@ import {
 } from "../utils/booking";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
-
-const FILE_ICONS = { pdf: "📄", image: "🖼️", doc: "📝", default: "📎" };
-function fileIcon(type = "") {
-  if (type.includes("pdf")) return FILE_ICONS.pdf;
-  if (type.startsWith("image/")) return FILE_ICONS.image;
-  if (type.includes("word") || type.includes("doc")) return FILE_ICONS.doc;
-  return FILE_ICONS.default;
-}
-function formatBytes(b) {
-  if (!b) return "";
-  if (b < 1024) return `${b} B`;
-  if (b < 1048576) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / 1048576).toFixed(1)} MB`;
-}
+import ReportFileList from "../components/ReportFileList";
 
 // The title of the "Next Availability" option on the intake's timing step (CategoryConsultant).
 const NEXT_AVAILABILITY_LABEL = "Next Availability";
@@ -69,6 +56,8 @@ export default function CategoryAppointmentConfirm() {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const [confirmErr, setConfirmErr] = useState("");
+  // Why the last upload failed, shown under the upload box on the details step (confirmErr is only shown from the payment step on).
+  const [uploadErr, setUploadErr] = useState("");
   const [showConsentModal, setShowConsentModal] = useState(false);
   const consentModalRef = useRef(null);
   useModalA11y(consentModalRef, showConsentModal, () => setShowConsentModal(false));
@@ -154,20 +143,25 @@ export default function CategoryAppointmentConfirm() {
 
   const uploadFiles = async (fileList) => {
     setUploading(true);
+    setUploadErr("");
     const results = [];
+    const failed = [];
     for (const file of Array.from(fileList)) {
       try {
         const uploaded = await uploadFileDirectToS3(file);
         results.push({
           url: uploaded.url,
-          name: uploaded.name,
-          type: uploaded.type,
-          size: uploaded.size,
+          key: uploaded.key,
+          // the name the patient picked, even if the storage answer carries none
+          name: uploaded.name || file.name,
+          type: uploaded.type || file.type,
+          size: uploaded.size || file.size,
         });
       } catch {
-        setConfirmErr(`Failed to upload "${file.name}". Max 10 MB.`);
+        failed.push(file.name);
       }
     }
+    if (failed.length) setUploadErr(`Failed to upload ${failed.map((n) => `"${n}"`).join(", ")}. Max 10 MB.`);
     setReports((prev) => [...prev, ...results]);
     setUploading(false);
   };
@@ -378,28 +372,12 @@ export default function CategoryAppointmentConfirm() {
                   </>
                 )}
               </div>
-              {reports.length > 0 && (
-                <div className="ap-report-list">
-                  {reports.map((r, i) => (
-                    <div key={i} className="ap-report-item">
-                      <span className="ap-report-icon">{fileIcon(r.type)}</span>
-                      <div className="ap-report-meta">
-                        <span className="ap-report-name">{r.name}</span>
-                        <span className="ap-report-size">
-                          {formatBytes(r.size)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ap-report-remove"
-                        onClick={() => removeReport(i)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              {uploadErr && (
+                <p role="alert" className="ap-error">
+                  {uploadErr}
+                </p>
               )}
+              <ReportFileList files={reports} onRemove={removeReport} uploaded />
             </div>
 
             <button
