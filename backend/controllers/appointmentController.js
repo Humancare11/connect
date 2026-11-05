@@ -29,6 +29,7 @@ const {
 } = require("../utils/appointmentLifecycle");
 const { notifyAppointmentBooked } = require("../utils/bookingNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
+const { safeStoredReports } = require("../utils/bookingReports");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
 
@@ -565,7 +566,8 @@ const mapCategoryConsultationToAppointment = (cc) => {
     time: resolveCategoryConsultationTime(cc),
     problem: cc.concern,
     status: mappedStatus,
-    medicalReports: [],
+    // The files the patient attached when booking (signed, short-lived links are added by withPresignedMedicalReportUrls).
+    medicalReports: safeStoredReports(cc.medicalReports),
     createdAt: cc.createdAt,
     updatedAt: cc.updatedAt,
     isCategoryConsultation: true,
@@ -641,7 +643,7 @@ const getDoctorAppointments = async (req, res) => {
         time: cc.slot,
         problem: cc.concern,
         status: mappedStatus,
-        medicalReports: [],
+        medicalReports: safeStoredReports(cc.medicalReports),
         createdAt: cc.createdAt,
         updatedAt: cc.updatedAt,
         isCategoryConsultation: true,

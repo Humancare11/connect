@@ -83,6 +83,9 @@ export async function startStack() {
     // A fresh browser context (own sessionStorage, own history); collects uncaught page errors.
     async newPage() {
       const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      // the phone widget's "detect my country" lookup and flag images stay offline and quiet
+      await context.route("https://api.country.is/**", (route) => route.abort());
+      await context.route("https://flagcdn.com/**", (route) => route.fulfill({ status: 200, contentType: "image/png", body: "" }));
       const page = await context.newPage();
       const errors = [];
       page.on("pageerror", (error) => errors.push(String(error)));

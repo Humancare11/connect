@@ -55,6 +55,53 @@ describe("Next Availability survives sign-in (real browser)", { skip: skipReason
     await context.close();
   });
 
+  // The real sign-up form: details, country and state from the real location lists, phone, consents, then the OTP step.
+  async function signUp(page) {
+    await page.getByRole("button", { name: "Sign Up" }).first().click();
+    await page.locator("#patient-register-name").waitFor();
+    await page.locator("#patient-register-name").fill("New Patient");
+    await page.locator("#patient-register-email").fill(`new-${Date.now()}@e2e.test`);
+    await page.selectOption("#country", { label: "United Kingdom" });
+    await page.waitForFunction(() => {
+      const state = document.querySelector("#state");
+      return state && !/Loading/.test(state.options[0]?.textContent || "");
+    }, null, { timeout: 15000 });
+    const states = await page.locator("#state option").evaluateAll((opts) => opts.map((o) => o.value).filter(Boolean));
+    if (states.length) await page.selectOption("#state", states[0]);
+    await page.waitForTimeout(1200); // the phone field and the country re-apply each other
+    await page.locator("#patient-register-mobile").fill("7911123456");
+    await page.waitForTimeout(600);
+    await page.locator("#patient-register-password").fill("Str0ng!Passw0rd#1");
+    await page.locator("#patient-register-terms").check();
+    await page.locator("#patient-register-privacy-consent").check();
+    await page.locator("#patient-register-hipaa-consent").check();
+    await page.getByRole("button", { name: "Create Account" }).last().click();
+    await page.locator("[id^='patient-register-otp']").first().waitFor({ timeout: 15000 });
+    await page.locator("[id^='patient-register-otp']").first().click();
+    await page.keyboard.type("123456");
+    await page.getByRole("button", { name: /Verify & Create Account/ }).click();
+  }
+
+  test("SIGN-UP: Next Availability is shown on the booking page after creating the account, and Back does not return to the sign-up form", async () => {
+    const { page, context, errors } = await stack.newPage();
+    await fillIntake(page);
+    await page.getByRole("radio", { name: /Next Availability/ }).click();
+    await page.getByRole("button", { name: "Book Appointment" }).click();
+    await page.waitForURL(/\/login$/);
+
+    await signUp(page);
+    await page.waitForURL(/\/appointment-booking\/category-confirm$/, { timeout: 20000 });
+    await page.getByRole("heading", { name: "Confirm Your Appointment" }).waitFor();
+    assert.equal((await preferredTime(page).innerText()).trim(), "Next Availability");
+    assert.equal((await stack.state()).registers.length, 1, "the account was created through the sign-up form");
+
+    await page.goBack();
+    await page.waitForURL(/\/category-consultant/);
+    assert.ok(!page.url().includes("/login"));
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
   test("a chosen time slot is kept across sign-in and shown as picked", async () => {
     const { page, context } = await stack.newPage();
     await fillIntake(page);

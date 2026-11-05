@@ -2,6 +2,13 @@
 // move the visitor's "IP country" between requests (the "geo" setting), which is the whole point of the currency test. Real payment,
 // real S3 and a real database are out of scope here (they have their own backend tests).
 import http from "node:http";
+import path from "node:path";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+
+// The sign-up form's country / state lists come from the real /api/locations route (static data, no database).
+const backendRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "backend");
+const requireBackend = createRequire(path.join(backendRoot, "package.json"));
 
 const PRICES = { general: { price: 49, priceEur: 45, priceGbp: 39, priceInr: 3999 } };
 const TREE = [
@@ -32,9 +39,13 @@ const freshState = () => ({
   uploads: [],
   consultations: [],
   appointments: [],
+  registers: [],
 });
 
 export async function startApiServer() {
+  const express = requireBackend("express");
+  const locationsApp = express();
+  locationsApp.use("/api/locations", requireBackend(path.join(backendRoot, "routes", "locations.js")));
   const state = freshState();
   const user = { _id: "patient-1", name: "Test Patient", email: "patient@e2e.test", role: "user" };
 
@@ -59,6 +70,16 @@ export async function startApiServer() {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, "http://x");
     const p = url.pathname;
+    if (p.startsWith("/api/locations")) return locationsApp(req, res);
+    if (req.method === "POST" && p === "/api/auth/send-register-otp") {
+      await readBody(req);
+      return send(res, 200, { msg: "OTP sent." });
+    }
+    if (req.method === "POST" && p === "/api/auth/register") {
+      state.registers.push(await readBody(req));
+      state.loggedIn = true;
+      return send(res, 201, { accessToken: "a", refreshToken: "r", user });
+    }
     if (req.method === "GET" && p === "/api/geo/currency") {
       state.geoCalls += 1;
       if (state.geoFails) return send(res, 503, { msg: "down" });

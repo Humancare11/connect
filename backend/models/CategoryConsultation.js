@@ -115,6 +115,7 @@ const consultationSchema = new mongoose.Schema(
     ...bookingSourceFields(),
     medicalReports: [
       {
+        key: { type: String },
         url: { type: String },
         name: { type: String },
         type: { type: String },

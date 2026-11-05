@@ -11,6 +11,7 @@ const {
 const { recordPaymentAndInvoice } = require("../utils/billing");
 const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
+const { BookingReportError, normalizeBookingReports } = require("../utils/bookingReports");
 
 // Create a new consultation
 const createCategoryConsultation = async (req, res) => {
@@ -38,6 +39,18 @@ const createCategoryConsultation = async (req, res) => {
         success: false,
         message: "Payment is required to submit a consultation request.",
       });
+    }
+
+    // The attached files are checked against the storage before anything is claimed: only files this patient uploaded, of an allowed
+    // type and size, are kept (rebuilt from what the storage says). A made-up or foreign key refuses the booking, nothing is spent.
+    let medicalReports;
+    try {
+      medicalReports = await normalizeBookingReports(req.body.medicalReports, { userId: req.user.id });
+    } catch (err) {
+      if (err instanceof BookingReportError) {
+        return res.status(err.status).json({ success: false, message: err.message, msg: err.message });
+      }
+      throw err;
     }
 
     let paymentRef = "";
@@ -132,7 +145,7 @@ const createCategoryConsultation = async (req, res) => {
         slot: isFlexible ? req.body.slot : null,
         date: req.body.date,
         patientId: req.user.id,
-        medicalReports: req.body.medicalReports,
+        medicalReports,
         consultationPrice: paymentAmountFinal / 100,
         categoryName: req.body.categoryName,
         specialtyName: req.body.specialtyName,
