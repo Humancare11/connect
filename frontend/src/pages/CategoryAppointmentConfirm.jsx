@@ -39,6 +39,9 @@ function formatBytes(b) {
   return `${(b / 1048576).toFixed(1)} MB`;
 }
 
+// The title of the "Next Availability" option on the intake's timing step (CategoryConsultant).
+const NEXT_AVAILABILITY_LABEL = "Next Availability";
+
 export default function CategoryAppointmentConfirm() {
   const { user, loading: authLoading } = useAuth();
   const { currency: siteCurrency, loading: currencyLoading } = useSiteCurrency();
@@ -56,9 +59,9 @@ export default function CategoryAppointmentConfirm() {
     pending?.formData?.time || pending?.formData?.slot || "",
   );
   // "Next Availability" bookings never had a slot picked — show that
-  // explicitly instead of a blank "Time" row on the payment summary.
-  const isNextAvailability = pending?.formData?.urgency !== "flexible";
-  const displayTime = time || (isNextAvailability ? "Next Available" : "");
+  // explicitly (on the details step and the payment summary) instead of a blank "—" time row.
+  const isNextAvailability = !time && pending?.formData?.urgency !== "flexible";
+  const displayTime = time || (isNextAvailability ? NEXT_AVAILABILITY_LABEL : "");
   const [date, setDate] = useState(pending?.formData?.date || "");
   const [stage, setStage] = useState("form"); // form | payment | confirming | success
   const [reports, setReports] = useState([]);
@@ -327,7 +330,7 @@ export default function CategoryAppointmentConfirm() {
                 </div>
                 <div className="ap-pay-summary-row">
                   <span>Preferred time</span>
-                  <strong>{time || "—"}</strong>
+                  <strong>{displayTime || "—"}</strong>
                 </div>
               </div>
             </div>

@@ -394,7 +394,8 @@ export default function AuthPage() {
     const from = location.state?.from;
     const doctor = location.state?.doctor;
     if (from) {
-      navigate(from, doctor ? { state: { doctor } } : undefined);
+      // Replace the login page in the history: Back from the page we return to must not land on the login (or sign-up) form again.
+      navigate(from, { replace: true, ...(doctor ? { state: { doctor } } : {}) });
     } else {
       navigate("/user/dashboard");
     }
