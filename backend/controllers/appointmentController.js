@@ -6,14 +6,13 @@ const CategoryConsultation = require("../models/CategoryConsultation");
 const mongoose = require("mongoose");
 const { sendEmail } = require("../utils/sendEmail");
 const { keyFromStoredValue } = require("../utils/uploadStorage");
-const { getS3ObjectUrl } = require("../config/s3");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const { sendPushToUser } = require("../utils/pushNotifications");
 const {
   PaymentVerificationError,
   resolveDoctorFeeCents,
   logOrphanedPayment,
-  resolveCategoryFeeCents,
+  verifyCategoryPayment,
   verifyStripePaymentIntent,
   verifyPaypalOrder,
   claimPaymentOnce,
@@ -30,24 +29,9 @@ const {
 const { notifyAppointmentBooked } = require("../utils/bookingNotifications");
 const { notifyAdminAppointmentBooked, notifyAdminAppointmentDoctorAction, notifyAdminPaymentNeedsReconciliation } = require("../utils/adminNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
+const { safeStoredReports, checkBookingReports, logReportOutcome, reportsWarning } = require("../utils/bookingReports");
 
 const ACTIVE_DOCTOR_STATUSES = ["assigned", "pending", "confirmed"];
-
-function normalizeMedicalReports(reports) {
-  if (!Array.isArray(reports)) return [];
-  return reports
-    .map((report) => {
-      const key = keyFromStoredValue(report?.key || report?.url);
-      if (!key) return null;
-      return {
-        url: getS3ObjectUrl(key),
-        name: String(report?.name || key.split("/").pop() || "Medical report").slice(0, 180),
-        type: String(report?.type || "").slice(0, 120),
-        size: Number(report?.size) || 0,
-      };
-    })
-    .filter(Boolean);
-}
 
 async function withPresignedMedicalReportUrls(appointment) {
   if (!appointment) return appointment;
@@ -161,7 +145,13 @@ const createAppointment = async (req, res) => {
   // reconcilable error instead of silently losing their payment).
   let paymentRef = "";
   let paymentGateway = "";
+  // Razorpay only (INR category bookings): the order and payment ids of the verified payment.
+  let paymentRazorpayOrderId = "";
+  let paymentRazorpayPaymentId = "";
   let paymentAmountFinal = 0;
+  // Currency of paymentAmountFinal, as verified with the gateway (lower-case).
+  // Doctor bookings are always USD; category bookings can be USD / EUR / GBP.
+  let paymentCurrency = "usd";
   let paymentStatus = "unpaid";
   let paymentDescription = "";
 
@@ -175,6 +165,9 @@ const createAppointment = async (req, res) => {
       medicalReports,
       paymentIntentId,
       paypalOrderId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
       category,
       categoryId,
       specialty,
@@ -229,6 +222,12 @@ const createAppointment = async (req, res) => {
       resolvedUtc = buildUtcDateTime(date, time, safeTimezone);
     }
 
+    // The attached files are checked against the storage here, before the payment is verified and claimed. The patient has already
+    // paid by now (the files were checked again before the payment was created), so a file is never a reason to refuse the booking:
+    // one that fails is dropped and logged, one the storage could not be asked about is kept aside as unverified
+    // (pendingReportsJob verifies it later), and the response carries a warning.
+    const checkedReports = await checkBookingReports(medicalReports, { userId: patientId });
+
     let resolvedDoctorId = null;
     let bookedDoctor = null;
 
@@ -266,12 +265,13 @@ const createAppointment = async (req, res) => {
         throw feeErr;
       }
       const verified = paymentIntentId
-        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents, patientId })
+        : await verifyPaypalOrder({ paypalOrderId, expectedCents, patientId });
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
       paymentAmountFinal = verified.amountCents;
+      paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
       paymentDescription = `Consultation with Dr. ${doctor.name}`;
 
@@ -291,7 +291,7 @@ const createAppointment = async (req, res) => {
 
     // Category-based booking (no specific doctor) — payment required
     if (!resolvedDoctorId) {
-      if (!paymentIntentId && !paypalOrderId) {
+      if (!paymentIntentId && !paypalOrderId && !razorpayPaymentId && !razorpayOrderId) {
         return res.status(400).json({ msg: "Payment is required to submit an appointment request." });
       }
 
@@ -304,18 +304,29 @@ const createAppointment = async (req, res) => {
       // CategoryConsultationController.js: this runs after the patient has
       // already been charged, so an admin deactivating/renaming the
       // category in the meantime must not strand that payment.
-      const expectedCents = await resolveCategoryFeeCents(categoryId || category, { requireActive: false });
-      if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
-        return res.status(400).json({ msg: "Unrecognized category. Please reselect and try again." });
-      }
-
-      const verified = paymentIntentId
-        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
+      //
+      // The payment says which currency it was taken in (the server chose it
+      // when the payment was created); verifyCategoryPayment checks amount AND
+      // currency against the category's stored price in that currency - no
+      // conversion - and throws PaymentVerificationError (400 for an unknown
+      // category) otherwise.
+      const verified = await verifyCategoryPayment({
+        paymentIntentId,
+        paypalOrderId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        patientId,
+        priceRef: categoryId || category,
+        requireActive: false,
+      });
 
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
+      paymentRazorpayOrderId = verified.razorpayOrderId || "";
+      paymentRazorpayPaymentId = verified.razorpayPaymentId || "";
       paymentAmountFinal = verified.amountCents;
+      paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
       paymentDescription = `${category || "Category"} consultation booking`;
     }
@@ -383,14 +394,25 @@ const createAppointment = async (req, res) => {
             category,
             specialty,
             condition,
-            consultationPrice: Number(consultationPrice) || 0,
+            // A EUR / GBP category booking records the amount actually charged
+            // (server-verified) rather than a price sent by the browser; USD
+            // bookings keep exactly the value they always had.
+            consultationPrice:
+              !resolvedDoctorId && paymentCurrency !== "usd"
+                ? paymentAmountFinal / 100
+                : Number(consultationPrice) || 0,
             patientDetails: safePatientDetails,
-            medicalReports: normalizeMedicalReports(medicalReports),
+            medicalReports: checkedReports.kept,
+            reportsUnverified: checkedReports.unverified,
+            reportsUnverifiedAt: checkedReports.unverified.length ? new Date() : null,
             status: resolvedDoctorId ? "pending" : "upcoming",
             paymentIntentId: paymentRef,
             paymentAmount: paymentAmountFinal,
+            paymentCurrency,
             paymentStatus,
             paymentGateway,
+            razorpayOrderId: paymentRazorpayOrderId,
+            razorpayPaymentId: paymentRazorpayPaymentId,
             source,
           },
         ],
@@ -427,9 +449,14 @@ const createAppointment = async (req, res) => {
       });
     }
 
+    logReportOutcome(checkedReports, { patientId, bookingId: String(appointment._id), kind: "appointment" });
+    const warning = reportsWarning(checkedReports);
+
     res.status(201).json({
       msg: resolvedDoctorId ? "Appointment booked successfully." : "Appointment request submitted successfully.",
       appointment,
+      // Set when some attached files did not make it; the booking and the payment are fine. The page shows it.
+      ...(warning ? { warning, droppedReports: checkedReports.dropped.map((d) => ({ name: d.name, reason: d.reason })) } : {}),
     });
 
     // Fire-and-forget: notify admins (and the booked doctor, if any). Never
@@ -453,8 +480,10 @@ const createAppointment = async (req, res) => {
         appointmentId: appointment._id,
         gateway: paymentGateway,
         gatewayReference: paymentRef,
+        razorpayOrderId: paymentRazorpayOrderId,
+        razorpayPaymentId: paymentRazorpayPaymentId,
         amountCents: paymentAmountFinal,
-        currency: "usd",
+        currency: paymentCurrency,
         description: paymentDescription,
       }).catch((err) => {
         console.error(`[invoice] Failed to record payment/invoice for appointment ${appointment._id}:`, err.message);
@@ -476,7 +505,7 @@ const createAppointment = async (req, res) => {
     // reference to get this reconciled instead of silently losing their payment.
     if (paymentStatus === "paid" && paymentRef) {
       console.error(
-        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
+        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal} ${paymentCurrency}) ` +
           `but appointment creation failed for patient ${req.user?.id}. Needs manual reconciliation.`
       );
       // paymentStatus is only "paid" after the gateway itself confirmed it above. Never throws.
@@ -540,7 +569,8 @@ const mapCategoryConsultationToAppointment = (cc) => {
     time: resolveCategoryConsultationTime(cc),
     problem: cc.concern,
     status: mappedStatus,
-    medicalReports: [],
+    // The files the patient attached when booking (signed, short-lived links are added by withPresignedMedicalReportUrls).
+    medicalReports: safeStoredReports(cc.medicalReports),
     createdAt: cc.createdAt,
     updatedAt: cc.updatedAt,
     isCategoryConsultation: true,
@@ -616,7 +646,7 @@ const getDoctorAppointments = async (req, res) => {
         time: cc.slot,
         problem: cc.concern,
         status: mappedStatus,
-        medicalReports: [],
+        medicalReports: safeStoredReports(cc.medicalReports),
         createdAt: cc.createdAt,
         updatedAt: cc.updatedAt,
         isCategoryConsultation: true,

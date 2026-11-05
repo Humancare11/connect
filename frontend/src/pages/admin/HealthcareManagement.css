@@ -216,3 +216,56 @@
     justify-content: center;
   }
 }
+
+.hcm-price-tabs {
+  margin-bottom: 12px;
+}
+
+.hcm-price-help {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hcm-optional {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.hcm-not-set {
+  color: #b45309;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.hcm-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.hcm-banner-btn {
+  border: 1.5px solid #d97706;
+  background: #fff;
+  color: #b45309;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hcm-banner-btn:hover {
+  background: #fef3c7;
+}

@@ -8,6 +8,7 @@ const {
   resolveEffectiveCategoryPrice,
   generateUniquePricingSlug,
 } = require("../utils/categoryPricing");
+const { parsePrice, maxPriceFor, minPriceFor } = require("../utils/currencyConfig");
 
 function cleanString(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -47,22 +48,36 @@ function categoryPayload(body, partial = false) {
   }
   if (body.icon !== undefined) payload.icon = cleanString(body.icon);
   if (body.description !== undefined) payload.description = cleanString(body.description);
-  // Price is only accepted at creation, to seed the category's matching
-  // CategoryPricing row (see createCategory). On update it's intentionally
-  // never part of this payload - price is managed exclusively through
-  // CategoryPricing via PUT /api/pricing/:categoryId, so a `price` sent
+  // Prices are only accepted at creation, to seed the category's matching
+  // CategoryPricing row (see createCategory). On update they're intentionally
+  // never part of this payload - prices are managed exclusively through
+  // CategoryPricing via PUT /api/pricing/:categoryId, so a price sent
   // here on an update is silently ignored rather than written to the
   // (legacy, no-longer-authoritative) HealthcareCategory.price field.
+  //
+  // A new category must be priced in all four currencies up front (each a
+  // number > 0, at most 100,000, at most 2 decimals; INR at most 10,00,000).
+  // `price` is USD; EUR, GBP and INR are entered by hand and never converted from it.
+  let prices;
   if (!partial) {
-    const parsed = parseNonNegativeNumber(body.price, "Price");
-    if (parsed.error) return { error: parsed.error };
-    payload.price = parsed.value;
+    prices = {};
+    for (const [key, label, max, min] of [
+      ["price", "USD price"],
+      ["priceEur", "EUR price"],
+      ["priceGbp", "GBP price"],
+      ["priceInr", "INR price", maxPriceFor("INR"), minPriceFor("INR")],
+    ]) {
+      const parsed = parsePrice(body[key], max, min);
+      if (parsed.error) return { error: `${label} ${parsed.error}` };
+      prices[key] = parsed.value;
+    }
+    payload.price = prices.price;
     payload.currency = "USD";
   }
   if (body.isActive !== undefined || !partial) {
     payload.isActive = parseBoolean(body.isActive, true);
   }
-  return { payload };
+  return { payload, prices };
 }
 
 function specialtyPayload(body, partial = false) {
@@ -137,7 +152,20 @@ async function listCategories(_req, res) {
           category,
           pricingLookup,
         );
-        return { ...category, price, currency };
+        // The admin Categories page also needs the EUR / GBP / INR prices
+        // (null = not set yet, shown as "Not set").
+        const record = category.pricingSlug ? pricingLookup.get(category.pricingSlug) : null;
+        const eur = Number(record?.priceEur);
+        const gbp = Number(record?.priceGbp);
+        const inr = Number(record?.priceInr);
+        return {
+          ...category,
+          price,
+          currency,
+          priceEur: Number.isFinite(eur) && eur > 0 ? eur : null,
+          priceGbp: Number.isFinite(gbp) && gbp > 0 ? gbp : null,
+          priceInr: Number.isFinite(inr) && inr > 0 ? inr : null,
+        };
       }),
     );
 
@@ -148,7 +176,7 @@ async function listCategories(_req, res) {
 }
 
 async function createCategory(req, res) {
-  const { payload, error } = categoryPayload(req.body);
+  const { payload, prices, error } = categoryPayload(req.body);
   if (error) return res.status(400).json({ msg: error });
 
   const pricingSlug = await generateUniquePricingSlug(payload.name);
@@ -176,6 +204,9 @@ async function createCategory(req, res) {
             categoryId: pricingSlug,
             label: payload.name,
             price: payload.price,
+            priceEur: prices.priceEur,
+            priceGbp: prices.priceGbp,
+            priceInr: prices.priceInr,
             currency: payload.currency,
             updatedBy: req.user?.id,
           },
@@ -383,6 +414,8 @@ async function getAppointmentTree(_req, res) {
         );
         return {
           _id: category._id,
+          // The key of the public price table (/api/pricing), so the booking page can find the category's EUR / GBP / INR price.
+          pricingSlug: category.pricingSlug || "",
           name: category.name,
           icon: category.icon,
           description: category.description,

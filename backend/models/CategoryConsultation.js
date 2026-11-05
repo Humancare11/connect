@@ -115,12 +115,20 @@ const consultationSchema = new mongoose.Schema(
     ...bookingSourceFields(),
     medicalReports: [
       {
+        key: { type: String },
         url: { type: String },
         name: { type: String },
         type: { type: String },
         size: { type: Number },
       },
     ],
+    // Files the patient attached that the storage could not be asked about when the booking was created (it was down). Never shown to
+    // anyone; jobs/pendingReportsJob.js verifies them later and moves the good ones into medicalReports (or drops them).
+    reportsUnverified: {
+      type: [{ _id: false, key: { type: String }, name: { type: String } }],
+      default: [],
+    },
+    reportsUnverifiedAt: { type: Date, default: null },
     consultationPrice: {
       type: Number,
       default: 0,
@@ -166,6 +174,13 @@ const consultationSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Currency of paymentAmount / consultationPrice. Bookings made before
+    // multi-currency existed have none stored and read as "usd".
+    paymentCurrency: {
+      type: String,
+      enum: ["usd", "eur", "gbp", "inr"],
+      default: "usd",
+    },
     paymentStatus: {
       type: String,
       enum: ["unpaid", "paid", "refunded"],
@@ -173,9 +188,12 @@ const consultationSchema = new mongoose.Schema(
     },
     paymentGateway: {
       type: String,
-      enum: ["", "stripe", "paypal"],
+      enum: ["", "stripe", "paypal", "razorpay"],
       default: "",
     },
+    // Set only for a Razorpay payment (paymentIntentId then holds the same razorpayPaymentId).
+    razorpayOrderId: { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
   },
   {
     timestamps: true,

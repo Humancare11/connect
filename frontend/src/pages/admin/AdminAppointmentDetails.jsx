@@ -14,12 +14,15 @@ function getCountryName(isoCode) {
   return country?.name || isoCode;
 }
 
-function formatMoney(value) {
+// `currency` is the booking paymentCurrency ("usd" / "eur" / "gbp" / "inr"); a booking without one is USD.
+function formatMoney(value, currency = "usd") {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "-";
-  return new Intl.NumberFormat("en-US", {
+  const code = String(currency || "usd").toUpperCase();
+  const shown = ["USD", "EUR", "GBP", "INR"].includes(code) ? code : "USD";
+  return new Intl.NumberFormat(shown === "INR" ? "en-IN" : "en-US", {
     style: "currency",
-    currency: "USD",
+    currency: shown,
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -328,6 +331,7 @@ export default function AdminAppointmentDetails() {
               value={formatMoney(
                 appointment.consultationPrice ||
                 appointment.paymentAmount / 100,
+                appointment.paymentCurrency,
               )}
             />
           </div>

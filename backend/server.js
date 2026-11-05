@@ -60,6 +60,7 @@ const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { scheduleSearchAnalyticsRollup } = require("./jobs/searchAnalyticsJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
+const { schedulePendingReports } = require("./jobs/pendingReportsJob");
 const { scheduleEmailSync } = require("./jobs/emailSyncJob");
 const { mountLiveChat, seedLiveChatDefaults } = require("./services/liveChat");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
@@ -156,6 +157,7 @@ const startServer = async () => {
   scheduleRetentionCleanup();
   scheduleSearchAnalyticsRollup(); // no-op unless search analytics is enabled; never throws or blocks startup
   scheduleInvoiceReconciliation();
+  schedulePendingReports();
   scheduleEmailSync();
   await seedLiveChatDefaults().catch((err) => console.error("[livechat] seed failed:", err.message));
 
@@ -366,6 +368,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// Razorpay signs the RAW body, so its webhook gets the bytes untouched (before express.json parses and discards them).
+app.post("/api/razorpay/webhook", express.raw({ type: "*/*", limit: "1mb" }), require("./routes/razorpay").webhookHandler);
 app.use(express.json());
 app.use(require("cookie-parser")());
 
@@ -607,6 +611,7 @@ app.use("/api/employee-admin", require("./routes/employeeAdmin"));
 app.use("/api/partner", require("./routes/partner"));
 app.use("/api/admin/bookings", require("./routes/adminBookings"));
 app.use("/api/admin/entries", require("./routes/adminEntries"));
+app.use("/api/admin/country-changes", require("./routes/adminCountryChanges"));
 app.use("/api/admin/partner-cases",require("./routes/adminPartnerCases"));
 app.use("/api/admin/notifications", require("./routes/adminNotifications"));
 // Registered first: signatures are private to each admin and have their own guard.
@@ -626,7 +631,9 @@ app.use("/api/admin/manual-invoices", require("./routes/manualInvoices"));
 app.use("/api/admin/gop", require("./routes/gop"));
 app.use("/api/admin/medical-reports", require("./routes/adminMedicalReports"));
 app.use("/api/paypal", require("./routes/paypal"));
+app.use("/api/razorpay", require("./routes/razorpay"));
 app.use("/api/pricing", require("./routes/pricing"));
+app.use("/api/geo", require("./routes/geo"));
 app.use("/api/services", require("./routes/services"));
 app.use("/api/superadmin/healthcare", require("./routes/healthcareManagement"));
 app.use("/api/superadmin/blogs", require("./routes/superadminBlogs"));

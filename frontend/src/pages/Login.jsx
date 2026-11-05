@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useGoogleLogin } from "@react-oauth/google";
+import { useGoogleSignIn } from "../hooks/useGoogleSignIn";
+import { googleEnabled } from "../utils/googleAuth";
 import "./Login.css";
 
 function EyeIcon({ open }) {
@@ -393,14 +394,15 @@ export default function AuthPage() {
     const from = location.state?.from;
     const doctor = location.state?.doctor;
     if (from) {
-      navigate(from, doctor ? { state: { doctor } } : undefined);
+      // Replace the login page in the history: Back from the page we return to must not land on the login (or sign-up) form again.
+      navigate(from, { replace: true, ...(doctor ? { state: { doctor } } : {}) });
     } else {
       navigate("/user/dashboard");
     }
   }
 
   /* ── Google ──────────────────────────────────────────────── */
-  const initiateGoogleLogin = useGoogleLogin({
+  const initiateGoogleLogin = useGoogleSignIn({
     onSuccess: async (tokenResponse) => {
       clrErr();
       try {
@@ -1102,15 +1104,17 @@ export default function AuthPage() {
               Join Humancare Connect and take charge of your health
             </p>
 
-            <div className="hc-social-links">
-              <button
-                type="button"
-                className="hc-google-btn"
-                onClick={() => initiateGoogleLogin()}
-              >
-                <GoogleIcon /> Continue with Google
-              </button>
-            </div>
+            {googleEnabled && (
+              <div className="hc-social-links">
+                <button
+                  type="button"
+                  className="hc-google-btn"
+                  onClick={() => initiateGoogleLogin()}
+                >
+                  <GoogleIcon /> Continue with Google
+                </button>
+              </div>
+            )}
 
             {formError && <p className="hc-form-error" id="hc-register-error" role={isRegister ? "alert" : undefined}>{formError}</p>}
 
@@ -1340,15 +1344,17 @@ export default function AuthPage() {
               Sign in to continue your healthcare journey
             </p>
 
-            <div className="hc-social-links">
-              <button
-                type="button"
-                className="hc-google-btn"
-                onClick={() => initiateGoogleLogin()}
-              >
-                <GoogleIcon /> Continue with Google
-              </button>
-            </div>
+            {googleEnabled && (
+              <div className="hc-social-links">
+                <button
+                  type="button"
+                  className="hc-google-btn"
+                  onClick={() => initiateGoogleLogin()}
+                >
+                  <GoogleIcon /> Continue with Google
+                </button>
+              </div>
+            )}
 
             {formSuccess && (
               <div className="hc-success-msg">
@@ -1356,7 +1362,7 @@ export default function AuthPage() {
               </div>
             )}
             {formError && <p className="hc-form-error" id="hc-login-error" role={isRegister ? undefined : "alert"}>{formError}</p>}
-            <span className="hc-divider-text">or use your email</span>
+            {googleEnabled && <span className="hc-divider-text">or use your email</span>}
 
             <label htmlFor="patient-login-email" style={VISUALLY_HIDDEN}>
               Email Address

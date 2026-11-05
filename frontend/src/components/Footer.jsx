@@ -15,6 +15,7 @@ import { FaThreads } from "react-icons/fa6";
 import { FaXTwitter } from "react-icons/fa6";
 // import logo from "../assets/final-footer-logo.webp";
 import logo from "../assets/HCC_FInal_logo-1.webp";
+import legit from "../assets/legitscript.png";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
@@ -36,10 +37,10 @@ export default function Footer() {
             />
           </Link>
 
-          <p className="footer-tagline">
+          {/* <p className="footer-tagline">
             Connecting patients with trusted healthcare professionals anytime
             through secure and affordable digital healthcare solutions.
-          </p>
+          </p> */}
 
           {/* COMPLIANCE BADGES */}
 
@@ -78,6 +79,24 @@ export default function Footer() {
                 support@humancareconnect.co
               </a>
             </div>
+            <div>
+            <a
+  href="https://www.legitscript.com/websites/?checker_keywords=humancareconnect.co"
+  target="_blank"
+  rel="noopener noreferrer"
+  title="Verify LegitScript Approval for www.humancareconnect.co"
+>
+  <img
+    src="https://static.legitscript.com/seals/51191758.png"
+    alt="Verify Approval for www.humancareconnect.co"
+    className="legit-logo"
+    width="73"
+    height="79"
+    loading="lazy"
+    decoding="async"
+  />
+</a>
+              </div>
           </div>
         </div>
 
@@ -108,6 +127,9 @@ export default function Footer() {
           <a href="/fit-to-fly-certificate">Fit to Fly Certifications</a>
           <a href="/online-second-medical-opinion">
             Online Second Medical Opinion
+          </a>
+          <a href="/service-areas">
+            Service Areas
           </a>
           {/* <a href="/weight-loss-programs">Weight Loss Programs</a> */}
         </div>

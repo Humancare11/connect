@@ -128,7 +128,9 @@ server {
     # Hashed build output: cache for a year.
     location /assets/ {
         expires off;                                   # cancel the server-level `expires -1` for hashed files
-        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        # NOT `always`: the long cache applies to 200 / 304 only. With `always` a missing file (a chunk removed by a newer build)
+        # answers 404 with "immutable" for a year, a browser or CDN keeps that 404, and the old page can never load its chunk.
+        add_header Cache-Control "public, max-age=31536000, immutable";
         # repeated because this location has its own add_header (see note above)
         add_header X-Frame-Options "DENY" always;
         add_header X-Content-Type-Options "nosniff" always;

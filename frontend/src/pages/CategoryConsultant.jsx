@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import "./CategoryConsultant.css";
 import { useToast } from "../components/ui/Toast";
+import { useCategoryPriceInfo } from "../hooks/useCategoryPriceInfo";
 
 const CATEGORY_MAP = {
   general: "General & Everyday Care",
@@ -138,7 +139,9 @@ export default function CategoryConsultant({ onComplete }) {
   const [step, setStep] = useState(1);
   const [data, setData] = useState(INITIAL_DATA);
   const [openWindow, setOpenWindow] = useState(null);
-  const [price, setPrice] = useState(49);
+  // The USD price the booking page carries as the selection's cost (null until known: there is no made-up fallback). A service
+  // booking takes it from the service; a category booking from the shared category price hook.
+  const [servicePrice, setServicePrice] = useState(null);
 
   const queryParams = new URLSearchParams(location.search);
   const categoryId =
@@ -152,32 +155,23 @@ export default function CategoryConsultant({ onComplete }) {
   const isServiceMode = Boolean(serviceSlug);
   const isPcpMode = queryParams.get("pcp") === "1";
   const [serviceName, setServiceName] = useState("");
+  const categoryPrice = useCategoryPriceInfo(categoryId);
+  const price = isServiceMode ? servicePrice : categoryPrice.usdAmount;
 
   useEffect(() => {
-    const fetchPrice = async () => {
-      if (isServiceMode) {
-        try {
-          const response = await api.get(`/api/services/by-slug/${serviceSlug}`);
-          setPrice(response.data?.price ?? 49);
-          setServiceName(response.data?.name ?? "");
-        } catch (err) {
-          console.error("Failed to fetch service price in CategoryConsultant:", err);
-        }
-        return;
-      }
+    if (!isServiceMode) return;
+    const fetchServicePrice = async () => {
       try {
-        const response = await api.get("/api/appointment-tree");
-        const categoryName = CATEGORY_MAP[categoryId] || categoryId;
-        const category = response.data.find((item) => item.name === categoryName);
-        if (category && category.price !== undefined) {
-          setPrice(category.price);
-        }
+        const response = await api.get(`/api/services/by-slug/${serviceSlug}`);
+        const fetched = Number(response.data?.price);
+        setServicePrice(Number.isFinite(fetched) && fetched > 0 ? fetched : null);
+        setServiceName(response.data?.name ?? "");
       } catch (err) {
-        console.error("Failed to fetch price in CategoryConsultant:", err);
+        console.error("Failed to fetch service price in CategoryConsultant:", err);
       }
     };
-    fetchPrice();
-  }, [categoryId, isServiceMode, serviceSlug]);
+    fetchServicePrice();
+  }, [isServiceMode, serviceSlug]);
 
   const textareaRef = useRef(null);
 
@@ -275,6 +269,11 @@ export default function CategoryConsultant({ onComplete }) {
   const handleFinish = async () => {
     if (!data.date) {
       setDateError("Please select a date.");
+      return;
+    }
+    if (!(Number(price) > 0)) {
+      // No price is known (still loading, or none configured): never book with a guessed one.
+      toast.error("The price is not available right now. Please try again in a moment.");
       return;
     }
     try {

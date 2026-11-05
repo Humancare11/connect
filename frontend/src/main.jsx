@@ -2,10 +2,13 @@ import { StrictMode } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import { installSecureConsole } from "./utils/secureConsole";
+import { installChunkReload } from "./utils/chunkReload";
 
 // Must run before anything else can call console.error/warn with a raw
 // Axios error object (see utils/secureConsole.js for why).
 installSecureConsole();
+// A page loaded before a deploy asks for chunk files that no longer exist: reload once to get the new build.
+installChunkReload();
 import AppProviders from "./AppProviders";
 import { readPrerenderData } from "./seo/prerenderData";
 import PrerenderCleanup from "./seo/PrerenderCleanup";

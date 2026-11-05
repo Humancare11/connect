@@ -1748,3 +1748,14 @@
   color: #15803d;
   font-weight: 600;
 }
+
+/* The currency of a EUR / GBP booking, beside its doctor fee box. */
+.en-cur {
+  display: block;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  text-align: right;
+}

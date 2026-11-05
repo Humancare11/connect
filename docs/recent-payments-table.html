@@ -1,0 +1,122 @@
+<title>Recent Payments Table</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: the live "Recent Payments" card, one row per link, columns in the order the team asked for */
+:root{
+  color-scheme:light;
+  --bg:#eef1f6; --surface:#ffffff; --head:#f1f5f9; --line:#e2e8f0; --row-hover:#f8fafc;
+  --fg:#0f172a; --fg-2:#334155; --muted:#64748b;
+  --blue:#2563eb; --blue-2:#1d4ed8; --blue-soft:#eff6ff; --blue-line:#bfdbfe;
+  --ok:#166534; --ok-bg:#dcfce7; --warn:#92400e; --warn-bg:#fef3c7; --neutral:#334155; --neutral-bg:#e2e8f0;
+  --teal:#0f766e; --teal-soft:#ecfdf5; --teal-line:#99f6e4;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px}
+p,h2{margin:0}
+.page{max-width:1240px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 34px rgba(15,23,42,.07);padding:24px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.eyebrow{display:block;color:var(--blue);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.head h2{font-size:19px;font-weight:400}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{height:42px;min-width:0;width:240px;max-width:100%;border:1.5px solid #cbd5e1;border-radius:8px;padding:0 12px;font:500 13px var(--font);background:#f8fafc;color:var(--fg)}
+.search:focus{outline:0;border-color:var(--blue)}
+.secondary{min-height:42px;border-radius:8px;font:800 14px var(--font);cursor:pointer;background:var(--blue-soft);color:var(--blue-2);padding:0 18px;border:1px solid var(--blue-line)}
+.scroll{overflow-x:auto}
+table{width:100%;min-width:980px;border-collapse:collapse}
+th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#475569;font-weight:800;padding:13px 12px;background:var(--head);border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--fg-2);font-size:13.5px}
+tbody tr:hover td{background:var(--row-hover)}
+.sr{color:var(--muted);font-variant-numeric:tabular-nums;width:56px}
+.case{font-family:ui-monospace,Consolas,"Cascadia Mono",monospace;font-size:12.5px;font-weight:700;color:var(--fg);white-space:nowrap}
+.name{font-weight:700;color:var(--fg)}
+.email{color:var(--muted);word-break:break-all;max-width:240px;font-size:12.5px;margin-top:2px}
+.time{color:var(--muted);font-size:12.5px;margin-top:2px}
+.date{white-space:nowrap}
+.num{font-weight:800;color:var(--fg);white-space:nowrap;font-variant-numeric:tabular-nums}
+.note{max-width:160px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:800;border-radius:999px;padding:3px 11px;white-space:nowrap}
+.paid{color:var(--ok);background:var(--ok-bg)} .pending,.due{color:var(--warn);background:var(--warn-bg)} .expired{color:var(--neutral);background:var(--neutral-bg)}
+.inv{display:grid;gap:6px;min-width:190px}
+.inv-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.inv-no{font-weight:800;color:var(--fg);font-variant-numeric:tabular-nums}
+.mail{font-size:12px;font-weight:600}
+.mail.no{color:#b45309} .mail.yes{color:var(--ok)}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.mini{min-height:32px;padding:0 12px;border-radius:7px;font:700 12.5px var(--font);cursor:pointer;background:var(--blue-soft);color:var(--blue-2);border:1px solid var(--blue-line)}
+.mini.teal{background:var(--teal-soft);color:var(--teal);border-color:var(--teal-line)}
+.mini:focus-visible,.secondary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600}
+</style>
+
+<div class="page">
+  <section class="card">
+    <div class="head">
+      <div><span class="eyebrow">History</span><h2>Recent Payments</h2></div>
+      <div class="tools">
+        <label for="q" style="position:absolute;left:-9999px">Search by name, email or case number</label>
+        <input class="search" id="q" type="search" placeholder="Search name, email, case number">
+        <button class="secondary" type="button" data-toast="Refreshed">Refresh</button>
+      </div>
+    </div>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Sr No</th><th>Case Number</th><th>Name</th><th>Created</th>
+            <th>Amount</th><th>Status</th><th>Note</th><th>Invoice</th><th>Link</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="foot"><span id="count"></span><span>Example data</span></div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const data=[
+  {case:"229987-HCV-SPAIN-28OCT26",name:"Satish Dalvi",email:"satish.dalvi@gmail.com",created:"28 Oct 2026, 12:33 pm",amount:100,status:"Paid",note:"-",inv:"HC14-2610",invSt:"Paid",mailed:false},
+  {case:"229986-TEL-IND-28OCT26",name:"Rahul Mehta",email:"rahul.mehta@gmail.com",created:"28 Oct 2026, 11:10 am",amount:75,status:"Pending",note:"Follow-up",inv:"HC13-2610",invSt:"Due",mailed:true},
+  {case:"229981-HCV-UAE-27OCT26",name:"Sara Khan",email:"sara.khan@outlook.com",created:"27 Oct 2026, 04:05 pm",amount:95.5,status:"Paid",note:"Two services",inv:"HC12-2610",invSt:"Paid",mailed:true},
+  {case:"229975-TEL-USA-25OCT26",name:"Daniel Ruiz",email:"dan.ruiz@yahoo.com",created:"25 Oct 2026, 02:10 pm",amount:60,status:"Expired",note:"-",inv:"HC10-2610",invSt:"Due",mailed:false}
+];
+const $=id=>document.getElementById(id);
+const money=n=>n.toLocaleString("en-US",{style:"currency",currency:"USD"});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c]);
+const pc=s=>({Paid:"paid",Pending:"pending",Due:"due",Expired:"expired"})[s];
+function render(){
+  const q=$("q").value.trim().toLowerCase();
+  const list=data.map((r,i)=>[r,i]).filter(([r])=>!q||[r.inv,r.name,r.email].some(v=>v.toLowerCase().includes(q)));
+  $("rows").innerHTML=list.length?list.map(([r,i],n)=>`<tr>
+    <td class="sr">${n+1}</td>
+    <td class="case">${esc(r.inv)}</td>
+    <td><div class="name">${esc(r.name)}</div><div class="email">${esc(r.email)}</div></td>
+    <td class="date"><div>${esc(r.created.split(", ")[0])}</div><div class="time">${esc(r.created.split(", ")[1]||"")}</div></td>
+    <td class="num">${money(r.amount)}</td>
+    <td><span class="pill ${pc(r.status)}">${r.status}</span></td>
+    <td class="note">${esc(r.note)}</td>
+    <td><div class="inv">
+      <span class="mail ${r.mailed?"yes":"no"}">${r.mailed?"✓ Email sent":"Email not sent"}</span>
+      <div class="acts"><button class="mini" type="button" data-toast="Invoice PDF opens in a new tab">Download</button><button class="mini teal" type="button" data-send="${i}">${r.mailed?"Resend Email":"Send Email"}</button></div>
+    </div></td>
+    <td><button class="mini" type="button" data-toast="Link copied">Copy</button></td>
+  </tr>`).join(""):`<tr><td colspan="9" class="empty">No payments match this search.</td></tr>`;
+  $("count").textContent=`${list.length} of ${data.length} payments`;
+}
+$("q").addEventListener("input",render);
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,1800);}
+document.addEventListener("click",e=>{
+  const s=e.target.closest("[data-send]");
+  if(s){const r=data[+s.dataset.send];r.mailed=true;render();toast(`Invoice sent to ${r.email}`);return;}
+  const b=e.target.closest("[data-toast]"); if(b) toast(b.dataset.toast);
+});
+render();
+</script>

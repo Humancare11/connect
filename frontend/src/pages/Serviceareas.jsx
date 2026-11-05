@@ -5,7 +5,7 @@ import SEO from "../components/Seo";
 // import HeroImg from "../assets/your-about-hero-image.webp";
 const HERO_IMG = null; // e.g. HeroImg
 
-const UNAVAILABLE = ["California", "Massachusetts", "Rhode Island", "Vermont"];
+const UNAVAILABLE = ["Alaska", "California", "Massachusetts", "Mississippi", "Rhode Island", "Vermont"];
 
 const ALL_STATES = [
   "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -310,7 +310,8 @@ export default function Serviceareas() {
                 Humancare Connect currently provides teleconsultation services
                 in {AVAILABLE_COUNT} states. Teleconsultation is not currently
                 available when the patient is physically located in
-                Massachusetts, Rhode Island, Vermont, or California. Humancare
+                Alaska, California, Massachusetts, Mississippi, Rhode Isla
+or Vermont. Humancare
                 Connect may update its service coverage periodically. Please
                 check the registration process or contact our support team for
                 the latest availability information.

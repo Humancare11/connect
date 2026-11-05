@@ -1,6 +1,7 @@
 ﻿﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCategoryPrice } from "../../../hooks/useCategoryPrice";
+import { useCategoryPriceInfo } from "../../../hooks/useCategoryPriceInfo";
+import PriceText from "../../../components/PriceText";
 import "./Condition.css";
 import {
   Calendar,
@@ -62,13 +63,13 @@ const pageData = {
 // ─────────────────────────────────────────────────────────────────
 export default function PreTravelVaccination({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice(categoryId);
+  const priceInfo = useCategoryPriceInfo(categoryId);
   const [openId, setOpenId] = useState("0-0");
   const toggle = (id) => setOpenId((prev) => (prev === id ? null : id));
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="condition-root">
         {/* ══════════════════════ HERO ══════════════════════ */}
         <PreloadImage src={pageData.bgImage} />
@@ -218,7 +219,7 @@ export default function PreTravelVaccination({ categoryId } = {}) {
                 </div>
 
                 <div className="condition-sbc-price-block">
-                  <div className="condition-sbc-price">${price ?? 49}</div>
+                  <div className="condition-sbc-price"><PriceText info={priceInfo} /></div>
                   <p className="condition-sbc-price-sub">
                     One-time consultation fee · No subscription required
                   </p>

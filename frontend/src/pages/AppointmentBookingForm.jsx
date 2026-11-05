@@ -19,14 +19,35 @@ import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
 import SEO from "../components/Seo";
 import { useAuth } from "../context/AuthContext";
+import { useSiteCurrency } from "../context/CurrencyContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
+import PriceText from "../components/PriceText";
+import { formatPrice, selectionPriceInfo, paypalProviderProps, paymentStepState, paymentStepKey, normalizeCurrency } from "../utils/currencyDisplay";
+import { useServiceRecord } from "../hooks/useServicePrice";
+import { paymentFields } from "../utils/booking";
+import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
-import { slugify } from "../utils/slug";
-import { normalizeAppointmentTree } from "../utils/appointmentTree";
+import { normalizeAppointmentTree, selectionFromUrl, selectionMatchesRoute } from "../utils/appointmentTree";
+import ReportFileList from "../components/ReportFileList";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "";
+// The server returns the public key id with every Razorpay order; this is only a fallback.
+const RAZORPAY_KEY_ID = import.meta.env.VITE_RAZORPAY_KEY_ID || "";
+
+// PayPal never takes rupees (those go through Razorpay), so for INR the PayPal SDK is not even loaded. Any other currency mounts a
+// provider keyed by it, which loads the SDK for that currency.
+function PayPalScope({ clientId, currency, children }) {
+  if (String(currency || "").toUpperCase() === "INR") return children;
+  const props = paypalProviderProps(clientId, currency);
+  return (
+    <PayPalScriptProvider key={props.key} options={props.options}>
+      {children}
+    </PayPalScriptProvider>
+  );
+}
 const BOOKING_PENDING_KEY = "hcc_booking_pending";
 const BOOKING_RESUME_KEY = "hcc_booking_resume_after_login";
 
@@ -183,18 +204,11 @@ function formatDisplayDate(dateStr) {
   return `${month}/${day}/${year}`;
 }
 
-function formatPrice(amount) {
-  const value = Number(amount);
-  if (!Number.isFinite(value)) return "";
-  return `$${value.toLocaleString("en-US", {
-    maximumFractionDigits: value % 1 === 0 ? 0 : 2,
-  })}`;
-}
-
 // ─── Stripe form (inside <Elements>) ─────────────────────────────────────────
 function StripeForm({
   clientSecret,
   amount,
+  currency,
   selection,
   formData,
   uploadedReports,
@@ -301,16 +315,42 @@ function StripeForm({
             <span className="ap-spinner ap-spinner--white" /> Processing…
           </>
         ) : (
-          `Pay ${formatPrice(amount)} ->`
+          `Pay ${formatPrice(amount, currency)} ->`
         )}
       </button>
     </form>
   );
 }
 
+// The payment step for a price (priceInfo from selectionPriceInfo). It always follows the CURRENT server-decided currency and price:
+//   - until the currency and the price are known there are no payment buttons (a skeleton, never the Stripe / PayPal buttons of a
+//     currency that is about to change);
+//   - the step is keyed by currency + amount, so when either changes (the currency finished loading, or was re-checked after login)
+//     everything it remembered - the chosen method, a Stripe intent, a PayPal order, the amount the server confirmed - is dropped and
+//     the right gateway for the new currency is shown.
+export function PaymentStep({ priceInfo, onBack, ...rest }) {
+  const state = paymentStepState(priceInfo);
+  if (state !== "ready") {
+    return (
+      <div className="ap-pay-root">
+        <button className="ap-pay-back" type="button" onClick={onBack}>
+          Back
+        </button>
+        {state === "loading" ? (
+          <p className="ap-pay-loading" role="status" aria-busy="true">Loading your price...</p>
+        ) : (
+          <p className="ap-error" role="alert">The price is not available right now. Please go back and try again in a moment.</p>
+        )}
+      </div>
+    );
+  }
+  return <PaymentStage key={paymentStepKey(priceInfo)} amount={priceInfo.amount} currency={priceInfo.currency} onBack={onBack} {...rest} />;
+}
+
 // ─── Payment stage ────────────────────────────────────────────────────────────
 export function PaymentStage({
   amount,
+  currency = "USD",
   selection,
   formData,
   uploadedReports,
@@ -323,20 +363,61 @@ export function PaymentStage({
   const [stripeError, setStripeError] = useState("");
   const [paypalLoading, setPaypalLoading] = useState(false);
   const [paypalError, setPaypalError] = useState("");
+  const { user: checkoutUser } = useAuth();
+  // Rupees (India) are paid through Razorpay only: Stripe and PayPal are not offered for them.
+  const isInr = String(currency || "").toUpperCase() === "INR";
+  const [razorpayBusy, setRazorpayBusy] = useState(false);
+  const [razorpayError, setRazorpayError] = useState("");
+  // What the server will really charge, once it has created the intent / order. The server decides the amount and the
+  // currency; this only shows them. Until then the price shown is the same one worked out from the visitor currency.
+  const [charge, setCharge] = useState(null);
+  const { recheck } = useSiteCurrency();
+  const chargeRef = useRef(null);
+  const updateCharge = (value) => {
+    chargeRef.current = value;
+    setCharge(value);
+  };
+  const shownAmount = charge ? charge.amount : amount;
+  const shownCurrency = charge ? charge.currency : currency;
+  const chargeOf = (data) =>
+    Number.isFinite(Number(data?.amountCents)) && data?.currency
+      ? { amount: Number(data.amountCents) / 100, currency: String(data.currency).toUpperCase() }
+      : null;
+
+  // Right before anything is created at a gateway the visitor's location is asked again (no throttle): the IP may have changed since
+  // the page loaded. If the currency changed, the page follows it at once (this step is keyed by currency, so it starts over with the
+  // right gateway and price) and nothing is created for the old one. A failed re-check changes nothing.
+  const currencyChangedBeforeCharge = async () => (await recheck({ force: true })).changed;
+  // The server decides the charge. If what it created is in another currency than the one on screen, it is discarded and the page is
+  // brought up to date instead of charging in a currency the visitor was not shown.
+  // The attached files are checked BEFORE a payment is created: after the payment a file can no longer refuse the booking (the server
+  // drops it instead), so a file that cannot be attached has to be caught while nothing has been charged. Throws with the server's
+  // message (it names the files) when one cannot be attached.
+  const checkReportsBeforeCharge = async () => {
+    if (!uploadedReports?.length) return;
+    await api.post("/api/upload/check-reports", { medicalReports: uploadedReports });
+  };
+  const chargeMatchesScreen = async (data) => {
+    const made = chargeOf(data);
+    if (!made || made.currency === normalizeCurrency(currency)) return true;
+    await recheck({ force: true });
+    return false;
+  };
+  const CHANGED_MSG = "Your location changed, so the price was updated. Please check it and choose a payment method again.";
 
   // The backend now resolves the charge amount itself from HealthcareCategory
   // / ServicePrice — it no longer trusts a client-supplied amount. We just
   // need to tell it *what* is being booked so it can look up the right price.
   //
-  // For categories, selection.catId is the stable pricingSlug (e.g.
-  // "general") — it's sent ahead of the display name so that a category
+  // For categories, selection.pricingSlug (e.g. "general"; the catId of the
+  // category-confirm flow) is the stable reference — it's sent ahead of the display name so that a category
   // getting renamed between now (payment intent creation) and the booking
   // being confirmed can't break the price lookup on the backend.
   const isServiceBooking = Boolean(selection?.isServiceBooking);
   const priceType = isServiceBooking ? "service" : "category";
   const priceRef = isServiceBooking
     ? selection?.serviceName || selection?.catId || ""
-    : selection?.catId || selection?.categoryName || selection?.catLabel || "";
+    : selection?.pricingSlug || selection?.catId || selection?.categoryName || selection?.catLabel || "";
 
   const selectStripe = async () => {
     setStripeError("");
@@ -346,11 +427,18 @@ export function PaymentStage({
     }
     setStripeCreating(true);
     try {
+      await checkReportsBeforeCharge();
+      if (await currencyChangedBeforeCharge()) return;
       const res = await api.post("/api/payments/create-intent-by-amount", {
         priceType,
         priceRef,
       });
+      if (!(await chargeMatchesScreen(res.data))) {
+        setStripeError(CHANGED_MSG);
+        return;
+      }
       setClientSecret(res.data.clientSecret);
+      updateCharge(chargeOf(res.data));
       setMethod("stripe");
     } catch (err) {
       setStripeError(
@@ -363,10 +451,18 @@ export function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
+    try {
+      await checkReportsBeforeCharge();
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Your files could not be checked. Please try again.");
+    }
+    if (await currencyChangedBeforeCharge()) throw new Error(CHANGED_MSG);
     const res = await api.post("/api/paypal/create-order-by-amount", {
       priceType,
       priceRef,
     });
+    if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
+    updateCharge(chargeOf(res.data));
     return res.data.orderId;
   };
 
@@ -378,7 +474,7 @@ export function PaymentStage({
         orderId: data.orderID,
       });
       if (res.data.status === "COMPLETED")
-        onComplete(res.data.orderId, "paypal");
+        onComplete(res.data.orderId, "paypal", chargeRef.current);
     } catch (err) {
       setPaypalError(
         err.response?.data?.msg || "PayPal payment failed. Please try again.",
@@ -388,14 +484,52 @@ export function PaymentStage({
     }
   };
 
+  // Razorpay Checkout: the server creates the order (amount and currency are its decision); the window collects the payment; the
+  // three values it returns go to the booking request, where the server verifies them before anything is booked.
+  const payWithRazorpay = async () => {
+    setRazorpayError("");
+    setRazorpayBusy(true);
+    try {
+      if (!(await loadRazorpayScript())) {
+        throw new Error("Could not load the Razorpay payment window. Check your connection and try again.");
+      }
+      await checkReportsBeforeCharge();
+      if (await currencyChangedBeforeCharge()) {
+        setRazorpayBusy(false);
+        return;
+      }
+      const res = await api.post("/api/razorpay/create-order", { priceType, priceRef });
+      if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
+      updateCharge(chargeOf(res.data));
+      const checkout = new window.Razorpay(
+        buildRazorpayOptions({
+          keyId: res.data.keyId || RAZORPAY_KEY_ID,
+          order: res.data,
+          user: checkoutUser,
+          description: `${selection?.catLabel || "Consultation"} booking fee`,
+          onSuccess: (response) => {
+            setRazorpayBusy(false);
+            onComplete(response, "razorpay", chargeRef.current);
+          },
+          onDismiss: () => {
+            setRazorpayBusy(false);
+            setRazorpayError("Payment was cancelled. You have not been charged. You can try again.");
+          },
+        }),
+      );
+      checkout.on("payment.failed", (failure) => {
+        setRazorpayError(failure?.error?.description || "Payment failed. Please try again.");
+      });
+      checkout.open();
+    } catch (err) {
+      setRazorpayBusy(false);
+      setRazorpayError(err.response?.data?.msg || err.message || "Failed to start the payment. Please try again.");
+    }
+  };
+
+  // The PayPal script is loaded for one currency; a different currency mounts a new provider (key) that loads it again.
   return (
-    <PayPalScriptProvider
-      options={{
-        "client-id": PAYPAL_CLIENT_ID,
-        currency: "USD",
-        intent: "capture",
-      }}
-    >
+    <PayPalScope clientId={PAYPAL_CLIENT_ID} currency={currency}>
       <div className="ap-pay-root">
         <button className="ap-pay-back" type="button" onClick={onBack}>
           <svg
@@ -444,7 +578,7 @@ export function PaymentStage({
           </div>
           <div className="ap-pay-summary-row ap-pay-summary-row--fee">
             <span>Consultation Fee</span>
-            <strong className="ap-pay-fee-amount">{formatPrice(amount)}</strong>
+            <strong className="ap-pay-fee-amount">{formatPrice(shownAmount, shownCurrency)}</strong>
           </div>
         </div>
 
@@ -452,6 +586,19 @@ export function PaymentStage({
         <div>
           <div className="ap-pay-method-label">Choose Payment Method</div>
           <div className="ap-pay-methods">
+            {isInr ? (
+              <button
+                type="button"
+                className={`ap-pay-method-btn ap-pay-method-btn--active${razorpayBusy ? " ap-pay-method-btn--loading" : ""}`}
+                onClick={payWithRazorpay}
+                disabled={razorpayBusy}
+              >
+                {razorpayBusy ? <span className="ap-spinner" /> : <span className="ap-pay-method-icon">💳</span>}
+                <span>Pay {formatPrice(shownAmount, shownCurrency)} with Razorpay</span>
+                <span className="ap-pay-method-sub">UPI · Cards · Netbanking · Wallets</span>
+              </button>
+            ) : (
+              <>
             <button
               type="button"
               className={`ap-pay-method-btn${method === "stripe" ? " ap-pay-method-btn--active" : ""}${stripeCreating ? " ap-pay-method-btn--loading" : ""}`}
@@ -492,13 +639,20 @@ export function PaymentStage({
               <span>PayPal</span>
               <span className="ap-pay-method-sub">Fast &amp; Secure</span>
             </button>
+              </>
+            )}
           </div>
+          {isInr && razorpayError && (
+            <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
+              {razorpayError}
+            </p>
+          )}
           {stripeError && (
             <p role="alert" className="ap-error" style={{ marginTop: 10 }}>
               {stripeError}
             </p>
           )}
-          {!PAYPAL_CLIENT_ID && (
+          {!isInr && !PAYPAL_CLIENT_ID && (
             <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 6 }}>
               PayPal not configured
             </p>
@@ -522,11 +676,12 @@ export function PaymentStage({
           >
             <StripeForm
               clientSecret={clientSecret}
-              amount={amount}
+              amount={shownAmount}
+              currency={shownCurrency}
               selection={selection}
               formData={formData}
               uploadedReports={uploadedReports}
-              onSuccess={(piId) => onComplete(piId, "stripe")}
+              onSuccess={(piId) => onComplete(piId, "stripe", chargeRef.current)}
             />
           </Elements>
         )}
@@ -563,7 +718,7 @@ export function PaymentStage({
           </div>
         )}
       </div>
-    </PayPalScriptProvider>
+    </PayPalScope>
   );
 }
 
@@ -577,13 +732,21 @@ export default function AppointmentBookingForm() {
     condition: conditionSlug,
   } = useParams();
   const { user, loading: authLoading } = useAuth();
+  const { currency: siteCurrency, loading: currencyLoading } = useSiteCurrency();
+  const prices = usePrices();
+  const { loading: pricesLoading } = usePricingMeta();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  // What the patient was really charged (the server's amount and currency), for the confirmation screen.
+  const [paidCharge, setPaidCharge] = useState(null);
+  // Set by the server when some attached files could not be attached to the (created, paid) booking.
+  const [reportsWarning, setReportsWarning] = useState("");
 
-  const [selection, setSelection] = useState(() => {
-    if (state?.selection) return state.selection;
-    return readPendingBooking()?.selection || null;
-  });
+  // The selection the URL names. One left in the router state or in the sessionStorage by an earlier booking (another category, or a
+  // price from before a deploy) is ignored when it is not this page's: the page is then rebuilt from the URL, with today's prices.
+  const route = { categorySlug, specialtySlug, conditionSlug };
+  const usableSelection = (candidate) => (candidate && selectionMatchesRoute(candidate, route) ? candidate : null);
+  const [selection, setSelection] = useState(() => usableSelection(state?.selection) || usableSelection(readPendingBooking()?.selection));
 
   // Shared/refreshed link with no state and no sessionStorage: reconstruct
   // the selection straight from the category/specialty/condition URL
@@ -591,7 +754,7 @@ export default function AppointmentBookingForm() {
   // form URL is fully shareable/refresh-safe without bouncing back to the
   // picker.
   const [resolvingSelection, setResolvingSelection] = useState(() => {
-    if (state?.selection || readPendingBooking()?.selection) return false;
+    if (usableSelection(state?.selection) || usableSelection(readPendingBooking()?.selection)) return false;
     return !!(categorySlug && specialtySlug && conditionSlug);
   });
   useEffect(() => {
@@ -603,45 +766,11 @@ export default function AppointmentBookingForm() {
         const res = await api.get("/api/appointment-tree");
         if (cancelled) return;
         const tree = normalizeAppointmentTree(res.data);
-        const cat = tree.find((c) => slugify(c.label) === categorySlug);
-        const spec = cat?.specialties.find(
-          (s) => slugify(s.name) === specialtySlug,
-        );
-        let condName = null;
-        let condIco = null;
-        if (spec) {
-          if (conditionSlug === "general-consultation") {
-            condName = "General Consultation";
-            condIco = "stethoscope";
-          } else {
-            const match = spec.conditions.find(
-              ([name]) => slugify(name) === conditionSlug,
-            );
-            if (match) {
-              condName = match[0];
-              condIco = match[1];
-            }
-          }
-        }
-        if (cat && spec && condName) {
-          // cat.price is already the effective price - the backend merges
-          // in the CategoryPricing admin override (see
-          // resolveEffectiveCategoryPrice server-side) before returning it
-          // via /api/appointment-tree, so no separate client-side pricing
-          // lookup is needed here.
-          const price = Number(cat.price);
-          const priceAvailable = Number.isFinite(price) && price > 0;
-          setSelection({
-            specName: spec.name,
-            specIco: spec.icon,
-            catId: cat.id,
-            catLabel: cat.label,
-            cost: priceAvailable ? price : undefined,
-            currency: cat.currency || "USD",
-            condName,
-            condIco,
-          });
-        }
+        // cat.price is already the effective price - the backend merges in the CategoryPricing admin override (see
+        // resolveEffectiveCategoryPrice server-side) before returning it via /api/appointment-tree. The visitor's own currency price
+        // is found through selection.pricingSlug in the public price table (see selectionPriceInfo).
+        const resolved = selectionFromUrl(tree, { categorySlug, specialtySlug, conditionSlug });
+        if (resolved) setSelection(resolved);
         // else: leave selection unset — the guard below redirects to
         // /appointment-booking once resolvingSelection flips to false.
       } catch {
@@ -691,18 +820,29 @@ export default function AppointmentBookingForm() {
     setConsents((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const today = new Date().toISOString().split("T")[0];
-  // selection.cost is already the effective price: the backend merges the
-  // CategoryPricing admin override into /api/appointment-tree's category
-  // price (see resolveEffectiveCategoryPrice), so nothing further needs to
-  // be resolved on the client.
-  const selectionAmount = Number(selection?.cost);
+  // selection.cost is the effective USD price (the backend merges the CategoryPricing admin override into
+  // /api/appointment-tree's category price). A visitor priced in EUR / GBP sees the category's price in that currency, the
+  // currency being the server's decision (CurrencyProvider). This is for display only: the server prices the payment itself.
+  // A service booking is priced from the service's own record (its EUR / GBP / INR price), a category booking from the price table.
+  const service = useServiceRecord(selection?.isServiceBooking ? selection.catId : "");
+  const priceInfo = selectionPriceInfo({
+    selection,
+    prices,
+    currency: siteCurrency,
+    currencyLoading,
+    pricesLoading,
+    serviceRecord: service.record,
+    serviceLoading: service.loading,
+  });
   const hasAppointmentPrice =
-    Number.isFinite(selectionAmount) && selectionAmount > 0;
+    !priceInfo.loading && Number.isFinite(Number(priceInfo.amount)) && Number(priceInfo.amount) > 0;
   const pricingIssue = !selection?.catId
     ? "Please reselect your appointment category so the current database price can be loaded."
-    : !hasAppointmentPrice
-      ? "No valid database price is configured for this category."
-      : "";
+    : priceInfo.loading
+      ? ""
+      : !hasAppointmentPrice
+        ? "No valid database price is configured for this category."
+        : "";
 
   const availableSlots = useMemo(
     () => ALL_TIME_SLOTS.filter((t) => !isSlotPassed(form.date, t)),
@@ -774,7 +914,7 @@ export default function AppointmentBookingForm() {
 
     const pending = readPendingBooking();
     sessionStorage.removeItem(BOOKING_RESUME_KEY);
-    if (!pending?.selection || !pending?.formData) return;
+    if (!pending?.selection || !pending?.formData || !usableSelection(pending.selection)) return;
 
     setSelection(pending.selection);
     setForm({
@@ -906,9 +1046,9 @@ export default function AppointmentBookingForm() {
         problem: formData.notes,
         medicalReports: reports,
       };
-      if (gateway === "paypal") body.paypalOrderId = paymentRef;
-      else body.paymentIntentId = paymentRef;
-      await api.post("/api/appointments", withBookingSource(body));
+      Object.assign(body, paymentFields(gateway, paymentRef));
+      const created = await api.post("/api/appointments", withBookingSource(body));
+      setReportsWarning(created.data?.warning || "");
       sessionStorage.removeItem(BOOKING_PENDING_KEY);
       sessionStorage.removeItem(BOOKING_RESUME_KEY);
       setStage("success");
@@ -921,7 +1061,8 @@ export default function AppointmentBookingForm() {
     }
   };
 
-  const handlePaymentComplete = (paymentRef, gateway) => {
+  const handlePaymentComplete = (paymentRef, gateway, charge = null) => {
+    setPaidCharge(charge);
     createAppointment(paymentRef, gateway, form, uploadedReports);
   };
 
@@ -1024,11 +1165,11 @@ export default function AppointmentBookingForm() {
               {selection.condName}
             </span>
           </div>
-          {hasAppointmentPrice && stage === "form" && (
+          {(hasAppointmentPrice || priceInfo.loading) && stage === "form" && (
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                {formatPrice(selection.cost)}
+                <PriceText info={priceInfo} />
               </span>
             </div>
           )}
@@ -1256,28 +1397,7 @@ export default function AppointmentBookingForm() {
                 <p className="ap-upload-sub">Max 10 MB per file</p>
               </div>
 
-              {form.files.length > 0 && (
-                <div className="ap-report-list">
-                  {form.files.map((f, i) => (
-                    <div key={i} className="ap-report-item">
-                      <span className="ap-report-icon">📄</span>
-                      <div className="ap-report-meta">
-                        <span className="ap-report-name">{f.name}</span>
-                        <span className="ap-report-size">
-                          {(f.size / 1048576).toFixed(1)} MB
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ap-report-remove"
-                        onClick={() => removeFile(i)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <ReportFileList files={form.files} onRemove={removeFile} />
             </div>
 
             {(pricingIssue || proceedErr) && (
@@ -1288,7 +1408,7 @@ export default function AppointmentBookingForm() {
             <button
               className="ap-submit"
               type="button"
-              disabled={proceeding || !!pricingIssue}
+              disabled={proceeding || !!pricingIssue || priceInfo.loading}
               onClick={handleProceedClick}
             >
               {proceeding ? (
@@ -1296,7 +1416,7 @@ export default function AppointmentBookingForm() {
                   <span className="ap-spinner ap-spinner--white" /> Preparing…
                 </>
               ) : (
-                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(selection.cost)}` : ""} ->`
+                `Proceed to Payment${hasAppointmentPrice ? ` - ${formatPrice(priceInfo.amount, priceInfo.currency)}` : ""} ->`
               )}
             </button>
 
@@ -1322,8 +1442,8 @@ export default function AppointmentBookingForm() {
             Stage: payment
         ══════════════════════════════════════ */}
         {stage === "payment" && (
-          <PaymentStage
-            amount={selection.cost}
+          <PaymentStep
+            priceInfo={priceInfo}
             selection={selection}
             formData={form}
             uploadedReports={uploadedReports}
@@ -1363,6 +1483,11 @@ export default function AppointmentBookingForm() {
               Payment confirmed. Our team will review and assign a doctor
               shortly. You'll receive an email once a doctor is assigned.
             </p>
+            {reportsWarning && (
+              <p role="alert" className="ap-error" data-testid="reports-warning">
+                {reportsWarning}
+              </p>
+            )}
             <div className="ap-success-details">
               <div className="ap-success-row">
                 <span className="ap-success-key">Specialty</span>
@@ -1385,7 +1510,9 @@ export default function AppointmentBookingForm() {
               <div className="ap-success-row">
                 <span className="ap-success-key">Amount Paid</span>
                 <span className="ap-success-val ap-success-val--green">
-                  {formatPrice(selection.cost)}
+                  {paidCharge
+                    ? formatPrice(paidCharge.amount, paidCharge.currency)
+                    : formatPrice(priceInfo.amount, priceInfo.currency)}
                 </span>
               </div>
               <div className="ap-success-row">
