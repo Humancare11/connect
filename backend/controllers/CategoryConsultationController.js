@@ -11,7 +11,7 @@ const {
 const { recordPaymentAndInvoice } = require("../utils/billing");
 const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
-const { BookingReportError, normalizeBookingReports } = require("../utils/bookingReports");
+const { checkBookingReports, logReportOutcome, reportsWarning } = require("../utils/bookingReports");
 
 // Create a new consultation
 const createCategoryConsultation = async (req, res) => {
@@ -41,17 +41,11 @@ const createCategoryConsultation = async (req, res) => {
       });
     }
 
-    // The attached files are checked against the storage before anything is claimed: only files this patient uploaded, of an allowed
-    // type and size, are kept (rebuilt from what the storage says). A made-up or foreign key refuses the booking, nothing is spent.
-    let medicalReports;
-    try {
-      medicalReports = await normalizeBookingReports(req.body.medicalReports, { userId: req.user.id });
-    } catch (err) {
-      if (err instanceof BookingReportError) {
-        return res.status(err.status).json({ success: false, message: err.message, msg: err.message });
-      }
-      throw err;
-    }
+    // The attached files are checked against the storage: only files this patient uploaded, of an allowed type and size, are kept
+    // (rebuilt from what the storage says). The patient has ALREADY PAID at this point (the files were checked before the payment was
+    // created), so a file is never a reason to refuse the booking: one that fails is dropped and logged, one the storage could not be
+    // asked about is kept aside as unverified (pendingReportsJob verifies it later), and the response carries a warning.
+    const checkedReports = await checkBookingReports(req.body.medicalReports, { userId: req.user.id });
 
     let paymentRef = "";
     let paymentGateway = "";
@@ -145,7 +139,9 @@ const createCategoryConsultation = async (req, res) => {
         slot: isFlexible ? req.body.slot : null,
         date: req.body.date,
         patientId: req.user.id,
-        medicalReports,
+        medicalReports: checkedReports.kept,
+        reportsUnverified: checkedReports.unverified,
+        reportsUnverifiedAt: checkedReports.unverified.length ? new Date() : null,
         consultationPrice: paymentAmountFinal / 100,
         categoryName: req.body.categoryName,
         specialtyName: req.body.specialtyName,
@@ -178,10 +174,15 @@ const createCategoryConsultation = async (req, res) => {
       });
     }
 
+    logReportOutcome(checkedReports, { patientId: req.user.id, bookingId: String(consultation._id), kind: "category" });
+    const warning = reportsWarning(checkedReports);
+
     res.status(201).json({
       success: true,
       message: "Consultation submitted successfully.",
       data: consultation,
+      // Set when some attached files did not make it; the booking and the payment are fine. The page shows it.
+      ...(warning ? { warning, droppedReports: checkedReports.dropped.map((d) => ({ name: d.name, reason: d.reason })) } : {}),
     });
 
     // Fire-and-forget: admin "new booking" email. Never throws or rejects.

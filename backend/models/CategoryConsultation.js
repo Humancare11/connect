@@ -122,6 +122,13 @@ const consultationSchema = new mongoose.Schema(
         size: { type: Number },
       },
     ],
+    // Files the patient attached that the storage could not be asked about when the booking was created (it was down). Never shown to
+    // anyone; jobs/pendingReportsJob.js verifies them later and moves the good ones into medicalReports (or drops them).
+    reportsUnverified: {
+      type: [{ _id: false, key: { type: String }, name: { type: String } }],
+      default: [],
+    },
+    reportsUnverifiedAt: { type: Date, default: null },
     consultationPrice: {
       type: Number,
       default: 0,

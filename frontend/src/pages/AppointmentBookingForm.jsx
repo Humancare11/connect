@@ -390,6 +390,13 @@ export function PaymentStage({
   const currencyChangedBeforeCharge = async () => (await recheck({ force: true })).changed;
   // The server decides the charge. If what it created is in another currency than the one on screen, it is discarded and the page is
   // brought up to date instead of charging in a currency the visitor was not shown.
+  // The attached files are checked BEFORE a payment is created: after the payment a file can no longer refuse the booking (the server
+  // drops it instead), so a file that cannot be attached has to be caught while nothing has been charged. Throws with the server's
+  // message (it names the files) when one cannot be attached.
+  const checkReportsBeforeCharge = async () => {
+    if (!uploadedReports?.length) return;
+    await api.post("/api/upload/check-reports", { medicalReports: uploadedReports });
+  };
   const chargeMatchesScreen = async (data) => {
     const made = chargeOf(data);
     if (!made || made.currency === normalizeCurrency(currency)) return true;
@@ -420,6 +427,7 @@ export function PaymentStage({
     }
     setStripeCreating(true);
     try {
+      await checkReportsBeforeCharge();
       if (await currencyChangedBeforeCharge()) return;
       const res = await api.post("/api/payments/create-intent-by-amount", {
         priceType,
@@ -443,6 +451,11 @@ export function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
+    try {
+      await checkReportsBeforeCharge();
+    } catch (err) {
+      throw new Error(err.response?.data?.msg || "Your files could not be checked. Please try again.");
+    }
     if (await currencyChangedBeforeCharge()) throw new Error(CHANGED_MSG);
     const res = await api.post("/api/paypal/create-order-by-amount", {
       priceType,
@@ -480,6 +493,7 @@ export function PaymentStage({
       if (!(await loadRazorpayScript())) {
         throw new Error("Could not load the Razorpay payment window. Check your connection and try again.");
       }
+      await checkReportsBeforeCharge();
       if (await currencyChangedBeforeCharge()) {
         setRazorpayBusy(false);
         return;
@@ -725,6 +739,8 @@ export default function AppointmentBookingForm() {
   const fileInputRef = useRef(null);
   // What the patient was really charged (the server's amount and currency), for the confirmation screen.
   const [paidCharge, setPaidCharge] = useState(null);
+  // Set by the server when some attached files could not be attached to the (created, paid) booking.
+  const [reportsWarning, setReportsWarning] = useState("");
 
   // The selection the URL names. One left in the router state or in the sessionStorage by an earlier booking (another category, or a
   // price from before a deploy) is ignored when it is not this page's: the page is then rebuilt from the URL, with today's prices.
@@ -1031,7 +1047,8 @@ export default function AppointmentBookingForm() {
         medicalReports: reports,
       };
       Object.assign(body, paymentFields(gateway, paymentRef));
-      await api.post("/api/appointments", withBookingSource(body));
+      const created = await api.post("/api/appointments", withBookingSource(body));
+      setReportsWarning(created.data?.warning || "");
       sessionStorage.removeItem(BOOKING_PENDING_KEY);
       sessionStorage.removeItem(BOOKING_RESUME_KEY);
       setStage("success");
@@ -1466,6 +1483,11 @@ export default function AppointmentBookingForm() {
               Payment confirmed. Our team will review and assign a doctor
               shortly. You'll receive an email once a doctor is assigned.
             </p>
+            {reportsWarning && (
+              <p role="alert" className="ap-error" data-testid="reports-warning">
+                {reportsWarning}
+              </p>
+            )}
             <div className="ap-success-details">
               <div className="ap-success-row">
                 <span className="ap-success-key">Specialty</span>

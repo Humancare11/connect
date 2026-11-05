@@ -30,6 +30,8 @@ const pv = require("../utils/paymentVerification");
 let claims = 0;
 pv.verifyCategoryPayment = async ({ paymentIntentId }) => ({ ref: paymentIntentId, gateway: "stripe", amountCents: 5000, currency: "USD" });
 pv.verifyServicePayment = pv.verifyCategoryPayment;
+pv.verifyStripePaymentIntent = async ({ paymentIntentId }) => ({ ref: paymentIntentId, gateway: "stripe", amountCents: 5000 });
+pv.verifyPaypalOrder = async ({ paypalOrderId }) => ({ ref: paypalOrderId, gateway: "paypal", amountCents: 5000 });
 pv.claimPaymentOnce = async () => { claims += 1; };
 require("../utils/billing").recordPaymentAndInvoice = async () => {};
 const notify = require("../utils/bookingNotifications");
@@ -37,6 +39,7 @@ notify.notifyAppointmentBooked = () => {};
 notify.notifyCategoryConsultationBooked = () => {};
 
 const CategoryConsultation = require("../models/CategoryConsultation");
+const Appointment = require("../models/Appointment");
 const Enrollment = require("../models/Enrollment");
 const { createCategoryConsultation } = require("../controllers/CategoryConsultationController");
 const A = require("../controllers/appointmentController");
@@ -82,6 +85,7 @@ before(async () => {
   replSet = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   await mongoose.connect(replSet.getUri());
   await CategoryConsultation.init();
+  await Appointment.init();
   // Validation is not what is tested here: the enrollment is inserted as the doctor directory row the controllers look up.
   const inserted = await Enrollment.collection.insertOne({ doctorId: new mongoose.Types.ObjectId(DOCTOR), firstName: "Dana", surname: "Doe", email: "dana@doctor.test" });
   enrollmentId = inserted.insertedId;
@@ -99,95 +103,242 @@ beforeEach(() => {
 const book = (reports, user = { id: PATIENT, role: "user" }) =>
   call(createCategoryConsultation, { user, body: consultationBody(reports === undefined ? {} : { medicalReports: reports }) });
 
-describe("on create: the attached files are validated and rebuilt from the storage", () => {
-  test("own files are kept, described by the storage (not by what the browser claimed)", async () => {
-    put(OWN, { name: "blood-test.pdf", length: 2048 });
-    put(OWN_IMG, { type: "image/png", length: 4096, name: "xray.png" });
-    const res = await book([
-      { url: `https://bucket.s3.amazonaws.com/${OWN}`, key: OWN, name: "TOTALLY-DIFFERENT.pdf", type: "text/html", size: 1, evil: "<script>" },
-      { key: OWN_IMG },
-    ]);
-    assert.equal(res.statusCode, 201, JSON.stringify(res.body));
-    const stored = await CategoryConsultation.findById(res.body.data._id).lean();
-    assert.equal(stored.medicalReports.length, 2);
-    assert.deepEqual(
-      stored.medicalReports.map((r) => [r.key, r.name, r.type, r.size]),
-      [[OWN, "blood-test.pdf", "application/pdf", 2048], [OWN_IMG, "xray.png", "image/png", 4096]],
-    );
-    assert.equal(stored.medicalReports[0].evil, undefined);
+describe("when the booking is created (the patient has already paid): a file is never a reason to refuse it", () => {
+  const appointmentBody = (extra = {}) => ({
+    date: tomorrow(), time: "10:00", problem: "Cough", category: "General Care", specialty: "GP", condition: "Cough",
+    consultationPrice: 50, paymentIntentId: `pi_${++seq}`, patientDetails: { firstName: "Test" }, ...extra,
   });
+  const bookAppointment = (reports) =>
+    call(A.createAppointment, { user: { id: PATIENT, role: "user" }, body: appointmentBody(reports === undefined ? {} : { medicalReports: reports }) });
+  const warnings = [];
+  const realWarn = console.warn;
+  before(() => { console.warn = (...args) => { warnings.push(args.join(" ")); }; });
+  after(() => { console.warn = realWarn; });
+  beforeEach(() => { warnings.length = 0; });
 
-  test("the same file listed twice is kept once; no files and no field at all both book normally", async () => {
-    put(OWN);
-    const twice = await book([{ key: OWN }, { key: OWN }]);
-    assert.equal((await CategoryConsultation.findById(twice.body.data._id).lean()).medicalReports.length, 1);
-    for (const none of [undefined, [], null]) {
-      const res = await book(none);
+  const storedOf = async (kind, res) =>
+    kind === "category"
+      ? CategoryConsultation.findById(res.body.data._id).lean()
+      : Appointment.findById(res.body.appointment._id).lean();
+  const flows = [["category", book], ["appointment", bookAppointment]];
+
+  for (const [kind, create] of flows) {
+    test(`${kind}: own files are kept, described by the storage (not by what the browser claimed); no warning`, async () => {
+      put(OWN, { name: "blood-test.pdf", length: 2048 });
+      put(OWN_IMG, { type: "image/png", length: 4096, name: "xray.png" });
+      const res = await create([
+        { url: `https://bucket.s3.amazonaws.com/${OWN}`, key: OWN, name: "TOTALLY-DIFFERENT.pdf", type: "text/html", size: 1, evil: "<script>" },
+        { key: OWN_IMG },
+      ]);
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+      assert.equal(res.body.warning, undefined);
+      const stored = await storedOf(kind, res);
+      assert.deepEqual(
+        stored.medicalReports.map((r) => [r.key, r.name, r.type, r.size]),
+        [[OWN, "blood-test.pdf", "application/pdf", 2048], [OWN_IMG, "xray.png", "image/png", 4096]],
+      );
+      assert.equal(stored.medicalReports[0].evil, undefined);
+      assert.deepEqual(warnings.filter((w) => w.includes("[REPORT_")), []);
+    });
+
+    test(`${kind}: PAYMENT SUCCEEDED + an invalid report -> the booking is still created, the file is dropped, a warning is returned and logged`, async () => {
+      put(OWN);
+      put(OTHERS, { by: OTHER_PATIENT });
+      const res = await create([{ key: OWN }, { key: OTHERS, name: "their-scan.pdf" }, { key: "doctors/Dr-Dana/licence-1.pdf", name: "licence.pdf" }]);
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+      assert.equal(claims >= 1, true, "the payment was claimed for the booking");
+      const stored = await storedOf(kind, res);
+      assert.deepEqual(stored.medicalReports.map((r) => r.key), [OWN], "only the genuine file is attached");
+      assert.match(res.body.warning, /2 files could not be attached/);
+      assert.match(res.body.warning, /booking and payment are confirmed/);
+      assert.deepEqual(res.body.droppedReports.map((d) => d.reason).sort(), ["not_an_upload_key", "not_yours"]);
+      const logged = warnings.filter((w) => w.includes("[REPORT_DROPPED]"));
+      assert.equal(logged.length, 2);
+      assert.ok(logged.some((l) => l.includes("reason=not_yours") && l.includes(OTHERS)));
+      assert.ok(logged.some((l) => l.includes("reason=not_an_upload_key")));
+      assert.ok(logged.every((l) => l.includes(`patient=${PATIENT}`) && l.includes(`kind=${kind}`)));
+    });
+
+    test(`${kind}: made-up keys, path tricks, bad types and sizes are all dropped, never refused`, async () => {
+      put(OWN, { type: "text/html" });
+      for (const key of [
+        "patients/Test-Patient/never-uploaded-1700000000000-aaaaaaaa.pdf",
+        "patients/Test-Patient/../../doctors/Dr-Dana/licence-1.pdf",
+        "patients/Test-Patient/run.exe",
+        OWN,
+      ]) {
+        const res = await create([{ key }]);
+        assert.equal(res.statusCode, 201, `${key}: ${JSON.stringify(res.body)}`);
+        assert.deepEqual((await storedOf(kind, res)).medicalReports, []);
+        assert.match(res.body.warning, /1 file could not be attached/);
+      }
+    });
+
+    test(`${kind}: more than 10 files keeps the first 10 and drops the rest; a list that is not a list is dropped`, async () => {
+      const keys = Array.from({ length: 12 }, (_, i) => put(`patients/Test-Patient/f${i}-1700000000000-aaaaaaaa.pdf`));
+      const res = await create(keys.map((key) => ({ key })));
       assert.equal(res.statusCode, 201);
-      assert.deepEqual((await CategoryConsultation.findById(res.body.data._id).lean()).medicalReports, []);
-    }
-  });
+      assert.equal((await storedOf(kind, res)).medicalReports.length, 10);
+      assert.match(res.body.warning, /2 files could not be attached/);
+      const odd = await create("patients/Test-Patient/x.pdf");
+      assert.equal(odd.statusCode, 201);
+      assert.match(odd.body.warning, /1 file could not be attached/);
+    });
 
-  const refused = async (reports, status = 400) => {
-    const before = await CategoryConsultation.countDocuments();
-    const res = await book(reports);
-    assert.equal(res.statusCode, status, JSON.stringify(res.body));
-    assert.equal(res.body.success, false);
-    assert.ok(res.body.msg);
-    assert.equal(await CategoryConsultation.countDocuments(), before, "no booking was created");
-    assert.equal(claims, 0, "the payment was not spent");
+    test(`${kind}: the same file twice is kept once; no files / no field / null / [] book normally with no warning`, async () => {
+      put(OWN);
+      const twice = await create([{ key: OWN }, { key: OWN }]);
+      assert.equal((await storedOf(kind, twice)).medicalReports.length, 1);
+      assert.equal(twice.body.warning, undefined);
+      for (const none of [undefined, [], null]) {
+        const res = await create(none);
+        assert.equal(res.statusCode, 201);
+        assert.deepEqual((await storedOf(kind, res)).medicalReports, []);
+        assert.equal(res.body.warning, undefined);
+      }
+    });
+
+    test(`${kind}: the storage is DOWN -> the booking is created, the file is kept aside as unverified (not shown), a warning says it will follow`, async () => {
+      put(OWN);
+      headError = Object.assign(new Error("S3 down"), { name: "ServiceUnavailable" });
+      const res = await create([{ key: OWN, name: "blood-test.pdf" }]);
+      assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+      const stored = await storedOf(kind, res);
+      assert.deepEqual(stored.medicalReports, [], "an unchecked file is not attached");
+      assert.deepEqual(stored.reportsUnverified.map((u) => u.key), [OWN]);
+      assert.ok(stored.reportsUnverifiedAt);
+      assert.match(res.body.warning, /could not be checked right now and will be attached to your booking shortly/);
+      assert.ok(warnings.some((w) => w.includes("[REPORT_UNVERIFIED]") && w.includes(OWN)));
+    });
+  }
+
+  test("a storage error that goes away on the second try is not even reported", async () => {
+    put(OWN);
+    let calls = 0;
+    const flaky = async (key) => { calls += 1; if (calls === 1) throw new Error("blip"); return objects.get(key) || null; };
+    const checked = await R.checkBookingReports([{ key: OWN }], { userId: PATIENT, head: flaky, retryDelayMs: 0 });
+    assert.equal(checked.kept.length, 1);
+    assert.deepEqual([checked.dropped, checked.unverified], [[], []]);
+  });
+});
+
+describe("before the payment is created: the files are checked and refused while nothing is charged", () => {
+  const route = () => {
+    const upload = require("../routes/upload");
+    const layer = upload.stack.find((l) => l.route && l.route.path === "/check-reports" && l.route.methods.post);
+    assert.ok(layer, "POST /api/upload/check-reports exists");
+    assert.equal(layer.route.stack.length, 3, "verifyToken + rate limit + handler");
+    return layer.route.stack[layer.route.stack.length - 1].handle;
+  };
+  const check = async (reports, user = { id: PATIENT, role: "user" }) => {
+    const res = makeRes();
+    await route()({ user, body: { medicalReports: reports } }, res);
+    return res;
   };
 
-  test("a file another patient uploaded is refused", async () => {
-    put(OTHERS, { by: OTHER_PATIENT });
-    await refused([{ key: OTHERS }]);
-    await refused([{ url: `https://bucket.s3.amazonaws.com/${OTHERS}` }]);
+  test("all files fine (or none) -> ok", async () => {
+    put(OWN);
+    const res = await check([{ key: OWN }]);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, { ok: true, files: 1 });
+    assert.deepEqual((await check([])).body, { ok: true, files: 0 });
+    assert.deepEqual((await check(undefined)).body, { ok: true, files: 0 });
   });
 
-  test("a made-up key (no such object) is refused", async () => {
-    await refused([{ key: "patients/Test-Patient/never-uploaded-1700000000000-aaaaaaaa.pdf" }]);
-  });
-
-  test("keys outside the patient folders, or with path tricks, are refused without asking the storage", async () => {
-    put("doctors/Dr-Dana/licence-1.pdf", { by: PATIENT });
-    put("employee-tasks/x/y.pdf", { by: PATIENT });
-    for (const key of [
-      "doctors/Dr-Dana/licence-1.pdf",
-      "employee-tasks/x/y.pdf",
-      "invoices/1.pdf",
-      "patients/Test-Patient/../../doctors/Dr-Dana/licence-1.pdf",
-      "patients//x.pdf",
-      "patients/Test-Patient/x.pdf%00.exe",
-      "patients/Test-Patient/run.exe",
-      "patients/Test-Patient/noextension",
-      `patients/${"a".repeat(400)}.pdf`,
-    ]) {
-      await refused([{ key }]);
-    }
-  });
-
-  test("a stored type that does not fit the extension, or a size of 0 or over 10 MB, is refused", async () => {
-    put(OWN, { type: "text/html" });
-    await refused([{ key: OWN }]);
-    put(OWN, { length: 0 });
-    await refused([{ key: OWN }]);
-    put(OWN, { length: 10 * 1024 * 1024 + 1 });
-    await refused([{ key: OWN }]);
-  });
-
-  test("one bad file refuses the whole list; more than 10 files, or a list that is not a list, are refused", async () => {
+  test("a file that cannot be attached -> 400 naming it, so the page stops before any charge", async () => {
     put(OWN);
     put(OTHERS, { by: OTHER_PATIENT });
-    await refused([{ key: OWN }, { key: OTHERS }]);
-    await refused(Array.from({ length: 11 }, () => ({ key: OWN })));
-    await refused("patients/Test-Patient/x.pdf");
-    await refused({ key: OWN });
+    const res = await check([{ key: OWN }, { key: OTHERS, name: "their-scan.pdf" }]);
+    assert.equal(res.statusCode, 400);
+    assert.match(res.body.msg, /their-scan\.pdf/);
+    assert.deepEqual(res.body.invalid, [{ name: "their-scan.pdf", reason: "not_yours" }]);
+    assert.equal((await check([{ key: "doctors/x/y.pdf", name: "y.pdf" }])).statusCode, 400);
+    assert.equal((await check([{ key: "patients/Test-Patient/missing-1700000000000-aaaaaaaa.pdf" }])).statusCode, 400);
   });
 
-  test("when the storage cannot be asked the booking is not refused as forged: 503, nothing spent", async () => {
+  test("the storage cannot be asked -> 503 (nothing charged yet, the patient retries)", async () => {
     put(OWN);
     headError = Object.assign(new Error("S3 down"), { name: "ServiceUnavailable" });
-    await refused([{ key: OWN }], 503);
+    const res = await check([{ key: OWN }]);
+    assert.equal(res.statusCode, 503);
+  });
+
+  test("both booking pages call it before every gateway call", () => {
+    const form = fs.readFileSync(path.join(__dirname, "..", "..", "frontend", "src", "pages", "AppointmentBookingForm.jsx"), "utf8").replace(/\r\n/g, "\n");
+    for (const call of ["/api/payments/create-intent-by-amount", "/api/paypal/create-order-by-amount", "/api/razorpay/create-order"]) {
+      const at = form.indexOf(`api.post("${call}"`);
+      assert.ok(at > 0, call);
+      assert.ok(form.slice(Math.max(0, at - 700), at).includes("checkReportsBeforeCharge()"), `${call} is preceded by the files check`);
+    }
+    assert.ok(form.includes('"/api/upload/check-reports"'));
+  });
+});
+
+describe("unverified files are settled later by the job", () => {
+  const { runPendingReports, GIVE_UP_AFTER_MS } = require("../jobs/pendingReportsJob");
+  const warn = console.warn;
+  const logs = [];
+  before(() => { console.warn = (...a) => logs.push(a.join(" ")); });
+  after(() => { console.warn = warn; });
+  beforeEach(() => { logs.length = 0; });
+
+  const bookWhileDown = async (reports) => {
+    headError = Object.assign(new Error("S3 down"), { name: "ServiceUnavailable" });
+    const res = await book(reports);
+    headError = null;
+    return res.body.data._id;
+  };
+
+  test("when the storage is back the file is attached, the pending list is cleared", async () => {
+    put(OWN);
+    const id = await bookWhileDown([{ key: OWN }]);
+    const totals = await runPendingReports();
+    assert.ok(totals.attached >= 1);
+    const stored = await CategoryConsultation.findById(id).lean();
+    assert.deepEqual(stored.medicalReports.map((r) => r.key), [OWN]);
+    assert.deepEqual(stored.reportsUnverified, []);
+    assert.equal(stored.reportsUnverifiedAt, null);
+  });
+
+  test("a file that fails when finally checked is dropped and logged; a good one beside it is attached", async () => {
+    put(OWN);
+    put(OTHERS, { by: OTHER_PATIENT });
+    const id = await bookWhileDown([{ key: OWN }, { key: OTHERS }]);
+    await runPendingReports();
+    const stored = await CategoryConsultation.findById(id).lean();
+    assert.deepEqual(stored.medicalReports.map((r) => r.key), [OWN]);
+    assert.deepEqual(stored.reportsUnverified, []);
+    assert.ok(logs.some((l) => l.includes("[REPORT_DROPPED]") && l.includes("reason=not_yours")));
+  });
+
+  test("while the storage is still down the file waits; after 24 hours it is dropped and logged", async () => {
+    put(OWN);
+    const id = await bookWhileDown([{ key: OWN }]);
+    headError = Object.assign(new Error("S3 down"), { name: "ServiceUnavailable" });
+    const waiting = await runPendingReports();
+    assert.ok(waiting.waiting >= 1);
+    assert.equal((await CategoryConsultation.findById(id).lean()).reportsUnverified.length, 1);
+    await runPendingReports({ now: Date.now() + GIVE_UP_AFTER_MS + 60000 });
+    const stored = await CategoryConsultation.findById(id).lean();
+    assert.deepEqual(stored.reportsUnverified, []);
+    assert.deepEqual(stored.medicalReports, []);
+    assert.ok(logs.some((l) => l.includes("[REPORT_DROPPED]") && l.includes("reason=storage_unavailable")));
+    headError = null;
+  });
+
+  test("it also settles Book Appointment bookings", async () => {
+    put(OWN);
+    headError = Object.assign(new Error("S3 down"), { name: "ServiceUnavailable" });
+    const res = await call(A.createAppointment, {
+      user: { id: PATIENT, role: "user" },
+      body: { date: tomorrow(), time: "10:00", problem: "Cough", category: "General Care", specialty: "GP", condition: "Cough", consultationPrice: 50, paymentIntentId: `pi_${++seq}`, patientDetails: { firstName: "T" }, medicalReports: [{ key: OWN }] },
+    });
+    headError = null;
+    assert.equal(res.statusCode, 201, JSON.stringify(res.body));
+    await runPendingReports();
+    const stored = await Appointment.findById(res.body.appointment._id).lean();
+    assert.deepEqual(stored.medicalReports.map((r) => r.key), [OWN]);
+    assert.deepEqual(stored.reportsUnverified, []);
   });
 });
 

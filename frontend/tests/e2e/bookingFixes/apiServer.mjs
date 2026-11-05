@@ -40,6 +40,10 @@ const freshState = () => ({
   consultations: [],
   appointments: [],
   registers: [],
+  // what the stand-in answers: the files pre-check ("ok" | "invalid" | "unavailable") and a warning on the created booking
+  checkReports: "ok",
+  checkCalls: [],
+  warnOnCreate: "",
 });
 
 export async function startApiServer() {
@@ -123,9 +127,18 @@ export async function startApiServer() {
       state.intents.push({ body, currency: geo.currency, amountCents: amount * 100 });
       return send(res, 200, { clientSecret: "pi_e2e_secret_stub", id: `pi_${state.intents.length}`, amountCents: amount * 100, currency: geo.currency });
     }
+    if (req.method === "POST" && p === "/api/upload/check-reports") {
+      const body = await readBody(req);
+      state.checkCalls.push({ at: state.intents.length, files: (body.medicalReports || []).length });
+      if (state.checkReports === "invalid") {
+        return send(res, 400, { msg: "These files cannot be attached: blood-test.pdf. Remove them and upload them again, then continue.", invalid: [{ name: "blood-test.pdf", reason: "not_found" }] });
+      }
+      if (state.checkReports === "unavailable") return send(res, 503, { msg: "Your files could not be checked right now. Please try again in a moment." });
+      return send(res, 200, { ok: true, files: (body.medicalReports || []).length });
+    }
     if (req.method === "POST" && p === "/api/category-consultation") {
       state.consultations.push(await readBody(req));
-      return send(res, 201, { msg: "ok" });
+      return send(res, 201, { success: true, data: { _id: "cc1" }, ...(state.warnOnCreate ? { warning: state.warnOnCreate } : {}) });
     }
     if (req.method === "POST" && p === "/api/appointments") {
       state.appointments.push(await readBody(req));

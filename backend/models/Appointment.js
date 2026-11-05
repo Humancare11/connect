@@ -87,12 +87,20 @@ const appointmentSchema = new mongoose.Schema(
     },
     medicalReports: [
       {
+        key:  { type: String },
         url:  { type: String },
         name: { type: String },
         type: { type: String },
         size: { type: Number },
       },
     ],
+    // Files the patient attached that the storage could not be asked about when the booking was created (it was down). Never shown to
+    // anyone; jobs/pendingReportsJob.js verifies them later and moves the good ones into medicalReports (or drops them).
+    reportsUnverified: {
+      type: [{ _id: false, key: { type: String }, name: { type: String } }],
+      default: [],
+    },
+    reportsUnverifiedAt: { type: Date, default: null },
     paymentIntentId:  { type: String, default: "" },
     paymentAmount:    { type: Number, default: 0 },
     // Currency of paymentAmount / consultationPrice. Bookings made before

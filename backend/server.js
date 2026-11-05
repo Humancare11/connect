@@ -60,6 +60,7 @@ const { initGeoIp } = require("./utils/geoIp");
 const { scheduleRetentionCleanup } = require("./jobs/retentionJobs");
 const { scheduleSearchAnalyticsRollup } = require("./jobs/searchAnalyticsJobs");
 const { scheduleInvoiceReconciliation } = require("./jobs/invoiceReconciliationJob");
+const { schedulePendingReports } = require("./jobs/pendingReportsJob");
 const { scheduleEmailSync } = require("./jobs/emailSyncJob");
 const { mountLiveChat, seedLiveChatDefaults } = require("./services/liveChat");
 const { ensureDefaults: ensureRetentionDefaults } = require("./controllers/retentionController");
@@ -156,6 +157,7 @@ const startServer = async () => {
   scheduleRetentionCleanup();
   scheduleSearchAnalyticsRollup(); // no-op unless search analytics is enabled; never throws or blocks startup
   scheduleInvoiceReconciliation();
+  schedulePendingReports();
   scheduleEmailSync();
   await seedLiveChatDefaults().catch((err) => console.error("[livechat] seed failed:", err.message));
 

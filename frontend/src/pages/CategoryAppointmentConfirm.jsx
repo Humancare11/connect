@@ -58,6 +58,8 @@ export default function CategoryAppointmentConfirm() {
   const [confirmErr, setConfirmErr] = useState("");
   // Why the last upload failed, shown under the upload box on the details step (confirmErr is only shown from the payment step on).
   const [uploadErr, setUploadErr] = useState("");
+  // Set by the server when some attached files could not be attached to the (created, paid) booking.
+  const [reportsWarning, setReportsWarning] = useState("");
   const [showConsentModal, setShowConsentModal] = useState(false);
   const consentModalRef = useRef(null);
   useModalA11y(consentModalRef, showConsentModal, () => setShowConsentModal(false));
@@ -218,7 +220,8 @@ export default function CategoryAppointmentConfirm() {
           pcpName: selection.pcpName || "",
         };
         Object.assign(body, paymentFields(gateway, paymentRef));
-        await api.post("/api/category-consultation", withBookingSource(body));
+        const created = await api.post("/api/category-consultation", withBookingSource(body));
+        setReportsWarning(created.data?.warning || "");
       } else {
         const body = {
           category: selection.catLabel,
@@ -234,7 +237,8 @@ export default function CategoryAppointmentConfirm() {
           medicalReports: reports,
         };
         Object.assign(body, paymentFields(gateway, paymentRef));
-        await api.post("/api/appointments", withBookingSource(body));
+        const created = await api.post("/api/appointments", withBookingSource(body));
+        setReportsWarning(created.data?.warning || "");
       }
       clearPendingBooking();
       setStage("success");
@@ -439,6 +443,11 @@ export default function CategoryAppointmentConfirm() {
               Payment confirmed. Our team will review and assign a doctor
               shortly.
             </p>
+            {reportsWarning && (
+              <p role="alert" className="ap-error" data-testid="reports-warning">
+                {reportsWarning}
+              </p>
+            )}
             <Link
               to="/user/appointments"
               className="ap-submit"

@@ -41,6 +41,38 @@ const spaFallback = () => ({
   },
 });
 
+const WARM_UP_ROUTES = [
+  "/",
+  "/other",
+  "/login",
+  "/category-consultant?category=general",
+  "/appointment-booking/category-confirm",
+  "/appointment-booking/women-s-health/obstetrics-and-gynaecology/pcos",
+];
+
+async function warmUp({ browser, origin }) {
+  const context = await browser.newContext();
+  await context.route("https://api.country.is/**", (route) => route.abort());
+  await context.route("https://flagcdn.com/**", (route) => route.fulfill({ status: 200, contentType: "image/png", body: "" }));
+  const page = await context.newPage();
+  page.setDefaultTimeout(120000);
+  try {
+    for (const route of WARM_UP_ROUTES) {
+      await page.goto(`${origin}${route}`, { waitUntil: "load", timeout: 120000 });
+      await page.locator("#root > *").first().waitFor({ state: "attached" });
+      await page.waitForLoadState("networkidle");
+    }
+    // pulled in only after a login (Login.jsx: import("../socket")), so no route above loads it
+    await page.evaluate(() => import("/src/socket.js")).catch(() => {});
+    await page.waitForLoadState("networkidle");
+    // a reload Vite does after the last dependency it found has to be over before the first test starts
+    await page.goto(`${origin}/login`, { waitUntil: "load" });
+    await page.waitForLoadState("networkidle");
+  } finally {
+    await context.close();
+  }
+}
+
 export async function startStack() {
   const api = await startApiServer();
   const vite = await createServer({
@@ -73,6 +105,12 @@ export async function startStack() {
   const origin = vite.resolvedUrls.local[0].replace(/\/$/, "");
   const browser = await chromium.launch({ executablePath: findBrowser(), headless: true });
 
+  // Vite bundles each npm dependency the first time a page imports it, and when it finds a new one while a page is open it reloads
+  // that page. Left to happen during a test, that reload (or a module that is not ready yet) fails whatever the test was doing. So
+  // the stack is not handed out until every route the tests use, and the module the login page imports lazily, has been loaded once
+  // and the dev server has gone quiet.
+  await warmUp({ browser, origin });
+
   const post = (p, body = {}) => fetch(`${api.url}${p}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   return {
     origin,
@@ -89,6 +127,14 @@ export async function startStack() {
       const page = await context.newPage();
       const errors = [];
       page.on("pageerror", (error) => errors.push(String(error)));
+      // Explicit waits: every navigation returns once the app has rendered and the network is quiet, not merely once the HTML arrived.
+      const rawGoto = page.goto.bind(page);
+      page.goto = async (url, options) => {
+        const response = await rawGoto(url, { waitUntil: "load", ...options });
+        await page.locator("#root > *").first().waitFor({ state: "attached" });
+        await page.waitForLoadState("networkidle");
+        return response;
+      };
       return { page, context, errors };
     },
     async close() {

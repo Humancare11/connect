@@ -84,6 +84,67 @@ describe("uploaded files are listed in both booking flows (real browser)", { ski
     await context.close();
   });
 
+  // The patient pays FIRST and the booking is created after: a file that cannot be attached must be caught before any charge, and
+  // after the charge it only produces a warning.
+  async function toPaymentWithFile(page) {
+    await openConfirm(page);
+    await page.locator("input[type=file]").setInputFiles(FILE);
+    await page.locator(".ap-report-item .ap-report-name").first().waitFor();
+    await page.getByRole("button", { name: /Proceed to Payment/ }).click();
+    await page.locator("#consent-agree").check();
+    await page.locator("#consent-age").check();
+    await page.getByRole("button", { name: /Confirm & Continue/ }).click();
+    await page.locator(".ap-pay-method-btn").first().waitFor();
+  }
+
+  test("a file that cannot be attached is refused BEFORE the payment is created, naming the file; nothing is charged", async () => {
+    const { page, context } = await stack.newPage();
+    await toPaymentWithFile(page);
+    await stack.set({ checkReports: "invalid" });
+    await page.locator(".ap-pay-method-btn").first().click();
+    await page.getByRole("alert").getByText(/blood-test\.pdf/).waitFor();
+    const state = await stack.state();
+    assert.equal(state.checkCalls.length, 1, "the files were checked");
+    assert.deepEqual(state.intents, [], "no payment was created");
+    // the storage unreachable: also stops before the charge, with a retry message
+    await stack.set({ checkReports: "unavailable" });
+    await page.locator(".ap-pay-method-btn").first().click();
+    await page.getByRole("alert").getByText(/could not be checked right now/).waitFor();
+    assert.deepEqual((await stack.state()).intents, []);
+    // fixed: the payment is created and the booking can go on
+    await stack.set({ checkReports: "ok" });
+    await page.locator(".ap-pay-method-btn").first().click();
+    await page.getByTestId("stub-payment-element").waitFor();
+    assert.equal((await stack.state()).intents.length, 1);
+    await context.close();
+  });
+
+  test("a booking with no files does not ask for the check at all", async () => {
+    const { page, context } = await stack.newPage();
+    await openConfirm(page);
+    await page.getByRole("button", { name: /Proceed to Payment/ }).click();
+    await page.locator("#consent-agree").check();
+    await page.locator("#consent-age").check();
+    await page.getByRole("button", { name: /Confirm & Continue/ }).click();
+    await page.locator(".ap-pay-method-btn").first().click();
+    await page.getByTestId("stub-payment-element").waitFor();
+    assert.equal((await stack.state()).checkCalls.length, 0);
+    await context.close();
+  });
+
+  test("payment succeeded and the server dropped a file: the booking is confirmed and the page shows the warning", async () => {
+    const { page, context } = await stack.newPage();
+    await toPaymentWithFile(page);
+    await stack.set({ warnOnCreate: "1 file could not be attached to your booking. Your booking and payment are confirmed; please contact support to send it to your doctor." });
+    await page.locator(".ap-pay-method-btn").first().click();
+    await page.getByTestId("stub-payment-element").waitFor();
+    await page.locator("form.ap-pay-form button[type=submit]").click();
+    await page.getByText("Appointment Requested!").waitFor();
+    assert.match(await page.getByTestId("reports-warning").innerText(), /1 file could not be attached to your booking.*payment are confirmed/);
+    assert.equal((await stack.state()).consultations.length, 1);
+    await context.close();
+  });
+
   test("header Book Appointment flow: the chosen file is listed the same way", async () => {
     const { page, context } = await stack.newPage();
     await page.goto(`${stack.origin}/appointment-booking/women-s-health/obstetrics-and-gynaecology/pcos`);
