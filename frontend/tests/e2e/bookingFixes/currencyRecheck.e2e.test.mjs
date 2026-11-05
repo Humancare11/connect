@@ -56,6 +56,38 @@ describe("currency follows the IP during a session (real browser)", { skip: skip
     await context.close();
   });
 
+  // REAL time (no fake clock): the throttle is measured with the page's own clock, like in a QA session with a VPN switch.
+  test("real clock: GB, then the IP moves to Germany; after more than 20 s the next client-side navigation shows EUR and the notice, without a reload", async () => {
+    const { page, context, errors } = await stack.newPage();
+    await stack.set({ geo: "GB" });
+    await page.goto(`${stack.origin}/`);
+    await page.locator("#home-price").getByText("£39").waitFor();
+    await page.evaluate(() => { window.__noReload = true; });
+    await stack.set({ geo: "DE" });
+    await page.waitForTimeout(20500);
+    const before = (await stack.state()).geoCalls;
+    await page.locator("#to-other").click(); // client-side navigation
+    await page.locator("#other-price").getByText("€45").waitFor();
+    assert.equal((await stack.state()).geoCalls, before + 1, "exactly one GET /api/geo/currency for the route change");
+    assert.equal(await page.getByTestId("currency-change-notice").innerText(), "Prices updated to your current location (€ EUR)");
+    assert.equal(await page.evaluate(() => window.__noReload === true), true, "the page was not reloaded");
+    assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  test("real clock: the server cannot place the new IP (answers USD, source default); the next navigation after 20 s shows USD, as the server will charge", async () => {
+    const { page, context } = await stack.newPage();
+    await stack.set({ geo: "GB" });
+    await page.goto(`${stack.origin}/`);
+    await page.locator("#home-price").getByText("£39").waitFor();
+    await stack.set({ geo: "XX" });
+    await page.waitForTimeout(20500);
+    await page.locator("#to-other").click();
+    await page.locator("#other-price").getByText("$49").waitFor();
+    assert.equal(await page.getByTestId("currency-change-notice").innerText(), "Prices updated to your current location ($ USD)");
+    await context.close();
+  });
+
   test("a failed re-check keeps the currency (no price flips to USD, no notice)", async () => {
     const { page, context } = await stack.newPage();
     await page.clock.install();

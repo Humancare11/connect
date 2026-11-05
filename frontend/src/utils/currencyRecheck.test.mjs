@@ -106,16 +106,17 @@ test("a failed re-check (network, 429, 5xx, source error) never changes the curr
   assert.deepEqual(t.changes, []);
 });
 
-test("a routine re-check does not let a 'default' answer (location unknown this time) overrule a real one; a payment-time check does", async () => {
-  const t = await loaded([ip("GBP")]);
+test("a routine re-check follows a 'default' answer too (the server could not place the new IP and will charge USD), same as a payment-time check", async () => {
+  const storage = memoryStorage();
+  const t = await loaded([ip("GBP")], { storage });
   t.setNext([{ currency: "USD", source: "default" }]);
   t.clock.t += RECHECK_MIN_INTERVAL_MS + 1;
-  assert.equal((await t.loader.recheck()).changed, false);
-  assert.equal(t.loader.getState().currency, "GBP");
-  // the server will charge in USD for this visitor right now, so the payment step must show USD
-  const forced = await t.loader.recheck({ force: true });
-  assert.equal(forced.changed, true);
+  const routine = await t.loader.recheck();
+  assert.equal(routine.changed, true);
   assert.equal(t.loader.getState().currency, "USD");
+  assert.equal(t.changes.length, 1);
+  // the unplaced answer is shown but never remembered as the visitor's currency
+  assert.equal(JSON.parse(storage.data[CURRENCY_CACHE_KEY]).currency, "GBP");
 });
 
 test("no re-check while the first load is still deciding, and none after dispose", async () => {

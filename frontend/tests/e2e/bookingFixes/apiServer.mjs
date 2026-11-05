@@ -29,6 +29,8 @@ const GEO = {
   GB: { currency: "GBP", country: "GB", source: "ip" },
   DE: { currency: "EUR", country: "DE", source: "ip" },
   IN: { currency: "INR", country: "IN", source: "ip" },
+  // an address the server cannot place (a VPN exit missing from the GeoIP data): it answers USD, source "default"
+  XX: { currency: "USD", country: "", source: "default" },
 };
 const freshState = () => ({
   geo: "US",

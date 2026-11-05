@@ -128,9 +128,9 @@ export function createCurrencyLoader({
         }
         if (disposed || mine !== sequence) return unchanged({ skipped: true });
         const fresh = { currency: normalizeCurrency(data?.currency), source: String(data?.source || "") };
-        // A routine re-check never lets "default" (no location data this time) overrule a real answer; right before a payment the
-        // server's current answer is what it will charge in, so it wins.
-        if (!force && !CACHEABLE_SOURCES.has(fresh.source)) return unchanged({ ok: true });
+        // Whatever the server answers is what it will charge in right now, so the screen follows it - also "default" (it could not
+        // place this IP, e.g. a VPN address missing from the GeoIP data, so it prices in USD). Only a real IP answer is remembered.
+        // (A request that FAILED never gets here, and the server's own "error" answer is thrown by ask(): those change nothing.)
         if (fresh.currency === state.currency) {
           if (CACHEABLE_SOURCES.has(fresh.source)) {
             writeCachedCurrency(storage, identity, fresh);
