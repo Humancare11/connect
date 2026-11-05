@@ -11,6 +11,10 @@
 //   - Only when every retry has failed (the API is really down) does the visitor see the last known currency, or USD if there is
 //     none, marked source "error"; it keeps retrying in the background and switches to the right one as soon as the server answers.
 //   - An answer that arrives after a newer load was started (login, then logout, quickly) is ignored.
+//   - The visitor's IP can change while a tab stays open (a VPN, a phone moving between networks). recheck() asks the server again
+//     during the session - on a route change and when the tab becomes visible (throttled, see RECHECK_MIN_INTERVAL_MS), and without
+//     the throttle right before a payment is created. If the currency changed the whole page follows it and onCurrencyChanged is
+//     told once; a failed re-check changes nothing.
 import { DEFAULT_CURRENCY, normalizeCurrency, SUPPORTED_CURRENCIES } from "./currencyDisplay.js";
 
 export const CURRENCY_CACHE_KEY = "hc:currency:v2"; // v2: the currency follows the IP only (v1 entries could hold a profile-country answer)
@@ -19,6 +23,8 @@ export const RETRY_DELAYS_MS = [400, 1000, 2500, 5000];
 export const BACKGROUND_RETRY_MS = 20000;
 export const MAX_BACKGROUND_RETRIES = 30;
 const MAX_RETRY_AFTER_MS = 10000;
+// A re-check during the session (route change, tab visible again) is made at most this often. The payment step bypasses it.
+export const RECHECK_MIN_INTERVAL_MS = 20000;
 
 const defaultWait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -64,6 +70,9 @@ export function createCurrencyLoader({
   backgroundMs = BACKGROUND_RETRY_MS,
   maxBackgroundRetries = MAX_BACKGROUND_RETRIES,
   warn = (...args) => console.warn(...args),
+  now = () => Date.now(),
+  recheckMinMs = RECHECK_MIN_INTERVAL_MS,
+  onCurrencyChanged = () => {},
 }) {
   let sequence = 0;
   let disposed = false;
@@ -95,8 +104,58 @@ export function createCurrencyLoader({
     set({ ...result, loading: false });
   }
 
+  let lastRecheckAt = 0;
+  let recheckInFlight = null;
+
+  // Ask the server again where the visitor is now. Resolves { changed, currency, ok, skipped }; it never rejects and never touches the
+  // state unless the server gave a real, different answer. `force` skips the throttle (used right before a payment is created).
+  function recheck({ force = false } = {}) {
+    const unchanged = (extra = {}) => ({ changed: false, currency: state.currency, ok: false, skipped: false, ...extra });
+    if (disposed) return Promise.resolve(unchanged({ skipped: true }));
+    // The first load is still deciding the currency: its answer is the fresh one.
+    if (state.loading) return Promise.resolve(unchanged({ skipped: true }));
+    if (recheckInFlight) return recheckInFlight;
+    if (!force && lastRecheckAt && now() - lastRecheckAt < recheckMinMs) return Promise.resolve(unchanged({ skipped: true }));
+    lastRecheckAt = now();
+    const mine = sequence;
+    recheckInFlight = (async () => {
+      try {
+        let data;
+        try {
+          data = await ask();
+        } catch {
+          return unchanged(); // the re-check failed (429, network, 5xx): keep what the session shows
+        }
+        if (disposed || mine !== sequence) return unchanged({ skipped: true });
+        const fresh = { currency: normalizeCurrency(data?.currency), source: String(data?.source || "") };
+        // A routine re-check never lets "default" (no location data this time) overrule a real answer; right before a payment the
+        // server's current answer is what it will charge in, so it wins.
+        if (!force && !CACHEABLE_SOURCES.has(fresh.source)) return unchanged({ ok: true });
+        if (fresh.currency === state.currency) {
+          if (CACHEABLE_SOURCES.has(fresh.source)) {
+            writeCachedCurrency(storage, identity, fresh);
+            if (state.source !== fresh.source) set({ ...fresh, loading: false });
+          }
+          return unchanged({ ok: true });
+        }
+        const from = state.currency;
+        accept(data);
+        try {
+          onCurrencyChanged({ from, to: fresh.currency });
+        } catch {
+          // a notice that fails to show must not undo the new currency
+        }
+        return { changed: true, currency: fresh.currency, ok: true, skipped: false };
+      } finally {
+        recheckInFlight = null;
+      }
+    })();
+    return recheckInFlight;
+  }
+
   async function load() {
     const mine = ++sequence;
+    lastRecheckAt = now(); // asking now counts as a check: a route change a moment after the page loaded does not ask again
 
     const cached = readCachedCurrency(storage, identity);
     if (cached) {
@@ -153,6 +212,7 @@ export function createCurrencyLoader({
 
   return {
     load,
+    recheck,
     getState: () => state,
     dispose() {
       disposed = true;

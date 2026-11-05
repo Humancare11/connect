@@ -19,6 +19,10 @@ export function normalizeCurrency(value) {
 
 export const currencySymbol = (currency) => SYMBOLS[normalizeCurrency(currency)];
 
+// The small notice shown when the visitor's location (IP) changes during a session and the currency follows it.
+export const currencyChangeNotice = (currency) =>
+  `Prices updated to your current location (${currencySymbol(currency)} ${normalizeCurrency(currency)})`;
+
 // Symbol first: $30, €30, £30, ₹4,999 (rupees use Indian digit grouping: ₹1,00,000). A whole amount has no decimals; a fractional
 // one always has two ($29.50, not $29.5).
 // Returns "" when the amount is not a number, so a missing price never shows as "$NaN".

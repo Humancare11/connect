@@ -11,6 +11,7 @@ import { MotionConfig } from "framer-motion";
 import { REDIRECTS } from "./seo/redirects";
 import RouteSeo from "./seo/RouteSeo";
 import BookingSourceTracker from "./components/BookingSourceTracker";
+import { CurrencyRouteWatcher } from "./context/CurrencyContext";
 import { Fragment, lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import "./App.css";
 
@@ -1217,6 +1218,7 @@ export function AppLayout() {
       <ScrollToTop />
       <RouteSeo />
       <BookingSourceTracker />
+      <CurrencyRouteWatcher />
       <SessionTimeoutManager />
       {/* The Text widget is replaced by our own chat when VITE_LIVECHAT_ENABLED=true (removed for good in Phase 5). */}
       {import.meta.env.VITE_LIVECHAT_ENABLED !== "true" && (

@@ -22,7 +22,7 @@ import { useAuth } from "../context/AuthContext";
 import { useSiteCurrency } from "../context/CurrencyContext";
 import { usePrices, usePricingMeta } from "../context/PricingContext";
 import PriceText from "../components/PriceText";
-import { formatPrice, selectionPriceInfo, paypalProviderProps, paymentStepState, paymentStepKey } from "../utils/currencyDisplay";
+import { formatPrice, selectionPriceInfo, paypalProviderProps, paymentStepState, paymentStepKey, normalizeCurrency } from "../utils/currencyDisplay";
 import { useServiceRecord } from "../hooks/useServicePrice";
 import { paymentFields } from "../utils/booking";
 import { loadRazorpayScript, buildRazorpayOptions } from "../utils/razorpayCheckout";
@@ -370,6 +370,7 @@ export function PaymentStage({
   // What the server will really charge, once it has created the intent / order. The server decides the amount and the
   // currency; this only shows them. Until then the price shown is the same one worked out from the visitor currency.
   const [charge, setCharge] = useState(null);
+  const { recheck } = useSiteCurrency();
   const chargeRef = useRef(null);
   const updateCharge = (value) => {
     chargeRef.current = value;
@@ -381,6 +382,20 @@ export function PaymentStage({
     Number.isFinite(Number(data?.amountCents)) && data?.currency
       ? { amount: Number(data.amountCents) / 100, currency: String(data.currency).toUpperCase() }
       : null;
+
+  // Right before anything is created at a gateway the visitor's location is asked again (no throttle): the IP may have changed since
+  // the page loaded. If the currency changed, the page follows it at once (this step is keyed by currency, so it starts over with the
+  // right gateway and price) and nothing is created for the old one. A failed re-check changes nothing.
+  const currencyChangedBeforeCharge = async () => (await recheck({ force: true })).changed;
+  // The server decides the charge. If what it created is in another currency than the one on screen, it is discarded and the page is
+  // brought up to date instead of charging in a currency the visitor was not shown.
+  const chargeMatchesScreen = async (data) => {
+    const made = chargeOf(data);
+    if (!made || made.currency === normalizeCurrency(currency)) return true;
+    await recheck({ force: true });
+    return false;
+  };
+  const CHANGED_MSG = "Your location changed, so the price was updated. Please check it and choose a payment method again.";
 
   // The backend now resolves the charge amount itself from HealthcareCategory
   // / ServicePrice — it no longer trusts a client-supplied amount. We just
@@ -404,10 +419,15 @@ export function PaymentStage({
     }
     setStripeCreating(true);
     try {
+      if (await currencyChangedBeforeCharge()) return;
       const res = await api.post("/api/payments/create-intent-by-amount", {
         priceType,
         priceRef,
       });
+      if (!(await chargeMatchesScreen(res.data))) {
+        setStripeError(CHANGED_MSG);
+        return;
+      }
       setClientSecret(res.data.clientSecret);
       updateCharge(chargeOf(res.data));
       setMethod("stripe");
@@ -422,10 +442,12 @@ export function PaymentStage({
   };
 
   const createPaypalOrder = async () => {
+    if (await currencyChangedBeforeCharge()) throw new Error(CHANGED_MSG);
     const res = await api.post("/api/paypal/create-order-by-amount", {
       priceType,
       priceRef,
     });
+    if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
     updateCharge(chargeOf(res.data));
     return res.data.orderId;
   };
@@ -457,7 +479,12 @@ export function PaymentStage({
       if (!(await loadRazorpayScript())) {
         throw new Error("Could not load the Razorpay payment window. Check your connection and try again.");
       }
+      if (await currencyChangedBeforeCharge()) {
+        setRazorpayBusy(false);
+        return;
+      }
       const res = await api.post("/api/razorpay/create-order", { priceType, priceRef });
+      if (!(await chargeMatchesScreen(res.data))) throw new Error(CHANGED_MSG);
       updateCharge(chargeOf(res.data));
       const checkout = new window.Razorpay(
         buildRazorpayOptions({
