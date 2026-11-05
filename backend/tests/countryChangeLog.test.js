@@ -200,13 +200,13 @@ describe("country change log", () => {
       await recordCountryChange({ userId: plain._id, oldCountry: "India", newCountry: "France" });
 
       let body;
-      await getAllUsers({ originalUrl: "/api/admin/users", headers: {} }, { status() { return this; }, json(p) { body = p; return this; } });
+      await getAllUsers({ originalUrl: "/api/admin/users", headers: {}, query: {} }, { status() { return this; }, json(p) { body = p; return this; } });
       const byId = Object.fromEntries(body.map((u) => [String(u._id), u.countryChangeNeedsReview]));
       assert.equal(byId[String(flagged._id)], true);
       assert.equal(byId[String(plain._id)], false);
 
       await CountryChangeLog.updateMany({}, { needsReview: false });
-      await getAllUsers({ originalUrl: "/api/admin/users", headers: {} }, { status() { return this; }, json(p) { body = p; return this; } });
+      await getAllUsers({ originalUrl: "/api/admin/users", headers: {}, query: {} }, { status() { return this; }, json(p) { body = p; return this; } });
       assert.ok(body.every((u) => u.countryChangeNeedsReview === false));
     });
   });

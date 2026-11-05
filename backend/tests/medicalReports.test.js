@@ -404,6 +404,8 @@ describe("admin medical reports", () => {
       const { toAdminUser } = require("../utils/signupMethod");
       // The original implementation, verbatim.
       const expected = (await User.find({ role: "user" }).sort({ createdAt: -1 }).lean()).map(toAdminUser);
+      // The currency work adds one computed flag to this list (countryChangeNeedsReview); nothing else may differ.
+      for (const u of expected) u.countryChangeNeedsReview = false;
 
       const res = await adminCall("GET", "/api/admin/users");
       assert.equal(res.status, 200);
