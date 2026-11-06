@@ -619,6 +619,8 @@ app.use("/api/admin/email/signatures", require("./routes/adminEmailSignatures"))
 app.use("/api/admin/email", require("./routes/adminEmail"));
 app.use("/api/superadmin/email/mailboxes", require("./routes/superadminMailboxes"));
 app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSettings"));
+// Registered first: the doctor's Visit Note signature has its own guard and multipart parser.
+app.use("/api/doctor/signature", require("./routes/doctorSignature"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
 app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/call-reports", require("./routes/callReports"));
@@ -626,6 +628,7 @@ app.use("/api/upload", require("./routes/upload"));
 app.use("/api/tickets", require("./routes/tickets"));
 app.use("/api/medical", require("./routes/medical"));
 app.use("/api/notes", require("./routes/consultationNotes"));
+app.use("/api/consultation-reports", require("./routes/consultationReports"));
 app.use("/api/payments", require("./routes/payments"));
 app.use("/api/admin/manual-invoices", require("./routes/manualInvoices"));
 app.use("/api/admin/gop", require("./routes/gop"));

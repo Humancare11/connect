@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./DoctorPatients.css";
+import "./VisitNote.css";
 import api from "../../api";
 import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
 import { formatShortDate as formatDate } from "../../utils/prescriptionForm";
@@ -86,6 +87,14 @@ function PatientPanel({ entry, onClose }) {
   const [certModalOpen, setCertModalOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [toast, setToast] = useState("");
+  const [visitNotes, setVisitNotes] = useState([]);
+
+  useEffect(() => {
+    api
+      .get(`/api/consultation-reports/doctor/patient/${patient._id}`, { authRole: "doctor" })
+      .then((r) => setVisitNotes(Array.isArray(r.data?.reports) ? r.data.reports : []))
+      .catch(() => setVisitNotes([]));
+  }, [patient._id]);
 
   useEffect(() => {
     api
@@ -199,6 +208,38 @@ function PatientPanel({ entry, onClose }) {
                     </div>
                   ))}
                 </div>
+              )}
+            </section>
+
+            {/* Visit Notes (finalised, signed) */}
+            <section>
+              <h3 className="dp-section-title">Visit Notes ({visitNotes.length})</h3>
+              {visitNotes.length === 0 ? (
+                <p className="dp-empty">No Visit Notes signed yet.</p>
+              ) : (
+                visitNotes.map((vn) => (
+                  <div key={vn._id} className="dp-record-card dp-record-card--cert">
+                    <div className="dp-record-header">
+                      <span className="dp-record-icon">📋</span>
+                      <span className="dp-record-title">
+                        {formatDate(vn.consultation?.date || vn.signedAt)} · {vn.reportNumber}
+                        {vn.amendments?.length > 0 && <span className="vn-tag vn-tag--warn">Amended</span>}
+                      </span>
+                      <span className="dp-record-date">Signed: {formatDate(vn.signedAt)}</span>
+                      <button
+                        className="dp-slip-btn"
+                        onClick={() => navigate(`/doctor-dashboard/visit-notes/report/${vn._id}`)}
+                        title="View Visit Note"
+                      >
+                        View
+                      </button>
+                    </div>
+                    {vn.symptoms && <p className="dp-record-note">🩺 {vn.symptoms}</p>}
+                    {vn.amendments?.length > 0 && (
+                      <p className="dp-record-note">✏️ {vn.amendments.length} amendment(s)</p>
+                    )}
+                  </div>
+                ))
               )}
             </section>
 
