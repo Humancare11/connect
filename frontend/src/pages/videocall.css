@@ -2643,11 +2643,13 @@
 }
 
 @media (max-width: 900px) {
+  /* Fills the call area only (.hc-vc__body is position: relative) so the control bar below always stays visible. */
   .hc-vc__notes {
-    position: fixed;
+    position: absolute;
     inset: 0;
-    width: 100vw;
+    width: 100%;
     min-width: 0;
+    height: auto;
     z-index: 80;
     border-left: none;
   }

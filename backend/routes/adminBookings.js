@@ -7,6 +7,7 @@ const { ListQueryError, listAdminBookings, loadAdminBookingRow, loadAdminBooking
 const actions = require("../utils/adminBookingActions");
 const { recordActivity } = require("../utils/activityLogger");
 const CategoryConsultation = require("../models/CategoryConsultation");
+const reschedule = require("../utils/appointmentReschedule");
 
 // The acting admin, for assignedBy and the audit log.
 async function actorOf(req) {
@@ -96,6 +97,31 @@ function create({ guard = [verifyAdminToken, adminOnly], superGuard = [verifyAdm
   // Complete -> Confirmed again (admins and super admins). The doctor is the only one who confirms a booking.
   router.post("/:id/reactivate", ...action("ADMIN_REACTIVATE_BOOKING", "Booking reactivated.",
     (req, actor) => actions.reactivateBooking(req.app, req.params.id, actor)));
+
+  // Admins and super admins. Moves a Pending / Assigned / Confirmed booking (its old time may already be past) to a new
+  // future slot of the same doctor and appends a history row.
+  // body: { date: "YYYY-MM-DD", time: "HH:MM" (08:00-19:30, 30-minute grid), reason, reasonNote?, notify? }
+  router.post("/:id/reschedule", ...action("ADMIN_RESCHEDULE_BOOKING", "Booking rescheduled.",
+    (req, actor) => reschedule.rescheduleBooking(req.app, req.params.id, req.body, actor)));
+
+  const readEndpoint = (name, run) => [
+    ...guard,
+    async (req, res) => {
+      try {
+        res.status(200).json(await run(req));
+      } catch (error) {
+        if (error instanceof LifecycleError) return res.status(error.statusCode).json({ msg: error.message, ...(error.code ? { code: error.code } : {}) });
+        console.error(`${name} error:`, error);
+        res.status(500).json({ msg: "Something went wrong. Please try again." });
+      }
+    },
+  ];
+
+  // The slot grid for ?date=YYYY-MM-DD (booked / past / current marked), or just the booking's state without a date.
+  router.get("/:id/reschedule-slots", ...readEndpoint("reschedule-slots", (req) => reschedule.getSlots(req.params.id, req.query.date)));
+
+  // The original booking and every change, oldest first (admin only: carries the admin's notes).
+  router.get("/:id/reschedule-history", ...readEndpoint("reschedule-history", (req) => reschedule.getHistory(req.params.id)));
 
   // Assigned or Confirmed -> Complete.
   router.post("/:id/auto-complete", ...action("ADMIN_AUTO_COMPLETE_BOOKING", "Booking marked complete.",

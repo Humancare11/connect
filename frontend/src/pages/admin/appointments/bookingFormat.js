@@ -156,6 +156,9 @@ export const canAlternate = (row) => hasDoctor(row) && !isClosed(row.status);
 export const canReactivate = (row) => hasDoctor(row) && row.status === "complete";
 export const canAutoComplete = (row) => hasDoctor(row) && ["assigned", "confirmed"].includes(row.status);
 export const canCancel = (row) => !isClosed(row.status);
+// Any open booking offers Reschedule. One with no doctor opens the dialog too, which says to assign a doctor first
+// (the server refuses it); a Complete or Cancelled booking has no button.
+export const canReschedule = (row) => !isClosed(row.status);
 
 // The buttons a row shows, in order. Only the ones that work for that row: a button that could not be used is left out
 // rather than greyed. View always; then Auto complete (a booking with a doctor that is Assigned or Confirmed) or
@@ -192,7 +195,8 @@ export function toTime24(display) {
 export function explainActionError(err) {
   const status = err?.response?.status;
   const data = err?.response?.data;
-  if (status === 409 && data?.code !== "slot_taken") {
+  // These 409s say something the admin can act on (busy doctor, closed booking, no doctor yet): show the server's words.
+  if (status === 409 && !["slot_taken", "closed", "no_doctor", "status"].includes(data?.code)) {
     return { message: "This booking was already updated, refreshing", refresh: true };
   }
   if (data?.msg) return { message: data.msg, refresh: false };

@@ -72,6 +72,9 @@ const appointmentSchema = new mongoose.Schema(
     // Booking source: platform, app version and the page the booking started from (see utils/bookingSource.js).
     ...bookingSourceFields(),
     sessionStarted: { type: Boolean, default: false },
+    // Admin reschedules (see utils/appointmentReschedule.js). The full trail is in AppointmentRescheduleHistory.
+    rescheduleCount: { type: Number, default: 0 },
+    lastRescheduledAt: { type: Date, default: null },
     // Set when an admin reopens a completed appointment; cleared again on completion.
     // Lets the doctor's list show a "Reopened by admin" note.
     reopenedByAdmin: {

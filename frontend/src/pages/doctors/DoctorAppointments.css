@@ -900,6 +900,23 @@
   font-weight: 600;
   color: #b45309;
 }
+/* Rescheduled by an admin: a small label under the status, and the old date / time crossed out under the new. */
+.da-rescheduled-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #b45309;
+  cursor: help;
+}
+.da-was {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #64748b;
+  text-decoration: line-through;
+}
 /* Prevent narrow dashboard columns from forcing the whole page wider. */
 .da-root,
 .da-header,

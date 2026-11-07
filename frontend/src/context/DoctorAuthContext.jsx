@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import api, { clearUserAuthToken, setActiveAuthRole } from "../api";
+import { clearAllBackups } from "../utils/visitNoteDraft";
 import { clearClientSession } from "../utils/session";
 
 const DoctorAuthContext = createContext(null);
@@ -58,6 +59,7 @@ export function DoctorAuthProvider({ children }) {
   const login = useCallback((doctorData) => setDoctor(doctorData), []);
 
   const logout = useCallback(async () => {
+    clearAllBackups(); // unsaved note text must not outlive the session
     try { await api.post("/api/doctor/logout", null, { authRole: "doctor" }); } catch { /* ignore */ }
     clearUserAuthToken();
     clearClientSession();

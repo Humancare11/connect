@@ -1626,7 +1626,7 @@
   width: 112px;
 }
 .adp-bk-col-actions {
-  width: 248px;
+  width: 340px;
 }
 .adp-bk th {
   padding: 10px 8px;
@@ -1903,7 +1903,7 @@ a.adp-bk-alt {
   opacity: 0.5;
   cursor: default;
 }
-/* Always one line, in the 248px column. */
+/* Always one line, in the 340px column. */
 .adp-bk-actions {
   display: flex;
   flex-wrap: nowrap;
@@ -2431,5 +2431,337 @@ a.adp-bk-alt {
   }
   .adp-bk-pager-chev {
     display: inline;
+  }
+}
+
+/* ── Reschedule dialog, history timeline and drawer (admin). Same teal and slate as the other row dialogs. ── */
+.hc-modal.adp-rs-modal {
+  max-width: 720px;
+}
+.adp-rs-label {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.adp-rs-current {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.adp-rs-current > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.adp-rs-current strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+.adp-rs-times {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.adp-rs-times__main {
+  color: #334155;
+  font-size: 13px;
+}
+.adp-rs-times__main--strong {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+}
+.adp-rs-times__ist {
+  color: #64748b;
+  font-size: 11.5px;
+}
+.adp-rs-when {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 16px;
+}
+.adp-rs-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-weight: 400;
+}
+.adp-rs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adp-rs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adp-rs-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 78px;
+  padding: 4px 10px;
+  border: 1px solid #dbe7ef;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.adp-rs-chip small {
+  color: #64748b;
+  font-size: 10.5px;
+}
+.adp-rs-chip:hover:not(:disabled) {
+  border-color: #0f766e;
+}
+.adp-rs-chip[aria-pressed="true"] {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+  font-weight: 600;
+}
+.adp-rs-chip[aria-pressed="true"] small {
+  color: #ccfbf1;
+}
+.adp-rs-chip:disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+.adp-rs-chip:disabled span {
+  text-decoration: line-through;
+}
+.adp-rs-chip:focus-visible,
+.adp-rs-note:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 1px;
+}
+.adp-rs-err {
+  color: #b4372f;
+}
+.adp-rs-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.adp-rs-reasons legend {
+  padding: 0;
+  margin-bottom: 6px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+.adp-rs-reasons small {
+  color: #64748b;
+}
+.adp-rs-reasonlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.adp-rs-reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #dbe7ef;
+  border-radius: 999px;
+  color: #334155;
+  font-size: 13px;
+  cursor: pointer;
+}
+.adp-rs-reason input {
+  margin: 0;
+  accent-color: #0f766e;
+}
+.adp-rs-reason--on {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  color: #0f766e;
+  font-weight: 600;
+}
+.adp-rs-note {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #dbe7ef;
+  border-radius: 8px;
+  color: #0f172a;
+  font: inherit;
+  resize: vertical;
+}
+.adp-rs-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px dashed #5eead4;
+  border-radius: 12px;
+  background: #f0fdfa;
+}
+.adp-rs-change > .adp-rs-times:first-child .adp-rs-times__main {
+  color: #64748b;
+  text-decoration: line-through;
+}
+.adp-rs-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #334155;
+  font-size: 13px;
+}
+.adp-rs-check input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: #0f766e;
+}
+.adp-rs-info {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #99f6e4;
+  border-radius: 10px;
+  background: #f0fdfa;
+  color: #115e59;
+  font-size: 13px;
+}
+.adp-rs-hint {
+  margin: 0 0 10px;
+  color: #64748b;
+  font-size: 12px;
+}
+/* "Rescheduled ×N" under the status pill; a button that opens the history. */
+.adp-rs-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.adp-rs-tag:hover {
+  text-decoration: underline;
+}
+.adp-rs-tag:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+/* The timeline: the original booking first, then each change. */
+.adp-rs-tl {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 0 7px;
+  padding: 0;
+  border-left: 2px solid #e2e8f0;
+  list-style: none;
+}
+.adp-rs-tl__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 0 18px 20px;
+  color: #334155;
+  font-size: 13px;
+}
+.adp-rs-tl__item:last-child {
+  padding-bottom: 0;
+}
+.adp-rs-tl__item::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 3px solid #0f766e;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.adp-rs-tl__item--first::before {
+  border-color: #94a3b8;
+}
+.adp-rs-tl__item--now::before {
+  border-color: #0f766e;
+  background: #0f766e;
+}
+.adp-rs-tl__title {
+  color: #0f172a;
+  font-weight: 700;
+}
+.adp-rs-tl__move s {
+  color: #64748b;
+}
+.adp-rs-tl__ist {
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.adp-rs-tl__meta {
+  color: #64748b;
+  font-size: 12px;
+}
+/* The history drawer: the shared Modal docked to the right edge. */
+.hc-modal-backdrop:has(.adp-rs-drawer) {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+.hc-modal.adp-rs-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 460px;
+  max-height: none;
+  border-radius: 0;
+}
+.adp-rs-drawer__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.adp-rs-drawer__who span:not(.adp-status-pill) {
+  color: #64748b;
+  font-size: 13px;
+}
+.hc-modal.adp-rs-drawer .hc-modal__actions {
+  margin-top: auto;
+}
+@media (max-width: 640px) {
+  .adp-rs-current {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .adp-rs-when {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

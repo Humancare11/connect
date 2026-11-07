@@ -508,9 +508,17 @@ export default function DoctorAppointments() {
                           {appt.time && (
                             <span className="da-time-inline">{appt.time}</span>
                           )}
+                          {appt.reschedule?.previousDate && (
+                            <span className="da-was" title="Date before the admin rescheduled it">{formatDate(appt.reschedule.previousDate)}</span>
+                          )}
                         </td>
 
-                        <td className="da-mono">{appt.time || "—"}</td>
+                        <td className="da-mono">
+                          {appt.time || "—"}
+                          {appt.reschedule?.previousTime && (
+                            <span className="da-was" title="Time before the admin rescheduled it">{appt.reschedule.previousTime}</span>
+                          )}
+                        </td>
 
                         <td className="da-problem">{appt.problem || "—"}</td>
 
@@ -520,6 +528,14 @@ export default function DoctorAppointments() {
                           </span>
                           {appt.status === "confirmed" && appt.reopenedByAdmin && (
                             <span className="da-reopened-note">Reopened by admin</span>
+                          )}
+                          {appt.reschedule && (
+                            <span
+                              className="da-rescheduled-note"
+                              title={`Originally booked for ${formatDate(appt.reschedule.originalDate)}${appt.reschedule.originalTime ? `, ${appt.reschedule.originalTime}` : ""}`}
+                            >
+                              Rescheduled by admin
+                            </span>
                           )}
                         </td>
 
@@ -578,6 +594,16 @@ export default function DoctorAppointments() {
                                     <span className="da-exp-label">Mobile</span>
                                     <span className="da-exp-value">
                                       {appt.patientId.mobile}
+                                    </span>
+                                  </div>
+                                )}
+                                {appt.reschedule && (
+                                  <div className="da-exp-item da-exp-item--full">
+                                    <span className="da-exp-label">Rescheduled by admin</span>
+                                    <span className="da-exp-value">
+                                      Originally {formatDate(appt.reschedule.originalDate)}
+                                      {appt.reschedule.originalTime ? `, ${appt.reschedule.originalTime}` : ""}
+                                      {appt.reschedule.count > 1 ? ` · moved ${appt.reschedule.count} times` : ""}
                                     </span>
                                   </div>
                                 )}

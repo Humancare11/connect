@@ -16,3 +16,13 @@ export const cancelBooking = (id, { reason }) => post(id, "cancel", { reason });
 // bulk confirm). Answers { summary, results: [{ id, status: ok | not_found | conflict | error, message? }] }.
 export const bulk = ({ action, ids, reason }) => api.post("/api/admin/bookings/bulk", { action, ids, ...(reason ? { reason } : {}) });
 
+
+// Admin reschedule. body: { date: "YYYY-MM-DD", time: "HH:MM", reason, reasonNote?, notify }.
+export const rescheduleBooking = (id, body) => post(id, "reschedule", body);
+// The booking's state and, with a date, that day's slot grid (available / booked / past / current).
+export const getRescheduleSlots = (id, date) =>
+  api.get(`/api/admin/bookings/${id}/reschedule-slots`, { params: date ? { date } : {} });
+// The original booking and every change, oldest first.
+export const getRescheduleHistory = (id) => api.get(`/api/admin/bookings/${id}/reschedule-history`);
+// One booking as a list row.
+export const getBookingRow = (id) => api.get(`/api/admin/bookings/${id}`);

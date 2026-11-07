@@ -1150,7 +1150,9 @@ function evictAllFromAppointmentRoom(appointmentId, { reason } = {}) {
       appointmentId: String(appointmentId),
       msg: reason === "completed"
         ? "This appointment has been marked complete."
-        : "This appointment has been cancelled.",
+        : reason === "rescheduled"
+          ? "This appointment has been rescheduled. Please join again at the new time."
+          : "This appointment has been cancelled.",
       reason: reason || "unavailable",
     });
     peerSocket.leave(room);

@@ -146,6 +146,9 @@ const consultationSchema = new mongoose.Schema(
       ),
       default: undefined,
     },
+    // Admin reschedules (see utils/appointmentReschedule.js). The full trail is in AppointmentRescheduleHistory.
+    rescheduleCount: { type: Number, default: 0 },
+    lastRescheduledAt: { type: Date, default: null },
     categoryName: {
       type: String,
       default: "",
