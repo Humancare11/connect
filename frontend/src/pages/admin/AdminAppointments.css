@@ -1459,33 +1459,39 @@
   color: #334155;
   font-weight: 600;
 }
+/* Hover / active / focus all use the brand primary (--primary, --primary-hover from App.css). */
 .adp-bk-card .adp-tab:hover {
-  background: #f8fafc;
+  border-color: var(--primary, #0b57e8);
+  background: rgba(11, 87, 232, 0.06);
+  color: var(--primary, #0b57e8);
 }
 .adp-bk-card .adp-tab.active {
-  border-color: #0f766e;
-  background: #f0fdfa;
-  color: #0f766e;
-  box-shadow: 0 0 0 2px #99f6e4;
+  border-color: var(--primary, #0b57e8);
+  background: var(--primary, #0b57e8);
+  color: #ffffff;
+  box-shadow: none;
+}
+.adp-bk-card .adp-tab.active:hover {
+  border-color: var(--primary-hover, #0047cc);
+  background: var(--primary-hover, #0047cc);
+  color: #ffffff;
+}
+.adp-bk-card .adp-tab:focus-visible {
+  outline: 2px solid var(--primary, #0b57e8);
+  outline-offset: 2px;
 }
 .adp-bk-card .adp-tab-count {
   padding: 1px 7px;
   border-radius: 6px;
-  background: #eef2ff;
-  color: #3730a3;
+  background: rgba(11, 87, 232, 0.1);
+  color: var(--primary, #0b57e8);
   font-size: 11.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .adp-bk-card .adp-tab.active .adp-tab-count {
-  background: #ccfbf1;
-  color: #0f766e;
-}
-.adp-bk-card .adp-bk-hide.active {
-  border-color: #0f172a;
-  background: #0f172a;
+  background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
-  box-shadow: none;
 }
 .adp-bk-card .adp-search {
   flex: 0 1 280px;
@@ -1537,6 +1543,39 @@
 .adp-bk-hide {
   margin-left: 4px;
 }
+
+/* Below 1200px the eight status tabs no longer fit one row (they need ~900px) and wrapped unevenly (6 + 2, or ragged on phones).
+   Lay them out as an even grid instead - four columns, two on phones (8 tabs always fill whole rows). Each tab keeps one line,
+   with the count pinned to the right, and the "Hide testing" toggle gets its own full-width row underneath. Wider screens keep
+   the existing single row. */
+@media (max-width: 1199px) {
+  .adp-bk-card .adp-bk-tabs {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+  }
+  .adp-bk-card .adp-bk-tabs .adp-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .adp-bk-card .adp-bk-tabs .adp-tab {
+    min-width: 0;
+    min-height: 40px;
+    justify-content: space-between;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .adp-bk-card .adp-bk-tabs .adp-bk-hide {
+    margin-left: 0;
+    justify-content: center;
+  }
+}
+@media (max-width: 639px) {
+  .adp-bk-card .adp-bk-tabs .adp-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .adp-bk-wrap {
   container-type: inline-size;
   overflow-x: auto;
@@ -1587,7 +1626,7 @@
   width: 112px;
 }
 .adp-bk-col-actions {
-  width: 248px;
+  width: 340px;
 }
 .adp-bk th {
   padding: 10px 8px;
@@ -1864,7 +1903,7 @@ a.adp-bk-alt {
   opacity: 0.5;
   cursor: default;
 }
-/* Always one line, in the 248px column. */
+/* Always one line, in the 340px column. */
 .adp-bk-actions {
   display: flex;
   flex-wrap: nowrap;
@@ -2394,3 +2433,681 @@ a.adp-bk-alt {
     display: inline;
   }
 }
+
+/* ── Reschedule dialog, history timeline and drawer (admin). Same teal and slate as the other row dialogs. ── */
+/* The reschedule dialog: header with chips, step 1 (calendar + slots), step 2 (reason), sticky footer. Teal primary, light-blue status pill. */
+.hc-modal.adp-rs-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  max-width: 900px;
+  max-height: min(92vh, 860px);
+  padding: 0;
+  overflow: hidden;
+}
+.hc-modal.adp-rs-modal > .hc-modal__title {
+  margin: 0;
+  padding: 18px 64px 0 22px;
+  font-size: 17px;
+}
+.adp-rs-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.adp-rs-x {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+}
+.adp-rs-x:hover:not(:disabled) {
+  background: #f8fafc;
+}
+.adp-rs-label {
+  display: block;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.adp-rs-current {
+  padding: 2px 22px 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.adp-rs-sub {
+  margin-top: 2px;
+  color: #475569;
+  font-size: 13px;
+}
+.adp-rs-sub strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+.adp-rs-id {
+  font-variant-numeric: tabular-nums;
+}
+.adp-rs-chipsrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.adp-rs-pillchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #f6f8fb;
+  color: #475569;
+  font-size: 12.5px;
+}
+.adp-rs-pillchip b {
+  color: #0f172a;
+  font-weight: 600;
+}
+.adp-rs-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: 22px;
+  min-height: 0;
+  padding: 16px 22px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.adp-rs-step {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adp-rs-step__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.adp-rs-step__head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.adp-rs-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #f6f8fb;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+.adp-rs-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.adp-rs-toggle input,
+.adp-rs-check input {
+  accent-color: #0f766e;
+}
+.adp-rs-pick {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.adp-rs-right {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+/* Calendar */
+.adp-rs-cal {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+.adp-rs-cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.adp-rs-cal__head b {
+  font-size: 14px;
+}
+.adp-rs-cal__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+}
+.adp-rs-cal__nav:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.adp-rs-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+  text-align: center;
+}
+.adp-rs-cal__wd {
+  padding: 4px 0;
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.adp-rs-cal__day {
+  position: relative;
+  max-width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.adp-rs-cal__day--out {
+  visibility: hidden;
+}
+.adp-rs-cal__day:hover:not(:disabled) {
+  border-color: #99d9d2;
+  background: #f0fdfa;
+}
+.adp-rs-cal__day--today {
+  border-color: #e2e8f0;
+  font-weight: 700;
+}
+.adp-rs-cal__day--today::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #0f766e;
+  transform: translateX(-50%);
+}
+.adp-rs-cal__day[aria-pressed="true"] {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+  font-weight: 700;
+}
+.adp-rs-cal__day[aria-pressed="true"]::after {
+  background: #ffffff;
+}
+.adp-rs-cal__day:disabled {
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+.adp-rs-cal__foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+.adp-rs-cal__link {
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: #1d4ed8;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.adp-rs-cal__link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Slots */
+.adp-rs-empty {
+  padding: 18px;
+  border: 1px dashed #e2e8f0;
+  border-radius: 10px;
+  color: #64748b;
+  text-align: center;
+}
+.adp-rs-seldate {
+  color: #475569;
+  font-size: 13px;
+}
+.adp-rs-seldate b {
+  color: #0f172a;
+}
+.adp-rs-tz {
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f6f8fb;
+  color: #475569;
+  font-size: 12.5px;
+}
+.adp-rs-tz--diff {
+  border-color: #f5b672;
+  background: #fff7ed;
+  color: #b45309;
+}
+.adp-rs-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-weight: 400;
+}
+.adp-rs-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adp-rs-chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.adp-rs-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 4px 6px;
+  border: 1px solid #d7dce4;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  cursor: pointer;
+}
+.adp-rs-chip small {
+  color: #64748b;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+.adp-rs-chip:hover:not(:disabled) {
+  border-color: #0f766e;
+  color: #115e59;
+}
+.adp-rs-chip[aria-pressed="true"] {
+  border-color: #0f766e;
+  background: #0f766e;
+  color: #ffffff;
+  font-weight: 600;
+}
+.adp-rs-chip[aria-pressed="true"] small {
+  color: #e6fffa;
+}
+.adp-rs-chip:disabled {
+  background: #f6f8fb;
+  color: #a8b3c2;
+  cursor: not-allowed;
+}
+.adp-rs-chip:disabled small {
+  color: #a8b3c2;
+}
+.adp-rs-chip:focus-visible,
+.adp-rs-note:focus-visible,
+.adp-rs-cal__day:focus-visible,
+.adp-rs-x:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+.adp-rs-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  color: #64748b;
+  font-size: 12px;
+}
+.adp-rs-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.adp-rs-legend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #ffffff;
+}
+.adp-rs-legend__sel {
+  border-color: #0f766e !important;
+  background: #0f766e !important;
+}
+.adp-rs-legend__off {
+  background: #f6f8fb !important;
+}
+.adp-rs-err {
+  color: #b4372f;
+}
+/* Reason */
+.adp-rs-reasonlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.adp-rs-reason {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  cursor: pointer;
+}
+.adp-rs-reason input {
+  margin: 0;
+  accent-color: #0f766e;
+}
+.adp-rs-reason--on {
+  border-color: #0f766e;
+  background: #f0fdfa;
+  color: #115e59;
+  font-weight: 600;
+}
+.adp-rs-note {
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  resize: vertical;
+}
+.adp-rs-note--bad {
+  border-color: #b91c1c;
+}
+.adp-rs-notehint {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -4px;
+  color: #64748b;
+  font-size: 12px;
+}
+.adp-rs-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.adp-rs-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+}
+.adp-rs-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #334155;
+  font-size: 13px;
+}
+.adp-rs-check input {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+}
+.adp-rs-fine {
+  margin: 0;
+  padding-left: 27px;
+  color: #64748b;
+  font-size: 12px;
+}
+/* Footer (stays in view: the body scrolls, not the dialog) */
+.adp-rs-foot {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 22px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+.adp-rs-change {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+.adp-rs-old {
+  color: #64748b;
+  font-size: 13px;
+}
+.adp-rs-arrow {
+  color: #64748b;
+}
+.adp-rs-new {
+  color: #115e59;
+  font-weight: 700;
+}
+.adp-rs-need {
+  color: #64748b;
+  font-size: 12.5px;
+}
+.adp-rs-btns {
+  display: flex;
+  gap: 8px;
+}
+@media (max-width: 820px) {
+  .adp-rs-pick {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .adp-rs-cal {
+    max-width: 340px;
+  }
+}
+@media (max-width: 640px) {
+  .hc-modal-backdrop:has(.adp-rs-modal) {
+    padding: 0;
+  }
+  .hc-modal.adp-rs-modal {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+  .hc-modal.adp-rs-modal > .hc-modal__title {
+    padding-left: 14px;
+  }
+  .adp-rs-x {
+    right: 12px;
+  }
+  .adp-rs-current,
+  .adp-rs-body,
+  .adp-rs-foot {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .adp-rs-chips {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .adp-rs-cal {
+    max-width: none;
+  }
+  .adp-rs-foot {
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+}
+.adp-rs-info {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #99f6e4;
+  border-radius: 10px;
+  background: #f0fdfa;
+  color: #115e59;
+  font-size: 13px;
+}
+.adp-rs-hint {
+  margin: 0 0 10px;
+  color: #64748b;
+  font-size: 12px;
+}
+/* "Rescheduled ×N" under the status pill; a button that opens the history. */
+.adp-rs-tag {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+.adp-rs-tag:hover {
+  text-decoration: underline;
+}
+.adp-rs-tag:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+/* The timeline: the original booking first, then each change. */
+.adp-rs-tl {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 0 7px;
+  padding: 0;
+  border-left: 2px solid #e2e8f0;
+  list-style: none;
+}
+.adp-rs-tl__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0 0 18px 20px;
+  color: #334155;
+  font-size: 13px;
+}
+.adp-rs-tl__item:last-child {
+  padding-bottom: 0;
+}
+.adp-rs-tl__item::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 3px solid #0f766e;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.adp-rs-tl__item--first::before {
+  border-color: #94a3b8;
+}
+.adp-rs-tl__item--now::before {
+  border-color: #0f766e;
+  background: #0f766e;
+}
+.adp-rs-tl__title {
+  color: #0f172a;
+  font-weight: 700;
+}
+.adp-rs-tl__move s {
+  color: #64748b;
+}
+.adp-rs-tl__ist {
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.adp-rs-tl__meta {
+  color: #64748b;
+  font-size: 12px;
+}
+/* The history drawer: the shared Modal docked to the right edge. */
+.hc-modal-backdrop:has(.adp-rs-drawer) {
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: 0;
+}
+.hc-modal.adp-rs-drawer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 460px;
+  max-height: none;
+  border-radius: 0;
+}
+.adp-rs-drawer__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.adp-rs-drawer__who span:not(.adp-status-pill) {
+  color: #64748b;
+  font-size: 13px;
+}
+.hc-modal.adp-rs-drawer .hc-modal__actions {
+  margin-top: auto;
+}
+

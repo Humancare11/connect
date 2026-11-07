@@ -1278,6 +1278,57 @@
   color: inherit;
 }
 
+/* Manage Doctors (.adp-tabs--grid): page too narrow for one row of pills (the
+   six pills need ~865px; below that they wrapped into a ragged 4 + 2, or worse
+   on phones): lay them out as an even grid. Columns are fluid - each holds at least 112px, so 2 across on the
+   narrowest phones and 3 across as it widens, and six tabs always fill complete
+   rows. Long labels ("Update Requests") wrap inside their own tab instead of
+   being clipped, and every row is the same height. Wider pages keep the
+   original single row of pills. */
+@container adp-doctors (max-width: 880px) {
+  .adp-doctors-page .adp-tabs--grid {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(max(112px, 28%), 1fr));
+    grid-auto-rows: 1fr;
+    gap: 8px;
+  }
+
+  .adp-doctors-page .adp-tabs--grid .adp-tab {
+    min-width: 0;
+    justify-content: space-between;
+    padding: 8px 12px;
+    line-height: 1.25;
+    text-align: left;
+  }
+
+  .adp-doctors-page .adp-tabs--grid .adp-tab-count {
+    flex-shrink: 0;
+  }
+}
+
+/* Our Doctors: specialty names vary a lot in length ("Gastroenterology" vs
+   "Pediatrics"), so equal columns would clip or waste space. On a narrow page
+   let the pills flow in compact rows instead: tighter padding and gaps, and
+   each pill grows to take up the leftover space in its row so rows end flush.
+   Names wrap inside a pill only when one alone is wider than the row. */
+@container adp-doctors (max-width: 880px) {
+  .adp-doctors-page .adp-tabs:not(.adp-tabs--grid) {
+    flex: 1 1 100%;
+    gap: 8px;
+  }
+
+  .adp-doctors-page .adp-tabs:not(.adp-tabs--grid) .adp-tab {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+    padding: 7px 12px;
+    line-height: 1.25;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
+
 .adp-doctors-page .adp-search {
   flex: 1 1 240px;
   max-width: 420px;

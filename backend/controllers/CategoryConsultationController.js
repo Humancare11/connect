@@ -4,16 +4,15 @@ const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const {
   PaymentVerificationError,
-  resolveCategoryFeeCents,
-  resolveServiceFeeCents,
-  verifyStripePaymentIntent,
-  verifyPaypalOrder,
+  verifyCategoryPayment,
+  verifyServicePayment,
   claimPaymentOnce,
 } = require("../utils/paymentVerification");
 const { recordPaymentAndInvoice } = require("../utils/billing");
 const { notifyCategoryConsultationBooked } = require("../utils/bookingNotifications");
 const { notifyAdminCategoryConsultationBooked, notifyAdminPaymentNeedsReconciliation } = require("../utils/adminNotifications");
 const { bookingSourceFor } = require("../utils/bookingSource");
+const { checkBookingReports, logReportOutcome, reportsWarning } = require("../utils/bookingReports");
 
 // Create a new consultation
 const createCategoryConsultation = async (req, res) => {
@@ -24,19 +23,39 @@ const createCategoryConsultation = async (req, res) => {
       req.body.urgency === "flexible" ? "FLEXIBLE_TIME" : "NEXT_AVAILABLE";
     const isFlexible = appointmentType === "FLEXIBLE_TIME";
 
-    const { paymentIntentId, paypalOrderId, serviceName, categoryName, categoryId } = req.body;
+    const {
+      paymentIntentId,
+      paypalOrderId,
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      serviceName,
+      categoryName,
+      categoryId,
+    } = req.body;
 
     // Payment validation
-    if (!paymentIntentId && !paypalOrderId) {
+    if (!paymentIntentId && !paypalOrderId && !razorpayPaymentId && !razorpayOrderId) {
       return res.status(400).json({
         success: false,
         message: "Payment is required to submit a consultation request.",
       });
     }
 
+    // The attached files are checked against the storage: only files this patient uploaded, of an allowed type and size, are kept
+    // (rebuilt from what the storage says). The patient has ALREADY PAID at this point (the files were checked before the payment was
+    // created), so a file is never a reason to refuse the booking: one that fails is dropped and logged, one the storage could not be
+    // asked about is kept aside as unverified (pendingReportsJob verifies it later), and the response carries a warning.
+    const checkedReports = await checkBookingReports(req.body.medicalReports, { userId: req.user.id });
+
     let paymentRef = "";
     let paymentGateway = "";
+    // Razorpay only (INR category bookings): the order and payment ids of the verified payment.
+    let paymentRazorpayOrderId = "";
+    let paymentRazorpayPaymentId = "";
     let paymentAmountFinal = 0;
+    // Currency of paymentAmountFinal, as verified with the gateway (lower-case).
+    let paymentCurrency = "usd";
     let paymentStatus = "unpaid";
 
     try {
@@ -53,23 +72,44 @@ const createCategoryConsultation = async (req, res) => {
       // complete it. categoryId (the stable pricingSlug/_id, when the
       // client sends one) is preferred over categoryName so a rename in
       // that window can't break the lookup either.
-      const expectedCents = serviceName
-        ? await resolveServiceFeeCents(serviceName)
-        : await resolveCategoryFeeCents(categoryId || categoryName, { requireActive: false });
-      if (!Number.isFinite(expectedCents) || expectedCents <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Unrecognized service/category. Please reselect and try again.",
+      //
+      // A service (verifyServicePayment) and a category (verifyCategoryPayment) are checked the same way: the payment's own
+      // currency (USD / EUR / GBP, or INR through Razorpay) against the stored price in that currency - no conversion.
+      const unrecognized = "Unrecognized service/category. Please reselect and try again.";
+      let verified;
+      if (serviceName) {
+        // Priced in the currency the payment was taken in (USD / EUR / GBP, or INR through Razorpay); verifyServicePayment checks the
+        // amount against the service's stored price in that currency (no conversion), the gateway, and that it is this user's payment.
+        verified = await verifyServicePayment({
+          paymentIntentId,
+          paypalOrderId,
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature,
+          patientId: req.user.id,
+          priceRef: serviceName,
+          unrecognizedMessage: unrecognized,
+        });
+      } else {
+        verified = await verifyCategoryPayment({
+          paymentIntentId,
+          paypalOrderId,
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature,
+          patientId: req.user.id,
+          priceRef: categoryId || categoryName,
+          requireActive: false,
+          unrecognizedMessage: unrecognized,
         });
       }
 
-      const verified = paymentIntentId
-        ? await verifyStripePaymentIntent({ paymentIntentId, expectedCents })
-        : await verifyPaypalOrder({ paypalOrderId, expectedCents });
-
       paymentRef = verified.ref;
       paymentGateway = verified.gateway;
+      paymentRazorpayOrderId = verified.razorpayOrderId || "";
+      paymentRazorpayPaymentId = verified.razorpayPaymentId || "";
       paymentAmountFinal = verified.amountCents;
+      paymentCurrency = String(verified.currency || "USD").toLowerCase();
       paymentStatus = "paid";
 
       // Marks this payment as spent so the same reference can't fund a
@@ -100,7 +140,9 @@ const createCategoryConsultation = async (req, res) => {
         slot: isFlexible ? req.body.slot : null,
         date: req.body.date,
         patientId: req.user.id,
-        medicalReports: req.body.medicalReports,
+        medicalReports: checkedReports.kept,
+        reportsUnverified: checkedReports.unverified,
+        reportsUnverifiedAt: checkedReports.unverified.length ? new Date() : null,
         consultationPrice: paymentAmountFinal / 100,
         categoryName: req.body.categoryName,
         specialtyName: req.body.specialtyName,
@@ -109,8 +151,11 @@ const createCategoryConsultation = async (req, res) => {
         pcpName: req.body.pcpName,
         paymentIntentId: paymentRef,
         paymentAmount: paymentAmountFinal,
+        paymentCurrency,
         paymentStatus,
         paymentGateway,
+        razorpayOrderId: paymentRazorpayOrderId,
+        razorpayPaymentId: paymentRazorpayPaymentId,
         source: bookingSourceFor(req),
       });
     } catch (err) {
@@ -118,7 +163,7 @@ const createCategoryConsultation = async (req, res) => {
       // failed after that — surface a reconciliation reference instead of a
       // generic error, matching the same pattern used for doctor bookings.
       console.error(
-        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal}) ` +
+        `[CRITICAL] Payment succeeded (${paymentGateway}:${paymentRef}, amount=${paymentAmountFinal} ${paymentCurrency}) ` +
           `but consultation creation failed for patient ${req.user?.id}. Needs manual reconciliation.`,
       );
       // Verified with the gateway above. Never throws.
@@ -132,10 +177,15 @@ const createCategoryConsultation = async (req, res) => {
       });
     }
 
+    logReportOutcome(checkedReports, { patientId: req.user.id, bookingId: String(consultation._id), kind: "category" });
+    const warning = reportsWarning(checkedReports);
+
     res.status(201).json({
       success: true,
       message: "Consultation submitted successfully.",
       data: consultation,
+      // Set when some attached files did not make it; the booking and the payment are fine. The page shows it.
+      ...(warning ? { warning, droppedReports: checkedReports.dropped.map((d) => ({ name: d.name, reason: d.reason })) } : {}),
     });
 
     // Fire-and-forget: admin "new booking" email. Never throws or rejects.
@@ -157,8 +207,10 @@ const createCategoryConsultation = async (req, res) => {
             categoryConsultationId: consultation._id,
             gateway: paymentGateway,
             gatewayReference: paymentRef,
+            razorpayOrderId: paymentRazorpayOrderId,
+            razorpayPaymentId: paymentRazorpayPaymentId,
             amountCents: paymentAmountFinal,
-            currency: "usd",
+            currency: paymentCurrency,
             description: `${req.body.categoryName || req.body.serviceName || "Category"} consultation booking`,
           })
         )

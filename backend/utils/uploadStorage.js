@@ -111,6 +111,25 @@ async function findUploadInS3(filename) {
   }
 }
 
+// Looks an object up by its full key (not run through uploadKey()). Resolves null when there is no such object; any other storage
+// error is thrown, so a caller can tell "not there" from "could not ask". uploadedBy is the id the upload endpoints stamped on it.
+async function headUploadByKey(key) {
+  try {
+    const head = await s3Client.send(new HeadObjectCommand({ Bucket: getBucketName(), Key: key }));
+    return {
+      key,
+      length: head.ContentLength,
+      contentType: head.ContentType,
+      originalName: head.Metadata?.originalname || "",
+      uploadedBy: head.Metadata?.uploadedby || null,
+      uploadedByRole: head.Metadata?.uploadedbyrole || "",
+    };
+  } catch (err) {
+    if (err?.name === "NotFound" || err?.name === "NoSuchKey" || err?.$metadata?.httpStatusCode === 404) return null;
+    throw err;
+  }
+}
+
 async function streamUploadFromS3(filename, res) {
   const key = uploadKey(filename);
   try {
@@ -187,6 +206,7 @@ async function deleteUploadsOlderThan(olderThan) {
 module.exports = {
   storeUploadInS3,
   findUploadInS3,
+  headUploadByKey,
   streamUploadFromS3,
   getUploadBuffer,
   deleteUploadFromS3,

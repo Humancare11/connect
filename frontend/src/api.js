@@ -35,6 +35,10 @@ const inferAuthRoleFromUrl = (url = "") => {
 
   if (value.startsWith("/api/doctor")) return "doctor";
   if (value.startsWith("/api/notes")) return "doctor";
+  // Visit Notes: the role is part of the path (see backend/routes/consultationReports.js).
+  if (value === "/api/consultation-reports" || value.startsWith("/api/consultation-reports/doctor")) return "doctor";
+  if (value.startsWith("/api/consultation-reports/mine")) return "user";
+  if (value.startsWith("/api/consultation-reports/admin")) return "admin";
   if (value.startsWith("/api/appointments/doctor")) return "doctor";
   if (/^\/api\/appointments\/[^/]+\/(confirm|complete|cancel)\b/.test(value)) return "doctor";
   if (value.startsWith("/api/auth/google-doctor")) return "doctor";

@@ -84,3 +84,28 @@ test("the summary line", () => {
   assert.equal(summaryText({ done: 5, skipped: 0, failed: 0 }), "5 done");
   assert.equal(summaryText({ done: 0, skipped: 3, failed: 0 }), "0 done, 3 skipped");
 });
+
+test("the bulk refund note names the currency of EUR / GBP bookings and never adds amounts across currencies", async () => {
+  const L = await import("./selectionLogic.js");
+  assert.equal(
+    L.bulkRefundNote([{ paid: true, paymentGateway: "stripe", currency: "eur", fee: 30 }]),
+    "1 of the selected bookings was paid and is not refunded automatically. Refund it in Stripe (€30.00).",
+  );
+  assert.equal(
+    L.bulkRefundNote([{ paid: true, paymentGateway: "stripe", currency: "gbp" }]),
+    "1 of the selected bookings was paid and is not refunded automatically. Refund it in Stripe (GBP).",
+  );
+  assert.equal(
+    L.bulkRefundNote([
+      { paid: true, paymentGateway: "stripe", currency: "eur", fee: 30 },
+      { paid: true, paymentGateway: "stripe", currency: "eur", fee: 30 },
+      { paid: true, paymentGateway: "paypal", currency: "usd", fee: 10 },
+    ], "cancelled"),
+    "3 of the cancelled bookings were paid and are not refunded automatically. Refund them: Stripe (2), PayPal (1). Currencies: USD (1), EUR (2).",
+  );
+  // all USD: exactly the old text
+  assert.equal(
+    L.bulkRefundNote([{ paid: true, paymentGateway: "stripe", currency: "usd" }, { paid: true, paymentGateway: "stripe" }]),
+    "2 of the selected bookings were paid and are not refunded automatically. Refund them: Stripe (2).",
+  );
+});

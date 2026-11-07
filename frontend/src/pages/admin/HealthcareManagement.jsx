@@ -4,6 +4,14 @@ import HealthcareIcon, { HEALTHCARE_ICON_OPTIONS } from "../../components/Health
 import "./Dashboard.css";
 import "./HealthcareManagement.css";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
+import {
+  PRICE_CURRENCIES,
+  MAX_PRICE_INR,
+  MAX_PRICE,
+  formatMoney,
+  isMissingForeignPrice,
+  checkCategoryPrices,
+} from "./healthcarePrices";
 
 const SECTIONS = [
   { id: "categories", label: "Categories", singular: "Category" },
@@ -16,11 +24,21 @@ const EMPTY_FORMS = {
     name: "",
     icon: "",
     description: "",
-    price: "0",
+    // Prices in each currency, entered by hand (nothing is converted).
+    // A new category needs all four (USD, EUR, GBP and INR for India).
+    price: "",
+    priceEur: "",
+    priceGbp: "",
+    priceInr: "",
     isActive: true,
     // Not user-editable - carried through from the loaded record so an
     // edit's price update can target the right CategoryPricing row.
     pricingSlug: "",
+    // Not user-editable - true when the loaded category already has that
+    // price, which then can't be emptied (only changed).
+    priceEurLocked: false,
+    priceGbpLocked: false,
+    priceInrLocked: false,
   },
   specialties: {
     categoryId: "",
@@ -58,15 +76,6 @@ function IconPreview({ value }) {
   );
 }
 
-function formatUsd(value) {
-  const amount = Number(value);
-  if (!Number.isFinite(amount)) return "$0";
-  return `$${amount.toLocaleString("en-US", {
-    minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
 export default function HealthcareManagement() {
   const confirm = useConfirm();
   const [active, setActive] = useState("categories");
@@ -78,6 +87,10 @@ export default function HealthcareManagement() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  // Which currency's price the Categories table shows, and whether it lists
+  // only the categories still missing a EUR / GBP price.
+  const [priceTab, setPriceTab] = useState("USD");
+  const [missingOnly, setMissingOnly] = useState(false);
 
   const filteredSpecialties = useMemo(() => {
     if (!form.categoryId) return specialties;
@@ -150,9 +163,15 @@ export default function HealthcareManagement() {
         name: item.name || "",
         icon: item.icon || "",
         description: item.description || "",
-        price: String(item.price ?? 0),
+        price: item.price === null || item.price === undefined ? "" : String(item.price),
+        priceEur: item.priceEur === null || item.priceEur === undefined ? "" : String(item.priceEur),
+        priceGbp: item.priceGbp === null || item.priceGbp === undefined ? "" : String(item.priceGbp),
+        priceInr: item.priceInr === null || item.priceInr === undefined ? "" : String(item.priceInr),
         isActive: Boolean(item.isActive),
         pricingSlug: item.pricingSlug || "",
+        priceEurLocked: item.priceEur !== null && item.priceEur !== undefined,
+        priceGbpLocked: item.priceGbp !== null && item.priceGbp !== undefined,
+        priceInrLocked: item.priceInr !== null && item.priceInr !== undefined,
       });
       return;
     }
@@ -186,16 +205,34 @@ export default function HealthcareManagement() {
       const payload = { ...form };
       if (active === "conditions") delete payload.categoryId;
 
+      if (active === "categories") {
+        const problem = checkCategoryPrices(form, !editing);
+        if (problem) {
+          setMessage({ type: "error", text: problem });
+          return;
+        }
+      }
+
       let res;
       if (active === "categories" && editing) {
-        // An existing category's price is managed exclusively through
-        // CategoryPricing (PUT /api/pricing/:pricingSlug) - it's never part
+        // An existing category's prices are managed exclusively through
+        // CategoryPricing (PUT /api/pricing/:pricingSlug) - they're never part
         // of the category's own update payload, so the two are saved as
         // separate requests here even though they look like one form.
-        const { price, pricingSlug, ...categoryFields } = payload;
+        // EUR / GBP / INR are only sent when filled in: a category that was never
+        // priced in them can be saved without (and keeps showing "Not set").
+        const {
+          price, priceEur, priceGbp, priceInr, pricingSlug,
+          priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked, priceInrLocked: _inrLocked,
+          ...categoryFields
+        } = payload;
         res = await api.put(`${endpoint}/${editing}`, categoryFields);
         try {
-          await api.put(`/api/pricing/${pricingSlug}`, { price: Number(price) });
+          const prices = { price: Number(price) };
+          if (String(priceEur).trim()) prices.priceEur = Number(priceEur);
+          if (String(priceGbp).trim()) prices.priceGbp = Number(priceGbp);
+          if (String(priceInr).trim()) prices.priceInr = Number(priceInr);
+          await api.put(`/api/pricing/${pricingSlug}`, prices);
         } catch (priceErr) {
           await loadAll();
           resetForm();
@@ -207,6 +244,20 @@ export default function HealthcareManagement() {
           });
           return;
         }
+      } else if (active === "categories") {
+        // New category: all four prices go with it.
+        const {
+          price, priceEur, priceGbp, priceInr,
+          pricingSlug: _slug, priceEurLocked: _eurLocked, priceGbpLocked: _gbpLocked, priceInrLocked: _inrLocked,
+          ...categoryFields
+        } = payload;
+        res = await api.post(endpoint, {
+          ...categoryFields,
+          price: Number(price),
+          priceEur: Number(priceEur),
+          priceGbp: Number(priceGbp),
+          priceInr: Number(priceInr),
+        });
       } else {
         res = editing
           ? await api.put(`${endpoint}/${editing}`, payload)
@@ -246,6 +297,8 @@ export default function HealthcareManagement() {
   };
 
   const rows = active === "categories" ? categories : active === "specialties" ? specialties : conditions;
+  const missingPriceCount = categories.filter(isMissingForeignPrice).length;
+  const visibleRows = active === "categories" && missingOnly ? rows.filter(isMissingForeignPrice) : rows;
   const activeSection = SECTIONS.find((section) => section.id === active);
 
   return (
@@ -363,10 +416,38 @@ export default function HealthcareManagement() {
                   )}
 
                   {active === "categories" && (
-                    <div className="hcm-field">
-                      <label>Price (USD)</label>
-                      <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => setField("price", e.target.value)} required />
-                    </div>
+                    <>
+                      <div className="hcm-field full">
+                        <p className="hcm-price-help">
+                          {editing
+                            ? "Enter each price by hand - nothing is converted. A price that is already set can be changed but not cleared; EUR / GBP / INR that show as empty can be filled in later."
+                            : "All four prices are required (more than 0, at most 2 decimals; up to 100,000, and up to 10,00,000 for INR). Enter each by hand - nothing is converted. INR is what customers in India pay, through Razorpay."}
+                        </p>
+                      </div>
+                      {PRICE_CURRENCIES.map(({ code, symbol, field, lockField }) => {
+                        const locked = lockField ? form[lockField] : false;
+                        const required = !editing || field === "price" || locked;
+                        return (
+                          <div className="hcm-field" key={field}>
+                            <label htmlFor={`hcm-${field}`}>
+                              Price ({code}) {symbol}
+                              {!required && <span className="hcm-optional"> - not set</span>}
+                            </label>
+                            <input
+                              id={`hcm-${field}`}
+                              type="number"
+                              min="0.01"
+                              max={code === "INR" ? MAX_PRICE_INR : MAX_PRICE}
+                              step="0.01"
+                              inputMode="decimal"
+                              value={form[field]}
+                              onChange={(e) => setField(field, e.target.value)}
+                              required={required}
+                            />
+                          </div>
+                        );
+                      })}
+                    </>
                   )}
 
                   <div className="hcm-field">
@@ -392,14 +473,46 @@ export default function HealthcareManagement() {
             </div>
 
             <div>
-              <h3 className="hcm-panel-title">{activeSection?.label} ({rows.length})</h3>
+              <h3 className="hcm-panel-title">{activeSection?.label} ({visibleRows.length})</h3>
+
+              {active === "categories" && (
+                <>
+                  <div className="hcm-tabs hcm-price-tabs" role="tablist" aria-label="Price currency">
+                    {PRICE_CURRENCIES.map(({ code }) => (
+                      <button
+                        key={code}
+                        type="button"
+                        role="tab"
+                        aria-selected={priceTab === code}
+                        className={`hcm-tab${priceTab === code ? " active" : ""}`}
+                        onClick={() => setPriceTab(code)}
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
+
+                  {missingPriceCount > 0 && (
+                    <div className="hcm-banner" role="status">
+                      <span>
+                        <strong>{missingPriceCount}</strong>{" "}
+                        {missingPriceCount === 1 ? "category is" : "categories are"} missing EUR/GBP/INR prices.
+                      </span>
+                      <button type="button" className="hcm-banner-btn" onClick={() => setMissingOnly((v) => !v)}>
+                        {missingOnly ? "Show all categories" : "Show only these"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+
               <div className="dash-table-wrap">
                 <table className="dash-table">
                   <thead>
                     <tr>
                       <th>Sr. No.</th>
                       <th>Name</th>
-                      {active === "categories" && <th>Price</th>}
+                      {active === "categories" && <th>Price ({priceTab})</th>}
                       {active !== "categories" && <th>Category</th>}
                       {active === "conditions" && <th>Specialty</th>}
                       <th>Status</th>
@@ -407,7 +520,7 @@ export default function HealthcareManagement() {
                     </tr>
                   </thead>
                   <tbody>
-                    {rows.length ? rows.map((item, index) => (
+                    {visibleRows.length ? visibleRows.map((item, index) => (
                       <tr key={item._id} className={index % 2 === 0 ? "" : "alt"}>
                         <td>{index + 1}</td>
                         <td>
@@ -419,7 +532,13 @@ export default function HealthcareManagement() {
                             </div>
                           </div>
                         </td>
-                        {active === "categories" && <td className="muted">{formatUsd(item.price)}</td>}
+                        {active === "categories" && (
+                          <td className="muted">
+                            {formatMoney(item[PRICE_CURRENCIES.find((c) => c.code === priceTab).field], priceTab) || (
+                              <span className="hcm-not-set">Not set</span>
+                            )}
+                          </td>
+                        )}
                         {active === "specialties" && <td className="muted">{relationName(item.categoryId) || "-"}</td>}
                         {active === "conditions" && <td className="muted">{relationName(item.specialtyId?.categoryId) || "-"}</td>}
                         {active === "conditions" && <td className="muted">{relationName(item.specialtyId) || "-"}</td>}

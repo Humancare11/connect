@@ -1,6 +1,6 @@
 import { useState, useEffect, Fragment, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { FiAward, FiCheck, FiChevronDown, FiFileText, FiVideo } from "react-icons/fi";
+import { FiAward, FiCheck, FiChevronDown, FiClipboard, FiFileText, FiVideo } from "react-icons/fi";
 import "./DoctorAppointments.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
@@ -50,6 +50,8 @@ export default function DoctorAppointments() {
   const [toast, setToast] = useState(null);
   const [completeConfirmId, setCompleteConfirmId] = useState(null);
   const [certAppt, setCertAppt] = useState(null);
+  // appointmentId -> { state: "draft" | "signed", reportId } for Visit Notes (one request for the whole list)
+  const [visitStates, setVisitStates] = useState({});
   const completeDialogRef = useRef(null);
   useModalA11y(completeDialogRef, !!completeConfirmId, () => setCompleteConfirmId(null));
 
@@ -92,6 +94,23 @@ export default function DoctorAppointments() {
       .catch((err) => console.error("Failed to load appointments", err))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    api
+      .get("/api/consultation-reports/doctor/states", { authRole: "doctor" })
+      .then((res) => setVisitStates(res.data?.states || {}))
+      .catch(() => {});
+  }, []);
+
+  // Signed -> the finalised report; Draft (or nothing yet) -> the note editor.
+  const openVisitNote = (appt) => {
+    const info = visitStates[appt._id];
+    navigate(
+      info?.state === "signed" && info.reportId
+        ? `/doctor-dashboard/visit-notes/report/${info.reportId}`
+        : `/doctor-dashboard/visit-notes/${appt._id}`,
+    );
+  };
 
   /* Deep-link: ?activityId=<id> — expand and scroll to that row */
   useEffect(() => {
@@ -425,6 +444,27 @@ export default function DoctorAppointments() {
                                   Certificate
                                 </button>
                             ),
+                            ["complete", "completed"].includes(appt.status) && (
+                                <button
+                                  key="visit-note"
+                                  type="button"
+                                  className="da-btn da-btn--rx"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openVisitNote(appt);
+                                  }}
+                                >
+                                  <FiClipboard aria-hidden="true" />
+                                  Visit Note
+                                  {visitStates[appt._id] && (
+                                    <span
+                                      className={`da-vn-state da-vn-state--${visitStates[appt._id].state}`}
+                                    >
+                                      {visitStates[appt._id].state === "signed" ? "Signed" : "Draft"}
+                                    </span>
+                                  )}
+                                </button>
+                            ),
                             ["assigned", "confirmed", "complete", "completed"].includes(appt.status) && (
                                 <button
                                   key="view-cert"
@@ -468,9 +508,17 @@ export default function DoctorAppointments() {
                           {appt.time && (
                             <span className="da-time-inline">{appt.time}</span>
                           )}
+                          {appt.reschedule?.previousDate && (
+                            <span className="da-was" title="Date before the admin rescheduled it">{formatDate(appt.reschedule.previousDate)}</span>
+                          )}
                         </td>
 
-                        <td className="da-mono">{appt.time || "—"}</td>
+                        <td className="da-mono">
+                          {appt.time || "—"}
+                          {appt.reschedule?.previousTime && (
+                            <span className="da-was" title="Time before the admin rescheduled it">{appt.reschedule.previousTime}</span>
+                          )}
+                        </td>
 
                         <td className="da-problem">{appt.problem || "—"}</td>
 
@@ -480,6 +528,14 @@ export default function DoctorAppointments() {
                           </span>
                           {appt.status === "confirmed" && appt.reopenedByAdmin && (
                             <span className="da-reopened-note">Reopened by admin</span>
+                          )}
+                          {appt.reschedule && (
+                            <span
+                              className="da-rescheduled-note"
+                              title={`Originally booked for ${formatDate(appt.reschedule.originalDate)}${appt.reschedule.originalTime ? `, ${appt.reschedule.originalTime}` : ""}`}
+                            >
+                              Rescheduled by admin
+                            </span>
                           )}
                         </td>
 
@@ -538,6 +594,16 @@ export default function DoctorAppointments() {
                                     <span className="da-exp-label">Mobile</span>
                                     <span className="da-exp-value">
                                       {appt.patientId.mobile}
+                                    </span>
+                                  </div>
+                                )}
+                                {appt.reschedule && (
+                                  <div className="da-exp-item da-exp-item--full">
+                                    <span className="da-exp-label">Rescheduled by admin</span>
+                                    <span className="da-exp-value">
+                                      Originally {formatDate(appt.reschedule.originalDate)}
+                                      {appt.reschedule.originalTime ? `, ${appt.reschedule.originalTime}` : ""}
+                                      {appt.reschedule.count > 1 ? ` · moved ${appt.reschedule.count} times` : ""}
                                     </span>
                                   </div>
                                 )}

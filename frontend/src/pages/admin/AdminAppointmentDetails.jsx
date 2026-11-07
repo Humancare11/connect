@@ -6,6 +6,11 @@ import AdminAppointmentStatusActions from "../../components/AdminAppointmentStat
 import { useAdmin } from "../../context/AdminContext";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
 import { useToast } from "../../components/ui/Toast";
+import useBookingActions from "./appointments/useBookingActions";
+import BookingActionModals from "./appointments/BookingActionModals";
+import RescheduleHistory from "./appointments/RescheduleHistory";
+import * as bookingApi from "./appointments/bookingApi";
+import { canReschedule } from "./appointments/bookingFormat";
 import "./AdminAppointments.css";
 
 function getCountryName(isoCode) {
@@ -14,12 +19,15 @@ function getCountryName(isoCode) {
   return country?.name || isoCode;
 }
 
-function formatMoney(value) {
+// `currency` is the booking paymentCurrency ("usd" / "eur" / "gbp" / "inr"); a booking without one is USD.
+function formatMoney(value, currency = "usd") {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "-";
-  return new Intl.NumberFormat("en-US", {
+  const code = String(currency || "usd").toUpperCase();
+  const shown = ["USD", "EUR", "GBP", "INR"].includes(code) ? code : "USD";
+  return new Intl.NumberFormat(shown === "INR" ? "en-IN" : "en-US", {
     style: "currency",
-    currency: "USD",
+    currency: shown,
     maximumFractionDigits: 0,
   }).format(amount);
 }
@@ -139,16 +147,27 @@ export default function AdminAppointmentDetails() {
   const toast = useToast();
   const navigate = useNavigate();
   const [deleting, setDeleting] = useState(false);
+  // The booking as an Appointments-list row (status, doctor, reschedule count) for the Reschedule dialog; `tick` reloads
+  // everything after a reschedule.
+  const [row, setRow] = useState(null);
+  const [tick, setTick] = useState(0);
+  const actions = useBookingActions({ reload: () => setTick((n) => n + 1) });
 
   useEffect(() => {
     let alive = true;
 
     async function loadAppointment() {
-      setLoading(true);
+      if (tick === 0) setLoading(true);
       setError("");
       try {
-        const res = await api.get(`/api/appointments/${id}`);
-        if (alive) setAppointment(res.data);
+        const [res, rowRes] = await Promise.all([
+          api.get(`/api/appointments/${id}`),
+          bookingApi.getBookingRow(id).catch(() => null),
+        ]);
+        if (alive) {
+          setAppointment(res.data);
+          setRow(rowRes?.data?.booking || null);
+        }
       } catch (err) {
         console.error("Failed to load appointment", err);
         if (alive)
@@ -162,7 +181,7 @@ export default function AdminAppointmentDetails() {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, tick]);
 
   // Super admin only, and only for a category consultation (a regular appointment is cancelled, never deleted).
   const deleteBooking = async () => {
@@ -271,6 +290,11 @@ export default function AdminAppointmentDetails() {
             View call report
           </Link>
           {/* Assigning or changing the doctor happens in the Appointments list. */}
+          {row && canReschedule(row) && (
+            <button type="button" className="adp-alt-btn" onClick={() => actions.handlers.reschedule(row)}>
+              Reschedule
+            </button>
+          )}
           {admin?.role === "superadmin" && appointment.isCategoryConsultation && (
             <button type="button" className="adp-alt-btn" disabled={deleting} onClick={deleteBooking}>
               {deleting ? "Deleting..." : "Delete"}
@@ -328,6 +352,7 @@ export default function AdminAppointmentDetails() {
               value={formatMoney(
                 appointment.consultationPrice ||
                 appointment.paymentAmount / 100,
+                appointment.paymentCurrency,
               )}
             />
           </div>
@@ -404,6 +429,10 @@ export default function AdminAppointmentDetails() {
           )}
         </Section> */}
 
+        <Section title={`Reschedule history${row?.rescheduleCount ? ` (${row.rescheduleCount})` : ""}`}>
+          <RescheduleHistory id={id} reloadKey={tick} />
+        </Section>
+
         <Section title="Medical Reports">
           {reports.length === 0 ? (
             <p className="adp-muted">No medical reports attached.</p>
@@ -427,6 +456,7 @@ export default function AdminAppointmentDetails() {
           )}
         </Section>
       </div>
+      <BookingActionModals actions={actions} />
     </div>
   );
 }

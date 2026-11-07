@@ -9,7 +9,7 @@ const PaymentLink = require("../models/PaymentLink");
 const Payment = require("../models/Payment");
 const { verifyUserToken, verifyAdminToken, adminOnly, paymentAdminOnly } = require("../middleware/verifyToken");
 const { toCents } = require("../utils/currency");
-const { resolveCategoryFeeCents, resolveServiceFeeCents } = require("../utils/paymentVerification");
+const { resolveChargeForSelection, assertGatewayCurrency, PaymentVerificationError } = require("../utils/paymentVerification");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const ManualInvoice = require("../models/ManualInvoice");
 const { MAX_AMOUNT_CENTS, parseItems, parseDueDate, parseBillingDetails, parseB2cBody } = require("../utils/manualInvoiceValidation");
@@ -149,6 +149,7 @@ router.post("/create-intent", verifyUserToken, async (req, res) => {
       metadata: {
         doctorId: resolvedDoctorId.toString(),
         patientId: req.user.id,
+        userId: req.user.id, // who this intent was created for: checked when the booking is verified
       },
     });
 
@@ -389,32 +390,37 @@ router.get("/admin/payment-link-creators", verifyAdminToken, paymentAdminOnly, a
 router.post("/create-intent-by-amount", verifyUserToken, async (req, res) => {
   try {
     const { priceType, priceRef } = req.body;
-    const amountCents = priceType === "service"
-      ? await resolveServiceFeeCents(priceRef)
-      : await resolveCategoryFeeCents(priceRef);
+    // The amount AND the currency are decided here on the server (the body is
+    // never trusted for either): see resolveChargeForSelection.
+    const charge = await resolveChargeForSelection(req, { priceType, priceRef });
 
-    if (!Number.isFinite(amountCents) || amountCents <= 0) {
+    if (!charge) {
       return res.status(400).json({
         msg: "Could not determine a valid price for this selection. Please reselect and try again.",
       });
     }
+    // Stripe never takes INR (Razorpay does): refused before Stripe is called.
+    const currency = assertGatewayCurrency("stripe", charge.currency);
 
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountCents,
-      currency: "usd",
+      amount: charge.amountMinor,
+      currency: currency.toLowerCase(),
       payment_method_types: ["card"],
       metadata: {
         patientId: req.user.id,
+        userId: req.user.id, // who this intent was created for: checked when the booking is verified
         bookingType: "category-based",
         priceType: priceType === "service" ? "service" : "category",
         priceRef: String(priceRef || "").slice(0, 120),
+        currency,
       },
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret, amountCents });
+    res.json({ clientSecret: paymentIntent.client_secret, amountCents: charge.amountMinor, currency });
   } catch (err) {
     console.error("create-intent-by-amount error:", err.message);
-    res.status(500).json({ msg: err.message || "Failed to create payment intent." });
+    // A gateway / currency mismatch is the caller's mistake (400), not a server failure.
+    res.status(err instanceof PaymentVerificationError ? err.status : 500).json({ msg: err.message || "Failed to create payment intent." });
   }
 });
 

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useCategoryPrice } from "../../hooks/useCategoryPrice";
+import { useCategoryPriceInfo } from "../../hooks/useCategoryPriceInfo";
+import PriceText from "../../components/PriceText";
 import "./Conditions/Condition.css";
 import SEO from "../../components/Seo";
 import PreloadImage from "../../components/PreloadImage";
@@ -16,7 +17,7 @@ import ConditionBannerImage from "../../assets/ConditionImages/PediatricCare/Chi
 import Breadcrumb from "../../components/ui/Breadcrumb";
 
 const pageData = {
-  badge: "Pediatric Care",
+  badge: "Children & Family Care",
   heading: "Childhood Allergies",
   description: "Allergic reactions affecting children",
   trustItems: ["Same Day Visits", "No Insurance Required", "Virtual Care"],
@@ -25,11 +26,11 @@ const pageData = {
 
 export default function ChildhoodAllergies({ categoryId } = {}) {
   const navigate = useNavigate();
-  const price = useCategoryPrice(categoryId);
+  const priceInfo = useCategoryPriceInfo(categoryId);
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="condition-root">
         <PreloadImage src={pageData.bgImage} />
         <section
@@ -158,7 +159,7 @@ export default function ChildhoodAllergies({ categoryId } = {}) {
                   Doctors Available Now
                 </div>
                 <div className="condition-sbc-price-block">
-                  <div className="condition-sbc-price">${price ?? 49}</div>
+                  <div className="condition-sbc-price"><PriceText info={priceInfo} /></div>
                   <p className="condition-sbc-price-sub">
                     One-time consultation fee · No subscription required
                   </p>

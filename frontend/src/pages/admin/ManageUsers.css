@@ -1128,3 +1128,27 @@
     justify-content: center;
   }
 }
+
+.ccp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+}
+
+.ccp-note {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.ccp-flag {
+  display: inline-flex;
+  align-items: center;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}

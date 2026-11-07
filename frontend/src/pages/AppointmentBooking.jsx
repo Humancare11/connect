@@ -500,6 +500,8 @@ export default function Ab() {
       condName === "General Consultation" && condIcon === "stethoscope"
         ? "general-consultation"
         : slugify(condName);
+    // The pricing slug (key of the public price table) of this category, so the booking page can show its EUR / GBP / INR price.
+    const pricingSlug = enrichedTree.find((c) => c.id === specialty.catId)?.pricingSlug || "";
     navigate(
       `/appointment-booking/${catSlugForUrl}/${specSlugForUrl}/${condSlugForUrl}`,
       {
@@ -508,6 +510,7 @@ export default function Ab() {
             specName: specialty.name,
             specIco: specialty.icon, // payload key kept for the booking form contract
             catId: specialty.catId,
+            pricingSlug,
             catLabel: specialty.catLabel,
             cost: specialty.cost,
             currency: specialty.currency ?? "USD", // dynamic currency for booking form

@@ -100,11 +100,18 @@ export function formatConsultation(consultation) {
   return { day: d.toLocaleDateString("en-GB", DAY_FORMAT), time: consultation.time || "" };
 }
 
-export function formatFee(value) {
+// A booking's currency for display: "USD", "EUR", "GBP" or "INR" (anything else, or none, is USD like bookings made before EUR / GBP).
+export const currencyCode = (currency) => {
+  const code = String(currency || "usd").toUpperCase();
+  return ["USD", "EUR", "GBP", "INR"].includes(code) ? code : "USD";
+};
+
+export function formatFee(value, currency = "usd") {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount <= 0) return "—";
-  // Always two decimals, as in the reference design: $99.00, $12.50.
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  // Always two decimals, as in the reference design: $99.00, €12.50, £12.50, ₹1,499.00 (rupees use Indian digit grouping).
+  const code = currencyCode(currency);
+  return new Intl.NumberFormat(code === "INR" ? "en-IN" : "en-US", { style: "currency", currency: code, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
 }
 
 // The last 8 characters of the booking id, shown as "...ABCD1234".
@@ -129,12 +136,15 @@ export const originalDoctorHint = (row) => (row.originalDoctorName ? `Originally
 
 export const CANCEL_REASONS = ["Patient requested", "Doctor unavailable", "Payment failed", "Duplicate booking", "Testing booking"];
 
-const GATEWAY_NAMES = { stripe: "Stripe", paypal: "PayPal" };
+const GATEWAY_NAMES = { stripe: "Stripe", paypal: "PayPal", razorpay: "Razorpay" };
 
-// Cancelling does not refund. The reminder names where the money was taken.
+// Cancelling does not refund. The reminder names where the money was taken and, for a EUR / GBP / INR booking, the amount and currency
+// to refund (a USD booking reads exactly as it always did): "Refund it in Razorpay." with the rupee amount.
 export function refundWarning(row) {
   const name = GATEWAY_NAMES[String(row?.paymentGateway || "").toLowerCase()];
-  return name ? `This booking was paid. Refund it in ${name}.` : "This booking was paid. Refund it with the payment provider.";
+  const code = currencyCode(row?.currency);
+  const paid = code !== "USD" ? ` (${Number(row?.fee) > 0 ? formatFee(row.fee, code) : code})` : "";
+  return name ? `This booking was paid${paid}. Refund it in ${name}.` : `This booking was paid${paid}. Refund it with the payment provider.`;
 }
 
 const hasDoctor = (row) => Boolean(row.doctorName);
@@ -146,6 +156,9 @@ export const canAlternate = (row) => hasDoctor(row) && !isClosed(row.status);
 export const canReactivate = (row) => hasDoctor(row) && row.status === "complete";
 export const canAutoComplete = (row) => hasDoctor(row) && ["assigned", "confirmed"].includes(row.status);
 export const canCancel = (row) => !isClosed(row.status);
+// Any open booking offers Reschedule. One with no doctor opens the dialog too, which says to assign a doctor first
+// (the server refuses it); a Complete or Cancelled booking has no button.
+export const canReschedule = (row) => !isClosed(row.status);
 
 // The buttons a row shows, in order. Only the ones that work for that row: a button that could not be used is left out
 // rather than greyed. View always; then Auto complete (a booking with a doctor that is Assigned or Confirmed) or
@@ -182,7 +195,8 @@ export function toTime24(display) {
 export function explainActionError(err) {
   const status = err?.response?.status;
   const data = err?.response?.data;
-  if (status === 409 && data?.code !== "slot_taken") {
+  // These 409s say something the admin can act on (busy doctor, closed booking, no doctor yet): show the server's words.
+  if (status === 409 && !["slot_taken", "closed", "no_doctor", "status"].includes(data?.code)) {
     return { message: "This booking was already updated, refreshing", refresh: true };
   }
   if (data?.msg) return { message: data.msg, refresh: false };

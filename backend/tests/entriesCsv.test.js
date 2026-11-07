@@ -158,7 +158,9 @@ describe("appointment entries: the CSV", () => {
     const manualLine = records.find((r) => r.Source === "Manual");
     assert.deepEqual([manualLine["Calculation (our margin)"], manualLine["Calculation (% of consultation fee)"]], ["-15.00", "-37.5"]);
     const booking = records.find((r) => r.Source !== "Manual");
-    for (const column of COLUMNS.slice(COLUMNS.indexOf("Company"))) assert.equal(booking[column], "", column);
+    // (Currency is the last column and is never empty: a booking row says which currency its money is in.)
+    for (const column of COLUMNS.slice(COLUMNS.indexOf("Company"), COLUMNS.indexOf("Currency"))) assert.equal(booking[column], "", column);
+    assert.equal(booking["Currency"], "USD");
   });
 
   test("it follows the list's tab, search, doctor and month filters, and leaves deleted manual rows out", async () => {

@@ -185,7 +185,7 @@ const CONDITION_DISCOVERY_ROUTES = new Set([
   "/mens-health/urology/blood-in-urine",
   "/mens-health/urology/kidney-stones",
   "/mens-health/urology/urinary-incontinence",
-  "/urinary-tract-infection",
+  "/mens-health/urology/urinary-tract-infection",
   "/mens-wellness-consultation",
   "/mental-health/behavioral-health/adjustment-difficulties",
   "/mental-health/behavioral-health/anger-management",

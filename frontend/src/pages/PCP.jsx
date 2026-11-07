@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   ArrowRight,
@@ -27,8 +27,8 @@ import "./Categories/categoriesGlobal.css";
 import SEO from "../components/Seo";
 import pcpHeroBg from "../assets/SpecialitiesImage/family-medicine-primary-care-doctor-consultation-banner.webp";
 import BookingCard from "../components/SpecialityBookingCard";
-import api from "../api";
 import FAQ from "../components/FAQ/FAQ";
+import { useCategoryPriceInfo } from "../hooks/useCategoryPriceInfo";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const FADE_VARIANTS = {
@@ -307,40 +307,11 @@ const CTA_TRUST_POINTS = [
 // ─── Page ──────────────────────────────────────────────────────────────────────
 export default function PCP() {
   const [openIndex, setOpenIndex] = useState(null);
-  const PCP_FALLBACK_PRICE = 69;
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchPrice() {
-      try {
-        const res = await api.get("/api/pricing");
-        if (!cancelled) {
-          const record = res.data?.general;
-          const fetchedPrice = Number(record?.price);
-          setPrice(
-            Number.isFinite(fetchedPrice) && fetchedPrice > 0
-              ? fetchedPrice
-              : PCP_FALLBACK_PRICE,
-          );
-        }
-      } catch (err) {
-        console.error("Failed to fetch category pricing:", err);
-        if (!cancelled) setPrice(PCP_FALLBACK_PRICE);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-    fetchPrice();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const priceInfo = useCategoryPriceInfo("general");
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div className="pcp-root">
         {/* ───────────────────────── Hero ───────────────────────── */}
@@ -433,8 +404,7 @@ export default function PCP() {
               <div className="pcp-about__right">
                 <FadeIn direction="right" className="pcp-about__booking-slot">
                   <BookingCard
-                    price={price}
-                    priceLoading={priceLoading}
+                    priceInfo={priceInfo}
                     categoryId="general"
                     name="Primary Care"
                     isPcp
@@ -690,12 +660,6 @@ export default function PCP() {
             badge="FAQ"
             title="Got Questions?"
             description="Everything you need to know about primary care and Humancare Connect."
-            stats={[
-              ...CTA_TRUST_POINTS.map((point) => ({
-                label: point.text,
-                icon: () => <point.icon size={16} />,
-              })),
-            ]}
             sections={[
               {
                 title: "Frequently Asked",

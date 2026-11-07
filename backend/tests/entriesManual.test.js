@@ -18,6 +18,10 @@ const adminEntries = require("../routes/adminEntries");
 const { entriesViewAccess } = require("../middleware/verifyToken");
 const M = require("../utils/manualEntry");
 
+// Money totals are kept per currency (never added across them); these tests only use USD bookings.
+const usdTotals = (t) => ({ rows: t.rows, ...t.byCurrency.usd });
+const usdSummary = (s) => ({ feeNotEnteredCount: s.feeNotEnteredCount, ...s.byCurrency.usd });
+
 const NOW = Date.UTC(2026, 9, 26, 22, 0); // already 2026-10-27 in India
 const TODAY = "2026-10-27";
 
@@ -182,7 +186,7 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       await manual({ consultationFee: "10.50" }, { paidStatus: "on_hold" });
       const all = await list();
       assert.deepEqual([all.total, all.counts.all, all.counts.unpaid, all.counts.on_hold], [3, 3, 2, 1]);
-      assert.deepEqual([all.totals.rows, all.totals.feeChargedCents, all.totals.doctorFeeCents], [3, 9900 + 10000 + 1050, 2000]);
+      assert.deepEqual([all.totals.rows, all.totals.byCurrency.usd.feeChargedCents, all.totals.byCurrency.usd.doctorFeeCents], [3, 9900 + 10000 + 1050, 2000]);
       assert.equal(all.items.filter((r) => r.kind === "manual").length, 2);
       assert.deepEqual((await list("tab=on_hold")).items.map((r) => r.kind), ["manual"]);
       assert.equal((await list("tab=unpaid")).items.length, 2);
@@ -290,7 +294,7 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
       await manual({}, { paidStatus: "not_payable" });
       await manual({}, { paidStatus: "on_hold", doctorFeeCents: 999 });
       const body = await listAsSuper();
-      assert.deepEqual([body.summary.toPayCents, body.summary.paidCents, body.summary.feeNotEnteredCount], [3000 + 1500, 4000, 2]);
+      assert.deepEqual([body.summary.byCurrency.usd.toPayCents, body.summary.byCurrency.usd.paidCents, body.summary.feeNotEnteredCount], [3000 + 1500, 4000, 2]);
       assert.deepEqual((await listAsSuper("tab=paid")).summary, body.summary);
       assert.deepEqual((await listAsSuper("q=nobody-called-this")).summary, body.summary);
     });
@@ -298,9 +302,9 @@ describe("manual entries: the list, and the add / edit / delete routes", () => {
     test("the totals row: fee charged and saved doctor fee follow the tab and the search", async () => {
       await manual({ patientName: "Alpha", consultationFee: "20" }, { doctorFeeCents: 1000 });
       await manual({ patientName: "Beta", consultationFee: "30" }, { paidStatus: "on_hold", doctorFeeCents: 500 });
-      assert.deepEqual((await list()).totals, { rows: 2, feeChargedCents: 5000, doctorFeeCents: 1500 });
-      assert.deepEqual((await list("tab=on_hold")).totals, { rows: 1, feeChargedCents: 3000, doctorFeeCents: 500 });
-      assert.deepEqual((await list("q=alpha")).totals, { rows: 1, feeChargedCents: 2000, doctorFeeCents: 1000 });
+      assert.deepEqual(usdTotals((await list()).totals), { rows: 2, feeChargedCents: 5000, doctorFeeCents: 1500 });
+      assert.deepEqual(usdTotals((await list("tab=on_hold")).totals), { rows: 1, feeChargedCents: 3000, doctorFeeCents: 500 });
+      assert.deepEqual(usdTotals((await list("q=alpha")).totals), { rows: 1, feeChargedCents: 2000, doctorFeeCents: 1000 });
     });
   });
 

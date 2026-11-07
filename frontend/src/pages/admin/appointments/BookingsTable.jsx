@@ -9,7 +9,7 @@ import CallBadge from "./CallBadge";
 import { copyText } from "./copyText";
 import { assignUrl } from "./assignPageLogic";
 import {
-  CARD_BELOW, assignedByHint, canAlternate, canAssign, formatBookedOn, formatConsultation, formatFee, originalDoctorHint, rowActions, rowNumber,
+  CARD_BELOW, assignedByHint, canAlternate, canAssign, canReschedule, formatBookedOn, formatConsultation, formatFee, originalDoctorHint, rowActions, rowNumber,
   shortBookingId, sourcePageText,
 } from "./bookingFormat";
 
@@ -123,10 +123,20 @@ function DoctorCell({ row, busy }) {
 
 // The status pill, and under it who assigned the doctor (only once the booking has a doctor). Bookings assigned
 // before the assigner was recorded show "by —" with the reason on hover.
-function StatusCell({ row }) {
+function StatusCell({ row, actions }) {
   return (
     <div className="adp-bk-statusbox">
       <StatusPill status={row.status} />
+      {row.rescheduleCount > 0 && (
+        <button
+          type="button"
+          className="adp-rs-tag"
+          title="Show the reschedule history"
+          onClick={() => actions.handlers.history(row)}
+        >
+          Rescheduled ×{row.rescheduleCount}
+        </button>
+      )}
       {row.doctorName && (
         <span className={`adp-bk-by${row.assignedBy ? "" : " adp-bk-by--none"}`} title={row.assignedBy ? `Assigned by ${row.assignedBy}` : assignedByHint(row)}>
           by {row.assignedBy || "—"}
@@ -147,6 +157,11 @@ function ActionsCell({ row, actions, busy, isSuperAdmin }) {
         <Link className="adp-bk-btn" to={`/admin-dashboard/appointments/${row.id}`}>
           View
         </Link>
+      )}
+      {canReschedule(row) && (
+        <button type="button" className="adp-bk-btn adp-bk-btn--outline-ok" disabled={busy} title="Move this booking to another date and time" onClick={() => handlers.reschedule(row)}>
+          Reschedule
+        </button>
       )}
       {shown.includes("autoComplete") && (
         <button type="button" className="adp-bk-btn adp-bk-btn--ok" disabled={busy} onClick={() => handlers.autoComplete(row)}>
@@ -278,8 +293,8 @@ export default function BookingsTable({ rows, page, callSummaries = {}, actions,
                       <span className="adp-bk-muted">Not scheduled</span>
                     )}
                   </td>
-                  <td data-label="Fee" className="adp-bk-fee">{formatFee(row.fee)}</td>
-                  <td data-label="Status" className="adp-bk-status"><StatusCell row={row} /></td>
+                  <td data-label="Fee" className="adp-bk-fee">{formatFee(row.fee, row.currency)}</td>
+                  <td data-label="Status" className="adp-bk-status"><StatusCell row={row} actions={actions} /></td>
                   <td data-label="Call" className="adp-bk-c-call"><CallBadge summary={callSummaries[row.id]} row={row} /></td>
                   <td data-label="Actions" className="adp-bk-actions-cell"><ActionsCell row={row} actions={actions} busy={busy} isSuperAdmin={isSuperAdmin} /></td>
                 </tr>

@@ -168,6 +168,8 @@ test("call A ends after a recovered reconnect, call B starts on the same socket:
     await join(a, "B"); // call B starts on the same socket, without an explicit leave from A
     assert.deepEqual(appointmentRoomsOf(serverSocket(srv, a)), ["B"], "it is in call B's room only");
     assert.equal(srv.state.socketRooms.get(a.id), "B");
+    // The "a left" event travels over the network: wait for it instead of assuming it has already arrived.
+    for (let i = 0; i < 100 && !peerALog.some((x) => x.e === "participant-left"); i++) await sleep(20);
     assert.deepEqual(peerALog.filter((x) => x.e === "participant-left"), [{ e: "participant-left", payload: { appointmentId: "A" } }], "call A's peer was told a left, tagged A");
 
     // The late participant-left for call A (what the old grace timer sent into the room by name).

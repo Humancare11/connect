@@ -3,6 +3,9 @@ import api from "../api";
 import "./Services.css";
 import SEO from "../components/Seo";
 import RetryButton from "../components/ui/RetryButton";
+import PriceText from "../components/PriceText";
+import { useSiteCurrency } from "../context/CurrencyContext";
+import { servicePriceInfo } from "../utils/currencyDisplay";
 
 function ServiceIcon({ icon, name }) {
   const value = String(icon || "").trim();
@@ -23,6 +26,8 @@ export default function HealthcareAlternating() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  // The price of each service is shown in the visitor's currency (the server decides it), with a skeleton until it is known.
+  const { currency, loading: currencyLoading } = useSiteCurrency();
 
   useEffect(() => {
     let active = true;
@@ -83,7 +88,9 @@ export default function HealthcareAlternating() {
                   <div>
                     <h2>{service.name}</h2>
                     <p className="dynamic-service-description">{service.description}</p>
-                    <p>${Number(service.price || 49).toFixed(2)}</p>
+                    <p>
+                      <PriceText info={servicePriceInfo({ record: service, currency, currencyLoading })} />
+                    </p>
                   </div>
                 </article>
               ))}

@@ -251,6 +251,21 @@ export default function Appointments() {
                     )}
                   </div>
 
+                  {appt.reschedule && (
+                    <div className="appt-resched" role="note">
+                      <b>Your appointment was rescheduled</b>
+                      <span>
+                        Rescheduled from {formatDate(appt.reschedule.previousDate)}
+                        {appt.reschedule.previousTime ? `, ${appt.reschedule.previousTime}` : ""}
+                      </span>
+                      {appt.reschedule.lastAt && (
+                        <span className="appt-resched-when">
+                          Changed on {new Date(appt.reschedule.lastAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   {appt.medicalReports?.length > 0 && (
                     <div className="appt-reports">
                       <p className="appt-reports-label">Medical Reports</p>

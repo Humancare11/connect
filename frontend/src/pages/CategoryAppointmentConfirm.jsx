@@ -3,8 +3,13 @@ import { useNavigate, Navigate, Link } from "react-router-dom";
 import api from "../api";
 import { withBookingSource } from "../utils/bookingSource";
 import HealthcareIcon from "../components/HealthcareIcon";
-import { PaymentStage } from "./AppointmentBookingForm";
+import { PaymentStep } from "./AppointmentBookingForm";
 import { useAuth } from "../context/AuthContext";
+import { useSiteCurrency } from "../context/CurrencyContext";
+import { usePrices, usePricingMeta } from "../context/PricingContext";
+import PriceText from "../components/PriceText";
+import { selectionPriceInfo } from "../utils/currencyDisplay";
+import { useServiceRecord } from "../hooks/useServicePrice";
 import { uploadFileDirectToS3 } from "../utils/directUpload";
 import {
   readPendingBooking,
@@ -15,26 +20,20 @@ import {
   toAppointmentUtc,
   formatDisplayDate,
   formatPrice,
+  paymentFields,
 } from "../utils/booking";
 import "./Appointment.css";
 import useModalA11y from "../hooks/useModalA11y";
+import ReportFileList from "../components/ReportFileList";
 
-const FILE_ICONS = { pdf: "📄", image: "🖼️", doc: "📝", default: "📎" };
-function fileIcon(type = "") {
-  if (type.includes("pdf")) return FILE_ICONS.pdf;
-  if (type.startsWith("image/")) return FILE_ICONS.image;
-  if (type.includes("word") || type.includes("doc")) return FILE_ICONS.doc;
-  return FILE_ICONS.default;
-}
-function formatBytes(b) {
-  if (!b) return "";
-  if (b < 1024) return `${b} B`;
-  if (b < 1048576) return `${(b / 1024).toFixed(1)} KB`;
-  return `${(b / 1048576).toFixed(1)} MB`;
-}
+// The title of the "Next Availability" option on the intake's timing step (CategoryConsultant).
+const NEXT_AVAILABILITY_LABEL = "Next Availability";
 
 export default function CategoryAppointmentConfirm() {
   const { user, loading: authLoading } = useAuth();
+  const { currency: siteCurrency, loading: currencyLoading } = useSiteCurrency();
+  const prices = usePrices();
+  const { loading: pricesLoading } = usePricingMeta();
   const navigate = useNavigate();
   const pending = readPendingBooking();
 
@@ -47,9 +46,9 @@ export default function CategoryAppointmentConfirm() {
     pending?.formData?.time || pending?.formData?.slot || "",
   );
   // "Next Availability" bookings never had a slot picked — show that
-  // explicitly instead of a blank "Time" row on the payment summary.
-  const isNextAvailability = pending?.formData?.urgency !== "flexible";
-  const displayTime = time || (isNextAvailability ? "Next Available" : "");
+  // explicitly (on the details step and the payment summary) instead of a blank "—" time row.
+  const isNextAvailability = !time && pending?.formData?.urgency !== "flexible";
+  const displayTime = time || (isNextAvailability ? NEXT_AVAILABILITY_LABEL : "");
   const [date, setDate] = useState(pending?.formData?.date || "");
   const [stage, setStage] = useState("form"); // form | payment | confirming | success
   const [reports, setReports] = useState([]);
@@ -57,6 +56,10 @@ export default function CategoryAppointmentConfirm() {
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
   const [confirmErr, setConfirmErr] = useState("");
+  // Why the last upload failed, shown under the upload box on the details step (confirmErr is only shown from the payment step on).
+  const [uploadErr, setUploadErr] = useState("");
+  // Set by the server when some attached files could not be attached to the (created, paid) booking.
+  const [reportsWarning, setReportsWarning] = useState("");
   const [showConsentModal, setShowConsentModal] = useState(false);
   const consentModalRef = useRef(null);
   useModalA11y(consentModalRef, showConsentModal, () => setShowConsentModal(false));
@@ -78,6 +81,19 @@ export default function CategoryAppointmentConfirm() {
     if (p?.formData?.date) setDate(p.formData.date);
     setStage("payment");
   }, [authLoading, user]);
+
+  // The price shown, in the currency the server decided for this visitor (display only: the server prices the payment itself).
+  // A service booking is priced from the service's own record (its EUR / GBP / INR price), like a category from the price table.
+  const service = useServiceRecord(selection?.isServiceBooking ? selection.catId : "");
+  const priceInfo = selectionPriceInfo({
+    selection: selection ? { ...selection, cost: livePrice } : null,
+    prices,
+    currency: siteCurrency,
+    currencyLoading,
+    pricesLoading,
+    serviceRecord: service.record,
+    serviceLoading: service.loading,
+  });
 
   // Always confirm the price against the DB before charging the patient
   useEffect(() => {
@@ -129,20 +145,25 @@ export default function CategoryAppointmentConfirm() {
 
   const uploadFiles = async (fileList) => {
     setUploading(true);
+    setUploadErr("");
     const results = [];
+    const failed = [];
     for (const file of Array.from(fileList)) {
       try {
         const uploaded = await uploadFileDirectToS3(file);
         results.push({
           url: uploaded.url,
-          name: uploaded.name,
-          type: uploaded.type,
-          size: uploaded.size,
+          key: uploaded.key,
+          // the name the patient picked, even if the storage answer carries none
+          name: uploaded.name || file.name,
+          type: uploaded.type || file.type,
+          size: uploaded.size || file.size,
         });
       } catch {
-        setConfirmErr(`Failed to upload "${file.name}". Max 10 MB.`);
+        failed.push(file.name);
       }
     }
+    if (failed.length) setUploadErr(`Failed to upload ${failed.map((n) => `"${n}"`).join(", ")}. Max 10 MB.`);
     setReports((prev) => [...prev, ...results]);
     setUploading(false);
   };
@@ -198,9 +219,9 @@ export default function CategoryAppointmentConfirm() {
           serviceName: selection.serviceName || "",
           pcpName: selection.pcpName || "",
         };
-        if (gateway === "paypal") body.paypalOrderId = paymentRef;
-        else body.paymentIntentId = paymentRef;
-        await api.post("/api/category-consultation", withBookingSource(body));
+        Object.assign(body, paymentFields(gateway, paymentRef));
+        const created = await api.post("/api/category-consultation", withBookingSource(body));
+        setReportsWarning(created.data?.warning || "");
       } else {
         const body = {
           category: selection.catLabel,
@@ -215,9 +236,9 @@ export default function CategoryAppointmentConfirm() {
           problem: notes,
           medicalReports: reports,
         };
-        if (gateway === "paypal") body.paypalOrderId = paymentRef;
-        else body.paymentIntentId = paymentRef;
-        await api.post("/api/appointments", withBookingSource(body));
+        Object.assign(body, paymentFields(gateway, paymentRef));
+        const created = await api.post("/api/appointments", withBookingSource(body));
+        setReportsWarning(created.data?.warning || "");
       }
       clearPendingBooking();
       setStage("success");
@@ -262,7 +283,7 @@ export default function CategoryAppointmentConfirm() {
             <div className="ap-hero-fee">
               <span className="ap-hero-fee-label">Fee</span>
               <span className="ap-hero-fee-amount">
-                {formatPrice(livePrice)}
+                <PriceText info={priceInfo} />
               </span>
             </div>
           )}
@@ -307,7 +328,7 @@ export default function CategoryAppointmentConfirm() {
                 </div>
                 <div className="ap-pay-summary-row">
                   <span>Preferred time</span>
-                  <strong>{time || "—"}</strong>
+                  <strong>{displayTime || "—"}</strong>
                 </div>
               </div>
             </div>
@@ -355,36 +376,21 @@ export default function CategoryAppointmentConfirm() {
                   </>
                 )}
               </div>
-              {reports.length > 0 && (
-                <div className="ap-report-list">
-                  {reports.map((r, i) => (
-                    <div key={i} className="ap-report-item">
-                      <span className="ap-report-icon">{fileIcon(r.type)}</span>
-                      <div className="ap-report-meta">
-                        <span className="ap-report-name">{r.name}</span>
-                        <span className="ap-report-size">
-                          {formatBytes(r.size)}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="ap-report-remove"
-                        onClick={() => removeReport(i)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              {uploadErr && (
+                <p role="alert" className="ap-error">
+                  {uploadErr}
+                </p>
               )}
+              <ReportFileList files={reports} onRemove={removeReport} uploaded />
             </div>
 
             <button
               className="ap-submit"
               type="button"
               onClick={handleProceedClick}
+              disabled={priceInfo.loading}
             >
-              Proceed to Payment - {formatPrice(livePrice)} →
+              Proceed to Payment - {priceInfo.loading ? "…" : formatPrice(priceInfo.amount, priceInfo.currency)} →
             </button>
           </div>
         )}
@@ -397,8 +403,8 @@ export default function CategoryAppointmentConfirm() {
         )}
 
         {stage === "payment" && (
-          <PaymentStage
-            amount={livePrice}
+          <PaymentStep
+            priceInfo={priceInfo}
             selection={selection}
             formData={{ notes, date, time: displayTime }}
             uploadedReports={reports}
@@ -437,6 +443,11 @@ export default function CategoryAppointmentConfirm() {
               Payment confirmed. Our team will review and assign a doctor
               shortly.
             </p>
+            {reportsWarning && (
+              <p role="alert" className="ap-error" data-testid="reports-warning">
+                {reportsWarning}
+              </p>
+            )}
             <Link
               to="/user/appointments"
               className="ap-submit"

@@ -66,7 +66,7 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
   // stacking context (z-index: 1), which is painted beneath the fixed sidebar
   // (z-index: 50), so the sidebar covered the left of the modal.
   return createPortal(
-    <div className="dp-modal-overlay dp-modal-overlay--fit" onClick={onClose}>
+    <div className="dp-modal-overlay dp-modal-overlay--fit" data-lenis-prevent onClick={onClose}>
       <div ref={certDialogRef} role="dialog" aria-modal="true" aria-label="Medical certificate" className="dp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="dp-modal-header">
           <h2>Medical Certificate</h2>
