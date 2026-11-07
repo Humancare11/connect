@@ -1,6 +1,5 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import api from "../../api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowRight,
@@ -20,7 +19,11 @@ import {
 import "./categoriesGlobal.css";
 import mentalHealthHero from "../../assets/HomeImageCategories/mental-health-counseling-services.webp";
 import SEO from "../../components/Seo";
+import Breadcrumb from "../../components/ui/Breadcrumb";
+import SpecialtyCard from "../../components/SpecialtyCard";
 import FAQ from "../../components/FAQ/FAQ";
+import { useCategoryPriceInfo } from "../../hooks/useCategoryPriceInfo";
+import PriceText from "../../components/PriceText";
 
 // ─── Page Data ────────────────────────────────────────────────────────────────
 // Edit ONLY this object to customise the page.
@@ -346,48 +349,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
   const [submitted, setSubmitted] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const response = await api.get("/api/appointment-tree");
-
-        const DB_CATEGORY_NAMES = {
-          general: "General & Everyday Care",
-          mental: "Mental Health",
-          skin: "Skin & Hair",
-          women: "Women's Health",
-          men: "Men's Health",
-          family: "Children & Family",
-          weight: "Weight & Nutrition",
-          chronic: "Chronic Care & Expert Opinion",
-          eeb: "Eye, Ear & Bone",
-          sexual: "Sexual Health",
-          travel: "Travel & Global Care",
-        };
-
-        const categoryName = DB_CATEGORY_NAMES[categoryCode] || categoryCode;
-        const category = response.data.find(
-          (item) => item.name === categoryName,
-        );
-
-        if (category && category.price !== undefined) {
-          setPrice(category.price);
-        } else {
-          setPrice(49);
-        }
-      } catch (error) {
-        console.error("Failed to fetch pricing:", error);
-        setPrice(49);
-      } finally {
-        setPriceLoading(false);
-      }
-    };
-
-    fetchPrice();
-  }, [categoryCode]);
+  const priceInfo = useCategoryPriceInfo(categoryCode);
 
   const handleSubmit = () => {
     if (!form.name || !form.phone || !form.date) return;
@@ -418,11 +380,7 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
     <div className="hcc-booking-card">
       <div className="hcc-booking-price-block">
         <div className="hcc-booking-price">
-          {priceLoading ? (
-            <span style={{ opacity: 0.5, color: "#FFF" }}>Loading...</span>
-          ) : (
-            `$${price ?? 49}`
-          )}
+          <PriceText info={priceInfo} />
         </div>
         <p className="hcc-booking-price-sub">
           <span>One-time consultation fee</span>
@@ -477,34 +435,6 @@ function BookingForm({ specialtyPlaceholder, categoryCode }) {
 
 // ─── Specialty Card — clickable ───────────────────────────────────────────────
 
-function SpecialtyCard({ sp, index }) {
-  const content = (
-    <motion.div
-      className="hcc-specialty-card"
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: Math.min(index * 0.04, 0.4) }}
-    >
-      <div className="hcc-specialty-name">{sp.name}</div>
-      <p className="hcc-specialty-desc">{sp.desc}</p>
-      {sp.path && (
-        <div className="hcc-specialty-arrow">
-          Learn more <FiArrowRight size={13} />
-        </div>
-      )}
-    </motion.div>
-  );
-
-  return sp.path ? (
-    <Link to={sp.path} className="hcc-specialty-link" aria-label={sp.name}>
-      {content}
-    </Link>
-  ) : (
-    content
-  );
-}
-
 // ─── Condition Card — clickable ───────────────────────────────────────────────
 
 function ConditionCard({ cond, index }) {
@@ -538,6 +468,8 @@ function ConditionCard({ cond, index }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function MentalHealth() {
+  // The same USD price the booking card below shows (hidden behind its skeleton), for the schema.org Offer.
+  const priceInfo = useCategoryPriceInfo("mental");
   const navigate = useNavigate();
   const goToBooking = () =>
     navigate("/appointment-booking", { state: { categoryId: "mental" } });
@@ -552,7 +484,7 @@ export default function MentalHealth() {
         minHeight: "100vh",
       }}
     >
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       {/* ── Hero ── */}
       <section
@@ -589,6 +521,7 @@ export default function MentalHealth() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55 }}
           >
+            <Breadcrumb tone="light" />
             <div className="hcc-badge">
               <span className="hcc-badge-dot" />
               Trusted {cat.label}

@@ -490,7 +490,71 @@ async function notifyDoctorAppointmentReopened({ appointment, isCategory }) {
   });
 }
 
+
+// An admin moved the booking to a new date/time. Goes to the patient and the assigned doctor, each with the old and the
+// new time. `booking` is the updated booking; `old` is { date, time, utc } from before the move. The admin's reason and
+// note are deliberately not part of any message.
+async function notifyBookingRescheduled({ booking, isCategory, old }) {
+  // The booking as it stood before, so the same time formatting shows the old slot.
+  const before = isCategory
+    ? { ...booking, date: old.date, slot: old.time, assignedSlot: old.time }
+    : { ...booking, date: old.date, time: old.time, appointmentDateTimeUtc: old.utc };
+
+  const patientWhen = (b) =>
+    isCategory
+      ? consultationWhen(b)
+      : whenText({
+          date: b.date,
+          time: b.time,
+          utc: b.appointmentDateTimeUtc,
+          patientTimezone: b.patientTimezone,
+          targetTimezone: b.patientTimezone,
+        });
+
+  await safely("patient rescheduled email", async () => {
+    const patient = await User.findById(booking.patientId).select("name email").lean();
+    if (!patient?.email) return;
+    await mailer.sendBookingNotificationEmail(patient.email, {
+      subject: "Your appointment has been rescheduled — Humancare Connect",
+      badge: "Appointment Rescheduled",
+      greeting: `Hello ${patient.name || "Patient"},`,
+      intro: "Your appointment has been moved to a new date and time by our team. Your payment is unchanged.",
+      rows: [
+        ["Earlier", patientWhen(before)],
+        ["New date / time", patientWhen(booking)],
+      ],
+    });
+  });
+
+  await safely("doctor rescheduled email", async () => {
+    const patient = await fetchPatient(booking.patientId);
+    const [now, then] = await Promise.all([
+      doctorContactFor({ booking, isCategory }),
+      doctorContactFor({ booking: before, isCategory }),
+    ]);
+    if (!now.to) {
+      console.warn("[booking-notify] rescheduled email skipped: doctor has no email address.");
+      return;
+    }
+    await mailer.sendBookingNotificationEmail(now.to, {
+      subject: "Humancare Connect — Appointment rescheduled",
+      badge: "Appointment Rescheduled",
+      greeting: now.doctorName ? `Hello Dr. ${now.doctorName},` : "Hello Doctor,",
+      intro: "An appointment has been moved to a new date and time by the Humancare Connect team.",
+      rows: [
+        ["Patient", patientLabel(patient)],
+        ["Earlier", then.when],
+        ["New date / time", now.when],
+        ["Category", now.category],
+      ],
+      ctaUrl: `${frontendBase()}/doctor-dashboard/appointments`,
+      ctaLabel: "Go to your dashboard",
+    });
+  });
+}
+
 module.exports = {
+  notifyBookingRescheduled,
   notifyDoctorAppointmentReopened,
   notifyAppointmentBooked,
   notifyCategoryConsultationBooked,

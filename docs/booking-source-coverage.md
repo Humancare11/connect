@@ -15,7 +15,7 @@ Every public route (no params, not noindex/private) and what the resolver names 
 | private (never named) | 0 |
 | **Public routes** | **307** |
 
-Not counted: 77 private/noindex routes (dashboards, login, payment, booking steps) and 30 routes with params (below).
+Not counted: 78 private/noindex routes (dashboards, login, payment, booking steps) and 30 routes with params (below).
 
 By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9, home 1, symptom 1.
 
@@ -243,6 +243,7 @@ By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9,
 | `/mens-health/urology/blood-in-urine` | condition | Blood in Urine |
 | `/mens-health/urology/kidney-stones` | condition | Kidney Stones |
 | `/mens-health/urology/urinary-incontinence` | condition | Urinary Incontinence |
+| `/mens-health/urology/urinary-tract-infection` | condition | Urinary Tract Infection |
 | `/mens-wellness-consultation` | condition | Men's Wellness Consultation |
 | `/mental-health` | category | Mental Health |
 | `/mental-health/behavioral-health` | speciality | Behavioral Medicine |
@@ -306,7 +307,6 @@ By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9,
 | `/travel-medical-certification` | condition | Travel Medical Certificate |
 | `/upper-respiratory-infection` | condition | Upper Respiratory Infection |
 | `/urinary-symptoms-in-men` | condition | Urinary Symptoms in Men |
-| `/urinary-tract-infection` | condition | Urinary Tract Infection |
 | `/vomiting` | condition | Vomiting |
 | `/vomiting-diarrhea-children` | condition | Vomiting & Diarrhea in Children |
 | `/weight-and-nutrition` | category | Weight & Nutrition |

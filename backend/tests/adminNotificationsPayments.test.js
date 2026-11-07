@@ -18,6 +18,18 @@ pv.verifyStripePaymentIntent = async ({ paymentIntentId }) => {
   return { ref: paymentIntentId, gateway: "stripe", amountCents: 5000 };
 };
 pv.verifyPaypalOrder = async ({ paypalOrderId }) => ({ ref: paypalOrderId, gateway: "paypal", amountCents: 5000 });
+// The controllers verify category / service bookings through verifyCategoryPayment / verifyServicePayment (currency work):
+// stub those with the same outcomes as the gateway stubs above (USD, $50.00).
+const verifyFor = async ({ paymentIntentId, paypalOrderId }) => {
+  if (paymentIntentId) {
+    const v = await pv.verifyStripePaymentIntent({ paymentIntentId });
+    return { ...v, currency: "USD" };
+  }
+  const v = await pv.verifyPaypalOrder({ paypalOrderId });
+  return { ...v, currency: "USD" };
+};
+pv.verifyCategoryPayment = verifyFor;
+pv.verifyServicePayment = verifyFor;
 pv.claimPaymentOnce = async () => {};
 require("../utils/billing").recordPaymentAndInvoice = async () => {};
 const notify = require("../utils/bookingNotifications");

@@ -66,7 +66,7 @@ test("appointment-tree condition projection is unchanged and hides PR2 fields", 
       Object.keys(specialty.conditions[0]).sort(),
       ["_id", "description", "icon", "isActive", "name", "specialtyId"],
     );
-    assert.deepEqual(Object.keys(body[0]).sort(), ["_id", "currency", "description", "icon", "isActive", "name", "price", "specialties"]);
+    assert.deepEqual(Object.keys(body[0]).sort(), ["_id", "currency", "description", "icon", "isActive", "name", "price", "pricingSlug", "specialties"]);
   } finally {
     restore.forEach((fn) => fn());
     CategoryPricing.find = originalPricingFind;

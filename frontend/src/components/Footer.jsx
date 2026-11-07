@@ -13,8 +13,8 @@ import {
 
 import { FaThreads } from "react-icons/fa6";
 import { FaXTwitter } from "react-icons/fa6";
-// import logo from "../assets/HC-Logo.webp";
-import logo from "../assets/final-footer-logo.webp";
+// import logo from "../assets/final-footer-logo.webp";
+import logo from "../assets/HCC_FInal_logo-1.webp";
 import legit from "../assets/legitscript.png";
 import { Link } from "react-router-dom";
 
@@ -104,7 +104,9 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Navigation </h5>
           <a href="/about-us">About Us</a>
-          <Link to="/appointment-booking" data-source="footer">Book Appointment</Link>
+          <Link to="/appointment-booking" data-source="footer">
+            Book Appointment
+          </Link>
           <a href="/corporates">Corporates</a>
           <a href="/blogs">Blogs</a>
         </div>
@@ -113,7 +115,11 @@ export default function Footer() {
         <div className="footer-col">
           <h5>Services </h5>
           <a href="/online-prescription-refills">Online Prescription Refill</a>
-          <Link to="/appointment-booking" state={{ tab: "spec" }} data-source="footer">
+          <Link
+            to="/appointment-booking"
+            state={{ tab: "spec" }}
+            data-source="footer"
+          >
             Online Doctor Consultation
           </Link>
           <a href="/doctors-note">Sick Notes</a>

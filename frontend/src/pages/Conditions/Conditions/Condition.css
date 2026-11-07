@@ -197,7 +197,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  justify-content: space-between;
+  /* The grid stretches this column to the height of the (much taller) right
+     column. space-between pushed the heading and the Quick Access card to
+     opposite ends of it, leaving ~200px gaps; stack them from the top instead. */
+  justify-content: flex-start;
 }
 .condition-about-h2 {
   font-size: clamp(20px, 2.2vw, 26px);

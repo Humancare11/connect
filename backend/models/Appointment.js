@@ -72,6 +72,9 @@ const appointmentSchema = new mongoose.Schema(
     // Booking source: platform, app version and the page the booking started from (see utils/bookingSource.js).
     ...bookingSourceFields(),
     sessionStarted: { type: Boolean, default: false },
+    // Admin reschedules (see utils/appointmentReschedule.js). The full trail is in AppointmentRescheduleHistory.
+    rescheduleCount: { type: Number, default: 0 },
+    lastRescheduledAt: { type: Date, default: null },
     // Set when an admin reopens a completed appointment; cleared again on completion.
     // Lets the doctor's list show a "Reopened by admin" note.
     reopenedByAdmin: {
@@ -87,16 +90,30 @@ const appointmentSchema = new mongoose.Schema(
     },
     medicalReports: [
       {
+        key:  { type: String },
         url:  { type: String },
         name: { type: String },
         type: { type: String },
         size: { type: Number },
       },
     ],
+    // Files the patient attached that the storage could not be asked about when the booking was created (it was down). Never shown to
+    // anyone; jobs/pendingReportsJob.js verifies them later and moves the good ones into medicalReports (or drops them).
+    reportsUnverified: {
+      type: [{ _id: false, key: { type: String }, name: { type: String } }],
+      default: [],
+    },
+    reportsUnverifiedAt: { type: Date, default: null },
     paymentIntentId:  { type: String, default: "" },
     paymentAmount:    { type: Number, default: 0 },
+    // Currency of paymentAmount / consultationPrice. Bookings made before
+    // multi-currency existed have none stored and read as "usd".
+    paymentCurrency:  { type: String, enum: ["usd", "eur", "gbp", "inr"], default: "usd" },
     paymentStatus:    { type: String, enum: ["unpaid", "paid"], default: "unpaid", index: true },
-    paymentGateway:   { type: String, enum: ["stripe", "paypal", ""], default: "" },
+    paymentGateway:   { type: String, enum: ["stripe", "paypal", "razorpay", ""], default: "" },
+    // Set only for a Razorpay payment (paymentIntentId then holds the same razorpayPaymentId).
+    razorpayOrderId:  { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
     doctorPayoutStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
     doctorPayoutDate:   { type: Date },
     doctorPayoutRef:    { type: String, default: "" },

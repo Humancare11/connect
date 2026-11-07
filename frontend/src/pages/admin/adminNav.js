@@ -46,6 +46,8 @@ export const NAV_ITEMS = [
       { path: "/admin-dashboard/medical-reports", label: "Medical Report", roles: ["admin", "superadmin"], icon: "document" },
     ],
   },
+  // Finalised doctor Visit Notes (read only). Admin and super admin only.
+  { key: "visit-notes", label: "Visit Notes", path: "/admin-dashboard/visit-notes", roles: ["admin", "superadmin"], icon: "document" },
   // Payment-admin-only pages. They aren't part of the requested menu order;
   // kept here (visible only to the payment admin role) until they get a home.
   {

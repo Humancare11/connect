@@ -229,7 +229,7 @@ export default function FitToFly() {
   const s = SERVICES[slug] || SERVICES["telehealth-services"];
   const handleSwitch = useCallback((newSlug) => setSlug(newSlug), []);
   const bp = useBreakpoint();
-  const { price, priceLoading } = useServicePrice(s.slug);
+  const { priceInfo } = useServicePrice(s.slug);
 
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -240,7 +240,7 @@ export default function FitToFly() {
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
 
       <div
         className="service-page service-page--fit-to-fly"
@@ -328,8 +328,7 @@ export default function FitToFly() {
                   className="service-hero__booking"
                 >
                   <ServiceBookingCard
-                    price={price}
-                    priceLoading={priceLoading}
+                    priceInfo={priceInfo}
                     name={s.serviceName}
                     slug={s.slug}
                   />

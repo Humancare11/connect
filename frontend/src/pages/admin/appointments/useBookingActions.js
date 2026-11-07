@@ -14,7 +14,7 @@ export default function useBookingActions({ reload }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [busyId, setBusyId] = useState("");
-  const [modal, setModal] = useState(null); // { type: "cancel", row }
+  const [modal, setModal] = useState(null); // { type: "cancel" | "reschedule" | "history", row }
   const [submitting, setSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
 
@@ -63,6 +63,14 @@ export default function useBookingActions({ reload }) {
       setModalError("");
       setModal({ type: "cancel", row });
     },
+    reschedule: (row) => {
+      setModalError("");
+      setModal({ type: "reschedule", row });
+    },
+    history: (row) => {
+      setModalError("");
+      setModal({ type: "history", row });
+    },
     reactivate: async (row) => {
       const ok = await confirm({
         title: "Reactivate this appointment?",
@@ -85,6 +93,22 @@ export default function useBookingActions({ reload }) {
 
   // What the dialogs call.
   const submit = {
+    // Resolves true when the server moved the booking (the history drawer then opens on the new state), false when it
+    // refused (the dialog stays open with the reason).
+    reschedule: async (row, body) => {
+      let updated = null;
+      const ok = await perform(
+        row,
+        () => bookingApi.rescheduleBooking(row.id, body),
+        (data) => {
+          updated = data.booking || null;
+          toast.success(`Booking ${label(row)} rescheduled.${body.notify ? " Patient and doctor notified." : ""}`);
+        },
+        { inDialog: true },
+      );
+      if (ok) setModal({ type: "history", row: updated || row });
+      return ok;
+    },
     cancel: (row, choice) =>
       perform(
         row,

@@ -2,16 +2,16 @@
   "planVersion": 1,
   "dryRun": true,
   "executed": false,
-  "generatedAt": "2026-11-02T07:47:49.642Z",
+  "generatedAt": "2026-11-06T05:14:01.155Z",
   "generator": "backend/scripts/searchTaxonomy/prepareSearchTaxonomyMigration.js",
   "sources": {
     "searchIndex": {
       "path": "frontend/src/data/searchIndex.js",
-      "sha256": "21481be38a1f19c69cc2c14bf05599f8718377d69c5e214780628227fbe69bfb"
+      "sha256": "817ec8d5a821d6fc4998be25d20488f4aa468460ad20c45f249287455d5adabc"
     },
     "appRoutes": {
       "path": "frontend/src/App.jsx",
-      "sha256": "ce4b5a2f609a46146fe7ad11877185ba6bb049fd67fce9ecf1ac0b63ef4a4064",
+      "sha256": "2ef113dadf3f8951e72e6a4eb6a714ccb36e3fdfc480687b7d6254f67c9f1bc8",
       "staticRoutes": 385,
       "duplicateDeclarations": []
     },
@@ -483,10 +483,10 @@
     "legacySpecialtyRecords": 30,
     "legacyConditionRecords": 221,
     "classification": {
-      "EXACT": 129,
-      "NAME_VARIATION": 54,
+      "EXACT": 131,
+      "NAME_VARIATION": 55,
       "CLEAR_SEMANTIC_MATCH": 3,
-      "NEEDS_REVIEW": 22,
+      "NEEDS_REVIEW": 19,
       "INSUFFICIENT_DATA": 13
     },
     "importable": 219,
@@ -668,7 +668,10 @@
     }
   ],
   "warnings": [
-    "Decision overrides a clean EXACT record: \"binge-eating\"."
+    "Decision overrides a clean EXACT record: \"arthritis\".",
+    "Decision overrides a clean EXACT record: \"osteoarthritis\".",
+    "Decision overrides a clean EXACT record: \"binge-eating\".",
+    "Decision overrides a clean NAME_VARIATION record: \"sore-throat\"."
   ],
   "fatal": [],
   "safety": {
@@ -696,7 +699,7 @@
       "collectionDeletions": 0
     }
   },
-  "operationsSha256": "359000eceb9e3ad9637b192d35238f6e3e8b74d8d5373c4503a3ae98a3a1ce41",
+  "operationsSha256": "569f13aa000405b5ee849dd0d72a8eeb93c69e73d050591bf6f41867e07a0a4d",
   "operations": [
     {
       "op": "CREATE_INDEX",
@@ -2444,7 +2447,7 @@
       },
       "specialtyName": "ENT",
       "categoryName": "Eye, Ear & Bone",
-      "classification": "NEEDS_REVIEW",
+      "classification": "NAME_VARIATION",
       "basis": "approved-specialty-route",
       "legacyRoute": "/eye-ear-bone/ear-nose-throat/sore-throat",
       "routeStatus": "FOUND_IN_APP"
@@ -2690,7 +2693,7 @@
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
-      "classification": "NEEDS_REVIEW",
+      "classification": "EXACT",
       "basis": "approved-hierarchy",
       "legacyRoute": "/eye-ear-bone/orthopedics/arthritis",
       "routeStatus": "FOUND_IN_APP"
@@ -2859,7 +2862,7 @@
       },
       "specialtyName": "Orthopedics",
       "categoryName": "Eye, Ear & Bone",
-      "classification": "NEEDS_REVIEW",
+      "classification": "EXACT",
       "basis": "approved-hierarchy",
       "legacyRoute": "/eye-ear-bone/orthopedics/osteoarthritis",
       "routeStatus": "FOUND_IN_APP"
@@ -4200,7 +4203,7 @@
         "kind": "condition",
         "legacyId": "urinary-tract-infection",
         "slug": "urinary-tract-infection-uti",
-        "route": "/urinary-tract-infection",
+        "route": "/mens-health/urology/urinary-tract-infection",
         "isActive": false,
         "isSearchable": true
       },
@@ -4208,7 +4211,7 @@
       "categoryName": "Men's Health",
       "classification": "NAME_VARIATION",
       "basis": "name_variation",
-      "legacyRoute": "/urinary-tract-infection",
+      "legacyRoute": "/mens-health/urology/urinary-tract-infection",
       "routeStatus": "FOUND_IN_APP"
     },
     {
@@ -7632,10 +7635,8 @@
       {
         "legacyId": "arthritis",
         "legacyTitle": "Arthritis",
-        "classification": "NEEDS_REVIEW",
-        "reasons": [
-          "no specialty field; route implies \"Orthopedics\" but legacy category is \"Chronic Care & Expert Opinion\""
-        ],
+        "classification": "EXACT",
+        "reasons": [],
         "decision": "IMPORT",
         "basis": "approved-hierarchy",
         "name": "Arthritis",
@@ -7926,10 +7927,8 @@
       {
         "legacyId": "osteoarthritis",
         "legacyTitle": "Osteoarthritis",
-        "classification": "NEEDS_REVIEW",
-        "reasons": [
-          "no specialty field; route implies \"Orthopedics\" but legacy category is \"Chronic Care & Expert Opinion\""
-        ],
+        "classification": "EXACT",
+        "reasons": [],
         "decision": "IMPORT",
         "basis": "approved-hierarchy",
         "name": "Osteoarthritis",
@@ -11491,9 +11490,9 @@
       {
         "legacyId": "sore-throat",
         "legacyTitle": "Sore Throat",
-        "classification": "NEEDS_REVIEW",
+        "classification": "NAME_VARIATION",
         "reasons": [
-          "route implies \"ENT\", specialty field says \"General Physician\""
+          "specialty \"ENT (Ear, Nose & Throat)\" → \"ENT\""
         ],
         "decision": "IMPORT",
         "basis": "approved-specialty-route",
@@ -11711,9 +11710,9 @@
         "specialty": "Urology",
         "category": "Men's Health",
         "mergeInto": null,
-        "legacyRoute": "/urinary-tract-infection",
+        "legacyRoute": "/mens-health/urology/urinary-tract-infection",
         "routeStatus": "FOUND_IN_APP",
-        "route": "/urinary-tract-infection",
+        "route": "/mens-health/urology/urinary-tract-infection",
         "routeSpecialtyMismatch": false,
         "aliasSources": {
           "uti": [

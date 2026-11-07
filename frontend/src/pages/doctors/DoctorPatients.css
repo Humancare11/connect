@@ -316,6 +316,7 @@
   box-shadow: -8px 0 40px rgba(1, 22, 74, 0.12);
   animation: dp-slideIn 0.25s var(--ease);
   position: relative;
+  overscroll-behavior: contain;
 }
 
 @keyframes dp-slideIn {

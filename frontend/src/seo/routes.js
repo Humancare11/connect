@@ -369,7 +369,7 @@ export const SEO_ROUTES = {
   "/travel-medical-certification": {"title":"Travel Medical Certificate Online | Virtual Medical Clearance","description":"Get online support for travel medical certificates, fitness-to-travel clearance, prescription documentation, and other travel health requirements.","lastmod":"2026-08-24"},
   "/upper-respiratory-infection": {"title":"Upper Respiratory Infection Treatment Online | Virtual Care","description":"Get online care for an upper respiratory infection. Consult a licensed provider for cough, congestion, sore throat, fever, and personalized treatment.","lastmod":"2026-08-24"},
   "/urinary-symptoms-in-men": {"title":"Urinary Symptoms in Men | Online Men's Urinary Care","description":"Get online care for male urinary symptoms, including frequent urination, weak urine flow, burning, urgency, and prostate-related concerns.","lastmod":"2026-08-24"},
-  "/urinary-tract-infection": {"title":"UTI Treatment Online | Virtual Urinary Tract Infection Care","description":"Get online UTI care for burning urination, frequent urges, pelvic discomfort, and other urinary symptoms. Consult a licensed provider for treatment.","lastmod":"2026-08-24"},
+  "/mens-health/urology/urinary-tract-infection": {"title":"UTI Treatment Online | Virtual Urinary Tract Infection Care","description":"Get online UTI care for burning urination, frequent urges, pelvic discomfort, and other urinary symptoms. Consult a licensed provider for treatment.","lastmod":"2026-08-24"},
   "/user/appointments": {"robots":"noindex,nofollow"},
   "/user/change-password": {"robots":"noindex,nofollow"},
   "/user/dashboard": {"robots":"noindex,nofollow"},

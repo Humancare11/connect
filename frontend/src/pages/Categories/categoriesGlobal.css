@@ -423,6 +423,16 @@ body {
   gap: 22px;
 }
 
+/* A lone card keeps the width a card gets in a two-up row (half the container
+   minus the gap) instead of stretching across the whole section. Applies on
+   any page with a single card; with 2+ cards the grid rules above/below are
+   untouched. At <=640px the grid is one full-width column anyway. */
+@media (min-width: 641px) {
+  .hcc-specialty-grid:has(> :only-child) {
+    grid-template-columns: minmax(0, calc((100% - 22px) / 2));
+  }
+}
+
 .hcc-specialty-card {
   background: var(--white);
   border: 1.5px solid var(--line);
@@ -438,6 +448,10 @@ body {
   gap: 14px;
   min-height: 230px;
   outline: none;
+  /* Fill the grid cell (or the link that wraps it) so every card in a row has
+     the same height, whatever the description length. */
+  box-sizing: border-box;
+  height: 100%;
 }
 
 .hcc-specialty-card:hover {
@@ -509,6 +523,11 @@ body {
   display: block;
   color: inherit;
   text-decoration: none;
+}
+
+/* The link is the grid item; let the card inside stretch to its full height. */
+.hcc-specialty-link {
+  height: 100%;
 }
 
 .hcc-specialty-link .hcc-specialty-card,

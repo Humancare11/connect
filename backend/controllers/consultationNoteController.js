@@ -4,12 +4,11 @@ const CategoryConsultation = require("../models/CategoryConsultation");
 const Enrollment = require("../models/Enrollment");
 const ConsultationNote = require("../models/ConsultationNote");
 const User = require("../models/User");
+const { FieldError, readFields, pickFieldUpdates, encryptFields } = require("../utils/consultationNoteFields");
 
 const VALID_STATUSES = new Set(["draft", "final", "archived"]);
 
 const isObjectId = (id) => mongoose.Types.ObjectId.isValid(String(id || ""));
-
-const normalizeContent = (value) => String(value ?? "").slice(0, 20000);
 
 const CATEGORY_CONSULTATION_STATUS_MAP = {
   pending: "pending",
@@ -88,16 +87,22 @@ const populateNote = (query) =>
 // CategoryConsultation documents use different field names (slot/concern)
 // than Appointment (time/problem). Fold them onto the common names so
 // consumers of a populated note never need to know which collection it
-// came from.
+// came from. Clinical text is decrypted here and the cipher blob never leaves the server.
 const normalizeNote = (note) => {
   if (!note) return note;
+  const fields = readFields(note);
   const plain = note.toObject({ getters: true });
   const populatedAppointment = plain.appointmentId;
   if (populatedAppointment && plain.appointmentModel === "CategoryConsultation") {
     populatedAppointment.time = populatedAppointment.time ?? populatedAppointment.slot;
     populatedAppointment.problem = populatedAppointment.problem ?? populatedAppointment.concern;
   }
-  return plain;
+  delete plain.cipherText;
+  delete plain.iv;
+  delete plain.authTag;
+  delete plain.keyVersion;
+  delete plain.content;
+  return { ...plain, ...fields, finalised: !!plain.reportId };
 };
 
 const handleError = (res, err, fallback) => {
@@ -107,6 +112,10 @@ const handleError = (res, err, fallback) => {
   console.error(fallback, err);
   return res.status(500).json({ msg: fallback });
 };
+
+const lockedError = () => new FieldError("This note is finalised into a Visit Note and can no longer be edited.", 409);
+
+const escapeRegex = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const listNotes = async (req, res) => {
   try {
@@ -131,21 +140,23 @@ const listNotes = async (req, res) => {
       if (dateTo) query.updatedAt.$lte = new Date(`${dateTo}T23:59:59.999Z`);
     }
 
+    // Note text is encrypted at rest, so search is by patient name / email only.
     const trimmedSearch = String(search).trim();
     if (trimmedSearch) {
+      const escaped = escapeRegex(trimmedSearch);
       const matchingPatients = await User.find({
         $or: [
-          { name: { $regex: trimmedSearch, $options: "i" } },
-          { email: { $regex: trimmedSearch, $options: "i" } },
+          { name: { $regex: escaped, $options: "i" } },
+          { email: { $regex: escaped, $options: "i" } },
         ],
       })
         .select("_id")
         .limit(50);
 
-      query.$or = [
-        { content: { $regex: trimmedSearch, $options: "i" } },
-        { patientId: { $in: matchingPatients.map((patient) => patient._id) } },
-      ];
+      const ids = matchingPatients.map((patient) => patient._id);
+      query.patientId = query.patientId
+        ? { $in: ids.filter((id) => String(id) === String(query.patientId)) }
+        : { $in: ids };
     }
 
     const notes = await populateNote(
@@ -184,39 +195,50 @@ const getAppointmentNote = async (req, res) => {
   }
 };
 
+// Read-merge-write of the encrypted blob, guarded by the document version so two concurrent auto-saves (e.g. the
+// call panel and the Notes page, or two fields saved at once) never silently drop each other's changes.
+const saveFields = async (noteId, doctorId, updates, extra = {}) => {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const current = await ConsultationNote.findOne({ _id: noteId, doctorId });
+    if (!current) throw new FieldError("Note not found or access denied.", 404);
+    if (current.reportId) throw lockedError();
+    const merged = { ...readFields(current), ...updates };
+    const result = await ConsultationNote.updateOne(
+      { _id: noteId, doctorId, __v: current.__v, reportId: null },
+      { $set: { ...encryptFields(merged), ...extra }, $inc: { __v: 1 } },
+    );
+    if (result.modifiedCount === 1) return;
+  }
+  throw new FieldError("Note was updated elsewhere. Refresh and try again.", 409);
+};
+
 const upsertAppointmentNote = async (req, res) => {
   try {
     const appointment = await ensureDoctorAppointment(req.params.appointmentId, req.user.id);
-    const content = normalizeContent(req.body.content);
+    const updates = pickFieldUpdates(req.body);
 
-    const note = await ConsultationNote.findOneAndUpdate(
-      {
-        appointmentId: appointment._id,
-        doctorId: req.user.id,
-      },
-      {
-        $set: {
-          patientId: appointment.patientId,
-          content,
-        },
-        $setOnInsert: {
+    let note = await ConsultationNote.findOne({ appointmentId: appointment._id, doctorId: req.user.id });
+    let created = false;
+    if (!note) {
+      try {
+        note = await ConsultationNote.create({
           appointmentId: appointment._id,
           appointmentModel: appointment.appointmentModel,
           doctorId: req.user.id,
+          patientId: appointment.patientId,
           status: "draft",
-        },
-        $inc: { __v: 1 },
-      },
-      {
-        new: true,
-        upsert: true,
-        runValidators: true,
-        setDefaultsOnInsert: true,
-      },
-    );
+          ...encryptFields(updates),
+        });
+        created = true;
+      } catch (err) {
+        if (err?.code !== 11000) throw err;
+        note = await ConsultationNote.findOne({ appointmentId: appointment._id, doctorId: req.user.id });
+      }
+    }
+    if (!created) await saveFields(note._id, req.user.id, updates, { patientId: appointment.patientId });
 
     const populated = await populateNote(ConsultationNote.findById(note._id));
-    res.status(note.createdAt.getTime() === note.updatedAt.getTime() ? 201 : 200).json({ note: normalizeNote(populated) });
+    res.status(created ? 201 : 200).json({ note: normalizeNote(populated) });
   } catch (err) {
     handleError(res, err, "Failed to save consultation note.");
   }
@@ -228,41 +250,29 @@ const updateNote = async (req, res) => {
       return res.status(400).json({ msg: "Invalid note ID." });
     }
 
-    const updates = {};
-    if (Object.prototype.hasOwnProperty.call(req.body, "content")) {
-      updates.content = normalizeContent(req.body.content);
-    }
+    const updates = pickFieldUpdates(req.body);
+    let status;
     if (Object.prototype.hasOwnProperty.call(req.body, "status")) {
       if (!VALID_STATUSES.has(req.body.status)) {
         return res.status(400).json({ msg: "Invalid note status." });
       }
-      updates.status = req.body.status;
+      status = req.body.status;
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0 && status === undefined) {
       return res.status(400).json({ msg: "No note changes provided." });
     }
 
-    const query = {
-      _id: req.params.id,
-      doctorId: req.user.id,
-    };
-
-    if (Number.isInteger(req.body.version)) {
-      query.__v = req.body.version;
+    const existing = await ConsultationNote.findOne({ _id: req.params.id, doctorId: req.user.id }).select("status reportId");
+    if (!existing) return res.status(404).json({ msg: "Note not found or access denied." });
+    if (existing.reportId) throw lockedError();
+    // A note only becomes final through Review & Finalise (POST /api/consultation-reports).
+    if (status === "final" && existing.status !== "final") {
+      return res.status(400).json({ msg: "Use Review & Finalise to add this note to a Visit Note." });
     }
 
-    const note = await ConsultationNote.findOneAndUpdate(
-      query,
-      { $set: updates, $inc: { __v: 1 } },
-      { new: true, runValidators: true },
-    );
-
-    if (!note) {
-      return res.status(409).json({ msg: "Note was updated elsewhere. Refresh and try again." });
-    }
-
-    const populated = await populateNote(ConsultationNote.findById(note._id));
+    await saveFields(req.params.id, req.user.id, updates, status ? { status } : {});
+    const populated = await populateNote(ConsultationNote.findById(req.params.id));
     res.status(200).json({ note: normalizeNote(populated) });
   } catch (err) {
     handleError(res, err, "Failed to update consultation note.");
@@ -278,10 +288,11 @@ const deleteNote = async (req, res) => {
     const note = await ConsultationNote.findOneAndDelete({
       _id: req.params.id,
       doctorId: req.user.id,
+      reportId: null,
     });
 
     if (!note) {
-      return res.status(404).json({ msg: "Note not found or access denied." });
+      return res.status(404).json({ msg: "Note not found, already finalised, or access denied." });
     }
 
     return res.status(200).json({ msg: "Note deleted.", noteId: note._id });
@@ -296,4 +307,5 @@ module.exports = {
   upsertAppointmentNote,
   updateNote,
   deleteNote,
+  ensureDoctorAppointment,
 };

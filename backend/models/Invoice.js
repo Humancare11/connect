@@ -21,6 +21,10 @@ const invoiceSchema = new mongoose.Schema(
     },
     amountCents: { type: Number, required: true, min: 0 },
     currency: { type: String, default: "usd" },
+    // How it was paid ("stripe" / "paypal" / "razorpay"); the Razorpay ids are set only for a Razorpay payment.
+    gateway: { type: String, default: "" },
+    razorpayOrderId: { type: String, default: "" },
+    razorpayPaymentId: { type: String, default: "" },
     issuedAt: { type: Date, default: Date.now },
     pdfKey: { type: String, required: true },
     emailedAt: { type: Date, default: null },

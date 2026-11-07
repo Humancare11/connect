@@ -101,4 +101,4 @@ function detectRegistrationClient(req) {
   }
 }
 
-module.exports = { detectRegistrationClient };
+module.exports = { detectRegistrationClient, inferNativeApp };

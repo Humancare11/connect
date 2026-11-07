@@ -18,14 +18,14 @@ const CATEGORY_ALIASES = {
   "mood": "Mental & Behavioral Health",
 
   // Skin
-  "skin": "Skin Conditions",
-  "acne": "Skin Conditions",
-  "rash": "Skin Conditions",
-  "eczema": "Skin Conditions",
-  "psoriasis": "Skin Conditions",
-  "hives": "Skin Conditions",
-  "hair": "Skin Conditions",
-  "dermatology": "Skin Conditions",
+  "skin": "Skin & Hair Care",
+  "acne": "Skin & Hair Care",
+  "rash": "Skin & Hair Care",
+  "eczema": "Skin & Hair Care",
+  "psoriasis": "Skin & Hair Care",
+  "hives": "Skin & Hair Care",
+  "hair": "Skin & Hair Care",
+  "dermatology": "Skin & Hair Care",
 
   // Joint & Muscle
   "joint": "Eye, Ear & Bone Care",
@@ -116,14 +116,14 @@ const CATEGORY_ALIASES = {
   "bowel": "Digestive Health",
 
   // Everyday Urgent
-  "urgent": "Everyday Urgent Care",
-  "cold": "Everyday Urgent Care",
-  "flu": "Everyday Urgent Care",
-  "fever": "Everyday Urgent Care",
-  "cough": "Everyday Urgent Care",
-  "sore throat": "Everyday Urgent Care",
-  "ear infection": "Everyday Urgent Care",
-  "pink eye": "Everyday Urgent Care",
+  "urgent": "Eye, Ear & Bone Care",
+  "cold": "Eye, Ear & Bone Care",
+  "flu": "Eye, Ear & Bone Care",
+  "fever": "Eye, Ear & Bone Care",
+  "cough": "Eye, Ear & Bone Care",
+  "sore throat": "Eye, Ear & Bone Care",
+  "ear infection": "Eye, Ear & Bone Care",
+  "pink eye": "Eye, Ear & Bone Care",
 
   // Prescriptions
   "prescription": "Prescription & Continuity Care",

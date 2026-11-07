@@ -306,10 +306,10 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
       font: getComputedStyle(document.querySelector("td.adp-bk-fee")).fontSize,
     }));
     assert.deepEqual(align, { fee: "right", feeHead: "right", statusPad: "18px", font: "13.5px" });
-    // Buttons: only those that work for the row
+    // Buttons: only those that work for the row (Reschedule is offered on every open booking)
     const buttons = async (name) => (await h.row(name).locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts()).map((t) => t.trim());
-    assert.deepEqual(await buttons("Row Upcoming"), ["View", "Cancel"]);
-    assert.deepEqual(await buttons("A Very Long"), ["View", "Auto complete", "Cancel"]);
+    assert.deepEqual(await buttons("Row Upcoming"), ["View", "Reschedule", "Cancel"]);
+    assert.deepEqual(await buttons("A Very Long"), ["View", "Reschedule", "Auto complete", "Cancel"]);
     assert.deepEqual(await buttons("Row Complete"), ["View", "Reactivate"]);
     assert.deepEqual(await buttons("Row Cancelled"), ["View"]);
     await page.setViewportSize({ width: 1500, height: 1000 });
@@ -1071,7 +1071,7 @@ describe("admin Appointments list in a real browser", { skip: skipReason || fals
     await h.open("/admin-dashboard/appointments?tab=all", { role: "admin" });
     await h.search("Role Case");
     assert.equal(await h.row("Role Case").locator("button", { hasText: /^Cancel$/ }).count(), 0, "no row Cancel for an admin");
-    assert.deepEqual(await h.row("Role Case").locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts().then((t) => t.map((x) => x.trim())), ["View", "Auto complete"]);
+    assert.deepEqual(await h.row("Role Case").locator(".adp-bk-actions button, .adp-bk-actions a").allInnerTexts().then((t) => t.map((x) => x.trim())), ["View", "Reschedule", "Auto complete"]);
     await page.locator(".adp-bk-headcheck").click();
     await page.locator('[role="menu"] button', { hasText: "Select this page" }).click();
     assert.deepEqual(await page.locator(".adp-bk-bulk-btn").allInnerTexts(), ["Auto complete", "Mark testing", "Unmark testing", "Done"], "no bulk Cancel for an admin");

@@ -32,11 +32,14 @@ routes:
     source: /chronic-care/neurology/chronic-migraine
     destination: /chronic-care/neurology/migraine
   - type: redirect
-    source: /mens-health/urology/urinary-tract-infection
-    destination: /urinary-tract-infection
+    source: /mens-health/urology/mens-health/urology/urinary-tract-infection
+    destination: /mens-health/urology/urinary-tract-infection
   - type: redirect
     source: /bladder-infection
-    destination: /urinary-tract-infection
+    destination: /mens-health/urology/urinary-tract-infection
+  - type: redirect
+    source: /urinary-tract-infection
+    destination: /mens-health/urology/urinary-tract-infection
   - type: redirect
     source: /mens-health-men-health
     destination: /mens-health/men-health

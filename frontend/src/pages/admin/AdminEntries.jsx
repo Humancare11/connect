@@ -13,7 +13,7 @@ import DeleteManualModal from "./entries/DeleteManualModal";
 import useEntries from "./entries/useEntries";
 import { exportEntriesCsv } from "./entries/entriesApi";
 import {
-  PAGE_SIZE, TAB_LABELS, TAB_ORDER, downloadName, monthFromParam, pageFromParam, rangeText, tabFromParam, viewFromParam, viewToParams,
+  PAGE_SIZE, TAB_LABELS, TAB_ORDER, downloadName, monthFromParam, pageFromParam, rangeText, tabFromParam, usdTotals, viewFromParam, viewToParams,
 } from "./entries/entriesFormat";
 
 const SEARCH_DELAY_MS = 300;
@@ -239,7 +239,7 @@ export default function AdminEntries() {
               <ManualSheet
                 rows={rows}
                 page={page}
-                totals={data.totals}
+                totals={usdTotals(data.totals)}
                 onRowSaved={onRowSaved}
                 onDelete={(row) => setModal({ type: "delete", row })}
                 onHistory={(row) => setModal({ type: "history", row })}

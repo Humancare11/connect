@@ -24,6 +24,7 @@ import { buildCallStatsSample } from "../utils/callStatsSample";
 import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
+import VisitNoteEditor from "../components/VisitNoteEditor";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -1245,13 +1246,6 @@ export default function VideoCall() {
 
   // ── Doctor notes state ────────────────────────────────────────────
   const [notesOpen, setNotesOpen] = useState(false);
-  const [noteContent, setNoteContent] = useState("");
-  const [notesLoading, setNotesLoading] = useState(false);
-  const [notesSaving, setNotesSaving] = useState(false);
-  const [notesError, setNotesError] = useState("");
-  const [notesSavedAt, setNotesSavedAt] = useState(null);
-  const [notesLoaded, setNotesLoaded] = useState(false);
-  const lastSavedNoteRef = useRef({ content: "" });
 
   // ── PiP drag ──────────────────────────────────────────────────────
   const [pipPos, setPipPos] = useState({ x: null, y: null });
@@ -1371,41 +1365,6 @@ export default function VideoCall() {
     if (!chatOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, chatOpen]);
-
-  useEffect(() => {
-    if (!isDoctor || !appointmentId || !appt?._id) return;
-
-    let cancelled = false;
-    setNotesLoading(true);
-    setNotesError("");
-    setNotesLoaded(false);
-
-    api
-      .get(`/api/notes/appointment/${appointmentId}`, { authRole: "doctor" })
-      .then((res) => {
-        if (cancelled) return;
-        const note = res.data?.note;
-        const content = note?.content || "";
-        setNoteContent(content);
-        setNotesSavedAt(note?.updatedAt || null);
-        lastSavedNoteRef.current = { content };
-        setNotesLoaded(true);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setNotesError(
-          err.response?.data?.msg || "Could not load consultation notes.",
-        );
-        setNotesLoaded(true);
-      })
-      .finally(() => {
-        if (!cancelled) setNotesLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isDoctor, appointmentId, appt?._id]);
 
   // ── Fetch appointment ─────────────────────────────────────────────
   // Wait for auth contexts so we know the caller's role, then hit a
@@ -5635,49 +5594,6 @@ export default function VideoCall() {
     });
   }, []);
 
-  const saveNotes = useCallback(
-    async ({ manual = false } = {}) => {
-      if (!isDoctor || !appointmentId || !notesLoaded) return;
-
-      const next = {
-        content: noteContent,
-      };
-      const previous = lastSavedNoteRef.current;
-      if (!manual && previous.content === next.content) return;
-
-      setNotesSaving(true);
-      setNotesError("");
-      try {
-        const res = await api.put(
-          `/api/notes/appointment/${appointmentId}`,
-          next,
-          { authRole: "doctor" },
-        );
-        const saved = res.data?.note;
-        setNotesSavedAt(saved?.updatedAt || new Date().toISOString());
-        lastSavedNoteRef.current = next;
-      } catch (err) {
-        setNotesError(err.response?.data?.msg || "Could not save notes.");
-      } finally {
-        setNotesSaving(false);
-      }
-    },
-    [isDoctor, appointmentId, notesLoaded, noteContent],
-  );
-
-  useEffect(() => {
-    if (!isDoctor || !notesLoaded) return;
-
-    const previous = lastSavedNoteRef.current;
-    if (previous.content === noteContent) return;
-
-    const timer = setTimeout(() => {
-      saveNotes();
-    }, 1200);
-
-    return () => clearTimeout(timer);
-  }, [isDoctor, notesLoaded, noteContent, saveNotes]);
-
   const toggleNotes = useCallback(() => {
     setNotesOpen((prev) => {
       const next = !prev;
@@ -6596,45 +6512,10 @@ export default function VideoCall() {
 
             <div className="hc-vc__notes-meta">
               <span>{otherParty?.name || "Patient"}</span>
-              <span>
-                {notesSaving
-                  ? "Saving..."
-                  : notesSavedAt
-                    ? `Saved ${fmtTime(notesSavedAt)}`
-                    : "Not saved yet"}
-              </span>
             </div>
 
-            {notesError && (
-              <div className="hc-vc__notes-error">
-                <FiAlertTriangle /> {notesError}
-              </div>
-            )}
-
-            <textarea
-              className="hc-vc__notes-textarea"
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              placeholder={
-                notesLoading
-                  ? "Loading notes..."
-                  : "Write consultation observations, assessment, plan, and follow-up notes..."
-              }
-              disabled={notesLoading}
-              maxLength={20000}
-            />
-
-            <div className="hc-vc__notes-foot">
-              <span>{noteContent.length}/20000</span>
-              <button
-                className="hc-vc__notes-save"
-                onClick={() => saveNotes({ manual: true })}
-                disabled={notesLoading || notesSaving}
-              >
-                {notesSaving ? <FiRefreshCw /> : <FiCheckCircle />}
-                <span>{notesSaving ? "Saving" : "Save"}</span>
-              </button>
-            </div>
+            {/* Structured note; every field auto-saves and is flushed if the call disconnects. */}
+            <VisitNoteEditor key={appointmentId} appointmentId={appointmentId} variant="panel" />
           </div>
         )}
       </div>

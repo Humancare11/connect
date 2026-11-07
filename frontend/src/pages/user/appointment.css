@@ -910,3 +910,21 @@
     padding: 11px 8px;
   }
 }
+
+/* An admin moved this appointment: shows where it was before (no reason is ever shown). */
+.appt-resched {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 13px;
+}
+.appt-resched-when {
+  color: #64748b;
+  font-size: 12px;
+}

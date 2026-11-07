@@ -36,6 +36,8 @@ const deletionHistory = require("../utils/accountDeletionHistory");
 const adminNotifications = require("../utils/adminNotifications");
 const { shouldSkipSignupLocation } = require("../utils/legacyAppBypass");
 const { Country, State } = require("country-state-city");
+const { recordCountryChange } = require("../utils/countryChangeLog");
+const { getClientIp } = require("../utils/clientIp");
 
 const CONSENT_POLICY_VERSION = "privacy-hipaa-v1";
 const passwordError = (res, result) => res.status(400).json({ msg: result.errors.join(" ") });
@@ -750,6 +752,19 @@ const updateProfile = async (req, res) => {
 
     if (!updated)
       return res.status(404).json({ msg: "User not found." });
+
+    // Every country change is logged (old, new, who, when, from which IP) and flagged for an admin if the
+    // customer already has a paid booking. A record only (the currency follows the visitor's IP, not this).
+    // Best-effort: never blocks the save.
+    if (set.country !== undefined && cleanStr(set.country) !== cleanStr(current.country)) {
+      await recordCountryChange({
+        userId: updated._id,
+        oldCountry: current.country,
+        newCountry: set.country,
+        ip: getClientIp(req),
+        changedBy: "self",
+      });
+    }
 
     await recordActivity(req, {
       action: "PROFILE_UPDATE",

@@ -18,7 +18,11 @@ const ROBOTS_NOINDEX = "noindex, nofollow";
 
 const absolute = (url) => (url && !/^https?:\/\//i.test(url) ? SITE_ORIGIN + url : url);
 
-export function SeoTags({ title, description, robots, image, canonical: canonicalOverride, type = "website", schemaData }) {
+// `usdPrice` (service, category, specialty and condition pages): the USD price the page itself shows (priceInfo.usdAmount from
+// useServicePrice / useCategoryPriceInfo - the same value that is kept as hidden text behind the price skeleton), marked up as a
+// schema.org Offer. Taken from the page's own price hook so the JSON-LD and the page text can never disagree; absent when the page has
+// no USD price (nothing is invented).
+export function SeoTags({ title, description, robots, image, canonical: canonicalOverride, type = "website", schemaData, usdPrice }) {
   const { pathname } = useLocation();
   const { path, entry, noindex: routeNoindex, canonical: routeCanonical } = getRouteSeo(pathname);
   // Dynamic pages (doctor profiles) pass their own canonical; everything else is self-referencing.
@@ -41,6 +45,7 @@ export function SeoTags({ title, description, robots, image, canonical: canonica
           description: finalDescription,
           image: finalImage,
           types: entry?.schema,
+          offer: usdPrice ? { price: usdPrice } : undefined,
         });
     jsonLd = schemaScriptContent(nodes);
   }

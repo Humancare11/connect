@@ -12,6 +12,7 @@ const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const { getS3ObjectUrl } = require("../config/s3");
+const { assertReportsBookable, BookingReportError } = require("../utils/bookingReports");
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const BLOCKED_EXTENSIONS = new Set([
@@ -246,6 +247,23 @@ router.post("/presign", verifyToken, presignLimiter, async (req, res) => {
     console.error("upload presign error:", err);
     const status = /not allowed|too large|Executable|content type/i.test(err.message) ? 400 : 500;
     return res.status(status).json({ msg: status === 400 ? err.message : "Could not prepare direct upload." });
+  }
+});
+
+// POST /api/upload/check-reports - the booking page calls this BEFORE it creates a payment (Stripe intent, PayPal order, Razorpay
+// order), because after the payment a file can no longer be a reason to refuse the booking (it is dropped instead). Answers
+// { ok: true, files: n } when every attached file can be attached, 400 { msg, invalid: [{ name, reason }] } naming the ones that
+// cannot, or 503 when the storage cannot be asked. Creates nothing.
+router.post("/check-reports", verifyToken, presignLimiter, async (req, res) => {
+  try {
+    const kept = await assertReportsBookable(req.body?.medicalReports, { userId: req.user?.id });
+    return res.json({ ok: true, files: kept.length });
+  } catch (err) {
+    if (err instanceof BookingReportError) {
+      return res.status(err.status).json({ msg: err.message, ...err.details });
+    }
+    console.error("check-reports error:", err);
+    return res.status(500).json({ msg: "Could not check the attached files." });
   }
 });
 

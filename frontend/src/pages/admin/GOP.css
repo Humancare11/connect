@@ -1295,6 +1295,37 @@
   overflow-x: visible;
 }
 
+/* The table is still an auto-layout <table>, so its width is the widest
+   unbreakable line in any cell. .gop-col-actions is white-space: nowrap (right
+   for the desktop Download / Resend links), and the card's status line
+   ("✓ emailed 03 Nov 2026, 04:20 pm") inherited it, widening the whole table
+   (and card) to ~466px on a 300-340px screen; the admin shell then clipped the
+   right-hand side. In the card layout let that text wrap, and keep the table
+   to the width of its container. */
+.gop-page--compact .gop-history-table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.gop-page--compact .gop-history-table tbody {
+  display: block;
+}
+
+.gop-page--compact .gop-col-actions {
+  white-space: normal;
+}
+
+.gop-page--compact .gop-cell-number {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.gop-page--compact .gop-card-actions__status,
+.gop-page--compact .gop-email-flag {
+  overflow-wrap: anywhere;
+}
+
 .gop-page--compact .gop-history-table thead {
   position: absolute;
   width: 1px;

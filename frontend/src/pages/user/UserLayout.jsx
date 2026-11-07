@@ -89,6 +89,7 @@ const menuItems = [
   { path: "/user/dashboard", label: "Dashboard", icon: <IconDashboard /> },
   { path: "/user/appointments", label: "Appointments", icon: <IconCalendar /> },
   { path: "/user/my-records", label: "My Records", icon: <IconRecords /> },
+  { path: "/user/my-visit-notes", label: "My Visit Notes", icon: <IconRecords /> },
   { path: "/user/payment-history", label: "Payment History", icon: <IconReceipt /> },
   { path: "/user/raise-ticket", label: "Raise a Ticket", icon: <IconTicket /> },
   { path: "/user/profile-settings", label: "Profile Settings", icon: <IconUser /> },

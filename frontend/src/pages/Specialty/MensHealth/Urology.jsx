@@ -73,10 +73,10 @@ import "../../Categories/categoriesGlobal.css";
 import heroImage from "../../../assets/SpecialitiesImage/urology-specialist-urinary-kidney-care.webp";
 import overviewImage from "../../../assets/SpecialitiesImage/board-certified-urology-specialist-consultation.webp";
 import BookingCard from "../../../components/SpecialityBookingCard";
-import api from "../../../api";
 import SEO from "../../../components/Seo";
 import FAQ from "../../../components/FAQ/FAQ";
 import Breadcrumb from "../../../components/ui/Breadcrumb";
+import { useCategoryPriceInfo } from "../../../hooks/useCategoryPriceInfo";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ★  EDIT THIS OBJECT TO CREATE A NEW SPECIALTY PAGE
@@ -180,7 +180,7 @@ const SPECIALTY_DATA = {
       Icon: FiDroplet,
       name: "Urinary Tract Infections (UTI)",
       desc: "Relief for sore throat and swollen tonsils",
-      path: "/urinary-tract-infection",
+      path: "/mens-health/urology/urinary-tract-infection",
     },
     {
       Icon: FiShield,
@@ -521,33 +521,11 @@ export default function Urology({ data = SPECIALTY_DATA }) {
     return () => clearTimeout(t);
   }, []);
 
-  const [price, setPrice] = useState(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchPrice() {
-      try {
-        const res = await api.get("/api/pricing");
-        if (!cancelled) {
-          const record = res.data?.[data.categoryId];
-          setPrice(record?.price ?? null);
-        }
-      } catch (err) {
-        console.error("Failed to fetch category pricing:", err);
-      } finally {
-        if (!cancelled) setPriceLoading(false);
-      }
-    }
-    fetchPrice();
-    return () => {
-      cancelled = true;
-    };
-  }, [data.categoryId]);
+  const priceInfo = useCategoryPriceInfo(data.categoryId);
 
   return (
     <>
-      <SEO />
+      <SEO usdPrice={priceInfo.usdAmount} />
       <div className="sp-page">
         {/* ── 1. HERO ────────────────────────────────────────────────────────── */}
         <section className="sp-hero">
@@ -567,8 +545,9 @@ export default function Urology({ data = SPECIALTY_DATA }) {
           <div className="sp-hero__content">
             <div className="sp-hero__layout">
               <div
-                className={`sp-hero__content-inner${heroLoaded ? " sp-hero__content-inner--loaded" : ""
-                  }`}
+                className={`sp-hero__content-inner${
+                  heroLoaded ? " sp-hero__content-inner--loaded" : ""
+                }`}
               >
                 <Breadcrumb tone="light" />
                 <span className="sp-hero__badge">Men's Health</span>
@@ -578,8 +557,7 @@ export default function Urology({ data = SPECIALTY_DATA }) {
               </div>
 
               <BookingCard
-                price={price}
-                priceLoading={priceLoading}
+                priceInfo={priceInfo}
                 categoryId={data.categoryId}
                 name={data.name}
               />
@@ -594,7 +572,8 @@ export default function Urology({ data = SPECIALTY_DATA }) {
               {/* Image column */}
               <Reveal>
                 <div className="sp-overview__img-wrap">
-                  <img decoding="async"
+                  <img
+                    decoding="async"
                     src={data.overviewImage}
                     width="562"
                     height="430"
@@ -685,7 +664,16 @@ export default function Urology({ data = SPECIALTY_DATA }) {
         <section className="sp-conditions">
           <div className="sp-container">
             <Reveal>
-              <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.target !== e.currentTarget) return; if (e.key === "Enter" || e.key === " ") { e.preventDefault(); (() => navigate("/conditions"))(e); } }}
+              <div
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.target !== e.currentTarget) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    (() => navigate("/conditions"))(e);
+                  }
+                }}
                 className="sp-conditions__head"
                 onClick={() => navigate("/conditions")}
                 style={{ cursor: "pointer" }}

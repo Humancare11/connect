@@ -80,11 +80,22 @@ export default function ConsultationNotesPanel({ patientId, className = "" }) {
                   </span>
                 </button>
                 {isOpen && (
-                  <p className="cnp-item-content">
-                    {note.content?.trim()
-                      ? note.content
-                      : "No content recorded."}
-                  </p>
+                  <div className="cnp-item-content">
+                    {[
+                      ["Symptoms", note.symptoms],
+                      ["Clinical Findings", note.clinicalFindings],
+                      ["Plan / Treatment", note.plan],
+                      ["Note", note.note],
+                    ].filter(([, v]) => v?.trim()).map(([label, v]) => (
+                      <p key={label} style={{ margin: "0 0 8px", whiteSpace: "pre-wrap" }}>
+                        <strong>{label}:</strong> {v}
+                      </p>
+                    ))}
+                    {!(note.symptoms || note.clinicalFindings || note.plan || note.note)?.trim() && "No content recorded."}
+                    <small style={{ display: "block", opacity: 0.7 }}>
+                      {note.reportId ? "Finalised" : "Draft"}
+                    </small>
+                  </div>
                 )}
               </div>
             );

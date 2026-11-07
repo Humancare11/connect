@@ -639,12 +639,12 @@ export default function Categories() {
 
   const filtered = query.trim()
     ? CATEGORIES.map((c) => ({
-      category: c,
-      score: scoreCategory(c, query.trim()),
-    }))
-      .filter((r) => r.score !== null)
-      .sort((a, b) => b.score - a.score)
-      .map((r) => r.category)
+        category: c,
+        score: scoreCategory(c, query.trim()),
+      }))
+        .filter((r) => r.score !== null)
+        .sort((a, b) => b.score - a.score)
+        .map((r) => r.category)
     : CATEGORIES;
 
   return (

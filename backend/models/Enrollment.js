@@ -44,6 +44,8 @@ const enrollmentSchema = new mongoose.Schema({
 
   // Section 2 - Verification + Payout
   medicalRegistrationNumber: String,
+  // Private S3 key of the doctor's PNG signature used on Visit Notes (served only through /api/doctor/signature).
+  signatureKey: { type: String, default: "" },
   medicalLicense: String,
   idProof: String,
   degreeFile: String,

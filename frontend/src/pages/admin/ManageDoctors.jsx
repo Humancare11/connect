@@ -325,7 +325,7 @@ export default function ManageDoctors() {
 
       <div className="adp-card">
         <div className="adp-card-header">
-          <div className="adp-tabs">
+          <div className="adp-tabs adp-tabs--grid">
             {[
               { key: "pending", label: "Pending", count: counts.pending },
               { key: "approved", label: "Approved", count: counts.approved },

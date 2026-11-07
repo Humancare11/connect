@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import "./DoctorNotes.css";
 import { useConfirm } from "../../components/ui/ConfirmDialog";
+import VisitNoteEditor from "../../components/VisitNoteEditor";
 
 const fmtDateTime = (value) => {
   if (!value) return "";
@@ -41,10 +42,6 @@ export default function DoctorNotes() {
     dateFrom: "",
     dateTo: "",
   });
-  const [draft, setDraft] = useState({
-    content: "",
-    version: 0,
-  });
 
   const selectedNote = useMemo(
     () => notes.find((note) => note._id === selectedId) || null,
@@ -81,44 +78,21 @@ export default function DoctorNotes() {
     loadNotes();
   }, [loadNotes]);
 
-  useEffect(() => {
-    if (!selectedNote) {
-      setDraft({ content: "", version: 0 });
-      return;
-    }
-
-    setDraft({
-      content: selectedNote.content || "",
-      version: Number.isInteger(selectedNote.__v) ? selectedNote.__v : 0,
-    });
-  }, [selectedNote]);
-
   const updateFilter = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const saveSelectedNote = async () => {
-    if (!selectedNote || saving) return;
-
-    setSaving(true);
-    setError("");
-    setSavedMessage("");
-    try {
-      const { data } = await api.patch(`/api/notes/${selectedNote._id}`, {
-        content: draft.content,
-        version: draft.version,
-      });
-      const saved = data.note;
-      setNotes((prev) => prev.map((note) => (note._id === saved._id ? saved : note)));
-      setSelectedId(saved._id);
-      setSavedMessage("Note saved.");
-      setTimeout(() => setSavedMessage(""), 2500);
-    } catch (err) {
-      setError(err.response?.data?.msg || "Failed to save consultation note.");
-    } finally {
-      setSaving(false);
-    }
-  };
+  // Keep the list card in step with what the editor auto-saved.
+  const handleNoteChange = useCallback((saved) => {
+    if (!saved?._id) return;
+    setNotes((prev) =>
+      prev.map((note) =>
+        note._id === saved._id
+          ? { ...note, updatedAt: saved.updatedAt, reportId: saved.reportId, status: saved.status }
+          : note,
+      ),
+    );
+  }, []);
 
   const deleteSelectedNote = async () => {
     if (!selectedNote || saving) return;
@@ -155,7 +129,7 @@ export default function DoctorNotes() {
         <div>
           <span className="dn-eyebrow">Consultation notes</span>
           <h2 className="dn-title">Notes</h2>
-          <p className="dn-subtitle">Review and manage notes saved during video consultations.</p>
+          <p className="dn-subtitle">Structured notes saved during video consultations. Finalise a note to add it to a Visit Note.</p>
         </div>
       </div>
 
@@ -163,7 +137,7 @@ export default function DoctorNotes() {
         <input
           className="dn-input dn-search"
           type="search"
-          placeholder="Search notes or patients"
+          placeholder="Search by patient name"
           value={filters.search}
           onChange={(e) => updateFilter("search", e.target.value)}
         />
@@ -204,6 +178,9 @@ export default function DoctorNotes() {
                 <strong>{getPatientName(note)}</strong>
                 <span>{fmtAppointmentDate(note.appointmentId?.date, note.appointmentId?.time)}</span>
                 <small>Updated {fmtDateTime(note.updatedAt)}</small>
+                <span className={`dn-pill ${note.reportId ? "dn-pill--final" : "dn-pill--draft"}`}>
+                  {note.reportId ? "Finalised" : "Draft"}
+                </span>
               </button>
             ))
           )}
@@ -231,38 +208,22 @@ export default function DoctorNotes() {
                   <span>Updated</span>
                   <strong>{fmtDateTime(selectedNote.updatedAt)}</strong>
                 </div>
-              </div>
-
-              <textarea
-                className="dn-textarea"
-                value={draft.content}
-                onChange={(e) => setDraft((prev) => ({ ...prev, content: e.target.value }))}
-                maxLength={20000}
-                disabled={saving}
-                placeholder="Consultation observations, assessment, plan, and follow-up notes..."
-              />
-
-              <div className="dn-editor-foot">
-                <span>{draft.content.length}/20000</span>
-                <div className="dn-actions">
-                  <button
-                    type="button"
-                    className="dn-btn dn-btn--danger"
-                    onClick={deleteSelectedNote}
-                    disabled={saving}
-                  >
-                    Delete
-                  </button>
-                  <button
-                    type="button"
-                    className="dn-btn dn-btn--primary"
-                    onClick={saveSelectedNote}
-                    disabled={saving}
-                  >
-                    {saving ? "Saving..." : "Save Changes"}
-                  </button>
+                <div>
+                  <span>Status</span>
+                  <strong>
+                    {selectedNote.reportId ? "Finalised · in Visit Note" : "Draft · only you can see"}
+                  </strong>
                 </div>
               </div>
+
+              <VisitNoteEditor
+                key={selectedNote.appointmentId?._id || selectedNote._id}
+                appointmentId={selectedNote.appointmentId?._id}
+                variant="page"
+                showBadge={false}
+                onNoteChange={handleNoteChange}
+                onDelete={deleteSelectedNote}
+              />
             </>
           ) : (
             <div className="dn-empty dn-empty--editor">Select a note to view details.</div>

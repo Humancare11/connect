@@ -275,12 +275,21 @@
 /* Secondary Navigation: Fluid, sticky & horizontally scrollable on demand */
 .quick-nav {
   position: sticky;
-  top: calc(var(--header-h, 72px) + 8px);
-  z-index: 25;
+  /* The site header is fixed: 10px from the top, ~60px tall once it shrinks
+     on scroll. Sit 10px beneath it. (--header-h is set on the header element
+     itself, so it was never visible here and this always used its fallback.) */
+  top: 80px;
+  z-index: 25; /* below the header (80), above page content */
   display: flex;
   gap: 8px;
-  width: 100%;
+  /* Size to the pills (so it is compact on wide screens) but never wider than
+     the column: when the pills don't fit, this row scrolls sideways by itself
+     and the page does not. One rule, no breakpoints. */
+  width: fit-content;
   max-width: 100%;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 8px;
+  overscroll-behavior-x: contain;
   overflow-x: auto;
   overflow-y: hidden;
   flex-wrap: nowrap;
@@ -304,13 +313,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 15px;
+  /* Fluid: scales smoothly with the viewport between phone and desktop. */
+  padding: 9px clamp(12px, 1.4vw, 15px);
+  scroll-snap-align: start;
   border-radius: 10px;
   border: none;
   background: transparent;
   color: var(--ink-soft);
   font-family: var(--font-secondary);
-  font-size: 0.85rem;
+  font-size: clamp(0.8125rem, 0.78rem + 0.15vw, 0.85rem);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -344,6 +355,11 @@
   flex-direction: column;
   gap: clamp(40px, 6vw, 64px);
   width: 100%;
+}
+
+.faq-section {
+  /* Land below the fixed header and the sticky category bar. */
+  scroll-margin-top: 150px;
 }
 
 .faq-section__heading {
