@@ -58,3 +58,66 @@ export function zoneNote(timezone) {
   }
   return `Times are the patient's local time (${zone}). IST is shown beneath each time.`;
 }
+
+// ── Calendar and time-zone helpers for the redesigned dialog ─────────────────
+
+const IST_ZONES = new Set(["Asia/Kolkata", "Asia/Calcutta"]);
+export const isIstZone = (zone) => IST_ZONES.has(String(zone || ""));
+
+// "2026-11" -> { year: 2026, month: 10 } (month is 0-based like Date) and back.
+export const parseMonth = (key) => {
+  const [y, m] = String(key).split("-").map(Number);
+  return { year: y, month: m - 1 };
+};
+export const monthKey = (year, month) => {
+  const d = new Date(year, month, 1);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+};
+export const shiftMonth = (key, delta) => {
+  const { year, month } = parseMonth(key);
+  return monthKey(year, month + delta);
+};
+export const monthTitle = (key) => {
+  const { year, month } = parseMonth(key);
+  return new Date(year, month, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+};
+
+// The cells of a month: `null` for the blanks before the 1st, then one ISO date per day (Sunday-first, like the design).
+export function monthCells(key) {
+  const { year, month } = parseMonth(key);
+  const blanks = new Date(year, month, 1).getDay();
+  const count = new Date(year, month + 1, 0).getDate();
+  return [...Array(blanks).fill(null), ...Array.from({ length: count }, (_, i) => `${year}-${pad(month + 1)}-${pad(i + 1)}`)];
+}
+
+// "Fri, 06 Nov 2026" for an ISO date.
+export function longDay(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+  if (!m) return iso || "";
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+}
+
+// Header chip: "America/New_York (EST)", "India (IST)".
+export function zoneChip(zone, at = new Date()) {
+  if (isIstZone(zone)) return "India (IST)";
+  let short = "";
+  try {
+    short = new Intl.DateTimeFormat("en-US", { timeZone: zone, timeZoneName: "short" }).formatToParts(at).find((p) => p.type === "timeZoneName")?.value || "";
+  } catch {
+    short = "";
+  }
+  return short ? `${zone} (${short})` : String(zone || "");
+}
+
+// The grey / orange note above the slots. `diff` is true when the patient's zone is not IST (IST is then shown under each slot).
+export function zoneInfo(timezone) {
+  if (!timezone) return { text: "", diff: false };
+  const diff = !isIstZone(timezone.patient);
+  if (timezone.assumed) return { text: zoneNote(timezone), diff };
+  return { text: diff ? `Times are the patient's time (${timezone.patient}). India time is shown under each slot.` : "Times are in IST, same for patient and admin.", diff };
+}
+
+// What is still needed, for the footer: "date, time, reason" (a note instead of the reason when "Other" has none).
+export function needList({ date, time, reason, note }) {
+  return [!date && "date", date && !time && "time", !reason && "reason", reason === "Other" && !String(note || "").trim() && "a note"].filter(Boolean);
+}

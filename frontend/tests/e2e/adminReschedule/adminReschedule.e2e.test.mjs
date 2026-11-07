@@ -51,6 +51,14 @@ describe("admin reschedule in a real browser: admin, doctor, patient", { skip: s
   };
   // The slot button whose own time (first line) is exactly this; the IST line under it also contains digits.
   const chip = (label) => page.locator(".adp-rs-chip", { has: page.locator("span", { hasText: new RegExp(`^${label}$`) }) });
+  // The calendar day button for an ISO date (moves to the next month first when needed).
+  const pickDay = async (iso) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    const label = new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+    const day = page.getByRole("button", { name: label });
+    if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
+    await day.click();
+  };
   const adminRow = (id) => page.locator("table.adp-bk tbody tr", { hasText: id });
 
   before(async () => {
@@ -107,24 +115,36 @@ describe("admin reschedule in a real browser: admin, doctor, patient", { skip: s
     const current = await page.locator(".adp-rs-modal .adp-rs-current").innerText();
     assert.match(current, /Nobita Mestry/);
     assert.match(current, /10:30 AM/);
-    assert.match(current, /IST 10:30 AM/);
+    assert.match(current, /Patient time zone\s*India \(IST\)/);
+    assert.match(current, /Confirmed/);
+    // Before a date is picked the right side says so, and Confirm is disabled with what is missing.
+    assert.match(await page.locator(".adp-rs-modal").innerText(), /Pick a date in the calendar to see the time slots\./);
+    assert.equal(await page.getByRole("button", { name: "Confirm reschedule" }).isDisabled(), true);
+    assert.match(await page.locator(".adp-rs-foot .adp-rs-need").innerText(), /Choose date, reason to continue/);
+    assert.equal(await page.getByRole("button", { name: "Previous month" }).isDisabled(), true);
     await shot("2-admin-modal-open");
 
-    await page.selectOption(".adp-rs-modal select", api.dates.tomorrow);
+    await pickDay(api.dates.tomorrow);
     await page.waitForSelector(".adp-rs-chip");
     // 11:30 is held by another patient with the same doctor.
     assert.equal(await chip("11:30 AM").isDisabled(), true);
     assert.equal(await chip("2:00 PM").isDisabled(), false);
-    assert.match(await page.locator(".adp-rs-modal").innerText(), /Times are the patient's local time \(Asia\/Kolkata\)\. IST is shown beneath each time\./);
+    assert.match(await page.locator(".adp-rs-modal").innerText(), /Times are in IST, same for patient and admin\./);
+    // An IST patient sees no second (IST) time under the slots: only unavailable ones carry a small reason.
+    assert.equal(await page.locator(".adp-rs-chip:not(:disabled) small").count(), 0);
+    assert.match(await chip("11:30 AM").innerText(), /Booked/);
 
     // Nothing chosen yet: it says what is missing. "Other" needs a note.
-    await page.getByRole("button", { name: "Confirm reschedule" }).click();
-    assert.match(await page.locator(".adp-rs-modal .adp-bk-modal-error").innerText(), /Choose a time slot, a reason/);
+    assert.equal(await page.getByRole("button", { name: "Confirm reschedule" }).isDisabled(), true);
+    assert.match(await page.locator(".adp-rs-foot .adp-rs-need").innerText(), /Choose time, reason to continue/);
     await chip("2:00 PM").click();
+    assert.equal(await page.getByRole("button", { name: "Confirm reschedule" }).isDisabled(), true);
     await page.getByLabel("Other", { exact: true }).check();
-    await page.getByRole("button", { name: "Confirm reschedule" }).click();
-    assert.match(await page.locator(".adp-rs-modal .adp-bk-modal-error").innerText(), /a note for "Other"/);
+    // "Other" needs a note: the box turns red and Confirm stays disabled until it is filled.
+    assert.equal(await page.getByRole("button", { name: "Confirm reschedule" }).isDisabled(), true);
+    assert.equal(await page.getByLabel("Reason note").getAttribute("aria-invalid"), "true");
     await page.getByLabel("Reason note").fill(NOTE);
+    assert.equal(await page.getByRole("button", { name: "Confirm reschedule" }).isDisabled(), false);
     assert.match(await page.locator(".adp-rs-change").innerText(), /10:30 AM[\s\S]*2:00 PM/);
     await shot("3-admin-modal-filled");
 
@@ -151,7 +171,7 @@ describe("admin reschedule in a real browser: admin, doctor, patient", { skip: s
     // The slot just taken is now disabled for another booking of the same doctor.
     await adminRow(api.ids.pending).getByRole("button", { name: "Reschedule" }).click();
     await page.waitForSelector(".adp-rs-modal .adp-rs-current");
-    await page.selectOption(".adp-rs-modal select", api.dates.tomorrow);
+    await pickDay(api.dates.tomorrow);
     await page.waitForSelector(".adp-rs-chip");
     assert.equal(await chip("2:00 PM").isDisabled(), true);
     await page.getByRole("button", { name: "Cancel" }).click();

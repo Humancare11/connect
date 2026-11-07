@@ -1,28 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import Modal from "../../../components/ui/Modal";
 import StatusPill from "./StatusPill";
+import RescheduleCalendar from "./RescheduleCalendar";
 import * as bookingApi from "./bookingApi";
 import { shortBookingId } from "./bookingFormat";
-import { SLOT_WHY, dayLabel, groupSlots, missingFields, nextDays, timePart, zoneNote } from "./rescheduleLogic";
+import { groupSlots, isoDay, longDay, needList, timePart, zoneChip, zoneInfo } from "./rescheduleLogic";
 
 const DEFAULT_REASONS = ["Patient not available", "Doctor not available", "Patient requested", "Technical issue", "Other"];
-
-// One slot as two lines: the patient's time and, beneath it, the same instant in IST.
-function SlotTimes({ patient, ist, strong = false }) {
-  return (
-    <span className="adp-rs-times">
-      <span className={strong ? "adp-rs-times__main adp-rs-times__main--strong" : "adp-rs-times__main"}>{patient || "-"}</span>
-      {ist && <span className="adp-rs-times__ist">IST {ist}</span>}
-    </span>
-  );
-}
+const OFF_LABEL = { booked: "Booked", past: "Past", current: "Current slot" };
+const NOTE_MAX = 500;
+const LOCK = (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+    <rect x="4" y="11" width="16" height="10" rx="2" />
+    <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+  </svg>
+);
 
 // Admin-only. Moves a Pending / Assigned / Confirmed booking to a new free slot of the same doctor. The old time may
 // already be past (a patient who never joined); only the new slot has to be in the future. The reason note is for admins:
 // the doctor and the patient only learn that it was rescheduled. `onSubmit` resolves true when the server accepted it.
+// (Layout only: the data, the checks and the request are the same as before the redesign.)
 export default function RescheduleModal({ row, submitting, error, onSubmit, onClose }) {
+  const [today] = useState(() => isoDay(new Date()));
   const [ctx, setCtx] = useState(null);
   const [ctxError, setCtxError] = useState("");
+  const [month, setMonth] = useState(today.slice(0, 7));
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState(null);
   const [slotsError, setSlotsError] = useState("");
@@ -30,9 +32,8 @@ export default function RescheduleModal({ row, submitting, error, onSubmit, onCl
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
   const [notify, setNotify] = useState(true);
-  const [touched, setTouched] = useState(false);
+  const [showOff, setShowOff] = useState(true);
   const request = useRef(0);
-  const [days] = useState(() => nextDays(14));
 
   useEffect(() => {
     let alive = true;
@@ -52,7 +53,9 @@ export default function RescheduleModal({ row, submitting, error, onSubmit, onCl
     if (!day) return;
     try {
       const res = await bookingApi.getRescheduleSlots(row.id, day);
-      if (mine === request.current) setSlots(res.data.slots || []);
+      if (mine === request.current) {
+        setSlots(res.data.slots || []);
+      }
     } catch (err) {
       if (mine === request.current) setSlotsError(err?.response?.data?.msg || "Could not load the slots. Try again.");
     }
@@ -61,18 +64,28 @@ export default function RescheduleModal({ row, submitting, error, onSubmit, onCl
   const pickDate = (day) => {
     setDate(day);
     setTime("");
+    if (day) setMonth(day.slice(0, 7));
     loadSlots(day);
+  };
+  const goToday = () => {
+    setMonth(today.slice(0, 7));
+    pickDate(today);
   };
 
   const blocked = ctx && !ctx.canReschedule;
   const chosen = slots?.find((s) => s.time === time) || null;
-  const missing = missingFields({ date, time, reason, note });
+  const need = needList({ date, time, reason, note });
   const reasons = ctx?.reasons?.length ? ctx.reasons : DEFAULT_REASONS;
+  const zone = ctx ? zoneInfo(ctx.timezone) : { text: "", diff: false };
+  const diff = zone.diff;
+  const noteMissing = reason === "Other" && !note.trim();
+  const currentLabel = ctx?.current?.patient?.label || "";
+  const currentIst = ctx?.current?.ist?.label || "";
+  const freeNow = slots ? slots.filter((s) => s.status === "available").length : 0;
 
   const submit = async (event) => {
     event.preventDefault();
-    setTouched(true);
-    if (missing || submitting || blocked) return;
+    if (need.length || submitting || blocked) return;
     const ok = await onSubmit({ date, time, reason, reasonNote: note.trim(), notify });
     // Someone took the slot, or it just passed: reload the day so the grid is right and the choice is cleared.
     if (ok === false && date) {
@@ -82,153 +95,213 @@ export default function RescheduleModal({ row, submitting, error, onSubmit, onCl
   };
 
   return (
-    <Modal open onClose={onClose} dismissible={!submitting} title={`Reschedule appointment · ${shortBookingId(row)}`} className="adp-bk-modal adp-rs-modal">
-      <form onSubmit={submit} className="adp-bk-modal-body" noValidate>
+    <Modal open onClose={onClose} dismissible={!submitting} title="Reschedule appointment" className="adp-bk-modal adp-rs-modal">
+      <form onSubmit={submit} className="adp-rs-form" noValidate>
+        <button type="button" className="adp-rs-x" aria-label="Close" onClick={onClose} disabled={submitting}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+
         <div className="adp-rs-current">
-          <div>
-            <span className="adp-rs-label">Patient</span>
-            <strong>{row.patient?.name || "Unknown patient"}</strong>
+          <div className="adp-rs-sub">
+            <strong>{row.patient?.name || "Unknown patient"}</strong> with <strong>{row.doctorName || "no doctor assigned"}</strong> ·{" "}
+            <span className="adp-rs-id">{shortBookingId(row)}</span>
           </div>
-          <div>
-            <span className="adp-rs-label">Doctor</span>
-            <strong>{row.doctorName || "Not assigned"}</strong>
-          </div>
-          <div>
-            <span className="adp-rs-label">Current slot</span>
-            {ctx ? <SlotTimes patient={ctx.current.patient.label} ist={ctx.current.ist.label && timePart(ctx.current.ist.label)} strong /> : <strong>…</strong>}
-          </div>
-          <div>
-            <span className="adp-rs-label">Status</span>
+          <div className="adp-rs-chipsrow">
+            <span className="adp-rs-pillchip">
+              Current <b>{ctx ? `${currentLabel}${diff && currentIst ? ` (${timePart(currentIst)} IST)` : ""}` : "…"}</b>
+            </span>
             <StatusPill status={row.status} />
+            {ctx && (
+              <span className="adp-rs-pillchip">
+                Patient time zone <b>{zoneChip(ctx.timezone.patient)}</b>
+              </span>
+            )}
           </div>
         </div>
 
-        {ctxError && (
-          <p className="adp-bk-modal-error" role="alert">
-            {ctxError}
-          </p>
-        )}
-        {blocked && (
-          <p className="adp-bk-modal-warning" role="alert">
-            {ctx.blockedReason}
-          </p>
-        )}
+        <div className="adp-rs-body">
+          {ctxError && (
+            <p className="adp-bk-modal-error" role="alert">
+              {ctxError}
+            </p>
+          )}
+          {blocked && (
+            <p className="adp-bk-modal-warning" role="alert">
+              {ctx.blockedReason}
+            </p>
+          )}
 
-        {ctx && !blocked && (
-          <>
-            <div className="adp-rs-when">
-              <label className="adp-bk-field">
-                <span>New date</span>
-                <select value={date} onChange={(e) => pickDate(e.target.value)} disabled={submitting}>
-                  <option value="">Select a date</option>
-                  {days.map((d) => (
-                    <option key={d} value={d}>
-                      {dayLabel(d)}
-                    </option>
-                  ))}
-                </select>
-                <small>Next 14 days, with {row.doctorName || "the doctor"}&rsquo;s free slots</small>
-              </label>
-
-              <div className="adp-bk-field">
-                <span id="adp-rs-time-label">New time</span>
-                {!date && <small>Pick a date to see the free slots.</small>}
-                {date && !slots && !slotsError && <small>Loading slots…</small>}
-                {slotsError && (
-                  <small className="adp-rs-err" role="alert">
-                    {slotsError}
-                  </small>
-                )}
-                {slots && (
-                  <div className="adp-rs-slots" role="group" aria-labelledby="adp-rs-time-label">
-                    {groupSlots(slots).map((group) => (
-                      <div key={group.name} className="adp-rs-group">
-                        <span className="adp-rs-label">{group.name}</span>
-                        <div className="adp-rs-chips">
-                          {group.slots.map((slot) => {
-                            const disabled = slot.status !== "available" || submitting;
-                            return (
-                              <button
-                                key={slot.time}
-                                type="button"
-                                className={`adp-rs-chip${slot.status !== "available" ? ` adp-rs-chip--${slot.status}` : ""}`}
-                                aria-pressed={time === slot.time}
-                                disabled={disabled}
-                                title={SLOT_WHY[slot.status] || undefined}
-                                onClick={() => setTime(slot.time)}
-                              >
-                                <span>{slot.label}</span>
-                                <small>IST {timePart(slot.ist)}</small>
-                              </button>
-                            );
-                          })}
+          {ctx && !blocked && (
+            <>
+              <section className="adp-rs-step">
+                <div className="adp-rs-step__head">
+                  <h3>
+                    <span className="adp-rs-num">1</span>New date and time
+                  </h3>
+                  {date && (
+                    <label className="adp-rs-toggle">
+                      <input type="checkbox" checked={showOff} onChange={(e) => setShowOff(e.target.checked)} /> Show unavailable
+                    </label>
+                  )}
+                </div>
+                <div className="adp-rs-pick">
+                  <RescheduleCalendar
+                    month={month}
+                    onMonth={setMonth}
+                    today={today}
+                    value={date}
+                    disabled={submitting}
+                    onPick={pickDate}
+                    onClear={() => pickDate("")}
+                    onToday={goToday}
+                  />
+                  <div className="adp-rs-right">
+                    {!date && <div className="adp-rs-empty">Pick a date in the calendar to see the time slots.</div>}
+                    {date && (
+                      <>
+                        <div className="adp-rs-seldate">
+                          Slots for <b>{longDay(date)}</b>
+                          {slots ? ` · ${freeNow} free` : ""}
                         </div>
-                      </div>
-                    ))}
-                    <small>Crossed-out slots are booked, in the past, or the current slot. {zoneNote(ctx.timezone)}</small>
+                        <div className={`adp-rs-tz${diff ? " adp-rs-tz--diff" : ""}`}>{zone.text}</div>
+                        {!slots && !slotsError && <small>Loading slots…</small>}
+                        {slotsError && (
+                          <small className="adp-rs-err" role="alert">
+                            {slotsError}
+                          </small>
+                        )}
+                        {slots && freeNow === 0 && <div className="adp-rs-empty">No free slots on this day. Pick another date.</div>}
+                        {slots && (
+                          <div className="adp-rs-slots" role="group" aria-label="Time slots">
+                            {groupSlots(slots).map((group) => {
+                              const list = group.slots.filter((s) => showOff || s.status === "available");
+                              if (!list.length) return null;
+                              return (
+                                <div key={group.name} className="adp-rs-group">
+                                  <span className="adp-rs-label">{group.name}</span>
+                                  <div className="adp-rs-chips">
+                                    {list.map((slot) => {
+                                      const off = slot.status !== "available";
+                                      return (
+                                        <button
+                                          key={slot.time}
+                                          type="button"
+                                          className={`adp-rs-chip${off ? ` adp-rs-chip--${slot.status}` : ""}`}
+                                          aria-pressed={time === slot.time}
+                                          disabled={off || submitting}
+                                          title={off ? OFF_LABEL[slot.status] : undefined}
+                                          aria-label={`${slot.label}${diff ? `, ${timePart(slot.ist)} IST` : ""}${off ? `, ${OFF_LABEL[slot.status]}` : ""}`}
+                                          onClick={() => setTime(slot.time)}
+                                        >
+                                          <span>{slot.label}</span>
+                                          {off ? <small>{OFF_LABEL[slot.status]}</small> : diff && <small>{timePart(slot.ist)} IST</small>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {showOff && (
+                              <div className="adp-rs-legend">
+                                <span>
+                                  <i />
+                                  Free
+                                </span>
+                                <span>
+                                  <i className="adp-rs-legend__sel" />
+                                  Selected
+                                </span>
+                                <span>
+                                  <i className="adp-rs-legend__off" />
+                                  Booked, past or current
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
+                </div>
+              </section>
 
-            <fieldset className="adp-rs-reasons">
-              <legend>Reason</legend>
-              <div className="adp-rs-reasonlist">
-                {reasons.map((r) => (
-                  <label key={r} className={reason === r ? "adp-rs-reason adp-rs-reason--on" : "adp-rs-reason"}>
-                    <input type="radio" name="reschedule-reason" value={r} checked={reason === r} onChange={() => setReason(r)} disabled={submitting} />
-                    {r}
+              <section className="adp-rs-step">
+                <div className="adp-rs-step__head">
+                  <h3>
+                    <span className="adp-rs-num">2</span>Reason
+                  </h3>
+                </div>
+                <div className="adp-rs-reasonlist" role="radiogroup" aria-label="Reason">
+                  {reasons.map((r) => (
+                    <label key={r} className={reason === r ? "adp-rs-reason adp-rs-reason--on" : "adp-rs-reason"}>
+                      <input type="radio" name="reschedule-reason" value={r} checked={reason === r} onChange={() => setReason(r)} disabled={submitting} />
+                      {r}
+                    </label>
+                  ))}
+                </div>
+                <textarea
+                  className={`adp-rs-note${noteMissing ? " adp-rs-note--bad" : ""}`}
+                  rows={2}
+                  maxLength={NOTE_MAX}
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder={reason === "Other" ? "Write the reason (required)" : "Add a note (optional)"}
+                  aria-label="Reason note"
+                  aria-invalid={noteMissing || undefined}
+                  disabled={submitting}
+                />
+                <div className="adp-rs-notehint">
+                  <span className="adp-rs-lock">{LOCK}Admins only. Patient and doctor only see that it was rescheduled.</span>
+                  <span>
+                    {note.length}/{NOTE_MAX}
+                  </span>
+                </div>
+                <div className="adp-rs-opts">
+                  <label className="adp-rs-check">
+                    <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} disabled={submitting} />
+                    <span>Email and notify the patient and doctor with the old and new time</span>
                   </label>
-                ))}
-              </div>
-              <textarea
-                className="adp-rs-note"
-                rows={2}
-                maxLength={500}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Add a note (required for Other)"
-                aria-label="Reason note"
-                disabled={submitting}
-              />
-              <small>Shown to admins only. The patient and the doctor see that it was rescheduled, not the reason or the note.</small>
-            </fieldset>
+                  <p className="adp-rs-fine">The old date and time stay in the history. Payment is not changed.</p>
+                </div>
+              </section>
+            </>
+          )}
 
-            {chosen && (
-              <div className="adp-rs-change" aria-live="polite">
-                <SlotTimes patient={ctx.current.patient.label} ist={timePart(ctx.current.ist.label)} />
-                <span aria-hidden="true">→</span>
-                <SlotTimes patient={`${dayLabel(date)}, ${chosen.label}`} ist={timePart(chosen.ist)} strong />
-              </div>
+          {error && (
+            <p className="adp-bk-modal-error" role="alert">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <div className="adp-rs-foot">
+          <div className="adp-rs-change" aria-live="polite">
+            {chosen ? (
+              <>
+                <s className="adp-rs-old">{currentLabel}</s>
+                <span className="adp-rs-arrow" aria-hidden="true">
+                  →
+                </span>
+                <span className="adp-rs-new">
+                  {longDay(date)}, {chosen.label}
+                </span>
+                {diff && <span className="adp-rs-need">({timePart(chosen.ist)} IST)</span>}
+              </>
+            ) : (
+              <span className="adp-rs-need">{blocked || !ctx ? "" : `Choose ${need.join(", ")} to continue`}</span>
             )}
-
-            <label className="adp-rs-check">
-              <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} disabled={submitting} />
-              <span>Notify patient and doctor by email and in-app with the old and new time</span>
-            </label>
-
-            <p className="adp-rs-info">The previous date and time are kept in the history and cannot be edited or deleted. Payment is not changed.</p>
-          </>
-        )}
-
-        {touched && missing && !blocked && (
-          <p className="adp-bk-modal-error" role="alert">
-            Choose {missing}.
-          </p>
-        )}
-        {error && (
-          <p className="adp-bk-modal-error" role="alert">
-            {error}
-          </p>
-        )}
-
-        <div className="hc-modal__actions">
-          <button type="button" className="adp-bk-btn" onClick={onClose} disabled={submitting}>
-            Cancel
-          </button>
-          <button type="submit" className="adp-bk-btn adp-bk-btn--ok" disabled={submitting || !ctx || blocked}>
-            {submitting ? "Rescheduling..." : "Confirm reschedule"}
-          </button>
+          </div>
+          <div className="adp-rs-btns">
+            <button type="button" className="adp-bk-btn" onClick={onClose} disabled={submitting}>
+              Cancel
+            </button>
+            <button type="submit" className="adp-bk-btn adp-bk-btn--ok" disabled={submitting || !ctx || blocked || need.length > 0}>
+              {submitting ? "Rescheduling..." : "Confirm reschedule"}
+            </button>
+          </div>
         </div>
       </form>
     </Modal>
