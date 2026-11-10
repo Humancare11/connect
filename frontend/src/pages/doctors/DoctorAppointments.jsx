@@ -583,6 +583,7 @@ export default function DoctorAppointments() {
                                     {appt.patientId?.name || "—"}
                                   </span>
                                 </div>
+                                {/*
                                 <div className="da-exp-item">
                                   <span className="da-exp-label">Email</span>
                                   <span className="da-exp-value">
@@ -597,6 +598,7 @@ export default function DoctorAppointments() {
                                     </span>
                                   </div>
                                 )}
+                                */}
                                 {appt.reschedule && (
                                   <div className="da-exp-item da-exp-item--full">
                                     <span className="da-exp-label">Rescheduled by admin</span>
