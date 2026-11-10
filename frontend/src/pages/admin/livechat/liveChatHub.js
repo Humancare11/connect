@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import api, { getUserAuthToken } from "../../../api";
-import { audioUnlocked, installAudioUnlock, playChime, playVisitorSound, showBrowserNotification, soundEnabled, visitorSoundEnabled, voiceEnabled } from "./liveChatNotify";
+import { audioUnlocked, installAudioUnlock, pageInFront, playChime, playVisitorSound, showBrowserNotification, soundEnabled, visitorSoundEnabled, voiceEnabled } from "./liveChatNotify";
 import { inLiveChatTab, shouldAlert } from "./liveChatTabs";
 import { createVisitorSoundGate } from "./visitorSound";
 import { createVoiceGate, speakPhrase } from "./voiceAlerts";
@@ -61,6 +61,13 @@ function set(patch) {
 
 const pagePath = (everLive, id) => `/admin-dashboard/live-chat/${everLive ? "agent-chats" : "ai-chats"}/${id}`;
 
+// The chime is separate from the toast: a chat the admin already has open needs no toast but still deserves a (softer)
+// sound when their window is not in front. Only the Live Chat tab alerts while it is open (see liveChatTabs.js).
+function ring(options) {
+  if (!shouldAlert()) return;
+  playChime(options);
+}
+
 // `notify` is what a browser notification may say (who / what kind of event, never message text).
 function pushToast({ title, body, path, notify }) {
   // While the Live Chat tab is open only that tab alerts; the dashboard tab just updates its badge.
@@ -68,8 +75,23 @@ function pushToast({ title, body, path, notify }) {
   const id = ++toastSeq;
   set({ toasts: [{ id, title, body, path }, ...snapshot.toasts].slice(0, MAX_TOASTS) });
   setTimeout(() => hub.dismissToast(id), TOAST_MS);
-  playChime();
   if (notify) showBrowserNotification({ ...notify, path, tag: `lc-${path || title}` });
+}
+
+// A toast with the normal chime (every event except a message in the chat that is open).
+function alertToast(toast) {
+  pushToast(toast);
+  ring();
+}
+
+// A patient message is announced once, whatever the number of times the event reaches this tab.
+const seenMessageIds = new Set();
+function firstSighting(id) {
+  if (!id) return true;
+  if (seenMessageIds.has(id)) return false;
+  seenMessageIds.add(id);
+  if (seenMessageIds.size > 300) for (const old of [...seenMessageIds].slice(0, 100)) seenMessageIds.delete(old);
+  return true;
 }
 
 const AI_PROBLEMS = {
@@ -101,7 +123,7 @@ function onChatEvent(event, payload) {
     case "chat:new":
       scheduleUnread();
       if (!isActive(payload.conversationId)) {
-        pushToast({
+        alertToast({
           title: "New chat",
           body: payload.mode === "live" ? "A chat was started" : `${payload.name || "A patient"} started a chat with the AI`,
           path: pagePath(payload.everLive, payload.conversationId),
@@ -112,35 +134,47 @@ function onChatEvent(event, payload) {
     case "queue:new":
       scheduleUnread();
       announceVoice("queue");
-      pushToast({
+      alertToast({
         title: "Waiting for an agent",
         body: `${payload.name || "A patient"} asked for a live agent`,
         path: pagePath(true, payload.conversationId),
-        notify: { title: "Waiting for an agent", body: `${payload.name || "A patient"} asked for a live agent` },
+        notify: { title: "Waiting for an agent", body: `${payload.name || "A patient"} asked for a live agent`, requireInteraction: true },
       });
       break;
-    case "chat:message":
+    case "chat:message": {
       if (payload.message?.sender !== "patient") break;
       scheduleUnread();
-      // Chats another agent is holding are not my business; the chat I am looking at needs no toast.
-      if (isActive(payload.conversationId)) break;
+      // Chats another agent is holding are not my business.
       if (payload.assigneeId && payload.assigneeId !== snapshot.agentId) break;
-      pushToast({
+      if (!firstSighting(payload.message.id)) break;
+      const who = payload.name || "A patient";
+      const notify = { title: "New message", body: `${who} sent a message` };
+      if (isActive(payload.conversationId)) {
+        // The chat on screen needs no toast. If the window is in front, nothing at all; if it is visible but not
+        // focused (another monitor, another app), a softer sound and a desktop notification.
+        if (!pageInFront() && shouldAlert()) {
+          ring({ quiet: true });
+          showBrowserNotification({ ...notify, path: pagePath(payload.everLive, payload.conversationId), tag: `lc-${pagePath(payload.everLive, payload.conversationId)}` });
+        }
+        break;
+      }
+      alertToast({
         title: payload.name || "Patient",
         body: payload.message.file ? "Sent a file" : preview(payload.message.text),
         path: pagePath(payload.everLive, payload.conversationId),
-        notify: { title: "New message", body: `${payload.name || "A patient"} sent a message` },
+        notify,
       });
       break;
+    }
     case "chat:updated":
       scheduleUnread();
       break;
     case "chat:taken":
       scheduleUnread();
-      pushToast({ title: "Chat taken over", body: `${payload.by} took over one of your chats`, path: pagePath(true, payload.conversationId) });
+      alertToast({ title: "Chat taken over", body: `${payload.by} took over one of your chats`, path: pagePath(true, payload.conversationId) });
       break;
     case "ai:unavailable":
-      pushToast({
+      alertToast({
         title: "AI assistant unavailable",
         body: `${AI_PROBLEMS[payload.kind] || "The AI assistant is having problems."} Patients are being sent to live agents.`,
         path: "",
@@ -148,7 +182,7 @@ function onChatEvent(event, payload) {
       });
       break;
     case "abuse:alert":
-      pushToast({
+      alertToast({
         title: "Possible abuse",
         body:
           payload.reason === "daily_limit"

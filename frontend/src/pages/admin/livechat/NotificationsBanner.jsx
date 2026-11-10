@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   bannerDismissed,
   dismissBanner,
@@ -10,6 +10,8 @@ import {
   setVisitorSoundEnabled,
   setVoiceEnabled,
   soundEnabled,
+  audioUnlocked,
+  subscribeAudioState,
   visitorSoundEnabled,
   voiceEnabled,
 } from "./liveChatNotify";
@@ -24,6 +26,7 @@ export default function NotificationsBanner() {
   const [visitorSound, setVisitorSound] = useState(visitorSoundEnabled);
   const [voice, setVoice] = useState(voiceEnabled);
 
+  const unlocked = useSyncExternalStore(subscribeAudioState, audioUnlocked);
   useEffect(() => {
     installAudioUnlock();
   }, []);
@@ -50,6 +53,11 @@ export default function NotificationsBanner() {
             ✕
           </button>
         </div>
+      )}
+      {sound && !unlocked && (
+        <span className="lcn-hint" role="status">
+          🔈 Click anywhere on this page to enable sound
+        </span>
       )}
       <button
         type="button"

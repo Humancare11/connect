@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiBaseOf } from "./apiBase";
+import { claimChime, createChimeGate, installChimeUnlock, isChimeMessage, playWidgetChime, readSoundOn, writeSoundOn } from "./chime";
 
 // Patient-side chat state. Talks to the server over Socket.IO (/livechat) with the chat token that the contact form
 // returns; without that token the server refuses every chat event.
@@ -124,6 +125,36 @@ export function useLiveChat() {
     openRef.current = open;
   }, [open]);
 
+  // Notification sound: a chime for a new reply (never the patient's own message, never history). Muted per browser.
+  const [soundOn, setSoundOn] = useState(readSoundOn);
+  const soundOnRef = useRef(soundOn);
+  const chimeGate = useRef(createChimeGate());
+  const chimedIds = useRef(new Set());
+  const conversationRef = useRef(null);
+  useEffect(() => {
+    conversationRef.current = conversation;
+  }, [conversation]);
+  useEffect(() => {
+    soundOnRef.current = soundOn;
+  }, [soundOn]);
+  useEffect(() => {
+    installChimeUnlock();
+  }, []);
+  const toggleSound = useCallback(() => {
+    setSoundOn((on) => {
+      writeSoundOn(!on);
+      return !on;
+    });
+  }, []);
+  // `key` identifies the event (a message id, or one id for a catch-up) so a second tab and a repeat are skipped.
+  const chime = useCallback((key) => {
+    if (!soundOnRef.current || chimedIds.current.has(key)) return;
+    chimedIds.current.add(key);
+    if (chimedIds.current.size > 200) chimedIds.current = new Set([...chimedIds.current].slice(-100));
+    if (!chimeGate.current.allow() || !claimChime(key)) return;
+    playWidgetChime();
+  }, []);
+
   const setOpen = useCallback((value) => {
     setOpenState(value);
     store.set(OPEN_KEY, value ? "1" : "0", "session");
@@ -146,7 +177,7 @@ export function useLiveChat() {
     []
   );
 
-  const resume = useCallback(async () => {
+  const resume = useCallback(async (announce = false) => {
     const res = await emit("chat:resume");
     if (res.needContact) {
       // The server does not know this contact (e.g. data was removed): ask again.
@@ -155,11 +186,18 @@ export function useLiveChat() {
       return;
     }
     if (res.ok) {
+      // After a reconnect: replies that arrived while offline give ONE chime (history on a first load never does).
+      const before = conversationRef.current;
+      if (announce && before && res.conversation?.conversationId === before.conversationId) {
+        const known = new Set(before.messages.map((m) => m.id));
+        const fresh = (res.conversation.messages || []).filter((m) => !known.has(m.id) && isChimeMessage(m));
+        if (fresh.length) chime(`resume-${fresh[fresh.length - 1].id}`);
+      }
       setFirstName(res.firstName || "");
       setConversation(res.conversation || null);
       setPhase("chat");
     }
-  }, [emit]);
+  }, [emit, chime]);
 
   const connect = useCallback(() => {
     if (socketRef.current) return connectingRef.current;
@@ -179,6 +217,8 @@ export function useLiveChat() {
       socketRef.current = socket;
 
       socket.on("chat:message", ({ conversationId, message }) => {
+        const shown = conversationRef.current;
+        if (shown && shown.conversationId === conversationId && !shown.messages.some((m) => m.id === message.id) && isChimeMessage(message)) chime(message.id);
         setConversation((current) => {
           if (!current || current.conversationId !== conversationId) return current;
           if (current.messages.some((m) => m.id === message.id)) return current;
@@ -196,7 +236,7 @@ export function useLiveChat() {
       let first = true;
       socket.on("connect", () => {
         setConnection("online");
-        if (!first) resume(); // reconnected: catch up on anything missed
+        if (!first) resume(true); // reconnected: catch up on anything missed
         first = false;
       });
       socket.on("disconnect", () => setConnection("offline"));
@@ -224,7 +264,7 @@ export function useLiveChat() {
       connectingRef.current = null;
     });
     return connectingRef.current;
-  }, [resume]);
+  }, [resume, chime]);
 
   // Returning visitor: restore the chat quietly once the widget is mounted.
   useEffect(() => {
@@ -504,6 +544,8 @@ export function useLiveChat() {
     limitReached,
     limitMessage: ERRORS.chat_limit,
     unread,
+    soundOn,
+    toggleSound,
     open,
     setOpen,
     submitContact,

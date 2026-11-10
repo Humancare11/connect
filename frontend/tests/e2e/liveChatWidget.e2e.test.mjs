@@ -992,4 +992,134 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.locator(".lcw-badge").count(), 0, "opening clears the badge");
     });
   });
+
+  describe("notification sound", () => {
+    // A fake audio context that counts the notes played: a chime is two oscillators.
+    const stubAudio = () =>
+      page.addInitScript(() => {
+        window.__osc = 0;
+        class FakeContext {
+          constructor() {
+            this.state = "running";
+            this.currentTime = 0;
+            this.destination = {};
+          }
+          resume() {
+            return Promise.resolve();
+          }
+          createOscillator() {
+            window.__osc += 1;
+            return { type: "", frequency: { value: 0 }, connect: (node) => node, start() {}, stop() {} };
+          }
+          createGain() {
+            return { gain: { setValueAtTime() {}, exponentialRampToValueAtTime() {} }, connect: (node) => node };
+          }
+        }
+        window.AudioContext = FakeContext;
+      });
+    const notes = () => page.evaluate(() => window.__osc);
+    const settle = (ms = 500) => new Promise((resolve) => setTimeout(resolve, ms));
+    const reply = (message) =>
+      io.of("/livechat").emit("chat:message", {
+        conversationId: mock.conversation.conversationId,
+        message: { at: new Date().toISOString(), ...message },
+      });
+    const ready = async () => {
+      for (let i = 0; i < 50 && !sentEvents("chat:resume").length; i += 1) await settle(100);
+    };
+
+    test("an AI reply and an agent message chime once the patient has interacted; their own message and the history do not", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      assert.equal(await notes(), 0, "chat history is silent");
+      await page.locator(".lcw-body").click(); // the patient interacts: the audio unlocks
+      await page.getByLabel("Your message").fill("hello there");
+      await page.getByLabel("Your message").press("Enter");
+      await page.locator(".lcw-msg--right", { hasText: "hello there" }).waitFor();
+      await settle();
+      assert.equal(await notes(), 0, "the patient's own message is silent");
+      reply({ id: "a1", sender: "ai", text: "Happy to help." });
+      await page.getByText("Happy to help.").waitFor();
+      await page.waitForFunction(() => window.__osc === 2);
+      await settle(1700); // past the burst gate
+      reply({ id: "a2", sender: "agent", agentName: "Sam", text: "Sam here." });
+      await page.getByText("Sam here.").waitFor();
+      await page.waitForFunction(() => window.__osc === 4);
+    });
+
+    test("nothing plays before the patient has interacted with the page", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      reply({ id: "a1", sender: "ai", text: "Early reply." });
+      await page.getByText("Early reply.").waitFor();
+      await settle();
+      assert.equal(await notes(), 0);
+    });
+
+    test("a burst of replies gives one chime (1.5 s gate)", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      reply({ id: "b1", sender: "ai", text: "First part." });
+      reply({ id: "b2", sender: "ai", text: "Second part." });
+      reply({ id: "b3", sender: "ai", text: "Third part." });
+      await page.getByText("Third part.").waitFor();
+      await settle();
+      assert.equal(await notes(), 2);
+    });
+
+    test("only 'joined the chat' and 'Chat resolved' system lines chime", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      reply({ id: "s1", sender: "system", text: "You're now chatting with Connect AI." });
+      await page.getByText("You're now chatting with Connect AI.").waitFor();
+      await settle();
+      assert.equal(await notes(), 0);
+      reply({ id: "s2", sender: "system", text: "Sam joined the chat" });
+      await page.getByText("Sam joined the chat").waitFor();
+      await page.waitForFunction(() => window.__osc === 2);
+      await settle(1700);
+      reply({ id: "s3", sender: "system", text: "Chat resolved" });
+      await page.getByText("Chat resolved").waitFor();
+      await page.waitForFunction(() => window.__osc === 4);
+    });
+
+    test("the bell mutes and unmutes, and the choice is remembered in hcLiveChatWidgetSound", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      await page.getByRole("button", { name: "Mute message sound" }).click();
+      assert.equal(await page.evaluate(() => localStorage.getItem("hcLiveChatWidgetSound")), "off");
+      reply({ id: "mute1", sender: "ai", text: "Muted reply." });
+      await page.getByText("Muted reply.").waitFor();
+      await settle();
+      assert.equal(await notes(), 0);
+      await page.reload();
+      await page.waitForSelector(".lcw-window");
+      await page.getByRole("button", { name: "Turn message sound on" }).click();
+      assert.equal(await page.evaluate(() => localStorage.getItem("hcLiveChatWidgetSound")), "on");
+    });
+
+    test("replies that arrived while offline give ONE chime when the chat reconnects", async () => {
+      await stubAudio();
+      await openAsReturningVisitor();
+      await ready();
+      await page.locator(".lcw-body").click();
+      mock.conversation.messages.push(
+        { id: "o1", sender: "ai", text: "Missed one.", at: new Date().toISOString() },
+        { id: "o2", sender: "agent", agentName: "Sam", text: "Missed two.", at: new Date().toISOString() }
+      );
+      mock.events.length = 0;
+      io.of("/livechat").sockets.forEach((client) => client.conn.close()); // a dropped connection (not a server kick): the client reconnects by itself
+      await page.getByText("Missed two.").waitFor({ timeout: 15_000 });
+      await settle(800);
+      assert.equal(await notes(), 2, "one chime, not one per message");
+    });
+  });
 });
