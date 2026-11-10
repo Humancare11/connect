@@ -118,6 +118,17 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
   let fileStore = store || null;
   const getStore = () => (fileStore ||= createS3FileStore());
 
+  // A storage failure becomes a short code for the widget and ONE log line with the reason: the step, the error name
+  // and the AWS code only. No file name, key, bucket, chat or visitor, so it is safe in pm2.
+  //   storage_not_configured  no bucket / no credentials (a setup problem)   storage_failed  S3 said no or was unreachable
+  function storageProblem(step, err) {
+    const text = `${err?.name || ""} ${err?.message || ""}`;
+    const notConfigured = /bucket is not configured|credential|CredentialsProviderError|Region is missing/i.test(text);
+    const reason = notConfigured ? "not_configured" : String(err?.name || err?.Code || err?.code || "error").replace(/[^\w.-]/g, "").slice(0, 60);
+    console.warn(`[livechat] file ${step} failed: storage ${reason}`);
+    return notConfigured ? new FileError(503, "storage_not_configured") : new FileError(502, "storage_failed");
+  }
+
   // A patient uploads into their OWN open chat.
   async function upload({ visitorId, file }) {
     let conv = await chat.findOpenConversation(visitorId);
@@ -139,8 +150,8 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     const key = `livechat/${conv.conversationId}/${crypto.randomUUID()}.${check.ext}`;
     try {
       await getStore().put(key, file.buffer, check.mime);
-    } catch {
-      throw new FileError(502, "storage_failed"); // never echo the storage error (it may name the bucket)
+    } catch (err) {
+      throw storageProblem("upload", err); // the answer never echoes the storage error (it may name the bucket)
     }
     const doc = await LcFile.create({
       conversationId: conv.conversationId,
@@ -170,8 +181,8 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     const key = `livechat/${conv.conversationId}/${crypto.randomUUID()}.${check.ext}`;
     try {
       await getStore().put(key, file.buffer, check.mime);
-    } catch {
-      throw new FileError(502, "storage_failed");
+    } catch (err) {
+      throw storageProblem("link", err);
     }
     const doc = await LcFile.create({
       conversationId: conv.conversationId,
@@ -202,8 +213,8 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
         filename: name,
         disposition: why === "download" ? "attachment" : "inline",
       });
-    } catch {
-      throw new FileError(502, "storage_failed");
+    } catch (err) {
+      throw storageProblem("link", err);
     }
     if (why !== "preview") await LcFile.updateOne({ _id: doc._id }, { $push: { patientAccessLog: { $each: [{ at: new Date(now()) }], $slice: -50 } } });
     return { ok: true, url, name, mime: doc.mimeType, expiresAt: new Date(now() + PRESIGN_SECONDS * 1000).toISOString() };
@@ -224,8 +235,8 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
         filename: name,
         disposition: why === "download" ? "attachment" : "inline",
       });
-    } catch {
-      throw new FileError(502, "storage_failed");
+    } catch (err) {
+      throw storageProblem("link", err);
     }
     if (why !== "preview") {
       await LcFile.updateOne(

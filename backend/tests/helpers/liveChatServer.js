@@ -72,7 +72,7 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
         store.set(key, { buffer, contentType });
       },
       presign: async (key, opts) => {
-        if (failures.presign) throw new Error("AccessDenied: bucket secret-bucket-name");
+        if (failures.presign) throw failures.presign instanceof Error ? failures.presign : new Error("AccessDenied: bucket secret-bucket-name");
         presigned.push({ key, ...opts });
         return `https://files.test/${key}?sig=fake`;
       },

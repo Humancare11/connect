@@ -540,8 +540,7 @@ html.hc-cookie-open .lcw-window {
     display: none;
   }
 }
-.lcw-x,
-.lcw-sound {
+.lcw-x {
   border: 0;
   background: transparent;
   color: var(--lcw-muted);
@@ -552,12 +551,8 @@ html.hc-cookie-open .lcw-window {
   cursor: pointer;
   flex: none;
 }
-.lcw-x:hover,
-.lcw-sound:hover {
+.lcw-x:hover {
   background: var(--lcw-surface-2);
-}
-.lcw-sound {
-  font-size: 15px;
 }
 
 /* Messages */

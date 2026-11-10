@@ -1089,21 +1089,17 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.waitForFunction(() => window.__osc === 4);
     });
 
-    test("the bell mutes and unmutes, and the choice is remembered in hcLiveChatWidgetSound", async () => {
+    test("there is no mute button, and an old stored 'off' is ignored: the reply still chimes", async () => {
       await stubAudio();
+      await context.addInitScript(() => localStorage.setItem("hcLiveChatWidgetSound", "off"));
       await openAsReturningVisitor();
       await ready();
       await page.locator(".lcw-body").click();
-      await page.getByRole("button", { name: "Mute message sound" }).click();
-      assert.equal(await page.evaluate(() => localStorage.getItem("hcLiveChatWidgetSound")), "off");
-      reply({ id: "mute1", sender: "ai", text: "Muted reply." });
-      await page.getByText("Muted reply.").waitFor();
-      await settle();
-      assert.equal(await notes(), 0);
-      await page.reload();
-      await page.waitForSelector(".lcw-window");
-      await page.getByRole("button", { name: "Turn message sound on" }).click();
-      assert.equal(await page.evaluate(() => localStorage.getItem("hcLiveChatWidgetSound")), "on");
+      assert.equal(await page.locator(".lcw-sound").count(), 0);
+      assert.equal(await page.getByRole("button", { name: /message sound/i }).count(), 0);
+      reply({ id: "always1", sender: "ai", text: "Still audible." });
+      await page.getByText("Still audible.").waitFor();
+      await page.waitForFunction(() => window.__osc === 2);
     });
 
     test("replies that arrived while offline give ONE chime when the chat reconnects", async () => {
@@ -1353,6 +1349,17 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
       assert.match(await page.locator(".lcw-bn").last().innerText(), /Sam/);
       assert.equal(await page.locator(".lcw-fb-caption .lcw-fb-name").innerText(), "From Sam.png");
+    });
+
+    test("when the storage is not set up, Download says so plainly instead of 'try again'", async () => {
+      mock.conversation.messages.push(image("nostore1", "Day03_Cover.png"));
+      await openAsReturningVisitor();
+      await context.route("**/api/livechat/files/*/url*", (route) =>
+        route.fulfill({ status: 503, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ ok: false, error: "storage_not_configured" }) })
+      );
+      await page.getByRole("button", { name: "Download" }).click();
+      await page.getByText(/File sharing isn't available right now/).waitFor();
+      assert.equal(await page.getByText(/couldn't download that file/).count(), 0);
     });
 
     test("a file with an unreadable name (the server sends 'attachment') still shows as a card", async () => {

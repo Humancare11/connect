@@ -139,6 +139,33 @@ describe("live chat: file bubbles (thumbnail, open, download) for patient and te
     chat.socket.close();
   });
 
+  test("storage trouble: the patient gets a clear code, the log gets ONE line with the reason and no file name, key or bucket", async () => {
+    const { chat, fileId } = await chatWithOwnFile("Day03_Cover.png");
+    const lines = [];
+    const original = console.warn;
+    console.warn = (...args) => lines.push(args.join(" "));
+    try {
+      lc.failures.presign = true; // S3 refuses
+      const refused = await patientLink(chat.token, fileId, "preview");
+      assert.equal(refused.status, 502);
+      assert.equal(refused.body.error, "storage_failed");
+      const nameless = Object.assign(new Error("AWS S3 bucket is not configured."), { name: "Error" });
+      lc.failures.presign = nameless; // no bucket / no credentials
+      const missing = await patientLink(chat.token, fileId, "download");
+      assert.equal(missing.status, 503);
+      assert.equal(missing.body.error, "storage_not_configured");
+    } finally {
+      lc.failures.presign = false;
+      console.warn = original;
+    }
+    const ours = lines.filter((l) => l.startsWith("[livechat] file link failed"));
+    assert.equal(ours.length, 2, "one line per failure");
+    assert.match(ours[0], /storage Error$/);
+    assert.match(ours[1], /storage not_configured$/);
+    for (const line of ours) assert.doesNotMatch(line, /Day03|secret-bucket|livechat\/|png/i);
+    chat.socket.close();
+  });
+
   test("thumbnail links have their own, larger rate limit (it does not share the /config budget)", () => {
     const limiters = require("../middleware/rateLimiters");
     assert.equal(typeof limiters.liveChatFileUrlLimiter, "function");

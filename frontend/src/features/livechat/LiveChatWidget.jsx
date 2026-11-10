@@ -256,16 +256,6 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
                 <span>Switch to AI</span>
               </button>
             )}
-            <button
-              type="button"
-              className="lcw-sound"
-              onClick={chat.toggleSound}
-              aria-pressed={chat.soundOn}
-              aria-label={chat.soundOn ? "Mute message sound" : "Turn message sound on"}
-              title={chat.soundOn ? "Sound on – click to mute" : "Sound off – click to turn on"}
-            >
-              {chat.soundOn ? "🔔" : "🔕"}
-            </button>
             <button type="button" className="lcw-x" onClick={() => setOpen(false)} aria-label="Minimize chat">
               –
             </button>

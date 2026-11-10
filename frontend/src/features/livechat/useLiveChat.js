@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiBaseOf } from "./apiBase";
-import { claimChime, createChimeGate, installChimeUnlock, isChimeMessage, playWidgetChime, readSoundOn, writeSoundOn } from "./chime";
+import { claimChime, createChimeGate, installChimeUnlock, isChimeMessage, playWidgetChime } from "./chime";
 
 // Patient-side chat state. Talks to the server over Socket.IO (/livechat) with the chat token that the contact form
 // returns; without that token the server refuses every chat event.
@@ -31,7 +31,14 @@ const UPLOAD_ERRORS = {
   unauthorized: "Please fill in your details to start the chat.",
   blocked: "Chat is not available right now.",
   storage_failed: "We couldn't save that file. Please try again.",
+  storage_not_configured: "File sharing isn't available right now. Please email support@humancareconnect.co.",
 };
+
+// What the patient reads when a file link fails. A storage that is not set up is said plainly (and is not worth retrying).
+function linkProblem(err, verb) {
+  if (err?.code === "storage_not_configured") return UPLOAD_ERRORS.storage_not_configured;
+  return `We couldn't ${verb} that file. Please try again in a moment.`;
+}
 
 // Friendly check before uploading (the server is the real gatekeeper).
 function fileProblem(file) {
@@ -125,9 +132,7 @@ export function useLiveChat() {
     openRef.current = open;
   }, [open]);
 
-  // Notification sound: a chime for a new reply (never the patient's own message, never history). Muted per browser.
-  const [soundOn, setSoundOn] = useState(readSoundOn);
-  const soundOnRef = useRef(soundOn);
+  // Notification sound: a chime for a new reply (never the patient's own message, never history). Always on.
   const chimeGate = useRef(createChimeGate());
   const chimedIds = useRef(new Set());
   const conversationRef = useRef(null);
@@ -135,20 +140,11 @@ export function useLiveChat() {
     conversationRef.current = conversation;
   }, [conversation]);
   useEffect(() => {
-    soundOnRef.current = soundOn;
-  }, [soundOn]);
-  useEffect(() => {
     installChimeUnlock();
-  }, []);
-  const toggleSound = useCallback(() => {
-    setSoundOn((on) => {
-      writeSoundOn(!on);
-      return !on;
-    });
   }, []);
   // `key` identifies the event (a message id, or one id for a catch-up) so a second tab and a repeat are skipped.
   const chime = useCallback((key) => {
-    if (!soundOnRef.current || chimedIds.current.has(key)) return;
+    if (chimedIds.current.has(key)) return;
     chimedIds.current.add(key);
     if (chimedIds.current.size > 200) chimedIds.current = new Set([...chimedIds.current].slice(-100));
     if (!chimeGate.current.allow() || !claimChime(key)) return;
@@ -476,7 +472,7 @@ export function useLiveChat() {
       headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
     });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok || !body.url) throw new Error("no link");
+    if (!res.ok || !body.url) throw Object.assign(new Error("no link"), { code: body.error || "" });
     return body.url;
   }, []);
 
@@ -490,9 +486,9 @@ export function useLiveChat() {
         const url = await fileUrl(file, "open");
         if (tab) tab.location.href = url;
         else setNotice("Your browser blocked the new tab. Please allow pop-ups to open the file.");
-      } catch {
+      } catch (err) {
         tab?.close();
-        setNotice("We couldn't open that file. Please try again in a moment.");
+        setNotice(linkProblem(err, "open"));
       }
     },
     [fileUrl]
@@ -510,8 +506,8 @@ export function useLiveChat() {
         document.body.appendChild(link);
         link.click();
         link.remove();
-      } catch {
-        setNotice("We couldn't download that file. Please try again in a moment.");
+      } catch (err) {
+        setNotice(linkProblem(err, "download"));
       }
     },
     [fileUrl]
@@ -573,8 +569,6 @@ export function useLiveChat() {
     limitReached,
     limitMessage: ERRORS.chat_limit,
     unread,
-    soundOn,
-    toggleSound,
     open,
     setOpen,
     submitContact,

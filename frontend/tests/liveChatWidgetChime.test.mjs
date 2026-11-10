@@ -56,10 +56,10 @@ test("a broken storage never blocks the sound", () => {
   assert.equal(claimChime("m1", { storage: broken }), true);
 });
 
-test("the mute key is the widget's own, not the admin's", () => {
+test("the sound is always on: no stored mute key and no read of one", () => {
   const chime = read("features", "livechat", "chime.js");
-  assert.match(chime, /hcLiveChatWidgetSound/);
-  assert.doesNotMatch(chime, /["']hcLiveChatSound["']/);
+  const hook = read("features", "livechat", "useLiveChat.js");
+  assert.doesNotMatch(chime + hook, /hcLiveChatWidgetSound|readSoundOn|writeSoundOn|soundOn/);
 });
 
 test("wiring: the chime is driven by chat:message and a reconnect catch-up, never by the history load", () => {
@@ -70,8 +70,9 @@ test("wiring: the chime is driven by chat:message and a reconnect catch-up, neve
   assert.match(hook, /!shown\.messages\.some\(\(m\) => m\.id === message\.id\)/, "a repeat of a known message is silent");
 });
 
-test("wiring: the header has a bell toggle", () => {
+test("wiring: the header has no bell or mute button", () => {
   const widget = read("features", "livechat", "LiveChatWidget.jsx");
-  assert.match(widget, /onClick=\{chat\.toggleSound\}/);
-  assert.match(widget, /Mute message sound/);
+  const css = read("features", "livechat", "LiveChatWidget.css");
+  assert.doesNotMatch(widget, /toggleSound|Mute message sound|lcw-sound|🔔|🔕/);
+  assert.doesNotMatch(css, /lcw-sound/);
 });

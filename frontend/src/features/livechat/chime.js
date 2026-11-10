@@ -4,11 +4,10 @@
 //  - Browsers only allow sound after the patient has interacted with the page, so the audio context is created on
 //    the first click, tap or key press. Until then the chime is silently skipped.
 //  - Plays for a reply from the AI, a message from an agent, and the "agent joined" / "Chat resolved" lines only.
-//    Never for the patient's own messages, never for chat history, never while muted.
+//    Never for the patient's own messages and never for chat history. The sound is always on (there is no mute switch).
 //  - A burst of replies gives one chime (CHIME_MIN_GAP_MS), and when several tabs of the site are open only one of
 //    them plays (a best-effort claim in localStorage, keyed by the message).
 //  The pure parts (what chimes, the gate, the claim) take their dependencies as arguments so they are unit-tested.
-export const WIDGET_SOUND_KEY = "hcLiveChatWidgetSound"; // "off" = muted; anything else = on (NOT the admin's key)
 export const CHIME_MIN_GAP_MS = 1500;
 export const CLAIM_KEY = "hcLiveChatChimeClaim";
 export const CLAIM_MS = 4000;
@@ -59,21 +58,6 @@ export function claimChime(id, { storage, now = () => Date.now() } = {}) {
     return area.getItem(CLAIM_KEY) === mine;
   } catch {
     return true;
-  }
-}
-
-export function readSoundOn() {
-  try {
-    return localStorage.getItem(WIDGET_SOUND_KEY) !== "off";
-  } catch {
-    return true;
-  }
-}
-export function writeSoundOn(on) {
-  try {
-    localStorage.setItem(WIDGET_SOUND_KEY, on ? "on" : "off");
-  } catch {
-    /* optional */
   }
 }
 
