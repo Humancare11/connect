@@ -6,6 +6,7 @@ import { DEFAULT_AI_NAME } from "./aiName";
 import { buildTimeline } from "./timeline";
 import { COMPOSER_MAX_PX, enterSends, fitTextarea, isCoarsePointer } from "./composerBox";
 import EndChatDialog from "./EndChatDialog";
+import FileBubble from "./FileBubble";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
 import RatingCard from "./RatingCard";
@@ -25,7 +26,6 @@ const timeOf = (iso) => {
   }
 };
 
-const sizeOf = (bytes) => (bytes >= 1024 * 1024 ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`);
 const initialsOf = (name) => String(name || "").trim().slice(0, 2).toUpperCase() || "HS";
 
 // Buttons to real pages of this site (the server only sends pages from its own list). A plain click moves within the
@@ -66,21 +66,14 @@ function PageLinks({ links, onNavigate, onAgent, canRequestAgent }) {
   );
 }
 
-function Message({ message, aiName, onNavigate, onOpenFile, onAgent, canRequestAgent }) {
+function Message({ message, aiName, onNavigate, files, onAgent, canRequestAgent }) {
   if (message.sender === "system") {
     return <div className="lcw-sys">{message.text}</div>;
   }
   if (message.sender === "patient") {
     return (
       <div className="lcw-msg lcw-msg--right">
-        {message.file ? (
-          <span className="lcw-file">
-            <span aria-hidden="true">📄</span> {message.file.name}
-            <small> · {sizeOf(message.file.size)}</small>
-          </span>
-        ) : (
-          message.text
-        )}
+        {message.file ? <FileBubble file={message.file} getUrl={files.url} onOpen={files.open} onDownload={files.download} prefix="lcw" /> : message.text}
         <span className="lcw-meta">{timeOf(message.at)}</span>
       </div>
     );
@@ -92,19 +85,7 @@ function Message({ message, aiName, onNavigate, onOpenFile, onAgent, canRequestA
       <div className="lcw-bw">
         <span className="lcw-bn">{isAgent ? message.agentName || "Humancare Connect support" : aiName}</span>
         <div className="lcw-msg lcw-msg--left">
-          {message.file ? (
-            <span className="lcw-file">
-              <span aria-hidden="true">📄</span> {message.file.name}
-              <small> · {sizeOf(message.file.size)}</small>
-              {message.file.id && (
-                <button type="button" className="lcw-file-open" onClick={() => onOpenFile(message.file.id)}>
-                  Open
-                </button>
-              )}
-            </span>
-          ) : (
-            message.text
-          )}
+          {message.file ? <FileBubble file={message.file} getUrl={files.url} onOpen={files.open} onDownload={files.download} prefix="lcw" /> : message.text}
           <span className="lcw-meta">{timeOf(message.at)}</span>
         </div>
         <PageLinks links={message.links} onNavigate={onNavigate} onAgent={onAgent} canRequestAgent={canRequestAgent} />
@@ -144,6 +125,9 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
   const bodyRef = useRef(null);
   const inputRef = useRef(null);
   const fileRef = useRef(null);
+
+  // What a file bubble needs from the chat: a link for the thumbnail, and what Open and Download do.
+  const fileActions = { url: chat.fileUrl, open: chat.openFile, download: chat.downloadFile };
 
   const mode = conversation?.mode;
   const waiting = mode === "queue";
@@ -308,7 +292,7 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               <>
                 {buildTimeline(conversation.messages, chat.outbox).map((item) => {
                   if (item.kind === "message") {
-                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} onOpenFile={chat.openFile} onAgent={chat.talkToAgent} canRequestAgent={Boolean(conversation?.canRequestAgent)} />;
+                    return <Message key={item.key} message={item.message} aiName={aiName} onNavigate={afterNavigate} files={fileActions} onAgent={chat.talkToAgent} canRequestAgent={Boolean(conversation?.canRequestAgent)} />;
                   }
                   const m = item.entry;
                   return m.status === "failed" ? (

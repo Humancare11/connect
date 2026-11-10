@@ -314,11 +314,32 @@ export default function ChatWorkspace({ view }) {
     // A patient's file opens through a short-lived link made by the server after a role check. The tab is opened on
     // the click itself (browsers block pop-ups opened after a wait) and pointed at the link once the server answers;
     // its opener is cleared so the file page can never reach this admin page.
+    // A short link to a file. `purpose`: "preview" for a thumbnail (not logged), "open" and "download" (logged).
+    fileUrl: async (file, purpose = "open") => {
+      const { data } = await api.get(`${BASE}/files/${file.id}/url`, { params: { purpose } });
+      if (!data?.url) throw new Error("no link");
+      return data.url;
+    },
+    // Saves a file: the link answers with "attachment", so the browser downloads it and this page stays put.
+    downloadFile: async (file) => {
+      try {
+        const { data } = await api.get(`${BASE}/files/${file.id}/url`, { params: { purpose: "download" } });
+        const link = document.createElement("a");
+        link.href = data.url;
+        link.rel = "noopener";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch (err) {
+        setActionError(err?.response?.status === 502 ? "The file storage is not reachable right now. Try again in a moment." : "Could not download that file.");
+      }
+    },
     openFile: async (file) => {
       const tab = window.open("", "_blank");
       if (tab) tab.opener = null;
       try {
-        const { data } = await api.get(`${BASE}/files/${file.id}/url`);
+        const { data } = await api.get(`${BASE}/files/${file.id}/url`, { params: { purpose: "open" } });
         if (tab) tab.location.href = data.url;
         else setActionError("Your browser blocked the new tab. Allow pop-ups for this site to open files.");
       } catch (err) {
@@ -441,6 +462,8 @@ export default function ChatWorkspace({ view }) {
             onSuggest={handlers.suggest}
             onTyping={onTyping}
             onOpenFile={handlers.openFile}
+            onFileUrl={handlers.fileUrl}
+            onDownloadFile={handlers.downloadFile}
             onBlockIp={handlers.blockIp}
             onDelete={handlers.remove}
             onDetect={handlers.detect}

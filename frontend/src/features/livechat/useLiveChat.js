@@ -469,24 +469,53 @@ export function useLiveChat() {
     }
   }, []);
 
-  // Opens a file the team sent us. The tab is opened on the click itself (browsers block pop-ups opened after a wait)
-  // and pointed at the short link once the server answers; its opener is cleared.
-  const openFile = useCallback(async (fileId) => {
-    const tab = window.open("", "_blank");
-    if (tab) tab.opener = null;
-    try {
-      const res = await fetch(`${API_BASE}/api/livechat/files/${encodeURIComponent(fileId)}/url`, {
-        headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok || !body.url) throw new Error("no link");
-      if (tab) tab.location.href = body.url;
-      else setNotice("Your browser blocked the new tab. Please allow pop-ups to open the file.");
-    } catch {
-      tab?.close();
-      setNotice("We couldn't open that file. Please try again in a moment.");
-    }
+  // A short link (5 minutes) to a file of this chat, the ones the patient sent and the ones the team sent. `purpose`:
+  // "preview" for a thumbnail (not logged), "open" and "download" (logged).
+  const fileUrl = useCallback(async (file, purpose = "open") => {
+    const res = await fetch(`${API_BASE}/api/livechat/files/${encodeURIComponent(file.id)}/url?purpose=${encodeURIComponent(purpose)}`, {
+      headers: { authorization: `Bearer ${store.get(TOKEN_KEY)}` },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok || !body.url) throw new Error("no link");
+    return body.url;
   }, []);
+
+  // Opens a file. The tab is opened on the click itself (browsers block pop-ups opened after a wait) and pointed at the
+  // short link once the server answers; its opener is cleared.
+  const openFile = useCallback(
+    async (file) => {
+      const tab = window.open("", "_blank");
+      if (tab) tab.opener = null;
+      try {
+        const url = await fileUrl(file, "open");
+        if (tab) tab.location.href = url;
+        else setNotice("Your browser blocked the new tab. Please allow pop-ups to open the file.");
+      } catch {
+        tab?.close();
+        setNotice("We couldn't open that file. Please try again in a moment.");
+      }
+    },
+    [fileUrl]
+  );
+
+  // Saves a file: the link answers with "attachment", so the browser downloads it and the page stays where it is.
+  const downloadFile = useCallback(
+    async (file) => {
+      try {
+        const url = await fileUrl(file, "download");
+        const link = document.createElement("a");
+        link.href = url;
+        link.rel = "noopener";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch {
+        setNotice("We couldn't download that file. Please try again in a moment.");
+      }
+    },
+    [fileUrl]
+  );
 
   const dismissInvite = useCallback(() => {
     setInvite((current) => {
@@ -556,7 +585,9 @@ export function useLiveChat() {
     endChat,
     rate,
     uploadFile,
+    fileUrl,
     openFile,
+    downloadFile,
     dismissInvite,
     notifyTyping,
     dismissNotice: () => setNotice(""),

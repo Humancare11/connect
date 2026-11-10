@@ -8,7 +8,12 @@
 //   - any AI failure (quota, cap, bad output, outage) shows the "AI unavailable" fallback and keeps live chat usable,
 //   - notes (sender "note") never reach the patient.
 const crypto = require("crypto");
-const { encryptLiveChatText, decryptLiveChatText, decryptLiveChatOrEmpty, hashLiveChatEmail, searchKeysOf } = require("../../utils/liveChat/crypto");
+const { encryptLiveChatText, decryptLiveChatText, decryptLiveChatOrEmpty, hashLiveChatEmail, isUnreadable, searchKeysOf } = require("../../utils/liveChat/crypto");
+// A file name that no key can decrypt is shown as a neutral name, never as the key-mismatch placeholder.
+const safeFileNameOf = (record) => {
+  const name = decryptLiveChatText(record);
+  return isUnreadable(name) || !name ? "attachment" : name;
+};
 const { newVisitorId } = require("./chatToken");
 const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish, scrubContact } = require("./languageHints");
@@ -195,7 +200,7 @@ function createChatService({
     const ids = rows.map((m) => m.fileId).filter(Boolean);
     if (!ids.length || !LcFile) return new Map();
     const docs = await LcFile.find({ _id: { $in: ids } }).lean();
-    return new Map(docs.map((d) => [String(d._id), { id: String(d._id), name: decryptLiveChatText(d.name), mime: d.mimeType, size: d.size }]));
+    return new Map(docs.map((d) => [String(d._id), { id: String(d._id), name: safeFileNameOf(d.name), mime: d.mimeType, size: d.size }]));
   }
 
   async function serialize(conv, settings) {
@@ -217,8 +222,8 @@ function createChatService({
               name: files.get(String(m.fileId)).name,
               mime: files.get(String(m.fileId)).mime,
               size: files.get(String(m.fileId)).size,
-              // the patient can open only the files the team sent them
-              ...(m.sender === "agent" ? { id: files.get(String(m.fileId)).id } : {}),
+              // the patient can open the files of their own chat: the ones they sent and the ones the team sent them
+              id: files.get(String(m.fileId)).id,
             },
           }
         : {}),

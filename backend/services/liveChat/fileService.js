@@ -73,12 +73,12 @@ function createS3FileStore() {
         })
       );
     },
-    async presign(key, { expiresIn = PRESIGN_SECONDS, contentType, filename }) {
+    async presign(key, { expiresIn = PRESIGN_SECONDS, contentType, filename, disposition = "inline" }) {
       const command = new GetObjectCommand({
         Bucket: getBucketName(),
         Key: key,
         ResponseContentType: contentType,
-        ResponseContentDisposition: `inline; filename="${asciiName(filename)}"`,
+        ResponseContentDisposition: `${disposition === "attachment" ? "attachment" : "inline"}; filename="${asciiName(filename)}"`,
       });
       return getSignedUrl(s3Client, command, { expiresIn });
     },
@@ -97,6 +97,10 @@ function createS3FileStore() {
     },
   };
 }
+
+// Why a link is asked for. "preview" (a thumbnail) is not logged: only a person opening or saving the file is.
+const PURPOSES = new Set(["preview", "open", "download"]);
+const purposeOf = (value) => (PURPOSES.has(value) ? value : "open");
 
 // A stored file name that no key can decrypt downloads as a neutral name instead of the placeholder text.
 const safeFileName = (record) => {
@@ -182,38 +186,53 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     return { doc, meta: { id: String(doc._id), name, mime: check.mime, size: file.buffer.length } };
   }
 
-  // A patient opens a file the team sent THEM: only their own chat's agent files, a 5-minute link, every open logged.
-  async function presignForPatient({ visitorId, fileId }) {
+  // A patient opens a file of their OWN chat (one they sent or one the team sent them): only their files, a 5-minute
+  // link. Opening or saving is logged on the file; a thumbnail ("preview") is not.
+  async function presignForPatient({ visitorId, fileId, purpose }) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
-    const doc = await LcFile.findOne({ _id: fileId, visitorId, sender: "agent" });
+    const why = purposeOf(purpose);
+    const doc = await LcFile.findOne({ _id: fileId, visitorId });
     if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
     const name = safeFileName(doc.name);
     let url;
     try {
-      url = await getStore().presign(doc.s3Key, { expiresIn: PRESIGN_SECONDS, contentType: doc.mimeType, filename: name });
+      url = await getStore().presign(doc.s3Key, {
+        expiresIn: PRESIGN_SECONDS,
+        contentType: doc.mimeType,
+        filename: name,
+        disposition: why === "download" ? "attachment" : "inline",
+      });
     } catch {
       throw new FileError(502, "storage_failed");
     }
-    await LcFile.updateOne({ _id: doc._id }, { $push: { patientAccessLog: { $each: [{ at: new Date(now()) }], $slice: -50 } } });
-    return { ok: true, url, name };
+    if (why !== "preview") await LcFile.updateOne({ _id: doc._id }, { $push: { patientAccessLog: { $each: [{ at: new Date(now()) }], $slice: -50 } } });
+    return { ok: true, url, name, mime: doc.mimeType, expiresAt: new Date(now() + PRESIGN_SECONDS * 1000).toISOString() };
   }
 
   // Admin: a short-lived link to open the file. The route has already checked the admin role.
-  async function presign(actor, fileId) {
+  async function presign(actor, fileId, { purpose } = {}) {
     if (!mongoose.isValidObjectId(fileId)) throw new FileError(404, "not_found");
+    const why = purposeOf(purpose);
     const doc = await LcFile.findById(fileId);
     if (!doc || (await inTrash(doc.conversationId))) throw new FileError(404, "not_found");
     const name = safeFileName(doc.name);
     let url;
     try {
-      url = await getStore().presign(doc.s3Key, { expiresIn: PRESIGN_SECONDS, contentType: doc.mimeType, filename: name });
+      url = await getStore().presign(doc.s3Key, {
+        expiresIn: PRESIGN_SECONDS,
+        contentType: doc.mimeType,
+        filename: name,
+        disposition: why === "download" ? "attachment" : "inline",
+      });
     } catch {
       throw new FileError(502, "storage_failed");
     }
-    await LcFile.updateOne(
-      { _id: doc._id },
-      { $push: { accessLog: { $each: [{ userId: new mongoose.Types.ObjectId(String(actor.id)), at: new Date(now()) }], $slice: -50 } } }
-    );
+    if (why !== "preview") {
+      await LcFile.updateOne(
+        { _id: doc._id },
+        { $push: { accessLog: { $each: [{ userId: new mongoose.Types.ObjectId(String(actor.id)), at: new Date(now()) }], $slice: -50 } } }
+      );
+    }
     return { ok: true, url, name, mime: doc.mimeType, expiresAt: new Date(now() + PRESIGN_SECONDS * 1000).toISOString() };
   }
 
@@ -222,10 +241,10 @@ function createFileService({ models, chat, store, env = process.env, now = () =>
     const ids = messages.map((m) => m.fileId).filter(Boolean);
     if (!ids.length) return new Map();
     const rows = await LcFile.find({ _id: { $in: ids } }).lean();
-    return new Map(rows.map((r) => [String(r._id), { id: String(r._id), name: decryptLiveChatText(r.name), mime: r.mimeType, size: r.size }]));
+    return new Map(rows.map((r) => [String(r._id), { id: String(r._id), name: safeFileName(r.name), mime: r.mimeType, size: r.size }]));
   }
 
   return { upload, presign, storeForAgent, presignForPatient, metaFor, limits };
 }
 
-module.exports = { createFileService, createS3FileStore, inspectUpload, displayName, FileError, TYPES, PRESIGN_SECONDS };
+module.exports = { safeFileName, createFileService, createS3FileStore, inspectUpload, displayName, FileError, TYPES, PRESIGN_SECONDS };

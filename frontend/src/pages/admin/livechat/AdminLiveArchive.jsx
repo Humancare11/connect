@@ -108,11 +108,31 @@ function ArchiveViewer({ id }) {
       }
     },
     setView: (view) => api.put(`${BASE}/conversations/${id}/view`, { view }).catch(() => {}),
+    // A short link to a file. `purpose`: "preview" for a thumbnail (not logged), "open" and "download" (logged).
+    fileUrl: async (file, purpose = "open") => {
+      const { data } = await api.get(`${BASE}/files/${file.id}/url`, { params: { purpose } });
+      if (!data?.url) throw new Error("no link");
+      return data.url;
+    },
+    downloadFile: async (file) => {
+      try {
+        const { data } = await api.get(`${BASE}/files/${file.id}/url`, { params: { purpose: "download" } });
+        const link = document.createElement("a");
+        link.href = data.url;
+        link.rel = "noopener";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      } catch {
+        setActionError("Could not download that file.");
+      }
+    },
     openFile: async (file) => {
       const tab = window.open("", "_blank");
       if (tab) tab.opener = null;
       try {
-        const { data } = await api.get(`${BASE}/files/${file.id}/url`);
+        const { data } = await api.get(`${BASE}/files/${file.id}/url`, { params: { purpose: "open" } });
         if (tab) tab.location.href = data.url;
         else setActionError("Your browser blocked the new tab. Allow pop-ups for this site to open files.");
       } catch {
@@ -173,6 +193,8 @@ function ArchiveViewer({ id }) {
             onTranslate={handlers.translate}
             onSetView={handlers.setView}
             onOpenFile={handlers.openFile}
+            onFileUrl={handlers.fileUrl}
+            onDownloadFile={handlers.downloadFile}
             onDownload={handlers.download}
             onDelete={handlers.remove}
           />

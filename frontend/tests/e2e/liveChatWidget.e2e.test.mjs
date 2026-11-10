@@ -731,7 +731,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await page.waitForSelector(".lcw-cform");
       await page.getByRole("button", { name: "Minimize chat" }).click();
       await page.locator(".lcw-launcher--round").waitFor();
-      await page.waitForFunction(() => document.querySelector(".lcw-gr-minif input")?.value === "Hello there"); // restored right after the window closes
+      await page.waitForFunction(() => document.querySelector(".lcw-gr-minif textarea")?.value === "Hello there"); // restored right after the window closes
       assert.equal(sentEvents("chat:message").length, 0);
     });
 
@@ -868,7 +868,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
         assert.ok(Math.abs(m.pill.top + m.pill.height / 2 - (m.slot.top + m.slot.height / 2)) <= 1, `${label}: the pill is centred on the button's row`);
       }
       await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
-      assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16, "16px or more: iOS does not zoom on focus");
+      assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif textarea").evaluate((el) => getComputedStyle(el).fontSize)) >= 16, "16px or more: iOS does not zoom on focus");
       const pillBefore = await page.locator(".lcw-gr-minif").boundingBox();
       const slotBefore = await page.locator(".lcw-gr-slot").boundingBox();
       await freeze();
@@ -927,8 +927,8 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
           if (banner) assert.ok(m.button.bottom <= m.h - 190 + 1, `${label}: the bar sits above the cookie banner (${m.button.bottom} vs ${m.h - 190})`);
         }
         await page.evaluate(() => document.documentElement.classList.remove("hc-cookie-open"));
-        assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif input").evaluate((el) => getComputedStyle(el).fontSize)) >= 16);
-        assert.equal(await page.locator(".lcw-gr-minif input").getAttribute("placeholder"), "Write a message…");
+        assert.ok(Number.parseFloat(await page.locator(".lcw-gr-minif textarea").evaluate((el) => getComputedStyle(el).fontSize)) >= 16);
+        assert.equal(await page.locator(".lcw-gr-minif textarea").getAttribute("placeholder"), "Write a message…");
         const input = page.getByLabel("Write a message");
         await input.fill("I need a refill");
         await realWait(300);
@@ -950,7 +950,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await load();
       await introPill().waitFor({ timeout: 8000 });
       await freeze();
-      await page.locator(".lcw-gr-minif input").focus();
+      await page.locator(".lcw-gr-minif textarea").focus();
       await tick(30_000);
       assert.equal(await page.locator(".lcw-gr-doc").count(), 1, "the doctor stays while the pill is focused");
       // a keyboard of 300px: the visual viewport shrinks, the layout viewport does not (iOS Safari)
@@ -962,7 +962,7 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "300px");
       const lifted = await page.locator(".lcw-gr-minif").boundingBox();
       assert.ok(lifted.y + lifted.height <= 844 - 300, `the pill sits above the keyboard (bottom ${lifted.y + lifted.height})`);
-      await page.locator(".lcw-gr-minif input").blur();
+      await page.locator(".lcw-gr-minif textarea").blur();
       assert.equal(await page.evaluate(() => document.documentElement.style.getPropertyValue("--lcw-kb")), "", "the lift is removed when the pill loses focus");
       await tick(10_500);
       await tick(1000);
@@ -1236,6 +1236,129 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       await pill.fill("y".repeat(700));
       assert.equal((await pill.inputValue()).length, 500);
       assert.ok((await heightOf(page.locator(".lcw-gr-minif"))) <= 132 + 4);
+    });
+  });
+
+  describe("file bubbles", () => {
+    const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64");
+    const settle = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
+    const image = (id, name = "Scan.png") => ({ id: `msg-${id}`, sender: "patient", text: name, at: new Date().toISOString(), file: { id, name, mime: "image/png", size: 2048 } });
+    const pdf = (id, sender = "agent", name = "Care plan.pdf") => ({ id: `msg-${id}`, sender, agentName: "Sam", text: name, at: new Date().toISOString(), file: { id, name, mime: "application/pdf", size: 1536 * 1024 } });
+    let asked; // the link requests the widget made: { id, purpose }
+    let failFirstPreview = false;
+    let failAllPreviews = false;
+
+    beforeEach(async () => {
+      asked = [];
+      failFirstPreview = false;
+      failAllPreviews = false;
+      await context.route("**/api/livechat/files/*/url*", async (route) => {
+        const url = new URL(route.request().url());
+        const id = url.pathname.split("/").at(-2);
+        const purpose = url.searchParams.get("purpose");
+        asked.push({ id, purpose, auth: route.request().headers().authorization });
+        const n = asked.filter((a) => a.id === id && a.purpose === purpose).length;
+        const broken = purpose === "preview" && (failAllPreviews || (failFirstPreview && n === 1));
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "access-control-allow-origin": "*" },
+          body: JSON.stringify({ ok: true, url: `https://files.test/${broken ? "broken" : "ok"}/${id}-${purpose}-${n}` }),
+        });
+      });
+      await context.route("https://files.test/**", async (route) => {
+        const target = route.request().url();
+        if (target.includes("/broken/")) return route.abort("failed");
+        if (target.includes("-download-")) return route.fulfill({ status: 200, contentType: "application/octet-stream", headers: { "content-disposition": 'attachment; filename="x.png"' }, body: PNG });
+        // (headless Chromium cannot show a PDF, so the stand-in for a PDF is a small page)
+        if (target.includes("pdf")) return route.fulfill({ status: 200, contentType: "text/html", body: "<p>a PDF</p>" });
+        return route.fulfill({ status: 200, contentType: "image/png", body: PNG });
+      });
+    });
+
+    test("the patient sees their own picture as a thumbnail; a click opens it, Download saves it, and a thumbnail is only a 'preview' request", async () => {
+      mock.conversation.messages.push(image("img1"));
+      await openAsReturningVisitor();
+      const thumb = page.locator(".lcw-fb-thumb img");
+      await thumb.waitFor();
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview"], "a thumbnail asks for a preview link only");
+      assert.match(asked[0].auth, /^Bearer /, "with the chat token");
+      assert.match(await page.locator(".lcw-fb-caption").innerText(), /Scan\.png\s+PNG · 2 KB/);
+      assert.equal(await thumb.getAttribute("alt"), "Image attachment", "the file name is not the alt text");
+
+      const popup = page.waitForEvent("popup");
+      await page.locator(".lcw-fb-thumb").click();
+      const tab = await popup;
+      await tab.waitForURL(/files\.test\/ok\/img1-open-1/);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview", "open"]);
+
+      const download = page.waitForEvent("download");
+      await page.getByRole("button", { name: "Download" }).click();
+      await download;
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview", "open", "download"]);
+    });
+
+    test("a PDF from the team is a card with its name, type, size, Open and Download; no thumbnail request", async () => {
+      mock.conversation.messages.push(pdf("pdf1"));
+      await openAsReturningVisitor();
+      const card = page.locator(".lcw-fb--card");
+      await card.waitFor();
+      assert.match(await card.innerText(), /Care plan\.pdf/);
+      assert.match(await card.innerText(), /PDF · 1\.5 MB/);
+      await settle();
+      assert.equal(asked.length, 0, "nothing is requested until someone clicks");
+      const popup = page.waitForEvent("popup");
+      await card.getByRole("button", { name: "Open" }).click();
+      await (await popup).waitForURL(/files\.test\/ok\/pdf1-open-1/);
+      const download = page.waitForEvent("download");
+      await card.getByRole("button", { name: "Download" }).click();
+      await download;
+      assert.deepEqual(asked.map((a) => a.purpose), ["open", "download"]);
+    });
+
+    test("a picture that is far off screen is not requested until the patient scrolls to it", async () => {
+      mock.conversation.messages.push(image("far1"));
+      for (let i = 0; i < 30; i += 1) mock.conversation.messages.push({ id: `t${i}`, sender: "ai", text: `Reply number ${i} with some words to take up room.`, at: new Date().toISOString() });
+      await openAsReturningVisitor();
+      await page.waitForFunction(() => {
+        const el = document.querySelector(".lcw-body");
+        return el.scrollHeight - el.scrollTop - el.clientHeight < 5;
+      });
+      await settle(600);
+      assert.equal(asked.length, 0, "the picture is above the visible area: no link requested");
+      await page.locator(".lcw-body").evaluate((el) => {
+        el.scrollTop = 0;
+      });
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview"]);
+    });
+
+    test("an expired thumbnail link is replaced once; if that fails too, the card shows instead", async () => {
+      failFirstPreview = true;
+      mock.conversation.messages.push(image("exp1"));
+      await openAsReturningVisitor();
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.deepEqual(asked.map((a) => a.purpose), ["preview", "preview"], "one new link after the first failed to load");
+
+      failAllPreviews = true;
+      io.of("/livechat").emit("chat:message", { conversationId: mock.conversation.conversationId, message: image("exp2", "Second.png") });
+      await page.locator(".lcw-fb--card", { hasText: "Second.png" }).waitFor();
+      assert.equal(await page.locator(".lcw-fb--card", { hasText: "Second.png" }).getByRole("button", { name: "Open" }).count(), 1, "never a dead end: Open still works");
+    });
+
+    test("a file that arrives live from the team shows at once, the same way", async () => {
+      await openAsReturningVisitor();
+      io.of("/livechat").emit("chat:message", { conversationId: mock.conversation.conversationId, message: { ...image("live1", "From Sam.png"), sender: "agent", agentName: "Sam" } });
+      await page.waitForFunction(() => document.querySelector(".lcw-fb-thumb img")?.naturalWidth > 0);
+      assert.match(await page.locator(".lcw-bn").last().innerText(), /Sam/);
+      assert.equal(await page.locator(".lcw-fb-caption .lcw-fb-name").innerText(), "From Sam.png");
+    });
+
+    test("a file with an unreadable name (the server sends 'attachment') still shows as a card", async () => {
+      mock.conversation.messages.push(pdf("pdf2", "patient", "attachment"));
+      await openAsReturningVisitor();
+      assert.equal(await page.locator(".lcw-fb-name").innerText(), "attachment");
     });
   });
 });

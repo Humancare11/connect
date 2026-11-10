@@ -3,14 +3,14 @@ import Icon from "./lcIcons";
 import Composer from "./Composer";
 import LanguageSwitch from "./LanguageSwitch";
 import DeleteChatsDialog from "./DeleteChatsDialog";
-import { dayWord, sizeOf, stamp, timeOf } from "./chatUtils";
+import { dayWord, stamp, timeOf } from "./chatUtils";
 import { initials } from "./visitorUtils";
 import { DEFAULT_AI_NAME } from "../../../features/livechat/aiName";
+import FileBubble from "../../../features/livechat/FileBubble";
 
 // Middle column: the conversation (docs/live-chat-admin-ui.html). The patient is on the left; the AI and agents are on
 // the right with their name above a run of messages; system lines sit at the right edge; internal notes are full width
 // and never reach the patient. Typing shows "typing…" only, never the draft.
-const fileKind = (mime) => (mime === "application/pdf" ? "PDF" : mime === "image/png" ? "PNG" : mime === "image/jpeg" ? "JPG" : "File");
 
 // Messages from the same sender in a row share one label and avatar.
 const groupKey = (m) => (!m ? "" : m.sender === "patient" ? "p" : m.sender === "ai" ? "ai" : m.sender === "agent" ? `a:${m.agentName || ""}` : "");
@@ -46,25 +46,7 @@ function TranslatedText({ text, translation, shownOriginal, onToggleOriginal }) 
   );
 }
 
-function FileLine({ file, onOpenFile }) {
-  return (
-    <span className="wk-file">
-      <Icon name="file" size={18} />
-      <span className="wk-file-name">
-        {file.name}
-        <small>
-          {" "}
-          · {sizeOf(file.size)} · {fileKind(file.mime)}
-        </small>
-      </span>
-      <button type="button" className="wk-btn" onClick={() => onOpenFile(file)}>
-        Open
-      </button>
-    </span>
-  );
-}
-
-function Message({ m, first, c, aiName, onOpenFile, translation, shownOriginal, onToggleOriginal }) {
+function Message({ m, first, c, aiName, onOpenFile, onFileUrl, onDownloadFile, translation, shownOriginal, onToggleOriginal }) {
   if (m.sender === "system") {
     return (
       <div className="mrow sysrow">
@@ -91,7 +73,7 @@ function Message({ m, first, c, aiName, onOpenFile, translation, shownOriginal, 
     );
   }
   const body = m.file ? (
-    <FileLine file={m.file} onOpenFile={onOpenFile} />
+    <FileBubble file={m.file} getUrl={onFileUrl} onOpen={onOpenFile} onDownload={onDownloadFile} prefix="wk" />
   ) : (
     <TranslatedText text={m.text} translation={translation} shownOriginal={shownOriginal} onToggleOriginal={onToggleOriginal} />
   );
@@ -153,6 +135,8 @@ export default function ChatConversation({
   onSuggest,
   onTyping,
   onOpenFile,
+  onFileUrl,
+  onDownloadFile,
   onBlockIp,
   onDetect, // retry the language detection: async, returns { language, reason }
   onDelete, // Super Admin: delete an archived chat (to Trash); async, returns { ok, error }
@@ -430,6 +414,8 @@ export default function ChatConversation({
             c={c}
             aiName={detail.aiName || DEFAULT_AI_NAME}
             onOpenFile={onOpenFile}
+            onFileUrl={onFileUrl}
+            onDownloadFile={onDownloadFile}
             translation={translationOf(m)}
             shownOriginal={originals.has(m.id)}
             onToggleOriginal={() => toggleOriginal(m.id)}

@@ -26,7 +26,7 @@ const VISITOR_ID_RE = /^[A-Za-z0-9_-]{16,64}$/;
 //   GET  /visitors/:visitorId/panel, PUT /visitors/:visitorId/contact   Real-time visitors side panel and contact edit
 //   POST /conversations/start                             admin-started chat with a visitor who has contact details
 //   GET  /unread, /canned-replies
-//   GET  /files/:id/url                                   a 5-minute presigned link to a patient's file (role-checked)
+//   GET  /files/:id/url                                   a 5-minute presigned link to a chat file (role-checked); ?purpose=preview|open|download, a preview is not logged
 //   POST /conversations/:id/block-ip, /visitors/:visitorId/block-ip   block an abusive IP
 //   GET  /blocked-ips, DELETE /blocked-ips/:id            list / unblock
 //   GET  /settings, /settings/audit                       AI agent settings and their change log (admin: read only)
@@ -276,7 +276,7 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
   router.get("/blocked-ips", handle(() => agent.blockedIps()));
   router.delete("/blocked-ips/:id", handle((req) => agent.unblockIp(actor(req), req.params.id)));
   // The role check is the guard above; the link is short-lived and every issue is logged on the file.
-  router.get("/files/:id/url", handle((req) => files.presign(actor(req), req.params.id)));
+  router.get("/files/:id/url", handle((req) => files.presign(actor(req), req.params.id, { purpose: req.query.purpose })));
 
   router.get("/unread", handle(async (req) => ({ ok: true, ...(await agent.unread(actor(req))) })));
   // In a chat: the active canned replies plus the agent's display name. With ?all=1 (settings page): every reply.

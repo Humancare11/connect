@@ -256,7 +256,7 @@ async function startChatServer({ ai = scriptedAi(), env = {}, mount = {} } = {})
       ai,
       settingsCacheMs: 0,
       getSettings: undefined, // the real settings reader (the Phase 1 stub only suits the socket tests)
-      publicLimiters: { contact: PASS, config: PASS, upload: PASS }, // the per-IP route limiters are not under test
+      publicLimiters: { contact: PASS, config: PASS, upload: PASS, fileUrl: PASS }, // the per-IP route limiters are not under test
       ...mount,
     },
   });
