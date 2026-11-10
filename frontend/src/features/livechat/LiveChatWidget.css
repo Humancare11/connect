@@ -149,7 +149,10 @@ html.hc-cookie-open .lcw-window {
   align-items: center;
   gap: 8px;
   width: min(290px, calc(100vw - 120px));
-  height: 60px;
+  min-height: 60px;
+  align-self: flex-end; /* the pill grows upward: its bottom stays level with the round button's */
+  margin-bottom: 2px;
+  align-items: flex-end;
   padding: 0 8px 0 24px;
   background: #fff;
   border: 1px solid #ececec;
@@ -168,24 +171,32 @@ html.hc-cookie-open .lcw-window {
   border-color: #c9d6f5;
   box-shadow: 0 8px 26px rgba(20, 33, 61, 0.18), 0 0 0 3px rgba(31, 79, 214, 0.12);
 }
-.lcw-gr-minif input {
+.lcw-gr-minif textarea {
   flex: 1;
   min-width: 0;
+  box-sizing: border-box;
+  display: block;
+  resize: none;
   border: 0;
   outline: 0;
   background: none;
   color: #14213d;
   font: inherit;
   font-size: 16px; /* 16px keeps iOS from zooming the page */
+  line-height: 24px;
+  padding: 18px 0; /* one line = the pill's 60px */
+  overflow-y: hidden;
 }
-.lcw-gr-minif input::placeholder {
+.lcw-gr-minif textarea::placeholder {
   color: #6b6f78;
 }
-.lcw-root .lcw-gr-minif input:focus-visible {
+.lcw-root .lcw-gr-minif textarea:focus-visible {
   outline: 0; /* the pill's own focus ring (above) shows the focus */
 }
 .lcw-gr-minif button {
   flex: none;
+  align-self: flex-end;
+  margin-bottom: 8px; /* centred on the first line when the pill is one line high */
   display: grid;
   place-items: center;
   width: 44px;
@@ -862,16 +873,23 @@ button.lcw-link {
 .lcw-composer {
   display: flex;
   gap: 6px;
-  align-items: center;
+  align-items: flex-end; /* the box grows upward; the buttons stay on the bottom line */
 }
-.lcw-composer input {
+.lcw-composer textarea {
   flex: 1;
   min-width: 0;
+  box-sizing: border-box;
+  display: block;
+  resize: none;
+  overflow-y: hidden; /* set to auto by the script once the text is taller than the cap */
+  max-height: 120px;
   border: 1px solid var(--lcw-line);
   background: var(--lcw-surface-2);
-  border-radius: 999px;
-  padding: 10px 14px;
+  border-radius: 20px;
+  padding: 9px 14px;
   font: inherit;
+  font-size: 16px; /* 16px keeps iOS from zooming the page */
+  line-height: 22px;
   color: var(--lcw-ink);
 }
 .lcw-send {

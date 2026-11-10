@@ -207,7 +207,7 @@ test("iOS keyboard: while the pill is focused the bar is lifted by what visualVi
   assert.match(greeter, /removeProperty\("--lcw-kb"\)/);
   assert.match(css, /bottom: calc\(20px \+ env\(safe-area-inset-bottom, 0px\) \+ var\(--lcw-kb, 0px\)\)/);
   assert.match(css, /bottom: calc\(190px \+ env\(safe-area-inset-bottom, 0px\) \+ var\(--lcw-kb, 0px\)\)/, "the cookie-banner offsets move with it");
-  assert.match(css, /\.lcw-gr-minif input \{[^}]*font-size: 16px;/);
+  assert.match(css, /\.lcw-gr-minif textarea \{[^}]*font-size: 16px;/);
 });
 
 test("the unread badge sits on the round button and an unread message or admin invite ends the intro", () => {

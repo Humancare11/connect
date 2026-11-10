@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ContactForm from "./ContactForm";
 import DoctorGreeter from "./DoctorGreeter";
 import { DEFAULT_AI_NAME } from "./aiName";
 import { buildTimeline } from "./timeline";
+import { COMPOSER_MAX_PX, enterSends, fitTextarea, isCoarsePointer } from "./composerBox";
 import EndChatDialog from "./EndChatDialog";
 import InviteBubble from "./InviteBubble";
 import QuickOptions from "./QuickOptions";
@@ -181,8 +182,20 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
     if (stage === "intro" && (chat.unread > 0 || chat.invite)) setStage("compact");
   }, [stage, chat.unread, chat.invite]);
 
+  // The message box grows with the text (up to COMPOSER_MAX_PX, then it scrolls inside). A chat that was at the bottom
+  // stays at the bottom while the box grows (the list gets shorter) and when it shrinks back after sending.
+  useLayoutEffect(() => {
+    const box = inputRef.current;
+    if (!box) return;
+    const body = bodyRef.current;
+    const pinned = body ? body.scrollHeight - body.scrollTop - body.clientHeight < 80 : false;
+    const before = box.offsetHeight;
+    fitTextarea(box, COMPOSER_MAX_PX);
+    if (pinned && body && box.offsetHeight !== before) body.scrollTop = body.scrollHeight;
+  }, [draft, open, phase]);
+
   const submit = (event) => {
-    event.preventDefault();
+    event?.preventDefault?.();
     const text = draft.trim();
     if (!text || phase !== "chat" || !conversation) return;
     setDraft(""); // the message shows at once; if it is not sent it stays on screen with a retry
@@ -368,14 +381,22 @@ export default function LiveChatWidget({ configAiName = DEFAULT_AI_NAME, showAiN
               >
                 📎
               </button>
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
+                rows={1}
                 value={draft}
                 maxLength={MAX_CHARS}
+                data-lenis-prevent
+                enterKeyHint="send"
                 onChange={(event) => {
                   setDraft(event.target.value);
                   if (event.target.value) chat.notifyTyping();
+                }}
+                onKeyDown={(event) => {
+                  // Enter sends, Shift+Enter is a new line; on a phone Enter is a new line and the arrow sends.
+                  if (!enterSends({ key: event.key, shiftKey: event.shiftKey, isComposing: event.nativeEvent?.isComposing }, isCoarsePointer())) return;
+                  event.preventDefault();
+                  submit();
                 }}
                 placeholder={ended && !canContinue ? "Chat is unavailable" : limitReached ? "Chat is unavailable today" : locked ? "Fill in the form to start" : "Type a message…"}
                 autoComplete="off"

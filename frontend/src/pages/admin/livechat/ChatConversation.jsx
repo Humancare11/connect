@@ -227,6 +227,19 @@ export default function ChatConversation({
       Promise.resolve().then(() => setUnseen((n) => n + added));
     }
   }, [messages.length, typing]);
+  // The reply box grows as the admin types, which makes the message list shorter: a list that was at the bottom stays at
+  // the bottom (and returns to it when the box shrinks after sending).
+  useEffect(() => {
+    const el = bodyRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return undefined;
+    let height = el.clientHeight;
+    const watch = new ResizeObserver(() => {
+      if (el.clientHeight !== height && atBottom.current) el.scrollTop = el.scrollHeight;
+      height = el.clientHeight;
+    });
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
   const jumpToNewest = () => {
     const el = bodyRef.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });

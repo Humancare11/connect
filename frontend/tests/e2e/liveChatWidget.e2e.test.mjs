@@ -1122,4 +1122,120 @@ describe("live chat widget in a real browser", { skip: skipReason || false }, ()
       assert.equal(await notes(), 2, "one chime, not one per message");
     });
   });
+
+  describe("growing message box", () => {
+    const box = () => page.getByLabel("Your message");
+    const heightOf = (locator) => locator.evaluate((el) => Math.round(el.getBoundingClientRect().height));
+    const manyLines = (n) => Array.from({ length: n }, (_, i) => `line ${i + 1}`);
+    const typeLines = async (target, lines) => {
+      await target.focus();
+      for (let i = 0; i < lines.length; i += 1) {
+        await page.keyboard.type(lines[i]);
+        if (i < lines.length - 1) await page.keyboard.press("Shift+Enter");
+      }
+    };
+
+    test("grows upward from one line to the cap, then scrolls inside; the buttons stay on the bottom line", async () => {
+      await openAsReturningVisitor();
+      const one = await heightOf(box());
+      const bottomBefore = await box().evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      assert.ok(one >= 38 && one <= 48, `one line is ${one}px`);
+      await typeLines(box(), manyLines(3));
+      const three = await heightOf(box());
+      assert.ok(three > one, "grew");
+      await typeLines(box(), manyLines(12));
+      const capped = await heightOf(box());
+      assert.ok(capped <= 120 && capped >= 100, `capped at ${capped}px`);
+      assert.equal(await box().evaluate((el) => getComputedStyle(el).overflowY), "auto", "scrolls inside once capped");
+      assert.equal(await box().evaluate((el) => el.scrollHeight > el.clientHeight), true);
+      const bottomAfter = await box().evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      assert.equal(bottomAfter, bottomBefore, "the bottom edge did not move: it grew upward");
+      const sendBottom = await page.getByRole("button", { name: "Send" }).evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      assert.ok(Math.abs(sendBottom - bottomAfter) <= 2, "the send button stays on the bottom line");
+      assert.equal(await box().evaluate((el) => parseFloat(getComputedStyle(el).fontSize)), 16, "16px keeps iOS from zooming");
+    });
+
+    test("Enter sends, Shift+Enter is a new line, and the box returns to one line after sending", async () => {
+      await openAsReturningVisitor();
+      await typeLines(box(), ["first line", "second line"]);
+      assert.equal(sentEvents("chat:message").length, 0, "Shift+Enter did not send");
+      const grown = await heightOf(box());
+      await box().press("Enter");
+      await page.locator(".lcw-msg--right", { hasText: "second line" }).waitFor();
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "first line\nsecond line" }]);
+      assert.equal(await box().inputValue(), "");
+      assert.ok((await heightOf(box())) < grown, "back to one line");
+    });
+
+    test("the message list stays scrolled to the bottom while the box grows", async () => {
+      mock.conversation = freshConversation();
+      for (let i = 0; i < 25; i += 1) mock.conversation.messages.push({ id: `h${i}`, sender: "ai", text: `Earlier message ${i}`, at: new Date().toISOString() });
+      await openAsReturningVisitor();
+      const gap = () => page.locator(".lcw-body").evaluate((el) => Math.round(el.scrollHeight - el.scrollTop - el.clientHeight));
+      await page.waitForFunction(() => { const el = document.querySelector(".lcw-body"); return el.scrollHeight - el.scrollTop - el.clientHeight < 5; });
+      await typeLines(box(), manyLines(6));
+      assert.ok((await gap()) < 5, `still at the bottom (gap ${await gap()}px)`);
+    });
+
+    test("the 1000 character limit still holds and the box does not run away with a long paragraph", async () => {
+      await openAsReturningVisitor();
+      await box().fill("x".repeat(1200));
+      assert.equal((await box().inputValue()).length, 1000);
+      assert.ok((await heightOf(box())) <= 120);
+    });
+
+    test("on a phone (touch keyboard) Enter is a new line and the send button sends", async () => {
+      await context.close();
+      context = await browser.newContext({ viewport: { width: 400, height: 800 }, hasTouch: true, isMobile: true, reducedMotion: "reduce" });
+      page = await context.newPage();
+      await openAsReturningVisitor();
+      assert.equal(await page.evaluate(() => matchMedia("(pointer: coarse)").matches), true);
+      await box().focus();
+      await page.keyboard.type("hello");
+      await page.keyboard.press("Enter");
+      await page.keyboard.type("world");
+      assert.equal(sentEvents("chat:message").length, 0, "Enter did not send");
+      assert.equal(await box().inputValue(), "hello\nworld");
+      await page.getByRole("button", { name: "Send" }).click();
+      await page.locator(".lcw-msg--right", { hasText: "world" }).waitFor();
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "hello\nworld" }]);
+    });
+
+    test("a multi-line message typed in the greeter pill opens the chat and is sent as one message", async () => {
+      await context.close();
+      context = await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: "reduce" });
+      page = await context.newPage();
+      await page.addInitScript(
+        ([token, visitor]) => {
+          localStorage.setItem("hcLiveChatToken", token);
+          localStorage.setItem("hcLiveChatVisitorId", visitor);
+        },
+        [TOKEN, VISITOR]
+      );
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      const pill = page.getByLabel("Write a message");
+      await pill.waitFor();
+      const oneLine = await heightOf(page.locator(".lcw-gr-minif"));
+      const bottom = await page.locator(".lcw-gr-minif").evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+      await typeLines(pill, manyLines(4));
+      assert.ok((await heightOf(page.locator(".lcw-gr-minif"))) > oneLine, "the pill grew");
+      assert.equal(await page.locator(".lcw-gr-minif").evaluate((el) => Math.round(el.getBoundingClientRect().bottom)), bottom, "upward");
+      assert.equal(sentEvents("chat:message").length, 0, "Shift+Enter in the pill does not open or send");
+      await pill.press("Enter");
+      await page.waitForSelector(".lcw-window");
+      await page.locator(".lcw-msg--right", { hasText: "line 4" }).waitFor();
+      assert.deepEqual(sentEvents("chat:message"), [{ text: "line 1\nline 2\nline 3\nline 4" }]);
+    });
+
+    test("the pill keeps its 500 character limit", async () => {
+      await context.close();
+      context = await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: "reduce" });
+      page = await context.newPage();
+      await page.goto(`${viteUrl}/tests/e2e/harness/index.html`);
+      const pill = page.getByLabel("Write a message");
+      await pill.fill("y".repeat(700));
+      assert.equal((await pill.inputValue()).length, 500);
+      assert.ok((await heightOf(page.locator(".lcw-gr-minif"))) <= 132 + 4);
+    });
+  });
 });

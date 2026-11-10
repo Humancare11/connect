@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import LauncherButton from "./LauncherButton";
+import { PILL_MAX_PX, enterSends, fitTextarea, isCoarsePointer } from "./composerBox";
 import {
   ALPHA_WEBM_SRC,
   IOS_MP4_SRC,
@@ -207,6 +208,11 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
     };
   }, [focused]);
 
+  // The pill grows upward with the text (its bottom stays on the round button's line), then scrolls inside.
+  useLayoutEffect(() => {
+    fitTextarea(inputRef.current, PILL_MAX_PX);
+  }, [text, mode]);
+
   const open = () => onOpen(text.trim());
   const typing = text.trim().length > 0;
 
@@ -222,11 +228,13 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
           else open();
         }}
       >
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
+          rows={1}
           value={text}
           maxLength={MAX_PILL_CHARS}
+          data-lenis-prevent
+          enterKeyHint="send"
           placeholder="Write a message…"
           aria-label="Write a message"
           autoComplete="off"
@@ -241,6 +249,11 @@ export default function DoctorGreeter({ stage, video = true, introKind = "alpha"
           }}
           onKeyDown={(event) => {
             if (event.key === "Escape") event.currentTarget.blur();
+            // Enter opens the chat with the text, Shift+Enter is a new line; on a phone Enter is a new line.
+            if (enterSends({ key: event.key, shiftKey: event.shiftKey, isComposing: event.nativeEvent?.isComposing }, isCoarsePointer())) {
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }
           }}
         />
         <button type="submit" aria-label="Send message">
