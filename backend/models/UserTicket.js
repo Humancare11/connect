@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { threadFields } = require("./ticketThreadFields");
 
 const userTicketSchema = new mongoose.Schema(
   {
@@ -36,6 +37,7 @@ const userTicketSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    ...threadFields,
   },
   { timestamps: true }
 );

@@ -1,5 +1,6 @@
 // models/Ticket.js
 const mongoose = require("mongoose");
+const { threadFields } = require("./ticketThreadFields");
 
 const ticketSchema = new mongoose.Schema(
   {
@@ -12,6 +13,11 @@ const ticketSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    category: {
+      type: String,
+      enum: ["technical", "appointment", "payments", "profile", "account", "other"],
+      default: "other",
     },
     status: {
       type: String,
@@ -32,6 +38,7 @@ const ticketSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    ...threadFields,
   },
   {
     timestamps: true,

@@ -1,9 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../../api";
 import { ticketTabFromQuery } from "./adminNotificationLinks";
-import useModalA11y from "../../hooks/useModalA11y";
-import "./AdminDashboard.css"; // keyframes used by the resolve dialog (adp-scalein, adp-spin)
+import { ADMIN_TIMEZONE, formatTicketClock, formatTicketDate, formatTicketDateTime, zoneLabel } from "../../utils/ticketTime";
 import "./SupportTickets.css";
 
 const CATEGORY_LABELS = {
@@ -11,228 +10,134 @@ const CATEGORY_LABELS = {
   billing:     "Billing",
   technical:   "Technical",
   medical:     "Medical",
+  payments:    "Payments",
+  profile:     "Profile",
+  account:     "Account",
   other:       "Other",
 };
 
-function ResolveModal({ ticket, resolveUrl, onClose, onResolved }) {
-  const resolveDialogRef = useRef(null);
-  useModalA11y(resolveDialogRef, true, onClose);
-  const [resolution, setResolution] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [focused, setFocused] = useState(false);
+const MAX_REPLY = 2000;
+const AS_ADMIN = { authRole: "admin" };
 
-  const submit = async () => {
-    if (!resolution.trim()) return;
-    setSaving(true);
+// Doctor tickets and patient tickets live in separate collections, so their routes differ by this prefix.
+const base = (kind) => (kind === "patient" ? "/api/tickets/user" : "/api/tickets");
+
+function TicketDetail({ ticket, kind, onChanged, onError }) {
+  const closed = ticket.status === "resolved";
+  const who = kind === "patient" ? "Patient" : "Doctor";
+  const raiserName = ticket.createdBy?.name || who;
+  const messages = ticket.messages || [];
+
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  const send = async () => {
+    const body = text.trim();
+    if (!body || sending) return;
+    setSending(true);
     try {
-      await api.put(resolveUrl, { resolution });
-      onResolved();
+      const res = await api.post(`${base(kind)}/${ticket._id}/admin-reply`, { text: body }, AS_ADMIN);
+      setText("");
+      onChanged(res.data.ticket);
     } catch (err) {
-      console.error("Resolve error:", err);
+      if (err.response?.status === 409) onError("This ticket was already closed.", true);
+      else onError(err.response?.data?.message || "Could not send the reply.");
     } finally {
-      setSaving(false);
+      setSending(false);
     }
   };
 
-  const canSubmit = resolution.trim() && !saving;
+  const close = async () => {
+    if (closing) return;
+    setClosing(true);
+    try {
+      const res = await api.put(`${base(kind)}/${ticket._id}/close`, null, AS_ADMIN);
+      setConfirming(false);
+      onChanged(res.data.ticket, "Ticket closed.");
+    } catch (err) {
+      if (err.response?.status === 409) onError("This ticket was already closed.", true);
+      else onError(err.response?.data?.message || "Could not close the ticket.");
+    } finally {
+      setClosing(false);
+    }
+  };
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        background: "rgba(8, 30, 80, 0.55)",
-        backdropFilter: "blur(4px)",
-        display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
-      }}
-    >
-      <div ref={resolveDialogRef} className="st-modal-dialog" role="dialog" aria-modal="true" aria-label="Resolve ticket"
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: "#ffffff",
-          borderRadius: 16,
-          width: "100%", maxWidth: 560,
-          boxShadow: "0 24px 60px rgba(8, 58, 176, 0.22), 0 4px 16px rgba(0,0,0,0.10)",
-          overflow: "hidden",
-          animation: "adp-scalein 0.2s ease",
-        }}
-      >
-        {/* Header */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "18px 24px",
-          borderBottom: "1.5px solid #e2e8f0",
-          background: "linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 8,
-              background: "rgba(255,255,255,0.2)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 16,
-            }}>✓</div>
-            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#ffffff" }}>Resolve Ticket</h3>
+    <div className="st-ticket__body" id={`st-body-${ticket._id}`}>
+      <div className="st-dhead">
+        <span className="st-ref">
+          {ticket.ref} · {messages.length} message{messages.length === 1 ? "" : "s"}
+        </span>
+        {!closed && (confirming ? (
+          <div className="st-confirm" role="group" aria-label="Confirm closing this ticket">
+            <span>Close this ticket? The {kind} won&apos;t be able to reply after this.</span>
+            <button type="button" className="st-btn st-btn--danger" onClick={close} disabled={closing}>
+              {closing ? "Closing…" : "Yes, close ticket"}
+            </button>
+            <button type="button" className="st-btn st-btn--ghost" onClick={() => setConfirming(false)} disabled={closing}>
+              Cancel
+            </button>
           </div>
-          <button
-            type="button"
-            className="st-modal-btn"
-            aria-label="Close"
-            onClick={onClose}
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "1.5px solid rgba(255,255,255,0.35)",
-              borderRadius: "50%",
-              width: 34, height: 34,
-              cursor: "pointer",
-              fontSize: 16, color: "#ffffff",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, lineHeight: 1,
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.28)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-          >
-            ✕
+        ) : (
+          <button type="button" className="st-btn st-btn--close" onClick={() => setConfirming(true)}>
+            Close Ticket
           </button>
+        ))}
+      </div>
+
+      <div className="st-ts">
+        <div className="st-tsbox">
+          <div className="st-tsbox__lbl">Raised · {who} time</div>
+          {ticket.userTimezone ? (
+            <>
+              <div className="st-tsbox__val">{formatTicketDateTime(ticket.createdAt, ticket.userTimezone)}</div>
+              <div className="st-tsbox__tz">{zoneLabel(ticket.createdAt, ticket.userTimezone)}</div>
+            </>
+          ) : (
+            <div className="st-tsbox__tz">Timezone was not recorded for this ticket.</div>
+          )}
         </div>
-
-        {/* Body */}
-        <div style={{ padding: "22px 24px" }}>
-          {/* Ticket info box */}
-          <div style={{
-            background: "#eff6ff",
-            border: "1.5px solid #bfdbfe",
-            borderRadius: 10,
-            padding: "14px 16px",
-            marginBottom: 20,
-          }}>
-            <div style={{
-              fontSize: 11, fontWeight: 700, color: "#1d4ed8",
-              textTransform: "uppercase", letterSpacing: ".07em", marginBottom: 6,
-            }}>
-              Ticket Details
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#1e3a5f", marginBottom: 4 }}>
-              {ticket.title}
-            </div>
-            <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.55 }}>
-              {ticket.description}
-            </div>
-            {ticket.createdBy?.name && (
-              <div className="st-modal-meta" style={{ fontSize: 12, color: "#6b7280", marginTop: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{
-                  width: 20, height: 20, borderRadius: "50%",
-                  background: "#dbeafe", color: "#1d4ed8",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 11, fontWeight: 700,
-                }}>
-                  {ticket.createdBy.name[0]?.toUpperCase()}
-                </span>
-                <span>{ticket.createdBy.name}</span>
-                {ticket.createdBy.email && <span className="st-modal-email" style={{ color: "#9ca3af" }}>· {ticket.createdBy.email}</span>}
-              </div>
-            )}
-          </div>
-
-          {/* Resolution textarea */}
-          <label style={{
-            display: "block",
-            fontSize: 12, fontWeight: 700, color: "#374151",
-            textTransform: "uppercase", letterSpacing: ".07em",
-            marginBottom: 8,
-          }}>
-            Resolution Message <span style={{ color: "#ef4444" }}>*</span>
-          </label>
-          <textarea
-            className="st-modal-field"
-            value={resolution}
-            onChange={e => setResolution(e.target.value)}
-            placeholder="Describe how the issue was resolved…"
-            rows={5}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              border: focused ? "2px solid #2563eb" : "1.5px solid #d1d5db",
-              borderRadius: 10,
-              fontSize: 14, fontFamily: "inherit",
-              resize: "vertical",
-              outline: "none",
-              boxSizing: "border-box",
-              color: "#111827",
-              background: "#ffffff",
-              transition: "border-color .15s",
-              lineHeight: 1.6,
-            }}
-          />
-          <p style={{ margin: "6px 0 0", fontSize: 12, color: "#6b7280" }}>
-            This message will be sent to the user when the ticket is marked resolved.
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: "16px 24px",
-          borderTop: "1.5px solid #e2e8f0",
-          background: "#f8fafc",
-          display: "flex", gap: 10, justifyContent: "flex-end",
-        }}>
-          <button
-            type="button"
-            className="st-modal-btn"
-            onClick={onClose}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "1.5px solid #d1d5db",
-              background: "#ffffff",
-              color: "#374151",
-              fontSize: 13, fontWeight: 600, fontFamily: "inherit",
-              cursor: "pointer",
-              transition: "background 0.15s, border-color 0.15s",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "#f3f4f6"; e.currentTarget.style.borderColor = "#9ca3af"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "#ffffff"; e.currentTarget.style.borderColor = "#d1d5db"; }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="st-modal-btn"
-            onClick={submit}
-            disabled={!canSubmit}
-            style={{
-              padding: "9px 22px",
-              borderRadius: 8,
-              border: "none",
-              background: canSubmit ? "linear-gradient(135deg, #1d4ed8, #2563eb)" : "#93c5fd",
-              color: "#ffffff",
-              fontSize: 13, fontWeight: 700, fontFamily: "inherit",
-              cursor: canSubmit ? "pointer" : "not-allowed",
-              boxShadow: canSubmit ? "0 3px 12px rgba(29,78,216,0.35)" : "none",
-              display: "flex", alignItems: "center", gap: 7,
-              transition: "opacity 0.15s, box-shadow 0.15s",
-            }}
-            onMouseEnter={e => { if (canSubmit) e.currentTarget.style.opacity = "0.88"; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
-          >
-            {saving ? (
-              <>
-                <span style={{ width: 14, height: 14, border: "2px solid rgba(255,255,255,0.4)", borderTopColor: "#fff", borderRadius: "50%", display: "inline-block", animation: "adp-spin 0.7s linear infinite" }} />
-                Saving…
-              </>
-            ) : (
-              <>✓ Mark Resolved</>
-            )}
-          </button>
+        <div className="st-tsbox">
+          <div className="st-tsbox__lbl">Raised · Admin time</div>
+          <div className="st-tsbox__val">{formatTicketDateTime(ticket.createdAt, ADMIN_TIMEZONE)}</div>
+          <div className="st-tsbox__tz">{zoneLabel(ticket.createdAt, ADMIN_TIMEZONE)}</div>
         </div>
       </div>
+
+      <div className="st-thread">
+        {messages.map((m, i) => (
+          <div key={m._id || i} className={`st-msg st-msg--${m.sender}`}>
+            <div className="st-msg__by">
+              {m.sender === "admin" ? "Admin" : raiserName} · {formatTicketDateTime(m.createdAt, ADMIN_TIMEZONE)}
+            </div>
+            <div className="st-msg__text">{m.text}</div>
+          </div>
+        ))}
+      </div>
+
+      {closed ? (
+        <div className="st-closednote">Closed by admin on {formatTicketDateTime(ticket.closedAt, ADMIN_TIMEZONE)}</div>
+      ) : (
+        <div className="st-reply">
+          <textarea
+            aria-label={`Reply to ${raiserName}`}
+            value={text}
+            maxLength={MAX_REPLY}
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Write a reply… the ticket stays open until you close it"
+          />
+          <button type="button" className="st-btn st-btn--primary" onClick={send} disabled={!text.trim() || sending}>
+            {sending ? "Sending…" : "Send reply"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-function TicketCard({ ticket, onResolve }) {
+function TicketCard({ ticket, kind, onChanged, onError }) {
   const [open, setOpen] = useState(false);
   const isResolved = ticket.status === "resolved";
   const toggle = () => setOpen((p) => !p);
@@ -272,37 +177,16 @@ function TicketCard({ ticket, onResolve }) {
 
         <div className="st-ticket__side">
           <span className="st-date">
-            {new Date(ticket.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+            {formatTicketDate(ticket.createdAt, ADMIN_TIMEZONE)}
+            <small>{formatTicketClock(ticket.createdAt, ADMIN_TIMEZONE)} IST</small>
           </span>
-          <span className={`st-badge st-badge--${ticket.status}`}>{ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}</span>
-          {!isResolved && (
-            <button type="button" className="st-resolve" onClick={(e) => { e.stopPropagation(); onResolve(ticket); }}>
-              Resolve
-            </button>
-          )}
+          <span className={`st-badge st-badge--${ticket.status}`}>{isResolved ? "Resolved" : "Open"}</span>
         </div>
 
         <span className={`st-chevron${open ? " st-chevron--open" : ""}`} aria-hidden="true">⌄</span>
       </div>
 
-      {open && (
-        <div className="st-ticket__body" id={bodyId}>
-          <div className="st-label">Description</div>
-          <p className="st-text">{ticket.description}</p>
-
-          {isResolved && ticket.resolution && (
-            <div className="st-resolution">
-              <div className="st-label st-label--ok">✓ Resolution</div>
-              <p className="st-text">{ticket.resolution}</p>
-              {ticket.resolvedBy && (
-                <p className="st-resolution__by">
-                  Resolved by {ticket.resolvedBy.name} · {new Date(ticket.updatedAt).toLocaleDateString("en-IN")}
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {open && <TicketDetail ticket={ticket} kind={kind} onChanged={onChanged} onError={onError} />}
     </div>
   );
 }
@@ -317,8 +201,6 @@ export default function SupportTickets() {
   const [doctorTickets,  setDoctorTickets]  = useState([]);
   const [patientTickets, setPatientTickets] = useState([]);
   const [loading,        setLoading]        = useState(true);
-  const [resolving,      setResolving]      = useState(null);
-  const [resolveType,    setResolveType]    = useState(null);
   const [search,         setSearch]         = useState("");
   const [filter,         setFilter]         = useState("all");
   const [toast,          setToast]          = useState(null);
@@ -327,8 +209,8 @@ export default function SupportTickets() {
     setLoading(true);
     try {
       const [drRes, ptRes] = await Promise.all([
-        api.get("/api/tickets/all"),
-        api.get("/api/tickets/user/all"),
+        api.get("/api/tickets/all", AS_ADMIN),
+        api.get("/api/tickets/user/all", AS_ADMIN),
       ]);
       setDoctorTickets(drRes.data);
       setPatientTickets(ptRes.data);
@@ -343,19 +225,24 @@ export default function SupportTickets() {
 
   const showToast = (msg, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 4000); };
 
-  const afterResolved = () => {
-    setResolving(null); setResolveType(null);
-    fetchAll();
-    showToast("Ticket resolved successfully.");
+  // Replace one ticket with the server's copy (after a reply or a close) without reloading the list.
+  const replaceTicket = (kind) => (updated, message) => {
+    const setter = kind === "patient" ? setPatientTickets : setDoctorTickets;
+    setter((list) => list.map((t) => (t._id === updated._id ? updated : t)));
+    if (message) showToast(message);
   };
+  const failed = (message, reload) => { showToast(message, false); if (reload) fetchAll(); };
 
   const source = tab === "patient" ? patientTickets : doctorTickets;
   const openCount    = patientTickets.filter(t => t.status === "open").length;
   const drOpenCount  = doctorTickets.filter(t => t.status === "open").length;
 
   const displayed = source.filter(t => {
-    const name = t.createdBy?.name || t.createdBy?.email || "";
-    const matchSearch = !search.trim() || name.toLowerCase().includes(search.toLowerCase()) || t.title?.toLowerCase().includes(search.toLowerCase());
+    const needle = search.trim().toLowerCase();
+    const matchSearch = !needle
+      || (t.createdBy?.name || "").toLowerCase().includes(needle)
+      || (t.createdBy?.email || "").toLowerCase().includes(needle)
+      || (t.title || "").toLowerCase().includes(needle);
     const matchFilter = filter === "all" || t.status === filter;
     return matchSearch && matchFilter;
   });
@@ -372,14 +259,6 @@ export default function SupportTickets() {
         <div className={`st-toast ${toast.ok ? "st-toast--ok" : "st-toast--err"}`} role="status">
           <span>{toast.ok ? "✓" : "!"}</span> {toast.msg}
         </div>
-      )}
-      {resolving && (
-        <ResolveModal
-          ticket={resolving}
-          resolveUrl={resolveType === "patient" ? `/api/tickets/user/${resolving._id}/resolve` : `/api/tickets/${resolving._id}/resolve`}
-          onClose={() => { setResolving(null); setResolveType(null); }}
-          onResolved={afterResolved}
-        />
       )}
 
       <div className="st-header">
@@ -445,7 +324,9 @@ export default function SupportTickets() {
             <TicketCard
               key={t._id}
               ticket={t}
-              onResolve={(ticket) => { setResolving(ticket); setResolveType(tab); }}
+              kind={tab}
+              onChanged={replaceTicket(tab)}
+              onError={failed}
             />
           ))}
         </div>

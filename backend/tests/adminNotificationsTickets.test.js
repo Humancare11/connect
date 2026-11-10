@@ -17,9 +17,11 @@ const UserTicket = require("../models/UserTicket");
 const Session = require("../models/Session");
 const AdminNotification = require("../models/AdminNotification");
 const { notifyAdminSupportTicketCreated } = require("../utils/adminNotifications");
+const mailer = require("../utils/sendEmail");
 
 // Real tickets, auth and doctor routers over HTTP against an isolated in-memory
-// MongoDB. No email is sent by these flows; no shared database is touched.
+// MongoDB. The ticket-raised admin email is stubbed out (no email leaves the machine);
+// no shared database is touched.
 const PASSWORD = "Passw0rd!x";
 let mongod, server, base, tokens, ids;
 let emitted;
@@ -52,7 +54,10 @@ async function withBrokenNotifications(fn) {
 }
 
 describe("admin notifications for support tickets (real routes, in-memory MongoDB)", () => {
+  let realSend;
   before(async () => {
+    realSend = mailer.sendBookingNotificationEmail;
+    mailer.sendBookingNotificationEmail = async () => {};
     mongod = await MongoMemoryServer.create();
     await mongoose.connect(mongod.getUri());
     await AdminNotification.init();
@@ -69,6 +74,7 @@ describe("admin notifications for support tickets (real routes, in-memory MongoD
     base = `http://127.0.0.1:${server.address().port}`;
   });
   after(async () => {
+    mailer.sendBookingNotificationEmail = realSend;
     await new Promise((resolve) => server.close(resolve));
     await mongoose.disconnect();
     await mongod.stop();

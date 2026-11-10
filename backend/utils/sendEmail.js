@@ -549,7 +549,7 @@ const sendDoctorApprovalEmail = async (to, { name, loginUrl }) => {
 // callers pass plain text. `rows` is a list of [label, value] pairs; rows with
 // an empty value are skipped. Deliberately carries no patient contact details
 // or clinical text — the CTA link leads to the authenticated dashboard.
-const buildBookingNotificationHTML = ({ badge, greeting, intro, rows = [], ctaUrl, ctaLabel, footnote }) => {
+const buildBookingNotificationHTML = ({ badge, greeting, intro, rows = [], ctaUrl, ctaLabel, footnote, quote }) => {
   const rowsHtml = rows
     .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
     .map(
@@ -587,6 +587,8 @@ ${rowsHtml ? `
     <div style="background:#0a62f126;border:1.5px dashed #312e81;border-radius:14px;padding:20px 24px;margin:0 0 18px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">${rowsHtml}</table>
     </div>
+` : ""}${quote ? `
+    <div style="border-left:4px solid #0a1f44;background:#f8f9ff;padding:12px 16px;margin:0 0 18px;border-radius:0 8px 8px 0;color:#1f2937;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-word;">${escapeHtml(quote)}</div>
 ` : ""}
     ${cta}${footnote ? `
     <p style="color:#374151;font-size:14px;line-height:1.7;margin:0;">${escapeHtml(footnote)}</p>` : ""}
@@ -616,7 +618,7 @@ ${rowsHtml ? `
 </html>`;
 };
 
-const buildBookingNotificationText = ({ greeting, intro, rows = [], ctaUrl }) =>
+const buildBookingNotificationText = ({ greeting, intro, rows = [], ctaUrl, quote }) =>
   [
     greeting,
     "",
@@ -625,16 +627,17 @@ const buildBookingNotificationText = ({ greeting, intro, rows = [], ctaUrl }) =>
     ...rows
       .filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "")
       .map(([label, value]) => `${label}: ${value}`),
+    ...(quote ? ["", quote] : []),
     ...(ctaUrl ? ["", `Full details (sign in required): ${ctaUrl}`] : []),
   ].join("\n");
 
-const sendBookingNotificationEmail = async (to, { subject, badge, greeting, intro, rows, ctaUrl, ctaLabel }) => {
+const sendBookingNotificationEmail = async (to, { subject, badge, greeting, intro, rows, ctaUrl, ctaLabel, quote }) => {
   await sendMail({
     from: `"Humancare Connect" <${MAIL_FROM}>`,
     to,
     subject,
-    text: buildBookingNotificationText({ greeting, intro, rows, ctaUrl }),
-    html: buildBookingNotificationHTML({ badge, greeting, intro, rows, ctaUrl, ctaLabel }),
+    text: buildBookingNotificationText({ greeting, intro, rows, ctaUrl, quote }),
+    html: buildBookingNotificationHTML({ badge, greeting, intro, rows, ctaUrl, ctaLabel, quote }),
   });
 };
 
