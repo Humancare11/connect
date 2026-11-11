@@ -274,8 +274,8 @@ describe("AI service", () => {
     assert.match(lines[0], /"outcome":"ok"/);
   });
 
-  test("the system prompt carries the brief's rules and the prices from settings", () => {
-    const prompt = buildSystemPrompt(DEFAULT_SETTINGS);
+  test("the system prompt carries the brief's rules and the live prices it is given", () => {
+    const prompt = buildSystemPrompt(DEFAULT_SETTINGS, [], { prices: { currency: "USD", items: [{ name: "General consultation", text: "$49" }, { name: "Fit to fly", text: "$69" }, { name: "Prescription refills", text: "$60" }] } });
     for (const needle of ["Never diagnose", "medications, doses or interactions", "call 911", "language", "General consultation: $49", "Fit to fly: $69", "Prescription refills: $60", "200 characters"]) {
       assert.ok(prompt.includes(needle), needle);
     }

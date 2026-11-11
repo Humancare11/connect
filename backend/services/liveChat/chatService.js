@@ -19,6 +19,7 @@ const { aiNameOf, withAiName } = require("./settingsDefaults");
 const { tooShortToTell, tooShortToDetect, looksEnglish, scrubContact } = require("./languageHints");
 const safety = require("./safety");
 const priceMode = require("./priceMode");
+const { quickReplyFor } = require("./settingsDefaults");
 
 // Shown the moment a chat goes to the team, whoever is or is not at their desk.
 const CONNECTING_TEXT = (name) => `Thanks, ${name}! Connecting you to our team now. You can keep typing your question here.`;
@@ -98,6 +99,7 @@ function createChatService({
   followUp = null, // the generic follow-up email ({ send(conv) })
   abuse = null, // abuse alerts ({ noteChat, noteDailyLimit })
   sitePages = require("./sitePages").createSitePages(), // the pages the AI may link to (allowlist)
+  livePrices = require("./livePrices").sharedLivePrices(), // the Super Admin prices the AI may quote ({ forCurrency })
   detectLanguage = null, // (conv, text) => Promise: one small model call when no AI turn has found the language
   leaveGraceMs = 30_000, // a visitor with no connection for this long has left
   now = () => Date.now(),
@@ -259,7 +261,42 @@ function createChatService({
     };
   }
 
+  // The prices the AI may quote to this visitor: the Super Admin prices in the visitor's own currency (what checkout would charge).
+  // Empty when none can be read: then no amount is quoted.
+  async function priceListFor(conv) {
+    const currency = priceMode.chatCurrencyOf(conv);
+    let items = [];
+    try {
+      items = await livePrices.forCurrency(currency);
+    } catch {
+      items = [];
+    }
+    return { currency, items };
+  }
+
+  // Every AI message passes here: an amount that is not an exact price of the visitor's list is cut and the patient is told the
+  // price is shown when they book (with the booking page as the link). Text without an amount is not touched.
+  async function guardAiAmounts(conv, text, extra) {
+    if (!priceMode.hasAmount(text)) return { text, extra };
+    const { items } = await priceListFor(conv);
+    const guarded = priceMode.guardAmounts(text, items);
+    if (!guarded.changed) return { text, extra };
+    const booking = extra.links?.length ? null : sitePages.bookingFor("/appointment-booking");
+    return { text: guarded.text, extra: booking ? { ...extra, links: [booking] } : extra };
+  }
+
+  // The Pricing blog (/telemedicine-cost-usa) shows generic market ranges, not our prices: the booking page replaces it.
+  const PRICING_BLOG = "/telemedicine-cost-usa";
+  function withoutPricingBlog(links) {
+    if (!links.some((l) => l.url === PRICING_BLOG)) return links;
+    const kept = links.filter((l) => l.url !== PRICING_BLOG);
+    if (kept.length) return kept;
+    const booking = sitePages.bookingFor("/appointment-booking");
+    return booking ? [booking] : [];
+  }
+
   async function addMessage(conv, sender, text, extra = {}) {
+    if (sender === "ai" && !extra.internal) ({ text, extra } = await guardAiAmounts(conv, text, extra));
     const { file, sourceText, ...stored } = extra; // `file` is display info; only fileId is stored
     // sourceText: the admin's English text of a translated reply. Stored encrypted, shown to admins only.
     const doc = await LcMessage.create({
@@ -861,8 +898,8 @@ function createChatService({
             pages: sitePages.pagesForPrompt({ allowContent: linkConditions }),
             pageHint: linkConditions ? sitePages.hintFor(lastPatientText).map((p) => p.title) : [],
             unansweredStreak: streakRow?.unansweredStreak || 0,
-            // A visitor priced in EUR / GBP is never quoted a dollar amount (see priceMode.js).
-            hidePrices: priceMode.hidesPrices(conv),
+            // The Super Admin prices, in this visitor's own currency (the same rule as checkout; see livePrices.js).
+            prices: await priceListFor(conv),
           }),
           deadline,
         ]);
@@ -918,19 +955,9 @@ function createChatService({
         // Off-topic never hands over; from the third in a row the patient is reminded of the button.
         const withReminder =
           result.offTopic && offTopicStreak >= OFF_TOPIC_REMINDER_AT ? `${result.reply} ${OFF_TOPIC_REMINDER}` : result.reply;
-        let reply = withReminder;
-        let shownLinks = links;
-        if (priceMode.hidesPrices(current)) {
-          // The model was told not to quote prices; anything that still slipped through is cut here, and the Pricing page
-          // (its prices are in USD) gives way to the booking page, where the price is shown in the visitor's currency.
-          reply = priceMode.withoutPrices(withReminder);
-          const withoutPricingPage = links.filter((l) => !/pric/i.test(`${l.title || ""} ${l.url || ""}`));
-          shownLinks = withoutPricingPage;
-          if (!shownLinks.length && (reply !== withReminder || withoutPricingPage.length !== links.length)) {
-            const booking = sitePages.bookingFor("/appointment-booking");
-            if (booking) shownLinks = [booking];
-          }
-        }
+        // The amount check happens in addMessage; a price question never links the generic Pricing blog.
+        const shownLinks = withoutPricingBlog(links);
+        const reply = withReminder;
         await addMessage(current, "ai", reply, shownLinks.length ? { links: shownLinks } : {});
         turn.posted = true;
       }
@@ -1360,13 +1387,10 @@ function createChatService({
       if (key === "live") {
         await requestAgent(fresh, { first: firstNameOf(decryptLiveChatOrEmpty(loaded.visitor.name)), settings });
       } else if (fresh.mode === "ai" && option.reply) {
-        let text = option.reply;
-        let link = option.link ? sitePages.linkFor(option.link) : null;
-        if (priceMode.hidesPrices(fresh)) {
-          // EUR / GBP visitor: no exact price (the service pages show USD); the booking page shows the real one.
-          text = priceMode.withoutPrices(text);
-          link = sitePages.bookingFor("/appointment-booking") || link;
-        }
+        // {price:key} in the text is the live Super Admin price in the visitor's currency; a missing price drops that sentence.
+        const stored = quickReplyFor(option);
+        const text = priceMode.fillPrices(stored, (await priceListFor(fresh)).items);
+        const link = option.link ? sitePages.linkFor(option.link) : null;
         await addMessage(fresh, "ai", text, link ? { links: [link] } : {});
         await pushState(fresh);
       } else {

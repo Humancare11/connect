@@ -3,6 +3,8 @@ const router = express.Router();
 const ServicePrice = require("../models/ServicePrice");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { parsePrice, isMultiCurrencyEnabled, isInrEnabled, maxPriceFor, minPriceFor } = require("../utils/currencyConfig");
+const { priceChanges, auditPriceChange } = require("../utils/priceAudit");
+const { invalidateLivePrices } = require("../services/liveChat/livePrices");
 
 function slugify(str) {
   return String(str)
@@ -135,6 +137,8 @@ router.post("/", verifyAdminToken, superAdminOnly, async (req, res) => {
 
   try {
     const service = await ServicePrice.create(payload.value);
+    invalidateLivePrices(); // the live chat quotes the new price at once
+    await auditPriceChange(req, { action: "SERVICE_PRICE_CREATE", resource: "ServicePrice", id: service._id, name: service.name, slug: service.slug, changes: priceChanges(null, service) });
     res.status(201).json({ msg: "Service created.", service });
   } catch (err) {
     console.error("POST /api/services error:", err);
@@ -158,6 +162,8 @@ router.put("/:id", verifyAdminToken, superAdminOnly, async (req, res) => {
       { $set: payload.value },
       { new: true, runValidators: true },
     );
+    invalidateLivePrices();
+    await auditPriceChange(req, { action: "SERVICE_PRICE_UPDATE", resource: "ServicePrice", id: req.params.id, name: service?.name, slug: service?.slug, changes: priceChanges(existing, service) });
     res.json({ msg: "Service updated.", service });
   } catch (err) {
     console.error("PUT /api/services/:id error:", err);
@@ -172,6 +178,8 @@ router.delete("/:id", verifyAdminToken, superAdminOnly, async (req, res) => {
   try {
     const service = await ServicePrice.findByIdAndDelete(req.params.id);
     if (!service) return res.status(404).json({ msg: "Service not found." });
+    invalidateLivePrices();
+    await auditPriceChange(req, { action: "SERVICE_PRICE_DELETE", resource: "ServicePrice", id: service._id, name: service.name, slug: service.slug, changes: priceChanges(service, null) });
     res.json({ msg: "Service deleted." });
   } catch (err) {
     console.error("DELETE /api/services/:id error:", err);

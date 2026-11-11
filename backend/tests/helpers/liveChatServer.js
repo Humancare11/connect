@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 const { io: connectClient } = require("socket.io-client");
 const { mountLiveChat } = require("../../services/liveChat");
 const { liveChatAgentOnly } = require("../../middleware/verifyToken");
+const { AI_SERVICES, formatAmount } = require("../../services/liveChat/livePrices");
 
 const ROLE_TOKENS = {
   "admin-token": { id: "a1", role: "admin" },
@@ -23,7 +24,28 @@ const AGENT_A = "64b000000000000000000a01";
 const AGENT_B = "64b000000000000000000b02";
 const SUPER_S = "64b000000000000000000c03";
 
+// A fake Super Admin price book for the AI (the real one reads the database). USD prices; a currency without its own list falls
+// back to USD, like checkout does. Tests change `book.USD` / `book.EUR` ... or call setPrice().
+const DEFAULT_USD = { "general-consultation": 49, "mental-health": 49, "doctor-notes": 49, "lab-requisitions": 49, "chronic-care-management": 55, "prescription-refills": 60, "second-opinion": 60, "fit-to-fly": 69 };
+function fakeLivePrices() {
+  const book = { USD: { ...DEFAULT_USD } };
+  const itemsFor = (code) => {
+    const own = book[code];
+    const list = own || book.USD;
+    const currency = own ? code : "USD";
+    return AI_SERVICES.filter((d) => list[d.key] > 0).map((d) => ({ ...d, amount: list[d.key], currency, text: formatAmount(list[d.key], currency) }));
+  };
+  return {
+    book,
+    calls: [],
+    forCurrency: async (code = "USD") => itemsFor(code),
+    overview: async () => AI_SERVICES.map((d) => ({ key: d.key, name: d.name, page: d.page, source: d.source, ref: d.ref, prices: Object.fromEntries(["USD", "EUR", "GBP", "INR"].map((c) => [c, itemsFor(c).find((i) => i.key === d.key) ? { text: itemsFor(c).find((i) => i.key === d.key).text, currency: itemsFor(c).find((i) => i.key === d.key).currency } : null])) })),
+    invalidate() {},
+  };
+}
+
 async function startLiveChatServer({ env = {}, mount = {} } = {}) {
+  const prices = fakeLivePrices();
   const identities = { ...ROLE_TOKENS };
   const app = express();
   app.set("trust proxy", 1);
@@ -47,6 +69,7 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
   const livechat = mountLiveChat({
     app,
     io,
+    livePrices: prices,
     env: { LIVECHAT_ENABLED: "true", NODE_ENV: "test", ...env },
     validateAccessToken: async (token) => identities[token] || null,
     graceMs: 250,
@@ -131,6 +154,7 @@ async function startLiveChatServer({ env = {}, mount = {} } = {}) {
     store,
     presigned,
     failures,
+    prices,
     connect,
     agent: (token = "admin-token") => connect("/livechat-admin", { auth: { token } }),
     visitor: (extra = {}) =>

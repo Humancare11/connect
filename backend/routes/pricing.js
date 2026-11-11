@@ -3,6 +3,8 @@ const router = express.Router();
 const { CategoryPricing } = require("../models/CategoryPricing");
 const { verifyAdminToken, superAdminOnly } = require("../middleware/verifyToken");
 const { recordActivity } = require("../utils/activityLogger");
+const { auditPriceChange } = require("../utils/priceAudit");
+const { invalidateLivePrices } = require("../services/liveChat/livePrices");
 const { parsePrice, isMultiCurrencyEnabled, isInrEnabled, maxPriceFor, minPriceFor } = require("../utils/currencyConfig");
 
 // GET /api/pricing - public, returns all category prices keyed by categoryId:
@@ -133,6 +135,14 @@ router.put("/:categoryId", verifyAdminToken, superAdminOnly, async (req, res) =>
       },
     });
 
+    invalidateLivePrices(); // the live chat quotes the new price at once
+    await auditPriceChange(req, {
+      action: "PRICING_UPDATE",
+      resource: "CategoryPricing",
+      id: categoryId,
+      slug: categoryId,
+      changes: Object.fromEntries(Object.entries(set).map(([key, value]) => [{ price: "USD", priceEur: "EUR", priceGbp: "GBP", priceInr: "INR" }[key] || key, { from: current[key] ?? null, to: value }])),
+    });
     res.json({ msg: "Price updated successfully.", record: updated });
   } catch (err) {
     console.error("PUT /api/pricing/:categoryId error:", err);

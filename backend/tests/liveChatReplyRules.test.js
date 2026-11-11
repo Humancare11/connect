@@ -197,7 +197,9 @@ describe("live chat: brand name and reply style", () => {
     assert.match(prompt, /first person plural/);
     assert.match(prompt, /never write "Sorry for the confusion"/);
     assert.match(prompt, /no dashes/);
-    assert.match(prompt, /state the actual price in USD from the Prices list/);
+    const withPrices = buildSystemPrompt(DEFAULT_SETTINGS, [], { prices: { currency: "USD", items: [{ name: "General consultation", text: "$49" }] } });
+    assert.match(withPrices, /state the actual price from the Prices list/);
+    assert.match(prompt, /Never state a price or an amount of money/, "no list given: nothing is quoted");
   });
 
   test("no prompt line and no fixed or default text says 'visit', 'in-person' or 'video call' (it is an online consultation)", () => {

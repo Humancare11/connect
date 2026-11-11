@@ -127,20 +127,8 @@ function validateSettings(patch) {
     }
   }
 
-  if (has("prices")) {
-    const prices = patch.prices;
-    if (!Array.isArray(prices) || prices.length > 30) errors.prices = "Up to 30 prices.";
-    else {
-      const out = [];
-      prices.forEach((p, i) => {
-        const name = clean(p?.name);
-        if (name.length < 1 || name.length > 60) errors[`prices.${i}.name`] = "The service name must be 1-60 characters.";
-        else if (!number(p?.price, { min: 0, max: 100000 })) errors[`prices.${i}.price`] = "The price must be a number from 0 to 100000.";
-        else out.push({ name, price: Math.round(p.price * 100) / 100 });
-      });
-      if (!Object.keys(errors).some((k) => k.startsWith("prices"))) values.prices = out;
-    }
-  }
+  // `prices` is retired: the AI quotes the Super Admin pricing (livePrices.js). An older client may still send the field; it is
+  // accepted and ignored, so nothing is saved and the stored list stays untouched.
 
   if (has("customFields")) {
     const fields = patch.customFields;
@@ -167,6 +155,20 @@ function validateSettings(patch) {
 
 // What the AI is told about prices and facts is recorded in full (before and after), not shortened.
 const FULL_FIELDS = new Set(["prices", "businessFacts"]);
+
+// A price typed into free text goes stale when the Super Admin changes the real price. The save still goes through; the answer
+// carries a warning for each text that has an amount. (Quick-option replies should use {price:key} instead.)
+function priceWarnings(values) {
+  const { hasAmount } = require("./priceMode");
+  const warnings = [];
+  if (typeof values.businessFacts === "string" && hasAmount(values.businessFacts)) {
+    warnings.push({ field: "businessFacts", message: "Business facts contain a price. Prices come from the Super Admin pricing; a price typed here can contradict it. Remove it, or the AI may quote a stale amount (any amount that is not a current price is blocked in replies)." });
+  }
+  (values.quickOptions || []).forEach((o, i) => {
+    if (hasAmount(String(o.reply || ""))) warnings.push({ field: `quickOptions.${i}.reply`, message: "This reply has a typed price. Use {price:general-consultation} (or another service key) so it follows the Super Admin pricing." });
+  });
+  return warnings;
+}
 const full = (value) => (typeof value === "string" ? value : JSON.stringify(value ?? ""));
 
 const short = (value) => {
@@ -231,11 +233,12 @@ function createSettingsService({ models, invalidateSettings = () => {}, now = ()
     if (Object.keys(errors).length) throw new SettingsError(400, "invalid_settings", { errors });
     const current = await currentSettings();
     const changes = diffSettings(current, values);
-    if (!changes.length) return { ok: true, changed: 0, settings: current };
+    const warnings = priceWarnings(values);
+    if (!changes.length) return { ok: true, changed: 0, settings: current, ...(warnings.length ? { warnings } : {}) };
     const saved = await LcSettings.findOneAndUpdate({ key: "default" }, { $set: { ...values, updatedBy: oid(actor.id) } }, { returnDocument: "after" });
     await logChange(actor, changes);
     invalidateSettings(); // applies at once, without a restart
-    return { ok: true, changed: changes.length, settings: saved.toObject() };
+    return { ok: true, changed: changes.length, settings: saved.toObject(), ...(warnings.length ? { warnings } : {}) };
   }
 
   async function audit(limit = 50) {

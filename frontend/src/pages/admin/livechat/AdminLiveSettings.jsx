@@ -23,7 +23,7 @@ const AI_MODES = [
 // the fields the page edits (everything else on the settings document is not sent back)
 const EDITABLE = [
   "aiMode", "followUpMinutes", "inactiveMinutes", "aiDisplayName", "agentDisplayName", "greeting", "unavailableMessage", "businessFacts",
-  "aiMayLinkConditionPages", "showAiNotice", "policyVersion", "dailySpendCapUsd", "handoffRules", "quickOptions", "prices", "customFields",
+  "aiMayLinkConditionPages", "showAiNotice", "policyVersion", "dailySpendCapUsd", "handoffRules", "quickOptions", "customFields",
 ];
 const MAX_CUSTOM_FIELDS = 10;
 const pick = (settings) => Object.fromEntries(EDITABLE.map((k) => [k, k === "customFields" ? settings[k] || [] : settings[k]]));
@@ -52,6 +52,8 @@ export default function AdminLiveSettings() {
   const [linkPages, setLinkPages] = useState([]);
   const [version, setVersion] = useState(0);
   const [cannedError, setCannedError] = useState("");
+  const [priceInfo, setPriceInfo] = useState(null); // the Super Admin prices the AI quotes (read only)
+  const [warnings, setWarnings] = useState([]);
 
   useEffect(() => hub.acquire(me), [me]);
 
@@ -69,6 +71,17 @@ export default function AdminLiveSettings() {
       .catch(() => {
         if (!cancelled) setLoadError("Could not load the settings.");
       });
+    return () => {
+      cancelled = true;
+    };
+  }, [version]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get(`${BASE}/prices`)
+      .then((res) => !cancelled && setPriceInfo(res.data))
+      .catch(() => !cancelled && setPriceInfo({ failed: true }));
     return () => {
       cancelled = true;
     };
@@ -106,6 +119,7 @@ export default function AdminLiveSettings() {
       setForm(pick(data.settings));
       setErrors({});
       setMessage(data.changed ? `Saved. ${data.changed} change${data.changed === 1 ? "" : "s"} applied now.` : "Nothing changed.");
+      setWarnings(data.warnings || []);
       setVersion((v) => v + 1);
     } catch (err) {
       const body = err?.response?.data;
@@ -274,26 +288,51 @@ export default function AdminLiveSettings() {
             </div>
           </div>
 
-          <div className="lcp-panel">
+          <div className="lcp-panel" id="ai-prices">
             <h3>Prices the AI may quote</h3>
-            <span className="lcp-help">Prices and business facts can only be changed by a Super Admin. Every change is logged with who, when, and the full before and after.</span>
-            {form.prices.map((p, i) => (
-              <div key={i}>
-                <div className="lcp-row lcp-row--price">
-                  <input type="text" value={p.name} maxLength={60} aria-label="Service" onChange={(e) => set("prices", form.prices.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-                  <input type="number" min="0" step="0.01" value={p.price} aria-label="Price in USD" onChange={(e) => set("prices", form.prices.map((x, j) => (j === i ? { ...x, price: Number(e.target.value) } : x)))} />
-                  <button type="button" className="lcp-btn lcp-btn--small lcp-btn--danger" onClick={() => set("prices", form.prices.filter((_, j) => j !== i))}>
-                    Remove
-                  </button>
-                </div>
-                <ErrorText errors={errors} name={`prices.${i}.name`} />
-                <ErrorText errors={errors} name={`prices.${i}.price`} />
+            <span className="lcp-help">
+              Read only. The AI quotes the same prices the website charges, in the visitor's own currency. Change a price in{" "}
+              <a href="/services-prices">Services Prices</a> or in the Healthcare Management tab of the{" "}
+              <a href="/superadmin-dashboard">Super Admin dashboard</a>; the chat uses the new price within seconds (at most 5 minutes). A service without a price is never
+              guessed: the AI says the exact price is shown when the patient books.
+            </span>
+            {!priceInfo && <p className="lcp-muted">Loading the prices…</p>}
+            {priceInfo?.failed && <div className="lcp-error">Could not load the prices.</div>}
+            {priceInfo?.services && (
+              <div className="lcp-table-wrap" style={{ marginTop: 10 }}>
+                <table className="lcp-table" style={{ minWidth: 0 }}>
+                  <thead>
+                    <tr>
+                      <th>Service</th>
+                      <th>USD</th>
+                      {priceInfo.multiCurrency && <th>EUR</th>}
+                      {priceInfo.multiCurrency && <th>GBP</th>}
+                      {priceInfo.inr && <th>INR</th>}
+                      <th>Comes from</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceInfo.services.map((row) => (
+                      <tr key={row.key}>
+                        <td>{row.name}</td>
+                        {["USD", "EUR", "GBP", "INR"]
+                          .filter((code) => code === "USD" || (priceInfo.multiCurrency && code !== "INR") || (priceInfo.inr && code === "INR"))
+                          .map((code) => {
+                            const cell = row.prices[code];
+                            return (
+                              <td key={code} title={cell && cell.currency !== code ? `No ${code} price yet: checkout charges the ${cell.currency} price` : undefined}>
+                                {cell ? `${cell.text}${cell.currency !== code ? " *" : ""}` : "no price"}
+                              </td>
+                            );
+                          })}
+                        <td className="lcp-muted">{row.source === "service" ? "Services Prices" : "Healthcare Management"}: {row.ref}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
-            <button type="button" className="lcp-btn lcp-btn--small" style={{ marginTop: 10 }} disabled={form.prices.length >= 30} onClick={() => set("prices", [...form.prices, { name: "", price: 0 }])}>
-              Add a price
-            </button>
-            <ErrorText errors={errors} name="prices" />
+            )}
+            {priceInfo?.multiCurrency && <span className="lcp-help">* No price in that currency yet, so checkout (and the AI) uses the USD price.</span>}
           </div>
 
           <div className="lcp-panel">
@@ -377,6 +416,7 @@ export default function AdminLiveSettings() {
               <ErrorText errors={errors} name={`quickOptions.${i}.label`} />
               <ErrorText errors={errors} name={`quickOptions.${i}.icon`} />
               <ErrorText errors={errors} name={`quickOptions.${i}.reply`} />
+              <span className="lcp-help">Use {"{price:general-consultation}"} (or prescription-refills, second-opinion, doctor-notes, mental-health, lab-requisitions, chronic-care-management, fit-to-fly) for a price: it follows the Super Admin pricing.</span>
               <ErrorText errors={errors} name={`quickOptions.${i}.link`} />
             </div>
           ))}
@@ -429,6 +469,9 @@ export default function AdminLiveSettings() {
           {saving ? "Saving…" : "Save changes"}
         </button>
         {message && <span className={message.startsWith("Saved") ? "lcp-saved" : message.startsWith("Nothing") ? "lcp-muted" : "lcp-field-error"} role="status">{message}</span>}
+        {warnings.map((w) => (
+          <span key={w.field} className="lcp-field-error" role="alert">Heads up: {w.message}</span>
+        ))}
         {!canEdit && <span className="lcp-muted">Only a Super Admin can save.</span>}
       </div>
 

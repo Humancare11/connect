@@ -266,9 +266,11 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     require("./sitePages").createSitePages(undefined, {
       source: options.siteCatalog === false ? null : require("./siteCatalog").createSiteCatalog({ models: options.siteCatalogModels }).load,
     });
+  const livePrices = options.livePrices || require("./livePrices").sharedLivePrices();
   const chat = createChatService({
     models,
     sitePages,
+    livePrices,
     loadSettings,
     ai,
     limits,
@@ -330,7 +332,7 @@ function mountLiveChat({ app, io, validateAccessToken, env = process.env, ...opt
     const routes = require("../../routes/adminLiveChat");
     app.use(
       "/api/admin/livechat",
-      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc, trash: trashSvc, review: reviewSvc, trashLimiter: options.trashLimiter })
+      routes.create({ guard: options.guard || routes.DEFAULT_GUARD, presence, getSettings: options.getSettings, agent: agentSvc, files, settings: settingsSvc, stats: statsSvc, archive: archiveSvc, trash: trashSvc, review: reviewSvc, trashLimiter: options.trashLimiter, prices: livePrices })
     );
   }
 

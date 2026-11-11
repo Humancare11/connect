@@ -250,22 +250,39 @@ describe("live chat: safety around the AI (emergency, reply filter, length, scru
       assert.equal((await audit()).length, before);
     });
 
+    test("the retired manual price list: a save that still sends it changes nothing and the stored list stays", async () => {
+      const cur = (await lc.rest("GET", "/settings", S)).body.settings;
+      const res = await save({ prices: [{ name: "General consultation", price: 1 }] });
+      assert.equal(res.status, 200);
+      assert.equal(res.body.changed, 0);
+      assert.deepEqual((await lc.rest("GET", "/settings", S)).body.settings.prices, cur.prices);
+    });
+
+    test("a price typed into Business facts or a quick reply is saved with a warning", async () => {
+      const cur = (await lc.rest("GET", "/settings", S)).body.settings;
+      const res = await save({ businessFacts: "A consultation is $19 this week." });
+      assert.equal(res.status, 200);
+      assert.deepEqual(res.body.warnings.map((w) => w.field), ["businessFacts"]);
+      const quick = await save({ quickOptions: cur.quickOptions.map((o, i) => (i === 0 ? { ...o, reply: "It is $19." } : o)) });
+      assert.ok(quick.body.warnings.some((w) => w.field === "quickOptions.0.reply"));
+      const clean = await save({ businessFacts: "Closed on holidays.", quickOptions: cur.quickOptions });
+      assert.equal(clean.body.warnings, undefined);
+      await save({ businessFacts: cur.businessFacts });
+    });
+
     test("a Super Admin change records who, when, and the full before and after", async () => {
       const cur = (await lc.rest("GET", "/settings", S)).body.settings;
       const longFacts = `${"Closed on holidays. ".repeat(100)}END`;
-      const prices = [...cur.prices.slice(0, 7), { name: "General consultation", price: 59 }];
-      await save({ businessFacts: longFacts, prices });
+      await save({ businessFacts: longFacts });
       const entry = (await audit())[0];
       assert.equal(entry.actor.id, SUPER_S);
       assert.equal(entry.actor.role, "superadmin");
       assert.ok(entry.at);
       const facts = entry.changes.find((c) => c.field === "businessFacts");
       assert.equal(facts.after, longFacts); // not shortened
-      const priceChange = entry.changes.find((c) => c.field === "prices");
-      assert.deepEqual(JSON.parse(priceChange.before), cur.prices);
-      assert.deepEqual(JSON.parse(priceChange.after), prices);
+      assert.equal(entry.changes.some((c) => c.field === "prices"), false, "the manual price list is retired: it is never changed or logged");
       // restore, and check the second change keeps the first value as "before"
-      await save({ businessFacts: cur.businessFacts, prices: cur.prices });
+      await save({ businessFacts: cur.businessFacts });
       const back = (await audit())[0].changes.find((c) => c.field === "businessFacts");
       assert.equal(back.before, longFacts);
     });

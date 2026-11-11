@@ -74,7 +74,7 @@ async function canReview(user) {
   }
 }
 
-function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, review, trashLimiter } = {}) {
+function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, settings, stats, archive, trash, review, trashLimiter, prices } = {}) {
   const router = express.Router();
   router.use(guard);
   router.use(express.json({ limit: "32kb" }));
@@ -128,6 +128,15 @@ function create({ guard = DEFAULT_GUARD, presence, getSettings, agent, files, se
       // linkPages: the site pages an option may show as a button (service pages and the booking page).
       const linkPages = sitePages.pages.filter((p) => p.type === "service").map((p) => ({ title: p.title, url: p.url }));
       return { ok: true, settings: doc?.toObject ? doc.toObject() : doc, canEdit: req.user.role === "superadmin", linkPages };
+    })
+  );
+  // The prices the AI quotes (read-only): each AI service with the Super Admin price it comes from, in every currency.
+  router.get(
+    "/prices",
+    handle(async () => {
+      const livePrices = prices || require("../services/liveChat/livePrices").sharedLivePrices();
+      const { isMultiCurrencyEnabled, isInrEnabled } = require("../utils/currencyConfig");
+      return { ok: true, multiCurrency: isMultiCurrencyEnabled(), inr: isInrEnabled(), services: await livePrices.overview() };
     })
   );
   router.put("/settings", superAdminOnly, handle((req) => settings.update(actor(req), req.body)));
