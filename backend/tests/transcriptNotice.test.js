@@ -16,7 +16,7 @@ const productionRouter = require("../routes/appointmentTranscript");
 const { createAppointmentTranscriptRouter } = productionRouter;
 const { transcriptNoticeLimiter } = require("../middleware/rateLimiters");
 
-const { TRANSCRIPT_NOTICE_VERSION, resolveNoticeVersion, sanitizeRawVersion, noticeRoleKey, bothNoticesShown, recordNoticeShown, transcriptNoticeFields } = notice;
+const { TRANSCRIPT_NOTICE_VERSION, resolveNoticeVersion, sanitizeRawVersion, sanitizeClientTime, noticeRoleKey, bothNoticesShown, recordNoticeShown, transcriptNoticeFields } = notice;
 const T0 = new Date("2026-11-12T10:00:00.000Z");
 const T1 = new Date("2026-11-12T10:00:07.000Z");
 
@@ -45,6 +45,18 @@ describe("transcript notice helpers", () => {
     const long = resolveNoticeVersion("x".repeat(500));
     assert.equal(long.version.length, 50);
     assert.equal(long.versionUnrecognized, true);
+  });
+
+  test("the browser's claimed time (clientShownAt) is kept only when it is a sensible time, otherwise null; it never throws", () => {
+    const now = new Date("2026-11-12T10:00:00.000Z");
+    assert.equal(sanitizeClientTime("2026-11-12T09:59:55Z", now).toISOString(), "2026-11-12T09:59:55.000Z");
+    assert.equal(sanitizeClientTime(now.getTime() - 60000, now).toISOString(), "2026-11-12T09:59:00.000Z");
+    assert.equal(sanitizeClientTime(new Date(now.getTime() - 1000), now).toISOString(), "2026-11-12T09:59:59.000Z");
+    assert.ok(sanitizeClientTime("2026-11-12T10:04:00Z", now), "a few minutes of clock difference is fine");
+    assert.ok(sanitizeClientTime("2026-11-10T10:30:00Z", now), "just under two days old is fine");
+    for (const bad of ["2026-11-12T10:10:00Z", "2026-11-09T10:00:00Z", "yesterday", "", "   ", null, undefined, NaN, Infinity, 1e18, -1, {}, [], true, "2026-11-12T09:59:55Z" + " ".repeat(60) + "x", Symbol("s")]) {
+      assert.equal(sanitizeClientTime(bad, now), null, typeof bad === "symbol" ? "symbol" : JSON.stringify(bad));
+    }
   });
 
   test("sanitizeRawVersion never throws, whatever it is given", () => {
@@ -314,6 +326,42 @@ describe("transcript notice record", () => {
           assert.equal(/[<>&"'`]/.test(entry.version), false, "no HTML characters stored: " + label);
           assert.ok(entry.version.length <= 50, label);
         }
+      });
+
+      test("clientShownAt: the browser's claim is stored as a separate informational field; the server's shownAt is unaffected and decides everything", async () => {
+        const b = await make(kind);
+        const claimed = new Date(T0.getTime() - 25000).toISOString();
+        const { post } = await start({ now: () => T0 });
+        const r = await post(b._id, { user: patient(), body: { version: "v1", clientShownAt: claimed, shownAt: "2000-01-01T00:00:00Z" } });
+        assert.equal(r.status, 200);
+        assert.equal(r.body.shownAt, T0.toISOString(), "the server's time, not the claim");
+        assert.equal("clientShownAt" in r.body, false, "not echoed back");
+        const entry = (await stored(kind, b._id)).transcriptNotice.patient;
+        assert.equal(entry.shownAt.getTime(), T0.getTime());
+        assert.equal(entry.clientShownAt.toISOString(), claimed);
+      });
+
+      test("clientShownAt that is missing, nonsense, in the future or ancient: the notice is still saved, with clientShownAt null", async () => {
+        const { post } = await start({ now: () => T0 });
+        for (const claim of [undefined, null, "", "garbage", 12345, "2099-01-01T00:00:00Z", "2001-01-01T00:00:00Z", { x: 1 }, ["a"], true, "x".repeat(500)]) {
+          const b = await make(kind);
+          const r = await post(b._id, { user: patient(), body: claim === undefined ? {} : { clientShownAt: claim } });
+          const label = String(JSON.stringify(claim)).slice(0, 40);
+          assert.equal(r.status, 200, label);
+          assert.equal(r.body.recorded, true, label);
+          const entry = (await stored(kind, b._id)).transcriptNotice.patient;
+          assert.equal(entry.clientShownAt, null, label);
+          assert.equal(entry.shownAt.getTime(), T0.getTime(), label);
+        }
+      });
+
+      test("first write wins for clientShownAt too", async () => {
+        const b = await make(kind);
+        const first = new Date(T0.getTime() - 9000).toISOString();
+        const { post } = await start();
+        await post(b._id, { user: patient(), body: { clientShownAt: first } });
+        await post(b._id, { user: patient(), body: { clientShownAt: new Date(T0.getTime() - 1000).toISOString() } });
+        assert.equal((await stored(kind, b._id)).transcriptNotice.patient.clientShownAt.toISOString(), first);
       });
 
       test("a real browser's version first, a wrong one later: the first record stays (first write wins), flag included", async () => {

@@ -22,6 +22,8 @@ const TRANSCRIPT_NOTICE_VERSION = "v1";
 const KNOWN_NOTICE_VERSIONS = new Set(["v1"]);
 const MAX_RAW_VERSION_LENGTH = 50;
 const MAX_IP_LENGTH = 64;
+const CLIENT_TIME_FUTURE_SLACK_MS = 5 * 60 * 1000;
+const CLIENT_TIME_MAX_AGE_MS = 48 * 60 * 60 * 1000;
 const ROLE_KEY = { user: "patient", doctor: "doctor" };
 
 const noticeEntrySchema = () =>
@@ -35,6 +37,10 @@ const noticeEntrySchema = () =>
       userAgent: { type: String, default: "" },
       // from the request (trusted-proxy aware, like Consent.ipAddress); never from the body
       ip: { type: String, default: "", maxlength: MAX_IP_LENGTH },
+      // UNTRUSTED and INFORMATIONAL ONLY: the time the browser says it displayed the notice (its own clock, possibly after retries).
+      // It explains a delay between the notice appearing and the server hearing about it. It is never used for any decision and never
+      // replaces shownAt. null when the browser sent nothing usable.
+      clientShownAt: { type: Date, default: null },
     },
     { _id: false }
   );
@@ -81,6 +87,19 @@ function resolveNoticeVersion(value) {
   return { version: sanitizeRawVersion(value), versionUnrecognized: true };
 }
 
+// The browser's own claim of when it showed the notice. Kept only if it is a real date, not from the future (a few minutes of clock
+// difference allowed) and not older than two days; anything else becomes null. Never throws, never refuses the notice.
+function sanitizeClientTime(value, now = new Date()) {
+  let ms = null;
+  if (value instanceof Date) ms = value.getTime();
+  else if (typeof value === "number") ms = value;
+  else if (typeof value === "string" && value.trim() !== "" && value.length <= 40) ms = Date.parse(value.trim());
+  if (typeof ms !== "number" || !Number.isFinite(ms)) return null;
+  const t = now.getTime();
+  if (ms > t + CLIENT_TIME_FUTURE_SLACK_MS || ms < t - CLIENT_TIME_MAX_AGE_MS) return null;
+  return new Date(ms);
+}
+
 function noticeRoleKey(role) {
   return ROLE_KEY[role] || null;
 }
@@ -98,7 +117,7 @@ function modelFor(kind) {
 
 // Records that `userId` (acting as `role`) was shown the notice. Returns { recorded, entry, bothShown }:
 // recorded is false when this person's notice was already on file (the original entry is returned, untouched).
-async function recordNoticeShown({ kind, appointmentId, userId, role, version, userAgent, ip, now = new Date() }) {
+async function recordNoticeShown({ kind, appointmentId, userId, role, version, userAgent, ip, clientShownAt, now = new Date() }) {
   const key = noticeRoleKey(role);
   if (!key) throw new Error("recordNoticeShown: role must be user or doctor");
   const Model = modelFor(kind);
@@ -111,6 +130,7 @@ async function recordNoticeShown({ kind, appointmentId, userId, role, version, u
     versionUnrecognized: resolved.versionUnrecognized,
     userAgent: String(userAgent || "").slice(0, 300),
     ip: String(ip || "").slice(0, MAX_IP_LENGTH),
+    clientShownAt: sanitizeClientTime(clientShownAt, now),
   };
 
   // One atomic step: only writes when this person has no entry yet, so two tabs or a quick double call cannot both "win".
@@ -135,6 +155,7 @@ module.exports = {
   transcriptNoticeFields,
   resolveNoticeVersion,
   sanitizeRawVersion,
+  sanitizeClientTime,
   noticeRoleKey,
   bothNoticesShown,
   recordNoticeShown,

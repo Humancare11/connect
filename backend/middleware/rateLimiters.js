@@ -214,6 +214,26 @@ const transcriptNoticeLimiter = buildUserLimiter({
   message:  "Too many requests. Please wait {min} minutes and try again.",
 });
 
+// Live transcript lines: POST /api/appointments/:id/transcript. A browser sends a small batch every few seconds while its owner talks
+// (plus a final flush and retries), so 600 per 10 minutes per signed-in person is well above real use and still bounds a script. Per user.
+const transcriptWriteStore = new Map();
+const transcriptWriteLimiter = buildUserLimiter({
+  store:    transcriptWriteStore,
+  windowMs: 10 * 60 * 1000,
+  max:      600,
+  message:  "Too many transcript uploads. Please wait {min} minutes and try again.",
+});
+
+// Reading or deleting a transcript (GET / DELETE /api/appointments/:id/transcript): a person opens a transcript a few times, never
+// hundreds. Every one of these is also written to the audit log. Per user.
+const transcriptReadStore = new Map();
+const transcriptReadLimiter = buildUserLimiter({
+  store:    transcriptReadStore,
+  windowMs: 10 * 60 * 1000,
+  max:      120,
+  message:  "Too many transcript requests. Please wait {min} minutes and try again.",
+});
+
 // The public Direct Video Room endpoints (GET /:roomId/status and
 // /:roomId/ice-servers) carry no login or email, so they're keyed by
 // IP + roomId — different rooms behind one office NAT don't share a bucket.
@@ -370,4 +390,6 @@ module.exports = {
   mailboxCheckLimiter,
   speechTokenLimiter,
   transcriptNoticeLimiter,
+  transcriptWriteLimiter,
+  transcriptReadLimiter,
 };

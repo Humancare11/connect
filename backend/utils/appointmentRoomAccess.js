@@ -27,40 +27,52 @@ function deniedMessage(reason, role) {
   return role === "doctor" ? NOT_CONFIRMED_DOCTOR_MESSAGE : NOT_CONFIRMED_MESSAGE;
 }
 
-// `identity` is { userId, role } as resolved from the socket.
-async function decideAppointmentAccess(identity, appointmentId) {
+// The booking behind an id and whether `identity` ({ userId, role }) is its own patient or doctor, with NO rule about the booking's
+// status. Shared by the call-room check below and by the live transcript, which must accept a participant's last lines after the call
+// has ended. Throws on a malformed id or a database error (decideAppointmentAccess turns those into a reason).
+async function lookupParticipantBooking(identity, appointmentId) {
   const userId = String(identity.userId);
   let appointment = null;
   let allowed = false;
   // Which kind of booking the id is, for the call report.
   let kind = "appointment";
 
-  try {
-    appointment = await Appointment.findById(appointmentId)
-      .select("patientId doctorId status")
+  appointment = await Appointment.findById(appointmentId)
+    .select("patientId doctorId status")
+    .lean();
+
+  if (appointment) {
+    allowed =
+      (identity.role === "user" && String(appointment.patientId) === userId) ||
+      (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
+  } else {
+    const cc = await CategoryConsultation.findById(appointmentId)
+      .select("patientId assignedDoctorId status")
       .lean();
 
-    if (appointment) {
-      allowed =
-        (identity.role === "user" && String(appointment.patientId) === userId) ||
-        (identity.role === "doctor" && appointment.doctorId && String(appointment.doctorId) === userId);
-    } else {
-      const cc = await CategoryConsultation.findById(appointmentId)
-        .select("patientId assignedDoctorId status")
-        .lean();
+    if (cc) {
+      appointment = cc;
+      kind = "category_consultation";
 
-      if (cc) {
-        appointment = cc;
-        kind = "category_consultation";
-
-        if (identity.role === "user") {
-          allowed = String(cc.patientId) === userId;
-        } else if (identity.role === "doctor" && cc.assignedDoctorId) {
-          const enrollment = await Enrollment.findOne({ doctorId: identity.userId }).select("_id").lean();
-          allowed = !!enrollment && String(cc.assignedDoctorId) === String(enrollment._id);
-        }
+      if (identity.role === "user") {
+        allowed = String(cc.patientId) === userId;
+      } else if (identity.role === "doctor" && cc.assignedDoctorId) {
+        const enrollment = await Enrollment.findOne({ doctorId: identity.userId }).select("_id").lean();
+        allowed = !!enrollment && String(cc.assignedDoctorId) === String(enrollment._id);
       }
     }
+  }
+
+  return { appointment, allowed, kind };
+}
+
+// `identity` is { userId, role } as resolved from the socket.
+async function decideAppointmentAccess(identity, appointmentId) {
+  let appointment;
+  let allowed;
+  let kind;
+  try {
+    ({ appointment, allowed, kind } = await lookupParticipantBooking(identity, appointmentId));
   } catch (err) {
     // Only a malformed id is permanent; a DB error must not read as "invalid".
     const reason = classifyAppointmentLookupError(err);
@@ -85,6 +97,7 @@ async function decideAppointmentAccess(identity, appointmentId) {
 
 module.exports = {
   TERMINAL_APPOINTMENT_STATUSES,
+  lookupParticipantBooking,
   decideAppointmentAccess,
   deniedMessage,
 };
