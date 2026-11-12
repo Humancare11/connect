@@ -5,6 +5,12 @@ import "./videocall.css";
 import HumancareLogo from "../assets/VideoCallingImage.png";
 import api, { getUserAuthToken } from "../api";
 import CallMoreMenu from "../components/CallMoreMenu";
+import { useTranscription } from "../features/translation/useTranscription";
+import { loadTranscriptionConfig } from "../features/translation/featureFlag";
+import { LanguageButton, TranscriptButton } from "../features/translation/ControlButtons";
+import LanguagePanel from "../features/translation/LanguagePanel";
+import TranscriptPanel from "../features/translation/TranscriptPanel";
+import TranscriptionOverlay from "../features/translation/TranscriptionOverlay";
 import useMobileCallControls from "../hooks/useMobileCallControls";
 import { useAuth } from "../context/AuthContext";
 import { useDoctorAuth } from "../context/DoctorAuthContext";
@@ -1175,6 +1181,49 @@ export default function VideoCall() {
   const [peerJoined, setPeerJoined] = useState(false);
   const [inCall, setInCall] = useState(false);
   const mobileControls = useMobileCallControls();
+
+  // ── Live transcript / translation ────────────────────────────────
+  // Everything for this feature is behind two flags (build + server). With either off, trConfig stays null, no request is made,
+  // useTranscription returns a fixed "off" state with no-op actions, and none of the transcript UI below renders.
+  const [trConfig, setTrConfig] = useState(null);
+  const [trPanel, setTrPanel] = useState(null); // "language" | "transcript" | null
+  const trAuthRole = isDoctor ? "doctor" : "user";
+  const trHttp = useMemo(
+    () => ({
+      get: (url, options) => api.get(url, { ...options, authRole: trAuthRole }),
+      post: (url, body, options) => api.post(url, body, { ...options, authRole: trAuthRole }),
+    }),
+    [trAuthRole],
+  );
+  useEffect(() => {
+    if (!appt) return undefined;
+    let cancelled = false;
+    loadTranscriptionConfig({ http: trHttp }).then((c) => {
+      if (!cancelled) setTrConfig(c.active ? c : null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [appt, trHttp]);
+  const tr = useTranscription({
+    active: Boolean(trConfig),
+    role: isDoctor ? "doctor" : "patient",
+    appointmentId,
+    config: trConfig,
+    http: trHttp,
+    socket,
+    getLocalStream: () => localStreamRef.current,
+    getRemoteElements: () => [remoteAudioRef.current].filter(Boolean),
+  });
+  // Read by the socket handlers and the track-swap code below, which live in older callbacks.
+  const trActionsRef = useRef(tr.actions);
+  useEffect(() => {
+    trActionsRef.current = tr.actions;
+  }, [tr.actions]);
+  // Start once the call is connected (the engine ignores a second start); the hook stops it when this screen goes away.
+  useEffect(() => {
+    if (tr.active && inCall) trActionsRef.current.start();
+  }, [tr.active, inCall]);
   const [isRemoteConnected, setIsRemoteConnected] = useState(false);
   const [connectionState, setConnectionState] = useState("idle");
   const [callDuration, setCallDuration] = useState(0);
@@ -2049,6 +2098,7 @@ export default function VideoCall() {
 
       localStreamRef.current = stream;
       if (pipVideoRef.current) pipVideoRef.current.srcObject = stream;
+      trActionsRef.current.swapMicStream(stream);
 
       ensureMediaTransceivers(pc, {
         audio: stream.getAudioTracks().length === 0,
@@ -3955,6 +4005,7 @@ export default function VideoCall() {
     };
 
     const handlePeerJoined = (payload = {}) => {
+      trActionsRef.current.onPeerJoined();
       // peer-joined is only echoed to a socket the server let into the room.
       joinDenyAttemptRef.current = 0;
       setJoinRetryPhase(null);
@@ -4410,6 +4461,7 @@ export default function VideoCall() {
     // join to "connect" and only does its own follow-up below.
     const handleSocketReconnect = () => {
       if (!mounted) return;
+      trActionsRef.current.onSocketReconnected();
       logVideoEvent("socket_reconnected_during_call", {
         inCall: inCallRef.current,
         role: isDoctor ? "doctor" : "user",
@@ -4946,6 +4998,10 @@ export default function VideoCall() {
     );
     return () => clearInterval(heartbeat);
   }, [inCall, isDoctor, performCleanup]);
+
+  useEffect(() => {
+    trActionsRef.current.setMuted(isMuted);
+  }, [isMuted, tr.active]);
 
   // ── Controls ──────────────────────────────────────────────────────
   const toggleMute = useCallback(() => {
@@ -5843,6 +5899,17 @@ export default function VideoCall() {
     </button>
   );
 
+  const transcriptBtns = tr.active ? (
+    <>
+      <LanguageButton
+        language={tr.state.readLang}
+        open={trPanel === "language"}
+        onClick={() => setTrPanel((p) => (p === "language" ? null : "language"))}
+      />
+      <TranscriptButton open={trPanel === "transcript"} onClick={() => setTrPanel((p) => (p === "transcript" ? null : "transcript"))} />
+    </>
+  ) : null;
+
   const notesBtn = isDoctor ? (
     <button
       className={`hc-vc__btn ${notesOpen ? "hc-vc__btn--notes-on" : ""}`}
@@ -6084,7 +6151,7 @@ export default function VideoCall() {
 
       {/* Main stage + chat */}
       <div
-        className={`hc-vc__body ${chatOpen || notesOpen ? "hc-vc__body--chat" : ""}`}
+        className={`hc-vc__body ${chatOpen || notesOpen || (tr.active && trPanel) ? "hc-vc__body--chat" : ""}`}
       >
         {/* Stage */}
         <div className="hc-vc__stage">
@@ -6338,6 +6405,15 @@ export default function VideoCall() {
             }}
           />
 
+          {tr.active && (
+            <TranscriptionOverlay
+              state={tr.state}
+              actions={tr.actions}
+              role={isDoctor ? "doctor" : "patient"}
+              ownLanguageCode={String((typeof navigator !== "undefined" && navigator.language) || "en").split("-")[0].toLowerCase()}
+            />
+          )}
+
           {/* Peer joined toast */}
           {peerJoined && !isRemoteConnected && (
             <div className="hc-vc__join-toast">
@@ -6346,6 +6422,11 @@ export default function VideoCall() {
             </div>
           )}
         </div>
+
+        {tr.active && trPanel === "language" && (
+          <LanguagePanel open onClose={() => setTrPanel(null)} state={tr.state} actions={tr.actions} />
+        )}
+        {tr.active && trPanel === "transcript" && <TranscriptPanel open onClose={() => setTrPanel(null)} state={tr.state} />}
 
         {/* ── Chat panel ───────────────────────────────────────── */}
         {chatOpen && (
@@ -6562,6 +6643,8 @@ export default function VideoCall() {
 
           {!mobileControls && hideBtn}
 
+          {!mobileControls && transcriptBtns}
+
           <button
             className={`hc-vc__btn ${chatOpen ? "hc-vc__btn--chat-on" : ""}`}
             onClick={toggleChat}
@@ -6599,6 +6682,7 @@ export default function VideoCall() {
               {fullBtn}
               {hideBtn}
               {notesBtn}
+              {transcriptBtns}
             </CallMoreMenu>
           )}
         </div>
