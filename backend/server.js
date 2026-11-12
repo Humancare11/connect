@@ -622,6 +622,9 @@ app.use("/api/superadmin/email/settings", require("./routes/superadminEmailSetti
 // Registered first: the doctor's Visit Note signature has its own guard and multipart parser.
 app.use("/api/doctor/signature", require("./routes/doctorSignature"));
 app.use("/api/doctor", require("./routes/doctorAuth"));
+// Live transcript routes of one appointment (feature flag TRANSCRIPTION_ENABLED, default off). Mounted before the general appointments
+// router; it only answers its own sub-paths and passes everything else on.
+app.use("/api/appointments/:id", require("./routes/appointmentTranscript"));
 app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/call-reports", require("./routes/callReports"));
 app.use("/api/upload", require("./routes/upload"));

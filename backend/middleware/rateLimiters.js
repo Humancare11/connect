@@ -204,6 +204,16 @@ const speechTokenLimiter = buildUserLimiter({
   message:  "Too many speech-token requests. Please wait {min} minutes and try again.",
 });
 
+// Live transcript: POST /api/appointments/:id/transcript-notice. A person posts it once when the notice is shown, again only after a
+// reload or reconnect, so 30 per 10 minutes per signed-in person is far above real use. Per user.
+const transcriptNoticeStore = new Map();
+const transcriptNoticeLimiter = buildUserLimiter({
+  store:    transcriptNoticeStore,
+  windowMs: 10 * 60 * 1000,
+  max:      30,
+  message:  "Too many requests. Please wait {min} minutes and try again.",
+});
+
 // The public Direct Video Room endpoints (GET /:roomId/status and
 // /:roomId/ice-servers) carry no login or email, so they're keyed by
 // IP + roomId — different rooms behind one office NAT don't share a bucket.
@@ -359,4 +369,5 @@ module.exports = {
   emailSendLimiter,
   mailboxCheckLimiter,
   speechTokenLimiter,
+  transcriptNoticeLimiter,
 };

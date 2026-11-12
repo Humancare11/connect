@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const { bookingAdminFields } = require("../utils/bookingAdminFields");
 const { bookingEntryFields } = require("../utils/bookingEntry");
 const { bookingSourceFields, protectBookingSource } = require("../utils/bookingSource");
+const { transcriptNoticeFields } = require("../utils/speech/transcriptNotice");
 
 const appointmentSchema = new mongoose.Schema(
   {
@@ -71,6 +72,8 @@ const appointmentSchema = new mongoose.Schema(
     ...bookingEntryFields(),
     // Booking source: platform, app version and the page the booking started from (see utils/bookingSource.js).
     ...bookingSourceFields(),
+    // "This call is being transcribed" notice: who saw it and when (see utils/speech/transcriptNotice.js). Hidden unless asked for.
+    ...transcriptNoticeFields(),
     sessionStarted: { type: Boolean, default: false },
     // Admin reschedules (see utils/appointmentReschedule.js). The full trail is in AppointmentRescheduleHistory.
     rescheduleCount: { type: Number, default: 0 },
