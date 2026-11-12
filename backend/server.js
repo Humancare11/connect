@@ -625,6 +625,8 @@ app.use("/api/doctor", require("./routes/doctorAuth"));
 // Live transcript routes of one appointment (feature flag TRANSCRIPTION_ENABLED, default off). Mounted before the general appointments
 // router; it only answers its own sub-paths and passes everything else on.
 app.use("/api/appointments/:id", require("./routes/appointmentTranscript"));
+// What the call screen needs to know about the live transcript feature (flag on/off, notice or consent mode). Signed-in users only.
+app.use("/api/transcription/config", require("./routes/transcriptionConfig"));
 app.use("/api/appointments", require("./routes/appointments"));
 app.use("/api/call-reports", require("./routes/callReports"));
 app.use("/api/upload", require("./routes/upload"));

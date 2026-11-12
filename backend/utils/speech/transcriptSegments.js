@@ -145,6 +145,7 @@ function serializeSegment(row) {
     receivedAt: row.receivedAt,
     noticePending: Boolean(row.noticePending),
     lateUpload: Boolean(row.lateUpload),
+    captureMode: row.captureMode || "notice",
   };
   if (row.kind === "gap") return { ...base, reason: row.gapReason, from: row.gapFrom, to: row.gapTo };
 

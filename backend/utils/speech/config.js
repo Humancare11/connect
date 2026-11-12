@@ -8,6 +8,11 @@
 //   TRANSCRIPT_LOW_BELOW                  below this (and not unclear) it is marked "low" (default 0.7). Tuned in the step 10 calibration.
 //   TRANSCRIPT_LATE_UPLOAD_MINUTES        a transcript row that reaches the server more than this long after the appointment was completed or
 //                                         cancelled is still saved, but marked lateUpload (default 30).
+//   TRANSCRIPT_MODE                       "notice" (default) = people are told the call is transcribed. "consent" = reserved for a later
+//                                         consent screen: today it only labels the data (the mode in force is stored on every notice and
+//                                         every saved row) and is shown to the app by GET /api/transcription/config; it blocks nothing.
+//                                         Anything that is not exactly "notice" or "consent" is treated as "notice" (what the system
+//                                         really does today), with a one-time warning.
 //   SPEECH_TOKEN_MAX_PER_APPOINTMENT      most tokens one person can fetch for one appointment (default 40, about 6 hours of
 //                                         call with a refresh every 9 minutes). A bound on cost if a call is left open.
 
@@ -17,6 +22,8 @@ const DEFAULT_UNCLEAR_BELOW = 0.4;
 const DEFAULT_LOW_BELOW = 0.7;
 const DEFAULT_LATE_UPLOAD_MINUTES = 30;
 const MAX_LATE_UPLOAD_MINUTES = 60 * 24 * 30;
+const TRANSCRIPT_MODES = ["notice", "consent"];
+let warnedBadMode = false;
 
 function isTranscriptionEnabled(env = process.env) {
   return String(env.TRANSCRIPTION_ENABLED || "").trim().toLowerCase() === "true";
@@ -60,6 +67,19 @@ function getLateUploadMinutes(env = process.env) {
   return n >= 1 && n <= MAX_LATE_UPLOAD_MINUTES ? n : DEFAULT_LATE_UPLOAD_MINUTES;
 }
 
+// "notice" or "consent". Unset or empty = notice. A value that is neither is treated as notice (it never claims consent that is not
+// there) and reported once in the log (the value is a setting, not a secret).
+function getTranscriptMode(env = process.env) {
+  const raw = String(env.TRANSCRIPT_MODE ?? "").trim().toLowerCase();
+  if (raw === "") return "notice";
+  if (TRANSCRIPT_MODES.includes(raw)) return raw;
+  if (!warnedBadMode) {
+    warnedBadMode = true;
+    console.warn(`[transcription] TRANSCRIPT_MODE="${String(env.TRANSCRIPT_MODE).slice(0, 30)}" is not "notice" or "consent"; using "notice".`);
+  }
+  return "notice";
+}
+
 module.exports = {
   DEFAULT_REGION,
   DEFAULT_MAX_PER_APPOINTMENT,
@@ -69,4 +89,6 @@ module.exports = {
   getMaxTokensPerAppointment,
   getConfidenceThresholds,
   getLateUploadMinutes,
+  TRANSCRIPT_MODES,
+  getTranscriptMode,
 };

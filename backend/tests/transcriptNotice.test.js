@@ -255,10 +255,10 @@ describe("transcript notice record", () => {
         const { post } = await start();
         const p = await post(b._id, { user: patient(), ua: "Mozilla/5.0 (iPhone)" });
         assert.equal(p.status, 200);
-        assert.deepEqual(p.body, { recorded: true, role: "patient", shownAt: T0.toISOString(), version: "v1", versionUnrecognized: false, bothShown: false });
+        assert.deepEqual(p.body, { recorded: true, role: "patient", shownAt: T0.toISOString(), version: "v1", versionUnrecognized: false, mode: "notice", consent: "", bothShown: false });
         assert.equal(p.headers.get("cache-control"), "no-store");
         const d = await post(b._id, { user: doctor() });
-        assert.deepEqual(d.body, { recorded: true, role: "doctor", shownAt: T0.toISOString(), version: "v1", versionUnrecognized: false, bothShown: true });
+        assert.deepEqual(d.body, { recorded: true, role: "doctor", shownAt: T0.toISOString(), version: "v1", versionUnrecognized: false, mode: "notice", consent: "", bothShown: true });
         const doc = await stored(kind, b._id);
         assert.equal(doc.transcriptNotice.patient.userAgent, "Mozilla/5.0 (iPhone)");
         assert.equal(String(doc.transcriptNotice.doctor.userId), String(doctorId));
@@ -274,7 +274,7 @@ describe("transcript notice record", () => {
         assert.equal(again.status, 200);
         assert.equal(again.body.recorded, false);
         assert.equal(again.body.shownAt, T0.toISOString());
-        assert.deepEqual(Object.keys(again.body).sort(), ["bothShown", "recorded", "role", "shownAt", "version", "versionUnrecognized"]);
+        assert.deepEqual(Object.keys(again.body).sort(), ["bothShown", "consent", "mode", "recorded", "role", "shownAt", "version", "versionUnrecognized"]);
         assert.equal(JSON.stringify(again.body).includes("127.0.0.1"), false, "the IP is never sent back");
       });
 

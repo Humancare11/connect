@@ -44,6 +44,8 @@ const transcriptSegmentSchema = new mongoose.Schema(
     // true when the row reached the server more than TRANSCRIPT_LATE_UPLOAD_MINUTES (default 30) after the appointment was completed or
     // cancelled. The row is saved anyway (never rejected); the doctor / admin view shows the mark. A fact about the moment of saving.
     lateUpload: { type: Boolean, default: false },
+    // The mode in force when the row was saved (TRANSCRIPT_MODE), set by the server. A label for the proof; it blocks nothing.
+    captureMode: { type: String, enum: ["notice", "consent"], default: "notice" },
 
     // ---- line ----
     sourceLang: { type: String, default: "", maxlength: 20 },

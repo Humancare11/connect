@@ -41,6 +41,10 @@ const noticeEntrySchema = () =>
       // It explains a delay between the notice appearing and the server hearing about it. It is never used for any decision and never
       // replaces shownAt. null when the browser sent nothing usable.
       clientShownAt: { type: Date, default: null },
+      // The mode in force when this was recorded (TRANSCRIPT_MODE), set by the server. "notice" today.
+      mode: { type: String, enum: ["notice", "consent"], default: "notice" },
+      // Only meaningful in "consent" mode (a later consent screen): what the person chose. Always "" in notice mode.
+      consent: { type: String, enum: ["", "accepted", "declined"], default: "" },
     },
     { _id: false }
   );
@@ -117,7 +121,7 @@ function modelFor(kind) {
 
 // Records that `userId` (acting as `role`) was shown the notice. Returns { recorded, entry, bothShown }:
 // recorded is false when this person's notice was already on file (the original entry is returned, untouched).
-async function recordNoticeShown({ kind, appointmentId, userId, role, version, userAgent, ip, clientShownAt, now = new Date() }) {
+async function recordNoticeShown({ kind, appointmentId, userId, role, version, userAgent, ip, clientShownAt, mode = "notice", consent, now = new Date() }) {
   const key = noticeRoleKey(role);
   if (!key) throw new Error("recordNoticeShown: role must be user or doctor");
   const Model = modelFor(kind);
@@ -131,6 +135,9 @@ async function recordNoticeShown({ kind, appointmentId, userId, role, version, u
     userAgent: String(userAgent || "").slice(0, 300),
     ip: String(ip || "").slice(0, MAX_IP_LENGTH),
     clientShownAt: sanitizeClientTime(clientShownAt, now),
+    mode: mode === "consent" ? "consent" : "notice",
+    // the browser's choice only counts in consent mode, and only if it is one of the two real answers
+    consent: mode === "consent" && (consent === "accepted" || consent === "declined") ? consent : "",
   };
 
   // One atomic step: only writes when this person has no entry yet, so two tabs or a quick double call cannot both "win".

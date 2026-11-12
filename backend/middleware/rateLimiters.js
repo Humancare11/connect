@@ -234,6 +234,16 @@ const transcriptReadLimiter = buildUserLimiter({
   message:  "Too many transcript requests. Please wait {min} minutes and try again.",
 });
 
+// Live transcript settings: GET /api/transcription/config. The call screen asks once when it opens, so 60 per 10 minutes per signed-in
+// person is far above real use. Per user.
+const transcriptionConfigStore = new Map();
+const transcriptionConfigLimiter = buildUserLimiter({
+  store:    transcriptionConfigStore,
+  windowMs: 10 * 60 * 1000,
+  max:      60,
+  message:  "Too many requests. Please wait {min} minutes and try again.",
+});
+
 // The public Direct Video Room endpoints (GET /:roomId/status and
 // /:roomId/ice-servers) carry no login or email, so they're keyed by
 // IP + roomId — different rooms behind one office NAT don't share a bucket.
@@ -392,4 +402,5 @@ module.exports = {
   transcriptNoticeLimiter,
   transcriptWriteLimiter,
   transcriptReadLimiter,
+  transcriptionConfigLimiter,
 };

@@ -5,7 +5,7 @@ const { transcriptNoticeLimiter, transcriptWriteLimiter, transcriptReadLimiter }
 const { decideAppointmentAccess, lookupParticipantBooking } = require("../utils/appointmentRoomAccess");
 const { classifyAppointmentLookupError } = require("../utils/roomDenyReason");
 const { recordSecurityEvent } = require("../utils/securityMonitor");
-const { isTranscriptionEnabled, getConfidenceThresholds, getLateUploadMinutes } = require("../utils/speech/config");
+const { isTranscriptionEnabled, getConfidenceThresholds, getLateUploadMinutes, getTranscriptMode } = require("../utils/speech/config");
 const { getClientIp } = require("../utils/clientIp");
 const { noticeRoleKey, recordNoticeShown, bothNoticesShown } = require("../utils/speech/transcriptNotice");
 const { MAX_BATCH, prepareBatch, serializeSegment, isLateUpload } = require("../utils/speech/transcriptSegments");
@@ -26,7 +26,8 @@ const TranscriptAccessLog = require("../models/TranscriptAccessLog");
 //     the time and the IP all come from the server. The record is NEVER refused because of the version (see transcriptNotice.js).
 //     Also optional: { clientShownAt } = when the browser says it showed the notice. Stored as the separate, UNTRUSTED, informational
 //     field clientShownAt (never used for any decision; dropped if it is not a sensible time).
-//     Answers { recorded, role, shownAt, version, versionUnrecognized, bothShown }. Repeating the call is safe: the first time stays
+//     Also optional: { consent: "accepted" | "declined" }, kept only when TRANSCRIPT_MODE is "consent" (a later consent screen).
+//     Answers { recorded, role, shownAt, version, versionUnrecognized, mode, consent, bothShown }. Repeating the call is safe: the first time stays
 //     on file (recorded: false).
 //
 //   POST /transcript            (the patient or doctor of the booking: their own browser sends their own speech)
@@ -79,6 +80,7 @@ function createAppointmentTranscriptRouter({
   record = recordNoticeShown,
   thresholds = getConfidenceThresholds,
   lateUploadMinutes = getLateUploadMinutes,
+  mode = getTranscriptMode,
   now = () => new Date(),
 } = {}) {
   const router = express.Router({ mergeParams: true });
@@ -127,6 +129,8 @@ function createAppointmentTranscriptRouter({
         userAgent: req.get("user-agent"),
         ip: getClientIp(req),
         clientShownAt: req.body && req.body.clientShownAt,
+        mode: mode(),
+        consent: req.body && req.body.consent,
         now: now(),
       });
       return res.json({
@@ -135,6 +139,8 @@ function createAppointmentTranscriptRouter({
         shownAt: out.entry ? out.entry.shownAt : null,
         version: out.entry ? out.entry.version : null,
         versionUnrecognized: out.entry ? Boolean(out.entry.versionUnrecognized) : false,
+        mode: out.entry ? out.entry.mode || "notice" : "notice",
+        consent: out.entry ? out.entry.consent || "" : "",
         bothShown: out.bothShown,
       });
     } catch (err) {
@@ -192,6 +198,7 @@ function createAppointmentTranscriptRouter({
           receivedAt,
           noticePending,
           lateUpload,
+          captureMode: mode(),
         },
         thresholds()
       );
@@ -274,6 +281,8 @@ function createAppointmentTranscriptRouter({
               versionUnrecognized: Boolean(e.versionUnrecognized),
               // what the browser CLAIMED (its own clock): untrusted, informational, shown next to the server's shownAt
               clientShownAt: e.clientShownAt || null,
+              mode: e.mode || "notice",
+              consent: e.consent || "",
               // who and from where is for admins only
               ...(isAdmin ? { userId: String(e.userId), ip: e.ip || "", userAgent: e.userAgent || "" } : {}),
             }
