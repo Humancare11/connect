@@ -752,6 +752,10 @@ const videoSdpLimiter = makeSocketLimiter({ windowMs: 1000, max: 6 });
 const iceCandidateLimiter = makeSocketLimiter({ windowMs: 1000, max: 60 });
 const iceRestartLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
+// Live transcript (flag TRANSCRIPTION_ENABLED): a speaker's browser sends a partial caption about 4 times a second plus the finals, so
+// 12 a second is well above real use; "which language I read" changes rarely (and is re-sent when the other person joins or reconnects).
+const captionLimiter = makeSocketLimiter({ windowMs: 1000, max: 12 });
+const langChangedLimiter = makeSocketLimiter({ windowMs: 5000, max: 8 });
 const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // call-stats: every 30s normally, every ~3s while an admin watches the report.
 const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
@@ -811,6 +815,8 @@ const SOCKET_LIMITERS = [
   iceCandidateLimiter,
   iceRestartLimiter,
   cameraStateLimiter,
+  captionLimiter,
+  langChangedLimiter,
   peerRebuildRequestLimiter,
   telemetryLimiter,
   directChatLimiter,
@@ -822,6 +828,20 @@ const SOCKET_LIMITERS = [
   directCallStatsLimiter,
   directPinVerifyLimiter,
 ];
+
+// Live captions and language changes between the two people of a call (see utils/speech/captionRelay.js). Off unless
+// TRANSCRIPTION_ENABLED=true; nothing in it logs a payload.
+const { createCaptionHandlers } = require("./utils/speech/captionRelay");
+const { isTranscriptionEnabled: isLiveTranscriptEnabled } = require("./utils/speech/config");
+const captionHandlers = createCaptionHandlers({
+  isEnabled: isLiveTranscriptEnabled,
+  isInRoom: (socket, appointmentId) => isSocketInAppointmentRoom(socket, appointmentId),
+  getSenderRole: (socket) => socketUsers.get(socket.id)?.role || socket.userRole,
+  allowLang: (socketId) => langChangedLimiter.allow(socketId),
+  allowCaption: (socketId) => captionLimiter.allow(socketId),
+  relay: (socket, appointmentId, event, payload) => socket.to(appointmentRoomName(appointmentId)).emit(event, payload),
+  reject: rejectSignal,
+});
 
 app.get("/api/admin/active-users", verifyAdminToken, adminOnly, (req, res) => {
   res.json({ activeUsers: onlineUsers.size });
@@ -2484,6 +2504,11 @@ io.on("connection", (socket) => {
       .to(appointmentRoomName(appointmentId))
       .emit("camera-state", { appointmentId: String(appointmentId), isCamOff: Boolean(isCamOff) });
   });
+
+  // Live transcript: "which language I read" and live captions, relayed to the other person in the call room. Ignored unless
+  // TRANSCRIPTION_ENABLED=true. See utils/speech/captionRelay.js for every rule (and the promise that no payload is ever logged).
+  socket.on("lang-changed", (payload) => captionHandlers.onLangChanged(socket, payload));
+  socket.on("caption", (payload) => captionHandlers.onCaption(socket, payload));
 
   // Asks the other participant to tear down and rebuild its own
   // RTCPeerConnection. In an appointment call the patient is the sole offerer,
