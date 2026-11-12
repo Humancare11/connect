@@ -1,0 +1,395 @@
+/* Live transcript / translation UI. Same dark theme and button styles as the call screen (hc-vc__*); own prefix hc-tr__. */
+
+/* ---------- subtitles (over the video, above the control bar) ---------- */
+.hc-tr__subtitles {
+  position: absolute;
+  left: 50%;
+  bottom: 110px;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(780px, 92vw);
+  text-align: center;
+  pointer-events: none;
+  z-index: 40;
+}
+.hc-tr__subtitle {
+  margin: 0 auto;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-family: var(--font-primary);
+  font-size: clamp(16px, 2.4vw, 24px);
+  line-height: 1.35;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+/* the recognizer was not sure: shown, but lighter */
+.hc-tr__subtitle--lighter {
+  opacity: 0.72;
+  font-style: italic;
+  font-weight: 500;
+}
+.hc-tr__subtitle--partial {
+  opacity: 0.9;
+}
+.hc-tr__machine {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-primary);
+  font-size: 11px;
+  color: rgba(232, 244, 255, 0.7);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- always-visible badge, notice, banners ---------- */
+.hc-tr__top {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 45;
+  pointer-events: none;
+}
+.hc-tr__top > * {
+  pointer-events: auto;
+}
+.hc-tr__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(1, 22, 74, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e8f4ff;
+  font-family: var(--font-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+.hc-tr__badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+.hc-tr__notice,
+.hc-tr__hint,
+.hc-tr__banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: min(520px, 94vw);
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #0a1826;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e8f4ff;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.hc-tr__notice-text {
+  flex: 1;
+}
+.hc-tr__notice-text strong {
+  display: block;
+  font-size: 14px;
+}
+.hc-tr__notice-text span {
+  display: block;
+  margin-top: 2px;
+  color: #9db4c8;
+}
+.hc-tr__hint {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(99, 102, 241, 0.16);
+  align-items: center;
+}
+.hc-tr__banner {
+  border-color: rgba(250, 204, 21, 0.4);
+  background: rgba(250, 204, 21, 0.1);
+  color: #fde68a;
+}
+.hc-tr__reconnect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.14);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  color: #fde68a;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.hc-tr__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.hc-tr__small-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e8f4ff;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.hc-tr__small-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.hc-tr__small-btn--primary {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.6);
+  color: #fff;
+}
+
+/* ---------- the two side panels (LANGUAGE and TRANSCRIPT) ---------- */
+.hc-tr__panel {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: #0a1826;
+  border-left: 1px solid rgba(255, 255, 255, 0.07);
+  color: #e8f4ff;
+  font-family: var(--font-primary);
+  overflow: hidden;
+  min-height: 0;
+}
+.hc-tr__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+.hc-tr__panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.hc-tr__close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #7a9ab4;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.hc-tr__close:hover {
+  color: #e8f4ff;
+  background: rgba(255, 255, 255, 0.1);
+}
+.hc-tr__panel-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+.hc-tr__help {
+  margin: 0;
+  font-size: 12px;
+  color: #9db4c8;
+  line-height: 1.45;
+}
+.hc-tr__search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #01164a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e8f4ff;
+  font-family: var(--font-primary);
+  font-size: 14px;
+}
+.hc-tr__search::placeholder {
+  color: #5a7a96;
+}
+.hc-tr__search:focus {
+  outline: 2px solid rgba(99, 102, 241, 0.6);
+  outline-offset: 1px;
+}
+.hc-tr__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.hc-tr__option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: #cfe2f3;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+.hc-tr__option:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.hc-tr__option:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.7);
+  outline-offset: 1px;
+}
+.hc-tr__option--selected {
+  background: rgba(99, 102, 241, 0.16);
+  border-color: rgba(99, 102, 241, 0.45);
+  color: #a5b4fc;
+}
+.hc-tr__option--none {
+  font-weight: 600;
+}
+.hc-tr__option-native {
+  font-size: 12px;
+  color: #7a9ab4;
+}
+.hc-tr__option-note {
+  font-size: 11px;
+  color: #fbbf24;
+}
+.hc-tr__toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.hc-tr__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #cfe2f3;
+  cursor: pointer;
+}
+.hc-tr__toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #6366f1;
+}
+.hc-tr__toggle--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.hc-tr__voice-off {
+  font-size: 12px;
+  color: #fbbf24;
+}
+.hc-tr__foot {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  color: #9db4c8;
+  flex-shrink: 0;
+}
+
+/* ---------- the live transcript list ---------- */
+.hc-tr__lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hc-tr__line-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: #7a9ab4;
+}
+.hc-tr__line-who {
+  font-weight: 700;
+  color: #a5b4fc;
+}
+.hc-tr__line-who--me {
+  color: #19c9a3;
+}
+.hc-tr__line-text {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #e8f4ff;
+}
+.hc-tr__line-translation {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #9db4c8;
+}
+.hc-tr__line--lighter .hc-tr__line-text {
+  opacity: 0.7;
+  font-style: italic;
+}
+.hc-tr__empty {
+  margin: 0;
+  padding: 16px 4px;
+  font-size: 13px;
+  color: #7a9ab4;
+}
+
+/* ---------- small screens: the panels slide up from the bottom ---------- */
+@media (max-width: 720px) {
+  .hc-tr__panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-height: 78vh;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px 18px 0 0;
+    z-index: 70;
+    box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.5);
+  }
+  .hc-tr__subtitles {
+    bottom: 150px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hc-tr__panel {
+    animation: hc-tr-slide-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+@keyframes hc-tr-slide-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

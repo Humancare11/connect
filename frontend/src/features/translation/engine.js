@@ -52,6 +52,7 @@ export function createTranscriptionEngine({
     recognizerStatus: "idle",
     reconnecting: false, // true = show "Subtitles unavailable, reconnecting…"
     readLang: NONE,
+    subtitlesEnabled: true,
     voiceEnabled: true,
     voiceBreakerTripped: false,
     peerReadLang: NONE,
@@ -131,6 +132,7 @@ export function createTranscriptionEngine({
   }
 
   function showSubtitle(s) {
+    if (!state.subtitlesEnabled) return; // the person switched subtitles off (the transcript panel is unaffected)
     clearTimer(subtitleTimer);
     set({ subtitle: s });
     subtitleTimer = setTimer(() => { if (state.subtitle && state.subtitle.id === s.id) set({ subtitle: null }); }, SUBTITLE_HOLD_MS);
@@ -314,6 +316,12 @@ export function createTranscriptionEngine({
       if (lang === NONE) voiceQueue.clear();
       announcer.announce(lang);
       if (recognizer) recognizer.requestRestart(recognitionConfig()); // my own language changed: applied at the next pause
+    },
+
+    setSubtitlesEnabled(on) {
+      const value = Boolean(on);
+      clearTimer(subtitleTimer);
+      set({ subtitlesEnabled: value, subtitle: value ? state.subtitle : null });
     },
 
     setVoiceEnabled(on) {

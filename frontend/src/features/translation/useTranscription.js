@@ -11,6 +11,7 @@ export const OFF_STATE = Object.freeze({
   recognizerStatus: "idle",
   reconnecting: false,
   readLang: "none",
+  subtitlesEnabled: true,
   voiceEnabled: true,
   voiceBreakerTripped: false,
   peerReadLang: "none",
@@ -25,7 +26,7 @@ export const OFF_STATE = Object.freeze({
 
 const noop = () => {};
 export const OFF_ACTIONS = Object.freeze({
-  start: noop, stop: noop, unlockAudio: noop, setReadLanguage: noop, setVoiceEnabled: noop, setMuted: noop,
+  start: noop, stop: noop, unlockAudio: noop, setReadLanguage: noop, setSubtitlesEnabled: noop, setVoiceEnabled: noop, setMuted: noop,
   swapMicStream: noop, dismissHint: noop, onPeerJoined: noop, onSocketReconnected: noop,
 });
 
@@ -73,6 +74,7 @@ export function useTranscription(params) {
           stop: () => engine.stop(),
           unlockAudio: () => engine.unlockAudio(),
           setReadLanguage: (code) => engine.setReadLanguage(code),
+          setSubtitlesEnabled: (on) => engine.setSubtitlesEnabled(on),
           setVoiceEnabled: (on) => engine.setVoiceEnabled(on),
           setMuted: (on) => engine.setMuted(on),
           swapMicStream: (stream) => engine.swapMicStream(stream),

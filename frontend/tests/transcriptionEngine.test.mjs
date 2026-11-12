@@ -252,6 +252,23 @@ test("a language with no speech support: the pick works, the person's speech is 
   assert.equal(t.engine.getState().unsupportedSpeech, false);
 });
 
+test("Show subtitles off: no subtitle appears, the voice and the transcript panel carry on; back on, subtitles return", async () => {
+  const t = await running();
+  t.engine.setReadLanguage("de");
+  t.engine.setSubtitlesEnabled(false);
+  assert.equal(t.engine.getState().subtitlesEnabled, false);
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "s1", final: true, text: "Hello", srcLang: "en-US", conf: 0.9, tr: { de: "Hallo" }, at: 1 });
+  assert.equal(t.engine.getState().subtitle, null);
+  await settle(); await settle();
+  assert.equal(t.sdk.log.synths[0].requests.length, 1, "the voice still speaks");
+  assert.equal(t.engine.getState().transcript.filter((e) => e.who === "peer").length, 1, "and the transcript panel still lists it");
+  t.engine.setSubtitlesEnabled(true);
+  t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "s2", final: false, text: "Next", srcLang: "en-US", conf: null, tr: { de: "Nächster" }, at: 2 });
+  assert.equal(t.engine.getState().subtitle.text, "Nächster");
+  t.engine.setSubtitlesEnabled(false);
+  assert.equal(t.engine.getState().subtitle, null, "switching off removes the one on screen");
+});
+
 test("going back to Real voice clears the subtitle and the queued voice, and tells the other person", async () => {
   const t = await running();
   t.engine.setReadLanguage("de");
