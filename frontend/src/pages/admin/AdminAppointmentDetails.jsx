@@ -12,6 +12,8 @@ import RescheduleHistory from "./appointments/RescheduleHistory";
 import * as bookingApi from "./appointments/bookingApi";
 import { canReschedule } from "./appointments/bookingFormat";
 import "./AdminAppointments.css";
+import TranscriptViewer from "../../features/translation/TranscriptViewer";
+import { isTranscriptionBuildEnabled } from "../../features/translation/featureFlag";
 
 function getCountryName(isoCode) {
   if (!isoCode) return "";
@@ -289,6 +291,9 @@ export default function AdminAppointmentDetails() {
           >
             View call report
           </Link>
+          {isTranscriptionBuildEnabled() && (admin?.role === "admin" || admin?.role === "superadmin") && (
+            <TranscriptViewer appointmentId={appointment._id} http={api} canDelete />
+          )}
           {/* Assigning or changing the doctor happens in the Appointments list. */}
           {row && canReschedule(row) && (
             <button type="button" className="adp-alt-btn" onClick={() => actions.handlers.reschedule(row)}>

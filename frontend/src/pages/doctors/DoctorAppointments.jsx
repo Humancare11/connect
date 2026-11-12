@@ -6,6 +6,12 @@ import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
 import CertificateModal from "../../components/CertificateModal";
 import useModalA11y from "../../hooks/useModalA11y";
+import TranscriptViewer from "../../features/translation/TranscriptViewer";
+import { isTranscriptionBuildEnabled } from "../../features/translation/featureFlag";
+
+// The saved call transcript is read with the doctor's own login. Shown only when the build has the live transcript feature switched on.
+const TRANSCRIPT_HTTP = { get: (url, options) => api.get(url, { ...options, authRole: "doctor" }) };
+const SHOW_TRANSCRIPT = isTranscriptionBuildEnabled();
 
 const STATUS_META = {
   assigned: { label: "Assigned", icon: "A", color: "teal" },
@@ -443,6 +449,9 @@ export default function DoctorAppointments() {
                                   <FiAward aria-hidden="true" />
                                   Certificate
                                 </button>
+                            ),
+                            SHOW_TRANSCRIPT && ["confirmed", "complete", "completed"].includes(appt.status) && (
+                                <TranscriptViewer key="transcript" appointmentId={appt._id} http={TRANSCRIPT_HTTP} />
                             ),
                             ["complete", "completed"].includes(appt.status) && (
                                 <button

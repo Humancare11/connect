@@ -7,3 +7,4 @@ export * as buttons from "../../src/features/translation/ControlButtons.jsx";
 export * as language from "../../src/features/translation/LanguagePanel.jsx";
 export * as transcript from "../../src/features/translation/TranscriptPanel.jsx";
 export * as overlay from "../../src/features/translation/TranscriptionOverlay.jsx";
+export * as viewer from "../../src/features/translation/TranscriptViewer.jsx";
