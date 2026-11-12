@@ -653,6 +653,8 @@ app.use(
 app.use("/api/direct-video-room", require("./routes/directVideoRoom"));
 app.use("/api/notifications", require("./routes/notifications"));
 app.use("/api/rtc", require("./routes/rtc"));
+// Live transcript / translation (feature flag TRANSCRIPTION_ENABLED, default off: this answers 404 while it is off).
+app.use("/api/speech-token", require("./routes/speechToken"));
 const searchRouter = require("./routes/search");
 app.use("/api/search", searchRouter);
 app.use("/api/search", searchRouter.handleSearchErrors);

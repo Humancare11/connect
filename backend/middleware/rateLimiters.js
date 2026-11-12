@@ -194,6 +194,16 @@ const mailboxCheckLimiter = buildUserLimiter({
   message:  "Too many mailbox checks. Please wait a minute and try again.",
 });
 
+// Live transcript: GET /api/speech-token. A call refreshes its token about every 9 minutes, so 20 per 10 minutes per
+// signed-in person is far above real use (a few reconnects) and still bounds a script. Per user.
+const speechTokenStore = new Map();
+const speechTokenLimiter = buildUserLimiter({
+  store:    speechTokenStore,
+  windowMs: 10 * 60 * 1000,
+  max:      20,
+  message:  "Too many speech-token requests. Please wait {min} minutes and try again.",
+});
+
 // The public Direct Video Room endpoints (GET /:roomId/status and
 // /:roomId/ice-servers) carry no login or email, so they're keyed by
 // IP + roomId — different rooms behind one office NAT don't share a bucket.
@@ -348,4 +358,5 @@ module.exports = {
   searchAnalyticsAdminLimiter,
   emailSendLimiter,
   mailboxCheckLimiter,
+  speechTokenLimiter,
 };
