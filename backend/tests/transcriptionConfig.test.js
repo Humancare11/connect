@@ -79,15 +79,31 @@ describe("GET /api/transcription/config", () => {
     const get = await start({ enabled: false });
     const r = await get(someone());
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body, { enabled: false, mode: "notice", noticeVersion: "v1" });
+    assert.deepEqual(r.body, { enabled: false, mode: "notice", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 } });
     assert.equal(r.headers.get("cache-control"), "no-store");
   });
 
   test("flag on, and the mode: shown exactly", async () => {
     const on = await start({ enabled: true });
-    assert.deepEqual((await on(someone())).body, { enabled: true, mode: "notice", noticeVersion: "v1" });
+    assert.deepEqual((await on(someone())).body, { enabled: true, mode: "notice", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 } });
     const consent = await start({ enabled: true, mode: "consent" });
-    assert.deepEqual((await consent(someone("doctor"))).body, { enabled: true, mode: "consent", noticeVersion: "v1" });
+    assert.deepEqual((await consent(someone("doctor"))).body, { enabled: true, mode: "consent", noticeVersion: "v1", confidence: { unclearBelow: 0.4, lowBelow: 0.7 } });
+  });
+
+  test("the thresholds are the ones the server uses to tag saved lines, including a custom pair from the environment", async () => {
+    const saved = { u: process.env.TRANSCRIPT_UNCLEAR_BELOW, l: process.env.TRANSCRIPT_LOW_BELOW };
+    process.env.TRANSCRIPT_UNCLEAR_BELOW = "0.3";
+    process.env.TRANSCRIPT_LOW_BELOW = "0.6";
+    try {
+      const app = express();
+      app.use("/api/transcription/config", createTranscriptionConfigRouter({ auth: fakeAuth, limiter: (req, res, next) => next(), isEnabled: () => true }));
+      const server = await new Promise((resolve) => { const s = http.createServer(app).listen(0, "127.0.0.1", () => resolve(s)); });
+      servers.push(server);
+      const res = await fetch(`http://127.0.0.1:${server.address().port}/api/transcription/config`, { headers: { "x-test-user": JSON.stringify(someone()) } });
+      assert.deepEqual((await res.json()).confidence, { unclearBelow: 0.3, lowBelow: 0.6 });
+    } finally {
+      for (const [name, v] of [["TRANSCRIPT_UNCLEAR_BELOW", saved.u], ["TRANSCRIPT_LOW_BELOW", saved.l]]) if (v === undefined) delete process.env[name]; else process.env[name] = v;
+    }
   });
 
   test("every signed-in role may ask; nobody else", async () => {
@@ -96,13 +112,13 @@ describe("GET /api/transcription/config", () => {
     assert.equal((await get()).status, 401);
   });
 
-  test("the answer has exactly three fields and never carries the Azure key, a token or any other setting", async () => {
+  test("the answer has exactly four fields and never carries the Azure key, a token or any other setting", async () => {
     const saved = { k: process.env.AZURE_SPEECH_KEY, m: process.env.SPEECH_TOKEN_MAX_PER_APPOINTMENT };
     process.env.AZURE_SPEECH_KEY = KEY;
     process.env.SPEECH_TOKEN_MAX_PER_APPOINTMENT = "7";
     try {
       const r = await (await start({ enabled: true }))(someone());
-      assert.deepEqual(Object.keys(r.body).sort(), ["enabled", "mode", "noticeVersion"]);
+      assert.deepEqual(Object.keys(r.body).sort(), ["confidence", "enabled", "mode", "noticeVersion"]);
       assert.equal(JSON.stringify(r.body).includes(KEY), false);
     } finally {
       for (const [name, v] of [["AZURE_SPEECH_KEY", saved.k], ["SPEECH_TOKEN_MAX_PER_APPOINTMENT", saved.m]]) if (v === undefined) delete process.env[name]; else process.env[name] = v;

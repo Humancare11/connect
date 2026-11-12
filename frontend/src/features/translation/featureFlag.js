@@ -11,6 +11,8 @@
 // Pure functions with the HTTP client passed in, so they can be tested without a browser.
 
 export const CONFIG_PATH = "/api/transcription/config";
+import { DEFAULT_THRESHOLDS, normalizeThresholds } from "./confidence.js";
+
 const DEFAULT_NOTICE_VERSION = "v1";
 
 export const INACTIVE = Object.freeze({
@@ -19,6 +21,7 @@ export const INACTIVE = Object.freeze({
   serverEnabled: false,
   mode: "notice",
   noticeVersion: DEFAULT_NOTICE_VERSION,
+  thresholds: DEFAULT_THRESHOLDS,
 });
 
 // import.meta.env only exists inside Vite; tests pass their own env.
@@ -34,7 +37,7 @@ export function isTranscriptionBuildEnabled(env = defaultEnv()) {
   return String((env && env.VITE_TRANSCRIPTION_ENABLED) ?? "").trim().toLowerCase() === "true";
 }
 
-// Whatever the server said, reduced to the three things we use; garbage becomes the safe default.
+// Whatever the server said, reduced to the things we use; garbage becomes the safe default.
 export function normalizeServerConfig(data) {
   if (!data || typeof data !== "object" || Array.isArray(data)) return null;
   const noticeVersion =
@@ -43,6 +46,7 @@ export function normalizeServerConfig(data) {
     serverEnabled: data.enabled === true,
     mode: data.mode === "consent" ? "consent" : "notice",
     noticeVersion,
+    thresholds: normalizeThresholds(data.confidence),
   };
 }
 
