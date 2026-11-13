@@ -6,13 +6,35 @@ const crypto = require("crypto");
 // compromised chat key can't also decrypt clinical records.
 const KEY_VERSION = process.env.PHI_ENCRYPTION_KEY_VERSION || "v1";
 
+// The configured key as 32 bytes, or null when PHI_ENCRYPTION_KEY is missing or malformed.
+function configuredKey(env = process.env) {
+  const configured = env.PHI_ENCRYPTION_KEY;
+  if (!configured) return null;
+  const key = Buffer.from(configured, /^[A-Fa-f0-9]{64}$/.test(configured) ? "hex" : "base64");
+  return key.length === 32 ? key : null;
+}
+
+// The key used when PHI_ENCRYPTION_KEY is not usable: derived from JWT_SECRET. An environment that has been running on this
+// fallback keeps reading its old data by setting PHI_ENCRYPTION_KEY to exactly fallbackKey().toString("hex")
+// (npm run phi:fallback-key prints it on the server's own terminal).
+function fallbackKey(env = process.env) {
+  return crypto.createHash("sha256").update(`${env.JWT_SECRET || "dev-phi-key"}:phi`).digest();
+}
+
 function activeKey() {
-  const configured = process.env.PHI_ENCRYPTION_KEY;
-  if (configured) {
-    const key = Buffer.from(configured, /^[A-Fa-f0-9]{64}$/.test(configured) ? "hex" : "base64");
-    if (key.length === 32) return key;
-  }
-  return crypto.createHash("sha256").update(`${process.env.JWT_SECRET || "dev-phi-key"}:phi`).digest();
+  return configuredKey() || fallbackKey();
+}
+
+// First 8 hex characters of the SHA-256 of a key: enough to compare two environments, useless for recovering the key.
+function keyFingerprint(key) {
+  return crypto.createHash("sha256").update(key).digest("hex").slice(0, 8);
+}
+
+// Which key is in use, WITHOUT revealing it. source: "configured" | "invalid" (set but not a valid 32-byte key) | "fallback" (not set).
+function phiKeyStatus(env = process.env) {
+  const key = configuredKey(env);
+  const source = key ? "configured" : env.PHI_ENCRYPTION_KEY ? "invalid" : "fallback";
+  return { source, fingerprint: keyFingerprint(key || fallbackKey(env)) };
 }
 
 // Encrypts an arbitrary JSON-serializable value (the caller decides which
@@ -47,4 +69,4 @@ function decryptPHI(record) {
   return JSON.parse(json);
 }
 
-module.exports = { encryptPHI, decryptPHI };
+module.exports = { encryptPHI, decryptPHI, fallbackKey, keyFingerprint, phiKeyStatus };

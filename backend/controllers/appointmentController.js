@@ -44,7 +44,14 @@ async function withPresignedMedicalReportUrls(appointment) {
     reports.map(async (report) => {
       const key = keyFromStoredValue(report?.key || report?.url);
       if (!key) return report;
-      const signed = await createS3PresignedGetUrl(key);
+      let signed;
+      try {
+        signed = await createS3PresignedGetUrl(key);
+      } catch {
+        // No link can be made (storage not configured or unreachable): the report is still listed, without a link, and the list still loads.
+        console.error(`[reports] could not make a download link for a report of booking ${appointment._id ? String(appointment._id) : "(no id)"}`);
+        return { ...report, url: null, urlExpiresAt: null, urlUnavailable: true };
+      }
       // Only the short-lived presigned URL is returned to clients — a raw
       // getS3ObjectUrl() would be a permanent, unauthenticated link to a PHI
       // document (medical report) that keeps working even if the bucket's

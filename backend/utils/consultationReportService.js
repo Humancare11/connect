@@ -8,6 +8,7 @@ const Doctor = require("../models/Doctor");
 const Enrollment = require("../models/Enrollment");
 const User = require("../models/User");
 const { encryptPHI, decryptPHI } = require("./phiCrypto");
+const { UNREADABLE_MESSAGE, tryDecryptPHI } = require("./phiSafeRead");
 const { nextSequenceValue } = require("./idSequence");
 const { readFields, missingRequired, encryptFields, FIELD_LABELS } = require("./consultationNoteFields");
 const { reportSignatureKey, copyObject } = require("./visitNoteStorage");
@@ -171,7 +172,9 @@ async function addAmendment({ doctorId, reportId, reason, text }) {
 }
 
 const serializeAmendment = (a) => {
-  const body = decryptPHI(a) || {};
+  const result = tryDecryptPHI(a, "report amendment");
+  if (result.unreadable) return { _id: a._id, authorName: a.authorName, reason: "", text: "", createdAt: a.createdAt, unreadable: true, unreadableMessage: UNREADABLE_MESSAGE };
+  const body = result.data;
   return { _id: a._id, authorName: a.authorName, reason: body.reason || "", text: body.text || "", createdAt: a.createdAt };
 };
 

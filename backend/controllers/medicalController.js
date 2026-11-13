@@ -9,7 +9,8 @@ const MedicalReport            = require("../models/MedicalReport");
 const mongoose                 = require("mongoose");
 const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const { serializeReport, logReportAccess } = require("../utils/medicalReportService");
-const { encryptPHI, decryptPHI } = require("../utils/phiCrypto");
+const { encryptPHI } = require("../utils/phiCrypto");
+const { UNREADABLE_MESSAGE, tryDecryptPHI } = require("../utils/phiSafeRead");
 const { ensureDoctorAppointment } = require("../utils/doctorAppointmentAccess");
 const { loadAppointmentAny, completeLoaded } = require("../utils/appointmentLifecycle");
 
@@ -23,9 +24,15 @@ function withDecryptedFields(doc, fieldNames) {
   if (!doc) return doc;
   const { cipherText, iv, authTag, keyVersion, ...rest } = doc;
   if (!cipherText) return rest;
-  const data = decryptPHI(doc) || {};
+  const result = tryDecryptPHI(doc, "clinical record");
+  if (result.unreadable) {
+    // Never fail a whole list because of one record: its protected fields are empty and the screens show the message.
+    const empty = {};
+    for (const field of fieldNames) empty[field] = null;
+    return { ...rest, ...empty, unreadable: true, unreadableMessage: UNREADABLE_MESSAGE };
+  }
   const decrypted = {};
-  for (const field of fieldNames) decrypted[field] = data[field];
+  for (const field of fieldNames) decrypted[field] = result.data[field];
   return { ...rest, ...decrypted };
 }
 

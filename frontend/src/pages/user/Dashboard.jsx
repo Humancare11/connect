@@ -5,6 +5,7 @@ import api from "../../api";
 import { useAuth } from "../../context/AuthContext";
 import socket from "../../socket";
 import { USER_ACTIVITY_UPDATED_EVENT } from "../../utils/activityEvents";
+import { recordTitle } from "../../utils/unreadableRecord";
 
 const formatDateShort = (d) => {
   if (!d) return "—";
@@ -256,7 +257,7 @@ export default function Dashboard() {
                   <div key={rx._id} className="hc-dash__record-item">
                     <div className="hc-dash__record-item-dot hc-dash__record-item-dot--rx" />
                     <div className="hc-dash__record-item-body">
-                      <span className="hc-dash__record-item-title">{rx.diagnosis}</span>
+                      <span className="hc-dash__record-item-title">{recordTitle(rx)}</span>
                       <span className="hc-dash__record-item-meta">
                         Dr. {rx.doctorId?.name || "—"} · {formatDateShort(rx.createdAt)}
                       </span>

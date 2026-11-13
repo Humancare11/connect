@@ -4,6 +4,8 @@ import "./MyRecords.css";
 import api from "../../api";
 import socket from "../../socket";
 import { useAuth } from "../../context/AuthContext";
+import UnreadableRecordCard from "../../components/UnreadableRecordCard";
+import { isUnreadableRecord } from "../../utils/unreadableRecord";
 
 const PrescriptionSlip = lazy(() =>
   import("../../components/RxSlip").then((module) => ({
@@ -44,6 +46,8 @@ function PrescriptionCard({ rx, patient }) {
       setDownloading(false);
     }
   };
+
+  if (isUnreadableRecord(rx)) return <UnreadableRecordCard className="mr-card mr-card--rx" icon="💊" />;
 
   return (
     <div className="mr-card mr-card--rx">
@@ -157,6 +161,8 @@ function CertificateCard({ cert, patient }) {
       setDownloading(false);
     }
   };
+
+  if (isUnreadableRecord(cert)) return <UnreadableRecordCard className="mr-card mr-card--cert" icon="📄" />;
 
   return (
     <div className="mr-card mr-card--cert">

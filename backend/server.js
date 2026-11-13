@@ -259,6 +259,9 @@ function validateRuntimeConfig() {
     process.exit(1);
   }
 
+  // PHI encryption key: warns when it is missing (JWT fallback), refuses only when PHI_KEY_REQUIRED=true. See utils/phiKeyCheck.js.
+  if (!require("./utils/phiKeyCheck").runPhiKeyCheck()) process.exit(1);
+
   // TURN is required (not just STUN) because STUN alone cannot relay media
   // for peers behind symmetric/restrictive NAT — see backend/routes/rtc.js
   // and backend/utils/turnCredentials.js for how these are consumed. Unlike

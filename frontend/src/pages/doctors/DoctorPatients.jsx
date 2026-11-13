@@ -7,6 +7,7 @@ import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
 import { formatShortDate as formatDate } from "../../utils/prescriptionForm";
 import CertificateModal from "../../components/CertificateModal";
 import useModalA11y from "../../hooks/useModalA11y";
+import { isUnreadableRecord, UNREADABLE_RECORD_TEXT } from "../../utils/unreadableRecord";
 
 // ── Small reusable components ─────────────────────────────────────────────────
 
@@ -251,7 +252,14 @@ function PatientPanel({ entry, onClose }) {
               {history.prescriptions.length === 0 ? (
                 <p className="dp-empty">No prescriptions issued.</p>
               ) : (
-                history.prescriptions.map((rx) => (
+                history.prescriptions.map((rx) => isUnreadableRecord(rx) ? (
+                  <div key={rx._id} className="dp-record-card dp-record-card--rx">
+                    <div className="dp-record-header">
+                      <span className="dp-record-icon">💊</span>
+                      <span className="dp-record-title">{UNREADABLE_RECORD_TEXT}</span>
+                    </div>
+                  </div>
+                ) : (
                   <div
                     key={rx._id}
                     className="dp-record-card dp-record-card--rx"
@@ -314,7 +322,14 @@ function PatientPanel({ entry, onClose }) {
               {history.certificates.length === 0 ? (
                 <p className="dp-empty">No certificates issued.</p>
               ) : (
-                history.certificates.map((cert) => (
+                history.certificates.map((cert) => isUnreadableRecord(cert) ? (
+                  <div key={cert._id} className="dp-record-card dp-record-card--cert">
+                    <div className="dp-record-header">
+                      <span className="dp-record-icon">📄</span>
+                      <span className="dp-record-title">{UNREADABLE_RECORD_TEXT}</span>
+                    </div>
+                  </div>
+                ) : (
                   <div
                     key={cert._id}
                     className="dp-record-card dp-record-card--cert"
