@@ -25,6 +25,8 @@ export const OFF_STATE = Object.freeze({
   realVoiceMuted: false,
   translationStatus: "off",
   fallbackReason: null,
+  listenNote: null, // "didnt_catch": a sentence of the other person was too unclear to translate
+  speakNote: null, // "not_understood": my own speech was not understood
 });
 
 const noop = () => {};

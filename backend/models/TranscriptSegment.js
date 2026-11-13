@@ -21,7 +21,7 @@ const encSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const GAP_REASONS = ["muted", "recognizer_down", "mic_stalled", "backgrounded", "interrupted", "other"];
+const GAP_REASONS = ["muted", "recognizer_down", "mic_stalled", "backgrounded", "interrupted", "not_recognised", "other"];
 const CONFIDENCE_TIERS = ["normal", "low", "unclear", "unknown"];
 
 const transcriptSegmentSchema = new mongoose.Schema(

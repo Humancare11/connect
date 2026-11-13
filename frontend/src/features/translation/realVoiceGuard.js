@@ -21,6 +21,7 @@ export const TRANSLATION_UNAVAILABLE = "Translation unavailable - you are hearin
 export const TRANSLATING_TEXT = "Translating…";
 export const SPEAKING_TEXT = "Speaking the translation";
 
+// peerStatus: what the other person's recognizer reported (ok | stalled | backgrounded | interrupted | down).
 // i: { readLang, peerReadLang, voiceEnabled, breakerTripped, phase, recognizerStatus, reconnecting, tokenFailed, audioState, levelAvailable,
 //      stalled, voiceFailed, unclearHold }
 // -> { expected, mute, reason, showMessage }
@@ -47,6 +48,7 @@ export function evaluateGuard(i) {
   if (i.audioState !== "running") return fail("audio_blocked");
   if (i.voiceFailed) return fail("voice_failed");
   if (!i.levelAvailable) return fail("cannot_measure_peer");
+  if (i.peerStatus && i.peerStatus !== "ok") return fail("peer_" + i.peerStatus);
   if (i.stalled) return fail("no_translation_arriving");
   if (i.unclearHold) return fail("sentence_not_spoken", false); // brief and expected: no alarming message
   return { expected: true, mute: true, reason: null, showMessage: false };

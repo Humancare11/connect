@@ -191,3 +191,23 @@ test("the unavailable phase still shows the badge and the reconnect pill", () =>
   assert.match(html, /Transcribing/);
   assert.match(html, /reconnecting/);
 });
+
+test("overlay: the lost-sentence messages, the wrong-language hint, the translation status and the unclear subtitle", () => {
+  const O = mods.overlay.default;
+  const r = (patch, role = "patient") => render(h(O, { state: { ...baseState, ...patch }, actions, role }));
+  assert.match(r({ listenNote: "didnt_catch" }), /Didn&#x27;t catch that - please ask them to repeat/);
+  assert.doesNotMatch(r({}), /Didn&#x27;t catch that/);
+  assert.match(r({ speakNote: "not_understood" }), /Not understood - please repeat/);
+  assert.doesNotMatch(r({}), /Not understood/);
+  assert.match(r({ readLang: "de", fellBackToDetection: true }), /You may be speaking a different language than selected/);
+  assert.doesNotMatch(r({ readLang: "none", fellBackToDetection: true }), /different language than selected/);
+  assert.doesNotMatch(r({ readLang: "de" }), /different language than selected/);
+  assert.match(r({ translationStatus: "waiting" }), /Translating…/);
+  assert.match(r({ translationStatus: "speaking" }), /Speaking the translation/);
+  assert.match(r({ translationStatus: "unavailable" }), /Translation unavailable - you are hearing the original voice/);
+  assert.doesNotMatch(r({ translationStatus: "ready" }), /Translating…|Translation unavailable/);
+  const unclear = render(h(mods.overlay.Subtitles, { subtitle: { id: "x", text: "Gemurmel", final: true, lighter: true, unclear: true } }));
+  assert.match(unclear, /\(unclear\)/);
+  assert.match(unclear, /Gemurmel/);
+  assert.doesNotMatch(render(h(mods.overlay.Subtitles, { subtitle: { id: "y", text: "Hallo", final: true } })), /unclear/);
+});

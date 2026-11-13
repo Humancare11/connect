@@ -10,7 +10,7 @@
 // Safe by construction: nothing here ever throws into the call, nothing is logged, nothing is kept in browser storage, and when the
 // feature is off the engine is simply never created.
 import { buildCandidateLocales } from "./candidates.js";
-import { createCaptionReceiver, createCaptionSender, createLangAnnouncer } from "./captionProtocol.js";
+import { createCaptionReceiver, createCaptionSender, createLangAnnouncer, createStatusAnnouncer } from "./captionProtocol.js";
 import { confidenceTier, normalizeThresholds, safetyNetTriggered } from "./confidence.js";
 import { createDucker } from "./ducker.js";
 import { createEchoBreaker, createEchoFilter } from "./echoFilter.js";
@@ -25,6 +25,11 @@ import { createVoiceQueue } from "./voiceQueue.js";
 
 const MAX_TRANSCRIPT_ROWS = 500;
 const SUBTITLE_HOLD_MS = 6000;
+const MIC_SPEECH_PEAK = 0.1; // my microphone is "clearly speaking" above this
+const NO_MATCH_TRIGGER = 3; // this many loud no-match results...
+const NO_MATCH_WINDOW_MS = 30000; // ...within this time switch to automatic language detection
+const NO_MATCH_STRETCH_END_MS = 5000; // a run of no-match results ends after this much without another
+const SPEAK_NOTE_MS = 5000;
 
 export function createTranscriptionEngine({
   role, // "doctor" | "patient"
@@ -69,6 +74,8 @@ export function createTranscriptionEngine({
     realVoiceMuted: false,
     translationStatus: "off", // off | ready | waiting | speaking | unavailable
     fallbackReason: null,
+    listenNote: null, // "didnt_catch": a sentence of the other person was too unclear to translate
+    speakNote: null, // "not_understood": my own speech was not understood
   };
 
   const emit = () => { for (const fn of [...listeners]) { try { fn(state); } catch { /* a bad subscriber must not break the call */ } } };
@@ -104,6 +111,14 @@ export function createTranscriptionEngine({
   let voiceFailedUntil = 0;
   let unclearUntil = 0;
   let lastLevelAvailable = false;
+  let peerStatus = "ok"; // the other person's recognizer health, as they reported it
+  let didntCatchUntil = 0;
+  let speakNoteUntil = 0;
+  const noMatchTimes = []; // loud no-match results of mine, for the wrong-language safety net
+  let noMatchStretch = null; // { start, last } perf times of a run of no-match results, saved as ONE gap
+  let myStall = null; // why my microphone stopped delivering sound (mic_stalled | backgrounded | interrupted)
+  let statusReady = false;
+  let noMatchStatusUntil = 0;
   const ducker = createDucker({ getElements: getRemoteElements, allowGain: allowGainDucking });
 
   const noticeSender = createNoticeSender({
@@ -119,6 +134,7 @@ export function createTranscriptionEngine({
     nowPerf, setTimer, clearTimer, random,
   });
 
+  const statusAnnouncer = createStatusAnnouncer({ send: (m) => socket.emit("tr-status", { appointmentId, status: m.status }) });
   const announcer = createLangAnnouncer({ send: (m) => socket.emit("lang-changed", { appointmentId, lang: m.lang }) });
   const captionSender = createCaptionSender({ send: (m) => socket.emit("caption", { appointmentId, ...m }), nowPerf, setTimer, clearTimer, prefix: `${role === "doctor" ? "d" : "p"}${Math.floor(random() * 1e6).toString(36)}` });
 
@@ -142,7 +158,7 @@ export function createTranscriptionEngine({
     onVoice: (v) => { voiceQueue.enqueue(v); },
     onHint: (h) => set({ hint: h }),
     // A finished sentence that will not be spoken (unclear, or no translation): its real voice was muted, so give the real voice back for a while.
-    onUnspoken: () => { unclearUntil = now() + UNCLEAR_HOLD_MS; refreshGuard(); },
+    onUnspoken: () => { unclearUntil = now() + UNCLEAR_HOLD_MS; didntCatchUntil = unclearUntil; refreshGuard(); },
   });
 
   // ---- one voice at a time -----------------------------------------------------------------------------------------------
@@ -152,7 +168,7 @@ export function createTranscriptionEngine({
       phase: state.phase, recognizerStatus: state.recognizerStatus, reconnecting: state.reconnecting,
       tokenFailed: Boolean(tokens && tokens.isPermanentlyFailed()),
       audioState: ctx ? ctx.state : "none", levelAvailable: lastLevelAvailable,
-      stalled: stalledLatch, voiceFailed: now() < voiceFailedUntil, unclearHold: now() < unclearUntil,
+      peerStatus, stalled: stalledLatch, voiceFailed: now() < voiceFailedUntil, unclearHold: now() < unclearUntil,
     };
   }
 
@@ -166,11 +182,52 @@ export function createTranscriptionEngine({
       let status = "off";
       if (verdict.showMessage) status = "unavailable";
       else if (verdict.mute) status = voiceQueue.isSpeaking() ? "speaking" : now() < waitingUntil || voiceQueue.waitingCount() > 0 ? "waiting" : "ready";
-      if (state.realVoiceMuted !== verdict.mute || state.translationStatus !== status || state.fallbackReason !== verdict.reason) {
-        state = { ...state, realVoiceMuted: verdict.mute, translationStatus: status, fallbackReason: verdict.reason };
+      const listenNote = !stopped && now() < didntCatchUntil && state.readLang !== NONE ? "didnt_catch" : null;
+      const speakNote = !stopped && now() < speakNoteUntil ? "not_understood" : null;
+      if (state.realVoiceMuted !== verdict.mute || state.translationStatus !== status || state.fallbackReason !== verdict.reason || state.listenNote !== listenNote || state.speakNote !== speakNote) {
+        state = { ...state, realVoiceMuted: verdict.mute, translationStatus: status, fallbackReason: verdict.reason, listenNote, speakNote };
         emit();
       }
     } catch { /* never into the call */ } finally { guarding = false; }
+  }
+
+  // ---- telling the other person how MY recognizer is doing -----------------------------------------------------------------
+  function refreshMyStatus() {
+    if (!statusReady || stopped) return;
+    let status = "ok";
+    if (myStall) status = myStall === "mic_stalled" ? "stalled" : myStall;
+    else if (state.phase === "unavailable" || state.reconnecting || state.recognizerStatus === "unavailable") status = "down";
+    else if (now() < noMatchStatusUntil) status = "no_match";
+    statusAnnouncer.set(status);
+  }
+
+  function closeNoMatchStretch() {
+    if (!noMatchStretch) return;
+    const { start, last } = noMatchStretch;
+    noMatchStretch = null;
+    addGap({ reason: "not_recognised", startedPerf: start, durationMs: Math.max(1, last - start) }); // the proof never looks empty
+  }
+
+  // Speech that Azure could not turn into words. Only counted when this person is clearly speaking (the microphone is loud).
+  function onNoMatch(r) {
+    if (state.muted || !pipeline || pipeline.recentPeak(2000) < MIC_SPEECH_PEAK) return;
+    const t = nowPerf();
+    if (!noMatchStretch) noMatchStretch = { start: t - (r && r.durationMs ? r.durationMs : 0), last: t };
+    else noMatchStretch.last = t;
+    speakNoteUntil = now() + SPEAK_NOTE_MS;
+    noMatchStatusUntil = now() + UNCLEAR_HOLD_MS;
+    statusAnnouncer.set("no_match", { force: true }); // each one is an event for the listener
+    noMatchTimes.push(t);
+    while (noMatchTimes.length && t - noMatchTimes[0] > NO_MATCH_WINDOW_MS) noMatchTimes.shift();
+    if (recognizer && recognizer.mode() === "fixed" && noMatchTimes.length >= NO_MATCH_TRIGGER) { noMatchTimes.length = 0; fallBackToDetection(); }
+    refreshGuard();
+  }
+
+  // The picked language does not match what is spoken: listen with detection instead, at the next pause (and tell the person).
+  function fallBackToDetection() {
+    recentConfidences.length = 0;
+    set({ fellBackToDetection: true });
+    recognizer.requestRestart({ mode: "detect", locale: null, candidates: buildCandidateLocales({ browserLanguages, profileCountry }) });
   }
 
   // Twice a second: is the other person speaking, and is anything arriving? (the 8-second rule)
@@ -188,8 +245,10 @@ export function createTranscriptionEngine({
       } else if (speechStart !== null && t - lastLoudAt > QUIET_GAP_MS) {
         speechStart = null;
       }
+      if (noMatchStretch && nowPerf() - noMatchStretch.last > NO_MATCH_STRETCH_END_MS) closeNoMatchStretch();
       if (state.realVoiceMuted && speechStart !== null && t - Math.max(speechStart, lastCaptionAt) > STALL_MS) stalledLatch = true; // latched until a caption arrives
     } catch { /* ignore */ }
+    refreshMyStatus();
     refreshGuard();
     guardTimer = setTimer(guardTick, TICK_MS);
   }
@@ -266,6 +325,9 @@ export function createTranscriptionEngine({
 
   function onFinal(f) {
     const tier = confidenceTier(f.confidence, thresholds);
+    closeNoMatchStretch(); // words came out again
+    noMatchStatusUntil = 0;
+    if (tier === "unclear") speakNoteUntil = now() + SPEAK_NOTE_MS; // "Not understood - please repeat"
     const verdict = echo.check({ text: f.text, confidence: f.confidence, durationMs: f.durationMs });
     const unsupported = state.unsupportedSpeech;
     const languageSource = state.readLang !== NONE && canTranscribeLanguage(state.readLang) && !state.fellBackToDetection ? "declared" : "auto";
@@ -290,11 +352,7 @@ export function createTranscriptionEngine({
     // what is spoken, so listen with detection instead, at the next pause.
     if (recognizer.mode() === "fixed") {
       recentConfidences.push(f.confidence);
-      if (safetyNetTriggered(recentConfidences)) {
-        recentConfidences.length = 0;
-        set({ fellBackToDetection: true });
-        recognizer.requestRestart({ mode: "detect", locale: null, candidates: buildCandidateLocales({ browserLanguages, profileCountry }) });
-      }
+      if (safetyNetTriggered(recentConfidences)) fallBackToDetection();
     }
   }
 
@@ -302,6 +360,15 @@ export function createTranscriptionEngine({
   function listen(event, handler) {
     socket.on(event, handler);
     offSocket.push(() => socket.off(event, handler));
+  }
+  function handleIncomingStatus(msg) {
+    if (!mine(msg) || stopped || typeof msg.status !== "string") return;
+    if (msg.status === "no_match") { // the other person is clearly speaking but nothing was understood: that sentence is lost
+      unclearUntil = now() + UNCLEAR_HOLD_MS; didntCatchUntil = unclearUntil;
+    } else {
+      peerStatus = msg.status;
+    }
+    refreshGuard();
   }
   const mine = (msg) => msg && typeof msg === "object" && String(msg.appointmentId) === String(appointmentId);
 
@@ -338,8 +405,9 @@ export function createTranscriptionEngine({
         set({ phase: "running", notice: "sending" });
         listen("lang-changed", handleIncomingLang);
         listen("caption", handleIncomingCaption);
-        listen("peer-joined", () => announcer.resend());
-        listen("connect", () => announcer.resend());
+        listen("tr-status", handleIncomingStatus);
+        listen("peer-joined", () => { announcer.resend(); statusAnnouncer.resend(); });
+        listen("connect", () => { announcer.resend(); statusAnnouncer.resend(); });
         announcer.announce(NONE);
 
         try {
@@ -358,18 +426,19 @@ export function createTranscriptionEngine({
           now, setTimer, clearTimer, random,
         });
 
-        pipeline = createMicPipeline({ ctx, stream: getLocalStream(), sink: (ab) => { if (sinkFn) sinkFn(ab); }, nowPerf, setTimer, clearTimer, doc, onGap: addGap });
+        pipeline = createMicPipeline({ ctx, stream: getLocalStream(), sink: (ab) => { if (sinkFn) sinkFn(ab); }, nowPerf, setTimer, clearTimer, doc, onGap: (g) => { addGap(g); if (g.reason !== "muted") { myStall = null; refreshMyStatus(); } }, onStall: ({ reason }) => { myStall = reason; refreshMyStatus(); } });
         recognizer = createRecognizerController({
           sdk,
           getToken: async (force) => { if (force) await tokens.refresh().catch(() => {}); return tokens.getToken(); },
           attachSink: (fn) => { sinkFn = fn; },
-          onPartial, onFinal,
-          onStatus: (status) => set({ recognizerStatus: status, reconnecting: status === "reconnecting" }),
+          onPartial, onFinal, onNoMatch,
+          onStatus: (status) => { set({ recognizerStatus: status, reconnecting: status === "reconnecting" }); refreshMyStatus(); },
           onGap: addGap,
           nowPerf, setTimer, clearTimer, random,
           isUnavailable: () => tokens.isPermanentlyFailed(),
         });
 
+        statusReady = true;
         if (guardTimer === null) guardTimer = setTimer(guardTick, TICK_MS);
         pipeline.start();
         pipeline.setMuted(state.muted);
@@ -413,8 +482,8 @@ export function createTranscriptionEngine({
 
     swapMicStream(stream) { if (pipeline) pipeline.swapStream(stream); },
     dismissHint() { set({ hint: null }); },
-    onPeerJoined() { announcer.resend(); },
-    onSocketReconnected() { announcer.resend(); },
+    onPeerJoined() { announcer.resend(); statusAnnouncer.resend(); },
+    onSocketReconnected() { announcer.resend(); statusAnnouncer.resend(); },
     handleIncomingCaption,
     handleIncomingLang,
 
@@ -426,6 +495,7 @@ export function createTranscriptionEngine({
       stopped = true;
       clearTimer(subtitleTimer);
       clearTimer(guardTimer); guardTimer = null;
+      closeNoMatchStretch();
       captionSender.stop();
       voiceQueue.clear();
       ducker.restore();

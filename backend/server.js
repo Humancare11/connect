@@ -759,6 +759,7 @@ const cameraStateLimiter = makeSocketLimiter({ windowMs: 1000, max: 5 });
 // 12 a second is well above real use; "which language I read" changes rarely (and is re-sent when the other person joins or reconnects).
 const captionLimiter = makeSocketLimiter({ windowMs: 1000, max: 12 });
 const langChangedLimiter = makeSocketLimiter({ windowMs: 5000, max: 8 });
+const trStatusLimiter = makeSocketLimiter({ windowMs: 5000, max: 10 }); // tr-status: sent on changes only
 const callConnectedLimiter = makeSocketLimiter({ windowMs: 5000, max: 3 });
 // call-stats: every 30s normally, every ~3s while an admin watches the report.
 const callStatsLimiter = makeSocketLimiter({ windowMs: 2000, max: 2 });
@@ -820,6 +821,7 @@ const SOCKET_LIMITERS = [
   cameraStateLimiter,
   captionLimiter,
   langChangedLimiter,
+  trStatusLimiter,
   peerRebuildRequestLimiter,
   telemetryLimiter,
   directChatLimiter,
@@ -842,6 +844,7 @@ const captionHandlers = createCaptionHandlers({
   getSenderRole: (socket) => socketUsers.get(socket.id)?.role || socket.userRole,
   allowLang: (socketId) => langChangedLimiter.allow(socketId),
   allowCaption: (socketId) => captionLimiter.allow(socketId),
+  allowStatus: (socketId) => trStatusLimiter.allow(socketId),
   relay: (socket, appointmentId, event, payload) => socket.to(appointmentRoomName(appointmentId)).emit(event, payload),
   reject: rejectSignal,
 });
@@ -2512,6 +2515,7 @@ io.on("connection", (socket) => {
   // TRANSCRIPTION_ENABLED=true. See utils/speech/captionRelay.js for every rule (and the promise that no payload is ever logged).
   socket.on("lang-changed", (payload) => captionHandlers.onLangChanged(socket, payload));
   socket.on("caption", (payload) => captionHandlers.onCaption(socket, payload));
+  socket.on("tr-status", (payload) => captionHandlers.onStatus(socket, payload));
 
   // Asks the other participant to tear down and rebuild its own
   // RTCPeerConnection. In an appointment call the patient is the sole offerer,

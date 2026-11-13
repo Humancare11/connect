@@ -9,6 +9,9 @@ export const NOTICE_LINE_2 = "Please keep the call in a quiet place. Other voice
 export const RECONNECTING_TEXT = "Subtitles unavailable, reconnecting…";
 export const NO_SPEECH_NOTE_OWN = "Subtitles only: your own speech in this language cannot be transcribed.";
 export const LANGUAGE_HELP = "Choose the language YOU speak. You will hear and read the other person in this language. The other person's original voice is muted while translation is on.";
+export const DIDNT_CATCH_TEXT = "Didn't catch that - please ask them to repeat";
+export const NOT_UNDERSTOOD_TEXT = "Not understood - please repeat";
+export const WRONG_LANGUAGE_HINT = "You may be speaking a different language than selected";
 export const NO_VOICE_NOTE = "No voice for this language: subtitles only.";
 
 // The rows of the LANGUAGE list: "Real voice" is ALWAYS first (also while searching), then the languages that match the search.

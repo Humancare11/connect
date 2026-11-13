@@ -14,6 +14,7 @@ export const GAP_LABELS = Object.freeze({
   mic_stalled: "Microphone stopped sending sound",
   backgrounded: "App was in the background",
   interrupted: "Interrupted (for example by a phone call)",
+  not_recognised: "Speech not recognised",
   other: "Not recorded",
 });
 

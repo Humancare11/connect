@@ -16,7 +16,7 @@ const MAX_AGE_MS = 12 * 60 * 60 * 1000; // a browser that was offline can send l
 const MAX_GAP_MS = 24 * 60 * 60 * 1000;
 const CLIENT_ID = /^[A-Za-z0-9_-]{8,64}$/;
 const LANG_CODE = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/;
-const GAP_REASONS = new Set(["muted", "recognizer_down", "mic_stalled", "backgrounded", "interrupted", "other"]);
+const GAP_REASONS = new Set(["muted", "recognizer_down", "mic_stalled", "backgrounded", "interrupted", "not_recognised", "other"]);
 const LANGUAGE_SOURCES = new Set(["declared", "auto"]);
 
 const ENDED_STATUSES = new Set(["complete", "completed", "cancelled"]);

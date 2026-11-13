@@ -225,9 +225,10 @@ test("unclear speech (confidence under 0.4) is saved and flagged but never shown
   const t = await running();
   t.engine.setReadLanguage("de");
   t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "u1", final: true, text: "mumble", srcLang: "en-US", conf: 0.2, tr: { de: "Gemurmel" }, at: 1 });
-  assert.equal(t.engine.getState().subtitle, null);
+  assert.equal(t.engine.getState().subtitle.unclear, true, "shown lightly, marked unclear");
+  assert.equal(t.engine.getState().subtitle.lighter, true);
   await settle();
-  assert.equal(t.sdk.log.synths.length, 0);
+  assert.equal(t.sdk.log.synths.length, 0, "but not spoken");
   t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "l1", final: true, text: "so so", srcLang: "en-US", conf: 0.55, tr: { de: "naja" }, at: 2 });
   assert.equal(t.engine.getState().subtitle.lighter, true);
 

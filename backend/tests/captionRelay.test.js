@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { MAX_TEXT, MAX_MESSAGE_BYTES, cleanCaptionText, parseLangChanged, parseCaption, createCaptionHandlers } = require("../utils/speech/captionRelay");
+const { MAX_TEXT, MAX_MESSAGE_BYTES, cleanCaptionText, parseLangChanged, parseCaption, createCaptionHandlers, parseStatus, STATUSES } = require("../utils/speech/captionRelay");
 
 const SECRET = "ZEBRA-CAPTION-SECRET";
 const APPT = "64b7f0c2a1b2c3d4e5f60718";
@@ -213,8 +213,54 @@ describe("nothing is ever logged", () => {
     const server = fs.readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
     assert.ok(server.includes('socket.on("lang-changed", (payload) => captionHandlers.onLangChanged(socket, payload));'));
     assert.ok(server.includes('socket.on("caption", (payload) => captionHandlers.onCaption(socket, payload));'));
+    assert.ok(server.includes('socket.on("tr-status", (payload) => captionHandlers.onStatus(socket, payload));'));
+    assert.ok(server.slice(server.indexOf("const SOCKET_LIMITERS = ["), server.indexOf("];", server.indexOf("const SOCKET_LIMITERS = ["))).includes("trStatusLimiter"));
     const list = server.slice(server.indexOf("const SOCKET_LIMITERS = ["), server.indexOf("];", server.indexOf("const SOCKET_LIMITERS = [")));
     assert.ok(list.includes("captionLimiter") && list.includes("langChangedLimiter"), "limiters are cleaned up when a socket disconnects");
     assert.ok(server.includes("reject: rejectSignal"), "refusals go through rejectSignal, which logs event + code only");
+  });
+});
+
+describe("tr-status (the speaker's recognizer health, so the listener can unmute the real voice at once)", () => {
+  const ST = (extra = {}) => ({ appointmentId: APPT, status: "stalled", ...extra });
+  function setup(over = {}) {
+    const calls = { relay: [], reject: [], status: 0, lang: 0 };
+    const deps = {
+      isEnabled: () => true, isInRoom: () => true, getSenderRole: () => "doctor",
+      allowLang: () => { calls.lang++; return true; }, allowCaption: () => true, allowStatus: () => { calls.status++; return true; },
+      relay: (s, appointmentId, event, payload) => calls.relay.push({ appointmentId, event, payload }),
+      reject: (s, event, code) => calls.reject.push({ event, code }), now: () => 1,
+      ...over,
+    };
+    return { calls, socket: { id: "s1" }, h: createCaptionHandlers(deps) };
+  }
+  test("only the known statuses are accepted", () => {
+    assert.deepEqual([...STATUSES].sort(), ["backgrounded", "down", "interrupted", "no_match", "ok", "stalled"]);
+    for (const status of STATUSES) assert.equal(parseStatus(ST({ status })).ok, true);
+    for (const bad of [null, "x", [], {}, ST({ status: "boom" }), ST({ status: 5 }), ST({ status: undefined }), ST({ appointmentId: undefined }), ST({ appointmentId: "" }), ST({ appointmentId: 5 })]) assert.equal(parseStatus(bad).ok, false);
+  });
+  test("relayed as { appointmentId, status, from } with the role from the socket and nothing else; uses its own limiter", () => {
+    const { calls, socket, h } = setup({ getSenderRole: () => "user" });
+    h.onStatus(socket, ST({ from: "doctor", text: SECRET, extra: 1 }));
+    assert.deepEqual(calls.relay, [{ appointmentId: APPT, event: "tr-status", payload: { appointmentId: APPT, status: "stalled", from: "patient" } }]);
+    assert.deepEqual([calls.status, calls.lang], [1, 0]);
+  });
+  test("flag off: ignored silently. Bad payload, outsider, wrong role and rate limit each get a code and are never relayed", () => {
+    const off = setup({ isEnabled: () => false });
+    off.h.onStatus(off.socket, ST());
+    assert.deepEqual([off.calls.relay.length, off.calls.reject.length], [0, 0]);
+    const bad = setup(); bad.h.onStatus(bad.socket, { appointmentId: APPT, status: "nope" });
+    const out = setup({ isInRoom: () => false }); out.h.onStatus(out.socket, ST());
+    const role = setup({ getSenderRole: () => "admin" }); role.h.onStatus(role.socket, ST());
+    const rate = setup({ allowStatus: () => false }); rate.h.onStatus(rate.socket, ST());
+    assert.deepEqual([bad, out, role, rate].map((x) => x.calls.reject[0].code), ["invalid_payload", "not_in_room", "not_allowed", "rate_limited"]);
+    for (const x of [bad, out, role, rate]) assert.equal(x.calls.relay.length, 0);
+  });
+});
+
+describe("the new gap reason for speech that was not recognised", () => {
+  test("accepted by both the model and the save path", () => {
+    assert.ok(require("../models/TranscriptSegment").GAP_REASONS.includes("not_recognised"));
+    assert.ok(require("../utils/speech/transcriptSegments").GAP_REASONS.has("not_recognised"));
   });
 });

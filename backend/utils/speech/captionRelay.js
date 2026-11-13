@@ -2,6 +2,8 @@
 //
 //   lang-changed  { appointmentId, lang }     "I now read / hear <lang>" ("none" = Real voice, no translation). Sent by the LISTENER to the
 //                                             other person, whose own recognizer then adds or removes that translation target.
+//   tr-status     { appointmentId, status }   "my recognizer is: ok | no_match | stalled | backgrounded | interrupted | down". Sent by the SPEAKER, so the
+//                                             listener learns at once that translation will not arrive and can give the real voice back.
 //   caption       { appointmentId, id, final, text, srcLang?, conf?, tr? }
 //                                             one recognized sentence (final) or its growing partial, from the SPEAKER, with its
 //                                             translations already in the languages the listener needs (tr: { en: "...", de: "..." }).
@@ -21,6 +23,7 @@ const LANG_CODE = /^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/;
 const CAPTION_ID = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_TEXT = 2000;
 const MAX_TRANSLATIONS = 3;
+const STATUSES = new Set(["ok", "no_match", "stalled", "backgrounded", "interrupted", "down"]);
 const MAX_MESSAGE_BYTES = 8 * 1024;
 const MAX_PAYLOAD_KEYS = 20;
 const MAX_ID_LENGTH = 64;
@@ -45,6 +48,14 @@ function parseLangChanged(payload) {
   const lang = payload.lang;
   if (lang !== "none" && !(typeof lang === "string" && LANG_CODE.test(lang))) return { ok: false };
   return { ok: true, appointmentId, lang };
+}
+
+// -> { ok: true, appointmentId, status } or { ok: false }
+function parseStatus(payload) {
+  if (!isObject(payload) || Object.keys(payload).length > MAX_PAYLOAD_KEYS) return { ok: false };
+  const appointmentId = parseAppointmentId(payload.appointmentId);
+  if (!appointmentId || typeof payload.status !== "string" || !STATUSES.has(payload.status)) return { ok: false };
+  return { ok: true, appointmentId, status: payload.status };
 }
 
 // -> { ok: true, appointmentId, caption } or { ok: false, reason }
@@ -88,7 +99,7 @@ function parseCaption(payload) {
 //   relay(socket, appointmentId, event, payload)  deliver to the OTHER people in the room
 //   reject(socket, event, code)       tell the sender, logging only the event name and the code
 //   now()                             clock for the delivery time stamp
-function createCaptionHandlers({ isEnabled, isInRoom, getSenderRole, allowLang, allowCaption, relay, reject, now = () => Date.now() }) {
+function createCaptionHandlers({ isEnabled, isInRoom, getSenderRole, allowLang, allowCaption, allowStatus = allowLang, relay, reject, now = () => Date.now() }) {
   const speakerOf = (role) => (role === "doctor" ? "doctor" : role === "user" ? "patient" : null);
 
   function onLangChanged(socket, payload) {
@@ -100,6 +111,18 @@ function createCaptionHandlers({ isEnabled, isInRoom, getSenderRole, allowLang, 
     if (!from) return reject(socket, "lang-changed", "not_allowed");
     if (!allowLang(socket.id)) return reject(socket, "lang-changed", "rate_limited");
     relay(socket, parsed.appointmentId, "lang-changed", { appointmentId: parsed.appointmentId, lang: parsed.lang, from });
+    return undefined;
+  }
+
+  function onStatus(socket, payload) {
+    if (!isEnabled()) return;
+    const parsed = parseStatus(payload);
+    if (!parsed.ok) return reject(socket, "tr-status", "invalid_payload");
+    if (!isInRoom(socket, parsed.appointmentId)) return reject(socket, "tr-status", "not_in_room");
+    const from = speakerOf(getSenderRole(socket));
+    if (!from) return reject(socket, "tr-status", "not_allowed");
+    if (!allowStatus(socket.id)) return reject(socket, "tr-status", "rate_limited");
+    relay(socket, parsed.appointmentId, "tr-status", { appointmentId: parsed.appointmentId, status: parsed.status, from });
     return undefined;
   }
 
@@ -115,7 +138,7 @@ function createCaptionHandlers({ isEnabled, isInRoom, getSenderRole, allowLang, 
     return undefined;
   }
 
-  return { onLangChanged, onCaption };
+  return { onLangChanged, onCaption, onStatus };
 }
 
 module.exports = {
@@ -125,5 +148,7 @@ module.exports = {
   cleanCaptionText,
   parseLangChanged,
   parseCaption,
+  parseStatus,
+  STATUSES,
   createCaptionHandlers,
 };

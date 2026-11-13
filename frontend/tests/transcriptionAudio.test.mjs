@@ -520,7 +520,7 @@ test("confidence: low is shown lighter and spoken; unclear is neither shown nor 
   rx.handle(caption({ id: "a", conf: 0.55 }));
   rx.handle(caption({ id: "b", conf: 0.2 }));
   rx.handle(caption({ id: "c", conf: null }));
-  assert.deepEqual(out.subtitles.map((s) => [s.id, s.lighter]), [["a", true], ["c", false]]);
+  assert.deepEqual(out.subtitles.map((s) => [s.id, s.lighter, Boolean(s.unclear)]), [["a", true, false], ["b", true, true], ["c", false, false]], "unclear: shown lightly marked unclear, never spoken");
   assert.deepEqual(out.voices.map((v) => v.id), ["a", "c"]);
   assert.deepEqual(out.transcript.map((t) => [t.id, t.tier]), [["a", "low"], ["b", "unclear"], ["c", "unknown"]]);
 });
@@ -528,7 +528,8 @@ test("confidence: low is shown lighter and spoken; unclear is neither shown nor 
 test("the thresholds come from the server", () => {
   const { out, rx } = receiverSetup({ myLang: "de", thresholds: { unclearBelow: 0.8, lowBelow: 0.95 } });
   rx.handle(caption({ conf: 0.75 }));
-  assert.equal(out.subtitles.length, 0, "0.75 is unclear under these thresholds");
+  assert.deepEqual(out.subtitles.map((s) => s.unclear), [true], "0.75 is unclear under these thresholds: shown only as an unclear subtitle");
+  assert.equal(out.voices.length, 0);
 });
 
 test("the voice is not spoken when it is switched off, or when the speaker already speaks my language", () => {

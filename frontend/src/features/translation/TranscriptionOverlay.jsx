@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { FiVolume2, FiX } from "react-icons/fi";
 import { SPEAKING_TEXT, TRANSLATING_TEXT, TRANSLATION_UNAVAILABLE } from "./realVoiceGuard.js";
-import { MACHINE_TRANSLATED, NOTICE_LINE_1, NOTICE_LINE_2, RECONNECTING_TEXT, peerUnsupportedNote } from "./uiModel.js";
+import { DIDNT_CATCH_TEXT, MACHINE_TRANSLATED, NOTICE_LINE_1, NOTICE_LINE_2, NOT_UNDERSTOOD_TEXT, RECONNECTING_TEXT, WRONG_LANGUAGE_HINT, peerUnsupportedNote } from "./uiModel.js";
 import "./translation.css";
 
 const SHOWN_PHASES = new Set(["running", "unavailable"]);
@@ -17,7 +17,7 @@ export function Subtitles({ subtitle }) {
   return (
     <div className="hc-tr__subtitles" role="status" aria-live="polite">
       <p className={`hc-tr__subtitle ${subtitle.lighter ? "hc-tr__subtitle--lighter" : ""} ${subtitle.final ? "" : "hc-tr__subtitle--partial"}`} dir="auto">
-        {subtitle.text}
+        {subtitle.unclear && <em className="hc-tr__unclear">(unclear) </em>}{subtitle.text}
       </p>
       <span className="hc-tr__machine">{MACHINE_TRANSLATED}</span>
     </div>
@@ -94,6 +94,9 @@ export default function TranscriptionOverlay({ state, actions, role, ownLanguage
         <TranscribingBadge />
         {!noticeClosed && <TranscribingNotice onDismiss={() => setNoticeClosed(true)} />}
         {state.reconnecting && <ReconnectingNotice />}
+        {state.listenNote === "didnt_catch" && <div className="hc-tr__reconnect" role="alert">{DIDNT_CATCH_TEXT}</div>}
+        {state.speakNote === "not_understood" && <div className="hc-tr__reconnect" role="alert">{NOT_UNDERSTOOD_TEXT}</div>}
+        {state.fellBackToDetection && state.readLang !== "none" && <div className="hc-tr__banner" role="status">{WRONG_LANGUAGE_HINT}</div>}
         <TranslationStatus status={state.translationStatus} />
         {banner && <div className="hc-tr__banner" role="status">{banner}</div>}
         <DoctorHint hint={role === "doctor" ? state.hint : null} onTurnOn={turnOn} onDismiss={actions.dismissHint} />

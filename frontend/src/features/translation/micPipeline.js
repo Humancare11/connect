@@ -53,6 +53,7 @@ export function createMicPipeline({
   let offTrack = [];
   let offCtx = null;
   let offDoc = null;
+  const peaks = []; // [time, peak] of the last few seconds: how loud this person has been just now
   const stats = { chunks: 0, gated: 0, peak: 0, clippedChunks: 0, stalls: 0, resumes: 0 };
 
   const ratio = () => (ctx.sampleRate || TARGET_RATE) / TARGET_RATE;
@@ -61,6 +62,7 @@ export function createMicPipeline({
   function beginGap(reason, startedPerf = nowPerf()) {
     if (gap) return;
     gap = { reason, startedPerf };
+    if (reason !== "muted") onStall({ reason }); // the engine tells the other person at once
   }
   function endGap() {
     if (!gap) return;
@@ -90,6 +92,8 @@ export function createMicPipeline({
     let peak = 0;
     for (let k = 0; k < input.length; k += 64) { const a = Math.abs(input[k]); if (a > peak) peak = a; }
     stats.chunks += 1;
+    peaks.push([nowPerf(), peak]);
+    while (peaks.length && nowPerf() - peaks[0][0] > 5000) peaks.shift();
     if (peak > stats.peak) stats.peak = peak;
     if (peak >= CLIP_LEVEL) stats.clippedChunks += 1;
     const pcm = downsampleToInt16(input, ratio());
@@ -100,7 +104,7 @@ export function createMicPipeline({
     watchdog = null;
     if (!started) return;
     if (!muted && lastChunkAt && nowPerf() - lastChunkAt > STALL_MS) {
-      if (!gap) { stats.stalls += 1; beginGap(stallReason(), lastChunkAt); onStall({ reason: gap.reason }); }
+      if (!gap) { stats.stalls += 1; beginGap(stallReason(), lastChunkAt); }
       recover(); // keeps trying every second while stalled
     }
     watchdog = setTimer(tick, WATCHDOG_MS);
@@ -170,6 +174,8 @@ export function createMicPipeline({
       endGap();
       try { if (proc) { proc.onaudioprocess = null; proc.disconnect(); } if (src) src.disconnect(); } catch { /* already gone */ }
     },
+    // The loudest sample of the last `windowMs` (0 when nothing arrived): "is this person clearly speaking?"
+    recentPeak(windowMs = 2000) { const from = nowPerf() - windowMs; let m = 0; for (const [t, p] of peaks) if (t >= from && p > m) m = p; return m; },
     isMuted: () => muted,
     isStalled: () => Boolean(gap && gap.reason !== "muted"),
     stats: () => ({ ...stats, clipRate: stats.chunks ? stats.clippedChunks / stats.chunks : 0 }),

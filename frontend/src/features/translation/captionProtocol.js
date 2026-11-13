@@ -70,6 +70,19 @@ export function createLangAnnouncer({ send } = {}) {
   };
 }
 
+// ------------------------------------------------------------------------------------------------------------------ announcing MY recognizer's health
+// ok | no_match | stalled | backgrounded | interrupted | down. Sent only when it changes, and again when the other person (re)joins, so
+// the listener's device can give the real voice back at once instead of waiting for its own 8-second rule.
+export function createStatusAnnouncer({ send } = {}) {
+  let last = "ok";
+  return {
+    // force: send even if unchanged (every "no_match" is an event of its own)
+    set(status, { force = false } = {}) { if (!force && status === last) return; last = status; send({ status }); },
+    resend() { if (last !== "ok") send({ status: last }); },
+    current: () => last,
+  };
+}
+
 // ------------------------------------------------------------------------------------------------------------------ receiving captions
 // Matches a translation key from the speaker ("de", "zh-hans", "fr-ca") with my language code ("de", "zh-Hans", "fr-ca").
 const sameCode = (a, b) => String(a || "").toLowerCase() === String(b || "").toLowerCase();
@@ -117,8 +130,10 @@ export function createCaptionReceiver({
 
       if (!myLang || myLang === "none") return; // Real voice: no subtitles, no translated voice
       const text = translationFor(entry.tr, myLang);
-      if (!text || !showLive(tier)) { // unclear: saved by the speaker, but not shown and not spoken
+      if (!text || !showLive(tier)) { // unclear (or no translation): never spoken. The text, if any, is shown lightly marked "unclear".
         if (entry.final) onUnspoken(entry);
+        const shown = text || entry.text;
+        if (entry.final && !showLive(tier) && shown) onSubtitle({ id: entry.id, text: shown, final: true, lighter: true, unclear: true, from: entry.from });
         return;
       }
       onSubtitle({ id: entry.id, text, final: entry.final, lighter: showLighter(tier), from: entry.from });

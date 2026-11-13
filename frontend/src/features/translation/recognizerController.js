@@ -23,6 +23,7 @@ export function createRecognizerController({
   attachSink, // (write | null) => void: where the microphone audio goes
   onPartial = () => {},
   onFinal = () => {},
+  onNoMatch = () => {}, // ({ durationMs }) audio that Azure could not turn into words
   onStatus = () => {},
   onGap = () => {}, // ({ reason: "recognizer_down", startedPerf, durationMs })
   onSessionStarted = () => {},
@@ -93,6 +94,7 @@ export function createRecognizerController({
     rec.recognized = (s, e) => {
       if (session !== mine) return;
       const reason = e.result && e.result.reason;
+      if (reason === sdk.ResultReason.NoMatch) { onNoMatch({ durationMs: Math.round((Number(e.result.duration) || 0) / 10000) }); return; }
       if (reason !== sdk.ResultReason.TranslatedSpeech) return;
       const r = extract(e.result, cfg);
       if (!r.text) return;
