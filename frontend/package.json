@@ -20,6 +20,7 @@
     "lint": "eslint .",
     "test:e2e": "node --test tests/e2e/liveChatWidget.e2e.test.mjs",
     "test:e2e:booking-source": "node --test tests/e2e/bookingSource/bookingSource.e2e.test.mjs",
+    "test:e2e:video-call": "node --test tests/e2e/videoCall/videoCall.e2e.test.mjs",
     "test:e2e:transcription": "node --test tests/e2e/transcription/transcription.e2e.test.mjs",
     "test:e2e:notes-panel": "node --test tests/e2e/visitNotePanel/visitNotePanel.e2e.test.mjs",
     "test:e2e:reschedule": "node --test tests/e2e/adminReschedule/adminReschedule.e2e.test.mjs",
