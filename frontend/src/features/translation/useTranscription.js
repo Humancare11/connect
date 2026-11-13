@@ -22,6 +22,9 @@ export const OFF_STATE = Object.freeze({
   unsupportedSpeech: false,
   fellBackToDetection: false,
   notice: "idle",
+  realVoiceMuted: false,
+  translationStatus: "off",
+  fallbackReason: null,
 });
 
 const noop = () => {};

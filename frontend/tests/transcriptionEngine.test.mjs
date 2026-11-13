@@ -221,7 +221,7 @@ test("the other person's real voice is lowered while the translation plays and r
   assert.equal(t.elements[0].volume, 1);
 });
 
-test("unclear speech (confidence under 0.4) is saved and flagged but never shown, spoken, or sent on; low speech is shown lighter", async () => {
+test("unclear speech (confidence under 0.4) is saved and flagged but never shown or spoken (it is sent so the other side can unmute); low speech is shown lighter", async () => {
   const t = await running();
   t.engine.setReadLanguage("de");
   t.socket.receive("caption", { appointmentId: APPT, from: "doctor", id: "u1", final: true, text: "mumble", srcLang: "en-US", conf: 0.2, tr: { de: "Gemurmel" }, at: 1 });
@@ -233,7 +233,9 @@ test("unclear speech (confidence under 0.4) is saved and flagged but never shown
 
   const before = t.sent("caption").length;
   say(t, "mumble mumble", { en: "mumble" }, { lang: "en-IN", conf: 0.2 });
-  assert.equal(t.sent("caption").length, before, "my own unclear sentence is not sent to the other person");
+  const unclearSent = t.sent("caption").slice(before);
+  assert.equal(unclearSent.length, 1, "my unclear sentence IS sent (the other device hides it, but then knows to give the real voice back)");
+  assert.equal(unclearSent[0].conf, 0.2);
   await flushUploads(t);
   assert.equal(t.calls.items.length, 1, "but it IS saved to the server");
   assert.equal(t.calls.items[0].confidence, 0.2);

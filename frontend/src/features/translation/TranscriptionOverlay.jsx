@@ -5,7 +5,8 @@
 //   • the subtitles
 // Nothing is drawn unless the engine is running, so with the feature off the call screen is exactly as it was.
 import { useState } from "react";
-import { FiX } from "react-icons/fi";
+import { FiVolume2, FiX } from "react-icons/fi";
+import { SPEAKING_TEXT, TRANSLATING_TEXT, TRANSLATION_UNAVAILABLE } from "./realVoiceGuard.js";
 import { MACHINE_TRANSLATED, NOTICE_LINE_1, NOTICE_LINE_2, RECONNECTING_TEXT, peerUnsupportedNote } from "./uiModel.js";
 import "./translation.css";
 
@@ -54,6 +55,14 @@ export function ReconnectingNotice() {
   );
 }
 
+// Tells the listener what the translated voice is doing, or that they are hearing the original voice because translation cannot deliver.
+export function TranslationStatus({ status }) {
+  if (status === "unavailable") return <div className="hc-tr__reconnect" role="alert">{TRANSLATION_UNAVAILABLE}</div>;
+  if (status === "waiting") return <div className="hc-tr__translating" role="status">{TRANSLATING_TEXT}</div>;
+  if (status === "speaking") return <div className="hc-tr__translating" role="status"><FiVolume2 aria-hidden="true" /> {SPEAKING_TEXT}</div>;
+  return null;
+}
+
 export function DoctorHint({ hint, onTurnOn, onDismiss }) {
   if (!hint) return null;
   return (
@@ -85,6 +94,7 @@ export default function TranscriptionOverlay({ state, actions, role, ownLanguage
         <TranscribingBadge />
         {!noticeClosed && <TranscribingNotice onDismiss={() => setNoticeClosed(true)} />}
         {state.reconnecting && <ReconnectingNotice />}
+        <TranslationStatus status={state.translationStatus} />
         {banner && <div className="hc-tr__banner" role="status">{banner}</div>}
         <DoctorHint hint={role === "doctor" ? state.hint : null} onTurnOn={turnOn} onDismiss={actions.dismissHint} />
       </div>

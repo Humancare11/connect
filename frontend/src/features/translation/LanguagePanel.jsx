@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FiSearch, FiX } from "react-icons/fi";
 import { NONE } from "./languages.js";
-import { MACHINE_TRANSLATED, buildLanguageRows, selectedNote } from "./uiModel.js";
+import { LANGUAGE_HELP, MACHINE_TRANSLATED, buildLanguageRows, selectedNote } from "./uiModel.js";
 import "./translation.css";
 
 export default function LanguagePanel({ open, onClose, state, actions }) {
@@ -40,7 +40,7 @@ export default function LanguagePanel({ open, onClose, state, actions }) {
       </div>
 
       <div className="hc-tr__panel-body">
-        <p className="hc-tr__help">Choose the language you want to read and hear. The other person chooses their own language on their screen.</p>
+        <p className="hc-tr__help">{LANGUAGE_HELP}</p>
 
         <div style={{ position: "relative" }}>
           <input

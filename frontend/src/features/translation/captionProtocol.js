@@ -89,6 +89,7 @@ export function createCaptionReceiver({
   onSubtitle = () => {},
   onVoice = () => {},
   onHint = () => {},
+  onUnspoken = () => {}, // a finished sentence of the other person that will NOT be spoken here (unclear, or no translation for me)
   now = () => Date.now(),
 } = {}) {
   const hintShownAt = new Map(); // language base -> time
@@ -116,8 +117,10 @@ export function createCaptionReceiver({
 
       if (!myLang || myLang === "none") return; // Real voice: no subtitles, no translated voice
       const text = translationFor(entry.tr, myLang);
-      if (!text) return;
-      if (!showLive(tier)) return; // unclear: saved by the speaker, but not shown and not spoken
+      if (!text || !showLive(tier)) { // unclear: saved by the speaker, but not shown and not spoken
+        if (entry.final) onUnspoken(entry);
+        return;
+      }
       onSubtitle({ id: entry.id, text, final: entry.final, lighter: showLighter(tier), from: entry.from });
       if (entry.final && speakAloud(tier) && isVoiceOn() && languageBase(entry.srcLang) !== languageBase(myLang)) {
         onVoice({ id: entry.id, text, lang: myLang });

@@ -11,13 +11,14 @@
 // feature is off the engine is simply never created.
 import { buildCandidateLocales } from "./candidates.js";
 import { createCaptionReceiver, createCaptionSender, createLangAnnouncer } from "./captionProtocol.js";
-import { confidenceTier, normalizeThresholds, safetyNetTriggered, showLive } from "./confidence.js";
+import { confidenceTier, normalizeThresholds, safetyNetTriggered } from "./confidence.js";
 import { createDucker } from "./ducker.js";
 import { createEchoBreaker, createEchoFilter } from "./echoFilter.js";
 import { NONE, canTranscribeLanguage, getLanguage, languageBase, localeForLanguage, voiceForLanguage } from "./languages.js";
 import { createMicPipeline } from "./micPipeline.js";
 import { createNoticeSender } from "./noticeSender.js";
 import { createRecognizerController } from "./recognizerController.js";
+import { QUIET_GAP_MS, SPEECH_LEVEL, STALL_MS, TICK_MS, UNCLEAR_HOLD_MS, VOICE_FAIL_HOLD_MS, WAITING_HOLD_MS, createElementMuter, createLevelMeter, evaluateGuard } from "./realVoiceGuard.js";
 import { createTokenManager } from "./tokenManager.js";
 import { createTranscriptUploader } from "./transcriptUploader.js";
 import { createVoiceQueue } from "./voiceQueue.js";
@@ -44,6 +45,7 @@ export function createTranscriptionEngine({
   clearTimer = (id) => clearTimeout(id),
   random = Math.random,
   doc = typeof document !== "undefined" ? document : null,
+  getPeerLevel = null, // () => 0..1 | null: how loud the other person is (default: measured from the remote audio element's stream)
 } = {}) {
   const thresholds = normalizeThresholds(config.thresholds);
   const listeners = new Set();
@@ -63,10 +65,14 @@ export function createTranscriptionEngine({
     unsupportedSpeech: false,
     fellBackToDetection: false,
     notice: "idle",
+    // Only one voice is heard: the other person's real voice is muted while the translated voice does the talking (see realVoiceGuard.js).
+    realVoiceMuted: false,
+    translationStatus: "off", // off | ready | waiting | speaking | unavailable
+    fallbackReason: null,
   };
 
   const emit = () => { for (const fn of [...listeners]) { try { fn(state); } catch { /* a bad subscriber must not break the call */ } } };
-  const set = (patch) => { state = { ...state, ...patch }; emit(); };
+  const set = (patch) => { state = { ...state, ...patch }; emit(); refreshGuard(); };
 
   // ---- parts, created in start() ----
   let sdk = null;
@@ -86,6 +92,18 @@ export function createTranscriptionEngine({
 
   const echo = createEchoFilter({ now });
   const breaker = createEchoBreaker({ now, onTrip: () => { voiceQueue.setEnabled(false); set({ voiceBreakerTripped: true }); } });
+  const muter = createElementMuter({ getElements: getRemoteElements });
+  const meter = createLevelMeter({ getContext: () => ctx, getElements: getRemoteElements });
+  const readPeerLevel = () => (getPeerLevel ? getPeerLevel() : meter.level());
+  let guardTimer = null;
+  let lastCaptionAt = -Infinity; // any caption from the other person: proof their recognizer is alive
+  let speechStart = null; // the other person has been speaking since (null = quiet)
+  let lastLoudAt = -Infinity;
+  let waitingUntil = 0;
+  let stalledLatch = false;
+  let voiceFailedUntil = 0;
+  let unclearUntil = 0;
+  let lastLevelAvailable = false;
   const ducker = createDucker({ getElements: getRemoteElements, allowGain: allowGainDucking });
 
   const noticeSender = createNoticeSender({
@@ -107,8 +125,9 @@ export function createTranscriptionEngine({
   const voiceQueue = createVoiceQueue({
     speak: (item) => playVoice(item),
     stop: () => { try { if (currentSource) currentSource.stop(); } catch { /* already stopped */ } },
-    onEnd: () => { ducker.restore(); },
-    onError: () => { ducker.restore(); },
+    onStart: () => { waitingUntil = 0; refreshGuard(); },
+    onEnd: () => { ducker.restore(); refreshGuard(); },
+    onError: () => { ducker.restore(); voiceFailedUntil = now() + VOICE_FAIL_HOLD_MS; refreshGuard(); }, // the real voice comes back
   });
 
   const receiver = createCaptionReceiver({
@@ -122,7 +141,58 @@ export function createTranscriptionEngine({
     onSubtitle: (s) => showSubtitle(s),
     onVoice: (v) => { voiceQueue.enqueue(v); },
     onHint: (h) => set({ hint: h }),
+    // A finished sentence that will not be spoken (unclear, or no translation): its real voice was muted, so give the real voice back for a while.
+    onUnspoken: () => { unclearUntil = now() + UNCLEAR_HOLD_MS; refreshGuard(); },
   });
+
+  // ---- one voice at a time -----------------------------------------------------------------------------------------------
+  function guardInputs() {
+    return {
+      readLang: state.readLang, peerReadLang: state.peerReadLang, voiceEnabled: state.voiceEnabled, breakerTripped: state.voiceBreakerTripped,
+      phase: state.phase, recognizerStatus: state.recognizerStatus, reconnecting: state.reconnecting,
+      tokenFailed: Boolean(tokens && tokens.isPermanentlyFailed()),
+      audioState: ctx ? ctx.state : "none", levelAvailable: lastLevelAvailable,
+      stalled: stalledLatch, voiceFailed: now() < voiceFailedUntil, unclearHold: now() < unclearUntil,
+    };
+  }
+
+  let guarding = false;
+  function refreshGuard() {
+    if (guarding) return;
+    guarding = true;
+    try {
+      const verdict = stopped ? { expected: false, mute: false, reason: null, showMessage: false } : evaluateGuard(guardInputs());
+      muter.apply(verdict.mute); // element.muted, every time: a re-created element or a new stream is covered too
+      let status = "off";
+      if (verdict.showMessage) status = "unavailable";
+      else if (verdict.mute) status = voiceQueue.isSpeaking() ? "speaking" : now() < waitingUntil || voiceQueue.waitingCount() > 0 ? "waiting" : "ready";
+      if (state.realVoiceMuted !== verdict.mute || state.translationStatus !== status || state.fallbackReason !== verdict.reason) {
+        state = { ...state, realVoiceMuted: verdict.mute, translationStatus: status, fallbackReason: verdict.reason };
+        emit();
+      }
+    } catch { /* never into the call */ } finally { guarding = false; }
+  }
+
+  // Twice a second: is the other person speaking, and is anything arriving? (the 8-second rule)
+  function guardTick() {
+    guardTimer = null;
+    if (stopped) return;
+    try {
+      const level = readPeerLevel();
+      lastLevelAvailable = typeof level === "number";
+      const t = now();
+      if (lastLevelAvailable && level > SPEECH_LEVEL) {
+        lastLoudAt = t;
+        if (speechStart === null) speechStart = t;
+        waitingUntil = t + WAITING_HOLD_MS;
+      } else if (speechStart !== null && t - lastLoudAt > QUIET_GAP_MS) {
+        speechStart = null;
+      }
+      if (state.realVoiceMuted && speechStart !== null && t - Math.max(speechStart, lastCaptionAt) > STALL_MS) stalledLatch = true; // latched until a caption arrives
+    } catch { /* ignore */ }
+    refreshGuard();
+    guardTimer = setTimer(guardTick, TICK_MS);
+  }
 
   // ---- helpers ----------------------------------------------------------------------------------------------------------
   function addTranscript(entry) {
@@ -182,7 +252,7 @@ export function createTranscriptionEngine({
       currentSource = source;
       const handle = echo.voiceStarted(item.text);
       ducker.duck();
-      source.onended = () => { echo.voiceEnded(handle); if (currentSource === source) currentSource = null; resolve(); };
+      source.onended = () => { voiceFailedUntil = 0; echo.voiceEnded(handle); if (currentSource === source) currentSource = null; resolve(); };
       source.start();
     });
   }
@@ -212,8 +282,9 @@ export function createTranscriptionEngine({
     addTranscript({ who: "me", from: role === "doctor" ? "doctor" : "patient", id: `me-${nowPerf()}`, final: true, text: f.text, tr: f.tr, srcLang: f.srcLang, conf: f.confidence, tier, at: now(), flags: { echo: verdict.echo } });
 
     if (verdict.echo) { breaker.record(); return; }
-    if (showLive(tier)) captionSender.final({ text: f.text, tr: f.tr, srcLang: f.srcLang, confidence: f.confidence });
-    else captionSender.abandon();
+    // Always sent (echo excepted). An unclear sentence is not shown or spoken on the other side, but its arrival tells that device that a
+    // sentence was not translated, so the real voice is not left muted.
+    captionSender.final({ text: f.text, tr: f.tr, srcLang: f.srcLang, confidence: f.confidence });
 
     // The wrong-language safety net (only when a language was picked): nonsense with low confidence means the pick does not match
     // what is spoken, so listen with detection instead, at the next pause.
@@ -241,6 +312,8 @@ export function createTranscriptionEngine({
   }
   function handleIncomingCaption(msg) {
     if (!mine(msg) || stopped) return;
+    lastCaptionAt = now();
+    if (stalledLatch) stalledLatch = false; // translation is arriving again: the real voice goes quiet again
     receiver.handle(msg);
   }
 
@@ -297,6 +370,7 @@ export function createTranscriptionEngine({
           isUnavailable: () => tokens.isPermanentlyFailed(),
         });
 
+        if (guardTimer === null) guardTimer = setTimer(guardTick, TICK_MS);
         pipeline.start();
         pipeline.setMuted(state.muted);
         await recognizer.start(recognitionConfig());
@@ -351,6 +425,7 @@ export function createTranscriptionEngine({
       if (!started || stopped) return; // never started (React's development double-mount): nothing to stop, and it can still be started
       stopped = true;
       clearTimer(subtitleTimer);
+      clearTimer(guardTimer); guardTimer = null;
       captionSender.stop();
       voiceQueue.clear();
       ducker.restore();
@@ -361,6 +436,7 @@ export function createTranscriptionEngine({
       if (tokens) tokens.stop();
       offSocket.forEach((off) => off());
       set({ phase: "stopped", subtitle: null });
+      muter.apply(false); meter.release(); // the real voice is never left muted
       const result = await uploader.flush(); // everything that is left, now
       uploader.close();
       return result;

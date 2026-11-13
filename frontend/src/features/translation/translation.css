@@ -520,3 +520,17 @@
 .hc-tr__confirm .hc-tr__actions {
   margin-top: 8px;
 }
+
+.hc-tr__translating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #bae6fd;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
