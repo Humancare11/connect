@@ -750,7 +750,10 @@ const ChronicMedicationManagement = lazy(
   () => import("./pages/NewServices/ChronicCareManagment"),
 );
 const SecondOpinion = lazy(() => import("./pages/NewServices/SecondOpinion"));
-// import DoctorNote from "./pages/NewServices/DoctorNote";
+const DoctorNoteSickNote = lazy(
+  () => import("./pages/NewServices/DoctorNoteSickNote"),
+);
+
 // Services
 
 const ServicesPrices = lazy(() => import("./pages/admin/ServicesPrices"));
@@ -3454,6 +3457,10 @@ export function AppLayout() {
                 <Route
                   path="/online-second-medical-opinion"
                   element={<SecondOpinion />}
+                />
+                <Route
+                  path="/doctors-note-sick-notes"
+                  element={<DoctorNoteSickNote />}
                 />
                 {/* <Route path="/mens-health-men-health" element={<SpeMensHealth />} /> */}
                 <Route
