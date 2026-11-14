@@ -407,7 +407,8 @@ export function createTranscriptionEngine({
         listen("caption", handleIncomingCaption);
         listen("tr-status", handleIncomingStatus);
         listen("peer-joined", () => { announcer.resend(); statusAnnouncer.resend(); });
-        listen("connect", () => { announcer.resend(); statusAnnouncer.resend(); });
+        // NOT on "connect" / the socket's "reconnect": the server refuses these until the room is joined again (not_in_room).
+        // The server answers a confirmed join with "peer-joined" whenever the other person is there, and that resends them.
         announcer.announce(NONE);
 
         try {
@@ -458,6 +459,7 @@ export function createTranscriptionEngine({
       set({ readLang: lang, unsupportedSpeech: unsupported, fellBackToDetection: false, subtitle: lang === NONE ? null : state.subtitle });
       if (lang === NONE) voiceQueue.clear();
       announcer.announce(lang);
+      if (lang !== NONE && tokens && tokens.resetServerFailures()) { tokens.refresh().catch(() => {}); set({}); } // picking a language again = try once more
       if (recognizer) recognizer.requestRestart(recognitionConfig()); // my own language changed: applied at the next pause
     },
 
@@ -483,7 +485,7 @@ export function createTranscriptionEngine({
     swapMicStream(stream) { if (pipeline) pipeline.swapStream(stream); },
     dismissHint() { set({ hint: null }); },
     onPeerJoined() { announcer.resend(); statusAnnouncer.resend(); },
-    onSocketReconnected() { announcer.resend(); statusAnnouncer.resend(); },
+    onSocketReconnected() { /* nothing to send yet: the room join is not confirmed; the "peer-joined" that follows it resends */ },
     handleIncomingCaption,
     handleIncomingLang,
 

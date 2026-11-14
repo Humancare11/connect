@@ -170,13 +170,15 @@ test("messages for another appointment, or junk, are ignored", async () => {
   assert.equal(t.engine.getState().transcript.length, 0);
 });
 
-test("the other person joins or the socket reconnects: my language is announced again", async () => {
+test("my language is announced again only when the room join is confirmed (peer-joined), NOT on connect / reconnect", async () => {
   const t = await running();
   const before = t.sent("lang-changed").length;
-  t.socket.receive("peer-joined", {});
   t.socket.receive("connect");
+  t.engine.onSocketReconnected();
+  assert.equal(t.sent("lang-changed").length, before, "the room is not joined again yet: the server would refuse it (not_in_room)");
+  t.socket.receive("peer-joined", {});
   t.engine.onPeerJoined();
-  assert.equal(t.sent("lang-changed").length, before + 3);
+  assert.equal(t.sent("lang-changed").length, before + 2);
   assert.ok(t.sent("lang-changed").every((m) => m.lang === "none" && m.appointmentId === APPT));
 });
 

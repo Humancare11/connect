@@ -374,3 +374,43 @@ test("static: the uploader never touches browser storage or logs", async () => {
     assert.equal(/\bconsole\s*\./.test(src), false, file + " must not log");
   }
 });
+
+// ---------------------------------------------------------------------------------------------------------------- server keeps failing (502)
+test("three server errors (502) in a row stop the token requests: nothing more is asked, the cap is not burned", async () => {
+  const { clock, calls, mgr } = tokenSetup({ answers: [httpError(502), httpError(502), httpError(502), { token: "never", region: "eastus", expiresInSeconds: 600 }] });
+  await assert.rejects(mgr.getToken());
+  await clock.advance(1200); await clock.advance(2500);
+  assert.equal(calls.fetch, 3);
+  assert.equal(mgr.isPermanentlyFailed(), true);
+  assert.deepEqual(calls.permanent, [502]);
+  await clock.advance(30 * 60 * 1000);
+  assert.equal(calls.fetch, 3, "no further requests, ever, until the person asks again");
+  assert.equal(clock.pending(), 0);
+  mgr.stop();
+});
+
+test("a success in between resets the count; network errors and ordinary 429 never trigger the stop", async () => {
+  const { clock, calls, mgr } = tokenSetup({ answers: [httpError(502), httpError(502), { token: "A", region: "eastus", expiresInSeconds: 120 }, httpError(502), networkError(), httpError(429, {}, { "retry-after": "1" }), { token: "B", region: "eastus", expiresInSeconds: 600 }] });
+  await assert.rejects(mgr.getToken()); await clock.advance(1200); await clock.advance(2500);
+  assert.equal((await mgr.getToken()).token, "A");
+  await clock.advance(120 * 1000 - REFRESH_BEFORE_MS + 100);
+  for (let i = 0; i < 6; i++) await clock.advance(2500);
+  assert.equal(mgr.isPermanentlyFailed(), false);
+  assert.ok(calls.tokens.includes("B"));
+  mgr.stop();
+});
+
+test("asking again (picking a language) allows a new try after the 502 stop, but never after a real refusal", async () => {
+  const { clock, calls, mgr } = tokenSetup({ answers: [httpError(502), httpError(502), httpError(502), { token: "OK", region: "eastus", expiresInSeconds: 600 }] });
+  await assert.rejects(mgr.getToken()); await clock.advance(1200); await clock.advance(2500);
+  assert.equal(mgr.isPermanentlyFailed(), true);
+  assert.equal(mgr.resetServerFailures(), true);
+  assert.equal((await mgr.getToken()).token, "OK");
+  assert.equal(mgr.resetServerFailures(), false, "nothing to reset now");
+  mgr.stop();
+  const cap = tokenSetup({ answers: [httpError(429, { code: "appointment_cap" })] });
+  await assert.rejects(cap.mgr.getToken());
+  assert.equal(cap.mgr.resetServerFailures(), false);
+  assert.equal(cap.mgr.isPermanentlyFailed(), true);
+  cap.mgr.stop();
+});

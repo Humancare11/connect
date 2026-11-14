@@ -270,13 +270,16 @@ test("SENDING: no-match is announced every time (each is an event); the status r
   assert.equal(t.sentStatuses().length, n);
 });
 
-test("SENDING: the last problem is repeated when the other person joins or the socket reconnects, and an ok state sends nothing extra", async () => {
+test("SENDING: the last problem is repeated when the room join is confirmed, and an ok state sends nothing extra", async () => {
   const t = await running();
   t.engine.onPeerJoined();
   assert.deepEqual(t.sentStatuses(), [], "ok is the default: nothing to repeat");
   t.mic(0.3); await t.clock.advance(3500);
   t.engine.onSocketReconnected();
-  assert.deepEqual(t.sentStatuses(), ["stalled", "stalled"]);
+  t.socket.receive("connect");
+  assert.deepEqual(t.sentStatuses(), ["stalled"], "a reconnect alone sends nothing (room not rejoined yet)");
+  t.socket.receive("peer-joined", {});
+  assert.deepEqual(t.sentStatuses(), ["stalled", "stalled"], "the confirmed join repeats the problem");
 });
 
 test("status announcer: only changes are sent", () => {
