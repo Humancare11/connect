@@ -39,8 +39,8 @@ const freePort = () => new Promise((resolve, reject) => {
   srv.listen(0, "127.0.0.1", () => { const { port } = srv.address(); srv.close(() => resolve(port)); });
 });
 
-function suite(label, flagOn) {
-  describe(`video call connects: ${label}`, { skip: skipReason || false }, () => {
+function suite(label, flagOn, aloneOnly = false) {
+  describe(`video call ${aloneOnly ? "doctor waits alone" : "connects"}: ${label}`, { skip: skipReason || false }, () => {
     let stack;
     let vite;
     let browser;
@@ -128,6 +128,52 @@ function suite(label, flagOn) {
       return { has: tracks.length > 0, live: tracks.some((t) => t.readyState === "live"), muted: a ? a.muted : null, volume: a ? a.volume : null };
     };
 
+    if (aloneOnly) {
+    test("the doctor opens the call FIRST and waits alone: the page finishes loading (no endless spinner), nothing stays pending", async () => {
+      const lonely = await newPlayer("doctor"); // own browser context, closed again before the real call test
+      const pending = new Map();
+      lonely.on("request", (r) => pending.set(r, r.url()));
+      lonely.on("requestfinished", (r) => pending.delete(r));
+      lonely.on("requestfailed", (r) => pending.delete(r));
+      await lonely.goto(`${viteUrl}/video-call/${stack.ids.appointmentId}?role=doctor`, { waitUntil: "load", timeout: 40000 }); // rejects if the load event never fires
+      assert.equal(await lonely.evaluate(() => document.readyState), "complete");
+      await new Promise((r) => setTimeout(r, 2000));
+      // long-lived socket.io polling/websocket requests may be open; anything else still pending would keep the tab "loading"
+      const stuck = [...pending.values()].filter((u) => !/\/socket\.io\//.test(u) && !/google|analytics|doubleclick/i.test(u));
+      assert.deepEqual(stuck, []);
+      await lonely.context().close();
+    });
+
+
+      test("the real microphone pipeline runs on an AudioWorklet in Chromium and delivers 16 kHz audio (no ScriptProcessor)", async () => {
+        const page = await newPlayer("doctor");
+        await page.goto(`${viteUrl}/`, { waitUntil: "domcontentloaded" });
+        const result = await page.evaluate(async () => {
+          const { createMicPipeline } = await import("/src/features/translation/micPipeline.js");
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const ctx = new AudioContext();
+          await ctx.resume();
+          let bytes = 0; let chunks = 0;
+          const usedScriptProcessor = { n: 0 };
+          const orig = ctx.createScriptProcessor.bind(ctx);
+          ctx.createScriptProcessor = (...a) => { usedScriptProcessor.n += 1; return orig(...a); };
+          const pipe = createMicPipeline({ ctx, stream, sink: (ab) => { bytes += ab.byteLength; chunks += 1; } });
+          pipe.start();
+          await new Promise((r) => setTimeout(r, 3000));
+          const stats = pipe.stats();
+          const peak = pipe.recentPeak(3000);
+          pipe.stop();
+          return { chunks, bytes, worklet: stats.worklet, scriptProcessors: usedScriptProcessor.n, peak, rate: ctx.sampleRate };
+        });
+        assert.equal(result.worklet, true, JSON.stringify(result));
+        assert.equal(result.scriptProcessors, 0);
+        assert.ok(result.chunks >= 5, `chunks: ${JSON.stringify(result)}`);
+        assert.ok(Math.abs(result.bytes - (result.chunks * 4096 * 16000) / result.rate * 2) < result.chunks * 8, "16 kHz 16-bit sizes");
+        await page.context().close();
+      });
+      return;
+    }
+
     test("doctor and patient connect, hear each other, and nothing has been muted", async () => {
       const id = stack.ids.appointmentId;
       await patientPage.goto(`${viteUrl}/video-call/${id}?role=user`);
@@ -184,3 +230,6 @@ function suite(label, flagOn) {
 
 suite("transcription flags OFF (as before)", false);
 suite("transcription flags ON", true);
+// Separate stacks: the doctor who waited alone must not still hold the room when the real call test starts.
+suite("transcription flags OFF", false, true);
+suite("transcription flags ON", true, true);

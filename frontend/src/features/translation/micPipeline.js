@@ -15,6 +15,15 @@ export const STALL_MS = 2000;
 export const CLIP_LEVEL = 0.99;
 const WATCHDOG_MS = 1000;
 
+// AudioWorklet processor (runs on the audio thread): public/mic-capture-worklet.js, collects the 128-frame blocks into CHUNK_SAMPLES and
+// posts each chunk to the page. It is a real file served from our own origin because the page's Content-Security-Policy
+// (script-src 'self') refuses blob: scripts. If the browser or the server refuses it we fall back to ScriptProcessor.
+export const WORKLET_NAME = "hc-mic-capture";
+export const WORKLET_URL = "/mic-capture-worklet.js";
+function workletSupported(ctx) {
+  return Boolean(ctx && ctx.audioWorklet && typeof ctx.audioWorklet.addModule === "function" && typeof AudioWorkletNode !== "undefined");
+}
+
 // Averages groups of input samples down to the target rate and converts to 16-bit integers.
 export function downsampleToInt16(input, ratio) {
   const n = Math.floor(input.length / ratio);
@@ -123,18 +132,50 @@ export function createMicPipeline({
 
   function connectSource(mediaStream) {
     if (src) { try { src.disconnect(); } catch { /* already gone */ } }
+    if (!proc) return; // the worklet is still loading: it connects the current stream when ready
     src = ctx.createMediaStreamSource(mediaStream);
     src.connect(proc);
+  }
+
+  // Old way (also the fallback): a ScriptProcessorNode on the page's main thread.
+  function startScriptProcessor() {
+    proc = ctx.createScriptProcessor(CHUNK_SAMPLES, 1, 1);
+    proc.onaudioprocess = onChunk;
+    connectSource(currentStream);
+    proc.connect(ctx.destination); // it writes silence to the output; it must be connected for the browser to run it
+  }
+
+  // Preferred way: an AudioWorklet (audio thread, not deprecated). Falls back to the old way if anything about it fails.
+  async function startWorklet() {
+    try {
+      await ctx.audioWorklet.addModule(WORKLET_URL);
+      if (!started) return; // stopped while loading
+      const node = new AudioWorkletNode(ctx, WORKLET_NAME, { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1], processorOptions: { chunk: CHUNK_SAMPLES } });
+      node.port.onmessage = (e) => { if (e.data && e.data.length) onChunk({ inputBuffer: { getChannelData: () => e.data } }); };
+      node.onprocessorerror = () => { if (proc === node) switchToScriptProcessor(); };
+      proc = node;
+      connectSource(currentStream);
+      node.connect(ctx.destination); // silent output; some browsers only run a connected node
+      stats.worklet = true;
+    } catch {
+      if (started) switchToScriptProcessor();
+    }
+  }
+  function switchToScriptProcessor() {
+    releaseProc();
+    stats.worklet = false;
+    try { startScriptProcessor(); } catch { /* no audio processing available: the stall detector reports it */ }
+  }
+  function releaseProc() {
+    try { if (proc) { if (proc.port) { proc.port.onmessage = null; } proc.onaudioprocess = null; proc.disconnect(); } if (src) src.disconnect(); } catch { /* already gone */ }
+    proc = null; src = null;
   }
 
   return {
     start() {
       if (started) return;
       started = true;
-      proc = ctx.createScriptProcessor(CHUNK_SAMPLES, 1, 1);
-      proc.onaudioprocess = onChunk;
-      connectSource(currentStream);
-      proc.connect(ctx.destination); // it writes silence to the output; it must be connected for the browser to run it
+      if (workletSupported(ctx)) startWorklet(); else startScriptProcessor();
       lastChunkAt = nowPerf();
       watchTrack(currentStream);
       if (ctx.addEventListener) {
@@ -172,7 +213,7 @@ export function createMicPipeline({
       offTrack.forEach((off) => off()); offTrack = [];
       if (offCtx) offCtx(); if (offDoc) offDoc();
       endGap();
-      try { if (proc) { proc.onaudioprocess = null; proc.disconnect(); } if (src) src.disconnect(); } catch { /* already gone */ }
+      releaseProc();
     },
     // The loudest sample of the last `windowMs` (0 when nothing arrived): "is this person clearly speaking?"
     recentPeak(windowMs = 2000) { const from = nowPerf() - windowMs; let m = 0; for (const [t, p] of peaks) if (t >= from && p > m) m = p; return m; },
