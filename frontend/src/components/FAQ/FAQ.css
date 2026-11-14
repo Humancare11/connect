@@ -22,7 +22,7 @@
   --faq-font-body: var(--font-secondary);
 
   background: var(--faq-blue-pale);
-  padding: 96px 32px;
+  padding: var(--section-gap, 80px) 32px;
   font-family: var(--faq-font-body);
   color: var(--faq-ink);
 }

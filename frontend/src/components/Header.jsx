@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import "./header.css";
 import { Link, useLocation } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
@@ -109,6 +110,42 @@ export default function Header() {
     setHelpOpen(false);
   }, [location.pathname]);
 
+  /* Keep the dropdown mounted briefly after closing so it can fade out. */
+  const [helpRender, setHelpRender] = useState(false);
+  const helpDropdownRef = useRef(null);
+  const [helpBox, setHelpBox] = useState(null);
+  /* Blur layer is sized to the card only (see the portal below). */
+  useLayoutEffect(() => {
+    if (!helpRender) {
+      setHelpBox(null);
+      return undefined;
+    }
+    const measure = () => {
+      const el = helpDropdownRef.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      setHelpBox({
+        left: r.left + r.width / 2 - w / 2,
+        top: r.top + r.height / 2 - h / 2,
+        width: w,
+        height: h,
+      });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [helpRender]);
+  useEffect(() => {
+    if (helpOpen) {
+      setHelpRender(true);
+      return undefined;
+    }
+    const tid = setTimeout(() => setHelpRender(false), 220);
+    return () => clearTimeout(tid);
+  }, [helpOpen]);
+
   const navItems = [
     ...(location.pathname !== "/" ? [{ label: "Home", link: "/" }] : []),
     { label: "About Us", link: "/about-us" },
@@ -194,6 +231,14 @@ export default function Header() {
       if (e.key === "Escape") setHelpOpen(false);
     };
 
+    /* Any scroll (page, either axis, or touch) closes the dropdown; scrolling
+       inside the panel itself does not. Capture phase catches nested scrollers. */
+    const handleScrollClose = (e) => {
+      if (helpWrapRef.current && e.target instanceof Node && helpWrapRef.current.contains(e.target)) return;
+      setHelpOpen(false);
+    };
+    window.addEventListener("scroll", handleScrollClose, { passive: true, capture: true });
+
     const tid = setTimeout(() => {
       document.addEventListener("mousedown", handleOutside);
       document.addEventListener("keydown", handleEsc);
@@ -201,6 +246,7 @@ export default function Header() {
 
     return () => {
       clearTimeout(tid);
+      window.removeEventListener("scroll", handleScrollClose, { capture: true });
       document.removeEventListener("mousedown", handleOutside);
       document.removeEventListener("keydown", handleEsc);
     };
@@ -309,10 +355,23 @@ export default function Header() {
                 </div>
               </div>
 
+              {/* Blur layer exactly behind the card (portal: the header's own
+                  backdrop-filter stops a nested blur from reaching the page). */}
+              {helpRender && helpBox &&
+                createPortal(
+                  <div
+                    className={`help-backdrop${helpOpen ? "" : " is-closing"}`}
+                    style={helpBox}
+                    aria-hidden="true"
+                  />,
+                  document.body,
+                )}
+
               {/* HELP DROPDOWN */}
-              {helpOpen && (
+              {helpRender && (
                 <div
-                  className="help-dropdown"
+                  ref={helpDropdownRef}
+                  className={`help-dropdown${helpOpen ? "" : " is-closing"}`}
                   role="menu"
                   aria-label="Care categories"
                 >

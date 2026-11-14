@@ -3,7 +3,7 @@
 ══════════════════════════════════════════════ */
 
 .why-section-container {
-  margin: 80px auto;
+  margin: var(--section-gap) auto;
   max-width: 1500px;
   width: calc(100% - 48px);
 }

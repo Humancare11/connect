@@ -287,10 +287,10 @@
   width: min(780px, calc(100vw - 32px));
   box-sizing: border-box;
   z-index: 90;
-  background: rgba(255, 255, 255, 0.96);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
-  backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(200, 215, 255, 0.5);
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   border-radius: 26px;
   padding: 20px 20px 20px;
   box-shadow:
@@ -300,6 +300,48 @@
 
   animation: dropdownIn 0.22s var(--ease-out-expo) both;
   will-change: transform, opacity;
+}
+
+.help-backdrop {
+  position: fixed;
+  z-index: 79;
+  border-radius: 26px;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
+  animation: backdropIn 0.25s ease both;
+}
+
+.help-backdrop.is-closing {
+  animation: backdropOut 0.22s ease both;
+  pointer-events: none;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes backdropOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.help-dropdown.is-closing {
+  animation: dropdownOut 0.22s var(--ease-out-expo) both;
+  pointer-events: none;
+}
+
+@keyframes dropdownOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
 }
 
 @keyframes dropdownIn {
@@ -447,8 +489,8 @@
   border-radius: 999px;
   color: var(--ink-2);
   font-family: var(--font-primary);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 800;
   letter-spacing: -0.01em;
   white-space: nowrap;
   text-decoration: none;

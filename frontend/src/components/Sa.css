@@ -2,7 +2,7 @@
 .services-section-wrapper {
   position: relative;
   width: min(calc(100% - clamp(16px, 4vw, 48px)), 1500px);
-  margin: clamp(36px, 6vw, 80px) auto;
+  margin: var(--section-gap) auto;
   padding: clamp(36px, 6vw, 70px) clamp(16px, 4vw, 50px);
   border-radius: clamp(20px, 3.5vw, 36px);
   overflow: hidden;
@@ -456,7 +456,7 @@
   .services-section-wrapper {
     padding: clamp(32px, 5vw, 44px) clamp(10px, 3vw, 18px);
     width: min(calc(100% - 16px), 1500px);
-    margin: 28px auto 44px;
+    margin: var(--section-gap) auto;
     border-radius: clamp(18px, 4vw, 28px);
   }
 

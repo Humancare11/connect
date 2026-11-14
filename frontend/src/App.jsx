@@ -52,7 +52,6 @@ const Login = lazy(() => import("./pages/Login"));
 const BookAppointment = lazy(() => import("./pages/BookAppointment"));
 const VideoCall = lazy(() => import("./pages/VideoCall"));
 const DirectVideoCall = lazy(() => import("./pages/DirectVideoCall"));
-const Serviceareas = lazy(() => import("./pages/Serviceareas"));
 import { useAdmin } from "./context/AdminContext";
 import { legacyAdminRedirects } from "./pages/admin/legacyRedirects";
 import { useAuth } from "./context/AuthContext";
@@ -1323,7 +1322,6 @@ export function AppLayout() {
                   path="/appointment-booking"
                   element={<AppointmentBooking />}
                 />
-                <Route path="/service-areas" element={<Serviceareas />} />
                 <Route
                   path="/appointment-booking/:catSlug"
                   element={<AppointmentBooking />}

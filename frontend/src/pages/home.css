@@ -2,6 +2,9 @@
 
 /* ═══ CSS VARIABLES ═════ */
 :root {
+  /* Vertical rhythm: one gap between homepage sections, a tighter one around the ticker */
+  --section-gap: clamp(40px, 6vw, 80px);
+  --section-gap-sm: clamp(24px, 3.5vw, 40px);
   --bg: #f4f7fb;
   --section: #dce6f2;
   --primary: #223a5e;
@@ -51,7 +54,7 @@ h4 {
   position: relative;
   width: calc(100% - 48px);
   max-width: 1500px;
-  margin: 100px auto 40px;
+  margin: 100px auto var(--section-gap);
   min-height: unset;
   display: flex;
   align-items: stretch;
@@ -1052,7 +1055,7 @@ h4 {
   .hero {
     flex-direction: column;
     width: calc(100% - 32px);
-    margin: 90px auto 32px;
+    margin: 90px auto var(--section-gap);
     padding: 44px 36px;
     gap: 32px;
     border-radius: 28px;
@@ -1106,7 +1109,7 @@ h4 {
   .hero {
     flex-direction: column;
     width: calc(100% - 24px);
-    margin: 56px auto 28px;
+    margin: 56px auto var(--section-gap);
     padding: 36px 28px;
     gap: 28px;
     border-radius: 24px;
@@ -1189,7 +1192,7 @@ h4 {
   .hero {
     flex-direction: column;
     width: calc(100% - 16px);
-    margin: 80px auto 20px;
+    margin: 80px auto var(--section-gap);
     padding: 28px 20px;
     gap: 24px;
     border-radius: 20px;
@@ -1497,7 +1500,7 @@ h4 {
 ══════════════════════════════════════════════ */
 
 .testimonials-section {
-  padding: 50px 0 50px;
+  padding: var(--section-gap-sm) 0;
   background: #eef2f7;
   overflow: hidden;
   display: flex;
@@ -1720,7 +1723,7 @@ h4 {
 /* Testimonials Responsive */
 @media (max-width: 768px) {
   .testimonials-section {
-    padding: 80px 0 60px;
+    padding: var(--section-gap-sm) 0;
   }
 
   .testi-title {
@@ -1742,7 +1745,7 @@ h4 {
 
 @media (max-width: 520px) {
   .testimonials-section {
-    padding: 70px 0 50px;
+    padding: var(--section-gap-sm) 0;
   }
 
   .testi-title {
@@ -1784,7 +1787,8 @@ h4 {
 ══════════════════════════════════════════════ */
 
 .cta-band {
-  padding: 60px 0 80px;
+  padding: 0;
+  margin: var(--section-gap) 0;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -1956,7 +1960,7 @@ h4 {
 
 @media (max-width: 768px) {
   .cta-band {
-    padding: 40px 0 60px;
+    padding: 0;
   }
 
   .cta-inner {
@@ -1967,7 +1971,7 @@ h4 {
 
 @media (max-width: 520px) {
   .cta-band {
-    padding: 30px 0 48px;
+    padding: 0;
   }
 
   .cta-inner {

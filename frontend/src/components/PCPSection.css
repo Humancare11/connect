@@ -7,7 +7,7 @@
   position: relative;
   width: calc(100% - 48px);
   max-width: 1500px;
-  margin: 80px auto 40px;
+  margin: var(--section-gap) auto;
   padding: 70px 52px;
   border-radius: 34px;
 
@@ -454,7 +454,7 @@
     width: calc(100% - 16px);
     padding: 40px 18px;
     border-radius: 22px;
-    margin: 48px auto 32px;
+    margin: var(--section-gap) auto;
   }
 
   .pcp-title {
