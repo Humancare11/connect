@@ -424,11 +424,7 @@ export const SEO_ROUTES = {
   "/women-health/women-mental-health/perinatal-anxiety": {"title":"Perinatal Anxiety Treatment Online | Pregnancy & Postpartum Mental Health","description":"Get compassionate support for perinatal anxiety online. Connect with a licensed provider for pregnancy and postpartum anxiety, emotional wellness.","lastmod":"2026-08-24"},
   "/women-health/women-mental-health/pmdd": {"title":"PMDD Treatment Online | Premenstrual Dysphoric Disorder Care","description":"Get expert online care for PMDD. Connect with a licensed provider for severe premenstrual symptoms, mood changes, anxiety, depression, hormone-related concerns.","lastmod":"2026-08-24"},
   "/women-health/women-mental-health/postnatal-depression": {"title":"Postnatal Depression Treatment Online | Postpartum Mental Health Care","description":"Get compassionate support for postnatal depression online. Connect with a licensed provider for postpartum depression, anxiety, mood changes.","lastmod":"2026-08-24"},
-"/doctors-note-sick-notes": {
-  title: "Doctor's Note & Sick Notes | Humancare Connect",
-  description: "Get professional medical consultations and doctor's notes through Humancare Connect.",
-  lastmod: "2026-11-15"
-},
+  "/doctors-note-sick-notes": {"title":"Doctor's Note & Sick Notes | Humancare Connect","description":"Get professional medical consultations and doctor's notes through Humancare Connect.","lastmod":"2026-11-15"},
 };
 
 export function normalizePath(pathname = "/") {
