@@ -1,0 +1,20 @@
+.sgp { display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: #1f2433; }
+.sgp-img-box, .sgp-preview { border: 1px dashed #c7d6ee; border-radius: 8px; padding: 6px; max-width: 280px; background:
+  conic-gradient(#f1f4fa 25%, #fff 0 50%, #f1f4fa 0 75%, #fff 0) 0 0 / 14px 14px; }
+.sgp-img-box img, .sgp-preview img { display: block; max-height: 70px; max-width: 100%; width: auto; margin: 0 auto; }
+.sgp-muted { font-size: 12px; color: #64748b; margin: 0; }
+.sgp-prompt { margin: 0; padding: 9px 12px; border-radius: 8px; background: #fff8e6; border: 1px solid #f3dd9b; color: #7a5a00; font-size: 13px; }
+.sgp-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sgp-btn { border: 1px solid #c7d6ee; background: #eef4ff; color: #12296b; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.sgp-btn:hover:not(:disabled) { background: #dfeaff; }
+.sgp-btn:disabled { opacity: 0.6; cursor: default; }
+.sgp-btn--primary { background: #12296b; color: #fff; border-color: #12296b; }
+.sgp-btn--primary:hover:not(:disabled) { background: #0c1d4f; }
+.sgp-error { font-size: 13px; color: #b42318; background: #fdecea; border: 1px solid #f5c2bd; padding: 9px 12px; border-radius: 8px; }
+.sgp-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; }
+.sgp-draw { border: 1px solid #c7d6ee; border-radius: 8px; background: #fff; touch-action: none; max-width: 100%; }
+.sgp-pending { display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid #e3e9f3; border-radius: 10px; background: #f8faff; }
+.sgp-pending strong { font-size: 13px; color: #12296b; }
+.sgp-option { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid #e3e9f3; border-radius: 10px; background: #f8faff; margin: 12px 0; }
+.sgp-btn--link { align-self: flex-start; background: none; border: none; padding: 0; color: #1e63d6; text-decoration: underline; font-weight: 600; }
+.sgp-btn--link:hover:not(:disabled) { background: none; }

@@ -25,6 +25,8 @@ import { useSlowConnectNotice } from "../utils/slowConnectNotice";
 import { createLocalMediaRecovery, hasEndedTrack } from "../utils/localMediaRecovery";
 import { ensureLocalTracksSentInAnswer } from "../utils/webrtcTransceivers";
 import VisitNoteEditor from "../components/VisitNoteEditor";
+import SignDocumentOption from "../components/SignDocumentOption";
+import useDoctorSignature from "../hooks/useDoctorSignature";
 import {
   FiAlertTriangle,
   FiCheckCircle,
@@ -174,6 +176,9 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
   );
   const [instructions, setInstructions] = useState(draft?.instructions || "");
   const [followUpDate, setFollowUpDate] = useState(draft?.followUpDate || "");
+  // In a call: only "Sign with saved signature". No saved signature never blocks the call or the prescription.
+  const signature = useDoctorSignature();
+  const [sign, setSign] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -230,6 +235,7 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
           medicines: medicines.filter((m) => m.name.trim()),
           instructions,
           followUpDate,
+          sign,
         },
         {
           authRole: "doctor",
@@ -242,6 +248,10 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
       }
       onSaved();
     } catch (err) {
+      if (err.response?.data?.code === "SIGNATURE_REQUIRED") {
+        setSign(false);
+        signature.refresh();
+      }
       setError(err.response?.data?.msg || "Failed to save prescription.");
       setSaving(false);
     }
@@ -339,6 +349,8 @@ function InCallPrescriptionModal({ appt, onClose, onSaved }) {
             value={followUpDate}
             onChange={(e) => setFollowUpDate(e.target.value)}
           />
+
+          <SignDocumentOption sig={signature} sign={sign} onSignChange={setSign} noun="prescription" compact />
 
           <div className="hc-vc__rx-modal-foot">
             <button

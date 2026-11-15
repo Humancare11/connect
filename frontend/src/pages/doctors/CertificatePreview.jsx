@@ -10,6 +10,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import useDocumentSignature from "../../hooks/useDocumentSignature";
 
 const MedicalCertificateSlip = lazy(() =>
   import("../../components/MedicalCertificateSlip").then((module) => ({
@@ -29,6 +30,7 @@ function ScaledCertificatePreview({
   patient,
   doctor,
   doctorEnrollment,
+  signatureUrl,
 }) {
   const measureRef = useRef(null);
   const innerRef = useRef(null);
@@ -74,6 +76,7 @@ function ScaledCertificatePreview({
               patient={patient}
               doctor={doctor}
               doctorEnrollment={doctorEnrollment}
+              signatureUrl={signatureUrl}
             />
           </Suspense>
         </div>
@@ -104,6 +107,11 @@ export default function CertificatePreview() {
   );
   const [loading, setLoading] = useState(!initial.cert);
   const [notFound, setNotFound] = useState(false);
+  const signatureUrl = useDocumentSignature(
+    cert?._id ? `/api/medical/certificates/${cert._id}/signature` : "",
+    "doctor",
+    cert?.isSigned,
+  );
 
   useEffect(() => {
     if (initial.cert) return;
@@ -216,6 +224,7 @@ export default function CertificatePreview() {
               patient={patient}
               doctor={doctor}
               doctorEnrollment={doctorEnrollment}
+              signatureUrl={signatureUrl}
             />
           </div>
         </div>
@@ -230,6 +239,7 @@ export default function CertificatePreview() {
               doctor={doctor}
               doctorEnrollment={doctorEnrollment}
               slipRef={slipRef}
+              signatureUrl={signatureUrl}
             />
           </Suspense>
         </div>

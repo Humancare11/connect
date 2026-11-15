@@ -22,6 +22,7 @@ import {
   C_CELL,
   C_TH,
   CertInfoField,
+  SlipSignature,
   getCountryName,
 } from "./slipShared";
 
@@ -62,6 +63,9 @@ export default function RxSlip({
 
   // opt-in: render with the Medical Certificate's look (footer unchanged)
   certStyle = false,
+
+  // doctor's signature as a data: URL (fetched through the authenticated API); drawn only when rx.isSigned
+  signatureUrl = "",
 }) {
   // Resolve patient details — prefers real backend data (rx), falls back to props
   const pName = rx?.patientId?.name || patient?.name || "";
@@ -430,6 +434,12 @@ export default function RxSlip({
                     </span>
                   </div>
                 ))}
+                <SlipSignature
+                  signed={!!rx?.isSigned}
+                  signatureUrl={signatureUrl}
+                  signedAt={rx?.signedAt}
+                  style={{ gridColumn: "1 / -1" }}
+                />
               </div>
             </div>
           </div>
@@ -563,6 +573,12 @@ export default function RxSlip({
             <span className="rx-label">Country</span>
             <span className="rx-value">{phyCountry}</span>
           </div>
+          {/* Signature: the empty cell beside Country, so the fixed one-page layout still fits */}
+          {rx?.isSigned && (
+            <div className="rx-physician-field">
+              <SlipSignature signed signatureUrl={signatureUrl} signedAt={rx?.signedAt} labelClassName="rx-label" />
+            </div>
+          )}
         </div>
 
         {/* Footer */}

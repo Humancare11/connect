@@ -21,6 +21,7 @@
     "test:e2e": "node --test tests/e2e/liveChatWidget.e2e.test.mjs",
     "test:e2e:booking-source": "node --test tests/e2e/bookingSource/bookingSource.e2e.test.mjs",
     "test:e2e:notes-panel": "node --test tests/e2e/visitNotePanel/visitNotePanel.e2e.test.mjs",
+    "test:e2e:document-signatures": "node --test tests/e2e/documentSignatures/documentSignatures.e2e.test.mjs",
     "test:e2e:reschedule": "node --test tests/e2e/adminReschedule/adminReschedule.e2e.test.mjs",
     "test:e2e:appointments": "node --test tests/e2e/adminAppointments/adminAppointments.e2e.test.mjs",
     "test:e2e:notifications": "node --test tests/e2e/adminNotifications/adminNotifications.e2e.test.mjs",

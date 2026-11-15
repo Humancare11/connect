@@ -4,6 +4,7 @@ import "./MyRecords.css";
 import api from "../../api";
 import socket from "../../socket";
 import { useAuth } from "../../context/AuthContext";
+import useDocumentSignature from "../../hooks/useDocumentSignature";
 
 const PrescriptionSlip = lazy(() =>
   import("../../components/RxSlip").then((module) => ({
@@ -30,6 +31,8 @@ function PrescriptionCard({ rx, patient }) {
   const [open,        setOpen]        = useState(false);
   const [downloading, setDownloading] = useState(false);
   const slipRef = useRef(null);
+  // Doctor's signature, fetched through the patient-scoped route (only for signed prescriptions)
+  const signatureUrl = useDocumentSignature(`/api/medical/my-prescriptions/${rx._id}/signature`, "user", rx.isSigned);
 
   const handleDownload = async (e) => {
     e.stopPropagation();
@@ -71,7 +74,7 @@ function PrescriptionCard({ rx, patient }) {
       {/* Slip — always in DOM so ref is valid for PDF download */}
       <div className={open ? "mr-slip-wrap" : "mr-slip-offscreen"}>
         <Suspense fallback={null}>
-          <PrescriptionSlip rx={rx} patient={patient} doctorEnrollment={rx.doctorEnrollment} slipRef={slipRef} />
+          <PrescriptionSlip rx={rx} patient={patient} doctorEnrollment={rx.doctorEnrollment} slipRef={slipRef} signatureUrl={signatureUrl} />
         </Suspense>
       </div>
     </div>
@@ -87,7 +90,7 @@ function PrescriptionCard({ rx, patient }) {
 const CERT_WIDTH = 794;
 const CERT_MIN_SCALE = 0.5;
 
-function ScaledCertificatePreview({ cert, patient }) {
+function ScaledCertificatePreview({ cert, patient, signatureUrl }) {
   const measureRef = useRef(null);
   const innerRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -129,7 +132,7 @@ function ScaledCertificatePreview({ cert, patient }) {
           style={{ width: CERT_WIDTH, transform: `scale(${scale})` }}
         >
           <Suspense fallback={null}>
-            <MedicalCertificateSlip cert={cert} patient={patient} />
+            <MedicalCertificateSlip cert={cert} patient={patient} signatureUrl={signatureUrl} />
           </Suspense>
         </div>
       </div>
@@ -143,6 +146,7 @@ function CertificateCard({ cert, patient }) {
   const [open,        setOpen]        = useState(false);
   const [downloading, setDownloading] = useState(false);
   const slipRef = useRef(null);
+  const signatureUrl = useDocumentSignature(`/api/medical/my-certificates/${cert._id}/signature`, "user", cert.isSigned);
 
   const handleDownload = async (e) => {
     e.stopPropagation();
@@ -183,7 +187,7 @@ function CertificateCard({ cert, patient }) {
       {/* On-screen preview — scaled to fit, only mounted while open */}
       {open && (
         <div className="mr-slip-wrap">
-          <ScaledCertificatePreview cert={cert} patient={patient} />
+          <ScaledCertificatePreview cert={cert} patient={patient} signatureUrl={signatureUrl} />
         </div>
       )}
 
@@ -191,7 +195,7 @@ function CertificateCard({ cert, patient }) {
           capture ref stays valid and is independent of the preview */}
       <div className="mr-slip-offscreen" aria-hidden="true">
         <Suspense fallback={null}>
-          <MedicalCertificateSlip cert={cert} patient={patient} slipRef={slipRef} />
+          <MedicalCertificateSlip cert={cert} patient={patient} slipRef={slipRef} signatureUrl={signatureUrl} />
         </Suspense>
       </div>
     </div>
