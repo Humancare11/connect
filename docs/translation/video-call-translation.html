@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Consultation – Live Translation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --panel:#0b1a2d; --panel2:#0f2440; --line:#1c2f48; --line2:#24406a;
+    --btn:#0d2547; --btnline:#1e3a63; --text:#e6eefb; --muted:#9fb3cf;
+    --accent:#19c2a0; --accent-bg:#0b3a37; --brand:#3b7bff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+  button,select,input{font-family:inherit}
+  .app{display:flex;flex-direction:column;height:100vh;min-height:600px}
+
+  /* Header */
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 32px;flex-wrap:wrap}
+  .logo b{display:block;font-weight:800;font-size:20px;letter-spacing:.5px;color:var(--brand)}
+  .logo b span{color:#6f9bff;font-weight:600}
+  .logo small{font-size:10px;font-weight:600;color:#5f8cff}
+  .who{display:flex;align-items:center;gap:12px;background:#0a1626;border:1px solid var(--line);border-radius:12px;padding:8px 16px}
+  .who .av{width:34px;height:34px;border-radius:50%;background:#13294a;display:grid;place-items:center}
+  .who .role{font-size:11px;font-weight:700;letter-spacing:1px;color:#7fa4d6}
+  .who .name{font-size:16px;font-weight:700}
+
+  /* Stage */
+  main{flex:1;min-height:0;margin:0 16px;border:1px solid var(--line);border-radius:24px;
+       background:radial-gradient(ellipse at 50% 40%,#0d2138 0%,#07121f 70%);display:flex;overflow:hidden}
+  .stage{position:relative;flex:1;min-width:0}
+  .remote{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding-bottom:140px}
+  .ring{width:180px;height:180px;border-radius:50%;border:2px solid var(--line2);display:grid;place-items:center;transition:.3s}
+  .ring.speaking{border-color:var(--accent);box-shadow:0 0 0 10px rgba(25,194,160,.12)}
+  .ring div{width:110px;height:110px;border-radius:26px;background:#0f2f3a;display:grid;place-items:center}
+  .remote .label{font-size:19px;font-weight:700}
+  .remote .label span{font-weight:500;color:#8fa6c6;font-size:14px}
+  .self{position:absolute;top:18px;right:18px;width:280px;aspect-ratio:16/9;border-radius:14px;border:2px solid #2a4366;background:#2a2620;display:grid;place-items:center;overflow:hidden}
+  .self .tag{position:absolute;left:10px;bottom:8px;font-size:12px;font-weight:600;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:6px}
+  .live-pill{position:absolute;top:18px;left:20px;display:none;align-items:center;gap:8px;background:rgba(9,40,38,.9);border:1px solid var(--accent);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:#bff3e6}
+  .live-pill.show{display:flex}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{opacity:.35}}
+
+  /* Subtitles */
+  .subs{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);width:min(780px,calc(100% - 40px));display:none;flex-direction:column;align-items:center;gap:10px}
+  .subs.show{display:flex}
+  .voice-chip{display:none;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#bff3e6;background:rgba(9,40,38,.9);border-radius:999px;padding:6px 12px}
+  .voice-chip.show{display:flex}
+  .sub-box{width:100%;background:rgba(0,0,0,.8);border-radius:16px;padding:16px 22px;text-align:center;min-height:64px}
+  .sub-who{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase}
+  .sub-text{font-size:24px;font-weight:600;line-height:1.4;color:#fff}
+  .sub-text.partial{color:#cfd9e8}
+  .sub-text.note{font-size:15px;font-weight:500;color:var(--muted)}
+
+  /* Translation panel */
+  .tpanel{position:absolute;right:20px;bottom:20px;width:360px;max-width:calc(100% - 40px);background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.5);display:none;flex-direction:column;gap:14px;z-index:5}
+  .tpanel.show{display:flex}
+  .tp-head{display:flex;align-items:center;justify-content:space-between}
+  .tp-head h2{margin:0;font-size:17px;display:flex;align-items:center;gap:10px}
+  .icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line2);background:transparent;color:#c9d7ee;cursor:pointer;display:grid;place-items:center}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel2);border-radius:12px;padding:12px 14px}
+  .row .t{font-size:15px;font-weight:600}
+  .row .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .switch{width:52px;height:30px;border-radius:999px;border:none;background:#33496a;position:relative;cursor:pointer;flex:none}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#c9d7ee;transition:.2s}
+  .switch[aria-checked="true"]{background:var(--accent)}
+  .switch[aria-checked="true"]::after{left:25px;background:#fff}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:13px;font-weight:600;color:#c9d7ee}
+  .field input,.field select{height:42px;border-radius:10px;border:1px solid #2c4a75;background:var(--panel2);color:var(--text);font-size:15px;padding:0 12px}
+  .field select{height:auto;padding:6px 8px}
+  .field select option{padding:6px 4px}
+  .other{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);border-top:1px solid #1c3354;padding-top:12px}
+  .other b{color:var(--text)}
+  .checks{display:flex;flex-direction:column;gap:10px}
+  .checks label{display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer}
+  .checks input{width:18px;height:18px;accent-color:var(--accent)}
+  .hint{margin:0;font-size:12px;line-height:1.5;color:#8fa6c6}
+
+  /* Transcript */
+  aside{width:340px;flex:0 0 340px;border-left:1px solid var(--line);background:rgba(6,14,25,.85);display:none;flex-direction:column;min-height:0}
+  aside.show{display:flex}
+  .tr-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .tr-head h2{margin:0;font-size:16px}
+  .small-btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:transparent;color:#c9d7ee;font-size:12px;font-weight:600;cursor:pointer}
+  .tr-list{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:16px}
+  .tr-item .meta{font-size:12px;color:#8fa6c6;display:flex;gap:8px}
+  .tr-item .meta b{color:#5fd4bb}
+  .tr-item.me .meta b{color:#7fa4ff}
+  .tr-item .o{font-size:14px;line-height:1.45;margin-top:3px}
+  .tr-item .x{font-size:13px;line-height:1.45;color:#9fdcca;padding-left:10px;border-left:2px solid #1d5c52;margin-top:4px}
+  .tr-empty{font-size:13px;color:#8fa6c6}
+
+  /* Controls */
+  nav{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;padding:16px 12px 20px}
+  .cbtn{position:relative;min-width:96px;height:72px;padding:0 10px;border-radius:14px;border:1px solid var(--btnline);background:var(--btn);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-size:12px;font-weight:700;cursor:pointer}
+  .cbtn:hover{background:#123063}
+  .cbtn.on{border-color:var(--accent);background:var(--accent-bg);color:#e6fff8}
+  .cbtn.on svg{stroke:var(--accent)}
+  .badge{position:absolute;top:-9px;right:-8px;background:var(--accent);color:#04221d;font-size:10px;font-weight:800;border-radius:999px;padding:3px 7px;display:none}
+  .cbtn.on .badge{display:block}
+
+  .mode{position:fixed;left:12px;bottom:12px;font-size:11px;color:#6f86a8;background:#07111e;border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+
+  @media (max-width: 760px){
+    header{padding:10px 16px}
+    .self{width:130px;top:12px;right:12px}
+    aside{position:absolute;inset:0;width:auto;z-index:6}
+    main{position:relative}
+    .sub-text{font-size:19px}
+    .cbtn{min-width:72px;height:62px;font-size:10px}
+    .ring{width:130px;height:130px}.ring div{width:80px;height:80px}
+  }
+</style>
+</head>
+<body>
+<style>
+  .demo-bar{position:fixed;left:50%;top:18px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;font-size:12px;color:#8fa6c6;background:#07111e;border:1px solid var(--line);border-radius:10px;padding:6px 8px;z-index:10}
+  .demo-bar button{height:30px;padding:0 12px;border-radius:7px;border:1px solid var(--line2);background:transparent;color:#c9d7ee;font-size:12px;font-weight:600;cursor:pointer}
+  .demo-bar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#04221d}
+  .lang-now{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel2);border-radius:12px;padding:12px 14px}
+  .lang-now .t{font-size:15px;font-weight:600}
+  .lang-now .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .lang-code{font-size:12px;font-weight:800;color:#04221d;background:var(--accent);border-radius:999px;padding:4px 9px}
+  @media (max-width:760px){.demo-bar{left:8px;right:8px;bottom:auto;top:8px;justify-content:center}}
+</style>
+<div class="app">
+  <header>
+    <div class="logo"><b>HUMANCARE <span>CONNECT</span></b><small>Global Health Passport</small></div>
+    <div class="who">
+      <div class="av"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9fb6d8" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+      <div><div class="role" id="myRole">DOCTOR</div><div class="name" id="myName">Dr. Test Main Doctor</div></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="stage">
+      <div class="live-pill" id="livePill"><span class="dot"></span><span id="livePillText">Live subtitles</span></div>
+
+      <div class="remote">
+        <div class="ring" id="ring"><div>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e6eefb" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        </div></div>
+        <div class="label"><span id="remoteName" style="font-size:19px;font-weight:700;color:var(--text)">Patient</span> <span id="remoteLangLabel">· speaks English</span></div>
+      </div>
+
+      <div class="self">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c9b9a0" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        <div class="tag" id="selfTag">You · English</div>
+      </div>
+
+      <!-- Subtitles: ONLY in MY selected language -->
+      <div class="subs" id="subs" aria-live="polite">
+        <div class="voice-chip" id="voiceChip">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#19c2a0" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+          <span id="voiceChipText">Translated voice</span>
+        </div>
+        <div class="sub-box">
+          <div class="sub-who" id="subWho">Patient</div>
+          <div class="sub-text" id="subText"></div>
+        </div>
+      </div>
+
+      <!-- Language settings -->
+      <div class="tpanel" id="tpanel" role="dialog" aria-label="Language settings">
+        <div class="tp-head">
+          <h2><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#19c2a0" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>My language</h2>
+          <button class="icon-btn" id="closePanel" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        </div>
+        <div class="lang-now">
+          <div><div class="t" id="langNowName">English</div><div class="s" id="statusText">I speak, read and hear this language</div></div>
+          <span class="lang-code" id="langNowCode">EN</span>
+        </div>
+        <div class="field">
+          <label for="langSearch">Change language</label>
+          <input id="langSearch" type="search" placeholder="Search language…" autocomplete="off">
+          <select id="langSelect" size="6" aria-label="Language"></select>
+        </div>
+        <div class="other"><span id="otherRole">Patient's language</span><b id="otherLang">English</b></div>
+        <div class="checks">
+          <label><input type="checkbox" id="chkSubs" checked> Show subtitles</label>
+          <label><input type="checkbox" id="chkVoice" checked> Hear translated voice</label>
+        </div>
+        <p class="hint">Subtitles and voice come only in your language. The other person picks their own language on their screen.</p>
+      </div>
+    </section>
+
+    <aside id="transcript" aria-label="Live transcript">
+      <div class="tr-head"><h2>Live transcript</h2><button class="small-btn" id="dlBtn">Download</button></div>
+      <div class="tr-list" id="trList"><div class="tr-empty" id="trEmpty">The conversation will appear here.</div></div>
+    </aside>
+  </main>
+
+  <nav aria-label="Call controls">
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>MUTE</button>
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m22 8-6 4 6 4z"/></svg>CAM OFF</button>
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>SHARE</button>
+    <button class="cbtn on" id="translateBtn" aria-label="Language, currently English"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"/></svg>LANGUAGE<span class="badge" id="badge">EN</span></button>
+    <button class="cbtn" id="transcriptBtn" aria-pressed="false"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>TRANSCRIPT</button>
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 8V3h5M21 8V3h-5M3 16v5h5M21 16v5h-5"/></svg>FULL</button>
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>HIDE ME</button>
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>CHAT</button>
+    <button class="cbtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10.7 13.3a16 16 0 0 0 3.4 2.4l1.9-1.9a1 1 0 0 1 1-.25 11 11 0 0 0 3.5.6 1 1 0 0 1 1 1V19a1 1 0 0 1-1 1A17 17 0 0 1 4 3a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11 11 0 0 0 .6 3.5 1 1 0 0 1-.25 1L7.9 9.4"/><path d="M22 2 2 22"/></svg>LEAVE CALL</button>
+  </nav>
+</div>
+
+<div class="demo-bar" id="demoBar">
+  <span>Demo · view as</span>
+  <button id="viewDoctor" aria-pressed="true">Doctor</button>
+  <button id="viewPatient" aria-pressed="false">Patient</button>
+</div>
+
+<script>
+/* =====================================================================
+   HOW IT WORKS
+   - Doctor and patient both start in ENGLISH.
+   - Each person picks their own language. That language is used for:
+       1) the language they SPEAK (so Azure knows what to listen for)
+       2) the subtitles they READ
+       3) the translated voice they HEAR
+   - Your signaling sends each person's language to the other side.
+   - Each screen translates the OTHER person's audio into its own language.
+
+   CONFIG
+   - mode 'demo': no Azure, plays a sample doctor/patient conversation.
+   - mode 'live': tokenUrl = your backend endpoint returning { token, region }.
+     Never put the Azure key in the browser.
+   ===================================================================== */
+const params = new URLSearchParams(location.search);
+const CONFIG = {
+  mode: 'demo',                                  // 'demo' | 'live'
+  tokenUrl: '/api/speech-token',
+  role: params.get('role') === 'patient' ? 'patient' : 'doctor',
+  defaultLang: 'en',
+  names: { doctor: 'Dr. Test Main Doctor', patient: '[Patient name]' }
+};
+
+const LANGS = [
+ ['af','Afrikaans','Afrikaans','af-ZA'],['sq','Albanian','Shqip','sq-AL'],['am','Amharic','አማርኛ','am-ET'],
+ ['ar','Arabic','العربية','ar-SA'],['hy','Armenian','Հայերեն','hy-AM'],['as','Assamese','অসমীয়া',null],
+ ['az','Azerbaijani','Azərbaycan','az-AZ'],['bn','Bangla','বাংলা','bn-IN'],['eu','Basque','Euskara','eu-ES'],
+ ['bs','Bosnian','Bosanski','bs-BA'],['bg','Bulgarian','Български','bg-BG'],['my','Burmese','မြန်မာ','my-MM'],
+ ['yue','Cantonese','粵語','zh-HK'],['ca','Catalan','Català','ca-ES'],['zh-Hans','Chinese (Simplified)','中文 (简体)','zh-CN'],
+ ['zh-Hant','Chinese (Traditional)','中文 (繁體)','zh-TW'],['hr','Croatian','Hrvatski','hr-HR'],['cs','Czech','Čeština','cs-CZ'],
+ ['da','Danish','Dansk','da-DK'],['prs','Dari','دری',null],['nl','Dutch','Nederlands','nl-NL'],
+ ['en','English','English','en-US'],['et','Estonian','Eesti','et-EE'],['fj','Fijian','Na Vosa Vakaviti',null],
+ ['fil','Filipino','Filipino','fil-PH'],['fi','Finnish','Suomi','fi-FI'],['fr','French','Français','fr-FR'],
+ ['fr-ca','French (Canada)','Français (Canada)','fr-CA'],['gl','Galician','Galego','gl-ES'],['ka','Georgian','ქართული','ka-GE'],
+ ['de','German','Deutsch','de-DE'],['el','Greek','Ελληνικά','el-GR'],['gu','Gujarati','ગુજરાતી','gu-IN'],
+ ['ht','Haitian Creole','Kreyòl ayisyen',null],['he','Hebrew','עברית','he-IL'],['hi','Hindi','हिन्दी','hi-IN'],
+ ['mww','Hmong Daw','Hmong Daw',null],['hu','Hungarian','Magyar','hu-HU'],['is','Icelandic','Íslenska','is-IS'],
+ ['id','Indonesian','Indonesia','id-ID'],['iu','Inuktitut','ᐃᓄᒃᑎᑐᑦ',null],['ga','Irish','Gaeilge','ga-IE'],
+ ['it','Italian','Italiano','it-IT'],['ja','Japanese','日本語','ja-JP'],['jv','Javanese','Basa Jawa','jv-ID'],
+ ['kn','Kannada','ಕನ್ನಡ','kn-IN'],['kk','Kazakh','Қазақ','kk-KZ'],['km','Khmer','ខ្មែរ','km-KH'],
+ ['ko','Korean','한국어','ko-KR'],['ku','Kurdish (Central)','کوردی',null],['kmr','Kurdish (Northern)','Kurmancî',null],
+ ['lo','Lao','ລາວ','lo-LA'],['lv','Latvian','Latviešu','lv-LV'],['lt','Lithuanian','Lietuvių','lt-LT'],
+ ['mk','Macedonian','Македонски','mk-MK'],['mg','Malagasy','Malagasy',null],['ms','Malay','Melayu','ms-MY'],
+ ['ml','Malayalam','മലയാളം','ml-IN'],['mt','Maltese','Malti','mt-MT'],['mi','Maori','Te Reo Māori',null],
+ ['mr','Marathi','मराठी','mr-IN'],['mn-Cyrl','Mongolian','Монгол','mn-MN'],['ne','Nepali','नेपाली','ne-NP'],
+ ['nb','Norwegian','Norsk Bokmål','nb-NO'],['or','Odia','ଓଡ଼ିଆ','or-IN'],['ps','Pashto','پښتو','ps-AF'],
+ ['fa','Persian','فارسی','fa-IR'],['pl','Polish','Polski','pl-PL'],['pt','Portuguese (Brazil)','Português (Brasil)','pt-BR'],
+ ['pt-pt','Portuguese (Portugal)','Português (Portugal)','pt-PT'],['pa','Punjabi','ਪੰਜਾਬੀ','pa-IN'],['ro','Romanian','Română','ro-RO'],
+ ['ru','Russian','Русский','ru-RU'],['sm','Samoan','Gagana Sāmoa',null],['sr-Cyrl','Serbian (Cyrillic)','Српски','sr-RS'],
+ ['sr-Latn','Serbian (Latin)','Srpski',null],['si','Sinhala','සිංහල','si-LK'],['sk','Slovak','Slovenčina','sk-SK'],
+ ['sl','Slovenian','Slovenščina','sl-SI'],['so','Somali','Soomaali','so-SO'],['es','Spanish','Español','es-ES'],
+ ['sw','Swahili','Kiswahili','sw-KE'],['sv','Swedish','Svenska','sv-SE'],['ty','Tahitian','Reo Tahiti',null],
+ ['ta','Tamil','தமிழ்','ta-IN'],['te','Telugu','తెలుగు','te-IN'],['th','Thai','ไทย','th-TH'],
+ ['ti','Tigrinya','ትግር',null],['to','Tongan','Lea Fakatonga',null],['tr','Turkish','Türkçe','tr-TR'],
+ ['uk','Ukrainian','Українська','uk-UA'],['ur','Urdu','اردو','ur-IN'],['uz','Uzbek','Oʻzbek','uz-UZ'],
+ ['vi','Vietnamese','Tiếng Việt','vi-VN'],['cy','Welsh','Cymraeg','cy-GB'],['zu','Zulu','isiZulu','zu-ZA']
+];
+const byCode = Object.fromEntries(LANGS.map(l => [l[0], l]));
+const RTL = new Set(['ar','he','fa','ur','ps','prs','ku']);
+const OTHER = { doctor: 'patient', patient: 'doctor' };
+const TITLE = { doctor: 'Doctor', patient: 'Patient' };
+
+/* ---------------- State ---------------- */
+const S = {
+  me: CONFIG.role,
+  lang: { doctor: CONFIG.defaultLang, patient: CONFIG.defaultLang },
+  subs: true, voice: true, transcript: []
+};
+const myLang = () => S.lang[S.me];
+const otherLang = () => S.lang[OTHER[S.me]];
+
+const $ = id => document.getElementById(id);
+const els = { panel:$('tpanel'), sel:$('langSelect'), search:$('langSearch'), subs:$('subs'),
+  subText:$('subText'), voiceChip:$('voiceChip'), voiceChipText:$('voiceChipText'), badge:$('badge'),
+  tBtn:$('translateBtn'), pill:$('livePill'), pillText:$('livePillText'), status:$('statusText'),
+  selfTag:$('selfTag'), trList:$('trList'), aside:$('transcript'), ring:$('ring') };
+
+function langName(code){ return byCode[code] ? byCode[code][1] : code; }
+function nativeName(code){ return byCode[code] ? byCode[code][2] : code; }
+function short(code){ return code.split('-')[0].toUpperCase(); }
+
+/* ---------------- Language list ---------------- */
+function renderLangOptions(filter=''){
+  const f = filter.trim().toLowerCase();
+  els.sel.innerHTML = '';
+  LANGS.filter(l => !f || l[1].toLowerCase().includes(f) || l[2].toLowerCase().includes(f) || l[0].toLowerCase().startsWith(f))
+       .forEach(l => {
+         const o = document.createElement('option');
+         o.value = l[0];
+         o.textContent = l[1] === l[2] ? l[1] : `${l[2]} — ${l[1]}`;
+         if (l[0] === myLang()) o.selected = true;
+         els.sel.appendChild(o);
+       });
+}
+els.search.addEventListener('input', e => renderLangOptions(e.target.value));
+els.sel.addEventListener('change', e => setMyLang(e.target.value));
+
+/* ---------------- UI ---------------- */
+function refreshUI(){
+  const me = S.me, other = OTHER[me], mine = myLang(), theirs = otherLang();
+  const same = mine === theirs;
+  const hasVoice = !!(byCode[mine] && byCode[mine][3]);
+  $('myRole').textContent = TITLE[me].toUpperCase();
+  $('myName').textContent = CONFIG.names[me];
+  $('remoteName').textContent = TITLE[other];
+  $('remoteLangLabel').textContent = '· speaks ' + nativeName(theirs);
+  $('subWho').textContent = TITLE[other];
+  $('otherRole').textContent = TITLE[other] + "'s language";
+  $('otherLang').textContent = langName(theirs);
+  $('langNowName').textContent = langName(mine);
+  $('langNowCode').textContent = short(mine);
+  els.badge.textContent = short(mine);
+  els.tBtn.setAttribute('aria-label', 'Language, currently ' + langName(mine));
+  els.selfTag.textContent = 'You · ' + langName(mine);
+  els.status.textContent = same
+    ? `Same as ${TITLE[other].toLowerCase()} — subtitles only, no translation`
+    : `${TITLE[other]}'s ${langName(theirs)} → your ${langName(mine)}`;
+  els.pill.classList.add('show');
+  els.pillText.textContent = same ? `Subtitles · ${langName(mine)}` : `Live translation · ${short(theirs)} → ${short(mine)}`;
+  els.subs.classList.toggle('show', S.subs);
+  els.voiceChip.classList.toggle('show', S.voice && !same);
+  els.voiceChipText.textContent = hasVoice ? `Translated voice · ${langName(mine)}` : `Voice not available in ${langName(mine)} — subtitles only`;
+  els.subText.dir = RTL.has(mine.split('-')[0]) ? 'rtl' : 'ltr';
+  $('viewDoctor').setAttribute('aria-pressed', me === 'doctor');
+  $('viewPatient').setAttribute('aria-pressed', me === 'patient');
+}
+
+function setMyLang(code){
+  S.lang[S.me] = code;
+  try { localStorage.setItem('hc_lang_' + S.me, code); } catch(e){}
+  refreshUI();
+  window.HCTranslation.onMyLangChange(S.me, code);   // -> send to other side via your signaling
+  Engine.restart();
+}
+
+els.tBtn.onclick = () => { const open = !els.panel.classList.contains('show'); els.panel.classList.toggle('show', open); if (open) { els.search.value=''; renderLangOptions(); els.sel.focus(); } };
+$('closePanel').onclick = () => els.panel.classList.remove('show');
+$('chkSubs').onchange = e => { S.subs = e.target.checked; refreshUI(); };
+$('chkVoice').onchange = e => { S.voice = e.target.checked; refreshUI(); if (!S.voice) stopVoice(); };
+$('transcriptBtn').onclick = () => { const v = !els.aside.classList.contains('show'); els.aside.classList.toggle('show', v); $('transcriptBtn').classList.toggle('on', v); };
+
+function showSubtitle(text, {partial=false, note=false}={}){
+  els.subText.textContent = text;
+  els.subText.className = 'sub-text' + (partial ? ' partial' : '') + (note ? ' note' : '');
+}
+function addTranscript(speaker, srcLang, original, translated){
+  const empty = $('trEmpty'); if (empty) empty.remove();
+  const t = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  S.transcript.push({ time:t, speaker, srcLang, original, translated, tgt:myLang() });
+  const d = document.createElement('div');
+  d.className = 'tr-item' + (speaker === S.me ? ' me' : '');
+  d.innerHTML = `<div class="meta"><b></b><span></span></div><div class="o"></div>`;
+  d.querySelector('b').textContent = speaker === S.me ? 'You' : TITLE[speaker];
+  d.querySelector('span').textContent = `${t} · ${short(srcLang)}`;
+  d.querySelector('.o').textContent = original;
+  if (translated && translated !== original) { const x = document.createElement('div'); x.className='x'; x.textContent = translated; d.appendChild(x); }
+  els.trList.appendChild(d);
+  els.trList.scrollTop = els.trList.scrollHeight;
+}
+function clearTranscript(){
+  S.transcript = [];
+  els.trList.innerHTML = '<div class="tr-empty" id="trEmpty">The conversation will appear here.</div>';
+}
+$('dlBtn').onclick = () => {
+  const lines = S.transcript.map(r => `[${r.time}] ${TITLE[r.speaker]} (${r.srcLang}): ${r.original}` + (r.translated && r.translated !== r.original ? `\n        (${r.tgt}): ${r.translated}` : ''));
+  const blob = new Blob([lines.join('\n') || 'No transcript yet.'], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'consultation-transcript.txt'; a.click();
+};
+
+/* =====================================================================
+   DEMO ENGINE — a sample consultation. Each line is spoken in the
+   speaker's chosen language and shown/heard in YOUR language.
+   ===================================================================== */
+const DEMO_LINES = [
+ { de:'Guten Tag, Herr Doktor.', en:'Good morning, doctor.', hi:'नमस्ते डॉक्टर साहब।', fr:'Bonjour, docteur.', es:'Buenos días, doctor.', it:'Buongiorno, dottore.', pt:'Bom dia, doutor.', nl:'Goedemorgen, dokter.', ru:'Здравствуйте, доктор.', ar:'صباح الخير يا دكتور.', 'zh-Hans':'医生，您好。', ja:'先生、こんにちは。', ko:'안녕하세요, 선생님.', tr:'İyi günler doktor.', bn:'নমস্কার, ডাক্তারবাবু।', mr:'नमस्कार डॉक्टर.', gu:'નમસ્તે ડૉક્ટર.', ta:'வணக்கம் டாக்டர்.', te:'నమస్కారం డాక్టర్.', ur:'آداب ڈاکٹر صاحب۔', pa:'ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਡਾਕਟਰ ਜੀ।' },
+ { de:'Ich habe seit drei Tagen Kopfschmerzen und leichtes Fieber.', en:'I’ve had a headache and a mild fever for three days.', hi:'मुझे तीन दिनों से सिरदर्द और हल्का बुखार है।', fr:'J’ai mal à la tête et un peu de fièvre depuis trois jours.', es:'Tengo dolor de cabeza y algo de fiebre desde hace tres días.', it:'Ho mal di testa e un po’ di febbre da tre giorni.', pt:'Estou com dor de cabeça e febre leve há três dias.', nl:'Ik heb al drie dagen hoofdpijn en lichte koorts.', ru:'У меня уже три дня болит голова и небольшая температура.', ar:'أعاني من صداع وحمى خفيفة منذ ثلاثة أيام.', 'zh-Hans':'我头痛、低烧已经三天了。', ja:'三日前から頭痛と微熱があります。', ko:'사흘 전부터 두통과 미열이 있어요.', tr:'Üç gündür baş ağrım ve hafif ateşim var.', bn:'তিন দিন ধরে আমার মাথাব্যথা আর হালকা জ্বর।', mr:'मला तीन दिवसांपासून डोकेदुखी आणि थोडा ताप आहे.', gu:'મને ત્રણ દિવસથી માથું દુખે છે અને હળવો તાવ છે.', ta:'மூன்று நாட்களாக எனக்கு தலைவலியும் லேசான காய்ச்சலும் இருக்கிறது.', te:'మూడు రోజులుగా నాకు తలనొప్పి, కొద్దిగా జ్వరం ఉన్నాయి.', ur:'مجھے تین دن سے سر درد اور ہلکا بخار ہے۔', pa:'ਮੈਨੂੰ ਤਿੰਨ ਦਿਨਾਂ ਤੋਂ ਸਿਰਦਰਦ ਅਤੇ ਹਲਕਾ ਬੁਖਾਰ ਹੈ।' },
+ { de:'Nein, ich habe keine Allergien gegen Medikamente.', en:'No, I don’t have any allergies to medicines.', hi:'नहीं, मुझे किसी दवा से एलर्जी नहीं है।', fr:'Non, je n’ai aucune allergie aux médicaments.', es:'No, no tengo alergia a ningún medicamento.', it:'No, non ho allergie ai farmaci.', pt:'Não, não tenho alergia a medicamentos.', nl:'Nee, ik ben niet allergisch voor medicijnen.', ru:'Нет, у меня нет аллергии на лекарства.', ar:'لا، ليس لدي حساسية من أي أدوية.', 'zh-Hans':'没有，我对药物不过敏。', ja:'いいえ、薬のアレルギーはありません。', ko:'아니요, 약물 알레르기는 없어요.', tr:'Hayır, hiçbir ilaca alerjim yok.', bn:'না, কোনো ওষুধে আমার অ্যালার্জি নেই।', mr:'नाही, मला कोणत्याही औषधाची ॲलर्जी नाही.', gu:'ના, મને કોઈ દવાની એલર્જી નથી.', ta:'இல்லை, எனக்கு எந்த மருந்திலும் ஒவ்வாமை இல்லை.', te:'లేదు, నాకు ఏ మందులకూ అలర్జీ లేదు.', ur:'نہیں، مجھے کسی دوا سے الرجی نہیں ہے۔', pa:'ਨਹੀਂ, ਮੈਨੂੰ ਕਿਸੇ ਦਵਾਈ ਤੋਂ ਐਲਰਜੀ ਨਹੀਂ ਹੈ।' }
+];
+const DOCTOR_LINES = [
+ { en:'Hello, what brings you in today?', de:'Hallo, was führt Sie heute zu mir?', hi:'नमस्ते, आज आपको क्या तकलीफ़ है?', fr:'Bonjour, qu’est-ce qui vous amène aujourd’hui ?', es:'Hola, ¿qué le trae hoy por aquí?', it:'Salve, cosa la porta qui oggi?', pt:'Olá, o que o traz aqui hoje?', nl:'Hallo, waarmee kan ik u vandaag helpen?', ru:'Здравствуйте, что вас беспокоит сегодня?', ar:'مرحبًا، ما الذي يزعجك اليوم؟', 'zh-Hans':'您好，今天哪里不舒服？', ja:'こんにちは、今日はどうされましたか？', ko:'안녕하세요, 오늘 어디가 불편하세요?', tr:'Merhaba, bugün şikâyetiniz nedir?', bn:'নমস্কার, আজ আপনার কী সমস্যা?', mr:'नमस्कार, आज तुम्हाला काय त्रास होतोय?', gu:'નમસ્તે, આજે તમને શું તકલીફ છે?', ta:'வணக்கம், இன்று உங்களுக்கு என்ன பிரச்சனை?', te:'నమస్కారం, ఈ రోజు మీకు ఏమి ఇబ్బంది?', ur:'آداب، آج آپ کو کیا تکلیف ہے؟', pa:'ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਅੱਜ ਤੁਹਾਨੂੰ ਕੀ ਤਕਲੀਫ਼ ਹੈ?' },
+ { en:'Do you have any allergies to medicines?', de:'Haben Sie Allergien gegen Medikamente?', hi:'क्या आपको किसी दवा से एलर्जी है?', fr:'Avez-vous des allergies aux médicaments ?', es:'¿Tiene alergia a algún medicamento?', it:'Ha allergie ai farmaci?', pt:'Você tem alergia a algum medicamento?', nl:'Bent u allergisch voor medicijnen?', ru:'У вас есть аллергия на лекарства?', ar:'هل لديك حساسية من أي أدوية؟', 'zh-Hans':'您对药物过敏吗？', ja:'薬のアレルギーはありますか？', ko:'약물 알레르기가 있으세요?', tr:'Herhangi bir ilaca alerjiniz var mı?', bn:'আপনার কি কোনো ওষুধে অ্যালার্জি আছে?', mr:'तुम्हाला कोणत्या औषधाची ॲलर्जी आहे का?', gu:'શું તમને કોઈ દવાની એલર્જી છે?', ta:'உங்களுக்கு ஏதாவது மருந்தில் ஒவ்வாமை உள்ளதா?', te:'మీకు ఏవైనా మందులకు అలర్జీ ఉందా?', ur:'کیا آپ کو کسی دوا سے الرجی ہے؟', pa:'ਕੀ ਤੁਹਾਨੂੰ ਕਿਸੇ ਦਵਾਈ ਤੋਂ ਐਲਰਜੀ ਹੈ?' },
+ { en:'Please take this tablet twice a day after meals.', de:'Bitte nehmen Sie diese Tablette zweimal täglich nach dem Essen.', hi:'यह गोली दिन में दो बार खाना खाने के बाद लीजिए।', fr:'Prenez ce comprimé deux fois par jour après les repas.', es:'Tome esta pastilla dos veces al día después de las comidas.', it:'Prenda questa compressa due volte al giorno dopo i pasti.', pt:'Tome este comprimido duas vezes ao dia após as refeições.', nl:'Neem deze tablet twee keer per dag na het eten.', ru:'Принимайте эту таблетку два раза в день после еды.', ar:'تناول هذا القرص مرتين يوميًا بعد الأكل.', 'zh-Hans':'请每天饭后服用这片药两次。', ja:'この錠剤を1日2回、食後に飲んでください。', ko:'이 알약을 하루 두 번 식후에 드세요.', tr:'Bu tableti günde iki kez yemekten sonra alın.', bn:'এই ট্যাবলেটটি দিনে দুবার খাবারের পরে খাবেন।', mr:'ही गोळी दिवसातून दोनदा जेवणानंतर घ्या.', gu:'આ ગોળી દિવસમાં બે વાર જમ્યા પછી લો.', ta:'இந்த மாத்திரையை தினமும் இரண்டு முறை சாப்பாட்டுக்குப் பிறகு எடுத்துக்கொள்ளுங்கள்.', te:'ఈ మాత్రను రోజుకు రెండుసార్లు భోజనం తర్వాత వేసుకోండి.', ur:'یہ گولی دن میں دو بار کھانے کے بعد لیں۔', pa:'ਇਹ ਗੋਲੀ ਦਿਨ ਵਿੱਚ ਦੋ ਵਾਰ ਖਾਣੇ ਤੋਂ ਬਾਅਦ ਲਓ।' }
+];
+const SCRIPT = [
+  ['patient', DEMO_LINES[0]], ['doctor', DOCTOR_LINES[0]],
+  ['patient', DEMO_LINES[1]], ['doctor', DOCTOR_LINES[1]],
+  ['patient', DEMO_LINES[2]], ['doctor', DOCTOR_LINES[2]]
+];
+
+const DemoEngine = {
+  timers:[], i:0,
+  start(){
+    this.stop();
+    const run = () => {
+      const [speaker, line] = SCRIPT[this.i % SCRIPT.length]; this.i++;
+      const spoken = line[S.lang[speaker]] || line.en;   // what the speaker actually said
+      const mine = myLang();
+      if (speaker === S.me) {
+        // My own line: transcript only, no subtitle for myself
+        addTranscript(speaker, S.lang[speaker], spoken, '');
+      } else {
+        const same = mine === S.lang[speaker];
+        const tr = same ? spoken : line[mine];
+        els.ring.classList.add('speaking');
+        if (!tr) {
+          showSubtitle(`${langName(mine)} subtitles appear here once Azure is connected (this demo has sample lines for 21 languages).`, {note:true});
+        } else {
+          const words = tr.split(' '); let k = 0;
+          const step = () => { k++; showSubtitle(words.slice(0,k).join(' '), {partial: k < words.length});
+            if (k < words.length) this.timers.push(setTimeout(step, 170)); else if (!same) speakDemo(tr); };
+          step();
+        }
+        addTranscript(speaker, S.lang[speaker], spoken, same ? '' : (tr || ''));
+        this.timers.push(setTimeout(() => els.ring.classList.remove('speaking'), 2600));
+      }
+      this.timers.push(setTimeout(run, speaker === S.me ? 2500 : 5500));
+    };
+    this.timers.push(setTimeout(run, 600));
+  },
+  stop(){ this.timers.forEach(clearTimeout); this.timers = []; els.ring.classList.remove('speaking'); stopVoice(); },
+  restart(){ this.i = 0; clearTranscript(); showSubtitle(''); this.start(); }
+};
+function speakDemo(text){
+  if (!S.voice || !window.speechSynthesis) return;
+  const loc = byCode[myLang()] && byCode[myLang()][3]; if (!loc) return;
+  const u = new SpeechSynthesisUtterance(text); u.lang = loc; speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function stopVoice(){
+  try { window.speechSynthesis && speechSynthesis.cancel(); } catch(e){}
+  if (synthAudio) { try { synthAudio.pause(); } catch(e){} synthAudio = null; }
+}
+
+/* =====================================================================
+   LIVE ENGINE — Azure Speech Translation on the OTHER person's audio.
+   Your video module calls:
+     HCTranslation.setRemoteStream(remoteMediaStream)
+     HCTranslation.setRemoteLang('de')      // when the other side changes language
+   and sends my changes using HCTranslation.onMyLangChange.
+   ===================================================================== */
+let remoteStream = null, recognizer = null, synthAudio = null;
+function loadSdk(){
+  return new Promise((res, rej) => {
+    if (window.SpeechSDK) return res();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.40.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js';
+    s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
+}
+const AUTH = { token:null, region:null, timer:null };
+async function refreshToken(){
+  const r = await fetch(CONFIG.tokenUrl, { credentials:'include' });
+  if (!r.ok) throw new Error('Speech token request failed: ' + r.status);
+  const j = await r.json(); AUTH.token = j.token; AUTH.region = j.region;
+}
+const LiveEngine = {
+  async start(){
+    if (!remoteStream) { showSubtitle('Waiting for the other person’s audio…', {note:true}); return; }
+    if (!S.subs && !S.voice) return;                       // nothing to show = no Azure cost
+    await loadSdk();
+    await refreshToken();
+    const { token, region } = AUTH;
+    clearInterval(AUTH.timer);   // Azure tokens last 10 min: refresh every 9 min
+    AUTH.timer = setInterval(async () => { try { await refreshToken(); if (recognizer) recognizer.authorizationToken = AUTH.token; } catch(e){ console.error(e); } }, 9 * 60 * 1000);
+    const sdk = window.SpeechSDK, mine = myLang(), theirs = otherLang(), same = mine === theirs;
+    const cfg = sdk.SpeechTranslationConfig.fromAuthorizationToken(token, region);
+    cfg.speechRecognitionLanguage = (byCode[theirs] && byCode[theirs][3]) || 'en-US';
+    cfg.addTargetLanguage(mine);
+    recognizer = new sdk.TranslationRecognizer(cfg, sdk.AudioConfig.fromStreamInput(remoteStream));
+    const pick = r => same ? r.text : (r.translations.get(mine) || '');
+    recognizer.recognizing = (_, e) => showSubtitle(pick(e.result), {partial:true});
+    recognizer.recognized = (_, e) => {
+      if (e.result.reason !== sdk.ResultReason.TranslatedSpeech && e.result.reason !== sdk.ResultReason.RecognizedSpeech) return;
+      const tr = pick(e.result);
+      showSubtitle(tr);
+      addTranscript(OTHER[S.me], theirs, e.result.text, same ? '' : tr);
+      if (!same) azureSpeak(tr, AUTH.token, AUTH.region);
+    };
+    recognizer.canceled = (_, e) => showSubtitle('Subtitles stopped: ' + (e.errorDetails || 'canceled'), {note:true});
+    recognizer.startContinuousRecognitionAsync();
+  },
+  stop(){
+    clearInterval(AUTH.timer);
+    if (recognizer) { const r = recognizer; r.stopContinuousRecognitionAsync(() => r.close()); recognizer = null; }
+    stopVoice();
+  },
+  restart(){ this.stop(); this.start(); }
+};
+function azureSpeak(text, token, region){
+  const loc = byCode[myLang()] && byCode[myLang()][3];
+  if (!S.voice || !text || !loc) return;
+  const sdk = window.SpeechSDK;
+  const sc = sdk.SpeechConfig.fromAuthorizationToken(token, region);
+  sc.speechSynthesisLanguage = loc;
+  synthAudio = new sdk.SpeakerAudioDestination();
+  const synth = new sdk.SpeechSynthesizer(sc, sdk.AudioConfig.fromSpeakerOutput(synthAudio));
+  synth.speakTextAsync(text, () => synth.close(), () => synth.close());
+  // Lower the original remote voice while the translation plays. Mark your remote <video>/<audio> with data-remote-media.
+  document.querySelectorAll('[data-remote-media]').forEach(m => m.volume = 0.2);
+  synthAudio.onAudioEnd = () => document.querySelectorAll('[data-remote-media]').forEach(m => m.volume = 1);
+}
+
+const Engine = CONFIG.mode === 'live' ? LiveEngine : DemoEngine;
+
+/* ---------------- Public hooks for your video module ---------------- */
+window.HCTranslation = {
+  setRemoteStream(stream){ remoteStream = stream; Engine.restart(); },
+  setRemoteLang(code){ if (!byCode[code]) return; S.lang[OTHER[S.me]] = code; refreshUI(); Engine.restart(); },
+  onMyLangChange(role, code){ /* replace: socket.emit('lang-changed', { role, code }) */ },
+  getMyLang(){ return myLang(); }
+};
+
+/* ---------------- Demo: switch between doctor and patient screens ---------------- */
+function setView(role){
+  S.me = role;
+  els.panel.classList.remove('show');
+  refreshUI(); renderLangOptions(); Engine.restart();
+}
+$('viewDoctor').onclick = () => setView('doctor');
+$('viewPatient').onclick = () => setView('patient');
+if (CONFIG.mode === 'live') $('demoBar').style.display = 'none';
+
+if (CONFIG.mode === 'live') try { ['doctor','patient'].forEach(r => { const v = localStorage.getItem('hc_lang_' + r); if (v && byCode[v]) S.lang[r] = v; }); } catch(e){}
+renderLangOptions();
+refreshUI();
+Engine.start();
+</script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Step 0 test</title>
+<style>
+  body { font: 14px system-ui; background: #111; color: #eee; padding: 12px; }
+  button, select { font-size: 16px; padding: 8px; margin: 4px 2px; }
+  pre { background: #000; padding: 8px; white-space: pre-wrap; max-height: 50vh; overflow: auto; }
+  a { color: #7cf; }
+</style>
+</head>
+<body>
+<h3>Step 0: remote stream to Azure (throwaway, not the app)</h3>
+<p><a href="echo.html">Open the mic / echo / ducking page</a> &nbsp;|&nbsp; <a href="speaker.html"><b>Speaker-side spike (two devices)</b></a></p>
+<div>
+  Sample:
+  <select id="sample">
+    <option value="de">German</option><option value="en">English</option><option value="es">Spanish</option>
+    <option value="en+de">English then German</option><option value="de+en">German then English</option>
+  </select>
+  Output:
+  <select id="target"><option value="none">original text only</option><option value="en">translate to en</option><option value="de">translate to de</option></select>
+  Detection:
+  <select id="lid">
+    <option value="none">off (fixed language)</option>
+    <option value="atstart">at-start (en/de/es)</option>
+    <option value="continuous">continuous (en/de/es)</option>
+    <option value="open">open range</option>
+  </select>
+  Fixed language:
+  <select id="fixed"><option>en-US</option><option>de-DE</option><option>es-ES</option></select>
+  <label><input type="checkbox" id="restart"> restart recognizer after each phrase</label>
+</div>
+<button id="suite" style="background:#2a7;color:#fff;border:0;border-radius:6px">PHONE SUITE: tap once (about 3 minutes, keep this page open)</button><br>
+<button id="go">1. Run one case (uses the choices above)</button>
+<button id="tts">2. Play translated voice (tap needed on iPhone)</button>
+<button id="copy">Copy results</button>
+<pre id="log"></pre>
+<audio id="remoteAudio" autoplay playsinline></audio>
+<script src="sdk.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const L = [];
+const log = (...a) => {
+  L.push(a.map((x) => (typeof x === "string" ? x : JSON.stringify(x))).join(" "));
+  $("log").textContent = L.join("\n");
+};
+log("UA:", navigator.userAgent);
+log("secure context:", window.isSecureContext, "| AudioContext:", typeof (window.AudioContext || window.webkitAudioContext), "| RTCPeerConnection:", typeof RTCPeerConnection);
+let lastText = "", lastTarget = "en";
+const CANDS = ["en-US", "de-DE", "es-ES"];
+
+async function getToken() { return (await fetch("token")).json(); }
+
+async function makeRemote(ctx, samples) {
+  const dest = ctx.createMediaStreamDestination();
+  let t = ctx.currentTime + 0.5, end = t;
+  for (const s of samples) {
+    if (s === "sil") { t += 8; end = t; continue; }
+    const buf = await ctx.decodeAudioData(await (await fetch("sample?lang=" + s)).arrayBuffer());
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(dest);
+    src.start(t); end = t + buf.duration; t = end + 2.5;
+  }
+  // Loopback WebRTC so the stream is a genuine REMOTE MediaStream, like in the real call.
+  const a = new RTCPeerConnection(), b = new RTCPeerConnection();
+  a.onicecandidate = (e) => e.candidate && b.addIceCandidate(e.candidate);
+  b.onicecandidate = (e) => e.candidate && a.addIceCandidate(e.candidate);
+  dest.stream.getTracks().forEach((tr) => a.addTrack(tr, dest.stream));
+  const remote = await new Promise(async (resolve) => {
+    b.ontrack = (e) => resolve(e.streams[0]);
+    const o = await a.createOffer(); await a.setLocalDescription(o); await b.setRemoteDescription(o);
+    const an = await b.createAnswer(); await b.setLocalDescription(an); await a.setRemoteDescription(an);
+  });
+  return { remote, endsInMs: (t - 2.5 - ctx.currentTime) * 1000 + 500 };
+}
+
+window.runCase = async function (o) {
+  const out = { opts: o, finals: [], errors: [], firstPartialMs: null };
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ctx = window.__sharedCtx || new AC(); await ctx.resume();
+    const { remote, endsInMs } = await makeRemote(ctx, o.sample.split("+"));
+    $("remoteAudio").srcObject = remote;
+    try { await $("remoteAudio").play(); } catch (e) { out.errors.push("remote audio play blocked: " + e.message); }
+    const t0 = performance.now();
+    const build = async () => {
+      const { token, region } = await getToken();
+      const audio = SpeechSDK.AudioConfig.fromStreamInput(remote);
+      const translate = o.target !== "none";
+      // Standard endpoint + token works for continuous detection (the v2 endpoint with a token did not connect).
+      const cfg = translate ? SpeechSDK.SpeechTranslationConfig.fromAuthorizationToken(token, region) : SpeechSDK.SpeechConfig.fromAuthorizationToken(token, region);
+      if (o.lid === "continuous" || o.lid === "open") cfg.setProperty(SpeechSDK.PropertyId.SpeechServiceConnection_LanguageIdMode, "Continuous");
+      cfg.outputFormat = SpeechSDK.OutputFormat.Detailed; // needed to read confidence
+      if (translate) cfg.addTargetLanguage(o.target);
+      const R = translate ? SpeechSDK.TranslationRecognizer : SpeechSDK.SpeechRecognizer;
+      if (o.lid === "none") { cfg.speechRecognitionLanguage = o.fixed; return new R(cfg, audio); }
+      const auto = o.lid === "open" ? SpeechSDK.AutoDetectSourceLanguageConfig.fromOpenRange() : SpeechSDK.AutoDetectSourceLanguageConfig.fromLanguages(CANDS);
+      return R.FromConfig(cfg, auto, audio);
+    };
+    let rec = await build(), stopped = false;
+    const wire = (r) => {
+      r.recognizing = () => { if (out.firstPartialMs === null) out.firstPartialMs = Math.round(performance.now() - t0); };
+      r.recognized = (s, e) => {
+        const res = e.result;
+        const ok = res.reason === SpeechSDK.ResultReason.TranslatedSpeech || res.reason === SpeechSDK.ResultReason.RecognizedSpeech;
+        if (!ok) { if (res.reason !== SpeechSDK.ResultReason.NoMatch) return; out.finals.push({ ms: Math.round(performance.now() - t0), nomatch: true }); return; }
+        let det = null, conf = null;
+        try { det = SpeechSDK.AutoDetectSourceLanguageResult.fromResult(res).language; } catch (_) {}
+        try { const j = JSON.parse(res.properties.getProperty(SpeechSDK.PropertyId.SpeechServiceResponse_JsonResult)); conf = j.NBest && j.NBest[0] && j.NBest[0].Confidence; } catch (_) {}
+        const tr = o.target !== "none" && res.translations ? res.translations.get(o.target) : null;
+        if (tr) { lastText = tr; lastTarget = o.target; }
+        out.finals.push({ ms: Math.round(performance.now() - t0), detected: det || "(fixed " + (o.fixed) + ")", conf, text: res.text, translation: tr });
+        log("FINAL", out.finals[out.finals.length - 1]);
+        if (o.restart && !stopped) restart();
+      };
+      r.canceled = (s, e) => { out.errors.push("CANCELED " + SpeechSDK.CancellationReason[e.reason] + " " + (e.errorDetails || "")); log("CANCELED", e.errorDetails || ""); };
+    };
+    let restarting = false;
+    const restart = async () => {
+      if (restarting) return; restarting = true;
+      const old = rec; old.stopContinuousRecognitionAsync(async () => { old.close(); rec = await build(); wire(rec); rec.startContinuousRecognitionAsync(() => { restarting = false; }); });
+    };
+    wire(rec);
+    await new Promise((res, rej) => rec.startContinuousRecognitionAsync(res, (e) => rej(new Error(String(e)))));
+    log("started", JSON.stringify(o));
+    await new Promise((r) => setTimeout(r, endsInMs + 6000));
+    stopped = true;
+    await new Promise((r) => rec.stopContinuousRecognitionAsync(r, r));
+    try { rec.close(); } catch (_) {}
+    if (!window.__sharedCtx) ctx.close();
+  } catch (e) { out.errors.push(e.message || String(e)); log("ERROR", e.message || String(e)); }
+  window.__result = out;
+  return out;
+};
+
+const optsFromUI = () => ({ sample: $("sample").value, target: $("target").value, lid: $("lid").value, fixed: $("fixed").value, restart: $("restart").checked });
+// iPhone/Safari only lets audio start from a tap, so ONE AudioContext and the <audio> element are unlocked inside the tap and reused.
+function unlockAudio() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!window.__sharedCtx) window.__sharedCtx = new AC();
+  const ctx = window.__sharedCtx;
+  ctx.resume().then(() => log("AudioContext:", ctx.state), (e) => log("AudioContext resume failed:", e.message));
+  const el = $("remoteAudio");
+  el.srcObject = ctx.createMediaStreamDestination().stream;
+  el.play().then(() => log("audio element unlocked"), (e) => log("audio element unlock failed:", e.message));
+}
+$("go").onclick = async () => { unlockAudio(); const r = await runCase(optsFromUI()); log("DONE", JSON.stringify({ finals: r.finals.length, errors: r.errors, firstPartialMs: r.firstPartialMs })); };
+
+$("suite").onclick = async () => {
+  unlockAudio();
+  const T = [
+    ["S1 continuous detection + translate to English, German speech", { sample: "de", target: "en", lid: "continuous", fixed: "en-US" },
+      (r) => r.finals.some((f) => /^de/.test(f.detected || "") && f.translation)],
+    ["S2 continuous detection, text only, English then German", { sample: "en+de", target: "none", lid: "continuous", fixed: "en-US" },
+      (r) => r.finals.some((f) => /^en/.test(f.detected || "")) && r.finals.some((f) => /^de/.test(f.detected || ""))],
+    ["S3 CONTROL: fixed English, German speech (expect nonsense text, low confidence)", { sample: "de", target: "none", lid: "none", fixed: "en-US" },
+      (r) => r.finals.length > 0 && r.finals.every((f) => f.conf === null || f.conf === undefined || f.conf < 0.4)],
+    ["S4 continuous detection + translate to English, English then German", { sample: "en+de", target: "en", lid: "continuous", fixed: "en-US" },
+      (r) => r.finals.some((f) => /^de/.test(f.detected || "") && f.translation)],
+  ];
+  const verdicts = [];
+  for (const [name, opts, ok] of T) {
+    log("---- running " + name);
+    const r = await runCase(opts);
+    const pass = r.errors.length === 0 && ok(r);
+    verdicts.push((pass ? "PASS  " : "CHECK ") + name + (r.errors.length ? "  errors: " + r.errors.join("; ") : ""));
+    log((pass ? "PASS" : "CHECK") + ": " + name);
+  }
+  log("==== SUITE SUMMARY ====");
+  verdicts.forEach((v) => log(v));
+  log("Now tap '2. Play translated voice' to check the voice, then 'Copy results'.");
+};
+$("tts").onclick = async () => {
+  try {
+    if (!lastText) return log("no translation yet (pick an Output language first)");
+    const { token, region } = await getToken();
+    const sc = SpeechSDK.SpeechConfig.fromAuthorizationToken(token, region);
+    sc.speechSynthesisVoiceName = { en: "en-US-JennyNeural", de: "de-DE-KatjaNeural" }[lastTarget];
+    const sy = new SpeechSDK.SpeechSynthesizer(sc); const t0 = performance.now();
+    sy.speakTextAsync(lastText, (r) => { log("TTS", SpeechSDK.ResultReason[r.reason], "ms", Math.round(performance.now() - t0), r.errorDetails || ""); sy.close(); }, (e) => log("TTS ERROR", String(e)));
+  } catch (e) { log("ERROR", e.message); }
+};
+$("copy").onclick = () => navigator.clipboard.writeText(L.join("\n")).then(() => log("copied"), () => log("copy blocked: select the text manually"));
+</script>
+</body>
+</html>

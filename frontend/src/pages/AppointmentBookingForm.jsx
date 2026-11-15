@@ -93,7 +93,7 @@ const ELEMENTS_APPEARANCE = {
     colorBackground: "#ffffff",
     colorText: "#111827",
     colorDanger: "#dc2626",
-    fontFamily: "'Inter', system-ui, sans-serif",
+    fontFamily: "'Inter'",
     borderRadius: "8px",
     fontSizeBase: "14px",
     spacingUnit: "4px",

@@ -1,10 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --font-primary:
-    "Satoshi", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-secondary:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-primary: "Satoshi", "Inter";
+  --font-secondary: "Inter";
 
   /* Layout containers (values already used across the app) */
   --container-sm: 900px;
@@ -12,11 +10,13 @@
   --container-lg: 1280px;
 
   /* Stacking scale: the values the app actually uses today */
-  --z-sticky: 80; /* fixed site header */
+  --z-sticky: 80;
+  /* fixed site header */
   --z-dropdown: 100;
   --z-overlay: 9998;
   --z-modal: 9999;
-  --z-toast: 10000; /* above modals; in-call screens (10001) stay above toasts */
+  --z-toast: 10000;
+  /* above modals; in-call screens (10001) stay above toasts */
 
   /* Transition durations */
   --duration-fast: 150ms;
@@ -103,11 +103,9 @@ input[type="reset"] {
 
 .corp-hero {
   background:
-    radial-gradient(
-      circle at top right,
+    radial-gradient(circle at top right,
       rgba(124, 183, 255, 0.18),
-      transparent 35%
-    ),
+      transparent 35%),
     linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
   background-size: cover;
   background-position: center;
@@ -158,6 +156,7 @@ input[type="reset"] {
     font-size: 14px;
   }
 }
+
 /* Skip link: first focusable element on every page; visible only while focused. */
 .hc-skip-link {
   position: fixed;
@@ -172,12 +171,14 @@ input[type="reset"] {
   border-radius: 8px;
   transform: translateY(-200%);
 }
+
 .hc-skip-link:focus,
 .hc-skip-link:focus-visible {
   transform: translateY(0);
   outline: 2px solid var(--primary, #2563eb);
   outline-offset: 2px;
 }
+
 /* The skip link moves focus here programmatically; no ring needed on the container. */
 #main-content:focus {
   outline: none;
@@ -197,6 +198,7 @@ input[type="reset"] {
 
 /* Visitors who asked for reduced motion: effectively no animation or smooth scrolling. */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

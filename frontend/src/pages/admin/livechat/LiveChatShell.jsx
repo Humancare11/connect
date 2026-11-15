@@ -25,7 +25,7 @@ const ITEMS = [
   { path: `${BASE}/settings`, label: "AI agent settings", icon: "sliders" },
 ];
 const BASE_API = "/api/admin/livechat";
-const FONT_URL = "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap";
+// const FONT_URL = "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap";
 
 const isChatRoute = (pathname) => /\/live-chat\/(ai-chats|agent-chats)(\/|$)/.test(pathname);
 const matches = (item, pathname) => (item.exact ? pathname === item.path : pathname === item.path || pathname.startsWith(`${item.path}/`));
@@ -38,21 +38,21 @@ const initialsOf = (name) =>
     .toUpperCase();
 
 // Geist is loaded from Google Fonts only while a Live Chat page is open.
-function useGeistFont() {
-  useEffect(() => {
-    const links = [];
-    const add = (rel, href) => {
-      const link = document.createElement("link");
-      link.rel = rel;
-      link.href = href;
-      document.head.appendChild(link);
-      links.push(link);
-    };
-    add("preconnect", "https://fonts.googleapis.com");
-    add("stylesheet", FONT_URL);
-    return () => links.forEach((link) => link.remove());
-  }, []);
-}
+// function useGeistFont() {
+//   useEffect(() => {
+//     const links = [];
+//     const add = (rel, href) => {
+//       const link = document.createElement("link");
+//       link.rel = rel;
+//       link.href = href;
+//       document.head.appendChild(link);
+//       links.push(link);
+//     };
+//     add("preconnect", "https://fonts.googleapis.com");
+//     add("stylesheet", FONT_URL);
+//     return () => links.forEach((link) => link.remove());
+//   }, []);
+// }
 
 export default function LiveChatShell({ children }) {
   const { admin: user, logout: contextLogout } = useAdmin();
@@ -65,7 +65,7 @@ export default function LiveChatShell({ children }) {
   const [canReview, setCanReview] = useState(false); // AI Review: Super Admin, or an admin the Super Admin has allowed
   const autoCollapsed = useRef(false); // collapsed by us on the chat pages (for room), given back when leaving
 
-  useGeistFont();
+  // useGeistFont();
 
   useEffect(() => {
     let cancelled = false;

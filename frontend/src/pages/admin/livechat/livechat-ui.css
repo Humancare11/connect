@@ -5,8 +5,9 @@
   --ink:#f3f3f5; --muted:#9b9ba4; --faint:#6e6e77;
   --accent:#3b82f6; --accent-soft:#16294d; --bubble:#1a2f5c; --bubble-ink:#eaf0ff;
   --ai:#a78bfa; --ai-soft:#2a2150; --warn:#f5a524; --warn-soft:#3a2b10; --ok:#22c55e; --urgent:#ef4444;
-  --f-ui:"Geist",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; --f-mono:"Geist Mono",ui-monospace,Menlo,monospace;
- --av-a:#b8890b; --av-a-ink:#1b1303; --av-anon:#6b3d7d; --av-anon-ink:#f1dff7; --av-me:#7e9a2f; --av-me-ink:#12190a;
+  --f-ui: var(--font-secondary);
+--f-mono: var(--font-primary);
+  --av-a:#b8890b; --av-a-ink:#1b1303; --av-anon:#6b3d7d; --av-anon-ink:#f1dff7; --av-me:#7e9a2f; --av-me-ink:#12190a;
   --warn-line:#5a4416; --ai-line:#3d3270; --accent-ink:#7fb0ff; --accent-hover:#2f74ee; --lang-bg:#2f2a14; --lang-ink:#e8c766;
   --err-bg:#3a1715; --danger-ink:#ff8d82; --ai-ink:#ece6ff; --note-ink:#f6dca4; --box-note-bg:#1d1810; --box-line:#3a3a41; --chip-line:#4a4a52;
   --warn-btn-ink:#241a05; --danger-line:#5c2723; --sc-bg:#7cb7f5; --sc-ink:#0b1a2e; --sc-hover:#93c4f8; --sc-bg2:#4592f0; --pop-bg:#1e1e22; --shadow-c:rgba(0,0,0,.28); --shadow-c2:rgba(0,0,0,.5);
@@ -361,7 +362,7 @@
 .lcx .lcp-title h2{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
 .lcx .lcp-eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--accent-ink);text-transform:uppercase}
 .lcx .lcp-muted{color:var(--muted)}
-.lcx .lcp-mono{font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;font-size:12.5px;font-variant-numeric:tabular-nums}
+.lcx .lcp-mono{font-family:var(--font-primary);font-size:12.5px;font-variant-numeric:tabular-nums}
 .lcx .lcp-note{color:var(--muted);font-size:12.5px;margin:10px 2px 0}
 .lcx .lcp-error{background:var(--err-bg);color:var(--danger-ink);font-weight:600;font-size:13px;padding:8px 12px;border-radius:10px;margin-bottom:10px}
 .lcx .lcp-btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 14px;font-weight:700;font-size:13px;cursor:pointer}

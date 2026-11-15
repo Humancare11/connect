@@ -34,7 +34,7 @@ const ICONS = {
   dots: svg(
     <>
       <circle cx="12" cy="12" r="10" fill="currentColor" stroke="none" />
-      <text x="12" y="16.5" textAnchor="middle" fontSize="13" fontWeight="700" fill="#fff" fontFamily="sans-serif">
+      <text x="12" y="16.5" textAnchor="middle" fontSize="13" fontWeight="700" fill="#fff" fontFamily="Inter">
         ?
       </text>
     </>,

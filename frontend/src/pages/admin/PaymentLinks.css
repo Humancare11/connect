@@ -755,7 +755,8 @@
   font-variant-numeric: tabular-nums;
 }
 .pl-recent__case {
-  font-family: ui-monospace, Consolas, "Cascadia Mono", monospace;
+  font-family: var(--font-primary);
+  font-variant-numeric: tabular-nums;
   font-size: 12.5px !important;
   font-weight: 700;
   color: #0f172a !important;

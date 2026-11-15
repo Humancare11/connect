@@ -188,7 +188,7 @@
 }
 .sa-table td { padding: 9px 10px; border-bottom: 1px solid #eef1f9; vertical-align: middle; }
 .sa-term { font-weight: 600; word-break: break-word; }
-.sa-path { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+.sa-path { font-family: var(--font-primary); font-variant-numeric: tabular-nums; font-size: 12px; word-break: break-all; }
 .sa-empty { text-align: center; color: #6b7ca3; padding: 24px 10px; }
 
 /* Dates stay on one line (YYYY-MM-DD would otherwise break at the hyphens). */
