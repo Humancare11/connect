@@ -299,7 +299,7 @@ Public pages are SEO-focused; the dashboards sit behind role logins. All routes 
 | `/` | `Home` | Landing page |
 | `/categories`, `/specialties`, `/conditions` | `Categories`, `Specialties`, `Symptoms` | Browse care areas |
 | `/<category>`, `/<category>/<specialty>`, `/<...>/<condition>` | Category / specialty / condition pages | Content pages (many hard-coded routes) |
-| `/medical-services`, `/corporates`, `/service-areas`, `/services-prices` | `Services`, `Corporates`, `Serviceareas`, `ServicesPrices` | Services and pricing info |
+| `/medical-services`, `/corporates`, `/services-prices` | `Services`, `Corporates`, `ServicesPrices` | Services and pricing info |
 | `/blogs`, `/:slug` (last catch-all) | `Blogs`, `BlogPost` | Blog list and admin-written blog posts |
 | `/contact-us` | `Contact` | Contact form |
 | `/login` | `Login` | Patient login / register |

@@ -15,7 +15,7 @@ Every public route (no params, not noindex/private) and what the resolver names 
 | private (never named) | 0 |
 | **Public routes** | **307** |
 
-Not counted: 78 private/noindex routes (dashboards, login, payment, booking steps) and 30 routes with params (below).
+Not counted: 80 private/noindex routes (dashboards, login, payment, booking steps) and 35 routes with params (below).
 
 By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9, home 1, symptom 1.
 
@@ -66,6 +66,7 @@ By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9,
 | `/contact-us` | page | Telemedicine Services Support |
 | `/cookie-policy` | page | Cookie Policy |
 | `/corporates` | page | Corporate Telemedicine Services |
+| `/doctors-note-sick-notes` | page | Doctor's Note & Sick Notes |
 | `/future-of-telemedicine` | blog | Future of Telemedicine |
 | `/hipaa-notice-of-privacy-practices` | page | HIPAA Notice of Privacy Practices |
 | `/how-does-a-telemedicine-appointment-work` | blog | How Does a Telemedicine Appointment Work? Step-by-Step Guide |
@@ -76,7 +77,6 @@ By type: condition 220, speciality 30, page 20, blog 14, category 12, service 9,
 | `/privacy-policy` | page | Privacy Policy |
 | `/provider-terms-of-service` | page | Provider Terms of Service |
 | `/refund-cancellation-policy` | page | Refund and Cancellation Policy |
-| `/service-areas` | page | Service Areas |
 | `/support-center` | page | Telemedicine & Online Doctor Support |
 | `/telehealth-for-hypertension` | blog | Telehealth for Hypertension: Treat High Blood Pressure Online |
 | `/telehealth-informed-consent` | page | Telehealth Informed Consent |

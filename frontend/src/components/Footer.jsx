@@ -128,9 +128,6 @@ export default function Footer() {
           <a href="/online-second-medical-opinion">
             Online Second Medical Opinion
           </a>
-          {/* <a href="/service-areas">
-            Service Areas
-          </a> */}
           {/* <a href="/weight-loss-programs">Weight Loss Programs</a> */}
         </div>
 
