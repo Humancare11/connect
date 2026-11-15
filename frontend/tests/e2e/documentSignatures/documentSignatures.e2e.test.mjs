@@ -173,6 +173,44 @@ describe("signed / unsigned papers: layout and PDF", { skip: skipReason || false
     });
   }
 
+  // The "Sign this ..." control: UNCHECKED by default even with a saved signature; the doctor ticks it each time.
+  describe("Sign this ... checkbox", () => {
+    const openOption = async (query) => {
+      await page.goto(`${base}/tests/e2e/documentSignatures/harness/index.html?doc=sign-option&${query}`);
+      await page.waitForSelector("#sign-state");
+    };
+    const state = () => page.locator("#sign-state").innerText();
+    const thumb = () => page.locator('img[alt="Your saved signature"]').count();
+
+    for (const compact of [false, true]) {
+      const where = compact ? "video-call panel (compact)" : "Prescription / Certificate form";
+      test(`${where}: saved signature, unchecked by default, thumbnail only while ticked`, async () => {
+        await openOption(`saved=1${compact ? "&compact=1" : ""}`);
+        const box = page.getByRole("checkbox");
+        assert.equal(await box.isChecked(), false, "unchecked by default");
+        assert.equal(await state(), "false", "form state is not signing");
+        assert.equal(await thumb(), 0, "no thumbnail while unchecked");
+        await box.check();
+        assert.equal(await state(), "true");
+        if (!compact) assert.equal(await thumb(), 1, "saved-signature thumbnail visible once ticked");
+        await box.uncheck();
+        assert.equal(await state(), "false");
+        assert.equal(await thumb(), 0);
+      });
+    }
+
+    test("no saved signature: nothing to tick, signing stays off, form is not blocked", async () => {
+      await openOption("saved=0");
+      assert.equal(await page.getByRole("checkbox").count(), 0);
+      assert.match(await page.locator("body").innerText(), /no saved signature/i);
+      assert.equal(await state(), "false");
+      await openOption("saved=0&compact=1");
+      assert.equal(await page.getByRole("checkbox").count(), 0);
+      assert.match(await page.locator("body").innerText(), /issued unsigned/i);
+      assert.equal(await state(), "false");
+    });
+  });
+
   test("no page errors in the browser", () => {
     assert.deepEqual(pageErrors, []);
   });

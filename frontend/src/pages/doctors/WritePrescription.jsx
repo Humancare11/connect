@@ -34,7 +34,7 @@ export default function WritePrescription() {
   const [saved, setSaved] = useState(false);
   const [savedNote, setSavedNote] = useState("");
   const signature = useDoctorSignature();
-  const [sign, setSign] = useState(false); // "Sign this prescription": ON by default once a saved signature exists
+  const [sign, setSign] = useState(false); // "Sign this prescription": unchecked by default; the doctor ticks it to sign
 
   const loadPatientData = useCallback(async () => {
     setLoading(true);

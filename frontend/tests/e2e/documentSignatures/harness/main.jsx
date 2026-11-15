@@ -1,13 +1,16 @@
 /* eslint-disable react-refresh/only-export-components -- test harness, not part of the app bundle */
 // Renders the REAL slips (RxSlip in both layouts, MedicalCertificateSlip, VisitNoteSlip) with fixed data, signed or
 // unsigned, and exposes window.makePdf() which runs the app's own PDF code (utils/slipPdf.js).
-//   ?doc=rx|rx-legacy|cert|visit   &signed=1   &sig=normal|wide|tall   &long=1 (long content, pushes to 2 pages)
-import React from "react";
+//   ?doc=rx|rx-legacy|cert|visit   &signed=1
+//   ?doc=sign-option&saved=1|0&compact=1   the "Sign this ..." control with a stub signature hook (state shown in #sign-state)
+//   (slips:)   &sig=normal|wide|tall   &long=1 (long content, pushes to 2 pages)
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./base.css";
 import RxSlip, { downloadPrescriptionPDF } from "../../../../src/components/RxSlip.jsx";
 import { MedicalCertificateSlip, downloadCertificatePDF } from "../../../../src/components/MedicalCertificateSlip.jsx";
 import VisitNoteSlip from "../../../../src/components/VisitNoteSlip.jsx";
+import SignDocumentOption from "../../../../src/components/SignDocumentOption.jsx";
 
 const params = new URLSearchParams(window.location.search);
 const doc = params.get("doc") || "rx";
@@ -80,6 +83,22 @@ const node = {
   visit: <VisitNoteSlip slipRef={slipRef} report={report} signatureUrl={signatureUrl} />,
 }[doc];
 
+// The "Sign this ..." control as the forms use it: the form owns `sign` (starts false, like the real forms).
+function SignOptionDemo() {
+  const saved = params.get("saved") === "1";
+  const [sign, setSign] = useState(false);
+  const sig = {
+    loading: false, hasSignature: saved, imageUrl: saved ? makeSignature("normal") : "", error: "",
+    refresh: async () => {}, preview: async () => ({}), save: async () => {},
+  };
+  return (
+    <div style={{ width: 520, background: "#fff", padding: 12 }}>
+      <SignDocumentOption sig={sig} sign={sign} onSignChange={setSign} noun="prescription" compact={params.get("compact") === "1"} />
+      <output id="sign-state">{String(sign)}</output>
+    </div>
+  );
+}
+
 window.makePdf = async () => {
   const name = `${doc}${signed ? "-signed" : "-unsigned"}.pdf`;
   // Same calls the app makes: Rx + Visit Note use downloadPrescriptionPDF, the certificate its own.
@@ -87,4 +106,6 @@ window.makePdf = async () => {
   else await downloadPrescriptionPDF(slipRef.current, name);
 };
 
-createRoot(document.getElementById("root")).render(<div style={{ padding: 16, background: "#e5e7eb", width: 830 }}>{node}</div>);
+createRoot(document.getElementById("root")).render(
+  <div style={{ padding: 16, background: "#e5e7eb", width: 830 }}>{doc === "sign-option" ? <SignOptionDemo /> : node}</div>,
+);

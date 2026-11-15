@@ -36,7 +36,7 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
     appointmentId: appointments[0]?._id || "",
   });
   const signature = useDoctorSignature();
-  const [sign, setSign] = useState(false); // "Sign this certificate": ON by default once a saved signature exists
+  const [sign, setSign] = useState(false); // "Sign this certificate": unchecked by default; the doctor ticks it to sign
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 

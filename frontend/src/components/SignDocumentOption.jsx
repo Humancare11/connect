@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import SignaturePanel from "./SignaturePanel";
 import "./SignaturePanel.css";
 
@@ -11,18 +11,12 @@ import "./SignaturePanel.css";
  *   noun           "prescription" | "certificate"
  *   compact        video call: checkbox only, never a panel; no saved signature = short message with a link
  *
- * ON by default once a saved signature is known (until the doctor touches the box). With no saved signature the
- * doctor is prompted to upload or draw one, but can still issue unsigned: this never blocks the form.
+ * UNCHECKED by default, even when a signature is saved: the doctor ticks it each time to sign. The saved signature's
+ * thumbnail shows while it is ticked. With no saved signature the doctor is prompted to upload or draw one, but can
+ * still issue unsigned: this never blocks the form.
  */
 export default function SignDocumentOption({ sig, sign, onSignChange, noun = "document", compact = false, profilePath = "/doctor-dashboard/profile" }) {
-  const touched = useRef(false);
   const [changing, setChanging] = useState(false);
-
-  // Default ON as soon as a saved signature exists (also right after the doctor saves their first one here).
-  useEffect(() => {
-    if (!touched.current && sig.hasSignature) onSignChange(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig.hasSignature]);
 
   // Never leave "sign" ticked when there is nothing to sign with.
   useEffect(() => {
@@ -30,10 +24,7 @@ export default function SignDocumentOption({ sig, sign, onSignChange, noun = "do
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig.loading, sig.hasSignature, sign]);
 
-  const toggle = (checked) => {
-    touched.current = true;
-    onSignChange(checked);
-  };
+  const toggle = (checked) => onSignChange(checked);
 
   if (sig.loading) return null;
 
