@@ -8,7 +8,7 @@
   position: relative;
   width: calc(100% - 48px);
   max-width: 1500px;
-  margin: 40px auto 80px;
+  margin: var(--section-gap) auto;
   padding: 68px 50px 76px;
   border-radius: 34px;
   background: rgba(255, 255, 255, 0.92);
@@ -513,7 +513,7 @@
 @media (max-width: 1024px) {
   .ecs-section {
     padding: 56px 36px 64px;
-    margin: 32px auto 60px;
+    margin: var(--section-gap) auto;
   }
 
   .ecs-card {
@@ -536,7 +536,7 @@
     width: calc(100% - 32px);
     padding: 44px 24px 50px;
     border-radius: 28px;
-    margin: 24px auto 48px;
+    margin: var(--section-gap) auto;
   }
 
   .ecs-grid {
@@ -662,7 +662,7 @@
     width: calc(100% - 12px);
     padding: 24px 12px 28px;
     border-radius: 18px;
-    margin: 20px auto 32px;
+    margin: var(--section-gap) auto;
   }
 
   .ecs-title {

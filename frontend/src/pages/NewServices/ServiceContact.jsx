@@ -13,15 +13,21 @@ const ConsultationForm = ({ s }) => {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (field) => (e) =>
     setValues((v) => ({ ...v, [field]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return; // one request at a time: ignore repeat clicks / Enter
+    setSubmitting(true);
 
     try {
-      const { data } = await api.post("/api/contact", values);
+      const { data } = await api.post("/api/contact", {
+        ...values,
+        subject: s?.serviceName || "",
+      });
 
       if (data.success) {
         setSubmitted(true);
@@ -36,6 +42,8 @@ const ConsultationForm = ({ s }) => {
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Unable to submit request.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -140,9 +148,11 @@ const ConsultationForm = ({ s }) => {
 
             <button
               type="submit"
+              disabled={submitting}
+              aria-busy={submitting}
               className="service-btn service-btn--primary service-btn--full"
             >
-              Submit Request
+              {submitting ? "Submitting..." : "Submit Request"}
             </button>
 
             <div className="service-form-privacy">

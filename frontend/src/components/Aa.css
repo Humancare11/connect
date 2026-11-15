@@ -5,7 +5,7 @@
   position: relative;
   width: calc(100% - 48px);
   max-width: 1500px;
-  margin: 80px auto;
+  margin: var(--section-gap) auto;
   padding: 70px 50px 80px;
   border-radius: 34px;
 
@@ -403,7 +403,7 @@ a.aa-card {
 @media (max-width: 768px) {
   .aa-section {
     width: calc(100% - 32px);
-    margin: 20px auto;
+    margin: var(--section-gap) auto;
     padding: 20px 14px 20px;
     border-radius: 20px;
   }
@@ -487,7 +487,7 @@ a.aa-card {
   .aa-section {
     width: calc(100% - 16px);
     padding: 16px 10px;
-    margin: 12px auto;
+    margin: var(--section-gap) auto;
     border-radius: 16px;
   }
 

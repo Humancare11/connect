@@ -139,14 +139,16 @@ export default function Sa() {
             <span className="services-card-cta-link">
               Refill Prescription <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
 
           {/* Doctors Notes */}
           <RevealCard
             className="services-card-item services-bento-small-weightloss"
             delay={D[1]}
-            to="/doctors-note"
+            to="/doctors-note-sick-notes"
           >
             <div className="services-card-header">
               <div className="services-icon-box">
@@ -166,7 +168,9 @@ export default function Sa() {
             <span className="services-card-cta-link">
               Get Started <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
 
           {/* Fit to Fly */}
@@ -193,7 +197,9 @@ export default function Sa() {
             <span className="services-card-cta-link">
               Get Certificate <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
 
           {/* ── General Consultation ── */}
@@ -221,7 +227,9 @@ export default function Sa() {
             <span className="services-card-cta-link">
               See a Doctor <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
 
           {/* Lab Requisition */}
@@ -248,7 +256,9 @@ export default function Sa() {
             <span className="services-card-cta-link">
               Learn More <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
 
           {/* ── Online Second Medical Opinion ── */}
@@ -276,7 +286,9 @@ export default function Sa() {
             <span className="services-card-cta-link">
               Get a Second Opinion <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
 
           {/* ── Chronic Care Management (4-col wide) ── */}
@@ -304,7 +316,9 @@ export default function Sa() {
             <span className="services-card-cta-link">
               Manage condition <span className="cta-arrow">→</span>
             </span>
-            <span className="services-card-row-arrow" aria-hidden="true">→</span>
+            <span className="services-card-row-arrow" aria-hidden="true">
+              →
+            </span>
           </RevealCard>
         </div>
       </div>
