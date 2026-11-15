@@ -22,6 +22,7 @@ function DoctorRow({ doctor, hasDoctor, assigning, selected, disabled, index, on
       <div className="aad-cell aad-cell-id">{doctor.doctorId || "-"}</div>
       <div className="aad-cell aad-cell-name">
         <span className="aad-name-text">{doctorDisplayName(doctor.name)}</span>
+        {doctor.email ? <span className="aad-email">{doctor.email}</span> : null}
         {/* shown instead of the ID column on tablet/phone layouts */}
         <span className="aad-id-inline">ID: {doctor.doctorId || "-"}</span>
       </div>
@@ -292,8 +293,8 @@ export default function AdminAssignDoctor() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
-              aria-label="Search doctors by name, ID, specialty or country"
-              placeholder="Search by name, ID, specialty, country…"
+              aria-label="Search doctors by name, email, phone, ID, specialty or country"
+              placeholder="Search name, email, phone, ID…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />

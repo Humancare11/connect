@@ -82,32 +82,66 @@ export function scoreDoctor(doctor, fit) {
   return { score, priority, secondaryScore };
 }
 
+// ── Search ───────────────────────────────────────────────────────────────────
+
+// Lowercase, accents removed, punctuation and runs of spaces collapsed to single spaces ("Dr.  José" -> "dr jose").
+export function normalizeSearch(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/\p{M}+/gu, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}@]+/gu, " ")
+    .trim();
+}
+
+const digitsOf = (value) => String(value || "").replace(/\D/g, "");
+
+// The words of a search: "Dr" / "Dr." is dropped (every name has it), so "dr smith" and "smith" are the same search and a lone "dr" shows everyone.
+function searchWords(query) {
+  const words = normalizeSearch(query).split(" ").filter(Boolean);
+  return words[0] === "dr" ? words.slice(1) : words;
+}
+
+// Does the doctor match the admin's search? Every word must be found somewhere (name, email, doctor ID, specialty,
+// place, licences), in any order, as a partial match. A word that is mostly digits ("+91 98765 43210") is also
+// compared against the phone number by digits only, so spaces, dashes and the country code don't matter.
+// Shared by the Assign doctor page for both kinds of booking.
+export function matchesDoctorSearch(doctor, query) {
+  const words = searchWords(query);
+  if (!words.length) return true;
+  const haystack = normalizeSearch(
+    [
+      String(doctor.name || "").replace(/^\s*dr\.?\s+/i, ""),
+      doctor.email,
+      doctor.doctorId,
+      doctor.specialty,
+      doctor.subSpecialty,
+      doctor.city,
+      doctor.state,
+      doctor.country,
+      ...(Array.isArray(doctor.internationalLicenses) ? doctor.internationalLicenses : []),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+  const phoneDigits = digitsOf(doctor.phoneNumber);
+  const fullPhoneDigits = digitsOf(doctor.countryCode) + phoneDigits;
+  // The whole query typed as a phone number: "+91 98765-43210" is one search, not three words.
+  const queryDigits = digitsOf(query);
+  const looksLikePhone = queryDigits.length >= 3 && !/[\p{L}@]/u.test(String(query));
+  if (looksLikePhone && phoneDigits && (fullPhoneDigits.includes(queryDigits) || phoneDigits.includes(queryDigits))) return true;
+  return words.every((word) => haystack.includes(word) || (/^\d+$/.test(word) && word.length >= 3 && phoneDigits.includes(word)));
+}
+
 // The approved doctors that match the search, best fit first (specialty, then country, then licence country, then
 // clinical fit, then name).
 export function rankDoctors(doctors, fit, query) {
-  const q = normalize(query);
   return (Array.isArray(doctors) ? doctors : [])
     .map((doctor) => {
       const match = scoreDoctor(doctor, fit);
       return { ...doctor, matchPriority: match.priority, matchSecondaryScore: match.secondaryScore };
     })
-    .filter((doctor) => {
-      if (!q) return true;
-      return [
-        doctor.name,
-        doctor.doctorId,
-        doctor.specialty,
-        doctor.subSpecialty,
-        doctor.city,
-        doctor.state,
-        doctor.country,
-        ...(Array.isArray(doctor.internationalLicenses) ? doctor.internationalLicenses : []),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    })
+    .filter((doctor) => matchesDoctorSearch(doctor, query))
     .sort((a, b) => {
       const priorityCompare =
         Number(b.matchPriority?.specialty) - Number(a.matchPriority?.specialty) ||

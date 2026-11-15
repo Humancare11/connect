@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  assignUrl, buildView, doctorDisplayName, isCurrentDoctor, listUrl, rankDoctors, safeListQuery, savedMessage, scoreDoctor,
+  assignUrl, buildView, matchesDoctorSearch, normalizeSearch, doctorDisplayName, isCurrentDoctor, listUrl, rankDoctors, safeListQuery, savedMessage, scoreDoctor,
 } from "./assignPageLogic.js";
 
 test("the list's tab, Hide testing and page travel to the assign page and back; nothing else does", () => {
@@ -97,4 +97,46 @@ test("the toast after saving says the doctor still has to confirm", () => {
   assert.match(savedMessage("assign"), /need to confirm/);
   assert.match(savedMessage("alternate"), /new doctor needs to confirm/);
   assert.equal(savedMessage("revert", "Dr Old"), "The booking is back with Dr Old. They need to confirm it.");
+});
+
+const searchDocs = [
+  { id: "s1", doctorId: 10010, name: "Dr. José  Álvarez", email: "Jose.Alvarez@Clinic.example.com", countryCode: "+91", phoneNumber: "98765 43210", specialty: "Cardiology", country: "IN" },
+  { id: "s2", doctorId: 10011, name: "Dr.  Rao", email: "rao@example.org", countryCode: "+1", phoneNumber: "415-555-0199", specialty: "Dermatology", country: "US" },
+  { id: "s3", doctorId: 10012, name: "Dr. Mary Ann Smith", email: "", specialty: "General Medicine", country: "GB" },
+];
+const found = (q) => rankDoctors(searchDocs, {}, q).map((d) => d.id).sort();
+
+test("search ignores case, extra spaces, accents and the Dr. prefix", () => {
+  assert.equal(normalizeSearch("  Dr.   José  "), "dr jose");
+  assert.deepEqual(found("JOSE"), ["s1"]);
+  assert.deepEqual(found("  jose    alvarez "), ["s1"]);
+  assert.deepEqual(found("dr jose"), ["s1"]);
+  assert.deepEqual(found("Dr.Jose"), ["s1"]);
+  assert.deepEqual(found("dr. rao"), ["s2"]);
+  assert.deepEqual(found("dr"), ["s1", "s2", "s3"], "a lone Dr matches everyone, it is not an error");
+  assert.deepEqual(found("   "), ["s1", "s2", "s3"]);
+});
+
+test("search matches partial text in any word order, and the email", () => {
+  assert.deepEqual(found("alv"), ["s1"]);
+  assert.deepEqual(found("smith mary"), ["s3"]);
+  assert.deepEqual(found("ann smi"), ["s3"]);
+  assert.deepEqual(found("rao@example"), ["s2"]);
+  assert.deepEqual(found("CLINIC.EXAMPLE"), ["s1"]);
+  assert.deepEqual(found("derm us"), ["s2"]);
+  assert.deepEqual(found("jose smith"), [], "every word has to match the same doctor");
+});
+
+test("search matches phone numbers by digits only, whatever the typing", () => {
+  assert.deepEqual(found("9876543210"), ["s1"]);
+  assert.deepEqual(found("98765 43210"), ["s1"]);
+  assert.deepEqual(found("98765-43210"), ["s1"]);
+  assert.deepEqual(found("+91 98765 43210"), ["s1"]);
+  assert.deepEqual(found("+919876543210"), ["s1"]);
+  assert.deepEqual(found("(415) 555 0199"), ["s2"]);
+  assert.deepEqual(found("+1 415"), ["s2"]);
+  assert.deepEqual(found("555-0199"), ["s2"]);
+  assert.deepEqual(found("0000000"), []);
+  assert.equal(matchesDoctorSearch({ name: "No Phone" }, "98765"), false, "no phone and no crash");
+  assert.deepEqual(found("10010"), ["s1"], "a doctor ID still matches");
 });

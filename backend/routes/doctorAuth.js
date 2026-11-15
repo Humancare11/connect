@@ -46,10 +46,12 @@ async function isPrivilegedAdminRequest(req) {
     }
 }
 
-const ADMIN_ONLY_DOCTOR_FIELDS = ["mongoId", "medicalRegistrationNumber", "medicalCouncilName", "internationalLicenses"];
-function stripAdminOnlyFields(doctor) {
+const ADMIN_ONLY_DOCTOR_FIELDS = ["mongoId", "medicalRegistrationNumber", "medicalCouncilName", "internationalLicenses", "phoneNumber", "countryCode"];
+// The public /:id route has always returned the doctor's email, so it is hidden from anonymous callers on /approved only.
+const APPROVED_LIST_ADMIN_ONLY_FIELDS = [...ADMIN_ONLY_DOCTOR_FIELDS, "email"];
+function stripAdminOnlyFields(doctor, fields = ADMIN_ONLY_DOCTOR_FIELDS) {
     const trimmed = { ...doctor };
-    for (const field of ADMIN_ONLY_DOCTOR_FIELDS) delete trimmed[field];
+    for (const field of fields) delete trimmed[field];
     return trimmed;
 }
 
@@ -987,6 +989,10 @@ router.get("/approved", async (req, res) => {
             doctorId: e.doctorId?.doctorId,
             mongoId: e.doctorId?._id,
             name: `Dr. ${e.firstName || ""} ${e.surname || ""}`.trim(),
+            // Same sources as the admin "Our Doctors" page. Admin-only (stripped below for everyone else).
+            email: e.email || e.doctorId?.email || "",
+            countryCode: e.countryCode || "",
+            phoneNumber: e.phoneNumber || "",
             degree: e.qualification || "",
             specialty: e.specialization || "",
             subSpecialty: e.subSpecialization || "",
@@ -1010,7 +1016,7 @@ router.get("/approved", async (req, res) => {
         }));
 
         if (!(await isPrivilegedAdminRequest(req))) {
-            doctors = doctors.map(stripAdminOnlyFields);
+            doctors = doctors.map((d) => stripAdminOnlyFields(d, APPROVED_LIST_ADMIN_ONLY_FIELDS));
         }
 
         return res.json(doctors);
