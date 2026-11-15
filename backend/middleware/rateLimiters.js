@@ -10,6 +10,7 @@ const emailChangeVerifyStore = new Map();
 const presignStore = new Map();
 const uploadStore = new Map();
 const directVideoRoomPublicStore = new Map();
+const doctorSignatureStore = new Map();
 
 function getEntry(store, key) {
   return store.get(key) || { count: 0, firstAttemptAt: Date.now() };
@@ -86,6 +87,15 @@ function buildUserLimiter({ windowMs, max, message, store }) {
     describeKey: (req, key) => `user:${key}`,
   });
 }
+
+// Doctor signature upload + preview. Both run image decoding/re-encoding (sharp) on every call, so they share one
+// per-doctor bucket (preview + save together): 20 calls per 10 minutes is plenty for trying a few images.
+const doctorSignatureLimiter = buildUserLimiter({
+  store:    doctorSignatureStore,
+  windowMs: 10 * 60 * 1000,
+  max:      20,
+  message:  "Too many signature uploads. Please wait {min} minutes and try again.",
+});
 
 const registrationLimiter = buildEmailLimiter({
   store:    registrationStore,
@@ -338,6 +348,7 @@ const appVersionLimiter = buildKeyedLimiter({
 });
 
 module.exports = {
+  doctorSignatureLimiter,
   liveChatUploadLimiter,
   liveChatContactLimiter,
   liveChatConfigLimiter,

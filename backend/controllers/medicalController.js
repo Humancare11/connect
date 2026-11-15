@@ -11,6 +11,9 @@ const { createS3PresignedGetUrl } = require("../utils/s3PresignedUrl");
 const { serializeReport, logReportAccess } = require("../utils/medicalReportService");
 const { encryptPHI, decryptPHI } = require("../utils/phiCrypto");
 const { ensureDoctorAppointment } = require("../utils/doctorAppointmentAccess");
+const {
+  DocumentSignatureError, snapshotSignature, publicSignatureFields, streamDocumentSignature,
+} = require("../utils/documentSignature");
 const { loadAppointmentAny, completeLoaded } = require("../utils/appointmentLifecycle");
 
 const isCancelled = (appointment) => String(appointment?.status || "").toLowerCase() === "cancelled";
@@ -21,12 +24,30 @@ const isCancelled = (appointment) => String(appointment?.status || "").toLowerCa
 // plaintext) fields on `doc` untouched — no migration required for old data.
 function withDecryptedFields(doc, fieldNames) {
   if (!doc) return doc;
-  const { cipherText, iv, authTag, keyVersion, ...rest } = doc;
+  const { cipherText, iv, authTag, keyVersion, ...restWithKey } = doc;
+  // The signature's S3 key never leaves the server: clients get isSigned and fetch the image via the signature routes.
+  const rest = publicSignatureFields(restWithKey);
   if (!cipherText) return rest;
   const data = decryptPHI(doc) || {};
   const decrypted = {};
   for (const field of fieldNames) decrypted[field] = data[field];
   return { ...rest, ...decrypted };
+}
+
+// Optional signing on create: only `sign: true` signs. A doctor with no saved signature gets 422 SIGNATURE_REQUIRED
+// (the form then lets them issue unsigned). Returns { fields } to merge into the new document, or { failed: true }
+// after having sent the error response.
+async function signIfRequested(req, res, kind, docId) {
+  if (req.body?.sign !== true) return { fields: {} };
+  try {
+    return { fields: await snapshotSignature({ kind, docId, doctorId: req.user.id }) };
+  } catch (err) {
+    if (err instanceof DocumentSignatureError) {
+      res.status(err.statusCode).json({ msg: err.message, code: err.code });
+      return { failed: true };
+    }
+    throw err;
+  }
 }
 
 const PRESCRIPTION_PHI_FIELDS = ["diagnosis", "medicines", "instructions", "followUpDate"];
@@ -224,7 +245,13 @@ const createPrescription = async (req, res) => {
     const cleanInstructions = typeof instructions === "string" ? instructions.trim().slice(0, 2000) : "";
     const cleanFollowUpDate = followUpDate || "";
 
+    const prescriptionId = new mongoose.Types.ObjectId();
+    const signed = await signIfRequested(req, res, "prescription", prescriptionId);
+    if (signed.failed) return;
+
     const prescription = await Prescription.create({
+      _id: prescriptionId,
+      ...signed.fields,
       appointmentId,
       doctorId: req.user.id,
       patientId,
@@ -263,7 +290,7 @@ const createPrescription = async (req, res) => {
       // Audit trail records that a prescription was created, not its clinical
       // content — logging the diagnosis text here would defeat encrypting it
       // at rest in the first place.
-      details: { appointmentId },
+      details: { appointmentId, signed: !!signed.fields.signatureKey },
     });
 
     // Only the appointments page asks for this (completeOnSave). Prescriptions
@@ -332,7 +359,13 @@ const createMedicalCertificate = async (req, res) => {
       notes:          notes          || "",
     };
 
+    const certificateId = new mongoose.Types.ObjectId();
+    const signed = await signIfRequested(req, res, "certificate", certificateId);
+    if (signed.failed) return;
+
     const certificate = await MedicalCertificate.create({
+      _id: certificateId,
+      ...signed.fields,
       appointmentId,
       doctorId: req.user.id,
       patientId,
@@ -362,7 +395,7 @@ const createMedicalCertificate = async (req, res) => {
       resource: "MedicalCertificate",
       resourceId: certificate._id,
       patientId,
-      details: { appointmentId },
+      details: { appointmentId, signed: !!signed.fields.signatureKey },
     });
 
     res.status(201).json({
@@ -503,7 +536,19 @@ const getMyMedicalCertificates = async (req, res) => {
   }
 };
 
+// Signature images: authenticated and scoped per role. Outside the scope = 404.
+const doctorScope = (req) => ({ doctorId: req.user.id });
+const patientScope = (req) => ({ patientId: req.user.id });
+const doctorPrescriptionSignature = streamDocumentSignature(Prescription, doctorScope);
+const doctorCertificateSignature = streamDocumentSignature(MedicalCertificate, doctorScope);
+const myPrescriptionSignature = streamDocumentSignature(Prescription, patientScope);
+const myCertificateSignature = streamDocumentSignature(MedicalCertificate, patientScope);
+
 module.exports = {
+  doctorPrescriptionSignature,
+  doctorCertificateSignature,
+  myPrescriptionSignature,
+  myCertificateSignature,
   getDoctorPatients,
   getPatientHistory,
   createPrescription,

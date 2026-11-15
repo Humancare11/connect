@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { lockAgainstUpdates } = require("../utils/lockUpdates");
 
 const medicalCertificateSchema = new mongoose.Schema(
   {
@@ -19,9 +20,17 @@ const medicalCertificateSchema = new mongoose.Schema(
     iv:              { type: String, default: "" },
     authTag:         { type: String, default: "" },
     keyVersion:      { type: String, default: "" },
+    // Optional doctor signature (see utils/documentSignature.js). Private S3 key of THIS certificate's own copy;
+    // never sent to clients. Absent on certificates issued unsigned or before signing existed.
+    signatureKey:    { type: String, default: "" },
+    signedAt:        { type: Date },
+    signedBy:        { name: { type: String, default: "" }, registrationNumber: { type: String, default: "" } },
     issuedDate:      { type: String, required: true },
   },
   { timestamps: true }
 );
+
+// Write-once: updates are rejected, deletes (retention job) are not.
+lockAgainstUpdates(medicalCertificateSchema, "Medical certificates");
 
 module.exports = mongoose.model("MedicalCertificate", medicalCertificateSchema);

@@ -1,5 +1,5 @@
 const crypto = require("crypto");
-const { PutObjectCommand, GetObjectCommand, CopyObjectCommand } = require("@aws-sdk/client-s3");
+const { PutObjectCommand, GetObjectCommand, CopyObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 const { s3Client, getBucketName } = require("../config/s3");
 
 // Private S3 objects for Visit Notes (signatures). Never public, never presigned for the browser:
@@ -34,6 +34,10 @@ async function copyObject(sourceKey, destKey) {
   );
 }
 
+async function deleteObject(key) {
+  await s3Client.send(new DeleteObjectCommand({ Bucket: getBucketName(), Key: key }));
+}
+
 async function getObjectBuffer(key) {
   const out = await s3Client.send(new GetObjectCommand({ Bucket: getBucketName(), Key: key }));
   const chunks = [];
@@ -54,4 +58,4 @@ async function streamPng(res, key) {
   }
 }
 
-module.exports = { doctorSignatureKey, reportSignatureKey, putPng, copyObject, getObjectBuffer, streamPng };
+module.exports = { doctorSignatureKey, reportSignatureKey, putPng, copyObject, deleteObject, getObjectBuffer, streamPng };

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { lockAgainstUpdates } = require("../utils/lockUpdates");
 
 const medicineSchema = new mongoose.Schema({
   name:      { type: String, required: true },
@@ -26,8 +27,16 @@ const prescriptionSchema = new mongoose.Schema(
     iv:            { type: String, default: "" },
     authTag:       { type: String, default: "" },
     keyVersion:    { type: String, default: "" },
+    // Optional doctor signature (see utils/documentSignature.js). Private S3 key of THIS prescription's own copy;
+    // never sent to clients. Absent on prescriptions issued unsigned or before signing existed.
+    signatureKey:  { type: String, default: "" },
+    signedAt:      { type: Date },
+    signedBy:      { name: { type: String, default: "" }, registrationNumber: { type: String, default: "" } },
   },
   { timestamps: true }
 );
+
+// Write-once: updates are rejected, deletes (retention job) are not.
+lockAgainstUpdates(prescriptionSchema, "Prescriptions");
 
 module.exports = mongoose.model("Prescription", prescriptionSchema);
