@@ -52,6 +52,7 @@ module.exports = new Set([
   "doctor-note-or-sick-notes",
   "doctor-register",
   "doctors-note",
+  "doctors-note-sick-notes",
   "edit",
   "emergency-contraception-guidance",
   "emergency-teleconsultation-abroad",
