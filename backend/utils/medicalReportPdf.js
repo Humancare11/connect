@@ -41,8 +41,10 @@ const MARGIN_X = 50;
 const CONTENT_WIDTH = 512;
 const BODY_TOP = 124;
 const BODY_BOTTOM = 690;
-const HEADER_LOGO = 41.25; // docx: 523875 EMU
-const FOOTER_LOGO = 21; // docx: 266700 EMU
+// Logo widths (the PNG is cropped to the artwork, so height follows its ~2.1:1 aspect).
+const HEADER_LOGO = 120;
+const FOOTER_LOGO = 56;
+const FOOTER_TEXT_X = MARGIN_X + 70;
 const HEADER_RULE_Y = 113;
 const CELL_PAD_X = 6;
 const CELL_PAD_Y = 4;
@@ -263,7 +265,7 @@ function drawBullets(doc, y, items) {
 }
 
 function drawHeader(doc) {
-  if (LOGO_BUFFER) doc.image(LOGO_BUFFER, MARGIN_X + 5, 52, { width: HEADER_LOGO, height: HEADER_LOGO });
+  if (LOGO_BUFFER) doc.image(LOGO_BUFFER, MARGIN_X, 50, { width: HEADER_LOGO });
   doc.font(FONT_BOLD).fontSize(12).fillColor(NAVY)
     .text("Humancare Connect", MARGIN_X, 62, { width: CONTENT_WIDTH, align: "right", lineBreak: false });
   doc.font(FONT_ITALIC).fontSize(8).fillColor(BLUE)
@@ -274,12 +276,12 @@ function drawHeader(doc) {
 function drawFooter(doc, reportNumber) {
   const ruleY = 706;
   doc.save().lineWidth(1).strokeColor(BLUE).moveTo(MARGIN_X, ruleY).lineTo(MARGIN_X + CONTENT_WIDTH, ruleY).stroke().restore();
-  if (LOGO_BUFFER) doc.image(LOGO_BUFFER, MARGIN_X + 5, 718, { width: FOOTER_LOGO, height: FOOTER_LOGO });
+  if (LOGO_BUFFER) doc.image(LOGO_BUFFER, MARGIN_X, 714, { width: FOOTER_LOGO });
   doc.font(FONT).fontSize(7).fillColor(MUTED)
-    .text("Humancare Connect, Inc. | Global Health Passport", MARGIN_X + 40, 722, { lineBreak: false });
+    .text("Humancare Connect, Inc. | Global Health Passport", FOOTER_TEXT_X, 722, { lineBreak: false });
   doc.text(
     "This medical report is confidential and intended solely for the named patient and authorized parties.",
-    MARGIN_X + 40,
+    FOOTER_TEXT_X,
     731,
     { lineBreak: false }
   );
