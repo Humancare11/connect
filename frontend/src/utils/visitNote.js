@@ -29,20 +29,21 @@ export const fmtDate = (value) =>
 
 export const fmtDateTime = (value) => (value ? `${fmtDate(value)} ${fmtTime(value)}` : "");
 
-// ── Signature (PNG only, 1 MB) ───────────────────────────────────────────────
-export const MAX_SIGNATURE_BYTES = 1024 * 1024;
+// ── Signature (PNG or JPG, 2 MB) - one rule for Prescription, Medical Certificate and Visit Note ────────────────
+export const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024;
 const PNG_MAGIC = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+const JPEG_MAGIC = [0xff, 0xd8, 0xff];
+const ALLOWED_MIME = ["image/png", "image/jpeg", "image/jpg", "image/pjpeg"];
+const startsWith = (head, magic) => head.length >= magic.length && magic.every((byte, i) => head[i] === byte);
 
-// Same three checks as the server (MIME, extension, magic bytes) plus size. Returns an error string, or "" when OK.
+// Quick client-side check so obvious mistakes fail before the upload (the server repeats all of it and decodes the
+// image). The real type comes from the first bytes, not the name. Returns an error string, or "" when OK.
 export async function validateSignatureFile(file) {
-  if (!file) return "Please choose a PNG signature image.";
-  if (file.size > MAX_SIGNATURE_BYTES) return "The signature image must be 1 MB or smaller.";
-  if (String(file.type).toLowerCase() !== "image/png") return "The signature must be a PNG image.";
-  if (!/\.png$/i.test(file.name || "")) return "The signature file name must end in .png.";
+  if (!file) return "Please choose a PNG or JPG signature image.";
+  if (file.size > MAX_SIGNATURE_BYTES) return "The signature image must be 2 MB or smaller.";
+  if (!ALLOWED_MIME.includes(String(file.type).toLowerCase())) return "The signature must be a PNG or JPG image.";
   const head = new Uint8Array(await file.slice(0, PNG_MAGIC.length).arrayBuffer());
-  if (head.length < PNG_MAGIC.length || PNG_MAGIC.some((byte, i) => head[i] !== byte)) {
-    return "This file is not a valid PNG image.";
-  }
+  if (!startsWith(head, PNG_MAGIC) && !startsWith(head, JPEG_MAGIC)) return "This file is not a valid PNG or JPG image.";
   return "";
 }
 

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import ConsultationNotesPanel from "../../components/ConsultationNotesPanel";
+import SignDocumentOption from "../../components/SignDocumentOption";
+import useDoctorSignature from "../../hooks/useDoctorSignature";
 import {
   EMPTY_MEDICINE,
   EMPTY_RX,
@@ -31,6 +33,8 @@ export default function WritePrescription() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [savedNote, setSavedNote] = useState("");
+  const signature = useDoctorSignature();
+  const [sign, setSign] = useState(false); // "Sign this prescription": ON by default once a saved signature exists
 
   const loadPatientData = useCallback(async () => {
     setLoading(true);
@@ -120,6 +124,7 @@ export default function WritePrescription() {
       const { data } = await api.post("/api/medical/prescriptions", {
         ...form,
         patientId: patient?._id,
+        sign,
         // Saving from the Appointments page also completes the appointment.
         ...(fromAppointment ? { completeOnSave: true } : {}),
       });
@@ -133,6 +138,10 @@ export default function WritePrescription() {
       setSaved(true);
       setTimeout(goBack, 1500);
     } catch (err) {
+      if (err.response?.data?.code === "SIGNATURE_REQUIRED") {
+        setSign(false);
+        signature.refresh();
+      }
       setError(err.response?.data?.msg || "Failed to save prescription.");
       setSaving(false);
     }
@@ -331,6 +340,8 @@ export default function WritePrescription() {
                 onChange={(e) => setField("followUpDate", e.target.value)}
                 disabled={saving || saved}
               />
+
+              <SignDocumentOption sig={signature} sign={sign} onSignChange={setSign} noun="prescription" />
 
               <div className="wp-form-footer">
                 <button

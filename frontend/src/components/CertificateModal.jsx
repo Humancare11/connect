@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import api from "../api";
 import useModalA11y from "../hooks/useModalA11y";
+import useDoctorSignature from "../hooks/useDoctorSignature";
+import SignDocumentOption from "./SignDocumentOption";
 import { formatShortDate as formatDate } from "../utils/prescriptionForm";
 // Uses the shared doctor-dashboard modal styles (dp-modal*, dp-input, ...).
 import "../pages/doctors/DoctorPatients.css";
@@ -33,6 +35,8 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
     ...EMPTY_CERT,
     appointmentId: appointments[0]?._id || "",
   });
+  const signature = useDoctorSignature();
+  const [sign, setSign] = useState(false); // "Sign this certificate": ON by default once a saved signature exists
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,9 +58,14 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
       await api.post("/api/medical/certificates", {
         ...form,
         patientId: patient._id,
+        sign,
       });
       onSaved("certificate");
     } catch (err) {
+      if (err.response?.data?.code === "SIGNATURE_REQUIRED") {
+        setSign(false);
+        signature.refresh();
+      }
       setError(err.response?.data?.msg || "Failed to issue certificate.");
       setSaving(false);
     }
@@ -138,6 +147,8 @@ export default function CertificateModal({ patient, appointments, onClose, onSav
             placeholder="Any additional remarks..."
             rows={3}
           />
+
+          <SignDocumentOption sig={signature} sign={sign} onSignChange={setSign} noun="certificate" />
 
           </div>
 

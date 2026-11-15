@@ -4,9 +4,25 @@ const MedicalCertificate = require("../models/MedicalCertificate");
 const RetentionPolicy = require("../models/RetentionPolicy");
 const { recordActivity } = require("../utils/activityLogger");
 const { deleteUploadsOlderThan } = require("../utils/uploadStorage");
+const { deleteObject } = require("../utils/visitNoteStorage");
 
 function cutoff(days) {
   return new Date(Date.now() - Number(days) * 24 * 60 * 60 * 1000);
+}
+
+// Signed prescriptions / certificates own a private S3 copy of the doctor's signature. When their rows are deleted
+// the copies go too. An S3 failure is logged and never stops the job (the object is just left behind).
+async function deleteSignatureCopies(keys) {
+  let deleted = 0;
+  for (const key of keys) {
+    try {
+      await deleteObject(key);
+      deleted += 1;
+    } catch (err) {
+      console.error("retention: could not delete signature copy", key, err?.message);
+    }
+  }
+  return deleted;
 }
 
 async function runRetentionCleanup(req = null) {
@@ -21,11 +37,19 @@ async function runRetentionCleanup(req = null) {
 
   if (byKey.medicalRecords) {
     const olderThan = cutoff(byKey.medicalRecords.retentionDays);
+    const filter = { createdAt: { $lt: olderThan } };
+    // Collect the signature keys first, delete the rows, and only then the S3 copies.
+    const withSignature = { ...filter, signatureKey: { $exists: true, $ne: "" } };
+    const [rxSigned, certSigned] = await Promise.all([
+      Prescription.find(withSignature).select("signatureKey").lean(),
+      MedicalCertificate.find(withSignature).select("signatureKey").lean(),
+    ]);
     const [prescriptions, certificates] = await Promise.all([
-      Prescription.deleteMany({ createdAt: { $lt: olderThan } }),
-      MedicalCertificate.deleteMany({ createdAt: { $lt: olderThan } }),
+      Prescription.deleteMany(filter),
+      MedicalCertificate.deleteMany(filter),
     ]);
     result.medicalRecords = (prescriptions.deletedCount || 0) + (certificates.deletedCount || 0);
+    result.medicalSignatureFiles = await deleteSignatureCopies([...rxSigned, ...certSigned].map((d) => d.signatureKey));
   }
 
   if (byKey.uploadedFiles) {

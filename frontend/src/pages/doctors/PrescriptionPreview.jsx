@@ -10,6 +10,7 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import "./DoctorPatients.css";
 import api from "../../api";
 import { useDoctorAuth } from "../../context/DoctorAuthContext";
+import useDocumentSignature from "../../hooks/useDocumentSignature";
 
 const PrescriptionSlip = lazy(() =>
   import("../../components/RxSlip").then((module) => ({
@@ -25,7 +26,7 @@ const PrescriptionSlip = lazy(() =>
 
 const RX_WIDTH = 794;
 
-function ScaledPrescriptionPreview({ rx, patient, doctor, doctorEnrollment }) {
+function ScaledPrescriptionPreview({ rx, patient, doctor, doctorEnrollment, signatureUrl }) {
   const measureRef = useRef(null);
   const innerRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -70,6 +71,7 @@ function ScaledPrescriptionPreview({ rx, patient, doctor, doctorEnrollment }) {
               patient={patient}
               doctor={doctor}
               doctorEnrollment={doctorEnrollment}
+              signatureUrl={signatureUrl}
               certStyle
             />
           </Suspense>
@@ -101,6 +103,11 @@ export default function PrescriptionPreview() {
   );
   const [loading, setLoading] = useState(!initial.rx);
   const [notFound, setNotFound] = useState(false);
+  const signatureUrl = useDocumentSignature(
+    rx?._id ? `/api/medical/prescriptions/${rx._id}/signature` : "",
+    "doctor",
+    rx?.isSigned,
+  );
 
   useEffect(() => {
     if (initial.rx) return;
@@ -196,6 +203,7 @@ export default function PrescriptionPreview() {
               patient={patient}
               doctor={doctor}
               doctorEnrollment={doctorEnrollment}
+              signatureUrl={signatureUrl}
             />
           </div>
         </div>
@@ -212,6 +220,7 @@ export default function PrescriptionPreview() {
             doctor={doctor}
             doctorEnrollment={doctorEnrollment}
             slipRef={slipRef}
+            signatureUrl={signatureUrl}
             certStyle
           />
         </Suspense>

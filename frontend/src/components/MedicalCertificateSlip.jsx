@@ -10,11 +10,13 @@
  *   doctorEnrollment — { specialization, qualification, clinicName, clinicAddress,
  *                        medicalRegistrationNumber, medicalCouncilName } (optional)
  *   slipRef          — ref forwarded to root div for PDF capture
+ *   signatureUrl     — doctor's signature as a data: URL (authenticated fetch); drawn only when cert.isSigned
  */
 
 import SlipContactIcon from "./SlipContactIcon";
 import footerQr from "../assets/New-Footer-QR.jpeg";
 import footerLogo from "../assets/prescription-logo.png";
+import { SlipSignature } from "./slipShared";
 
 /* ── Shared design tokens (identical to PrescriptionSlip) ─────────────────── */
 const PRIMARY = "#12296B"; // navy
@@ -176,6 +178,7 @@ export function MedicalCertificateSlip({
   doctor,
   doctorEnrollment,
   slipRef,
+  signatureUrl = "",
 }) {
   const age = calcAge(patient?.dob);
   const ageSex = [age ? `${age} yrs` : "", patient?.gender]
@@ -482,20 +485,25 @@ export function MedicalCertificateSlip({
               )}
             </div>
 
-            {/* System-generated note */}
-            <div
-              style={{
-                fontSize: 11,
-                color: MUTED,
-                fontStyle: "italic",
-                textAlign: "center",
-                maxWidth: 220,
-                lineHeight: 1.6,
-              }}
-            >
-              This is a system-generated certificate and does not require a
-              signature or stamp.
-            </div>
+            {cert?.isSigned ? (
+              /* Signed: the doctor's signature replaces the "system-generated" note */
+              <SlipSignature signed signatureUrl={signatureUrl} signedAt={cert.signedAt} />
+            ) : (
+              /* System-generated note (unsigned and pre-signing certificates) */
+              <div
+                style={{
+                  fontSize: 11,
+                  color: MUTED,
+                  fontStyle: "italic",
+                  textAlign: "center",
+                  maxWidth: 220,
+                  lineHeight: 1.6,
+                }}
+              >
+                This is a system-generated certificate and does not require a
+                signature or stamp.
+              </div>
+            )}
           </div>
         </div>
 

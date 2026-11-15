@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components -- shared layout tokens + a tiny component, not a routed module */
 import { Country } from "country-state-city";
+import { fmtDateTime } from "../utils/visitNote";
 
 // Letterhead layout tokens and small pieces shared by the prescription slip (RxSlip) and the Visit Note slip, so both
 // papers look the same. Moved here unchanged from RxSlip.jsx.
@@ -61,6 +62,30 @@ export function CertInfoField({ label, value }) {
       >
         {value || " "}
       </span>
+    </div>
+  );
+}
+
+// The doctor's signature block, identical on every paper (Visit Note look: image 56px high, 220px wide at most,
+// left-aligned, "Digitally signed" caption). `signatureUrl` is a data: URL fetched through the authenticated API.
+// Renders nothing for an unsigned document. While the image is still loading the space is kept, so the layout
+// does not jump.
+// `labelClassName` lets the classic prescription layout label it with its own "rx-label" style.
+export function SlipSignature({ signed, signatureUrl = "", signedAt, style = {}, labelClassName = "" }) {
+  if (!signed) return null;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 4, ...style }}>
+      <span className={labelClassName || undefined} style={labelClassName ? undefined : { fontSize: 12, fontWeight: 700, color: C_PRIMARY }}>Signature</span>
+      {signatureUrl ? (
+        <img
+          src={signatureUrl}
+          alt="Doctor's signature"
+          style={{ height: 56, width: "auto", maxWidth: 220, objectFit: "contain", objectPosition: "left", display: "block" }}
+        />
+      ) : (
+        <div style={{ height: 56 }} />
+      )}
+      <span style={{ fontSize: 11, color: C_MUTED }}>Digitally signed{signedAt ? ` · ${fmtDateTime(signedAt)}` : ""}</span>
     </div>
   );
 }

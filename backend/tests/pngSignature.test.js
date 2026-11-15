@@ -138,16 +138,19 @@ describe("/api/doctor/signature", () => {
     assert.notEqual(first, second);
   });
 
-  test("rejects JPEG, wrong extension and fake PNG with 400 and stores nothing", async () => {
-    const jpeg = await sharp({ create: { width: 50, height: 50, channels: 3, background: "#fff" } }).jpeg().toBuffer();
-    assert.equal((await put(jpeg, { type: "image/jpeg", name: "s.jpg" })).status, 400);
-    assert.equal((await put(await makePng(), { name: "sig.jpg" })).status, 400);
-    assert.equal((await put(jpeg)).status, 400);
+  // Rule changed (PNG or JPG, 2 MB, shared by all three documents): a real JPEG is now accepted and stored as PNG.
+  test("accepts a real JPEG; rejects GIF and non-images with 400 and stores nothing", async () => {
+    const jpeg = await sharp({ create: { width: 200, height: 80, channels: 3, background: "#fff" } }).jpeg().toBuffer();
+    assert.equal((await put(jpeg, { type: "image/jpeg", name: "s.jpg" })).status, 200);
+    store.clear();
+    const gif = await sharp({ create: { width: 60, height: 30, channels: 3, background: "#fff" } }).gif().toBuffer();
+    assert.equal((await put(gif, { type: "image/gif", name: "s.gif" })).status, 400);
+    assert.equal((await put(Buffer.from("<svg></svg>"))).status, 400);
     assert.equal(store.size, 0);
   });
 
-  test("rejects over 1 MB", async () => {
-    const res = await put(Buffer.concat([PNG_MAGIC, Buffer.alloc(1024 * 1024 + 10)]));
+  test("rejects over 2 MB", async () => {
+    const res = await put(Buffer.concat([PNG_MAGIC, Buffer.alloc(2 * 1024 * 1024 + 10)]));
     assert.equal(res.status, 413);
   });
 

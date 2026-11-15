@@ -7,6 +7,8 @@ import { uploadFileDirectToS3 } from "../../utils/directUpload";
 import { Country, State } from "country-state-city";
 import "./DoctorProfile.css";
 import ChangeEmailPanel from "../../components/ChangeEmailPanel";
+import SignaturePanel from "../../components/SignaturePanel";
+import useDoctorSignature from "../../hooks/useDoctorSignature";
 import PhoneInputField, {
   COUNTRIES as PHONE_COUNTRIES,
 } from "../../components/PhoneInputField";
@@ -1079,6 +1081,20 @@ function Section({ icon, title, children }) {
       </div>
       <div className="drprofile__card-body">{children}</div>
     </section>
+  );
+}
+
+/* ─── My Signature: set once, reused on Prescriptions, Medical Certificates and Visit Notes.
+   Independent of the profile edit form: it saves on its own and works in both read and edit mode. ─── */
+function MySignatureCard() {
+  const signature = useDoctorSignature();
+  return (
+    <Section icon="✍️" title="My Signature">
+      <SignaturePanel
+        sig={signature}
+        prompt="You have not saved a signature yet. Upload a PNG or JPG, or draw one, to sign your prescriptions, medical certificates and visit notes."
+      />
+    </Section>
   );
 }
 
@@ -2740,6 +2756,8 @@ export default function DoctorProfile() {
             </Section>
           </>
         )}
+
+        <MySignatureCard />
       </div>
     </>
   );
